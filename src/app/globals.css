@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-sans: "Noto Sans JP", system-ui, sans-serif;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-white text-ink-800 antialiased;
+    text-wrap: pretty;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-bold tracking-tight;
+    text-wrap: balance;
+  }
+
+  /* キーボード操作時のフォーカスを明確に（アクセシビリティ） */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-500 ring-offset-2;
+  }
+}
+
+@layer components {
+  /* セクション見出しの装飾ラベル */
+  .eyebrow {
+    @apply inline-flex items-center gap-2 text-sm font-semibold tracking-wide text-brand-600;
+  }
+  .eyebrow::before {
+    content: "";
+    @apply inline-block h-px w-6 bg-brand-500;
+  }
+}
