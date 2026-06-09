@@ -488,3 +488,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 .apprex-form__success h4 { color: var(--color-secondary); margin-top: 0; }
 .apprex-form__line { margin-top: 22px; padding-top: 18px; border-top: 1px dashed var(--color-line); text-align: center; }
 .apprex-form__line p { margin: 0 0 10px; color: var(--color-muted); font-size: .9rem; }
+
+/* Chat CTA alt (meeting) */
+.apprex-chat__cta--alt { background: var(--color-primary); }
+.apprex-chat__cta--alt:hover { background: var(--color-primary-dark); }

@@ -39,6 +39,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<li><a href="<?php echo esc_url( apprex_page_url( 'estimate' ) ); ?>"><?php esc_html_e( '見積もり・発注', 'apprex' ); ?></a></li>
 					<li><a href="<?php echo esc_url( apprex_page_url( 'free-trial' ) ); ?>"><?php esc_html_e( '無料体験', 'apprex' ); ?></a></li>
 					<li><a href="<?php echo esc_url( apprex_page_url( 'document' ) ); ?>"><?php esc_html_e( '資料請求', 'apprex' ); ?></a></li>
+					<li><a href="<?php echo esc_url( apprex_page_url( 'meeting' ) ); ?>"><?php esc_html_e( 'ミーティング予約', 'apprex' ); ?></a></li>
 					<li><a href="<?php echo esc_url( apprex_page_url( 'contact' ) ); ?>"><?php esc_html_e( 'お問い合わせ', 'apprex' ); ?></a></li>
 					<li><a href="<?php echo esc_url( apprex_page_url( 'company' ) ); ?>"><?php esc_html_e( '会社概要', 'apprex' ); ?></a></li>
 					<li><a href="https://www.instagram.com/apprex1173/" target="_blank" rel="noopener"><?php esc_html_e( 'Instagram（@apprex1173）', 'apprex' ); ?></a></li>

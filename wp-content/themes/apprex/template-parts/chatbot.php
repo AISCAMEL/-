@@ -42,7 +42,8 @@ if ( ! $apprex_ai && ! $apprex_zapier ) {
 		<input type="text" id="apprex-chat-input" autocomplete="off" placeholder="<?php esc_attr_e( 'メッセージを入力…', 'apprex' ); ?>" aria-label="<?php esc_attr_e( 'メッセージ', 'apprex' ); ?>">
 		<button type="submit" aria-label="<?php esc_attr_e( '送信', 'apprex' ); ?>">➤</button>
 	</form>
-	<a class="apprex-chat__cta" href="<?php echo esc_url( apprex_page_url( 'estimate' ) ); ?>"><?php esc_html_e( '▶ 見積もり〜発注フォームへ', 'apprex' ); ?></a>
+	<a class="apprex-chat__cta" href="<?php echo esc_url( apprex_page_url( 'estimate' ) ); ?>"><?php esc_html_e( '▶ 見積もり〜発注', 'apprex' ); ?></a>
+	<a class="apprex-chat__cta apprex-chat__cta--alt" href="<?php echo esc_url( apprex_page_url( 'meeting' ) ); ?>"><?php esc_html_e( '▶ オンライン相談を予約', 'apprex' ); ?></a>
 	<?php $apprex_line = apprex_line_url(); ?>
 	<?php if ( $apprex_line ) : ?>
 		<a class="apprex-chat__line" href="<?php echo esc_url( $apprex_line ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'LINEで相談する', 'apprex' ); ?></a>

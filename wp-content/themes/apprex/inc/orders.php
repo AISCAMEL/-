@@ -36,7 +36,16 @@ function apprex_register_orders_cpt() {
 		)
 	);
 
-	register_post_status( 'apprex_new', array( 'label' => '新規受付', 'public' => false, 'internal' => true, 'show_in_admin_all_list' => true ) );
+	register_post_status(
+		'apprex_new',
+		array(
+			'label'                     => '新規受付',
+			'public'                    => false,
+			'exclude_from_search'       => true,
+			'show_in_admin_all_list'    => true,
+			'show_in_admin_status_list' => true,
+		)
+	);
 }
 add_action( 'init', 'apprex_register_orders_cpt' );
 
@@ -113,6 +122,12 @@ function apprex_rest_order( WP_REST_Request $request ) {
 	}
 
 	apprex_notify_order( $post_id, $estimate, $meta );
+	apprex_send_order_autoreply( $estimate, $meta );
+
+	// Enroll the customer into the 見積もり (estimate) follow-up sequence.
+	if ( function_exists( 'apprex_enroll_drip' ) ) {
+		apprex_enroll_drip( $post_id, 'estimate', $meta['customer_email'], $meta['customer_name'] );
+	}
 
 	return rest_ensure_response(
 		array(
@@ -163,6 +178,49 @@ function apprex_notify_order( $post_id, $estimate, $meta ) {
 	$lines[] = '管理画面: ' . admin_url( 'post.php?post=' . $post_id . '&action=edit' );
 
 	wp_mail( $to, $subject, implode( "\n", $lines ) );
+}
+
+/**
+ * Send the customer an order/estimate confirmation auto-reply (plain text).
+ *
+ * @param array $estimate Estimate breakdown.
+ * @param array $meta     Customer meta.
+ */
+function apprex_send_order_autoreply( $estimate, $meta ) {
+	$name    = $meta['customer_name'];
+	$subject = '【APPREX】お見積り・お申し込みありがとうございます';
+
+	$lines = array(
+		"{$name} 様",
+		'',
+		'この度はお見積り・お申し込みをいただきありがとうございます。',
+		'以下の内容で受け付けました。担当者より2営業日以内にご連絡いたします。',
+		'',
+		'■ お見積り内容',
+		'サービス: ' . $estimate['service_label'],
+		'プラン: ' . $estimate['plan_label'],
+	);
+	foreach ( $estimate['options'] as $o ) {
+		$lines[] = 'オプション: ' . $o['label'] . '（+' . number_format( $o['price'] ) . '円）';
+	}
+	if ( 'monthly' === $estimate['billing'] ) {
+		$lines[] = '月額: ' . number_format( $estimate['monthly'] ) . '円（税抜）';
+		$lines[] = '初期費用: ' . number_format( $estimate['initial_fee'] ) . '円（キャンペーン中）';
+		$lines[] = '年間概算: ' . number_format( $estimate['annual_est'] ) . '円';
+		$lines[] = '最低契約: ' . $estimate['min_months'] . 'ヶ月';
+	} else {
+		$lines[] = '合計（買い切り）: ' . number_format( $estimate['oneoff'] ) . '円（税抜）';
+	}
+	$line = apprex_line_url();
+	$lines[] = '';
+	$lines[] = '──────────';
+	$lines[] = 'ノーコードアプリ開発プラットフォーム APPREX / 合同会社アイズ';
+	$lines[] = '受付：平日10:00〜18:00（チャット・メール・オンライン相談）';
+	if ( $line ) {
+		$lines[] = 'LINEでのご相談：' . $line;
+	}
+
+	wp_mail( $meta['customer_email'], $subject, implode( "\n", $lines ), apprex_mail_headers() );
 }
 
 /**

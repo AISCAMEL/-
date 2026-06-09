@@ -51,6 +51,7 @@ function apprex_seed_pages() {
 		'contact'     => array( 'title' => 'お問い合わせ', 'tpl' => 'page-templates/page-contact.php' ),
 		'estimate'    => array( 'title' => '見積もり・発注', 'tpl' => 'page-templates/page-estimate.php' ),
 		'document'    => array( 'title' => '資料請求', 'tpl' => 'page-templates/page-document.php' ),
+		'meeting'     => array( 'title' => 'ミーティング予約', 'tpl' => 'page-templates/page-meeting.php' ),
 		'hp-creation' => array( 'title' => 'ホームページ制作', 'tpl' => 'page-templates/page-hp-creation.php' ),
 		'company'     => array( 'title' => '会社概要', 'tpl' => 'page-templates/page-company.php' ),
 	);

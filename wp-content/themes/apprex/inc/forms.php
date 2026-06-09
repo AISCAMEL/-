@@ -115,16 +115,43 @@ add_action( 'init', function () {
 /**
  * Labels per form type.
  *
- * @param string $type contact|document|trial.
+ * @param string $type contact|document|trial|meeting.
  * @return array
  */
 function apprex_form_meta( $type ) {
 	$map = array(
-		'contact'  => array( 'submit' => 'この内容で送信する', 'msg_label' => 'お問い合わせ内容', 'msg_required' => true ),
-		'document' => array( 'submit' => '資料をダウンロードする', 'msg_label' => 'ご質問・ご要望（任意）', 'msg_required' => false ),
-		'trial'    => array( 'submit' => '30日間 無料体験を申し込む', 'msg_label' => 'ご要望（任意）', 'msg_required' => false ),
+		'contact'  => array( 'submit' => 'この内容で送信する', 'msg_label' => 'お問い合わせ内容', 'msg_required' => true, 'datetime' => false ),
+		'document' => array( 'submit' => '資料をダウンロードする', 'msg_label' => 'ご質問・ご要望（任意）', 'msg_required' => false, 'datetime' => false ),
+		'trial'    => array( 'submit' => '30日間 無料体験を申し込む', 'msg_label' => 'ご要望（任意）', 'msg_required' => false, 'datetime' => false ),
+		'meeting'  => array( 'submit' => 'この日時で予約する', 'msg_label' => '相談したい内容（任意）', 'msg_required' => false, 'datetime' => true ),
 	);
 	return isset( $map[ $type ] ) ? $map[ $type ] : $map['contact'];
+}
+
+/**
+ * Allowed inquiry types.
+ *
+ * @return string[]
+ */
+function apprex_inquiry_types() {
+	return array( 'contact', 'document', 'trial', 'meeting' );
+}
+
+/**
+ * Type → Japanese label.
+ *
+ * @param string $type Type.
+ * @return string
+ */
+function apprex_type_label( $type ) {
+	$labels = array(
+		'contact'  => 'お問い合わせ',
+		'document' => '資料請求',
+		'trial'    => '無料体験申込',
+		'meeting'  => 'ミーティング予約',
+		'estimate' => '見積もり・発注',
+	);
+	return isset( $labels[ $type ] ) ? $labels[ $type ] : 'お問い合わせ';
 }
 
 /**
@@ -151,6 +178,11 @@ function apprex_render_form( $type = 'contact' ) {
 		<label><?php esc_html_e( '電話番号（任意）', 'apprex' ); ?>
 			<input type="tel" name="phone">
 		</label>
+		<?php if ( ! empty( $meta['datetime'] ) ) : ?>
+			<label><?php esc_html_e( 'ご希望日時', 'apprex' ); ?> <span>*</span>
+				<input type="datetime-local" name="meeting_at" required>
+			</label>
+		<?php endif; ?>
 		<label><?php echo esc_html( $meta['msg_label'] ); ?> <?php echo $meta['msg_required'] ? '<span>*</span>' : ''; ?>
 			<textarea name="message" rows="5" <?php echo $meta['msg_required'] ? 'required' : ''; ?>></textarea>
 		</label>
@@ -201,18 +233,25 @@ function apprex_rest_inquiry( WP_REST_Request $request ) {
 	}
 
 	$type    = sanitize_key( $request->get_param( 'type' ) );
-	$type    = in_array( $type, array( 'contact', 'document', 'trial' ), true ) ? $type : 'contact';
+	$type    = in_array( $type, apprex_inquiry_types(), true ) ? $type : 'contact';
 	$name    = sanitize_text_field( (string) $request->get_param( 'name' ) );
 	$company = sanitize_text_field( (string) $request->get_param( 'company' ) );
 	$email   = sanitize_email( (string) $request->get_param( 'email' ) );
 	$phone   = sanitize_text_field( (string) $request->get_param( 'phone' ) );
 	$message = sanitize_textarea_field( (string) $request->get_param( 'message' ) );
 
+	// Meeting preferred datetime (meeting type only).
+	$meeting_raw = sanitize_text_field( (string) $request->get_param( 'meeting_at' ) );
+	$meeting_at  = ( 'meeting' === $type && $meeting_raw ) ? strtotime( $meeting_raw ) : 0;
+	if ( 'meeting' === $type && ! $meeting_at ) {
+		return new WP_Error( 'bad_request', 'ご希望日時をご指定ください。', array( 'status' => 400 ) );
+	}
+
 	if ( '' === $name || ! is_email( $email ) ) {
 		return new WP_Error( 'bad_request', 'お名前と有効なメールアドレスをご入力ください。', array( 'status' => 400 ) );
 	}
 
-	$type_label = array( 'contact' => 'お問い合わせ', 'document' => '資料請求', 'trial' => '無料体験申込' )[ $type ];
+	$type_label = apprex_type_label( $type );
 	$post_id    = wp_insert_post(
 		array(
 			'post_type'   => 'apprex_inquiry',
@@ -230,14 +269,13 @@ function apprex_rest_inquiry( WP_REST_Request $request ) {
 		update_post_meta( $post_id, 'apprex_' . $k, $v );
 	}
 	update_post_meta( $post_id, 'apprex_submitted_at', current_time( 'mysql' ) );
-
-	// Drip subscription.
-	if ( get_option( 'apprex_drip_enabled', 1 ) ) {
-		update_post_meta( $post_id, 'apprex_drip_active', 1 );
-		update_post_meta( $post_id, 'apprex_drip_start', time() );
-		update_post_meta( $post_id, 'apprex_drip_sent', array() );
+	if ( $meeting_at ) {
+		update_post_meta( $post_id, 'apprex_meeting_at', $meeting_at );
+		$fields['meeting_at'] = $meeting_at;
 	}
 
+	// Type-specific auto-reply + step / reminder sequence.
+	apprex_enroll_drip( $post_id, $type, $email, $name, $meeting_at );
 	apprex_send_autoreply( $type, $fields );
 	apprex_notify_inquiry( $post_id, $type_label, $fields );
 
@@ -270,8 +308,35 @@ function apprex_autoreply_onscreen( $type ) {
 			return '資料請求ありがとうございます。ダウンロードリンクをメールでもお送りしました。';
 		case 'trial':
 			return '無料体験のお申し込みを受け付けました。担当者より2営業日以内にご案内します。';
+		case 'meeting':
+			return 'ミーティングのご予約を受け付けました。確認のうえ、確定のご連絡を差し上げます。リマインダーもお送りします。';
 		default:
 			return 'お問い合わせありがとうございます。担当者より2営業日以内にご連絡いたします。';
+	}
+}
+
+/**
+ * Enroll a submission (inquiry or order) into the type-specific drip sequence.
+ *
+ * @param int    $post_id    Post ID (apprex_inquiry or apprex_order).
+ * @param string $type       Sequence type.
+ * @param string $email      Recipient.
+ * @param string $name       Name.
+ * @param int    $meeting_at Meeting timestamp (meeting type only).
+ */
+function apprex_enroll_drip( $post_id, $type, $email, $name, $meeting_at = 0 ) {
+	if ( ! get_option( 'apprex_drip_enabled', 1 ) ) {
+		return;
+	}
+	update_post_meta( $post_id, 'apprex_drip_active', 1 );
+	update_post_meta( $post_id, 'apprex_drip_type', $type );
+	update_post_meta( $post_id, 'apprex_drip_start', time() );
+	update_post_meta( $post_id, 'apprex_drip_sent', array() );
+	// Cron reads these standardized keys across both CPTs.
+	update_post_meta( $post_id, 'apprex_email', $email );
+	update_post_meta( $post_id, 'apprex_name', $name );
+	if ( $meeting_at ) {
+		update_post_meta( $post_id, 'apprex_meeting_at', $meeting_at );
 	}
 }
 
@@ -299,6 +364,13 @@ function apprex_send_autoreply( $type, $fields ) {
 		case 'trial':
 			$subject = '【APPREX】無料体験のお申し込みありがとうございます';
 			$body    = "{$name} 様\n\n30日間無料体験のお申し込みを受け付けました。\n担当者より2営業日以内に開始方法をご案内いたします。\n";
+			break;
+		case 'meeting':
+			$when    = ! empty( $fields['meeting_at'] ) ? wp_date( 'Y年n月j日(D) H:i', (int) $fields['meeting_at'] ) : '';
+			$subject = '【APPREX】ミーティングのご予約を受け付けました';
+			$body    = "{$name} 様\n\nオンラインミーティングのご予約ありがとうございます。\n";
+			$body   .= $when ? "ご希望日時：{$when}\n" : '';
+			$body   .= "内容を確認のうえ、確定のご連絡（接続URL含む）を差し上げます。\n開催前にリマインダーメールをお送りします。\n";
 			break;
 		default:
 			$subject = '【APPREX】お問い合わせありがとうございます';
@@ -329,10 +401,13 @@ function apprex_notify_inquiry( $post_id, $type_label, $fields ) {
 		'会社名: ' . ( $fields['company'] ? $fields['company'] : '（未入力）' ),
 		"メール: {$fields['email']}",
 		'電話: ' . ( $fields['phone'] ? $fields['phone'] : '（未入力）' ),
-		'内容: ' . ( $fields['message'] ? $fields['message'] : '（なし）' ),
-		'',
-		'管理画面: ' . admin_url( 'post.php?post=' . $post_id . '&action=edit' ),
 	);
+	if ( ! empty( $fields['meeting_at'] ) ) {
+		$lines[] = 'ご希望日時: ' . wp_date( 'Y-m-d H:i', (int) $fields['meeting_at'] );
+	}
+	$lines[] = '内容: ' . ( $fields['message'] ? $fields['message'] : '（なし）' );
+	$lines[] = '';
+	$lines[] = '管理画面: ' . admin_url( 'post.php?post=' . $post_id . '&action=edit' );
 	wp_mail( apprex_notify_to(), $subject, implode( "\n", $lines ), apprex_mail_headers() );
 }
 
@@ -354,69 +429,117 @@ function apprex_mail_headers() {
  * ---------------------------------------------------------------------- */
 
 /**
- * Step definitions: offset in days => {subject, body}. {name} is replaced.
- * Editable via the apprex_step_mails filter.
+ * Type-specific step sequences. Offset in days => {subject, body}.
+ * {name} is replaced at send time. Editable via the apprex_step_mails filter.
  *
+ * @param string $type document|trial|estimate|contact.
  * @return array<int,array{subject:string,body:string}>
  */
-function apprex_step_mails() {
-	$steps = array(
-		1   => array(
-			'subject' => '【APPREX】ノーコードで“最短2週間”アプリ公開の進め方',
-			'body'    => "{name} 様\n\nAPPREXなら、企画から最短2週間でアプリを公開できます。まずは無料体験で操作感をお試しください。\n無料体験：" . home_url( '/free-trial/' ) . "\n",
+function apprex_step_mails( $type = 'contact' ) {
+	$ft    = home_url( '/free-trial/' );
+	$est   = home_url( '/estimate/' );
+	$cases = home_url( '/cases/' );
+	$hp    = home_url( '/hp-creation/' );
+
+	$sequences = array(
+		// 資料請求後：資料活用 → 事例 → 料金 → 体験 → 相談.
+		'document' => array(
+			1  => array( 'subject' => '【APPREX】資料はお手元に届きましたか？', 'body' => "{name} 様\n\n先日お送りした資料はご覧いただけましたでしょうか。ご不明点があればこのメールにご返信ください。\n" ),
+			3  => array( 'subject' => '【APPREX】事例で見る、アプリ活用のイメージ', 'body' => "{name} 様\n\n9業種の導入事例をまとめています。貴社に近いケースがきっと見つかります。\n{$cases}\n" ),
+			7  => array( 'subject' => '【APPREX】料金は月額19,800円〜・初期費用0円', 'body' => "{name} 様\n\n従来の開発コストの1/10。1分でお見積りできます。\n{$est}\n" ),
+			14 => array( 'subject' => '【APPREX】まずは30日間の無料体験から', 'body' => "{name} 様\n\n操作感はやはり触ってみるのが一番です。無料体験をご用意しています。\n{$ft}\n" ),
+			30 => array( 'subject' => '【APPREX】個別相談・LINEでもお気軽に', 'body' => "{name} 様\n\nご検討状況はいかがでしょうか。チャットやLINEでお気軽にご相談ください。\n" ),
 		),
-		3   => array(
-			'subject' => '【APPREX】導入事例：9業種で成果が出ています',
-			'body'    => "{name} 様\n\nアパレル・飲食・士業・不動産など、業種を問わず成果につながっています。事例はこちら。\n" . home_url( '/cases/' ) . "\n",
+		// 30日お試し：開始 → 使い方 → 公開 → 事例 → 終了前リマインド → 継続.
+		'trial'    => array(
+			1  => array( 'subject' => '【APPREX】無料体験スタート！最初の一歩', 'body' => "{name} 様\n\n無料体験ありがとうございます。まずはテンプレートを選んで画面を作ってみましょう。困ったらご返信ください。\n" ),
+			3  => array( 'subject' => '【APPREX】よく使う機能の使い方', 'body' => "{name} 様\n\nプッシュ通知・会員管理など、よく使う機能の設定方法をご案内します。ご不明点はお気軽に。\n" ),
+			7  => array( 'subject' => '【APPREX】公開までの進め方', 'body' => "{name} 様\n\nアプリ公開までの流れをまとめました。最短2週間での公開も可能です。\n" ),
+			14 => array( 'subject' => '【APPREX】体験中の方へ：成功事例のご紹介', 'body' => "{name} 様\n\n体験から本番運用で成果を出した事例をご紹介します。\n{$cases}\n" ),
+			25 => array( 'subject' => '【APPREX】無料体験は残りわずかです（終了前のご案内）', 'body' => "{name} 様\n\n無料体験の期間終了が近づいています。継続をご希望の場合のお手続き・お見積りはこちら。\n{$est}\n" ),
+			30 => array( 'subject' => '【APPREX】無料体験ありがとうございました', 'body' => "{name} 様\n\n体験期間が終了しました。本番運用・ご相談はいつでも承ります。\n{$est}\n" ),
 		),
-		7   => array(
-			'subject' => '【APPREX】料金は月額19,800円〜・初期費用0円キャンペーン中',
-			'body'    => "{name} 様\n\n従来の開発コストの1/10。初期費用0円キャンペーン実施中です。お見積りは1分で完了します。\n見積り：" . home_url( '/estimate/' ) . "\n",
+		// 見積もり・発注後：検討促進.
+		'estimate' => array(
+			1  => array( 'subject' => '【APPREX】お見積り内容のご確認とご相談', 'body' => "{name} 様\n\nお見積りありがとうございます。内容のご相談・条件のご調整も承ります。お気軽にご返信ください。\n" ),
+			3  => array( 'subject' => '【APPREX】導入の流れとスケジュール', 'body' => "{name} 様\n\nご発注後の流れ（ヒアリング→制作→公開）をご案内します。最短2週間での公開も可能です。\n" ),
+			7  => array( 'subject' => '【APPREX】初期費用0円キャンペーンのご案内', 'body' => "{name} 様\n\n先着5名様・初期費用0円キャンペーン実施中です（通常30万円）。この機会をぜひご活用ください。\n{$est}\n" ),
+			14 => array( 'subject' => '【APPREX】事例で見る費用対効果', 'body' => "{name} 様\n\n同価格帯でどのような成果が出ているか、事例でご確認いただけます。\n{$cases}\n" ),
+			30 => array( 'subject' => '【APPREX】個別相談のご提案', 'body' => "{name} 様\n\nご検討状況はいかがでしょうか。オンラインでのご相談も承っております。\n" ),
 		),
-		14  => array(
-			'subject' => '【APPREX】ホームページ制作も月額9,800円〜対応しています',
-			'body'    => "{name} 様\n\nアプリだけでなく、ホームページ制作も初期費用0円・月額制で承っています。\n" . home_url( '/hp-creation/' ) . "\n",
-		),
-		30  => array(
-			'subject' => '【APPREX】ご不明点はチャット・LINEでお気軽に',
-			'body'    => "{name} 様\n\n導入のご検討状況はいかがでしょうか。サイトのチャットやLINEでお気軽にご相談ください。\n",
-		),
-		60  => array(
-			'subject' => '【APPREX】補助金を活用したアプリ・DX導入のご案内',
-			'body'    => "{name} 様\n\nIT導入補助金などを活用すると、コストを抑えて導入いただけます。お気軽にご相談ください。\n",
-		),
-		90  => array(
-			'subject' => '【APPREX】3ヶ月限定の特別ご提案',
-			'body'    => "{name} 様\n\n改めてAPPREXのご検討はいかがでしょうか。条件面のご相談も承ります。\n見積り：" . home_url( '/estimate/' ) . "\n",
-		),
-		180 => array(
-			'subject' => '【APPREX】最新機能・事例アップデートのお知らせ',
-			'body'    => "{name} 様\n\nAPPREXは機能を継続的に拡充しています。最新の事例・機能をぜひご覧ください。\n" . home_url( '/' ) . "\n",
-		),
-		365 => array(
-			'subject' => '【APPREX】1年のご愛顧に感謝を込めて',
-			'body'    => "{name} 様\n\nいつもありがとうございます。改めてアプリ・HP制作のご相談がございましたらお気軽にご連絡ください。\n",
+		// 汎用（お問い合わせ）：長期ナーチャ.
+		'contact'  => array(
+			1   => array( 'subject' => '【APPREX】ノーコードで“最短2週間”アプリ公開', 'body' => "{name} 様\n\nまずは無料体験で操作感をお試しください。\n{$ft}\n" ),
+			3   => array( 'subject' => '【APPREX】9業種の導入事例', 'body' => "{name} 様\n\n業種を問わず成果につながっています。\n{$cases}\n" ),
+			7   => array( 'subject' => '【APPREX】料金・初期費用0円キャンペーン', 'body' => "{name} 様\n\n1分でお見積りできます。\n{$est}\n" ),
+			14  => array( 'subject' => '【APPREX】ホームページ制作も月額9,800円〜', 'body' => "{name} 様\n\nHP制作も初期費用0円・月額制で承っています。\n{$hp}\n" ),
+			30  => array( 'subject' => '【APPREX】チャット・LINEでお気軽に', 'body' => "{name} 様\n\nご不明点はお気軽にご相談ください。\n" ),
+			90  => array( 'subject' => '【APPREX】改めてのご提案', 'body' => "{name} 様\n\n条件面のご相談も承ります。\n{$est}\n" ),
+			180 => array( 'subject' => '【APPREX】最新機能・事例アップデート', 'body' => "{name} 様\n\n最新の事例・機能をぜひご覧ください。\n" . home_url( '/' ) . "\n" ),
+			365 => array( 'subject' => '【APPREX】1年のご愛顧に感謝を込めて', 'body' => "{name} 様\n\nいつもありがとうございます。改めてのご相談もお気軽に。\n" ),
 		),
 	);
-	return apply_filters( 'apprex_step_mails', $steps );
+
+	$steps = isset( $sequences[ $type ] ) ? $sequences[ $type ] : $sequences['contact'];
+	return apply_filters( 'apprex_step_mails', $steps, $type );
 }
 
 /**
- * Ensure the daily cron is scheduled.
+ * Meeting reminders relative to the booked datetime.
+ * offset in seconds (negative = before the meeting). {name}/{when} replaced.
+ *
+ * @return array<string,array{offset:int,subject:string,body:string}>
+ */
+function apprex_meeting_reminders() {
+	$reminders = array(
+		'before_1d' => array(
+			'offset'  => -DAY_IN_SECONDS,
+			'subject' => '【APPREX】明日はオンラインミーティングのお約束です',
+			'body'    => "{name} 様\n\n明日 {when} にオンラインミーティングを予定しております。接続URLは別途ご案内いたします。ご都合が変わる場合はご返信ください。\n",
+		),
+		'before_1h' => array(
+			'offset'  => -HOUR_IN_SECONDS,
+			'subject' => '【APPREX】まもなくミーティング開始のお時間です',
+			'body'    => "{name} 様\n\n本日 {when} よりミーティングを予定しております。お時間になりましたらご参加ください。\n",
+		),
+		'after_1d'  => array(
+			'offset'  => DAY_IN_SECONDS,
+			'subject' => '【APPREX】先日はありがとうございました',
+			'body'    => "{name} 様\n\n先日はお時間をいただきありがとうございました。お見積りや無料体験のご用意がございます。\n見積り：" . home_url( '/estimate/' ) . "\n無料体験：" . home_url( '/free-trial/' ) . "\n",
+		),
+	);
+	return apply_filters( 'apprex_meeting_reminders', $reminders );
+}
+
+/**
+ * Ensure the hourly cron is scheduled (hourly to support meeting reminders).
  */
 add_action( 'init', function () {
-	if ( ! wp_next_scheduled( 'apprex_daily_dripmail' ) ) {
-		wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', 'apprex_daily_dripmail' );
+	if ( ! wp_next_scheduled( 'apprex_dripmail_cron' ) ) {
+		wp_schedule_event( time() + MINUTE_IN_SECONDS * 5, 'hourly', 'apprex_dripmail_cron' );
 	}
 } );
+add_action( 'apprex_dripmail_cron', 'apprex_process_dripmail' );
 
 /**
- * Daily handler: send due step mails for active subscribers.
+ * Send a single step/reminder mail with footer + unsubscribe.
+ *
+ * @param int    $id      Subscriber post ID.
+ * @param string $email   Recipient.
+ * @param string $subject Subject.
+ * @param string $body    Body (placeholders already replaced).
+ * @param bool   $unsub   Append unsubscribe link.
  */
-add_action( 'apprex_daily_dripmail', 'apprex_process_dripmail' );
+function apprex_send_drip_mail( $id, $email, $subject, $body, $unsub = true ) {
+	$body .= "\n──────────\nAPPREX / 合同会社アイズ\n";
+	if ( $unsub ) {
+		$body .= '配信停止：' . apprex_unsubscribe_url( $id, $email ) . "\n";
+	}
+	wp_mail( $email, $subject, $body, apprex_mail_headers() );
+}
 
 /**
- * Process the drip queue.
+ * Process the drip/reminder queue across inquiries and orders (type-aware).
  */
 function apprex_process_dripmail() {
 	if ( ! get_option( 'apprex_drip_enabled', 1 ) ) {
@@ -424,8 +547,10 @@ function apprex_process_dripmail() {
 	}
 	$subscribers = get_posts(
 		array(
-			'post_type'      => 'apprex_inquiry',
-			'posts_per_page' => 200,
+			'post_type'      => array( 'apprex_inquiry', 'apprex_order' ),
+			// Explicit list: orders use the custom 'apprex_new' status which 'any' excludes.
+			'post_status'    => array( 'publish', 'apprex_new' ),
+			'posts_per_page' => 300,
 			'meta_key'       => 'apprex_drip_active',
 			'meta_value'     => '1',
 			'fields'         => 'ids',
@@ -434,40 +559,94 @@ function apprex_process_dripmail() {
 	if ( empty( $subscribers ) ) {
 		return;
 	}
-
-	$steps = apprex_step_mails();
-	ksort( $steps );
 	$now = time();
 
 	foreach ( $subscribers as $id ) {
-		$start = (int) get_post_meta( $id, 'apprex_drip_start', true );
-		$sent  = (array) get_post_meta( $id, 'apprex_drip_sent', true );
+		$type  = get_post_meta( $id, 'apprex_drip_type', true );
+		$type  = $type ? $type : 'contact';
 		$email = get_post_meta( $id, 'apprex_email', true );
 		$name  = get_post_meta( $id, 'apprex_name', true );
-		if ( ! $start || ! is_email( $email ) ) {
+		$sent  = (array) get_post_meta( $id, 'apprex_drip_sent', true );
+
+		if ( ! is_email( $email ) ) {
 			update_post_meta( $id, 'apprex_drip_active', 0 );
 			continue;
 		}
 
+		if ( 'meeting' === $type ) {
+			apprex_run_meeting_reminders( $id, $email, $name, $sent, $now );
+			continue;
+		}
+
+		$start = (int) get_post_meta( $id, 'apprex_drip_start', true );
+		if ( ! $start ) {
+			update_post_meta( $id, 'apprex_drip_active', 0 );
+			continue;
+		}
+		$steps = apprex_step_mails( $type );
+		ksort( $steps );
+		if ( empty( $steps ) ) {
+			update_post_meta( $id, 'apprex_drip_active', 0 );
+			continue;
+		}
 		$max_offset = max( array_keys( $steps ) );
+
 		foreach ( $steps as $offset => $mail ) {
 			if ( in_array( $offset, $sent, true ) ) {
 				continue;
 			}
 			if ( $now >= $start + ( $offset * DAY_IN_SECONDS ) ) {
-				$subject = $mail['subject'];
-				$body    = str_replace( '{name}', $name, $mail['body'] );
-				$body   .= "\n──────────\nAPPREX / 合同会社アイズ\n配信停止：" . apprex_unsubscribe_url( $id, $email ) . "\n";
-				wp_mail( $email, $subject, $body, apprex_mail_headers() );
+				apprex_send_drip_mail( $id, $email, $mail['subject'], str_replace( '{name}', $name, $mail['body'] ) );
 				$sent[] = $offset;
 				update_post_meta( $id, 'apprex_drip_sent', $sent );
 			}
 		}
 
-		// Complete after the final step or beyond 1 year.
 		if ( in_array( $max_offset, $sent, true ) || $now > $start + ( 366 * DAY_IN_SECONDS ) ) {
 			update_post_meta( $id, 'apprex_drip_active', 0 );
 		}
+	}
+}
+
+/**
+ * Send due meeting reminders for one booking.
+ *
+ * @param int    $id    Inquiry ID.
+ * @param string $email Recipient.
+ * @param string $name  Name.
+ * @param array  $sent  Already-sent reminder keys.
+ * @param int    $now   Current timestamp.
+ */
+function apprex_run_meeting_reminders( $id, $email, $name, $sent, $now ) {
+	$meeting_at = (int) get_post_meta( $id, 'apprex_meeting_at', true );
+	if ( ! $meeting_at ) {
+		update_post_meta( $id, 'apprex_drip_active', 0 );
+		return;
+	}
+	$when = wp_date( 'Y年n月j日(D) H:i', $meeting_at );
+
+	foreach ( apprex_meeting_reminders() as $key => $r ) {
+		if ( in_array( $key, $sent, true ) ) {
+			continue;
+		}
+		$is_before = $r['offset'] < 0;
+		// Don't fire a pre-meeting reminder once the meeting time has passed.
+		if ( $is_before && $now >= $meeting_at ) {
+			$sent[] = $key;
+			update_post_meta( $id, 'apprex_drip_sent', $sent );
+			continue;
+		}
+		if ( $now >= $meeting_at + (int) $r['offset'] ) {
+			$body = str_replace( array( '{name}', '{when}' ), array( $name, $when ), $r['body'] );
+			apprex_send_drip_mail( $id, $email, $r['subject'], $body, false );
+			$sent[] = $key;
+			update_post_meta( $id, 'apprex_drip_sent', $sent );
+		}
+	}
+
+	// Complete two days after the meeting.
+	if ( $now > $meeting_at + ( 2 * DAY_IN_SECONDS ) ) {
+		update_post_meta( $id, 'apprex_drip_active', 0 );
 	}
 }
 
@@ -510,9 +689,9 @@ add_action( 'template_redirect', function () {
  * Clear the cron on theme switch.
  */
 add_action( 'switch_theme', function () {
-	$ts = wp_next_scheduled( 'apprex_daily_dripmail' );
+	$ts = wp_next_scheduled( 'apprex_dripmail_cron' );
 	if ( $ts ) {
-		wp_unschedule_event( $ts, 'apprex_daily_dripmail' );
+		wp_unschedule_event( $ts, 'apprex_dripmail_cron' );
 	}
 } );
 
@@ -543,6 +722,12 @@ function apprex_inquiry_detail_box( $post ) {
 	}
 	$sent   = (array) get_post_meta( $post->ID, 'apprex_drip_sent', true );
 	$active = (int) get_post_meta( $post->ID, 'apprex_drip_active', true );
-	echo '<tr><th>ステップメール</th><td>' . ( $active ? '配信中' : '停止/完了' ) . '（送信済み: ' . esc_html( $sent ? implode( ', ', $sent ) . '日目' : 'なし' ) . '）</td></tr>';
+	$dtype  = get_post_meta( $post->ID, 'apprex_drip_type', true );
+	$mt     = (int) get_post_meta( $post->ID, 'apprex_meeting_at', true );
+	if ( $mt ) {
+		echo '<tr><th>予約日時</th><td>' . esc_html( wp_date( 'Y-m-d H:i', $mt ) ) . '</td></tr>';
+	}
+	$kind = ( 'meeting' === $dtype ) ? 'リマインダー' : 'ステップメール';
+	echo '<tr><th>' . esc_html( $kind ) . '</th><td>' . ( $active ? '配信中' : '停止/完了' ) . '（種別: ' . esc_html( $dtype ? $dtype : '-' ) . ' ／ 送信済み: ' . esc_html( $sent ? implode( ', ', $sent ) : 'なし' ) . '）</td></tr>';
 	echo '</table>';
 }
