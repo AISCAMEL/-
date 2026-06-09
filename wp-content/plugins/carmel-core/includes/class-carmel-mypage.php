@@ -191,6 +191,20 @@ class Carmel_MyPage {
 		} else {
 			$out .= '<p>' . esc_html( $info[ $current ][1] ) . '</p>';
 		}
+
+		// 納車準備中は確定した納車日・陸送費を表示。
+		if ( 'delivery_prep' === $status ) {
+			$ddate = get_post_meta( $deal->ID, 'delivery_date', true );
+			$fee   = get_post_meta( $deal->ID, 'transport_fee', true );
+			$km    = get_post_meta( $deal->ID, 'transport_distance_km', true );
+			if ( $ddate ) {
+				$out .= '<p>納車予定日：<strong>' . esc_html( $ddate ) . '</strong></p>';
+			}
+			if ( '' !== $fee ) {
+				$out .= '<p>陸送費：<strong>¥' . esc_html( number_format( (float) $fee ) ) . '</strong>'
+					. ( '' !== $km ? '（約' . esc_html( $km ) . 'km）' : '' ) . '</p>';
+			}
+		}
 		$out .= '</div>';
 
 		return $out;

@@ -208,11 +208,25 @@ Carmel_Deal_Status::change( $deal_id, 'delivered', array( 'system' => true ) );
 GASへ送る案件ペイロードは `carmel_gas_deal_payload` フィルタで拡張可能。
 スコアは /hq 審査画面の「AIスコア」列に表示される。
 
+## 陸送費計算（Phase 3 実装済み）
+
+`Carmel_Transport` が Google Maps Distance Matrix API で距離を取得し、単価テーブルで費用を自動算出する。
+
+- **トリガー**：案件が `delivery_prep`（納車準備）に入ると自動計算
+- **出発地**：加盟店の `store_address`（`carmel_transport_origin` で上書き可）
+- **納車先**：案件 `applicant_address` → 顧客 user_meta `address` の順（`carmel_transport_destination`）
+- **料金式**：`fee = base + per_km × km`（最低料金あり）。`carmel_transport_rates` オプション／フィルタで本部設定可（既定 base=10,000 / per_km=80 / min=10,000）
+- **保存**：`transport_from` / `transport_to` / `transport_distance_km` / `transport_fee` を案件メタに保存。/mypage の納車準備フェーズに**陸送費・距離を表示**
+- **失敗時**：Maps API 失敗は `system_error`→Slack へ通知
+- API キー：`CARMEL_MAPS_API_KEY` / `carmel_maps_api_key`（未設定なら no-op）
+- 手動計算：`Carmel_Transport::instance()->calculate( $deal_id )`
+
 ## 次フェーズ（未実装）
 
-- /hq 全加盟店横断カンバン（審査以外の案件管理）・売上レポート
+- Square + WooCommerce 決済（申込金・保証・オプション・販促・会費）
+- /hq 全加盟店横断カンバン・売上レポート
 - 書類アップロード、返済状況の顧客表示
-- ACF フィールド群（deal_type 別）、Square / Google Maps 連携
+- ACF フィールド群（deal_type 別）
 - ステータス変更フックから `carmel_event` の自動発火
 - ACF フィールド群（deal_type 別）、行レベルのクエリフィルター
 - GAS / Square / Google Maps 連携
