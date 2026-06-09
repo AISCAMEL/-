@@ -20,7 +20,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="mt-4 text-sm leading-relaxed text-slate-400">
-              自動車業界のDX・販売支援を軸に、創業支援からWeb・開発まで。戦略から実行まで一気通貫で伴走します。
+              自動車の販売・買取・リースを主軸に、アプリ開発・Web/システム開発、GPS事業、FC事業を展開。クルマのことからデジタルまで、ワンストップでお応えします。
             </p>
           </div>
 

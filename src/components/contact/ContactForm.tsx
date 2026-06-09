@@ -4,10 +4,10 @@ import { useState, FormEvent } from "react";
 import { Icon } from "@/components/ui/Icon";
 
 const subjects = [
-  "自動車業界支援（販売・DXなど）",
-  "創業・起業・資金調達・補助金",
-  "Web制作・マーケティング",
-  "システム・アプリ開発",
+  "自動車（販売・買取・リース）",
+  "アプリ・Web・システム開発",
+  "GPS事業について",
+  "FC事業について",
   "その他・どれか分からない",
 ];
 

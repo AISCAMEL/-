@@ -7,9 +7,9 @@ import { CtaBanner } from "@/components/layout/CtaBanner";
 import { services } from "@/content/services";
 
 export const metadata: Metadata = {
-  title: "サービス｜自動車業界支援・創業支援・Web/開発支援",
+  title: "事業・サービス｜自動車・アプリ・GPS・FC",
   description:
-    "合同会社アイズのサービス一覧。自動車業界向けコンサル/DX、創業・資金調達・補助金支援、Web制作・マーケティング・システム/アプリ開発まで、戦略から実行まで伴走します。",
+    "合同会社アイズの事業一覧。自動車事業（販売・買取・リース）を主力に、アプリ事業（自社アプリ・Web・システム開発）、GPS事業、FC事業を展開しています。",
   alternates: { canonical: "/services" },
 };
 
@@ -17,9 +17,9 @@ export default function ServicesPage() {
   return (
     <>
       <PageHero
-        eyebrow="Services"
-        title="戦略から実行まで、3つの領域でご支援します"
-        lead="自動車業界支援を主軸に、創業支援、Web/開発支援を組み合わせて、事業フェーズに合わせた最適な支援を提供します。"
+        eyebrow="Business"
+        title="アイズの事業・サービス"
+        lead="自動車事業（販売・買取・リース）を主力に、アプリ・GPS・FCの各事業を展開。クルマのことからデジタルまで、ワンストップでお応えします。"
       />
       <Section tone="light">
         <div className="grid gap-8">
@@ -36,6 +36,11 @@ export default function ServicesPage() {
                   0{i + 1} / {s.tagline}
                 </p>
                 <h2 className="mt-1 text-2xl font-bold text-ink-900">{s.name}</h2>
+                {s.isPlaceholder && (
+                  <span className="mt-2 inline-block rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold text-amber-800">
+                    内容 要確認（準備中）
+                  </span>
+                )}
                 <p className="mt-3 text-sm leading-relaxed text-ink-600">{s.summary}</p>
                 <Link
                   href={`/services/${s.slug}`}

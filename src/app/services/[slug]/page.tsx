@@ -34,6 +34,14 @@ export default function ServiceDetailPage({ params }: { params: { slug: string }
     <>
       <PageHero eyebrow={service.tagline} title={service.name} lead={service.summary} />
 
+      {service.isPlaceholder && (
+        <Section tone="light" className="!pb-0">
+          <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            ※ この事業ページは内容が未確定の構成用です。サービス詳細・対象・メニューが固まり次第、差し替えてください。
+          </p>
+        </Section>
+      )}
+
       {/* こんな方へ */}
       <Section tone="light">
         <SectionHeading

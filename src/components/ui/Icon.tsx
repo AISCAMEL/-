@@ -2,6 +2,9 @@ import { SVGProps } from "react";
 
 export type IconName =
   | "car"
+  | "app"
+  | "gps"
+  | "store"
   | "rocket"
   | "code"
   | "arrow-right"
@@ -19,6 +22,25 @@ const paths: Record<IconName, JSX.Element> = {
       <path d="M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11" />
       <path d="M3 11h18v5a1 1 0 0 1-1 1h-1a2 2 0 1 1-4 0H9a2 2 0 1 1-4 0H4a1 1 0 0 1-1-1v-5z" />
       <path d="M7 14h.01M17 14h.01" />
+    </>
+  ),
+  app: (
+    <>
+      <rect x="7" y="3" width="10" height="18" rx="2.5" />
+      <path d="M11 18h2" />
+    </>
+  ),
+  gps: (
+    <>
+      <path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11z" />
+      <circle cx="12" cy="10" r="2.5" />
+    </>
+  ),
+  store: (
+    <>
+      <path d="M3.5 9l1.4-4.2A1 1 0 0 1 5.85 4h12.3a1 1 0 0 1 .95.8L20.5 9" />
+      <path d="M5 9v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9" />
+      <path d="M9.5 19v-4.5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1V19" />
     </>
   ),
   rocket: (

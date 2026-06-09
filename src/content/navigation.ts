@@ -10,19 +10,24 @@ export const mainNav: NavItem[] = [
     href: "/services",
     children: [
       {
-        label: "自動車業界支援",
+        label: "自動車事業",
         href: "/services/automotive",
-        description: "販売戦略・新規参入・DX推進",
+        description: "販売・買取・リース",
       },
       {
-        label: "創業・起業支援",
-        href: "/services/startup",
-        description: "資金調達・補助金・開業/運営支援",
+        label: "アプリ事業",
+        href: "/services/app",
+        description: "自社アプリ・Web・システム開発",
       },
       {
-        label: "Web・開発支援",
-        href: "/services/web-development",
-        description: "Web制作・マーケ・システム/アプリ開発",
+        label: "GPS事業",
+        href: "/services/gps",
+        description: "GPSを活用したサービス",
+      },
+      {
+        label: "FC事業",
+        href: "/services/fc",
+        description: "フランチャイズ展開",
       },
     ],
   },
@@ -35,12 +40,13 @@ export const mainNav: NavItem[] = [
 
 export const footerNav: { title: string; items: { label: string; href: string }[] }[] = [
   {
-    title: "サービス",
+    title: "事業・サービス",
     items: [
-      { label: "自動車業界支援", href: "/services/automotive" },
-      { label: "創業・起業支援", href: "/services/startup" },
-      { label: "Web・開発支援", href: "/services/web-development" },
-      { label: "サービス一覧", href: "/services" },
+      { label: "自動車事業", href: "/services/automotive" },
+      { label: "アプリ事業", href: "/services/app" },
+      { label: "GPS事業", href: "/services/gps" },
+      { label: "FC事業", href: "/services/fc" },
+      { label: "事業一覧", href: "/services" },
     ],
   },
   {

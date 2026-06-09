@@ -3,9 +3,9 @@ import { Container } from "@/components/ui/Container";
 import { Icon } from "@/components/ui/Icon";
 
 const trustPoints = [
-  "自動車業界 × IT/DX",
-  "戦略から実行まで一気通貫",
-  "創業〜開発〜集客まで対応",
+  "販売・買取・リースに対応",
+  "自社アプリ・Web開発",
+  "GPS・FC事業も展開",
 ];
 
 export function Hero() {
@@ -40,16 +40,16 @@ export function Hero() {
             </span>
 
             <h1 className="mt-6 text-3xl font-bold leading-tight sm:text-4xl md:text-5xl lg:text-[3.25rem]">
-              自動車業界のDX・販売支援を、
+              クルマの「販売・買取・リース」を、
               <span className="bg-gradient-to-r from-accent-400 to-brand-400 bg-clip-text text-transparent">
-                戦略から実行まで伴走。
+                一社でまるごと。
               </span>
             </h1>
 
             <p className="mt-6 max-w-2xl text-base leading-relaxed text-slate-300 sm:text-lg">
-              合同会社アイズは、自動車販売の現場知見とITの実装力を掛け合わせるパートナーです。
-              新規参入・販売拡大・DX化から、創業支援、Web制作・システム/アプリ開発まで。
-              構想だけで終わらせず、成果が出るまで寄り添います。
+              合同会社アイズは、自動車の販売・買取・リースを主軸とする会社です。
+              さらに、自社アプリ開発やWeb・システム開発、GPS事業、FC事業まで。
+              クルマのことからデジタルまで、あなたのニーズにワンストップでお応えします。
             </p>
 
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
@@ -72,23 +72,35 @@ export function Hero() {
             </ul>
           </div>
 
-          {/* 右: 3本柱の視覚的サマリー */}
+          {/* 右: 事業の視覚的サマリー（自動車を主力として強調） */}
           <div className="lg:col-span-5">
             <div className="grid gap-3">
               {[
-                { icon: "car" as const, label: "自動車業界支援", desc: "販売戦略・新規参入・DX推進" },
-                { icon: "rocket" as const, label: "創業・起業支援", desc: "資金調達・補助金・開業支援" },
-                { icon: "code" as const, label: "Web・開発支援", desc: "制作・マーケ・システム/アプリ" },
+                { icon: "car" as const, label: "自動車事業", desc: "販売・買取・リース", primary: true },
+                { icon: "app" as const, label: "アプリ事業", desc: "自社アプリ・Web・システム開発" },
+                { icon: "gps" as const, label: "GPS事業", desc: "GPSを活用したサービス" },
+                { icon: "store" as const, label: "FC事業", desc: "フランチャイズ展開" },
               ].map((c) => (
                 <div
                   key={c.label}
-                  className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.06] p-5 backdrop-blur"
+                  className={`flex items-center gap-4 rounded-2xl border p-5 backdrop-blur ${
+                    c.primary
+                      ? "border-accent-400/40 bg-white/[0.10] ring-1 ring-inset ring-accent-400/30"
+                      : "border-white/10 bg-white/[0.06]"
+                  }`}
                 >
                   <span className="grid h-12 w-12 flex-none place-items-center rounded-xl bg-brand-600/30 text-accent-400 ring-1 ring-inset ring-white/10">
                     <Icon name={c.icon} className="h-6 w-6" />
                   </span>
                   <div>
-                    <p className="font-semibold text-white">{c.label}</p>
+                    <p className="flex items-center gap-2 font-semibold text-white">
+                      {c.label}
+                      {c.primary && (
+                        <span className="rounded-full bg-accent-400/20 px-2 py-0.5 text-[10px] font-bold text-accent-300">
+                          主力事業
+                        </span>
+                      )}
+                    </p>
                     <p className="text-sm text-slate-400">{c.desc}</p>
                   </div>
                 </div>

@@ -9,7 +9,7 @@ export const site = {
   // SEO の基準URL（本番ドメインに合わせて変更）
   url: "https://aiscompany.jp",
   description:
-    "合同会社アイズは、自動車業界のDX・販売支援を軸に、創業支援からWeb制作・システム/アプリ開発まで、戦略から実行まで一気通貫で伴走するパートナーです。",
+    "合同会社アイズは、自動車の販売・買取・リースを主軸に、自社アプリ開発・Web/システム開発、GPS事業、FC事業を展開する会社です。クルマのことからデジタルまで、ワンストップでお応えします。",
   // 連絡先（placeholder: 確定情報に差し替え）
   contact: {
     email: "info@aisjaltd.com", // placeholder
