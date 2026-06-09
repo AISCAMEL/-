@@ -80,6 +80,11 @@ function mapFormToLoan(row, caseId) {
     '自己破産歴':     jijou.indexOf('自己破産') !== -1 ? '自己破産' : '',
     '滞納履歴':       row[71],           // 未払い・滞納状況
     '購入予定車両':   [row[52], row[53]].filter(String).join(' '),
+    '頭金有無':       row[61],           // 頭金問診
+    '頭金額':         row[62],           // 頭金ありの場合
+    '貯金額':         row[35],
+    '住居状況':       row[29],
+    '保証人有無':     row[72],           // 保証人の有無
     '登録日時':       new Date()
   };
 }

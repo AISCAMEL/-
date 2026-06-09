@@ -97,6 +97,26 @@ function calculateScore(data) {
     score += 5; // 軽微な情報あり
   }
 
+  // --- 加点：与信補完要因（C/D層でも前向きな材料があれば押し上げる）---
+  // 頭金あり
+  if (String(data['頭金有無'] || '').indexOf('あり') !== -1) {
+    score += config.SCORING.BONUS_DOWNPAYMENT;
+  }
+  // 貯金額
+  const savings = normalizeYen(data['貯金額']);
+  if (savings >= 1000000) score += config.SCORING.BONUS_SAVINGS_HIGH;
+  else if (savings >= 500000) score += config.SCORING.BONUS_SAVINGS_MID;
+  // 住居状況（持家は安定、実家・親族宅は住居コスト低）
+  const housing = String(data['住居状況'] || '');
+  if (housing.indexOf('持家') !== -1) score += config.SCORING.BONUS_OWN_HOME;
+  else if (housing.indexOf('実家') !== -1 || housing.indexOf('親族') !== -1) {
+    score += config.SCORING.BONUS_FAMILY_HOME;
+  }
+  // 保証人あり
+  if (String(data['保証人有無'] || '').indexOf('はい') !== -1) {
+    score += config.SCORING.BONUS_GUARANTOR;
+  }
+
   // 年齢（60歳以上は減点：完済までの就業・健康リスクを反映）
   // 生年月日から年齢を算出（フォームに項目があるため新規列は不要）
   const age = calcAge(data['生年月日']);
