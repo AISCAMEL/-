@@ -34,7 +34,7 @@ const CONFIG = {
     }
   },
   SCORING: {
-    RANK_A: 80,
+    RANK_A: 85,
     RANK_B: 60,
     RANK_C: 40,
     ASSUMED_RATE: 4.9,

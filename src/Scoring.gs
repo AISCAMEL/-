@@ -71,16 +71,16 @@ function calculateScore(data) {
   const monthly = normalizeMonthly(data['月額支払い可能額']);
   if (income > 0 && monthly > 0) {
     const ratio = (monthly * 12) / income * 100;
-    if (ratio <= 25) score += 25;
-    else if (ratio <= 35) score += 15;
-    else if (ratio <= 45) score += 5;
+    if (ratio <= 20) score += 25;
+    else if (ratio <= 30) score += 15;
+    else if (ratio <= 40) score += 5;
   }
 
-  // 他社借入（15点）
+  // 他社借入（10点）
   const otherLoan = normalizeYen(data['他社借入総額']);
-  if (otherLoan === 0) score += 15;
-  else if (otherLoan <= 500000) score += 10;
-  else if (otherLoan <= 1000000) score += 5;
+  if (otherLoan === 0) score += 10;
+  else if (otherLoan <= 500000) score += 7;
+  else if (otherLoan <= 1000000) score += 3;
 
   // 他社審査履歴（±5点〜）：多重申込ほど他社否決の可能性が高くリスク
   const recentChecks = normalizeShinsaCount(data['直近6ヶ月審査数']);
@@ -100,8 +100,10 @@ function calculateScore(data) {
     score -= 10; // 現在進行形の滞納
   } else if (debt || bankrupt) {
     // 債務整理・自己破産歴あり：加点なし（据え置き）
+  } else if (overdue && overdue.includes('過去')) {
+    // 過去に延滞・滞納あり（解消済を含む）：加点なし
   } else {
-    score += 5; // 軽微な情報あり
+    score += 5; // 軽微な情報のみ
   }
 
   // --- 加点：与信補完要因（C/D層でも前向きな材料があれば押し上げる）---
