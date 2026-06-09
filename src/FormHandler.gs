@@ -35,6 +35,7 @@ function onProLineFormSubmit() {
       processedIds[caseId] = true; // 同一実行内での二重登録も防ぐ
       const lastRow = loanSheet.getLastRow();
       const scoreResult = runScoring(lastRow);
+      proposeCreditors(lastRow); // ランクに応じた打診信販を自動提案
       //const lineId = getLineIdByUid(uid, loanSS);
       //if (lineId) {
       //  notifyCustomerReceived(lineId, scoreResult);

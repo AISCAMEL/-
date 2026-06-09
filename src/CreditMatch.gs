@@ -218,6 +218,114 @@ function onSheetEdit(e) {
   }
 }
 
+// 信販マッチング：スコア/ランクから打診すべき信販会社を提案し、信販1〜8列へ自動セットする。
+// 対応判定（A / A〜B / B / C / C〜D / D）に申込者ランクが含まれ、契約者種別に対応し、
+// 稼働中の信販会社を、打診優先順位の昇順で最大8社まで割り当てる。
+function proposeCreditors(rowNumber) {
+  try {
+    const config = getConfig();
+    const ss = SpreadsheetApp.openById(config.SPREADSHEET.ID);
+    const loanSheet = ss.getSheetByName(config.SPREADSHEET.SHEETS.LOAN);
+    const headers = loanSheet.getRange(1, 1, 1, loanSheet.getLastColumn()).getValues()[0];
+    const row = loanSheet.getRange(rowNumber, 1, 1, loanSheet.getLastColumn()).getValues()[0];
+
+    const data = {};
+    headers.forEach(function(h, i) { data[h] = row[i]; });
+
+    const rank = String(data['見込みランク'] || '').trim();
+    const score = parseFloat(data['AIスコア']);
+    const contractType = String(data['契約者種別'] || '個人');
+
+    // 審査不可（スコア0）やランク未算出はスキップ
+    if (!rank || score === 0) {
+      Logger.log('信販提案スキップ（ランク=' + rank + ' / スコア=' + score + '）：行' + rowNumber);
+      return null;
+    }
+
+    const creditors = getMatchingCreditors(rank, contractType, ss);
+    if (creditors.length === 0) {
+      Logger.log('対応信販なし（ランク' + rank + '）：行' + rowNumber);
+      return null;
+    }
+
+    writeProposedCreditors(rowNumber, creditors, loanSheet, headers);
+    Logger.log('信販提案：行' + rowNumber + ' ランク' + rank + ' → ' + creditors.length + '社');
+    return creditors;
+
+  } catch(err) {
+    Logger.log('proposeCreditorsエラー：' + err.toString());
+    return null;
+  }
+}
+
+// 申込者ランク・契約者種別に合致する稼働中の信販会社を、打診優先順位の昇順で返す
+function getMatchingCreditors(rank, contractType, ss) {
+  const config = getConfig();
+  const sheet = ss.getSheetByName(config.SPREADSHEET.SHEETS.CREDITOR);
+  const data = sheet.getDataRange().getValues();
+  const h = data[0];
+
+  const nameIdx     = h.indexOf('信販会社名');
+  const rateMinIdx  = h.indexOf('最低金利');
+  const rateMaxIdx  = h.indexOf('最高金利');
+  const judgeIdx    = h.indexOf('対応判定');
+  const priorityIdx = h.indexOf('打診優先順位');
+  const statusIdx   = h.indexOf('ステータス');
+
+  // 契約者種別 → 対応列
+  let typeCol = '個人対応';
+  if (contractType.indexOf('法人') !== -1) typeCol = '法人対応';
+  else if (contractType.indexOf('個人事業主') !== -1) typeCol = '個人事業主対応';
+  const typeIdx = h.indexOf(typeCol);
+
+  const matched = [];
+  for (var i = 1; i < data.length; i++) {
+    const r = data[i];
+    if (!r[nameIdx]) continue;
+    if (String(r[statusIdx]) !== '稼働中') continue;
+    if (String(r[judgeIdx]).indexOf(rank) === -1) continue;          // 対応判定にランクが含まれる
+    if (typeIdx !== -1 && String(r[typeIdx]).indexOf('○') === -1) continue; // 契約者種別に対応
+
+    matched.push({
+      name: r[nameIdx],
+      priority: parseInt(r[priorityIdx]) || 99,
+      rate: (r[rateMinIdx] !== '' ? r[rateMinIdx] : '') + '〜' + (r[rateMaxIdx] !== '' ? r[rateMaxIdx] : '') + '%'
+    });
+  }
+  matched.sort(function(a, b) { return a.priority - b.priority; });
+  return matched;
+}
+
+// 提案信販を 信販1〜8 の各列（社名/結果/承認額/金利）へ書き込む
+function writeProposedCreditors(rowNumber, creditors, loanSheet, headers) {
+  const startCol = headers.indexOf('信販1_社名') + 1;
+  if (startCol <= 0) return;
+
+  const block = [];
+  for (var k = 0; k < 8; k++) {
+    const c = creditors[k];
+    if (c) block.push(c.name, '打診予定', '', c.rate);
+    else   block.push('', '', '', '');
+  }
+  loanSheet.getRange(rowNumber, startCol, 1, 32).setValues([block]);
+
+  const statusIdx = headers.indexOf('ステータス') + 1;
+  if (statusIdx > 0) loanSheet.getRange(rowNumber, statusIdx).setValue('信販打診中');
+}
+
+// 【保守用】既存の全ローン案件に対して信販提案をまとめて実行
+function proposeCreditorsForAll() {
+  const config = getConfig();
+  const ss = SpreadsheetApp.openById(config.SPREADSHEET.ID);
+  const loanSheet = ss.getSheetByName(config.SPREADSHEET.SHEETS.LOAN);
+  const lastRow = loanSheet.getLastRow();
+  var count = 0;
+  for (var r = 2; r <= lastRow; r++) {
+    if (proposeCreditors(r)) count++;
+  }
+  Logger.log('信販提案（一括）：' + count + '件に提案');
+}
+
 function testCreditMatch() {
   const config = getConfig();
   const ss = SpreadsheetApp.openById(config.SPREADSHEET.ID);
