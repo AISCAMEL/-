@@ -37,7 +37,10 @@ const CONFIG = {
     RANK_A: 80,
     RANK_B: 60,
     RANK_C: 40,
-    ASSUMED_RATE: 4.9
+    ASSUMED_RATE: 4.9,
+    AGE_SENIOR_60: -5,
+    AGE_SENIOR_65: -10,
+    AGE_SENIOR_70: -15
   },
   FRANCHISEE: {
     MAX_CASES: 5

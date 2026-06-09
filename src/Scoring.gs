@@ -40,6 +40,7 @@ function runScoring(rowNumber) {
 }
 
 function calculateScore(data) {
+  const config = getConfig();
   let score = 0;
 
   // 雇用形態（25点）
@@ -96,7 +97,38 @@ function calculateScore(data) {
     score += 5; // 軽微な情報あり
   }
 
+  // 年齢（60歳以上は減点：完済までの就業・健康リスクを反映）
+  // 生年月日から年齢を算出（フォームに項目があるため新規列は不要）
+  const age = calcAge(data['生年月日']);
+  if (age >= 70) score += config.SCORING.AGE_SENIOR_70;
+  else if (age >= 65) score += config.SCORING.AGE_SENIOR_65;
+  else if (age >= 60) score += config.SCORING.AGE_SENIOR_60;
+
   return Math.max(0, Math.min(100, score));
+}
+
+// 生年月日（「1981年09月17日」やDate型）から満年齢を算出。解釈不能なら0
+function calcAge(birth) {
+  let d;
+  if (birth instanceof Date) {
+    d = birth;
+  } else {
+    const s = toHalfWidth(birth);
+    const m = s.match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/);
+    if (m) {
+      d = new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10));
+    } else {
+      const y = s.match(/\d{4}/);
+      if (!y) return 0;
+      d = new Date(parseInt(y[0], 10), 0, 1);
+    }
+  }
+  if (isNaN(d.getTime())) return 0;
+  const t = new Date();
+  let age = t.getFullYear() - d.getFullYear();
+  const mo = t.getMonth() - d.getMonth();
+  if (mo < 0 || (mo === 0 && t.getDate() < d.getDate())) age--;
+  return age;
 }
 
 function getRank(score, config) {
