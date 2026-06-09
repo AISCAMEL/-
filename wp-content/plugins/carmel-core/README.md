@@ -186,11 +186,33 @@ Carmel_Deal_Status::change( $deal_id, 'delivered', array( 'system' => true ) );
 
 > §9.4 の方針どおり、返済・延滞・アフターの定期通知を GAS トリガーから WP-Cron に一本化。
 
+## GAS連携（Phase 3 実装済み）
+
+`Carmel_GAS_Client` が WP→GAS の呼び出しと結果の書き戻しを担う（WPが正、GASはサービス）。
+
+| 機能 | 内容 |
+|------|------|
+| AIスコアリング | ローン申込作成時に**自動でスコア依頼**（単発Cronで非同期化しフォーム応答をブロックしない）。結果を `ai_score`/`score_rank` に保存し、`provisional`→`scored` に前進 |
+| 書類生成 | 案件が `doc_prep` に入ると申込書PDFを依頼。結果を `carmel_document`（`pdf_url`/`generated_at`）として保存 |
+| 認証 | 送信は `X-Carmel-Token` ヘッダ＋body `token`（Secret Token） |
+| 非同期コールバック | `POST /wp-json/carmel/v1/gas-callback`（トークン検証）。`type=score|document` で書き戻し。GAS側が時間のかかる処理を後から返せる |
+| 失敗時 | GAS呼び出し失敗は `system_error` 通知で Slack へ自動アラート |
+
+設定（未設定なら安全に no-op）：
+
+| 定数 / オプション | 用途 |
+|------------------|------|
+| `CARMEL_GAS_ENDPOINT` / `carmel_gas_endpoint` | GAS Web アプリ URL（doPost） |
+| `CARMEL_GAS_TOKEN` / `carmel_gas_token` | Secret Token（送信・コールバック共通） |
+
+GASへ送る案件ペイロードは `carmel_gas_deal_payload` フィルタで拡張可能。
+スコアは /hq 審査画面の「AIスコア」列に表示される。
+
 ## 次フェーズ（未実装）
 
 - /hq 全加盟店横断カンバン（審査以外の案件管理）・売上レポート
 - 書類アップロード、返済状況の顧客表示
-- ACF フィールド群（deal_type 別）、Square / GAS / Maps 連携
+- ACF フィールド群（deal_type 別）、Square / Google Maps 連携
 - ステータス変更フックから `carmel_event` の自動発火
 - ACF フィールド群（deal_type 別）、行レベルのクエリフィルター
 - GAS / Square / Google Maps 連携
