@@ -9,7 +9,7 @@ import { works } from "@/content/works";
 export const metadata: Metadata = {
   title: "実績・事例",
   description:
-    "合同会社アイズの実績・事例。自動車事業（販売・買取・リース）、アプリ事業などの取り組みをご紹介します。",
+    "合同会社アイズの実績・事例。自動車（カーメル／BUYMO／CARSHICO）やIT事業（APPREX）などの取り組みをご紹介します。",
   alternates: { canonical: "/works" },
 };
 

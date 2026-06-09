@@ -1,6 +1,7 @@
 # 合同会社アイズ コーポレートサイト
 
-自動車の販売・買取・リースを主軸に、アプリ事業（自社アプリ・Web/システム開発）・GPS事業・FC事業を展開する
+自動車販売「カーメル」・買取「BUYMO」・リース「CARSHICO」・車両セキュリティ「天護 TENGO」・レッカーを主軸に、
+IT事業「APPREX」（ノーコードアプリ開発）・WEB開発「WEB crews」・FC事業を展開する
 合同会社アイズ（AIS LLC）のコーポレートサイト（リニューアル版）です。
 
 ## 技術スタック
@@ -36,7 +37,7 @@ docs/            リニューアル戦略・設計書
 | --- | --- |
 | `site.ts` | 会社名・連絡先・ドメインなど基本情報 |
 | `navigation.ts` | ヘッダー/フッターのメニュー |
-| `services.ts` | 4事業（自動車/アプリ/GPS/FC）の詳細 |
+| `services.ts` | 8事業（3グループ）とブランドの詳細 |
 | `home.ts` | トップの課題・強み・流れ・メッセージ |
 | `faq.ts` | よくある質問 |
 | `works.ts` | 実績・事例 |
@@ -45,11 +46,11 @@ docs/            リニューアル戦略・設計書
 
 ## 公開前に差し替えが必要な項目（placeholder）
 
-- 会社概要（代表者・設立・所在地）`content/company.ts`
-- 連絡先（メール・電話・住所）`content/site.ts`
-- 本番ドメイン `content/site.ts` の `url`
+- 各ブランドのロゴ・サービスサイトURL（カーメル／BUYMO／CARSHICO／天護／APPREX／WEB crews）
 - 実績（`works.ts`）・お知らせ（`news.ts`）の実データ（`isPlaceholder: false` に）
 - プライバシーポリシー本文 `app/privacy/page.tsx`
 - お問い合わせフォームの送信処理（`components/contact/ContactForm.tsx`）
+
+> 会社概要・連絡先・本番ドメイン（aisjaltd.com）は実情報を反映済みです。
 
 詳細は [`docs/サイトリニューアル戦略.md`](./docs/サイトリニューアル戦略.md) を参照してください。

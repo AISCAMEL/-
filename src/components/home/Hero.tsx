@@ -3,9 +3,9 @@ import { Container } from "@/components/ui/Container";
 import { Icon } from "@/components/ui/Icon";
 
 const trustPoints = [
-  "販売・買取・リース・レスキュー",
-  "ノーコードアプリ・Web開発",
-  "GPS・FC事業も展開",
+  "販売・買取・リース・セキュリティ・レッカー",
+  "ノーコードアプリ「APPREX」・WEB開発",
+  "FC（カーメル／BUYMO）加盟募集",
 ];
 
 export function Hero() {
@@ -40,16 +40,15 @@ export function Hero() {
             </span>
 
             <h1 className="mt-6 text-3xl font-bold leading-tight sm:text-4xl md:text-5xl lg:text-[3.25rem]">
-              クルマの「販売・買取・リース」を、
+              クルマのことを、
               <span className="bg-gradient-to-r from-accent-400 to-brand-400 bg-clip-text text-transparent">
                 一社でまるごと。
               </span>
             </h1>
 
             <p className="mt-6 max-w-2xl text-base leading-relaxed text-slate-300 sm:text-lg">
-              合同会社アイズは、自動車の販売・買取・リース・カーレスキューを主軸とする会社です。
-              さらに、ノーコードアプリ開発「APPREX」やWeb・システム開発「WEBCREWS」、GPS事業、FC事業まで。
-              クルマのことからデジタルまで、あなたのニーズにワンストップでお応えします。
+              合同会社アイズは、自動車販売「カーメル」・買取「BUYMO」・リース「CARSHICO」・車両セキュリティ「天護」・レッカーまで、クルマに関わるすべてを手がける会社です。
+              さらに、ノーコードアプリ開発「APPREX」やWEB開発「WEB crews」、FC事業まで。あなたのニーズにワンストップでお応えします。
             </p>
 
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
@@ -76,10 +75,9 @@ export function Hero() {
           <div className="lg:col-span-5">
             <div className="grid gap-3">
               {[
-                { icon: "car" as const, label: "自動車事業", desc: "販売・買取・リース・レスキュー", primary: true },
-                { icon: "app" as const, label: "アプリ事業", desc: "ノーコードアプリ・Web・システム開発" },
-                { icon: "gps" as const, label: "GPS事業", desc: "GPSを活用したサービス" },
-                { icon: "store" as const, label: "FC事業", desc: "フランチャイズ展開" },
+                { icon: "car" as const, label: "自動車事業", desc: "販売・買取・リース・セキュリティ・レッカー", primary: true },
+                { icon: "app" as const, label: "IT・WEB事業", desc: "APPREX（ノーコードアプリ）／WEB crews" },
+                { icon: "store" as const, label: "FC事業", desc: "カーメル／BUYMO 加盟募集" },
               ].map((c) => (
                 <div
                   key={c.label}

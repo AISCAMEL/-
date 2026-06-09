@@ -33,7 +33,7 @@ const sections = [
   },
   {
     h: "6. お問い合わせ窓口",
-    p: `本ポリシーに関するお問い合わせは、${site.contact.email}（placeholder）までご連絡ください。`,
+    p: `本ポリシーに関するお問い合わせは、${site.contact.email} までご連絡ください。`,
   },
 ];
 

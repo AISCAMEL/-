@@ -2,14 +2,14 @@
 
 export const companyProfile: { label: string; value: string }[] = [
   { label: "会社名", value: "合同会社アイズ（AIS LLC）" },
-  { label: "代表者", value: "代表社員 ○○ ○○（placeholder）" },
-  { label: "設立", value: "20XX年X月（placeholder）" },
-  { label: "所在地", value: "〒000-0000 XXX県XXX市XXX 0-0-0（placeholder）" },
-  { label: "連絡先", value: "info@aisjaltd.com（placeholder）" },
+  { label: "代表者", value: "代表 吉田 一平" },
+  { label: "所在地", value: "〒979-0204 福島県いわき市四倉町細谷字大町1番" },
+  { label: "電話番号", value: "050-1722-3365" },
+  { label: "メール", value: "info@aisjaltd.com" },
   {
     label: "事業内容",
     value:
-      "自動車事業（新車・中古車の販売／買取・査定／カーリース／カーレスキュー）／アプリ事業（ノーコードアプリ開発「APPREX」・Web制作/システム開発「WEBCREWS」）／GPS事業／FC事業",
+      "自動車販売「カーメル」／自動車買取「BUYMO」／カーリース「CARSHICO」／車両セキュリティ「天護 TENGO」／レッカー事業／FC事業／IT事業「APPREX」（ノーコードアプリ開発）／WEB開発「WEB crews」",
   },
 ];
 

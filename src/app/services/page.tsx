@@ -4,12 +4,12 @@ import { PageHero } from "@/components/layout/PageHero";
 import { Section } from "@/components/ui/Section";
 import { Icon } from "@/components/ui/Icon";
 import { CtaBanner } from "@/components/layout/CtaBanner";
-import { services } from "@/content/services";
+import { serviceGroups, getServicesByGroup } from "@/content/services";
 
 export const metadata: Metadata = {
-  title: "事業・サービス｜自動車・アプリ・GPS・FC",
+  title: "事業紹介｜自動車・IT/WEB・FC",
   description:
-    "合同会社アイズの事業一覧。自動車事業（販売・買取・リース・カーレスキュー）を主力に、アプリ事業（ノーコードアプリ開発APPREX・Web/システム開発WEBCREWS）、GPS事業、FC事業を展開しています。",
+    "合同会社アイズの事業一覧。自動車販売「カーメル」・買取「BUYMO」・リース「CARSHICO」・車両セキュリティ「天護」・レッカー事業を主力に、IT事業「APPREX」、WEB開発「WEB crews」、FC事業を展開しています。",
   alternates: { canonical: "/services" },
 };
 
@@ -18,50 +18,60 @@ export default function ServicesPage() {
     <>
       <PageHero
         eyebrow="Business"
-        title="アイズの事業・サービス"
-        lead="自動車事業（販売・買取・リース・カーレスキュー）を主力に、アプリ・GPS・FCの各事業を展開。クルマのことからデジタルまで、ワンストップでお応えします。"
+        title="事業紹介"
+        lead="自動車事業（販売・買取・リース・セキュリティ・レッカー）を主力に、IT・WEB事業、FC事業を展開。クルマのことからデジタルまで、ワンストップでお応えします。"
       />
       <Section tone="light">
-        <div className="grid gap-8">
-          {services.map((s, i) => (
-            <div
-              key={s.slug}
-              className="grid gap-6 rounded-2xl border border-slate-200 bg-white p-7 shadow-card md:grid-cols-12 md:p-9"
-            >
-              <div className="md:col-span-4">
-                <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-50 text-brand-600 ring-1 ring-inset ring-brand-100">
-                  <Icon name={s.icon} className="h-7 w-7" />
-                </span>
-                <p className="mt-4 text-sm font-semibold text-brand-600">
-                  0{i + 1} / {s.tagline}
-                </p>
-                <h2 className="mt-1 text-2xl font-bold text-ink-900">{s.name}</h2>
-                {s.isPlaceholder && (
-                  <span className="mt-2 inline-block rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold text-amber-800">
-                    内容 要確認（準備中）
+        <div className="space-y-14">
+          {serviceGroups.map((group) => (
+            <div key={group.id}>
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <h2 className="text-xl font-bold text-ink-900">{group.label}</h2>
+                {group.isPrimary && (
+                  <span className="rounded-full bg-brand-600 px-2.5 py-0.5 text-[11px] font-bold text-white">
+                    主力事業
                   </span>
                 )}
-                <p className="mt-3 text-sm leading-relaxed text-ink-600">{s.summary}</p>
-                <Link
-                  href={`/services/${s.slug}`}
-                  className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:text-brand-800"
-                >
-                  このサービスの詳細
-                  <Icon name="arrow-right" className="h-4 w-4" />
-                </Link>
               </div>
-              <div className="md:col-span-8">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {s.offerings.map((o) => (
-                    <div
-                      key={o.title}
-                      className="rounded-xl border border-slate-100 bg-slate-50 p-4"
-                    >
-                      <h3 className="text-sm font-bold text-ink-900">{o.title}</h3>
-                      <p className="mt-1.5 text-xs leading-relaxed text-ink-600">{o.description}</p>
+              <p className="mt-1 text-sm text-ink-500">{group.description}</p>
+
+              <div className="mt-6 grid gap-5 md:grid-cols-2">
+                {getServicesByGroup(group.id).map((s) => (
+                  <div
+                    key={s.slug}
+                    className="grid gap-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-card sm:grid-cols-12 sm:p-7"
+                  >
+                    <div className="sm:col-span-5">
+                      <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-brand-600 ring-1 ring-inset ring-brand-100">
+                        <Icon name={s.icon} className="h-6 w-6" />
+                      </span>
+                      {s.brand && (
+                        <p className="mt-3 text-xs font-semibold tracking-wide text-brand-600">
+                          {s.brand}
+                        </p>
+                      )}
+                      <h3 className="mt-0.5 text-lg font-bold text-ink-900">{s.name}</h3>
+                      <p className="mt-1 text-sm font-medium text-ink-600">{s.tagline}</p>
+                      <Link
+                        href={`/services/${s.slug}`}
+                        className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:text-brand-800"
+                      >
+                        詳しく見る
+                        <Icon name="arrow-right" className="h-4 w-4" />
+                      </Link>
                     </div>
-                  ))}
-                </div>
+                    <div className="sm:col-span-7">
+                      <ul className="space-y-2">
+                        {s.highlights.map((h) => (
+                          <li key={h} className="flex items-start gap-2 text-sm text-ink-700">
+                            <Icon name="check" className="mt-0.5 h-4 w-4 flex-none text-accent-600" />
+                            {h}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           ))}

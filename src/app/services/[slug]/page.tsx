@@ -28,19 +28,21 @@ export default function ServiceDetailPage({ params }: { params: { slug: string }
   const service = getService(params.slug);
   if (!service) notFound();
 
-  const others = services.filter((s) => s.slug !== service.slug);
+  const sameGroup = services.filter(
+    (s) => s.group === service.group && s.slug !== service.slug,
+  );
+  const others =
+    sameGroup.length > 0
+      ? sameGroup
+      : services.filter((s) => s.slug !== service.slug).slice(0, 3);
 
   return (
     <>
-      <PageHero eyebrow={service.tagline} title={service.name} lead={service.summary} />
-
-      {service.isPlaceholder && (
-        <Section tone="light" className="!pb-0">
-          <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            ※ この事業ページは内容が未確定の構成用です。サービス詳細・対象・メニューが固まり次第、差し替えてください。
-          </p>
-        </Section>
-      )}
+      <PageHero
+        eyebrow={service.brand ?? service.tagline}
+        title={service.name}
+        lead={service.summary}
+      />
 
       {/* こんな方へ */}
       <Section tone="light">
@@ -125,6 +127,9 @@ export default function ServiceDetailPage({ params }: { params: { slug: string }
                 <Icon name={o.icon} className="h-6 w-6" />
               </span>
               <div className="flex-1">
+                {o.brand && (
+                  <p className="text-xs font-semibold text-brand-600">{o.brand}</p>
+                )}
                 <h3 className="font-bold text-ink-900">{o.name}</h3>
                 <p className="text-sm text-ink-500">{o.tagline}</p>
               </div>

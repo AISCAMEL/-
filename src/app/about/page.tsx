@@ -55,9 +55,6 @@ export default function AboutPage() {
             </div>
           ))}
         </dl>
-        <p className="mt-4 text-xs text-ink-400">
-          ※「placeholder」と記載の項目は、確定情報に差し替えてください。
-        </p>
       </Section>
 
       <CtaBanner />

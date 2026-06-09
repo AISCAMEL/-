@@ -5,6 +5,10 @@ export type IconName =
   | "app"
   | "gps"
   | "store"
+  | "tag"
+  | "key"
+  | "shield"
+  | "truck"
   | "rocket"
   | "code"
   | "arrow-right"
@@ -41,6 +45,33 @@ const paths: Record<IconName, JSX.Element> = {
       <path d="M3.5 9l1.4-4.2A1 1 0 0 1 5.85 4h12.3a1 1 0 0 1 .95.8L20.5 9" />
       <path d="M5 9v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9" />
       <path d="M9.5 19v-4.5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1V19" />
+    </>
+  ),
+  tag: (
+    <>
+      <path d="M4 13l7-7a2 2 0 0 1 1.5-.6l4.5.3.3 4.5A2 2 0 0 1 18 11.8l-7 7a2 2 0 0 1-2.8 0L4 14.6a2 2 0 0 1 0-1.6z" />
+      <circle cx="14.5" cy="9.5" r="1.1" />
+    </>
+  ),
+  key: (
+    <>
+      <circle cx="8" cy="8" r="3.5" />
+      <path d="M10.5 10.5L20 20" />
+      <path d="M16 16l2.2-2.2M18.5 18.5l2-2" />
+    </>
+  ),
+  shield: (
+    <>
+      <path d="M12 3l7 3v5c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6l7-3z" />
+      <path d="M9 11.5l2 2 4-4" />
+    </>
+  ),
+  truck: (
+    <>
+      <path d="M3 7h10v8H3z" />
+      <path d="M13 10h4l3 3v2h-7z" />
+      <circle cx="7" cy="17" r="1.6" />
+      <circle cx="17.5" cy="17" r="1.6" />
     </>
   ),
   rocket: (

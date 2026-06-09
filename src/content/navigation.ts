@@ -6,33 +6,21 @@ export type NavItem = {
 
 export const mainNav: NavItem[] = [
   {
-    label: "サービス",
+    label: "事業紹介",
     href: "/services",
     children: [
-      {
-        label: "自動車事業",
-        href: "/services/automotive",
-        description: "販売・買取・リース",
-      },
-      {
-        label: "アプリ事業",
-        href: "/services/app",
-        description: "ノーコードアプリ・Web・システム開発",
-      },
-      {
-        label: "GPS事業",
-        href: "/services/gps",
-        description: "GPSを活用したサービス",
-      },
-      {
-        label: "FC事業",
-        href: "/services/fc",
-        description: "フランチャイズ展開",
-      },
+      { label: "自動車販売（カーメル）", href: "/services/carmel", description: "新車・中古車の販売" },
+      { label: "自動車買取（BUYMO）", href: "/services/buymo", description: "愛車の買取・査定" },
+      { label: "カーリース（CARSHICO）", href: "/services/carshico", description: "月々定額のカーリース" },
+      { label: "車両セキュリティ（天護 TENGO）", href: "/services/tengo", description: "GPS・盗難対策" },
+      { label: "レッカー事業", href: "/services/towing", description: "レッカー・カーレスキュー" },
+      { label: "FC事業（カーメル／BUYMO）", href: "/services/fc", description: "フランチャイズ加盟募集" },
+      { label: "IT事業（APPREX）", href: "/services/apprex", description: "ノーコードアプリ開発" },
+      { label: "WEB開発（WEB crews）", href: "/services/webcrews", description: "Web制作・システム開発" },
     ],
   },
+  { label: "ブランド一覧", href: "/brands" },
   { label: "アイズについて", href: "/about" },
-  { label: "理念", href: "/philosophy" },
   { label: "実績", href: "/works" },
   { label: "お知らせ", href: "/news" },
   { label: "よくある質問", href: "/faq" },
@@ -40,27 +28,31 @@ export const mainNav: NavItem[] = [
 
 export const footerNav: { title: string; items: { label: string; href: string }[] }[] = [
   {
-    title: "事業・サービス",
+    title: "自動車事業",
     items: [
-      { label: "自動車事業", href: "/services/automotive" },
-      { label: "アプリ事業", href: "/services/app" },
-      { label: "GPS事業", href: "/services/gps" },
-      { label: "FC事業", href: "/services/fc" },
-      { label: "事業一覧", href: "/services" },
+      { label: "自動車販売（カーメル）", href: "/services/carmel" },
+      { label: "自動車買取（BUYMO）", href: "/services/buymo" },
+      { label: "カーリース（CARSHICO）", href: "/services/carshico" },
+      { label: "車両セキュリティ（天護）", href: "/services/tengo" },
+      { label: "レッカー事業", href: "/services/towing" },
     ],
   },
   {
-    title: "会社情報",
+    title: "IT・WEB・FC",
+    items: [
+      { label: "IT事業（APPREX）", href: "/services/apprex" },
+      { label: "WEB開発（WEB crews）", href: "/services/webcrews" },
+      { label: "FC事業", href: "/services/fc" },
+      { label: "ブランド一覧", href: "/brands" },
+    ],
+  },
+  {
+    title: "会社情報・サポート",
     items: [
       { label: "アイズについて", href: "/about" },
       { label: "理念", href: "/philosophy" },
       { label: "実績", href: "/works" },
       { label: "お知らせ", href: "/news" },
-    ],
-  },
-  {
-    title: "サポート",
-    items: [
       { label: "よくある質問", href: "/faq" },
       { label: "お問い合わせ", href: "/contact" },
       { label: "プライバシーポリシー", href: "/privacy" },
