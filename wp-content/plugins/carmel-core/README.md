@@ -170,6 +170,22 @@ Carmel_Deal_Status::change( $deal_id, 'delivered', array( 'system' => true ) );
 
 > HQユーザー（`carmel_manage_stores`）は全店の案件を横断表示・操作できる。
 
+## 定期処理 WP-Cron（Phase 3 実装済み）
+
+`Carmel_Cron` が毎日／毎週のジョブを実行し、すべて通知オーケストレーター経由で送る（dedup・フォールバック・ログが効く）。有効化時に自動スケジュール、`init` で自己修復（未登録なら再スケジュール）。
+
+| ジョブ | 内容 |
+|--------|------|
+| 毎朝8:00 | **返済リマインダー**（期日3日前/前日/当日・未払いのみ）／**延滞検知＋利息計算**（`元金×14.6%÷365×延滞日数`、1/5/14日目に督促）／**車検満了アラート**（90/60/30日前）／**保険更新アラート**（90/30日前） |
+| 毎週9:00 | **週次レポート**（案件総数・種別内訳）を Slack＋本部メールへ |
+
+- 同一日の重複送信は通知ログの冪等性キーで抑止（例 `delinquency:{repayment_id}:{延滞日数}`）
+- 延滞日数・延滞利息は `carmel_repayment` のメタに書き戻し
+- 車検は `carmel_vehicle.inspection_expiry`＋`linked_deal_id`、保険は `carmel_insurance.end_date`＋`deal_id` を参照
+- 手動実行：`Carmel_Cron::instance()->run_daily()` / `run_weekly()`
+
+> §9.4 の方針どおり、返済・延滞・アフターの定期通知を GAS トリガーから WP-Cron に一本化。
+
 ## 次フェーズ（未実装）
 
 - /hq 全加盟店横断カンバン（審査以外の案件管理）・売上レポート

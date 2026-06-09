@@ -28,6 +28,7 @@ require_once CARMEL_CORE_DIR . 'includes/class-carmel-deal-status.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-hq-screening.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-mypage.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-store.php';
+require_once CARMEL_CORE_DIR . 'includes/class-carmel-cron.php';
 require_once CARMEL_CORE_DIR . 'includes/notifications/interface-carmel-channel-adapter.php';
 require_once CARMEL_CORE_DIR . 'includes/notifications/class-carmel-notification-log.php';
 require_once CARMEL_CORE_DIR . 'includes/notifications/adapters/class-carmel-proline-adapter.php';
@@ -47,6 +48,7 @@ function carmel_core_init() {
 	Carmel_HQ_Screening::instance()->register_hooks();
 	Carmel_MyPage::instance()->register_hooks();
 	Carmel_Store::instance()->register_hooks();
+	Carmel_Cron::instance()->register_hooks();
 	Carmel_Notifier::instance()->register_hooks();
 }
 add_action( 'plugins_loaded', 'carmel_core_init' );
@@ -57,6 +59,7 @@ add_action( 'plugins_loaded', 'carmel_core_init' );
 function carmel_core_activate() {
 	Carmel_Post_Types::instance()->register_post_types();
 	Carmel_Roles::add_roles_and_caps();
+	Carmel_Cron::schedule();
 	flush_rewrite_rules();
 }
 register_activation_hook( __FILE__, 'carmel_core_activate' );
@@ -66,6 +69,7 @@ register_activation_hook( __FILE__, 'carmel_core_activate' );
  * (full removal happens in uninstall.php).
  */
 function carmel_core_deactivate() {
+	Carmel_Cron::unschedule();
 	flush_rewrite_rules();
 }
 register_deactivation_hook( __FILE__, 'carmel_core_deactivate' );

@@ -93,6 +93,7 @@ class Carmel_Notifier {
 			'insurance_notice'     => array( $cust( 'proline', 'mail' ), $d( 'store', 'lineworks' ) ),
 			'maintenance_notice'   => array( $cust( 'proline', 'mail' ) ),
 			'system_error'         => array( $d( 'system', 'slack' ) ),
+			'weekly_report'        => array( $d( 'system', 'slack' ), $d( 'hq', 'mail' ) ),
 		);
 
 		return apply_filters( 'carmel_routing_table', $table );
@@ -285,6 +286,7 @@ class Carmel_Notifier {
 			'insurance_notice'      => array( '保険更新のご案内', "{name} 様\n保険満了日が近づいています（{end_date}）。" ),
 			'maintenance_notice'    => array( '定期点検のご案内', "{name} 様\n定期点検の時期です。" ),
 			'system_error'          => array( 'システム通知', '{message}' ),
+			'weekly_report'         => array( '週次レポート', "{report}" ),
 		);
 
 		$subject = isset( $defaults[ $event_type ][0] ) ? $defaults[ $event_type ][0] : 'カーメルからのお知らせ';
