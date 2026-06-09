@@ -13,7 +13,11 @@
 
 'use strict';
 
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const DEFAULT_OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+// 接続先は環境変数で上書き可能（自前ゲートウェイ/テスト用モック等）
+function getEndpoint() {
+  return process.env.OPENROUTER_BASE_URL || DEFAULT_OPENROUTER_URL;
+}
 
 /**
  * 利用モデルのフォールバックチェーン。
@@ -98,7 +102,7 @@ async function streamChat(clientMessages, onDelta, opts = {}) {
 
   for (const model of models) {
     try {
-      const res = await fetch(OPENROUTER_URL, {
+      const res = await fetch(getEndpoint(), {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${apiKey}`,
