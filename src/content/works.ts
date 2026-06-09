@@ -39,13 +39,13 @@ export const works: Work[] = [
     isPlaceholder: true,
   },
   {
-    slug: "sample-app-development",
-    title: "自社サービスのアプリ開発・リリース",
+    slug: "sample-app-nocode",
+    title: "ノーコード（APPREX）でのアプリ開発・リリース",
     category: "app",
     categoryLabel: "アプリ事業",
     summary:
-      "企画・UI設計から開発・リリースまでを一貫して対応。公開後の運用・改善まで継続的に支援。",
-    result: "予定どおりリリースを実現（※サンプル）",
+      "APPREXのノーコード開発で、企画からリリースまでをスピーディに対応。低コストでアプリを形にし、公開後の改善まで支援。",
+    result: "短期間・低コストでリリース（※サンプル）",
     isPlaceholder: true,
   },
 ];

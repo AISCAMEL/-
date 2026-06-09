@@ -4,8 +4,9 @@ import { useState, FormEvent } from "react";
 import { Icon } from "@/components/ui/Icon";
 
 const subjects = [
-  "自動車（販売・買取・リース）",
-  "アプリ・Web・システム開発",
+  "自動車（販売・買取・リース・カーレスキュー）",
+  "アプリ開発（APPREX・ノーコード）",
+  "Web制作・システム開発（WEBCREWS）",
   "GPS事業について",
   "FC事業について",
   "その他・どれか分からない",

@@ -9,7 +9,7 @@ import { services } from "@/content/services";
 export const metadata: Metadata = {
   title: "事業・サービス｜自動車・アプリ・GPS・FC",
   description:
-    "合同会社アイズの事業一覧。自動車事業（販売・買取・リース）を主力に、アプリ事業（自社アプリ・Web・システム開発）、GPS事業、FC事業を展開しています。",
+    "合同会社アイズの事業一覧。自動車事業（販売・買取・リース・カーレスキュー）を主力に、アプリ事業（ノーコードアプリ開発APPREX・Web/システム開発WEBCREWS）、GPS事業、FC事業を展開しています。",
   alternates: { canonical: "/services" },
 };
 
@@ -19,7 +19,7 @@ export default function ServicesPage() {
       <PageHero
         eyebrow="Business"
         title="アイズの事業・サービス"
-        lead="自動車事業（販売・買取・リース）を主力に、アプリ・GPS・FCの各事業を展開。クルマのことからデジタルまで、ワンストップでお応えします。"
+        lead="自動車事業（販売・買取・リース・カーレスキュー）を主力に、アプリ・GPS・FCの各事業を展開。クルマのことからデジタルまで、ワンストップでお応えします。"
       />
       <Section tone="light">
         <div className="grid gap-8">

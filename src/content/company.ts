@@ -9,7 +9,7 @@ export const companyProfile: { label: string; value: string }[] = [
   {
     label: "事業内容",
     value:
-      "自動車事業（新車・中古車の販売／買取・査定／カーリース）／アプリ事業（自社アプリ・Web制作・システム/アプリ開発）／GPS事業／FC事業",
+      "自動車事業（新車・中古車の販売／買取・査定／カーリース／カーレスキュー）／アプリ事業（ノーコードアプリ開発「APPREX」・Web制作/システム開発「WEBCREWS」）／GPS事業／FC事業",
   },
 ];
 

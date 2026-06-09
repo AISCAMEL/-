@@ -17,7 +17,7 @@ export const mainNav: NavItem[] = [
       {
         label: "アプリ事業",
         href: "/services/app",
-        description: "自社アプリ・Web・システム開発",
+        description: "ノーコードアプリ・Web・システム開発",
       },
       {
         label: "GPS事業",

@@ -15,9 +15,9 @@ export const metadata: Metadata = {
 const examples = [
   "新車・中古車の購入や乗り換えを相談したい",
   "今の愛車の買取査定をお願いしたい",
-  "カーリースの料金やプランについて知りたい",
-  "アプリやWebサイトの開発を相談したい",
-  "GPS事業・FC事業について問い合わせたい",
+  "カーリースやカーレスキューについて知りたい",
+  "ノーコード（APPREX）でアプリを作りたい",
+  "Webサイト・システム開発（WEBCREWS）を相談したい",
 ];
 
 export default function ContactPage() {

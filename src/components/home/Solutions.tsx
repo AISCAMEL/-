@@ -12,7 +12,7 @@ export function Solutions() {
       <SectionHeading
         eyebrow="Business"
         title="アイズの事業"
-        lead="自動車事業（販売・買取・リース）を主力に、アプリ・GPS・FCの各事業を展開。クルマのことからデジタルまで、ワンストップでお応えします。"
+        lead="自動車事業（販売・買取・リース・カーレスキュー）を主力に、アプリ・GPS・FCの各事業を展開。クルマのことからデジタルまで、ワンストップでお応えします。"
         align="center"
       />
 

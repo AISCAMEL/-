@@ -3,8 +3,8 @@ import { Container } from "@/components/ui/Container";
 import { Icon } from "@/components/ui/Icon";
 
 const trustPoints = [
-  "販売・買取・リースに対応",
-  "自社アプリ・Web開発",
+  "販売・買取・リース・レスキュー",
+  "ノーコードアプリ・Web開発",
   "GPS・FC事業も展開",
 ];
 
@@ -47,8 +47,8 @@ export function Hero() {
             </h1>
 
             <p className="mt-6 max-w-2xl text-base leading-relaxed text-slate-300 sm:text-lg">
-              合同会社アイズは、自動車の販売・買取・リースを主軸とする会社です。
-              さらに、自社アプリ開発やWeb・システム開発、GPS事業、FC事業まで。
+              合同会社アイズは、自動車の販売・買取・リース・カーレスキューを主軸とする会社です。
+              さらに、ノーコードアプリ開発「APPREX」やWeb・システム開発「WEBCREWS」、GPS事業、FC事業まで。
               クルマのことからデジタルまで、あなたのニーズにワンストップでお応えします。
             </p>
 
@@ -76,8 +76,8 @@ export function Hero() {
           <div className="lg:col-span-5">
             <div className="grid gap-3">
               {[
-                { icon: "car" as const, label: "自動車事業", desc: "販売・買取・リース", primary: true },
-                { icon: "app" as const, label: "アプリ事業", desc: "自社アプリ・Web・システム開発" },
+                { icon: "car" as const, label: "自動車事業", desc: "販売・買取・リース・レスキュー", primary: true },
+                { icon: "app" as const, label: "アプリ事業", desc: "ノーコードアプリ・Web・システム開発" },
                 { icon: "gps" as const, label: "GPS事業", desc: "GPSを活用したサービス" },
                 { icon: "store" as const, label: "FC事業", desc: "フランチャイズ展開" },
               ].map((c) => (
