@@ -36,10 +36,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<h4><?php esc_html_e( 'サポート・会社', 'apprex' ); ?></h4>
 				<ul>
 					<li><a href="<?php echo esc_url( apprex_page_url( 'faq' ) ); ?>"><?php esc_html_e( 'よくある質問', 'apprex' ); ?></a></li>
+					<li><a href="<?php echo esc_url( apprex_page_url( 'estimate' ) ); ?>"><?php esc_html_e( '見積もり・発注', 'apprex' ); ?></a></li>
 					<li><a href="<?php echo esc_url( apprex_page_url( 'free-trial' ) ); ?>"><?php esc_html_e( '無料体験', 'apprex' ); ?></a></li>
-					<li><a href="<?php echo esc_url( apprex_page_url( 'contact' ) ); ?>"><?php esc_html_e( 'お問い合わせ・見積依頼', 'apprex' ); ?></a></li>
+					<li><a href="<?php echo esc_url( apprex_page_url( 'document' ) ); ?>"><?php esc_html_e( '資料請求', 'apprex' ); ?></a></li>
+					<li><a href="<?php echo esc_url( apprex_page_url( 'contact' ) ); ?>"><?php esc_html_e( 'お問い合わせ', 'apprex' ); ?></a></li>
 					<li><a href="<?php echo esc_url( apprex_page_url( 'company' ) ); ?>"><?php esc_html_e( '会社概要', 'apprex' ); ?></a></li>
 					<li><a href="https://www.instagram.com/apprex1173/" target="_blank" rel="noopener"><?php esc_html_e( 'Instagram（@apprex1173）', 'apprex' ); ?></a></li>
+					<?php $apprex_line = apprex_line_url(); ?>
+					<?php if ( $apprex_line ) : ?>
+						<li><a href="<?php echo esc_url( $apprex_line ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'LINEで相談', 'apprex' ); ?></a></li>
+					<?php endif; ?>
 				</ul>
 			</div>
 		</div>

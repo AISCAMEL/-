@@ -34,9 +34,8 @@ while ( have_posts() ) :
 		<div class="container content-prose">
 			<?php if ( trim( get_the_content() ) ) : ?>
 				<?php the_content(); ?>
-			<?php else : ?>
-				<?php get_template_part( 'template-parts/placeholder-form', null, array( 'type' => 'contact' ) ); ?>
 			<?php endif; ?>
+			<?php apprex_render_form( 'contact' ); ?>
 		</div>
 	</section>
 	<?php

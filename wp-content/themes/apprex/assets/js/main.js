@@ -14,10 +14,10 @@
 		initChatbot();
 	});
 
-	/* ---- Zapier chatbot (lazy iframe) ---- */
+	/* ---- Zapier chatbot fallback (lazy iframe). Native AI widget is in chat.js ---- */
 	function initChatbot() {
 		var toggle = document.querySelector('.apprex-chat-toggle');
-		var win = document.getElementById('apprex-chat-window');
+		var win = document.querySelector('.apprex-chat-window'); // Zapier variant only.
 		if (!toggle || !win) {
 			return;
 		}

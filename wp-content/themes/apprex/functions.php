@@ -49,6 +49,11 @@ require_once APPREX_DIR . '/inc/enqueue.php';
 require_once APPREX_DIR . '/inc/cpt-cases.php';
 require_once APPREX_DIR . '/inc/acf-fields.php';
 require_once APPREX_DIR . '/inc/template-helpers.php';
+require_once APPREX_DIR . '/inc/pricing-config.php';
+require_once APPREX_DIR . '/inc/openrouter-chat.php';
+require_once APPREX_DIR . '/inc/orders.php';
+require_once APPREX_DIR . '/inc/forms.php';
+require_once APPREX_DIR . '/inc/ai-blog.php';
 require_once APPREX_DIR . '/inc/installer.php';
 
 /**
@@ -61,6 +66,7 @@ function apprex_primary_menu_fallback() {
 		'/functions'   => __( '機能', 'apprex' ),
 		'/pricing'     => __( '料金', 'apprex' ),
 		'/cases'       => __( '事例', 'apprex' ),
+		'/estimate'    => __( '見積もり', 'apprex' ),
 		'/hp-creation' => __( 'HP制作', 'apprex' ),
 		'/company'     => __( '会社概要', 'apprex' ),
 		'/faq'         => __( 'FAQ', 'apprex' ),

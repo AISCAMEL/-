@@ -1,12 +1,8 @@
 <?php
 /**
- * Template Name: 無料体験申し込みページ (Free Trial)
+ * Template Name: 資料請求ページ (Document Request)
  *
- * Assign to the "free-trial" page. Spec §12.
- *
- * Recommended: paste a Contact Form 7 / WPForms shortcode into the page editor.
- * When the editor content is empty a static placeholder form is shown so the
- * layout is complete during build.
+ * Assign to the "document" page. 資料請求＋LINE誘導。
  *
  * @package APPREX
  */
@@ -27,7 +23,7 @@ while ( have_posts() ) :
 				<span> / </span><?php the_title(); ?>
 			</nav>
 			<h1><?php the_title(); ?></h1>
-			<p><?php esc_html_e( '30日間無料体験。クレジットカード登録不要で、すぐに始められます。', 'apprex' ); ?></p>
+			<p><?php esc_html_e( 'APPREX のサービス内容・料金・導入事例をまとめた資料を無料でダウンロードいただけます。', 'apprex' ); ?></p>
 		</div>
 	</section>
 
@@ -36,7 +32,7 @@ while ( have_posts() ) :
 			<?php if ( trim( get_the_content() ) ) : ?>
 				<?php the_content(); ?>
 			<?php endif; ?>
-			<?php apprex_render_form( 'trial' ); ?>
+			<?php apprex_render_form( 'document' ); ?>
 		</div>
 	</section>
 	<?php

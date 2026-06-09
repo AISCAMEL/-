@@ -1,0 +1,308 @@
+<?php
+/**
+ * OpenRouter-powered in-site chatbot.
+ *
+ * Architecture: the browser never sees the API key. The chat widget POSTs the
+ * conversation to a WordPress REST endpoint, which proxies the request to
+ * OpenRouter server-side and returns the assistant reply.
+ *
+ * Configuration (priority order):
+ *   1. Constant in wp-config.php:  define( 'APPREX_OPENROUTER_API_KEY', 'sk-or-...' );
+ *   2. Option (Settings > APPREX チャット):  apprex_openrouter_api_key
+ * Model:  constant APPREX_OPENROUTER_MODEL or option apprex_openrouter_model
+ *         (default below — any OpenRouter model id is accepted).
+ *
+ * Local testing without network: define( 'APPREX_CHAT_MOCK', true );
+ *
+ * @package APPREX
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+const APPREX_OPENROUTER_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
+const APPREX_OPENROUTER_DEFAULT_MODEL = 'anthropic/claude-3.5-haiku';
+
+/**
+ * Resolve the API key from constant or option.
+ *
+ * @return string
+ */
+function apprex_openrouter_key() {
+	if ( defined( 'APPREX_OPENROUTER_API_KEY' ) && APPREX_OPENROUTER_API_KEY ) {
+		return (string) APPREX_OPENROUTER_API_KEY;
+	}
+	return (string) get_option( 'apprex_openrouter_api_key', '' );
+}
+
+/**
+ * Resolve the model id.
+ *
+ * @return string
+ */
+function apprex_openrouter_model() {
+	if ( defined( 'APPREX_OPENROUTER_MODEL' ) && APPREX_OPENROUTER_MODEL ) {
+		return (string) APPREX_OPENROUTER_MODEL;
+	}
+	$opt = get_option( 'apprex_openrouter_model', '' );
+	return $opt ? (string) $opt : APPREX_OPENROUTER_DEFAULT_MODEL;
+}
+
+/**
+ * Whether the chatbot is operational (key present or mock mode).
+ *
+ * @return bool
+ */
+function apprex_chat_enabled() {
+	return ( defined( 'APPREX_CHAT_MOCK' ) && APPREX_CHAT_MOCK ) || '' !== apprex_openrouter_key();
+}
+
+/**
+ * Reusable OpenRouter chat-completion call.
+ *
+ * @param array $messages [{role, content}, ...] including any system message.
+ * @param array $args     Optional: model, temperature, max_tokens.
+ * @return string|WP_Error Assistant content or error.
+ */
+function apprex_openrouter_complete( $messages, $args = array() ) {
+	$api_key = apprex_openrouter_key();
+	if ( '' === $api_key ) {
+		return new WP_Error( 'not_configured', 'OpenRouter APIキーが未設定です（設定 > APPREX チャット）。' );
+	}
+
+	$payload = array(
+		'model'       => isset( $args['model'] ) ? $args['model'] : apprex_openrouter_model(),
+		'messages'    => $messages,
+		'temperature' => isset( $args['temperature'] ) ? (float) $args['temperature'] : 0.4,
+		'max_tokens'  => isset( $args['max_tokens'] ) ? (int) $args['max_tokens'] : 600,
+	);
+
+	$response = wp_remote_post(
+		APPREX_OPENROUTER_ENDPOINT,
+		array(
+			'timeout' => isset( $args['timeout'] ) ? (int) $args['timeout'] : 45,
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $api_key,
+				'Content-Type'  => 'application/json',
+				'HTTP-Referer'  => home_url( '/' ),
+				'X-Title'       => 'APPREX',
+			),
+			'body'    => wp_json_encode( $payload ),
+		)
+	);
+
+	if ( is_wp_error( $response ) ) {
+		return new WP_Error( 'upstream_error', '生成サービスに接続できませんでした。' );
+	}
+	$code = (int) wp_remote_retrieve_response_code( $response );
+	$body = json_decode( wp_remote_retrieve_body( $response ), true );
+	if ( 200 !== $code || empty( $body['choices'][0]['message']['content'] ) ) {
+		$detail = isset( $body['error']['message'] ) ? ' ' . $body['error']['message'] : '';
+		return new WP_Error( 'upstream_error', '生成に失敗しました（HTTP ' . $code . '）。' . $detail );
+	}
+	return (string) $body['choices'][0]['message']['content'];
+}
+
+/**
+ * Editable knowledge base (Settings > APPREX チャット). Injected into the prompt.
+ *
+ * @return string
+ */
+function apprex_chat_knowledge() {
+	return trim( (string) get_option( 'apprex_chat_knowledge', '' ) );
+}
+
+/**
+ * System prompt: APPREX persona + live pricing/services + admin knowledge base.
+ *
+ * @return string
+ */
+function apprex_chat_system_prompt() {
+	$pricing = apprex_pricing_summary_text();
+	$prompt  = <<<PROMPT
+あなたは「合同会社アイズ」が運営するノーコードアプリ開発プラットフォーム「APPREX（アプレックス）」の公式サイトに常駐する、親しみやすく丁寧なカスタマーサポートAIです。
+
+# 役割
+- 来訪者の質問に正確・簡潔に答え、顧客満足を最優先する。
+- 必要に応じて「見積もり」や「無料体験」「お問い合わせ」へ自然に案内する。
+- 分からないことは正直に伝え、担当者へのお問い合わせを促す。推測で誤った金額や仕様を断定しない。
+- 日本語で、絵文字は控えめに、敬体（です・ます）で回答する。1〜3文程度を基本に簡潔に。
+
+# APPREXの基本情報
+- ノーコードでiOS/Androidアプリを開発・運営できるプラットフォーム。制作代行・ホームページ制作も提供。
+- 強み：高性能・低価格（従来の1/10）・スピード公開（最短2週間）・専任サポート・分析機能。
+- 導入実績8,000+。電話窓口は無し（チャット・メール・オンライン相談、平日10:00〜18:00）。
+
+# 料金（最新・税抜）
+{$pricing}
+
+# 見積もり・発注の案内
+- 具体的な料金を知りたい人には、サイトの「見積もりフォーム（/estimate）」で、サービス・プラン・オプションを選ぶと概算が出て、そのまま発注（仮申込）まで進めることを伝える。
+- 「即日公開」という表現は使わない（「スピード公開・最短2週間」と表現する）。
+PROMPT;
+
+	$knowledge = apprex_chat_knowledge();
+	if ( '' !== $knowledge ) {
+		$prompt .= "\n\n# 追加ナレッジ（運営者がWP管理画面で登録した最新情報。最優先で参照する）\n" . $knowledge;
+	}
+
+	return apply_filters( 'apprex_chat_system_prompt', $prompt );
+}
+
+/**
+ * Register the REST route.
+ */
+add_action( 'rest_api_init', function () {
+	register_rest_route(
+		'apprex/v1',
+		'/chat',
+		array(
+			'methods'             => 'POST',
+			'callback'            => 'apprex_rest_chat',
+			'permission_callback' => '__return_true', // Public widget; protected by nonce + throttle below.
+		)
+	);
+} );
+
+/**
+ * REST handler: validate, throttle, proxy to OpenRouter.
+ *
+ * @param WP_REST_Request $request Request.
+ * @return WP_REST_Response|WP_Error
+ */
+function apprex_rest_chat( WP_REST_Request $request ) {
+	// Nonce check (sent by the widget as X-WP-Nonce).
+	$nonce = $request->get_header( 'x_wp_nonce' );
+	if ( ! $nonce || ! wp_verify_nonce( $nonce, 'wp_rest' ) ) {
+		return new WP_Error( 'forbidden', '不正なリクエストです。ページを再読み込みしてください。', array( 'status' => 403 ) );
+	}
+
+	// Simple per-IP throttle: max 20 requests / 60s.
+	$ip  = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : 'anon';
+	$key = 'apprex_chat_rl_' . md5( $ip );
+	$hits = (int) get_transient( $key );
+	if ( $hits >= 20 ) {
+		return new WP_Error( 'rate_limited', '混み合っています。しばらくしてからお試しください。', array( 'status' => 429 ) );
+	}
+	set_transient( $key, $hits + 1, MINUTE_IN_SECONDS );
+
+	// Parse + sanitize history.
+	$raw = $request->get_param( 'messages' );
+	if ( ! is_array( $raw ) ) {
+		return new WP_Error( 'bad_request', 'メッセージがありません。', array( 'status' => 400 ) );
+	}
+	$messages = array();
+	foreach ( array_slice( $raw, -12 ) as $m ) { // Cap history length.
+		$role    = isset( $m['role'] ) && in_array( $m['role'], array( 'user', 'assistant' ), true ) ? $m['role'] : 'user';
+		$content = isset( $m['content'] ) ? sanitize_textarea_field( $m['content'] ) : '';
+		$content = mb_substr( $content, 0, 2000 ); // Cap message length.
+		if ( '' !== $content ) {
+			$messages[] = array( 'role' => $role, 'content' => $content );
+		}
+	}
+	if ( empty( $messages ) ) {
+		return new WP_Error( 'bad_request', 'メッセージが空です。', array( 'status' => 400 ) );
+	}
+
+	// Mock mode for local/dev without network.
+	if ( defined( 'APPREX_CHAT_MOCK' ) && APPREX_CHAT_MOCK ) {
+		$last = end( $messages );
+		return rest_ensure_response(
+			array(
+				'reply' => apprex_chat_mock_reply( $last['content'] ),
+				'mock'  => true,
+			)
+		);
+	}
+
+	if ( '' === apprex_openrouter_key() ) {
+		return new WP_Error( 'not_configured', 'チャットは現在準備中です。お問い合わせフォームをご利用ください。', array( 'status' => 503 ) );
+	}
+
+	$reply = apprex_openrouter_complete(
+		array_merge(
+			array( array( 'role' => 'system', 'content' => apprex_chat_system_prompt() ) ),
+			$messages
+		),
+		array( 'temperature' => 0.4, 'max_tokens' => 600, 'timeout' => 30 )
+	);
+
+	if ( is_wp_error( $reply ) ) {
+		return new WP_Error( 'upstream_error', 'ただいま応答できませんでした。お手数ですがお問い合わせフォームをご利用ください。', array( 'status' => 502 ) );
+	}
+
+	return rest_ensure_response( array( 'reply' => $reply ) );
+}
+
+/**
+ * Canned reply for mock mode (UI/plumbing verification).
+ *
+ * @param string $msg User message.
+ * @return string
+ */
+function apprex_chat_mock_reply( $msg ) {
+	if ( false !== mb_strpos( $msg, '料金' ) || false !== mb_strpos( $msg, '見積' ) ) {
+		return "アプリ開発は月額19,800円〜（初期費用0円）です。サービスやオプションを選ぶと概算が出る「見積もりフォーム」から、そのまま発注まで進めます。ご案内しましょうか？【モック応答】";
+	}
+	return "ご質問ありがとうございます。APPREX はノーコードでiOS/Androidアプリを最短2週間で公開できます。詳しくは見積もりフォームや無料体験もご利用ください。【モック応答】";
+}
+
+/**
+ * Minimal settings page: Settings > APPREX チャット.
+ */
+add_action( 'admin_menu', function () {
+	add_options_page( 'APPREX チャット設定', 'APPREX チャット', 'manage_options', 'apprex-chat', 'apprex_chat_settings_page' );
+} );
+
+add_action( 'admin_init', function () {
+	register_setting( 'apprex_chat', 'apprex_openrouter_api_key', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+	register_setting( 'apprex_chat', 'apprex_openrouter_model', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+	register_setting( 'apprex_chat', 'apprex_chat_knowledge', array( 'sanitize_callback' => 'sanitize_textarea_field' ) );
+} );
+
+/**
+ * Render the settings page.
+ */
+function apprex_chat_settings_page() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+	$key_from_const = defined( 'APPREX_OPENROUTER_API_KEY' ) && APPREX_OPENROUTER_API_KEY;
+	?>
+	<div class="wrap">
+		<h1><?php esc_html_e( 'APPREX チャット（OpenRouter）設定', 'apprex' ); ?></h1>
+		<form method="post" action="options.php">
+			<?php settings_fields( 'apprex_chat' ); ?>
+			<table class="form-table" role="presentation">
+				<tr>
+					<th scope="row"><?php esc_html_e( 'OpenRouter APIキー', 'apprex' ); ?></th>
+					<td>
+						<?php if ( $key_from_const ) : ?>
+							<p><em><?php esc_html_e( 'wp-config.php の APPREX_OPENROUTER_API_KEY で設定済みです（こちらが優先されます）。', 'apprex' ); ?></em></p>
+						<?php else : ?>
+							<input type="password" name="apprex_openrouter_api_key" value="<?php echo esc_attr( get_option( 'apprex_openrouter_api_key', '' ) ); ?>" class="regular-text" autocomplete="off">
+							<p class="description"><?php esc_html_e( 'sk-or- から始まるキー。セキュリティ上、可能なら wp-config.php の定数での設定を推奨します。', 'apprex' ); ?></p>
+						<?php endif; ?>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'モデル', 'apprex' ); ?></th>
+					<td>
+						<input type="text" name="apprex_openrouter_model" value="<?php echo esc_attr( get_option( 'apprex_openrouter_model', '' ) ); ?>" class="regular-text" placeholder="<?php echo esc_attr( APPREX_OPENROUTER_DEFAULT_MODEL ); ?>">
+						<p class="description"><?php printf( esc_html__( '未入力時は %s。任意の OpenRouter モデルID（例：google/gemini-flash-1.5、deepseek/deepseek-chat 等）を指定できます。', 'apprex' ), esc_html( APPREX_OPENROUTER_DEFAULT_MODEL ) ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'ナレッジ（チャット学習内容）', 'apprex' ); ?></th>
+					<td>
+						<textarea name="apprex_chat_knowledge" rows="10" class="large-text" placeholder="<?php esc_attr_e( '例）よくある質問と回答、キャンペーン情報、対応業種、納期の目安、注意事項 など。ここに書いた内容をチャットボットが最優先で参照して回答します。', 'apprex' ); ?>"><?php echo esc_textarea( get_option( 'apprex_chat_knowledge', '' ) ); ?></textarea>
+						<p class="description"><?php esc_html_e( 'チャットボットに覚えさせたい自社情報・FAQ・ルールを自由に記載してください（WP側で随時更新＝学習）。', 'apprex' ); ?></p>
+					</td>
+				</tr>
+			</table>
+			<?php submit_button(); ?>
+		</form>
+	</div>
+	<?php
+}

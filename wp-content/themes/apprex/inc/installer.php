@@ -49,6 +49,8 @@ function apprex_seed_pages() {
 		'faq'         => array( 'title' => 'よくある質問', 'tpl' => 'page-templates/page-faq.php' ),
 		'free-trial'  => array( 'title' => '無料体験申し込み', 'tpl' => 'page-templates/page-free-trial.php' ),
 		'contact'     => array( 'title' => 'お問い合わせ', 'tpl' => 'page-templates/page-contact.php' ),
+		'estimate'    => array( 'title' => '見積もり・発注', 'tpl' => 'page-templates/page-estimate.php' ),
+		'document'    => array( 'title' => '資料請求', 'tpl' => 'page-templates/page-document.php' ),
 		'hp-creation' => array( 'title' => 'ホームページ制作', 'tpl' => 'page-templates/page-hp-creation.php' ),
 		'company'     => array( 'title' => '会社概要', 'tpl' => 'page-templates/page-company.php' ),
 	);
@@ -107,7 +109,7 @@ function apprex_seed_menu( $pages ) {
 		return;
 	}
 
-	$order = array( 'features', 'functions', 'pricing', 'company', 'faq' );
+	$order = array( 'features', 'functions', 'pricing', 'estimate', 'company', 'faq' );
 	$pos   = 1;
 	foreach ( $order as $slug ) {
 		if ( empty( $pages[ $slug ] ) ) {
