@@ -65,7 +65,7 @@ function mapFormToLoan(row, caseId) {
     '電話番号':       row[22],
     'LINE_ID':        row[1],
     '郵便番号':       row[16],
-    '住所':           [row[17], row[18], row[19], row[20]].filter(String).join(''),
+    '住所':           [row[17], row[18], row[19], row[20]].map(cleanCell).filter(String).join(''),
     '雇用形態':       row[36],
     '勤続年数':       String(row[45] || '') + String(row[46] || ''), // 継続年数+継続月数（例:「9年11ヶ月」）
     '年収':           row[47],
@@ -94,6 +94,31 @@ function buildRowFromMap(headers, dataMap) {
   return headers.map(function(h) {
     return Object.prototype.hasOwnProperty.call(dataMap, h) ? dataMap[h] : '';
   });
+}
+
+// フォーム読み込み値の整形：null/未定義は空文字、Date型（番地等の自動変換）は
+// 日付文字列にして「Fri Jan 09 2026 …」のような出力を防ぐ
+function cleanCell(v) {
+  if (v === null || v === undefined || v === '') return '';
+  if (v instanceof Date) return Utilities.formatDate(v, 'Asia/Tokyo', 'yyyy/MM/dd');
+  return String(v);
+}
+
+// 【保守用】列ズレした既存データを正しいマッピングで作り直す。
+// ヘッダーを最新化 → 既存ローン案件を消去 → フォームから全件再取り込み＋再スコアリング。
+// ※実行前に必ずスプレッドシートのバックアップを取ってください。
+function rebuildLoanSheet() {
+  setupAllSheets(); // ヘッダーを最新スキーマ（月額支払い可能額・頭金有無 等を含む）に更新
+  const config = getConfig();
+  const ss = SpreadsheetApp.openById(config.SPREADSHEET.ID);
+  const sheet = ss.getSheetByName(config.SPREADSHEET.SHEETS.LOAN);
+  const lastRow = sheet.getLastRow();
+  if (lastRow > 1) {
+    sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).clearContent();
+    Logger.log('既存ローン案件 ' + (lastRow - 1) + '件を消去しました');
+  }
+  onProLineFormSubmit(); // 正しいマッピングで全件取り込み直し＋スコアリング
+  Logger.log('ローン案件シートの再構築が完了しました');
 }
 
 function getLineIdByUid(uid, ss) {
