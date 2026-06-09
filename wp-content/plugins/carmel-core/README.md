@@ -156,11 +156,25 @@ Carmel_Deal_Status::change( $deal_id, 'delivered', array( 'system' => true ) );
 
 > /hq の審査画面でステータスを変えると、この /mypage の表示と顧客への通知が連動して更新される（本部↔顧客の対の画面）。
 
+## 加盟店ポータル（Phase 2 実装済み）
+
+ショートコード **`[carmel_store]`** を /store ページに設置すると、加盟店ダッシュボードを表示する（`store_owner` / `store_staff`）。
+
+- **行レベルのアクセス制御**：ユーザーの user_meta `store_id` と案件の `store_id` が一致する案件のみ表示・操作可。他店舗の案件は閲覧・操作とも 403
+- **ダッシュボード**：担当案件数・ステータス別カウントのサマリーカード
+- **案件一覧**：申込者・種別・ステータス・操作ボタン
+- **工程を進めるボタン**：加盟店が担当する前進遷移のみ提示（loan: matched→書類準備→（本部の契約後）→納車準備→納車済→アフター→クローズ、buyback/lease は各フロー）
+  - **本部専用の遷移（審査・契約）は提示せず**、`doc_prep` 等では「本部の手続き待ち」と表示。万一POSTされても `Carmel_Deal_Status` の cap で二重ブロック
+  - 納車準備へ進める際は**納車予定日**を入力でき、`delivery_date_fixed` 通知に反映
+- 押下 → `admin-post.php`（nonce＋cap＋**自店所属チェック**＋遷移妥当性チェック）→ `Carmel_Deal_Status::change()` → 通知・在庫連動・監査ログ発火
+
+> HQユーザー（`carmel_manage_stores`）は全店の案件を横断表示・操作できる。
+
 ## 次フェーズ（未実装）
 
-- /store ダッシュボード・案件カンバン
-- /hq 全加盟店横断カンバン（審査以外の案件管理）
+- /hq 全加盟店横断カンバン（審査以外の案件管理）・売上レポート
 - 書類アップロード、返済状況の顧客表示
+- ACF フィールド群（deal_type 別）、Square / GAS / Maps 連携
 - ステータス変更フックから `carmel_event` の自動発火
 - ACF フィールド群（deal_type 別）、行レベルのクエリフィルター
 - GAS / Square / Google Maps 連携

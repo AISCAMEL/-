@@ -27,6 +27,7 @@ require_once CARMEL_CORE_DIR . 'includes/class-carmel-application-intake.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-deal-status.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-hq-screening.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-mypage.php';
+require_once CARMEL_CORE_DIR . 'includes/class-carmel-store.php';
 require_once CARMEL_CORE_DIR . 'includes/notifications/interface-carmel-channel-adapter.php';
 require_once CARMEL_CORE_DIR . 'includes/notifications/class-carmel-notification-log.php';
 require_once CARMEL_CORE_DIR . 'includes/notifications/adapters/class-carmel-proline-adapter.php';
@@ -45,6 +46,7 @@ function carmel_core_init() {
 	Carmel_Deal_Status::instance()->register_hooks();
 	Carmel_HQ_Screening::instance()->register_hooks();
 	Carmel_MyPage::instance()->register_hooks();
+	Carmel_Store::instance()->register_hooks();
 	Carmel_Notifier::instance()->register_hooks();
 }
 add_action( 'plugins_loaded', 'carmel_core_init' );
