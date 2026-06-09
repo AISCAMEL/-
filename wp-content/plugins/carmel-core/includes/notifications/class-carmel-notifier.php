@@ -272,7 +272,7 @@ class Carmel_Notifier {
 		$vars = isset( $context['vars'] ) && is_array( $context['vars'] ) ? $context['vars'] : array();
 
 		$defaults = array(
-			'application_received'  => array( '申込を受け付けました', "{name} 様\nお申込みを受け付けました。マイページからお手続き状況をご確認いただけます。" ),
+			'application_received'  => array( '申込を受け付けました', "{name} 様\nお申込みを受け付けました。{account_notice}\nお手続き状況はマイページからご確認いただけます。" ),
 			'screening_result'      => array( '審査結果のお知らせ', "{name} 様\n審査結果：{result}\n詳細はマイページをご確認ください。" ),
 			'store_assigned'        => array( '新規案件アサイン', "案件 #{deal_id} が割り当てられました。" ),
 			'contract_sign_request' => array( '契約書ご署名のお願い', "{name} 様\nご契約手続きの準備が整いました。マイページよりご署名ください。" ),

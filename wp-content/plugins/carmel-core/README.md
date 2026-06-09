@@ -77,9 +77,36 @@ do_action( 'carmel_event', 'inspection_notice', array(
 1. `wp-content/plugins/carmel-core/` を配置
 2. 管理画面でプラグインを有効化（CPT・ロール登録＋リライトルール flush が自動実行）
 
+## 申込受付（Phase 2 実装済み）
+
+`Carmel_Application_Intake` がフォーム送信を受けて **顧客アカウント自動発行 → 案件作成 → 申込受付通知** を一括処理する。フォーム非依存で、以下3経路から同じ `process()` を呼ぶ。
+
+| 経路 | 配線 | フィールドマッピング |
+|------|------|---------------------|
+| Contact Form 7 | `wpcf7_mail_sent` | `carmel_cf7_field_map` フィルタ |
+| Gravity Forms | `gform_after_submission` | `carmel_gform_field_map` フィルタ（フォームID別） |
+| REST | `POST /wp-json/carmel/v1/application` | `X-Carmel-Token` ヘッダ必須 |
+
+- **正規化キー**：`name`(必須) / `email`(必須) / `phone` / `deal_type`(loan/buyback/lease) / `message` / `extra[]`
+- **アカウント発行**：同一メールの既存ユーザーは再利用、新規は `customer` ロールで作成。**平文パスワードは送らず**、パスワード設定（マジック）リンクを通知に含める（要件§13-#5の安全な既定）
+- **初期ステータス**：loan→`provisional` / buyback→`appraisal_request` / lease→`lease_request`
+- 完了後 `carmel_application_created` アクションを発火（後続連携用）
+
+```php
+$result = Carmel_Application_Intake::process( array(
+    'name'      => '山田太郎',
+    'email'     => 'taro@example.com',
+    'phone'     => '090-0000-0000',
+    'deal_type' => 'loan',
+    'message'   => 'ローン審査希望',
+) );
+// => [ 'deal_id' => 45, 'customer_id' => 12, 'created_account' => true ]
+```
+
+REST エンドポイントは `CARMEL_INTAKE_TOKEN`（定数）または `carmel_intake_token`（オプション）未設定時は既定で拒否（`carmel_intake_allow_unauthenticated` フィルタで開放可）。
+
 ## 次フェーズ（未実装）
 
-- 申込フォーム → 案件作成＋顧客アカウント自動発行
 - /mypage の PHASE 表示制御、/store・/hq の画面
 - ステータス変更フックから `carmel_event` の自動発火
 - ACF フィールド群（deal_type 別）、行レベルのクエリフィルター
