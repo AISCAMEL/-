@@ -131,9 +131,23 @@ Carmel_Deal_Status::change( $deal_id, 'delivered', array( 'system' => true ) );
 
 各マップは `carmel_transition_caps` / `carmel_status_events` / `carmel_vehicle_status_map` フィルタで調整可能。
 
+## 本部 審査管理画面（Phase 2 実装済み）
+
+ショートコード **`[carmel_hq_screening]`** を /hq ページに設置すると、信販審査キューが表示される（`carmel_screening` cap を持つ本部のみ）。
+
+- 審査待ち案件（`provisional` / `scored` / `screening`）を一覧表示。申込者・種別・AIスコア・現在ステータスを表示
+- 各案件に **審査開始 / 審査OK / 審査NG（理由入力）** ボタン
+- ボタン押下 → `admin-post.php`（nonce 検証 + cap チェック）→ `Carmel_Deal_Status::change()` を実行
+  - これにより**顧客への審査結果通知・在庫連動・監査ログが自動発火**
+- NG時は `screening_result` / `screening_reason` メタも保存し、NG理由を通知 vars に反映
+- 処理後はバナーで結果表示（送信成功／権限エラー等）
+
+> /hq ページ自体のアクセス制御は `Carmel_Access_Control` が担当（未ログイン→/login、権限不足→403）。本ショートコードは二重に cap を確認する。
+
 ## 次フェーズ（未実装）
 
-- /mypage の PHASE 表示制御、/store・/hq の画面
+- /mypage の PHASE 表示制御、/store ダッシュボード・カンバン
+- /hq 全加盟店横断カンバン（審査以外の案件管理）
 - ステータス変更フックから `carmel_event` の自動発火
 - ACF フィールド群（deal_type 別）、行レベルのクエリフィルター
 - GAS / Square / Google Maps 連携
