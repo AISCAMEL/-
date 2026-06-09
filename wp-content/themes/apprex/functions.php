@@ -49,18 +49,21 @@ require_once APPREX_DIR . '/inc/enqueue.php';
 require_once APPREX_DIR . '/inc/cpt-cases.php';
 require_once APPREX_DIR . '/inc/acf-fields.php';
 require_once APPREX_DIR . '/inc/template-helpers.php';
+require_once APPREX_DIR . '/inc/installer.php';
 
 /**
  * Fallback for the primary menu before the client assigns one in wp-admin.
- * Mirrors the spec's global nav: 特徴 | 機能 | 事例 | 料金 | FAQ | 無料体験を始める
+ * Global nav (現行サイト準拠): 特徴 | 機能 | 料金 | 事例 | HP制作 | 会社概要 | FAQ
  */
 function apprex_primary_menu_fallback() {
 	$items = array(
-		'/features'   => __( '特徴', 'apprex' ),
-		'/functions'  => __( '機能', 'apprex' ),
-		'/cases'      => __( '事例', 'apprex' ),
-		'/pricing'    => __( '料金', 'apprex' ),
-		'/faq'        => __( 'FAQ', 'apprex' ),
+		'/features'    => __( '特徴', 'apprex' ),
+		'/functions'   => __( '機能', 'apprex' ),
+		'/pricing'     => __( '料金', 'apprex' ),
+		'/cases'       => __( '事例', 'apprex' ),
+		'/hp-creation' => __( 'HP制作', 'apprex' ),
+		'/company'     => __( '会社概要', 'apprex' ),
+		'/faq'         => __( 'FAQ', 'apprex' ),
 	);
 	echo '<ul class="menu">';
 	foreach ( $items as $path => $label ) {
@@ -72,3 +75,18 @@ function apprex_primary_menu_fallback() {
 	}
 	echo '</ul>';
 }
+
+/**
+ * Zapier chatbot URL (修正要件 §2). Filterable so it can be overridden.
+ */
+function apprex_chatbot_url() {
+	return apply_filters( 'apprex_chatbot_url', 'https://apprex.zapier.app' );
+}
+
+/**
+ * Inject the floating Zapier chatbot on every page (修正要件 §2 — 全ページ).
+ */
+function apprex_render_chatbot() {
+	get_template_part( 'template-parts/chatbot' );
+}
+add_action( 'wp_footer', 'apprex_render_chatbot' );

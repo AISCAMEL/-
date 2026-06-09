@@ -23,7 +23,7 @@ $apprex_cases = new WP_Query(
 ?>
 <section class="section" id="cases">
 	<div class="container">
-		<?php apprex_section_head( 'Cases', __( '9業種8,000社以上の導入実績', 'apprex' ), __( '業種を問わず、成果につながるアプリを実現しています。', 'apprex' ) ); ?>
+		<?php apprex_section_head( 'Cases', __( 'アプリ事例', 'apprex' ), __( 'マッチングアプリから業務アプリまで。APPREX で実現したアプリの一例をご紹介します。', 'apprex' ) ); ?>
 
 		<?php if ( $apprex_cases->have_posts() ) : ?>
 			<div class="grid grid--3">

@@ -11,7 +11,28 @@
 		initAccordion();
 		initReveal();
 		initCounters();
+		initChatbot();
 	});
+
+	/* ---- Zapier chatbot (lazy iframe) ---- */
+	function initChatbot() {
+		var toggle = document.querySelector('.apprex-chat-toggle');
+		var win = document.getElementById('apprex-chat-window');
+		if (!toggle || !win) {
+			return;
+		}
+		toggle.addEventListener('click', function () {
+			var open = win.classList.toggle('is-open');
+			toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+			if (open && !win.querySelector('iframe') && win.dataset.src) {
+				var f = document.createElement('iframe');
+				f.src = win.dataset.src;
+				f.title = 'APPREX チャット';
+				f.loading = 'lazy';
+				win.appendChild(f);
+			}
+		});
+	}
 
 	/* ---- Mobile drawer ---- */
 	function initMobileNav() {

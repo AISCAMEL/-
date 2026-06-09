@@ -18,7 +18,7 @@ $apprex_stats = array(
 	array(
 		'value'  => '1/10',
 		'suffix' => '',
-		'label'  => __( '従来コスト比', 'apprex' ),
+		'label'  => __( '従来の開発コスト', 'apprex' ),
 	),
 	array(
 		'value'  => '2',
@@ -26,9 +26,9 @@ $apprex_stats = array(
 		'label'  => __( '最短公開', 'apprex' ),
 	),
 	array(
-		'value'  => '99.9',
-		'suffix' => '%',
-		'label'  => __( '稼働率保証', 'apprex' ),
+		'value'  => '19,800',
+		'suffix' => __( '円〜', 'apprex' ),
+		'label'  => __( '月額（業界最安水準）', 'apprex' ),
 	),
 );
 ?>

@@ -14,34 +14,35 @@ Tags: business, custom-post-types, custom-menu, featured-images, responsive-layo
 */
 
 /* ===========================================================================
-   Design Tokens
+   Design Tokens — APPREX bright blue palette (現行サイト準拠 / 案A)
    ======================================================================== */
 :root {
-  --color-primary: #1a5cff;
-  --color-primary-dark: #0a3fc4;
-  --color-primary-light: #e9f0ff;
-  --color-accent: #ff7a18;
-  --color-ink: #0e1730;
-  --color-body: #3a4256;
+  --color-primary: #3b82f6;       /* 明るいブルー */
+  --color-primary-dark: #2563eb;
+  --color-primary-light: #eff6ff;
+  --color-secondary: #10b981;     /* グリーン */
+  --color-accent: #f59e0b;        /* オレンジ */
+  --color-ink: #1f2937;
+  --color-body: #374151;
   --color-muted: #6b7280;
-  --color-line: #e5e8ef;
+  --color-line: #e5e7eb;
   --color-bg: #ffffff;
-  --color-bg-soft: #f5f7fc;
-  --color-bg-dark: #0e1730;
+  --color-bg-soft: #f0f9ff;       /* 淡いブルー */
+  --color-bg-dark: #1e3a8a;       /* ネイビー */
   --color-success: #10b981;
 
   --radius-sm: 8px;
   --radius: 14px;
   --radius-lg: 22px;
-  --shadow-sm: 0 2px 8px rgba(14, 23, 48, .06);
-  --shadow: 0 10px 30px rgba(14, 23, 48, .08);
-  --shadow-lg: 0 24px 60px rgba(14, 23, 48, .12);
+  --shadow-sm: 0 2px 8px rgba(59, 130, 246, .1);
+  --shadow: 0 4px 12px rgba(59, 130, 246, .15);
+  --shadow-lg: 0 10px 30px rgba(59, 130, 246, .2);
 
-  --container: 1160px;
+  --container: 1200px;
   --gap: clamp(16px, 4vw, 40px);
-  --section-y: clamp(56px, 9vw, 120px);
+  --section-y: clamp(56px, 9vw, 110px);
 
-  --font-sans: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, system-ui, sans-serif;
+  --font-sans: "Hiragino Kaku Gothic ProN", "ヒラギノ角ゴ ProN W3", "Noto Sans JP", "Yu Gothic", Meiryo, system-ui, sans-serif;
 }
 
 /* ===========================================================================
@@ -107,9 +108,9 @@ ul { margin: 0; padding: 0; list-style: none; }
   transition: transform .15s, box-shadow .2s, background .2s, color .2s;
 }
 .btn:active { transform: translateY(1px); }
-.btn--primary { background: var(--color-primary); color: #fff; box-shadow: 0 8px 20px rgba(26, 92, 255, .3); }
-.btn--primary:hover { background: var(--color-primary-dark); color: #fff; box-shadow: 0 12px 26px rgba(26, 92, 255, .38); }
-.btn--accent { background: var(--color-accent); color: #fff; box-shadow: 0 8px 20px rgba(255, 122, 24, .3); }
+.btn--primary { background: var(--color-primary); color: #fff; box-shadow: 0 8px 20px rgba(59, 130, 246, .3); }
+.btn--primary:hover { background: var(--color-primary-dark); color: #fff; box-shadow: 0 12px 26px rgba(59, 130, 246, .38); }
+.btn--accent { background: var(--color-accent); color: #fff; box-shadow: 0 8px 20px rgba(245, 158, 11, .3); }
 .btn--accent:hover { filter: brightness(1.05); color: #fff; }
 .btn--ghost { background: transparent; color: var(--color-primary); border-color: var(--color-primary); }
 .btn--ghost:hover { background: var(--color-primary-light); color: var(--color-primary-dark); }
@@ -162,8 +163,8 @@ ul { margin: 0; padding: 0; list-style: none; }
 .hero {
   position: relative; overflow: hidden;
   background:
-    radial-gradient(1200px 600px at 80% -10%, rgba(26, 92, 255, .18), transparent 60%),
-    linear-gradient(180deg, var(--color-primary-light), #fff 70%);
+    radial-gradient(1200px 600px at 80% -10%, rgba(59, 130, 246, .18), transparent 60%),
+    linear-gradient(180deg, var(--color-bg-soft), #fff 70%);
   padding-block: clamp(48px, 8vw, 96px);
 }
 .hero__inner { display: grid; gap: clamp(28px, 5vw, 56px); align-items: center; }
@@ -319,3 +320,72 @@ ul { margin: 0; padding: 0; list-style: none; }
   .is-reveal { opacity: 1; transform: none; transition: none; }
   html { scroll-behavior: auto; }
 }
+
+/* ===========================================================================
+   APPREX brushed-up components (現行サイト準拠)
+   ======================================================================== */
+
+/* Campaign bar (月末まで限定！先着5名様) */
+.campaign-bar {
+  background: linear-gradient(135deg, var(--color-accent), #fbbf24);
+  color: #fff; text-align: center; font-weight: 700; font-size: .9rem;
+  padding: 8px 16px; line-height: 1.5;
+}
+.campaign-bar strong { font-size: 1rem; }
+
+/* Logo image in header/footer */
+.logo-image { height: 44px; width: auto; display: block; }
+.site-footer .logo-image { height: 40px; }
+
+/* Hero secondary line under badges */
+.hero__sub { font-size: .9rem; color: var(--color-muted); margin-top: 14px; }
+.hero__sub strong { color: var(--color-secondary); }
+
+/* Section: highlight callout (e.g. HP制作) */
+.callout {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  color: #fff; border-radius: var(--radius-lg); padding: clamp(28px, 5vw, 48px); text-align: center;
+}
+.callout h2, .callout h3 { color: #fff; }
+.callout p { color: rgba(255,255,255,.92); }
+.callout .btn { margin-top: 18px; }
+
+/* Instagram strip */
+.insta {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 18px;
+  background: linear-gradient(135deg, #f58529, #dd2a7b 50%, #8134af 90%);
+  color: #fff; border-radius: var(--radius-lg); padding: 26px clamp(20px, 4vw, 40px); text-align: center;
+}
+.insta h3 { color: #fff; margin: 0; }
+.insta p { color: rgba(255,255,255,.92); margin: 4px 0 0; }
+
+/* Pricing: secondary plan groups (制作代行 / 自社制作) */
+.plan-group-title { text-align: center; font-size: 1.2rem; margin: 48px 0 8px; color: var(--color-ink); }
+.plan-note { text-align: center; color: var(--color-muted); font-size: .85rem; margin-top: 14px; }
+.price-card .price--ask { font-size: 1.4rem; }
+
+/* Secondary color button */
+.btn--secondary { background: var(--color-secondary); color: #fff; box-shadow: 0 8px 20px rgba(16,185,129,.3); }
+.btn--secondary:hover { filter: brightness(1.05); color: #fff; }
+
+/* Zapier chatbot floating button + window */
+.apprex-chat-toggle {
+  position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  border: none; box-shadow: 0 4px 14px rgba(0,0,0,.25); cursor: pointer; z-index: 9999;
+  color: #fff; font-size: 26px; display: grid; place-items: center; transition: transform .2s;
+}
+.apprex-chat-toggle:hover { transform: scale(1.06); }
+.apprex-chat-window {
+  position: fixed; bottom: 92px; right: 20px; width: 400px; height: 600px; max-height: 76vh;
+  border-radius: 14px; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,.2);
+  z-index: 9998; display: none; background: #fff;
+}
+.apprex-chat-window.is-open { display: block; }
+.apprex-chat-window iframe { width: 100%; height: 100%; border: 0; }
+@media (max-width: 768px) {
+  .apprex-chat-window { width: calc(100vw - 24px); right: 12px; left: 12px; height: 70vh; bottom: 88px; }
+}
+
+/* App sample (cases) — show full app screenshot without cropping */
+.case-card__thumb--contain { aspect-ratio: 3 / 4; background: #f1f5f9; object-fit: contain; }

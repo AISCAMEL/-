@@ -10,12 +10,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $apprex_features = array(
-	array( 'icon' => '⚡', 'title' => __( 'ノーコード開発', 'apprex' ), 'desc' => __( 'プログラミング知識不要。ドラッグ＆ドロップでアプリを構築できます。', 'apprex' ) ),
-	array( 'icon' => '💴', 'title' => __( '圧倒的な低価格', 'apprex' ), 'desc' => __( '従来の開発コストの1/10。月額19,800円〜で本格的なアプリを運用。', 'apprex' ) ),
-	array( 'icon' => '🚀', 'title' => __( 'スピード開発', 'apprex' ), 'desc' => __( '最短2週間で公開。ビジネスチャンスを逃しません。', 'apprex' ) ),
-	array( 'icon' => '🎨', 'title' => __( 'カスタマイズ自由', 'apprex' ), 'desc' => __( '業種・用途に合わせて柔軟にレイアウトと機能を調整できます。', 'apprex' ) ),
-	array( 'icon' => '📱', 'title' => __( 'マルチプラットフォーム対応', 'apprex' ), 'desc' => __( 'iOS / Android の両方に1つの管理画面から対応します。', 'apprex' ) ),
-	array( 'icon' => '🔒', 'title' => __( 'セキュリティ万全', 'apprex' ), 'desc' => __( '稼働率99.9%保証。堅牢なインフラで安心して運用いただけます。', 'apprex' ) ),
+	array( 'icon' => '⚡', 'title' => __( 'ノーコード開発', 'apprex' ), 'desc' => __( 'プログラミング知識不要で、ドラッグ&ドロップで簡単にアプリを作成できます。', 'apprex' ) ),
+	array( 'icon' => '💴', 'title' => __( '高性能、低価格', 'apprex' ), 'desc' => __( '従来の開発費用の1/10以下で、全業種・どんなアプリでも高品質に開発できます。', 'apprex' ) ),
+	array( 'icon' => '🚀', 'title' => __( 'スピード開発', 'apprex' ), 'desc' => __( 'スピード公開対応（最短2週間）。従来の開発期間を大幅に短縮します。', 'apprex' ) ),
+	array( 'icon' => '📱', 'title' => __( 'iOS / Android 対応', 'apprex' ), 'desc' => __( 'iOSとAndroidの両方に対応。一度の開発で両プラットフォームに配信できます。', 'apprex' ) ),
+	array( 'icon' => '📊', 'title' => __( '分析機能', 'apprex' ), 'desc' => __( 'ユーザー行動を詳細に分析。データに基づいた改善が可能です。', 'apprex' ) ),
+	array( 'icon' => '🤝', 'title' => __( '充実サポート', 'apprex' ), 'desc' => __( '専任スタッフが開発から運用までしっかりサポートします。', 'apprex' ) ),
 );
 ?>
 <section class="section" id="features">

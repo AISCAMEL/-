@@ -1,75 +1,74 @@
 # APPREX WordPress テーマ
 
-クラウド型アプリ開発プラットフォーム「APPREX」公式サイト（`site.aiscompany.jp`）リニューアル用の自作テーマです。制作指示書（`docs/APPREX_WordPress制作指示書.md`）の構成を実装しています。
+クラウド型アプリ開発プラットフォーム「APPREX」（合同会社アイズ）公式サイトの WordPress テーマです。現行の静的サイト（Cloudflare Pages 版）の実データ・デザイン・画像をもとに、WordPress 向けにブラッシュアップして再構築しています。
 
-## 実装方針（指示書からの修正点）
+## 特長
 
-指示書では Elementor Pro + Hello Elementor が第一候補ですが、**Elementor Pro のライセンスが「要確認」ステータス**のため、本テーマは **ライセンス非依存の独立テーマ** として実装しました。
+- **ワンクリック構築（self-seeder）**：テーマを有効化するだけで、固定ページ・静的フロントページ・グローバルメニュー・導入事例（CPT）と画像が自動生成されます。手動セットアップ不要。
+- **現行サイト準拠のデザイン**：明るいブルー系パレット（#3B82F6 / グリーン #10B981 / オレンジ #F59E0B / 背景 #F0F9FF）、ヒラギノ角ゴ系フォント。
+- **ライセンス非依存**：Elementor Pro は不要。導入事例・FAQ は標準の WordPress（CPT＋ACF/メタボックス）で編集可能。
+- **Zapier チャットボット**を全ページに常設（右下フローティング、クリックで遅延読み込み）。
+- モバイルファースト、Lazy Load、スクロールリビール、カウンターアニメーション。
 
-- 導入事例（cases）と FAQ は **CPT + ACF（無料版でも可）** で wp-admin から編集可能 → 指示書 §9「クライアント自身が編集可能」を Elementor 非依存で達成。
-- ACF が未インストールでも、簡易メタボックスで事例フィールドを入力できるフォールバックを内蔵。
-- 後から Elementor を導入してもテンプレートと共存できる構造。
+## インストール（最短手順）
 
-## 動作要件
+1. WordPress 管理画面 → **外観 > テーマ > 新規追加 > テーマのアップロード** で `apprex-theme.zip` をアップロードし「有効化」。
+2. 有効化と同時に以下が自動生成されます：
+   - 固定ページ：ホーム / 特徴 / 機能説明 / 料金プラン / よくある質問 / 無料体験申し込み / お問い合わせ / ホームページ制作 / 会社概要
+   - 静的フロントページ（ホーム）設定
+   - グローバルメニュー（primary 位置に割り当て）
+   - 導入事例（case）5件＋アプリ画面サンプル画像
+3. 必要に応じて **設定 > パーマリンク** を一度保存（リライト確実化）。
 
-- WordPress 6.0 以上 / PHP 7.4 以上
-- 推奨プラグイン：
-  - **ACF（Advanced Custom Fields）** … 導入事例のフィールド入力（無くても動作）
-  - **Contact Form 7** または **WPForms** … 無料体験・お問い合わせフォーム
-  - WebP 変換・遅延読み込み系（例：EWWW Image Optimizer）※ 画像最適化（§9）
+> 自動生成を無効化したい場合は、有効化前に `wp-config.php` で `define( 'APPREX_DISABLE_SEEDER', true );` を定義してください。既存のページ・事例は上書きされません（冪等）。
 
-## セットアップ手順
+## 推奨プラグイン
 
-1. `wp-content/themes/apprex/` をテーマディレクトリに配置し、外観 > テーマで **APPREX** を有効化。
-   - 有効化時に `cases` の CPT・`industry` タクソノミーが登録され、パーマリンクが自動フラッシュされます。
-2. **固定ページを作成**（指示書 §12 のスラッグで作成）：
+- **ACF（Advanced Custom Fields）**：導入事例フィールドの編集 UI（未導入でも簡易メタボックスで動作）
+- **Contact Form 7 / WPForms**：無料体験・お問い合わせフォーム（未設置時は仮フォームを表示）
+- WebP 変換・遅延読み込み系（例：EWWW Image Optimizer）
 
-   | ページ名 | スラッグ | 割り当てるテンプレート |
-   |---------|---------|----------------------|
-   | ホーム | `front-page`（任意） | （フロントページに指定） |
-   | 特徴 | `features` | 特徴ページ (Features) |
-   | 機能説明 | `functions` | 機能説明ページ (Functions) |
-   | 料金プラン | `pricing` | 料金プランページ (Pricing) |
-   | よくある質問 | `faq` | よくある質問ページ (FAQ) |
-   | 無料体験申し込み | `free-trial` | 無料体験申し込みページ (Free Trial) |
-   | お問い合わせ | `contact` | お問い合わせページ (Contact) |
+## 編集ポイント
 
-3. **設定 > 表示設定** で「ホームページの表示」を「固定ページ」にし、作成したホーム用固定ページを割り当て（`front-page.php` が自動適用されます）。
-4. **外観 > メニュー** で「グローバルナビ」位置にメニューを割り当て（未割り当て時はフォールバックメニューを表示）。
-5. **導入事例**：左メニュー「導入事例」から 9 件を登録（指示書 §7 の表を参照）。各事例で業種・成果指標・開発期間・利用機能を入力し、アイキャッチ画像（WebP 推奨）を設定。
-6. **フォーム**：`free-trial` / `contact` ページの本文に Contact Form 7 等のショートコードを貼り付け（未入力時は仮フォームを表示）。
+- **キャンペーンバー・ヒーロー文言**：`header.php` / `template-parts/sections/hero.php`
+- **料金**：`template-parts/pricing-table.php`（アプリ開発／制作代行）、`page-templates/page-hp-creation.php`（HP制作）
+- **チャットボット URL**：`apprex_chatbot_url()`（`functions.php`）。フィルター `apprex_chatbot_url` で上書き可。
+- **導入事例**：管理画面「導入事例」から追加。業種・成果指標・開発期間・利用機能を入力し、アイキャッチ（アプリ画面）を設定。
+- **メニュー**：外観 > メニューで「メインメニュー」を編集。
 
 ## ファイル構成
 
 ```
 apprex/
-├── style.css                  テーマヘッダー＋全スタイル（デザイントークン/モバイルファースト）
-├── functions.php              テーマ初期化・メニュー・画像サイズ
-├── header.php / footer.php     共通ヘッダー（ナビ）/ フッター
-├── front-page.php             HOME（セクション 01–10 を組み立て）
-├── page.php / index.php        汎用ページ / フォールバック
-├── archive-case.php           導入事例一覧（業種フィルター付き）
-├── single-case.php            導入事例詳細
+├── style.css                  デザイントークン＋全スタイル
+├── functions.php              初期化・メニュー・チャットボット注入
+├── header.php / footer.php     キャンペーンバー＋ナビ / 合同会社アイズ情報
+├── front-page.php             HOME（hero→stats→problem→solution→features→functions→cases→instagram→pricing→hp-cta→faq→final-cta）
+├── archive-case.php / single-case.php   導入事例 一覧・詳細
+├── page.php / index.php
 ├── inc/
-│   ├── enqueue.php            CSS/JS 読み込み・Lazy Load 付与
+│   ├── installer.php          ★ self-seeder（有効化時の自動構築）
 │   ├── cpt-cases.php          CPT「case」＋タクソノミー「industry」
-│   ├── acf-fields.php         ACF フィールド群＋非 ACF フォールバック
-│   └── template-helpers.php   apprex_field() 等の共通関数
+│   ├── acf-fields.php         ACF フィールド＋非 ACF フォールバック
+│   ├── enqueue.php / template-helpers.php
 ├── template-parts/
-│   ├── sections/              HOME 各セクション（hero〜faq）
-│   ├── case-card.php          事例カード（一覧で再利用）
-│   ├── pricing-table.php      3 プラン料金表（HOME/料金ページ共用）
-│   ├── faq-list.php           FAQ アコーディオン（共用）
-│   ├── placeholder-form.php   仮フォーム
-│   └── final-cta.php          共通 Final CTA
-├── page-templates/            下層ページ用テンプレート 6 種
-└── assets/js/main.js          ナビ/タブ/アコーディオン/リビール/カウンター
+│   ├── sections/              HOME 各セクション
+│   ├── case-card.php / pricing-table.php / faq-list.php
+│   ├── chatbot.php            Zapier フローティングチャット
+│   ├── placeholder-form.php / final-cta.php
+├── page-templates/            下層ページ 8 種
+└── assets/
+    ├── images/                ロゴ＋アプリ画面サンプル（現行サイト実画像）
+    └── js/main.js
 ```
 
-## 公開前チェック（指示書 §10）
+## ローカル検証済み環境
 
-- [ ] スマホ・タブレット実機で表示崩れ確認
-- [ ] フォーム送信テスト（本番フォームに差し替え後）
-- [ ] 全リンクの疎通確認
-- [ ] PageSpeed Insights 計測（画像 WebP 化・Lazy Load 済み）
-- [ ] 導入事例 9 件の登録とアイキャッチ設定
+WordPress 6.7.1 / PHP 8.4 / SQLite で構築・全ページ HTTP 200・PHP エラーなしを確認済み（`docs/APPREX_WordPress構築レポート.md` 参照）。
+
+## 現行サイトからの修正（ブラッシュアップ）点
+
+- 料金表記の統一：stale だった `pricing.html`（¥30,000/¥80,000、電話番号 03-XXXX-XXXX、©2024、ブランド誤記「アプリックス」）は不採用。README/トップページの正データ（アプリ開発 Trial¥19,800〜）に統一。
+- 電話番号は全ページ非表示（現行方針を踏襲）。
+- 「即日公開」表現は不使用。「スピード公開（最短2週間）」に統一。
+- 配色は要件「案A 爽やかなブルー系」を正式採用。
