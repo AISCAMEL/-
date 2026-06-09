@@ -105,6 +105,32 @@ $result = Carmel_Application_Intake::process( array(
 
 REST エンドポイントは `CARMEL_INTAKE_TOKEN`（定数）または `carmel_intake_token`（オプション）未設定時は既定で拒否（`carmel_intake_allow_unauthenticated` フィルタで開放可）。
 
+## ステータス遷移（Phase 2 実装済み）
+
+`Carmel_Deal_Status` が案件ステータスのステートマシン。**ステータスが変わると通知・在庫連動・監査ログが自動発火**する。
+
+```php
+// 本部が審査OKに（cap: carmel_screening を要求 → screening_result 通知）
+Carmel_Deal_Status::change( $deal_id, 'approved' );
+
+// 却下理由を添えて（NG通知の vars に渡る）
+Carmel_Deal_Status::change( $deal_id, 'rejected', array(
+    'vars' => array( 'result' => 'NG（収入条件未充足）' ),
+) );
+
+// Cron 等の自動処理は権限チェックをスキップ
+Carmel_Deal_Status::change( $deal_id, 'delivered', array( 'system' => true ) );
+```
+
+- **権限（§5.5）**：遷移先ごとに必要 cap を判定（`approved`/`rejected`→`carmel_screening`、`contracted`→`carmel_send_cloudsign`、他→`carmel_change_deal_status`）。`system=true` で自動処理はスキップ
+- **通知連動**：`approved`/`rejected`→`screening_result`、`matched`→`store_assigned`、`contracted`→`contract_sign_request`、`delivery_prep`/`delivered`→`delivery_date_fixed`
+- **在庫連動（§6.3）**：`matched`→商談中 / `contracted`→売約済 / `delivered`→納車済（`vehicle_id` 紐付け車両）
+- **監査ログ（§10）**：from/to・実行者・日時を `_carmel_status_history` に追記
+- 処理完了で `carmel_deal_status_changed` アクションを発火
+- 管理画面でメタを直接変更した場合も**メタ変更リスナー**経由で同じ処理が走る（経路を問わず一貫）
+
+各マップは `carmel_transition_caps` / `carmel_status_events` / `carmel_vehicle_status_map` フィルタで調整可能。
+
 ## 次フェーズ（未実装）
 
 - /mypage の PHASE 表示制御、/store・/hq の画面
