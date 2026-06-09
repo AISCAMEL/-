@@ -55,6 +55,46 @@
 - サブドメインは検索エンジン上は**独立サイト**として扱われます（Search Console も別プロパティで登録）。
 - Cloudflare をプロキシ（オレンジ雲）で使う場合は、まずは **DNSのみ（グレー雲）** で公開→SSL確認後に必要ならプロキシ有効化が安全です。
 
+## 2.6 既存 `site.aiscompany.jp` を WordPress に置き換える（切替手順）
+
+現在 Cloudflare Pages で配信中の `site.aiscompany.jp` を、**同じホスト名のまま** WPX の WordPress に向け替えます。鉄則は「**先に WPX 側を完成・確認 → 最後に DNS を切替**」。
+
+### フェーズ1：WPX 側を無停止で構築（DNSはまだ触らない）
+1. WPX に親ドメイン `aiscompany.jp` を「ドメイン設定追加」（未追加の場合）。
+2. **「サブドメイン設定追加」で `site`** を追加 → `site.aiscompany.jp` を作成。
+3. その `site.aiscompany.jp` に **WordPress 簡単インストール** → テーマ `apprex` 導入・確認。
+   - DNS切替前の表示確認は、**WPXの「動作確認URL」**、または手元PCの `hosts` ファイルに「WPXのIP  site.aiscompany.jp」を一時追記してプレビュー。
+
+### フェーズ2：DNS 切替（Cloudflare 側で `site` を向け替え）
+> `site.aiscompany.jp` の DNS は、現在 Cloudflare（aiscompany.jp ゾーン）で管理されている前提です。
+
+1. （事前）Cloudflare DNS で `site` レコードの **TTL を 300秒**など短くしておく。
+2. **Cloudflare Pages のプロジェクト**設定 → カスタムドメインから **`site.aiscompany.jp` を削除**（ホスト名を解放）。
+3. Cloudflare **DNS** で `site` レコードを以下に変更：
+   - 種別 **A** ／ 名前 `site` ／ 内容 **WPXサーバーのIPアドレス**（WPXパネル「サーバー情報」に表示）。
+   - プロキシは一旦 **「DNSのみ（グレー雲）」** に（SSL発行のため）。
+4. 反映後、WPX パネルで **無料独自SSL（Let's Encrypt）を `site.aiscompany.jp` に発行** → `https://site.aiscompany.jp` で鍵マーク確認。
+5. 必要なら、SSL確認後に Cloudflare プロキシ（オレンジ雲）を有効化。
+
+### フェーズ3：仕上げ（SEO・リンク維持）
+1. WP **設定 > 一般** の URL が `https://site.aiscompany.jp` か確認。
+2. 旧静的URL（`/contact.html` など）→ 新URL（`/contact/` 等）へ **301リダイレクト**を `.htaccess` に設定（例）：
+   ```apache
+   Redirect 301 /contact.html      /contact/
+   Redirect 301 /pricing.html      /pricing/
+   Redirect 301 /cases.html        /cases/
+   Redirect 301 /free-trial.html   /free-trial/
+   ```
+3. `sitemap.xml` を再生成し、**Search Console（同一プロパティ）で再送信**。Google確認ファイルが必要なら設置。
+4. 表示・フォーム送信・チャットを本番URLで最終確認。
+
+### ロールバック
+- 切替後に問題があれば、Cloudflare DNS の `site` レコードを**元（Cloudflare Pages 宛）に戻す**だけで復旧（TTLを短くしてあるため数分）。**確認が済むまで Pages プロジェクトは消さずに残す**こと。
+
+### 注意
+- メール（`@aiscompany.jp` 等）の MX はルートゾーン側の設定。`site` サブドメインの切替では通常影響しませんが、念のため MX レコードは変更しないこと。
+- 「中身（HTML）を直接書き換える」のではなく、**配信先サーバーをWordPressに切り替える**のが今回の置き換えです（コンテンツは WordPress 側で編集）。
+
 ## 3. ネームサーバー（DNS）の設定（ルートドメインを移す場合）
 
 ドメインを **WPX/エックスサーバーのネームサーバー**に向けます（ドメインを取得したレジストラの管理画面で設定）。
