@@ -18,11 +18,9 @@ function runScoring(rowNumber) {
 
     const score = calculateScore(data);
     const rank = getRank(score, config);
-    const monthly = calcMonthlyPayment(
-      data['希望借入額'],
-      config.SCORING.ASSUMED_RATE,
-      data['希望返済期間']
-    );
+    // フォームには借入元金・返済期間がないため、申込者が回答した
+    // 「月額支払い可能額」を月々返済の目安としてそのまま使う
+    const monthly = normalizeMonthly(data['月額支払い可能額']);
 
     const scoreCol = headers.indexOf('AIスコア') + 1;
     const rankCol = headers.indexOf('見込みランク') + 1;
@@ -42,7 +40,6 @@ function runScoring(rowNumber) {
 }
 
 function calculateScore(data) {
-  const config = getConfig();
   let score = 0;
 
   // 雇用形態（25点）
@@ -61,11 +58,11 @@ function calculateScore(data) {
   else score += 3;
 
   // 返済負担率（25点）
-  const income = parseFloat(data['年収']) || 0;
-  const loan = parseFloat(data['希望借入額']) || 0;
-  const period = parseFloat(data['希望返済期間']) || 60;
-  if (income > 0) {
-    const monthly = calcMonthlyPayment(loan, config.SCORING.ASSUMED_RATE, period);
+  // 借入元金・期間はフォームになく、年収・月額は単位がまちまちの
+  // 自由入力のため正規化してから算出する
+  const income = normalizeYen(data['年収']);
+  const monthly = normalizeMonthly(data['月額支払い可能額']);
+  if (income > 0 && monthly > 0) {
     const ratio = (monthly * 12) / income * 100;
     if (ratio <= 25) score += 25;
     else if (ratio <= 35) score += 15;
@@ -73,13 +70,13 @@ function calculateScore(data) {
   }
 
   // 他社借入（15点）
-  const otherLoan = parseFloat(data['他社借入総額']) || 0;
+  const otherLoan = normalizeYen(data['他社借入総額']);
   if (otherLoan === 0) score += 15;
   else if (otherLoan <= 500000) score += 10;
   else if (otherLoan <= 1000000) score += 5;
 
   // 直近審査数（±5点）
-  const recentChecks = parseFloat(data['直近6ヶ月審査数']) || 0;
+  const recentChecks = normalizeShinsaCount(data['直近6ヶ月審査数']);
   if (recentChecks === 0) score += 5;
   else if (recentChecks >= 2) score -= 5;
 
@@ -117,6 +114,44 @@ function calcMonthlyPayment(principal, annualRate, months) {
   const r = annualRate / 100 / 12;
   const monthly = principal * r * Math.pow(1 + r, months) / (Math.pow(1 + r, months) - 1);
   return Math.round(monthly);
+}
+
+// 全角数字を半角へ
+function toHalfWidth(str) {
+  return String(str == null ? '' : str).replace(/[０-９]/g, function(c) {
+    return String.fromCharCode(c.charCodeAt(0) - 0xFEE0);
+  });
+}
+
+// 「450万円」「4900000」「416」「200万円～250万円未満」「非公開」「なし」などを
+// 円単位の数値へ正規化する。先頭の数値を採用し、「万」表記や万単位省略を補正。
+function normalizeYen(value) {
+  const s = toHalfWidth(value);
+  if (!s || s.indexOf('非公開') !== -1) return 0;
+  const m = s.match(/[0-9]+(?:\.[0-9]+)?/);
+  if (!m) return 0;                       // 「なし」など数字なし → 0
+  const num = parseFloat(m[0]);
+  if (isNaN(num) || num === 0) return 0;
+  if (s.indexOf('万') !== -1) return Math.round(num * 10000);
+  if (num < 10000) return Math.round(num * 10000); // 「416」=416万円とみなす
+  return Math.round(num);
+}
+
+// 「10,000 〜 20,000」「〜 10,000」「0」などの月額レンジを代表値（上限）へ
+function normalizeMonthly(value) {
+  const s = toHalfWidth(value).replace(/,/g, '');
+  const nums = s.match(/[0-9]+/g);
+  if (!nums) return 0;
+  return Math.max.apply(null, nums.map(Number));
+}
+
+// 「はじめて」「２社目」「５社目」「それ以上」などを審査社数の数値へ
+function normalizeShinsaCount(value) {
+  const s = toHalfWidth(value);
+  if (s.indexOf('はじめて') !== -1) return 0;
+  if (s.indexOf('それ以上') !== -1) return 5;
+  const m = s.match(/[0-9]+/);
+  return m ? parseInt(m[0], 10) : 0;
 }
 
 function testScoring() {

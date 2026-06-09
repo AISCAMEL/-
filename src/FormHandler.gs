@@ -29,7 +29,8 @@ function onProLineFormSubmit() {
       const caseId = 'LOAN-' + uid;
       if (processedIds[caseId]) continue;
 
-      const caseData = mapFormToLoan(row, caseId);
+      const dataMap = mapFormToLoan(row, caseId);
+      const caseData = buildRowFromMap(loanData[0], dataMap);
       loanSheet.appendRow(caseData);
       processedIds[caseId] = true; // 同一実行内での二重登録も防ぐ
       const lastRow = loanSheet.getLastRow();
@@ -49,26 +50,45 @@ function onProLineFormSubmit() {
   }
 }
 
+// ProLineフォーム（form_3：かんたん審査）の回答列 → ローン案件管理の項目
+// ※ row[n] の n は回答シートの列番号（0始まり）。フォーム項目追加で
+//   ずれないよう、項目名キーのオブジェクトで返し buildRowFromMap で並べ替える。
 function mapFormToLoan(row, caseId) {
-  const now = new Date();
-  return [
-    caseId, row[0], '書類確認中', '個人',
-    row[10], row[14], row[22], row[1],
-    row[16], row[17] + row[18] + row[19],
-    row[35], row[43] + '年' + row[44] + 'ヶ月',
-    row[45], '', '', row[32], row[31], row[8],
-    '', '', '', row[5], row[47],
-    '', '', '',
-    '', '', '', '', '',
-    '', '', '', '', '', '', '', '',
-    '', '', '', '', '', '', '', '',
-    '', '', '', '', '', '', '', '',
-    '', '', '', '', '', '', '', '',
-    '', '', '', '', '', '', '', '',
-    '', '', '', '', '', '', '', '',
-    '', '', '', '', '', '', '', '',
-    '', '', '', '', now
-  ];
+  const jijou = String(row[5] || '');   // 現在の事情を教えてください
+  return {
+    '申込番号':       caseId,
+    '受付日時':       row[0],
+    'ステータス':     '書類確認中',
+    '契約者種別':     '個人',
+    '顧客名':         row[10],
+    '生年月日':       row[14],
+    '電話番号':       row[22],
+    'LINE_ID':        row[1],
+    '郵便番号':       row[16],
+    '住所':           [row[17], row[18], row[19], row[20]].filter(String).join(''),
+    '雇用形態':       row[36],
+    '勤続年数':       (row[45] || '') + '年' + (row[46] || '') + 'ヶ月',
+    '年収':           row[47],
+    '希望借入額':     '',               // フォームに項目なし
+    '希望返済期間':   '',               // フォームに項目なし
+    '月額支払い可能額': row[59],          // 返済負担率の算定に使用
+    '他社借入総額':   row[34],
+    '他社借入件数':   row[33],
+    '直近6ヶ月審査数': row[8],
+    '信用情報':       jijou,
+    '債務整理歴':     jijou.indexOf('債務整理') !== -1 ? '債務整理' : '',
+    '自己破産歴':     jijou.indexOf('自己破産') !== -1 ? '自己破産' : '',
+    '滞納履歴':       row[71],           // 未払い・滞納状況
+    '購入予定車両':   [row[52], row[53]].filter(String).join(' '),
+    '登録日時':       new Date()
+  };
+}
+
+// シートのヘッダー順に合わせて値配列を組み立てる（未設定の列は空欄）
+function buildRowFromMap(headers, dataMap) {
+  return headers.map(function(h) {
+    return Object.prototype.hasOwnProperty.call(dataMap, h) ? dataMap[h] : '';
+  });
 }
 
 function getLineIdByUid(uid, ss) {
