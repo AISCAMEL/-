@@ -1,0 +1,14 @@
+{
+  "name": "carmel-lp-chatbot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "カーメルLP 改良版（既存LP再現 + 右下チャットウィジェット + OpenRouter AIチャットボット）",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

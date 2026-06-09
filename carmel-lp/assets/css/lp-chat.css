@@ -1,0 +1,394 @@
+/* ==================================================================
+ * lp-chat.css — 追加チャット導線ウィジェット専用スタイル
+ * (CSSレイヤー 6. LP追加機能専用)
+ *
+ * 本ファイルと lp-chat.js / config.js を取り除けば、LP本体は無傷。
+ * ロールバック容易性のため、ここに追加UIのスタイルを集約する。
+ * ================================================================== */
+
+/* ---- 追加UI専用ルート。安全領域対応 (7.6) ---- */
+.chat-layer {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: var(--z-widget);
+  /* レイヤー自体はポインタ透過にし、子要素だけ受け取る */
+  pointer-events: none;
+}
+
+.chat-layer > * {
+  pointer-events: auto;
+}
+
+/* ==================== チャットウィジェット ==================== */
+.chat-widget {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-primary);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  overflow: visible;
+  transition: transform 0.16s ease;
+  z-index: var(--z-widget);
+}
+
+.chat-widget:hover {
+  transform: scale(1.05);
+}
+
+.chat-widget__avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* 画像取得失敗時の代替表示 (18. フォールバック) */
+.chat-widget__avatar--fallback {
+  display: grid;
+  place-items: center;
+  background: var(--color-accent);
+  color: var(--color-primary-dark);
+  font-weight: 900;
+  font-size: 1.6rem;
+}
+
+.chat-widget__badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--color-danger);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 0 0 2px #fff;
+}
+
+/* ==================== 手動ポップアップ ==================== */
+.chat-popup {
+  position: absolute;
+  right: 0;
+  bottom: 76px; /* ウィジェット上部に吹き出し配置 */
+  width: min(360px, calc(100vw - 32px));
+  height: min(560px, calc(100vh - 120px));
+  background: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  z-index: var(--z-popup);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  /* 既定は非表示。表示/非表示は opacity + transform で (7.4) */
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  visibility: hidden;
+  transition: opacity 0.24s ease, transform 0.24s ease, visibility 0.24s;
+}
+
+.chat-popup.is-open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  visibility: visible;
+}
+
+/* ---- ヘッダー ---- */
+.chat-popup__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background: var(--color-primary);
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.chat-popup__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.chat-popup__heading {
+  line-height: 1.3;
+}
+
+.chat-popup__title {
+  font-size: 1rem;
+  color: #fff;
+}
+
+.chat-popup__status {
+  font-size: 0.75rem;
+  opacity: 0.9;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chat-popup__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4ade80;
+  display: inline-block;
+}
+
+.chat-popup__close {
+  margin-left: auto;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ---- 会話スレッド ---- */
+.chat-thread {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-md);
+  background: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  -webkit-overflow-scrolling: touch;
+}
+
+.chat-msg {
+  max-width: 85%;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.6;
+}
+
+.chat-msg--bot {
+  align-self: flex-start;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-bottom-left-radius: 4px;
+}
+
+.chat-msg--user {
+  align-self: flex-end;
+  background: var(--color-primary);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+/* タイピングインジケータ */
+.chat-typing {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.chat-typing span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  animation: chat-bounce 1.2s infinite ease-in-out;
+}
+
+.chat-typing span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.chat-typing span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes chat-bounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+/* ---- サジェストチップ ---- */
+.chat-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  flex-shrink: 0;
+}
+
+.chat-suggestions:empty {
+  display: none;
+}
+
+.chat-suggestion {
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+  background: #fff;
+  border-radius: var(--radius-pill);
+  padding: 6px var(--space-md);
+  font-size: 0.78rem;
+  cursor: pointer;
+  line-height: 1.3;
+}
+
+.chat-suggestion:hover {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+/* ---- 入力フォーム ---- */
+.chat-input {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.chat-input__field {
+  flex: 1;
+  resize: none;
+  max-height: 96px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.chat-input__field:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.chat-input__send {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.chat-input__send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---- 有人エスカレーション ---- */
+.chat-popup__escalation {
+  display: flex;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.chat-popup__escalation .btn {
+  flex: 1;
+  min-height: 40px;
+  font-size: 0.82rem;
+  padding-inline: var(--space-sm);
+}
+
+/* ==================== 自動ポップアップ ==================== */
+.auto-popup {
+  position: absolute;
+  right: 0;
+  bottom: 76px;
+  width: min(300px, calc(100vw - 32px));
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-md) 40px var(--space-md) var(--space-md);
+  z-index: var(--z-toast);
+
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  visibility: hidden;
+  transition: opacity 0.24s ease, transform 0.24s ease, visibility 0.24s;
+}
+
+.auto-popup.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  visibility: visible;
+}
+
+.auto-popup__message {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.auto-popup__close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  cursor: pointer;
+  line-height: 1;
+}
+
+/* ==================== レスポンシブ調整 ==================== */
+/* 小画面ではポップアップを全幅寄りに自動調整 (18. フォールバック) */
+@media (max-width: 360px) {
+  .chat-popup,
+  .auto-popup {
+    width: calc(100vw - 24px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .chat-widget {
+    width: 68px;
+    height: 68px;
+  }
+}
+
+/* ==================== モーション配慮 (7.4 prefers-reduced-motion) ==================== */
+@media (prefers-reduced-motion: reduce) {
+  .chat-widget,
+  .chat-popup,
+  .auto-popup {
+    transition: opacity 0.01ms;
+  }
+  .chat-widget:hover {
+    transform: none;
+  }
+}

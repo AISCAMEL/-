@@ -1,0 +1,68 @@
+/* base.css — 変数・タイポグラフィ (CSSレイヤー方針 2. Base / 7.2 CSS変数定義) */
+:root {
+  /* ブランドカラー */
+  --color-primary: #1a3a6b; /* ネイビー */
+  --color-primary-dark: #12294c;
+  --color-accent: #ffd700; /* イエロー */
+  --color-line: #06c755; /* LINE グリーン */
+  --color-tel: #1a3a6b;
+  --color-danger: #e53935;
+  --color-text: #222222;
+  --color-text-muted: #5b6472;
+  --color-bg: #ffffff;
+  --color-surface: #f8f9fb;
+  --color-border: #e3e7ee;
+
+  /* 影・角丸 */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.16);
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+
+  /* z-index 方針 (7.3) */
+  --z-header: 100;
+  --z-fixed-cta: 200;
+  --z-widget: 900;
+  --z-popup: 910;
+  --z-toast: 920;
+
+  /* スペーシング */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* レイアウト */
+  --container-max: 1080px;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Hiragino Sans',
+    'Hiragino Kaku Gothic ProN', 'Noto Sans JP', Meiryo, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 72px; /* 固定ヘッダー分 */
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  background: var(--color-bg);
+  font-size: 16px;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.4;
+  color: var(--color-primary);
+  font-weight: 800;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

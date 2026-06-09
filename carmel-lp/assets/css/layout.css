@@ -1,0 +1,113 @@
+/* layout.css — レイアウト・セクション骨格 (3. Layout) */
+
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: var(--space-md);
+}
+
+/* ---- ヘッダー ---- */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: saturate(140%) blur(6px);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.site-header__inner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  min-height: 60px;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: var(--space-md);
+}
+
+.site-logo {
+  font-weight: 900;
+  font-size: 1.4rem;
+  letter-spacing: 0.08em;
+  color: var(--color-primary);
+}
+
+.site-nav {
+  display: none;
+  gap: var(--space-lg);
+  margin-left: auto;
+  font-weight: 600;
+}
+
+.site-header__cta {
+  display: flex;
+  gap: var(--space-sm);
+  margin-left: auto;
+  align-items: center;
+}
+
+/* ---- セクション共通 ---- */
+.section {
+  padding-block: var(--space-2xl);
+}
+
+.section--surface {
+  background: var(--color-surface);
+}
+
+.section__head {
+  text-align: center;
+  margin-bottom: var(--space-xl);
+}
+
+.section__title {
+  font-size: clamp(1.4rem, 5vw, 2rem);
+}
+
+.section__lead {
+  margin-top: var(--space-sm);
+  color: var(--color-text-muted);
+}
+
+/* ---- グリッド ---- */
+.grid {
+  display: grid;
+  gap: var(--space-md);
+}
+
+/* ---- フッター ---- */
+.site-footer {
+  background: var(--color-primary-dark);
+  color: #cfd8e6;
+  padding-block: var(--space-2xl);
+  /* 右下ウィジェットと重なりすぎないよう余白を確保 (RG-04) */
+  padding-bottom: calc(var(--space-2xl) + 88px);
+}
+
+.site-footer a {
+  color: #fff;
+}
+
+/* ---- レスポンシブ (7.5 / 14.3 ブレークポイント) ---- */
+@media (min-width: 768px) {
+  .site-nav {
+    display: flex;
+  }
+  .grid--2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .grid--3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .site-footer {
+    padding-bottom: var(--space-2xl);
+  }
+}
+
+@media (min-width: 1024px) {
+  .section {
+    padding-block: 64px;
+  }
+}
