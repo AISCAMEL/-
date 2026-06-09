@@ -16,6 +16,10 @@ const CONFIG = {
   MODEL_FREE: 'deepseek/deepseek-chat-v3-0324',
   MODEL_PAID: 'anthropic/claude-haiku-4-5'
 },
+  API: {
+    // WordPress連携APIの認証トークン。長いランダム文字列に変更してください。
+    TOKEN: 'CHANGE_ME_TO_A_LONG_RANDOM_SECRET'
+  },
   SPREADSHEET: {
     ID: '17DwD3Nr5ItDxdzvP_DQ3ZceYaz3gg5X_icLTZsaToCE',
     PROLINE_FORM_ID: '1n9WXqI1HCZdNkPnFq_Q5K_fMXoglqZo0Hv3D1O85LFc',

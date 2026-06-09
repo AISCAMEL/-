@@ -1,6 +1,11 @@
 const PROLINE_WEBHOOK_URL = 'https://autosns.jp/webhook/YOUR_PROLINE_WEBHOOK_TOKEN';
 
 function doPost(e) {
+  // WordPress連携API（承認/否決・加盟店アサイン）。action付きのときだけ振り分け、
+  // LINE webhook（action無し）には一切影響しない。
+  if (e && e.parameter && e.parameter.action) {
+    return handleApiPost(e);
+  }
   try {
     const body = JSON.parse(e.postData.contents);
     const events = body.events || [];
@@ -131,7 +136,13 @@ function replyToLine(replyToken, message) {
 
 function doGet(e) {
   try {
-    const params = e.parameter;
+    const params = e.parameter || {};
+
+    // WordPress連携API（案件一覧取得）。action付きのときだけ振り分ける。
+    if (params.action) {
+      return handleApiGet(e);
+    }
+
     const uid = params.uid || '';
     const snsname = params.snsname || '';
     const event = params.event || '';
