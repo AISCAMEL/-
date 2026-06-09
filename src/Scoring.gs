@@ -43,6 +43,12 @@ function calculateScore(data) {
   const config = getConfig();
   let score = 0;
 
+  // 勤続が判明していて規定月数（既定3ヶ月）未満なら審査不可 → 即0点（D相当）
+  const tenureMonths = parseTenureMonths(data['勤続年数']);
+  if (tenureMonths >= 0 && tenureMonths < config.SCORING.MIN_TENURE_MONTHS) {
+    return 0;
+  }
+
   // 雇用形態（25点）
   const employment = data['雇用形態'] || '';
   if (employment.includes('正社員') || employment.includes('公務員')) score += 25;
@@ -51,8 +57,7 @@ function calculateScore(data) {
   else if (employment.includes('契約') || employment.includes('派遣')) score += 10;
   else if (employment.includes('パート') || employment.includes('アルバイト')) score += 5;
 
-  // 勤続年数（20点）：年だけでなく月数も合算して評価
-  const tenureMonths = parseTenureMonths(data['勤続年数']);
+  // 勤続年数（20点）：年だけでなく月数も合算して評価（tenureMonthsは上で算出済み）
   if (tenureMonths >= 60) score += 20;       // 5年以上
   else if (tenureMonths >= 36) score += 15;  // 3年以上
   else if (tenureMonths >= 12) score += 8;   // 1年以上
@@ -199,11 +204,13 @@ function normalizeMonthly(value) {
   return Math.max.apply(null, nums.map(Number));
 }
 
-// 「9年11ヶ月」「0年6ヶ月」などの勤続表記を総月数へ（年×12＋月）
+// 「9年11ヶ月」「0年6ヶ月」などの勤続表記を総月数へ（年×12＋月）。
+// 年・月のどちらも数値が取れない場合は -1（不明）を返す
 function parseTenureMonths(value) {
   const s = toHalfWidth(value);
   const y = s.match(/(\d+)\s*年/);
   const m = s.match(/(\d+)\s*[ヶケヵカか]?月/);
+  if (!y && !m) return -1;
   const years = y ? parseInt(y[1], 10) : 0;
   const months = m ? parseInt(m[1], 10) : 0;
   return years * 12 + months;

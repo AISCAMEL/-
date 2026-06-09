@@ -38,6 +38,8 @@ const CONFIG = {
     RANK_B: 60,
     RANK_C: 40,
     ASSUMED_RATE: 4.9,
+    MIN_TENURE_MONTHS: 3,
+
     AGE_SENIOR_60: -5,
     AGE_SENIOR_65: -10,
     AGE_SENIOR_70: -15,
