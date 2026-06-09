@@ -51,11 +51,12 @@ function calculateScore(data) {
   else if (employment.includes('契約') || employment.includes('派遣')) score += 10;
   else if (employment.includes('パート') || employment.includes('アルバイト')) score += 5;
 
-  // 勤続年数（20点）
-  const years = parseFloat(data['勤続年数']) || 0;
-  if (years >= 5) score += 20;
-  else if (years >= 3) score += 15;
-  else if (years >= 1) score += 8;
+  // 勤続年数（20点）：年だけでなく月数も合算して評価
+  const tenureMonths = parseTenureMonths(data['勤続年数']);
+  if (tenureMonths >= 60) score += 20;       // 5年以上
+  else if (tenureMonths >= 36) score += 15;  // 3年以上
+  else if (tenureMonths >= 12) score += 8;   // 1年以上
+  else if (tenureMonths >= 6) score += 5;    // 6ヶ月以上（試用期間明けの目安）
   else score += 3;
 
   // 返済負担率（25点）
@@ -76,10 +77,11 @@ function calculateScore(data) {
   else if (otherLoan <= 500000) score += 10;
   else if (otherLoan <= 1000000) score += 5;
 
-  // 直近審査数（±5点）
+  // 他社審査履歴（±5点〜）：多重申込ほど他社否決の可能性が高くリスク
   const recentChecks = normalizeShinsaCount(data['直近6ヶ月審査数']);
-  if (recentChecks === 0) score += 5;
-  else if (recentChecks >= 2) score -= 5;
+  if (recentChecks === 0) score += 5;        // はじめて
+  else if (recentChecks >= 3) score -= 10;   // 3社以上
+  else if (recentChecks >= 2) score -= 5;    // 2社目
 
   // 信用情報（15点）
   const credit = data['信用情報'] || '';
@@ -195,6 +197,16 @@ function normalizeMonthly(value) {
   const nums = s.match(/[0-9]+/g);
   if (!nums) return 0;
   return Math.max.apply(null, nums.map(Number));
+}
+
+// 「9年11ヶ月」「0年6ヶ月」などの勤続表記を総月数へ（年×12＋月）
+function parseTenureMonths(value) {
+  const s = toHalfWidth(value);
+  const y = s.match(/(\d+)\s*年/);
+  const m = s.match(/(\d+)\s*[ヶケヵカか]?月/);
+  const years = y ? parseInt(y[1], 10) : 0;
+  const months = m ? parseInt(m[1], 10) : 0;
+  return years * 12 + months;
 }
 
 // 「はじめて」「２社目」「５社目」「それ以上」などを審査社数の数値へ
