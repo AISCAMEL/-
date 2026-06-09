@@ -20,7 +20,7 @@ function runScoring(rowNumber) {
     const rank = getRank(score, config);
     const monthly = calcMonthlyPayment(
       data['希望借入額'],
-      4.9,
+      config.SCORING.ASSUMED_RATE,
       data['希望返済期間']
     );
 
@@ -42,6 +42,7 @@ function runScoring(rowNumber) {
 }
 
 function calculateScore(data) {
+  const config = getConfig();
   let score = 0;
 
   // 雇用形態（25点）
@@ -64,7 +65,7 @@ function calculateScore(data) {
   const loan = parseFloat(data['希望借入額']) || 0;
   const period = parseFloat(data['希望返済期間']) || 60;
   if (income > 0) {
-    const monthly = calcMonthlyPayment(loan, 4.9, period);
+    const monthly = calcMonthlyPayment(loan, config.SCORING.ASSUMED_RATE, period);
     const ratio = (monthly * 12) / income * 100;
     if (ratio <= 25) score += 25;
     else if (ratio <= 35) score += 15;
@@ -88,10 +89,15 @@ function calculateScore(data) {
   const bankrupt = data['自己破産歴'] || '';
   const overdue = data['滞納履歴'] || '';
 
-  if (!credit && !debt && !bankrupt && !overdue) score += 15;
-  else if (overdue && overdue.includes('現在')) score -= 10;
-  else if (debt || bankrupt) score += 0;
-  else score += 5;
+  if (!credit && !debt && !bankrupt && !overdue) {
+    score += 15; // 事故情報なし
+  } else if (overdue && overdue.includes('現在')) {
+    score -= 10; // 現在進行形の滞納
+  } else if (debt || bankrupt) {
+    // 債務整理・自己破産歴あり：加点なし（据え置き）
+  } else {
+    score += 5; // 軽微な情報あり
+  }
 
   return Math.max(0, Math.min(100, score));
 }

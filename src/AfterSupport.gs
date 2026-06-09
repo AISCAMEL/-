@@ -62,7 +62,7 @@ function runAfterSupport() {
       const switchNotified = row[headers.indexOf('乗換え通知済')];
       if (switchDate && !switchNotified) {
         const daysLeft = Math.floor((switchDate - today) / (1000 * 60 * 60 * 24));
-        if (daysLeft <= 30 && daysLeft >= 0) {
+        if (daysLeft <= config.AFTER_SUPPORT.SWITCH_NOTIFY_DAYS && daysLeft >= 0) {
           results.switchover.push({ supportId, customerName, lineId, caseId, daysLeft });
           sheet.getRange(i + 1, headers.indexOf('乗換え通知済') + 1).setValue('済');
         }

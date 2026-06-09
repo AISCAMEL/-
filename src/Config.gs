@@ -19,7 +19,7 @@ const CONFIG = {
   SPREADSHEET: {
     ID: '17DwD3Nr5ItDxdzvP_DQ3ZceYaz3gg5X_icLTZsaToCE',
     PROLINE_FORM_ID: '1n9WXqI1HCZdNkPnFq_Q5K_fMXoglqZo0Hv3D1O85LFc',
-　　 PROLINE_FORM_SHEET: 'form_3：かんたん審査',
+    PROLINE_FORM_SHEET: 'form_3：かんたん審査',
     SHEETS: {
       LOAN:          'ローン案件管理',
       BUY:           '買取案件管理',
@@ -36,7 +36,11 @@ const CONFIG = {
   SCORING: {
     RANK_A: 80,
     RANK_B: 60,
-    RANK_C: 40
+    RANK_C: 40,
+    ASSUMED_RATE: 4.9
+  },
+  FRANCHISEE: {
+    MAX_CASES: 5
   },
   DELAY: {
     RATE_LOAN:  14.6,
@@ -44,10 +48,11 @@ const CONFIG = {
     ALERT_DAYS: 14
   },
   AFTER_SUPPORT: {
-    SHAKEN_DAYS:     90,
-    INSURANCE_DAYS:  90,
-    SWITCH_DAYS:     365,
-    COMPLETION_DAYS: 90
+    SHAKEN_DAYS:       90,
+    INSURANCE_DAYS:    90,
+    SWITCH_DAYS:       365,
+    SWITCH_NOTIFY_DAYS: 30,
+    COMPLETION_DAYS:   90
   }
 };
 

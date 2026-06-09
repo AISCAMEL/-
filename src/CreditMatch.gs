@@ -58,7 +58,8 @@ function getApprovedCreditors(data, headers, row) {
 
 function matchFranchisees(approvedCreditors, ss) {
   try {
-    const sheet = ss.getSheetByName('加盟店マスタ');
+    const config = getConfig();
+    const sheet = ss.getSheetByName(config.SPREADSHEET.SHEETS.FRANCHISEE);
     const data = sheet.getDataRange().getValues();
     const headers = data[0];
     const candidates = [];
@@ -79,7 +80,7 @@ function matchFranchisees(approvedCreditors, ss) {
       const creditorList = row[creditorIdx] || '';
 
       if (status !== '稼働中') continue;
-      if (caseCount >= 5) continue;
+      if (caseCount >= config.FRANCHISEE.MAX_CASES) continue;
 
       const hasMatch = approvedCreditors.some(function(creditor) {
         return creditorList.includes(creditor.name);
@@ -118,6 +119,12 @@ function saveCandidatesToSheet(rowNumber, candidates, sheet, headers) {
 }
 
 function assignFranchisee(rowNumber, franchiseeName) {
+  // セル編集トリガー経由で多重実行されても案件数を二重加算しないよう排他制御
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) {
+    Logger.log('assignFranchisee：ロック取得失敗のためスキップ');
+    return false;
+  }
   try {
     const config = getConfig();
     const ss = SpreadsheetApp.openById(config.SPREADSHEET.ID);
@@ -128,6 +135,14 @@ function assignFranchisee(rowNumber, franchiseeName) {
     const data = {};
     headers.forEach(function(h, i) { data[h] = row[i]; });
 
+    const prevFranchisee = data['担当加盟店'] || '';
+
+    // 同じ加盟店が再入力された場合は案件数を増やさず終了（冪等性を確保）
+    if (prevFranchisee === franchiseeName) {
+      Logger.log('加盟店アサイン：変更なし（' + franchiseeName + '）');
+      return true;
+    }
+
     const franchiseeIdx = headers.indexOf('担当加盟店') + 1;
     const assignDateIdx = headers.indexOf('アサイン日時') + 1;
     const statusIdx = headers.indexOf('ステータス') + 1;
@@ -136,7 +151,11 @@ function assignFranchisee(rowNumber, franchiseeName) {
     sheet.getRange(rowNumber, assignDateIdx).setValue(new Date());
     sheet.getRange(rowNumber, statusIdx).setValue('アサイン済み');
 
-    updateFranchiseeCaseCount(franchiseeName, ss);
+    // 付け替えの場合は旧加盟店の案件数を減らし、新加盟店を増やす
+    if (prevFranchisee) {
+      adjustFranchiseeCaseCount(prevFranchisee, ss, -1);
+    }
+    adjustFranchiseeCaseCount(franchiseeName, ss, 1);
 
     Logger.log('加盟店アサイン完了：' + franchiseeName);
     return true;
@@ -144,12 +163,15 @@ function assignFranchisee(rowNumber, franchiseeName) {
   } catch(err) {
     Logger.log('assignFranchiseeエラー：' + err.toString());
     return false;
+  } finally {
+    lock.releaseLock();
   }
 }
 
-function updateFranchiseeCaseCount(franchiseeName, ss) {
+function adjustFranchiseeCaseCount(franchiseeName, ss, delta) {
   try {
-    const sheet = ss.getSheetByName('加盟店マスタ');
+    const config = getConfig();
+    const sheet = ss.getSheetByName(config.SPREADSHEET.SHEETS.FRANCHISEE);
     const data = sheet.getDataRange().getValues();
     const headers = data[0];
     const nameIdx = headers.indexOf('加盟店名');
@@ -158,13 +180,14 @@ function updateFranchiseeCaseCount(franchiseeName, ss) {
     for (var i = 1; i < data.length; i++) {
       if (data[i][nameIdx] === franchiseeName) {
         const current = parseInt(data[i][countIdx]) || 0;
-        sheet.getRange(i + 1, countIdx + 1).setValue(current + 1);
-        Logger.log('案件数更新：' + franchiseeName + ' → ' + (current + 1));
+        const updated = Math.max(0, current + delta);
+        sheet.getRange(i + 1, countIdx + 1).setValue(updated);
+        Logger.log('案件数更新：' + franchiseeName + ' → ' + updated);
         break;
       }
     }
   } catch(err) {
-    Logger.log('updateFranchiseeCaseCountエラー：' + err.toString());
+    Logger.log('adjustFranchiseeCaseCountエラー：' + err.toString());
   }
 }
 

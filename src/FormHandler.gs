@@ -1,4 +1,10 @@
 function onProLineFormSubmit() {
+  // 5分間隔トリガーと手動実行の同時走行による二重登録を防ぐ
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) {
+    Logger.log('onProLineFormSubmit：ロック取得失敗のためスキップ');
+    return;
+  }
   try {
     const config = getConfig();
     const formSS = SpreadsheetApp.openById(config.SPREADSHEET.PROLINE_FORM_ID);
@@ -7,28 +13,39 @@ function onProLineFormSubmit() {
     const loanSheet = loanSS.getSheetByName(config.SPREADSHEET.SHEETS.LOAN);
     const formData = formSheet.getDataRange().getValues();
     const loanData = loanSheet.getDataRange().getValues();
-    const processedIds = [];
+
+    // 登録済み申込番号をマップ化（indexOf より高速・重複判定を明確化）
+    const processedIds = {};
     for (var i = 1; i < loanData.length; i++) {
-      if (loanData[i][0]) processedIds.push(loanData[i][0]);
+      if (loanData[i][0]) processedIds[loanData[i][0]] = true;
     }
-    for (var j = formData.length - 1; j >= 1; j--) {
+
+    // 古い順に走査し、未処理の申込をすべて登録する
+    var registered = 0;
+    for (var j = 1; j < formData.length; j++) {
       const row = formData[j];
       const uid = row[1];
+      if (!uid) continue;
       const caseId = 'LOAN-' + uid;
-      if (processedIds.indexOf(caseId) !== -1) continue;
+      if (processedIds[caseId]) continue;
+
       const caseData = mapFormToLoan(row, caseId);
       loanSheet.appendRow(caseData);
+      processedIds[caseId] = true; // 同一実行内での二重登録も防ぐ
       const lastRow = loanSheet.getLastRow();
       const scoreResult = runScoring(lastRow);
       //const lineId = getLineIdByUid(uid, loanSS);
-// if (lineId) {
-//   notifyCustomerReceived(lineId, scoreResult);
-// }
+      //if (lineId) {
+      //  notifyCustomerReceived(lineId, scoreResult);
+      //}
       Logger.log('新規案件登録：' + caseId);
-      break;
+      registered++;
     }
+    Logger.log('onProLineFormSubmit：' + registered + '件登録');
   } catch(err) {
     Logger.log('onProLineFormSubmitエラー：' + err.toString());
+  } finally {
+    lock.releaseLock();
   }
 }
 
@@ -79,25 +96,7 @@ function notifyCustomerReceived(lineId, scoreResult) {
   }
 }
 
-function pushToLine(lineId, message) {
-  try {
-    const config = getConfig();
-    const options = {
-      method: 'post',
-      contentType: 'application/json',
-      headers: { 'Authorization': 'Bearer ' + config.LINE.CHANNEL_TOKEN },
-      payload: JSON.stringify({
-        to: lineId,
-        messages: [{ type: 'text', text: message }]
-      }),
-      muteHttpExceptions: true
-    };
-    const response = UrlFetchApp.fetch('https://api.line.me/v2/bot/message/push', options);
-    Logger.log('プッシュ通知：' + response.getResponseCode());
-  } catch(err) {
-    Logger.log('pushToLineエラー：' + err.toString());
-  }
-}
+// pushToLine() は LineNotify.gs に一本化（重複定義を解消）
 
 function generateCaseId() {
   const config = getConfig();
