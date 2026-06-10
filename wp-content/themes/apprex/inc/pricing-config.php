@@ -51,21 +51,21 @@ function apprex_pricing_config() {
 				'plans'      => array(
 					'trial'    => array(
 						'label'           => 'トライアル（基本機能）',
-						'monthly'         => 9800,
+						'monthly'         => 19800,
 						'monthly_regular' => 19800,
 						'initial'         => 200000,
 						'desc'            => '基本機能・縛りなし。まずはここから。',
 					),
 					'start'    => array(
 						'label'           => 'スタート（電子カタログ）',
-						'monthly'         => 19800,
+						'monthly'         => 39800,
 						'monthly_regular' => 39800,
 						'initial'         => 200000,
 						'desc'            => 'トライアル＋電子カタログ機能。',
 					),
 					'business' => array(
 						'label'           => 'ビジネス（多店舗）',
-						'monthly'         => 49800,
+						'monthly'         => 59800,
 						'monthly_regular' => 59800,
 						'initial'         => 500000,
 						'desc'            => 'スタート＋多店舗機能（店舗数無制限）。',
@@ -230,10 +230,9 @@ function apprex_pricing_summary_text() {
 	$lines[] = '【アプリ開発（月額・初期設定費は今月キャンペーンで0円）】';
 	foreach ( $app['plans'] as $p ) {
 		$lines[] = sprintf(
-			'- %s：月額%s円（通常%s円）／初期設定費 通常%s円→今月0円',
+			'- %s：月額%s円／初期設定費 通常%s円→今月0円',
 			$p['label'],
 			number_format( $p['monthly'] ),
-			number_format( $p['monthly_regular'] ),
 			number_format( $p['initial'] )
 		);
 	}
