@@ -593,3 +593,8 @@ html, body { overflow-x: hidden; max-width: 100%; }
 .partner-terms table { width: 100%; border-collapse: collapse; background: #fff; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm); }
 .partner-terms th { text-align: left; background: var(--color-bg-soft); color: var(--color-ink); padding: 14px 16px; width: 32%; vertical-align: top; border-bottom: 1px solid var(--color-line); white-space: nowrap; }
 .partner-terms td { padding: 14px 16px; border-bottom: 1px solid var(--color-line); }
+
+/* お問い合わせ等：フォームと案内ボックスの枠を揃える（枠ズレ防止） */
+.content-prose .apprex-form { max-width: 100%; }
+.content-prose .callout { text-align: center; }
+.apprex-form__line { max-width: 100%; }
