@@ -13,6 +13,29 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * 自動投稿の初期トピック（10本）。設定が空のときの既定値。
+ *
+ * @return string
+ */
+function apprex_default_autopost_topics() {
+	return implode(
+		"\n",
+		array(
+			'ノーコードアプリ開発のメリットと始め方',
+			'飲食店アプリで再来店を増やす5つの方法',
+			'美容サロンの予約・会員アプリ導入事例',
+			'マッチングアプリ開発の費用と期間の目安',
+			'アプリとホームページの使い分け',
+			'プッシュ通知で売上を伸ばすコツ',
+			'補助金を活用したアプリ・DX導入',
+			'スタンプカード・クーポンのアプリ活用術',
+			'多店舗展開に強い店舗アプリの作り方',
+			'MEO・LLMOで集客を強化する方法',
+		)
+	);
+}
+
 /* -------------------------------------------------------------------------
  * 記事生成（再利用関数）
  * ---------------------------------------------------------------------- */
@@ -179,7 +202,7 @@ function apprex_ai_blog_page() {
 				<tr><th><?php esc_html_e( 'トーン', 'apprex' ); ?></th>
 					<td><input type="text" name="apprex_autopost_tone" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_autopost_tone', '専門的で信頼感のある' ) ); ?>"></td></tr>
 				<tr><th><?php esc_html_e( 'トピック一覧（1行に1テーマ）', 'apprex' ); ?></th>
-					<td><textarea name="apprex_autopost_topics" rows="8" class="large-text" placeholder="ノーコードアプリ開発のメリット&#10;飲食店アプリで再来店を増やす方法&#10;補助金を活用したアプリ導入&#10;アプリとホームページの使い分け"><?php echo esc_textarea( get_option( 'apprex_autopost_topics', '' ) ); ?></textarea>
+					<td><textarea name="apprex_autopost_topics" rows="8" class="large-text" placeholder="ノーコードアプリ開発のメリット&#10;飲食店アプリで再来店を増やす方法&#10;補助金を活用したアプリ導入&#10;アプリとホームページの使い分け"><?php echo esc_textarea( get_option( 'apprex_autopost_topics', apprex_default_autopost_topics() ) ); ?></textarea>
 					<p class="description"><?php esc_html_e( '上から順に1記事ずつ自動生成します（一巡したら先頭へ戻ります）。', 'apprex' ); ?></p></td></tr>
 				<tr><th><?php esc_html_e( '画像モデル', 'apprex' ); ?></th>
 					<td><input type="text" name="apprex_image_model" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_image_model', '' ) ); ?>" placeholder="google/gemini-2.5-flash-image-preview">
@@ -256,7 +279,7 @@ function apprex_run_autopost() {
 	if ( ! get_option( 'apprex_autopost_enabled', 0 ) || ! apprex_chat_enabled() ) {
 		return;
 	}
-	$topics = array_filter( array_map( 'trim', preg_split( '/\r\n|\r|\n/', (string) get_option( 'apprex_autopost_topics', '' ) ) ) );
+	$topics = array_filter( array_map( 'trim', preg_split( '/\r\n|\r|\n/', (string) get_option( 'apprex_autopost_topics', apprex_default_autopost_topics() ) ) ) );
 	if ( empty( $topics ) ) {
 		return;
 	}
