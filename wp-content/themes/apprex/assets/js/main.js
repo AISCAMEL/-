@@ -38,19 +38,32 @@
 	function initMobileNav() {
 		var toggle = document.querySelector('.nav-toggle');
 		var drawer = document.getElementById('mobile-drawer');
+		var overlay = document.getElementById('mobile-drawer-overlay');
 		if (!toggle || !drawer) {
 			return;
 		}
-		toggle.addEventListener('click', function () {
-			var open = drawer.classList.toggle('is-open');
+		function setOpen(open) {
+			drawer.classList.toggle('is-open', open);
 			toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+			if (overlay) { overlay.hidden = !open; }
 			document.body.style.overflow = open ? 'hidden' : '';
+		}
+		toggle.addEventListener('click', function () {
+			setOpen(!drawer.classList.contains('is-open'));
 		});
 		drawer.addEventListener('click', function (e) {
 			if (e.target.tagName === 'A') {
-				drawer.classList.remove('is-open');
-				toggle.setAttribute('aria-expanded', 'false');
-				document.body.style.overflow = '';
+				setOpen(false);
+			}
+		});
+		if (overlay) {
+			overlay.addEventListener('click', function () {
+				setOpen(false);
+			});
+		}
+		document.addEventListener('keydown', function (e) {
+			if (e.key === 'Escape' && drawer.classList.contains('is-open')) {
+				setOpen(false);
 			}
 		});
 	}

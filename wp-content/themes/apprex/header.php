@@ -61,23 +61,26 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<span></span><span></span><span></span>
 		</button>
 	</div>
-
-	<div class="mobile-drawer" id="mobile-drawer">
-		<?php
-		wp_nav_menu(
-			array(
-				'theme_location' => 'primary',
-				'container'      => false,
-				'menu_class'     => 'menu',
-				'fallback_cb'    => 'apprex_primary_menu_fallback',
-				'depth'          => 1,
-			)
-		);
-		?>
-		<a class="btn btn--primary btn--block" href="<?php echo esc_url( apprex_page_url( 'free-trial' ) ); ?>">
-			<?php esc_html_e( '無料体験を始める', 'apprex' ); ?>
-		</a>
-	</div>
 </header>
+
+<?php /* モバイルメニューは header の外に配置：site-header の backdrop-filter が position:fixed の包含ブロックになり、ドロワーが潰れる不具合を回避 */ ?>
+<div class="mobile-drawer" id="mobile-drawer">
+	<?php
+	wp_nav_menu(
+		array(
+			'theme_location' => 'primary',
+			'container'      => false,
+			'menu_class'     => 'menu',
+			'fallback_cb'    => 'apprex_primary_menu_fallback',
+			'depth'          => 1,
+		)
+	);
+	?>
+	<a class="btn btn--primary btn--block" href="<?php echo esc_url( apprex_page_url( 'free-trial' ) ); ?>">
+		<?php esc_html_e( '無料体験を始める', 'apprex' ); ?>
+	</a>
+</div>
+
+<div class="mobile-drawer__overlay" id="mobile-drawer-overlay" hidden></div>
 
 <main id="main">
