@@ -75,14 +75,24 @@ function apprex_jsonld() {
 	$graph = array();
 
 	$org = array(
-		'@type'  => 'Organization',
-		'@id'    => home_url( '/#organization' ),
-		'name'   => 'APPREX（アプリックス）',
-		'legalName' => '合同会社アイズ',
-		'url'    => home_url( '/' ),
-		'logo'   => APPREX_URI . '/assets/images/apprex-logo.png',
-		'sameAs' => array( 'https://www.instagram.com/apprex1173/' ),
+		'@type'       => 'Organization',
+		'@id'         => home_url( '/#organization' ),
+		'name'        => 'APPREX（アプリックス）',
+		'legalName'   => '合同会社アイズ',
+		'url'         => home_url( '/' ),
+		'logo'        => APPREX_URI . '/assets/images/apprex-logo.png',
+		'sameAs'      => array( 'https://www.instagram.com/apprex1173/' ),
 		'description' => 'ノーコードアプリ開発プラットフォーム。制作代行・ホームページ制作も提供。',
+		'email'       => function_exists( 'apprex_contact_email' ) ? apprex_contact_email() : '',
+		'foundingDate' => '2018-10',
+		'founder'     => array( '@type' => 'Person', 'name' => '吉田一平' ),
+		'address'     => array(
+			'@type'           => 'PostalAddress',
+			'addressCountry'  => 'JP',
+			'addressRegion'   => '福島県',
+			'addressLocality' => 'いわき市',
+			'streetAddress'   => '四倉町細谷字大町1番',
+		),
 	);
 	$graph[] = $org;
 

@@ -112,18 +112,19 @@ add_action( 'transition_post_status', function ( $new, $old, $post ) {
 	if ( 'post' !== $post->post_type ) {
 		return;
 	}
-	if ( ! function_exists( 'apprex_dispatch_event' ) ) {
-		return;
-	}
-	apprex_dispatch_event(
-		'post_published',
-		array(
-			'id'        => $post->ID,
-			'title'     => get_the_title( $post ),
-			'url'       => get_permalink( $post ),
-			'excerpt'   => wp_trim_words( wp_strip_all_tags( $post->post_content ), 60 ),
-			'image'     => get_the_post_thumbnail_url( $post, 'large' ),
-			'ai'        => (bool) get_post_meta( $post->ID, '_apprex_ai_generated', true ),
-		)
+	$data = array(
+		'id'      => $post->ID,
+		'title'   => get_the_title( $post ),
+		'url'     => get_permalink( $post ),
+		'excerpt' => wp_trim_words( wp_strip_all_tags( $post->post_content ), 60 ),
+		'image'   => get_the_post_thumbnail_url( $post, 'large' ),
+		'ai'      => (bool) get_post_meta( $post->ID, '_apprex_ai_generated', true ),
 	);
+	// GAS（任意）と Slack 直結（任意）の両方へ。
+	if ( function_exists( 'apprex_dispatch_event' ) ) {
+		apprex_dispatch_event( 'post_published', $data );
+	}
+	if ( function_exists( 'apprex_slack_notify_post' ) ) {
+		apprex_slack_notify_post( $data );
+	}
 }, 10, 3 );

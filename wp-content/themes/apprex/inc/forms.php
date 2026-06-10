@@ -29,6 +29,7 @@ add_action( 'admin_init', function () {
 	register_setting( 'apprex_integrations', 'apprex_gas_webhook_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
 	register_setting( 'apprex_integrations', 'apprex_gas_token', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 	register_setting( 'apprex_integrations', 'apprex_gsc_verify', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+	register_setting( 'apprex_integrations', 'apprex_slack_webhook', array( 'sanitize_callback' => 'esc_url_raw' ) );
 } );
 
 /**
@@ -72,6 +73,11 @@ function apprex_integrations_page() {
 					<th scope="row"><?php esc_html_e( 'GAS 共有トークン', 'apprex' ); ?></th>
 					<td><input type="text" name="apprex_gas_token" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_gas_token', '' ) ); ?>" autocomplete="off">
 					<p class="description"><?php esc_html_e( 'なりすまし防止用の合言葉。GAS側の同じ値と照合します（任意の文字列）。', 'apprex' ); ?></p></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Slack Webhook URL（新着記事通知）', 'apprex' ); ?></th>
+					<td><input type="url" name="apprex_slack_webhook" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_slack_webhook', '' ) ); ?>" placeholder="https://hooks.slack.com/services/XXX/YYY/ZZZ">
+					<p class="description"><?php esc_html_e( 'Slack の Incoming Webhook URL。ブログ記事を公開すると、このチャンネルに新着記事を自動投稿します。', 'apprex' ); ?></p></td>
 				</tr>
 				<tr>
 					<th scope="row"><?php esc_html_e( 'Google Search Console 確認コード', 'apprex' ); ?></th>

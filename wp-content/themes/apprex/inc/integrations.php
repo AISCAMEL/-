@@ -63,3 +63,74 @@ function apprex_dispatch_event( $event, $data ) {
 		)
 	);
 }
+
+/**
+ * Slack Incoming Webhook URL。
+ *
+ * @return string
+ */
+function apprex_slack_webhook_url() {
+	return (string) get_option( 'apprex_slack_webhook', '' );
+}
+
+/**
+ * Slack に通知を送る（Incoming Webhook・ノンブロッキング）。
+ *
+ * @param string $text   フォールバックテキスト。
+ * @param array  $blocks Block Kit（任意）。
+ * @return bool 送信を試みたか。
+ */
+function apprex_slack_notify( $text, $blocks = array() ) {
+	$url = apprex_slack_webhook_url();
+	if ( ! $url ) {
+		return false;
+	}
+	$body = array( 'text' => $text );
+	if ( ! empty( $blocks ) ) {
+		$body['blocks'] = $blocks;
+	}
+	wp_remote_post(
+		$url,
+		array(
+			'timeout'  => 8,
+			'blocking' => false,
+			'headers'  => array( 'Content-Type' => 'application/json' ),
+			'body'     => wp_json_encode( $body ),
+		)
+	);
+	return true;
+}
+
+/**
+ * 記事公開を Slack に投稿（新着NEW通知）。
+ *
+ * @param array $data { title, url, excerpt, image, ai }.
+ */
+function apprex_slack_notify_post( $data ) {
+	$title   = $data['title'] ?? '';
+	$url     = $data['url'] ?? '';
+	$excerpt = $data['excerpt'] ?? '';
+	$tag     = ! empty( $data['ai'] ) ? ' 🤖AI生成' : '';
+
+	$blocks = array(
+		array(
+			'type' => 'section',
+			'text' => array(
+				'type' => 'mrkdwn',
+				'text' => "*🆕 新着記事を公開しました{$tag}*\n<{$url}|{$title}>\n{$excerpt}",
+			),
+		),
+		array(
+			'type'     => 'actions',
+			'elements' => array(
+				array(
+					'type'  => 'button',
+					'text'  => array( 'type' => 'plain_text', 'text' => '記事を見る' ),
+					'url'   => $url,
+					'style' => 'primary',
+				),
+			),
+		),
+	);
+	apprex_slack_notify( "🆕 新着記事: {$title} {$url}", $blocks );
+}

@@ -15,6 +15,9 @@ get_header();
 
 $apprex_company = array(
 	array( __( '会社名', 'apprex' ), __( '合同会社アイズ', 'apprex' ) ),
+	array( __( '代表者', 'apprex' ), __( '吉田 一平', 'apprex' ) ),
+	array( __( '設立', 'apprex' ), __( '2018年10月', 'apprex' ) ),
+	array( __( '所在地', 'apprex' ), __( '福島県いわき市四倉町細谷字大町1番', 'apprex' ) ),
 	array( __( 'サービス名', 'apprex' ), __( 'APPREX（アプリックス）', 'apprex' ) ),
 	array( __( '事業内容', 'apprex' ), __( 'ノーコードアプリ開発プラットフォームの提供／アプリ制作代行／ホームページ制作／DX・補助金活用支援', 'apprex' ) ),
 	array( __( '受付時間', 'apprex' ), __( '平日 10:00〜18:00（チャット・メール・オンライン相談）', 'apprex' ) ),
