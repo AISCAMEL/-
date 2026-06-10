@@ -129,6 +129,7 @@ add_action( 'admin_init', function () {
 	register_setting( 'apprex_aiblog', 'apprex_image_model', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 	register_setting( 'apprex_aiblog', 'apprex_autopost_enabled', array( 'sanitize_callback' => 'absint' ) );
 	register_setting( 'apprex_aiblog', 'apprex_autopost_freq', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+	register_setting( 'apprex_aiblog', 'apprex_autopost_hour', array( 'sanitize_callback' => 'apprex_sanitize_hour' ) );
 	register_setting( 'apprex_aiblog', 'apprex_autopost_image', array( 'sanitize_callback' => 'absint' ) );
 	register_setting( 'apprex_aiblog', 'apprex_autopost_tone', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 	register_setting( 'apprex_aiblog', 'apprex_autopost_topics', array( 'sanitize_callback' => 'sanitize_textarea_field' ) );
@@ -197,7 +198,24 @@ function apprex_ai_blog_page() {
 						<option value="weekly" <?php selected( $f, 'weekly' ); ?>>週1回</option>
 						<option value="biweekly" <?php selected( $f, 'biweekly' ); ?>>2週に1回</option>
 					</select></td></tr>
-				<tr><th><?php esc_html_e( 'アイキャッチAI生成', 'apprex' ); ?></th>
+				<tr><th><?php esc_html_e( '投稿時刻', 'apprex' ); ?></th>
+						<td><select name="apprex_autopost_hour">
+							<?php
+							$sel_hour = (int) get_option( 'apprex_autopost_hour', 10 );
+							for ( $h = 0; $h < 24; $h++ ) :
+								?>
+								<option value="<?php echo esc_attr( $h ); ?>" <?php selected( $sel_hour, $h ); ?>><?php echo esc_html( sprintf( '%02d:00', $h ) ); ?></option>
+							<?php endfor; ?>
+						</select>
+						<span style="margin-left:8px;color:#666"><?php esc_html_e( '（日本時間／この時刻以降の最初のアクセスで実行）', 'apprex' ); ?></span>
+						<?php
+						$apprex_next = wp_next_scheduled( 'apprex_autopost_cron' );
+						if ( $apprex_next ) :
+							?>
+							<p class="description"><?php printf( esc_html__( '次回の自動実行予定：%s', 'apprex' ), esc_html( wp_date( 'Y年n月j日(D) H:i', $apprex_next ) ) ); ?></p>
+						<?php endif; ?>
+						</td></tr>
+					<tr><th><?php esc_html_e( 'アイキャッチAI生成', 'apprex' ); ?></th>
 					<td><label><input type="checkbox" name="apprex_autopost_image" value="1" <?php checked( 1, (int) get_option( 'apprex_autopost_image', 0 ) ); ?>> <?php esc_html_e( '自動投稿でも画像を生成する', 'apprex' ); ?></label></td></tr>
 				<tr><th><?php esc_html_e( 'トーン', 'apprex' ); ?></th>
 					<td><input type="text" name="apprex_autopost_tone" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_autopost_tone', '専門的で信頼感のある' ) ); ?>"></td></tr>
@@ -210,7 +228,7 @@ function apprex_ai_blog_page() {
 			</table>
 			<?php submit_button( '保存', 'secondary' ); ?>
 		</form>
-		<p class="description"><?php esc_html_e( '自動投稿は1日1回のスケジュールで頻度を判定して実行されます（サーバーcron推奨）。', 'apprex' ); ?></p>
+		<p class="description"><?php esc_html_e( '自動投稿は「投稿時刻」を基準に1日1回判定され、頻度（毎日/週1/隔週）に達していれば公開します。WordPress標準のcronはアクセス時に動くため、指定時刻ちょうどに出すにはサーバーのcronで wp-cron.php を定期実行する設定（wpXの自動実行など）を推奨します。', 'apprex' ); ?></p>
 	</div>
 	<?php
 }
@@ -259,11 +277,63 @@ add_action( 'admin_post_apprex_generate_post', function () {
 /* -------------------------------------------------------------------------
  * 自動投稿（cron）
  * ---------------------------------------------------------------------- */
+
+/**
+ * 投稿時刻（0〜23時）に丸める。
+ *
+ * @param mixed $v 入力値。
+ * @return int 0〜23。
+ */
+function apprex_sanitize_hour( $v ) {
+	$h = (int) $v;
+	return max( 0, min( 23, $h ) );
+}
+
+/**
+ * 指定時刻（サイトのタイムゾーン）における次の実行タイムスタンプ（UTC秒）。
+ *
+ * @param int $hour 0〜23。
+ * @return int タイムスタンプ。
+ */
+function apprex_autopost_next_run( $hour ) {
+	$tz   = wp_timezone();
+	$now  = new DateTime( 'now', $tz );
+	$next = new DateTime( 'now', $tz );
+	$next->setTime( apprex_sanitize_hour( $hour ), 0, 0 );
+	if ( $next <= $now ) {
+		$next->modify( '+1 day' );
+	}
+	return $next->getTimestamp();
+}
+
+/**
+ * 自動投稿cronを、設定された投稿時刻に合わせて（再）スケジュールする。
+ */
+function apprex_reschedule_autopost() {
+	$ts = wp_next_scheduled( 'apprex_autopost_cron' );
+	if ( $ts ) {
+		wp_unschedule_event( $ts, 'apprex_autopost_cron' );
+	}
+	$hour = (int) get_option( 'apprex_autopost_hour', 10 );
+	wp_schedule_event( apprex_autopost_next_run( $hour ), 'daily', 'apprex_autopost_cron' );
+}
+
 add_action( 'init', function () {
-	if ( ! wp_next_scheduled( 'apprex_autopost_cron' ) ) {
-		wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', 'apprex_autopost_cron' );
+	$hour      = (int) get_option( 'apprex_autopost_hour', 10 );
+	$scheduled = wp_next_scheduled( 'apprex_autopost_cron' );
+	if ( ! $scheduled ) {
+		wp_schedule_event( apprex_autopost_next_run( $hour ), 'daily', 'apprex_autopost_cron' );
+		return;
+	}
+	// 既存スケジュールの時刻が設定とズレていたら合わせ直す。
+	if ( (int) wp_date( 'G', $scheduled ) !== apprex_sanitize_hour( $hour ) ) {
+		apprex_reschedule_autopost();
 	}
 } );
+// 管理画面で投稿時刻を変更したら即リスケ。
+add_action( 'update_option_apprex_autopost_hour', 'apprex_reschedule_autopost' );
+add_action( 'add_option_apprex_autopost_hour', 'apprex_reschedule_autopost' );
+
 add_action( 'switch_theme', function () {
 	$ts = wp_next_scheduled( 'apprex_autopost_cron' );
 	if ( $ts ) {
