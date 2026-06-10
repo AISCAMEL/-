@@ -99,6 +99,35 @@ while ( have_posts() ) :
 		</div>
 	</section>
 
+	<section class="section">
+		<div class="container">
+			<?php apprex_section_head( 'Terms', __( 'パートナー契約の概要', 'apprex' ), __( '主な契約条件です。詳細はお申し込み後に契約書でご案内します。', 'apprex' ) ); ?>
+			<div class="partner-terms">
+				<table>
+					<tbody>
+						<?php
+						$apprex_terms = array(
+							array( '契約形態', '取次・紹介パートナー（販売代理）。OEM販売パートナーも別途ご相談可能。' ),
+							array( '取次報酬', '成約時の初期費用に対して10%（目安・プランにより変動）。' ),
+							array( '継続報酬', '月額利用料に対して継続的に10%（目安・契約継続中）。' ),
+							array( '報酬の支払い', '月末締め・翌月末払い（銀行振込）。※条件は契約書に準ずる。' ),
+							array( '契約期間', '1年単位（自動更新）。中途解約は事前通知により可。' ),
+							array( 'パートナーの役割', '見込み客のご紹介・お取次ぎ。商談・サポートは当社が対応も可能。' ),
+							array( '当社の役割', '開発・サポート・請求管理・成約後の運用を担当。' ),
+							array( '禁止事項', '虚偽説明・誇大広告・当社ブランドを毀損する行為等。' ),
+							array( '費用・ノルマ', '加盟金・月額費用・販売ノルマなし（無料で開始）。' ),
+						);
+						foreach ( $apprex_terms as $t ) :
+							?>
+							<tr><th><?php echo esc_html( $t[0] ); ?></th><td><?php echo esc_html( $t[1] ); ?></td></tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+				<p class="plan-note"><?php esc_html_e( '※ 報酬率・支払い条件・契約期間などの具体的条件は、事業形態に応じて個別にご案内します（要確認事項）。', 'apprex' ); ?></p>
+			</div>
+		</div>
+	</section>
+
 	<section class="section section--soft">
 		<div class="container content-prose">
 			<?php apprex_section_head( 'Apply', __( 'パートナー登録（無料）', 'apprex' ) ); ?>

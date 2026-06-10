@@ -53,15 +53,17 @@ function apprex_pricing_config() {
 						'label'           => 'トライアル（基本機能）',
 						'monthly'         => 19800,
 						'monthly_regular' => 19800,
-						'initial'         => 200000,
+						'initial'         => 100000,
 						'desc'            => '基本機能・縛りなし。まずはここから。',
+						'note'            => '制作代行（オプション）10万円。自社で制作する場合は不要。',
 					),
 					'start'    => array(
 						'label'           => 'スタート（電子カタログ）',
 						'monthly'         => 39800,
 						'monthly_regular' => 39800,
-						'initial'         => 200000,
+						'initial'         => 300000,
 						'desc'            => 'トライアル＋電子カタログ機能。',
+						'note'            => '制作代行（オプション）10万円（電子カタログ10冊まで）。10冊以上は別途。自社制作は不要。',
 					),
 					'business' => array(
 						'label'           => 'ビジネス（多店舗）',
@@ -69,13 +71,18 @@ function apprex_pricing_config() {
 						'monthly_regular' => 59800,
 						'initial'         => 500000,
 						'desc'            => 'スタート＋多店舗機能（店舗数無制限）。',
+						'note'            => '制作代行（オプション）20万円（20店舗まで込み）。20店舗以上は1店舗ごと+1万円。自社制作は不要。',
 					),
 				),
-				// 一回限りのオプション。
+				// 一回限りのオプション（金額あり）。
 				'options'    => array(
 					'seisaku' => array( 'label' => '制作代行（10メニューまで）', 'price' => 100000 ),
 					'chat'    => array( 'label' => 'チャット機能', 'price' => 300000 ),
 					'gps'     => array( 'label' => 'GPSプッシュ（1カ所）', 'price' => 20000 ),
+				),
+				// 要相談オプション（金額は個別見積）。
+				'quote_options' => array(
+					'API連動', '基幹システム連動', 'オンプレミス', '機能カスタマイズ', '補助金サポート',
 				),
 			),
 			'hp'  => array(
@@ -87,10 +94,12 @@ function apprex_pricing_config() {
 					'standard' => array( 'label' => 'Standard', 'monthly' => 19800, 'monthly_regular' => 19800, 'initial' => 0, 'desc' => 'LP付き・問い合わせ充実' ),
 					'premium'  => array( 'label' => 'Premium', 'monthly' => 39800, 'monthly_regular' => 39800, 'initial' => 0, 'desc' => 'EC・会員機能付き' ),
 				),
-				'options'    => array(
-					'banner'  => array( 'label' => 'バナー制作サブスク', 'price' => 50000 ),
-					'ads'     => array( 'label' => '広告運用代行', 'price' => 50000 ),
-					'consult' => array( 'label' => 'Webコンサル', 'price' => 80000 ),
+				'options'       => array(
+					'banner' => array( 'label' => 'バナー制作', 'price' => 50000 ),
+					'ads'    => array( 'label' => '広告運用', 'price' => 50000 ),
+				),
+				'quote_options' => array(
+					'HP構造化（SEO）', 'LINE構築',
 				),
 			),
 		),

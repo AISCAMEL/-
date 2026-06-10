@@ -49,6 +49,7 @@ while ( have_posts() ) :
 					<div class="estimate__block">
 						<h3 class="estimate__h"><span>3</span><?php esc_html_e( 'オプション（任意）', 'apprex' ); ?></h3>
 						<div class="estimate__options" id="est-options"></div>
+						<p class="estimate__hint" style="margin-top:12px"><?php esc_html_e( 'API連動・基幹システム連動・オンプレミス・機能カスタマイズ・補助金サポート等は要相談です。発注時の「ご要望」欄にご記入いただくか、お問い合わせください。', 'apprex' ); ?></p>
 					</div>
 				</div>
 

@@ -77,7 +77,7 @@ function apprex_cta_buttons( $variant = 'accent' ) {
 	);
 	printf(
 		'<a class="btn btn--ghost" href="%1$s">%2$s</a>',
-		esc_url( apprex_page_url( 'contact' ) ),
+		esc_url( apprex_page_url( 'meeting' ) ),
 		esc_html__( 'オンライン相談予約', 'apprex' )
 	);
 }

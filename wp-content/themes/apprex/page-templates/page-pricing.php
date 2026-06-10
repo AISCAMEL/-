@@ -34,6 +34,49 @@ while ( have_posts() ) :
 		</div>
 	</section>
 
+	<section class="section">
+		<div class="container">
+			<?php apprex_section_head( 'Compare', __( 'アプリ開発プラン 比較表', 'apprex' ) ); ?>
+			<div class="compare-wrap">
+				<table class="compare-table">
+					<thead>
+						<tr>
+							<th><?php esc_html_e( '項目', 'apprex' ); ?></th>
+							<th><?php esc_html_e( 'トライアル', 'apprex' ); ?></th>
+							<th class="is-feat"><?php esc_html_e( 'スタート', 'apprex' ); ?></th>
+							<th><?php esc_html_e( 'ビジネス', 'apprex' ); ?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php
+						$apprex_rows = array(
+							array( '月額（税抜）', '19,800円', '39,800円', '59,800円' ),
+							array( '初期設定費（今月）', '0円（通常10万）', '0円（通常30万）', '0円（通常50万）' ),
+							array( '開発費用', '0円', '0円', '0円' ),
+							array( '基本機能', '◯', '◯', '◯' ),
+							array( '電子カタログ機能', '—', '◯', '◯' ),
+							array( '多店舗機能（無制限）', '—', '—', '◯' ),
+							array( 'プッシュ通知', '無制限', '無制限', '無制限' ),
+							array( '決済・サブスク決済', '可能', '可能', '可能' ),
+							array( 'ダウンロード数課金', 'なし', 'なし', 'なし' ),
+							array( '最低利用期間', '縛りなし', '縛りなし', '縛りなし' ),
+							array( '制作代行（オプション）', '10万円', '10万円', '20万円' ),
+						);
+						foreach ( $apprex_rows as $r ) :
+							?>
+							<tr>
+								<th><?php echo esc_html( $r[0] ); ?></th>
+								<td><?php echo esc_html( $r[1] ); ?></td>
+								<td class="is-feat"><?php echo esc_html( $r[2] ); ?></td>
+								<td><?php echo esc_html( $r[3] ); ?></td>
+							</tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</section>
+
 	<section class="section section--soft" id="quote-plans">
 		<div class="container">
 			<?php apprex_section_head( 'Advanced', __( '個別見積プラン（要相談）', 'apprex' ), __( 'マッチングアプリ・フルスクラッチ・ソース買取まで、あらゆるアプリに対応します。', 'apprex' ) ); ?>

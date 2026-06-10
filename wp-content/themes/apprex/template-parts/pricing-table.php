@@ -49,6 +49,9 @@ $apprex_render_service = function ( $svc, $featured = '' ) use ( $apprex_est, $a
 				<li><?php echo esc_html( $p['desc'] ); ?></li>
 				<li><?php esc_html_e( '最低利用期間 縛りなし', 'apprex' ); ?></li>
 			</ul>
+			<?php if ( ! empty( $p['note'] ) ) : ?>
+				<p class="price-note"><?php echo esc_html( $p['note'] ); ?></p>
+			<?php endif; ?>
 			<a class="btn <?php echo $is_feat ? 'btn--primary' : 'btn--ghost'; ?>" href="<?php echo esc_url( $apprex_est ); ?>"><?php esc_html_e( '見積もり・申込', 'apprex' ); ?></a>
 		</div>
 		<?php
@@ -62,6 +65,9 @@ $apprex_render_service = function ( $svc, $featured = '' ) use ( $apprex_est, $a
 			$opts[] = esc_html( $o['label'] ) . ' ' . number_format( $o['price'] ) . '円';
 		}
 		echo wp_kses_post( implode( '／', $opts ) ) . '</p>';
+	}
+	if ( ! empty( $svc['quote_options'] ) ) {
+		echo '<p class="plan-note"><strong>その他オプション（要相談）</strong>：' . esc_html( implode( '／', $svc['quote_options'] ) ) . '</p>';
 	}
 };
 ?>
