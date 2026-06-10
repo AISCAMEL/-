@@ -90,16 +90,26 @@ function apprex_pricing_config() {
 				'billing'    => 'monthly',
 				'min_months' => 0,
 				'plans'      => array(
-					'light'    => array( 'label' => 'Light', 'monthly' => 9800, 'monthly_regular' => 9800, 'initial' => 0, 'desc' => '基本的なコーポレートサイト' ),
-					'standard' => array( 'label' => 'Standard', 'monthly' => 19800, 'monthly_regular' => 19800, 'initial' => 0, 'desc' => 'LP付き・問い合わせ充実' ),
-					'premium'  => array( 'label' => 'Premium', 'monthly' => 39800, 'monthly_regular' => 39800, 'initial' => 0, 'desc' => 'EC・会員機能付き' ),
+					'light'    => array(
+						'label' => 'Light', 'monthly' => 9800, 'monthly_regular' => 9800, 'initial' => 0,
+						'desc' => '基本的なコーポレートサイト',
+						'support' => array( '〜5ページ', '月1回までの更新サポート', 'お問い合わせフォーム', '常時SSL', '基本SEO設定' ),
+					),
+					'standard' => array(
+						'label' => 'Standard', 'monthly' => 19800, 'monthly_regular' => 19800, 'initial' => 0,
+						'desc' => 'LP付き・問い合わせ充実',
+						'support' => array( '〜10ページ＋LP1本', '月2回までの更新サポート', '予約・問い合わせ強化', '構造化データ（基本）' ),
+					),
+					'premium'  => array(
+						'label' => 'Premium', 'monthly' => 39800, 'monthly_regular' => 39800, 'initial' => 0,
+						'desc' => 'EC・会員機能付き',
+						'support' => array( '〜20ページ', '月3回までの更新サポート', 'EC・会員機能', '優先サポート' ),
+					),
 				),
-				'options'       => array(
-					'banner' => array( 'label' => 'バナー制作', 'price' => 50000 ),
-					'ads'    => array( 'label' => '広告運用', 'price' => 50000 ),
-				),
+				// HPの追加項目はすべて別途見積もり（要相談）。
+				'options'       => array(),
 				'quote_options' => array(
-					'HP構造化（SEO）', 'LINE構築',
+					'バナー制作', '構造化（SEO）', 'LINE構築', 'MEO構築', 'LLMO構築',
 				),
 			),
 		),
@@ -251,7 +261,7 @@ function apprex_pricing_summary_text() {
 	}
 	$lines[] = '  オプション：' . implode( ' / ', $opts ) . '。縛りなし・DL課金なし・プッシュ無制限。';
 
-	$lines[] = '【ホームページ制作（初期費用0円・月額）】Light 9,800円／Standard 19,800円／Premium 39,800円。';
+	$lines[] = '【ホームページ制作（初期費用0円・月額）】Light 9,800円／Standard 19,800円／Premium 39,800円。プラン毎にサポート範囲あり。追加項目（バナー制作・構造化・LINE構築・MEO構築・LLMO構築）はすべて別途見積もり。';
 
 	$lines[] = '【個別見積（要相談）】';
 	foreach ( apprex_quote_plans() as $q ) {
