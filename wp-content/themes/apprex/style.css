@@ -539,3 +539,27 @@ html, body { overflow-x: hidden; max-width: 100%; }
 .share-buttons__btn { color: #fff; border-radius: 8px; padding: 8px 16px; font-size: .85rem; font-weight: 700; }
 .share-buttons__btn:hover { color: #fff; filter: brightness(1.05); }
 .share-x { background: #000; } .share-facebook { background: #1877f2; } .share-line { background: #06c755; }
+
+/* ===========================================================================
+   料金：キャンペーン表示・個別見積カード・パートナー
+   ======================================================================== */
+.price-was { text-align: center; font-size: .82rem; color: var(--color-muted); margin: -4px 0 10px; }
+.price-was s { color: var(--color-muted); }
+.price-was b { color: var(--color-accent); }
+
+.quote-card { background: #fff; border: 1px solid var(--color-line); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; }
+.quote-card h3 { font-size: 1.2rem; }
+.quote-card__lead { color: var(--color-muted); font-size: .9rem; }
+.quote-card__table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; font-size: .85rem; }
+.quote-card__table th { text-align: left; color: var(--color-ink); white-space: nowrap; padding: 6px 8px 6px 0; vertical-align: top; width: 42%; }
+.quote-card__table td { padding: 6px 0; border-bottom: 1px solid var(--color-line); }
+.quote-card__tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.quote-card .btn { margin-top: auto; }
+
+/* パートナー */
+.partner-reward { display: grid; gap: 18px; grid-template-columns: 1fr; max-width: 680px; margin: 0 auto; }
+@media (min-width: 640px) { .partner-reward { grid-template-columns: 1fr 1fr; } }
+.partner-reward__item { text-align: center; background: var(--color-bg-soft); border: 1px solid var(--color-line); border-radius: var(--radius); padding: 26px; }
+.partner-reward__num { font-size: 3rem; font-weight: 800; color: var(--color-primary); line-height: 1; }
+.partner-reward__num small { font-size: 1.2rem; }
+.partner-reward__label { font-weight: 700; color: var(--color-ink); margin-top: 6px; }

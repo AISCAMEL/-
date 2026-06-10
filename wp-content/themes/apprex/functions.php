@@ -73,6 +73,7 @@ function apprex_primary_menu_fallback() {
 		'/estimate'    => __( '見積もり', 'apprex' ),
 		'/hp-creation' => __( 'HP制作', 'apprex' ),
 		'/blog'        => __( 'ブログ', 'apprex' ),
+		'/partner'     => __( 'パートナー募集', 'apprex' ),
 		'/company'     => __( '会社概要', 'apprex' ),
 		'/faq'         => __( 'FAQ', 'apprex' ),
 	);

@@ -136,6 +136,7 @@ function apprex_form_meta( $type ) {
 		'document' => array( 'submit' => '資料をダウンロードする', 'msg_label' => 'ご質問・ご要望（任意）', 'msg_required' => false, 'datetime' => false ),
 		'trial'    => array( 'submit' => '30日間 無料体験を申し込む', 'msg_label' => 'ご要望（任意）', 'msg_required' => false, 'datetime' => false ),
 		'meeting'  => array( 'submit' => 'この日時で予約する', 'msg_label' => '相談したい内容（任意）', 'msg_required' => false, 'datetime' => true ),
+		'partner'  => array( 'submit' => 'パートナー登録を申し込む', 'msg_label' => '事業内容・ご質問（任意）', 'msg_required' => false, 'datetime' => false ),
 	);
 	return isset( $map[ $type ] ) ? $map[ $type ] : $map['contact'];
 }
@@ -146,7 +147,7 @@ function apprex_form_meta( $type ) {
  * @return string[]
  */
 function apprex_inquiry_types() {
-	return array( 'contact', 'document', 'trial', 'meeting' );
+	return array( 'contact', 'document', 'trial', 'meeting', 'partner' );
 }
 
 /**
@@ -161,6 +162,7 @@ function apprex_type_label( $type ) {
 		'document' => '資料請求',
 		'trial'    => '無料体験申込',
 		'meeting'  => 'ミーティング予約',
+		'partner'  => 'パートナー応募',
 		'estimate' => '見積もり・発注',
 	);
 	return isset( $labels[ $type ] ) ? $labels[ $type ] : 'お問い合わせ';
@@ -341,6 +343,8 @@ function apprex_autoreply_onscreen( $type ) {
 			return '無料体験のお申し込みを受け付けました。担当者より2営業日以内にご案内します。';
 		case 'meeting':
 			return 'ミーティングのご予約を受け付けました。確認のうえ、確定のご連絡を差し上げます。リマインダーもお送りします。';
+		case 'partner':
+			return 'パートナー登録のお申し込みを受け付けました。担当者より詳細をご案内します。';
 		default:
 			return 'お問い合わせありがとうございます。担当者より2営業日以内にご連絡いたします。';
 	}
@@ -402,6 +406,10 @@ function apprex_send_autoreply( $type, $fields ) {
 			$body    = "{$name} 様\n\nオンラインミーティングのご予約ありがとうございます。\n";
 			$body   .= $when ? "ご希望日時：{$when}\n" : '';
 			$body   .= "内容を確認のうえ、確定のご連絡（接続URL含む）を差し上げます。\n開催前にリマインダーメールをお送りします。\n";
+			break;
+		case 'partner':
+			$subject = '【APPREX】パートナー登録のお申し込みありがとうございます';
+			$body    = "{$name} 様\n\nこの度はAPPREXパートナー（取次販売・紹介）にお申し込みいただきありがとうございます。\n担当者より制度の詳細・報酬・進め方をご案内いたします。\n";
 			break;
 		default:
 			$subject = '【APPREX】お問い合わせありがとうございます';

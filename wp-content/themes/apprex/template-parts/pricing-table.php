@@ -1,7 +1,7 @@
 <?php
 /**
- * Reusable pricing tables — アプリ開発 / 制作代行 / 自社制作。
- * 料金は README（権威データ）＋トップページに準拠。stale な pricing.html は不採用。
+ * 料金表（APPREX仕様）。アプリ開発＋HP制作＋オプション。
+ * 個別見積（マッチング等）と注記は page-pricing.php 側で追記。
  *
  * @package APPREX
  */
@@ -10,90 +10,69 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$apprex_app_plans = array(
-	array(
-		'name'     => __( 'Trial', 'apprex' ),
-		'price'    => '19,800',
-		'unit'     => __( '円 / 月（税抜）', 'apprex' ),
-		'featured' => false,
-		'feats'    => array(
-			__( '初期費用0円', 'apprex' ),
-			__( 'ノーコードでアプリ作成', 'apprex' ),
-			__( 'iOS / Android 対応', 'apprex' ),
-			__( 'メール・チャットサポート', 'apprex' ),
-		),
-		'cta'      => __( '無料体験を始める', 'apprex' ),
-		'cta_url'  => apprex_page_url( 'free-trial' ),
-	),
-	array(
-		'name'     => __( 'Start', 'apprex' ),
-		'price'    => '39,800',
-		'unit'     => __( '円 / 月（税抜）', 'apprex' ),
-		'featured' => true,
-		'feats'    => array(
-			__( '初期費用0円', 'apprex' ),
-			__( 'Trial の全機能', 'apprex' ),
-			__( 'プッシュ通知・会員管理', 'apprex' ),
-			__( '分析機能', 'apprex' ),
-			__( '優先サポート', 'apprex' ),
-		),
-		'cta'      => __( 'このプランで始める', 'apprex' ),
-		'cta_url'  => apprex_page_url( 'contact' ),
-	),
-	array(
-		'name'     => __( 'Business', 'apprex' ),
-		'price'    => '59,800',
-		'unit'     => __( '円 / 月（税抜）', 'apprex' ),
-		'featured' => false,
-		'feats'    => array(
-			__( '初期費用0円', 'apprex' ),
-			__( 'Start の全機能', 'apprex' ),
-			__( 'EC・決済・外部連携', 'apprex' ),
-			__( 'カスタマイズ開発対応', 'apprex' ),
-			__( '専任担当による運用支援', 'apprex' ),
-		),
-		'cta'      => __( '相談する', 'apprex' ),
-		'cta_url'  => apprex_page_url( 'contact' ),
-	),
-);
+$apprex_cfg     = apprex_pricing_config();
+$apprex_contact = apprex_page_url( 'contact' );
+$apprex_est     = apprex_page_url( 'estimate' );
 
-$apprex_agency_plans = array(
-	array( 'name' => __( '制作代行 Trial', 'apprex' ), 'price' => '100,000', 'unit' => __( '円〜（買い切り）', 'apprex' ) ),
-	array( 'name' => __( '制作代行 Start', 'apprex' ), 'price' => '150,000', 'unit' => __( '円〜（買い切り）', 'apprex' ) ),
-	array( 'name' => __( '制作代行 Business', 'apprex' ), 'price' => '200,000', 'unit' => __( '円〜（買い切り）', 'apprex' ) ),
-);
+/**
+ * 1サービス分のプラン表を描画。
+ *
+ * @param array  $svc      サービス定義。
+ * @param string $featured おすすめプランkey。
+ */
+$apprex_render_service = function ( $svc, $featured = '' ) use ( $apprex_est, $apprex_contact ) {
+	echo '<div class="pricing">';
+	foreach ( $svc['plans'] as $key => $p ) {
+		$is_feat   = ( $key === $featured );
+		$initial_r = (int) ( $p['initial'] ?? 0 );
+		$initial   = apprex_campaign_initial( $initial_r );
+		?>
+		<div class="price-card<?php echo $is_feat ? ' price-card--featured' : ''; ?> is-reveal">
+			<?php if ( $is_feat ) : ?><span class="ribbon"><?php esc_html_e( 'おすすめ', 'apprex' ); ?></span><?php endif; ?>
+			<h3><?php echo esc_html( $p['label'] ); ?></h3>
+			<div class="price">
+				<?php echo esc_html( number_format( $p['monthly'] ) ); ?><small><?php esc_html_e( '円 / 月（税抜）', 'apprex' ); ?></small>
+			</div>
+			<?php if ( ! empty( $p['monthly_regular'] ) && $p['monthly_regular'] > $p['monthly'] ) : ?>
+				<p class="price-was">通常 <s><?php echo esc_html( number_format( $p['monthly_regular'] ) ); ?>円</s> → <b>キャンペーン</b></p>
+			<?php endif; ?>
+			<ul class="feats">
+				<li><?php esc_html_e( '開発費用 0円', 'apprex' ); ?></li>
+				<li>
+					<?php esc_html_e( '初期設定費', 'apprex' ); ?>
+					<?php if ( $initial_r > $initial ) : ?>
+						<s><?php echo esc_html( number_format( $initial_r ) ); ?>円</s> → <strong><?php echo esc_html( number_format( $initial ) ); ?>円</strong>（今月）
+					<?php else : ?>
+						<?php echo esc_html( number_format( $initial ) ); ?>円
+					<?php endif; ?>
+				</li>
+				<li><?php echo esc_html( $p['desc'] ); ?></li>
+				<li><?php esc_html_e( '最低利用期間 縛りなし', 'apprex' ); ?></li>
+			</ul>
+			<a class="btn <?php echo $is_feat ? 'btn--primary' : 'btn--ghost'; ?>" href="<?php echo esc_url( $apprex_est ); ?>"><?php esc_html_e( '見積もり・申込', 'apprex' ); ?></a>
+		</div>
+		<?php
+	}
+	echo '</div>';
+
+	if ( ! empty( $svc['options'] ) ) {
+		echo '<p class="plan-note"><strong>オプション（一回）</strong>：';
+		$opts = array();
+		foreach ( $svc['options'] as $o ) {
+			$opts[] = esc_html( $o['label'] ) . ' ' . number_format( $o['price'] ) . '円';
+		}
+		echo wp_kses_post( implode( '／', $opts ) ) . '</p>';
+	}
+};
 ?>
 
-<h3 class="plan-group-title"><?php esc_html_e( 'アプリ開発プラン（月額制・初期費用0円）', 'apprex' ); ?></h3>
-<div class="pricing">
-	<?php foreach ( $apprex_app_plans as $plan ) : ?>
-		<div class="price-card<?php echo $plan['featured'] ? ' price-card--featured' : ''; ?> is-reveal">
-			<?php if ( $plan['featured'] ) : ?>
-				<span class="ribbon"><?php esc_html_e( 'おすすめ', 'apprex' ); ?></span>
-			<?php endif; ?>
-			<h3><?php echo esc_html( $plan['name'] ); ?></h3>
-			<div class="price"><?php echo esc_html( $plan['price'] ); ?><small><?php echo esc_html( $plan['unit'] ); ?></small></div>
-			<ul class="feats">
-				<?php foreach ( $plan['feats'] as $feat ) : ?>
-					<li><?php echo esc_html( $feat ); ?></li>
-				<?php endforeach; ?>
-			</ul>
-			<a class="btn <?php echo $plan['featured'] ? 'btn--primary' : 'btn--ghost'; ?>" href="<?php echo esc_url( $plan['cta_url'] ); ?>">
-				<?php echo esc_html( $plan['cta'] ); ?>
-			</a>
-		</div>
-	<?php endforeach; ?>
-</div>
-<p class="plan-note"><?php esc_html_e( '※ 最低契約期間は12ヶ月です。30日間無料体験あり。初期費用0円キャンペーン実施中（通常30万円）。', 'apprex' ); ?></p>
+<h3 class="plan-group-title"><?php esc_html_e( 'アプリ開発プラン（月額制・開発費0円）', 'apprex' ); ?></h3>
+<p class="plan-note"><?php esc_html_e( '初期設定費は今月末まで限定キャンペーン（先着10社）で0円。30日間の管理画面体験は無料。ダウンロード数課金なし・プッシュ通知無制限。', 'apprex' ); ?></p>
+<?php $apprex_render_service( $apprex_cfg['services']['app'], 'start' ); ?>
 
-<h3 class="plan-group-title"><?php esc_html_e( '制作代行プラン（買い切り）', 'apprex' ); ?></h3>
-<div class="grid grid--3">
-	<?php foreach ( $apprex_agency_plans as $plan ) : ?>
-		<div class="price-card is-reveal">
-			<h3><?php echo esc_html( $plan['name'] ); ?></h3>
-			<div class="price"><?php echo esc_html( $plan['price'] ); ?><small><?php echo esc_html( $plan['unit'] ); ?></small></div>
-			<a class="btn btn--ghost" href="<?php echo esc_url( apprex_page_url( 'contact' ) ); ?>"><?php esc_html_e( 'お問い合わせ', 'apprex' ); ?></a>
-		</div>
-	<?php endforeach; ?>
-</div>
-<p class="plan-note"><?php esc_html_e( '※ 自社制作（お客様ご自身での制作）は無料でご利用いただけます。', 'apprex' ); ?></p>
+<h3 class="plan-group-title"><?php esc_html_e( 'ホームページ制作（初期費用0円・月額制）', 'apprex' ); ?></h3>
+<?php $apprex_render_service( $apprex_cfg['services']['hp'], 'standard' ); ?>
+
+<p class="plan-note"><?php esc_html_e( '※ 価格はすべて税抜表示です。マッチングアプリ等の上位プランは個別見積（要相談）。', 'apprex' ); ?>
+	<a href="<?php echo esc_url( $apprex_contact ); ?>"><?php esc_html_e( 'お問い合わせ', 'apprex' ); ?></a>
+</p>

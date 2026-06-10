@@ -1,7 +1,13 @@
 <?php
 /**
- * Single source of truth for pricing — used by the estimate calculator,
- * the order processor (server-side recompute), and the AI chatbot prompt.
+ * 料金の単一ソース（APPREX仕様）。
+ * 見積もり計算・料金ページ・チャット回答・GAS連携が全てここを参照。
+ *
+ * 方針：
+ * - アプリ開発は「初期設定費」を提示し、今月キャンペーンで 0円 に自動反映。
+ * - 月額は通常価格（取り消し線）＋キャンペーン価格を表示。
+ * - 制作代行・チャット・GPS等は一回限りのオプション。
+ * - マッチング/カスタム/オンプレミスは個別見積（要相談）として別掲。
  *
  * @package APPREX
  */
@@ -11,65 +17,80 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Structured pricing model.
+ * アプリ基本機能の一覧（トライアル）。
  *
- * billing: 'monthly' (月額) | 'oneoff' (買い切り)
- * Amounts are in JPY, tax excluded.
+ * @return string[]
+ */
+function apprex_app_basic_features() {
+	return array(
+		'簡単作成CMS', 'TOPデザインテンプレート', 'デザイン編集機能', 'ページ作成機能',
+		'プッシュ通知（6種類）', '予約機能', 'スタンプカード', 'クーポン', 'ポイント機能',
+		'スタンプラリー', '会員機能', '会員証機能', 'アンケート', 'ブログ機能', '動画機能',
+		'LINEで友達紹介', 'HTML編集', '申し込みフォーム作成', 'DL分析', 'フォトギャラリー',
+		'SNS連動', 'ウェブビュー機能', '各種ページ作成',
+	);
+}
+
+/**
+ * 価格モデル。
  *
  * @return array
  */
 function apprex_pricing_config() {
 	$config = array(
-		'currency'    => 'JPY',
-		'campaign'    => array(
-			'label'        => '初期費用0円キャンペーン（先着5名様）',
-			'initial_fee'  => 0,
-			'normal_fee'   => 300000,
+		'currency' => 'JPY',
+		'campaign' => array(
+			'label'           => '今月末まで限定キャンペーン（先着10社）',
+			'initial_to_zero' => true, // 初期設定費を0円に。
 		),
-		'services'    => array(
-			'app'    => array(
+		'services' => array(
+			'app' => array(
 				'label'      => 'アプリ開発（月額制）',
 				'billing'    => 'monthly',
-				'min_months' => 12,
+				'min_months' => 0, // 縛りなし。
 				'plans'      => array(
-					'trial'    => array( 'label' => 'Trial', 'price' => 19800 ),
-					'start'    => array( 'label' => 'Start', 'price' => 39800 ),
-					'business' => array( 'label' => 'Business', 'price' => 59800 ),
+					'trial'    => array(
+						'label'           => 'トライアル（基本機能）',
+						'monthly'         => 9800,
+						'monthly_regular' => 19800,
+						'initial'         => 200000,
+						'desc'            => '基本機能・縛りなし。まずはここから。',
+					),
+					'start'    => array(
+						'label'           => 'スタート（電子カタログ）',
+						'monthly'         => 19800,
+						'monthly_regular' => 39800,
+						'initial'         => 200000,
+						'desc'            => 'トライアル＋電子カタログ機能。',
+					),
+					'business' => array(
+						'label'           => 'ビジネス（多店舗）',
+						'monthly'         => 49800,
+						'monthly_regular' => 59800,
+						'initial'         => 500000,
+						'desc'            => 'スタート＋多店舗機能（店舗数無制限）。',
+					),
 				),
+				// 一回限りのオプション。
 				'options'    => array(
-					'multilang' => array( 'label' => '多言語対応', 'price' => 5000 ),
-					'ec'        => array( 'label' => 'EC・決済機能', 'price' => 10000 ),
-					'api'       => array( 'label' => '外部API連携', 'price' => 8000 ),
-					'support'   => array( 'label' => '保守・運用強化', 'price' => 10000 ),
+					'seisaku' => array( 'label' => '制作代行（10メニューまで）', 'price' => 100000 ),
+					'chat'    => array( 'label' => 'チャット機能', 'price' => 100000 ),
+					'gps'     => array( 'label' => 'GPSプッシュ（1カ所）', 'price' => 20000 ),
 				),
 			),
-			'agency' => array(
-				'label'      => '制作代行（買い切り）',
-				'billing'    => 'oneoff',
-				'min_months' => 0,
-				'plans'      => array(
-					'trial'    => array( 'label' => 'Trial', 'price' => 100000 ),
-					'start'    => array( 'label' => 'Start', 'price' => 150000 ),
-					'business' => array( 'label' => 'Business', 'price' => 200000 ),
-				),
-				'options'    => array(
-					'design'  => array( 'label' => 'デザイン強化', 'price' => 50000 ),
-					'release' => array( 'label' => 'ストア公開代行', 'price' => 30000 ),
-				),
-			),
-			'hp'     => array(
+			'hp'  => array(
 				'label'      => 'ホームページ制作（月額制・初期費用0円）',
 				'billing'    => 'monthly',
-				'min_months' => 12,
+				'min_months' => 0,
 				'plans'      => array(
-					'light'    => array( 'label' => 'Light', 'price' => 9800 ),
-					'standard' => array( 'label' => 'Standard', 'price' => 19800 ),
-					'premium'  => array( 'label' => 'Premium', 'price' => 39800 ),
+					'light'    => array( 'label' => 'Light', 'monthly' => 9800, 'monthly_regular' => 9800, 'initial' => 0, 'desc' => '基本的なコーポレートサイト' ),
+					'standard' => array( 'label' => 'Standard', 'monthly' => 19800, 'monthly_regular' => 19800, 'initial' => 0, 'desc' => 'LP付き・問い合わせ充実' ),
+					'premium'  => array( 'label' => 'Premium', 'monthly' => 39800, 'monthly_regular' => 39800, 'initial' => 0, 'desc' => 'EC・会員機能付き' ),
 				),
 				'options'    => array(
 					'banner'  => array( 'label' => 'バナー制作サブスク', 'price' => 50000 ),
 					'ads'     => array( 'label' => '広告運用代行', 'price' => 50000 ),
-					'consult' => array( 'label' => 'Webコンサルティング', 'price' => 80000 ),
+					'consult' => array( 'label' => 'Webコンサル', 'price' => 80000 ),
 				),
 			),
 		),
@@ -79,25 +100,88 @@ function apprex_pricing_config() {
 }
 
 /**
- * Server-side recompute of an estimate from raw input (anti-tampering).
+ * 個別見積（要相談）の上位プラン。料金ページ・チャットで案内。
+ *
+ * @return array
+ */
+function apprex_quote_plans() {
+	return apply_filters(
+		'apprex_quote_plans',
+		array(
+			'matching' => array(
+				'label'    => 'マッチングアプリ開発',
+				'lead'     => 'スキルマッチング／ビジネスマッチング／出会い系／フリマ等。Flutterスクラッチ開発でカスタマイズ自由。',
+				'rows'     => array(
+					'開発費用（iOS/Android）' => '500万円 → 300万円（キャンペーン）',
+					'月額保守・サーバ代'      => '10万円 → 5万円',
+					'制作期間'                => '1〜3ヶ月',
+					'開発言語'                => 'アプリ：Flutter／管理：PHP',
+					'サーバ'                  => 'AWS無料提供',
+					'決済'                    => 'iOS/Android 内部課金 または Square等の外部課金',
+					'最低利用期間'            => '縛りなし',
+				),
+				'examples' => array( 'スキルマッチング', 'ビジネスマッチング', '出会い系マッチング', 'フリマアプリ' ),
+				'cta'      => 'matching-appli.net も参照',
+			),
+			'custom'   => array(
+				'label' => 'カスタマイズプラン',
+				'lead'  => 'APPREXの基盤の上に、希望の機能・デザインをスクラッチ開発。他社比で低価格・短納期。',
+				'rows'  => array(
+					'開発費'     => '相談（案件ごと見積）',
+					'月額管理費' => '相談',
+					'仕様定義'   => '1週間〜',
+					'開発期間'   => '3ヶ月〜',
+					'用途'       => 'マッチング・業務用・課金アプリ等あらゆるアプリ',
+				),
+			),
+			'onprem'   => array(
+				'label' => 'オンプレミスプラン',
+				'lead'  => 'プログラムソース買取。自社で改造可能。',
+				'rows'  => array(
+					'ライセンス' => '1ライセンス',
+					'サーバ'     => '自社サーバー または 弊社サーバー',
+					'価格'       => '2,000万円〜',
+					'月額管理費' => '20万円〜',
+				),
+			),
+		)
+	);
+}
+
+/**
+ * 今月のキャンペーン後・初期費用（0円 or 通常）。
+ *
+ * @param int $regular 通常初期費用。
+ * @return int
+ */
+function apprex_campaign_initial( $regular ) {
+	$c = apprex_pricing_config();
+	return ! empty( $c['campaign']['initial_to_zero'] ) ? 0 : (int) $regular;
+}
+
+/**
+ * サーバー側で見積りを再計算（改ざん防止）。
  *
  * @param string   $service Service key.
  * @param string   $plan    Plan key.
  * @param string[] $options Option keys.
- * @return array|WP_Error { service, plan, billing, monthly, oneoff, initial_fee, options[], annual_est, min_months, label }
+ * @return array|WP_Error
  */
 function apprex_calculate_estimate( $service, $plan, $options = array() ) {
 	$config = apprex_pricing_config();
-
 	if ( empty( $config['services'][ $service ] ) ) {
 		return new WP_Error( 'invalid_service', 'サービスの指定が正しくありません。' );
 	}
 	$svc = $config['services'][ $service ];
-
 	if ( empty( $svc['plans'][ $plan ] ) ) {
 		return new WP_Error( 'invalid_plan', 'プランの指定が正しくありません。' );
 	}
-	$base = (int) $svc['plans'][ $plan ]['price'];
+	$p = $svc['plans'][ $plan ];
+
+	$monthly         = (int) $p['monthly'];
+	$monthly_regular = (int) ( $p['monthly_regular'] ?? $p['monthly'] );
+	$initial_regular = (int) ( $p['initial'] ?? 0 );
+	$initial         = apprex_campaign_initial( $initial_regular );
 
 	$opt_total = 0;
 	$opt_lines = array();
@@ -112,52 +196,60 @@ function apprex_calculate_estimate( $service, $plan, $options = array() ) {
 		}
 	}
 
-	$monthly     = 'monthly' === $svc['billing'] ? $base + $opt_total : 0;
-	$oneoff      = 'oneoff' === $svc['billing'] ? $base + $opt_total : 0;
-	$initial_fee = (int) $config['campaign']['initial_fee'];
-	$annual_est  = $monthly * 12;
+	$initial_total = $initial + $opt_total; // オプションは一回費用。
+	$annual_est    = $monthly * 12 + $initial_total;
 
 	return array(
-		'service'     => $service,
-		'service_label' => $svc['label'],
-		'plan'        => $plan,
-		'plan_label'  => $svc['plans'][ $plan ]['label'],
-		'billing'     => $svc['billing'],
-		'base'        => $base,
-		'options'     => $opt_lines,
-		'monthly'     => $monthly,
-		'oneoff'      => $oneoff,
-		'initial_fee' => $initial_fee,
-		'annual_est'  => $annual_est,
-		'min_months'  => (int) $svc['min_months'],
+		'service'         => $service,
+		'service_label'   => $svc['label'],
+		'plan'            => $plan,
+		'plan_label'      => $p['label'],
+		'billing'         => 'monthly',
+		'monthly'         => $monthly,
+		'monthly_regular' => $monthly_regular,
+		'initial'         => $initial,
+		'initial_regular' => $initial_regular,
+		'options'         => $opt_lines,
+		'options_total'   => $opt_total,
+		'initial_total'   => $initial_total,
+		'annual_est'      => $annual_est,
+		'min_months'      => (int) $svc['min_months'],
 	);
 }
 
 /**
- * Human-readable pricing summary injected into the AI system prompt.
+ * チャット用の料金要約（自動でAIに渡る）。
  *
  * @return string
  */
 function apprex_pricing_summary_text() {
 	$c     = apprex_pricing_config();
 	$lines = array();
-	foreach ( $c['services'] as $svc ) {
-		$unit = 'monthly' === $svc['billing'] ? '円/月' : '円(買い切り)';
-		$plans = array();
-		foreach ( $svc['plans'] as $p ) {
-			$plans[] = sprintf( '%s %s%s', $p['label'], number_format( $p['price'] ), $unit );
-		}
-		$opts = array();
-		foreach ( $svc['options'] as $o ) {
-			$opts[] = sprintf( '%s(+%s%s)', $o['label'], number_format( $o['price'] ), $unit );
-		}
+
+	$app = $c['services']['app'];
+	$lines[] = '【アプリ開発（月額・初期設定費は今月キャンペーンで0円）】';
+	foreach ( $app['plans'] as $p ) {
 		$lines[] = sprintf(
-			'- %s：%s。オプション：%s',
-			$svc['label'],
-			implode( ' / ', $plans ),
-			$opts ? implode( ' / ', $opts ) : 'なし'
+			'- %s：月額%s円（通常%s円）／初期設定費 通常%s円→今月0円',
+			$p['label'],
+			number_format( $p['monthly'] ),
+			number_format( $p['monthly_regular'] ),
+			number_format( $p['initial'] )
 		);
 	}
-	$lines[] = '- 初期費用：0円キャンペーン中（通常30万円）。月額プランは最低契約12ヶ月。30日間無料体験あり。';
+	$opts = array();
+	foreach ( $app['options'] as $o ) {
+		$opts[] = sprintf( '%s(%s円)', $o['label'], number_format( $o['price'] ) );
+	}
+	$lines[] = '  オプション：' . implode( ' / ', $opts ) . '。縛りなし・DL課金なし・プッシュ無制限。';
+
+	$lines[] = '【ホームページ制作（初期費用0円・月額）】Light 9,800円／Standard 19,800円／Premium 39,800円。';
+
+	$lines[] = '【個別見積（要相談）】';
+	foreach ( apprex_quote_plans() as $q ) {
+		$lines[] = '- ' . $q['label'] . '：' . $q['lead'];
+	}
+	$lines[] = 'マッチングアプリ開発：開発費 通常500万→キャンペーン300万、月額保守5万、Flutterスクラッチ、最短1ヶ月〜。';
+	$lines[] = '30日間の管理画面体験は無料。詳しい見積りは /estimate、上位プランはお問い合わせへ。';
 	return implode( "\n", $lines );
 }

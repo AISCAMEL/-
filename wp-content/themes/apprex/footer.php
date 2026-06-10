@@ -42,6 +42,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<li><a href="<?php echo esc_url( apprex_page_url( 'meeting' ) ); ?>"><?php esc_html_e( 'ミーティング予約', 'apprex' ); ?></a></li>
 					<li><a href="<?php echo esc_url( apprex_page_url( 'contact' ) ); ?>"><?php esc_html_e( 'お問い合わせ', 'apprex' ); ?></a></li>
 					<li><a href="<?php echo esc_url( apprex_page_url( 'company' ) ); ?>"><?php esc_html_e( '会社概要', 'apprex' ); ?></a></li>
+					<li><a href="<?php echo esc_url( apprex_page_url( 'partner' ) ); ?>"><?php esc_html_e( 'パートナー募集', 'apprex' ); ?></a></li>
 					<li><a href="https://www.instagram.com/apprex1173/" target="_blank" rel="noopener"><?php esc_html_e( 'Instagram（@apprex1173）', 'apprex' ); ?></a></li>
 					<?php $apprex_line = apprex_line_url(); ?>
 					<?php if ( $apprex_line ) : ?>
