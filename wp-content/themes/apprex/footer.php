@@ -18,7 +18,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<img class="logo-image" src="<?php echo esc_url( APPREX_URI . '/assets/images/apprex-logo.png' ); ?>" alt="APPREX" width="160" height="40">
 				<p><?php esc_html_e( 'ノーコードでアプリ開発。クラウド型アプリ開発プラットフォーム APPREX。プログラミング不要で、誰でも簡単に高性能アプリを制作・運営できます。', 'apprex' ); ?></p>
 				<p><strong><?php esc_html_e( '合同会社アイズ', 'apprex' ); ?></strong><br>
-				<?php esc_html_e( '受付時間：平日 10:00〜18:00（チャット・メール・オンライン相談）', 'apprex' ); ?></p>
+				<?php esc_html_e( '受付時間：平日 10:00〜18:00（チャット・メール・オンライン相談）', 'apprex' ); ?><br>
+				<?php esc_html_e( 'メール：', 'apprex' ); ?><a href="mailto:<?php echo esc_attr( apprex_contact_email() ); ?>"><?php echo esc_html( apprex_contact_email() ); ?></a></p>
 			</div>
 
 			<div class="site-footer__nav">

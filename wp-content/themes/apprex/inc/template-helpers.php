@@ -10,6 +10,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * 公式連絡先メール（全サイト統一）。
+ * 設定 > APPREX 連携 の通知先メールがあればそれ、無ければ既定。
+ *
+ * @return string
+ */
+function apprex_contact_email() {
+	$opt = get_option( 'apprex_notify_email', '' );
+	$email = $opt ? $opt : 'info@aisjaltd.com';
+	return apply_filters( 'apprex_contact_email', $email );
+}
+
+/**
  * Read a custom field, transparently using ACF when present and falling back
  * to core post meta otherwise.
  *

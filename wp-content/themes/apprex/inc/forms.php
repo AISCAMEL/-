@@ -101,7 +101,10 @@ function apprex_line_url() {
  */
 function apprex_notify_to() {
 	$opt = get_option( 'apprex_notify_email', '' );
-	return $opt ? $opt : get_option( 'admin_email' );
+	if ( $opt ) {
+		return $opt;
+	}
+	return function_exists( 'apprex_contact_email' ) ? apprex_contact_email() : get_option( 'admin_email' );
 }
 
 /* -------------------------------------------------------------------------

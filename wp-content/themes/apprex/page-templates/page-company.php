@@ -18,6 +18,7 @@ $apprex_company = array(
 	array( __( 'サービス名', 'apprex' ), __( 'APPREX（アプリックス）', 'apprex' ) ),
 	array( __( '事業内容', 'apprex' ), __( 'ノーコードアプリ開発プラットフォームの提供／アプリ制作代行／ホームページ制作／DX・補助金活用支援', 'apprex' ) ),
 	array( __( '受付時間', 'apprex' ), __( '平日 10:00〜18:00（チャット・メール・オンライン相談）', 'apprex' ) ),
+	array( __( 'メール', 'apprex' ), apprex_contact_email() ),
 	array( __( '公式SNS', 'apprex' ), __( 'Instagram：@apprex1173', 'apprex' ) ),
 );
 
