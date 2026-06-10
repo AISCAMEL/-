@@ -179,25 +179,31 @@ function apprex_render_form( $type = 'contact' ) {
 	?>
 	<form class="apprex-form" data-apprex-form data-type="<?php echo esc_attr( $type ); ?>">
 		<div class="apprex-form__row">
-			<label><?php esc_html_e( 'お名前', 'apprex' ); ?> <span>*</span>
+			<label>
+				<span class="apprex-form__lbl"><?php esc_html_e( 'お名前', 'apprex' ); ?> <span class="req">*</span></span>
 				<input type="text" name="name" required>
 			</label>
-			<label><?php esc_html_e( '会社名', 'apprex' ); ?>
+			<label>
+				<span class="apprex-form__lbl"><?php esc_html_e( '会社名', 'apprex' ); ?></span>
 				<input type="text" name="company">
 			</label>
 		</div>
-		<label><?php esc_html_e( 'メールアドレス', 'apprex' ); ?> <span>*</span>
+		<label>
+			<span class="apprex-form__lbl"><?php esc_html_e( 'メールアドレス', 'apprex' ); ?> <span class="req">*</span></span>
 			<input type="email" name="email" required>
 		</label>
-		<label><?php esc_html_e( '電話番号（任意）', 'apprex' ); ?>
+		<label>
+			<span class="apprex-form__lbl"><?php esc_html_e( '電話番号（任意）', 'apprex' ); ?></span>
 			<input type="tel" name="phone">
 		</label>
 		<?php if ( ! empty( $meta['datetime'] ) ) : ?>
-			<label><?php esc_html_e( 'ご希望日時', 'apprex' ); ?> <span>*</span>
+			<label>
+				<span class="apprex-form__lbl"><?php esc_html_e( 'ご希望日時', 'apprex' ); ?> <span class="req">*</span></span>
 				<input type="datetime-local" name="meeting_at" required>
 			</label>
 		<?php endif; ?>
-		<label><?php echo esc_html( $meta['msg_label'] ); ?> <?php echo $meta['msg_required'] ? '<span>*</span>' : ''; ?>
+		<label>
+			<span class="apprex-form__lbl"><?php echo esc_html( $meta['msg_label'] ); ?> <?php echo $meta['msg_required'] ? '<span class="req">*</span>' : ''; ?></span>
 			<textarea name="message" rows="5" <?php echo $meta['msg_required'] ? 'required' : ''; ?>></textarea>
 		</label>
 		<label class="apprex-form__consent">

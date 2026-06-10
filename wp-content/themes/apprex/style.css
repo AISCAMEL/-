@@ -598,3 +598,10 @@ html, body { overflow-x: hidden; max-width: 100%; }
 .content-prose .apprex-form { max-width: 100%; }
 .content-prose .callout { text-align: center; }
 .apprex-form__line { max-width: 100%; }
+
+/* フォーム：ラベルと必須マークの整列（会社名と名前の枠ズレ解消） */
+.apprex-form label span { color: inherit; }
+.apprex-form__lbl { display: block; font-weight: 600; color: var(--color-ink); }
+.apprex-form .req { color: var(--color-accent); }
+.apprex-form__row { align-items: start; }
+.apprex-form__row > label { margin: 0; }
