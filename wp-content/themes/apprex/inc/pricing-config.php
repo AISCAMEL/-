@@ -74,7 +74,7 @@ function apprex_pricing_config() {
 				// 一回限りのオプション。
 				'options'    => array(
 					'seisaku' => array( 'label' => '制作代行（10メニューまで）', 'price' => 100000 ),
-					'chat'    => array( 'label' => 'チャット機能', 'price' => 100000 ),
+					'chat'    => array( 'label' => 'チャット機能', 'price' => 300000 ),
 					'gps'     => array( 'label' => 'GPSプッシュ（1カ所）', 'price' => 20000 ),
 				),
 			),
@@ -112,8 +112,8 @@ function apprex_quote_plans() {
 				'label'    => 'マッチングアプリ開発',
 				'lead'     => 'スキルマッチング／ビジネスマッチング／出会い系／フリマ等。Flutterスクラッチ開発でカスタマイズ自由。',
 				'rows'     => array(
-					'開発費用（iOS/Android）' => '500万円 → 300万円（キャンペーン）',
-					'月額保守・サーバ代'      => '10万円 → 5万円',
+					'開発費用（iOS/Android）' => '300万円〜',
+					'月額保守・サーバ代'      => '5万円〜',
 					'制作期間'                => '1〜3ヶ月',
 					'開発言語'                => 'アプリ：Flutter／管理：PHP',
 					'サーバ'                  => 'AWS無料提供',
@@ -248,7 +248,7 @@ function apprex_pricing_summary_text() {
 	foreach ( apprex_quote_plans() as $q ) {
 		$lines[] = '- ' . $q['label'] . '：' . $q['lead'];
 	}
-	$lines[] = 'マッチングアプリ開発：開発費 通常500万→キャンペーン300万、月額保守5万、Flutterスクラッチ、最短1ヶ月〜。';
+	$lines[] = 'マッチングアプリ開発：開発費 300万円〜、月額保守5万円〜、Flutterスクラッチ、最短1ヶ月〜。';
 	$lines[] = '30日間の管理画面体験は無料。詳しい見積りは /estimate、上位プランはお問い合わせへ。';
 	return implode( "\n", $lines );
 }

@@ -563,3 +563,8 @@ html, body { overflow-x: hidden; max-width: 100%; }
 .partner-reward__num { font-size: 3rem; font-weight: 800; color: var(--color-primary); line-height: 1; }
 .partner-reward__num small { font-size: 1.2rem; }
 .partner-reward__label { font-weight: 700; color: var(--color-ink); margin-top: 6px; }
+
+/* マーキー：事例リンク化 */
+.marquee__item { display: block; text-decoration: none; }
+.marquee__cap { display: block; margin-top: 8px; font-size: .8rem; color: var(--color-muted); font-weight: 600; text-align: center; }
+.marquee__item:hover .marquee__cap { color: var(--color-primary); }
