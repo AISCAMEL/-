@@ -28,7 +28,7 @@ if ( $apprex_cases->have_posts() ) {
 		$apprex_cases->the_post();
 		if ( has_post_thumbnail() ) {
 			$apprex_items[] = array(
-				'img'   => get_the_post_thumbnail_url( null, 'apprex-card' ),
+				'img'   => get_the_post_thumbnail_url( null, 'large' ),
 				'label' => get_the_title(),
 				'link'  => get_permalink(),
 			);

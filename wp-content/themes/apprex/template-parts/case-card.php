@@ -15,7 +15,7 @@ $apprex_duration = apprex_field( 'case_duration' );
 ?>
 <a class="case-card is-reveal" href="<?php the_permalink(); ?>">
 	<?php if ( has_post_thumbnail() ) : ?>
-		<?php the_post_thumbnail( 'apprex-card', array( 'class' => 'case-card__thumb', 'alt' => esc_attr( get_the_title() ) ) ); ?>
+		<?php the_post_thumbnail( 'large', array( 'class' => 'case-card__thumb', 'alt' => esc_attr( get_the_title() ) ) ); ?>
 	<?php else : ?>
 		<span class="case-card__thumb" aria-hidden="true"></span>
 	<?php endif; ?>
