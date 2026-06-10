@@ -22,6 +22,18 @@ function apprex_is_new_post( $post = null, $days = 14 ) {
 }
 
 /**
+ * 読了時間（分）を推定（日本語 約500字/分）。
+ *
+ * @param int|WP_Post|null $post Post.
+ * @return int
+ */
+function apprex_reading_time( $post = null ) {
+	$content = get_post_field( 'post_content', $post ? $post : get_the_ID() );
+	$chars   = mb_strlen( wp_strip_all_tags( (string) $content ) );
+	return max( 1, (int) ceil( $chars / 500 ) );
+}
+
+/**
  * NEW バッジを出力（新着のときだけ）。
  *
  * @param int|WP_Post|null $post Post.

@@ -14,7 +14,7 @@ get_header();
 while ( have_posts() ) :
 	the_post();
 	?>
-	<section class="page-hero">
+	<section class="page-hero post-hero">
 		<div class="container">
 			<nav class="breadcrumbs">
 				<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'ホーム', 'apprex' ); ?></a>
@@ -22,20 +22,36 @@ while ( have_posts() ) :
 				<a href="<?php echo esc_url( apprex_page_url( 'blog' ) ); ?>"><?php esc_html_e( 'ブログ', 'apprex' ); ?></a>
 				<span> / </span><?php the_title(); ?>
 			</nav>
+			<?php
+			$apprex_cats = get_the_category();
+			if ( $apprex_cats ) :
+				?>
+				<span class="post-cat"><?php echo esc_html( $apprex_cats[0]->name ); ?></span>
+			<?php endif; ?>
 			<h1><?php the_title(); ?> <?php apprex_new_badge(); ?></h1>
-			<p class="post-meta"><?php echo esc_html( get_the_date() ); ?>｜<?php echo esc_html( get_the_author() ); ?></p>
+			<p class="post-meta">
+				<span>📅 <?php echo esc_html( get_the_date() ); ?></span>
+				<span>✍ <?php echo esc_html( get_the_author() ); ?></span>
+				<?php if ( function_exists( 'apprex_reading_time' ) ) : ?>
+					<span>⏱ <?php echo esc_html( apprex_reading_time() ); ?>分で読めます</span>
+				<?php endif; ?>
+			</p>
 		</div>
 	</section>
 
 	<article class="section">
-		<div class="container content-prose">
+		<div class="container">
 			<?php if ( has_post_thumbnail() ) : ?>
-				<?php the_post_thumbnail( 'large' ); ?>
+				<figure class="post-hero-img"><?php the_post_thumbnail( 'large' ); ?></figure>
 			<?php endif; ?>
 
-			<?php the_content(); ?>
+			<div class="post-article">
+				<?php the_content(); ?>
+			</div>
 
-			<?php apprex_share_buttons(); ?>
+			<div class="post-article">
+				<?php apprex_share_buttons(); ?>
+			</div>
 		</div>
 	</article>
 
