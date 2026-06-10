@@ -28,6 +28,7 @@ add_action( 'admin_init', function () {
 	register_setting( 'apprex_integrations', 'apprex_drip_enabled', array( 'sanitize_callback' => 'absint' ) );
 	register_setting( 'apprex_integrations', 'apprex_gas_webhook_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
 	register_setting( 'apprex_integrations', 'apprex_gas_token', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+	register_setting( 'apprex_integrations', 'apprex_gsc_verify', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 } );
 
 /**
@@ -71,6 +72,11 @@ function apprex_integrations_page() {
 					<th scope="row"><?php esc_html_e( 'GAS 共有トークン', 'apprex' ); ?></th>
 					<td><input type="text" name="apprex_gas_token" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_gas_token', '' ) ); ?>" autocomplete="off">
 					<p class="description"><?php esc_html_e( 'なりすまし防止用の合言葉。GAS側の同じ値と照合します（任意の文字列）。', 'apprex' ); ?></p></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Google Search Console 確認コード', 'apprex' ); ?></th>
+					<td><input type="text" name="apprex_gsc_verify" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_gsc_verify', '' ) ); ?>" placeholder="例：abcd1234...（content= の値だけ）">
+					<p class="description"><?php esc_html_e( 'Search Console の「HTMLタグ」確認で表示される content="..." の中の文字列だけを貼り付け。<head>に確認メタタグを自動出力します。', 'apprex' ); ?></p></td>
 				</tr>
 			</table>
 			<?php submit_button(); ?>

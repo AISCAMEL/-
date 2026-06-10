@@ -47,7 +47,11 @@ function apprex_head_meta() {
 	if ( is_singular() && has_post_thumbnail() ) {
 		$img = get_the_post_thumbnail_url( null, 'large' );
 	}
+	$gsc = get_option( 'apprex_gsc_verify', '' );
 	?>
+	<?php if ( $gsc ) : ?>
+	<meta name="google-site-verification" content="<?php echo esc_attr( $gsc ); ?>">
+	<?php endif; ?>
 	<meta name="description" content="<?php echo esc_attr( $desc ); ?>">
 	<meta property="og:type" content="<?php echo is_singular( 'post' ) ? 'article' : 'website'; ?>">
 	<meta property="og:title" content="<?php echo esc_attr( $title ); ?>">
