@@ -25,6 +25,7 @@ add_action( 'admin_init', function () {
 	register_setting( 'apprex_integrations', 'apprex_line_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
 	register_setting( 'apprex_integrations', 'apprex_notify_email', array( 'sanitize_callback' => 'sanitize_email' ) );
 	register_setting( 'apprex_integrations', 'apprex_document_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
+	register_setting( 'apprex_integrations', 'apprex_meeting_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
 	register_setting( 'apprex_integrations', 'apprex_drip_enabled', array( 'sanitize_callback' => 'absint' ) );
 	register_setting( 'apprex_integrations', 'apprex_gas_webhook_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
 	register_setting( 'apprex_integrations', 'apprex_gas_token', array( 'sanitize_callback' => 'sanitize_text_field' ) );
@@ -59,6 +60,11 @@ function apprex_integrations_page() {
 					<th scope="row"><?php esc_html_e( '資料ダウンロード URL', 'apprex' ); ?></th>
 					<td><input type="url" name="apprex_document_url" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_document_url', '' ) ); ?>" placeholder="https://example.com/apprex-document.pdf">
 					<p class="description"><?php esc_html_e( '資料請求の自動返信メールに記載されるダウンロードリンクです。', 'apprex' ); ?></p></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'ミーティング予約URL（Google Meet）', 'apprex' ); ?></th>
+					<td><input type="url" name="apprex_meeting_url" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_meeting_url', '' ) ); ?>" placeholder="https://calendar.app.google/xxxxxxxx">
+					<p class="description"><?php esc_html_e( 'Googleカレンダーの予約ページ（appointment schedule）URL。設定すると、ミーティングページに「Google Meetで予約」ボタンを表示します。予約時にGoogle Meetの参加URL・招待・リマインダーが自動で発行されます。', 'apprex' ); ?></p></td>
 				</tr>
 				<tr>
 					<th scope="row"><?php esc_html_e( 'ステップメール（1年間）', 'apprex' ); ?></th>
@@ -98,6 +104,15 @@ function apprex_integrations_page() {
  */
 function apprex_line_url() {
 	return (string) get_option( 'apprex_line_url', '' );
+}
+
+/**
+ * Google Meet 予約ページ（Googleカレンダー appointment schedule）URL。
+ *
+ * @return string
+ */
+function apprex_meeting_url() {
+	return (string) get_option( 'apprex_meeting_url', 'https://calendar.app.google/6xgkopT97tSwsHb76' );
 }
 
 /**
@@ -424,9 +439,13 @@ function apprex_send_autoreply( $type, $fields ) {
 		case 'meeting':
 			$when    = ! empty( $fields['meeting_at'] ) ? wp_date( 'Y年n月j日(D) H:i', (int) $fields['meeting_at'] ) : '';
 			$subject = '【APPREX】ミーティングのご予約を受け付けました';
-			$body    = "{$name} 様\n\nオンラインミーティングのご予約ありがとうございます。\n";
+			$body    = "{$name} 様\n\nオンラインミーティング（Google Meet）のご予約ありがとうございます。\n";
 			$body   .= $when ? "ご希望日時：{$when}\n" : '';
-			$body   .= "内容を確認のうえ、確定のご連絡（接続URL含む）を差し上げます。\n開催前にリマインダーメールをお送りします。\n";
+			$body   .= "内容を確認のうえ、Google MeetのURLを含む確定のご連絡を差し上げます。\n開催前にリマインダーメールをお送りします。\n";
+			$meet    = apprex_meeting_url();
+			if ( $meet ) {
+				$body .= "\n▼ ご自身で今すぐ日時を確定したい方はこちら（Google Meet・URL自動発行）\n{$meet}\n";
+			}
 			break;
 		case 'partner':
 			$subject = '【APPREX】パートナー登録のお申し込みありがとうございます';
