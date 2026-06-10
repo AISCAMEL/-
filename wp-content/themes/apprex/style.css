@@ -505,3 +505,13 @@ ul { margin: 0; padding: 0; list-style: none; }
 .marquee__item figcaption { margin-top: 8px; font-size: .8rem; color: var(--color-muted); font-weight: 600; }
 @keyframes apprex-marquee { from { transform: translateX(0); } to { transform: translateX(calc(-50% - 10px)); } }
 @media (prefers-reduced-motion: reduce) { .marquee__track { animation: none; } .marquee { overflow-x: auto; } }
+
+/* ===========================================================================
+   トップの横ズレ防止 ＋ マーキーのシームレス化（上書き）
+   ======================================================================== */
+html, body { overflow-x: hidden; max-width: 100%; }
+.marquee { max-width: 100%; }
+/* gap を使わず item の margin で1セット幅＝-50% を厳密一致させ、継ぎ目を無くす */
+.marquee__track { gap: 0; will-change: transform; }
+.marquee__item { margin: 0 20px 0 0; }
+@keyframes apprex-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
