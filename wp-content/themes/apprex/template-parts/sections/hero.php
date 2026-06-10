@@ -31,10 +31,22 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</p>
 		</div>
 
+		<?php
+		// ヒーロー画像：固定ページ「ホーム」のアイキャッチ画像があればそれを使用。
+		// 無ければ同梱のサンプル画像。→ 管理画面でバナーを差し替え可能。
+		$apprex_hero_img = '';
+		$apprex_front_id = (int) get_option( 'page_on_front' );
+		if ( $apprex_front_id && has_post_thumbnail( $apprex_front_id ) ) {
+			$apprex_hero_img = get_the_post_thumbnail_url( $apprex_front_id, 'large' );
+		}
+		if ( ! $apprex_hero_img ) {
+			$apprex_hero_img = APPREX_URI . '/assets/images/app-sample-taka.jpg';
+		}
+		?>
 		<div class="hero__visual is-reveal">
 			<img
-				src="<?php echo esc_url( APPREX_URI . '/assets/images/app-sample-taka.jpg' ); ?>"
-				alt="<?php esc_attr_e( 'APPREX で開発したアプリの画面例', 'apprex' ); ?>"
+				src="<?php echo esc_url( $apprex_hero_img ); ?>"
+				alt="<?php esc_attr_e( 'APPREX のイメージ', 'apprex' ); ?>"
 				class="hero__mock"
 				style="aspect-ratio:3/4;object-fit:cover;padding:0"
 				width="320" height="427" loading="eager">
