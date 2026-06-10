@@ -164,3 +164,26 @@ function doPost(e) {
 4. **メール文面**（§4の表）に修正はあるか
 
 赤入れ・ご要望をいただければ、文面と列を調整して最終化します。
+
+---
+
+## 7. 記事公開 → SNS連動（追加イベント）
+
+ブログ記事を公開すると、同じ GAS Webhook に `event: "post_published"` が届きます。GAS側で Instagram / X / Facebook / LINE 等へ投稿できます（各SNSのAPI/トークンは GAS 側で設定）。
+
+```json
+{
+  "event": "post_published",
+  "token": "（共有トークン）",
+  "data": {
+    "id": 123,
+    "title": "ノーコードアプリ開発のはじめ方",
+    "url": "https://site.aiscompany.jp/...",
+    "excerpt": "記事の冒頭抜粋…",
+    "image": "https://site.aiscompany.jp/wp-content/uploads/...jpg",
+    "ai": true
+  }
+}
+```
+
+GAS の `doPost` 冒頭で `body.event` を分岐し、`post_published` の場合は SNS投稿、`inquiry`/`order` の場合は スプレッド→Asana→Slack、と振り分けてください。

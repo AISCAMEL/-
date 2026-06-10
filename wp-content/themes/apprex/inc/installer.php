@@ -28,6 +28,10 @@ function apprex_seed_site() {
 
 	$pages = apprex_seed_pages();
 	apprex_seed_front_page( $pages );
+	// ブログ（投稿）ページを「投稿ページ」に割り当て。
+	if ( ! empty( $pages['blog'] ) && ! get_option( 'page_for_posts' ) ) {
+		update_option( 'page_for_posts', $pages['blog'] );
+	}
 	apprex_seed_menu( $pages );
 	apprex_seed_cases();
 
@@ -54,6 +58,7 @@ function apprex_seed_pages() {
 		'meeting'     => array( 'title' => 'ミーティング予約', 'tpl' => 'page-templates/page-meeting.php' ),
 		'hp-creation' => array( 'title' => 'ホームページ制作', 'tpl' => 'page-templates/page-hp-creation.php' ),
 		'company'     => array( 'title' => '会社概要', 'tpl' => 'page-templates/page-company.php' ),
+		'blog'        => array( 'title' => 'ブログ', 'tpl' => '' ),
 	);
 
 	$ids = array();
@@ -110,7 +115,7 @@ function apprex_seed_menu( $pages ) {
 		return;
 	}
 
-	$order = array( 'features', 'functions', 'pricing', 'estimate', 'company', 'faq' );
+	$order = array( 'features', 'functions', 'pricing', 'estimate', 'blog', 'company', 'faq' );
 	$pos   = 1;
 	foreach ( $order as $slug ) {
 		if ( empty( $pages[ $slug ] ) ) {

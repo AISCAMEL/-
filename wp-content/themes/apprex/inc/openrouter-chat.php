@@ -306,3 +306,100 @@ function apprex_chat_settings_page() {
 	</div>
 	<?php
 }
+
+/**
+ * 画像生成モデル（既定：Gemini Image「Nano Banana」）。
+ *
+ * @return string
+ */
+function apprex_image_model() {
+	$opt = get_option( 'apprex_image_model', '' );
+	return $opt ? (string) $opt : 'google/gemini-2.5-flash-image-preview';
+}
+
+/**
+ * OpenRouter で画像を生成（Nano Banana 等の画像出力モデル）。
+ *
+ * @param string $prompt 画像の指示文。
+ * @param array  $args   model 等。
+ * @return array|WP_Error { mime, data(binary) } または WP_Error。
+ */
+function apprex_openrouter_image( $prompt, $args = array() ) {
+	$key = apprex_openrouter_key();
+	if ( '' === $key ) {
+		return new WP_Error( 'not_configured', 'OpenRouter APIキーが未設定です。' );
+	}
+	$payload = array(
+		'model'      => isset( $args['model'] ) ? $args['model'] : apprex_image_model(),
+		'messages'   => array( array( 'role' => 'user', 'content' => $prompt ) ),
+		'modalities' => array( 'image', 'text' ),
+	);
+	$resp = wp_remote_post(
+		APPREX_OPENROUTER_ENDPOINT,
+		array(
+			'timeout' => 120,
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $key,
+				'Content-Type'  => 'application/json',
+				'HTTP-Referer'  => home_url( '/' ),
+				'X-Title'       => 'APPREX',
+			),
+			'body'    => wp_json_encode( $payload ),
+		)
+	);
+	if ( is_wp_error( $resp ) ) {
+		return new WP_Error( 'upstream_error', '画像生成サービスに接続できませんでした。' );
+	}
+	$body = json_decode( wp_remote_retrieve_body( $resp ), true );
+	$url  = '';
+	// OpenRouter は message.images[].image_url.url に data URL を返す。
+	if ( ! empty( $body['choices'][0]['message']['images'][0]['image_url']['url'] ) ) {
+		$url = $body['choices'][0]['message']['images'][0]['image_url']['url'];
+	} elseif ( ! empty( $body['data'][0]['b64_json'] ) ) {
+		$url = 'data:image/png;base64,' . $body['data'][0]['b64_json'];
+	}
+	if ( ! $url || 0 !== strpos( $url, 'data:' ) ) {
+		return new WP_Error( 'no_image', '画像を取得できませんでした（モデルが画像出力に対応しているかご確認ください）。' );
+	}
+	if ( ! preg_match( '#^data:(image/[a-zA-Z0-9.+-]+);base64,(.+)$#s', $url, $m ) ) {
+		return new WP_Error( 'bad_image', '画像データの形式が不正です。' );
+	}
+	$bin = base64_decode( $m[2], true );
+	if ( false === $bin ) {
+		return new WP_Error( 'bad_image', '画像データをデコードできませんでした。' );
+	}
+	return array( 'mime' => $m[1], 'data' => $bin );
+}
+
+/**
+ * 生成画像をメディアに保存し添付IDを返す。
+ *
+ * @param array  $image   { mime, data }。
+ * @param string $title   タイトル。
+ * @param int    $parent  親投稿ID。
+ * @return int|WP_Error
+ */
+function apprex_save_generated_image( $image, $title = 'apprex-ai', $parent = 0 ) {
+	require_once ABSPATH . 'wp-admin/includes/image.php';
+	require_once ABSPATH . 'wp-admin/includes/file.php';
+	$ext      = ( false !== strpos( $image['mime'], 'png' ) ) ? 'png' : ( ( false !== strpos( $image['mime'], 'webp' ) ) ? 'webp' : 'jpg' );
+	$filename = sanitize_title( $title ) . '-' . wp_generate_password( 6, false ) . '.' . $ext;
+	$upload   = wp_upload_bits( $filename, null, $image['data'] );
+	if ( ! empty( $upload['error'] ) ) {
+		return new WP_Error( 'save_failed', $upload['error'] );
+	}
+	$attach_id = wp_insert_attachment(
+		array(
+			'post_mime_type' => $image['mime'],
+			'post_title'     => $title,
+			'post_status'    => 'inherit',
+		),
+		$upload['file'],
+		$parent
+	);
+	if ( is_wp_error( $attach_id ) || ! $attach_id ) {
+		return new WP_Error( 'attach_failed', 'メディア登録に失敗しました。' );
+	}
+	wp_update_attachment_metadata( $attach_id, wp_generate_attachment_metadata( $attach_id, $upload['file'] ) );
+	return $attach_id;
+}

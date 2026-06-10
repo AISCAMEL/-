@@ -23,6 +23,7 @@ get_template_part( 'template-parts/sections/cases' );
 get_template_part( 'template-parts/sections/instagram' );
 get_template_part( 'template-parts/sections/pricing' );
 get_template_part( 'template-parts/sections/hp-cta' );
+get_template_part( 'template-parts/sections/latest-posts' );
 get_template_part( 'template-parts/sections/faq' );
 
 // 10. Final CTA (shared partial).

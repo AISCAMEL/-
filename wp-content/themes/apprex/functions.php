@@ -56,6 +56,7 @@ require_once APPREX_DIR . '/inc/integrations.php';
 require_once APPREX_DIR . '/inc/orders.php';
 require_once APPREX_DIR . '/inc/forms.php';
 require_once APPREX_DIR . '/inc/ai-blog.php';
+require_once APPREX_DIR . '/inc/blog.php';
 require_once APPREX_DIR . '/inc/seo.php';
 require_once APPREX_DIR . '/inc/installer.php';
 
@@ -71,6 +72,7 @@ function apprex_primary_menu_fallback() {
 		'/cases'       => __( '事例', 'apprex' ),
 		'/estimate'    => __( '見積もり', 'apprex' ),
 		'/hp-creation' => __( 'HP制作', 'apprex' ),
+		'/blog'        => __( 'ブログ', 'apprex' ),
 		'/company'     => __( '会社概要', 'apprex' ),
 		'/faq'         => __( 'FAQ', 'apprex' ),
 	);
