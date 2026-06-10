@@ -3,11 +3,12 @@
  * ------------------------------------------------------------------
  * WordPress（テーマ apprex）から届く Webhook を種類別に処理します。
  *
- *  event = "inquiry" / "order"      → スプレッド記録 + Asana タスク + Slack 通知
+ *  event = "inquiry" / "order"      → スプレッドシート記録 + Asana タスク + Slack 通知
  *  event = "post_published"         → Slack 通知 + SNS 投稿（LINE / Facebook / Zapier 経由でX・IG）
  *
  * 使い方：
- *  1) スプレッドシートを作成し、タブ名を「受付」にする
+ *  1) スプレッドシートを作成し、その ID を SHEET_ID に貼る（URL の /d/●●●/edit の●●●）
+ *     ※ 見出し行はスクリプトが自動作成します（タブが無ければ自動生成）
  *  2) 拡張機能 > Apps Script に本コードを貼り付け、下の CONFIG を設定
  *  3) デプロイ > 新しいデプロイ > 種類「ウェブアプリ」/ アクセス「全員」
  *  4) 発行された …/exec URL を WordPress（設定 > APPREX 連携 > GAS Webhook URL）に貼る
@@ -32,6 +33,13 @@ const CONFIG = {
   ZAPIER_HOOK  : ''                                       // X / Instagram は Zapier 経由が簡単（任意）
 };
 
+/** 受付台帳の見出し（列の並び）。 */
+const HEADERS = [
+  '受付日時', '種別', 'お名前', '会社名', 'メール', '電話',
+  'サービス', 'プラン', '月額(円)', '初期費用(円)', '年間目安(円)',
+  '内容・ご要望', 'ご希望日時', '流入元', '管理画面URL', 'サイト'
+];
+
 /** エントリポイント */
 function doPost(e) {
   try {
@@ -44,7 +52,8 @@ function doPost(e) {
     switch (body.event) {
       case 'inquiry':
       case 'order':
-        handleInquiry_(body, d);
+        logToSheet_(body, d);   // ← どの種別でも必ずスプレッドシートに1行記録
+        notifyTeam_(body, d);   //   Asana タスク + Slack 通知
         break;
       case 'post_published':
         handlePost_(d);
@@ -57,46 +66,96 @@ function doPost(e) {
 }
 
 /* ============================================================
- * 1) お問い合わせ / 発注 → スプレッド + Asana + Slack
+ * 1) お問い合わせ / 発注 → スプレッドシート（1行追記・見出し自動作成）
  * ========================================================== */
-function handleInquiry_(body, d) {
-  const amount = d.billing === 'monthly' ? ('月額' + (d.monthly || 0))
-               : (d.monthly ? ('月額' + d.monthly) : (d.oneoff ? (d.oneoff + '円') : ''));
+function logToSheet_(body, d) {
+  if (!CONFIG.SHEET_ID) { return; }
 
-  // A. スプレッドシート（1行追記）
-  if (CONFIG.SHEET_ID) {
-    const sh = SpreadsheetApp.openById(CONFIG.SHEET_ID).getSheetByName(CONFIG.SHEET_NAME);
-    sh.appendRow([
-      body.time, d.type_label || d.type, d.name, d.company, d.email,
-      d.phone, d.message, d.meeting_at || '', amount, d.admin_url
-    ]);
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  let sh = ss.getSheetByName(CONFIG.SHEET_NAME);
+  if (!sh) { sh = ss.insertSheet(CONFIG.SHEET_NAME); }
+
+  // シートが空のときだけ見出し行を作成（既存データには触れない）
+  if (sh.getLastRow() === 0) {
+    sh.appendRow(HEADERS);
+    sh.getRange(1, 1, 1, HEADERS.length).setFontWeight('bold').setBackground('#eff6ff');
+    sh.setFrozenRows(1);
   }
 
-  // B. Asana タスク
+  const kind = d.type_label || (body.event === 'order' ? '見積もり・発注' : (d.type || 'お問い合わせ'));
+
+  sh.appendRow([
+    body.time || new Date(),       // 受付日時
+    kind,                          // 種別（資料請求/無料体験/ミーティング/パートナー/見積もり・発注 …）
+    d.name || '',                  // お名前
+    d.company || '',               // 会社名
+    d.email || '',                 // メール
+    d.phone || '',                 // 電話
+    d.service || '',               // サービス（発注時のみ）
+    d.plan || '',                  // プラン（発注時のみ）
+    num_(d.monthly),               // 月額
+    num_(d.initial),               // 初期費用
+    num_(d.annual),                // 年間目安
+    d.message || '',               // 内容・ご要望
+    d.meeting_at || '',            // ご希望日時（ミーティング予約）
+    d.source || body.site || '',   // 流入元
+    d.admin_url || '',             // 管理画面URL
+    body.site || ''                // サイト
+  ]);
+}
+
+/** 文字列・記号混じりでも数値だけ取り出す（空なら空欄のまま）。 */
+function num_(v) {
+  if (v === undefined || v === null || v === '') { return ''; }
+  const n = Number(String(v).replace(/[^0-9.-]/g, ''));
+  return isNaN(n) ? '' : n;
+}
+
+/* ============================================================
+ * 2) 社内通知（Asana タスク + Slack）
+ * ========================================================== */
+function notifyTeam_(body, d) {
+  const kind = d.type_label || (body.event === 'order' ? '見積もり・発注' : (d.type || 'お問い合わせ'));
+  const amount = buildAmount_(d);
+
+  // Asana タスク
   if (CONFIG.ASANA_TOKEN && CONFIG.ASANA_PROJECT) {
-    const notes = `メール: ${d.email}\n電話: ${d.phone || ''}\n内容: ${d.message || ''}\n`
-                + (amount ? `金額: ${amount}\n` : '') + `管理: ${d.admin_url || ''}`;
+    const notes = `メール: ${d.email || ''}\n電話: ${d.phone || ''}\n`
+                + (d.service ? `サービス: ${d.service} / ${d.plan || ''}\n` : '')
+                + (amount ? `金額: ${amount}\n` : '')
+                + (d.meeting_at ? `ご希望日時: ${d.meeting_at}\n` : '')
+                + `内容: ${d.message || ''}\n管理: ${d.admin_url || ''}`;
     UrlFetchApp.fetch('https://app.asana.com/api/1.0/tasks', {
       method: 'post', muteHttpExceptions: true,
       headers: { Authorization: 'Bearer ' + CONFIG.ASANA_TOKEN },
       contentType: 'application/json',
       payload: JSON.stringify({ data: {
-        name: `【${d.type_label || d.type}】${d.name}（${d.company || ''}）`,
+        name: `【${kind}】${d.name || ''}（${d.company || ''}）`,
         notes: notes, projects: [CONFIG.ASANA_PROJECT]
       }})
     });
   }
 
-  // C. Slack 通知
-  postSlack_(`:bell: 新規【${d.type_label || d.type}】\n`
-    + `氏名: ${d.name}（${d.company || ''}）\n`
-    + `メール: ${d.email} / 電話: ${d.phone || ''}\n`
+  // Slack 通知
+  postSlack_(`:bell: 新規【${kind}】\n`
+    + `氏名: ${d.name || ''}（${d.company || ''}）\n`
+    + `メール: ${d.email || ''} / 電話: ${d.phone || ''}\n`
+    + (d.service ? `プラン: ${d.service} / ${d.plan || ''}\n` : '')
     + (amount ? `金額: ${amount}\n` : '')
+    + (d.meeting_at ? `ご希望日時: ${d.meeting_at}\n` : '')
     + `内容: ${d.message || ''}\n▶ ${d.admin_url || ''}`);
 }
 
+/** 月額・初期費用の表示文字列を組み立てる。 */
+function buildAmount_(d) {
+  const parts = [];
+  if (d.monthly) { parts.push('月額' + Number(d.monthly).toLocaleString() + '円'); }
+  if (d.initial) { parts.push('初期' + Number(d.initial).toLocaleString() + '円'); }
+  return parts.join(' / ');
+}
+
 /* ============================================================
- * 2) 記事公開 → Slack + SNS
+ * 3) 記事公開 → Slack + SNS
  * ========================================================== */
 function handlePost_(d) {
   const title = d.title || '';

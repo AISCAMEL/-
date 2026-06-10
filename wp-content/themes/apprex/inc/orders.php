@@ -145,6 +145,7 @@ function apprex_rest_order( WP_REST_Request $request ) {
 				'monthly'   => $estimate['monthly'],
 				'initial'   => $estimate['initial_total'],
 				'annual'    => $estimate['annual_est'],
+				'source'    => $meta['source_url'],
 				'admin_url' => admin_url( 'post.php?post=' . $post_id . '&action=edit' ),
 			)
 		);
