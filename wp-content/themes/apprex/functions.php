@@ -49,11 +49,14 @@ require_once APPREX_DIR . '/inc/enqueue.php';
 require_once APPREX_DIR . '/inc/cpt-cases.php';
 require_once APPREX_DIR . '/inc/acf-fields.php';
 require_once APPREX_DIR . '/inc/template-helpers.php';
+require_once APPREX_DIR . '/inc/campaign.php';
 require_once APPREX_DIR . '/inc/pricing-config.php';
 require_once APPREX_DIR . '/inc/openrouter-chat.php';
+require_once APPREX_DIR . '/inc/integrations.php';
 require_once APPREX_DIR . '/inc/orders.php';
 require_once APPREX_DIR . '/inc/forms.php';
 require_once APPREX_DIR . '/inc/ai-blog.php';
+require_once APPREX_DIR . '/inc/seo.php';
 require_once APPREX_DIR . '/inc/installer.php';
 
 /**

@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 <section class="hero" id="hero">
 	<div class="container hero__inner">
 		<div class="hero__content is-reveal">
-			<span class="eyebrow"><?php esc_html_e( 'APPREX（アプレックス）', 'apprex' ); ?></span>
+			<span class="eyebrow"><?php esc_html_e( 'APPREX（アプリックス）', 'apprex' ); ?></span>
 			<h1 class="hero__title"><?php echo wp_kses_post( __( 'プログラミング不要！<br><em>誰でも簡単にアプリ開発</em>', 'apprex' ) ); ?></h1>
 			<p class="hero__lead"><?php esc_html_e( 'クラウド型ノーコードアプリ開発プラットフォーム。高性能・低価格・スピード開発で、自社アプリを今すぐ。制作代行も承ります。', 'apprex' ); ?></p>
 

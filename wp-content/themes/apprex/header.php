@@ -22,8 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 <a class="screen-reader-text" href="#main"><?php esc_html_e( 'コンテンツへスキップ', 'apprex' ); ?></a>
 
 <div class="campaign-bar">
-	<?php esc_html_e( '月末まで限定！先着5名様 — 初期費用30万円 → ', 'apprex' ); ?><strong><?php esc_html_e( '0円', 'apprex' ); ?></strong>
-	<?php esc_html_e( '／月額19,800円〜 業界最安水準', 'apprex' ); ?>
+	<?php echo esc_html( apprex_campaign_text() ); ?>
 </div>
 
 <header class="site-header">

@@ -129,6 +129,28 @@ function apprex_rest_order( WP_REST_Request $request ) {
 		apprex_enroll_drip( $post_id, 'estimate', $meta['customer_email'], $meta['customer_name'] );
 	}
 
+	// GAS連携（スプレッド→Asana→Slack）。
+	if ( function_exists( 'apprex_dispatch_event' ) ) {
+		apprex_dispatch_event(
+			'order',
+			array(
+				'id'        => $post_id,
+				'type'      => 'estimate',
+				'name'      => $meta['customer_name'],
+				'company'   => $meta['customer_company'],
+				'email'     => $meta['customer_email'],
+				'message'   => $meta['customer_message'],
+				'service'   => $estimate['service_label'],
+				'plan'      => $estimate['plan_label'],
+				'billing'   => $estimate['billing'],
+				'monthly'   => $estimate['monthly'],
+				'oneoff'    => $estimate['oneoff'],
+				'annual'    => $estimate['annual_est'],
+				'admin_url' => admin_url( 'post.php?post=' . $post_id . '&action=edit' ),
+			)
+		);
+	}
+
 	return rest_ensure_response(
 		array(
 			'ok'       => true,

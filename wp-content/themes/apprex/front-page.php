@@ -13,6 +13,7 @@ get_header();
 
 // 01–09 sections.
 get_template_part( 'template-parts/sections/hero' );
+get_template_part( 'template-parts/sections/app-marquee' );
 get_template_part( 'template-parts/sections/stats' );
 get_template_part( 'template-parts/sections/problem' );
 get_template_part( 'template-parts/sections/solution' );

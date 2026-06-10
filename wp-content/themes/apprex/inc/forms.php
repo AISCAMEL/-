@@ -26,6 +26,8 @@ add_action( 'admin_init', function () {
 	register_setting( 'apprex_integrations', 'apprex_notify_email', array( 'sanitize_callback' => 'sanitize_email' ) );
 	register_setting( 'apprex_integrations', 'apprex_document_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
 	register_setting( 'apprex_integrations', 'apprex_drip_enabled', array( 'sanitize_callback' => 'absint' ) );
+	register_setting( 'apprex_integrations', 'apprex_gas_webhook_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
+	register_setting( 'apprex_integrations', 'apprex_gas_token', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 } );
 
 /**
@@ -59,6 +61,16 @@ function apprex_integrations_page() {
 				<tr>
 					<th scope="row"><?php esc_html_e( 'ステップメール（1年間）', 'apprex' ); ?></th>
 					<td><label><input type="checkbox" name="apprex_drip_enabled" value="1" <?php checked( 1, (int) get_option( 'apprex_drip_enabled', 1 ) ); ?>> <?php esc_html_e( '有効にする（申込後、定期的にフォローメールを自動送信）', 'apprex' ); ?></label></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'GAS Webhook URL', 'apprex' ); ?></th>
+					<td><input type="url" name="apprex_gas_webhook_url" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_gas_webhook_url', '' ) ); ?>" placeholder="https://script.google.com/macros/s/XXXX/exec">
+					<p class="description"><?php esc_html_e( 'お問い合わせ・発注の内容を送る GAS WebアプリのURL。GAS側で スプレッド→Asana→Slack に展開します。', 'apprex' ); ?></p></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'GAS 共有トークン', 'apprex' ); ?></th>
+					<td><input type="text" name="apprex_gas_token" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_gas_token', '' ) ); ?>" autocomplete="off">
+					<p class="description"><?php esc_html_e( 'なりすまし防止用の合言葉。GAS側の同じ値と照合します（任意の文字列）。', 'apprex' ); ?></p></td>
 				</tr>
 			</table>
 			<?php submit_button(); ?>
@@ -278,6 +290,25 @@ function apprex_rest_inquiry( WP_REST_Request $request ) {
 	apprex_enroll_drip( $post_id, $type, $email, $name, $meeting_at );
 	apprex_send_autoreply( $type, $fields );
 	apprex_notify_inquiry( $post_id, $type_label, $fields );
+
+	// GAS連携（スプレッド→Asana→Slack）。
+	if ( function_exists( 'apprex_dispatch_event' ) ) {
+		apprex_dispatch_event(
+			'inquiry',
+			array(
+				'id'         => $post_id,
+				'type'       => $type,
+				'type_label' => $type_label,
+				'name'       => $name,
+				'company'    => $company,
+				'email'      => $email,
+				'phone'      => $phone,
+				'message'    => $message,
+				'meeting_at' => $meeting_at ? wp_date( 'Y-m-d H:i', $meeting_at ) : '',
+				'admin_url'  => admin_url( 'post.php?post=' . $post_id . '&action=edit' ),
+			)
+		);
+	}
 
 	$result = array(
 		'ok'      => true,
