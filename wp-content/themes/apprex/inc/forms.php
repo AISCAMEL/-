@@ -27,6 +27,7 @@ add_action( 'admin_init', function () {
 	register_setting( 'apprex_integrations', 'apprex_document_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
 	register_setting( 'apprex_integrations', 'apprex_meeting_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
 	register_setting( 'apprex_integrations', 'apprex_drip_enabled', array( 'sanitize_callback' => 'absint' ) );
+	register_setting( 'apprex_integrations', 'apprex_wp_meeting_reminders', array( 'sanitize_callback' => 'absint' ) );
 	register_setting( 'apprex_integrations', 'apprex_gas_webhook_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
 	register_setting( 'apprex_integrations', 'apprex_gas_token', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 	register_setting( 'apprex_integrations', 'apprex_gsc_verify', array( 'sanitize_callback' => 'sanitize_text_field' ) );
@@ -69,6 +70,11 @@ function apprex_integrations_page() {
 				<tr>
 					<th scope="row"><?php esc_html_e( 'ステップメール（1年間）', 'apprex' ); ?></th>
 					<td><label><input type="checkbox" name="apprex_drip_enabled" value="1" <?php checked( 1, (int) get_option( 'apprex_drip_enabled', 1 ) ); ?>> <?php esc_html_e( '有効にする（申込後、定期的にフォローメールを自動送信）', 'apprex' ); ?></label></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'ミーティングのリマインダー', 'apprex' ); ?></th>
+					<td><label><input type="checkbox" name="apprex_wp_meeting_reminders" value="1" <?php checked( 1, (int) get_option( 'apprex_wp_meeting_reminders', 0 ) ); ?>> <?php esc_html_e( 'WordPressからも送る', 'apprex' ); ?></label>
+					<p class="description"><?php esc_html_e( '通常はOFF。Google Meet予約のリマインダー（前日・直前）はGoogleカレンダーが自動送信するため、重複を避けるためWordPressからは送りません。ONにすると前日・1時間前・翌日フォローをWordPressからも送信します。', 'apprex' ); ?></p></td>
 				</tr>
 				<tr>
 					<th scope="row"><?php esc_html_e( 'GAS Webhook URL', 'apprex' ); ?></th>
@@ -399,6 +405,13 @@ function apprex_enroll_drip( $post_id, $type, $email, $name, $meeting_at = 0 ) {
 	if ( ! get_option( 'apprex_drip_enabled', 1 ) ) {
 		return;
 	}
+	// ミーティングは原則 Google カレンダーがリマインダーを送るため、WordPress 側は既定で送らない。
+	if ( 'meeting' === $type && ! get_option( 'apprex_wp_meeting_reminders', 0 ) ) {
+		if ( $meeting_at ) {
+			update_post_meta( $post_id, 'apprex_meeting_at', $meeting_at );
+		}
+		return;
+	}
 	update_post_meta( $post_id, 'apprex_drip_active', 1 );
 	update_post_meta( $post_id, 'apprex_drip_type', $type );
 	update_post_meta( $post_id, 'apprex_drip_start', time() );
@@ -441,7 +454,7 @@ function apprex_send_autoreply( $type, $fields ) {
 			$subject = '【APPREX】ミーティングのご予約を受け付けました';
 			$body    = "{$name} 様\n\nオンラインミーティング（Google Meet）のご予約ありがとうございます。\n";
 			$body   .= $when ? "ご希望日時：{$when}\n" : '';
-			$body   .= "内容を確認のうえ、Google MeetのURLを含む確定のご連絡を差し上げます。\n開催前にリマインダーメールをお送りします。\n";
+			$body   .= "内容を確認のうえ、Google MeetのURLを含む確定のご連絡を差し上げます。\n確定後は、Googleカレンダーより開催前のリマインダーが自動で届きます。\n";
 			$meet    = apprex_meeting_url();
 			if ( $meet ) {
 				$body .= "\n▼ ご自身で今すぐ日時を確定したい方はこちら（Google Meet・URL自動発行）\n{$meet}\n";
@@ -697,6 +710,11 @@ function apprex_process_dripmail() {
  * @param int    $now   Current timestamp.
  */
 function apprex_run_meeting_reminders( $id, $email, $name, $sent, $now ) {
+	// Google カレンダーに一本化している場合は WordPress からは送らない。
+	if ( ! get_option( 'apprex_wp_meeting_reminders', 0 ) ) {
+		update_post_meta( $id, 'apprex_drip_active', 0 );
+		return;
+	}
 	$meeting_at = (int) get_post_meta( $id, 'apprex_meeting_at', true );
 	if ( ! $meeting_at ) {
 		update_post_meta( $id, 'apprex_drip_active', 0 );
