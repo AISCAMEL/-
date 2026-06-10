@@ -112,7 +112,7 @@
 			if (e.optTotal) { html += '<li>一回オプション：' + yen(e.optTotal) + '</li>'; }
 			html += '<li>初期お支払い目安：<b>' + yen(e.initialTotal) + '</b></li>';
 			html += '<li>初年度概算：' + yen(e.annual) + '</li>';
-			html += '<li style="color:var(--color-muted)">最低利用期間：縛りなし</li>';
+			html += '<li style="color:var(--color-muted)">最低利用期間：1年契約（12ヶ月）</li>';
 			html += '</ul>';
 			elTotal.innerHTML = html;
 			orderForm.hidden = false;

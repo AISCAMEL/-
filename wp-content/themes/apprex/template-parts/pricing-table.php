@@ -52,7 +52,7 @@ $apprex_render_service = function ( $svc, $featured = '' ) use ( $apprex_est, $a
 						<li><?php echo esc_html( $s ); ?></li>
 					<?php endforeach; ?>
 				<?php endif; ?>
-				<li><?php esc_html_e( '最低利用期間 縛りなし', 'apprex' ); ?></li>
+				<li><?php esc_html_e( '最低利用期間 1年契約（12ヶ月）', 'apprex' ); ?></li>
 			</ul>
 			<?php if ( ! empty( $p['note'] ) ) : ?>
 				<p class="price-note"><?php echo esc_html( $p['note'] ); ?></p>

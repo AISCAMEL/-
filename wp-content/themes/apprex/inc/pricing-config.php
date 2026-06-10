@@ -47,14 +47,14 @@ function apprex_pricing_config() {
 			'app' => array(
 				'label'      => 'アプリ開発（月額制）',
 				'billing'    => 'monthly',
-				'min_months' => 0, // 縛りなし。
+				'min_months' => 12, // 1年契約。
 				'plans'      => array(
 					'trial'    => array(
 						'label'           => 'トライアル（基本機能）',
 						'monthly'         => 19800,
 						'monthly_regular' => 19800,
 						'initial'         => 100000,
-						'desc'            => '基本機能・縛りなし。まずはここから。',
+						'desc'            => '基本機能・1年契約。まずはここから。',
 						'note'            => '制作代行（オプション）10万円。自社で制作する場合は不要。',
 					),
 					'start'    => array(
@@ -88,7 +88,7 @@ function apprex_pricing_config() {
 			'hp'  => array(
 				'label'      => 'ホームページ制作（月額制・初期費用0円）',
 				'billing'    => 'monthly',
-				'min_months' => 0,
+				'min_months' => 12,
 				'plans'      => array(
 					'light'    => array(
 						'label' => 'Light', 'monthly' => 9800, 'monthly_regular' => 9800, 'initial' => 0,
@@ -137,7 +137,7 @@ function apprex_quote_plans() {
 					'開発言語'                => 'アプリ：Flutter／管理：PHP',
 					'サーバ'                  => 'AWS無料提供',
 					'決済'                    => 'iOS/Android 内部課金 または Square等の外部課金',
-					'最低利用期間'            => '縛りなし',
+					'最低利用期間'            => '1年契約（12ヶ月）',
 				),
 				'examples' => array( 'スキルマッチング', 'ビジネスマッチング', '出会い系マッチング', 'フリマアプリ' ),
 				'cta'      => 'matching-appli.net も参照',
@@ -259,7 +259,7 @@ function apprex_pricing_summary_text() {
 	foreach ( $app['options'] as $o ) {
 		$opts[] = sprintf( '%s(%s円)', $o['label'], number_format( $o['price'] ) );
 	}
-	$lines[] = '  オプション：' . implode( ' / ', $opts ) . '。縛りなし・DL課金なし・プッシュ無制限。';
+	$lines[] = '  オプション：' . implode( ' / ', $opts ) . '。1年契約・DL課金なし・プッシュ無制限。';
 
 	$lines[] = '【ホームページ制作（初期費用0円・月額）】Light 9,800円／Standard 19,800円／Premium 39,800円。プラン毎にサポート範囲あり。追加項目（バナー制作・構造化・LINE構築・MEO構築・LLMO構築）はすべて別途見積もり。';
 
