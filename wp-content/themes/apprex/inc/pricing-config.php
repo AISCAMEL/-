@@ -48,6 +48,9 @@ function apprex_pricing_config() {
 				'label'      => 'アプリ開発（月額制）',
 				'billing'    => 'monthly',
 				'min_months' => 12, // 1年契約。
+				// アプリ登録時に別途必要（iOS/Android 一律）。キャンペーン対象外。
+				'registration_fee'   => 55000,
+				'registration_label' => 'アプリ登録費（iOS/Android）',
 				'plans'      => array(
 					'trial'    => array(
 						'label'           => 'トライアル（基本機能）',
@@ -216,23 +219,31 @@ function apprex_calculate_estimate( $service, $plan, $options = array() ) {
 	}
 
 	$initial_total = $initial + $opt_total; // オプションは一回費用。
-	$annual_est    = $monthly * 12 + $initial_total;
+
+	// アプリ登録費（iOS/Android）はキャンペーン対象外で別途必要。
+	$registration       = (int) ( $svc['registration_fee'] ?? 0 );
+	$registration_label = (string) ( $svc['registration_label'] ?? 'アプリ登録費' );
+	$initial_total     += $registration;
+
+	$annual_est = $monthly * 12 + $initial_total;
 
 	return array(
-		'service'         => $service,
-		'service_label'   => $svc['label'],
-		'plan'            => $plan,
-		'plan_label'      => $p['label'],
-		'billing'         => 'monthly',
-		'monthly'         => $monthly,
-		'monthly_regular' => $monthly_regular,
-		'initial'         => $initial,
-		'initial_regular' => $initial_regular,
-		'options'         => $opt_lines,
-		'options_total'   => $opt_total,
-		'initial_total'   => $initial_total,
-		'annual_est'      => $annual_est,
-		'min_months'      => (int) $svc['min_months'],
+		'service'            => $service,
+		'service_label'      => $svc['label'],
+		'plan'               => $plan,
+		'plan_label'         => $p['label'],
+		'billing'            => 'monthly',
+		'monthly'            => $monthly,
+		'monthly_regular'    => $monthly_regular,
+		'initial'            => $initial,
+		'initial_regular'    => $initial_regular,
+		'registration'       => $registration,
+		'registration_label' => $registration_label,
+		'options'            => $opt_lines,
+		'options_total'      => $opt_total,
+		'initial_total'      => $initial_total,
+		'annual_est'         => $annual_est,
+		'min_months'         => (int) $svc['min_months'],
 	);
 }
 
@@ -260,6 +271,9 @@ function apprex_pricing_summary_text() {
 		$opts[] = sprintf( '%s(%s円)', $o['label'], number_format( $o['price'] ) );
 	}
 	$lines[] = '  オプション：' . implode( ' / ', $opts ) . '。1年契約・DL課金なし・プッシュ無制限。';
+	if ( ! empty( $app['registration_fee'] ) ) {
+		$lines[] = '  ' . $app['registration_label'] . '：一律' . number_format( $app['registration_fee'] ) . '円（iOS/Android、アプリ登録時に別途必要・キャンペーン対象外）。';
+	}
 
 	$lines[] = '【ホームページ制作（初期費用0円・月額）】Light 9,800円／Standard 19,800円／Premium 39,800円。プラン毎にサポート範囲あり。追加項目（バナー制作・構造化・LINE構築・MEO構築・LLMO構築）はすべて別途見積もり。';
 
