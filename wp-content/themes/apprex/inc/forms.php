@@ -484,6 +484,19 @@ function apprex_autoreply_message( $type, $fields ) {
 			$body    = "{$name} 様\n\nお問い合わせいただきありがとうございます。\n内容を確認のうえ、担当者より2営業日以内にご連絡いたします。\n";
 	}
 
+	$ov = function_exists( 'apprex_mail_override' ) ? apprex_mail_override( 'autoreply.' . $type ) : null;
+	if ( $ov ) {
+		if ( ! empty( $ov['subject'] ) ) {
+			$subject = $ov['subject'];
+		}
+		if ( ! empty( $ov['body'] ) ) {
+			$body = $ov['body'];
+		}
+	}
+	$when    = ! empty( $fields['meeting_at'] ) ? wp_date( 'Y年n月j日(D) H:i', (int) $fields['meeting_at'] ) : '';
+	$body    = strtr( $body, array( '{name}' => $name, '{download_url}' => $doc, '{meeting_at}' => $when ) );
+	$subject = strtr( $subject, array( '{name}' => $name ) );
+
 	$body = apply_filters( 'apprex_autoreply_body', $body, $type, $fields );
 	return array( $subject, $body );
 }

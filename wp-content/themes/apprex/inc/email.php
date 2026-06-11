@@ -228,6 +228,219 @@ function apprex_admin_notify_html( $type_label, $fields, $post_id = 0 ) {
 }
 
 /* -------------------------------------------------------------------------
+ * 文面の上書き（管理画面で編集した内容を適用）
+ * ---------------------------------------------------------------------- */
+
+/** 保存済みの文面上書き（連想配列）。 */
+function apprex_mail_overrides() {
+	$o = get_option( 'apprex_mail_overrides', array() );
+	return is_array( $o ) ? $o : array();
+}
+
+/**
+ * 指定キーの上書き文面を返す（無ければ null）。
+ *
+ * @param string $key 例 autoreply.contact / step.contact.1 / reminder.before_1d。
+ * @return array|null { subject, body }
+ */
+function apprex_mail_override( $key ) {
+	$o = apprex_mail_overrides();
+	return ( isset( $o[ $key ] ) && is_array( $o[ $key ] ) ) ? $o[ $key ] : null;
+}
+
+/** ステップメールに上書きを反映。 */
+function apprex_apply_step_overrides( $steps, $type ) {
+	foreach ( $steps as $offset => $mail ) {
+		$ov = apprex_mail_override( "step.$type.$offset" );
+		if ( $ov ) {
+			if ( ! empty( $ov['subject'] ) ) {
+				$steps[ $offset ]['subject'] = $ov['subject'];
+			}
+			if ( ! empty( $ov['body'] ) ) {
+				$steps[ $offset ]['body'] = $ov['body'];
+			}
+		}
+	}
+	return $steps;
+}
+add_filter( 'apprex_step_mails', 'apprex_apply_step_overrides', 10, 2 );
+
+/** ミーティングリマインダーに上書きを反映。 */
+function apprex_apply_reminder_overrides( $reminders ) {
+	foreach ( $reminders as $k => $r ) {
+		$ov = apprex_mail_override( "reminder.$k" );
+		if ( $ov ) {
+			if ( ! empty( $ov['subject'] ) ) {
+				$reminders[ $k ]['subject'] = $ov['subject'];
+			}
+			if ( ! empty( $ov['body'] ) ) {
+				$reminders[ $k ]['body'] = $ov['body'];
+			}
+		}
+	}
+	return $reminders;
+}
+add_filter( 'apprex_meeting_reminders', 'apprex_apply_reminder_overrides', 10, 1 );
+
+/* -------------------------------------------------------------------------
+ * 管理画面：メール文面の編集
+ * ---------------------------------------------------------------------- */
+
+add_action( 'admin_menu', function () {
+	add_submenu_page(
+		'options-general.php',
+		'APPREX メール文面の編集',
+		'APPREX メール文面',
+		'manage_options',
+		'apprex-mail-content',
+		'apprex_mail_content_page'
+	);
+} );
+
+/** 保存可能なキーか検証。 */
+function apprex_mail_key_allowed( $key ) {
+	return (bool) preg_match( '/^(autoreply\.[a-z]+|step\.[a-z]+\.\d+|reminder\.[a-z0-9_]+)$/', $key );
+}
+
+/** 文面の保存ハンドラ。 */
+add_action( 'admin_post_apprex_save_mail_content', function () {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( '権限がありません。' );
+	}
+	check_admin_referer( 'apprex_mail_content' );
+
+	$in  = ( isset( $_POST['m'] ) && is_array( $_POST['m'] ) ) ? wp_unslash( $_POST['m'] ) : array();
+	$out = array();
+	foreach ( $in as $key => $pair ) {
+		$key = (string) $key;
+		if ( ! apprex_mail_key_allowed( $key ) || ! is_array( $pair ) ) {
+			continue;
+		}
+		$subject = isset( $pair['subject'] ) ? sanitize_text_field( $pair['subject'] ) : '';
+		$body    = isset( $pair['body'] ) ? sanitize_textarea_field( $pair['body'] ) : '';
+		if ( '' !== $subject || '' !== $body ) {
+			$out[ $key ] = array( 'subject' => $subject, 'body' => $body );
+		}
+	}
+	update_option( 'apprex_mail_overrides', $out );
+	wp_safe_redirect( add_query_arg( 'apprex_saved', '1', admin_url( 'options-general.php?page=apprex-mail-content' ) ) );
+	exit;
+} );
+
+/** 全文面を初期状態に戻す。 */
+add_action( 'admin_post_apprex_reset_mail_content', function () {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( '権限がありません。' );
+	}
+	check_admin_referer( 'apprex_mail_content' );
+	delete_option( 'apprex_mail_overrides' );
+	wp_safe_redirect( add_query_arg( 'apprex_saved', 'reset', admin_url( 'options-general.php?page=apprex-mail-content' ) ) );
+	exit;
+} );
+
+/** 1項目分の編集フィールドを描画。 */
+function apprex_mail_edit_field( $key, $label, $subject, $body, $note = '' ) {
+	echo '<tr><th scope="row" style="vertical-align:top;width:120px;">' . esc_html( $label ) . '</th><td>';
+	echo '<input type="text" name="m[' . esc_attr( $key ) . '][subject]" class="large-text" value="' . esc_attr( $subject ) . '" placeholder="件名" style="margin-bottom:6px;">';
+	echo '<textarea name="m[' . esc_attr( $key ) . '][body]" rows="6" class="large-text code" placeholder="本文">' . esc_textarea( $body ) . '</textarea>';
+	if ( $note ) {
+		echo '<p class="description">' . esc_html( $note ) . '</p>';
+	}
+	echo '</td></tr>';
+}
+
+/** メール文面編集ページ本体。 */
+function apprex_mail_content_page() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
+	}
+	$labels = apprex_mail_types();
+	?>
+	<div class="wrap">
+		<h1>APPREX メール文面の編集</h1>
+
+		<?php if ( isset( $_GET['apprex_saved'] ) ) : ?>
+			<div class="notice notice-success is-dismissible"><p>
+			<?php echo ( 'reset' === $_GET['apprex_saved'] ) ? '全ての文面を初期状態に戻しました。' : '文面を保存しました。'; ?>
+			</p></div>
+		<?php endif; ?>
+
+		<p>件名・本文を自由に編集できます。差し込みタグ <code>{name}</code> はお客様名に置き換わります。
+		編集後は「<strong>設定 &gt; APPREX メール</strong>」のプレビュー／テスト送信で見た目を確認できます。<br>
+		ある項目を<strong>空欄にして保存すると、その項目だけ初期文面に戻ります</strong>。</p>
+
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<input type="hidden" name="action" value="apprex_save_mail_content">
+			<?php wp_nonce_field( 'apprex_mail_content' ); ?>
+
+			<h2>自動返信（申込直後）</h2>
+			<table class="form-table" role="presentation"><tbody>
+			<?php
+			$ar_types = array( 'contact', 'document', 'trial', 'meeting', 'partner' );
+			foreach ( $ar_types as $t ) {
+				list( $s, $b ) = apprex_autoreply_message( $t, array( 'name' => '{name}' ) );
+				$note = '{name} が使えます';
+				if ( 'document' === $t ) {
+					$note .= ' / {download_url}（資料DLリンク）';
+				}
+				if ( 'meeting' === $t ) {
+					$note .= ' / {meeting_at}（予約日時）';
+				}
+				apprex_mail_edit_field( 'autoreply.' . $t, ( isset( $labels[ $t ] ) ? $labels[ $t ] : $t ), $s, $b, $note );
+			}
+			?>
+			</tbody></table>
+
+			<h2>ステップメール（フォロー配信）</h2>
+			<?php
+			$drip = array(
+				'contact'  => 'お問い合わせ',
+				'document' => '資料請求',
+				'trial'    => '無料体験',
+				'estimate' => '見積・発注',
+			);
+			foreach ( $drip as $k => $lbl ) {
+				echo '<h3 style="border-left:4px solid #2563eb;padding-left:8px;">' . esc_html( $lbl ) . '</h3>';
+				echo '<table class="form-table" role="presentation"><tbody>';
+				$steps = apprex_step_mails( $k );
+				ksort( $steps );
+				foreach ( $steps as $offset => $mail ) {
+					apprex_mail_edit_field( "step.$k.$offset", $offset . '日後', $mail['subject'], $mail['body'], '{name} が使えます' );
+				}
+				echo '</tbody></table>';
+			}
+			?>
+
+			<h2>ミーティング リマインダー</h2>
+			<table class="form-table" role="presentation"><tbody>
+			<?php
+			$rlabel = array(
+				'before_1d' => '前日',
+				'before_1h' => '1時間前',
+				'after_1d'  => '翌日フォロー',
+			);
+			foreach ( apprex_meeting_reminders() as $rk => $r ) {
+				$lbl = isset( $rlabel[ $rk ] ) ? $rlabel[ $rk ] : $rk;
+				apprex_mail_edit_field( "reminder.$rk", $lbl, $r['subject'], $r['body'], '{name} {when}（予約日時）が使えます' );
+			}
+			?>
+			</tbody></table>
+
+			<?php submit_button( '文面を保存する' ); ?>
+		</form>
+
+		<hr>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" onsubmit="return confirm('編集した全ての文面を初期状態に戻します。よろしいですか？');">
+			<input type="hidden" name="action" value="apprex_reset_mail_content">
+			<?php wp_nonce_field( 'apprex_mail_content' ); ?>
+			<button type="submit" class="button button-secondary">全ての文面を初期状態に戻す</button>
+			<span class="description">（編集内容を破棄し、最初の文面に戻します）</span>
+		</form>
+	</div>
+	<?php
+}
+
+/* -------------------------------------------------------------------------
  * 管理画面：テスト送信 ＋ プレビュー
  * ---------------------------------------------------------------------- */
 
@@ -408,6 +621,7 @@ function apprex_mail_admin_page() {
 	?>
 	<div class="wrap">
 		<h1>APPREX メール（テスト送信 / プレビュー）</h1>
+		<p><a href="<?php echo esc_url( admin_url( 'options-general.php?page=apprex-mail-content' ) ); ?>" class="button">✏️ メール文面を編集する</a> ← 件名・本文を編集したい場合はこちら</p>
 
 		<?php if ( isset( $_GET['apprex_test'] ) ) : ?>
 			<?php if ( 'sent' === $_GET['apprex_test'] ) : ?>
