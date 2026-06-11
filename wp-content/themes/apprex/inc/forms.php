@@ -549,7 +549,8 @@ function apprex_mail_headers() {
  * ---------------------------------------------------------------------- */
 
 /**
- * Type-specific step sequences. Offset in days => {subject, body}.
+ * Type-specific step sequences. Offset in MINUTES => {subject, body}.
+ * 1日=1440 / 3日=4320 / 7日=10080 / 14日=20160 / 30日=43200 など。
  * {name} is replaced at send time. Editable via the apprex_step_mails filter.
  *
  * @param string $type document|trial|estimate|contact.
@@ -564,39 +565,40 @@ function apprex_step_mails( $type = 'contact' ) {
 	$sequences = array(
 		// 資料請求後：資料活用 → 事例 → 料金 → 体験 → 相談.
 		'document' => array(
-			1  => array( 'subject' => '【APPREX】資料はお手元に届きましたか？', 'body' => "{name} 様\n\n先日お送りした資料はご覧いただけましたでしょうか。ご不明点があればこのメールにご返信ください。\n" ),
-			3  => array( 'subject' => '【APPREX】事例で見る、アプリ活用のイメージ', 'body' => "{name} 様\n\n9業種の導入事例をまとめています。貴社に近いケースがきっと見つかります。\n{$cases}\n" ),
-			7  => array( 'subject' => '【APPREX】料金は月額19,800円〜・初期費用0円', 'body' => "{name} 様\n\n従来の開発コストの1/10。1分でお見積りできます。\n{$est}\n" ),
-			14 => array( 'subject' => '【APPREX】まずは30日間の無料体験から', 'body' => "{name} 様\n\n操作感はやはり触ってみるのが一番です。無料体験をご用意しています。\n{$ft}\n" ),
-			30 => array( 'subject' => '【APPREX】個別相談・LINEでもお気軽に', 'body' => "{name} 様\n\nご検討状況はいかがでしょうか。チャットやLINEでお気軽にご相談ください。\n" ),
+			1440  => array( 'subject' => '【APPREX】資料はお手元に届きましたか？', 'body' => "{name} 様\n\n先日お送りした資料はご覧いただけましたでしょうか。ご不明点があればこのメールにご返信ください。\n" ),
+			4320  => array( 'subject' => '【APPREX】事例で見る、アプリ活用のイメージ', 'body' => "{name} 様\n\n9業種の導入事例をまとめています。貴社に近いケースがきっと見つかります。\n{$cases}\n" ),
+			10080 => array( 'subject' => '【APPREX】料金は月額19,800円〜・初期費用0円', 'body' => "{name} 様\n\n従来の開発コストの1/10。1分でお見積りできます。\n{$est}\n" ),
+			20160 => array( 'subject' => '【APPREX】まずは30日間の無料体験から', 'body' => "{name} 様\n\n操作感はやはり触ってみるのが一番です。無料体験をご用意しています。\n{$ft}\n" ),
+			43200 => array( 'subject' => '【APPREX】個別相談・LINEでもお気軽に', 'body' => "{name} 様\n\nご検討状況はいかがでしょうか。チャットやLINEでお気軽にご相談ください。\n" ),
 		),
 		// 30日お試し：開始 → 使い方 → 公開 → 事例 → 終了前リマインド → 継続.
 		'trial'    => array(
-			1  => array( 'subject' => '【APPREX】無料体験スタート！最初の一歩', 'body' => "{name} 様\n\n無料体験ありがとうございます。まずはテンプレートを選んで画面を作ってみましょう。困ったらご返信ください。\n" ),
-			3  => array( 'subject' => '【APPREX】よく使う機能の使い方', 'body' => "{name} 様\n\nプッシュ通知・会員管理など、よく使う機能の設定方法をご案内します。ご不明点はお気軽に。\n" ),
-			7  => array( 'subject' => '【APPREX】公開までの進め方', 'body' => "{name} 様\n\nアプリ公開までの流れをまとめました。最短2週間での公開も可能です。\n" ),
-			14 => array( 'subject' => '【APPREX】体験中の方へ：成功事例のご紹介', 'body' => "{name} 様\n\n体験から本番運用で成果を出した事例をご紹介します。\n{$cases}\n" ),
-			25 => array( 'subject' => '【APPREX】無料体験は残りわずかです（終了前のご案内）', 'body' => "{name} 様\n\n無料体験の期間終了が近づいています。継続をご希望の場合のお手続き・お見積りはこちら。\n{$est}\n" ),
-			30 => array( 'subject' => '【APPREX】無料体験ありがとうございました', 'body' => "{name} 様\n\n体験期間が終了しました。本番運用・ご相談はいつでも承ります。\n{$est}\n" ),
+			1440  => array( 'subject' => '【APPREX】無料体験スタート！最初の一歩', 'body' => "{name} 様\n\n無料体験ありがとうございます。まずはテンプレートを選んで画面を作ってみましょう。困ったらご返信ください。\n" ),
+			4320  => array( 'subject' => '【APPREX】よく使う機能の使い方', 'body' => "{name} 様\n\nプッシュ通知・会員管理など、よく使う機能の設定方法をご案内します。ご不明点はお気軽に。\n" ),
+			10080 => array( 'subject' => '【APPREX】公開までの進め方', 'body' => "{name} 様\n\nアプリ公開までの流れをまとめました。最短2週間での公開も可能です。\n" ),
+			20160 => array( 'subject' => '【APPREX】体験中の方へ：成功事例のご紹介', 'body' => "{name} 様\n\n体験から本番運用で成果を出した事例をご紹介します。\n{$cases}\n" ),
+			36000 => array( 'subject' => '【APPREX】無料体験は残りわずかです（終了前のご案内）', 'body' => "{name} 様\n\n無料体験の期間終了が近づいています。継続をご希望の場合のお手続き・お見積りはこちら。\n{$est}\n" ),
+			43200 => array( 'subject' => '【APPREX】無料体験ありがとうございました', 'body' => "{name} 様\n\n体験期間が終了しました。本番運用・ご相談はいつでも承ります。\n{$est}\n" ),
 		),
 		// 見積もり・発注後：検討促進.
 		'estimate' => array(
-			1  => array( 'subject' => '【APPREX】お見積り内容のご確認とご相談', 'body' => "{name} 様\n\nお見積りありがとうございます。内容のご相談・条件のご調整も承ります。お気軽にご返信ください。\n" ),
-			3  => array( 'subject' => '【APPREX】導入の流れとスケジュール', 'body' => "{name} 様\n\nご発注後の流れ（ヒアリング→制作→公開）をご案内します。最短2週間での公開も可能です。\n" ),
-			7  => array( 'subject' => '【APPREX】初期費用0円キャンペーンのご案内', 'body' => "{name} 様\n\n先着5名様・初期費用0円キャンペーン実施中です（通常30万円）。この機会をぜひご活用ください。\n{$est}\n" ),
-			14 => array( 'subject' => '【APPREX】事例で見る費用対効果', 'body' => "{name} 様\n\n同価格帯でどのような成果が出ているか、事例でご確認いただけます。\n{$cases}\n" ),
-			30 => array( 'subject' => '【APPREX】個別相談のご提案', 'body' => "{name} 様\n\nご検討状況はいかがでしょうか。オンラインでのご相談も承っております。\n" ),
+			1440  => array( 'subject' => '【APPREX】お見積り内容のご確認とご相談', 'body' => "{name} 様\n\nお見積りありがとうございます。内容のご相談・条件のご調整も承ります。お気軽にご返信ください。\n" ),
+			4320  => array( 'subject' => '【APPREX】導入の流れとスケジュール', 'body' => "{name} 様\n\nご発注後の流れ（ヒアリング→制作→公開）をご案内します。最短2週間での公開も可能です。\n" ),
+			10080 => array( 'subject' => '【APPREX】初期費用0円キャンペーンのご案内', 'body' => "{name} 様\n\n先着5名様・初期費用0円キャンペーン実施中です（通常30万円）。この機会をぜひご活用ください。\n{$est}\n" ),
+			20160 => array( 'subject' => '【APPREX】事例で見る費用対効果', 'body' => "{name} 様\n\n同価格帯でどのような成果が出ているか、事例でご確認いただけます。\n{$cases}\n" ),
+			43200 => array( 'subject' => '【APPREX】個別相談のご提案', 'body' => "{name} 様\n\nご検討状況はいかがでしょうか。オンラインでのご相談も承っております。\n" ),
 		),
-		// 汎用（お問い合わせ）：長期ナーチャ.
+		// 汎用（お問い合わせ）：10分後にお礼の1通目 → 翌日以降に長期ナーチャ.
 		'contact'  => array(
-			1   => array( 'subject' => '【APPREX】ノーコードで“最短2週間”アプリ公開', 'body' => "{name} 様\n\nまずは無料体験で操作感をお試しください。\n{$ft}\n" ),
-			3   => array( 'subject' => '【APPREX】9業種の導入事例', 'body' => "{name} 様\n\n業種を問わず成果につながっています。\n{$cases}\n" ),
-			7   => array( 'subject' => '【APPREX】料金・初期費用0円キャンペーン', 'body' => "{name} 様\n\n1分でお見積りできます。\n{$est}\n" ),
-			14  => array( 'subject' => '【APPREX】ホームページ制作も月額9,800円〜', 'body' => "{name} 様\n\nHP制作も初期費用0円・月額制で承っています。\n{$hp}\n" ),
-			30  => array( 'subject' => '【APPREX】チャット・LINEでお気軽に', 'body' => "{name} 様\n\nご不明点はお気軽にご相談ください。\n" ),
-			90  => array( 'subject' => '【APPREX】改めてのご提案', 'body' => "{name} 様\n\n条件面のご相談も承ります。\n{$est}\n" ),
-			180 => array( 'subject' => '【APPREX】最新機能・事例アップデート', 'body' => "{name} 様\n\n最新の事例・機能をぜひご覧ください。\n" . home_url( '/' ) . "\n" ),
-			365 => array( 'subject' => '【APPREX】1年のご愛顧に感謝を込めて', 'body' => "{name} 様\n\nいつもありがとうございます。改めてのご相談もお気軽に。\n" ),
+			10     => array( 'subject' => '【APPREX】お問い合わせありがとうございます', 'body' => "{name} 様\n\n先ほどはお問い合わせいただきありがとうございます。担当者より改めてご連絡いたしますが、その前に“どんなことができるか”をぜひご覧ください。\n{$cases}\n\nお急ぎの場合は本メールにご返信いただくか、無料体験からすぐお試しいただけます。\n{$ft}\n" ),
+			1440   => array( 'subject' => '【APPREX】ノーコードで“最短2週間”アプリ公開', 'body' => "{name} 様\n\nまずは無料体験で操作感をお試しください。\n{$ft}\n" ),
+			4320   => array( 'subject' => '【APPREX】9業種の導入事例', 'body' => "{name} 様\n\n業種を問わず成果につながっています。\n{$cases}\n" ),
+			10080  => array( 'subject' => '【APPREX】料金・初期費用0円キャンペーン', 'body' => "{name} 様\n\n1分でお見積りできます。\n{$est}\n" ),
+			20160  => array( 'subject' => '【APPREX】ホームページ制作も月額9,800円〜', 'body' => "{name} 様\n\nHP制作も初期費用0円・月額制で承っています。\n{$hp}\n" ),
+			43200  => array( 'subject' => '【APPREX】チャット・LINEでお気軽に', 'body' => "{name} 様\n\nご不明点はお気軽にご相談ください。\n" ),
+			129600 => array( 'subject' => '【APPREX】改めてのご提案', 'body' => "{name} 様\n\n条件面のご相談も承ります。\n{$est}\n" ),
+			259200 => array( 'subject' => '【APPREX】最新機能・事例アップデート', 'body' => "{name} 様\n\n最新の事例・機能をぜひご覧ください。\n" . home_url( '/' ) . "\n" ),
+			525600 => array( 'subject' => '【APPREX】1年のご愛顧に感謝を込めて', 'body' => "{name} 様\n\nいつもありがとうございます。改めてのご相談もお気軽に。\n" ),
 		),
 	);
 
@@ -715,14 +717,14 @@ function apprex_process_dripmail() {
 		}
 		$max_offset = max( array_keys( $steps ) );
 
-		// テストモード時は「日」を「分」に圧縮（管理画面で切替）。
-		$unit = get_option( 'apprex_drip_test_mode' ) ? MINUTE_IN_SECONDS : DAY_IN_SECONDS;
+		// オフセットは「分」単位。テストモード時は 1日(1440分)→1分 に圧縮（管理画面で切替）。
+		$sec_per_unit = get_option( 'apprex_drip_test_mode' ) ? ( MINUTE_IN_SECONDS / 1440 ) : MINUTE_IN_SECONDS;
 
 		foreach ( $steps as $offset => $mail ) {
 			if ( in_array( $offset, $sent, true ) ) {
 				continue;
 			}
-			if ( $now >= $start + ( $offset * $unit ) ) {
+			if ( $now >= $start + ( $offset * $sec_per_unit ) ) {
 				apprex_send_drip_mail( $id, $email, $mail['subject'], str_replace( '{name}', $name, $mail['body'] ) );
 				$sent[] = $offset;
 				update_post_meta( $id, 'apprex_drip_sent', $sent );

@@ -405,7 +405,7 @@ function apprex_mail_content_page() {
 				$steps = apprex_step_mails( $k );
 				ksort( $steps );
 				foreach ( $steps as $offset => $mail ) {
-					apprex_mail_edit_field( "step.$k.$offset", $offset . '日後', $mail['subject'], $mail['body'], '{name} が使えます' );
+					apprex_mail_edit_field( "step.$k.$offset", apprex_offset_label( $offset ), $mail['subject'], $mail['body'], '{name} が使えます' );
 				}
 				echo '</tbody></table>';
 			}
@@ -542,7 +542,22 @@ add_action( 'admin_post_apprex_test_mail', function () {
 	exit;
 } );
 
-/** ステップメール配信タイミング（種別→オフセット日数）。 */
+/** オフセット（分）を人が読めるラベルに（10分後 / 1時間後 / 1日後）。 */
+function apprex_offset_label( $minutes ) {
+	$minutes = (int) $minutes;
+	if ( $minutes < 60 ) {
+		return $minutes . '分後';
+	}
+	if ( 0 === $minutes % 1440 ) {
+		return ( $minutes / 1440 ) . '日後';
+	}
+	if ( 0 === $minutes % 60 ) {
+		return ( $minutes / 60 ) . '時間後';
+	}
+	return $minutes . '分後';
+}
+
+/** ステップメール配信タイミング（種別→オフセット分）。 */
 function apprex_drip_timing( $type ) {
 	$steps = apprex_step_mails( apprex_drip_key_for( $type ) );
 	ksort( $steps );
@@ -714,7 +729,7 @@ function apprex_mail_admin_page() {
 		</tbody></table>
 
 		<h3>配信スケジュール一覧</h3>
-		<p class="description">本番では「◯日後」、テストモードONでは「◯分後」に届きます。</p>
+		<p class="description">下記は本番の配信タイミングです。テストモードONのときは「1日 → 1分」に圧縮されます（例：10分後はほぼ即時、1日後は1分後）。</p>
 		<table class="widefat striped" style="max-width:820px;">
 			<thead><tr><th style="width:90px;">タイミング</th><th>種別</th><th>件名</th></tr></thead>
 			<tbody>
@@ -725,7 +740,7 @@ function apprex_mail_admin_page() {
 				}
 				$timing = apprex_drip_timing( $type );
 				foreach ( $timing as $offset => $subj ) {
-					echo '<tr><td>' . esc_html( $offset ) . ( $test_mode ? '分後' : '日後' ) . '</td><td>' . esc_html( $label ) . '</td><td>' . esc_html( $subj ) . '</td></tr>';
+					echo '<tr><td>' . esc_html( apprex_offset_label( $offset ) ) . '</td><td>' . esc_html( $label ) . '</td><td>' . esc_html( $subj ) . '</td></tr>';
 				}
 			}
 			?>
