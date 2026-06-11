@@ -16,6 +16,34 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * 会員種別の選択肢（値 => 表示名）。`apprex_member_types` フィルタで追加可。
+ *
+ * @return array
+ */
+function apprex_member_types() {
+	return apply_filters(
+		'apprex_member_types',
+		array(
+			'standard' => '通常会員',
+			'premium'  => 'プレミアム会員',
+			'corporate' => '法人会員',
+			'partner'  => 'パートナー',
+		)
+	);
+}
+
+/**
+ * 会員種別コードを表示名に変換。
+ *
+ * @param string $key 会員種別コード。
+ * @return string
+ */
+function apprex_member_type_label( $key ) {
+	$types = apprex_member_types();
+	return isset( $types[ $key ] ) ? $types[ $key ] : (string) $key;
+}
+
 /* -------------------------------------------------------------------------
  * CPT
  * ---------------------------------------------------------------------- */
@@ -169,6 +197,15 @@ function apprex_contract_box( $post ) {
 		<tr><th>メール</th><td><input type="email" name="apprex_c_email" class="regular-text" value="<?php echo esc_attr( $g( 'apprex_c_email' ) ); ?>"></td></tr>
 		<tr><th>サービス</th><td><input type="text" name="apprex_c_service" class="regular-text" value="<?php echo esc_attr( $g( 'apprex_c_service' ) ); ?>" placeholder="アプリ開発 / ホームページ制作 など"></td></tr>
 		<tr><th>プラン</th><td><input type="text" name="apprex_c_plan" class="regular-text" value="<?php echo esc_attr( $g( 'apprex_c_plan' ) ); ?>" placeholder="スタート / ビジネス など"></td></tr>
+		<tr><th>会員種別</th><td>
+			<select name="apprex_c_member_type">
+				<?php $mt = $g( 'apprex_c_member_type' ); ?>
+				<option value="">（未設定）</option>
+				<?php foreach ( apprex_member_types() as $k => $label ) : ?>
+					<option value="<?php echo esc_attr( $k ); ?>" <?php selected( $mt, $k ); ?>><?php echo esc_html( $label ); ?></option>
+				<?php endforeach; ?>
+			</select>
+		</td></tr>
 		<tr><th>月額(円)</th><td><input type="number" name="apprex_c_monthly" value="<?php echo esc_attr( $g( 'apprex_c_monthly', 0 ) ); ?>" min="0" step="100"> 円（税抜）</td></tr>
 		<tr><th>契約開始日</th><td><input type="date" name="apprex_c_start" value="<?php echo esc_attr( $g( 'apprex_c_start' ) ); ?>"></td></tr>
 		<tr><th>契約年数</th><td><input type="number" name="apprex_c_term" value="<?php echo esc_attr( $g( 'apprex_c_term', 1 ) ); ?>" min="1" step="1"> 年</td></tr>
@@ -192,6 +229,8 @@ function apprex_contract_box( $post ) {
 		<tr><th>支払い期日</th><td>毎月 <input type="number" name="apprex_c_payment_day" value="<?php echo esc_attr( $g( 'apprex_c_payment_day', 27 ) ); ?>" min="1" max="31" style="width:70px"> 日</td></tr>
 		<tr><th>最終入金確認日<br><span class="description">（消し込み）</span></th><td><input type="date" name="apprex_c_last_paid" value="<?php echo esc_attr( $g( 'apprex_c_last_paid' ) ); ?>"><br><span class="description">入金を確認したらこの日付を更新。一定期間更新が無いと延滞としてSlack通知します。</span></td></tr>
 		<tr><th>アプリ製作ページURL</th><td><input type="url" name="apprex_c_app_url" class="regular-text" value="<?php echo esc_attr( $g( 'apprex_c_app_url' ) ); ?>" placeholder="https://…（コントロールパネル/アプリビルダー）"><br><span class="description">会員マイページの「アプリ製作ページを開く」ボタンのリンク先。</span></td></tr>
+		<tr><th>アプリ ログインID</th><td><input type="text" name="apprex_c_app_login" class="regular-text" value="<?php echo esc_attr( $g( 'apprex_c_app_login' ) ); ?>" autocomplete="off" placeholder="お客様ごとに発行したログインID"><br><span class="description">手動入力。会員マイページの「アプリログイン情報」に表示されます。</span></td></tr>
+		<tr><th>アプリ ログインPW</th><td><input type="text" name="apprex_c_app_pass" class="regular-text" value="<?php echo esc_attr( $g( 'apprex_c_app_pass' ) ); ?>" autocomplete="off" placeholder="お客様ごとに発行したパスワード"><br><span class="description">手動入力。会員本人のみマイページで閲覧できます。</span></td></tr>
 		<tr><th>備考</th><td><textarea name="apprex_c_note" rows="3" class="large-text"><?php echo esc_textarea( $g( 'apprex_c_note' ) ); ?></textarea></td></tr>
 	</table>
 	<?php
@@ -213,7 +252,7 @@ add_action( 'save_post_apprex_contract', function ( $post_id ) {
 		return;
 	}
 
-	$text = array( 'apprex_c_name', 'apprex_c_company', 'apprex_c_service', 'apprex_c_plan', 'apprex_c_start', 'apprex_c_status', 'apprex_c_last_paid' );
+	$text = array( 'apprex_c_name', 'apprex_c_company', 'apprex_c_service', 'apprex_c_plan', 'apprex_c_start', 'apprex_c_status', 'apprex_c_last_paid', 'apprex_c_member_type', 'apprex_c_app_login', 'apprex_c_app_pass' );
 	foreach ( $text as $k ) {
 		if ( isset( $_POST[ $k ] ) ) {
 			update_post_meta( $post_id, $k, sanitize_text_field( wp_unslash( $_POST[ $k ] ) ) );

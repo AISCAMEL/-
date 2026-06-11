@@ -231,7 +231,7 @@ add_action( 'admin_post_apprex_dash_export', function () {
 		'contract' => array(
 			'post_type' => 'apprex_contract',
 			'status'    => 'publish',
-			'header'    => array( 'ID', '名前', '会社', 'メール', 'サービス', 'プラン', '状態', '月額', '開始日', '更新日', '契約年数', '支払方法', '支払日', '最終入金' ),
+			'header'    => array( 'ID', '名前', '会社', 'メール', '会員種別', 'サービス', 'プラン', '状態', '月額', '開始日', '更新日', '契約年数', '支払方法', '支払日', '最終入金', 'アプリID', 'アプリPW' ),
 			'row'       => function ( $id ) {
 				$g = function ( $k ) use ( $id ) {
 					return (string) get_post_meta( $id, $k, true );
@@ -240,12 +240,14 @@ add_action( 'admin_post_apprex_dash_export', function () {
 				$s  = $g( 'apprex_c_status' );
 				return array(
 					$id, $g( 'apprex_c_name' ), $g( 'apprex_c_company' ), $g( 'apprex_c_email' ),
+					function_exists( 'apprex_member_type_label' ) && $g( 'apprex_c_member_type' ) ? apprex_member_type_label( $g( 'apprex_c_member_type' ) ) : '',
 					$g( 'apprex_c_service' ), $g( 'apprex_c_plan' ),
 					isset( $st[ $s ] ) ? $st[ $s ] : $s,
 					$g( 'apprex_c_monthly' ), $g( 'apprex_c_start' ), $g( 'apprex_c_renewal' ),
 					$g( 'apprex_c_term' ),
 					'invoice' === $g( 'apprex_c_payment_method' ) ? '請求書' : 'Square',
 					$g( 'apprex_c_payment_day' ), $g( 'apprex_c_last_paid' ),
+					$g( 'apprex_c_app_login' ), $g( 'apprex_c_app_pass' ),
 				);
 			},
 		),

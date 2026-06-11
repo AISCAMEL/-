@@ -158,8 +158,27 @@ function apprex_member_contract_card( $id ) {
 			echo $row( 'お名前', $m( 'apprex_c_name' ) ); // phpcs:ignore
 			echo $row( '会社名', $m( 'apprex_c_company' ) ); // phpcs:ignore
 			echo $row( 'メール', $m( 'apprex_c_email' ) ); // phpcs:ignore
+			$mtype = $m( 'apprex_c_member_type' );
+			echo $row( '会員種別', $mtype && function_exists( 'apprex_member_type_label' ) ? apprex_member_type_label( $mtype ) : '' ); // phpcs:ignore
 			?>
 		</table>
+
+		<?php
+		$app_login = $m( 'apprex_c_app_login' );
+		$app_pass  = $m( 'apprex_c_app_pass' );
+		if ( $app_login || $app_pass || $app_url ) :
+			?>
+			<h4 style="margin:14px 0 6px;color:#374151;">アプリログイン情報</h4>
+			<table style="border-collapse:collapse;width:100%;font-size:14px;">
+				<?php
+				echo $row( 'ログインID', $app_login ); // phpcs:ignore
+				echo $row( 'パスワード', $app_pass ); // phpcs:ignore
+				if ( $app_url ) {
+					echo $row( 'アプリ製作ページ', $app_url ); // phpcs:ignore
+				}
+				?>
+			</table>
+		<?php endif; ?>
 
 		<h4 style="margin:14px 0 6px;color:#374151;">契約内容</h4>
 		<table style="border-collapse:collapse;width:100%;font-size:14px;">
