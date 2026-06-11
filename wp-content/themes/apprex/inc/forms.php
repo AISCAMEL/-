@@ -104,6 +104,22 @@ function apprex_integrations_page() {
 }
 
 /**
+ * Output the Google Search Console verification meta tag in <head>.
+ *
+ * Without this, the stored 確認コード is never rendered and verification fails.
+ */
+add_action( 'wp_head', function () {
+	$token = (string) get_option( 'apprex_gsc_verify', '' );
+	// Tolerate a full <meta> tag being pasted: keep only the content token.
+	if ( $token && preg_match( '/content=["\']([^"\']+)["\']/i', $token, $m ) ) {
+		$token = $m[1];
+	}
+	if ( '' !== $token ) {
+		echo '<meta name="google-site-verification" content="' . esc_attr( $token ) . '">' . "\n";
+	}
+}, 1 );
+
+/**
  * LINE URL accessor.
  *
  * @return string
