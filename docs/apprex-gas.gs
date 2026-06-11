@@ -125,24 +125,43 @@ function logToSheet_(body, d) {
     sh.setFrozenRows(1);
   }
 
-  sh.appendRow([
-    body.time || formatNow_(),     // 受付日時（WPの送信時刻文字列をそのまま）
-    kindOf_(body, d),              // 種別（資料請求/無料体験/ミーティング/パートナー/見積もり・発注 …）
-    d.name || '',                  // お名前
-    d.company || '',               // 会社名
-    d.email || '',                 // メール
-    d.phone || '',                 // 電話
-    d.service || '',               // サービス（発注時のみ）
-    d.plan || '',                  // プラン（発注時のみ）
-    num_(d.monthly),               // 月額
-    num_(d.initial),               // 初期費用
-    num_(d.annual),                // 年間目安
-    d.message || '',               // 内容・ご要望
-    d.meeting_at || '',            // ご希望日時（ミーティング予約）
-    d.source || body.site || '',   // 流入元
-    d.admin_url || '',             // 管理画面URL
-    body.site || ''                // サイト
-  ]);
+  // 見出し名 => 値（位置ではなく「列名」で配置するので列ズレが起きない）
+  const record = {
+    '受付日時'    : body.time || formatNow_(),
+    '種別'        : kindOf_(body, d),
+    'お名前'      : d.name || '',
+    '会社名'      : d.company || '',
+    'メール'      : d.email || '',
+    '電話'        : d.phone || '',
+    'サービス'    : d.service || '',
+    'プラン'      : d.plan || '',
+    '月額(円)'    : num_(d.monthly),
+    '初期費用(円)': num_(d.initial),
+    '年間目安(円)': num_(d.annual),
+    '内容・ご要望': d.message || '',
+    'ご希望日時'  : d.meeting_at || '',
+    '流入元'      : d.source || body.site || '',
+    '管理画面URL' : d.admin_url || '',
+    'サイト'      : body.site || ''
+  };
+
+  // 実際の見出し行を読み、見出し名 → 列インデックス を作る
+  const lastCol   = Math.max(sh.getLastColumn(), HEADERS.length);
+  const headerRow = sh.getRange(1, 1, 1, lastCol).getValues()[0];
+  const colOf = {};
+  headerRow.forEach(function (h, i) {
+    const name = String(h).trim();
+    if (name) { colOf[name] = i; }
+  });
+
+  // 見出しに合わせて1行分の配列を組み立てる
+  const row = new Array(lastCol).fill('');
+  Object.keys(record).forEach(function (name) {
+    let idx = (name in colOf) ? colOf[name] : HEADERS.indexOf(name);
+    if (idx >= 0 && idx < row.length) { row[idx] = record[name]; }
+  });
+
+  sh.appendRow(row);
 }
 
 /* ============================================================
