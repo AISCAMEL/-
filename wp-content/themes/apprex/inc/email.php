@@ -329,6 +329,75 @@ add_action( 'admin_post_apprex_test_mail', function () {
 	exit;
 } );
 
+/** ステップメール配信タイミング（種別→オフセット日数）。 */
+function apprex_drip_timing( $type ) {
+	$steps = apprex_step_mails( apprex_drip_key_for( $type ) );
+	ksort( $steps );
+	$rows = array();
+	foreach ( $steps as $offset => $mail ) {
+		$rows[ $offset ] = $mail['subject'];
+	}
+	return $rows;
+}
+
+/** テストモード（日→分）切替。 */
+add_action( 'admin_post_apprex_drip_testmode', function () {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( '権限がありません。' );
+	}
+	check_admin_referer( 'apprex_drip_tools' );
+	$mode = isset( $_POST['mode'] ) && '1' === $_POST['mode'] ? 1 : 0;
+	update_option( 'apprex_drip_test_mode', $mode );
+	wp_safe_redirect( add_query_arg( 'apprex_test', 'mode', admin_url( 'options-general.php?page=apprex-mail' ) ) );
+	exit;
+} );
+
+/** 今すぐ配信処理を実行（cronを待たずに送る）。 */
+add_action( 'admin_post_apprex_drip_run_now', function () {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( '権限がありません。' );
+	}
+	check_admin_referer( 'apprex_drip_tools' );
+	if ( function_exists( 'apprex_process_dripmail' ) ) {
+		apprex_process_dripmail();
+	}
+	wp_safe_redirect( add_query_arg( 'apprex_test', 'ran', admin_url( 'options-general.php?page=apprex-mail' ) ) );
+	exit;
+} );
+
+/** テスト購読を開始（自分のアドレスをステップ配信に登録）。 */
+add_action( 'admin_post_apprex_drip_test_start', function () {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( '権限がありません。' );
+	}
+	check_admin_referer( 'apprex_drip_tools' );
+
+	$to   = isset( $_POST['to'] ) ? sanitize_email( wp_unslash( $_POST['to'] ) ) : '';
+	$type = isset( $_POST['type'] ) ? sanitize_key( wp_unslash( $_POST['type'] ) ) : 'contact';
+	$back = admin_url( 'options-general.php?page=apprex-mail' );
+
+	if ( ! is_email( $to ) ) {
+		wp_safe_redirect( add_query_arg( 'apprex_test', 'bademail', $back ) );
+		exit;
+	}
+
+	$dtype   = apprex_drip_key_for( $type );
+	$post_id = wp_insert_post(
+		array(
+			'post_type'   => 'apprex_inquiry',
+			'post_status' => 'publish',
+			'post_title'  => '[テスト購読] ' . $to . '（' . $dtype . '）',
+		)
+	);
+	if ( $post_id && function_exists( 'apprex_enroll_drip' ) ) {
+		apprex_enroll_drip( $post_id, $dtype, $to, 'テスト 太郎' );
+		// 即時に1通目が出るよう、テストモードもONにしておく。
+		update_option( 'apprex_drip_test_mode', 1 );
+	}
+	wp_safe_redirect( add_query_arg( 'apprex_test', 'started', $back ) );
+	exit;
+} );
+
 /** 管理ページ本体（テスト送信フォーム＋プレビュー）。 */
 function apprex_mail_admin_page() {
 	if ( ! current_user_can( 'manage_options' ) ) {
@@ -345,7 +414,18 @@ function apprex_mail_admin_page() {
 				<div class="notice notice-success is-dismissible"><p>テストメールを <strong><?php echo (int) ( $_GET['n'] ?? 0 ); ?>通</strong> 送信しました。受信トレイ（迷惑メールも）をご確認ください。</p></div>
 			<?php elseif ( 'bademail' === $_GET['apprex_test'] ) : ?>
 				<div class="notice notice-error is-dismissible"><p>メールアドレスが正しくありません。</p></div>
+			<?php elseif ( 'started' === $_GET['apprex_test'] ) : ?>
+				<div class="notice notice-success is-dismissible"><p>テスト購読を開始しました（テストモードON）。下の「今すぐ配信処理を実行」を押すたびに、経過分数に応じてステップメールが順番に届きます。</p></div>
+			<?php elseif ( 'ran' === $_GET['apprex_test'] ) : ?>
+				<div class="notice notice-success is-dismissible"><p>配信処理を実行しました。期限が来ているステップメールを送信しました（受信トレイをご確認ください）。</p></div>
+			<?php elseif ( 'mode' === $_GET['apprex_test'] ) : ?>
+				<div class="notice notice-success is-dismissible"><p>テストモードを切り替えました。</p></div>
 			<?php endif; ?>
+		<?php endif; ?>
+
+		<?php $test_mode = (int) get_option( 'apprex_drip_test_mode', 0 ); ?>
+		<?php if ( $test_mode ) : ?>
+			<div class="notice notice-warning"><p>⚠️ <strong>ステップメール テストモードが ON</strong> です（「日」を「分」に圧縮中）。本番運用前に必ず OFF に戻してください。</p></div>
 		<?php endif; ?>
 
 		<h2>テスト送信</h2>
@@ -369,6 +449,74 @@ function apprex_mail_admin_page() {
 			</tbody></table>
 			<?php submit_button( 'テスト送信する' ); ?>
 		</form>
+
+		<hr>
+		<h2>ステップメールの配信テスト</h2>
+		<p>実際のステップメール（フォロー配信）が「どの順番・どの間隔で届くか」を体感テストできます。<br>
+		テストモードを使うと <strong>「◯日後」→「◯分後」</strong> に圧縮されるので、数分で全ステップを確認できます。</p>
+
+		<table class="form-table" role="presentation"><tbody>
+			<tr>
+				<th scope="row">テストモード</th>
+				<td>
+					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline;">
+						<input type="hidden" name="action" value="apprex_drip_testmode">
+						<?php wp_nonce_field( 'apprex_drip_tools' ); ?>
+						<input type="hidden" name="mode" value="<?php echo $test_mode ? '0' : '1'; ?>">
+						<strong style="margin-right:8px;"><?php echo $test_mode ? '現在：ON（分単位）' : '現在：OFF（本番・日単位）'; ?></strong>
+						<button type="submit" class="button"><?php echo $test_mode ? 'OFFにする（本番に戻す）' : 'ONにする（日→分に圧縮）'; ?></button>
+					</form>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row">テスト購読を開始</th>
+				<td>
+					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+						<input type="hidden" name="action" value="apprex_drip_test_start">
+						<?php wp_nonce_field( 'apprex_drip_tools' ); ?>
+						<input type="email" name="to" class="regular-text" value="<?php echo esc_attr( $default ); ?>" placeholder="送信先メール" required style="margin:0;">
+						<select name="type">
+							<?php foreach ( $types as $k => $label ) : ?>
+								<?php if ( 'meeting' === $k ) { continue; } ?>
+								<option value="<?php echo esc_attr( $k ); ?>"><?php echo esc_html( $label ); ?></option>
+							<?php endforeach; ?>
+						</select>
+						<button type="submit" class="button button-primary">この内容でテスト購読を開始</button>
+					</form>
+					<p class="description">開始するとテストモードが自動でONになり、すぐ下の「今すぐ配信」で1通目から順に届きます。</p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row">今すぐ配信処理を実行</th>
+				<td>
+					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+						<input type="hidden" name="action" value="apprex_drip_run_now">
+						<?php wp_nonce_field( 'apprex_drip_tools' ); ?>
+						<button type="submit" class="button">今すぐ配信処理を実行（cronを待たない）</button>
+					</form>
+					<p class="description">押した時点で「期限が来ているステップ」を送信します。テストモード中なら、購読開始から1分後→1通目、3分後→2通目…の要領で、押すたびに順番に届きます。</p>
+				</td>
+			</tr>
+		</tbody></table>
+
+		<h3>配信スケジュール一覧</h3>
+		<p class="description">本番では「◯日後」、テストモードONでは「◯分後」に届きます。</p>
+		<table class="widefat striped" style="max-width:820px;">
+			<thead><tr><th style="width:90px;">タイミング</th><th>種別</th><th>件名</th></tr></thead>
+			<tbody>
+			<?php
+			foreach ( $types as $type => $label ) {
+				if ( 'meeting' === $type ) {
+					continue;
+				}
+				$timing = apprex_drip_timing( $type );
+				foreach ( $timing as $offset => $subj ) {
+					echo '<tr><td>' . esc_html( $offset ) . ( $test_mode ? '分後' : '日後' ) . '</td><td>' . esc_html( $label ) . '</td><td>' . esc_html( $subj ) . '</td></tr>';
+				}
+			}
+			?>
+			</tbody>
+		</table>
 
 		<hr>
 		<h2>メール内容プレビュー</h2>

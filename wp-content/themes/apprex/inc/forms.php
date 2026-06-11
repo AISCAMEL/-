@@ -702,11 +702,14 @@ function apprex_process_dripmail() {
 		}
 		$max_offset = max( array_keys( $steps ) );
 
+		// テストモード時は「日」を「分」に圧縮（管理画面で切替）。
+		$unit = get_option( 'apprex_drip_test_mode' ) ? MINUTE_IN_SECONDS : DAY_IN_SECONDS;
+
 		foreach ( $steps as $offset => $mail ) {
 			if ( in_array( $offset, $sent, true ) ) {
 				continue;
 			}
-			if ( $now >= $start + ( $offset * DAY_IN_SECONDS ) ) {
+			if ( $now >= $start + ( $offset * $unit ) ) {
 				apprex_send_drip_mail( $id, $email, $mail['subject'], str_replace( '{name}', $name, $mail['body'] ) );
 				$sent[] = $offset;
 				update_post_meta( $id, 'apprex_drip_sent', $sent );
