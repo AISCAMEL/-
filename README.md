@@ -29,6 +29,7 @@ LLM / FAQ / DB / 通知 / 管理画面
 │   ├── AIオペレーター24_開発仕様書.md   # マスター仕様書（本プロジェクトの正）
 │   ├── ai-conversation.md               # AI会話仕様・プロンプト・state machine
 │   ├── api.md                           # API / Webhook 仕様
+│   ├── twilio-setup.md                  # 実機通話テスト手順・疎通チェックリスト
 │   └── 開発仕様書.md                    # （別案件 CarLoan_System・参考）
 ├── db/
 │   ├── schema.sql                       # PostgreSQL / Supabase スキーマ（ENUM・テーブル・index・RLS）
@@ -87,6 +88,14 @@ npm run dev                           # http://localhost:3000
 psql "$DATABASE_URL" -f db/schema.sql
 psql "$DATABASE_URL" -f db/seed.sql
 ```
+
+### 実機通話テスト
+公開URL・Twilio番号設定・OpenAIキーを用意し、設定を診断してから着信テストします。
+```bash
+cd backend
+npm run doctor          # 環境変数・DB接続・Twilioに設定すべきURLを診断
+```
+手順とチェックリストは [`docs/twilio-setup.md`](docs/twilio-setup.md) を参照。
 
 ## 設計原則
 
