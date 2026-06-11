@@ -33,18 +33,28 @@ LLM / FAQ / DB / 通知 / 管理画面
 ├── db/
 │   ├── schema.sql                       # PostgreSQL / Supabase スキーマ（ENUM・テーブル・index・RLS）
 │   └── seed.sql                         # デモ用シードデータ
-└── backend/                             # Node.js + TypeScript バックボーン
-    ├── package.json
-    ├── tsconfig.json
-    ├── .env.example
-    └── src/
-        ├── server.ts                    # Fastify エントリ
-        ├── config.ts
-        ├── twilio/                      # 着信Webhook・署名検証・TwiML
-        ├── ws/                          # Conversation Relay WebSocket ハンドラ
-        ├── ai/                          # Orchestrator・プロンプト・要約
-        ├── notify/                      # メール / Slack 通知
-        └── db/                          # DBアクセス層
+├── backend/                             # Node.js + TypeScript バックボーン
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── .env.example
+│   └── src/
+│       ├── server.ts                    # Fastify エントリ
+│       ├── config.ts
+│       ├── auth/                        # JWT 認証（Supabase / devモード）
+│       ├── api/                         # 管理画面 REST API
+│       ├── twilio/                      # 着信Webhook・署名検証・TwiML
+│       ├── ws/                          # Conversation Relay WebSocket ハンドラ
+│       ├── ai/                          # Orchestrator・プロンプト・要約
+│       ├── notify/                      # メール / Slack 通知
+│       ├── demo/                        # DBなしデモ用 fixtures
+│       └── db/                          # DBアクセス層・管理API用クエリ
+└── frontend/                            # Next.js (App Router) + Tailwind
+    ├── app/
+    │   ├── page.tsx                     # LP（ランディングページ）
+    │   ├── login/                       # ログイン
+    │   └── (app)/                       # 管理画面（ダッシュボード/通話/FAQ/設定/Admin）
+    ├── lib/                             # APIクライアント・認証
+    └── components/                      # 共通UI
 ```
 
 ## MVPスコープ
@@ -52,13 +62,30 @@ LLM / FAQ / DB / 通知 / 管理画面
 MVP完成条件（`docs/AIオペレーター24_開発仕様書.md` 第20章）を満たすことを目標とします。
 後回し機能（Stripe自動課金・Twilio Subaccount自動作成・CRM/LINE連携・ホワイトラベル等）には踏み込みません。
 
-## セットアップ（backend）
+## セットアップ
 
+### backend
 ```bash
 cd backend
-cp .env.example .env   # 各種キーを設定
+cp .env.example .env   # 各種キーを設定（未設定でもデモモードで起動可）
 npm install
 npm run dev            # http://localhost:8080
+```
+`DATABASE_URL` / `OPENAI_API_KEY` 未設定でも **デモモード**で起動し、インメモリのサンプルデータで管理画面・API・通話フローを確認できます。
+
+### frontend
+```bash
+cd frontend
+cp .env.example .env.local            # NEXT_PUBLIC_API_BASE_URL を backend に向ける
+npm install
+npm run dev                           # http://localhost:3000
+```
+`http://localhost:3000` がLP、`/login` からデモログイン（任意の内容でOK）→ 管理画面へ。
+
+### DB（任意・本番接続時）
+```bash
+psql "$DATABASE_URL" -f db/schema.sql
+psql "$DATABASE_URL" -f db/seed.sql
 ```
 
 ## 設計原則

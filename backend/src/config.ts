@@ -29,6 +29,19 @@ export const config = {
     from: process.env.MAIL_FROM ?? 'AIオペレーター24 <noreply@ai-operator24.com>',
   },
 
+  auth: {
+    // Supabase の JWT 秘密鍵（HS256）。設定時は署名検証する。
+    jwtSecret: process.env.SUPABASE_JWT_SECRET ?? '',
+    // 開発/デモ用。署名検証を行わず、ヘッダ or デフォルトでテナントを解決する。
+    devMode: (process.env.AUTH_DEV_MODE ?? 'true') === 'true',
+  },
+
+  // デモテナント（seed.sql の固定 UUID）。
+  demoTenantId: process.env.DEMO_TENANT_ID ?? '00000000-0000-0000-0000-000000000001',
+
+  // 管理画面フロントの許可オリジン（CORS）。
+  corsOrigin: process.env.CORS_ORIGIN ?? '*',
+
   defaultGreeting:
     process.env.DEFAULT_GREETING ??
     'お電話ありがとうございます。AI受付です。ご用件をお話しください。',
