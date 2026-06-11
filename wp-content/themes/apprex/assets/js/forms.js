@@ -52,6 +52,9 @@
 							if (res.body.download) {
 								html += '<p><a class="btn btn--primary" href="' + res.body.download + '" target="_blank" rel="noopener">資料をダウンロード</a></p>';
 							}
+							if (res.body.meeting) {
+								html += '<p><a class="btn btn--primary" href="' + res.body.meeting + '" target="_blank" rel="noopener">ミーティングを予約する（Web面談）</a></p>';
+							}
 							if (res.body.line) {
 								html += '<p><a class="line-cta" href="' + res.body.line + '" target="_blank" rel="noopener">LINEで相談する</a></p>';
 							}

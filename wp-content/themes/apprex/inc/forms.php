@@ -313,8 +313,13 @@ function apprex_rest_inquiry( WP_REST_Request $request ) {
 	$message = sanitize_textarea_field( (string) $request->get_param( 'message' ) );
 
 	// Meeting preferred datetime (meeting type only).
+	// datetime-local の値はサイトのタイムゾーンで解釈する（UTC解釈による時刻ズレ防止）。
 	$meeting_raw = sanitize_text_field( (string) $request->get_param( 'meeting_at' ) );
-	$meeting_at  = ( 'meeting' === $type && $meeting_raw ) ? strtotime( $meeting_raw ) : 0;
+	$meeting_at  = 0;
+	if ( 'meeting' === $type && $meeting_raw ) {
+		$dt         = date_create( $meeting_raw, wp_timezone() );
+		$meeting_at = $dt ? $dt->getTimestamp() : 0;
+	}
 	if ( 'meeting' === $type && ! $meeting_at ) {
 		return new WP_Error( 'bad_request', 'ご希望日時をご指定ください。', array( 'status' => 400 ) );
 	}
@@ -380,6 +385,13 @@ function apprex_rest_inquiry( WP_REST_Request $request ) {
 			$result['download'] = esc_url_raw( $doc );
 		}
 	}
+	// お問い合わせ・パートナーはミーティング（Web面談）予約へ誘導。
+	if ( in_array( $type, array( 'contact', 'partner' ), true ) ) {
+		$meet = apprex_meeting_url();
+		if ( $meet ) {
+			$result['meeting'] = esc_url_raw( $meet );
+		}
+	}
 	$line = apprex_line_url();
 	if ( $line ) {
 		$result['line'] = esc_url_raw( $line );
@@ -402,9 +414,9 @@ function apprex_autoreply_onscreen( $type ) {
 		case 'meeting':
 			return 'ミーティングのご予約を受け付けました。確認のうえ、確定のご連絡を差し上げます。リマインダーもお送りします。';
 		case 'partner':
-			return 'パートナー登録のお申し込みを受け付けました。担当者より詳細をご案内します。';
+			return 'パートナー登録のお申し込みを受け付けました。担当者より詳細をご案内します。下のボタンから、Webミーティングのご予約もできます。';
 		default:
-			return 'お問い合わせありがとうございます。担当者より2営業日以内にご連絡いたします。';
+			return 'お問い合わせありがとうございます。担当者より2営業日以内にご連絡いたします。お急ぎの方は、下のボタンからミーティング（Web面談）をご予約ください。';
 	}
 }
 
@@ -482,6 +494,14 @@ function apprex_autoreply_message( $type, $fields ) {
 		default:
 			$subject = '【APPREX】お問い合わせありがとうございます';
 			$body    = "{$name} 様\n\nお問い合わせいただきありがとうございます。\n内容を確認のうえ、担当者より2営業日以内にご連絡いたします。\n";
+	}
+
+	// お問い合わせ・パートナーは Web ミーティング予約へ誘導（URL行はボタン化される）。
+	if ( in_array( $type, array( 'contact', 'partner' ), true ) ) {
+		$meet = apprex_meeting_url();
+		if ( $meet ) {
+			$body .= "\nお急ぎの方・先に相談したい方は、無料のWebミーティングをご予約ください。\n{$meet}\n";
+		}
 	}
 
 	$ov = function_exists( 'apprex_mail_override' ) ? apprex_mail_override( 'autoreply.' . $type ) : null;
