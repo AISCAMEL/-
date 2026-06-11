@@ -206,7 +206,7 @@ function apprex_member_account_box( $post ) {
 		echo '<p>会員アカウント発行済み：<br><strong>' . esc_html( $u->user_email ) . '</strong></p>';
 		echo '<p>マイページ：<a href="' . esc_url( apprex_mypage_url() ) . '" target="_blank">' . esc_html( apprex_mypage_url() ) . '</a></p>';
 	} else {
-		echo '<p>この契約のメール宛に会員ログインを発行し、パスワード設定リンクを送ります。</p>';
+		echo '<p>この契約のメール宛に会員ログインを発行します。初期パスワードを自動発行し、ログイン情報をメール送信＋この画面にも表示します。</p>';
 	}
 	if ( ! $email ) {
 		echo '<p style="color:#b91c1c;">先にメールアドレスを入力・保存してください。</p>';
@@ -252,16 +252,24 @@ add_action( 'admin_post_apprex_issue_member', function () {
 	}
 	update_post_meta( $cid, 'apprex_c_user_id', $user->ID );
 
-	// パスワード設定（リセット）リンクを発行してメール送信。
-	$key   = get_password_reset_key( $user );
-	$reset = is_wp_error( $key ) ? wp_lostpassword_url( apprex_mypage_url() )
-		: network_site_url( 'wp-login.php?action=rp&key=' . rawurlencode( $key ) . '&login=' . rawurlencode( $user->user_login ), 'login' );
+	// 初期パスワードを発行して即ログインできる状態にする（メール不達でも管理者が手渡し可能）。
+	$initial_pass = wp_generate_password( 12, false );
+	wp_set_password( $initial_pass, $user->ID );
 
-	$body  = "{$name} 様\n\nAPPREX 会員マイページのログインを発行しました。\n";
-	$body .= "下記より、ログイン用パスワードを設定してください。\n{$reset}\n\n";
-	$body .= "パスワード設定後、マイページから契約内容・お支払い・アプリ製作ページをご確認いただけます。\n";
-	$body .= 'マイページ：' . apprex_mypage_url() . "\n";
-	$body .= 'ログインID：' . $email . "\n";
+	// 管理画面に1回だけ表示するため一時保存。
+	set_transient(
+		'apprex_member_cred_' . $cid,
+		array( 'email' => $email, 'pass' => $initial_pass, 'login' => $user->user_login ),
+		180
+	);
+
+	// 会員へ案内メール（ログインID＋初期パスワード＋マイページURL）。
+	$mypage = apprex_mypage_url();
+	$body   = "{$name} 様\n\nAPPREX 会員マイページのログインを発行しました。\n下記の情報でログインいただけます。\n\n";
+	$body  .= "マイページ：{$mypage}\n";
+	$body  .= "ログインID（メール）：{$email}\n";
+	$body  .= "初期パスワード：{$initial_pass}\n\n";
+	$body  .= "ログイン後、パスワードの変更をおすすめします（マイページ内の案内、または「パスワードをお忘れの方」より再設定できます）。\n";
 
 	$html = function_exists( 'apprex_render_email' )
 		? apprex_render_email( '【APPREX】会員マイページのご案内', $body, array( 'heading' => '会員マイページのご案内' ) )
@@ -273,7 +281,19 @@ add_action( 'admin_post_apprex_issue_member', function () {
 } );
 
 add_action( 'admin_notices', function () {
-	if ( isset( $_GET['apprex_member'] ) && 'sent' === $_GET['apprex_member'] ) {
-		echo '<div class="notice notice-success is-dismissible"><p>会員ログイン（パスワード設定リンク）を送信しました。</p></div>';
+	if ( ! isset( $_GET['apprex_member'] ) || 'sent' !== $_GET['apprex_member'] ) {
+		return;
 	}
+	$cid  = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
+	$cred = $cid ? get_transient( 'apprex_member_cred_' . $cid ) : false;
+	echo '<div class="notice notice-success is-dismissible"><p><strong>会員ログインを発行しました。</strong>（同じ内容を会員へメール送信済み）</p>';
+	if ( is_array( $cred ) ) {
+		echo '<p style="font-family:monospace;background:#f6f7f7;padding:8px;border:1px solid #dcdcde;border-radius:4px;">'
+			. 'マイページ：<a href="' . esc_url( apprex_mypage_url() ) . '" target="_blank">' . esc_html( apprex_mypage_url() ) . '</a><br>'
+			. 'ログインID：' . esc_html( $cred['email'] ) . '<br>'
+			. '初期パスワード：<strong>' . esc_html( $cred['pass'] ) . '</strong></p>';
+		echo '<p class="description">※ このパスワードはこの画面でのみ表示されます。控えてお客様にお伝えください（メールが届かない場合の手渡し用）。</p>';
+		delete_transient( 'apprex_member_cred_' . $cid );
+	}
+	echo '</div>';
 } );

@@ -77,17 +77,90 @@ add_action( 'add_meta_boxes', function () {
 } );
 
 /**
+ * 反映用：選択した問い合わせ／発注から契約フィールドの初期値を作る。
+ *
+ * @return array meta_key => 値。
+ */
+function apprex_contract_prefill_data() {
+	if ( empty( $_GET['apprex_prefill'] ) ) {
+		return array();
+	}
+	$src = absint( $_GET['apprex_prefill'] );
+	$pt  = get_post_type( $src );
+
+	if ( 'apprex_inquiry' === $pt ) {
+		return array(
+			'apprex_c_name'    => get_post_meta( $src, 'apprex_name', true ),
+			'apprex_c_company' => get_post_meta( $src, 'apprex_company', true ),
+			'apprex_c_email'   => get_post_meta( $src, 'apprex_email', true ),
+		);
+	}
+	if ( 'apprex_order' === $pt ) {
+		$est = (array) get_post_meta( $src, 'apprex_estimate', true );
+		return array(
+			'apprex_c_name'    => get_post_meta( $src, 'apprex_customer_name', true ),
+			'apprex_c_company' => get_post_meta( $src, 'apprex_customer_company', true ),
+			'apprex_c_email'   => get_post_meta( $src, 'apprex_customer_email', true ),
+			'apprex_c_service' => isset( $est['service_label'] ) ? $est['service_label'] : '',
+			'apprex_c_plan'    => isset( $est['plan_label'] ) ? $est['plan_label'] : '',
+			'apprex_c_monthly' => isset( $est['monthly'] ) ? (int) $est['monthly'] : '',
+		);
+	}
+	return array();
+}
+
+/**
  * 契約編集メタボックス。
  *
  * @param WP_Post $post 契約。
  */
 function apprex_contract_box( $post ) {
 	wp_nonce_field( 'apprex_contract_save', 'apprex_contract_nonce' );
-	$g = function ( $k, $d = '' ) use ( $post ) {
+	$prefill = apprex_contract_prefill_data();
+	$g = function ( $k, $d = '' ) use ( $post, $prefill ) {
 		$v = get_post_meta( $post->ID, $k, true );
-		return ( '' === $v || null === $v ) ? $d : $v;
+		if ( '' !== $v && null !== $v ) {
+			return $v;
+		}
+		if ( isset( $prefill[ $k ] ) && '' !== $prefill[ $k ] ) {
+			return $prefill[ $k ]; // 空欄のみ、選んだ顧客情報で補完。
+		}
+		return $d;
 	};
 	$statuses = apprex_contract_statuses();
+
+	// 顧客情報の反映（問い合わせ・発注＝スプレッドと同じデータから）。
+	$leads = get_posts(
+		array(
+			'post_type'      => array( 'apprex_inquiry', 'apprex_order' ),
+			'post_status'    => array( 'publish', 'apprex_new' ),
+			'posts_per_page' => 50,
+		)
+	);
+	if ( $leads ) {
+		$base = remove_query_arg( 'apprex_prefill' );
+		echo '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:10px 12px;margin-bottom:14px;">';
+		echo '<strong>顧客情報を反映</strong>（問い合わせ・発注から引用）<br>';
+		echo '<select id="apprex_prefill_select" style="max-width:60%;margin:6px 6px 6px 0;">';
+		echo '<option value="">— 顧客を選択 —</option>';
+		foreach ( $leads as $lead ) {
+			if ( 'apprex_order' === $lead->post_type ) {
+				$nm = get_post_meta( $lead->ID, 'apprex_customer_name', true );
+				$em = get_post_meta( $lead->ID, 'apprex_customer_email', true );
+				$tag = '発注';
+			} else {
+				$nm = get_post_meta( $lead->ID, 'apprex_name', true );
+				$em = get_post_meta( $lead->ID, 'apprex_email', true );
+				$tag = get_post_meta( $lead->ID, 'apprex_type', true ) ? get_post_meta( $lead->ID, 'apprex_type', true ) : '問い合わせ';
+			}
+			$label = sprintf( '[%s] %s %s', $tag, $nm ? $nm : '(無名)', $em ? '／' . $em : '' );
+			echo '<option value="' . esc_attr( $lead->ID ) . '">' . esc_html( $label ) . '</option>';
+		}
+		echo '</select> ';
+		echo '<button type="button" class="button" onclick="(function(){var v=document.getElementById(\'apprex_prefill_select\').value;if(!v)return;var u=new URL(' . wp_json_encode( $base ) . ',window.location.origin);u.searchParams.set(\'apprex_prefill\',v);window.location.href=u.toString();})()">反映する</button>';
+		echo '<p class="description" style="margin:6px 0 0;">選んだ顧客の氏名・会社・メール（発注ならプラン・月額も）を、<strong>空欄の項目だけ</strong>に差し込みます。確認後に「公開／更新」で保存してください。</p>';
+		echo '</div>';
+	}
 	?>
 	<style>.apprex-c-tbl th{width:140px;text-align:left;vertical-align:top;padding:8px 6px}.apprex-c-tbl td{padding:6px}</style>
 	<table class="apprex-c-tbl">
