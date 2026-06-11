@@ -20,8 +20,26 @@
 		var history = [];
 		var greeted = false;
 		var busy = false;
+		var sessionId = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
 		var cfg = window.APPREX_REST || {};
+
+		function renderSuggestions(list) {
+			if (!list || !list.length) { return; }
+			var wrap = document.createElement('div');
+			wrap.className = 'apprex-chat-suggest';
+			list.forEach(function (s) {
+				var a = document.createElement('a');
+				a.className = 'apprex-chat-suggest__btn';
+				a.href = s.url;
+				a.target = '_blank';
+				a.rel = 'noopener';
+				a.textContent = s.label;
+				wrap.appendChild(a);
+			});
+			log.appendChild(wrap);
+			log.scrollTop = log.scrollHeight;
+		}
 
 		function openWidget() {
 			widget.hidden = false;
@@ -74,7 +92,7 @@
 			fetch(cfg.root + 'chat', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': cfg.nonce },
-				body: JSON.stringify({ messages: history })
+				body: JSON.stringify({ messages: history, session: sessionId })
 			})
 				.then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
 				.then(function (res) {
@@ -82,6 +100,7 @@
 					if (res.ok && res.body && res.body.reply) {
 						addMessage('assistant', res.body.reply);
 						history.push({ role: 'assistant', content: res.body.reply });
+						renderSuggestions(res.body.suggestions);
 					} else {
 						var msg = (res.body && res.body.message) ? res.body.message
 							: 'うまく応答できませんでした。お手数ですがお問い合わせフォームをご利用ください。';

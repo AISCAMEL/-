@@ -147,6 +147,33 @@ PROMPT;
 		$prompt .= "\n\n# 追加ナレッジ（運営者がWP管理画面で登録した最新情報。最優先で参照する）\n" . $knowledge;
 	}
 
+	// よくある質問（学習データとして注入）。
+	if ( function_exists( 'apprex_default_faqs' ) ) {
+		$faqs = apprex_default_faqs();
+		if ( $faqs ) {
+			$prompt .= "\n\n# よくある質問（参考にし、自然な言葉で答える）\n";
+			foreach ( $faqs as $f ) {
+				$prompt .= '- Q: ' . $f['q'] . ' / A: ' . $f['a'] . "\n";
+			}
+		}
+	}
+
+	// 導入事例（業種の例として提示してよい）。
+	$cases = get_posts( array( 'post_type' => 'case', 'posts_per_page' => 12, 'post_status' => 'publish' ) );
+	if ( $cases ) {
+		$prompt .= "\n# 導入事例（業種の例として挙げてよい）\n";
+		foreach ( $cases as $c ) {
+			$prompt .= '- ' . get_the_title( $c ) . "\n";
+		}
+	}
+
+	// 後追い（リード獲得）ルール。
+	$meet    = function_exists( 'apprex_meeting_url' ) ? apprex_meeting_url() : '';
+	$prompt .= "\n# 誘導・後追いのルール\n";
+	$prompt .= "- 料金や導入に前向きな様子が見えたら、具体的に次の行動を提案する：見積もり（" . home_url( '/estimate/' ) . "）、無料体験（" . home_url( '/free-trial/' ) . "）" . ( $meet ? '、Webミーティング予約（' . $meet . '）' : '' ) . "。\n";
+	$prompt .= "- 検討中の相手には、よろしければメールアドレスを伺い、『担当より詳しくご連絡します』と伝える（しつこくしない）。メールをいただけたら、担当からの後追い連絡・フォローメールに繋げる旨を一言添える。\n";
+	$prompt .= "- お問い合わせ窓口：" . home_url( '/contact/' ) . "（電話窓口は無し）。\n";
+
 	return apply_filters( 'apprex_chat_system_prompt', $prompt );
 }
 
@@ -232,7 +259,21 @@ function apprex_rest_chat( WP_REST_Request $request ) {
 		return new WP_Error( 'upstream_error', 'ただいま応答できませんでした。お手数ですがお問い合わせフォームをご利用ください。', array( 'status' => 502 ) );
 	}
 
-	return rest_ensure_response( array( 'reply' => $reply ) );
+	// 学習・後追い：会話ログ保存＋メール検出によるリード獲得。
+	$session = sanitize_text_field( (string) $request->get_param( 'session' ) );
+	$captured = false;
+	if ( function_exists( 'apprex_chat_after_reply' ) ) {
+		$captured = apprex_chat_after_reply( $messages, $reply, $session );
+	}
+
+	$out = array( 'reply' => $reply );
+	if ( function_exists( 'apprex_chat_suggestions' ) ) {
+		$out['suggestions'] = apprex_chat_suggestions();
+	}
+	if ( $captured ) {
+		$out['lead_captured'] = true;
+	}
+	return rest_ensure_response( $out );
 }
 
 /**
