@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { api, yen } from '@/lib/api';
+import Link from 'next/link';
+import { api, yen, downloadUsageCsv } from '@/lib/api';
 import { getSession } from '@/lib/auth';
 import { Card, PageTitle } from '@/components/ui';
 
@@ -65,7 +66,15 @@ export default function UsagePage() {
 
   return (
     <div>
-      <PageTitle title="利用状況・原価" sub={`${data.month} の集計（${data.plan.label}プラン）`} />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <PageTitle title="利用状況・原価" sub={`${data.month} の集計（${data.plan.label}プラン）`} />
+        <div className="flex gap-2">
+          <button onClick={() => downloadUsageCsv()}
+            className="h-10 rounded-lg border px-4 text-sm hover:bg-gray-50">明細CSV</button>
+          <Link href="/usage/invoice"
+            className="flex h-10 items-center rounded-lg bg-brand px-4 text-sm font-medium text-white hover:bg-brand-dark">請求書を表示</Link>
+        </div>
+      </div>
 
       <Card className="mb-6">
         <div className="flex items-end justify-between">

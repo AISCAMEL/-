@@ -63,10 +63,11 @@ function renderBody({ fromNumber, summary, statusLabel }: CallNotificationInput)
   ].join('\n');
 }
 
+export const CATEGORY_LABEL: Record<CallSummary['category'], string> = {
+  reservation: '予約', inquiry: '問い合わせ', pricing: '料金問い合わせ',
+  callback: '折り返し希望', transfer: '担当者希望', complaint: 'クレーム', other: 'その他',
+};
+
 function categoryLabel(c: CallSummary['category']): string {
-  const m: Record<CallSummary['category'], string> = {
-    reservation: '予約', inquiry: '問い合わせ', pricing: '料金問い合わせ',
-    callback: '折り返し希望', transfer: '担当者希望', complaint: 'クレーム', other: 'その他',
-  };
-  return m[c] ?? 'その他';
+  return CATEGORY_LABEL[c] ?? 'その他';
 }

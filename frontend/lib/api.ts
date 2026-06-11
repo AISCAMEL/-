@@ -54,7 +54,29 @@ export const api = {
 
   usage: (month?: string) => request<any>(`/api/usage${month ? `?month=${month}` : ''}`),
   adminUsage: (month?: string) => request<any>(`/api/admin/usage${month ? `?month=${month}` : ''}`),
+  invoice: (month?: string) => request<any>(`/api/usage/invoice${month ? `?month=${month}` : ''}`),
 };
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
+
+/** 通話明細CSVを認証付きで取得し、ダウンロードを発火する。 */
+export async function downloadUsageCsv(month?: string): Promise<void> {
+  const { getSession } = await import('./auth');
+  const s = getSession();
+  const res = await fetch(`${BASE_URL}/api/usage/export${month ? `?month=${month}` : ''}`, {
+    headers: s ? { Authorization: `Bearer ${s.token}`, 'x-role': s.role, ...(s.tenantId ? { 'x-tenant-id': s.tenantId } : {}) } : {},
+  });
+  if (!res.ok) throw new Error(`${res.status}`);
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `usage_${month ?? 'current'}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
 
 export function yen(n?: number | null): string {
   if (n === null || n === undefined) return '—';

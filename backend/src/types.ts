@@ -59,6 +59,10 @@ export interface TenantContext {
   humanTransferEnabled: boolean;
   transferPhoneNumber: string | null;
   notificationEmail: string | null;
+  slackWebhookUrl: string | null;
+  notifyOnCallEnd: boolean;
+  notifyOnCallback: boolean;
+  notifyOnTransfer: boolean;
   fallbackMessage: string | null;
   faqs: Faq[];
 }

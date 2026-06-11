@@ -352,6 +352,106 @@ export async function getAdminUsageSummary(month?: string) {
   return { month: key, tenants, totals };
 }
 
+// ---------------- 請求書・明細 ----------------
+const TAX_RATE = 0.1; // 消費税10%
+
+/** 顧客向け請求書データ（charges のみ。原価・粗利は含めない）。 */
+export async function getInvoice(tenantId: string, month?: string) {
+  const summary = await getUsageSummary(tenantId, month);
+  const tenant = await getTenantBilling(tenantId);
+  const p = summary.plan;
+
+  const lines: { desc: string; qty: number; unit: string; unitPrice: number; amount: number }[] = [
+    { desc: `基本料金（${p.label}プラン / 月${p.allowance_min}分まで）`, qty: 1, unit: '式', unitPrice: p.base_jpy, amount: p.base_jpy },
+  ];
+  if (summary.overage_minutes > 0) {
+    const amt = summary.overage_minutes * p.overage_jpy_per_min;
+    lines.push({ desc: '超過通話料', qty: summary.overage_minutes, unit: '分', unitPrice: p.overage_jpy_per_min, amount: amt });
+  }
+  const subtotal = lines.reduce((s, l) => s + l.amount, 0);
+  const tax = Math.round(subtotal * TAX_RATE);
+  const total = subtotal + tax;
+
+  return {
+    invoice_no: `INV-${summary.month.replace('-', '')}-${tenantId.slice(0, 8)}`,
+    issued_date: new Date().toISOString().slice(0, 10),
+    month: summary.month,
+    tenant,
+    plan: p,
+    usage: { calls: summary.calls, billable_minutes: summary.billable_minutes, overage_minutes: summary.overage_minutes },
+    lines,
+    subtotal,
+    tax_rate: TAX_RATE,
+    tax,
+    total,
+    currency: 'JPY',
+  };
+}
+
+async function getTenantBilling(tenantId: string) {
+  if (!dbEnabled) {
+    return {
+      company_name: demoTenant.company_name,
+      billing_email: 'owner@example.com',
+      address: '東京都〇〇区サンプル1-2-3',
+    };
+  }
+  const [t] = await query<any>(`select company_name, billing_email, address from tenants where id = $1`, [tenantId]);
+  return t ?? { company_name: '—', billing_email: null, address: null };
+}
+
+/** 通話明細（CSV用の行データ）。 */
+export async function getCallLineItems(tenantId: string, month?: string) {
+  const { from, to } = monthRange(month);
+  if (!dbEnabled) {
+    return demoCalls
+      .filter((c) => {
+        const t = new Date(c.started_at);
+        return (c.tenant_id === tenantId || tenantId === demoTenant.id) && t >= from && t < to;
+      })
+      .sort((a, b) => a.started_at.localeCompare(b.started_at))
+      .map((c) => lineItem(c.started_at, c.from_number, c.customer_name, c.company_name, c.category, c.status, c.duration_sec));
+  }
+  const rows = await query<any>(
+    `select started_at, from_number, customer_name, company_name, category, status, duration_sec
+       from calls where tenant_id = $1 and started_at >= $2 and started_at < $3 order by started_at`,
+    [tenantId, from.toISOString(), to.toISOString()],
+  );
+  return rows.map((c) => lineItem(c.started_at, c.from_number, c.customer_name, c.company_name, c.category, c.status, c.duration_sec));
+}
+
+function lineItem(
+  startedAt: string, from: string | null, customer: string | null, company: string | null,
+  category: string | null, status: string, durationSec: number | null,
+) {
+  const min = billableMinutes(durationSec);
+  return {
+    started_at: startedAt,
+    from_number: from ?? '',
+    customer_name: customer ?? '',
+    company_name: company ?? '',
+    category: category ?? '',
+    status,
+    duration_sec: durationSec ?? 0,
+    billable_minutes: min,
+    est_cost_jpy: aiCostJpy(min),
+  };
+}
+
+/** 明細をCSV文字列に整形（Excel向けにBOM付与は呼び出し側で）。 */
+export function lineItemsToCsv(items: Awaited<ReturnType<typeof getCallLineItems>>): string {
+  const header = ['通話日時', '発信者番号', '顧客名', '会社名', '要件', 'ステータス', '通話秒数', '課金分', '推定原価(円)'];
+  const rows = items.map((i) => [
+    i.started_at, i.from_number, i.customer_name, i.company_name, i.category, i.status,
+    String(i.duration_sec), String(i.billable_minutes), String(i.est_cost_jpy),
+  ]);
+  return [header, ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n');
+}
+
+function csvCell(v: string): string {
+  return /[",\r\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+}
+
 // ---------------- Super Admin ----------------
 export async function listTenants() {
   if (!dbEnabled) return [demoTenant];

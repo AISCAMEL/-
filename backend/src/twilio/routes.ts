@@ -5,6 +5,7 @@ import { getSession, deleteSession } from './sessionStore.js';
 import { resolveTenantByPhone, finalizeCall, recordNotification, recordUsage } from '../db/index.js';
 import { summarizeCall } from '../ai/summarize.js';
 import { sendCallNotification } from '../notify/email.js';
+import { sendSlackNotification } from '../notify/slack.js';
 import { billableMinutes, aiCostJpy, transferAddCostJpy } from '../billing/rates.js';
 
 // TwiML 生成（ConversationRelay へ接続）。
@@ -107,26 +108,35 @@ async function finalizeAndNotify(app: FastifyInstance, callSid: string): Promise
     }
   }
 
-  // 通知先メール（テナント設定）。着信先番号からテナント設定を引く。
+  // テナント設定（着信先番号から解決）。通知の宛先・ON/OFFフラグを参照。
   const tenant = await resolveTenantByPhone(session.to).catch(() => null);
-  const dest = tenant?.notificationEmail ?? 'owner@example.com';
 
-  const result = await sendCallNotification(dest, {
-    fromNumber: session.from,
-    summary,
-    statusLabel,
-  });
+  // 通知すべきイベントか判定（通話終了 / 折り返し / 転送）。
+  const shouldNotify = !tenant
+    || (tenant.notifyOnCallEnd)
+    || (tenant.notifyOnCallback && summary.callback_requested)
+    || (tenant.notifyOnTransfer && Boolean(last?.should_transfer));
 
-  await recordNotification({
-    tenantId: session.tenantId,
-    callId: session.callId,
-    type: 'email',
-    destination: dest,
-    status: result.ok ? 'sent' : 'failed',
-    subject: '【AIオペレーター24】新しい電話受付がありました',
-    payload: summary,
-    error: result.error ?? null,
-  }).catch((err) => app.log.error({ err }, 'recordNotification failed'));
+  if (shouldNotify) {
+    // --- メール通知 ---
+    const dest = tenant?.notificationEmail ?? 'owner@example.com';
+    const mail = await sendCallNotification(dest, { fromNumber: session.from, summary, statusLabel });
+    await recordNotification({
+      tenantId: session.tenantId, callId: session.callId, type: 'email', destination: dest,
+      status: mail.ok ? 'sent' : 'failed',
+      subject: '【AIオペレーター24】新しい電話受付がありました',
+      payload: summary, error: mail.error ?? null,
+    }).catch((err) => app.log.error({ err }, 'recordNotification(email) failed'));
+
+    // --- Slack通知（Webhook設定時のみ） ---
+    if (tenant?.slackWebhookUrl) {
+      const slack = await sendSlackNotification(tenant.slackWebhookUrl, { fromNumber: session.from, summary, statusLabel });
+      await recordNotification({
+        tenantId: session.tenantId, callId: session.callId, type: 'slack', destination: 'slack',
+        status: slack.ok ? 'sent' : 'failed', subject: null, payload: summary, error: slack.error ?? null,
+      }).catch((err) => app.log.error({ err }, 'recordNotification(slack) failed'));
+    }
+  }
 
   deleteSession(callSid);
 }

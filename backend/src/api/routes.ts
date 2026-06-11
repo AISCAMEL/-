@@ -163,6 +163,27 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     return q.getUsageSummary(p.tenantId, month);
   });
 
+  // 請求書データ（JSON）。フロントで印刷/PDF化する。
+  app.get('/api/usage/invoice', { preHandler: authenticate }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const { month } = req.query as Record<string, string>;
+    return q.getInvoice(p.tenantId, month);
+  });
+
+  // 通話明細CSV（Excel向けにUTF-8 BOM付き）。
+  app.get('/api/usage/export', { preHandler: authenticate }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const { month } = req.query as Record<string, string>;
+    const items = await q.getCallLineItems(p.tenantId, month);
+    const csv = '﻿' + q.lineItemsToCsv(items);
+    const fname = `usage_${month ?? 'current'}.csv`;
+    reply.header('Content-Type', 'text/csv; charset=utf-8');
+    reply.header('Content-Disposition', `attachment; filename="${fname}"`);
+    return reply.send(csv);
+  });
+
   // ---- super admin ----
   app.get('/api/admin/tenants', { preHandler: requireSuperAdmin }, async () => q.listTenants());
   app.post('/api/admin/tenants', { preHandler: requireSuperAdmin }, async (req, reply) => {

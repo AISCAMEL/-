@@ -1,0 +1,54 @@
+# Render Blueprint — AIオペレーター24 バックエンド
+# Render ダッシュボード → New → Blueprint で本ファイルを指定するとデプロイされる。
+# シークレット（sync:false）はデプロイ後にダッシュボードで設定する。
+services:
+  - type: web
+    name: ai-operator24-backend
+    runtime: node
+    plan: starter
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: PORT
+        value: "8080"
+      # 公開URL（デプロイ後の onrender.com ホストに合わせて設定）
+      - key: PUBLIC_API_BASE_URL
+        sync: false
+      - key: PUBLIC_WS_BASE_URL
+        sync: false
+      # 管理画面フロント（Vercel）のオリジンに限定
+      - key: CORS_ORIGIN
+        sync: false
+      # Twilio
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_VALIDATE_SIGNATURE
+        value: "true"
+      # OpenAI
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      # DB（Supabase等）
+      - key: DATABASE_URL
+        sync: false
+      # 通知
+      - key: RESEND_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      # 認証（本番）
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: AUTH_DEV_MODE
+        value: "false"
+      # 原価レート（為替など改定時に変更）
+      - key: USD_JPY
+        value: "155"

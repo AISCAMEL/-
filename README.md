@@ -31,6 +31,7 @@ LLM / FAQ / DB / 通知 / 管理画面
 │   ├── api.md                           # API / Webhook 仕様
 │   ├── twilio-setup.md                  # 実機通話テスト手順・疎通チェックリスト
 │   ├── cost-analysis.md                 # 経費・原価分析（プラン別採算）
+│   ├── deploy.md                        # 本番デプロイ手順（Render/Vercel/Supabase）
 │   └── 開発仕様書.md                    # （別案件 CarLoan_System・参考）
 ├── db/
 │   ├── schema.sql                       # PostgreSQL / Supabase スキーマ（ENUM・テーブル・index・RLS）

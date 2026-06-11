@@ -21,7 +21,8 @@ export async function resolveTenantByPhone(toNumber: string): Promise<TenantCont
     `select t.id as tenant_id, t.company_name, t.industry,
             s.greeting_message, s.ai_tone, s.business_hours, s.holiday_settings,
             s.human_transfer_enabled, s.transfer_phone_number, s.fallback_message,
-            s.notification_email
+            s.notification_email, s.slack_webhook_url,
+            s.notify_on_call_end, s.notify_on_callback, s.notify_on_transfer
        from phone_numbers p
        join tenants t        on t.id = p.tenant_id
        left join tenant_settings s on s.tenant_id = t.id
@@ -47,6 +48,10 @@ export async function resolveTenantByPhone(toNumber: string): Promise<TenantCont
     humanTransferEnabled: r.human_transfer_enabled ?? true,
     transferPhoneNumber: r.transfer_phone_number,
     notificationEmail: r.notification_email,
+    slackWebhookUrl: r.slack_webhook_url,
+    notifyOnCallEnd: r.notify_on_call_end ?? true,
+    notifyOnCallback: r.notify_on_callback ?? true,
+    notifyOnTransfer: r.notify_on_transfer ?? true,
     fallbackMessage: r.fallback_message,
     faqs,
   };

@@ -19,7 +19,9 @@ function demoContext(): TenantContext {
     greetingMessage: config.defaultGreeting, aiTone: 'polite',
     businessHours: {}, holidaySettings: {},
     humanTransferEnabled: true, transferPhoneNumber: '+810000000000',
-    notificationEmail: null, fallbackMessage: null,
+    notificationEmail: null, slackWebhookUrl: null,
+    notifyOnCallEnd: true, notifyOnCallback: true, notifyOnTransfer: true,
+    fallbackMessage: null,
     faqs: [
       { question: '営業時間を教えてください', answer: '営業時間は平日10時から18時までです。土日祝日はお休みです。', category: '営業案内' },
     ],
