@@ -223,12 +223,22 @@ function apprex_ai_blog_page() {
 					<td><textarea name="apprex_autopost_topics" rows="8" class="large-text" placeholder="ノーコードアプリ開発のメリット&#10;飲食店アプリで再来店を増やす方法&#10;補助金を活用したアプリ導入&#10;アプリとホームページの使い分け"><?php echo esc_textarea( get_option( 'apprex_autopost_topics', apprex_default_autopost_topics() ) ); ?></textarea>
 					<p class="description"><?php esc_html_e( '上から順に1記事ずつ自動生成します（一巡したら先頭へ戻ります）。', 'apprex' ); ?></p></td></tr>
 				<tr><th><?php esc_html_e( '画像モデル', 'apprex' ); ?></th>
-					<td><input type="text" name="apprex_image_model" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_image_model', '' ) ); ?>" placeholder="google/gemini-2.5-flash-image-preview">
-					<p class="description"><?php esc_html_e( '未入力時は Gemini Image（通称 Nano Banana）。OpenRouterの画像対応モデルIDを指定できます。', 'apprex' ); ?></p></td></tr>
+					<td><input type="text" name="apprex_image_model" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_image_model', '' ) ); ?>" placeholder="google/gemini-2.5-flash-image">
+					<p class="description"><?php esc_html_e( '未入力時は Gemini Image（通称 Nano Banana / google/gemini-2.5-flash-image）。OpenRouterの画像対応モデルIDを指定できます。', 'apprex' ); ?></p></td></tr>
 			</table>
 			<?php submit_button( '保存', 'secondary' ); ?>
 		</form>
 		<p class="description"><?php esc_html_e( '自動投稿は「投稿時刻」を基準に1日1回判定され、頻度（毎日/週1/隔週）に達していれば公開します。WordPress標準のcronはアクセス時に動くため、指定時刻ちょうどに出すにはサーバーのcronで wp-cron.php を定期実行する設定（wpXの自動実行など）を推奨します。', 'apprex' ); ?></p>
+
+		<hr>
+		<h2><?php esc_html_e( '画像生成テスト（診断）', 'apprex' ); ?></h2>
+		<p class="description"><?php esc_html_e( 'アイキャッチが生成されない場合、ここでテスト実行するとエラー内容（モデル未対応・権限・残高不足など）が表示されます。生成できた画像はメディアに保存されます。', 'apprex' ); ?></p>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<input type="hidden" name="action" value="apprex_test_image">
+			<?php wp_nonce_field( 'apprex_test_image' ); ?>
+			<?php submit_button( '画像生成をテストする', 'secondary', 'submit', false, apprex_chat_enabled() ? array() : array( 'disabled' => 'disabled' ) ); ?>
+			<span style="margin-left:8px;color:#666;"><?php echo esc_html( 'モデル：' . apprex_image_model() ); ?></span>
+		</form>
 	</div>
 	<?php
 }
@@ -272,6 +282,39 @@ add_action( 'admin_post_apprex_generate_post', function () {
 			esc_url( $view )
 		)
 	);
+} );
+
+/**
+ * 画像生成テスト（診断）のハンドラ。
+ */
+add_action( 'admin_post_apprex_test_image', function () {
+	if ( ! current_user_can( 'edit_posts' ) || ! check_admin_referer( 'apprex_test_image' ) ) {
+		wp_die( 'forbidden' );
+	}
+	$uid = get_current_user_id();
+	if ( ! function_exists( 'apprex_openrouter_image' ) ) {
+		set_transient( 'apprex_ai_blog_notice_' . $uid, array( 'type' => 'error', 'msg' => '画像生成機能が無効です。' ), 60 );
+		wp_safe_redirect( admin_url( 'edit.php?page=apprex-ai-blog' ) );
+		exit;
+	}
+
+	$img = apprex_openrouter_image( 'APPREXのブログ用テスト画像。明るいブルー基調、クリーンなビジネス向け、テキストなし、16:9。' );
+	if ( is_wp_error( $img ) ) {
+		$msg = '画像生成テストに失敗：' . esc_html( $img->get_error_message() );
+		$type = 'error';
+	} else {
+		$att = apprex_save_generated_image( $img, 'apprex-test', 0 );
+		if ( is_wp_error( $att ) ) {
+			$msg  = '画像は生成できましたが保存に失敗：' . esc_html( $att->get_error_message() );
+			$type = 'error';
+		} else {
+			$msg  = sprintf( '画像生成テスト成功。<a href="%s" target="_blank">生成画像を見る</a>（モデル：%s）', esc_url( wp_get_attachment_url( $att ) ), esc_html( apprex_image_model() ) );
+			$type = 'success';
+		}
+	}
+	set_transient( 'apprex_ai_blog_notice_' . $uid, array( 'type' => $type, 'msg' => $msg ), 60 );
+	wp_safe_redirect( admin_url( 'edit.php?page=apprex-ai-blog' ) );
+	exit;
 } );
 
 /* -------------------------------------------------------------------------

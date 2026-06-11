@@ -115,6 +115,109 @@ add_action( 'admin_post_apprex_save_dash', function () {
 } );
 
 /* -------------------------------------------------------------------------
+ * 延滞リスト（入金未確認）
+ * ---------------------------------------------------------------------- */
+
+/**
+ * 延滞している契約の一覧（契約中で、最終入金確認 または 契約開始から38日超）。
+ *
+ * @return array[] 各要素 { id, name, company, email, monthly, last_paid, days, method, payment_day }。
+ */
+function apprex_overdue_contracts() {
+	if ( ! function_exists( 'apprex_get_contracts' ) ) {
+		return array();
+	}
+	$now  = current_time( 'timestamp' );
+	$list = array();
+	foreach ( apprex_get_contracts( 'active' ) as $id ) {
+		$last  = (string) get_post_meta( $id, 'apprex_c_last_paid', true );
+		$lts   = $last ? strtotime( $last ) : 0;
+		$start = (string) get_post_meta( $id, 'apprex_c_start', true );
+		$ref   = $lts ? $lts : ( $start ? strtotime( $start ) : 0 );
+		if ( ! $ref ) {
+			continue; // 判定の基準日が無い。
+		}
+		$days = (int) floor( ( $now - $ref ) / DAY_IN_SECONDS );
+		if ( $days <= 38 ) {
+			continue;
+		}
+		$list[] = array(
+			'id'          => $id,
+			'name'        => (string) get_post_meta( $id, 'apprex_c_name', true ),
+			'company'     => (string) get_post_meta( $id, 'apprex_c_company', true ),
+			'email'       => (string) get_post_meta( $id, 'apprex_c_email', true ),
+			'monthly'     => (int) get_post_meta( $id, 'apprex_c_monthly', true ),
+			'last_paid'   => $last,
+			'days'        => $days,
+			'method'      => 'invoice' === get_post_meta( $id, 'apprex_c_payment_method', true ) ? '請求書' : 'Square',
+			'payment_day' => (int) get_post_meta( $id, 'apprex_c_payment_day', true ),
+		);
+	}
+	usort(
+		$list,
+		function ( $a, $b ) {
+			return $b['days'] - $a['days'];
+		}
+	);
+	return $list;
+}
+
+/** 延滞リストを Slack 用テキストに整形。 */
+function apprex_overdue_slack_text( $list ) {
+	$lines = array( ':rotating_light: *延滞リスト（入金未確認）* ' . count( $list ) . '件' );
+	foreach ( array_slice( $list, 0, 20 ) as $r ) {
+		$lines[] = sprintf(
+			'• %s%s ／ ¥%s/月 ／ %d日経過 ／ 最終入金 %s ／ %s',
+			$r['name'],
+			$r['company'] ? '（' . $r['company'] . '）' : '',
+			number_format( $r['monthly'] ),
+			$r['days'],
+			$r['last_paid'] ? $r['last_paid'] : '記録なし',
+			$r['method']
+		);
+	}
+	if ( count( $list ) > 20 ) {
+		$lines[] = '…ほか ' . ( count( $list ) - 20 ) . '件';
+	}
+	$lines[] = admin_url( 'admin.php?page=apprex-dashboard' );
+	return implode( "\n", $lines );
+}
+
+/** 1日1回、延滞リストを Slack へ要約通知（既存の契約cronに相乗り）。 */
+add_action( 'apprex_contract_cron', 'apprex_overdue_daily_summary' );
+function apprex_overdue_daily_summary() {
+	if ( ! get_option( 'apprex_overdue_slack_daily', 1 ) ) {
+		return;
+	}
+	$today = wp_date( 'Y-m-d' );
+	if ( get_option( 'apprex_overdue_summary_date' ) === $today ) {
+		return; // 本日分は送信済み。
+	}
+	update_option( 'apprex_overdue_summary_date', $today );
+	$list = apprex_overdue_contracts();
+	if ( empty( $list ) || ! function_exists( 'apprex_slack_notify' ) ) {
+		return;
+	}
+	apprex_slack_notify( apprex_overdue_slack_text( $list ) );
+}
+
+/** ダッシュボードから手動で Slack に延滞リストを送信。 */
+add_action( 'admin_post_apprex_send_overdue_slack', function () {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( '権限がありません。' );
+	}
+	check_admin_referer( 'apprex_overdue_slack' );
+	$list = apprex_overdue_contracts();
+	$sent = 0;
+	if ( function_exists( 'apprex_slack_notify' ) ) {
+		$text = empty( $list ) ? ':white_check_mark: 現在、延滞はありません。' : apprex_overdue_slack_text( $list );
+		$sent = apprex_slack_notify( $text ) ? 1 : 0;
+	}
+	wp_safe_redirect( admin_url( 'admin.php?page=apprex-dashboard&overdue_slack=' . $sent ) );
+	exit;
+} );
+
+/* -------------------------------------------------------------------------
  * CSV エクスポート
  * ---------------------------------------------------------------------- */
 add_action( 'admin_post_apprex_dash_export', function () {
@@ -323,6 +426,43 @@ function apprex_dashboard_page() {
 			?>
 			</tbody>
 		</table>
+
+		<?php $overdue = apprex_overdue_contracts(); ?>
+		<h2 style="margin-top:24px;">延滞リスト（入金未確認）
+			<span style="font-size:14px;font-weight:normal;color:<?php echo $overdue ? '#dc2626' : '#16a34a'; ?>;">
+				<?php echo $overdue ? esc_html( count( $overdue ) . '件' ) : '0件（問題なし）'; ?>
+			</span>
+		</h2>
+		<?php if ( isset( $_GET['overdue_slack'] ) ) : ?>
+			<div class="notice notice-<?php echo '1' === $_GET['overdue_slack'] ? 'success' : 'warning'; ?> is-dismissible" style="margin:8px 0;"><p><?php echo '1' === $_GET['overdue_slack'] ? 'Slackに延滞リストを送信しました。' : 'Slack Webhookが未設定です（連携 > Slack）。'; ?></p></div>
+		<?php endif; ?>
+		<p style="color:#6b7280;">最終入金確認（消し込み）または契約開始から <strong>38日</strong> を超えても入金確認が無い契約です。入金を確認したら契約編集の「最終入金確認日」を更新してください。</p>
+		<?php if ( $overdue ) : ?>
+			<table class="widefat striped" style="max-width:920px;">
+				<thead><tr><th>顧客</th><th>会社</th><th style="text-align:right;">月額</th><th style="text-align:right;">経過日数</th><th>最終入金</th><th>支払方法</th><th></th></tr></thead>
+				<tbody>
+				<?php foreach ( $overdue as $r ) : ?>
+					<tr>
+						<td><?php echo esc_html( $r['name'] ); ?></td>
+						<td><?php echo esc_html( $r['company'] ); ?></td>
+						<td style="text-align:right;"><?php echo esc_html( '¥' . number_format( $r['monthly'] ) ); ?></td>
+						<td style="text-align:right;color:<?php echo $r['days'] > 60 ? '#dc2626' : '#d97706'; ?>;font-weight:600;"><?php echo (int) $r['days']; ?>日</td>
+						<td><?php echo esc_html( $r['last_paid'] ? $r['last_paid'] : '記録なし' ); ?></td>
+						<td><?php echo esc_html( $r['method'] ); ?></td>
+						<td><a href="<?php echo esc_url( admin_url( 'post.php?post=' . $r['id'] . '&action=edit' ) ); ?>">消し込み</a></td>
+					</tr>
+				<?php endforeach; ?>
+				</tbody>
+			</table>
+		<?php else : ?>
+			<p style="color:#16a34a;">現在、延滞はありません。</p>
+		<?php endif; ?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top:8px;">
+			<input type="hidden" name="action" value="apprex_send_overdue_slack">
+			<?php wp_nonce_field( 'apprex_overdue_slack' ); ?>
+			<button type="submit" class="button">Slackに延滞リストを送信</button>
+			<span style="margin-left:8px;color:#9ca3af;font-size:13px;">毎日自動でもSlackに要約通知します（延滞がある日のみ）。</span>
+		</form>
 
 		<h2>推移（直近6ヶ月）</h2>
 		<?php

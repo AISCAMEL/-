@@ -364,7 +364,52 @@ function apprex_chat_settings_page() {
  */
 function apprex_image_model() {
 	$opt = get_option( 'apprex_image_model', '' );
-	return $opt ? (string) $opt : 'google/gemini-2.5-flash-image-preview';
+	return $opt ? (string) $opt : 'google/gemini-2.5-flash-image';
+}
+
+/**
+ * OpenRouter のさまざまな応答形から画像URL（data: または http）を取り出す。
+ *
+ * @param array $body デコード済みレスポンス。
+ * @return string URL（無ければ空文字）。
+ */
+function apprex_extract_image_url( $body ) {
+	if ( ! is_array( $body ) ) {
+		return '';
+	}
+	$msg = isset( $body['choices'][0]['message'] ) ? $body['choices'][0]['message'] : array();
+
+	// 1) message.images[].image_url.url（OpenRouter 標準）。
+	if ( ! empty( $msg['images'] ) && is_array( $msg['images'] ) ) {
+		foreach ( $msg['images'] as $im ) {
+			if ( ! empty( $im['image_url']['url'] ) ) {
+				return (string) $im['image_url']['url'];
+			}
+			if ( ! empty( $im['url'] ) ) {
+				return (string) $im['url'];
+			}
+		}
+	}
+	// 2) message.content が配列（type=image_url / image）の場合。
+	if ( ! empty( $msg['content'] ) && is_array( $msg['content'] ) ) {
+		foreach ( $msg['content'] as $part ) {
+			if ( ! empty( $part['image_url']['url'] ) ) {
+				return (string) $part['image_url']['url'];
+			}
+			if ( isset( $part['type'] ) && 'image' === $part['type'] && ! empty( $part['source']['data'] ) ) {
+				$mime = isset( $part['source']['media_type'] ) ? $part['source']['media_type'] : 'image/png';
+				return 'data:' . $mime . ';base64,' . $part['source']['data'];
+			}
+		}
+	}
+	// 3) 画像生成API互換（data[0].b64_json / url）。
+	if ( ! empty( $body['data'][0]['b64_json'] ) ) {
+		return 'data:image/png;base64,' . $body['data'][0]['b64_json'];
+	}
+	if ( ! empty( $body['data'][0]['url'] ) ) {
+		return (string) $body['data'][0]['url'];
+	}
+	return '';
 }
 
 /**
@@ -398,18 +443,32 @@ function apprex_openrouter_image( $prompt, $args = array() ) {
 		)
 	);
 	if ( is_wp_error( $resp ) ) {
-		return new WP_Error( 'upstream_error', '画像生成サービスに接続できませんでした。' );
+		return new WP_Error( 'upstream_error', '画像生成サービスに接続できませんでした：' . $resp->get_error_message() );
 	}
+	$code = (int) wp_remote_retrieve_response_code( $resp );
 	$body = json_decode( wp_remote_retrieve_body( $resp ), true );
-	$url  = '';
-	// OpenRouter は message.images[].image_url.url に data URL を返す。
-	if ( ! empty( $body['choices'][0]['message']['images'][0]['image_url']['url'] ) ) {
-		$url = $body['choices'][0]['message']['images'][0]['image_url']['url'];
-	} elseif ( ! empty( $body['data'][0]['b64_json'] ) ) {
-		$url = 'data:image/png;base64,' . $body['data'][0]['b64_json'];
+
+	// API がエラーを返したら、その内容をそのまま伝える（診断しやすく）。
+	if ( 200 !== $code || isset( $body['error'] ) ) {
+		$detail = isset( $body['error']['message'] ) ? $body['error']['message'] : ( 'HTTP ' . $code );
+		return new WP_Error( 'upstream_error', 'モデル「' . $payload['model'] . '」でエラー：' . $detail );
 	}
-	if ( ! $url || 0 !== strpos( $url, 'data:' ) ) {
-		return new WP_Error( 'no_image', '画像を取得できませんでした（モデルが画像出力に対応しているかご確認ください）。' );
+
+	$url = apprex_extract_image_url( $body );
+	if ( '' === $url ) {
+		// テキストだけ返ってきた等：本文の冒頭を手掛かりに返す。
+		$txt = isset( $body['choices'][0]['message']['content'] ) && is_string( $body['choices'][0]['message']['content'] )
+			? mb_substr( trim( $body['choices'][0]['message']['content'] ), 0, 120 )
+			: '';
+		return new WP_Error( 'no_image', 'モデル「' . $payload['model'] . '」が画像を返しませんでした（画像出力対応モデルかご確認ください）。' . ( $txt ? ' 応答: ' . $txt : '' ) );
+	}
+	if ( 0 !== strpos( $url, 'data:' ) ) {
+		// http(s) URL で返るモデルにも対応：取得して data 化。
+		$bin = wp_remote_retrieve_body( wp_remote_get( $url, array( 'timeout' => 60 ) ) );
+		if ( '' === $bin ) {
+			return new WP_Error( 'no_image', '画像URLを取得できませんでした。' );
+		}
+		return array( 'mime' => 'image/png', 'data' => $bin );
 	}
 	if ( ! preg_match( '#^data:(image/[a-zA-Z0-9.+-]+);base64,(.+)$#s', $url, $m ) ) {
 		return new WP_Error( 'bad_image', '画像データの形式が不正です。' );
