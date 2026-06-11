@@ -52,6 +52,14 @@ const HEADERS = [
   '内容・ご要望', 'ご希望日時', '流入元', '管理画面URL', 'サイト'
 ];
 
+/** 契約台帳のタブ名・見出し。 */
+const CONTRACT_SHEET_NAME = '契約';
+const CONTRACT_HEADERS = [
+  '更新日時', '契約ID', '顧客名', '会社名', 'メール', 'サービス', 'プラン',
+  '月額(円)', '契約開始日', '契約年数', '次回更新日', '自動継続', 'ステータス',
+  '管理画面URL', 'サイト'
+];
+
 /* ============================================================
  * エントリポイント
  * ========================================================== */
@@ -91,6 +99,9 @@ function doPost(e) {
       case 'order':
         logToSheet_(body, d);   // どの種別でも必ずスプレッドシートに1行記録
         notifyTeam_(body, d);   // Asana タスク + Slack 通知
+        break;
+      case 'contract':
+        logContractToSheet_(body, d);   // 契約タブに1行記録（顧客・プラン・契約期限など）
         break;
       case 'post_published':
         handlePost_(d);
@@ -162,6 +173,77 @@ function logToSheet_(body, d) {
   });
 
   sh.appendRow(row);
+}
+
+/* ============================================================
+ * 1.5) 契約 → スプレッドシート「契約」タブ（見出し名で配置）
+ * ========================================================== */
+function logContractToSheet_(body, d) {
+  if (!CONFIG.SHEET_ID || String(CONFIG.SHEET_ID).indexOf('スプレッド') === 0) {
+    Logger.log('logContractToSheet_ skipped: SHEET_ID 未設定');
+    return;
+  }
+
+  const ss = SpreadsheetApp.openById(CONFIG.SHEET_ID);
+  let sh = ss.getSheetByName(CONTRACT_SHEET_NAME);
+  if (!sh) { sh = ss.insertSheet(CONTRACT_SHEET_NAME); }
+
+  if (sh.getLastRow() === 0) {
+    sh.appendRow(CONTRACT_HEADERS);
+    sh.getRange(1, 1, 1, CONTRACT_HEADERS.length).setFontWeight('bold').setBackground('#ecfdf5');
+    sh.setFrozenRows(1);
+  }
+
+  const record = {
+    '更新日時'   : body.time || formatNow_(),
+    '契約ID'     : d.id || '',
+    '顧客名'     : d.name || '',
+    '会社名'     : d.company || '',
+    'メール'     : d.email || '',
+    'サービス'   : d.service || '',
+    'プラン'     : d.plan || '',
+    '月額(円)'   : num_(d.monthly),
+    '契約開始日' : d.start_date || '',
+    '契約年数'   : d.term_years || '',
+    '次回更新日' : d.renewal || '',
+    '自動継続'   : d.auto_renew || '',
+    'ステータス' : d.status || '',
+    '管理画面URL': d.admin_url || '',
+    'サイト'     : body.site || ''
+  };
+
+  const lastCol   = Math.max(sh.getLastColumn(), CONTRACT_HEADERS.length);
+  const headerRow = sh.getRange(1, 1, 1, lastCol).getValues()[0];
+  const colOf = {};
+  headerRow.forEach(function (h, i) {
+    const name = String(h).trim();
+    if (name) { colOf[name] = i; }
+  });
+
+  // 契約IDが既にあれば上書き（最新状態に保つ）、無ければ追記。
+  let targetRow = -1;
+  const idCol = colOf['契約ID'];
+  if (idCol !== undefined && d.id) {
+    const last = sh.getLastRow();
+    if (last >= 2) {
+      const ids = sh.getRange(2, idCol + 1, last - 1, 1).getValues();
+      for (let r = 0; r < ids.length; r++) {
+        if (String(ids[r][0]) === String(d.id)) { targetRow = r + 2; break; }
+      }
+    }
+  }
+
+  const row = new Array(lastCol).fill('');
+  Object.keys(record).forEach(function (name) {
+    let idx = (name in colOf) ? colOf[name] : CONTRACT_HEADERS.indexOf(name);
+    if (idx >= 0 && idx < row.length) { row[idx] = record[name]; }
+  });
+
+  if (targetRow > 0) {
+    sh.getRange(targetRow, 1, 1, row.length).setValues([row]);
+  } else {
+    sh.appendRow(row);
+  }
 }
 
 /* ============================================================
