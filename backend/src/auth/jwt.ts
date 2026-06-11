@@ -43,6 +43,20 @@ export function requireSuperAdmin(req: FastifyRequest, reply: FastifyReply, done
   });
 }
 
+/** 指定ロールのみ許可するガードを生成（ユーザー管理など）。 */
+export function requireRole(roles: AuthPrincipal['role'][]) {
+  return (req: FastifyRequest, reply: FastifyReply, done: (err?: Error) => void): void => {
+    authenticate(req, reply, (err) => {
+      if (err) return done(err);
+      if (!req.principal || !roles.includes(req.principal.role)) {
+        reply.code(403).send({ error: 'forbidden' });
+        return;
+      }
+      done();
+    });
+  };
+}
+
 function resolvePrincipal(req: FastifyRequest): AuthPrincipal | null {
   const header = req.headers.authorization;
   const token = header?.startsWith('Bearer ') ? header.slice(7) : null;

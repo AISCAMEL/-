@@ -128,6 +128,16 @@ export const demoFaqs: DemoFaq[] = [
   { id: 'faq-3', tenant_id: TENANT, question: 'カットの料金はいくらですか', answer: 'カットは4,400円からとなっております。詳細は担当者よりご案内いたします。', category: '料金', keywords: ['料金', 'カット'], is_active: true, created_at: iso(-1000), updated_at: iso(-1000) },
 ];
 
+export interface DemoUser {
+  id: string; tenant_id: string; name: string; email: string;
+  role: 'owner' | 'admin' | 'staff'; is_active: boolean; created_at: string;
+}
+
+export const demoUsers: DemoUser[] = [
+  { id: 'user-1', tenant_id: TENANT, name: 'デモ店長', email: 'owner@example.com', role: 'owner', is_active: true, created_at: iso(-60 * 24 * 30) },
+  { id: 'user-2', tenant_id: TENANT, name: '受付スタッフ A', email: 'staff-a@example.com', role: 'staff', is_active: true, created_at: iso(-60 * 24 * 10) },
+];
+
 export function newId(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 }

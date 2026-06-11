@@ -3,8 +3,8 @@
 import { dbEnabled, query } from './index.js';
 import { summarizeCall } from '../ai/summarize.js';
 import {
-  demoCalls, demoFaqs, demoSettings, demoPhoneNumbers, demoTenant, newId,
-  type DemoCall, type DemoFaq,
+  demoCalls, demoFaqs, demoSettings, demoPhoneNumbers, demoTenant, demoUsers, newId,
+  type DemoCall, type DemoFaq, type DemoUser,
 } from '../demo/fixtures.js';
 import type { CallSummary } from '../types.js';
 import {
@@ -350,6 +350,100 @@ export async function getAdminUsageSummary(month?: string) {
     { calls: 0, billable_minutes: 0, cost_jpy: 0, revenue_jpy: 0, margin_jpy: 0 },
   );
   return { month: key, tenants, totals };
+}
+
+// ---------------- ユーザー管理（テナント内スタッフ） ----------------
+const ASSIGNABLE_ROLES = ['owner', 'admin', 'staff'] as const;
+type AssignableRole = (typeof ASSIGNABLE_ROLES)[number];
+
+export function isAssignableRole(r: string): r is AssignableRole {
+  return (ASSIGNABLE_ROLES as readonly string[]).includes(r);
+}
+
+export async function listUsers(tenantId: string) {
+  if (!dbEnabled) {
+    return demoUsers.filter((u) => u.tenant_id === tenantId || tenantId === demoTenant.id);
+  }
+  return query<any>(
+    `select id, name, email, role, is_active, created_at
+       from app_users where tenant_id = $1 order by created_at`,
+    [tenantId],
+  );
+}
+
+export async function createUser(tenantId: string, input: { name?: string; email: string; role: string }) {
+  const role = isAssignableRole(input.role) ? input.role : 'staff';
+  if (!dbEnabled) {
+    if (demoUsers.some((u) => u.tenant_id === tenantId && u.email === input.email)) {
+      return { error: 'duplicate' as const };
+    }
+    const u: DemoUser = {
+      id: newId('user'), tenant_id: tenantId, name: input.name ?? '', email: input.email,
+      role, is_active: true, created_at: new Date().toISOString(),
+    };
+    demoUsers.push(u);
+    return { user: u };
+  }
+  try {
+    const [row] = await query<any>(
+      `insert into app_users (tenant_id, name, email, role, is_active)
+       values ($1,$2,$3,$4,true)
+       returning id, name, email, role, is_active, created_at`,
+      [tenantId, input.name ?? null, input.email, role],
+    );
+    return { user: row };
+  } catch (err: any) {
+    if (String(err?.code) === '23505') return { error: 'duplicate' as const };
+    throw err;
+  }
+}
+
+export async function updateUser(
+  tenantId: string, userId: string, patch: { role?: string; is_active?: boolean; name?: string },
+) {
+  const role = patch.role && isAssignableRole(patch.role) ? patch.role : undefined;
+  if (!dbEnabled) {
+    const u = demoUsers.find((x) => x.id === userId && (x.tenant_id === tenantId || tenantId === demoTenant.id));
+    if (!u) return null;
+    if (role) u.role = role;
+    if (patch.is_active !== undefined) u.is_active = patch.is_active;
+    if (patch.name !== undefined) u.name = patch.name;
+    return u;
+  }
+  const [row] = await query<any>(
+    `update app_users set role = coalesce($3, role), is_active = coalesce($4, is_active),
+        name = coalesce($5, name)
+      where id = $1 and tenant_id = $2
+      returning id, name, email, role, is_active, created_at`,
+    [userId, tenantId, role ?? null, patch.is_active ?? null, patch.name ?? null],
+  );
+  return row ?? null;
+}
+
+export async function deleteUser(tenantId: string, userId: string) {
+  if (!dbEnabled) {
+    const i = demoUsers.findIndex((x) => x.id === userId && (x.tenant_id === tenantId || tenantId === demoTenant.id));
+    if (i === -1) return false;
+    demoUsers.splice(i, 1);
+    return true;
+  }
+  const rows = await query(`delete from app_users where id = $1 and tenant_id = $2 returning id`, [userId, tenantId]);
+  return rows.length > 0;
+}
+
+/** テナントの owner が最低1人残るかをチェック（最後の owner の降格/無効化/削除を防ぐ）。 */
+export async function countActiveOwners(tenantId: string, excludeUserId?: string): Promise<number> {
+  if (!dbEnabled) {
+    return demoUsers.filter((u) =>
+      (u.tenant_id === tenantId || tenantId === demoTenant.id) &&
+      u.role === 'owner' && u.is_active && u.id !== excludeUserId).length;
+  }
+  const [r] = await query<any>(
+    `select count(*)::int as n from app_users
+      where tenant_id = $1 and role = 'owner' and is_active = true and id <> $2`,
+    [tenantId, excludeUserId ?? '00000000-0000-0000-0000-000000000000'],
+  );
+  return r?.n ?? 0;
 }
 
 // ---------------- 請求書・明細 ----------------

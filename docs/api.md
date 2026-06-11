@@ -66,12 +66,32 @@
 | GET   | `/api/phone-numbers` |
 | PATCH | `/api/phone-numbers/{phone_number_id}` |
 
+## ユーザー管理 API（owner / admin / super_admin のみ）
+| Method | Path | 説明 |
+|--------|------|------|
+| GET    | `/api/users` | テナント内ユーザー一覧（閲覧は全ロール可） |
+| POST   | `/api/users` | メンバー追加（name/email/role） |
+| PATCH  | `/api/users/{user_id}` | 権限変更・有効/無効・氏名 |
+| DELETE | `/api/users/{user_id}` | 削除 |
+
+- ロール：`owner`（全権・最低1人必須）/ `admin`（ユーザー管理・設定）/ `staff`（閲覧・対応）。
+- 最後の `owner` の降格・無効化・削除は 400 で拒否。
+
+## 請求・利用 API
+| Method | Path | 説明 |
+|--------|------|------|
+| GET | `/api/usage` | 当月の分数・原価・売上・粗利 |
+| GET | `/api/usage/invoice` | 請求書データ（税込・印刷/PDF用） |
+| GET | `/api/usage/export` | 通話明細CSV（UTF-8 BOM） |
+| GET | `/api/admin/usage` | 全テナント横断の利用・原価（super_admin） |
+
 ## Super Admin API
 | Method | Path |
 |--------|------|
 | GET  | `/api/admin/tenants` |
 | POST | `/api/admin/tenants` |
 | GET  | `/api/admin/calls` |
+| GET  | `/api/admin/usage` |
 
 ---
 

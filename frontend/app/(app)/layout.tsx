@@ -38,9 +38,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     router.replace('/login');
   }
 
-  const items = session?.role === 'super_admin'
-    ? [...nav, { href: '/admin', label: 'Super Admin', icon: '🛡️' }]
-    : nav;
+  const canManageUsers = ['owner', 'admin', 'super_admin'].includes(session?.role ?? '');
+  const items = [
+    ...nav,
+    ...(canManageUsers ? [{ href: '/settings/users', label: 'ユーザー管理', icon: '👥' }] : []),
+    ...(session?.role === 'super_admin' ? [{ href: '/admin', label: 'Super Admin', icon: '🛡️' }] : []),
+  ];
 
   return (
     <div className="flex min-h-screen">

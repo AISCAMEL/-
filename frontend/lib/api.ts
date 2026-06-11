@@ -52,6 +52,11 @@ export const api = {
   updatePhoneNumber: (id: string, body: any) =>
     request<any>(`/api/phone-numbers/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
 
+  users: () => request<any[]>('/api/users'),
+  createUser: (body: any) => request<any>('/api/users', { method: 'POST', body: JSON.stringify(body) }),
+  updateUser: (id: string, body: any) => request<any>(`/api/users/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  deleteUser: (id: string) => request<any>(`/api/users/${id}`, { method: 'DELETE' }),
+
   usage: (month?: string) => request<any>(`/api/usage${month ? `?month=${month}` : ''}`),
   adminUsage: (month?: string) => request<any>(`/api/admin/usage${month ? `?month=${month}` : ''}`),
   invoice: (month?: string) => request<any>(`/api/usage/invoice${month ? `?month=${month}` : ''}`),

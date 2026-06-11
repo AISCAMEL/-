@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { authenticate, requireSuperAdmin } from '../auth/jwt.js';
+import { authenticate, requireSuperAdmin, requireRole } from '../auth/jwt.js';
 import * as q from '../db/queries.js';
 import { sendCallNotification } from '../notify/email.js';
 import { getSettings } from '../db/queries.js';
@@ -182,6 +182,52 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     reply.header('Content-Type', 'text/csv; charset=utf-8');
     reply.header('Content-Disposition', `attachment; filename="${fname}"`);
     return reply.send(csv);
+  });
+
+  // ---- ユーザー管理（owner / admin / super_admin のみ） ----
+  const manageUsers = requireRole(['owner', 'admin', 'super_admin']);
+
+  app.get('/api/users', { preHandler: authenticate }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    return q.listUsers(p.tenantId);
+  });
+
+  app.post('/api/users', { preHandler: manageUsers }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const body = (req.body ?? {}) as { name?: string; email?: string; role?: string };
+    if (!body.email) return reply.code(400).send({ error: 'email required' });
+    const res = await q.createUser(p.tenantId, { name: body.name, email: body.email, role: body.role ?? 'staff' });
+    if ('error' in res) return reply.code(409).send({ error: 'このメールアドレスは既に登録されています' });
+    return res.user;
+  });
+
+  app.patch('/api/users/:id', { preHandler: manageUsers }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const id = (req.params as any).id;
+    const body = (req.body ?? {}) as { role?: string; is_active?: boolean; name?: string };
+    // 最後のownerを降格/無効化しないよう保護。
+    const demotingOwner = (body.role && body.role !== 'owner') || body.is_active === false;
+    if (demotingOwner && (await q.countActiveOwners(p.tenantId, id)) === 0) {
+      return reply.code(400).send({ error: 'オーナーは最低1人必要です' });
+    }
+    const row = await q.updateUser(p.tenantId, id, body);
+    if (!row) return reply.code(404).send({ error: 'not found' });
+    return row;
+  });
+
+  app.delete('/api/users/:id', { preHandler: manageUsers }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const id = (req.params as any).id;
+    if ((await q.countActiveOwners(p.tenantId, id)) === 0) {
+      return reply.code(400).send({ error: 'オーナーは最低1人必要です' });
+    }
+    const ok = await q.deleteUser(p.tenantId, id);
+    if (!ok) return reply.code(404).send({ error: 'not found' });
+    return { ok: true };
   });
 
   // ---- super admin ----
