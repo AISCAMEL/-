@@ -55,6 +55,7 @@ require_once APPREX_DIR . '/inc/openrouter-chat.php';
 require_once APPREX_DIR . '/inc/integrations.php';
 require_once APPREX_DIR . '/inc/orders.php';
 require_once APPREX_DIR . '/inc/contracts.php';
+require_once APPREX_DIR . '/inc/contracts-lifecycle.php';
 require_once APPREX_DIR . '/inc/email.php';
 require_once APPREX_DIR . '/inc/forms.php';
 require_once APPREX_DIR . '/inc/ai-blog.php';

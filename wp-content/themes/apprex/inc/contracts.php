@@ -109,6 +109,15 @@ function apprex_contract_box( $post ) {
 			</select>
 		</td></tr>
 		<tr><th>自動継続</th><td><label><input type="checkbox" name="apprex_c_autorenew" value="1" <?php checked( 1, (int) $g( 'apprex_c_autorenew', 1 ) ); ?>> 期限到来時に自動で1年延長する</label></td></tr>
+		<tr><th>支払い方法</th><td>
+			<select name="apprex_c_payment_method">
+				<?php $pm = $g( 'apprex_c_payment_method', 'square' ); ?>
+				<option value="square" <?php selected( $pm, 'square' ); ?>>Square（自動課金）</option>
+				<option value="invoice" <?php selected( $pm, 'invoice' ); ?>>請求書（振込）</option>
+			</select>
+		</td></tr>
+		<tr><th>支払い期日</th><td>毎月 <input type="number" name="apprex_c_payment_day" value="<?php echo esc_attr( $g( 'apprex_c_payment_day', 27 ) ); ?>" min="1" max="31" style="width:70px"> 日</td></tr>
+		<tr><th>最終入金確認日<br><span class="description">（消し込み）</span></th><td><input type="date" name="apprex_c_last_paid" value="<?php echo esc_attr( $g( 'apprex_c_last_paid' ) ); ?>"><br><span class="description">入金を確認したらこの日付を更新。一定期間更新が無いと延滞としてSlack通知します。</span></td></tr>
 		<tr><th>備考</th><td><textarea name="apprex_c_note" rows="3" class="large-text"><?php echo esc_textarea( $g( 'apprex_c_note' ) ); ?></textarea></td></tr>
 	</table>
 	<?php
@@ -130,7 +139,7 @@ add_action( 'save_post_apprex_contract', function ( $post_id ) {
 		return;
 	}
 
-	$text = array( 'apprex_c_name', 'apprex_c_company', 'apprex_c_service', 'apprex_c_plan', 'apprex_c_start', 'apprex_c_status' );
+	$text = array( 'apprex_c_name', 'apprex_c_company', 'apprex_c_service', 'apprex_c_plan', 'apprex_c_start', 'apprex_c_status', 'apprex_c_last_paid' );
 	foreach ( $text as $k ) {
 		if ( isset( $_POST[ $k ] ) ) {
 			update_post_meta( $post_id, $k, sanitize_text_field( wp_unslash( $_POST[ $k ] ) ) );
@@ -140,6 +149,8 @@ add_action( 'save_post_apprex_contract', function ( $post_id ) {
 	update_post_meta( $post_id, 'apprex_c_monthly', isset( $_POST['apprex_c_monthly'] ) ? absint( $_POST['apprex_c_monthly'] ) : 0 );
 	update_post_meta( $post_id, 'apprex_c_term', max( 1, isset( $_POST['apprex_c_term'] ) ? absint( $_POST['apprex_c_term'] ) : 1 ) );
 	update_post_meta( $post_id, 'apprex_c_autorenew', isset( $_POST['apprex_c_autorenew'] ) ? 1 : 0 );
+	update_post_meta( $post_id, 'apprex_c_payment_method', ( isset( $_POST['apprex_c_payment_method'] ) && 'invoice' === $_POST['apprex_c_payment_method'] ) ? 'invoice' : 'square' );
+	update_post_meta( $post_id, 'apprex_c_payment_day', min( 31, max( 1, isset( $_POST['apprex_c_payment_day'] ) ? absint( $_POST['apprex_c_payment_day'] ) : 27 ) ) );
 	update_post_meta( $post_id, 'apprex_c_note', isset( $_POST['apprex_c_note'] ) ? sanitize_textarea_field( wp_unslash( $_POST['apprex_c_note'] ) ) : '' );
 
 	// 次回更新日 = 開始日 + 契約年数。
@@ -189,6 +200,9 @@ function apprex_sync_contract_to_gas( $post_id ) {
 			'renewal'    => get_post_meta( $post_id, 'apprex_c_renewal', true ),
 			'auto_renew' => (int) get_post_meta( $post_id, 'apprex_c_autorenew', true ) ? 'ON' : 'OFF',
 			'status'     => apprex_contract_status_label( get_post_meta( $post_id, 'apprex_c_status', true ) ),
+			'payment_method' => ( 'invoice' === get_post_meta( $post_id, 'apprex_c_payment_method', true ) ) ? '請求書' : 'Square',
+			'payment_day'    => (int) get_post_meta( $post_id, 'apprex_c_payment_day', true ),
+			'last_paid'      => get_post_meta( $post_id, 'apprex_c_last_paid', true ),
 			'admin_url'  => admin_url( 'post.php?post=' . $post_id . '&action=edit' ),
 		)
 	);

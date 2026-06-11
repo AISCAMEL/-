@@ -57,7 +57,7 @@ const CONTRACT_SHEET_NAME = '契約';
 const CONTRACT_HEADERS = [
   '更新日時', '契約ID', '顧客名', '会社名', 'メール', 'サービス', 'プラン',
   '月額(円)', '契約開始日', '契約年数', '次回更新日', '自動継続', 'ステータス',
-  '管理画面URL', 'サイト'
+  '支払い方法', '支払い期日', '最終入金確認日', '管理画面URL', 'サイト'
 ];
 
 /* ============================================================
@@ -206,10 +206,13 @@ function logContractToSheet_(body, d) {
     '契約開始日' : d.start_date || '',
     '契約年数'   : d.term_years || '',
     '次回更新日' : d.renewal || '',
-    '自動継続'   : d.auto_renew || '',
-    'ステータス' : d.status || '',
-    '管理画面URL': d.admin_url || '',
-    'サイト'     : body.site || ''
+    '自動継続'     : d.auto_renew || '',
+    'ステータス'   : d.status || '',
+    '支払い方法'   : d.payment_method || '',
+    '支払い期日'   : d.payment_day || '',
+    '最終入金確認日': d.last_paid || '',
+    '管理画面URL'  : d.admin_url || '',
+    'サイト'       : body.site || ''
   };
 
   const lastCol   = Math.max(sh.getLastColumn(), CONTRACT_HEADERS.length);
