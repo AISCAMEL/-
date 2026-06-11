@@ -122,7 +122,9 @@ LLMトークンの試算（1通話3分・8〜12ターン、システムプロン
   1. Twilio Console で**日本の着信・番号・発信の実レート**を確認し本表を更新。
   2. 転送通話の課金方針を確定（別課金 or 分数別カウント）。
   3. 為替前提（¥155）をレビューし価格にバッファを織り込む。
-  4. `usage_records` テーブルに `usage_type`（ai_minutes / transfer_minutes / recording）で記録し、実原価を継続モニタリング（スキーマは対応済み）。
+  4. ✅ **実装済み**：通話確定時に `usage_records`（`ai_minutes` / `transfer_minutes`）へ原価を記録し、
+     管理画面「利用状況・原価」ページ（`/usage`）と API `GET /api/usage`・`GET /api/admin/usage` で
+     月次の分数・原価・推定売上・粗利を可視化。レートは `backend/src/billing/rates.ts`（環境変数で改定可）。
 
 ---
 

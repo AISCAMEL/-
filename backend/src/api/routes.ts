@@ -155,6 +155,14 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     return row;
   });
 
+  // ---- usage / 原価モニタリング ----
+  app.get('/api/usage', { preHandler: authenticate }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const { month } = req.query as Record<string, string>;
+    return q.getUsageSummary(p.tenantId, month);
+  });
+
   // ---- super admin ----
   app.get('/api/admin/tenants', { preHandler: requireSuperAdmin }, async () => q.listTenants());
   app.post('/api/admin/tenants', { preHandler: requireSuperAdmin }, async (req, reply) => {
@@ -165,5 +173,9 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/admin/calls', { preHandler: requireSuperAdmin }, async (req) => {
     const { limit } = req.query as Record<string, string>;
     return q.listAllCalls({ limit: limit ? Number(limit) : undefined });
+  });
+  app.get('/api/admin/usage', { preHandler: requireSuperAdmin }, async (req) => {
+    const { month } = req.query as Record<string, string>;
+    return q.getAdminUsageSummary(month);
   });
 }

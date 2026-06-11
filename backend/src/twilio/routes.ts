@@ -2,9 +2,10 @@ import type { FastifyInstance } from 'fastify';
 import { config } from '../config.js';
 import { verifyTwilioSignature } from './signature.js';
 import { getSession, deleteSession } from './sessionStore.js';
-import { resolveTenantByPhone, finalizeCall, recordNotification } from '../db/index.js';
+import { resolveTenantByPhone, finalizeCall, recordNotification, recordUsage } from '../db/index.js';
 import { summarizeCall } from '../ai/summarize.js';
 import { sendCallNotification } from '../notify/email.js';
+import { billableMinutes, aiCostJpy, transferAddCostJpy } from '../billing/rates.js';
 
 // TwiML 生成（ConversationRelay へ接続）。
 function buildConnectTwiml(greeting: string): string {
@@ -86,6 +87,24 @@ async function finalizeAndNotify(app: FastifyInstance, callSid: string): Promise
   if (session.callId) {
     await finalizeCall(session.callId, session.tenantId, summary, durationSec).catch((err) =>
       app.log.error({ err }, 'finalizeCall failed'));
+
+    // 利用量・原価を台帳(usage_records)に記録。
+    const minutes = billableMinutes(durationSec);
+    if (minutes > 0) {
+      await recordUsage({
+        tenantId: session.tenantId, callId: session.callId, usageType: 'ai_minutes',
+        quantity: minutes, unit: 'minute', costAmount: aiCostJpy(minutes),
+        metadata: { duration_sec: durationSec },
+      }).catch((err) => app.log.error({ err }, 'recordUsage(ai) failed'));
+
+      if (last?.should_transfer) {
+        await recordUsage({
+          tenantId: session.tenantId, callId: session.callId, usageType: 'transfer_minutes',
+          quantity: minutes, unit: 'minute', costAmount: transferAddCostJpy(minutes),
+          metadata: { note: 'transfer outbound leg (estimated, mobile)' },
+        }).catch((err) => app.log.error({ err }, 'recordUsage(transfer) failed'));
+      }
+    }
   }
 
   // 通知先メール（テナント設定）。着信先番号からテナント設定を引く。

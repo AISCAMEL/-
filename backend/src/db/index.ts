@@ -135,3 +135,17 @@ export async function recordNotification(input: {
      input.subject, JSON.stringify(input.payload ?? {}), input.error ?? null],
   );
 }
+
+/** 利用量・原価を usage_records に記録（課金・原価モニタリングの台帳）。 */
+export async function recordUsage(input: {
+  tenantId: string; callId: string | null; usageType: string;
+  quantity: number; unit: string; costAmount: number; currency?: string; metadata?: unknown;
+}): Promise<void> {
+  if (!pool) return;
+  await query(
+    `insert into usage_records (tenant_id, call_id, usage_type, quantity, unit, cost_amount, currency, metadata)
+     values ($1,$2,$3,$4,$5,$6,$7,$8)`,
+    [input.tenantId, input.callId, input.usageType, input.quantity, input.unit,
+     input.costAmount, input.currency ?? 'JPY', JSON.stringify(input.metadata ?? {})],
+  );
+}

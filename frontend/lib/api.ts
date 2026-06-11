@@ -51,7 +51,15 @@ export const api = {
   phoneNumbers: () => request<any[]>('/api/phone-numbers'),
   updatePhoneNumber: (id: string, body: any) =>
     request<any>(`/api/phone-numbers/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+
+  usage: (month?: string) => request<any>(`/api/usage${month ? `?month=${month}` : ''}`),
+  adminUsage: (month?: string) => request<any>(`/api/admin/usage${month ? `?month=${month}` : ''}`),
 };
+
+export function yen(n?: number | null): string {
+  if (n === null || n === undefined) return '—';
+  return '¥' + Math.round(n).toLocaleString('ja-JP');
+}
 
 // 表示用ラベル
 export const CATEGORY_LABEL: Record<string, string> = {

@@ -7,6 +7,10 @@ import {
   type DemoCall, type DemoFaq,
 } from '../demo/fixtures.js';
 import type { CallSummary } from '../types.js';
+import {
+  planDef, billableMinutes, aiCostJpy, transferAddCostJpy, monthlyRevenueJpy,
+  AI_COST_USD_PER_MIN, USD_JPY,
+} from '../billing/rates.js';
 
 export interface CallListFilter {
   status?: string;
@@ -248,6 +252,104 @@ export async function updatePhoneNumber(tenantId: string, id: string, patch: { s
       where id=$1 and tenant_id=$2 returning *`,
     [id, tenantId, patch.status, patch.type]);
   return row ?? null;
+}
+
+// ---------------- 利用量・原価モニタリング ----------------
+// 'YYYY-MM' → [開始, 翌月開始) のISO範囲。未指定は当月。
+function monthRange(month?: string): { from: Date; to: Date; key: string } {
+  const now = new Date();
+  const [y, m] = month
+    ? month.split('-').map(Number)
+    : [now.getUTCFullYear(), now.getUTCMonth() + 1];
+  const from = new Date(Date.UTC(y, m - 1, 1));
+  const to = new Date(Date.UTC(y, m, 1));
+  return { from, to, key: `${y}-${String(m).padStart(2, '0')}` };
+}
+
+function buildSummary(
+  plan: string | null, calls: number, billableMin: number, transferMin: number, monthKey: string,
+) {
+  const p = planDef(plan);
+  const costAi = aiCostJpy(billableMin);
+  const costTransfer = transferAddCostJpy(transferMin);
+  const totalCost = round2(costAi + costTransfer);
+  const revenue = monthlyRevenueJpy(p, billableMin);
+  const margin = round2(revenue - totalCost);
+  return {
+    month: monthKey,
+    plan: { key: plan ?? 'starter', label: p.label, allowance_min: p.allowanceMin, base_jpy: p.baseJpy, overage_jpy_per_min: p.overageJpyPerMin },
+    calls,
+    billable_minutes: billableMin,
+    transfer_minutes: transferMin,
+    overage_minutes: Math.max(0, billableMin - p.allowanceMin),
+    cost: { ai_jpy: costAi, transfer_jpy: costTransfer, total_jpy: totalCost },
+    revenue_jpy: revenue,
+    margin_jpy: margin,
+    margin_rate: revenue > 0 ? Math.round((margin / revenue) * 1000) / 10 : 0,
+    ai_cost_per_min_jpy: round2(AI_COST_USD_PER_MIN * USD_JPY),
+    usd_jpy: USD_JPY,
+  };
+}
+
+function round2(n: number): number { return Math.round(n * 100) / 100; }
+
+export async function getUsageSummary(tenantId: string, month?: string) {
+  const { from, to, key } = monthRange(month);
+  if (!dbEnabled) {
+    const rows = demoCalls.filter((c) => {
+      const t = new Date(c.started_at);
+      return (c.tenant_id === tenantId || tenantId === demoTenant.id) && t >= from && t < to;
+    });
+    const billable = rows.reduce((s, c) => s + billableMinutes(c.duration_sec), 0);
+    const transfer = rows.filter((c) => c.status === 'transferred')
+      .reduce((s, c) => s + billableMinutes(c.duration_sec), 0);
+    return buildSummary(demoTenant.plan, rows.length, billable, transfer, key);
+  }
+  const [agg] = await query<any>(
+    `select count(*)::int as calls,
+            coalesce(sum(ceil(duration_sec/60.0)),0)::int as billable_min,
+            coalesce(sum(ceil(duration_sec/60.0)) filter (where status='transferred'),0)::int as transfer_min
+       from calls where tenant_id = $1 and started_at >= $2 and started_at < $3`,
+    [tenantId, from.toISOString(), to.toISOString()],
+  );
+  const [tenant] = await query<any>(`select plan from tenants where id = $1`, [tenantId]);
+  return buildSummary(tenant?.plan ?? 'starter', agg.calls, agg.billable_min, agg.transfer_min, key);
+}
+
+export async function getAdminUsageSummary(month?: string) {
+  const { from, to, key } = monthRange(month);
+  if (!dbEnabled) {
+    const t = await getUsageSummary(demoTenant.id, month);
+    return {
+      month: key,
+      tenants: [{ tenant_id: demoTenant.id, company_name: demoTenant.company_name, ...t }],
+      totals: { calls: t.calls, billable_minutes: t.billable_minutes, cost_jpy: t.cost.total_jpy, revenue_jpy: t.revenue_jpy, margin_jpy: t.margin_jpy },
+    };
+  }
+  const rows = await query<any>(
+    `select t.id as tenant_id, t.company_name, t.plan,
+            count(c.*)::int as calls,
+            coalesce(sum(ceil(c.duration_sec/60.0)),0)::int as billable_min,
+            coalesce(sum(ceil(c.duration_sec/60.0)) filter (where c.status='transferred'),0)::int as transfer_min
+       from tenants t
+       left join calls c on c.tenant_id = t.id and c.started_at >= $1 and c.started_at < $2
+      group by t.id, t.company_name, t.plan
+      order by billable_min desc`,
+    [from.toISOString(), to.toISOString()],
+  );
+  const tenants = rows.map((r) => ({
+    tenant_id: r.tenant_id, company_name: r.company_name,
+    ...buildSummary(r.plan, r.calls, r.billable_min, r.transfer_min, key),
+  }));
+  const totals = tenants.reduce(
+    (acc, t) => ({
+      calls: acc.calls + t.calls, billable_minutes: acc.billable_minutes + t.billable_minutes,
+      cost_jpy: round2(acc.cost_jpy + t.cost.total_jpy), revenue_jpy: acc.revenue_jpy + t.revenue_jpy,
+      margin_jpy: round2(acc.margin_jpy + t.margin_jpy),
+    }),
+    { calls: 0, billable_minutes: 0, cost_jpy: 0, revenue_jpy: 0, margin_jpy: 0 },
+  );
+  return { month: key, tenants, totals };
 }
 
 // ---------------- Super Admin ----------------
