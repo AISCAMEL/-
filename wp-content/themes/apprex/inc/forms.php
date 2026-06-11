@@ -450,10 +450,9 @@ function apprex_enroll_drip( $post_id, $type, $email, $name, $meeting_at = 0 ) {
  * @param string $type   Form type.
  * @param array  $fields Submitted fields.
  */
-function apprex_send_autoreply( $type, $fields ) {
-	$name = $fields['name'];
+function apprex_autoreply_message( $type, $fields ) {
+	$name = isset( $fields['name'] ) ? $fields['name'] : '';
 	$doc  = get_option( 'apprex_document_url', '' );
-	$line = apprex_line_url();
 
 	switch ( $type ) {
 		case 'document':
@@ -485,13 +484,24 @@ function apprex_send_autoreply( $type, $fields ) {
 			$body    = "{$name} 様\n\nお問い合わせいただきありがとうございます。\n内容を確認のうえ、担当者より2営業日以内にご連絡いたします。\n";
 	}
 
-	$body .= "\n──────────\nノーコードアプリ開発プラットフォーム APPREX\n合同会社アイズ\n受付：平日10:00〜18:00（チャット・メール・オンライン相談）\n";
-	if ( $line ) {
-		$body .= "LINEでのご相談：{$line}\n";
-	}
-
 	$body = apply_filters( 'apprex_autoreply_body', $body, $type, $fields );
-	wp_mail( $fields['email'], $subject, $body, apprex_mail_headers() );
+	return array( $subject, $body );
+}
+
+/**
+ * Send the immediate auto-reply (HTML) to the customer.
+ *
+ * @param string $type   Form type.
+ * @param array  $fields Submitted fields.
+ */
+function apprex_send_autoreply( $type, $fields ) {
+	list( $subject, $body ) = apprex_autoreply_message( $type, $fields );
+	$html = apprex_render_email(
+		$subject,
+		$body,
+		array( 'heading' => apprex_email_heading_from_subject( $subject ) )
+	);
+	wp_mail( $fields['email'], $subject, $html, apprex_mail_headers() );
 }
 
 /**
@@ -503,20 +513,9 @@ function apprex_send_autoreply( $type, $fields ) {
  */
 function apprex_notify_inquiry( $post_id, $type_label, $fields ) {
 	$subject = sprintf( '[APPREX] %s #%d — %s', $type_label, $post_id, $fields['name'] );
-	$lines   = array(
-		"種別: {$type_label}",
-		"お名前: {$fields['name']}",
-		'会社名: ' . ( $fields['company'] ? $fields['company'] : '（未入力）' ),
-		"メール: {$fields['email']}",
-		'電話: ' . ( $fields['phone'] ? $fields['phone'] : '（未入力）' ),
-	);
-	if ( ! empty( $fields['meeting_at'] ) ) {
-		$lines[] = 'ご希望日時: ' . wp_date( 'Y-m-d H:i', (int) $fields['meeting_at'] );
-	}
-	$lines[] = '内容: ' . ( $fields['message'] ? $fields['message'] : '（なし）' );
-	$lines[] = '';
-	$lines[] = '管理画面: ' . admin_url( 'post.php?post=' . $post_id . '&action=edit' );
-	wp_mail( apprex_notify_to(), $subject, implode( "\n", $lines ), apprex_mail_headers() );
+	$content = apprex_admin_notify_html( $type_label, $fields, $post_id );
+	$html    = apprex_email_wrap( $subject, $content, array( 'heading' => '新しい' . $type_label . 'が届きました' ) );
+	wp_mail( apprex_notify_to(), $subject, $html, apprex_mail_headers() );
 }
 
 /**
@@ -527,7 +526,7 @@ function apprex_notify_inquiry( $post_id, $type_label, $fields ) {
 function apprex_mail_headers() {
 	$from = apprex_notify_to();
 	return array(
-		'Content-Type: text/plain; charset=UTF-8',
+		'Content-Type: text/html; charset=UTF-8',
 		'From: APPREX <' . $from . '>',
 	);
 }
@@ -639,11 +638,15 @@ add_action( 'apprex_dripmail_cron', 'apprex_process_dripmail' );
  * @param bool   $unsub   Append unsubscribe link.
  */
 function apprex_send_drip_mail( $id, $email, $subject, $body, $unsub = true ) {
-	$body .= "\n──────────\nAPPREX / 合同会社アイズ\n";
-	if ( $unsub ) {
-		$body .= '配信停止：' . apprex_unsubscribe_url( $id, $email ) . "\n";
-	}
-	wp_mail( $email, $subject, $body, apprex_mail_headers() );
+	$html = apprex_render_email(
+		$subject,
+		$body,
+		array(
+			'heading'   => apprex_email_heading_from_subject( $subject ),
+			'unsub_url' => $unsub ? apprex_unsubscribe_url( $id, $email ) : '',
+		)
+	);
+	wp_mail( $email, $subject, $html, apprex_mail_headers() );
 }
 
 /**

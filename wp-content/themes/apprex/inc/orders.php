@@ -195,7 +195,8 @@ function apprex_notify_order( $post_id, $estimate, $meta ) {
 	$lines[] = '';
 	$lines[] = '管理画面: ' . admin_url( 'post.php?post=' . $post_id . '&action=edit' );
 
-	wp_mail( $to, $subject, implode( "\n", $lines ) );
+	$html = apprex_render_email( $subject, implode( "\n", $lines ), array( 'heading' => '新規 見積・発注が届きました' ) );
+	wp_mail( $to, $subject, $html, apprex_mail_headers() );
 }
 
 /**
@@ -225,16 +226,13 @@ function apprex_send_order_autoreply( $estimate, $meta ) {
 	$lines[] = '初期設定費: ' . number_format( $estimate['initial'] ) . '円（通常 ' . number_format( $estimate['initial_regular'] ) . '円→今月キャンペーンで0円）';
 	$lines[] = '初期お支払い目安: ' . number_format( $estimate['initial_total'] ) . '円（初期設定費＋一回オプション）';
 	$lines[] = '初年度概算: ' . number_format( $estimate['annual_est'] ) . '円';
-	$line = apprex_line_url();
-	$lines[] = '';
-	$lines[] = '──────────';
-	$lines[] = 'ノーコードアプリ開発プラットフォーム APPREX / 合同会社アイズ';
-	$lines[] = '受付：平日10:00〜18:00（チャット・メール・オンライン相談）';
-	if ( $line ) {
-		$lines[] = 'LINEでのご相談：' . $line;
-	}
 
-	wp_mail( $meta['customer_email'], $subject, implode( "\n", $lines ), apprex_mail_headers() );
+	$html = apprex_render_email(
+		$subject,
+		implode( "\n", $lines ),
+		array( 'heading' => apprex_email_heading_from_subject( $subject ) )
+	);
+	wp_mail( $meta['customer_email'], $subject, $html, apprex_mail_headers() );
 }
 
 /**
