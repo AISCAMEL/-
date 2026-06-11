@@ -247,9 +247,18 @@ function apprex_rest_chat( WP_REST_Request $request ) {
 		return new WP_Error( 'not_configured', 'チャットは現在準備中です。お問い合わせフォームをご利用ください。', array( 'status' => 503 ) );
 	}
 
+	// 会員ログイン連携：ログイン中の契約者なら本人の契約情報を文脈に追加。
+	$system = apprex_chat_system_prompt();
+	if ( function_exists( 'apprex_chat_member_context' ) ) {
+		$member_ctx = apprex_chat_member_context();
+		if ( '' !== $member_ctx ) {
+			$system .= "\n\n# ログイン中の契約者情報（本人にのみ案内してよい）\n" . $member_ctx;
+		}
+	}
+
 	$reply = apprex_openrouter_complete(
 		array_merge(
-			array( array( 'role' => 'system', 'content' => apprex_chat_system_prompt() ) ),
+			array( array( 'role' => 'system', 'content' => $system ) ),
 			$messages
 		),
 		array( 'temperature' => 0.4, 'max_tokens' => 600, 'timeout' => 30 )

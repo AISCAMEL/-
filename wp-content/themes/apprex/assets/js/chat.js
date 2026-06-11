@@ -47,7 +47,13 @@
 			toggle.setAttribute('aria-expanded', 'true');
 			if (!greeted) {
 				greeted = true;
-				addMessage('assistant', 'こんにちは！APPREX サポートです🙂 ノーコードアプリ開発・料金・お見積りなど、お気軽にご質問ください。');
+				var member = cfg.member || {};
+				if (member.loggedIn) {
+					addMessage('assistant', (member.name || 'お客様') + ' 様、いつもありがとうございます🙂 ご契約・お支払い・更新日のご確認や、マイページのご案内ができます。お気軽にどうぞ。');
+					renderSuggestions([{ label: 'マイページ', url: member.mypageUrl }]);
+				} else {
+					addMessage('assistant', 'こんにちは！APPREX サポートです🙂 ノーコードアプリ開発・料金・お見積りなど、お気軽にご質問ください。');
+				}
 			}
 			setTimeout(function () { input.focus(); }, 50);
 		}

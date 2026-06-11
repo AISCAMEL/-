@@ -43,6 +43,11 @@ function apprex_enqueue_assets() {
 		'chatEnabled' => apprex_chat_enabled(),
 	);
 
+	// 会員ログイン連携：ログイン中の契約者ならチャットを本人向けに切り替える。
+	if ( function_exists( 'apprex_chat_member_info' ) ) {
+		$rest['member'] = apprex_chat_member_info();
+	}
+
 	// In-site AI chatbot.
 	wp_enqueue_script( 'apprex-chat', APPREX_URI . '/assets/js/chat.js', array(), APPREX_VERSION, true );
 	wp_localize_script( 'apprex-chat', 'APPREX_REST', $rest );

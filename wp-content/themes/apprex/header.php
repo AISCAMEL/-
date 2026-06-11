@@ -52,6 +52,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 		</nav>
 
 		<div class="header-actions">
+			<?php if ( function_exists( 'apprex_chat_is_member' ) && apprex_chat_is_member() ) : ?>
+				<a class="btn btn--ghost" href="<?php echo esc_url( apprex_mypage_url() ); ?>">
+					<?php esc_html_e( 'マイページ', 'apprex' ); ?>
+				</a>
+			<?php endif; ?>
 			<a class="btn btn--primary" href="<?php echo esc_url( apprex_page_url( 'free-trial' ) ); ?>">
 				<?php esc_html_e( '無料体験を始める', 'apprex' ); ?>
 			</a>
