@@ -67,6 +67,21 @@ function apprex_dash_order_initial_this_month() {
 	return $sum;
 }
 
+/** 契約の平均契約年数（未設定は除外、データなしは3年とみなす）。 */
+function apprex_dash_avg_term_years() {
+	$ids = get_posts( array( 'post_type' => 'apprex_contract', 'post_status' => 'publish', 'posts_per_page' => 1000, 'fields' => 'ids' ) );
+	$sum = 0;
+	$n   = 0;
+	foreach ( $ids as $id ) {
+		$t = (int) get_post_meta( $id, 'apprex_c_term', true );
+		if ( $t > 0 ) {
+			$sum += $t;
+			$n++;
+		}
+	}
+	return $n ? round( $sum / $n, 1 ) : 3;
+}
+
 /** 直近6ヶ月の月次件数。 */
 function apprex_dash_monthly_counts( $post_type, $status ) {
 	$out = array();
@@ -100,6 +115,104 @@ add_action( 'admin_post_apprex_save_dash', function () {
 } );
 
 /* -------------------------------------------------------------------------
+ * CSV エクスポート
+ * ---------------------------------------------------------------------- */
+add_action( 'admin_post_apprex_dash_export', function () {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( '権限がありません。' );
+	}
+	check_admin_referer( 'apprex_dash_export' );
+	$type = isset( $_GET['type'] ) ? sanitize_key( $_GET['type'] ) : '';
+
+	$specs = array(
+		'contract' => array(
+			'post_type' => 'apprex_contract',
+			'status'    => 'publish',
+			'header'    => array( 'ID', '名前', '会社', 'メール', 'サービス', 'プラン', '状態', '月額', '開始日', '更新日', '契約年数', '支払方法', '支払日', '最終入金' ),
+			'row'       => function ( $id ) {
+				$g = function ( $k ) use ( $id ) {
+					return (string) get_post_meta( $id, $k, true );
+				};
+				$st = array( 'active' => '契約中', 'pending' => '更新待ち', 'cancelled' => '解約' );
+				$s  = $g( 'apprex_c_status' );
+				return array(
+					$id, $g( 'apprex_c_name' ), $g( 'apprex_c_company' ), $g( 'apprex_c_email' ),
+					$g( 'apprex_c_service' ), $g( 'apprex_c_plan' ),
+					isset( $st[ $s ] ) ? $st[ $s ] : $s,
+					$g( 'apprex_c_monthly' ), $g( 'apprex_c_start' ), $g( 'apprex_c_renewal' ),
+					$g( 'apprex_c_term' ),
+					'invoice' === $g( 'apprex_c_payment_method' ) ? '請求書' : 'Square',
+					$g( 'apprex_c_payment_day' ), $g( 'apprex_c_last_paid' ),
+				);
+			},
+		),
+		'inquiry'  => array(
+			'post_type' => 'apprex_inquiry',
+			'status'    => 'publish',
+			'header'    => array( 'ID', '日時', '種別', '名前', '会社', 'メール', '電話', '内容' ),
+			'row'       => function ( $id ) {
+				$g = function ( $k ) use ( $id ) {
+					return (string) get_post_meta( $id, $k, true );
+				};
+				return array(
+					$id, get_the_date( 'Y-m-d H:i', $id ), $g( 'apprex_type' ),
+					$g( 'apprex_name' ), $g( 'apprex_company' ), $g( 'apprex_email' ),
+					$g( 'apprex_phone' ), $g( 'apprex_message' ),
+				);
+			},
+		),
+		'order'    => array(
+			'post_type' => 'apprex_order',
+			'status'    => array( 'publish', 'apprex_new' ),
+			'header'    => array( 'ID', '日時', '顧客名', '会社', 'メール', '内容', '月額', '初期費用', 'ステータス' ),
+			'row'       => function ( $id ) {
+				$e = (array) get_post_meta( $id, 'apprex_estimate', true );
+				return array(
+					$id, get_the_date( 'Y-m-d H:i', $id ),
+					(string) get_post_meta( $id, 'apprex_customer_name', true ),
+					(string) get_post_meta( $id, 'apprex_customer_company', true ),
+					(string) get_post_meta( $id, 'apprex_customer_email', true ),
+					get_the_title( $id ),
+					isset( $e['monthly'] ) ? $e['monthly'] : '',
+					isset( $e['initial_total'] ) ? $e['initial_total'] : '',
+					get_post_status( $id ),
+				);
+			},
+		),
+	);
+
+	if ( ! isset( $specs[ $type ] ) ) {
+		wp_die( '不正な書き出し種別です。' );
+	}
+	$spec = $specs[ $type ];
+
+	$ids = get_posts(
+		array(
+			'post_type'      => $spec['post_type'],
+			'post_status'    => $spec['status'],
+			'posts_per_page' => 5000,
+			'fields'         => 'ids',
+			'orderby'        => 'date',
+			'order'          => 'DESC',
+		)
+	);
+
+	nocache_headers();
+	header( 'Content-Type: text/csv; charset=UTF-8' );
+	header( 'Content-Disposition: attachment; filename="apprex-' . $type . '-' . gmdate( 'Ymd-His' ) . '.csv"' );
+
+	$out = fopen( 'php://output', 'w' );
+	echo "\xEF\xBB\xBF"; // UTF-8 BOM（Excel対策）。
+	fputcsv( $out, $spec['header'] );
+	foreach ( $ids as $id ) {
+		$row = call_user_func( $spec['row'], $id );
+		fputcsv( $out, array_map( 'wp_strip_all_tags', array_map( 'strval', $row ) ) );
+	}
+	fclose( $out );
+	exit;
+} );
+
+/* -------------------------------------------------------------------------
  * 画面
  * ---------------------------------------------------------------------- */
 function apprex_dashboard_page() {
@@ -117,6 +230,13 @@ function apprex_dashboard_page() {
 	$pending   = function_exists( 'apprex_get_contracts' ) ? count( apprex_get_contracts( 'pending' ) ) : 0;
 	$cancelled = function_exists( 'apprex_get_contracts' ) ? count( apprex_get_contracts( 'cancelled' ) ) : 0;
 	$new_contr = apprex_dash_count( 'apprex_contract', 'publish', array(), true );
+
+	// 収益指標：解約率・ARPA・LTV。
+	$total_c = $active + $pending + $cancelled;
+	$churn   = $total_c > 0 ? round( $cancelled / $total_c * 100, 1 ) : 0;
+	$arpa    = $active > 0 ? (int) round( $mrr / $active ) : 0;
+	$avg_term = apprex_dash_avg_term_years();
+	$ltv      = (int) round( $arpa * $avg_term * 12 );
 
 	$inq_total = apprex_dash_count( 'apprex_inquiry', 'publish' );
 	$inq_month = apprex_dash_count( 'apprex_inquiry', 'publish', array(), true );
@@ -168,6 +288,16 @@ function apprex_dashboard_page() {
 			$card( '更新待ち', (string) $pending, '', '#d97706' );
 			$card( '今月の新規契約', (string) $new_contr );
 			$card( '解約（累計）', (string) $cancelled, '', '#6b7280' );
+			?>
+		</div>
+
+		<h2>収益指標</h2>
+		<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;">
+			<?php
+			$card( '解約率（累計）', $churn . '%', '解約 ÷ 全契約', $churn <= 10 ? '#16a34a' : '#dc2626' );
+			$card( 'ARPA（顧客あたり月額）', $yen( $arpa ), '契約中の平均月額' );
+			$card( 'LTV（顧客生涯価値）', $yen( $ltv ), 'ARPA × 平均契約年数 ' . $avg_term . '年' );
+			$card( '継続率（累計）', round( 100 - $churn, 1 ) . '%', '1 − 解約率', '#16a34a' );
 			?>
 		</div>
 
@@ -246,6 +376,18 @@ function apprex_dashboard_page() {
 			} );
 			?>
 		</div>
+
+		<h2 style="margin-top:24px;">データ書き出し（CSV）</h2>
+		<p style="color:#6b7280;">Excel／スプレッドシートで開けるCSV（UTF-8 BOM付き）をダウンロードします。</p>
+		<?php
+		$exp = function ( $type, $label ) {
+			$url = wp_nonce_url( admin_url( 'admin-post.php?action=apprex_dash_export&type=' . $type ), 'apprex_dash_export' );
+			echo '<a class="button" style="margin-right:8px;" href="' . esc_url( $url ) . '">' . esc_html( $label ) . '</a>';
+		};
+		$exp( 'contract', '契約をCSV出力' );
+		$exp( 'inquiry', '問い合わせをCSV出力' );
+		$exp( 'order', '発注をCSV出力' );
+		?>
 
 		<h2 style="margin-top:24px;">設定</h2>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
