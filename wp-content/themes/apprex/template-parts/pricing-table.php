@@ -80,6 +80,7 @@ $apprex_render_service = function ( $svc, $featured = '' ) use ( $apprex_est, $a
 <h3 class="plan-group-title"><?php esc_html_e( 'アプリ開発プラン（月額制・開発費0円）', 'apprex' ); ?></h3>
 <p class="plan-note"><?php esc_html_e( '初期設定費は今月末まで限定キャンペーン（先着10社）で0円。30日間の管理画面体験は無料。ダウンロード数課金なし・プッシュ通知無制限。', 'apprex' ); ?></p>
 <?php $apprex_render_service( $apprex_cfg['services']['app'], 'start' ); ?>
+<p class="plan-note"><?php esc_html_e( '※ アプリ登録時の費用（iOS・Android 一律 55,000円）が別途必要です。', 'apprex' ); ?></p>
 
 <h3 class="plan-group-title"><?php esc_html_e( 'ホームページ制作（初期費用0円・月額制）', 'apprex' ); ?></h3>
 <?php $apprex_render_service( $apprex_cfg['services']['hp'], 'standard' ); ?>
