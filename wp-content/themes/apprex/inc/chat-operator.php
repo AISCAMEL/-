@@ -321,10 +321,21 @@ function apprex_rest_chat_poll( WP_REST_Request $request ) {
 function apprex_rest_slack_events( WP_REST_Request $request ) {
 	$raw  = $request->get_body();
 	$json = json_decode( $raw, true );
+	if ( ! is_array( $json ) ) {
+		$json = $request->get_json_params(); // WP がパース済みの本文を復元。
+	}
 
-	// URL 検証チャレンジ。
-	if ( is_array( $json ) && isset( $json['type'] ) && 'url_verification' === $json['type'] ) {
-		return rest_ensure_response( array( 'challenge' => isset( $json['challenge'] ) ? $json['challenge'] : '' ) );
+	// URL 検証チャレンジ（パース済みパラメータを優先＝最も確実）。
+	$type = $request->get_param( 'type' );
+	if ( ! $type && is_array( $json ) && isset( $json['type'] ) ) {
+		$type = $json['type'];
+	}
+	if ( 'url_verification' === $type ) {
+		$challenge = $request->get_param( 'challenge' );
+		if ( ( null === $challenge || '' === $challenge ) && is_array( $json ) && isset( $json['challenge'] ) ) {
+			$challenge = $json['challenge'];
+		}
+		return new WP_REST_Response( array( 'challenge' => (string) $challenge ), 200 );
 	}
 
 	// 署名検証。
