@@ -13,6 +13,8 @@ const CATEGORIES = [
 
 export default function ContactPage() {
   const [form, setForm] = useState({ category: 'document', name: '', company: '', email: '', phone: '', industry: '', message: '' });
+  const [companyUrl, setCompanyUrl] = useState(''); // ハニーポット
+  const [agreed, setAgreed] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
   const [sending, setSending] = useState(false);
@@ -23,9 +25,10 @@ export default function ContactPage() {
     e.preventDefault();
     setError('');
     if (!form.email && !form.phone) { setError('メールアドレスまたは電話番号をご入力ください。'); return; }
+    if (!agreed) { setError('利用規約・プライバシーポリシーへの同意が必要です。'); return; }
     setSending(true);
     try {
-      await submitLead({ ...form, page: 'contact' });
+      await submitLead({ ...form, company_url: companyUrl, page: 'contact' });
       setDone(true);
     } catch (err: any) {
       setError(String(err.message ?? err));
@@ -83,11 +86,25 @@ export default function ContactPage() {
                 <textarea value={form.message} onChange={(e) => set('message', e.target.value)} rows={4}
                   className="mt-1 w-full rounded-lg border px-3 py-2 text-sm" placeholder="ご質問・ご相談内容をご記入ください" />
               </div>
+              {/* ハニーポット（人間には非表示。botが埋めると送信が無効化される） */}
+              <input type="text" name="company_url" value={companyUrl} onChange={(e) => setCompanyUrl(e.target.value)}
+                tabIndex={-1} autoComplete="off" aria-hidden="true"
+                className="absolute left-[-9999px] h-0 w-0 opacity-0" />
+
+              <label className="flex items-start gap-2 text-xs text-gray-600">
+                <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 h-4 w-4" />
+                <span>
+                  <Link href="/legal/terms" className="text-brand hover:underline" target="_blank">利用規約</Link>
+                  および
+                  <Link href="/legal/privacy" className="text-brand hover:underline" target="_blank">プライバシーポリシー</Link>
+                  に同意します。
+                </span>
+              </label>
+
               <button disabled={sending}
                 className="w-full rounded-lg bg-brand py-3 font-semibold text-white hover:bg-brand-dark disabled:opacity-50">
                 {sending ? '送信中…' : '送信する'}
               </button>
-              <p className="text-center text-xs text-gray-400">送信いただいた情報は、お問い合わせ対応の目的にのみ利用します。</p>
             </form>
           </div>
         )}

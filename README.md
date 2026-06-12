@@ -32,6 +32,7 @@ LLM / FAQ / DB / 通知 / 管理画面
 │   ├── twilio-setup.md                  # 実機通話テスト手順・疎通チェックリスト
 │   ├── cost-analysis.md                 # 経費・原価分析（プラン別採算）
 │   ├── deploy.md                        # 本番デプロイ手順（Render/Vercel/Supabase）
+│   ├── readiness.md                     # 本番リリースに向けた残作業（ギャップ分析）
 │   └── 開発仕様書.md                    # （別案件 CarLoan_System・参考）
 ├── db/
 │   ├── schema.sql                       # PostgreSQL / Supabase スキーマ（ENUM・テーブル・index・RLS）

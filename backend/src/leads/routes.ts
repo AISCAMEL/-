@@ -4,6 +4,9 @@ import { requireSuperAdmin } from '../auth/jwt.js';
 import { sendEmail } from '../notify/email.js';
 import * as leads from './repo.js';
 import { listTenants, getAdminUsageSummary } from '../db/queries.js';
+import { rateLimit } from '../util/ratelimit.js';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // 問い合わせ導線のルート。
 //   公開: POST /api/public/leads（LPフォーム。認証なし）
@@ -12,7 +15,22 @@ export async function registerLeadRoutes(app: FastifyInstance): Promise<void> {
   // --- 公開フォーム ---
   app.post('/api/public/leads', async (req, reply) => {
     const b = (req.body ?? {}) as Record<string, any>;
+
+    // レート制限（IP単位・10分で5件まで）。
+    const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip;
+    const rl = rateLimit(`lead:${ip}`, 5, 10 * 60_000);
+    if (!rl.allowed) {
+      reply.header('Retry-After', rl.retryAfter);
+      return reply.code(429).send({ error: '送信回数が多すぎます。しばらくしてからお試しください。' });
+    }
+
+    // ハニーポット（人間には見えない隠しフィールド。埋まっていればbotとみなし黙って成功扱い）。
+    if (typeof b.company_url === 'string' && b.company_url.trim() !== '') {
+      return reply.code(201).send({ ok: true });
+    }
+
     if (!b.email && !b.phone) return reply.code(400).send({ error: 'メールアドレスまたは電話番号を入力してください' });
+    if (b.email && !EMAIL_RE.test(String(b.email))) return reply.code(400).send({ error: 'メールアドレスの形式が正しくありません' });
 
     const lead = await leads.createLead({
       source: 'lp_form',

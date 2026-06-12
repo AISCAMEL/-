@@ -119,6 +119,12 @@ export default function LandingPage() {
 
       <footer className="border-t">
         <div className="mx-auto max-w-6xl px-6 py-8 text-center text-sm text-gray-400">
+          <nav className="mb-3 flex flex-wrap justify-center gap-4">
+            <Link href="/contact" className="hover:text-gray-700">お問い合わせ</Link>
+            <Link href="/legal/terms" className="hover:text-gray-700">利用規約</Link>
+            <Link href="/legal/privacy" className="hover:text-gray-700">プライバシーポリシー</Link>
+            <Link href="/legal/tokushoho" className="hover:text-gray-700">特定商取引法に基づく表記</Link>
+          </nav>
           © 2026 AIオペレーター24
         </div>
       </footer>
