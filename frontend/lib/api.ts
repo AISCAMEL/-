@@ -63,6 +63,8 @@ export const api = {
 
   // リード管理（運営・super_admin）
   overview: () => request<any>('/api/admin/overview'),
+  tenant: (id: string) => request<any>(`/api/admin/tenants/${id}`),
+  updateTenant: (id: string, body: any) => request<any>(`/api/admin/tenants/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   leads: (qs = '') => request<any[]>(`/api/admin/leads${qs}`),
   lead: (id: string) => request<any>(`/api/admin/leads/${id}`),
   updateLead: (id: string, body: any) => request<any>(`/api/admin/leads/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),

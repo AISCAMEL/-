@@ -560,6 +560,56 @@ export async function createTenant(input: { company_name: string; industry?: str
   return row;
 }
 
+/** テナント詳細（契約情報＋設定＋番号＋当月利用＋ユーザ数）。super_admin用。 */
+export async function getTenantDetail(tenantId: string) {
+  const usage = await getUsageSummary(tenantId).catch(() => null);
+  if (!dbEnabled) {
+    const isDemo = tenantId === demoTenant.id;
+    return {
+      tenant: {
+        ...demoTenant,
+        billing_email: 'owner@example.com', phone: '+815000000000',
+        address: '東京都〇〇区サンプル1-2-3', memo: '', created_at: new Date(Date.now() - 86400_000 * 30).toISOString(),
+      },
+      settings: demoSettings,
+      phone_numbers: demoPhoneNumbers.filter((p) => isDemo || p.tenant_id === tenantId),
+      user_count: 2,
+      usage,
+    };
+  }
+  const [tenant] = await query<any>(`select * from tenants where id = $1`, [tenantId]);
+  if (!tenant) return null;
+  const [settings] = await query<any>(`select * from tenant_settings where tenant_id = $1`, [tenantId]);
+  const phone_numbers = await query<any>(`select * from phone_numbers where tenant_id = $1 order by created_at`, [tenantId]);
+  const [uc] = await query<any>(`select count(*)::int as n from app_users where tenant_id = $1`, [tenantId]);
+  return { tenant, settings: settings ?? null, phone_numbers, user_count: uc?.n ?? 0, usage };
+}
+
+const TENANT_FIELDS = ['company_name', 'industry', 'plan', 'status', 'billing_email', 'phone', 'address', 'memo'] as const;
+const PLAN_VALUES = ['starter', 'business', 'pro', 'enterprise'];
+const STATUS_VALUES = ['active', 'inactive', 'suspended', 'trial', 'closed'];
+
+export async function updateTenant(tenantId: string, patch: Record<string, unknown>) {
+  if (patch.plan && !PLAN_VALUES.includes(String(patch.plan))) return { error: 'invalid plan' as const };
+  if (patch.status && !STATUS_VALUES.includes(String(patch.status))) return { error: 'invalid status' as const };
+  if (!dbEnabled) {
+    if (tenantId === demoTenant.id) {
+      for (const k of TENANT_FIELDS) if (k in patch) (demoTenant as any)[k] = patch[k];
+    }
+    return { tenant: { ...demoTenant } };
+  }
+  const cols = TENANT_FIELDS.filter((k) => k in patch);
+  if (cols.length === 0) {
+    const [row] = await query<any>(`select * from tenants where id = $1`, [tenantId]);
+    return row ? { tenant: row } : null;
+  }
+  const sets = cols.map((c, i) => `${c} = $${i + 2}`).join(', ');
+  const [row] = await query<any>(
+    `update tenants set ${sets} where id = $1 returning *`,
+    [tenantId, ...cols.map((c) => patch[c])]);
+  return row ? { tenant: row } : null;
+}
+
 export async function listAllCalls(filter: CallListFilter) {
   if (!dbEnabled) return demoCalls.map(toCallListItem);
   const params: unknown[] = [filter.limit ?? 100];

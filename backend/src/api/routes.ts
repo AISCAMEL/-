@@ -237,6 +237,17 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     if (!body.company_name) return reply.code(400).send({ error: 'company_name required' });
     return q.createTenant(body);
   });
+  app.get('/api/admin/tenants/:id', { preHandler: requireSuperAdmin }, async (req, reply) => {
+    const detail = await q.getTenantDetail((req.params as any).id);
+    if (!detail) return reply.code(404).send({ error: 'not found' });
+    return detail;
+  });
+  app.patch('/api/admin/tenants/:id', { preHandler: requireSuperAdmin }, async (req, reply) => {
+    const res = await q.updateTenant((req.params as any).id, (req.body ?? {}) as Record<string, unknown>);
+    if (!res) return reply.code(404).send({ error: 'not found' });
+    if ('error' in res) return reply.code(400).send({ error: res.error });
+    return res.tenant;
+  });
   app.get('/api/admin/calls', { preHandler: requireSuperAdmin }, async (req) => {
     const { limit } = req.query as Record<string, string>;
     return q.listAllCalls({ limit: limit ? Number(limit) : undefined });

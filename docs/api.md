@@ -111,8 +111,11 @@
 |--------|------|
 | GET  | `/api/admin/tenants` |
 | POST | `/api/admin/tenants` |
+| GET  | `/api/admin/tenants/{id}` （詳細：契約情報＋設定＋番号＋当月利用＋ユーザ数） |
+| PATCH| `/api/admin/tenants/{id}` （プラン変更・利用停止・契約情報編集） |
 | GET  | `/api/admin/calls` |
 | GET  | `/api/admin/usage` |
+| GET  | `/api/admin/overview` |
 
 ---
 

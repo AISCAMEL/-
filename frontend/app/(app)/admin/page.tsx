@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { getSession } from '@/lib/auth';
 import { Card, PageTitle } from '@/components/ui';
 
@@ -53,8 +54,10 @@ export default function AdminPage() {
           </thead>
           <tbody>
             {tenants.map((t) => (
-              <tr key={t.id} className="border-b last:border-0">
-                <td className="px-4 py-3 font-medium">{t.company_name}</td>
+              <tr key={t.id} className="border-b last:border-0 hover:bg-gray-50">
+                <td className="px-4 py-3 font-medium">
+                  <Link href={`/admin/tenants/${t.id}`} className="text-brand hover:underline">{t.company_name}</Link>
+                </td>
                 <td className="px-4 py-3 text-gray-600">{t.industry ?? '—'}</td>
                 <td className="px-4 py-3 text-gray-600">{t.plan}</td>
                 <td className="px-4 py-3 text-gray-600">{t.status}</td>
