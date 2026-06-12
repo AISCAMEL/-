@@ -180,6 +180,35 @@ function apprex_member_contract_card( $id ) {
 			</table>
 		<?php endif; ?>
 
+			<h4 style="margin:14px 0 6px;color:#374151;">契約書</h4>
+			<?php
+			$mf_status = $m( 'apprex_c_mf_status' );
+			$mf_url    = $m( 'apprex_c_mf_url' );
+			$mf_pdf    = $m( 'apprex_c_mf_signed_pdf' );
+			$mf_label  = function_exists( 'apprex_mf_status_label' ) ? apprex_mf_status_label( $mf_status ) : '';
+			$mf_color  = 'signed' === $mf_status ? '#16a34a' : ( 'sent' === $mf_status ? '#d97706' : '#6b7280' );
+			$doc_url   = function_exists( 'apprex_contract_doc_url' ) ? apprex_contract_doc_url( $id ) : '';
+			?>
+			<table style="border-collapse:collapse;width:100%;font-size:14px;">
+				<tr>
+					<th style="text-align:left;padding:8px 10px;background:#f8fafc;border:1px solid #e5e7eb;width:42%;color:#374151;font-weight:600;">締結状況</th>
+					<td style="padding:8px 10px;border:1px solid #e5e7eb;">
+						<span style="display:inline-block;background:<?php echo esc_attr( $mf_color ); ?>;color:#fff;padding:2px 10px;border-radius:999px;font-size:13px;"><?php echo esc_html( $mf_label ? $mf_label : '未送付' ); ?></span>
+					</td>
+				</tr>
+			</table>
+			<div style="margin:10px 0 4px;display:flex;flex-wrap:wrap;gap:8px;">
+				<?php if ( $doc_url ) : ?>
+					<a href="<?php echo esc_url( $doc_url ); ?>" target="_blank" rel="noopener" style="display:inline-block;background:#374151;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-size:14px;">契約書を表示（PDF保存可）</a>
+				<?php endif; ?>
+				<?php if ( 'signed' !== $mf_status && $mf_url ) : ?>
+					<a href="<?php echo esc_url( $mf_url ); ?>" target="_blank" rel="noopener" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:bold;font-size:14px;">マネーフォワードで締結する →</a>
+				<?php endif; ?>
+				<?php if ( $mf_pdf ) : ?>
+					<a href="<?php echo esc_url( $mf_pdf ); ?>" target="_blank" rel="noopener" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-size:14px;">署名済み契約書（PDF）</a>
+				<?php endif; ?>
+			</div>
+
 		<h4 style="margin:14px 0 6px;color:#374151;">契約内容</h4>
 		<table style="border-collapse:collapse;width:100%;font-size:14px;">
 			<?php

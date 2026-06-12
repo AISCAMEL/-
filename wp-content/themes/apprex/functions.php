@@ -56,6 +56,7 @@ require_once APPREX_DIR . '/inc/chat-enhance.php';
 require_once APPREX_DIR . '/inc/integrations.php';
 require_once APPREX_DIR . '/inc/orders.php';
 require_once APPREX_DIR . '/inc/contracts.php';
+require_once APPREX_DIR . '/inc/contract-doc.php';
 require_once APPREX_DIR . '/inc/contracts-lifecycle.php';
 require_once APPREX_DIR . '/inc/member-portal.php';
 require_once APPREX_DIR . '/inc/dashboard.php';

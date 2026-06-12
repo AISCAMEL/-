@@ -232,6 +232,28 @@ function apprex_contract_box( $post ) {
 		<tr><th>アプリ ログインID</th><td><input type="text" name="apprex_c_app_login" class="regular-text" value="<?php echo esc_attr( $g( 'apprex_c_app_login' ) ); ?>" autocomplete="off" placeholder="お客様ごとに発行したログインID"><br><span class="description">手動入力。会員マイページの「アプリログイン情報」に表示されます。</span></td></tr>
 		<tr><th>アプリ ログインPW</th><td><input type="text" name="apprex_c_app_pass" class="regular-text" value="<?php echo esc_attr( $g( 'apprex_c_app_pass' ) ); ?>" autocomplete="off" placeholder="お客様ごとに発行したパスワード"><br><span class="description">手動入力。会員本人のみマイページで閲覧できます。</span></td></tr>
 		<tr><th>備考</th><td><textarea name="apprex_c_note" rows="3" class="large-text"><?php echo esc_textarea( $g( 'apprex_c_note' ) ); ?></textarea></td></tr>
+
+		<tr><th colspan="2" style="border-top:1px solid #e5e7eb;padding-top:14px;"><strong>契約書・電子契約（マネーフォワード クラウド契約）</strong></th></tr>
+		<tr><th>契約書プレビュー</th><td>
+			<?php if ( function_exists( 'apprex_contract_doc_url' ) && $post->ID && 'auto-draft' !== $post->post_status ) : ?>
+				<a href="<?php echo esc_url( apprex_contract_doc_url( $post->ID ) ); ?>" target="_blank" rel="noopener" class="button">契約書を表示（PDF保存可）</a>
+				<span class="description">テンプレートに契約情報を差し込んだ契約書を別タブで表示。<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=apprex_contract&page=apprex-contract-template' ) ); ?>" target="_blank">テンプレートを編集</a></span>
+			<?php else : ?>
+				<span class="description">先に「公開」して保存すると表示できます。</span>
+			<?php endif; ?>
+		</td></tr>
+		<tr><th>締結ステータス</th><td>
+			<select name="apprex_c_mf_status">
+				<?php $mfs = $g( 'apprex_c_mf_status', 'none' ); ?>
+				<?php foreach ( apprex_mf_statuses() as $k => $label ) : ?>
+					<option value="<?php echo esc_attr( $k ); ?>" <?php selected( $mfs, $k ); ?>><?php echo esc_html( $label ); ?></option>
+				<?php endforeach; ?>
+			</select>
+			<span class="description">「締結済」に変更して保存すると、会員へ締結完了メールを自動送信します。</span>
+		</td></tr>
+		<tr><th>MF締結ページURL</th><td><input type="url" name="apprex_c_mf_url" class="regular-text" value="<?php echo esc_attr( $g( 'apprex_c_mf_url' ) ); ?>" placeholder="https://… マネーフォワード クラウド契約の締結URL"><br><span class="description">お客様が署名するページのURL。マイページに「マネーフォワードで締結する」ボタンとして表示されます。</span></td></tr>
+		<tr><th>署名済みPDF URL</th><td><input type="url" name="apprex_c_mf_signed_pdf" class="regular-text" value="<?php echo esc_attr( $g( 'apprex_c_mf_signed_pdf' ) ); ?>" placeholder="https://… 締結後にMFからDLしてメディアにアップしたPDF"><br><span class="description">締結後の署名済みPDFのURL。マイページからダウンロードできるようになります。</span></td></tr>
+		<tr><th>締結日</th><td><input type="date" name="apprex_c_mf_signed_at" value="<?php echo esc_attr( $g( 'apprex_c_mf_signed_at' ) ); ?>"></td></tr>
 	</table>
 	<?php
 }
