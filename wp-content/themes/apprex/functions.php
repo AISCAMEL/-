@@ -53,6 +53,7 @@ require_once APPREX_DIR . '/inc/campaign.php';
 require_once APPREX_DIR . '/inc/pricing-config.php';
 require_once APPREX_DIR . '/inc/openrouter-chat.php';
 require_once APPREX_DIR . '/inc/chat-enhance.php';
+require_once APPREX_DIR . '/inc/chat-operator.php';
 require_once APPREX_DIR . '/inc/integrations.php';
 require_once APPREX_DIR . '/inc/orders.php';
 require_once APPREX_DIR . '/inc/contracts.php';

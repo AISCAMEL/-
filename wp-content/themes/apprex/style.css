@@ -455,6 +455,9 @@ ul { margin: 0; padding: 0; list-style: none; }
 @keyframes apprexMsgIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .apprex-msg--assistant { background: #fff; border: 1px solid var(--color-line); align-self: flex-start; border-bottom-left-radius: 5px; }
 .apprex-msg--user { background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)); color: #fff; align-self: flex-end; border-bottom-right-radius: 5px; }
+.apprex-msg--operator { background: #ecfdf5; border: 1px solid #a7f3d0; color: #064e3b; align-self: flex-start; border-bottom-left-radius: 5px; }
+.apprex-msg__tag { display: block; font-size: .66rem; font-weight: 700; color: #059669; margin-bottom: 2px; letter-spacing: .03em; }
+.apprex-msg--system { align-self: center; max-width: 92%; text-align: center; background: #eef2ff; color: #4338ca; font-size: .76rem; border-radius: 999px; padding: 6px 14px; box-shadow: none; }
 .apprex-msg--typing { padding: 12px 14px; }
 .apprex-typing { display: inline-flex; gap: 5px; align-items: center; }
 .apprex-typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--color-muted); opacity: .45; animation: apprexTyping 1.2s infinite ease-in-out; }
@@ -467,6 +470,9 @@ ul { margin: 0; padding: 0; list-style: none; }
 .apprex-chat__quick { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px; background: #fff; border-top: 1px solid var(--color-line); }
 .apprex-chat__quick button { font-size: .78rem; border: 1px solid var(--color-primary); color: var(--color-primary); background: #fff; border-radius: 999px; padding: 6px 12px; cursor: pointer; transition: background .2s, color .2s, transform .15s; }
 .apprex-chat__quick button:hover { background: var(--color-primary); color: #fff; transform: translateY(-1px); }
+.apprex-chat__quick--op { border-color: #059669; color: #059669; }
+.apprex-chat__quick--op:hover { background: #059669; color: #fff; }
+.apprex-chat__quick--op::before { content: "🙋 "; }
 .apprex-chat__form { display: flex; gap: 8px; padding: 10px 12px; background: #fff; }
 .apprex-chat__form input { flex: 1; min-height: 44px; padding: 0 14px; border: 1px solid var(--color-line); border-radius: 999px; font-size: .9rem; transition: border-color .2s, box-shadow .2s; }
 .apprex-chat__form input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-light); }

@@ -17,9 +17,13 @@
 		var log = document.getElementById('apprex-chat-log');
 		var input = document.getElementById('apprex-chat-input');
 		var quick = document.getElementById('apprex-chat-quick');
+		var opBtn = document.getElementById('apprex-chat-operator');
 		var history = [];
 		var greeted = false;
 		var busy = false;
+		var human = false;
+		var pollCursor = 0;
+		var pollTimer = null;
 		var sessionId = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
 		var cfg = window.APPREX_REST || {};
@@ -57,11 +61,13 @@
 				}
 			}
 			setTimeout(function () { input.focus(); }, 50);
+			startPolling();
 		}
 		function closeWidget() {
 			widget.classList.remove('is-open');
 			widget.hidden = true;
 			toggle.setAttribute('aria-expanded', 'false');
+			stopPolling();
 		}
 
 		toggle.addEventListener('click', function () {
@@ -72,10 +78,45 @@
 		function addMessage(role, text) {
 			var el = document.createElement('div');
 			el.className = 'apprex-msg apprex-msg--' + role;
-			el.textContent = text;
+			if (role === 'operator') {
+				var tag = document.createElement('span');
+				tag.className = 'apprex-msg__tag';
+				tag.textContent = '担当者';
+				el.appendChild(tag);
+				el.appendChild(document.createTextNode(text));
+			} else {
+				el.textContent = text;
+			}
 			log.appendChild(el);
 			log.scrollTop = log.scrollHeight;
 			return el;
+		}
+
+		function startPolling() {
+			if (pollTimer || !cfg.root || !cfg.opEnabled) { return; }
+			pollTimer = setInterval(poll, 4000);
+		}
+		function stopPolling() {
+			if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+		}
+		function poll() {
+			fetch(cfg.root + 'chat/poll?session=' + encodeURIComponent(sessionId) + '&after=' + pollCursor, {
+				headers: { 'X-WP-Nonce': cfg.nonce }
+			})
+				.then(function (r) { return r.json(); })
+				.then(function (b) {
+					if (!b) { return; }
+					if (typeof b.cursor === 'number') { pollCursor = b.cursor; }
+					human = !!b.human;
+					if (b.messages && b.messages.length) {
+						setTyping(false);
+						b.messages.forEach(function (m) {
+							if (m.who === 'system') { addMessage('system', m.text); }
+							else { addMessage('operator', m.text); }
+						});
+					}
+				})
+				.catch(function () { /* silent */ });
 		}
 
 		function setTyping(on) {
@@ -107,6 +148,11 @@
 				.then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
 				.then(function (res) {
 					setTyping(false);
+					if (res.body && res.body.human) {
+						human = true;
+						poll(); // 担当者の返信をすぐ取りに行く。
+						return; // 有人対応中はAIの空応答を表示しない。
+					}
 					if (res.ok && res.body && res.body.reply) {
 						addMessage('assistant', res.body.reply);
 						history.push({ role: 'assistant', content: res.body.reply });
@@ -136,6 +182,32 @@
 					openWidget();
 					send(btn.getAttribute('data-q'));
 				}
+			});
+		}
+
+		if (opBtn) {
+			opBtn.addEventListener('click', function () {
+				if (opBtn.disabled) { return; }
+				opBtn.disabled = true;
+				addMessage('system', '担当者におつなぎしています。少々お待ちください…');
+				startPolling();
+				fetch(cfg.root + 'chat/operator', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': cfg.nonce },
+					body: JSON.stringify({ session: sessionId })
+				})
+					.then(function (r) { return r.json(); })
+					.then(function (b) {
+						if (!b || !b.ok) {
+							addMessage('system', 'ただいま担当者につなげませんでした。お手数ですがお問い合わせフォームをご利用ください。');
+						}
+					})
+					.catch(function () {
+						addMessage('system', '通信エラーが発生しました。少し時間をおいてお試しください。');
+					})
+					.finally(function () {
+						setTimeout(function () { opBtn.disabled = false; }, 8000);
+					});
 			});
 		}
 	});

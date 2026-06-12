@@ -42,6 +42,9 @@ if ( ! $apprex_ai && ! $apprex_zapier ) {
 		<button type="button" data-q="料金を教えて"><?php esc_html_e( '料金を知りたい', 'apprex' ); ?></button>
 		<button type="button" data-q="見積もりをしたい"><?php esc_html_e( '見積もりしたい', 'apprex' ); ?></button>
 		<button type="button" data-q="どんなアプリが作れますか？"><?php esc_html_e( '作れるアプリは？', 'apprex' ); ?></button>
+		<?php if ( function_exists( 'apprex_chat_op_enabled' ) && apprex_chat_op_enabled() ) : ?>
+			<button type="button" class="apprex-chat__quick--op" id="apprex-chat-operator"><?php esc_html_e( '担当者に相談', 'apprex' ); ?></button>
+		<?php endif; ?>
 	</div>
 	<form class="apprex-chat__form" id="apprex-chat-form">
 		<input type="text" id="apprex-chat-input" autocomplete="off" placeholder="<?php esc_attr_e( 'メッセージを入力…', 'apprex' ); ?>" aria-label="<?php esc_attr_e( 'メッセージ', 'apprex' ); ?>">

@@ -41,6 +41,7 @@ function apprex_enqueue_assets() {
 		'root'        => esc_url_raw( rest_url( 'apprex/v1/' ) ),
 		'nonce'       => wp_create_nonce( 'wp_rest' ),
 		'chatEnabled' => apprex_chat_enabled(),
+		'opEnabled'   => function_exists( 'apprex_chat_op_enabled' ) && apprex_chat_op_enabled(),
 	);
 
 	// 会員ログイン連携：ログイン中の契約者ならチャットを本人向けに切り替える。

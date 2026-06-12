@@ -232,6 +232,16 @@ function apprex_rest_chat( WP_REST_Request $request ) {
 		return new WP_Error( 'bad_request', 'メッセージが空です。', array( 'status' => 400 ) );
 	}
 
+	$session = sanitize_text_field( (string) $request->get_param( 'session' ) );
+
+	// オペレーター連携：発言を Slack へ転送。有人対応中ならAI応答を止める。
+	if ( function_exists( 'apprex_chat_op_ingest' ) ) {
+		$is_human = apprex_chat_op_ingest( $session, $messages );
+		if ( $is_human ) {
+			return rest_ensure_response( array( 'reply' => '', 'human' => true ) );
+		}
+	}
+
 	// Mock mode for local/dev without network.
 	if ( defined( 'APPREX_CHAT_MOCK' ) && APPREX_CHAT_MOCK ) {
 		$last = end( $messages );
@@ -269,10 +279,14 @@ function apprex_rest_chat( WP_REST_Request $request ) {
 	}
 
 	// 学習・後追い：会話ログ保存＋メール検出によるリード獲得。
-	$session = sanitize_text_field( (string) $request->get_param( 'session' ) );
 	$captured = false;
 	if ( function_exists( 'apprex_chat_after_reply' ) ) {
 		$captured = apprex_chat_after_reply( $messages, $reply, $session );
+	}
+
+	// オペレーター連携：AI応答もスレッドへ記録（担当者の文脈把握用）。
+	if ( function_exists( 'apprex_chat_op_log_ai_reply' ) ) {
+		apprex_chat_op_log_ai_reply( $session, $reply );
 	}
 
 	$out = array( 'reply' => $reply );
