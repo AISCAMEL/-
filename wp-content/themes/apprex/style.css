@@ -105,7 +105,7 @@ ul { margin: 0; padding: 0; list-style: none; }
   display: inline-flex; align-items: center; justify-content: center; gap: .5em;
   min-height: 52px; padding: 0 28px; border-radius: 999px; font-weight: 700;
   font-size: 1rem; cursor: pointer; border: 2px solid transparent; text-align: center;
-  transition: transform .15s, box-shadow .2s, background .2s, color .2s;
+  white-space: nowrap; transition: transform .15s, box-shadow .2s, background .2s, color .2s;
 }
 .btn:active { transform: translateY(1px); }
 .btn--primary { background: var(--color-primary); color: #fff; box-shadow: 0 8px 20px rgba(59, 130, 246, .3); }
@@ -125,14 +125,15 @@ ul { margin: 0; padding: 0; list-style: none; }
   position: sticky; top: 0; z-index: 100; background: rgba(255, 255, 255, .9);
   backdrop-filter: saturate(180%) blur(10px); border-bottom: 1px solid var(--color-line);
 }
-.site-header__inner { display: flex; align-items: center; justify-content: space-between; min-height: 68px; }
+.site-header__inner { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 68px; }
 .site-logo { font-size: 1.3rem; font-weight: 800; letter-spacing: .02em; color: var(--color-ink); }
 .site-logo span { color: var(--color-primary); }
+.site-branding { flex-shrink: 0; }
 .main-nav { display: none; }
-.main-nav ul { display: flex; align-items: center; gap: 26px; }
-.main-nav a { color: var(--color-ink); font-weight: 600; font-size: .95rem; }
+.main-nav ul { display: flex; align-items: center; flex-wrap: nowrap; gap: 22px; }
+.main-nav a { color: var(--color-ink); font-weight: 600; font-size: .95rem; white-space: nowrap; }
 .main-nav a:hover { color: var(--color-primary); }
-.header-actions { display: none; align-items: center; gap: 12px; }
+.header-actions { display: none; align-items: center; flex-shrink: 0; gap: 12px; }
 .nav-toggle {
   display: inline-flex; flex-direction: column; gap: 5px; width: 44px; height: 44px;
   align-items: center; justify-content: center; background: none; border: 0; cursor: pointer;
@@ -151,7 +152,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 .mobile-drawer a { display: block; padding: 14px 6px; border-bottom: 1px solid var(--color-line); color: var(--color-ink); font-weight: 600; }
 .mobile-drawer .btn { margin-top: 18px; }
 
-@media (min-width: 960px) {
+@media (min-width: 1100px) {
   .main-nav { display: block; }
   .header-actions { display: flex; }
   .nav-toggle, .mobile-drawer { display: none; }
