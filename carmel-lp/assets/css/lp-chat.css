@@ -231,6 +231,41 @@
   }
 }
 
+/* ---- 回答後の誘導CTA（LINE/電話） ---- */
+.chat-msg__cta {
+  align-self: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  max-width: 85%;
+  margin-top: -2px;
+}
+
+.chat-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--radius-pill);
+  padding: 6px var(--space-md);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  color: #fff;
+  line-height: 1.3;
+}
+
+.chat-cta--line {
+  background: var(--color-line);
+}
+
+.chat-cta--tel {
+  background: var(--color-primary);
+}
+
+.chat-cta:hover {
+  opacity: 0.9;
+}
+
 /* ---- サジェストチップ ---- */
 .chat-suggestions {
   display: flex;

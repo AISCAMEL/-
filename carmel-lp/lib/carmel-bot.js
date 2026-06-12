@@ -13,6 +13,9 @@
 
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
+
 const DEFAULT_OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 // 接続先は環境変数で上書き可能（自前ゲートウェイ/テスト用モック等）
 function getEndpoint() {
@@ -62,6 +65,107 @@ const SYSTEM_PROMPT = [
 ].join('\n');
 
 /**
+ * ナレッジCSVの場所。環境変数 KNOWLEDGE_CSV で差し替え可能。
+ * 既定は data/knowledge.csv（営業担当が編集する想定の "知識スプレッド"）。
+ */
+function getKnowledgePath() {
+  return process.env.KNOWLEDGE_CSV || path.join(__dirname, '..', 'data', 'knowledge.csv');
+}
+
+// CSVはファイル更新(mtime)を見てキャッシュ。編集すれば次リクエストから反映される。
+let _kbCache = { mtimeMs: 0, text: '' };
+
+/**
+ * 1行のCSVをパース（ダブルクオート/エスケープ"" に対応した簡易パーサ）。
+ */
+function parseCsvLine(line) {
+  const out = [];
+  let field = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (inQuotes) {
+      if (c === '"' && line[i + 1] === '"') {
+        field += '"';
+        i++;
+      } else if (c === '"') {
+        inQuotes = false;
+      } else {
+        field += c;
+      }
+    } else if (c === '"') {
+      inQuotes = true;
+    } else if (c === ',') {
+      out.push(field);
+      field = '';
+    } else {
+      field += c;
+    }
+  }
+  out.push(field);
+  return out;
+}
+
+/**
+ * ナレッジCSVを読み、AIに渡す参考知識テキストを生成する。
+ * 形式: 「category,question,answer」のヘッダ付きCSV。
+ * 読み込み失敗時は空文字（＝ナレッジ無しでも従来通り動作する）。
+ */
+function loadKnowledge() {
+  const file = getKnowledgePath();
+  let stat;
+  try {
+    stat = fs.statSync(file);
+  } catch (_e) {
+    return ''; // ファイルが無ければナレッジ無しで継続
+  }
+  if (stat.mtimeMs === _kbCache.mtimeMs) return _kbCache.text;
+
+  let text = '';
+  try {
+    const raw = fs.readFileSync(file, 'utf8').replace(/^﻿/, '');
+    const lines = raw.split(/\r?\n/).filter((l) => l.trim());
+    if (lines.length > 1) {
+      const header = parseCsvLine(lines[0]).map((h) => h.trim().toLowerCase());
+      const qi = header.indexOf('question');
+      const ai = header.indexOf('answer');
+      const ci = header.indexOf('category');
+      if (qi !== -1 && ai !== -1) {
+        const items = lines.slice(1).map((line) => {
+          const cols = parseCsvLine(line);
+          const cat = ci !== -1 ? (cols[ci] || '').trim() : '';
+          const q = (cols[qi] || '').trim();
+          const a = (cols[ai] || '').trim();
+          const tag = cat ? `【${cat}】` : '';
+          return q && a ? `- ${tag}Q: ${q}\n  A: ${a}` : '';
+        });
+        text = items.filter(Boolean).join('\n');
+      }
+    }
+  } catch (_e) {
+    text = '';
+  }
+  _kbCache = { mtimeMs: stat.mtimeMs, text };
+  return text;
+}
+
+/**
+ * システムプロンプト本体に、CSVナレッジを参考情報として連結して返す。
+ */
+function buildSystemPrompt() {
+  const kb = loadKnowledge();
+  if (!kb) return SYSTEM_PROMPT;
+  return [
+    SYSTEM_PROMPT,
+    '',
+    '# 参考ナレッジ（カーメルの確認済み情報。回答の根拠として優先的に活用する）',
+    '- 以下のQ&Aに該当する内容は、これを踏まえて自然な日本語で回答する。',
+    '- 該当が無い場合は無理に当てはめず、一般的な案内とLINE/電話への誘導にとどめる。',
+    kb
+  ].join('\n');
+}
+
+/**
  * メッセージ配列を OpenRouter 形式へ整形（systemを先頭に付与）。
  * 想定外のロールや空メッセージは除外する。
  */
@@ -77,7 +181,7 @@ function buildMessages(clientMessages) {
     .map((m) => ({ role: m.role, content: String(m.content).slice(0, 2000) }))
     .slice(-12);
 
-  return [{ role: 'system', content: SYSTEM_PROMPT }, ...safe];
+  return [{ role: 'system', content: buildSystemPrompt() }, ...safe];
 }
 
 /**
@@ -168,4 +272,11 @@ async function pipeOpenRouterStream(body, onDelta) {
   }
 }
 
-module.exports = { streamChat, buildMessages, getModels, SYSTEM_PROMPT };
+module.exports = {
+  streamChat,
+  buildMessages,
+  buildSystemPrompt,
+  loadKnowledge,
+  getModels,
+  SYSTEM_PROMPT
+};

@@ -112,6 +112,7 @@ async function sendMessage(rawText) {
     if (!answer) throw new Error('empty response');
     history.push({ role: 'assistant', content: answer });
     track(cfg.events.responseReceived);
+    renderCtaButtons(); // 回答ごとに有人相談（LINE/電話）へ誘導
   } catch (err) {
     if (typingEl.isConnected) typingEl.remove();
     showFallback();
@@ -167,6 +168,33 @@ async function streamFromServer(messages, onDelta) {
       }
     }
   }
+}
+
+/**
+ * 回答の直後に「LINEで相談 / 電話で相談」CTAを表示し、有人窓口へ誘導する。
+ * 文言・リンクは config.js（CHAT_CONFIG）に集約。クリックは計測する。
+ */
+function renderCtaButtons() {
+  const wrap = document.createElement('div');
+  wrap.className = 'chat-msg__cta';
+
+  const line = document.createElement('a');
+  line.className = 'chat-cta chat-cta--line';
+  line.href = CHAT_CONFIG.lineUrl;
+  line.target = '_blank';
+  line.rel = 'noopener';
+  line.textContent = '💬 LINEで相談';
+  line.addEventListener('click', () => track(CHAT_CONFIG.events.ctaLineClick, { from: 'chatbot' }));
+
+  const tel = document.createElement('a');
+  tel.className = 'chat-cta chat-cta--tel';
+  tel.href = CHAT_CONFIG.telUrl;
+  tel.textContent = `📞 ${CHAT_CONFIG.telDisplay}`;
+  tel.addEventListener('click', () => track(CHAT_CONFIG.events.ctaTelClick, { from: 'chatbot' }));
+
+  wrap.append(line, tel);
+  dom.thread.appendChild(wrap);
+  scrollToBottom();
 }
 
 function showFallback() {
