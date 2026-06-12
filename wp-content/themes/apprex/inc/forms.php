@@ -53,6 +53,21 @@ function apprex_integrations_page() {
 					<p class="description"><?php esc_html_e( '設定すると、チャット・フォーム・資料請求にLINE誘導ボタンが表示されます。', 'apprex' ); ?></p></td>
 				</tr>
 				<tr>
+					<th scope="row"><?php esc_html_e( 'LINE配信バナー：バッジ文言', 'apprex' ); ?></th>
+					<td><input type="text" name="apprex_line_badge" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_line_badge', '📱 新着記事｜APPREX' ) ); ?>" placeholder="📱 新着記事｜APPREX">
+					<p class="description"><?php esc_html_e( '記事公開時にLINEへ送るFlexバナー上部の小見出し（訴求コピー）。', 'apprex' ); ?></p></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'LINE配信バナー：ボタン文言', 'apprex' ); ?></th>
+					<td><input type="text" name="apprex_line_cta" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_line_cta', '記事を読む ▶' ) ); ?>" placeholder="記事を読む ▶">
+					<p class="description"><?php esc_html_e( 'タップで記事へ遷移するボタンのラベル。画像・カード全体もタップで記事に飛びます。', 'apprex' ); ?></p></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'LINE配信バナー：代替画像URL', 'apprex' ); ?></th>
+					<td><input type="url" name="apprex_line_banner_fallback" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_line_banner_fallback', '' ) ); ?>" placeholder="https://example.com/line-banner.png">
+					<p class="description"><?php esc_html_e( 'アイキャッチが無い記事に使うバナー画像（https のPNG/JPEG）。未設定なら画像なしのカードになります。', 'apprex' ); ?></p></td>
+				</tr>
+				<tr>
 					<th scope="row"><?php esc_html_e( '通知先メール', 'apprex' ); ?></th>
 					<td><input type="email" name="apprex_notify_email" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_notify_email', '' ) ); ?>" placeholder="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>">
 					<p class="description"><?php esc_html_e( '未入力時はサイト管理者メールに送信します。', 'apprex' ); ?></p></td>

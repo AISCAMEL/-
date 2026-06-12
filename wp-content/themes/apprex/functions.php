@@ -65,6 +65,7 @@ require_once APPREX_DIR . '/inc/email.php';
 require_once APPREX_DIR . '/inc/forms.php';
 require_once APPREX_DIR . '/inc/ai-blog.php';
 require_once APPREX_DIR . '/inc/blog.php';
+require_once APPREX_DIR . '/inc/line-banner.php';
 require_once APPREX_DIR . '/inc/seo.php';
 require_once APPREX_DIR . '/inc/installer.php';
 
