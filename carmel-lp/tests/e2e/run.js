@@ -106,6 +106,33 @@ async function collect(messages) {
     m3.srv.close();
   }
 
+  // 3.5) チャットログ: 既定オフ / CHAT_LOG=1 でJSONL追記
+  try {
+    const fs = require('fs');
+    const os = require('os');
+    const path = require('path');
+    delete require.cache[require.resolve('../../lib/chat-log')];
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'clog-'));
+    process.env.CHAT_LOG_DIR = dir;
+
+    delete process.env.CHAT_LOG; // 既定: 無効
+    let log = require('../../lib/chat-log');
+    log.appendLog({ messages: [{ role: 'user', content: 'x' }], answer: 'y', model: 'm' });
+    assert.strictEqual(fs.readdirSync(dir).length, 0, '無効時に書き込んでいる');
+
+    process.env.CHAT_LOG = '1'; // 有効化
+    log.appendLog({ messages: [{ role: 'user', content: 'Q?' }], answer: 'A.', model: 'm' });
+    const files = fs.readdirSync(dir).filter((f) => f.endsWith('.jsonl'));
+    assert.strictEqual(files.length, 1, 'JSONLが作られていない');
+    const rec = JSON.parse(fs.readFileSync(path.join(dir, files[0]), 'utf8').trim());
+    assert.strictEqual(rec.question, 'Q?');
+    assert.strictEqual(rec.answer, 'A.');
+    delete process.env.CHAT_LOG;
+    ok('チャットログ（既定オフ / CHAT_LOG=1 でJSONL追記）');
+  } catch (e) {
+    ng('チャットログ', e);
+  }
+
   // 4) APIキー未設定: 明確なエラー
   delete process.env.OPENROUTER_API_KEY;
   try {

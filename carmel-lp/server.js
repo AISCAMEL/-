@@ -17,6 +17,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { streamChat } = require('./lib/carmel-bot');
+const { appendLog } = require('./lib/chat-log');
 
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
@@ -52,13 +53,18 @@ async function handleChat(req, res) {
     });
     try {
       const { messages } = JSON.parse(raw || '{}');
-      await streamChat(
+      let answer = '';
+      const { model } = await streamChat(
         messages,
-        (delta) => res.write(`data: ${JSON.stringify({ delta })}\n\n`),
+        (delta) => {
+          answer += delta;
+          res.write(`data: ${JSON.stringify({ delta })}\n\n`);
+        },
         { referer: req.headers.referer }
       );
       res.write('data: [DONE]\n\n');
       res.end();
+      appendLog({ messages, answer, model }); // CHAT_LOG=1 のとき記録
     } catch (err) {
       sendSseError(res, err && err.message ? err.message : 'chat failed');
     }

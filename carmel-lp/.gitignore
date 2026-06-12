@@ -4,3 +4,6 @@ node_modules/
 *.log
 .DS_Store
 .vercel
+
+# 会話ログ（CHAT_LOG=1 のとき生成。個人情報を含みうるためコミットしない）
+data/chat-logs/

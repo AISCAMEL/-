@@ -14,6 +14,7 @@
 'use strict';
 
 const { streamChat } = require('../lib/carmel-bot');
+const { appendLog } = require('../lib/chat-log');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -33,13 +34,19 @@ module.exports = async function handler(req, res) {
     const body = req.body && typeof req.body === 'object' ? req.body : await readJson(req);
     const messages = (body && body.messages) || [];
 
-    await streamChat(
+    let answer = '';
+    const { model } = await streamChat(
       messages,
-      (delta) => res.write(`data: ${JSON.stringify({ delta })}\n\n`),
+      (delta) => {
+        answer += delta;
+        res.write(`data: ${JSON.stringify({ delta })}\n\n`);
+      },
       { referer: req.headers && req.headers.referer }
     );
     res.write('data: [DONE]\n\n');
     res.end();
+    // CHAT_LOG=1 のとき記録（サーバーレスではFS揮発に注意。CHAT_LOG_DIRで永続先指定推奨）
+    appendLog({ messages, answer, model });
   } catch (err) {
     res.write(`data: ${JSON.stringify({ error: (err && err.message) || 'chat failed' })}\n\n`);
     res.end();
