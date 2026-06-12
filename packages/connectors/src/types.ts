@@ -2,6 +2,8 @@ import type {
   ChannelId,
   ChannelOrder,
   InventorySnapshot,
+  MarketId,
+  MarketListing,
   ShipmentInfo,
   SupplierId,
   SupplierOrderRequest,
@@ -58,6 +60,18 @@ export interface SalesChannelConnector {
   setPublished(externalListingId: string, published: boolean): Promise<void>;
   fetchOrders(since: Date): Promise<ChannelOrder[]>;
   pushTracking(externalOrderId: string, tracking: TrackingInput): Promise<void>;
+}
+
+export interface MarketSearchQuery {
+  keyword: string;
+  /** 取得件数の上限。 */
+  limit?: number;
+}
+
+/** 市場調査コネクタ（Amazon / 楽天 が実装）。売値の調査に使う。 */
+export interface MarketResearchConnector {
+  readonly id: MarketId;
+  searchListings(query: MarketSearchQuery): Promise<MarketListing[]>;
 }
 
 /** コネクタ動作モード。live は実APIを叩く。 */

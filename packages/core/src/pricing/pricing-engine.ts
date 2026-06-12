@@ -41,14 +41,22 @@ const roundUpTo = (value: number, unit: number): number =>
   unit <= 0 ? value : Math.ceil(value / unit) * unit;
 
 /**
- * 販売価格を算出する。外部I/Oを持たない純粋関数。
+ * 着地原価（landed cost）= 仕入れて手元に届くまでの総コスト（JPY）。
  *
  *   landedCost = 仕入原価×為替×(1+関税) + 国際送料 + 国内送料
- *   税抜売価   = (landedCost + 利益) / (1 - 手数料率)   ← 手数料で割り戻し
+ */
+export function computeLandedCost(input: PriceInput, rule: PriceRule): number {
+  const costJpy = input.cost * rule.fxRateToJpy * (1 + rule.dutyRate);
+  return costJpy + rule.intlShippingPerUnit + rule.domesticShipping;
+}
+
+/**
+ * 販売価格を算出する。外部I/Oを持たない純粋関数。
+ *
+ *   税抜売価 = (landedCost + 利益) / (1 - 手数料率)   ← 手数料で割り戻し
  */
 export function calculateSellPrice(input: PriceInput, rule: PriceRule): PriceResult {
-  const costJpy = input.cost * rule.fxRateToJpy * (1 + rule.dutyRate);
-  const landedCost = costJpy + rule.intlShippingPerUnit + rule.domesticShipping;
+  const landedCost = computeLandedCost(input, rule);
 
   const targetProfit =
     rule.margin.type === "fixed" ? rule.margin.value : landedCost * rule.margin.value;

@@ -53,6 +53,12 @@ pnpm typecheck
 ## API クイック例（mock）
 
 ```bash
+# 市場調査（Amazon・楽天で売値を調べ、仕入れ値と突き合わせて利益率/ROIを算出）
+curl -X POST localhost:3001/research \
+  -H 'content-type: application/json' \
+  -d '{"keyword":"ワイヤレスイヤホン","markets":["amazon","rakuten"],"supplierId":"theckb","externalId":"CKB-0001"}'
+#  → 市場の min/median/max ＋「市場中央値/最安値/最安値-5%」での利益・利益率・ROI
+
 # 仕入れ商品の取り込み（価格計算＋規約チェック）
 curl -X POST localhost:3001/products/import \
   -H 'content-type: application/json' \
