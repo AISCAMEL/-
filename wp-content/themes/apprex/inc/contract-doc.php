@@ -390,10 +390,42 @@ function apprex_contract_doc_body( $contract_id ) {
 	return strtr( $tpl, $map );
 }
 
-/** 契約書のスタンドアロンHTML（A4印刷最適化）を出力。 */
+/**
+ * 本文HTMLを「前文」「各条」「署名欄」のブロックに包み、
+ * ページ途中で条文が割れないよう印刷制御できるようにする。
+ *
+ * @param string $body 差し込み済み本文HTML。
+ * @return string
+ */
+function apprex_contract_doc_wrap( $body ) {
+	$sign = '';
+	$pos  = strpos( $body, '<div class="apprex-doc-sign"' );
+	if ( false !== $pos ) {
+		$sign = substr( $body, $pos );
+		$body = substr( $body, 0, $pos );
+	}
+	$parts = preg_split( '/(?=<h2)/', $body );
+	$out   = '';
+	foreach ( $parts as $p ) {
+		if ( '' === trim( $p ) ) {
+			continue;
+		}
+		if ( 0 === strpos( ltrim( $p ), '<h2' ) ) {
+			$out .= '<section class="apprex-doc-art">' . $p . '</section>';
+		} else {
+			$out .= '<div class="apprex-doc-head">' . $p . '</div>';
+		}
+	}
+	if ( '' !== $sign ) {
+		$out .= '<div class="apprex-doc-signwrap">' . $sign . '</div>';
+	}
+	return $out;
+}
+
+/** 契約書のスタンドアロンHTML（A4印刷最適化・明朝体）を出力。 */
 function apprex_render_contract_document( $contract_id ) {
 	$title  = get_option( 'apprex_contract_doc_title', '契約書' );
-	$body   = apprex_contract_doc_body( $contract_id );
+	$body   = apprex_contract_doc_wrap( apprex_contract_doc_body( $contract_id ) );
 	$status = get_post_meta( $contract_id, 'apprex_c_mf_status', true );
 	$signed = 'signed' === $status;
 	$sdate  = get_post_meta( $contract_id, 'apprex_c_mf_signed_at', true );
@@ -408,21 +440,49 @@ function apprex_render_contract_document( $contract_id ) {
 	<title><?php echo esc_html( $title ); ?></title>
 	<style>
 		*{box-sizing:border-box}
-		body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;color:#111827;line-height:1.9;margin:0;background:#f3f4f6}
-		.apprex-doc-toolbar{position:sticky;top:0;background:#111827;color:#fff;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+		body{
+			font-family:"Yu Mincho","YuMincho","Hiragino Mincho ProN","Hiragino Mincho Pro","HiraMinProN-W3","MS PMincho","Noto Serif JP",serif;
+			color:#1a1a1a;line-height:1.95;margin:0;background:#e9ebee;
+			font-feature-settings:"palt";text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;
+		}
+		.apprex-doc-toolbar{position:sticky;top:0;z-index:5;background:#1f2937;color:#fff;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif}
 		.apprex-doc-toolbar button{background:#2563eb;color:#fff;border:0;border-radius:6px;padding:8px 18px;font-size:14px;cursor:pointer}
-		.apprex-doc-sheet{max-width:820px;margin:18px auto;background:#fff;padding:48px 56px;box-shadow:0 1px 6px rgba(0,0,0,.12)}
-		.apprex-doc-sheet h1{font-size:24px;text-align:center;margin:0 0 28px;letter-spacing:.1em}
-		.apprex-doc-sheet h2{font-size:16px;margin:24px 0 6px;border-left:4px solid #2563eb;padding-left:10px}
-		.apprex-doc-sheet ul{margin:6px 0 6px 1.2em}
-		.apprex-doc-sign{margin-top:40px;padding-top:18px;border-top:1px solid #d1d5db}
-		.apprex-doc-stamp{display:inline-block;margin-top:10px;color:#16a34a;border:2px solid #16a34a;border-radius:8px;padding:6px 14px;font-weight:bold;transform:rotate(-4deg)}
-		@media print{body{background:#fff}.apprex-doc-toolbar{display:none}.apprex-doc-sheet{box-shadow:none;margin:0;max-width:none;padding:0}@page{margin:18mm}}
+
+		/* A4用紙イメージ（画面表示） */
+		.apprex-doc-sheet{
+			width:210mm;max-width:100%;min-height:297mm;margin:22px auto;background:#fff;
+			padding:24mm 22mm;box-shadow:0 2px 14px rgba(0,0,0,.16);
+		}
+		.apprex-doc-sheet h1{
+			font-size:25px;text-align:center;margin:0 0 6px;letter-spacing:.45em;text-indent:.45em;font-weight:700;
+		}
+		.apprex-doc-head{margin-bottom:10mm}
+		.apprex-doc-head::after{content:"";display:block;width:64px;height:2px;background:#1a1a1a;margin:10px auto 18px}
+		.apprex-doc-head p{text-align:justify;margin:0 0 12px}
+
+		.apprex-doc-art{break-inside:avoid;page-break-inside:avoid;margin:0 0 9px}
+		.apprex-doc-art h2{
+			font-size:16px;font-weight:700;margin:16px 0 6px;padding-bottom:3px;
+			border-bottom:1px solid #cfcfcf;break-after:avoid;page-break-after:avoid;
+		}
+		.apprex-doc-art p{text-align:justify;margin:0 0 8px;orphans:2;widows:2}
+
+		.apprex-doc-signwrap{break-inside:avoid;page-break-inside:avoid;break-before:auto;margin-top:14mm}
+		.apprex-doc-sign{margin-top:0;padding-top:0;display:flex;flex-wrap:wrap;gap:10mm}
+		.apprex-doc-sign p{margin:0;min-width:60mm;line-height:2.4}
+		.apprex-doc-stamp{display:inline-block;margin-top:14px;color:#b91c1c;border:2px solid #b91c1c;border-radius:8px;padding:6px 16px;font-weight:bold;transform:rotate(-5deg);font-family:"Yu Mincho",serif}
+
+		@media print{
+			html,body{background:#fff}
+			.apprex-doc-toolbar{display:none}
+			.apprex-doc-sheet{width:auto;min-height:0;margin:0;padding:0;box-shadow:none}
+			@page{size:A4;margin:20mm 18mm}
+		}
 	</style>
 </head>
 <body>
 	<div class="apprex-doc-toolbar">
-		<span>契約書プレビュー（「PDFで保存」から保存できます）</span>
+		<span>契約書プレビュー（「印刷 / PDFで保存」からA4で保存できます）</span>
 		<button type="button" onclick="window.print()">🖨 印刷 / PDFで保存</button>
 	</div>
 	<div class="apprex-doc-sheet">
