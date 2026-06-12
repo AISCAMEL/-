@@ -62,47 +62,40 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
+-- 権限ヘルパー（SECURITY DEFINER で RLS を回避し、自己参照の無限再帰を防ぐ）
+-- ※ ポリシー内で members を直接参照すると無限再帰になるため、必ずこの関数を使う。
+create or replace function public.current_member_role()
+returns member_role language sql stable security definer set search_path = public as $$
+  select role from public.members where id = auth.uid();
+$$;
+
+create or replace function public.is_staff()
+returns boolean language sql stable security definer set search_path = public as $$
+  select coalesce(
+    (select role in ('staff', 'admin') from public.members where id = auth.uid()),
+    false
+  );
+$$;
+
 -- RLS（UI + API + RLS の三重化の「DB層」）---------------------
 alter table public.members enable row level security;
 
--- 自分のプロフィールは参照可能
-create policy "members can read own profile"
-  on public.members for select
-  using (auth.uid() = id);
-
--- 公開プロフィール（他会員）も最低限は参照可能（ぼかし制御はアプリ層）
-create policy "authenticated can read public profiles"
+-- 認証済みは会員プロフィールを参照可能（ぼかし等のUI制御はアプリ層）
+create policy "authenticated can read profiles"
   on public.members for select
   to authenticated
   using (true);
 
--- 自分のプロフィールのみ更新可能（role / plan / status は本人変更不可）
+-- 自分のプロフィールのみ更新可能
+-- （role / plan / status の本人変更は次フェーズで管理用 RPC に限定する）
 create policy "members can update own profile"
   on public.members for update
+  to authenticated
   using (auth.uid() = id)
   with check (auth.uid() = id);
 
--- staff / admin は全会員を参照・更新可能（管理画面用）
-create policy "staff can read all members"
-  on public.members for select
-  to authenticated
-  using (
-    exists (
-      select 1 from public.members m
-      where m.id = auth.uid() and m.role in ('staff', 'admin')
-    )
-  );
-
+-- staff / admin は全会員を更新可能（管理画面用）。再帰回避のため is_staff() を使用
 create policy "staff can update all members"
   on public.members for update
   to authenticated
-  using (
-    exists (
-      select 1 from public.members m
-      where m.id = auth.uid() and m.role in ('staff', 'admin')
-    )
-  );
-
--- 注意: role / plan / status の変更は本人ポリシーの with check では
--- 区別できないため、実運用では「管理用 RPC or サービスロール」経由で
--- 変更する想定（次フェーズで関数化）。MVP では staff ポリシーで対応。
+  using (public.is_staff());
