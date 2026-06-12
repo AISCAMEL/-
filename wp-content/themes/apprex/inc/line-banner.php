@@ -48,6 +48,14 @@ function apprex_line_flex_build( $data ) {
 	if ( '' === $title || '' === $url ) {
 		return null;
 	}
+	// 日本語スラッグだと長大なURLになるため、短縮リンク（?p=ID）を優先。
+	$link = '';
+	if ( ! empty( $data['id'] ) ) {
+		$link = wp_get_shortlink( (int) $data['id'] );
+	}
+	if ( '' === $link ) {
+		$link = $url;
+	}
 	$excerpt = isset( $data['excerpt'] ) ? trim( wp_strip_all_tags( (string) $data['excerpt'] ) ) : '';
 	$banner  = ! empty( $data['image'] ) ? (string) $data['image'] : apprex_line_banner_fallback();
 
@@ -55,7 +63,7 @@ function apprex_line_flex_build( $data ) {
 	$action = array(
 		'type'  => 'uri',
 		'label' => '記事を読む',
-		'uri'   => $url,
+		'uri'   => $link,
 	);
 
 	// 本文（バッジ＋タイトル＋抜粋）。
@@ -110,7 +118,7 @@ function apprex_line_flex_build( $data ) {
 					'action' => array(
 						'type'  => 'uri',
 						'label' => mb_substr( apprex_line_cta_text(), 0, 40 ),
-						'uri'   => $url,
+						'uri'   => $link,
 					),
 				),
 			),
@@ -149,6 +157,13 @@ add_filter( 'apprex_dispatch_payload', function ( $payload, $event, $data ) {
 	if ( $flex ) {
 		$payload['data']['line_flex'] = $flex;          // GASはこれをLINEへ転送。
 		$payload['data']['line_alt']  = $flex['altText']; // 通知/フォールバック用。
+	}
+	// 短縮URL（?p=ID）も付与：テキスト配信時もURLを短く保てる。
+	if ( ! empty( $data['id'] ) ) {
+		$short = wp_get_shortlink( (int) $data['id'] );
+		if ( $short ) {
+			$payload['data']['short_url'] = $short;
+		}
 	}
 	return $payload;
 }, 10, 3 );
