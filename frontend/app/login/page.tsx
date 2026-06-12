@@ -15,7 +15,7 @@ export default function LoginPage() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setSession({ token: 'dev', role, email });
-    router.push('/dashboard');
+    router.push(role === 'super_admin' ? '/overview' : '/dashboard');
   }
 
   return (

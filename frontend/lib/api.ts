@@ -62,6 +62,7 @@ export const api = {
   invoice: (month?: string) => request<any>(`/api/usage/invoice${month ? `?month=${month}` : ''}`),
 
   // リード管理（運営・super_admin）
+  overview: () => request<any>('/api/admin/overview'),
   leads: (qs = '') => request<any[]>(`/api/admin/leads${qs}`),
   lead: (id: string) => request<any>(`/api/admin/leads/${id}`),
   updateLead: (id: string, body: any) => request<any>(`/api/admin/leads/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),

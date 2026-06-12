@@ -3,6 +3,7 @@ import { config } from '../config.js';
 import { requireSuperAdmin } from '../auth/jwt.js';
 import { sendEmail } from '../notify/email.js';
 import * as leads from './repo.js';
+import { listTenants, getAdminUsageSummary } from '../db/queries.js';
 
 // 問い合わせ導線のルート。
 //   公開: POST /api/public/leads（LPフォーム。認証なし）
@@ -38,6 +39,32 @@ export async function registerLeadRoutes(app: FastifyInstance): Promise<void> {
     ).catch((err) => app.log.error({ err }, 'lead notify failed'));
 
     return reply.code(201).send({ ok: true, id: lead.id });
+  });
+
+  // --- 運営ダッシュボード（経営KPI） ---
+  app.get('/api/admin/overview', { preHandler: requireSuperAdmin }, async () => {
+    const [tenants, usage, leadStats, meetings, recentLeads] = await Promise.all([
+      listTenants(),
+      getAdminUsageSummary(),
+      leads.getLeadStats(),
+      leads.getUpcomingMeetings(5),
+      leads.getRecentLeads(6),
+    ]);
+    const byTenantStatus: Record<string, number> = {};
+    for (const t of tenants) byTenantStatus[t.status] = (byTenantStatus[t.status] ?? 0) + 1;
+    const wonLost = leadStats.won + leadStats.lost;
+    return {
+      tenants: { total: tenants.length, active: byTenantStatus['active'] ?? 0, trial: byTenantStatus['trial'] ?? 0, by_status: byTenantStatus },
+      mrr_jpy: usage.totals.revenue_jpy,             // 当月の見込み売上をMRR目安に
+      cost_jpy: usage.totals.cost_jpy,
+      margin_jpy: usage.totals.margin_jpy,
+      calls_this_month: usage.totals.calls,
+      leads: leadStats,
+      conversion_rate: wonLost > 0 ? Math.round((leadStats.won / wonLost) * 1000) / 10 : 0,
+      upcoming_meetings: meetings,
+      recent_leads: recentLeads,
+      month: usage.month,
+    };
   });
 
   // --- 運営（受信箱） ---

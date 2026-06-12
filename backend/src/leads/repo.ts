@@ -230,6 +230,57 @@ export async function processDueEmails(): Promise<number> {
   return sent;
 }
 
+// ---- 集計（運営ダッシュボード用） ----
+export async function getLeadStats() {
+  if (!dbEnabled) {
+    const monthStart = new Date(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1).toISOString();
+    const byStatus: Record<string, number> = {};
+    for (const l of mem.leads) byStatus[l.status] = (byStatus[l.status] ?? 0) + 1;
+    return {
+      total: mem.leads.length,
+      new: mem.leads.filter((l) => l.status === 'new').length,
+      this_month: mem.leads.filter((l) => l.created_at >= monthStart).length,
+      won: mem.leads.filter((l) => l.status === 'won').length,
+      lost: mem.leads.filter((l) => l.status === 'lost').length,
+      by_status: byStatus,
+    };
+  }
+  const [r] = await query<any>(
+    `select count(*)::int as total,
+            count(*) filter (where status='new')::int as new,
+            count(*) filter (where created_at >= date_trunc('month', now()))::int as this_month,
+            count(*) filter (where status='won')::int as won,
+            count(*) filter (where status='lost')::int as lost
+       from leads`);
+  const byRows = await query<any>(`select status, count(*)::int as n from leads group by status`);
+  const by_status: Record<string, number> = {};
+  byRows.forEach((x) => { by_status[x.status] = x.n; });
+  return { ...r, by_status };
+}
+
+/** 今後の商談（予定日時が現在以降）。 */
+export async function getUpcomingMeetings(limit = 5) {
+  const nowIso = new Date().toISOString();
+  if (!dbEnabled) {
+    return mem.meetings
+      .filter((m) => m.scheduled_at && m.scheduled_at >= nowIso && m.status !== 'canceled')
+      .sort((a, b) => (a.scheduled_at ?? '').localeCompare(b.scheduled_at ?? ''))
+      .slice(0, limit)
+      .map((m) => ({ ...m, lead_name: mem.leads.find((l) => l.id === m.lead_id)?.name ?? null }));
+  }
+  return query<any>(
+    `select m.id, m.lead_id, m.title, m.scheduled_at, m.status, l.name as lead_name, l.company
+       from meetings m join leads l on l.id = m.lead_id
+      where m.scheduled_at >= now() and m.status <> 'canceled'
+      order by m.scheduled_at limit $1`, [limit]);
+}
+
+/** 最近のリード（運営ダッシュボード用）。 */
+export async function getRecentLeads(limit = 6) {
+  const all = await listLeads({});
+  return all.slice(0, limit);
+}
+
 function seedDemo() {
   if (dbEnabled) return;
   const now = Date.now();

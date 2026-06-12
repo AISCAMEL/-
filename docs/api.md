@@ -85,6 +85,11 @@
 | GET | `/api/usage/export` | 通話明細CSV（UTF-8 BOM） |
 | GET | `/api/admin/usage` | 全テナント横断の利用・原価（super_admin） |
 
+## 運営ダッシュボード API
+| Method | Path | 認証 | 説明 |
+|--------|------|------|------|
+| GET | `/api/admin/overview` | super_admin | 経営KPI（MRR・粗利・テナント数・通話数・リード/成約率・今後の商談・最近のリード） |
+
 ## 問い合わせ導線 / リード管理 API
 | Method | Path | 認証 | 説明 |
 |--------|------|------|------|

@@ -5,7 +5,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { clearSession, getSession, type Session } from '@/lib/auth';
 
-const nav = [
+// テナント（店舗・企業）向けナビ
+const tenantNav = [
   { href: '/dashboard', label: 'ダッシュボード', icon: '📊' },
   { href: '/calls', label: '通話履歴', icon: '📞' },
   { href: '/usage', label: '利用状況・原価', icon: '💰' },
@@ -13,6 +14,14 @@ const nav = [
   { href: '/settings/ai', label: 'AI設定', icon: '🤖' },
   { href: '/settings/notification', label: '通知設定', icon: '✉️' },
   { href: '/phone-numbers', label: '電話番号設定', icon: '☎️' },
+];
+
+// 運営者（自社・super_admin）向けナビ
+const operatorNav = [
+  { href: '/overview', label: '運営ダッシュボード', icon: '📈' },
+  { href: '/leads', label: '問い合わせ管理', icon: '📥' },
+  { href: '/usage', label: '利用・売上', icon: '💰' },
+  { href: '/admin', label: 'テナント管理', icon: '🏢' },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -38,15 +47,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     router.replace('/login');
   }
 
-  const canManageUsers = ['owner', 'admin', 'super_admin'].includes(session?.role ?? '');
-  const items = [
-    ...nav,
-    ...(canManageUsers ? [{ href: '/settings/users', label: 'ユーザー管理', icon: '👥' }] : []),
-    ...(session?.role === 'super_admin' ? [
-      { href: '/leads', label: '問い合わせ管理', icon: '📥' },
-      { href: '/admin', label: 'Super Admin', icon: '🛡️' },
-    ] : []),
-  ];
+  const isSuper = session?.role === 'super_admin';
+  const canManageUsers = ['owner', 'admin'].includes(session?.role ?? '');
+  const items = isSuper
+    ? operatorNav
+    : [
+        ...tenantNav,
+        ...(canManageUsers ? [{ href: '/settings/users', label: 'ユーザー管理', icon: '👥' }] : []),
+      ];
 
   return (
     <div className="flex min-h-screen">
