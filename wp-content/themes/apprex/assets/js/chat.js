@@ -44,6 +44,7 @@
 		function openWidget() {
 			widget.hidden = false;
 			widget.classList.add('is-open');
+			toggle.classList.add('has-seen');
 			toggle.setAttribute('aria-expanded', 'true');
 			if (!greeted) {
 				greeted = true;
@@ -80,8 +81,11 @@
 		function setTyping(on) {
 			var existing = log.querySelector('.apprex-msg--typing');
 			if (on && !existing) {
-				var el = addMessage('assistant', '…');
-				el.classList.add('apprex-msg--typing');
+				var el = document.createElement('div');
+				el.className = 'apprex-msg apprex-msg--assistant apprex-msg--typing';
+				el.innerHTML = '<span class="apprex-typing"><span></span><span></span><span></span></span>';
+				log.appendChild(el);
+				log.scrollTop = log.scrollHeight;
 			} else if (!on && existing) {
 				existing.remove();
 			}
