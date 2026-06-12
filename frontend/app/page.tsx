@@ -47,12 +47,12 @@ export default function LandingPage() {
             営業時間外も、接客中も、移動中も。AIが自然な日本語でお客様の要件を聞き取り、必要な情報だけをあなたに届けます。
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-            <Link href="/login" className="rounded-lg bg-brand px-8 py-3 font-semibold text-white hover:bg-brand-dark">
+            <Link href="/contact" className="rounded-lg bg-brand px-8 py-3 font-semibold text-white hover:bg-brand-dark">
               無料デモを試す
             </Link>
-            <a href="#plans" className="rounded-lg border border-gray-300 px-8 py-3 font-semibold text-gray-700 hover:bg-gray-50">
+            <Link href="/contact" className="rounded-lg border border-gray-300 px-8 py-3 font-semibold text-gray-700 hover:bg-gray-50">
               資料請求する
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -111,7 +111,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-4xl px-6 py-16 text-center text-white">
           <h2 className="text-3xl font-bold">まずは御社専用のAI電話番号で1週間テスト。</h2>
           <p className="mt-4 text-brand-light">電話に出られなかった問い合わせ、もう逃しません。</p>
-          <Link href="/login" className="mt-8 inline-block rounded-lg bg-white px-8 py-3 font-semibold text-brand hover:bg-gray-100">
+          <Link href="/contact" className="mt-8 inline-block rounded-lg bg-white px-8 py-3 font-semibold text-brand hover:bg-gray-100">
             無料デモを試す
           </Link>
         </div>

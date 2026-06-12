@@ -42,7 +42,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const items = [
     ...nav,
     ...(canManageUsers ? [{ href: '/settings/users', label: 'ユーザー管理', icon: '👥' }] : []),
-    ...(session?.role === 'super_admin' ? [{ href: '/admin', label: 'Super Admin', icon: '🛡️' }] : []),
+    ...(session?.role === 'super_admin' ? [
+      { href: '/leads', label: '問い合わせ管理', icon: '📥' },
+      { href: '/admin', label: 'Super Admin', icon: '🛡️' },
+    ] : []),
   ];
 
   return (

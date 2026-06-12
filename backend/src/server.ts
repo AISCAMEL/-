@@ -8,6 +8,8 @@ import { llmEnabled } from './ai/llm.js';
 import { registerTwilioRoutes } from './twilio/routes.js';
 import { registerConversationWs } from './ws/conversation.js';
 import { registerApiRoutes } from './api/routes.js';
+import { registerLeadRoutes } from './leads/routes.js';
+import { processDueEmails } from './leads/repo.js';
 
 async function main() {
   const app = Fastify({ logger: true });
@@ -27,6 +29,15 @@ async function main() {
   await registerTwilioRoutes(app);
   await registerConversationWs(app);
   await registerApiRoutes(app);
+  await registerLeadRoutes(app);
+
+  // ステップメール worker（予定時刻を過ぎたメールを定期送信）。
+  if (config.leadWorkerIntervalSec > 0) {
+    const tick = () => processDueEmails()
+      .then((n) => { if (n > 0) app.log.info(`[lead-worker] sent ${n} emails`); })
+      .catch((err) => app.log.error({ err }, 'lead-worker failed'));
+    setInterval(tick, config.leadWorkerIntervalSec * 1000).unref();
+  }
 
   try {
     await app.listen({ port: config.port, host: '0.0.0.0' });

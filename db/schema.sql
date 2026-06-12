@@ -355,3 +355,97 @@ select
 from calls
 where started_at >= date_trunc('day', now())
 group by tenant_id;
+
+-- =============================================================
+-- 問い合わせ導線（リード管理）  ※運営者(自社)向け・テナント非依存
+--   LP問い合わせ/資料請求 → リード → ステップメール → 商談 → 受注後フォロー
+-- =============================================================
+do $$ begin
+  create type lead_source   as enum ('lp_form','contact','demo_request','referral','manual','phone');
+exception when duplicate_object then null; end $$;
+do $$ begin
+  create type lead_category as enum ('inquiry','consultation','demo','document','order_followup','other');
+exception when duplicate_object then null; end $$;
+do $$ begin
+  create type lead_status   as enum ('new','contacted','in_progress','meeting_scheduled','won','lost','closed');
+exception when duplicate_object then null; end $$;
+do $$ begin
+  create type meeting_status as enum ('proposed','confirmed','done','canceled');
+exception when duplicate_object then null; end $$;
+do $$ begin
+  create type scheduled_email_status as enum ('pending','sent','failed','canceled');
+exception when duplicate_object then null; end $$;
+
+create table if not exists leads (
+  id           uuid primary key default gen_random_uuid(),
+  source       lead_source   not null default 'lp_form',
+  category     lead_category not null default 'inquiry',
+  status       lead_status   not null default 'new',
+  name         text,
+  company      text,
+  email        text,
+  phone        text,
+  industry     text,
+  message      text,
+  assigned_to  uuid references app_users(id) on delete set null,
+  meta         jsonb not null default '{}'::jsonb,   -- utm等
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+create index if not exists idx_leads_status on leads(status, created_at desc);
+create trigger trg_leads_updated before update on leads
+  for each row execute function set_updated_at();
+
+create table if not exists lead_notes (
+  id         uuid primary key default gen_random_uuid(),
+  lead_id    uuid not null references leads(id) on delete cascade,
+  user_id    uuid references app_users(id) on delete set null,
+  note       text not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_lead_notes_lead on lead_notes(lead_id, created_at);
+
+create table if not exists meetings (
+  id           uuid primary key default gen_random_uuid(),
+  lead_id      uuid not null references leads(id) on delete cascade,
+  title        text not null default '商談・ご相談',
+  scheduled_at timestamptz,
+  status       meeting_status not null default 'proposed',
+  meeting_url  text,
+  note         text,
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+create index if not exists idx_meetings_lead on meetings(lead_id, created_at);
+create trigger trg_meetings_updated before update on meetings
+  for each row execute function set_updated_at();
+
+-- ステップメールの送信予約（アウトボックス）。本文はリード作成時に確定して積む。
+create table if not exists scheduled_emails (
+  id           uuid primary key default gen_random_uuid(),
+  lead_id      uuid not null references leads(id) on delete cascade,
+  step_no      integer not null,
+  subject      text not null,
+  body         text not null,
+  to_email     text not null,
+  scheduled_at timestamptz not null,
+  status       scheduled_email_status not null default 'pending',
+  sent_at      timestamptz,
+  error        text,
+  created_at   timestamptz not null default now()
+);
+create index if not exists idx_scheduled_emails_due on scheduled_emails(status, scheduled_at);
+
+-- これらは運営者(super_admin)のみ参照。RLSで保護。
+alter table leads            enable row level security;
+alter table lead_notes       enable row level security;
+alter table meetings         enable row level security;
+alter table scheduled_emails enable row level security;
+do $$
+declare t text;
+begin
+  foreach t in array array['leads','lead_notes','meetings','scheduled_emails'] loop
+    execute format('drop policy if exists operator_only on %I;', t);
+    execute format('create policy operator_only on %I using (is_super_admin()) with check (is_super_admin());', t);
+  end loop;
+end $$;

@@ -9,40 +9,31 @@ export interface CallNotificationInput {
 
 const SUBJECT = '【AIオペレーター24】新しい電話受付がありました';
 
-/** 通話終了メールを送る。Resend 未設定時はコンソール出力（デモ用）。 */
-export async function sendCallNotification(
-  to: string,
-  input: CallNotificationInput,
-): Promise<{ ok: boolean; error?: string }> {
-  const body = renderBody(input);
-
+/** 汎用メール送信。Resend 未設定時はコンソール出力（デモ用）。 */
+export async function sendEmail(to: string, subject: string, text: string): Promise<{ ok: boolean; error?: string }> {
   if (!config.mail.resendApiKey) {
-    console.log(`[notify:email] (dry-run) to=${to}\n件名: ${SUBJECT}\n${body}`);
+    console.log(`[email] (dry-run) to=${to}\n件名: ${subject}\n${text}\n---`);
     return { ok: true };
   }
-
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${config.mail.resendApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: config.mail.from,
-        to: [to],
-        subject: SUBJECT,
-        text: body,
-      }),
+      headers: { Authorization: `Bearer ${config.mail.resendApiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: config.mail.from, to: [to], subject, text }),
     });
-    if (!res.ok) {
-      const error = `Resend ${res.status}: ${await res.text()}`;
-      return { ok: false, error };
-    }
+    if (!res.ok) return { ok: false, error: `Resend ${res.status}: ${await res.text()}` };
     return { ok: true };
   } catch (err) {
     return { ok: false, error: String(err) };
   }
+}
+
+/** 通話終了メールを送る。 */
+export async function sendCallNotification(
+  to: string,
+  input: CallNotificationInput,
+): Promise<{ ok: boolean; error?: string }> {
+  return sendEmail(to, SUBJECT, renderBody(input));
 }
 
 // docs/api.md の本文項目に準拠。

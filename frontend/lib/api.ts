@@ -60,6 +60,40 @@ export const api = {
   usage: (month?: string) => request<any>(`/api/usage${month ? `?month=${month}` : ''}`),
   adminUsage: (month?: string) => request<any>(`/api/admin/usage${month ? `?month=${month}` : ''}`),
   invoice: (month?: string) => request<any>(`/api/usage/invoice${month ? `?month=${month}` : ''}`),
+
+  // リード管理（運営・super_admin）
+  leads: (qs = '') => request<any[]>(`/api/admin/leads${qs}`),
+  lead: (id: string) => request<any>(`/api/admin/leads/${id}`),
+  updateLead: (id: string, body: any) => request<any>(`/api/admin/leads/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  addLeadNote: (id: string, note: string) => request<any>(`/api/admin/leads/${id}/notes`, { method: 'POST', body: JSON.stringify({ note }) }),
+  createMeeting: (id: string, body: any) => request<any>(`/api/admin/leads/${id}/meetings`, { method: 'POST', body: JSON.stringify(body) }),
+  updateMeeting: (id: string, body: any) => request<any>(`/api/admin/meetings/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  sendLeadEmail: (id: string, subject: string, body: string) => request<any>(`/api/admin/leads/${id}/email`, { method: 'POST', body: JSON.stringify({ subject, body }) }),
+};
+
+const PUBLIC_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
+
+/** LP公開フォームからの問い合わせ送信（認証なし）。 */
+export async function submitLead(body: Record<string, unknown>): Promise<{ ok: boolean; id?: string }> {
+  const res = await fetch(`${PUBLIC_BASE}/api/public/leads`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const t = await res.json().catch(() => ({}));
+    throw new Error((t as any).error ?? `${res.status}`);
+  }
+  return res.json();
+}
+
+export const LEAD_STATUS_LABEL: Record<string, string> = {
+  new: '新規', contacted: '連絡済', in_progress: '対応中',
+  meeting_scheduled: '商談設定', won: '受注', lost: '失注', closed: 'クローズ',
+};
+export const LEAD_CATEGORY_LABEL: Record<string, string> = {
+  inquiry: 'お問い合わせ', consultation: 'ご相談', demo: 'デモ希望',
+  document: '資料請求', order_followup: '受注後連絡', other: 'その他',
 };
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';

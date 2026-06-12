@@ -39,6 +39,11 @@ export const config = {
   // デモテナント（seed.sql の固定 UUID）。
   demoTenantId: process.env.DEMO_TENANT_ID ?? '00000000-0000-0000-0000-000000000001',
 
+  // 新規リード（問い合わせ）の通知先（自社営業）。
+  leadsNotifyEmail: process.env.LEADS_NOTIFY_EMAIL ?? 'sales@ai-operator24.com',
+  // ステップメール worker の実行間隔(秒)。0で無効。
+  leadWorkerIntervalSec: Number(process.env.LEAD_WORKER_INTERVAL_SEC ?? 60),
+
   // 管理画面フロントの許可オリジン（CORS）。
   corsOrigin: process.env.CORS_ORIGIN ?? '*',
 

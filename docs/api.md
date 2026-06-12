@@ -85,6 +85,22 @@
 | GET | `/api/usage/export` | 通話明細CSV（UTF-8 BOM） |
 | GET | `/api/admin/usage` | 全テナント横断の利用・原価（super_admin） |
 
+## 問い合わせ導線 / リード管理 API
+| Method | Path | 認証 | 説明 |
+|--------|------|------|------|
+| POST | `/api/public/leads` | なし（公開） | LPフォーム送信。リード作成＋ステップメール予約＋自社通知 |
+| GET  | `/api/admin/leads` | super_admin | リード一覧（status/category/q フィルタ） |
+| GET  | `/api/admin/leads/{id}` | super_admin | 詳細（メモ・商談・ステップメール） |
+| PATCH| `/api/admin/leads/{id}` | super_admin | ステータス・種別・担当変更 |
+| POST | `/api/admin/leads/{id}/notes` | super_admin | 対応メモ追加 |
+| POST | `/api/admin/leads/{id}/meetings` | super_admin | 商談・ミーティング作成 |
+| PATCH| `/api/admin/meetings/{id}` | super_admin | 商談ステータス・日時更新 |
+| POST | `/api/admin/leads/{id}/email` | super_admin | 個別メール送信 |
+| POST | `/api/admin/leads-worker/run` | super_admin | ステップメール送信を手動実行 |
+
+- ステップメール既定シナリオ：即時お礼 → 翌日資料 → 3日後事例 → 7日後デモ案内（`backend/src/leads/sequence.ts`）。
+- 受注/失注/クローズに変更すると未送信のステップメールは自動停止。
+
 ## Super Admin API
 | Method | Path |
 |--------|------|
