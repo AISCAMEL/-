@@ -12,6 +12,7 @@ import type { ChannelId, MarketId, SupplierId } from "@hub/core";
 import { loadConfig } from "./config.js";
 import { importProduct, publishToChannel } from "./services/listing-service.js";
 import { researchMarket } from "./services/research-service.js";
+import { screenCandidates } from "./services/screening-service.js";
 
 export function buildServer() {
   const config = loadConfig();
@@ -81,6 +82,39 @@ export function buildServer() {
 
     const result = await researchMarket({ keyword, markets: selectedMarkets, limit, supplier });
     return result;
+  });
+
+  // 一括スクリーニング: 複数候補を調査・採点し、利益率/グレードで足切りしてランキング
+  const screenSchema = z.object({
+    candidates: z
+      .array(
+        z.object({
+          supplierId: z.enum(["alibaba", "theckb"]),
+          externalId: z.string(),
+          keyword: z.string().optional(),
+        }),
+      )
+      .min(1),
+    markets: z.array(z.enum(["amazon", "rakuten"])).default(["amazon", "rakuten"]),
+    minMarginRate: z.number().min(0).max(1).optional(),
+    minGrade: z.enum(["A", "B", "C"]).optional(),
+    limit: z.number().int().positive().max(50).optional(),
+  });
+  app.post("/research/screen", async (req, reply) => {
+    const parsed = screenSchema.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
+    const { candidates, markets: marketIds, minMarginRate, minGrade, limit } = parsed.data;
+
+    const selectedMarkets = marketIds.map(getMarket).filter((m): m is MarketResearchConnector => !!m);
+    if (selectedMarkets.length === 0) return reply.code(404).send({ error: "no valid market" });
+
+    const ranked = await screenCandidates({
+      candidates,
+      resolveSupplier: getSupplier,
+      markets: selectedMarkets,
+      options: { minMarginRate, minGrade, limit },
+    });
+    return { count: ranked.length, items: ranked };
   });
 
   // BASE へ出品

@@ -22,11 +22,7 @@ export class RakutenConnector implements MarketResearchConnector {
   }
 
   async searchListings(query: MarketSearchQuery): Promise<MarketListing[]> {
-    if (this.live) {
-      // TODO: 楽天 IchibaItem/Search を fetch し item[] を MarketListing へ変換
-      //   const appId = this.config.credentials?.RAKUTEN_APP_ID
-      throw new NotImplementedLiveError("rakuten.searchListings");
-    }
+    if (this.live) return this.fetchLive(query);
     const base = 3200;
     return Array.from({ length: query.limit ?? 5 }, (_, i) => ({
       marketId: this.id,
@@ -37,4 +33,41 @@ export class RakutenConnector implements MarketResearchConnector {
       rating: 4.2,
     }));
   }
+
+  /** 楽天市場 商品検索API (IchibaItem/Search) を実呼び出しする。 */
+  private async fetchLive(query: MarketSearchQuery): Promise<MarketListing[]> {
+    const appId = this.config.credentials?.RAKUTEN_APP_ID;
+    if (!appId) throw new NotImplementedLiveError("rakuten.searchListings (RAKUTEN_APP_ID 未設定)");
+
+    const url = new URL("https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601");
+    url.searchParams.set("applicationId", appId);
+    url.searchParams.set("keyword", query.keyword);
+    url.searchParams.set("hits", String(Math.min(query.limit ?? 30, 30)));
+    url.searchParams.set("sort", "+itemPrice"); // 価格の安い順
+    url.searchParams.set("formatVersion", "2");
+
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Rakuten API error: ${res.status} ${await res.text()}`);
+    const data = (await res.json()) as RakutenSearchResponse;
+
+    return (data.Items ?? []).map((item) => ({
+      marketId: this.id,
+      title: item.itemName,
+      price: item.itemPrice,
+      url: item.itemUrl,
+      reviewCount: item.reviewCount,
+      rating: item.reviewAverage,
+    }));
+  }
+}
+
+/** formatVersion=2 のレスポンス形（必要フィールドのみ）。 */
+interface RakutenSearchResponse {
+  Items?: {
+    itemName: string;
+    itemPrice: number;
+    itemUrl: string;
+    reviewCount: number;
+    reviewAverage: number;
+  }[];
 }

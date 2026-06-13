@@ -49,6 +49,8 @@ pnpm typecheck
 
 - `mock`（既定）: 外部APIを叩かず決定的なダミーで動作。設計・開発・テスト用。
 - `live`: 実API連携。各プラットフォームの**審査・契約・キー発行が前提**（取得後にコネクタの live 分岐を実装）。
+  - **楽天は live 実装済み**: `.env` に `RAKUTEN_APP_ID` を設定 ＋ `CONNECTOR_MODE=live` で本物の市場データを取得（無料）。
+  - Amazon は Keepa / PA-API（要契約）の差込口を用意。BASE / Alibaba / THE CKB は審査・契約後に実装。
 
 ## API クイック例（mock）
 
@@ -58,6 +60,12 @@ curl -X POST localhost:3001/research \
   -H 'content-type: application/json' \
   -d '{"keyword":"ワイヤレスイヤホン","markets":["amazon","rakuten"],"supplierId":"theckb","externalId":"CKB-0001"}'
 #  → 市場の min/median/max ＋「市場中央値/最安値/最安値-5%」での利益・利益率・ROI
+
+# 一括スクリーニング（複数候補を採点し、利益率30%以上・B以上だけランキング）
+curl -X POST localhost:3001/research/screen \
+  -H 'content-type: application/json' \
+  -d '{"candidates":[{"supplierId":"theckb","externalId":"CKB-0001","keyword":"ワイヤレスイヤホン"}],"minMarginRate":0.3,"minGrade":"B"}'
+#  → 各候補に 0-100 スコア / A・B・C グレード / 採点理由 を付けて降順に返す
 
 # 仕入れ商品の取り込み（価格計算＋規約チェック）
 curl -X POST localhost:3001/products/import \
