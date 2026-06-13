@@ -167,10 +167,11 @@ function apprex_contract_box( $post ) {
 			'posts_per_page' => 50,
 		)
 	);
+	// 0件でもボックスは必ず表示する（「何も出ない＝壊れている？」を防ぐ）。
+	$base = remove_query_arg( 'apprex_prefill' );
+	echo '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:10px 12px;margin-bottom:14px;">';
+	echo '<strong>顧客情報を反映</strong>（問い合わせ・発注から引用）<br>';
 	if ( $leads ) {
-		$base = remove_query_arg( 'apprex_prefill' );
-		echo '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:10px 12px;margin-bottom:14px;">';
-		echo '<strong>顧客情報を反映</strong>（問い合わせ・発注から引用）<br>';
 		echo '<select id="apprex_prefill_select" style="max-width:60%;margin:6px 6px 6px 0;">';
 		echo '<option value="">— 顧客を選択 —</option>';
 		foreach ( $leads as $lead ) {
@@ -189,8 +190,10 @@ function apprex_contract_box( $post ) {
 		echo '</select> ';
 		echo '<button type="button" class="button" onclick="(function(){var v=document.getElementById(\'apprex_prefill_select\').value;if(!v)return;var u=new URL(' . wp_json_encode( $base ) . ',window.location.origin);u.searchParams.set(\'apprex_prefill\',v);window.location.href=u.toString();})()">反映する</button>';
 		echo '<p class="description" style="margin:6px 0 0;">選んだ顧客の氏名・会社・メール（発注ならプラン・月額も）を、<strong>空欄の項目だけ</strong>に差し込みます。確認後に「公開／更新」で保存してください。</p>';
-		echo '</div>';
+	} else {
+		echo '<p class="description" style="margin:6px 0 0;">引用できる<strong>問い合わせ・発注がまだありません</strong>。サイトのお問い合わせフォーム（このテーマ標準フォーム）から届いた問い合わせ、または発注がここに一覧表示されます。<br>※ Contact Form 7 など別プラグインのフォームから届いた問い合わせはここには出ません。</p>';
 	}
+	echo '</div>';
 	?>
 	<style>.apprex-c-tbl th{width:140px;text-align:left;vertical-align:top;padding:8px 6px}.apprex-c-tbl td{padding:6px}</style>
 	<table class="apprex-c-tbl">
