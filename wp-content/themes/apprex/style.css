@@ -116,6 +116,8 @@ ul { margin: 0; padding: 0; list-style: none; }
 .btn--ghost:hover { background: var(--color-primary-light); color: var(--color-primary-dark); }
 .btn--light { background: #fff; color: var(--color-primary); }
 .btn--light:hover { background: var(--color-primary-light); }
+.btn--line { background: #06c755; color: #fff; }
+.btn--line:hover { background: #05b34c; color: #fff; }
 .btn--block { width: 100%; }
 
 /* ===========================================================================

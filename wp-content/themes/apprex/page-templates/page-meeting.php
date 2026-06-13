@@ -45,15 +45,27 @@ while ( have_posts() ) :
 						<li><span><?php esc_html_e( '3', 'apprex' ); ?></span><?php esc_html_e( 'Meet URL が自動発行・リマインダーも自動', 'apprex' ); ?></li>
 					</ul>
 				</div>
-
-				<div class="meet-or"><span><?php esc_html_e( 'ご都合の合う枠が無い場合は、ご希望日時をお送りください', 'apprex' ); ?></span></div>
 			<?php endif; ?>
 
 			<div class="content-prose">
 				<?php if ( trim( get_the_content() ) ) : ?>
 					<?php the_content(); ?>
 				<?php endif; ?>
-				<?php apprex_render_form( 'meeting' ); ?>
+
+				<h2><?php esc_html_e( 'ご予約のやり方', 'apprex' ); ?></h2>
+				<ol>
+					<li><?php esc_html_e( '上のカレンダーから、ご希望の日時（空き枠）を選びます。', 'apprex' ); ?></li>
+					<li><?php esc_html_e( 'お名前とメールアドレスを入力して「予約」を押します。', 'apprex' ); ?></li>
+					<li><?php esc_html_e( 'ご登録のメールに、Google Meet の参加URL・カレンダー招待・リマインダーが自動で届きます。', 'apprex' ); ?></li>
+					<li><?php esc_html_e( '当日は、届いたメール内の Meet URL をクリックして参加してください。', 'apprex' ); ?></li>
+				</ol>
+				<?php $apprex_line = function_exists( 'apprex_line_url' ) ? apprex_line_url() : ''; ?>
+				<p>
+					<?php esc_html_e( '空いている枠が見つからない場合や、ご不明点がある場合は、お気軽にご連絡ください。', 'apprex' ); ?>
+					<?php if ( $apprex_line ) : ?>
+						<br><a class="btn btn--line" href="<?php echo esc_url( $apprex_line ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'LINEで相談する', 'apprex' ); ?></a>
+					<?php endif; ?>
+				</p>
 			</div>
 		</div>
 	</section>
