@@ -49,13 +49,13 @@
     <!-- Hero mini-quote card (filled by JS from simulator defaults) -->
     <div class="hero-card" id="heroCard">
       <h3>総額イメージ（例）</h3>
-      <p class="sub">落札予算 150万円・コンパクトカーの場合</p>
-      <div class="row"><span>落札価格</span><span id="hcBid">¥1,500,000</span></div>
-      <div class="row"><span>代行手数料</span><span id="hcFee">¥40,000</span></div>
-      <div class="row"><span>陸送・登録など</span><span id="hcOther">¥98,000</span></div>
+      <p class="sub">落札予算 140万円・コンパクトカーの場合</p>
+      <div class="row"><span>落札価格</span><span id="hcBid">¥1,400,000</span></div>
+      <div class="row"><span>代行手数料</span><span id="hcFee">¥59,800</span></div>
+      <div class="row"><span>陸送・登録など</span><span id="hcOther">¥74,000</span></div>
       <div class="total">
         <span class="lbl">乗り出し総額（目安）</span>
-        <span class="val" id="hcTotal">¥1,638,000</span>
+        <span class="val" id="hcTotal">¥1,533,800</span>
       </div>
     </div>
   </div>
@@ -120,8 +120,8 @@
       <!-- Inputs -->
       <div class="sim-panel">
         <div class="field">
-          <label>落札予算（希望上限価格）<span class="v" id="bidOut">¥1,500,000</span></label>
-          <input type="range" id="bid" min="200000" max="6000000" step="50000" value="1500000" />
+          <label>落札予算（希望上限価格）<span class="v" id="bidOut">¥1,400,000</span></label>
+          <input type="range" id="bid" min="200000" max="6000000" step="50000" value="1400000" />
           <div style="display:flex;justify-content:space-between;font-size:12px;color:#9fb0cc;margin-top:4px;">
             <span>¥200,000</span><span>¥6,000,000</span>
           </div>
@@ -165,8 +165,8 @@
       <div class="result">
         <h3>お見積り（概算）</h3>
         <p class="note">※ 税込・参考値です。実際の費用は車両・落札状況により変動します。</p>
-        <div class="line"><span>落札価格</span><span id="rBid">¥1,500,000</span></div>
-        <div class="line"><span>代行手数料 <span class="tag" id="feeTag">コンパクト</span></span><span id="rFee">¥40,000</span></div>
+        <div class="line"><span>落札価格</span><span id="rBid">¥1,400,000</span></div>
+        <div class="line"><span>代行手数料 <span class="tag" id="feeTag">100〜150万円帯</span></span><span id="rFee">¥59,800</span></div>
         <div class="line"><span>オークション落札料・出品取り扱い</span><span id="rAuc">¥11,000</span></div>
         <div class="line"><span>リサイクル料・自動車税等（預り）</span><span id="rRecycle">¥18,000</span></div>
         <div class="line"><span>陸送費</span><span id="rShip">¥20,000</span></div>
@@ -175,7 +175,7 @@
           <span class="lbl">乗り出し総額（目安）</span>
           <span class="val" id="rTotal">¥1,614,000</span>
         </div>
-        <div class="savings">店頭購入の目安より <b id="rSave">約 28万円</b> おトク（同等車を相場比較した概算）</div>
+        <div class="savings">店頭購入の目安より <b id="rSave">約 16万円</b> おトク（同等車を相場比較した概算）</div>
         <a class="btn btn-navy btn-block mt-30" href="login.html">この条件でオーダーする（無料登録）</a>
       </div>
     </div>
@@ -187,46 +187,56 @@
   <div class="wrap">
     <div class="section-head">
       <div class="eyebrow">PRICING</div>
-      <h2>わかりやすい3つの代行プラン</h2>
-      <p>追加の中間マージンは一切なし。代行手数料はすべて明朗会計です。</p>
+      <h2>代行手数料は「落札価格帯別の定額」</h2>
+      <p>全国の代行業者の公開料金の中央値に合わせた、わかりやすい明朗会計。追加の中間マージンは一切ありません。</p>
     </div>
-    <div class="price-grid">
-      <div class="price">
-        <h3>ライト</h3>
-        <div class="amt">¥30,000<small> /1台（税込）</small></div>
-        <p style="color:var(--muted);font-size:14px;margin:0;">車種が決まっている方向け。入札〜落札代行のシンプルプラン。</p>
-        <ul>
-          <li>入札・落札代行</li>
-          <li>出品票・評価点チェック</li>
-          <li>マイページ進捗管理</li>
-        </ul>
-        <a class="btn btn-navy btn-block" href="login.html">このプランで登録</a>
+
+    <!-- 価格帯別 代行手数料テーブル -->
+    <div class="fee-table">
+      <div class="fee-row fee-head">
+        <span>落札価格帯</span>
+        <span>代行手数料（税込）</span>
       </div>
-      <div class="price feat">
-        <div class="ribbon">いちばん人気</div>
-        <h3>スタンダード</h3>
-        <div class="amt">¥45,000<small> /1台（税込）</small></div>
-        <p style="color:var(--muted);font-size:14px;margin:0;">条件提案からおまかせ。陸送・名義変更までワンストップ。</p>
-        <ul>
-          <li>ライトの全機能</li>
-          <li>バイヤーによる車両提案</li>
-          <li>陸送・名義変更代行</li>
-          <li>納車前 簡易点検</li>
+      <div class="fee-row"><span>〜50万円</span><span>¥39,800</span></div>
+      <div class="fee-row"><span>50万円〜100万円</span><span>¥49,800</span></div>
+      <div class="fee-row feat"><span>100万円〜150万円<em>いちばん多い価格帯</em></span><span>¥59,800</span></div>
+      <div class="fee-row"><span>150万円〜200万円</span><span>¥69,800</span></div>
+      <div class="fee-row"><span>200万円〜300万円</span><span>¥79,800</span></div>
+      <div class="fee-row"><span>300万円〜</span><span>落札価格の 3%</span></div>
+    </div>
+    <p class="fee-note">※ SUV・大型車は +¥5,000、輸入車は +¥20,000 の割増。落札不成立の場合、代行手数料はいただきません。</p>
+
+    <!-- 別途かかる実費・オプション -->
+    <div class="section-head" style="margin-top:60px;margin-bottom:30px;">
+      <h2 style="font-size:24px;">別途かかる実費・オプション</h2>
+      <p>必要な分だけ。すべてシミュレーションの総額に反映されます。</p>
+    </div>
+    <div class="grid-3">
+      <div class="card">
+        <h3>必須の実費</h3>
+        <ul class="opt-list">
+          <li>オークション落札料 <b>¥11,000</b></li>
+          <li>リサイクル料・税等（預り） <b>¥12,000〜</b></li>
+          <li>陸送費（エリア別） <b>¥20,000〜</b></li>
         </ul>
-        <a class="btn btn-gold btn-block" href="login.html">このプランで登録</a>
       </div>
-      <div class="price">
-        <h3>プレミアム</h3>
-        <div class="amt">¥69,000<small> /1台（税込）</small></div>
-        <p style="color:var(--muted);font-size:14px;margin:0;">輸入車・こだわりの一台に。保証と整備までフルサポート。</p>
-        <ul>
-          <li>スタンダードの全機能</li>
-          <li>12ヶ月点検・整備パック</li>
-          <li>6ヶ月保証付帯</li>
-          <li>専任コンシェルジュ</li>
+      <div class="card">
+        <h3>手続き代行（任意）</h3>
+        <ul class="opt-list">
+          <li>名義変更・登録代行 <b>¥25,000</b></li>
+          <li>車庫証明 取得代行 <b>¥12,000</b></li>
         </ul>
-        <a class="btn btn-navy btn-block" href="login.html">このプランで登録</a>
       </div>
+      <div class="card">
+        <h3>安心パック（任意）</h3>
+        <ul class="opt-list">
+          <li>12ヶ月点検・整備 <b>¥35,000</b></li>
+          <li>6ヶ月保証パック <b>¥28,000</b></li>
+        </ul>
+      </div>
+    </div>
+    <div class="center mt-30">
+      <a class="btn btn-gold" href="#simulator">▶ あなたの条件で総額を試算する</a>
     </div>
   </div>
 </section>
@@ -240,6 +250,7 @@
     </div>
     <div class="faq">
       <details class="qa"><summary>本当に店頭で買うより安くなりますか？</summary><div class="a">車種・状態によりますが、店頭価格にはオークション落札価格に対して概ね15〜25%の中間コストが上乗せされています。代行では代行手数料と実費（陸送・諸費用）のみのため、多くの場合で総額を抑えられます。シミュレーションで目安をご確認ください。</div></details>
+      <details class="qa"><summary>代行手数料はどう決まりますか？</summary><div class="a">手数料は「落札価格帯別の定額制」です（〜50万円 ¥39,800／100〜150万円 ¥59,800 など、全国の代行業者の中央値に準拠）。300万円超は落札価格の3%。SUV・大型は+¥5,000、輸入車は+¥20,000の割増です。落札前に総額が確定するため、後から増えることはありません。</div></details>
       <details class="qa"><summary>希望の車が落札できなかった場合は？</summary><div class="a">落札できなかった場合、代行手数料は原則いただきません（出品取り下げ等の実費が発生する場合を除く）。上限価格内で落札を目指し、未成立なら次の候補をご提案します。</div></details>
       <details class="qa"><summary>車の状態が心配です。ハズレ車を引きませんか？</summary><div class="a">オークション車両には第三者検査機関による評価点と検査票が付きます。経験豊富なバイヤーが修復歴・外装内装・機関を確認し、リスクのある車両は入札を見送ります。</div></details>
       <details class="qa"><summary>支払い方法は？ローンは使えますか？</summary><div class="a">銀行振込・オンライン決済に対応。提携信販会社のオートローンもご利用いただけます。会員登録後、マイページからお申し込みいただけます。</div></details>

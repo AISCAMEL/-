@@ -195,6 +195,22 @@ section { padding: 76px 0; }
 .price li { padding: 8px 0 8px 26px; position: relative; font-size: 14px; color: var(--ink); border-bottom: 1px solid var(--line); }
 .price li::before { content: "✓"; position: absolute; left: 0; color: var(--green); font-weight: 900; }
 
+/* ---------- Fee table (価格帯別) ---------- */
+.fee-table { max-width: 720px; margin: 0 auto; background: var(--white); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+.fee-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 26px; border-bottom: 1px solid var(--line); font-size: 16px; }
+.fee-row:last-child { border-bottom: none; }
+.fee-row span:last-child { font-weight: 900; font-size: 19px; }
+.fee-head { background: var(--navy); color: #fff; font-weight: 800; }
+.fee-head span:last-child { color: var(--gold-2); font-size: 16px; }
+.fee-row.feat { background: #fdf7e8; }
+.fee-row.feat span:last-child { color: var(--navy); }
+.fee-row em { display: inline-block; margin-left: 10px; font-style: normal; font-size: 11px; font-weight: 800; color: var(--navy); background: var(--gold-2); padding: 2px 9px; border-radius: 999px; vertical-align: middle; }
+.fee-note { max-width: 720px; margin: 14px auto 0; color: var(--muted); font-size: 13px; text-align: center; }
+.opt-list { list-style: none; padding: 0; margin: 14px 0 0; }
+.opt-list li { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14.5px; }
+.opt-list li:last-child { border-bottom: none; }
+.opt-list b { color: var(--navy); }
+
 /* ---------- FAQ ---------- */
 .faq { max-width: 760px; margin: 0 auto; }
 .qa { background: var(--white); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 12px; overflow: hidden; }

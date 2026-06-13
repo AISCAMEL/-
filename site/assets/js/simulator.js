@@ -7,15 +7,45 @@
 (function () {
   "use strict";
 
+  // --- 代行手数料：落札価格帯別の定額制（全国平均ベース・税込） ---
+  // 国内代行業者の公開料金の中央値に合わせた価格帯別定額。
+  // 300万円超は定額では割安になりすぎるため料率（3%）に切り替え。
+  var FEE_TIERS = [
+    { max: 500000,  fee: 39800 },  // 〜50万円
+    { max: 1000000, fee: 49800 },  // 50〜100万円
+    { max: 1500000, fee: 59800 },  // 100〜150万円
+    { max: 2000000, fee: 69800 },  // 150〜200万円
+    { max: 3000000, fee: 79800 }   // 200〜300万円
+  ];
+  var FEE_RATE_OVER = 0.03; // 300万円超は落札価格の3%
+
+  function feeByBid(bid) {
+    for (var i = 0; i < FEE_TIERS.length; i++) {
+      if (bid < FEE_TIERS[i].max) return FEE_TIERS[i].fee;
+    }
+    return Math.round(bid * FEE_RATE_OVER); // 300万円〜
+  }
+
+  // 価格帯ラベル（例: "100〜150万円帯"）
+  function feeBandLabel(bid) {
+    var bounds = [0, 50, 100, 150, 200, 300]; // 万円
+    for (var i = 0; i < FEE_TIERS.length; i++) {
+      if (bid < FEE_TIERS[i].max) {
+        return i === 0 ? "〜50万円帯" : bounds[i] + "〜" + bounds[i + 1] + "万円帯";
+      }
+    }
+    return "300万円〜（3%）";
+  }
+
   // --- クラス別の係数・固定費（税込ベースの参考値） ---
-  // fee: 代行手数料 / recycle: リサイクル料等の預り目安
+  // surcharge: 輸入車・大型の手数料割増 / recycle: リサイクル料等の預り目安
   // dealerMargin: 店頭購入時に上乗せされる中間コスト率（おトク額の試算に使用）
   var CLASS = {
-    kei:     { label: "軽自動車",       fee: 30000, recycle: 12000, dealerMargin: 0.18 },
-    compact: { label: "コンパクト",     fee: 40000, recycle: 18000, dealerMargin: 0.20 },
-    sedan:   { label: "セダン/ミニバン", fee: 45000, recycle: 22000, dealerMargin: 0.22 },
-    suv:     { label: "SUV/大型",       fee: 50000, recycle: 26000, dealerMargin: 0.23 },
-    import:  { label: "輸入車",         fee: 69000, recycle: 35000, dealerMargin: 0.25 }
+    kei:     { label: "軽自動車",       surcharge: 0,     recycle: 12000, dealerMargin: 0.18 },
+    compact: { label: "コンパクト",     surcharge: 0,     recycle: 18000, dealerMargin: 0.20 },
+    sedan:   { label: "セダン/ミニバン", surcharge: 0,     recycle: 22000, dealerMargin: 0.22 },
+    suv:     { label: "SUV/大型",       surcharge: 5000,  recycle: 26000, dealerMargin: 0.23 },
+    import:  { label: "輸入車",         surcharge: 20000, recycle: 35000, dealerMargin: 0.25 }
   };
 
   var AUCTION_FEE = 11000; // オークション落札料・出品取り扱い（一律目安）
@@ -54,7 +84,8 @@
       if (opts[k]) optTotal += OPTIONS[k];
     });
 
-    var subtotal = bid + c.fee + AUCTION_FEE + c.recycle + region + optTotal;
+    var fee = feeByBid(bid) + c.surcharge; // 価格帯別定額 ＋ クラス割増
+    var subtotal = bid + fee + AUCTION_FEE + c.recycle + region + optTotal;
 
     // 店頭購入時の想定総額との差額（おトク額）
     var dealerEstimate = bid * (1 + c.dealerMargin) + region * 0.5;
@@ -62,8 +93,9 @@
 
     return {
       classLabel: c.label,
+      feeBand: feeBandLabel(bid),
       bid: bid,
-      fee: c.fee,
+      fee: fee,
       auctionFee: AUCTION_FEE,
       recycle: c.recycle,
       ship: region,
@@ -74,7 +106,7 @@
   }
 
   // window へ公開（mypage 等からの再利用用）
-  window.AucSim = { calculate: calculate, yen: yen, CLASS: CLASS, OPTIONS: OPTIONS };
+  window.AucSim = { calculate: calculate, feeByBid: feeByBid, yen: yen, CLASS: CLASS, OPTIONS: OPTIONS, FEE_TIERS: FEE_TIERS };
 
   // ===== ここから index.html 用の DOM 連動 =====
   var bid = document.getElementById("bid");
@@ -101,7 +133,7 @@
     document.getElementById("bidOut").textContent = yen(r.bid);
     document.getElementById("rBid").textContent = yen(r.bid);
     document.getElementById("rFee").textContent = yen(r.fee);
-    document.getElementById("feeTag").textContent = r.classLabel;
+    document.getElementById("feeTag").textContent = r.feeBand + "・" + r.classLabel;
     document.getElementById("rAuc").textContent = yen(r.auctionFee);
     document.getElementById("rRecycle").textContent = yen(r.recycle);
     document.getElementById("rShip").textContent = yen(r.ship);
