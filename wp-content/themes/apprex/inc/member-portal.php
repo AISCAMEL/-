@@ -158,8 +158,6 @@ function apprex_member_contract_card( $id ) {
 			echo $row( 'お名前', $m( 'apprex_c_name' ) ); // phpcs:ignore
 			echo $row( '会社名', $m( 'apprex_c_company' ) ); // phpcs:ignore
 			echo $row( 'メール', $m( 'apprex_c_email' ) ); // phpcs:ignore
-			$mtype = $m( 'apprex_c_member_type' );
-			echo $row( '会員種別', $mtype && function_exists( 'apprex_member_type_label' ) ? apprex_member_type_label( $mtype ) : '' ); // phpcs:ignore
 			?>
 		</table>
 

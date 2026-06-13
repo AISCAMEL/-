@@ -25,10 +25,12 @@ function apprex_member_types() {
 	return apply_filters(
 		'apprex_member_types',
 		array(
-			'standard' => '通常会員',
-			'premium'  => 'プレミアム会員',
-			'corporate' => '法人会員',
-			'partner'  => 'パートナー',
+			'トライアル' => 'トライアル',
+			'スタート'   => 'スタート',
+			'ビジネス'   => 'ビジネス',
+			'Light'      => 'Light',
+			'Standard'   => 'Standard',
+			'Premium'    => 'Premium',
 		)
 	);
 }
@@ -196,8 +198,7 @@ function apprex_contract_box( $post ) {
 		<tr><th>会社名</th><td><input type="text" name="apprex_c_company" class="regular-text" value="<?php echo esc_attr( $g( 'apprex_c_company' ) ); ?>"></td></tr>
 		<tr><th>メール</th><td><input type="email" name="apprex_c_email" class="regular-text" value="<?php echo esc_attr( $g( 'apprex_c_email' ) ); ?>"></td></tr>
 		<tr><th>サービス</th><td><input type="text" name="apprex_c_service" class="regular-text" value="<?php echo esc_attr( $g( 'apprex_c_service' ) ); ?>" placeholder="アプリ開発 / ホームページ制作 など"></td></tr>
-		<tr><th>プラン</th><td><input type="text" name="apprex_c_plan" class="regular-text" value="<?php echo esc_attr( $g( 'apprex_c_plan' ) ); ?>" placeholder="スタート / ビジネス など"></td></tr>
-		<tr><th>会員種別</th><td>
+		<tr><th>プラン</th><td>
 			<select name="apprex_c_member_type">
 				<?php $mt = $g( 'apprex_c_member_type' ); ?>
 				<option value="">（未設定）</option>
@@ -205,6 +206,7 @@ function apprex_contract_box( $post ) {
 					<option value="<?php echo esc_attr( $k ); ?>" <?php selected( $mt, $k ); ?>><?php echo esc_html( $label ); ?></option>
 				<?php endforeach; ?>
 			</select>
+			<span class="description">選んだプランがマイページ・契約書・集計に反映されます。</span>
 		</td></tr>
 		<tr><th>月額(円)</th><td><input type="number" name="apprex_c_monthly" value="<?php echo esc_attr( $g( 'apprex_c_monthly', 0 ) ); ?>" min="0" step="100"> 円（税抜）</td></tr>
 		<tr><th>契約開始日</th><td><input type="date" name="apprex_c_start" value="<?php echo esc_attr( $g( 'apprex_c_start' ) ); ?>"></td></tr>
@@ -274,11 +276,17 @@ add_action( 'save_post_apprex_contract', function ( $post_id ) {
 		return;
 	}
 
-	$text = array( 'apprex_c_name', 'apprex_c_company', 'apprex_c_service', 'apprex_c_plan', 'apprex_c_start', 'apprex_c_status', 'apprex_c_last_paid', 'apprex_c_member_type', 'apprex_c_app_login', 'apprex_c_app_pass' );
+	$text = array( 'apprex_c_name', 'apprex_c_company', 'apprex_c_service', 'apprex_c_start', 'apprex_c_status', 'apprex_c_last_paid', 'apprex_c_member_type', 'apprex_c_app_login', 'apprex_c_app_pass' );
 	foreach ( $text as $k ) {
 		if ( isset( $_POST[ $k ] ) ) {
 			update_post_meta( $post_id, $k, sanitize_text_field( wp_unslash( $_POST[ $k ] ) ) );
 		}
+	}
+
+	// プランは「会員種別→プラン」選択に統一。選択があれば apprex_c_plan に同期（下位互換：タイトル/マイページ/集計用）。
+	$selected_plan = get_post_meta( $post_id, 'apprex_c_member_type', true );
+	if ( '' !== $selected_plan ) {
+		update_post_meta( $post_id, 'apprex_c_plan', $selected_plan );
 	}
 	update_post_meta( $post_id, 'apprex_c_email', isset( $_POST['apprex_c_email'] ) ? sanitize_email( wp_unslash( $_POST['apprex_c_email'] ) ) : '' );
 	update_post_meta( $post_id, 'apprex_c_monthly', isset( $_POST['apprex_c_monthly'] ) ? absint( $_POST['apprex_c_monthly'] ) : 0 );
