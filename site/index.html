@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AUC-AGENT｜車のオークション代行・相場よりおトクに愛車を</title>
+<meta name="description" content="全国のオートオークション（USS/TAA/JU等）から、あなたに代わってプロが入札・落札。サイト上で総額シミュレーション、会員サイトでかんたんオーダー。中間マージンを抑えて相場よりおトクに。" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+<!-- ===== Header ===== -->
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <span class="logo">A</span>
+      <span>AUC-AGENT<small>CAR AUCTION AGENT</small></span>
+    </a>
+    <nav class="nav">
+      <a class="nav-link" href="#reasons">選ばれる理由</a>
+      <a class="nav-link" href="#flow">ご利用の流れ</a>
+      <a class="nav-link" href="#simulator">料金シミュレーション</a>
+      <a class="nav-link" href="#price">プラン</a>
+      <a class="nav-link" href="mypage.html">マイページ</a>
+      <a class="btn btn-gold btn-sm" href="login.html">無料会員登録</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ===== Hero ===== -->
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <span class="badge">★ 累計代行実績 12,000台突破</span>
+      <h1>欲しい車を、<span class="hl">相場よりおトク</span>に。<br />プロが代わりに<span class="hl">入札・落札</span>します。</h1>
+      <p class="lead">業者専用のオートオークションは、本来ディーラーや買取店しか参加できません。AUC-AGENTがあなたの「指定席」になり、希望条件にあう一台をプロが見極めて落札。中間マージンを抑えた価格で愛車が手に入ります。</p>
+      <div class="cta-row">
+        <a class="btn btn-gold" href="#simulator">▶ いくらで買える？総額シミュレーション</a>
+        <a class="btn btn-ghost" href="login.html">無料で会員登録</a>
+      </div>
+      <div class="trust">
+        <div><div class="t-num">12,000<span style="font-size:16px">台</span></div><div class="t-lbl">累計代行台数</div></div>
+        <div><div class="t-num">98.6<span style="font-size:16px">%</span></div><div class="t-lbl">ご成約満足度</div></div>
+        <div><div class="t-num">最短3<span style="font-size:16px">日</span></div><div class="t-lbl">落札→納車</div></div>
+      </div>
+    </div>
+
+    <!-- Hero mini-quote card (filled by JS from simulator defaults) -->
+    <div class="hero-card" id="heroCard">
+      <h3>総額イメージ（例）</h3>
+      <p class="sub">落札予算 150万円・コンパクトカーの場合</p>
+      <div class="row"><span>落札価格</span><span id="hcBid">¥1,500,000</span></div>
+      <div class="row"><span>代行手数料</span><span id="hcFee">¥40,000</span></div>
+      <div class="row"><span>陸送・登録など</span><span id="hcOther">¥98,000</span></div>
+      <div class="total">
+        <span class="lbl">乗り出し総額（目安）</span>
+        <span class="val" id="hcTotal">¥1,638,000</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Pain / Why agent ===== -->
+<section id="reasons">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">WHY AUCTION AGENT</div>
+      <h2>「代行」だから、おトク・安心・かんたん。</h2>
+      <p>店頭価格には、仕入れ・整備・展示・人件費などのマージンが上乗せされています。代行ならオークション相場で直接ねらえます。</p>
+    </div>
+    <div class="grid-3">
+      <div class="card">
+        <div class="ico">💰</div>
+        <h3>相場価格で手に入る</h3>
+        <p>店頭購入では落札価格に15〜25%の中間コストが乗りがち。代行手数料だけで済むので、同じ車でも総額を大きく抑えられます。</p>
+      </div>
+      <div class="card">
+        <div class="ico">🔍</div>
+        <h3>プロが車両を見極め</h3>
+        <p>検査票（出品票）と評価点を熟知したバイヤーが、修復歴・状態を確認。粗悪車をしっかり回避して入札します。</p>
+      </div>
+      <div class="card">
+        <div class="ico">🚚</div>
+        <h3>陸送・名義変更も一括</h3>
+        <p>落札後の陸送・名義変更・車庫証明・納車までワンストップ。面倒な手続きはすべておまかせいただけます。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Flow ===== -->
+<section id="flow" style="background:#eef2f9;">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">HOW IT WORKS</div>
+      <h2>ご利用は5ステップ。会員サイトで完結。</h2>
+      <p>会員登録後はすべてマイページ上で進行。進捗もリアルタイムに確認できます。</p>
+    </div>
+    <div class="flow">
+      <div class="step"><div class="n">1</div><h4>無料会員登録</h4><p>メールだけで1分。希望条件を登録します。</p></div>
+      <div class="step"><div class="n">2</div><h4>条件オーダー</h4><p>車種・年式・予算・上限価格をかんたん入力。</p></div>
+      <div class="step"><div class="n">3</div><h4>車両提案・入札</h4><p>バイヤーが候補を提案、ご承認後に入札代行。</p></div>
+      <div class="step"><div class="n">4</div><h4>落札・お支払い</h4><p>落札成立で総額確定。オンライン決済も可。</p></div>
+      <div class="step"><div class="n">5</div><h4>整備・納車</h4><p>陸送・名義変更まで代行し、ご自宅へ納車。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Simulator ===== -->
+<section id="simulator" class="sim">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">COST SIMULATION</div>
+      <h2>サイト上で「乗り出し総額」をその場で計算</h2>
+      <p>予算とクラス・エリアを選ぶだけ。代行手数料・陸送費・諸費用まで含めた総額と、店頭購入との差額目安がすぐ分かります。</p>
+    </div>
+
+    <div class="sim-grid">
+      <!-- Inputs -->
+      <div class="sim-panel">
+        <div class="field">
+          <label>落札予算（希望上限価格）<span class="v" id="bidOut">¥1,500,000</span></label>
+          <input type="range" id="bid" min="200000" max="6000000" step="50000" value="1500000" />
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:#9fb0cc;margin-top:4px;">
+            <span>¥200,000</span><span>¥6,000,000</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>車両クラス</label>
+          <div class="seg" id="classSeg">
+            <label><input type="radio" name="cls" value="kei" /><span>軽自動車</span></label>
+            <label><input type="radio" name="cls" value="compact" checked /><span>コンパクト</span></label>
+            <label><input type="radio" name="cls" value="sedan" /><span>セダン/ミニバン</span></label>
+            <label><input type="radio" name="cls" value="suv" /><span>SUV/大型</span></label>
+            <label><input type="radio" name="cls" value="import" /><span>輸入車</span></label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>陸送エリア（ご納車先）</label>
+          <select id="region">
+            <option value="20000">関東（東京・神奈川・埼玉・千葉）</option>
+            <option value="28000">中部・東海（愛知・静岡 ほか）</option>
+            <option value="30000">関西（大阪・京都・兵庫 ほか）</option>
+            <option value="40000">東北・北陸・中国・四国</option>
+            <option value="60000">北海道・九州</option>
+            <option value="90000">沖縄・離島</option>
+          </select>
+        </div>
+
+        <div class="field" style="margin-bottom:0;">
+          <label>オプション（代行手続き）</label>
+          <div class="checks">
+            <label><input type="checkbox" id="optReg" checked /> 名義変更・登録代行（+¥25,000）</label>
+            <label><input type="checkbox" id="optGarage" /> 車庫証明取得代行（+¥12,000）</label>
+            <label><input type="checkbox" id="optInspect" /> 12ヶ月点検・整備パック（+¥35,000）</label>
+            <label><input type="checkbox" id="optWarranty" /> 6ヶ月保証パック（+¥28,000）</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Result -->
+      <div class="result">
+        <h3>お見積り（概算）</h3>
+        <p class="note">※ 税込・参考値です。実際の費用は車両・落札状況により変動します。</p>
+        <div class="line"><span>落札価格</span><span id="rBid">¥1,500,000</span></div>
+        <div class="line"><span>代行手数料 <span class="tag" id="feeTag">コンパクト</span></span><span id="rFee">¥40,000</span></div>
+        <div class="line"><span>オークション落札料・出品取り扱い</span><span id="rAuc">¥11,000</span></div>
+        <div class="line"><span>リサイクル料・自動車税等（預り）</span><span id="rRecycle">¥18,000</span></div>
+        <div class="line"><span>陸送費</span><span id="rShip">¥20,000</span></div>
+        <div class="line muted"><span>オプション合計</span><span id="rOpt">¥25,000</span></div>
+        <div class="grand">
+          <span class="lbl">乗り出し総額（目安）</span>
+          <span class="val" id="rTotal">¥1,614,000</span>
+        </div>
+        <div class="savings">店頭購入の目安より <b id="rSave">約 28万円</b> おトク（同等車を相場比較した概算）</div>
+        <a class="btn btn-navy btn-block mt-30" href="login.html">この条件でオーダーする（無料登録）</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Pricing ===== -->
+<section id="price">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">PRICING</div>
+      <h2>わかりやすい3つの代行プラン</h2>
+      <p>追加の中間マージンは一切なし。代行手数料はすべて明朗会計です。</p>
+    </div>
+    <div class="price-grid">
+      <div class="price">
+        <h3>ライト</h3>
+        <div class="amt">¥30,000<small> /1台（税込）</small></div>
+        <p style="color:var(--muted);font-size:14px;margin:0;">車種が決まっている方向け。入札〜落札代行のシンプルプラン。</p>
+        <ul>
+          <li>入札・落札代行</li>
+          <li>出品票・評価点チェック</li>
+          <li>マイページ進捗管理</li>
+        </ul>
+        <a class="btn btn-navy btn-block" href="login.html">このプランで登録</a>
+      </div>
+      <div class="price feat">
+        <div class="ribbon">いちばん人気</div>
+        <h3>スタンダード</h3>
+        <div class="amt">¥45,000<small> /1台（税込）</small></div>
+        <p style="color:var(--muted);font-size:14px;margin:0;">条件提案からおまかせ。陸送・名義変更までワンストップ。</p>
+        <ul>
+          <li>ライトの全機能</li>
+          <li>バイヤーによる車両提案</li>
+          <li>陸送・名義変更代行</li>
+          <li>納車前 簡易点検</li>
+        </ul>
+        <a class="btn btn-gold btn-block" href="login.html">このプランで登録</a>
+      </div>
+      <div class="price">
+        <h3>プレミアム</h3>
+        <div class="amt">¥69,000<small> /1台（税込）</small></div>
+        <p style="color:var(--muted);font-size:14px;margin:0;">輸入車・こだわりの一台に。保証と整備までフルサポート。</p>
+        <ul>
+          <li>スタンダードの全機能</li>
+          <li>12ヶ月点検・整備パック</li>
+          <li>6ヶ月保証付帯</li>
+          <li>専任コンシェルジュ</li>
+        </ul>
+        <a class="btn btn-navy btn-block" href="login.html">このプランで登録</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FAQ ===== -->
+<section style="background:#eef2f9;">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">FAQ</div>
+      <h2>よくあるご質問</h2>
+    </div>
+    <div class="faq">
+      <details class="qa"><summary>本当に店頭で買うより安くなりますか？</summary><div class="a">車種・状態によりますが、店頭価格にはオークション落札価格に対して概ね15〜25%の中間コストが上乗せされています。代行では代行手数料と実費（陸送・諸費用）のみのため、多くの場合で総額を抑えられます。シミュレーションで目安をご確認ください。</div></details>
+      <details class="qa"><summary>希望の車が落札できなかった場合は？</summary><div class="a">落札できなかった場合、代行手数料は原則いただきません（出品取り下げ等の実費が発生する場合を除く）。上限価格内で落札を目指し、未成立なら次の候補をご提案します。</div></details>
+      <details class="qa"><summary>車の状態が心配です。ハズレ車を引きませんか？</summary><div class="a">オークション車両には第三者検査機関による評価点と検査票が付きます。経験豊富なバイヤーが修復歴・外装内装・機関を確認し、リスクのある車両は入札を見送ります。</div></details>
+      <details class="qa"><summary>支払い方法は？ローンは使えますか？</summary><div class="a">銀行振込・オンライン決済に対応。提携信販会社のオートローンもご利用いただけます。会員登録後、マイページからお申し込みいただけます。</div></details>
+      <details class="qa"><summary>会員登録に費用はかかりますか？</summary><div class="a">会員登録・シミュレーション・車両提案まで無料です。費用が発生するのは、実際に落札・ご成約いただいた場合のみです。</div></details>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CTA band ===== -->
+<section class="cta-band">
+  <div class="wrap">
+    <h2>まずは無料で、いくらで買えるか確かめよう。</h2>
+    <p>会員登録は1分。条件を登録すれば、プロから車両提案が届きます。</p>
+    <a class="btn btn-navy" href="login.html">無料会員登録してオーダーする</a>
+  </div>
+</section>
+
+<!-- ===== Footer ===== -->
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <a class="brand" href="index.html" style="color:#fff;margin-bottom:12px;">
+          <span class="logo">A</span><span>AUC-AGENT</span>
+        </a>
+        <p style="max-width:340px;">全国のオートオークションから、あなたの一台をプロが代行落札。相場価格で、安心・かんたんにマイカーを。</p>
+      </div>
+      <div>
+        <h4>サービス</h4>
+        <a href="#reasons">選ばれる理由</a>
+        <a href="#flow">ご利用の流れ</a>
+        <a href="#simulator">料金シミュレーション</a>
+        <a href="#price">料金プラン</a>
+      </div>
+      <div>
+        <h4>会員</h4>
+        <a href="login.html">会員登録 / ログイン</a>
+        <a href="mypage.html">マイページ</a>
+        <a href="#">特定商取引法に基づく表記</a>
+        <a href="#">プライバシーポリシー</a>
+      </div>
+    </div>
+    <div class="copy">© 2026 AUC-AGENT — Car Auction Agent. これはデモ用ランディングページです。</div>
+  </div>
+</footer>
+
+<script src="assets/js/simulator.js"></script>
+</body>
+</html>

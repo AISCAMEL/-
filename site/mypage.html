@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>マイページ｜AUC-AGENT 会員サイト</title>
+<meta name="description" content="AUC-AGENT 会員マイページ。注文状況の確認と、かんたんオーダー（入札代行のご依頼）が行えます。" />
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <span class="logo">A</span>
+      <span>AUC-AGENT<small>CAR AUCTION AGENT</small></span>
+    </a>
+    <nav class="nav">
+      <a class="nav-link" href="index.html#simulator">料金シミュレーション</a>
+      <a class="nav-link" href="index.html">サービス</a>
+      <a class="btn btn-ghost btn-sm" href="#" id="logoutBtn">ログアウト</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-head">
+  <div class="wrap">
+    <h1 id="hello">マイページ</h1>
+    <p id="planLine">会員サイトへようこそ。注文の確認と、新しいオーダーがこちらで完結します。</p>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="mp-grid">
+    <!-- Sidebar -->
+    <aside class="mp-side">
+      <div class="me">
+        <div class="ava" id="avatar">G</div>
+        <div>
+          <div class="nm" id="meName">ゲスト会員</div>
+          <div class="rk" id="mePlan">スタンダード会員</div>
+        </div>
+      </div>
+      <nav class="mp-nav">
+        <a href="#dash" class="active">📊 ダッシュボード</a>
+        <a href="#orders">📦 注文状況</a>
+        <a href="#newOrder">➕ かんたんオーダー</a>
+        <a href="index.html#simulator">🧮 料金シミュレーション</a>
+        <a href="index.html">🏠 トップへ</a>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main>
+      <!-- Stats -->
+      <div id="dash" class="stat-row">
+        <div class="stat"><div class="k">進行中の注文</div><div class="v" id="stActive">1</div></div>
+        <div class="stat"><div class="k">累計ご成約</div><div class="v" id="stDone">1</div></div>
+        <div class="stat"><div class="k">累計おトク額（目安）</div><div class="v" id="stSave">¥0</div></div>
+      </div>
+
+      <!-- Orders -->
+      <section class="panel" id="orders">
+        <div class="panel-head">
+          <h3>注文状況</h3>
+          <a class="btn btn-gold btn-sm" href="#newOrder">＋ 新しくオーダー</a>
+        </div>
+        <div class="panel-body" id="orderList">
+          <!-- JSで描画 -->
+        </div>
+      </section>
+
+      <!-- New Order (easy order form, reuses AucSim) -->
+      <section class="panel" id="newOrder">
+        <div class="panel-head"><h3>かんたんオーダー</h3></div>
+        <div class="panel-body">
+          <div class="alert alert-info" id="orderAlert">条件を入力すると、その場で総額の目安を計算します。ご依頼後はバイヤーが候補車両を提案します。</div>
+          <form id="orderForm">
+            <div class="field">
+              <label>ご希望の車種・モデル</label>
+              <input type="text" id="oCar" placeholder="例）トヨタ アルファード 2.5 S（2019〜2021年式 / 走行5万km以下）" required />
+            </div>
+            <div class="row-2">
+              <div class="field">
+                <label>落札上限予算<span class="v" id="oBidOut" style="color:var(--gold)"></span></label>
+                <input type="number" id="oBid" min="200000" max="8000000" step="50000" value="2500000" required />
+              </div>
+              <div class="field">
+                <label>車両クラス</label>
+                <select id="oClass">
+                  <option value="kei">軽自動車</option>
+                  <option value="compact">コンパクト</option>
+                  <option value="sedan" selected>セダン/ミニバン</option>
+                  <option value="suv">SUV/大型</option>
+                  <option value="import">輸入車</option>
+                </select>
+              </div>
+            </div>
+            <div class="row-2">
+              <div class="field">
+                <label>納車エリア</label>
+                <select id="oRegion">
+                  <option value="20000">関東</option>
+                  <option value="28000">中部・東海</option>
+                  <option value="30000">関西</option>
+                  <option value="40000">東北・北陸・中国・四国</option>
+                  <option value="60000">北海道・九州</option>
+                  <option value="90000">沖縄・離島</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>オプション</label>
+                <div class="checks">
+                  <label><input type="checkbox" id="oReg" checked> 名義変更・登録代行</label>
+                  <label><input type="checkbox" id="oInspect"> 12ヶ月点検・整備パック</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="result" style="box-shadow:none;border:1px solid var(--line);padding:20px;">
+              <div class="line"><span>落札上限予算</span><span id="qBid">¥2,500,000</span></div>
+              <div class="line"><span>代行手数料・諸費用・陸送</span><span id="qFees">¥0</span></div>
+              <div class="grand"><span class="lbl">想定 乗り出し総額</span><span class="val" id="qTotal">¥0</span></div>
+            </div>
+
+            <button class="btn btn-gold btn-block mt-30" type="submit">この内容でオーダーを依頼する</button>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="copy">© 2026 AUC-AGENT — Car Auction Agent. これはデモ用の会員サイトです（データはブラウザ内に保存されます）。</div>
+  </div>
+</footer>
+
+<script src="assets/js/simulator.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  // --- 未ログインならログインページへ ---
+  var user = AucAuth.current();
+  if (!user) { location.href = "login.html"; }
+
+  // --- ヘッダー/サイドバーにユーザー情報を反映 ---
+  document.getElementById("hello").textContent = "こんにちは、" + user.name + " さん";
+  document.getElementById("planLine").textContent = user.plan + " 会員 ／ 登録日 " + user.since;
+  document.getElementById("meName").textContent = user.name;
+  document.getElementById("mePlan").textContent = user.plan + " 会員";
+  document.getElementById("avatar").textContent = (user.name || "G").charAt(0);
+
+  document.getElementById("logoutBtn").onclick = function (e) {
+    e.preventDefault(); AucAuth.logout(); location.href = "index.html";
+  };
+
+  // --- ステータス表示の対応表 ---
+  var STATUS = {
+    bid:      { cls: "st-bid",  label: "入札・提案中" },
+    won:      { cls: "st-won",  label: "落札成立" },
+    shipping: { cls: "st-ship", label: "陸送・手続き中" },
+    done:     { cls: "st-done", label: "納車完了" }
+  };
+
+  function yen(n) { return "¥" + Math.round(n).toLocaleString("ja-JP"); }
+
+  // --- 注文一覧を描画 ---
+  function renderOrders() {
+    var orders = AucAuth.orders();
+    var list = document.getElementById("orderList");
+    if (!orders.length) {
+      list.innerHTML = '<p style="color:var(--muted);margin:0;">まだ注文はありません。下の「かんたんオーダー」からご依頼ください。</p>';
+    } else {
+      list.innerHTML = orders.map(function (o) {
+        var s = STATUS[o.status] || STATUS.bid;
+        return '<div class="order">' +
+          '<div><div class="car">' + o.car + '</div>' +
+          '<div class="meta">注文番号 ' + o.id + ' ／ ' + o.date + '</div>' +
+          '<div class="progress"><i style="width:' + o.progress + '%"></i></div>' +
+          '<div class="meta" style="margin-top:6px;">' + (o.memo || "") + '</div></div>' +
+          '<div class="right"><span class="badge-status ' + s.cls + '">' + s.label + '</span>' +
+          '<div style="margin-top:8px;font-weight:800;">' + yen(o.total) + '</div></div>' +
+          '</div>';
+      }).join("");
+    }
+
+    // 統計を更新
+    var active = orders.filter(function (o) { return o.status !== "done"; }).length;
+    var done = orders.filter(function (o) { return o.status === "done"; }).length;
+    document.getElementById("stActive").textContent = active;
+    document.getElementById("stDone").textContent = done;
+  }
+
+  // --- かんたんオーダーの即時見積もり（AucSim を再利用） ---
+  function quoteParams() {
+    return {
+      bid: document.getElementById("oBid").value,
+      cls: document.getElementById("oClass").value,
+      region: document.getElementById("oRegion").value,
+      options: {
+        optReg: document.getElementById("oReg").checked,
+        optInspect: document.getElementById("oInspect").checked
+      }
+    };
+  }
+  function renderQuote() {
+    var r = AucSim.calculate(quoteParams());
+    document.getElementById("oBidOut").textContent = AucSim.yen(r.bid);
+    document.getElementById("qBid").textContent = AucSim.yen(r.bid);
+    document.getElementById("qFees").textContent =
+      AucSim.yen(r.fee + r.auctionFee + r.recycle + r.ship + r.options);
+    document.getElementById("qTotal").textContent = AucSim.yen(r.total);
+    return r;
+  }
+  document.getElementById("orderForm").addEventListener("input", renderQuote);
+  document.getElementById("orderForm").addEventListener("change", renderQuote);
+
+  // --- オーダー送信（デモ: localStorage に追加） ---
+  document.getElementById("orderForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var r = renderQuote();
+    var order = AucAuth.addOrder({
+      car: document.getElementById("oCar").value,
+      total: r.total,
+      memo: "オーダーを受け付けました。担当バイヤーが候補車両を提案します。"
+    });
+    var alertBox = document.getElementById("orderAlert");
+    alertBox.className = "alert alert-ok";
+    alertBox.textContent = "✓ オーダー（" + order.id + "）を受け付けました。注文状況に追加されました。";
+    renderOrders();
+    document.getElementById("oCar").value = "";
+    document.getElementById("orders").scrollIntoView({ behavior: "smooth" });
+  });
+
+  renderOrders();
+  renderQuote();
+</script>
+</body>
+</html>
