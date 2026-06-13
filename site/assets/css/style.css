@@ -211,6 +211,36 @@ section { padding: 76px 0; }
 .opt-list li:last-child { border-bottom: none; }
 .opt-list b { color: var(--navy); }
 
+/* ---------- Placeholder note ---------- */
+.ph { display: inline-block; color: #b07a1f; background: #fcf3df; border: 1px dashed #e2c483; padding: 1px 8px; border-radius: 6px; font-size: 12px; }
+
+/* ---------- Results / Testimonials ---------- */
+.result-card .rc-car { font-weight: 800; font-size: 15px; margin-bottom: 10px; }
+.result-card .rc-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; color: var(--muted); }
+.result-card .rc-row b { color: var(--ink); }
+.result-card .rc-save { margin-top: 10px; background: #eaf7f0; color: var(--green); border-radius: 8px; padding: 8px 12px; font-weight: 800; font-size: 13px; text-align: center; }
+.voice .stars { color: var(--gold); letter-spacing: 2px; margin-bottom: 8px; }
+.voice p { font-size: 14px; color: var(--ink); margin: 0 0 12px; }
+.voice .who { font-size: 13px; color: var(--muted); font-weight: 700; }
+
+/* ---------- Contact ---------- */
+.contact-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 24px; align-items: start; }
+.contact-form .field label { color: var(--ink); }
+.contact-form input, .contact-form textarea {
+  width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line);
+  font-size: 15px; font-family: var(--font); background: #fff; color: var(--ink);
+}
+.btn-line { background: #06c755; color: #fff; }
+.btn-line:hover { background: #05b14c; }
+.line-cta { text-align: center; }
+.line-cta .ico { margin: 0 auto 14px; }
+
+/* ---------- Company table ---------- */
+.company-table { width: 100%; max-width: 860px; margin: 0 auto; border-collapse: collapse; background: var(--white); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+.company-table th, .company-table td { text-align: left; padding: 14px 18px; border-bottom: 1px solid var(--line); font-size: 14.5px; vertical-align: top; }
+.company-table th { width: 160px; background: #f3f6fb; font-weight: 800; color: var(--navy); }
+.company-table tr:last-child th, .company-table tr:last-child td { border-bottom: none; }
+
 /* ---------- FAQ ---------- */
 .faq { max-width: 760px; margin: 0 auto; }
 .qa { background: var(--white); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
@@ -300,6 +330,8 @@ section { padding: 76px 0; }
   .nav .nav-link { display: none; }
   .price.feat { transform: none; }
   .site-footer .cols { grid-template-columns: 1fr; }
+  .contact-grid { grid-template-columns: 1fr; }
+  .company-table th { width: 120px; }
 }
 @media (max-width: 520px) {
   .flow { grid-template-columns: 1fr; }

@@ -12,7 +12,22 @@
 | `mypage.html` | 会員サイト。注文状況の確認＋**かんたんオーダー**（即時見積もり付き） |
 | `assets/css/style.css` | デザインシステム（ネイビー×ゴールド、レスポンシブ対応） |
 | `assets/js/simulator.js` | 総額計算ロジック（`window.AucSim`として公開し、LP・会員サイト双方で再利用） |
-| `assets/js/app.js` | 会員サイトのデモロジック（localStorageで登録／ログイン／注文を再現） |
+| `assets/js/app.js` | 会員サイトのロジック＋**バックエンド送信**（`ENDPOINT`にGAS URLを設定するとシート登録/LINE/AIへ連携） |
+
+LPには **選ばれる理由／利用の流れ／料金シミュレーション／料金／安心・保証／落札実績・お客様の声／FAQ／お問い合わせ・LINE／会社情報・特商法** を実装済み（実データに差し替え可のプレースホルダーは黄色注記）。
+
+## バックエンド自動化（`../gas/`）
+
+申込を **GAS Web App → スプレッドシート登録 → LINE通知 → AI要約** まで自動化します。
+セットアップは [`../gas/セットアップ手順.md`](../gas/セットアップ手順.md) を参照。
+
+| ファイル | 役割 |
+|---|---|
+| `gas/Config.gs` | 設定（シートID・LINEトークン・OpenRouterキー） |
+| `gas/Setup.gs` | `setupAll()` で3シートを自動作成 |
+| `gas/WebApp.gs` | `doPost()`：LPからの登録/オーダー/問い合わせを受信 |
+| `gas/Line.gs` | スタッフへLINE通知 |
+| `gas/AI.gs` | OpenRouterで申込を要約・優先度づけ（キー無しは簡易ルール） |
 
 ## 主な機能
 

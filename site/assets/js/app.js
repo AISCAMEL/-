@@ -10,6 +10,31 @@
   var USER_KEY = "auc_user";
   var ORDER_KEY = "auc_orders";
 
+  /* =======================================================
+     バックエンド送信設定
+     GASのウェブアプリURLをここに貼り付けると、会員登録・
+     かんたんオーダー・お問い合わせが自動でスプレッドシートへ
+     登録され、LINE通知＋AI要約まで走ります。
+     空欄のままでもサイトはデモとして動作します（localStorage）。
+     ======================================================= */
+  var ENDPOINT = ""; // 例: "https://script.google.com/macros/s/XXXX/exec"
+
+  /**
+   * GASへ送信（fire-and-forget）。
+   * GASウェブアプリはCORSヘッダを返さないため no-cors で送信し、
+   * 画面表示はlocalStorage側で完結させる（送信可否はサーバーのシートで確認）。
+   */
+  function sendToBackend(payload) {
+    if (!ENDPOINT) return Promise.resolve({ ok: false, skipped: true });
+    return fetch(ENDPOINT, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" }, // プリフライト回避
+      body: JSON.stringify(payload)
+    }).then(function () { return { ok: true }; })
+      .catch(function (e) { return { ok: false, error: String(e) }; });
+  }
+
   function read(key, fallback) {
     try { return JSON.parse(localStorage.getItem(key)) || fallback; }
     catch (e) { return fallback; }
@@ -41,11 +66,14 @@
     ]);
   }
 
+  window.AucConfig = { endpoint: ENDPOINT, send: sendToBackend };
+
   window.AucAuth = {
     register: function (u) {
       var user = { name: u.name || "ゲスト会員", email: u.email || "", plan: u.plan || "スタンダード", since: "2026-06-13" };
       write(USER_KEY, user);
       seedOrders();
+      sendToBackend({ type: "register", name: user.name, email: user.email, plan: user.plan, source: "LP" });
       return user;
     },
     login: function (email) {
@@ -68,6 +96,8 @@
       o.date = new Date().toISOString().slice(0, 10);
       orders.unshift(o);
       write(ORDER_KEY, orders);
+      var user = read(USER_KEY, {}) || {};
+      sendToBackend(Object.assign({ type: "order", name: user.name, email: user.email, plan: user.plan }, o.payload || {}, { car: o.car, total: o.total }));
       return o;
     }
   };

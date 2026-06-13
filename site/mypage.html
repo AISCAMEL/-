@@ -220,10 +220,23 @@
   document.getElementById("orderForm").addEventListener("submit", function (e) {
     e.preventDefault();
     var r = renderQuote();
+    var clsSel = document.getElementById("oClass");
+    var regSel = document.getElementById("oRegion");
     var order = AucAuth.addOrder({
       car: document.getElementById("oCar").value,
       total: r.total,
-      memo: "オーダーを受け付けました。担当バイヤーが候補車両を提案します。"
+      memo: "オーダーを受け付けました。担当バイヤーが候補車両を提案します。",
+      payload: {
+        bid: r.bid,
+        cls: clsSel.value,
+        clsLabel: r.classLabel,
+        fee: r.fee,
+        regionLabel: regSel.options[regSel.selectedIndex].text,
+        optionsLabel: [
+          document.getElementById("oReg").checked ? "名義変更・登録" : "",
+          document.getElementById("oInspect").checked ? "12ヶ月点検" : ""
+        ].filter(Boolean).join("・")
+      }
     });
     var alertBox = document.getElementById("orderAlert");
     alertBox.className = "alert alert-ok";
