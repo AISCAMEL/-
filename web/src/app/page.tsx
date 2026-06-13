@@ -72,8 +72,22 @@ export default function Home() {
               </div>
             ))}
           </div>
-          <p className="mt-10 text-center text-xs text-navy/40">
-            ※ コミュニティ・スキル掲示板・波情報は順次公開予定です。
+          <div className="mt-10 flex flex-wrap justify-center gap-3 text-sm">
+            <Link
+              href="/community"
+              className="rounded-full border border-ocean/30 px-5 py-2 font-medium text-ocean transition hover:bg-ocean hover:text-foam"
+            >
+              コミュニティを見る
+            </Link>
+            <Link
+              href="/waves"
+              className="rounded-full border border-teal/40 px-5 py-2 font-medium text-teal transition hover:bg-teal hover:text-navy"
+            >
+              今日の波情報 🌊
+            </Link>
+          </div>
+          <p className="mt-6 text-center text-xs text-navy/40">
+            ※ スキル掲示板・管理画面は順次公開予定です。
           </p>
         </div>
       </section>

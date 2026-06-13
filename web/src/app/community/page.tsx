@@ -8,6 +8,7 @@ import {
   isCategory,
 } from "@/lib/community";
 import { PostCard, type PostSummary } from "@/components/community/post-card";
+import { WaveWidget } from "@/components/waves/wave-widget";
 
 export const metadata: Metadata = {
   title: "コミュニティ｜IWASAWA SURF BASE",
@@ -46,6 +47,11 @@ export default async function CommunityFeed({ searchParams }: Props) {
         <p className="mt-1 text-sm text-sand/90">
           波・体験・質問・イベント。海の入口で、ゆるくつながる場所。
         </p>
+      </div>
+
+      {/* 波情報ウィジェット（WV-01） */}
+      <div className="mt-6">
+        <WaveWidget />
       </div>
 
       {/* カテゴリフィルター */}
