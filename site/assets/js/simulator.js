@@ -54,8 +54,82 @@
     optReg:     25000, // 名義変更・登録代行
     optGarage:  12000, // 車庫証明取得代行
     optInspect: 35000, // 12ヶ月点検・整備パック
-    optWarranty:28000  // 6ヶ月保証パック
+    optWarranty:28000, // 6ヶ月保証パック
+    optNumber:  8000,  // 希望ナンバー取得
+    optCoat:    44000, // ボディコーティング
+    optDrive:   22000  // ドラレコ等 取付
   };
+
+  /* =========================================================
+     陸送シミュレーション
+     出発エリア→納車エリアを地域ゾーンの距離で概算。
+     ※[要確認] 実際の会場×エリアの料金表で最終調整。
+     ========================================================= */
+  var AREAS = {
+    hokkaido: { label: "北海道",        zone: 0, ferry: true },
+    tohoku:   { label: "東北",          zone: 1 },
+    kanto:    { label: "関東",          zone: 2 },
+    chubu:    { label: "中部・東海",     zone: 3 },
+    kansai:   { label: "関西",          zone: 4 },
+    chugoku:  { label: "中国",          zone: 5 },
+    shikoku:  { label: "四国",          zone: 5 },
+    kyushu:   { label: "九州",          zone: 6 },
+    okinawa:  { label: "沖縄",          zone: 7, ferry: true }
+  };
+  var SHIP_BASE = 12000;       // 同一ゾーン内の基準
+  var SHIP_PER_ZONE = 8000;    // ゾーン差1あたり加算
+  var SHIP_FERRY = 40000;      // 北海道・沖縄の航送加算
+  var SIZE_MULT = { kei: 0.85, compact: 1.0, sedan: 1.1, suv: 1.25, import: 1.3 };
+
+  function estimateShipping(p) {
+    var from = AREAS[p.from] || AREAS.kanto;
+    var to = AREAS[p.to] || AREAS.kanto;
+    var mult = SIZE_MULT[p.cls] || 1.0;
+    var diff = Math.abs(from.zone - to.zone);
+    var cost = SHIP_BASE + diff * SHIP_PER_ZONE;
+    if (from.ferry || to.ferry) cost += SHIP_FERRY;
+    cost = cost * mult;
+    return {
+      fromLabel: from.label, toLabel: to.label,
+      cost: Math.round(cost / 1000) * 1000
+    };
+  }
+
+  /* =========================================================
+     落札・出品シミュレーション（売却側）
+     想定落札価格をもとに、出品代行手数料を引いた「手取り」を概算。
+     ※[要確認] 手数料率・成約料は市場調査で確定。
+     ========================================================= */
+  var SELL_RATE = 0.03;        // 出品代行手数料：落札価格の3%
+  var SELL_FEE_MIN = 33000;    // 手数料の下限
+  var SELL_SETTLE = 11000;     // 会場 成約料（一律目安）
+  // 車両状態（評価点）による相場レンジ係数
+  var COND = {
+    good:   { label: "良好（評価点4.5以上）", lo: 0.95, hi: 1.10, adj: 1.03 },
+    normal: { label: "標準（評価点3.5〜4）",  lo: 0.90, hi: 1.06, adj: 1.00 },
+    low:    { label: "難あり（評価点3以下）",  lo: 0.80, hi: 0.98, adj: 0.92 }
+  };
+
+  function estimateSell(p) {
+    var median = Number(p.median) || 0;     // 想定落札価格（中央値）
+    var c = COND[p.cond] || COND.normal;
+    var carrierIn = !!p.carrierIn;          // 代理搬入オプション
+    var carrierFee = carrierIn ? 18000 : 0;
+
+    var mid = median * c.adj;
+    var low = Math.round(median * c.lo / 1000) * 1000;
+    var high = Math.round(median * c.hi / 1000) * 1000;
+
+    var sellFee = Math.max(SELL_FEE_MIN, Math.round(mid * SELL_RATE));
+    var net = mid - sellFee - SELL_SETTLE - carrierFee;
+
+    return {
+      condLabel: c.label,
+      rangeLow: low, rangeHigh: high, mid: Math.round(mid),
+      sellFee: sellFee, settle: SELL_SETTLE, carrierFee: carrierFee,
+      net: Math.round(net)
+    };
+  }
 
   function yen(n) {
     return "¥" + Math.round(n).toLocaleString("ja-JP");
@@ -106,7 +180,12 @@
   }
 
   // window へ公開（mypage 等からの再利用用）
-  window.AucSim = { calculate: calculate, feeByBid: feeByBid, yen: yen, CLASS: CLASS, OPTIONS: OPTIONS, FEE_TIERS: FEE_TIERS };
+  window.AucSim = {
+    calculate: calculate, feeByBid: feeByBid, yen: yen, man: man,
+    CLASS: CLASS, OPTIONS: OPTIONS, FEE_TIERS: FEE_TIERS,
+    AREAS: AREAS, estimateShipping: estimateShipping,
+    COND: COND, estimateSell: estimateSell
+  };
 
   // ===== ここから index.html 用の DOM 連動 =====
   var bid = document.getElementById("bid");
