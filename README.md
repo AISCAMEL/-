@@ -74,6 +74,7 @@ cd backend
 cp .env.example .env   # 各種キーを設定（未設定でもデモモードで起動可）
 npm install
 npm run dev            # http://localhost:8080
+npm test               # 主要ロジックの単体テスト（node:test）
 ```
 `DATABASE_URL` / `OPENAI_API_KEY` 未設定でも **デモモード**で起動し、インメモリのサンプルデータで管理画面・API・通話フローを確認できます。
 
