@@ -61,7 +61,17 @@ function apprex_member_contracts( $user ) {
 		'fields'         => 'ids',
 	);
 	$by_id = get_posts( array_merge( $base, array( 'meta_key' => 'apprex_c_user_id', 'meta_value' => $user->ID ) ) );
-	$by_em = get_posts( array_merge( $base, array( 'meta_key' => 'apprex_c_email', 'meta_value' => $user->user_email ) ) );
+
+	// メール一致（大文字小文字を無視して照合）。
+	$by_em = array();
+	$email = strtolower( trim( (string) $user->user_email ) );
+	if ( $email ) {
+		foreach ( get_posts( $base ) as $cid ) {
+			if ( strtolower( trim( (string) get_post_meta( $cid, 'apprex_c_email', true ) ) ) === $email ) {
+				$by_em[] = $cid;
+			}
+		}
+	}
 	return array_values( array_unique( array_merge( $by_id, $by_em ) ) );
 }
 
@@ -168,6 +178,9 @@ function apprex_mypage_render() {
 
 	if ( empty( $ids ) ) {
 		echo '<p style="margin-top:20px;">現在ご契約情報が見つかりません。お手数ですが担当者までお問い合わせください。</p>';
+		if ( current_user_can( 'manage_options' ) ) {
+			echo '<p style="margin-top:10px;padding:10px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:13px;color:#92400e;">【管理者向けヒント】このアカウント（' . esc_html( $user->user_email ) . '）に紐づく契約がありません。契約の「メール」を同じにするか、契約画面の「会員アカウントを発行する」で発行したアカウントでログインすると表示されます。</p>';
+		}
 		echo '</div>';
 		return ob_get_clean();
 	}
