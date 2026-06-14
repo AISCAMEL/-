@@ -70,23 +70,89 @@ function apprex_member_contracts( $user ) {
  * ---------------------------------------------------------------------- */
 add_shortcode( 'apprex_mypage', 'apprex_mypage_render' );
 
+/* -------------------------------------------------------------------------
+ * 会員ログイン処理（マイページ内で完結＝wp-login.php に依存しない）
+ * ---------------------------------------------------------------------- */
+
+/** マイページから送信されたログインを処理（出力前に実行＝Cookieを確実にセット）。 */
+add_action( 'template_redirect', function () {
+	if ( empty( $_POST['apprex_member_login'] ) ) {
+		return;
+	}
+	if ( ! isset( $_POST['apprex_login_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['apprex_login_nonce'] ) ), 'apprex_member_login' ) ) {
+		$GLOBALS['apprex_login_error'] = 'ページの有効期限が切れました。もう一度お試しください。';
+		return;
+	}
+	$creds = array(
+		'user_login'    => isset( $_POST['log'] ) ? sanitize_text_field( wp_unslash( $_POST['log'] ) ) : '',
+		'user_password' => isset( $_POST['pwd'] ) ? (string) wp_unslash( $_POST['pwd'] ) : '',
+		'remember'      => ! empty( $_POST['rememberme'] ),
+	);
+	if ( '' === $creds['user_login'] || '' === $creds['user_password'] ) {
+		$GLOBALS['apprex_login_error'] = 'メールアドレスとパスワードを入力してください。';
+		return;
+	}
+	$user = wp_signon( $creds, is_ssl() );
+	if ( is_wp_error( $user ) ) {
+		$GLOBALS['apprex_login_error'] = 'メールアドレスまたはパスワードが正しくありません。';
+		return;
+	}
+	wp_set_current_user( $user->ID );
+	wp_safe_redirect( apprex_mypage_url() );
+	exit;
+}, 1 );
+
+/** 会員（管理者以外）は wp-login.php 経由でも必ずマイページに着地させる。 */
+add_filter( 'login_redirect', function ( $redirect_to, $requested, $user ) {
+	if ( ! ( $user instanceof WP_User ) ) {
+		return $redirect_to;
+	}
+	$roles = (array) $user->roles;
+	if ( in_array( 'administrator', $roles, true ) || in_array( 'editor', $roles, true ) ) {
+		return $redirect_to;
+	}
+	return apprex_mypage_url();
+}, 10, 3 );
+
+/** 会員（subscriber）が wp-admin に入ってしまったらマイページへ戻す（プロフィール編集・Ajaxは除く）。 */
+add_action( 'admin_init', function () {
+	if ( wp_doing_ajax() || ! is_user_logged_in() ) {
+		return;
+	}
+	$user = wp_get_current_user();
+	$roles = (array) $user->roles;
+	if ( in_array( 'administrator', $roles, true ) || in_array( 'editor', $roles, true ) || current_user_can( 'edit_posts' ) ) {
+		return;
+	}
+	wp_safe_redirect( apprex_mypage_url() );
+	exit;
+} );
+
 /** マイページ本体を描画。 */
 function apprex_mypage_render() {
 	ob_start();
 
 	if ( ! is_user_logged_in() ) {
-		echo '<div class="apprex-mypage" style="max-width:480px;margin:0 auto;">';
-		echo '<h2 style="text-align:center;">会員ログイン</h2>';
-		echo '<p style="text-align:center;color:#6b7280;">ご契約者様向けのマイページです。発行されたID（メール）とパスワードでログインしてください。</p>';
-		wp_login_form(
-			array(
-				'redirect'       => apprex_mypage_url(),
-				'label_username' => 'メールアドレス または ユーザー名',
-				'label_password' => 'パスワード',
-				'remember'       => true,
-			)
-		);
-		echo '<p style="text-align:center;margin-top:12px;"><a href="' . esc_url( wp_lostpassword_url( apprex_mypage_url() ) ) . '">パスワードをお忘れの方はこちら</a></p>';
+		$err    = isset( $GLOBALS['apprex_login_error'] ) ? $GLOBALS['apprex_login_error'] : '';
+		$action = esc_url( apprex_mypage_url() );
+		$nonce  = wp_create_nonce( 'apprex_member_login' );
+		echo '<div class="apprex-login" style="max-width:420px;margin:0 auto;background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:28px 26px;box-shadow:0 2px 10px rgba(0,0,0,.05);">';
+		echo '<h2 style="text-align:center;margin:0 0 6px;font-size:22px;">会員ログイン</h2>';
+		echo '<p style="text-align:center;color:#6b7280;font-size:14px;margin:0 0 18px;">ご契約者様向けのマイページです。<br>発行されたメールアドレスとパスワードでログインしてください。</p>';
+		if ( $err ) {
+			echo '<p style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;padding:10px 12px;border-radius:8px;font-size:14px;margin:0 0 14px;">' . esc_html( $err ) . '</p>';
+		}
+		echo '<form method="post" action="' . $action . '">';
+		echo '<input type="hidden" name="apprex_member_login" value="1">';
+		echo '<input type="hidden" name="apprex_login_nonce" value="' . esc_attr( $nonce ) . '">';
+		echo '<label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:4px;">メールアドレス</label>';
+		echo '<input type="text" name="log" autocomplete="username" required style="width:100%;min-height:46px;padding:0 14px;border:1px solid #d1d5db;border-radius:8px;margin-bottom:14px;font-size:15px;">';
+		echo '<label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:4px;">パスワード</label>';
+		echo '<input type="password" name="pwd" autocomplete="current-password" required style="width:100%;min-height:46px;padding:0 14px;border:1px solid #d1d5db;border-radius:8px;margin-bottom:12px;font-size:15px;">';
+		echo '<label style="display:flex;align-items:center;gap:6px;font-size:14px;color:#374151;margin-bottom:16px;"><input type="checkbox" name="rememberme" value="1" checked> ログイン状態を保持する</label>';
+		echo '<button type="submit" style="width:100%;min-height:48px;background:#2563eb;color:#fff;border:0;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;">ログイン</button>';
+		echo '</form>';
+		echo '<p style="text-align:center;margin:14px 0 0;font-size:14px;"><a href="' . esc_url( wp_lostpassword_url( apprex_mypage_url() ) ) . '">パスワードをお忘れの方はこちら</a></p>';
 		echo '</div>';
 		return ob_get_clean();
 	}
