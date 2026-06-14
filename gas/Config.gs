@@ -36,6 +36,7 @@ function getConfig() {
     SHEET_LOAN:    "ローン審査",      // ローン申込（オリコ連携）
     SHEET_MEMBERS: "会員マスタ",
     SHEET_CONTACTS: "問い合わせ",
+    SHEET_PARTNERS: "パートナー申込",
 
     // ⑥ デジタル出品票（PDF）出力先 Google ドライブ フォルダID（任意）
     //    空欄ならマイドライブ直下に作成します。

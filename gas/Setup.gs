@@ -41,6 +41,10 @@ function setupAll() {
     "受付日時", "お名前", "メール", "電話", "お問い合わせ内容", "対応状況"
   ]);
 
+  ensureSheet_(ss, cfg.SHEET_PARTNERS, [
+    "受付日時", "お名前/会社名", "参画タイプ", "メール", "電話", "対応エリア", "ご要望", "対応状況"
+  ]);
+
   SpreadsheetApp.flush();
   Logger.log("セットアップ完了：" + ss.getUrl());
 }

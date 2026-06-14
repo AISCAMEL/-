@@ -31,6 +31,7 @@ function doPost(e) {
       case "loan":     result = handleLoan_(data);     break;
       case "register": result = handleRegister_(data); break;
       case "contact":  result = handleContact_(data);  break;
+      case "partner":  result = handlePartner_(data);  break;
       default:         result = { ok: false, error: "unknown type" };
     }
     return json_(result);
@@ -197,6 +198,26 @@ function handleContact_(d) {
 
   sh.appendRow([new Date(), d.name || "", d.email || "", d.phone || "", d.message || "", "未対応"]);
   notifyStaff_("✉️ お問い合わせ\nお名前：" + (d.name || "-") + "\n内容：" + (d.message || "-"));
+  return { ok: true };
+}
+
+/* ---------- パートナー申込（別サイト） ---------- */
+function handlePartner_(d) {
+  var cfg = getConfig();
+  var ss = openBook_();
+  var sh = ss.getSheetByName(cfg.SHEET_PARTNERS) || ensureSheet_(ss, cfg.SHEET_PARTNERS, []);
+
+  sh.appendRow([
+    new Date(), d.name || "", d.ptype || "", d.email || "",
+    d.phone || "", d.area || "", d.message || "", "未対応"
+  ]);
+  notifyStaff_(
+    "🤝 パートナー申込\n" +
+    "名称：" + (d.name || "-") + "\n" +
+    "タイプ：" + (d.ptype || "-") + "\n" +
+    "エリア：" + (d.area || "-") + "\n" +
+    "連絡先：" + (d.email || "-") + " / " + (d.phone || "-")
+  );
   return { ok: true };
 }
 
