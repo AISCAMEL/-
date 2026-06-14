@@ -14,10 +14,49 @@
 
 		var toggle = document.querySelector('.apprex-chat-toggle');
 		var closeBtn = widget.querySelector('.apprex-chat__close');
+		var muteBtn = document.getElementById('apprex-chat-mute');
 		var log = document.getElementById('apprex-chat-log');
 		var input = document.getElementById('apprex-chat-input');
 		var quick = document.getElementById('apprex-chat-quick');
 		var opBtn = document.getElementById('apprex-chat-operator');
+
+		// 受信音（Web Audio：音声ファイル不要）。ミュートは localStorage に保存。
+		var soundOn = true;
+		try { soundOn = (localStorage.getItem('apprexChatMute') !== '1'); } catch (e) {}
+		var audioCtx = null;
+		function ensureAudio() {
+			try {
+				var AC = window.AudioContext || window.webkitAudioContext;
+				if (!audioCtx && AC) { audioCtx = new AC(); }
+				if (audioCtx && audioCtx.state === 'suspended') { audioCtx.resume(); }
+			} catch (e) {}
+		}
+		function playDing() {
+			if (!soundOn || !audioCtx) { return; }
+			try {
+				var t = audioCtx.currentTime;
+				var o = audioCtx.createOscillator();
+				var g = audioCtx.createGain();
+				o.type = 'sine';
+				o.frequency.setValueAtTime(880, t);
+				o.frequency.exponentialRampToValueAtTime(1320, t + 0.09);
+				g.gain.setValueAtTime(0.0001, t);
+				g.gain.exponentialRampToValueAtTime(0.16, t + 0.02);
+				g.gain.exponentialRampToValueAtTime(0.0001, t + 0.34);
+				o.connect(g); g.connect(audioCtx.destination);
+				o.start(t); o.stop(t + 0.36);
+			} catch (e) {}
+		}
+		function updateMuteIcon() { if (muteBtn) { muteBtn.textContent = soundOn ? '🔔' : '🔕'; } }
+		updateMuteIcon();
+		if (muteBtn) {
+			muteBtn.addEventListener('click', function () {
+				soundOn = !soundOn;
+				try { localStorage.setItem('apprexChatMute', soundOn ? '0' : '1'); } catch (e) {}
+				updateMuteIcon();
+				if (soundOn) { ensureAudio(); playDing(); }
+			});
+		}
 		var history = [];
 		var greeted = false;
 		var busy = false;
@@ -50,6 +89,7 @@
 			widget.classList.add('is-open');
 			toggle.classList.add('has-seen');
 			toggle.setAttribute('aria-expanded', 'true');
+			ensureAudio(); // ユーザー操作の瞬間に音声を有効化（ブラウザ制約対策）。
 			if (!greeted) {
 				greeted = true;
 				var member = cfg.member || {};
@@ -89,6 +129,7 @@
 			}
 			log.appendChild(el);
 			log.scrollTop = log.scrollHeight;
+			if (role !== 'user') { playDing(); } // 受信時のみ音を鳴らす。
 			return el;
 		}
 

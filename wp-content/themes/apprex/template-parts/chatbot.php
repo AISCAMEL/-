@@ -35,7 +35,10 @@ if ( ! $apprex_ai && ! $apprex_zapier ) {
 				<span class="apprex-chat__status"><span class="apprex-chat__dot" aria-hidden="true"></span><?php esc_html_e( 'オンライン｜お気軽にどうぞ', 'apprex' ); ?></span>
 			</div>
 		</div>
-		<button class="apprex-chat__close" type="button" aria-label="<?php esc_attr_e( '閉じる', 'apprex' ); ?>">×</button>
+		<div class="apprex-chat__actions">
+			<button class="apprex-chat__mute" id="apprex-chat-mute" type="button" aria-label="<?php esc_attr_e( '通知音のオン/オフ', 'apprex' ); ?>" title="<?php esc_attr_e( '通知音のオン/オフ', 'apprex' ); ?>">🔔</button>
+			<button class="apprex-chat__close" type="button" aria-label="<?php esc_attr_e( '閉じる', 'apprex' ); ?>">×</button>
+		</div>
 	</div>
 	<div class="apprex-chat__log" id="apprex-chat-log" aria-live="polite"></div>
 	<div class="apprex-chat__quick" id="apprex-chat-quick">
