@@ -31,9 +31,15 @@ function getConfig() {
     COMPANY_NAME: "AUC-AGENT（オークション代行）",
 
     // ⑤ シート名（基本変更不要）
-    SHEET_ORDERS: "オーダー管理",
+    SHEET_ORDERS: "オーダー管理",     // 購入代行
+    SHEET_SELL:    "出品管理",        // 出品代行
+    SHEET_LOAN:    "ローン審査",      // ローン申込（オリコ連携）
     SHEET_MEMBERS: "会員マスタ",
-    SHEET_CONTACTS: "問い合わせ"
+    SHEET_CONTACTS: "問い合わせ",
+
+    // ⑥ デジタル出品票（PDF）出力先 Google ドライブ フォルダID（任意）
+    //    空欄ならマイドライブ直下に作成します。
+    SELL_SHEET_PDF_FOLDER_ID: ""
   };
 }
 

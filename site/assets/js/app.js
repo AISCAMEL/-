@@ -41,25 +41,28 @@
   }
   function write(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
 
-  // 初回ログイン時に、雰囲気を出すためのサンプル注文を投入
+  // 初回ログイン時に、雰囲気を出すためのサンプル注文を投入（購入＋出品）
   function seedOrders() {
     if (read(ORDER_KEY, null)) return;
     write(ORDER_KEY, [
       {
-        id: "OD-2041",
+        id: "OD-2041", kind: "buy",
         car: "トヨタ ヤリス 1.5 G (2021)",
-        status: "shipping",
-        total: 1614000,
-        progress: 75,
+        status: "shipping", total: 1614000, progress: 75,
         date: "2026-06-02",
         memo: "落札成立・陸送手配中。6/16頃ご納車予定。"
       },
       {
-        id: "OD-1987",
+        id: "SL-3007", kind: "sell",
+        car: "日産 セレナ ハイウェイスター (2019)",
+        status: "listing", total: 1153000, progress: 45,
+        date: "2026-06-08",
+        memo: "出品票を発送しました。会場へのご搬入をお願いします。"
+      },
+      {
+        id: "OD-1987", kind: "buy",
         car: "ホンダ N-BOX カスタム (2020)",
-        status: "done",
-        total: 1180000,
-        progress: 100,
+        status: "done", total: 1180000, progress: 100,
         date: "2026-04-18",
         memo: "ご納車完了。ありがとうございました。"
       }
@@ -90,14 +93,20 @@
     orders: function () { return read(ORDER_KEY, []); },
     addOrder: function (o) {
       var orders = read(ORDER_KEY, []);
-      o.id = "OD-" + (2050 + orders.length);
-      o.status = "bid";
+      var sell = o.kind === "sell";
+      o.id = (sell ? "SL-" : "OD-") + (2050 + orders.length);
+      o.kind = o.kind || "buy";
+      o.status = sell ? "apply" : "bid";
       o.progress = 20;
       o.date = new Date().toISOString().slice(0, 10);
       orders.unshift(o);
       write(ORDER_KEY, orders);
       var user = read(USER_KEY, {}) || {};
-      sendToBackend(Object.assign({ type: "order", name: user.name, email: user.email, plan: user.plan }, o.payload || {}, { car: o.car, total: o.total }));
+      // type: 購入=order / 出品=sell
+      sendToBackend(Object.assign(
+        { type: sell ? "sell" : "order", name: user.name, email: user.email, plan: user.plan },
+        o.payload || {}, { kind: o.kind, car: o.car, total: o.total }
+      ));
       return o;
     }
   };

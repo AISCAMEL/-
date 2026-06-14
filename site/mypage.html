@@ -43,8 +43,10 @@
       </div>
       <nav class="mp-nav">
         <a href="#dash" class="active">📊 ダッシュボード</a>
-        <a href="#orders">📦 注文状況</a>
-        <a href="#newOrder">➕ かんたんオーダー</a>
+        <a href="#orders">📦 注文・出品状況</a>
+        <a href="#newOrder">➕ 購入オーダー</a>
+        <a href="#newSell">🏷️ 出品申込</a>
+        <a href="manual.html">📖 出品マニュアル</a>
         <a href="index.html#simulator">🧮 料金シミュレーション</a>
         <a href="index.html">🏠 トップへ</a>
       </nav>
@@ -127,6 +129,44 @@
           </form>
         </div>
       </section>
+
+      <!-- Sell application (出品申込) -->
+      <section class="panel" id="newSell">
+        <div class="panel-head"><h3>出品申込（売却）</h3></div>
+        <div class="panel-body">
+          <div class="alert alert-info" id="sellAlert">愛車情報を入力すると、手取りの目安をその場で計算します。お申込み後、出品票を制作してご郵送します。</div>
+          <form id="sellForm">
+            <div class="field">
+              <label>売却する車種・モデル</label>
+              <input type="text" id="zCar" placeholder="例）日産 セレナ ハイウェイスター（2019年式 / 走行6万km）" required />
+            </div>
+            <div class="row-2">
+              <div class="field">
+                <label>想定落札価格（中央値）<span class="v" id="zMedOut" style="color:var(--gold)"></span></label>
+                <input type="number" id="zMed" min="100000" max="8000000" step="50000" value="1200000" required />
+              </div>
+              <div class="field">
+                <label>車両の状態</label>
+                <select id="zCond"></select>
+              </div>
+            </div>
+            <div class="field">
+              <label>オプション</label>
+              <div class="checks">
+                <label><input type="checkbox" id="zCarrier"> 代理搬入を依頼する（+¥18,000）</label>
+              </div>
+            </div>
+
+            <div class="result" style="box-shadow:none;border:1px solid var(--line);padding:20px;">
+              <div class="line"><span>想定落札相場レンジ</span><span id="zRange">—</span></div>
+              <div class="line"><span>出品代行手数料・成約料・搬入</span><span id="zFees">—</span></div>
+              <div class="grand"><span class="lbl">手取り目安</span><span class="val" id="zNet">¥0</span></div>
+            </div>
+
+            <button class="btn btn-navy btn-block mt-30" type="submit">この内容で出品を申し込む</button>
+          </form>
+        </div>
+      </section>
     </main>
   </div>
 </div>
@@ -155,12 +195,17 @@
     e.preventDefault(); AucAuth.logout(); location.href = "index.html";
   };
 
-  // --- ステータス表示の対応表 ---
+  // --- ステータス表示の対応表（購入＋出品） ---
   var STATUS = {
+    // 購入
     bid:      { cls: "st-bid",  label: "入札・提案中" },
     won:      { cls: "st-won",  label: "落札成立" },
     shipping: { cls: "st-ship", label: "陸送・手続き中" },
-    done:     { cls: "st-done", label: "納車完了" }
+    done:     { cls: "st-done", label: "納車完了" },
+    // 出品
+    apply:    { cls: "st-bid",  label: "出品申込・審査" },
+    listing:  { cls: "st-ship", label: "出品票発送・搬入待ち" },
+    sold:     { cls: "st-won",  label: "成約・入金処理" }
   };
 
   function yen(n) { return "¥" + Math.round(n).toLocaleString("ja-JP"); }
@@ -174,9 +219,12 @@
     } else {
       list.innerHTML = orders.map(function (o) {
         var s = STATUS[o.status] || STATUS.bid;
+        var kindTag = (o.kind === "sell")
+          ? '<span class="badge-status" style="background:#efeaff;color:#5b46c4;margin-right:6px;">出品</span>'
+          : '<span class="badge-status" style="background:#e6f0ff;color:#2a64c4;margin-right:6px;">購入</span>';
         return '<div class="order">' +
-          '<div><div class="car">' + o.car + '</div>' +
-          '<div class="meta">注文番号 ' + o.id + ' ／ ' + o.date + '</div>' +
+          '<div><div class="car">' + kindTag + o.car + '</div>' +
+          '<div class="meta">受付番号 ' + o.id + ' ／ ' + o.date + '</div>' +
           '<div class="progress"><i style="width:' + o.progress + '%"></i></div>' +
           '<div class="meta" style="margin-top:6px;">' + (o.memo || "") + '</div></div>' +
           '<div class="right"><span class="badge-status ' + s.cls + '">' + s.label + '</span>' +
@@ -246,8 +294,56 @@
     document.getElementById("orders").scrollIntoView({ behavior: "smooth" });
   });
 
+  // --- 出品申込（売却）の即時手取り計算 ---
+  var zCondSel = document.getElementById("zCond");
+  Object.keys(AucSim.COND).forEach(function (k) {
+    var o = document.createElement("option");
+    o.value = k; o.textContent = AucSim.COND[k].label;
+    if (k === "normal") o.selected = true;
+    zCondSel.appendChild(o);
+  });
+  function sellParams() {
+    return {
+      median: document.getElementById("zMed").value,
+      cond: zCondSel.value,
+      carrierIn: document.getElementById("zCarrier").checked
+    };
+  }
+  function renderSell() {
+    var r = AucSim.estimateSell(sellParams());
+    document.getElementById("zMedOut").textContent = AucSim.yen(document.getElementById("zMed").value);
+    document.getElementById("zRange").textContent = AucSim.yen(r.rangeLow) + "〜" + AucSim.yen(r.rangeHigh);
+    document.getElementById("zFees").textContent = "− " + AucSim.yen(r.sellFee + r.settle + r.carrierFee);
+    document.getElementById("zNet").textContent = AucSim.yen(r.net);
+    return r;
+  }
+  document.getElementById("sellForm").addEventListener("input", renderSell);
+  document.getElementById("sellForm").addEventListener("change", renderSell);
+
+  document.getElementById("sellForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var r = renderSell();
+    var order = AucAuth.addOrder({
+      kind: "sell",
+      car: document.getElementById("zCar").value,
+      total: r.net,
+      memo: "出品申込を受け付けました。審査後、出品票を制作・郵送します。",
+      payload: {
+        median: r.mid, cond: r.condLabel,
+        sellFee: r.sellFee, carrierFee: r.carrierFee
+      }
+    });
+    var box = document.getElementById("sellAlert");
+    box.className = "alert alert-ok";
+    box.textContent = "✓ 出品申込（" + order.id + "）を受け付けました。状況に追加されました。";
+    renderOrders();
+    document.getElementById("zCar").value = "";
+    document.getElementById("orders").scrollIntoView({ behavior: "smooth" });
+  });
+
   renderOrders();
   renderQuote();
+  renderSell();
 </script>
 </body>
 </html>
