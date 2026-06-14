@@ -9,7 +9,7 @@ import { news } from "@/content/news";
 export const metadata: Metadata = {
   title: "お知らせ・コラム",
   description:
-    "合同会社アイズからのお知らせと、クルマ（販売・買取・リース）やアプリ・Web開発に関するコラムをお届けします。",
+    "合同会社アイズからのお知らせと、クルマ（販売・買取・オンライン購入）やアプリ・Web制作に関するコラムをお届けします。",
   alternates: { canonical: "/news" },
 };
 

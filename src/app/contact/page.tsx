@@ -8,17 +8,17 @@ import { site } from "@/content/site";
 export const metadata: Metadata = {
   title: "お問い合わせ・無料相談",
   description:
-    "合同会社アイズへのお問い合わせ。自動車販売（カーメル）・買取（BUYMO）・リース（CARSHICO）・車両セキュリティ（天護）・レッカー、IT事業（APPREX）・WEB開発（WEB crews）・FC事業のご相談を承ります。初回相談・お見積りは無料です。",
+    "合同会社アイズへのお問い合わせ。自動車販売（カーメル）・買取（BUYMO）・オンライン車販売（CARSHICO）・車両セキュリティ（天護）・レッカー、IT事業（APPREX）・WEB制作（WEB crews）・FC事業のご相談を承ります。初回相談・お見積りは無料です。",
   alternates: { canonical: "/contact" },
 };
 
 const examples = [
-  "新車・中古車の購入や乗り換えを相談したい（カーメル）",
-  "今の愛車の買取査定をお願いしたい（BUYMO）",
-  "カーリースについて知りたい（CARSHICO）",
-  "車のGPS・盗難対策を相談したい（天護）",
+  "国産車の購入や乗り換えを相談したい（カーメル）",
+  "車・トラック・農機具・アルミを買取してほしい（BUYMO）",
+  "新車をオンラインで注文して自宅で受け取りたい（CARSHICO）",
+  "車のGPS・遠隔停止セキュリティを相談したい（天護）",
   "ノーコードでアプリを作りたい（APPREX）",
-  "Webサイト・システム開発を相談したい（WEB crews）",
+  "サブスクでホームページを作りたい（WEB crews）",
 ];
 
 export default function ContactPage() {

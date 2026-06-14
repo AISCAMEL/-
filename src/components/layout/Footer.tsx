@@ -20,7 +20,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="mt-4 text-sm leading-relaxed text-slate-400">
-              自動車販売「カーメル」・買取「BUYMO」・リース「CARSHICO」・車両セキュリティ「天護」・レッカーを主軸に、IT事業「APPREX」、WEB開発「WEB crews」、FC事業を展開しています。
+              自動車販売「カーメル」・買取「BUYMO」・オンライン車販売「CARSHICO」・車両セキュリティ「天護」・レッカーを主軸に、IT事業「APPREX」、サブスクWeb制作「WEB crews」、FC事業を展開しています。
             </p>
           </div>
 

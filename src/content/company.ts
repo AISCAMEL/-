@@ -9,7 +9,7 @@ export const companyProfile: { label: string; value: string }[] = [
   {
     label: "事業内容",
     value:
-      "自動車販売「カーメル」／自動車買取「BUYMO」／カーリース「CARSHICO」／車両セキュリティ「天護 TENGO」／レッカー事業／FC事業／IT事業「APPREX」（ノーコードアプリ開発）／WEB開発「WEB crews」",
+      "自動車販売「カーメル」（国産車・全国）／自動車買取「BUYMO」（車・トラック・農機具・アルミ等／全国）／オンライン車販売「CARSHICO」（新車・自宅納車）／車両セキュリティ「天護 TENGO」（GPS遠隔停止）／レッカー事業（福島県内）／FC事業／IT事業「APPREX」（ノーコードアプリ開発）／サブスクWeb制作「WEB crews」／AI電話応対「AIオペレーター24」（準備中）",
   },
 ];
 

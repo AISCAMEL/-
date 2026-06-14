@@ -9,7 +9,7 @@ import { serviceGroups, getServicesByGroup } from "@/content/services";
 export const metadata: Metadata = {
   title: "事業紹介｜自動車・IT/WEB・FC",
   description:
-    "合同会社アイズの事業一覧。自動車販売「カーメル」・買取「BUYMO」・リース「CARSHICO」・車両セキュリティ「天護」・レッカー事業を主力に、IT事業「APPREX」、WEB開発「WEB crews」、FC事業を展開しています。",
+    "合同会社アイズの事業一覧。自動車販売「カーメル」・買取「BUYMO」・オンライン車販売「CARSHICO」・車両セキュリティ「天護」・レッカー事業を主力に、IT事業「APPREX」、サブスクWeb制作「WEB crews」、FC事業を展開しています。",
   alternates: { canonical: "/services" },
 };
 
@@ -19,7 +19,7 @@ export default function ServicesPage() {
       <PageHero
         eyebrow="Business"
         title="事業紹介"
-        lead="自動車事業（販売・買取・リース・セキュリティ・レッカー）を主力に、IT・WEB事業、FC事業を展開。クルマのことからデジタルまで、ワンストップでお応えします。"
+        lead="自動車事業（販売・買取・オンライン販売・セキュリティ・レッカー）を主力に、IT・WEB事業、FC事業を展開。クルマのことからデジタルまで、ワンストップでお応えします。"
       />
       <Section tone="light">
         <div className="space-y-14">
@@ -50,7 +50,14 @@ export default function ServicesPage() {
                           {s.brand}
                         </p>
                       )}
-                      <h3 className="mt-0.5 text-lg font-bold text-ink-900">{s.name}</h3>
+                      <div className="mt-0.5 flex flex-wrap items-center gap-2">
+                        <h3 className="text-lg font-bold text-ink-900">{s.name}</h3>
+                        {s.comingSoon && (
+                          <span className="rounded-full bg-accent-50 px-2 py-0.5 text-[10px] font-bold text-accent-700 ring-1 ring-inset ring-accent-200">
+                            準備中
+                          </span>
+                        )}
+                      </div>
                       <p className="mt-1 text-sm font-medium text-ink-600">{s.tagline}</p>
                       <Link
                         href={`/services/${s.slug}`}

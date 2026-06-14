@@ -9,7 +9,7 @@ import { services } from "@/content/services";
 export const metadata: Metadata = {
   title: "ブランド一覧",
   description:
-    "合同会社アイズが展開するブランド一覧。自動車販売「カーメル」、買取「BUYMO」、カーリース「CARSHICO」、車両セキュリティ「天護 TENGO」、ノーコードアプリ開発「APPREX」、Web開発「WEB crews」。",
+    "合同会社アイズが展開するブランド一覧。自動車販売「カーメル」、買取「BUYMO」、オンライン車販売「CARSHICO」、車両セキュリティ「天護 TENGO」、ノーコードアプリ開発「APPREX」、サブスクWeb制作「WEB crews」、AI電話応対「AIオペレーター24」。",
   alternates: { canonical: "/brands" },
 };
 

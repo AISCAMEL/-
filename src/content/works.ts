@@ -29,13 +29,13 @@ export const works: Work[] = [
     isPlaceholder: true,
   },
   {
-    slug: "sample-carshico-lease",
-    title: "法人向けカーリース（CARSHICO）の導入",
+    slug: "sample-carshico-online",
+    title: "オンライン車販売（CARSHICO）での新車購入・自宅納車",
     category: "mobility",
-    categoryLabel: "カーリース",
+    categoryLabel: "オンライン車販売",
     summary:
-      "初期費用を抑えたい法人のお客様へ、月々定額のカーリース（CARSHICO）を導入。費用の見通しを立てやすく社用車を整備。",
-    result: "初期費用を大幅に圧縮（※サンプル）",
+      "来店が難しいお客様へ、新車をオンラインで注文（CARSHICO）。手続きまでオンラインで完結し、ご自宅まで納車。",
+    result: "来店なしで新車購入が完結（※サンプル）",
     isPlaceholder: true,
   },
   {

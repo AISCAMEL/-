@@ -3,8 +3,8 @@ import { Container } from "@/components/ui/Container";
 import { Icon } from "@/components/ui/Icon";
 
 const trustPoints = [
-  "販売・買取・リース・セキュリティ・レッカー",
-  "ノーコードアプリ「APPREX」・WEB開発",
+  "販売・買取・オンライン納車・セキュリティ・レッカー",
+  "ノーコードアプリ「APPREX」・サブスクWeb制作",
   "FC（カーメル／BUYMO）加盟募集",
 ];
 
@@ -47,8 +47,8 @@ export function Hero() {
             </h1>
 
             <p className="mt-6 max-w-2xl text-base leading-relaxed text-slate-300 sm:text-lg">
-              合同会社アイズは、自動車販売「カーメル」・買取「BUYMO」・リース「CARSHICO」・車両セキュリティ「天護」・レッカーまで、クルマに関わるすべてを手がける会社です。
-              さらに、ノーコードアプリ開発「APPREX」やWEB開発「WEB crews」、FC事業まで。あなたのニーズにワンストップでお応えします。
+              合同会社アイズは、自動車販売「カーメル」・買取「BUYMO」・オンライン車販売「CARSHICO」・車両セキュリティ「天護」・レッカーまで、クルマに関わるすべてを手がける会社です。
+              さらに、ノーコードアプリ開発「APPREX」やサブスクWeb制作「WEB crews」、FC事業まで。あなたのニーズにワンストップでお応えします。
             </p>
 
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
@@ -75,8 +75,8 @@ export function Hero() {
           <div className="lg:col-span-5">
             <div className="grid gap-3">
               {[
-                { icon: "car" as const, label: "自動車事業", desc: "販売・買取・リース・セキュリティ・レッカー", primary: true },
-                { icon: "app" as const, label: "IT・WEB事業", desc: "APPREX（ノーコードアプリ）／WEB crews" },
+                { icon: "car" as const, label: "自動車事業", desc: "販売・買取・オンライン納車・セキュリティ・レッカー", primary: true },
+                { icon: "app" as const, label: "IT・WEB事業", desc: "APPREX／WEB crews／AIオペレーター24" },
                 { icon: "store" as const, label: "FC事業", desc: "カーメル／BUYMO 加盟募集" },
               ].map((c) => (
                 <div

@@ -9,7 +9,7 @@ export const site = {
   // SEO の基準URL（本番ドメイン）
   url: "https://aisjaltd.com",
   description:
-    "合同会社アイズは、自動車販売「カーメル」・買取「BUYMO」・リース「CARSHICO」・車両セキュリティ「天護」・レッカーを主軸に、ノーコードアプリ開発「APPREX」、Web開発「WEB crews」、FC事業を展開する会社です。クルマのことからデジタルまで、ワンストップでお応えします。",
+    "合同会社アイズは、自動車販売「カーメル」・買取「BUYMO」・オンライン車販売「CARSHICO」・車両セキュリティ「天護」・レッカーを主軸に、ノーコードアプリ開発「APPREX」、サブスクWeb制作「WEB crews」、FC事業を展開する会社です。クルマのことからデジタルまで、ワンストップでお応えします。",
   contact: {
     email: "info@aisjaltd.com",
     tel: "050-1722-3365",

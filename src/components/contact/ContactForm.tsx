@@ -6,11 +6,12 @@ import { Icon } from "@/components/ui/Icon";
 const subjects = [
   "自動車販売（カーメル）",
   "自動車買取（BUYMO）",
-  "カーリース（CARSHICO）",
+  "オンライン車販売（CARSHICO）",
   "車両セキュリティ（天護 TENGO）",
   "レッカー・カーレスキュー",
   "IT事業・アプリ開発（APPREX）",
-  "WEB開発（WEB crews）",
+  "WEB制作（WEB crews）",
+  "AIオペレーター24（準備中）",
   "FC事業（加盟のご相談）",
   "その他・どれか分からない",
 ];

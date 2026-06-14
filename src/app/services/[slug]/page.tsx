@@ -44,6 +44,29 @@ export default function ServiceDetailPage({ params }: { params: { slug: string }
         lead={service.summary}
       />
 
+      {(service.externalUrl || service.comingSoon) && (
+        <div className="border-b border-slate-200 bg-slate-50">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-4 sm:px-6">
+            {service.comingSoon && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-50 px-3 py-1 text-xs font-bold text-accent-700 ring-1 ring-inset ring-accent-200">
+                リリース準備中
+              </span>
+            )}
+            {service.externalUrl && (
+              <a
+                href={service.externalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:text-brand-800"
+              >
+                公式サイトを見る
+                <Icon name="arrow-right" className="h-4 w-4" />
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* こんな方へ */}
       <Section tone="light">
         <SectionHeading
