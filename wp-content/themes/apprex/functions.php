@@ -59,6 +59,7 @@ require_once APPREX_DIR . '/inc/orders.php';
 require_once APPREX_DIR . '/inc/contracts.php';
 require_once APPREX_DIR . '/inc/contract-doc.php';
 require_once APPREX_DIR . '/inc/contracts-lifecycle.php';
+require_once APPREX_DIR . '/inc/square-billing.php';
 require_once APPREX_DIR . '/inc/member-portal.php';
 require_once APPREX_DIR . '/inc/dashboard.php';
 require_once APPREX_DIR . '/inc/email.php';

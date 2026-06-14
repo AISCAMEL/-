@@ -158,6 +158,10 @@ function apprex_send_renewal_reminder( $id, $days_left ) {
  * 毎月のお支払い通知（Square自動課金 / 請求書）
  * ---------------------------------------------------------------------- */
 function apprex_send_payment_notice( $id ) {
+	// Square 請求書自動発行が処理したら、通常の通知メールは送らない。
+	if ( apply_filters( 'apprex_send_payment_via_square', false, $id ) ) {
+		return;
+	}
 	$email = get_post_meta( $id, 'apprex_c_email', true );
 	if ( ! is_email( $email ) ) {
 		return;
