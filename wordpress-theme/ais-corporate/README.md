@@ -47,6 +47,19 @@
 3. 管理画面 → 設定 → パーマリンク を一度「変更を保存」して、リライトルールを反映してください
    （カスタム投稿タイプの URL を有効化するため）。
 
+## ローカルでの実機確認
+
+MySQL を用意しなくても、SQLite で WordPress 一式を立ち上げて確認できます。
+
+```bash
+bash wordpress-theme/dev/setup-local-wp.sh
+# 完了後に表示されるコマンドでサーバーを起動 → http://localhost:8089
+```
+
+> WordPress 6.5 + SQLite で、テーマ有効化時のページ自動生成・フロントページ設定・
+> 事業/実績/お知らせのカスタム投稿の URL（`/services/carmel/` 等）・SEO（title/description/
+> canonical/OGP）・404・お問い合わせフォーム・AIチャットの表示制御まで動作を確認済みです。
+
 ## スタイルのビルド（編集する場合）
 
 スタイルは Tailwind CSS でビルドし、`assets/css/theme.css`（コミット済み）を読み込みます。
