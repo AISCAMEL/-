@@ -91,47 +91,26 @@
 <rect x="640" y="130" width="560" height="20" fill="#0e1b33"/>
 <text x="658" y="136" font-size="16" font-weight="800" fill="#fff">D. 出品代行 手数料（価格帯別の定額・確定）</text>
 <text x="656" y="178" font-size="14" text-anchor="start" fill="#1a2233" >〜50万円</text>
-<text x="1186" y="178" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥35,000</text>
+<text x="1186" y="178" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥39,800</text>
 <line x1="640" y1="188" x2="1200" y2="188" stroke="#e4e8ef"/>
 <rect x="640" y="188" width="560" height="30" fill="#fafbfd"/>
 <text x="656" y="208" font-size="14" text-anchor="start" fill="#1a2233" >50〜100万円</text>
-<text x="1186" y="208" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥45,000</text>
+<text x="1186" y="208" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥49,800</text>
 <line x1="640" y1="218" x2="1200" y2="218" stroke="#e4e8ef"/>
 <text x="656" y="238" font-size="14" text-anchor="start" fill="#1a2233" >100〜200万円</text>
-<text x="1186" y="238" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥60,000</text>
+<text x="1186" y="238" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥59,800</text>
 <line x1="640" y1="248" x2="1200" y2="248" stroke="#e4e8ef"/>
 <rect x="640" y="248" width="560" height="30" fill="#fafbfd"/>
 <text x="656" y="268" font-size="14" text-anchor="start" fill="#1a2233" >200〜300万円</text>
-<text x="1186" y="268" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥80,000</text>
+<text x="1186" y="268" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥69,800</text>
 <line x1="640" y1="278" x2="1200" y2="278" stroke="#e4e8ef"/>
 <text x="656" y="298" font-size="14" text-anchor="start" fill="#1a2233" >300〜400万円</text>
-<text x="1186" y="298" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥100,000</text>
+<text x="1186" y="298" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥79,800</text>
 <line x1="640" y1="308" x2="1200" y2="308" stroke="#e4e8ef"/>
 <rect x="640" y="308" width="560" height="30" fill="#fafbfd"/>
-<text x="656" y="328" font-size="14" text-anchor="start" fill="#1a2233" >400〜500万円</text>
-<text x="1186" y="328" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥120,000</text>
+<text x="656" y="328" font-size="14" text-anchor="start" fill="#1a2233" >1000万円超</text>
+<text x="1186" y="328" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">応相談（2.5%）</text>
 <line x1="640" y1="338" x2="1200" y2="338" stroke="#e4e8ef"/>
-<text x="656" y="358" font-size="14" text-anchor="start" fill="#1a2233" >500〜600万円</text>
-<text x="1186" y="358" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥140,000</text>
-<line x1="640" y1="368" x2="1200" y2="368" stroke="#e4e8ef"/>
-<rect x="640" y="368" width="560" height="30" fill="#fafbfd"/>
-<text x="656" y="388" font-size="14" text-anchor="start" fill="#1a2233" >600〜700万円</text>
-<text x="1186" y="388" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥160,000</text>
-<line x1="640" y1="398" x2="1200" y2="398" stroke="#e4e8ef"/>
-<text x="656" y="418" font-size="14" text-anchor="start" fill="#1a2233" >700〜800万円</text>
-<text x="1186" y="418" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥180,000</text>
-<line x1="640" y1="428" x2="1200" y2="428" stroke="#e4e8ef"/>
-<rect x="640" y="428" width="560" height="30" fill="#fafbfd"/>
-<text x="656" y="448" font-size="14" text-anchor="start" fill="#1a2233" >800〜900万円</text>
-<text x="1186" y="448" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥200,000</text>
-<line x1="640" y1="458" x2="1200" y2="458" stroke="#e4e8ef"/>
-<text x="656" y="478" font-size="14" text-anchor="start" fill="#1a2233" >900〜1000万円</text>
-<text x="1186" y="478" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥220,000</text>
-<line x1="640" y1="488" x2="1200" y2="488" stroke="#e4e8ef"/>
-<rect x="640" y="488" width="560" height="30" fill="#fafbfd"/>
-<text x="656" y="508" font-size="14" text-anchor="start" fill="#1a2233" >1000万円超</text>
-<text x="1186" y="508" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">応相談（2.5%）</text>
-<line x1="640" y1="518" x2="1200" y2="518" stroke="#e4e8ef"/>
 <text x="656" y="522" font-size="12" fill="#5a6675">出品料・成約料 ¥11,000／代理搬入 +¥18,000／流札 無料</text>
 <rect x="640" y="560" width="560" height="150" rx="12" fill="#fff" stroke="#e4e8ef" stroke-width="1.5"/>
 <rect x="640" y="560" width="560" height="40" rx="12" fill="#0e1b33"/>
@@ -144,17 +123,17 @@
 <line x1="640" y1="638" x2="1200" y2="638" stroke="#e4e8ef"/>
 <rect x="640" y="638" width="560" height="30" fill="#fafbfd"/>
 <text x="656" y="658" font-size="14" text-anchor="start" fill="#1a2233" >¥800,000</text>
-<text x="999.3333333333333" y="658" font-size="14" text-anchor="end" fill="#1a2233" >¥45,000</text>
-<text x="1186" y="658" font-size="14" text-anchor="end" fill="#0e1b33" >¥744,000</text>
+<text x="999.3333333333333" y="658" font-size="14" text-anchor="end" fill="#1a2233" >¥49,800</text>
+<text x="1186" y="658" font-size="14" text-anchor="end" fill="#0e1b33" >¥739,200</text>
 <line x1="640" y1="668" x2="1200" y2="668" stroke="#e4e8ef"/>
 <text x="656" y="688" font-size="14" text-anchor="start" fill="#1a2233" >¥1,200,000</text>
-<text x="999.3333333333333" y="688" font-size="14" text-anchor="end" fill="#1a2233" >¥60,000</text>
-<text x="1186" y="688" font-size="14" text-anchor="end" fill="#0e1b33" >¥1,129,000</text>
+<text x="999.3333333333333" y="688" font-size="14" text-anchor="end" fill="#1a2233" >¥59,800</text>
+<text x="1186" y="688" font-size="14" text-anchor="end" fill="#0e1b33" >¥1,129,200</text>
 <line x1="640" y1="698" x2="1200" y2="698" stroke="#e4e8ef"/>
 <rect x="640" y="698" width="560" height="30" fill="#fafbfd"/>
 <text x="656" y="718" font-size="14" text-anchor="start" fill="#1a2233" >¥2,500,000</text>
-<text x="999.3333333333333" y="718" font-size="14" text-anchor="end" fill="#1a2233" >¥80,000</text>
-<text x="1186" y="718" font-size="14" text-anchor="end" fill="#0e1b33" >¥2,409,000</text>
+<text x="999.3333333333333" y="718" font-size="14" text-anchor="end" fill="#1a2233" >¥79,800</text>
+<text x="1186" y="718" font-size="14" text-anchor="end" fill="#0e1b33" >¥2,409,200</text>
 <line x1="640" y1="728" x2="1200" y2="728" stroke="#e4e8ef"/>
 <rect x="640" y="730" width="560" height="210" rx="12" fill="#fff" stroke="#e4e8ef" stroke-width="1.5"/>
 <rect x="640" y="730" width="560" height="40" rx="12" fill="#0e1b33"/>

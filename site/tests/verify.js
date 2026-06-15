@@ -63,7 +63,7 @@ function fire(win, el, type) { el.dispatchEvent(new win.Event(type, { bubbles: t
     const { win, doc, getError } = load("sell.html");
     const med = doc.getElementById("sMed");
     med.value = "1200000"; fire(win, med, "input");
-    ok("手取りが計算される (#sNet=¥1,129,000)", doc.getElementById("sNet").textContent === "¥1,129,000", doc.getElementById("sNet").textContent);
+    ok("手取りが計算される (#sNet=¥1,129,200)", doc.getElementById("sNet").textContent === "¥1,129,200", doc.getElementById("sNet").textContent);
     ok("相場レンジ表示", /〜/.test(doc.getElementById("sRange").textContent));
     ok("ページエラーなし", !getError(), getError());
   }

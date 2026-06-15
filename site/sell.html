@@ -47,11 +47,11 @@
       <h3>出品代行の手取りイメージ</h3>
       <p class="sub">想定落札 120万円・標準状態の場合</p>
       <div class="row"><span>想定落札価格</span><span>¥1,200,000</span></div>
-      <div class="row"><span>出品代行手数料</span><span>− ¥60,000</span></div>
+      <div class="row"><span>出品代行手数料</span><span>− ¥59,800</span></div>
       <div class="row"><span>出品料・成約料</span><span>− ¥11,000</span></div>
       <div class="total">
         <span class="lbl">手取り目安</span>
-        <span class="val">¥1,129,000</span>
+        <span class="val">¥1,129,200</span>
       </div>
     </div>
   </div>
@@ -115,8 +115,10 @@
           <select id="sCond"></select>
         </div>
         <div class="field" style="margin-bottom:0;">
-          <label>オプション</label>
+          <label>オプション（出品前の付加サービス）</label>
           <div class="checks">
+            <label><input type="checkbox" id="sShaken"> 車検整備（車検なし車両の点検整備／+¥79,800・法定費用別）</label>
+            <label><input type="checkbox" id="sClean"> 内外装クリーニング（+¥19,800）</label>
             <label><input type="checkbox" id="sCarrier"> 代理搬入を依頼する（+¥18,000）</label>
           </div>
         </div>
@@ -127,13 +129,15 @@
         <h3>手取りシミュレーション（概算）</h3>
         <p class="note">※ 税込・参考値です。実際の落札額・費用は出品状況により変動します。</p>
         <div class="line"><span>想定落札相場レンジ <span class="tag" id="sCondTag">標準</span></span><span id="sRange">¥1,080,000〜¥1,272,000</span></div>
-        <div class="line"><span>想定落札価格（手数料帯 <span class="tag" id="sBandTag">100〜200万円</span>）</span><span id="sMid">¥1,200,000</span></div>
-        <div class="line muted"><span>出品代行手数料</span><span id="sFee">− ¥60,000</span></div>
+        <div class="line"><span>想定落札価格（手数料帯 <span class="tag" id="sBandTag">100〜150万円</span>）</span><span id="sMid">¥1,200,000</span></div>
+        <div class="line muted"><span>出品代行手数料</span><span id="sFee">− ¥59,800</span></div>
         <div class="line muted"><span>出品料・成約料</span><span id="sSettle">− ¥11,000</span></div>
+        <div class="line muted"><span>車検整備</span><span id="sShakenFee">− ¥0</span></div>
+        <div class="line muted"><span>内外装クリーニング</span><span id="sCleanFee">− ¥0</span></div>
         <div class="line muted"><span>代理搬入</span><span id="sCarrierFee">− ¥0</span></div>
         <div class="grand">
           <span class="lbl">手取り目安</span>
-          <span class="val" id="sNet">¥1,129,000</span>
+          <span class="val" id="sNet">¥1,129,200</span>
         </div>
         <a class="btn btn-navy btn-block mt-30" href="login.html">この内容で出品を申し込む（無料登録）</a>
       </div>
@@ -193,7 +197,9 @@
       var r = S.estimateSell({
         median: document.getElementById("sMed").value,
         cond: condSel.value,
-        carrierIn: document.getElementById("sCarrier").checked
+        carrierIn: document.getElementById("sCarrier").checked,
+        shakenIn: document.getElementById("sShaken").checked,
+        cleanIn: document.getElementById("sClean").checked
       });
       document.getElementById("sMedOut").textContent = S.yen(document.getElementById("sMed").value);
       document.getElementById("sCondTag").textContent = r.condLabel;
@@ -202,6 +208,8 @@
       document.getElementById("sMid").textContent = S.yen(r.mid);
       document.getElementById("sFee").textContent = "− " + S.yen(r.sellFee);
       document.getElementById("sSettle").textContent = "− " + S.yen(r.settle);
+      document.getElementById("sShakenFee").textContent = "− " + S.yen(r.shakenFee);
+      document.getElementById("sCleanFee").textContent = "− " + S.yen(r.cleanFee);
       document.getElementById("sCarrierFee").textContent = "− " + S.yen(r.carrierFee);
       document.getElementById("sNet").textContent = S.yen(r.net);
     }
