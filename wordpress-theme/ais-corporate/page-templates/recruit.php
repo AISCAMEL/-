@@ -18,6 +18,51 @@ $flow = array(
 	array( 'title' => '条件のご提示', 'body' => '雇用形態・待遇など、具体的な条件をご提示します。' ),
 	array( 'title' => '参画・スタート', 'body' => 'ご納得のうえで、いっしょに事業を進めます。' ),
 );
+
+// 求人の構造化データ（JobPosting）
+$emp_map = array(
+	'業務委託'        => array( 'CONTRACTOR' ),
+	'正社員・業務委託' => array( 'FULL_TIME', 'CONTRACTOR' ),
+	'正社員'          => array( 'FULL_TIME' ),
+	'正社員・アルバイト' => array( 'FULL_TIME', 'PART_TIME' ),
+);
+$posted   = get_the_modified_date( 'Y-m-d' ) ? get_the_modified_date( 'Y-m-d' ) : gmdate( 'Y-m-d' );
+$job_items = array();
+foreach ( $positions as $idx => $pos ) {
+	$emp = isset( $emp_map[ $pos['type'] ] ) ? $emp_map[ $pos['type'] ] : array( 'OTHER' );
+	$job_items[] = array(
+		'@type'    => 'ListItem',
+		'position' => $idx + 1,
+		'item'     => array(
+			'@type'              => 'JobPosting',
+			'title'              => $pos['title'],
+			'description'        => $pos['summary'] . '｜歓迎：' . $pos['welcome'],
+			'datePosted'         => $posted,
+			'employmentType'     => $emp,
+			'hiringOrganization' => array(
+				'@type' => 'Organization',
+				'name'  => $site['name'],
+				'sameAs' => $site['url'],
+			),
+			'jobLocation'        => array(
+				'@type'   => 'Place',
+				'address' => array(
+					'@type'           => 'PostalAddress',
+					'addressRegion'   => '福島県',
+					'addressLocality' => 'いわき市',
+					'addressCountry'  => 'JP',
+				),
+			),
+			'directApply'        => true,
+		),
+	);
+}
+$job_ld = array(
+	'@context'        => 'https://schema.org',
+	'@type'           => 'ItemList',
+	'itemListElement' => $job_items,
+);
+echo '<script type="application/ld+json">' . wp_json_encode( $job_ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . '</script>';
 ?>
 
 <?php echo ais_page_hero( 'Recruit', '採用情報', 'クルマからデジタルまで、多角的に挑戦できるフィールドがあります。正社員から業務委託まで、革新・品質・信頼を軸に、一緒に成長してくれる仲間を募集します。' ); // phpcs:ignore ?>
