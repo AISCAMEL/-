@@ -68,11 +68,11 @@ function fire(win, el, type) { el.dispatchEvent(new win.Event(type, { bubbles: t
   console.log("shipping.html（陸送シミュ）");
   {
     const { win, doc, getError } = load("shipping.html");
-    doc.getElementById("from").value = "kanto";
-    doc.getElementById("to").value = "hokkaido";
+    doc.getElementById("from").value = "東京";
+    doc.getElementById("to").value = "北海道";
     doc.querySelector('input[name="cls"][value="suv"]').checked = true;
     fire(win, doc.getElementById("to"), "change");
-    ok("陸送費が計算される (関東→北海道/SUV=¥85,000)", doc.getElementById("rCost").textContent === "¥85,000", doc.getElementById("rCost").textContent);
+    ok("陸送費が計算される (東京→北海道/SUV=¥115,000)", doc.getElementById("rCost").textContent === "¥115,000", doc.getElementById("rCost").textContent);
     ok("ページエラーなし", !getError(), getError());
   }
 

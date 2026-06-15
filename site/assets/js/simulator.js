@@ -61,36 +61,72 @@
   };
 
   /* =========================================================
-     陸送シミュレーション
-     出発エリア→納車エリアを地域ゾーンの距離で概算。
-     ※[要確認] 実際の会場×エリアの料金表で最終調整。
+     陸送シミュレーション（都道府県＋距離ベース・キャリアカー積載/普通車基準）
+     各都道府県に「日本列島の南北軸の概算位置(km)」を割り当て、
+     距離 = |軸差| を距離区分の料金に変換。北海道・沖縄は航送加算。
+     参考相場：同県内2〜3万、東京→大阪 約8万、東京→福岡 約10万（個人ドアtoドア）。
+     業者キャリアカー積載前提で実勢に合わせて区分を設定。最終は会場見積もりに準拠。
      ========================================================= */
-  var AREAS = {
-    hokkaido: { label: "北海道",        zone: 0, ferry: true },
-    tohoku:   { label: "東北",          zone: 1 },
-    kanto:    { label: "関東",          zone: 2 },
-    chubu:    { label: "中部・東海",     zone: 3 },
-    kansai:   { label: "関西",          zone: 4 },
-    chugoku:  { label: "中国",          zone: 5 },
-    shikoku:  { label: "四国",          zone: 5 },
-    kyushu:   { label: "九州",          zone: 6 },
-    okinawa:  { label: "沖縄",          zone: 7, ferry: true }
+  // axis: 札幌方面を起点とした概算ロード位置(km) / ferry: 航送区分
+  var PREF = {
+    "北海道": { axis: 0,    ferry: "hokkaido" },
+    "青森": { axis: 780 }, "岩手": { axis: 880 }, "秋田": { axis: 920 },
+    "宮城": { axis: 1000 }, "山形": { axis: 1030 }, "福島": { axis: 1120 },
+    "新潟": { axis: 1150 }, "茨城": { axis: 1230 }, "栃木": { axis: 1230 },
+    "群馬": { axis: 1260 }, "埼玉": { axis: 1280 }, "千葉": { axis: 1300 },
+    "東京": { axis: 1300 }, "神奈川": { axis: 1320 }, "山梨": { axis: 1380 },
+    "長野": { axis: 1370 }, "静岡": { axis: 1400 }, "富山": { axis: 1450 },
+    "石川": { axis: 1480 }, "岐阜": { axis: 1480 }, "愛知": { axis: 1500 },
+    "福井": { axis: 1520 }, "三重": { axis: 1560 }, "滋賀": { axis: 1600 },
+    "奈良": { axis: 1680 }, "京都": { axis: 1640 }, "大阪": { axis: 1700 },
+    "兵庫": { axis: 1720 }, "和歌山": { axis: 1740 }, "岡山": { axis: 1820 },
+    "鳥取": { axis: 1850 }, "徳島": { axis: 1800 }, "香川": { axis: 1820 },
+    "広島": { axis: 1950 }, "島根": { axis: 1950 }, "高知": { axis: 1920 },
+    "愛媛": { axis: 1950 }, "山口": { axis: 2080 }, "福岡": { axis: 2200 },
+    "佐賀": { axis: 2250 }, "大分": { axis: 2280 }, "熊本": { axis: 2300 },
+    "長崎": { axis: 2330 }, "宮崎": { axis: 2400 }, "鹿児島": { axis: 2480 },
+    "沖縄": { axis: 3500, ferry: "okinawa" }
   };
-  var SHIP_BASE = 12000;       // 同一ゾーン内の基準
-  var SHIP_PER_ZONE = 8000;    // ゾーン差1あたり加算
-  var SHIP_FERRY = 40000;      // 北海道・沖縄の航送加算
-  var SIZE_MULT = { kei: 0.85, compact: 1.0, sedan: 1.1, suv: 1.25, import: 1.3 };
+  // 距離区分→料金（普通車・キャリアカー積載の目安）
+  var SHIP_KM_TIERS = [
+    { km: 30,   fee: 13000 },
+    { km: 80,   fee: 16000 },
+    { km: 150,  fee: 20000 },
+    { km: 300,  fee: 27000 },
+    { km: 500,  fee: 35000 },
+    { km: 800,  fee: 45000 },
+    { km: 1200, fee: 58000 },
+    { km: 1800, fee: 75000 }
+  ];
+  var SHIP_KM_OVER = 90000;        // 1800km超
+  var SHIP_FERRY_HOKKAIDO = 25000; // 青函航送 加算
+  var SHIP_FERRY_OKINAWA = 50000;  // 沖縄航送 加算
+  // 車種サイズ係数（距離主体のため差は小さめ）
+  var SIZE_MULT = { kei: 0.9, compact: 1.0, sedan: 1.05, suv: 1.15, import: 1.2 };
+
+  function shipFeeByKm(km) {
+    for (var i = 0; i < SHIP_KM_TIERS.length; i++) {
+      if (km <= SHIP_KM_TIERS[i].km) return SHIP_KM_TIERS[i].fee;
+    }
+    return SHIP_KM_OVER;
+  }
 
   function estimateShipping(p) {
-    var from = AREAS[p.from] || AREAS.kanto;
-    var to = AREAS[p.to] || AREAS.kanto;
+    var from = PREF[p.from] || PREF["東京"];
+    var to = PREF[p.to] || PREF["東京"];
+    var fromName = PREF[p.from] ? p.from : "東京";
+    var toName = PREF[p.to] ? p.to : "東京";
     var mult = SIZE_MULT[p.cls] || 1.0;
-    var diff = Math.abs(from.zone - to.zone);
-    var cost = SHIP_BASE + diff * SHIP_PER_ZONE;
-    if (from.ferry || to.ferry) cost += SHIP_FERRY;
+
+    var km = Math.abs(from.axis - to.axis);
+    var cost = shipFeeByKm(km);
+    if (from.ferry === "hokkaido" || to.ferry === "hokkaido") cost += SHIP_FERRY_HOKKAIDO;
+    if (from.ferry === "okinawa" || to.ferry === "okinawa") cost += SHIP_FERRY_OKINAWA;
     cost = cost * mult;
+
     return {
-      fromLabel: from.label, toLabel: to.label,
+      fromLabel: fromName, toLabel: toName,
+      km: km,
       cost: Math.round(cost / 1000) * 1000
     };
   }
@@ -214,7 +250,7 @@
   window.AucSim = {
     calculate: calculate, feeByBid: feeByBid, yen: yen, man: man,
     CLASS: CLASS, OPTIONS: OPTIONS, FEE_TIERS: FEE_TIERS,
-    AREAS: AREAS, estimateShipping: estimateShipping,
+    AREAS: PREF, PREF: PREF, estimateShipping: estimateShipping,
     COND: COND, estimateSell: estimateSell,
     SELL_TIERS: SELL_TIERS, sellFeeByPrice: sellFeeByPrice
   };

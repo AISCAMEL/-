@@ -35,11 +35,11 @@
     <div class="sim-grid">
       <div class="sim-panel">
         <div class="field">
-          <label>出発エリア（会場など）</label>
+          <label>出発（会場の都道府県）</label>
           <select id="from"></select>
         </div>
         <div class="field">
-          <label>納車先エリア</label>
+          <label>納車先（都道府県）</label>
           <select id="to"></select>
         </div>
         <div class="field" style="margin-bottom:0;">
@@ -58,11 +58,11 @@
       <div class="result">
         <h3>陸送費（概算）</h3>
         <p class="note">※ 税込・参考値です。</p>
-        <div class="line"><span>区間</span><span id="rRoute">関東 → 関東</span></div>
+        <div class="line"><span>区間</span><span id="rRoute">東京 → 大阪</span></div>
         <div class="line"><span>車種クラス</span><span id="rCls">コンパクト</span></div>
         <div class="grand">
           <span class="lbl">陸送費の目安</span>
-          <span class="val" id="rCost">¥12,000</span>
+          <span class="val" id="rCost">¥35,000</span>
         </div>
         <div class="savings" style="background:#eef3fb;color:#2a64c4;border-color:#cfe0ff;">この金額は購入・出品シミュレーションにも反映できます。</div>
         <a class="btn btn-navy btn-block mt-30" href="index.html#simulator">購入の総額シミュレーションへ</a>
@@ -83,19 +83,19 @@
     var S = window.AucSim;
     var fromSel = document.getElementById("from");
     var toSel = document.getElementById("to");
-    Object.keys(S.AREAS).forEach(function (k) {
+    Object.keys(S.PREF).forEach(function (k) {
       [fromSel, toSel].forEach(function (sel) {
         var o = document.createElement("option");
-        o.value = k; o.textContent = S.AREAS[k].label;
+        o.value = k; o.textContent = k;
         sel.appendChild(o);
       });
     });
-    fromSel.value = "kanto"; toSel.value = "kanto";
+    fromSel.value = "東京"; toSel.value = "大阪";
 
     function render() {
       var cls = document.querySelector('input[name="cls"]:checked').value;
       var r = S.estimateShipping({ from: fromSel.value, to: toSel.value, cls: cls });
-      document.getElementById("rRoute").textContent = r.fromLabel + " → " + r.toLabel;
+      document.getElementById("rRoute").textContent = r.fromLabel + " → " + r.toLabel + "（約" + r.km + "km）";
       document.getElementById("rCls").textContent = S.CLASS[cls].label;
       document.getElementById("rCost").textContent = S.yen(r.cost);
     }
