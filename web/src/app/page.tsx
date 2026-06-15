@@ -80,6 +80,12 @@ export default function Home() {
               コミュニティを見る
             </Link>
             <Link
+              href="/skills"
+              className="rounded-full border border-ocean/30 px-5 py-2 font-medium text-ocean transition hover:bg-ocean hover:text-foam"
+            >
+              スキル掲示板
+            </Link>
+            <Link
               href="/waves"
               className="rounded-full border border-teal/40 px-5 py-2 font-medium text-teal transition hover:bg-teal hover:text-navy"
             >
@@ -87,7 +93,7 @@ export default function Home() {
             </Link>
           </div>
           <p className="mt-6 text-center text-xs text-navy/40">
-            ※ スキル掲示板・管理画面は順次公開予定です。
+            ※ 管理画面（運営向け）は順次公開予定です。
           </p>
         </div>
       </section>
