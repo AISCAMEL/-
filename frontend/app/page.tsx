@@ -28,6 +28,7 @@ export default function LandingPage() {
           <div className="text-lg font-bold text-brand">AIオペレーター24</div>
           <nav className="flex items-center gap-4 text-sm">
             <a href="#features" className="hidden text-gray-600 hover:text-gray-900 sm:inline">機能</a>
+            <a href="#compare" className="hidden text-gray-600 hover:text-gray-900 sm:inline">比較</a>
             <a href="#plans" className="hidden text-gray-600 hover:text-gray-900 sm:inline">料金</a>
             <Link href="/login" className="rounded-lg bg-brand px-4 py-2 font-medium text-white hover:bg-brand-dark">
               管理画面ログイン
@@ -69,6 +70,56 @@ export default function LandingPage() {
               <p className="mt-2 text-sm text-gray-600">{f.desc}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Comparison */}
+      <section id="compare" className="bg-white">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <h2 className="text-center text-3xl font-bold">他の方法と比べてみてください</h2>
+          <p className="mt-3 text-center text-gray-600">
+            人を雇う・電話代行を頼む・他のAI電話と比べても、24時間と要約の自動化で“ちょうどいい”。
+          </p>
+
+          <div className="mt-12 overflow-x-auto">
+            <table className="w-full min-w-[680px] border-collapse text-sm">
+              <thead>
+                <tr className="border-b">
+                  <th className="px-3 py-3 text-left font-medium text-gray-500"> </th>
+                  <th className="rounded-t-xl bg-brand-light px-3 py-3 text-center font-bold text-brand">
+                    AIオペレーター24
+                  </th>
+                  <th className="px-3 py-3 text-center font-medium text-gray-600">AI電話（最安系）</th>
+                  <th className="px-3 py-3 text-center font-medium text-gray-600">電話代行（人手）</th>
+                  <th className="px-3 py-3 text-center font-medium text-gray-600">スタッフ採用</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ['月額の目安', '¥9,800〜', '¥0〜3,000〜', '¥5,000〜30,000', '¥100,000〜'],
+                  ['24時間対応', '◎', '◎', '△（高額）', '△（シフト）'],
+                  ['AIが会話で要件聞き取り', '◎', '△（選択式中心）', '◎（人）', '◎（人）'],
+                  ['予約・折り返し受付', '◎', '○', '◎', '◎'],
+                  ['担当者へ転送', '◎', '○', '◎', '◎'],
+                  ['通話の文字起こし・要約', '◎ 自動', '△', '△ メモ', '△'],
+                  ['メール／Slack通知', '◎', '○', '○', '—'],
+                  ['管理画面で履歴管理', '◎', '○', '△', '—'],
+                  ['初期費用', '¥0', '¥0', '¥1〜3万', '採用コスト'],
+                ].map((row, i) => (
+                  <tr key={i} className="border-b">
+                    <td className="px-3 py-3 text-left font-medium text-gray-700">{row[0]}</td>
+                    <td className="bg-brand-light/50 px-3 py-3 text-center font-semibold text-brand">{row[1]}</td>
+                    <td className="px-3 py-3 text-center text-gray-600">{row[2]}</td>
+                    <td className="px-3 py-3 text-center text-gray-600">{row[3]}</td>
+                    <td className="px-3 py-3 text-center text-gray-600">{row[4]}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-4 text-center text-xs text-gray-400">
+            ※ 各社の料金・機能は2026年6月時点の一般的な相場をもとにした比較です。最新の内容は各社公式をご確認ください。
+          </p>
         </div>
       </section>
 
