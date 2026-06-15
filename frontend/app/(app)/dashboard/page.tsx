@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { api } from '@/lib/api';
+import { api, CATEGORY_LABEL } from '@/lib/api';
 import { Card, PageTitle, StatusBadge, CategoryTag, formatDateTime, formatDuration } from '@/components/ui';
 
 export default function DashboardPage() {
@@ -30,6 +30,12 @@ export default function DashboardPage() {
     <div>
       <PageTitle title="ダッシュボード" sub="電話受付の状況をひと目で。" />
 
+      {/* 初期設定への導線 */}
+      <Link href="/onboarding" className="mb-6 flex items-center justify-between rounded-xl border border-brand/30 bg-brand-light px-4 py-3 text-sm hover:bg-brand-light/70">
+        <span className="font-medium text-brand">🚀 はじめての方へ：かんたん初期設定（挨拶文・転送先・FAQ）</span>
+        <span className="text-brand">設定する →</span>
+      </Link>
+
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {stats.map((s) => (
           <Card key={s.label} className={s.accent ? 'ring-1 ring-brand' : ''}>
@@ -39,6 +45,18 @@ export default function DashboardPage() {
             </div>
           </Card>
         ))}
+      </div>
+
+      {/* グラフ */}
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        <Card>
+          <h2 className="mb-3 text-sm font-semibold text-gray-500">要件の内訳（今月）</h2>
+          <CategoryChart data={data.by_category ?? {}} />
+        </Card>
+        <Card>
+          <h2 className="mb-3 text-sm font-semibold text-gray-500">時間帯別の着信（今月）</h2>
+          <HourChart data={data.by_hour ?? []} />
+        </Card>
       </div>
 
       <h2 className="mb-3 mt-8 text-lg font-semibold">最近の通話</h2>
@@ -68,6 +86,48 @@ export default function DashboardPage() {
           </tbody>
         </table>
       </Card>
+    </div>
+  );
+}
+
+// 要件カテゴリの横棒グラフ
+function CategoryChart({ data }: { data: Record<string, number> }) {
+  const entries = Object.entries(data).sort((a, b) => b[1] - a[1]);
+  const max = Math.max(1, ...entries.map(([, n]) => n));
+  if (entries.length === 0) return <p className="text-sm text-gray-400">データがありません。</p>;
+  return (
+    <div className="space-y-2">
+      {entries.map(([cat, n]) => (
+        <div key={cat} className="flex items-center gap-2 text-sm">
+          <span className="w-20 shrink-0 text-gray-600">{CATEGORY_LABEL[cat] ?? cat}</span>
+          <div className="h-4 flex-1 overflow-hidden rounded bg-gray-100">
+            <div className="h-full rounded bg-brand" style={{ width: `${(n / max) * 100}%` }} />
+          </div>
+          <span className="w-6 text-right text-gray-500">{n}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// 時間帯別の縦棒グラフ（0-23時）
+function HourChart({ data }: { data: number[] }) {
+  const hours = data.length === 24 ? data : Array.from({ length: 24 }, () => 0);
+  const max = Math.max(1, ...hours);
+  const total = hours.reduce((s, n) => s + n, 0);
+  if (total === 0) return <p className="text-sm text-gray-400">データがありません。</p>;
+  return (
+    <div>
+      <div className="flex h-32 items-end gap-0.5">
+        {hours.map((n, h) => (
+          <div key={h} className="flex flex-1 flex-col items-center justify-end" title={`${h}時: ${n}件`}>
+            <div className="w-full rounded-t bg-brand" style={{ height: `${(n / max) * 100}%`, minHeight: n > 0 ? 3 : 0 }} />
+          </div>
+        ))}
+      </div>
+      <div className="mt-1 flex justify-between text-[10px] text-gray-400">
+        <span>0時</span><span>6時</span><span>12時</span><span>18時</span><span>23時</span>
+      </div>
     </div>
   );
 }

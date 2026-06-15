@@ -24,6 +24,12 @@ export async function getDashboard(tenantId: string) {
   if (!dbEnabled) {
     const today = demoCalls; // デモは全件を当日扱い
     const recent = [...today].sort((a, b) => b.started_at.localeCompare(a.started_at)).slice(0, 10);
+    const byCategory: Record<string, number> = {};
+    const byHour = Array.from({ length: 24 }, () => 0);
+    for (const c of today) {
+      if (c.category) byCategory[c.category] = (byCategory[c.category] ?? 0) + 1;
+      byHour[new Date(c.started_at).getHours()]++;
+    }
     return {
       calls_today: today.length,
       calls_this_month: today.length,
@@ -32,6 +38,8 @@ export async function getDashboard(tenantId: string) {
       transfer_count: today.filter((c) => c.status === 'transferred').length,
       unhandled_count: today.filter((c) => ['new', 'need_human'].includes(c.status)).length,
       avg_duration_sec: Math.round(today.reduce((s, c) => s + (c.duration_sec ?? 0), 0) / (today.length || 1)),
+      by_category: byCategory,
+      by_hour: byHour,
       recent: recent.map(toCallListItem),
     };
   }
@@ -52,7 +60,18 @@ export async function getDashboard(tenantId: string) {
        from calls where tenant_id = $1 order by started_at desc nulls last limit 10`,
     [tenantId],
   );
-  return { ...agg, recent };
+  const catRows = await query<any>(
+    `select category, count(*)::int as n from calls
+      where tenant_id = $1 and category is not null and started_at >= date_trunc('month', now())
+      group by category`, [tenantId]);
+  const by_category: Record<string, number> = {};
+  catRows.forEach((r) => { by_category[r.category] = r.n; });
+  const hourRows = await query<any>(
+    `select extract(hour from started_at)::int as h, count(*)::int as n from calls
+      where tenant_id = $1 and started_at >= date_trunc('month', now()) group by h`, [tenantId]);
+  const by_hour = Array.from({ length: 24 }, () => 0);
+  hourRows.forEach((r) => { by_hour[r.h] = r.n; });
+  return { ...agg, by_category, by_hour, recent };
 }
 
 // ---------------- Calls ----------------
