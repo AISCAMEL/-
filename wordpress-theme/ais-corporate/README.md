@@ -11,6 +11,9 @@
 - 事業・実績・お知らせはカスタム投稿タイプ（`/services/<slug>`・`/works/<slug>`・`/news/<slug>`）で
   URL を Next.js 版と一致。お知らせは管理画面の本文編集にも対応（入力があれば優先表示）。
 - お問い合わせフォームは `wp_mail()` で実送信（nonce + ハニーポット付き）。送信先は管理者メール。
+- **SEO はプラグイン不要で内蔵**（`inc/seo.php`）。各ページ・各事業の `<title>`／meta description／
+  canonical／OGP／Twitter カードを Next.js 版と一致させ、トップに構造化データ（Organization＋FAQ）も出力。
+  ※ Yoast 等の SEO プラグインを併用する場合は、重複を避けるため本テーマの SEO 出力との調整が必要です。
 
 ## インストール
 

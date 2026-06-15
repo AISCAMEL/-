@@ -8,6 +8,7 @@ define( 'AIS_THEME_VERSION', '1.0.0' );
 
 require get_template_directory() . '/inc/data.php';
 require get_template_directory() . '/inc/helpers.php';
+require get_template_directory() . '/inc/seo.php';
 
 /** テーマサポート */
 function ais_setup() {
