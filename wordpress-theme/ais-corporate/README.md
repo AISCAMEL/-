@@ -15,6 +15,29 @@
   canonical／OGP／Twitter カードを Next.js 版と一致させ、トップに構造化データ（Organization＋FAQ）も出力。
   ※ Yoast 等の SEO プラグインを併用する場合は、重複を避けるため本テーマの SEO 出力との調整が必要です。
 
+## AIチャット（OpenRouter 自動応答）
+
+サイト全体に常駐するAIチャットを内蔵しています。会社概要・事業・FAQ を読み込んだ
+システムプロンプトで、訪問者の質問に自動で回答します（応答は OpenRouter 経由）。
+
+**APIキーはフロントに出さず、サーバー側（WP REST `ais/v1/chat`）で OpenRouter を呼び出します。**
+
+### セットアップ
+
+1. [openrouter.ai](https://openrouter.ai/) で APIキーを発行します。
+2. キーの設定方法は2通り（**定数を推奨**：DBに保存されません）。
+   - `wp-config.php` に追記：
+     ```php
+     define( 'AIS_OPENROUTER_API_KEY', 'sk-or-xxxxxxxx' );
+     ```
+   - または管理画面 **設定 → AIチャット** の「OpenRouter APIキー」に入力。
+3. 同設定画面で、有効化・モデル・あいさつ文・追加指示を調整できます。
+   - モデル例：`openai/gpt-4o-mini`（既定）、`anthropic/claude-3.5-haiku`、`google/gemini-flash-1.5`
+4. 有効化＋キー設定済みのときだけ、フロントにチャットが表示されます。
+
+会社概要・事業内容・FAQ は `inc/data.php` から自動でAIに渡されるため、
+データを更新すればAIの回答内容も追従します。電話番号は案内しない方針もプロンプトに含めています。
+
 ## インストール
 
 1. このディレクトリ（`ais-corporate`）を WordPress の `wp-content/themes/` に配置します。
@@ -57,7 +80,10 @@ ais-corporate/
 ├─ index.php / page.php / 404.php                     フォールバック
 ├─ inc/data.php             全コンテンツ（データ層）
 ├─ inc/helpers.php          表示ヘルパー（アイコン・ボタン・見出し・CTA 等）
-└─ assets/css|js            ビルド済み CSS・スクリプト
+├─ inc/seo.php              SEO（title/description/canonical/OGP）
+├─ inc/chat.php             AIチャット（OpenRouter プロキシ・管理画面設定）
+├─ template-parts/chat-widget.php   チャットUI
+└─ assets/css|js            ビルド済み CSS・スクリプト（main.js / chat.js）
 ```
 
 ## 差し替えポイント（placeholder）

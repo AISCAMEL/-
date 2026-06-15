@@ -9,6 +9,7 @@ define( 'AIS_THEME_VERSION', '1.0.0' );
 require get_template_directory() . '/inc/data.php';
 require get_template_directory() . '/inc/helpers.php';
 require get_template_directory() . '/inc/seo.php';
+require get_template_directory() . '/inc/chat.php';
 
 /** テーマサポート */
 function ais_setup() {
@@ -35,8 +36,28 @@ function ais_assets() {
 	wp_enqueue_style( 'ais-theme', get_theme_file_uri( '/assets/css/theme.css' ), array(), AIS_THEME_VERSION );
 	// メイン JS（モバイルメニュー・スライダー・アコーディオン・スクロール表示）
 	wp_enqueue_script( 'ais-main', get_theme_file_uri( '/assets/js/main.js' ), array(), AIS_THEME_VERSION, true );
+
+	// AIチャット（有効かつAPIキー設定時のみ）
+	if ( function_exists( 'ais_chat_active' ) && ais_chat_active() ) {
+		$opt = ais_chat_options();
+		wp_enqueue_script( 'ais-chat', get_theme_file_uri( '/assets/js/chat.js' ), array(), AIS_THEME_VERSION, true );
+		wp_localize_script( 'ais-chat', 'AIS_CHAT', array(
+			'restUrl'  => esc_url_raw( rest_url( 'ais/v1/chat' ) ),
+			'nonce'    => wp_create_nonce( 'wp_rest' ),
+			'greeting' => $opt['greeting'],
+			'name'     => get_bloginfo( 'name' ),
+		) );
+	}
 }
 add_action( 'wp_enqueue_scripts', 'ais_assets' );
+
+/** AIチャットウィジェットをフッターに出力 */
+function ais_render_chat_widget() {
+	if ( function_exists( 'ais_chat_active' ) && ais_chat_active() ) {
+		get_template_part( 'template-parts/chat-widget' );
+	}
+}
+add_action( 'wp_footer', 'ais_render_chat_widget' );
 
 /** Google Fonts 用の preconnect を付与 */
 function ais_resource_hints( $urls, $relation_type ) {
