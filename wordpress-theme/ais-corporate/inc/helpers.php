@@ -38,6 +38,26 @@ function ais_icon( $name, $class = 'h-6 w-6' ) {
 	return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="' . esc_attr( $class ) . '">' . $inner . '</svg>';
 }
 
+/** AIチャットの案内係（女性）アバター SVG */
+function ais_chat_avatar( $class = 'h-9 w-9' ) {
+	return '<svg class="' . esc_attr( $class ) . '" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AIコンシェルジュ">'
+		. '<circle cx="24" cy="24" r="24" fill="#e8f0fe"/>'
+		. '<path d="M7 48 C7 38 14.5 33.5 24 33.5 C33.5 33.5 41 38 41 48 Z" fill="#2563eb"/>'
+		. '<path d="M19.5 30 h9 v5 h-9 z" fill="#f1c39f"/>'
+		. '<path d="M11.5 27 C11 14 37 14 36.5 27 C36.2 31 34.5 34 33.2 35.5 L33.2 23 C33.2 23 31 17.5 24 17.5 C17 17.5 14.8 23 14.8 23 L14.8 35.5 C13.5 34 11.8 31 11.5 27 Z" fill="#4b4660"/>'
+		. '<ellipse cx="24" cy="23" rx="8.6" ry="9.6" fill="#f6cca9"/>'
+		. '<path d="M15.2 21.5 C16 14.5 32 14.5 32.8 21.5 C30 18.8 27 18 24 18 C21 18 18 18.8 15.2 21.5 Z" fill="#4b4660"/>'
+		. '<circle cx="20.6" cy="23" r="1.15" fill="#2b2b35"/>'
+		. '<circle cx="27.4" cy="23" r="1.15" fill="#2b2b35"/>'
+		. '<path d="M21.4 27 Q24 29.4 26.6 27" fill="none" stroke="#c06a4f" stroke-width="1.4" stroke-linecap="round"/>'
+		. '<path d="M14 24 Q24 9 34 24" fill="none" stroke="#1f2937" stroke-width="2.1" stroke-linecap="round"/>'
+		. '<rect x="12.3" y="23" width="3.4" height="5" rx="1.7" fill="#1f2937"/>'
+		. '<rect x="32.3" y="23" width="3.4" height="5" rx="1.7" fill="#1f2937"/>'
+		. '<path d="M14 27.5 Q12.5 33 19 33" fill="none" stroke="#1f2937" stroke-width="1.6" stroke-linecap="round"/>'
+		. '<circle cx="19.4" cy="33" r="1.5" fill="#1f2937"/>'
+		. '</svg>';
+}
+
 /** ボタン */
 function ais_button( $href, $label, $variant = 'primary', $size = 'md', $extra_class = '', $attrs = array() ) {
 	$base = 'inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-60 disabled:pointer-events-none';

@@ -112,14 +112,22 @@
         });
     }
 
+    function avatarEl() {
+      var a = document.createElement("span");
+      a.className = "grid h-7 w-7 flex-none place-items-center self-end overflow-hidden rounded-full bg-brand-50 ring-1 ring-slate-200";
+      a.innerHTML = AIS_CHAT.avatar || "";
+      return a;
+    }
+
     function addBubble(role, text) {
       var wrap = document.createElement("div");
-      wrap.className = "flex " + (role === "user" ? "justify-end" : "justify-start");
+      wrap.className = "flex items-end gap-2 " + (role === "user" ? "justify-end" : "justify-start");
+      if (role === "assistant") wrap.appendChild(avatarEl());
       var b = document.createElement("div");
       b.className =
         role === "user"
-          ? "max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-sm bg-brand-600 px-3.5 py-2 text-sm leading-relaxed text-white"
-          : "max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-bl-sm border border-slate-200 bg-white px-3.5 py-2 text-sm leading-relaxed text-ink-800";
+          ? "max-w-[80%] whitespace-pre-wrap rounded-2xl rounded-br-sm bg-brand-600 px-3.5 py-2 text-sm leading-relaxed text-white"
+          : "max-w-[80%] whitespace-pre-wrap rounded-2xl rounded-bl-sm border border-slate-200 bg-white px-3.5 py-2 text-sm leading-relaxed text-ink-800";
       b.textContent = text;
       wrap.appendChild(b);
       log.appendChild(wrap);
@@ -129,13 +137,16 @@
 
     function addTyping() {
       var wrap = document.createElement("div");
-      wrap.className = "flex justify-start";
-      wrap.innerHTML =
+      wrap.className = "flex items-end gap-2 justify-start";
+      wrap.appendChild(avatarEl());
+      var t = document.createElement("div");
+      t.innerHTML =
         '<div class="flex items-center gap-1 rounded-2xl rounded-bl-sm border border-slate-200 bg-white px-4 py-3">' +
         '<span class="h-2 w-2 animate-bounce rounded-full bg-slate-400" style="animation-delay:0ms"></span>' +
         '<span class="h-2 w-2 animate-bounce rounded-full bg-slate-400" style="animation-delay:120ms"></span>' +
         '<span class="h-2 w-2 animate-bounce rounded-full bg-slate-400" style="animation-delay:240ms"></span>' +
         "</div>";
+      wrap.appendChild(t);
       log.appendChild(wrap);
       log.scrollTop = log.scrollHeight;
       return wrap;

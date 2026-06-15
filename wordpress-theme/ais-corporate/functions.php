@@ -46,6 +46,7 @@ function ais_assets() {
 			'nonce'    => wp_create_nonce( 'wp_rest' ),
 			'greeting' => $opt['greeting'],
 			'name'     => get_bloginfo( 'name' ),
+			'avatar'   => ais_chat_avatar( 'h-full w-full' ),
 		) );
 	}
 }
