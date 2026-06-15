@@ -15,14 +15,18 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 	<!-- パネル -->
 	<div id="ais-chat-panel" class="absolute bottom-20 right-0 hidden w-[min(92vw,22rem)] origin-bottom-right overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card-hover">
 		<div class="flex items-center gap-3 bg-ink-900 px-4 py-3 text-white">
-			<span class="grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-white ring-1 ring-white/20"><?php echo ais_chat_avatar( 'h-10 w-10' ); // phpcs:ignore ?></span>
-			<div class="leading-tight">
-				<p class="flex items-center gap-1.5 text-sm font-bold">AIコンシェルジュ
-					<span class="inline-flex items-center gap-1 rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-300"><span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>オンライン</span>
+			<span data-ais-chat-face class="grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-white ring-1 ring-white/20"><?php echo ais_chat_avatar( 'h-10 w-10' ); // phpcs:ignore ?></span>
+			<div class="min-w-0 leading-tight">
+				<p class="flex items-center gap-1.5 whitespace-nowrap text-sm font-bold">AIコンシェルジュ
+					<span class="h-1.5 w-1.5 flex-none rounded-full bg-emerald-400" title="オンライン"></span>
 				</p>
-				<p class="text-[11px] text-slate-300"><?php echo esc_html( get_bloginfo( 'name' ) ); ?> ご案内</p>
+				<p class="truncate text-[11px] text-slate-300"><?php echo esc_html( get_bloginfo( 'name' ) ); ?> ご案内</p>
 			</div>
-			<button type="button" data-ais-chat-close aria-label="閉じる" class="ml-auto grid h-8 w-8 place-items-center rounded-md text-slate-300 hover:text-white"><?php echo ais_icon( 'close', 'h-5 w-5' ); // phpcs:ignore ?></button>
+			<button type="button" data-ais-chat-mute aria-label="音声のオン／オフ" aria-pressed="false" class="ml-auto grid h-8 w-8 place-items-center rounded-md text-slate-300 hover:text-white">
+				<span data-ais-voice-on><?php echo ais_icon( 'volume', 'h-5 w-5' ); // phpcs:ignore ?></span>
+				<span data-ais-voice-off class="hidden"><?php echo ais_icon( 'mute', 'h-5 w-5' ); // phpcs:ignore ?></span>
+			</button>
+			<button type="button" data-ais-chat-close aria-label="閉じる" class="grid h-8 w-8 place-items-center rounded-md text-slate-300 hover:text-white"><?php echo ais_icon( 'close', 'h-5 w-5' ); // phpcs:ignore ?></button>
 		</div>
 
 		<div id="ais-chat-log" class="flex h-80 flex-col gap-3 overflow-y-auto bg-slate-50 px-4 py-4" aria-live="polite"></div>

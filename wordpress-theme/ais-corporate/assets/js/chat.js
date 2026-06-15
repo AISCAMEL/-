@@ -14,10 +14,74 @@
     var sendBtn = form.querySelector('button[type="submit"]');
     var iconOpen = toggle.querySelector("[data-ais-chat-open]");
     var iconShut = toggle.querySelector("[data-ais-chat-shut]");
+    var face = root.querySelector("[data-ais-chat-face]");
+    var muteBtn = root.querySelector("[data-ais-chat-mute]");
+    var voiceOnIcon = root.querySelector("[data-ais-voice-on]");
+    var voiceOffIcon = root.querySelector("[data-ais-voice-off]");
 
     var history = []; // {role, content}
     var busy = false;
     var greeted = false;
+
+    /* ---- 音声読み上げ（Web Speech API / 追加費用なし） ---- */
+    var synth = window.speechSynthesis || null;
+    var muted = localStorage.getItem("aisChatMuted") === "1";
+    var jaVoice = null;
+    var speakingClasses = ["ring-2", "ring-emerald-400", "animate-pulse"];
+
+    function pickVoice() {
+      if (!synth) return;
+      var voices = synth.getVoices() || [];
+      var ja = voices.filter(function (v) { return /ja(-|_)?JP|Japanese|日本語/i.test(v.lang + " " + v.name); });
+      // 女性らしい声を優先（名前ヒント）
+      jaVoice =
+        ja.find(function (v) { return /(Kyoko|O-?ren|Haruka|Nanami|Ayumi|Google 日本語|Female|女性)/i.test(v.name); }) ||
+        ja[0] || null;
+    }
+    if (synth) {
+      pickVoice();
+      if (typeof synth.onvoiceschanged !== "undefined") {
+        synth.onvoiceschanged = pickVoice;
+      }
+    }
+
+    function setSpeaking(on) {
+      if (!face) return;
+      if (on) face.classList.add.apply(face.classList, speakingClasses);
+      else face.classList.remove.apply(face.classList, speakingClasses);
+    }
+    function stopSpeak() {
+      if (synth) synth.cancel();
+      setSpeaking(false);
+    }
+    function speak(text) {
+      if (!synth || muted || !text) return;
+      synth.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = "ja-JP";
+      if (jaVoice) u.voice = jaVoice;
+      u.rate = 1.0;
+      u.pitch = 1.05;
+      u.onstart = function () { setSpeaking(true); };
+      u.onend = function () { setSpeaking(false); };
+      u.onerror = function () { setSpeaking(false); };
+      synth.speak(u);
+    }
+    function reflectMute() {
+      if (voiceOnIcon) voiceOnIcon.classList.toggle("hidden", muted);
+      if (voiceOffIcon) voiceOffIcon.classList.toggle("hidden", !muted);
+      if (muteBtn) muteBtn.setAttribute("aria-pressed", String(muted));
+    }
+    reflectMute();
+    if (!synth && muteBtn) muteBtn.style.display = "none"; // 非対応ブラウザでは隠す
+    if (muteBtn) {
+      muteBtn.addEventListener("click", function () {
+        muted = !muted;
+        localStorage.setItem("aisChatMuted", muted ? "1" : "0");
+        if (muted) stopSpeak();
+        reflectMute();
+      });
+    }
 
     function openPanel() {
       panel.classList.remove("hidden");
@@ -35,6 +99,7 @@
       toggle.setAttribute("aria-expanded", "false");
       iconOpen.classList.remove("hidden");
       iconShut.classList.add("hidden");
+      stopSpeak();
     }
     function togglePanel() {
       if (panel.classList.contains("hidden")) openPanel();
@@ -68,6 +133,7 @@
       if (!text) return;
       input.value = "";
       input.style.height = "auto";
+      stopSpeak();
       addBubble("user", text);
       history.push({ role: "user", content: text });
       sendToServer();
@@ -132,6 +198,7 @@
       wrap.appendChild(b);
       log.appendChild(wrap);
       log.scrollTop = log.scrollHeight;
+      if (role === "assistant") speak(text);
       return wrap;
     }
 
