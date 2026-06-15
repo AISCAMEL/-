@@ -6,7 +6,7 @@ import {
   demoCalls, demoFaqs, demoSettings, demoPhoneNumbers, demoTenant, demoUsers, newId,
   type DemoCall, type DemoFaq, type DemoUser,
 } from '../demo/fixtures.js';
-import type { CallSummary } from '../types.js';
+import type { CallSummary, TenantContext } from '../types.js';
 import {
   planDef, billableMinutes, aiCostJpy, transferAddCostJpy, monthlyRevenueJpy,
   AI_COST_USD_PER_MIN, USD_JPY,
@@ -231,6 +231,38 @@ export async function updateSettings(tenantId: string, patch: Record<string, unk
        on conflict (tenant_id) do update set ${sets} returning *`,
     [tenantId, ...values]);
   return row;
+}
+
+/** AI応対テスト用に、テナントの設定＋FAQをまとめた会話コンテキストを返す。 */
+export async function getTenantAiContext(tenantId: string): Promise<TenantContext> {
+  const s = await getSettings(tenantId);
+  const faqRows = await listFaqs(tenantId);
+  let companyName = demoTenant.company_name;
+  let industry: string | null = demoTenant.industry;
+  if (dbEnabled) {
+    const [t] = await query<any>(`select company_name, industry from tenants where id = $1`, [tenantId]);
+    companyName = t?.company_name ?? '（テナント）';
+    industry = t?.industry ?? null;
+  }
+  return {
+    tenantId,
+    companyName,
+    industry,
+    greetingMessage: s?.greeting_message ?? 'お電話ありがとうございます。AI受付です。ご用件をお話しください。',
+    aiTone: s?.ai_tone ?? 'polite',
+    businessHours: s?.business_hours ?? {},
+    holidaySettings: s?.holiday_settings ?? {},
+    humanTransferEnabled: s?.human_transfer_enabled ?? true,
+    transferPhoneNumber: s?.transfer_phone_number ?? null,
+    notificationEmail: s?.notification_email ?? null,
+    slackWebhookUrl: s?.slack_webhook_url ?? null,
+    notifyOnCallEnd: s?.notify_on_call_end ?? true,
+    notifyOnCallback: s?.notify_on_callback ?? true,
+    notifyOnTransfer: s?.notify_on_transfer ?? true,
+    fallbackMessage: s?.fallback_message ?? null,
+    faqs: (faqRows ?? []).filter((f: any) => f.is_active !== false)
+      .map((f: any) => ({ question: f.question, answer: f.answer, category: f.category ?? null })),
+  };
 }
 
 // ---------------- Phone numbers ----------------

@@ -57,6 +57,10 @@ export const api = {
   updateUser: (id: string, body: any) => request<any>(`/api/users/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   deleteUser: (id: string) => request<any>(`/api/users/${id}`, { method: 'DELETE' }),
 
+  aiTest: (message: string, history: { role: 'customer' | 'ai'; content: string }[]) =>
+    request<{ reply: string; intent: string; should_transfer: boolean; should_end_call: boolean }>(
+      '/api/ai-test', { method: 'POST', body: JSON.stringify({ message, history }) }),
+
   usage: (month?: string) => request<any>(`/api/usage${month ? `?month=${month}` : ''}`),
   adminUsage: (month?: string) => request<any>(`/api/admin/usage${month ? `?month=${month}` : ''}`),
   invoice: (month?: string) => request<any>(`/api/usage/invoice${month ? `?month=${month}` : ''}`),

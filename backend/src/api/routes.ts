@@ -3,6 +3,7 @@ import { authenticate, requireSuperAdmin, requireRole } from '../auth/jwt.js';
 import * as q from '../db/queries.js';
 import { sendCallNotification } from '../notify/email.js';
 import { getSettings } from '../db/queries.js';
+import { tenantTestReply, type TestTurn } from '../ai/testchat.js';
 
 // 管理画面 API（docs/api.md 準拠）。全エンドポイントは JWT(またはdevモード) 認証必須。
 export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
@@ -153,6 +154,19 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     const row = await q.updatePhoneNumber(p.tenantId, (req.params as any).id, (req.body ?? {}) as any);
     if (!row) return reply.code(404).send({ error: 'not found' });
     return row;
+  });
+
+  // ---- AI応対テスト（テナントの設定/FAQで会話を試す） ----
+  app.post('/api/ai-test', { preHandler: authenticate }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const body = (req.body ?? {}) as { message?: string; history?: TestTurn[] };
+    const message = (body.message ?? '').toString().slice(0, 1000).trim();
+    if (!message) return reply.code(400).send({ error: 'message required' });
+    const ctx = await q.getTenantAiContext(p.tenantId);
+    const history = Array.isArray(body.history) ? body.history.slice(-12) : [];
+    const result = await tenantTestReply(ctx, history, message);
+    return result;
   });
 
   // ---- usage / 原価モニタリング ----

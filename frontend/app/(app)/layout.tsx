@@ -9,6 +9,7 @@ import { clearSession, getSession, type Session } from '@/lib/auth';
 const tenantNav = [
   { href: '/dashboard', label: 'ダッシュボード', icon: '📊' },
   { href: '/calls', label: '通話履歴', icon: '📞' },
+  { href: '/ai-test', label: 'AI応対テスト', icon: '🎙️' },
   { href: '/usage', label: '利用状況・原価', icon: '💰' },
   { href: '/faqs', label: 'FAQ管理', icon: '❓' },
   { href: '/settings/ai', label: 'AI設定', icon: '🤖' },
@@ -29,6 +30,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [session, setSessionState] = useState<Session | null>(null);
   const [ready, setReady] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const s = getSession();
@@ -39,6 +41,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     setSessionState(s);
     setReady(true);
   }, [router]);
+
+  // ページ遷移したらモバイルメニューを閉じる
+  useEffect(() => { setMenuOpen(false); }, [pathname]);
 
   if (!ready) return <div className="p-10 text-gray-400">読み込み中…</div>;
 
@@ -56,34 +61,63 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         ...(canManageUsers ? [{ href: '/settings/users', label: 'ユーザー管理', icon: '👥' }] : []),
       ];
 
+  const navLinks = (
+    <nav className="flex-1 space-y-1 px-3">
+      {items.map((i) => {
+        const active = pathname === i.href || pathname.startsWith(i.href + '/');
+        return (
+          <Link key={i.href} href={i.href}
+            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm ${
+              active ? 'bg-brand-light font-medium text-brand' : 'text-gray-600 hover:bg-gray-50'}`}>
+            <span>{i.icon}</span> {i.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+
   return (
     <div className="flex min-h-screen">
+      {/* PC: 固定サイドバー */}
       <aside className="hidden w-60 shrink-0 border-r bg-white md:flex md:flex-col">
         <div className="px-5 py-5 text-lg font-bold text-brand">AIオペレーター24</div>
-        <nav className="flex-1 space-y-1 px-3">
-          {items.map((i) => {
-            const active = pathname === i.href || pathname.startsWith(i.href + '/');
-            return (
-              <Link key={i.href} href={i.href}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm ${
-                  active ? 'bg-brand-light font-medium text-brand' : 'text-gray-600 hover:bg-gray-50'}`}>
-                <span>{i.icon}</span> {i.label}
-              </Link>
-            );
-          })}
-        </nav>
+        {navLinks}
         <div className="border-t p-4 text-xs text-gray-500">
           <div className="truncate">{session?.email}</div>
           <button onClick={logout} className="mt-2 text-brand hover:underline">ログアウト</button>
         </div>
       </aside>
 
+      {/* モバイル: ドロワー */}
+      {menuOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setMenuOpen(false)} />
+          <aside className="absolute left-0 top-0 flex h-full w-64 flex-col bg-white shadow-xl">
+            <div className="flex items-center justify-between px-5 py-4">
+              <span className="text-lg font-bold text-brand">AIオペレーター24</span>
+              <button onClick={() => setMenuOpen(false)} aria-label="閉じる" className="text-gray-400">✕</button>
+            </div>
+            {navLinks}
+            <div className="border-t p-4 text-xs text-gray-500">
+              <div className="truncate">{session?.email}</div>
+              <button onClick={logout} className="mt-2 text-brand hover:underline">ログアウト</button>
+            </div>
+          </aside>
+        </div>
+      )}
+
       <div className="flex-1">
-        <header className="flex items-center justify-between border-b bg-white px-6 py-3 md:hidden">
+        {/* モバイルヘッダ（ハンバーガー） */}
+        <header className="flex items-center justify-between border-b bg-white px-4 py-3 md:hidden">
+          <button onClick={() => setMenuOpen(true)} aria-label="メニュー" className="flex flex-col gap-1 p-1">
+            <span className="block h-0.5 w-6 bg-gray-700" />
+            <span className="block h-0.5 w-6 bg-gray-700" />
+            <span className="block h-0.5 w-6 bg-gray-700" />
+          </button>
           <span className="font-bold text-brand">AIオペレーター24</span>
-          <button onClick={logout} className="text-sm text-brand">ログアウト</button>
+          <button onClick={logout} className="text-xs text-brand">ログアウト</button>
         </header>
-        <main className="mx-auto max-w-5xl px-6 py-8">{children}</main>
+        <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>
       </div>
     </div>
   );
