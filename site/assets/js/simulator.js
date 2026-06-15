@@ -100,11 +100,38 @@
      想定落札価格をもとに、出品代行手数料を引いた「手取り」を概算。
      ※[要確認] 手数料率・成約料は市場調査で確定。
      ========================================================= */
-  // 出品代行手数料：落札価格の2.5% と 定額¥22,000 の高い方（市場調査ベース）
-  // 出典：出品代行料は「2万円 or 成約価格の2.5%の高い方」が一般的、出品料9千〜2万/週。
-  var SELL_RATE = 0.025;       // 出品代行手数料：落札価格の2.5%
-  var SELL_FEE_MIN = 22000;    // 手数料の下限（定額）
+  // 出品代行手数料：落札価格帯別の定額（オーナー設定）
+  // ¥50,000起点・100万円単位で +¥20,000・最大1000万円まで。1000万円超は応相談。
+  var SELL_TIERS = [
+    { max: 500000,   fee: 50000 },  // 〜50万円
+    { max: 1000000,  fee: 70000 },  // 50〜100万円
+    { max: 2000000,  fee: 90000 },  // 100〜200万円
+    { max: 3000000,  fee: 110000 }, // 200〜300万円
+    { max: 4000000,  fee: 130000 }, // 300〜400万円
+    { max: 5000000,  fee: 150000 }, // 400〜500万円
+    { max: 6000000,  fee: 170000 }, // 500〜600万円
+    { max: 7000000,  fee: 190000 }, // 600〜700万円
+    { max: 8000000,  fee: 210000 }, // 700〜800万円
+    { max: 9000000,  fee: 230000 }, // 800〜900万円
+    { max: 10000000, fee: 250000 }  // 900〜1000万円
+  ];
+  var SELL_OVER_RATE = 0.025;  // 1000万円超は応相談（目安：落札価格の2.5%）
   var SELL_SETTLE = 11000;     // 出品料・成約料（会場）一律目安
+  var SELL_RELIST = 0;         // 流札・再出品料：無料
+
+  function sellFeeByPrice(p) {
+    for (var i = 0; i < SELL_TIERS.length; i++) {
+      if (p < SELL_TIERS[i].max) return SELL_TIERS[i].fee;
+    }
+    return Math.round(p * SELL_OVER_RATE); // 1000万円超
+  }
+  function sellBandLabel(p) {
+    var t = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]; // 万円
+    for (var i = 0; i < SELL_TIERS.length; i++) {
+      if (p < SELL_TIERS[i].max) return i === 0 ? "〜50万円" : t[i - 1] + "〜" + t[i] + "万円";
+    }
+    return "1000万円超（応相談）";
+  }
   // 車両状態（評価点）による相場レンジ係数
   var COND = {
     good:   { label: "良好（評価点4.5以上）", lo: 0.95, hi: 1.10, adj: 1.03 },
@@ -113,22 +140,24 @@
   };
 
   function estimateSell(p) {
-    var median = Number(p.median) || 0;     // 想定落札価格（中央値）
+    var median = Number(p.median) || 0;     // 想定落札価格（手数料帯の基準）
     var c = COND[p.cond] || COND.normal;
     var carrierIn = !!p.carrierIn;          // 代理搬入オプション
     var carrierFee = carrierIn ? 18000 : 0;
 
-    var mid = median * c.adj;
+    // 相場レンジ（状態による振れ幅の目安）
     var low = Math.round(median * c.lo / 1000) * 1000;
     var high = Math.round(median * c.hi / 1000) * 1000;
 
-    var sellFee = Math.max(SELL_FEE_MIN, Math.round(mid * SELL_RATE));
-    var net = mid - sellFee - SELL_SETTLE - carrierFee;
+    var sellFee = sellFeeByPrice(median);   // 価格帯別の定額
+    var net = median - sellFee - SELL_SETTLE - carrierFee;
 
     return {
       condLabel: c.label,
-      rangeLow: low, rangeHigh: high, mid: Math.round(mid),
+      band: sellBandLabel(median),
+      rangeLow: low, rangeHigh: high, mid: median,
       sellFee: sellFee, settle: SELL_SETTLE, carrierFee: carrierFee,
+      relist: SELL_RELIST,
       net: Math.round(net)
     };
   }
@@ -186,7 +215,8 @@
     calculate: calculate, feeByBid: feeByBid, yen: yen, man: man,
     CLASS: CLASS, OPTIONS: OPTIONS, FEE_TIERS: FEE_TIERS,
     AREAS: AREAS, estimateShipping: estimateShipping,
-    COND: COND, estimateSell: estimateSell
+    COND: COND, estimateSell: estimateSell,
+    SELL_TIERS: SELL_TIERS, sellFeeByPrice: sellFeeByPrice
   };
 
   // ===== ここから index.html 用の DOM 連動 =====

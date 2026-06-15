@@ -60,7 +60,7 @@ function fire(win, el, type) { el.dispatchEvent(new win.Event(type, { bubbles: t
     const { win, doc, getError } = load("sell.html");
     const med = doc.getElementById("sMed");
     med.value = "1200000"; fire(win, med, "input");
-    ok("手取りが計算される (#sNet=¥1,159,000)", doc.getElementById("sNet").textContent === "¥1,159,000", doc.getElementById("sNet").textContent);
+    ok("手取りが計算される (#sNet=¥1,099,000)", doc.getElementById("sNet").textContent === "¥1,099,000", doc.getElementById("sNet").textContent);
     ok("相場レンジ表示", /〜/.test(doc.getElementById("sRange").textContent));
     ok("ページエラーなし", !getError(), getError());
   }
@@ -98,7 +98,7 @@ function fire(win, el, type) { el.dispatchEvent(new win.Event(type, { bubbles: t
     doc.getElementById("zCar").value = "セレナ";
     doc.getElementById("zMed").value = "1000000";
     fire(win, doc.getElementById("zMed"), "input");
-    ok("出品手取り即時計算 (#zNet)", /¥9\d\d,\d00/.test(doc.getElementById("zNet").textContent), doc.getElementById("zNet").textContent);
+    ok("出品手取り即時計算 (#zNet)", /¥\d{3},\d00/.test(doc.getElementById("zNet").textContent), doc.getElementById("zNet").textContent);
     fire(win, doc.getElementById("sellForm"), "submit");
     ok("出品申込で注文追加(SL-)", /SL-/.test(doc.getElementById("orderList").innerHTML));
     ok("種別バッジ(購入/出品)表示", /出品/.test(doc.getElementById("orderList").innerHTML) && /購入/.test(doc.getElementById("orderList").innerHTML));

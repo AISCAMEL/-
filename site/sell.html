@@ -47,11 +47,11 @@
       <h3>出品代行の手取りイメージ</h3>
       <p class="sub">想定落札 120万円・標準状態の場合</p>
       <div class="row"><span>想定落札価格</span><span>¥1,200,000</span></div>
-      <div class="row"><span>出品代行手数料</span><span>− ¥30,000</span></div>
+      <div class="row"><span>出品代行手数料</span><span>− ¥90,000</span></div>
       <div class="row"><span>出品料・成約料</span><span>− ¥11,000</span></div>
       <div class="total">
         <span class="lbl">手取り目安</span>
-        <span class="val">¥1,159,000</span>
+        <span class="val">¥1,099,000</span>
       </div>
     </div>
   </div>
@@ -127,13 +127,13 @@
         <h3>手取りシミュレーション（概算）</h3>
         <p class="note">※ 税込・参考値です。実際の落札額・費用は出品状況により変動します。</p>
         <div class="line"><span>想定落札相場レンジ <span class="tag" id="sCondTag">標準</span></span><span id="sRange">¥1,080,000〜¥1,272,000</span></div>
-        <div class="line"><span>想定落札価格（中央値）</span><span id="sMid">¥1,236,000</span></div>
-        <div class="line muted"><span>出品代行手数料</span><span id="sFee">− ¥37,080</span></div>
-        <div class="line muted"><span>成約料</span><span id="sSettle">− ¥11,000</span></div>
+        <div class="line"><span>想定落札価格（手数料帯 <span class="tag" id="sBandTag">100〜200万円</span>）</span><span id="sMid">¥1,200,000</span></div>
+        <div class="line muted"><span>出品代行手数料</span><span id="sFee">− ¥90,000</span></div>
+        <div class="line muted"><span>出品料・成約料</span><span id="sSettle">− ¥11,000</span></div>
         <div class="line muted"><span>代理搬入</span><span id="sCarrierFee">− ¥0</span></div>
         <div class="grand">
           <span class="lbl">手取り目安</span>
-          <span class="val" id="sNet">¥1,187,920</span>
+          <span class="val" id="sNet">¥1,099,000</span>
         </div>
         <a class="btn btn-navy btn-block mt-30" href="login.html">この内容で出品を申し込む（無料登録）</a>
       </div>
@@ -197,6 +197,7 @@
       });
       document.getElementById("sMedOut").textContent = S.yen(document.getElementById("sMed").value);
       document.getElementById("sCondTag").textContent = r.condLabel;
+      document.getElementById("sBandTag").textContent = r.band;
       document.getElementById("sRange").textContent = S.yen(r.rangeLow) + "〜" + S.yen(r.rangeHigh);
       document.getElementById("sMid").textContent = S.yen(r.mid);
       document.getElementById("sFee").textContent = "− " + S.yen(r.sellFee);
