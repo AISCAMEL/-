@@ -19,12 +19,8 @@ $ais_site = ais_site();
 
 <header class="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur">
 	<div class="container flex h-16 items-center justify-between gap-4">
-		<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="flex items-center gap-2" aria-label="<?php echo esc_attr( $ais_site['name'] . ' ホーム' ); ?>">
-			<span class="grid h-9 w-9 place-items-center rounded-lg bg-brand-600 font-bold text-white">A</span>
-			<span class="flex flex-col leading-none">
-				<span class="text-base font-bold tracking-tight text-ink-900"><?php echo esc_html( $ais_site['name'] ); ?></span>
-				<span class="text-[10px] font-medium tracking-wider text-brand-600"><?php echo esc_html( $ais_site['tagline'] ); ?></span>
-			</span>
+		<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="flex items-center" aria-label="<?php echo esc_attr( $ais_site['name'] . ' ホーム' ); ?>">
+			<img src="<?php echo esc_url( get_theme_file_uri( '/assets/img/logo.svg' ) ); ?>" alt="<?php echo esc_attr( $ais_site['name'] . '（AIS）' ); ?>" class="h-9 w-auto sm:h-10" width="128" height="40">
 		</a>
 
 		<nav class="hidden items-center gap-1 lg:flex" aria-label="メインナビゲーション">

@@ -1,4 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="AIS">
-  <rect width="64" height="64" rx="14" fill="#2563eb"/>
-  <path d="M32 14 L46 50 L39.5 50 L36.7 42 L27.3 42 L24.5 50 L18 50 Z M29 36.5 L35 36.5 L32 27.8 Z" fill="#ffffff"/>
+  <rect width="64" height="64" rx="12" fill="#ffffff"/>
+  <g fill="none" stroke="#E2231A" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" transform="translate(8,9) scale(0.48)">
+    <path d="M50 7 L92 88 L8 88 Z"/>
+    <path d="M50 7 L50 60"/><path d="M50 60 L8 88"/><path d="M50 60 L92 88"/>
+    <path d="M50 60 L50 88"/><path d="M50 60 L29 88"/><path d="M50 60 L71 88"/>
+    <path d="M31 64 L69 64"/>
+  </g>
 </svg>

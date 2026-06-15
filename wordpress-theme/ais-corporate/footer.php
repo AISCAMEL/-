@@ -11,8 +11,8 @@ $ais_site = ais_site();
 	<div class="container py-14">
 		<div class="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
 			<div>
-				<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="flex items-center gap-2">
-					<span class="grid h-9 w-9 place-items-center rounded-lg bg-brand-600 font-bold text-white">A</span>
+				<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="flex items-center gap-2.5">
+					<img src="<?php echo esc_url( get_theme_file_uri( '/assets/img/logo-mark.svg' ) ); ?>" alt="" class="h-9 w-9" width="36" height="36">
 					<span class="flex flex-col leading-none">
 						<span class="text-base font-bold text-white"><?php echo esc_html( $ais_site['name'] ); ?></span>
 						<span class="text-[10px] tracking-wider text-brand-300"><?php echo esc_html( $ais_site['tagline'] ); ?></span>
