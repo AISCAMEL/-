@@ -597,6 +597,16 @@ function csvCell(v: string): string {
   return /[",\r\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
 }
 
+/** 通話履歴をCSV化（フィルタ適用済みの一覧から）。 */
+export function callsToCsv(items: any[]): string {
+  const header = ['通話日時', '発信者番号', '顧客名', '会社名', '要件', 'ステータス', '通話秒数', '要約'];
+  const rows = items.map((c) => [
+    c.started_at ?? '', c.from_number ?? '', c.customer_name ?? '', c.company_name ?? '',
+    c.category ?? '', c.status ?? '', String(c.duration_sec ?? 0), c.summary ?? '',
+  ]);
+  return [header, ...rows].map((r) => r.map(csvCell).join(',')).join('\r\n');
+}
+
 // ---------------- Super Admin ----------------
 export async function listTenants() {
   if (!dbEnabled) return [demoTenant];

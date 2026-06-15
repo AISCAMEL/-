@@ -12,6 +12,7 @@ export default function CallDetailPage() {
   const [note, setNote] = useState('');
   const [msg, setMsg] = useState('');
   const [error, setError] = useState('');
+  const [faq, setFaq] = useState<{ question: string; answer: string } | null>(null);
 
   function load() { api.call(id).then(setCall).catch((e) => setError(String(e))); }
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [id]);
@@ -41,6 +42,17 @@ export default function CallDetailPage() {
     const r = await api.renotify(id);
     setMsg(r.ok ? `通知を送信しました（${r.destination}）` : `送信失敗: ${r.error}`);
   }
+  function openFaq() {
+    // 通話内容からFAQ候補をプリフィル
+    setFaq({ question: call.request_detail || call.summary || '', answer: '' });
+  }
+  async function saveFaq(e: React.FormEvent) {
+    e.preventDefault();
+    if (!faq?.question || !faq?.answer) return;
+    await api.createFaq({ question: faq.question, answer: faq.answer });
+    setFaq(null);
+    setMsg('FAQに追加しました。今後はAIが自動で回答します。');
+  }
 
   return (
     <div>
@@ -51,11 +63,29 @@ export default function CallDetailPage() {
           <StatusBadge status={call.status} />
         </div>
         <div className="flex gap-2">
+          <button onClick={openFaq} className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">FAQに追加</button>
           <button onClick={resummarize} className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">要約を再生成</button>
           <button onClick={renotify} className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">通知を再送</button>
         </div>
       </div>
       {msg && <p className="mb-4 text-sm text-brand">{msg}</p>}
+
+      {/* この通話からFAQを追加 */}
+      {faq && (
+        <Card className="mb-4">
+          <h2 className="mb-2 text-sm font-semibold text-gray-500">この用件をFAQに追加</h2>
+          <form onSubmit={saveFaq} className="space-y-2">
+            <input value={faq.question} onChange={(e) => setFaq({ ...faq, question: e.target.value })}
+              placeholder="質問" className="w-full rounded-lg border px-3 py-2 text-sm" />
+            <textarea value={faq.answer} onChange={(e) => setFaq({ ...faq, answer: e.target.value })} rows={2}
+              placeholder="回答（AIがこの内容で答えます）" className="w-full rounded-lg border px-3 py-2 text-sm" />
+            <div className="flex gap-2">
+              <button className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark">FAQに保存</button>
+              <button type="button" onClick={() => setFaq(null)} className="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50">キャンセル</button>
+            </div>
+          </form>
+        </Card>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* 左: 要約・顧客情報 */}

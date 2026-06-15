@@ -118,11 +118,11 @@ export const LEAD_CATEGORY_LABEL: Record<string, string> = {
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
 
-/** 通話明細CSVを認証付きで取得し、ダウンロードを発火する。 */
-export async function downloadUsageCsv(month?: string): Promise<void> {
+/** 認証付きでCSVを取得しダウンロードを発火する汎用関数。 */
+export async function downloadCsv(path: string, filename: string): Promise<void> {
   const { getSession } = await import('./auth');
   const s = getSession();
-  const res = await fetch(`${BASE_URL}/api/usage/export${month ? `?month=${month}` : ''}`, {
+  const res = await fetch(`${BASE_URL}${path}`, {
     headers: s ? { Authorization: `Bearer ${s.token}`, 'x-role': s.role, ...(s.tenantId ? { 'x-tenant-id': s.tenantId } : {}) } : {},
   });
   if (!res.ok) throw new Error(`${res.status}`);
@@ -130,11 +130,21 @@ export async function downloadUsageCsv(month?: string): Promise<void> {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `usage_${month ?? 'current'}.csv`;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+}
+
+/** 通話明細CSV（利用・原価）。 */
+export function downloadUsageCsv(month?: string): Promise<void> {
+  return downloadCsv(`/api/usage/export${month ? `?month=${month}` : ''}`, `usage_${month ?? 'current'}.csv`);
+}
+
+/** 通話履歴CSV（フィルタ適用）。 */
+export function downloadCallsCsv(qs = ''): Promise<void> {
+  return downloadCsv(`/api/calls/export${qs}`, 'calls.csv');
 }
 
 export function yen(n?: number | null): string {

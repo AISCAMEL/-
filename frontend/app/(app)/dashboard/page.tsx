@@ -23,6 +23,7 @@ export default function DashboardPage() {
     { label: '折り返し', value: data.callback_count },
     { label: '転送', value: data.transfer_count },
     { label: '未対応', value: data.unhandled_count, warn: data.unhandled_count > 0 },
+    { label: 'AI対応率', value: `${data.calls_today > 0 ? Math.round((data.completed_count / data.calls_today) * 100) : 0}%`, text: true },
     { label: '平均通話時間', value: formatDuration(data.avg_duration_sec), text: true },
   ];
 

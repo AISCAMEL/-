@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { api, CATEGORY_LABEL, STATUS_LABEL } from '@/lib/api';
+import { api, CATEGORY_LABEL, STATUS_LABEL, downloadCallsCsv } from '@/lib/api';
 import { Card, PageTitle, StatusBadge, CategoryTag, formatDateTime, formatDuration } from '@/components/ui';
 
 export default function CallsPage() {
@@ -44,6 +44,14 @@ export default function CallsPage() {
             className="rounded-lg border px-3 py-2 text-sm" />
           <button className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark">検索</button>
         </form>
+        <button type="button" onClick={() => {
+          const p = new URLSearchParams();
+          if (status) p.set('status', status);
+          if (category) p.set('category', category);
+          if (q) p.set('q', q);
+          const s = p.toString();
+          downloadCallsCsv(s ? `?${s}` : '');
+        }} className="ml-auto rounded-lg border px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">CSVエクスポート</button>
       </div>
 
       <Card className="p-0">

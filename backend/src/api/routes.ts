@@ -31,6 +31,18 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     return q.listCalls(p.tenantId, { status, category, q: qs, limit: limit ? Number(limit) : undefined });
   });
 
+  // 通話履歴CSV（フィルタ対応・UTF-8 BOM）。:id ルートより前に定義する。
+  app.get('/api/calls/export', { preHandler: authenticate }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const { status, category, q: qs } = req.query as Record<string, string>;
+    const items = await q.listCalls(p.tenantId, { status, category, q: qs, limit: 1000 });
+    const csv = '﻿' + q.callsToCsv(items);
+    reply.header('Content-Type', 'text/csv; charset=utf-8');
+    reply.header('Content-Disposition', 'attachment; filename="calls.csv"');
+    return reply.send(csv);
+  });
+
   app.get('/api/calls/:id', { preHandler: authenticate }, async (req, reply) => {
     const p = req.principal!;
     if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
