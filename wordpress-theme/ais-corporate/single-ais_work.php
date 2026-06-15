@@ -12,12 +12,19 @@ if ( ! $work ) {
 	return;
 }
 
-$body_sections = array(
-	array( '背景・ご相談内容', '（プレースホルダー）お客様の事業背景と、ご相談に至った経緯を記載します。' ),
-	array( '課題', '（プレースホルダー）解決すべきだった具体的な課題を記載します。' ),
-	array( 'アイズの支援内容', '（プレースホルダー）実施した支援・施策の内容を記載します。' ),
-	array( '成果', '（プレースホルダー）定量・定性の成果を記載します。数値はダミーです。' ),
-);
+$body_sections = array();
+if ( ! empty( $work['detail'] ) ) {
+	foreach ( $work['detail'] as $d ) {
+		$body_sections[] = array( $d['h'], $d['t'] );
+	}
+} else {
+	$body_sections = array(
+		array( '背景・ご相談内容', 'お客様の事業背景と、ご相談に至った経緯を記載します。' ),
+		array( '課題', '解決すべきだった具体的な課題を記載します。' ),
+		array( 'アイズの支援内容', '実施した支援・施策の内容を記載します。' ),
+		array( '成果', '定量・定性の成果を記載します。' ),
+	);
+}
 ?>
 
 <?php echo ais_page_hero( $work['category_label'], $work['title'], $work['summary'] ); // phpcs:ignore ?>

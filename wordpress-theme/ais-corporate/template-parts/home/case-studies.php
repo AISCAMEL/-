@@ -1,7 +1,7 @@
 <?php
 /** トップ: 実績（CaseStudies.tsx） */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
-$works = ais_works();
+$works = array_slice( ais_works(), 0, 3 );
 $has_placeholder = (bool) array_filter( $works, function ( $w ) { return ! empty( $w['is_placeholder'] ); } );
 ?>
 <section class="py-16 sm:py-24 bg-white text-ink-800">
