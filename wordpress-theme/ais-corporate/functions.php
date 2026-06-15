@@ -187,7 +187,6 @@ function ais_handle_contact() {
 	$name    = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
 	$company = isset( $_POST['company'] ) ? sanitize_text_field( wp_unslash( $_POST['company'] ) ) : '';
 	$email   = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
-	$tel     = isset( $_POST['tel'] ) ? sanitize_text_field( wp_unslash( $_POST['tel'] ) ) : '';
 	$subject = isset( $_POST['subject'] ) ? sanitize_text_field( wp_unslash( $_POST['subject'] ) ) : '';
 	$message = isset( $_POST['message'] ) ? sanitize_textarea_field( wp_unslash( $_POST['message'] ) ) : '';
 
@@ -203,7 +202,6 @@ function ais_handle_contact() {
 	$body .= "お名前：{$name}\n";
 	$body .= "会社名・屋号：{$company}\n";
 	$body .= "メール：{$email}\n";
-	$body .= "電話番号：{$tel}\n";
 	$body .= "ご相談の種類：{$subject}\n\n";
 	$body .= "ご相談内容：\n{$message}\n";
 	$headers = array( 'Reply-To: ' . $name . ' <' . $email . '>' );

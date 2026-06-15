@@ -15,8 +15,6 @@ function ais_site() {
 		'url'          => 'https://aisjaltd.com',
 		'description'  => '合同会社アイズは、自動車販売「カーメル」・買取「BUYMO」・オンライン車販売「CARSHICO」・車両セキュリティ「天護」・レッカーを主軸に、ノーコードアプリ開発「APPREX」、サブスクWeb制作「WEB crews」、FC事業を展開する会社です。クルマのことからデジタルまで、ワンストップでお応えします。',
 		'email'        => 'info@aisjaltd.com',
-		'tel'          => '050-1722-3365',
-		'tel_hours'    => '平日 10:00 - 18:00',
 		'address'      => '〒979-0204 福島県いわき市四倉町細谷字大町1番',
 		'reply_target' => '原則1〜2営業日以内',
 	);
@@ -378,8 +376,7 @@ function ais_company_profile() {
 		array( 'label' => '会社名', 'value' => '合同会社アイズ（AIS LLC）' ),
 		array( 'label' => '代表者', 'value' => '代表 吉田 一平' ),
 		array( 'label' => '所在地', 'value' => '〒979-0204 福島県いわき市四倉町細谷字大町1番' ),
-		array( 'label' => '電話番号', 'value' => '050-1722-3365' ),
-		array( 'label' => 'メール', 'value' => 'info@aisjaltd.com' ),
+		array( 'label' => 'お問い合わせ', 'value' => 'info@aisjaltd.com（メール・チャットにて対応）' ),
 		array( 'label' => '事業内容', 'value' => '自動車販売「カーメル」（国産車・全国）／自動車買取「BUYMO」（車・トラック・農機具・アルミ等／全国）／オンライン車販売「CARSHICO」（新車・自宅納車）／車両セキュリティ「天護 TENGO」（GPS遠隔停止）／レッカー事業（福島県内）／FC事業／IT事業「APPREX」（ノーコードアプリ開発）／サブスクWeb制作「WEB crews」／AI電話応対「AIオペレーター24」（準備中）' ),
 	);
 }

@@ -66,8 +66,8 @@ $input_base = 'w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text
 						<?php echo esc_html( $site['email'] ); ?>
 					</a>
 					<p class="flex items-center gap-3 text-ink-700">
-						<?php echo ais_icon( 'phone', 'h-5 w-5 text-brand-600' ); // phpcs:ignore ?>
-						<?php echo esc_html( $site['tel'] ); ?>（<?php echo esc_html( $site['tel_hours'] ); ?>）
+						<?php echo ais_icon( 'spark', 'h-5 w-5 text-brand-600' ); // phpcs:ignore ?>
+						お問い合わせはメール・チャットにて承ります
 					</p>
 				</div>
 			</div>
@@ -105,15 +105,9 @@ $input_base = 'w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text
 								</div>
 							</div>
 
-							<div class="grid gap-5 sm:grid-cols-2">
-								<div>
-									<label for="email" class="mb-1.5 flex items-center gap-2 text-sm font-semibold text-ink-900">メールアドレス <span class="rounded bg-brand-600 px-1.5 py-0.5 text-[10px] font-bold text-white">必須</span></label>
-									<input id="email" name="email" type="email" required class="<?php echo esc_attr( $input_base ); ?>" placeholder="example@example.com">
-								</div>
-								<div>
-									<label for="tel" class="mb-1.5 flex items-center gap-2 text-sm font-semibold text-ink-900">電話番号 <span class="rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-ink-500">任意</span></label>
-									<input id="tel" name="tel" type="tel" class="<?php echo esc_attr( $input_base ); ?>" placeholder="000-0000-0000（任意）">
-								</div>
+							<div>
+								<label for="email" class="mb-1.5 flex items-center gap-2 text-sm font-semibold text-ink-900">メールアドレス <span class="rounded bg-brand-600 px-1.5 py-0.5 text-[10px] font-bold text-white">必須</span></label>
+								<input id="email" name="email" type="email" required class="<?php echo esc_attr( $input_base ); ?>" placeholder="example@example.com">
 							</div>
 
 							<div>
