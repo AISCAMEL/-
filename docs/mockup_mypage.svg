@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="980" viewBox="0 0 960 980" font-family="'Noto Sans CJK JP','IPAGothic',sans-serif">
+  <defs>
+    <linearGradient id="head" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0e1b33"/><stop offset="1" stop-color="#16294a"/></linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e0bd6a"/><stop offset="1" stop-color="#c9a14a"/></linearGradient>
+  </defs>
+  <rect width="960" height="980" fill="#f6f8fc"/>
+
+  <!-- Header -->
+  <rect width="960" height="56" fill="#0e1b33"/>
+  <rect x="32" y="14" width="28" height="28" rx="7" fill="url(#gold)"/><text x="40" y="33" fill="#0e1b33" font-size="16" font-weight="900">A</text>
+  <text x="70" y="33" fill="#fff" font-size="15" font-weight="800">AUC-AGENT</text>
+  <text x="860" y="33" fill="#cfd6e6" font-size="12">ログアウト</text>
+
+  <!-- page head -->
+  <rect x="0" y="56" width="960" height="74" fill="url(#head)"/>
+  <text x="32" y="94" fill="#fff" font-size="20" font-weight="800">こんにちは、吉田 一平 さん</text>
+  <text x="32" y="116" fill="#b9c4d8" font-size="12">スタンダード会員 ／ 登録日 2026-06-13</text>
+
+  <!-- Sidebar -->
+  <rect x="32" y="154" width="220" height="300" rx="12" fill="#fff" stroke="#e4e8ef"/>
+  <circle cx="64" cy="186" r="16" fill="url(#gold)"/><text x="64" y="191" fill="#0e1b33" font-size="14" font-weight="900" text-anchor="middle">吉</text>
+  <text x="90" y="184" fill="#1a2233" font-size="14" font-weight="800">吉田 一平</text>
+  <text x="90" y="200" fill="#c9a14a" font-size="11">スタンダード会員</text>
+  <line x1="48" y1="214" x2="236" y2="214" stroke="#e4e8ef"/>
+  <g font-size="13" fill="#1a2233">
+    <rect x="48" y="226" width="188" height="28" rx="8" fill="#eef2f9"/><text x="62" y="245">📊 ダッシュボード</text>
+    <text x="62" y="279">📦 注文・出品状況</text>
+    <text x="62" y="309">➕ 購入オーダー</text>
+    <text x="62" y="339">🏷️ 出品申込</text>
+    <text x="62" y="369" fill="#c9a14a" font-weight="700">🔑 車ひろばログイン</text>
+    <text x="62" y="399">📖 出品マニュアル</text>
+    <text x="62" y="429">🧮 料金シミュレーション</text>
+  </g>
+
+  <!-- 車ひろば panel -->
+  <rect x="272" y="154" width="656" height="96" rx="12" fill="#fff" stroke="#c9a14a" stroke-width="2"/>
+  <text x="292" y="184" fill="#1a2233" font-size="15" font-weight="800">🔑 購入のやりとり（車ひろば エージェント）</text>
+  <text x="292" y="208" fill="#5a6675" font-size="12">ログインID・パスワードは購入お申込み後に発行し、登録メールへご連絡します。</text>
+  <rect x="292" y="220" width="220" height="18" rx="4" fill="#e6f0ff"/><text x="300" y="233" fill="#2a64c4" font-size="11">申込後にログイン情報を発行します</text>
+  <rect x="740" y="200" width="168" height="34" rx="17" fill="url(#gold)"/><text x="824" y="222" fill="#0e1b33" font-size="12" font-weight="700" text-anchor="middle">車ひろばにログイン →</text>
+
+  <!-- stats -->
+  <rect x="272" y="266" width="206" height="70" rx="12" fill="#fff" stroke="#e4e8ef"/><text x="292" y="294" fill="#5a6675" font-size="12">進行中の注文</text><text x="292" y="322" fill="#1a2233" font-size="22" font-weight="900">2</text>
+  <rect x="496" y="266" width="206" height="70" rx="12" fill="#fff" stroke="#e4e8ef"/><text x="516" y="294" fill="#5a6675" font-size="12">累計ご成約</text><text x="516" y="322" fill="#1a2233" font-size="22" font-weight="900">1</text>
+  <rect x="720" y="266" width="208" height="70" rx="12" fill="#fff" stroke="#e4e8ef"/><text x="740" y="294" fill="#5a6675" font-size="12">累計おトク額（目安）</text><text x="740" y="322" fill="#1a2233" font-size="20" font-weight="900">¥160,000</text>
+
+  <!-- orders -->
+  <rect x="272" y="352" width="656" height="270" rx="12" fill="#fff" stroke="#e4e8ef"/>
+  <text x="292" y="382" fill="#1a2233" font-size="16" font-weight="800">注文・出品状況</text>
+  <rect x="800" y="364" width="110" height="26" rx="13" fill="url(#gold)"/><text x="855" y="381" fill="#0e1b33" font-size="11" font-weight="700" text-anchor="middle">＋ 新規オーダー</text>
+  <line x1="272" y1="400" x2="928" y2="400" stroke="#eef0f4"/>
+  <!-- order 1 -->
+  <rect x="292" y="414" width="44" height="18" rx="9" fill="#e6f0ff"/><text x="314" y="427" fill="#2a64c4" font-size="10" font-weight="700" text-anchor="middle">購入</text>
+  <text x="346" y="428" fill="#1a2233" font-size="14" font-weight="800">トヨタ ヤリス 1.5 G (2021)</text>
+  <rect x="800" y="412" width="110" height="22" rx="11" fill="#e6f0ff"/><text x="855" y="427" fill="#2a64c4" font-size="10" font-weight="700" text-anchor="middle">陸送・手続き中</text>
+  <text x="292" y="448" fill="#5a6675" font-size="11">受付番号 OD-2041 ／ 2026-06-02</text>
+  <rect x="292" y="456" width="500" height="7" rx="4" fill="#e4e8ef"/><rect x="292" y="456" width="375" height="7" rx="4" fill="url(#gold)"/>
+  <text x="910" y="450" fill="#1a2233" font-size="13" font-weight="800" text-anchor="end">¥1,614,000</text>
+  <line x1="272" y1="486" x2="928" y2="486" stroke="#eef0f4"/>
+  <!-- order 2 sell -->
+  <rect x="292" y="500" width="44" height="18" rx="9" fill="#efeaff"/><text x="314" y="513" fill="#5b46c4" font-size="10" font-weight="700" text-anchor="middle">出品</text>
+  <text x="346" y="514" fill="#1a2233" font-size="14" font-weight="800">日産 セレナ ハイウェイスター (2019)</text>
+  <rect x="790" y="498" width="120" height="22" rx="11" fill="#e6f0ff"/><text x="850" y="513" fill="#2a64c4" font-size="10" font-weight="700" text-anchor="middle">出品票発送・搬入待ち</text>
+  <text x="292" y="534" fill="#5a6675" font-size="11">受付番号 SL-3007 ／ 2026-06-08</text>
+  <rect x="292" y="542" width="500" height="7" rx="4" fill="#e4e8ef"/><rect x="292" y="542" width="225" height="7" rx="4" fill="url(#gold)"/>
+  <text x="910" y="536" fill="#1a2233" font-size="13" font-weight="800" text-anchor="end">¥1,129,200</text>
+  <line x1="272" y1="572" x2="928" y2="572" stroke="#eef0f4"/>
+  <!-- order 3 done -->
+  <rect x="292" y="586" width="44" height="18" rx="9" fill="#e6f0ff"/><text x="314" y="599" fill="#2a64c4" font-size="10" font-weight="700" text-anchor="middle">購入</text>
+  <text x="346" y="600" fill="#1a2233" font-size="14" font-weight="800">ホンダ N-BOX カスタム (2020)</text>
+  <rect x="828" y="584" width="82" height="22" rx="11" fill="#eef0f4"/><text x="869" y="599" fill="#5a6675" font-size="10" font-weight="700" text-anchor="middle">納車完了</text>
+
+  <!-- order form -->
+  <rect x="272" y="638" width="656" height="312" rx="12" fill="#fff" stroke="#e4e8ef"/>
+  <text x="292" y="668" fill="#1a2233" font-size="16" font-weight="800">かんたんオーダー（購入）</text>
+  <rect x="292" y="682" width="616" height="28" rx="6" fill="#e6f0ff"/><text x="304" y="700" fill="#2a64c4" font-size="11">条件を入力すると、その場で総額の目安を計算します</text>
+  <text x="292" y="734" fill="#5a6675" font-size="12">ご希望の車種・モデル</text>
+  <rect x="292" y="744" width="616" height="32" rx="6" fill="#f6f8fc" stroke="#e4e8ef"/><text x="304" y="765" fill="#9aa6b8" font-size="12">例）トヨタ アルファード 2.5 S（2019〜2021年式）</text>
+  <text x="292" y="800" fill="#5a6675" font-size="12">落札上限予算</text><rect x="292" y="810" width="296" height="32" rx="6" fill="#f6f8fc" stroke="#e4e8ef"/><text x="304" y="831" fill="#1a2233" font-size="13">¥2,500,000</text>
+  <text x="612" y="800" fill="#5a6675" font-size="12">納車先（福島拠点より配送）</text><rect x="612" y="810" width="296" height="32" rx="6" fill="#f6f8fc" stroke="#e4e8ef"/><text x="624" y="831" fill="#1a2233" font-size="13">東京都　▼</text>
+  <rect x="292" y="862" width="616" height="40" rx="8" fill="#0e1b33"/><text x="312" y="887" fill="#d4dcec" font-size="13">想定 乗り出し総額</text><text x="888" y="888" fill="#e0bd6a" font-size="20" font-weight="900" text-anchor="end">¥2,657,800</text>
+  <rect x="292" y="912" width="616" height="30" rx="8" fill="url(#gold)"/><text x="600" y="932" fill="#0e1b33" font-size="12" font-weight="700" text-anchor="middle">この内容でオーダーを依頼する</text>
+</svg>
