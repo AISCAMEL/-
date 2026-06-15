@@ -214,6 +214,24 @@
   }
 
   /**
+   * オートローン 月々支払い（元利均等）
+   * @param {number} principal 借入元金（円）
+   * @param {number} ratePct 実質年率（%）
+   * @param {number} months 支払回数
+   */
+  function loanMonthly(principal, ratePct, months) {
+    principal = Number(principal) || 0;
+    months = Number(months) || 1;
+    var r = (Number(ratePct) || 0) / 100 / 12;
+    var m = r === 0 ? principal / months : principal * r / (1 - Math.pow(1 + r, -months));
+    return {
+      monthly: Math.round(m),
+      total: Math.round(m) * months,
+      interest: Math.round(m) * months - principal
+    };
+  }
+
+  /**
    * 総額計算ロジック（再利用可能）
    * @param {object} p {bid, cls, region, options:{}}
    * @returns {object} 明細と合計
@@ -257,6 +275,7 @@
   window.AucSim = {
     calculate: calculate, feeByBid: feeByBid, yen: yen, man: man,
     CLASS: CLASS, OPTIONS: OPTIONS, CLEAN_BY_CLASS: CLEAN_BY_CLASS, FEE_TIERS: FEE_TIERS,
+    loanMonthly: loanMonthly,
     AREAS: PREF, PREF: PREF, HOME_PREF: HOME_PREF, estimateShipping: estimateShipping,
     COND: COND, estimateSell: estimateSell,
     SELL_TIERS: SELL_TIERS, sellFeeByPrice: sellFeeByPrice

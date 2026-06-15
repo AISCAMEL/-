@@ -105,6 +105,12 @@ function fire(win, el, type) { el.dispatchEvent(new win.Event(type, { bubbles: t
     fire(win, doc.getElementById("sellForm"), "submit");
     ok("出品申込で注文追加(SL-)", /SL-/.test(doc.getElementById("orderList").innerHTML));
     ok("種別バッジ(購入/出品)表示", /出品/.test(doc.getElementById("orderList").innerHTML) && /購入/.test(doc.getElementById("orderList").innerHTML));
+    // ローン仮申込：月々計算とAI一次判定
+    doc.getElementById("lAmt").value = "1500000"; fire(win, doc.getElementById("lAmt"), "input");
+    ok("ローン月々支払い計算 (#lMonthly)", /¥[\d,]+ \/月/.test(doc.getElementById("lMonthly").textContent), doc.getElementById("lMonthly").textContent);
+    ok("ローンAI一次判定表示 (#lGrade)", /[ABCD]（/.test(doc.getElementById("lGrade").textContent), doc.getElementById("lGrade").textContent);
+    fire(win, doc.getElementById("loanForm"), "submit");
+    ok("ローン仮申込で受付表示", /受け付け/.test(doc.getElementById("loanAlert").textContent), doc.getElementById("loanAlert").textContent);
     ok("ページエラーなし", !getError(), getError());
   }
 

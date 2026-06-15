@@ -46,6 +46,7 @@
         <a href="#orders">📦 注文・出品状況</a>
         <a href="#newOrder">➕ 購入オーダー</a>
         <a href="#newSell">🏷️ 出品申込</a>
+        <a href="#newLoan">💳 ローン仮申込</a>
         <a href="#hiroba">🔑 車ひろばログイン</a>
         <a href="manual.html">📖 出品マニュアル</a>
         <a href="index.html#simulator">🧮 料金シミュレーション</a>
@@ -182,6 +183,65 @@
             </div>
 
             <button class="btn btn-navy btn-block mt-30" type="submit">この内容で出品を申し込む</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Loan application (ローン申込・オリコ) -->
+      <section class="panel" id="newLoan">
+        <div class="panel-head"><h3>オートローン仮申込（オリコ）</h3></div>
+        <div class="panel-body">
+          <div class="alert alert-info" id="loanAlert">月々のお支払い目安をその場で計算します。仮申込後、AIで一次判定し、信販会社（オリコ等）へ審査を依頼します（事務手数料は無料）。</div>
+          <form id="loanForm">
+            <div class="row-2">
+              <div class="field">
+                <label>ローン希望額<span class="v" id="lAmtOut" style="color:var(--gold)"></span></label>
+                <input type="number" id="lAmt" min="100000" max="8000000" step="50000" value="1500000" required />
+              </div>
+              <div class="field">
+                <label>支払回数</label>
+                <select id="lTerm">
+                  <option value="12">12回（1年）</option>
+                  <option value="24">24回（2年）</option>
+                  <option value="36" selected>36回（3年）</option>
+                  <option value="48">48回（4年）</option>
+                  <option value="60">60回（5年）</option>
+                  <option value="84">84回（7年）</option>
+                </select>
+              </div>
+            </div>
+            <div class="row-2">
+              <div class="field">
+                <label>実質年率（目安）</label>
+                <select id="lRate">
+                  <option value="3.9">3.9%</option>
+                  <option value="6.9" selected>6.9%</option>
+                  <option value="8.9">8.9%</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>雇用形態</label>
+                <select id="lJob">
+                  <option value="正社員" selected>正社員・公務員</option>
+                  <option value="法人">会社役員・法人</option>
+                  <option value="個人事業">個人事業主</option>
+                  <option value="契約">契約・派遣・パート</option>
+                  <option value="その他">その他</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label>年収（万円）</label>
+              <input type="number" id="lIncome" min="0" max="5000" step="10" value="400" />
+            </div>
+
+            <div class="result" style="box-shadow:none;border:1px solid var(--line);padding:20px;">
+              <div class="line"><span>月々のお支払い（目安）</span><span id="lMonthly" style="font-weight:800;">¥0</span></div>
+              <div class="line"><span>支払総額／うち利息</span><span id="lTotal">—</span></div>
+              <div class="grand"><span class="lbl">AI一次判定（目安）</span><span class="val" id="lGrade" style="font-size:22px;">—</span></div>
+            </div>
+
+            <button class="btn btn-gold btn-block mt-30" type="submit">この内容でローンを仮申込する</button>
           </form>
         </div>
       </section>
@@ -379,9 +439,56 @@
     document.getElementById("orders").scrollIntoView({ behavior: "smooth" });
   });
 
+  // --- ローン仮申込（オリコ）：月々計算＋AI一次判定 ---
+  function loanGrade() {
+    var job = document.getElementById("lJob").value;
+    var income = Number(document.getElementById("lIncome").value) * 10000; // 万円→円
+    var amount = Number(document.getElementById("lAmt").value);
+    var s = 50;
+    if (/正社員|公務員/.test(job)) s += 25; else if (/法人/.test(job)) s += 18;
+    else if (/個人事業/.test(job)) s += 12; else if (/契約/.test(job)) s += 6;
+    if (income > 0 && amount > 0) {
+      var ratio = amount / income;
+      if (ratio < 0.5) s += 20; else if (ratio < 1) s += 12; else if (ratio < 2) s += 4;
+    }
+    s = Math.max(0, Math.min(100, s));
+    return s >= 80 ? "A（即日審査へ）" : s >= 60 ? "B（翌営業日）" : s >= 40 ? "C（要確認）" : "D（要相談）";
+  }
+  function renderLoan() {
+    var amt = document.getElementById("lAmt").value;
+    var term = document.getElementById("lTerm").value;
+    var rate = document.getElementById("lRate").value;
+    var r = AucSim.loanMonthly(amt, rate, term);
+    document.getElementById("lAmtOut").textContent = AucSim.yen(amt);
+    document.getElementById("lMonthly").textContent = AucSim.yen(r.monthly) + " /月";
+    document.getElementById("lTotal").textContent = AucSim.yen(r.total) + "（利息 " + AucSim.yen(r.interest) + "）";
+    document.getElementById("lGrade").textContent = loanGrade();
+    return r;
+  }
+  document.getElementById("loanForm").addEventListener("input", renderLoan);
+  document.getElementById("loanForm").addEventListener("change", renderLoan);
+  document.getElementById("loanForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    renderLoan();
+    AucConfig.send({
+      type: "loan",
+      name: user.name, email: user.email,
+      amount: Number(document.getElementById("lAmt").value),
+      term: Number(document.getElementById("lTerm").value),
+      rate: document.getElementById("lRate").value,
+      job: document.getElementById("lJob").value,
+      income: Number(document.getElementById("lIncome").value) * 10000
+    });
+    var box = document.getElementById("loanAlert");
+    box.className = "alert alert-ok";
+    box.textContent = "✓ ローン仮申込を受け付けました。AI一次判定のうえ、信販会社（オリコ等）へ審査を依頼し、結果をご連絡します。";
+    box.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+
   renderOrders();
   renderQuote();
   renderSell();
+  renderLoan();
 </script>
 </body>
 </html>
