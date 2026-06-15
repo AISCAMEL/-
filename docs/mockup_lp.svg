@@ -1,0 +1,142 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="1780" viewBox="0 0 960 1780" font-family="'Noto Sans CJK JP','IPAGothic',sans-serif">
+  <defs>
+    <linearGradient id="hero" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0e1b33"/><stop offset="0.7" stop-color="#16294a"/><stop offset="1" stop-color="#1f3a66"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e0bd6a"/><stop offset="1" stop-color="#c9a14a"/>
+    </linearGradient>
+    <linearGradient id="sim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0e1b33"/><stop offset="1" stop-color="#16294a"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="960" height="1780" fill="#f6f8fc"/>
+
+  <!-- ===== Header ===== -->
+  <rect width="960" height="60" fill="#0e1b33"/>
+  <rect x="32" y="16" width="28" height="28" rx="7" fill="url(#gold)"/>
+  <text x="40" y="35" fill="#0e1b33" font-size="16" font-weight="900">A</text>
+  <text x="70" y="32" fill="#fff" font-size="16" font-weight="800">AUC-AGENT</text>
+  <text x="70" y="46" fill="#e0bd6a" font-size="9" letter-spacing="2">CAR AUCTION AGENT</text>
+  <text x="600" y="36" fill="#d8deea" font-size="12">購入代行</text>
+  <text x="660" y="36" fill="#d8deea" font-size="12">出品代行</text>
+  <text x="725" y="36" fill="#d8deea" font-size="12">陸送シミュ</text>
+  <rect x="800" y="16" width="128" height="28" rx="14" fill="url(#gold)"/>
+  <text x="864" y="35" fill="#0e1b33" font-size="12" font-weight="700" text-anchor="middle">無料会員登録</text>
+
+  <!-- ===== Hero ===== -->
+  <rect x="0" y="60" width="960" height="420" fill="url(#hero)"/>
+  <!-- left -->
+  <rect x="40" y="96" width="220" height="28" rx="14" fill="#2a3a5c"/>
+  <text x="55" y="115" fill="#e0bd6a" font-size="12" font-weight="700">★ 累計代行実績 12,000台突破</text>
+  <text x="40" y="170" fill="#fff" font-size="30" font-weight="900">欲しい車を、<tspan fill="#e0bd6a">相場よりおトク</tspan>に。</text>
+  <text x="40" y="208" fill="#fff" font-size="30" font-weight="900">プロが代わりに<tspan fill="#e0bd6a">入札・落札</tspan>。</text>
+  <text x="40" y="244" fill="#d4dcec" font-size="13">業者専用オークションは本来ディーラーしか参加できません。</text>
+  <text x="40" y="264" fill="#d4dcec" font-size="13">AUC-AGENTがあなたの「指定席」になり、相場価格で落札します。</text>
+  <rect x="40" y="292" width="250" height="42" rx="21" fill="url(#gold)"/>
+  <text x="165" y="318" fill="#0e1b33" font-size="14" font-weight="700" text-anchor="middle">▶ 総額シミュレーション</text>
+  <rect x="300" y="292" width="120" height="42" rx="21" fill="none" stroke="#7d89a8"/>
+  <text x="360" y="318" fill="#cfd6e6" font-size="13" font-weight="700" text-anchor="middle">無料で登録</text>
+  <!-- trust -->
+  <text x="42" y="386" fill="#e0bd6a" font-size="24" font-weight="900">12,000<tspan font-size="13">台</tspan></text>
+  <text x="42" y="404" fill="#aab6cd" font-size="11">累計代行台数</text>
+  <text x="180" y="386" fill="#e0bd6a" font-size="24" font-weight="900">98.6<tspan font-size="13">%</tspan></text>
+  <text x="180" y="404" fill="#aab6cd" font-size="11">ご成約満足度</text>
+  <text x="320" y="386" fill="#e0bd6a" font-size="20" font-weight="900">全国<tspan font-size="12">納車</tspan></text>
+  <text x="320" y="404" fill="#aab6cd" font-size="11">ゼロ社 陸送提携</text>
+  <!-- quote card -->
+  <rect x="560" y="110" width="360" height="300" rx="16" fill="#26375a" stroke="#3c4f78"/>
+  <text x="584" y="146" fill="#fff" font-size="15" font-weight="700">総額イメージ（例）</text>
+  <text x="584" y="168" fill="#aab6cd" font-size="11">落札予算 140万円・コンパクトカーの場合</text>
+  <line x1="584" y1="186" x2="896" y2="186" stroke="#3c4f78" stroke-dasharray="3 3"/>
+  <text x="584" y="214" fill="#d4dcec" font-size="13">落札価格</text><text x="896" y="214" fill="#fff" font-size="13" font-weight="700" text-anchor="end">¥1,400,000</text>
+  <text x="584" y="246" fill="#d4dcec" font-size="13">代行手数料</text><text x="896" y="246" fill="#fff" font-size="13" font-weight="700" text-anchor="end">¥59,800</text>
+  <text x="584" y="278" fill="#d4dcec" font-size="13">陸送・登録など</text><text x="896" y="278" fill="#fff" font-size="13" font-weight="700" text-anchor="end">¥74,000</text>
+  <line x1="584" y1="300" x2="896" y2="300" stroke="#3c4f78" stroke-dasharray="3 3"/>
+  <text x="584" y="344" fill="#d4dcec" font-size="13">乗り出し総額（目安）</text>
+  <text x="896" y="356" fill="#e0bd6a" font-size="26" font-weight="900" text-anchor="end">¥1,533,800</text>
+
+  <!-- ===== Reasons ===== -->
+  <text x="480" y="540" fill="#1a2233" font-size="24" font-weight="900" text-anchor="middle">「代行」だから、おトク・安心・かんたん。</text>
+  <text x="480" y="566" fill="#5a6675" font-size="13" text-anchor="middle">店頭価格には仕入れ・整備・人件費などのマージンが上乗せ。代行なら相場で直接ねらえます。</text>
+  <g>
+    <rect x="40" y="596" width="280" height="170" rx="14" fill="#fff" stroke="#e4e8ef"/>
+    <rect x="64" y="620" width="48" height="48" rx="12" fill="#f3e2b4"/><text x="79" y="652" font-size="22">💰</text>
+    <text x="64" y="700" fill="#1a2233" font-size="16" font-weight="800">相場価格で手に入る</text>
+    <text x="64" y="724" fill="#5a6675" font-size="12">店頭は落札価格に15〜25%の中間</text>
+    <text x="64" y="742" fill="#5a6675" font-size="12">コスト。代行手数料だけで済みます。</text>
+  </g>
+  <g>
+    <rect x="340" y="596" width="280" height="170" rx="14" fill="#fff" stroke="#e4e8ef"/>
+    <rect x="364" y="620" width="48" height="48" rx="12" fill="#f3e2b4"/><text x="379" y="652" font-size="22">🔍</text>
+    <text x="364" y="700" fill="#1a2233" font-size="16" font-weight="800">プロが車両を見極め</text>
+    <text x="364" y="724" fill="#5a6675" font-size="12">検査票と評価点を熟知したバイヤー</text>
+    <text x="364" y="742" fill="#5a6675" font-size="12">が状態を確認し粗悪車を回避。</text>
+  </g>
+  <g>
+    <rect x="640" y="596" width="280" height="170" rx="14" fill="#fff" stroke="#e4e8ef"/>
+    <rect x="664" y="620" width="48" height="48" rx="12" fill="#f3e2b4"/><text x="679" y="652" font-size="22">🚚</text>
+    <text x="664" y="700" fill="#1a2233" font-size="16" font-weight="800">ゼロ社陸送で全国へ</text>
+    <text x="664" y="724" fill="#5a6675" font-size="12">大手ゼロのマイカー陸送と提携。</text>
+    <text x="664" y="742" fill="#5a6675" font-size="12">福島拠点からドアtoドアで納車。</text>
+  </g>
+
+  <!-- ===== Simulator ===== -->
+  <rect x="0" y="806" width="960" height="500" fill="url(#sim)"/>
+  <text x="480" y="858" fill="#fff" font-size="24" font-weight="900" text-anchor="middle">サイト上で「乗り出し総額」をその場で計算</text>
+  <text x="480" y="884" fill="#b9c4d8" font-size="13" text-anchor="middle">予算・クラス・納車先を選ぶだけ。総額と店頭比のおトク額がすぐ分かります。</text>
+  <!-- input panel -->
+  <rect x="40" y="912" width="430" height="360" rx="16" fill="#26375a" stroke="#3c4f78"/>
+  <text x="64" y="946" fill="#e7ecf6" font-size="13" font-weight="700">落札予算（希望上限価格）</text>
+  <text x="446" y="946" fill="#e0bd6a" font-size="13" font-weight="700" text-anchor="end">¥1,400,000</text>
+  <rect x="64" y="958" width="382" height="6" rx="3" fill="#1f3a66"/><circle cx="240" cy="961" r="9" fill="#e0bd6a"/>
+  <text x="64" y="1000" fill="#e7ecf6" font-size="13" font-weight="700">車両クラス</text>
+  <rect x="64" y="1010" width="80" height="30" rx="8" fill="#c9a14a"/><text x="104" y="1030" fill="#0e1b33" font-size="12" font-weight="800" text-anchor="middle">コンパクト</text>
+  <rect x="150" y="1010" width="60" height="30" rx="8" fill="#324a72"/><text x="180" y="1030" fill="#cdd9ee" font-size="12" text-anchor="middle">軽</text>
+  <rect x="216" y="1010" width="110" height="30" rx="8" fill="#324a72"/><text x="271" y="1030" fill="#cdd9ee" font-size="12" text-anchor="middle">セダン/ミニバン</text>
+  <rect x="332" y="1010" width="60" height="30" rx="8" fill="#324a72"/><text x="362" y="1030" fill="#cdd9ee" font-size="12" text-anchor="middle">SUV</text>
+  <text x="64" y="1076" fill="#e7ecf6" font-size="13" font-weight="700">ご納車先（福島拠点より配送）</text>
+  <rect x="64" y="1086" width="382" height="34" rx="8" fill="#324a72"/><text x="80" y="1108" fill="#cdd9ee" font-size="13">東京都　▼</text>
+  <text x="64" y="1150" fill="#e7ecf6" font-size="13" font-weight="700">オプション</text>
+  <rect x="64" y="1162" width="16" height="16" rx="3" fill="#e0bd6a"/><text x="90" y="1175" fill="#cdd9ee" font-size="12">名義変更・登録代行（+¥25,000）</text>
+  <rect x="64" y="1186" width="16" height="16" rx="3" fill="#324a72"/><text x="90" y="1199" fill="#cdd9ee" font-size="12">車検整備（車検なし車両 +¥79,800）</text>
+  <rect x="64" y="1210" width="16" height="16" rx="3" fill="#324a72"/><text x="90" y="1223" fill="#cdd9ee" font-size="12">内外装クリーニング（サイズ別）</text>
+  <!-- result panel -->
+  <rect x="490" y="912" width="430" height="360" rx="16" fill="#fff"/>
+  <text x="514" y="946" fill="#1a2233" font-size="16" font-weight="800">お見積り（概算）</text>
+  <text x="514" y="966" fill="#5a6675" font-size="11">※ 税込・参考値です。</text>
+  <text x="514" y="998" fill="#1a2233" font-size="13">落札価格</text><text x="896" y="998" fill="#1a2233" font-size="13" text-anchor="end">¥1,400,000</text>
+  <text x="514" y="1026" fill="#1a2233" font-size="13">代行手数料（100〜150万円帯）</text><text x="896" y="1026" fill="#1a2233" font-size="13" text-anchor="end">¥59,800</text>
+  <text x="514" y="1054" fill="#1a2233" font-size="13">オークション落札料</text><text x="896" y="1054" fill="#1a2233" font-size="13" text-anchor="end">¥11,000</text>
+  <text x="514" y="1082" fill="#1a2233" font-size="13">リサイクル料・税等</text><text x="896" y="1082" fill="#1a2233" font-size="13" text-anchor="end">¥18,000</text>
+  <text x="514" y="1110" fill="#1a2233" font-size="13">陸送費（福島→東京）</text><text x="896" y="1110" fill="#1a2233" font-size="13" text-anchor="end">¥42,000</text>
+  <text x="514" y="1138" fill="#5a6675" font-size="13">オプション合計</text><text x="896" y="1138" fill="#5a6675" font-size="13" text-anchor="end">¥25,000</text>
+  <rect x="514" y="1156" width="382" height="48" rx="10" fill="#0e1b33"/>
+  <text x="532" y="1186" fill="#d4dcec" font-size="13">乗り出し総額（目安）</text>
+  <text x="880" y="1190" fill="#e0bd6a" font-size="22" font-weight="900" text-anchor="end">¥1,555,800</text>
+  <rect x="514" y="1216" width="382" height="36" rx="10" fill="#eaf7f0" stroke="#c4ead6"/>
+  <text x="705" y="1239" fill="#1f9d6b" font-size="13" font-weight="700" text-anchor="middle">店頭購入の目安より 約16万円 おトク</text>
+
+  <!-- ===== Pricing ===== -->
+  <text x="480" y="1366" fill="#1a2233" font-size="24" font-weight="900" text-anchor="middle">代行手数料は「落札価格帯別の定額」</text>
+  <rect x="240" y="1392" width="480" height="240" rx="12" fill="#fff" stroke="#e4e8ef"/>
+  <rect x="240" y="1392" width="480" height="44" rx="12" fill="#0e1b33"/>
+  <text x="266" y="1420" fill="#fff" font-size="14" font-weight="700">落札価格帯</text>
+  <text x="694" y="1420" fill="#e0bd6a" font-size="14" font-weight="700" text-anchor="end">代行手数料（税込）</text>
+  <g font-size="14" fill="#1a2233">
+    <text x="266" y="1462">〜50万円</text><text x="694" y="1462" text-anchor="end" font-weight="700">¥39,800</text>
+    <text x="266" y="1494">50〜100万円</text><text x="694" y="1494" text-anchor="end" font-weight="700">¥49,800</text>
+    <rect x="240" y="1506" width="480" height="30" fill="#fdf7e8"/>
+    <text x="266" y="1526">100〜150万円</text><text x="694" y="1526" text-anchor="end" font-weight="800">¥59,800</text>
+    <text x="266" y="1558">150〜200万円</text><text x="694" y="1558" text-anchor="end" font-weight="700">¥69,800</text>
+    <text x="266" y="1590">200〜300万円</text><text x="694" y="1590" text-anchor="end" font-weight="700">¥79,800</text>
+    <text x="266" y="1620">300万円〜</text><text x="694" y="1620" text-anchor="end" font-weight="700">落札価格の3%</text>
+  </g>
+
+  <!-- ===== CTA band ===== -->
+  <rect x="0" y="1664" width="960" height="116" fill="url(#gold)"/>
+  <text x="480" y="1712" fill="#0e1b33" font-size="22" font-weight="900" text-anchor="middle">まずは無料で、いくらで買えるか確かめよう。</text>
+  <rect x="360" y="1730" width="240" height="38" rx="19" fill="#0e1b33"/>
+  <text x="480" y="1754" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">無料会員登録してオーダー</text>
+</svg>
