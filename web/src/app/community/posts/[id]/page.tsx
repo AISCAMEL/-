@@ -5,6 +5,7 @@ import { getCurrentMember } from "@/lib/auth";
 import { CATEGORY_LABEL, type Category } from "@/lib/community";
 import { LikeButton } from "@/components/community/like-button";
 import { CommentForm } from "@/components/community/comment-form";
+import { ReportButton } from "@/components/community/report-button";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -98,6 +99,9 @@ export default async function PostDetail({ params }: Props) {
             initialLiked={liked}
             canLike={Boolean(member)}
           />
+        </div>
+        <div className="mt-3 text-right">
+          <ReportButton targetType="post" targetId={post.id} canReport={Boolean(member)} />
         </div>
       </article>
 
