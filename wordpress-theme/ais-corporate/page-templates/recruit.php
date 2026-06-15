@@ -6,6 +6,7 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 get_header();
 $positions = ais_recruit_positions();
+$site = ais_site();
 $persons = array(
 	array( 'title' => '変化を前向きに楽しめる人', 'body' => '新しい仕組みや技術を「リスク」ではなく「成長の機会」と捉え、まず試してみられる方。' ),
 	array( 'title' => 'お客様に最後まで寄り添える人', 'body' => '売って終わりにせず、構想から実行・成果まで伴走することにやりがいを感じる方。' ),
@@ -35,8 +36,8 @@ $flow = array(
 
 <section class="py-16 sm:py-24 bg-slate-50 text-ink-800">
 	<div class="container">
-		<?php echo ais_section_heading( '募集職種', 'Positions', '正社員・アルバイトから業務委託まで。あなたに合った関わり方を選べます。', 'center' ); // phpcs:ignore ?>
-		<div class="mt-12 grid gap-6 lg:grid-cols-2">
+		<?php echo ais_section_heading( '募集職種', 'Positions', esc_html( $site['name'] ) . 'が募集する職種です。当社との直接契約（正社員／業務委託）となります。', 'center' ); // phpcs:ignore ?>
+		<div class="mx-auto mt-12 grid max-w-4xl gap-6 lg:grid-cols-2">
 			<?php foreach ( $positions as $i => $pos ) : ?>
 				<div class="reveal flex flex-col rounded-2xl border border-slate-200 bg-white p-7 shadow-card" style="transition-delay:<?php echo (int) ( $i * 70 ); ?>ms">
 					<div class="flex items-start gap-4">
@@ -47,8 +48,9 @@ $flow = array(
 								<span class="rounded-full bg-brand-600 px-2.5 py-0.5 text-[11px] font-bold text-white"><?php echo esc_html( $pos['type'] ); ?></span>
 							</div>
 							<?php if ( ! empty( $pos['brand'] ) ) : ?>
-								<p class="mt-0.5 text-xs font-semibold tracking-wide text-brand-600"><?php echo esc_html( $pos['brand'] ); ?></p>
+								<p class="mt-0.5 text-xs font-semibold tracking-wide text-brand-600">取扱ブランド：<?php echo esc_html( $pos['brand'] ); ?></p>
 							<?php endif; ?>
+							<p class="mt-0.5 text-xs text-ink-500">募集元：<?php echo esc_html( $site['name'] ); ?></p>
 						</div>
 					</div>
 
