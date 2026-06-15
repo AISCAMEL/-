@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { sendChat, type ChatTurn } from '@/lib/api';
 
-// 動画アバターのURL（任意）。未設定ならアニメーションのフォールバックを表示。
-const AVATAR_VIDEO = process.env.NEXT_PUBLIC_CHATBOT_VIDEO ?? '';
+// 動画アバターのURL。環境変数で差し替え可。既定は同梱の動画。
+const AVATAR_VIDEO = process.env.NEXT_PUBLIC_CHATBOT_VIDEO ?? '/chatbot-avatar.mp4';
 const GREETING = 'こんにちは！AIオペレーター24のAIアシスタントです🤖 料金・機能・無料デモなど、お気軽にお尋ねください。';
 
 export default function ChatWidget() {
