@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="780" height="1040" viewBox="0 0 780 1040" font-family="'Noto Sans CJK JP','IPAGothic',sans-serif">
+  <rect width="780" height="1040" fill="#fff"/>
+  <rect x="0" y="0" width="780" height="64" fill="#0e1b33"/>
+  <text x="32" y="32" fill="#fff" font-size="17" font-weight="800">オリコ オートローン クレジット申込書</text>
+  <text x="32" y="52" fill="#e0bd6a" font-size="11">（個別信用購入あっせん）　受付番号 LN-5001／加盟店：合同会社アイズ（AUC-AGENT）</text>
+  <text x="32" y="84" fill="#5a6675" font-size="11">※ 取得済み情報は記入済み。空欄（____）はお客様記入・押印のうえご返送ください。</text>
+
+  <g font-size="11.5" fill="#1a2233">
+    <!-- 1 -->
+    <rect x="32" y="98" width="716" height="22" fill="#eef2f9"/><text x="40" y="113" font-weight="800" fill="#0e1b33">1. お申込者情報</text>
+    <line x1="32" y1="120" x2="748" y2="120" stroke="#e4e8ef"/>
+    <text x="40" y="140">お名前（漢字）：吉田 一平</text><text x="420" y="140">フリガナ：________</text>
+    <text x="40" y="160">生年月日：________（年齢__）</text><text x="420" y="160">性別：男 ・ 女</text>
+    <text x="40" y="180">ご自宅住所：〒________　________________</text>
+    <text x="40" y="200">自宅TEL：________</text><text x="420" y="200">携帯TEL：________</text>
+    <text x="40" y="220">メール：（登録メール）</text>
+    <text x="40" y="240">居住形態：自己所有・賃貸・家族所有・社宅</text><text x="420" y="240">居住年数：__年</text>
+    <text x="40" y="260">家族構成：世帯__名／扶養__名</text><text x="420" y="260">家賃/住宅ローン：月____円</text>
+
+    <!-- 2 -->
+    <rect x="32" y="276" width="716" height="22" fill="#eef2f9"/><text x="40" y="291" font-weight="800" fill="#0e1b33">2. お勤め先情報</text>
+    <line x1="32" y1="298" x2="748" y2="298" stroke="#e4e8ef"/>
+    <text x="40" y="318">勤務先名：________</text><text x="420" y="318">電話：________</text>
+    <text x="40" y="338">所在地：〒________　________________</text>
+    <text x="40" y="358">雇用形態：正社員・公務員</text><text x="420" y="358">業種・職種：________</text>
+    <text x="40" y="378">勤続年数：__年__ヶ月</text><text x="420" y="378">税込年収：¥4,000,000</text>
+    <text x="40" y="398">健康保険：社保・国保・組合・共済・その他</text>
+
+    <!-- 3 -->
+    <rect x="32" y="414" width="716" height="22" fill="#fdf7e8"/><text x="40" y="429" font-weight="800" fill="#0e1b33">3. お支払い条件（記入済）</text>
+    <line x1="32" y1="436" x2="748" y2="436" stroke="#e4e8ef"/>
+    <text x="40" y="456">ご利用金額：¥1,500,000</text><text x="420" y="456">実質年率（目安）：6.9%</text>
+    <text x="40" y="476">支払回数：36 回</text><text x="420" y="476">月々のお支払い（目安）：¥46,247</text>
+    <text x="40" y="496">お支払い総額（目安）：¥1,664,892</text><text x="420" y="496">ボーナス加算：有・無</text>
+    <text x="40" y="516">お支払い方法：口座振替（金融機関____／口座番号____）</text>
+
+    <!-- 4 -->
+    <rect x="32" y="532" width="716" height="22" fill="#eef2f9"/><text x="40" y="547" font-weight="800" fill="#0e1b33">4. ご購入商品（自動車）</text>
+    <line x1="32" y1="554" x2="748" y2="554" stroke="#e4e8ef"/>
+    <text x="40" y="574">車名・型式：________</text><text x="420" y="574">年式：____</text>
+    <text x="40" y="594">走行距離：____km</text><text x="420" y="594">車台番号：________</text>
+    <text x="40" y="614">現金販売価格：____円</text><text x="420" y="614">頭金：____円</text>
+    <text x="40" y="634">販売／取扱店：合同会社アイズ（AUC-AGENT）</text>
+
+    <!-- 5 -->
+    <rect x="32" y="650" width="716" height="22" fill="#eef2f9"/><text x="40" y="665" font-weight="800" fill="#0e1b33">5. 連帯保証人（必要な場合）</text>
+    <line x1="32" y1="672" x2="748" y2="672" stroke="#e4e8ef"/>
+    <text x="40" y="692">お名前：________</text><text x="420" y="692">続柄：____</text>
+    <text x="40" y="712">住所：〒________　________________</text>
+    <text x="40" y="732">勤務先：________</text><text x="420" y="732">年収：____円</text>
+
+    <!-- 6 -->
+    <rect x="32" y="748" width="716" height="22" fill="#eef2f9"/><text x="40" y="763" font-weight="800" fill="#0e1b33">6. ご確認・同意</text>
+    <line x1="32" y1="770" x2="748" y2="770" stroke="#e4e8ef"/>
+  </g>
+  <text x="40" y="792" font-size="10.5" fill="#5a6675">・本申込に関する個人情報を、株式会社オリエントコーポレーション（オリコ）および加盟店が、与信・契約の判断</text>
+  <text x="40" y="808" font-size="10.5" fill="#5a6675">　および個人信用情報機関への登録・利用のために取り扱うことに同意します。</text>
+  <text x="40" y="824" font-size="10.5" fill="#5a6675">・記載内容に相違ありません。</text>
+  <text x="40" y="858" font-size="12" fill="#1a2233">申込日：____________　　ご署名：____________________　㊞</text>
+
+  <rect x="32" y="884" width="716" height="120" rx="8" fill="#f6f8fc" stroke="#e4e8ef"/>
+  <text x="48" y="908" font-size="11" font-weight="800" fill="#0e1b33">自動化の流れ</text>
+  <text x="48" y="930" font-size="11" fill="#5a6675">① 会員がローン仮申込（月々目安・AI一次判定）</text>
+  <text x="48" y="950" font-size="11" fill="#5a6675">② 裏で本申込書（PDF）を顧客情報から自動生成</text>
+  <text x="48" y="970" font-size="11" fill="#5a6675">③ ご登録メールへ自動送付 → ④ 記入・返送 → ⑤ オリコへ正式審査依頼</text>
+  <text x="48" y="992" font-size="10" fill="#8a93a4">※ 最終様式・項目はオリコ指定の正式申込書に準拠（様式があれば差し替え可）。</text>
+</svg>

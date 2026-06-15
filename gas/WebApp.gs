@@ -163,26 +163,78 @@ function loanMonthly_(d) {
 function makeOricoFormPdf_(id, d, score) {
   var cfg = getConfig();
   var lm = loanMonthly_(d);
+  var BL = "________________";  // 記入欄
   var doc = DocumentApp.create("オリコ_クレジット申込書_" + id);
   var b = doc.getBody();
-  b.appendParagraph("オリコ オートローン クレジット申込書（事前）")
+
+  b.appendParagraph("オリコ オートローン クレジット申込書（個別信用購入あっせん）")
     .setHeading(DocumentApp.ParagraphHeading.HEADING1);
-  b.appendParagraph("受付番号：" + id + "　作成日：" + new Date().toLocaleDateString("ja-JP"));
-  b.appendParagraph("取扱：合同会社アイズ（AUC-AGENT）／福島県いわき市四倉町細谷字大町1番");
+  b.appendParagraph("受付番号：" + id + "　作成日：" + new Date().toLocaleDateString("ja-JP")
+    + "　加盟店：合同会社アイズ（AUC-AGENT）").setFontSize(9);
+  b.appendParagraph("※ 取得済みの情報は記入済みです。空欄（" + BL + "）はお客様にてご記入・押印のうえご返送ください。").setFontSize(9);
+
+  // 1. 申込者情報
+  b.appendParagraph("1. お申込者情報").setHeading(DocumentApp.ParagraphHeading.HEADING2);
   b.appendTable([
-    ["お名前", d.name || ""],
-    ["メール", d.email || ""],
-    ["電話", d.phone || ""],
-    ["ローン希望額", yen_(d.amount)],
-    ["支払回数", (d.term || "") + " 回"],
-    ["実質年率（目安）", (d.rate || "") + " %"],
-    ["月々のお支払い（目安）", yen_(lm.monthly)],
-    ["支払総額（目安）", yen_(lm.total)],
-    ["雇用形態", d.job || ""],
-    ["年収", yen_(d.income)],
-    ["AI一次判定", (score ? score.grade : "")]
+    ["お名前（漢字）", d.name || BL, "フリガナ", BL],
+    ["生年月日", BL + "（年齢 " + BL + "）", "性別", "男 ・ 女"],
+    ["ご自宅住所", "〒" + BL + "　" + BL, "", ""],
+    ["自宅TEL", d.phone || BL, "携帯TEL", d.phone || BL],
+    ["メール", d.email || "", "", ""],
+    ["居住形態", "自己所有 ・ 家族所有 ・ 賃貸 ・ 社宅", "居住年数", BL + " 年"],
+    ["家族構成", "世帯人数 " + BL + " 名 ／ 扶養 " + BL + " 名", "住宅ローン/家賃", "月 " + BL + " 円"]
   ]);
-  b.appendParagraph("※ 本書は事前申込用です。正式審査にはオリコ所定の書類・本人確認が必要です。記入のうえご返送ください。");
+
+  // 2. 勤務先情報
+  b.appendParagraph("2. お勤め先情報").setHeading(DocumentApp.ParagraphHeading.HEADING2);
+  b.appendTable([
+    ["勤務先名", BL, "電話", BL],
+    ["所在地", "〒" + BL + "　" + BL, "", ""],
+    ["雇用形態", d.job || BL, "業種・職種", BL],
+    ["勤続年数", BL + " 年 " + BL + " ヶ月", "税込年収", yen_(d.income)],
+    ["健康保険", "社保 ・ 国保 ・ 組合 ・ 共済 ・ その他", "", ""]
+  ]);
+
+  // 3. お支払い条件
+  b.appendParagraph("3. お支払い条件").setHeading(DocumentApp.ParagraphHeading.HEADING2);
+  b.appendTable([
+    ["ご利用金額（分割払い元金）", yen_(d.amount)],
+    ["実質年率（目安）", (d.rate || "") + " %"],
+    ["支払回数", (d.term || "") + " 回"],
+    ["月々のお支払い（目安）", yen_(lm.monthly)],
+    ["お支払い総額（目安）", yen_(lm.total)],
+    ["初回／2回目以降", "初回 " + BL + " 円 ／ 2回目以降 " + yen_(lm.monthly)],
+    ["ボーナス加算", "有（" + BL + "円 ×年2回）・ 無"],
+    ["お支払い方法", "口座振替（金融機関 " + BL + " / 口座番号 " + BL + "）"],
+    ["AI一次判定（社内）", (score ? score.grade : "")]
+  ]);
+
+  // 4. 購入商品
+  b.appendParagraph("4. ご購入商品（自動車）").setHeading(DocumentApp.ParagraphHeading.HEADING2);
+  b.appendTable([
+    ["車名・型式", BL, "年式", BL],
+    ["走行距離", BL + " km", "車台番号", BL],
+    ["現金販売価格", BL + " 円", "頭金", BL + " 円"],
+    ["販売／取扱店", "合同会社アイズ（AUC-AGENT）", "", ""]
+  ]);
+
+  // 5. 連帯保証人
+  b.appendParagraph("5. 連帯保証人（必要な場合のみ）").setHeading(DocumentApp.ParagraphHeading.HEADING2);
+  b.appendTable([
+    ["お名前", BL, "続柄", BL],
+    ["住所", "〒" + BL + "　" + BL, "電話", BL],
+    ["勤務先", BL, "年収", BL + " 円"]
+  ]);
+
+  // 6. 同意・署名
+  b.appendParagraph("6. ご確認・同意").setHeading(DocumentApp.ParagraphHeading.HEADING2);
+  b.appendParagraph("・本申込に関する個人情報を、株式会社オリエントコーポレーション（オリコ）および加盟店（合同会社アイズ）が、与信・契約の判断および個人信用情報機関への登録・利用のために取り扱うことに同意します。");
+  b.appendParagraph("・記載内容に相違ありません。");
+  b.appendParagraph("");
+  b.appendParagraph("申込日：" + BL + "　　ご署名：" + BL + "　　㊞");
+  b.appendParagraph("");
+  b.appendParagraph("※ 本書は加盟店が事前情報を反映した申込書です。正式審査にはオリコ所定の本人確認書類等が必要です。最終様式・項目はオリコ指定の申込書に準拠します。").setFontSize(9);
+
   doc.saveAndClose();
 
   var file = DriveApp.getFileById(doc.getId());
