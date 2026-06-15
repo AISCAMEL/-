@@ -5,6 +5,7 @@ import { sendEmail } from '../notify/email.js';
 import * as leads from './repo.js';
 import { listTenants, getAdminUsageSummary } from '../db/queries.js';
 import { rateLimit } from '../util/ratelimit.js';
+import { salesChatReply, type ChatTurn } from './chat.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -57,6 +58,21 @@ export async function registerLeadRoutes(app: FastifyInstance): Promise<void> {
     ).catch((err) => app.log.error({ err }, 'lead notify failed'));
 
     return reply.code(201).send({ ok: true, id: lead.id });
+  });
+
+  // --- 公開チャットボット（LP用） ---
+  app.post('/api/public/chat', async (req, reply) => {
+    const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip;
+    const rl = rateLimit(`chat:${ip}`, 30, 5 * 60_000);
+    if (!rl.allowed) return reply.code(429).send({ reply: '少し時間をおいて再度お試しください。' });
+
+    const b = (req.body ?? {}) as { message?: string; history?: ChatTurn[] };
+    const message = (b.message ?? '').toString().slice(0, 1000).trim();
+    if (!message) return reply.code(400).send({ error: 'message required' });
+
+    const history = Array.isArray(b.history) ? b.history.slice(-8) : [];
+    const text = await salesChatReply(message, history);
+    return { reply: text };
   });
 
   // --- 運営ダッシュボード（経営KPI） ---

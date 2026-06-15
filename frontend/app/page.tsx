@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import ChatWidget from '@/components/ChatWidget';
 
 const features = [
   { icon: '📞', title: '24時間AIが一次対応', desc: '営業時間外も接客中も移動中も、AIが自然な日本語で電話に応答します。' },
@@ -128,6 +129,9 @@ export default function LandingPage() {
           © 2026 AIオペレーター24
         </div>
       </footer>
+
+      {/* AIチャットボット（動画アバター対応） */}
+      <ChatWidget />
     </main>
   );
 }

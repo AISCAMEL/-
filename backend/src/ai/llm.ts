@@ -32,3 +32,20 @@ export async function chatJson<T>(messages: ChatMessage[], model?: string): Prom
     return null;
   }
 }
+
+/** プレーンテキスト応答を返すチャット補完（チャットボット用）。未設定/失敗時は null。 */
+export async function chatText(messages: ChatMessage[], model?: string): Promise<string | null> {
+  if (!client) return null;
+  try {
+    const res = await client.chat.completions.create({
+      model: model ?? config.openai.model,
+      messages,
+      temperature: 0.5,
+      max_tokens: 400,
+    });
+    return res.choices[0]?.message?.content ?? null;
+  } catch (err) {
+    console.error('[llm] chatText failed:', err);
+    return null;
+  }
+}

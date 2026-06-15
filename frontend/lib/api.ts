@@ -90,6 +90,19 @@ export async function submitLead(body: Record<string, unknown>): Promise<{ ok: b
   return res.json();
 }
 
+export interface ChatTurn { role: 'user' | 'assistant'; content: string; }
+
+/** LPチャットボットへメッセージを送る（認証なし）。 */
+export async function sendChat(message: string, history: ChatTurn[]): Promise<string> {
+  const res = await fetch(`${PUBLIC_BASE}/api/public/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message, history }),
+  });
+  const data = await res.json().catch(() => ({}));
+  return (data as any).reply ?? '申し訳ありません。うまく応答できませんでした。';
+}
+
 export const LEAD_STATUS_LABEL: Record<string, string> = {
   new: '新規', contacted: '連絡済', in_progress: '対応中',
   meeting_scheduled: '商談設定', won: '受注', lost: '失注', closed: 'クローズ',

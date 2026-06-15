@@ -4,11 +4,15 @@ const config: Config = {
   content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}'],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['"Noto Sans JP"', 'system-ui', 'sans-serif'],
+        heading: ['"Zen Kaku Gothic New"', '"Noto Sans JP"', 'sans-serif'],
+      },
       colors: {
         brand: {
-          DEFAULT: '#1f6feb',
-          dark: '#1a5fce',
-          light: '#e8f1ff',
+          DEFAULT: '#2563eb',
+          dark: '#1d4ed8',
+          light: '#eaf1ff',
         },
       },
     },

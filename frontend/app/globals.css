@@ -8,4 +8,11 @@
 
 body {
   @apply bg-gray-50 text-gray-900 antialiased;
+  font-family: 'Noto Sans JP', system-ui, -apple-system, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+}
+
+/* 見出しは Zen Kaku Gothic New で印象を強く */
+h1, h2, h3 {
+  font-family: 'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif;
+  letter-spacing: 0.01em;
 }
