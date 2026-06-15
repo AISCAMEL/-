@@ -29,7 +29,21 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 			<button type="button" data-ais-chat-close aria-label="閉じる" class="grid h-8 w-8 place-items-center rounded-md text-slate-300 hover:text-white"><?php echo ais_icon( 'close', 'h-5 w-5' ); // phpcs:ignore ?></button>
 		</div>
 
-		<div id="ais-chat-log" class="flex h-80 flex-col gap-3 overflow-y-auto bg-slate-50 px-4 py-4" aria-live="polite"></div>
+		<?php $ais_op_video = get_theme_file_path( '/assets/media/operator.mp4' ); ?>
+		<?php if ( file_exists( $ais_op_video ) ) : ?>
+			<!-- オペレーター映像（ミュート・ループ。音声は読み上げで再生） -->
+			<div data-ais-chat-stage class="relative bg-ink-900">
+				<video data-ais-chat-video class="block h-40 w-full object-cover" muted loop playsinline preload="metadata"
+					poster="<?php echo esc_url( get_theme_file_uri( '/assets/media/operator-poster.jpg' ) ); ?>">
+					<source src="<?php echo esc_url( get_theme_file_uri( '/assets/media/operator.mp4' ) ); ?>" type="video/mp4">
+				</video>
+				<span class="pointer-events-none absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/45 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">
+					<span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>ご案内中
+				</span>
+			</div>
+		<?php endif; ?>
+
+		<div id="ais-chat-log" class="flex h-64 flex-col gap-3 overflow-y-auto bg-slate-50 px-4 py-4" aria-live="polite"></div>
 
 		<form id="ais-chat-form" class="flex items-end gap-2 border-t border-slate-200 bg-white p-3">
 			<label for="ais-chat-input" class="sr-only">メッセージ</label>

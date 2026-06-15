@@ -40,8 +40,16 @@ function ais_icon( $name, $class = 'h-6 w-6' ) {
 	return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="' . esc_attr( $class ) . '">' . $inner . '</svg>';
 }
 
-/** AIチャットの案内係（女性）アバター SVG */
+/** AIチャットの案内係アバター。写真（assets/media/operator-avatar.jpg）があれば優先、無ければSVG。 */
 function ais_chat_avatar( $class = 'h-9 w-9' ) {
+	if ( function_exists( 'get_theme_file_path' ) && file_exists( get_theme_file_path( '/assets/media/operator-avatar.jpg' ) ) ) {
+		return '<img src="' . esc_url( get_theme_file_uri( '/assets/media/operator-avatar.jpg' ) ) . '" alt="AIコンシェルジュ" loading="lazy" decoding="async" class="' . esc_attr( $class ) . ' object-cover">';
+	}
+	return ais_chat_avatar_svg( $class );
+}
+
+/** 案内係（女性）アバターの SVG 版（写真が無い場合のフォールバック） */
+function ais_chat_avatar_svg( $class = 'h-9 w-9' ) {
 	return '<svg class="' . esc_attr( $class ) . '" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AIコンシェルジュ">'
 		. '<circle cx="24" cy="24" r="24" fill="#e8f0fe"/>'
 		. '<path d="M7 48 C7 38 14.5 33.5 24 33.5 C33.5 33.5 41 38 41 48 Z" fill="#2563eb"/>'

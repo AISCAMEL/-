@@ -15,6 +15,8 @@
     var iconOpen = toggle.querySelector("[data-ais-chat-open]");
     var iconShut = toggle.querySelector("[data-ais-chat-shut]");
     var face = root.querySelector("[data-ais-chat-face]");
+    var video = root.querySelector("[data-ais-chat-video]");
+    var stage = root.querySelector("[data-ais-chat-stage]");
     var muteBtn = root.querySelector("[data-ais-chat-mute]");
     var voiceOnIcon = root.querySelector("[data-ais-voice-on]");
     var voiceOffIcon = root.querySelector("[data-ais-voice-off]");
@@ -45,10 +47,16 @@
       }
     }
 
+    var stageGlow = ["ring-2", "ring-inset", "ring-emerald-400"];
     function setSpeaking(on) {
-      if (!face) return;
-      if (on) face.classList.add.apply(face.classList, speakingClasses);
-      else face.classList.remove.apply(face.classList, speakingClasses);
+      if (face) {
+        if (on) face.classList.add.apply(face.classList, speakingClasses);
+        else face.classList.remove.apply(face.classList, speakingClasses);
+      }
+      if (stage) {
+        if (on) stage.classList.add.apply(stage.classList, stageGlow);
+        else stage.classList.remove.apply(stage.classList, stageGlow);
+      }
     }
     function stopSpeak() {
       if (synth) synth.cancel();
@@ -88,6 +96,7 @@
       toggle.setAttribute("aria-expanded", "true");
       iconOpen.classList.add("hidden");
       iconShut.classList.remove("hidden");
+      if (video) { var pr = video.play(); if (pr && pr.catch) pr.catch(function () {}); }
       if (!greeted) {
         greeted = true;
         if (AIS_CHAT.greeting) addBubble("assistant", AIS_CHAT.greeting);
@@ -100,6 +109,7 @@
       iconOpen.classList.remove("hidden");
       iconShut.classList.add("hidden");
       stopSpeak();
+      if (video) video.pause();
     }
     function togglePanel() {
       if (panel.classList.contains("hidden")) openPanel();
