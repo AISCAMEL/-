@@ -46,6 +46,7 @@
         <a href="#orders">📦 注文・出品状況</a>
         <a href="#newOrder">➕ 購入オーダー</a>
         <a href="#newSell">🏷️ 出品申込</a>
+        <a href="#hiroba">🔑 車ひろばログイン</a>
         <a href="manual.html">📖 出品マニュアル</a>
         <a href="index.html#simulator">🧮 料金シミュレーション</a>
         <a href="index.html">🏠 トップへ</a>
@@ -54,6 +55,16 @@
 
     <!-- Main -->
     <main>
+      <!-- 車ひろば エージェント連携（購入のやりとり） -->
+      <section class="panel" id="hiroba" style="border:2px solid var(--gold);">
+        <div class="panel-head"><h3>🔑 購入のやりとり（車ひろば エージェント）</h3></div>
+        <div class="panel-body">
+          <p style="margin:0 0 12px;">車両のご提案・入札・進捗のやりとりは、専用システム「<strong>車ひろば エージェント</strong>」で行います。<strong>ログインID・パスワードは購入お申込み後に発行</strong>し、登録メールへご連絡します。</p>
+          <div class="alert alert-info" id="hirobaStatus">購入オーダーをお申込みいただくと、ログイン情報を発行します。</div>
+          <a class="btn btn-gold" href="https://agent.car-hiroba.jp/usr/login/" target="_blank" rel="noopener">車ひろば エージェントにログイン →</a>
+        </div>
+      </section>
+
       <!-- Stats -->
       <div id="dash" class="stat-row">
         <div class="stat"><div class="k">進行中の注文</div><div class="v" id="stActive">1</div></div>
@@ -293,7 +304,7 @@
     var order = AucAuth.addOrder({
       car: document.getElementById("oCar").value,
       total: r.total,
-      memo: "オーダーを受け付けました。担当バイヤーが候補車両を提案します。",
+      memo: "オーダーを受け付けました。車ひろばのログインID/PWを発行のうえメールでご連絡します。",
       payload: {
         bid: r.bid,
         cls: clsSel.value,
@@ -309,6 +320,10 @@
     var alertBox = document.getElementById("orderAlert");
     alertBox.className = "alert alert-ok";
     alertBox.textContent = "✓ オーダー（" + order.id + "）を受け付けました。注文状況に追加されました。";
+    // 車ひろば：ログイン情報の発行ステータスを更新
+    var hb = document.getElementById("hirobaStatus");
+    hb.className = "alert alert-ok";
+    hb.textContent = "✓ お申込みを受け付けました。車ひろばのログインID／パスワードを発行し、登録メール（" + (user.email || "ご登録先") + "）へお送りします。発行後は下のボタンからログインしてください。";
     renderOrders();
     document.getElementById("oCar").value = "";
     document.getElementById("orders").scrollIntoView({ behavior: "smooth" });

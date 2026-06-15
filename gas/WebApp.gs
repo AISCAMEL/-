@@ -62,7 +62,8 @@ function handleOrder_(d) {
     "希望車種：" + (d.car || "-") + "\n" +
     "予算：" + yen_(d.bid) + " / 想定総額：" + yen_(d.total) + "\n" +
     "AI優先度：" + ai.priority + "\n" +
-    "要約：" + ai.summary
+    "要約：" + ai.summary + "\n" +
+    "▶ 車ひろば（agent.car-hiroba.jp）のログインID/PWを発行し、" + (d.email || "登録メール") + " へ連絡してください。"
   );
 
   return { ok: true, id: id };
