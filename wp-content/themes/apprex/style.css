@@ -4,7 +4,7 @@ Theme URI: https://site.aiscompany.jp/
 Author: AIS Company
 Author URI: https://site.aiscompany.jp/
 Description: クラウド型アプリ開発プラットフォーム「APPREX」公式サイト用テーマ。Hello Elementor の思想を踏襲したライセンス非依存の自作テーマ。固定ページ構成＋カスタム投稿タイプ cases によるリニューアル実装。モバイルファースト・WebP・Lazy Load 対応。
-Version: 1.2.0
+Version: 1.3.0
 Requires at least: 6.0
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -391,9 +391,20 @@ ul { margin: 0; padding: 0; list-style: none; }
 .apprex-chat-toggle[aria-expanded="true"] { animation: none; }
 .apprex-chat-toggle[aria-expanded="true"]::before { display: none; }
 .apprex-chat-toggle__icon { grid-area: 1 / 1; line-height: 1; transition: opacity .25s ease, transform .3s cubic-bezier(.34,1.56,.64,1); }
+.apprex-chat-toggle__icon--open { width: 100%; height: 100%; }
+.apprex-chat-toggle__photo {
+  width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block;
+  box-shadow: inset 0 0 0 3px rgba(255,255,255,.85);
+}
 .apprex-chat-toggle__icon--close { opacity: 0; transform: rotate(-90deg) scale(.5); font-size: 22px; }
 .apprex-chat-toggle[aria-expanded="true"] .apprex-chat-toggle__icon--open { opacity: 0; transform: rotate(90deg) scale(.5); }
 .apprex-chat-toggle[aria-expanded="true"] .apprex-chat-toggle__icon--close { opacity: 1; transform: none; }
+/* オンライン中を示す緑のドット（ランチャー右下） */
+.apprex-chat-toggle__pip {
+  position: absolute; bottom: 4px; right: 4px; width: 15px; height: 15px; border-radius: 50%;
+  background: #34d399; border: 2.5px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.25);
+}
+.apprex-chat-toggle[aria-expanded="true"] .apprex-chat-toggle__pip { display: none; }
 .apprex-chat-toggle__badge {
   position: absolute; top: 6px; right: 6px; min-width: 18px; height: 18px; padding: 0 4px;
   border-radius: 999px; background: #ef4444; color: #fff; border: 2px solid #fff;
@@ -439,9 +450,10 @@ ul { margin: 0; padding: 0; list-style: none; }
 .apprex-chat__mute:hover { opacity: 1; transform: scale(1.15); }
 .apprex-chat__id { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .apprex-chat__avatar {
-  width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center;
-  font-size: 21px; background: rgba(255,255,255,.22); box-shadow: inset 0 0 0 1px rgba(255,255,255,.25);
+  position: relative; width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; overflow: hidden;
+  font-size: 21px; background: rgba(255,255,255,.22); box-shadow: 0 0 0 2px rgba(255,255,255,.55);
 }
+.apprex-chat__avatar-photo { width: 100%; height: 100%; object-fit: cover; display: block; }
 .apprex-chat__head strong { display: block; font-size: 1rem; }
 .apprex-chat__status { display: flex; align-items: center; gap: 6px; font-size: .72rem; opacity: .95; }
 .apprex-chat__dot {
@@ -464,6 +476,13 @@ ul { margin: 0; padding: 0; list-style: none; }
 .apprex-msg--assistant { background: #fff; align-self: flex-start; border-bottom-left-radius: 6px; }
 .apprex-msg--user { background: linear-gradient(135deg, #3b82f6, #6366f1); color: #fff; align-self: flex-end; border-bottom-right-radius: 6px; }
 .apprex-msg--operator { background: #ecfdf5; border: 1px solid #a7f3d0; color: #064e3b; align-self: flex-start; border-bottom-left-radius: 5px; }
+/* AI／担当者の吹き出しに担当者アイコンを添える（人が対応している印象に） */
+.apprex-msg--assistant, .apprex-msg--operator, .apprex-msg--typing { position: relative; margin-left: 40px; }
+.apprex-msg--assistant::before, .apprex-msg--operator::before, .apprex-msg--typing::before {
+  content: ""; position: absolute; left: -40px; bottom: 0; width: 30px; height: 30px;
+  border-radius: 50%; background-image: var(--apprex-agent); background-size: cover; background-position: center;
+  background-color: #dbeafe; box-shadow: 0 1px 4px rgba(37,99,235,.25), inset 0 0 0 1.5px #fff;
+}
 .apprex-msg__tag { display: block; font-size: .66rem; font-weight: 700; color: #059669; margin-bottom: 2px; letter-spacing: .03em; }
 .apprex-msg--system { align-self: center; max-width: 92%; text-align: center; background: #eef2ff; color: #4338ca; font-size: .76rem; border-radius: 999px; padding: 6px 14px; box-shadow: none; }
 .apprex-msg--typing { padding: 12px 14px; }
@@ -472,7 +491,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 .apprex-typing span:nth-child(2) { animation-delay: .18s; }
 .apprex-typing span:nth-child(3) { animation-delay: .36s; }
 @keyframes apprexTyping { 0%, 60%, 100% { transform: translateY(0); opacity: .35; } 30% { transform: translateY(-5px); opacity: 1; } }
-.apprex-chat-suggest { display: flex; flex-wrap: wrap; gap: 6px; align-self: flex-start; max-width: 90%; margin-top: -2px; }
+.apprex-chat-suggest { display: flex; flex-wrap: wrap; gap: 6px; align-self: flex-start; max-width: 90%; margin-top: -2px; margin-left: 40px; }
 .apprex-chat-suggest__btn { font-size: .78rem; text-decoration: none; border: 1px solid var(--color-primary); color: var(--color-primary); background: #fff; border-radius: 999px; padding: 6px 12px; line-height: 1.2; transition: background .2s, color .2s, transform .15s; }
 .apprex-chat-suggest__btn:hover { background: var(--color-primary); color: #fff; transform: translateY(-1px); }
 .apprex-chat__quick { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px; background: #fff; border-top: 1px solid var(--color-line); }

@@ -18,18 +18,26 @@ $apprex_zapier  = $apprex_ai ? '' : apprex_chatbot_url();
 if ( ! $apprex_ai && ! $apprex_zapier ) {
 	return;
 }
+
+$apprex_agent_img    = get_theme_file_uri( 'assets/images/support-agent.jpg' );
+$apprex_agent_img_sm = get_theme_file_uri( 'assets/images/support-agent-sm.jpg' );
 ?>
 <button class="apprex-chat-toggle" type="button" aria-expanded="false" aria-controls="apprex-chat-window" aria-label="<?php esc_attr_e( 'チャットで相談', 'apprex' ); ?>">
-	<span class="apprex-chat-toggle__icon apprex-chat-toggle__icon--open" aria-hidden="true">💬</span>
+	<span class="apprex-chat-toggle__icon apprex-chat-toggle__icon--open" aria-hidden="true">
+		<img class="apprex-chat-toggle__photo" src="<?php echo esc_url( $apprex_agent_img_sm ); ?>" alt="" width="68" height="68" loading="lazy" decoding="async">
+	</span>
 	<span class="apprex-chat-toggle__icon apprex-chat-toggle__icon--close" aria-hidden="true">✕</span>
+	<span class="apprex-chat-toggle__pip" aria-hidden="true"></span>
 	<span class="apprex-chat-toggle__badge" aria-hidden="true">1</span>
 </button>
 
 <?php if ( $apprex_ai ) : ?>
-<div class="apprex-chat" id="apprex-chat-window" hidden>
+<div class="apprex-chat" id="apprex-chat-window" hidden style="--apprex-agent: url('<?php echo esc_url( $apprex_agent_img_sm ); ?>');">
 	<div class="apprex-chat__head">
 		<div class="apprex-chat__id">
-			<span class="apprex-chat__avatar" aria-hidden="true">🤖</span>
+			<span class="apprex-chat__avatar" aria-hidden="true">
+				<img class="apprex-chat__avatar-photo" src="<?php echo esc_url( $apprex_agent_img ); ?>" alt="" width="44" height="44" loading="lazy" decoding="async">
+			</span>
 			<div>
 				<strong><?php esc_html_e( 'APPREX サポート', 'apprex' ); ?></strong>
 				<span class="apprex-chat__status"><span class="apprex-chat__dot" aria-hidden="true"></span><?php esc_html_e( 'オンライン｜お気軽にどうぞ', 'apprex' ); ?></span>
