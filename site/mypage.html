@@ -100,15 +100,8 @@
             </div>
             <div class="row-2">
               <div class="field">
-                <label>納車エリア</label>
-                <select id="oRegion">
-                  <option value="20000">関東</option>
-                  <option value="28000">中部・東海</option>
-                  <option value="30000">関西</option>
-                  <option value="40000">東北・北陸・中国・四国</option>
-                  <option value="60000">北海道・九州</option>
-                  <option value="90000">沖縄・離島</option>
-                </select>
+                <label>納車先（都道府県）<span style="color:var(--gold);font-size:11px;">福島拠点より配送</span></label>
+                <select id="oRegion"></select>
               </div>
               <div class="field">
                 <label>オプション</label>
@@ -240,12 +233,23 @@
     document.getElementById("stDone").textContent = done;
   }
 
+  // 納車先（都道府県）を福島拠点からの配送として生成
+  var oRegionSel = document.getElementById("oRegion");
+  Object.keys(AucSim.PREF).forEach(function (k) {
+    var o = document.createElement("option");
+    o.value = k; o.textContent = k;
+    oRegionSel.appendChild(o);
+  });
+  oRegionSel.value = "福島";
+
   // --- かんたんオーダーの即時見積もり（AucSim を再利用） ---
   function quoteParams() {
+    var cls = document.getElementById("oClass").value;
+    var ship = AucSim.estimateShipping({ from: AucSim.HOME_PREF, to: oRegionSel.value, cls: cls }).cost;
     return {
       bid: document.getElementById("oBid").value,
-      cls: document.getElementById("oClass").value,
-      region: document.getElementById("oRegion").value,
+      cls: cls,
+      region: ship,
       options: {
         optReg: document.getElementById("oReg").checked,
         optInspect: document.getElementById("oInspect").checked

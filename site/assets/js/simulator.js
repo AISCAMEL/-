@@ -104,6 +104,8 @@
   // 車種サイズ係数（距離主体のため差は小さめ）
   var SIZE_MULT = { kei: 0.9, compact: 1.0, sedan: 1.05, suv: 1.15, import: 1.2 };
 
+  var HOME_PREF = "福島"; // 事業拠点（陸送の出発地）
+
   function shipFeeByKm(km) {
     for (var i = 0; i < SHIP_KM_TIERS.length; i++) {
       if (km <= SHIP_KM_TIERS[i].km) return SHIP_KM_TIERS[i].fee;
@@ -250,7 +252,7 @@
   window.AucSim = {
     calculate: calculate, feeByBid: feeByBid, yen: yen, man: man,
     CLASS: CLASS, OPTIONS: OPTIONS, FEE_TIERS: FEE_TIERS,
-    AREAS: PREF, PREF: PREF, estimateShipping: estimateShipping,
+    AREAS: PREF, PREF: PREF, HOME_PREF: HOME_PREF, estimateShipping: estimateShipping,
     COND: COND, estimateSell: estimateSell,
     SELL_TIERS: SELL_TIERS, sellFeeByPrice: sellFeeByPrice
   };
@@ -259,12 +261,26 @@
   var bid = document.getElementById("bid");
   if (!bid) return; // シミュレーターが無いページでは何もしない
 
+  // 納車先（都道府県）を福島拠点からの配送として生成
+  var regionSel = document.getElementById("region");
+  if (regionSel && !regionSel.options.length) {
+    Object.keys(PREF).forEach(function (k) {
+      var o = document.createElement("option");
+      o.value = k; o.textContent = k;
+      regionSel.appendChild(o);
+    });
+    regionSel.value = "福島";
+  }
+
   function readForm() {
     var clsEl = document.querySelector('input[name="cls"]:checked');
+    var cls = clsEl ? clsEl.value : "compact";
+    var dest = regionSel ? regionSel.value : "福島";
+    var ship = estimateShipping({ from: HOME_PREF, to: dest, cls: cls }).cost;
     return {
       bid: bid.value,
-      cls: clsEl ? clsEl.value : "compact",
-      region: document.getElementById("region").value,
+      cls: cls,
+      region: ship,
       options: {
         optReg: document.getElementById("optReg").checked,
         optGarage: document.getElementById("optGarage").checked,

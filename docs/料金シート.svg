@@ -59,41 +59,32 @@
 <rect x="40" y="700" width="560" height="232" rx="12" fill="#fff" stroke="#e4e8ef" stroke-width="1.5"/>
 <rect x="40" y="700" width="560" height="40" rx="12" fill="#0e1b33"/>
 <rect x="40" y="720" width="560" height="20" fill="#0e1b33"/>
-<text x="58" y="726" font-size="16" font-weight="800" fill="#fff">C. 陸送費（コンパクト・都道府県例）</text>
+<text x="58" y="726" font-size="16" font-weight="800" fill="#fff">C. 陸送費（福島拠点発・コンパクト例）</text>
 <rect x="40" y="748" width="560" height="30" fill="#eef2f9"/>
-<text x="56" y="768" font-size="14" text-anchor="start" fill="#0e1b33" >出発＼納車</text>
-<text x="306" y="768" font-size="14" text-anchor="end" fill="#0e1b33" >東京</text>
-<text x="446" y="768" font-size="14" text-anchor="end" fill="#0e1b33" >大阪</text>
-<text x="586" y="768" font-size="14" text-anchor="end" fill="#0e1b33" >福岡</text>
+<text x="56" y="768" font-size="14" text-anchor="start" fill="#0e1b33" >納車先（福島発）</text>
+<text x="586" y="768" font-size="14" text-anchor="end" fill="#0e1b33" >陸送費</text>
 <line x1="40" y1="778" x2="600" y2="778" stroke="#e4e8ef"/>
 <rect x="40" y="778" width="560" height="30" fill="#fafbfd"/>
-<text x="56" y="798" font-size="14" text-anchor="start" fill="#1a2233" >東京</text>
-<text x="306" y="798" font-size="14" text-anchor="end" fill="#1a2233" >¥13,000</text>
-<text x="446" y="798" font-size="14" text-anchor="end" fill="#1a2233" >¥35,000</text>
-<text x="586" y="798" font-size="14" text-anchor="end" fill="#0e1b33" >¥58,000</text>
+<text x="56" y="798" font-size="14" text-anchor="start" fill="#1a2233" >福島</text>
+<text x="586" y="798" font-size="14" text-anchor="end" fill="#0e1b33" >¥13,000</text>
 <line x1="40" y1="808" x2="600" y2="808" stroke="#e4e8ef"/>
-<text x="56" y="828" font-size="14" text-anchor="start" fill="#1a2233" >大阪</text>
-<text x="306" y="828" font-size="14" text-anchor="end" fill="#1a2233" >¥35,000</text>
-<text x="446" y="828" font-size="14" text-anchor="end" fill="#1a2233" >¥13,000</text>
-<text x="586" y="828" font-size="14" text-anchor="end" fill="#0e1b33" >¥35,000</text>
+<text x="56" y="828" font-size="14" text-anchor="start" fill="#1a2233" >東京</text>
+<text x="586" y="828" font-size="14" text-anchor="end" fill="#0e1b33" >¥27,000</text>
 <line x1="40" y1="838" x2="600" y2="838" stroke="#e4e8ef"/>
 <rect x="40" y="838" width="560" height="30" fill="#fafbfd"/>
 <text x="56" y="858" font-size="14" text-anchor="start" fill="#1a2233" >宮城</text>
-<text x="306" y="858" font-size="14" text-anchor="end" fill="#1a2233" >¥27,000</text>
-<text x="446" y="858" font-size="14" text-anchor="end" fill="#1a2233" >¥45,000</text>
-<text x="586" y="858" font-size="14" text-anchor="end" fill="#0e1b33" >¥58,000</text>
+<text x="586" y="858" font-size="14" text-anchor="end" fill="#0e1b33" >¥20,000</text>
 <line x1="40" y1="868" x2="600" y2="868" stroke="#e4e8ef"/>
-<text x="56" y="888" font-size="14" text-anchor="start" fill="#1a2233" >北海道</text>
-<text x="306" y="888" font-size="14" text-anchor="end" fill="#1a2233" >¥100,000</text>
-<text x="446" y="888" font-size="14" text-anchor="end" fill="#1a2233" >¥100,000</text>
-<text x="586" y="888" font-size="14" text-anchor="end" fill="#0e1b33" >¥115,000</text>
+<text x="56" y="888" font-size="14" text-anchor="start" fill="#1a2233" >大阪</text>
+<text x="586" y="888" font-size="14" text-anchor="end" fill="#0e1b33" >¥45,000</text>
 <line x1="40" y1="898" x2="600" y2="898" stroke="#e4e8ef"/>
 <rect x="40" y="898" width="560" height="30" fill="#fafbfd"/>
-<text x="56" y="918" font-size="14" text-anchor="start" fill="#1a2233" >沖縄</text>
-<text x="306" y="918" font-size="14" text-anchor="end" fill="#1a2233" >¥140,000</text>
-<text x="446" y="918" font-size="14" text-anchor="end" fill="#1a2233" >¥125,000</text>
-<text x="586" y="918" font-size="14" text-anchor="end" fill="#0e1b33" >¥125,000</text>
+<text x="56" y="918" font-size="14" text-anchor="start" fill="#1a2233" >福岡</text>
+<text x="586" y="918" font-size="14" text-anchor="end" fill="#0e1b33" >¥58,000</text>
 <line x1="40" y1="928" x2="600" y2="928" stroke="#e4e8ef"/>
+<text x="56" y="948" font-size="14" text-anchor="start" fill="#1a2233" >北海道</text>
+<text x="586" y="948" font-size="14" text-anchor="end" fill="#0e1b33" >¥83,000</text>
+<line x1="40" y1="958" x2="600" y2="958" stroke="#e4e8ef"/>
 <text x="56" y="922" font-size="12" fill="#5a6675">サイズ係数：軽×0.9／コンパクト×1.0／セダン×1.05／SUV×1.15／輸入×1.2</text>
 <rect x="640" y="110" width="560" height="430" rx="12" fill="#fff" stroke="#e4e8ef" stroke-width="1.5"/>
 <rect x="640" y="110" width="560" height="40" rx="12" fill="#0e1b33"/>
