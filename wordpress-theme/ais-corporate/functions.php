@@ -60,6 +60,19 @@ function ais_render_chat_widget() {
 }
 add_action( 'wp_footer', 'ais_render_chat_widget' );
 
+/** ファビコン／アプリアイコンを出力（管理画面でサイトアイコン未設定のときのみ） */
+function ais_favicon() {
+	if ( function_exists( 'has_site_icon' ) && has_site_icon() ) {
+		return; // 管理画面で設定済みならそちらを優先
+	}
+	$img = get_theme_file_uri( '/assets/img' );
+	echo '<link rel="icon" type="image/svg+xml" href="' . esc_url( $img . '/favicon.svg' ) . '">' . "\n";
+	echo '<link rel="icon" type="image/png" sizes="32x32" href="' . esc_url( $img . '/favicon-32.png' ) . '">' . "\n";
+	echo '<link rel="apple-touch-icon" sizes="180x180" href="' . esc_url( $img . '/apple-touch-icon.png' ) . '">' . "\n";
+}
+add_action( 'wp_head', 'ais_favicon' );
+add_action( 'login_head', 'ais_favicon' );
+
 /** Google Fonts 用の preconnect を付与 */
 function ais_resource_hints( $urls, $relation_type ) {
 	if ( 'preconnect' === $relation_type ) {
