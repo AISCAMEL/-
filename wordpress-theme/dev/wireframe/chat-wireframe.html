@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root{
+    --ink:#1f2430; --line:#9aa3b2; --line2:#c3c9d4; --fill:#eef1f5; --fill2:#e2e6ec;
+    --muted:#6b7280; --accentline:#5b6472; --paper:#f6f7f9;
+  }
+  body{ font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans",Meiryo,system-ui,sans-serif; background:var(--paper); color:var(--ink); padding:40px; }
+  .wrap{ max-width:1360px; margin:0 auto; }
+  h1{ font-size:22px; letter-spacing:.02em; }
+  .sub{ color:var(--muted); font-size:13px; margin-top:6px; }
+  .rule{ height:2px; background:var(--ink); margin:18px 0 30px; }
+  .grid{ display:grid; grid-template-columns: 240px 300px 300px 1fr; gap:34px; align-items:start; }
+  .state-title{ font-size:13px; font-weight:700; letter-spacing:.04em; margin-bottom:14px; padding-bottom:6px; border-bottom:2px solid var(--ink); display:inline-block;}
+  .device{ position:relative; }
+
+  /* wireframe primitives */
+  .box{ border:1.5px solid var(--line); background:#fff; border-radius:14px; }
+  .ph{ background:var(--fill); border-radius:4px; }
+  .dash{ border:1.5px dashed var(--line); border-radius:12px; }
+  .lbl{ font-size:11px; color:var(--muted); }
+
+  /* floating launcher */
+  .launcher{ width:64px;height:64px;border-radius:50%;border:1.5px solid var(--line);background:var(--fill2);
+    display:flex;align-items:center;justify-content:center;margin-left:120px;}
+  .launcher .ic{ width:26px;height:26px;border:1.5px solid var(--accentline);border-radius:6px;transform:rotate(45deg); }
+  .badge{ width:14px;height:14px;border-radius:50%;border:1.5px solid var(--line);background:#fff;position:relative;top:-26px;left:18px;}
+
+  /* chat panel */
+  .panel{ width:300px; }
+  .hd{ display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1.5px solid var(--line2);background:var(--fill2);border-radius:13px 13px 0 0;}
+  .avatar{ width:34px;height:34px;border-radius:50%;border:1.5px solid var(--line);background:#fff;flex:none;}
+  .hd .t1{ width:90px;height:9px;} .hd .t2{ width:120px;height:7px;margin-top:6px;}
+  .x{ margin-left:auto;width:22px;height:22px;border:1.5px solid var(--line);border-radius:5px;}
+  .log{ height:300px;padding:14px;display:flex;flex-direction:column;gap:12px;background:var(--paper); }
+  .row{ display:flex; } .row.r{ justify-content:flex-end; }
+  .bub{ max-width:78%;border:1.5px solid var(--line2);background:#fff;border-radius:14px;padding:9px 11px;}
+  .bub.user{ background:var(--fill2);border-radius:14px 14px 4px 14px; }
+  .bub.ai{ border-radius:14px 14px 14px 4px; }
+  .ln{ height:7px;background:var(--fill);border-radius:4px;margin:5px 0;}
+  .typing{ display:flex;gap:6px;align-items:center;padding:11px 13px;border:1.5px solid var(--line2);border-radius:14px;background:#fff;width:64px;}
+  .dot{ width:8px;height:8px;border-radius:50%;background:var(--line);}
+  .inputbar{ display:flex;gap:8px;align-items:flex-end;padding:12px;border-top:1.5px solid var(--line2);background:#fff;}
+  .ta{ flex:1;height:38px;border:1.5px solid var(--line);border-radius:10px;background:var(--fill);}
+  .send{ width:40px;height:38px;border:1.5px solid var(--line);border-radius:10px;background:var(--fill2);flex:none;display:flex;align-items:center;justify-content:center;}
+  .send .arr{ width:16px;height:16px;border-top:1.5px solid var(--accentline);border-right:1.5px solid var(--accentline);transform:rotate(45deg);}
+  .foot{ padding:8px 14px;border-top:1.5px solid var(--fill2);background:#fff;border-radius:0 0 13px 13px;}
+  .foot .ln{ height:6px;margin:3px 0; }
+
+  /* callouts */
+  .callout{ display:flex;gap:10px;margin-bottom:14px; }
+  .num{ width:22px;height:22px;border-radius:50%;border:1.5px solid var(--ink);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none;}
+  .ctext b{ font-size:13px; } .ctext p{ font-size:12px;color:var(--muted);margin-top:2px;line-height:1.5; }
+  .spec h3{ font-size:13px;border-bottom:2px solid var(--ink);padding-bottom:6px;margin-bottom:14px;display:inline-block;}
+  .pin{ position:absolute;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--ink);background:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+  .tag{ font-size:10px;color:var(--muted);margin-top:6px; }
+  .flow{ margin-top:30px;border:1.5px dashed var(--line);border-radius:12px;padding:16px 18px;background:#fff;}
+  .flow h3{ font-size:13px;margin-bottom:10px;}
+  .flow ol{ font-size:12px;color:#39404d;line-height:1.9;padding-left:18px;}
+  .nb{ color:var(--muted);font-size:11px;margin-top:8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>合同会社アイズ ｜ AIチャットボット ワイヤーフレーム</h1>
+  <p class="sub">OpenRouter 自動応答（サーバー側プロキシ経由）／サイト右下に常駐。状態：待機 → 起動 → 会話。</p>
+  <div class="rule"></div>
+
+  <div class="grid">
+
+    <!-- STATE 1: 待機 -->
+    <div class="device">
+      <div class="state-title">① 待機（全ページ右下）</div>
+      <div style="height:300px;position:relative;border:1.5px dashed var(--line2);border-radius:12px;background:#fff;">
+        <div class="lbl" style="position:absolute;top:10px;left:12px;">…ページ本文…</div>
+        <div style="position:absolute;bottom:18px;right:18px;">
+          <div class="launcher"><div class="ic"></div></div>
+        </div>
+        <div class="pin" style="bottom:30px;right:96px;">1</div>
+      </div>
+      <p class="tag">1. 起動ボタン（FAB）／クリックでパネル開閉。スパーク=AIアイコン。</p>
+    </div>
+
+    <!-- STATE 2: 起動時 -->
+    <div class="device">
+      <div class="state-title">② 起動時（あいさつ）</div>
+      <div class="box panel">
+        <div class="hd">
+          <div class="avatar"></div>
+          <div><div class="ph t1"></div><div class="ph t2"></div></div>
+          <div class="x"></div>
+        </div>
+        <div class="log">
+          <div class="row"><div class="bub ai"><div class="ln" style="width:150px;"></div><div class="ln" style="width:170px;"></div><div class="ln" style="width:110px;"></div></div></div>
+        </div>
+        <div class="inputbar"><div class="ta"></div><div class="send"><div class="arr"></div></div></div>
+        <div class="foot"><div class="ln" style="width:80%"></div></div>
+      </div>
+      <div class="pin" style="top:40px;left:-10px;">2</div>
+      <div class="pin" style="top:250px;left:-10px;">5</div>
+    </div>
+
+    <!-- STATE 3: 会話中 -->
+    <div class="device">
+      <div class="state-title">③ 会話中（送受信・生成待ち）</div>
+      <div class="box panel">
+        <div class="hd">
+          <div class="avatar"></div>
+          <div><div class="ph t1"></div><div class="ph t2"></div></div>
+          <div class="x"></div>
+        </div>
+        <div class="log">
+          <div class="row"><div class="bub ai"><div class="ln" style="width:140px;"></div><div class="ln" style="width:120px;"></div></div></div>
+          <div class="row r"><div class="bub user"><div class="ln" style="width:130px;background:#d4d9e1;"></div></div></div>
+          <div class="row"><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
+        </div>
+        <div class="inputbar"><div class="ta"></div><div class="send"><div class="arr"></div></div></div>
+        <div class="foot"><div class="ln" style="width:80%"></div></div>
+      </div>
+      <div class="pin" style="top:96px;left:-10px;">3</div>
+      <div class="pin" style="top:190px;left:-10px;">4</div>
+      <div class="pin" style="top:300px;left:-10px;">6</div>
+    </div>
+
+    <!-- SPEC -->
+    <div class="spec">
+      <h3>各パーツの仕様</h3>
+      <div class="callout"><div class="num">2</div><div class="ctext"><b>ヘッダー</b><p>AIアバター／「AIアシスタント」＋社名／閉じる(×)。背景はダーク（ink-900）。</p></div></div>
+      <div class="callout"><div class="num">3</div><div class="ctext"><b>メッセージログ</b><p>高さ固定＋縦スクロール。AI=左・白、ユーザー=右・ブランド色。自動で最下部へ。</p></div></div>
+      <div class="callout"><div class="num">4</div><div class="ctext"><b>タイピング表示</b><p>送信〜AI応答までの待機を3点ドットで提示（生成中インジケータ）。</p></div></div>
+      <div class="callout"><div class="num">5</div><div class="ctext"><b>入力欄＋送信</b><p>自動リサイズ（最大約4行）。Enter送信／Shift+Enter改行。送信中は無効化。</p></div></div>
+      <div class="callout"><div class="num">6</div><div class="ctext"><b>免責フッター</b><p>「AIによる自動応答」注記＋「お問い合わせ」リンク（不確実時の導線）。</p></div></div>
+
+      <div class="flow">
+        <h3>会話フロー</h3>
+        <ol>
+          <li>ボタン → パネル展開、あいさつ文を表示</li>
+          <li>入力 → 送信（ユーザー吹き出し追加）</li>
+          <li>WP REST <code>/ais/v1/chat</code> に履歴をPOST</li>
+          <li>サーバーが OpenRouter を呼び出し（会社情報をsystemに付与）</li>
+          <li>応答を AI 吹き出しで表示／失敗時はお問い合わせへ誘導</li>
+        </ol>
+        <p class="nb">※ APIキーはフロント非公開（サーバー側保持）。電話番号は案内しない方針を内蔵。</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
