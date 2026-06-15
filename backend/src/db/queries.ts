@@ -16,8 +16,22 @@ export interface CallListFilter {
   status?: string;
   category?: string;
   q?: string;
+  period?: string;     // today / week / month
+  attention?: boolean; // 要対応のみ（new/need_human）
   limit?: number;
 }
+
+// 期間の開始時刻(ISO)を返す。未指定/不正は null。
+function periodStartIso(period?: string): string | null {
+  if (!period) return null;
+  const now = new Date();
+  if (period === 'today') { const d = new Date(now); d.setHours(0, 0, 0, 0); return d.toISOString(); }
+  if (period === 'week') return new Date(now.getTime() - 7 * 86400_000).toISOString();
+  if (period === 'month') { const d = new Date(now.getFullYear(), now.getMonth(), 1); return d.toISOString(); }
+  return null;
+}
+
+const ATTENTION_STATUSES = ['new', 'need_human'];
 
 // ---------------- Dashboard ----------------
 export async function getDashboard(tenantId: string) {
@@ -79,7 +93,10 @@ export async function listCalls(tenantId: string, f: CallListFilter) {
   if (!dbEnabled) {
     let rows = demoCalls.filter((c) => c.tenant_id === tenantId || tenantId === demoTenant.id);
     if (f.status) rows = rows.filter((c) => c.status === f.status);
+    if (f.attention) rows = rows.filter((c) => ATTENTION_STATUSES.includes(c.status));
     if (f.category) rows = rows.filter((c) => c.category === f.category);
+    const since = periodStartIso(f.period);
+    if (since) rows = rows.filter((c) => c.started_at >= since);
     if (f.q) {
       const q = f.q;
       rows = rows.filter((c) =>
@@ -93,7 +110,10 @@ export async function listCalls(tenantId: string, f: CallListFilter) {
   const where: string[] = ['tenant_id = $1'];
   const params: unknown[] = [tenantId];
   if (f.status) { params.push(f.status); where.push(`status = $${params.length}`); }
+  if (f.attention) where.push(`status in ('new','need_human')`);
   if (f.category) { params.push(f.category); where.push(`category = $${params.length}`); }
+  const since = periodStartIso(f.period);
+  if (since) { params.push(since); where.push(`started_at >= $${params.length}`); }
   if (f.q) { params.push(`%${f.q}%`); where.push(`(customer_name ilike $${params.length} or company_name ilike $${params.length} or summary ilike $${params.length} or from_number ilike $${params.length})`); }
   params.push(f.limit ?? 50);
   return query<any>(

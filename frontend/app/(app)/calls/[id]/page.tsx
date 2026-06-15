@@ -62,7 +62,10 @@ export default function CallDetailPage() {
           <h1 className="text-2xl font-bold">{call.customer_name ?? call.from_number}</h1>
           <StatusBadge status={call.status} />
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {call.status !== 'completed' && (
+            <button onClick={() => changeStatus('completed')} className="rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700">対応済みにする</button>
+          )}
           <button onClick={openFaq} className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">FAQに追加</button>
           <button onClick={resummarize} className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">要約を再生成</button>
           <button onClick={renotify} className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">通知を再送</button>

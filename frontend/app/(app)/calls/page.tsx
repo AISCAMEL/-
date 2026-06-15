@@ -9,26 +9,45 @@ export default function CallsPage() {
   const [calls, setCalls] = useState<any[]>([]);
   const [status, setStatus] = useState('');
   const [category, setCategory] = useState('');
+  const [period, setPeriod] = useState('');
+  const [attention, setAttention] = useState(false);
   const [q, setQ] = useState('');
   const [loading, setLoading] = useState(true);
 
-  function load() {
-    setLoading(true);
+  function buildQs() {
     const params = new URLSearchParams();
     if (status) params.set('status', status);
     if (category) params.set('category', category);
+    if (period) params.set('period', period);
+    if (attention) params.set('attention', '1');
     if (q) params.set('q', q);
-    const qs = params.toString();
-    api.calls(qs ? `?${qs}` : '').then(setCalls).finally(() => setLoading(false));
+    const s = params.toString();
+    return s ? `?${s}` : '';
   }
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [status, category]);
+  function load() {
+    setLoading(true);
+    api.calls(buildQs()).then(setCalls).finally(() => setLoading(false));
+  }
+
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [status, category, period, attention]);
 
   return (
     <div>
       <PageTitle title="通話履歴" sub="AIが受けた電話の一覧です。" />
 
       <div className="mb-4 flex flex-wrap gap-3">
+        <button type="button" onClick={() => setAttention((v) => !v)}
+          className={`rounded-lg border px-3 py-2 text-sm font-medium ${attention ? 'border-red-300 bg-red-50 text-red-700' : 'text-gray-600 hover:bg-gray-50'}`}>
+          {attention ? '✓ 要対応のみ' : '要対応のみ'}
+        </button>
+        <select value={period} onChange={(e) => setPeriod(e.target.value)}
+          className="rounded-lg border px-3 py-2 text-sm">
+          <option value="">全期間</option>
+          <option value="today">今日</option>
+          <option value="week">今週(7日)</option>
+          <option value="month">今月</option>
+        </select>
         <select value={status} onChange={(e) => setStatus(e.target.value)}
           className="rounded-lg border px-3 py-2 text-sm">
           <option value="">すべてのステータス</option>
@@ -44,14 +63,8 @@ export default function CallsPage() {
             className="rounded-lg border px-3 py-2 text-sm" />
           <button className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark">検索</button>
         </form>
-        <button type="button" onClick={() => {
-          const p = new URLSearchParams();
-          if (status) p.set('status', status);
-          if (category) p.set('category', category);
-          if (q) p.set('q', q);
-          const s = p.toString();
-          downloadCallsCsv(s ? `?${s}` : '');
-        }} className="ml-auto rounded-lg border px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">CSVエクスポート</button>
+        <button type="button" onClick={() => downloadCallsCsv(buildQs())}
+          className="ml-auto rounded-lg border px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">CSVエクスポート</button>
       </div>
 
       <Card className="p-0">
