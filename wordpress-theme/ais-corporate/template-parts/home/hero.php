@@ -27,7 +27,7 @@ $cards = array(
 				</span>
 
 				<h1 class="mt-6 text-3xl font-bold leading-tight sm:text-4xl md:text-5xl lg:text-[3.25rem]">
-					クルマのことを、<span class="bg-gradient-to-r from-accent-400 to-brand-400 bg-clip-text text-transparent">一社でまるごと。</span>
+					クルマも、デジタルも。<br class="hidden sm:block"><span class="bg-gradient-to-r from-accent-400 to-brand-400 bg-clip-text text-transparent">「困った」を、まるごと。</span>
 				</h1>
 
 				<p class="mt-6 max-w-2xl text-base leading-relaxed text-slate-300 sm:text-lg">

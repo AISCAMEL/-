@@ -171,6 +171,12 @@ function ais_cta_banner() {
 					<?php echo ais_button( '/contact', '無料で相談する', 'primary', 'lg' ); // phpcs:ignore ?>
 					<?php echo ais_button( '/services', 'サービスを見る', 'ghost', 'lg' ); // phpcs:ignore ?>
 				</div>
+				<div class="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-slate-300">
+					<span class="text-slate-400">ご相談はこちらから：</span>
+					<a href="<?php echo esc_url( ais_url( '/contact' ) ); ?>" class="inline-flex items-center gap-1.5 font-semibold text-white hover:text-accent-400"><?php echo ais_icon( 'mail', 'h-4 w-4' ); // phpcs:ignore ?>お問い合わせフォーム</a>
+					<a href="mailto:<?php echo esc_attr( $site['email'] ); ?>" class="inline-flex items-center gap-1.5 font-semibold text-white hover:text-accent-400"><?php echo ais_icon( 'mail', 'h-4 w-4' ); // phpcs:ignore ?>メール</a>
+					<a href="<?php echo esc_url( ais_url( '/contact' ) ); ?>" data-ais-open-chat class="inline-flex items-center gap-1.5 font-semibold text-white hover:text-accent-400"><?php echo ais_icon( 'spark', 'h-4 w-4' ); // phpcs:ignore ?>AIチャットで相談</a>
+				</div>
 			</div>
 		</div>
 	</section>

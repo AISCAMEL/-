@@ -126,6 +126,8 @@ function ais_provision_pages() {
 		'message'    => array( '代表メッセージ', 'page-templates/message.php' ),
 		'philosophy' => array( '理念', 'page-templates/philosophy.php' ),
 		'brands'     => array( 'ブランド一覧', 'page-templates/brands.php' ),
+		'franchise'  => array( 'FC加盟募集', 'page-templates/fc.php' ),
+		'recruit'    => array( '採用情報', 'page-templates/recruit.php' ),
 		'faq'        => array( 'よくある質問', 'page-templates/faq.php' ),
 		'contact'    => array( 'お問い合わせ', 'page-templates/contact.php' ),
 		'privacy'    => array( 'プライバシーポリシー', 'page-templates/privacy.php' ),

@@ -120,6 +120,15 @@
     root.querySelectorAll("[data-ais-chat-close]").forEach(function (b) {
       b.addEventListener("click", closePanel);
     });
+    // ページ内の「AIチャットで相談」リンクから起動（チャット有効時はフォーム遷移より優先）
+    document.addEventListener("click", function (e) {
+      var trg = e.target.closest("[data-ais-open-chat]");
+      if (trg) {
+        e.preventDefault();
+        openPanel();
+        panel.scrollIntoView({ block: "nearest" });
+      }
+    });
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape" && !panel.classList.contains("hidden")) closePanel();
     });
