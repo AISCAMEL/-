@@ -1,0 +1,187 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="1580" viewBox="0 0 1240 1580" font-family="'Noto Sans CJK JP','IPAGothic',sans-serif">
+<rect width="1240" height="1580" fill="#f6f8fc"/>
+<text x="40" y="50" font-size="28" font-weight="800" fill="#0e1b33">AUC-AGENT 料金シート（確認用）</text>
+<text x="40" y="78" font-size="14" fill="#8a93a4">オークション代行・全料金まとめ ／ 2026-06-15 ／ 税込・参考値</text>
+<rect x="40" y="110" width="560" height="250" rx="12" fill="#fff" stroke="#e4e8ef" stroke-width="1.5"/>
+<rect x="40" y="110" width="560" height="40" rx="12" fill="#0e1b33"/>
+<rect x="40" y="130" width="560" height="20" fill="#0e1b33"/>
+<text x="58" y="136" font-size="16" font-weight="800" fill="#fff">A. 購入代行 手数料（価格帯別の定額）</text>
+<text x="56" y="178" font-size="14" text-anchor="start" fill="#1a2233" >〜50万円</text>
+<text x="586" y="178" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥39,800</text>
+<line x1="40" y1="188" x2="600" y2="188" stroke="#e4e8ef"/>
+<rect x="40" y="188" width="560" height="30" fill="#fafbfd"/>
+<text x="56" y="208" font-size="14" text-anchor="start" fill="#1a2233" >50〜100万円</text>
+<text x="586" y="208" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥49,800</text>
+<line x1="40" y1="218" x2="600" y2="218" stroke="#e4e8ef"/>
+<text x="56" y="238" font-size="14" text-anchor="start" fill="#1a2233" >100〜150万円</text>
+<text x="586" y="238" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥59,800</text>
+<line x1="40" y1="248" x2="600" y2="248" stroke="#e4e8ef"/>
+<rect x="40" y="248" width="560" height="30" fill="#fafbfd"/>
+<text x="56" y="268" font-size="14" text-anchor="start" fill="#1a2233" >150〜200万円</text>
+<text x="586" y="268" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥69,800</text>
+<line x1="40" y1="278" x2="600" y2="278" stroke="#e4e8ef"/>
+<text x="56" y="298" font-size="14" text-anchor="start" fill="#1a2233" >200〜300万円</text>
+<text x="586" y="298" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥79,800</text>
+<line x1="40" y1="308" x2="600" y2="308" stroke="#e4e8ef"/>
+<rect x="40" y="308" width="560" height="30" fill="#fafbfd"/>
+<text x="56" y="328" font-size="14" text-anchor="start" fill="#1a2233" >300万円〜</text>
+<text x="586" y="328" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">落札価格の3%</text>
+<line x1="40" y1="338" x2="600" y2="338" stroke="#e4e8ef"/>
+<text x="56" y="342" font-size="12" fill="#5a6675">割増：SUV/大型 +¥5,000・輸入車 +¥20,000　/　落札料 ¥11,000</text>
+<rect x="40" y="380" width="560" height="300" rx="12" fill="#fff" stroke="#e4e8ef" stroke-width="1.5"/>
+<rect x="40" y="380" width="560" height="40" rx="12" fill="#0e1b33"/>
+<rect x="40" y="400" width="560" height="20" fill="#0e1b33"/>
+<text x="58" y="406" font-size="16" font-weight="800" fill="#fff">B. オプション（購入時に選択）</text>
+<text x="56" y="448" font-size="14" text-anchor="start" fill="#1a2233" >名義変更・登録</text>
+<text x="586" y="448" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥25,000</text>
+<line x1="40" y1="458" x2="600" y2="458" stroke="#e4e8ef"/>
+<rect x="40" y="458" width="560" height="30" fill="#fafbfd"/>
+<text x="56" y="478" font-size="14" text-anchor="start" fill="#1a2233" >車庫証明 取得</text>
+<text x="586" y="478" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥12,000</text>
+<line x1="40" y1="488" x2="600" y2="488" stroke="#e4e8ef"/>
+<text x="56" y="508" font-size="14" text-anchor="start" fill="#1a2233" >12ヶ月点検・整備</text>
+<text x="586" y="508" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥35,000</text>
+<line x1="40" y1="518" x2="600" y2="518" stroke="#e4e8ef"/>
+<rect x="40" y="518" width="560" height="30" fill="#fafbfd"/>
+<text x="56" y="538" font-size="14" text-anchor="start" fill="#1a2233" >6ヶ月保証</text>
+<text x="586" y="538" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥28,000</text>
+<line x1="40" y1="548" x2="600" y2="548" stroke="#e4e8ef"/>
+<text x="56" y="568" font-size="14" text-anchor="start" fill="#1a2233" >希望ナンバー</text>
+<text x="586" y="568" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥8,000</text>
+<line x1="40" y1="578" x2="600" y2="578" stroke="#e4e8ef"/>
+<rect x="40" y="578" width="560" height="30" fill="#fafbfd"/>
+<text x="56" y="598" font-size="14" text-anchor="start" fill="#1a2233" >コーティング</text>
+<text x="586" y="598" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥44,000</text>
+<line x1="40" y1="608" x2="600" y2="608" stroke="#e4e8ef"/>
+<text x="56" y="628" font-size="14" text-anchor="start" fill="#1a2233" >ドラレコ取付</text>
+<text x="586" y="628" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥22,000</text>
+<line x1="40" y1="638" x2="600" y2="638" stroke="#e4e8ef"/>
+<rect x="40" y="700" width="560" height="232" rx="12" fill="#fff" stroke="#e4e8ef" stroke-width="1.5"/>
+<rect x="40" y="700" width="560" height="40" rx="12" fill="#0e1b33"/>
+<rect x="40" y="720" width="560" height="20" fill="#0e1b33"/>
+<text x="58" y="726" font-size="16" font-weight="800" fill="#fff">C. 陸送費（コンパクト基準・抜粋）</text>
+<rect x="40" y="748" width="560" height="30" fill="#eef2f9"/>
+<text x="56" y="768" font-size="14" text-anchor="start" fill="#0e1b33" >出発＼納車</text>
+<text x="306" y="768" font-size="14" text-anchor="end" fill="#0e1b33" >関東</text>
+<text x="446" y="768" font-size="14" text-anchor="end" fill="#0e1b33" >関西</text>
+<text x="586" y="768" font-size="14" text-anchor="end" fill="#0e1b33" >九州</text>
+<line x1="40" y1="778" x2="600" y2="778" stroke="#e4e8ef"/>
+<rect x="40" y="778" width="560" height="30" fill="#fafbfd"/>
+<text x="56" y="798" font-size="14" text-anchor="start" fill="#1a2233" >関東</text>
+<text x="306" y="798" font-size="14" text-anchor="end" fill="#1a2233" >¥12,000</text>
+<text x="446" y="798" font-size="14" text-anchor="end" fill="#1a2233" >¥28,000</text>
+<text x="586" y="798" font-size="14" text-anchor="end" fill="#0e1b33" >¥44,000</text>
+<line x1="40" y1="808" x2="600" y2="808" stroke="#e4e8ef"/>
+<text x="56" y="828" font-size="14" text-anchor="start" fill="#1a2233" >関西</text>
+<text x="306" y="828" font-size="14" text-anchor="end" fill="#1a2233" >¥28,000</text>
+<text x="446" y="828" font-size="14" text-anchor="end" fill="#1a2233" >¥12,000</text>
+<text x="586" y="828" font-size="14" text-anchor="end" fill="#0e1b33" >¥28,000</text>
+<line x1="40" y1="838" x2="600" y2="838" stroke="#e4e8ef"/>
+<rect x="40" y="838" width="560" height="30" fill="#fafbfd"/>
+<text x="56" y="858" font-size="14" text-anchor="start" fill="#1a2233" >東北</text>
+<text x="306" y="858" font-size="14" text-anchor="end" fill="#1a2233" >¥20,000</text>
+<text x="446" y="858" font-size="14" text-anchor="end" fill="#1a2233" >¥36,000</text>
+<text x="586" y="858" font-size="14" text-anchor="end" fill="#0e1b33" >¥52,000</text>
+<line x1="40" y1="868" x2="600" y2="868" stroke="#e4e8ef"/>
+<text x="56" y="888" font-size="14" text-anchor="start" fill="#1a2233" >北海道</text>
+<text x="306" y="888" font-size="14" text-anchor="end" fill="#1a2233" >¥68,000</text>
+<text x="446" y="888" font-size="14" text-anchor="end" fill="#1a2233" >¥84,000</text>
+<text x="586" y="888" font-size="14" text-anchor="end" fill="#0e1b33" >¥100,000</text>
+<line x1="40" y1="898" x2="600" y2="898" stroke="#e4e8ef"/>
+<rect x="40" y="898" width="560" height="30" fill="#fafbfd"/>
+<text x="56" y="918" font-size="14" text-anchor="start" fill="#1a2233" >沖縄</text>
+<text x="306" y="918" font-size="14" text-anchor="end" fill="#1a2233" >¥92,000</text>
+<text x="446" y="918" font-size="14" text-anchor="end" fill="#1a2233" >¥76,000</text>
+<text x="586" y="918" font-size="14" text-anchor="end" fill="#0e1b33" >¥60,000</text>
+<line x1="40" y1="928" x2="600" y2="928" stroke="#e4e8ef"/>
+<text x="56" y="922" font-size="12" fill="#5a6675">サイズ係数：軽×0.85／コンパクト×1.0／セダン×1.1／SUV×1.25／輸入×1.3</text>
+<rect x="640" y="110" width="560" height="430" rx="12" fill="#fff" stroke="#e4e8ef" stroke-width="1.5"/>
+<rect x="640" y="110" width="560" height="40" rx="12" fill="#0e1b33"/>
+<rect x="640" y="130" width="560" height="20" fill="#0e1b33"/>
+<text x="658" y="136" font-size="16" font-weight="800" fill="#fff">D. 出品代行 手数料（価格帯別の定額・確定）</text>
+<text x="656" y="178" font-size="14" text-anchor="start" fill="#1a2233" >〜50万円</text>
+<text x="1186" y="178" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥35,000</text>
+<line x1="640" y1="188" x2="1200" y2="188" stroke="#e4e8ef"/>
+<rect x="640" y="188" width="560" height="30" fill="#fafbfd"/>
+<text x="656" y="208" font-size="14" text-anchor="start" fill="#1a2233" >50〜100万円</text>
+<text x="1186" y="208" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥45,000</text>
+<line x1="640" y1="218" x2="1200" y2="218" stroke="#e4e8ef"/>
+<text x="656" y="238" font-size="14" text-anchor="start" fill="#1a2233" >100〜200万円</text>
+<text x="1186" y="238" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥60,000</text>
+<line x1="640" y1="248" x2="1200" y2="248" stroke="#e4e8ef"/>
+<rect x="640" y="248" width="560" height="30" fill="#fafbfd"/>
+<text x="656" y="268" font-size="14" text-anchor="start" fill="#1a2233" >200〜300万円</text>
+<text x="1186" y="268" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥80,000</text>
+<line x1="640" y1="278" x2="1200" y2="278" stroke="#e4e8ef"/>
+<text x="656" y="298" font-size="14" text-anchor="start" fill="#1a2233" >300〜400万円</text>
+<text x="1186" y="298" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥100,000</text>
+<line x1="640" y1="308" x2="1200" y2="308" stroke="#e4e8ef"/>
+<rect x="640" y="308" width="560" height="30" fill="#fafbfd"/>
+<text x="656" y="328" font-size="14" text-anchor="start" fill="#1a2233" >400〜500万円</text>
+<text x="1186" y="328" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥120,000</text>
+<line x1="640" y1="338" x2="1200" y2="338" stroke="#e4e8ef"/>
+<text x="656" y="358" font-size="14" text-anchor="start" fill="#1a2233" >500〜600万円</text>
+<text x="1186" y="358" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥140,000</text>
+<line x1="640" y1="368" x2="1200" y2="368" stroke="#e4e8ef"/>
+<rect x="640" y="368" width="560" height="30" fill="#fafbfd"/>
+<text x="656" y="388" font-size="14" text-anchor="start" fill="#1a2233" >600〜700万円</text>
+<text x="1186" y="388" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥160,000</text>
+<line x1="640" y1="398" x2="1200" y2="398" stroke="#e4e8ef"/>
+<text x="656" y="418" font-size="14" text-anchor="start" fill="#1a2233" >700〜800万円</text>
+<text x="1186" y="418" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥180,000</text>
+<line x1="640" y1="428" x2="1200" y2="428" stroke="#e4e8ef"/>
+<rect x="640" y="428" width="560" height="30" fill="#fafbfd"/>
+<text x="656" y="448" font-size="14" text-anchor="start" fill="#1a2233" >800〜900万円</text>
+<text x="1186" y="448" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥200,000</text>
+<line x1="640" y1="458" x2="1200" y2="458" stroke="#e4e8ef"/>
+<text x="656" y="478" font-size="14" text-anchor="start" fill="#1a2233" >900〜1000万円</text>
+<text x="1186" y="478" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">¥220,000</text>
+<line x1="640" y1="488" x2="1200" y2="488" stroke="#e4e8ef"/>
+<rect x="640" y="488" width="560" height="30" fill="#fafbfd"/>
+<text x="656" y="508" font-size="14" text-anchor="start" fill="#1a2233" >1000万円超</text>
+<text x="1186" y="508" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">応相談（2.5%）</text>
+<line x1="640" y1="518" x2="1200" y2="518" stroke="#e4e8ef"/>
+<text x="656" y="522" font-size="12" fill="#5a6675">出品料・成約料 ¥11,000／代理搬入 +¥18,000／流札 無料</text>
+<rect x="640" y="560" width="560" height="150" rx="12" fill="#fff" stroke="#e4e8ef" stroke-width="1.5"/>
+<rect x="640" y="560" width="560" height="40" rx="12" fill="#0e1b33"/>
+<rect x="640" y="580" width="560" height="20" fill="#0e1b33"/>
+<text x="658" y="586" font-size="16" font-weight="800" fill="#fff">D. 出品 手取り例（出品料込み）</text>
+<rect x="640" y="608" width="560" height="30" fill="#eef2f9"/>
+<text x="656" y="628" font-size="14" text-anchor="start" fill="#0e1b33" >想定落札</text>
+<text x="999.3333333333333" y="628" font-size="14" text-anchor="end" fill="#0e1b33" >手数料</text>
+<text x="1186" y="628" font-size="14" text-anchor="end" fill="#0e1b33" >手取り目安</text>
+<line x1="640" y1="638" x2="1200" y2="638" stroke="#e4e8ef"/>
+<rect x="640" y="638" width="560" height="30" fill="#fafbfd"/>
+<text x="656" y="658" font-size="14" text-anchor="start" fill="#1a2233" >¥800,000</text>
+<text x="999.3333333333333" y="658" font-size="14" text-anchor="end" fill="#1a2233" >¥45,000</text>
+<text x="1186" y="658" font-size="14" text-anchor="end" fill="#0e1b33" >¥744,000</text>
+<line x1="640" y1="668" x2="1200" y2="668" stroke="#e4e8ef"/>
+<text x="656" y="688" font-size="14" text-anchor="start" fill="#1a2233" >¥1,200,000</text>
+<text x="999.3333333333333" y="688" font-size="14" text-anchor="end" fill="#1a2233" >¥60,000</text>
+<text x="1186" y="688" font-size="14" text-anchor="end" fill="#0e1b33" >¥1,129,000</text>
+<line x1="640" y1="698" x2="1200" y2="698" stroke="#e4e8ef"/>
+<rect x="640" y="698" width="560" height="30" fill="#fafbfd"/>
+<text x="656" y="718" font-size="14" text-anchor="start" fill="#1a2233" >¥2,500,000</text>
+<text x="999.3333333333333" y="718" font-size="14" text-anchor="end" fill="#1a2233" >¥80,000</text>
+<text x="1186" y="718" font-size="14" text-anchor="end" fill="#0e1b33" >¥2,409,000</text>
+<line x1="640" y1="728" x2="1200" y2="728" stroke="#e4e8ef"/>
+<rect x="640" y="730" width="560" height="210" rx="12" fill="#fff" stroke="#e4e8ef" stroke-width="1.5"/>
+<rect x="640" y="730" width="560" height="40" rx="12" fill="#0e1b33"/>
+<rect x="640" y="750" width="560" height="20" fill="#0e1b33"/>
+<text x="658" y="756" font-size="16" font-weight="800" fill="#fff">🟡 未確定（要確認）</text>
+<text x="656" y="798" font-size="14" text-anchor="start" fill="#1a2233" >ローン金利・事務手数料</text>
+<text x="1186" y="798" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">オリコ規定 [要確認]</text>
+<line x1="640" y1="808" x2="1200" y2="808" stroke="#e4e8ef"/>
+<rect x="640" y="808" width="560" height="30" fill="#fafbfd"/>
+<text x="656" y="828" font-size="14" text-anchor="start" fill="#1a2233" >パートナー報酬</text>
+<text x="1186" y="828" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">紹介¥15,000〜 [要確認]</text>
+<line x1="640" y1="838" x2="1200" y2="838" stroke="#e4e8ef"/>
+<text x="656" y="858" font-size="14" text-anchor="start" fill="#1a2233" >違約金・クレーム期間</text>
+<text x="1186" y="858" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">弁護士確認前提 [要確認]</text>
+<line x1="640" y1="868" x2="1200" y2="868" stroke="#e4e8ef"/>
+<rect x="640" y="868" width="560" height="30" fill="#fafbfd"/>
+<text x="656" y="888" font-size="14" text-anchor="start" fill="#1a2233" >会社情報・古物商番号・特商法</text>
+<text x="1186" y="888" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">実データ待ち</text>
+<line x1="640" y1="898" x2="1200" y2="898" stroke="#e4e8ef"/>
+<text x="40" y="1560" font-size="12" fill="#8a93a4">※ 数値の正本は site/assets/js/simulator.js（FEE_TIERS / SELL_TIERS / OPTIONS / AREAS）。本シートはその出力です。</text>
+</svg>
