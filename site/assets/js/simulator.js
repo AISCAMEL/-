@@ -58,8 +58,12 @@
     optNumber:  8000,  // 希望ナンバー取得
     optCoat:    44000, // ボディコーティング
     optDrive:   22000, // ドラレコ等 取付
-    optShaken:  79800, // 車検整備（車検なし車両の点検整備／法定費用別）
-    optClean:   19800  // 内外装クリーニング
+    optShaken:  79800  // 車検整備（車検なし車両の点検整備／法定費用別）
+  };
+
+  // 内外装クリーニング：車種サイズ別
+  var CLEAN_BY_CLASS = {
+    kei: 12000, compact: 16000, sedan: 22000, suv: 26000, import: 30000
   };
 
   /* =========================================================
@@ -177,7 +181,7 @@
     var c = COND[p.cond] || COND.normal;
     var carrierFee = p.carrierIn ? 18000 : 0;          // 代理搬入
     var shakenFee = p.shakenIn ? OPTIONS.optShaken : 0; // 車検整備（車検なし）
-    var cleanFee = p.cleanIn ? OPTIONS.optClean : 0;    // 内外装クリーニング
+    var cleanFee = p.cleanIn ? (CLEAN_BY_CLASS[p.cls] || CLEAN_BY_CLASS.compact) : 0; // 内外装クリーニング（サイズ別）
     var optTotal = carrierFee + shakenFee + cleanFee;
 
     // 相場レンジ（状態による振れ幅の目安）
@@ -225,6 +229,8 @@
     Object.keys(OPTIONS).forEach(function (k) {
       if (opts[k]) optTotal += OPTIONS[k];
     });
+    // 内外装クリーニングは車種サイズ別
+    if (opts.optClean) optTotal += CLEAN_BY_CLASS[p.cls] || CLEAN_BY_CLASS.compact;
 
     var fee = feeByBid(bid) + c.surcharge; // 価格帯別定額 ＋ クラス割増
     var subtotal = bid + fee + AUCTION_FEE + c.recycle + region + optTotal;
@@ -250,7 +256,7 @@
   // window へ公開（mypage 等からの再利用用）
   window.AucSim = {
     calculate: calculate, feeByBid: feeByBid, yen: yen, man: man,
-    CLASS: CLASS, OPTIONS: OPTIONS, FEE_TIERS: FEE_TIERS,
+    CLASS: CLASS, OPTIONS: OPTIONS, CLEAN_BY_CLASS: CLEAN_BY_CLASS, FEE_TIERS: FEE_TIERS,
     AREAS: PREF, PREF: PREF, HOME_PREF: HOME_PREF, estimateShipping: estimateShipping,
     COND: COND, estimateSell: estimateSell,
     SELL_TIERS: SELL_TIERS, sellFeeByPrice: sellFeeByPrice

@@ -111,6 +111,16 @@
           </div>
         </div>
         <div class="field">
+          <label>車種クラス</label>
+          <select id="sClass">
+            <option value="kei">軽自動車</option>
+            <option value="compact">コンパクト</option>
+            <option value="sedan" selected>セダン/ミニバン</option>
+            <option value="suv">SUV/大型</option>
+            <option value="import">輸入車</option>
+          </select>
+        </div>
+        <div class="field">
           <label>車両の状態（評価点の目安）</label>
           <select id="sCond"></select>
         </div>
@@ -118,7 +128,7 @@
           <label>オプション（出品前の付加サービス）</label>
           <div class="checks">
             <label><input type="checkbox" id="sShaken"> 車検整備（車検なし車両の点検整備／+¥79,800・法定費用別）</label>
-            <label><input type="checkbox" id="sClean"> 内外装クリーニング（+¥19,800）</label>
+            <label><input type="checkbox" id="sClean"> 内外装クリーニング（サイズ別 +¥12,000〜¥30,000）</label>
             <label><input type="checkbox" id="sCarrier"> 代理搬入を依頼する（+¥18,000）</label>
           </div>
         </div>
@@ -197,6 +207,7 @@
       var r = S.estimateSell({
         median: document.getElementById("sMed").value,
         cond: condSel.value,
+        cls: document.getElementById("sClass").value,
         carrierIn: document.getElementById("sCarrier").checked,
         shakenIn: document.getElementById("sShaken").checked,
         cleanIn: document.getElementById("sClean").checked

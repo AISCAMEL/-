@@ -144,6 +144,16 @@
                 <label>車両の状態</label>
                 <select id="zCond"></select>
               </div>
+              <div class="field">
+                <label>車種クラス</label>
+                <select id="zClass">
+                  <option value="kei">軽自動車</option>
+                  <option value="compact">コンパクト</option>
+                  <option value="sedan" selected>セダン/ミニバン</option>
+                  <option value="suv">SUV/大型</option>
+                  <option value="import">輸入車</option>
+                </select>
+              </div>
             </div>
             <div class="field">
               <label>オプション</label>
@@ -316,6 +326,7 @@
     return {
       median: document.getElementById("zMed").value,
       cond: zCondSel.value,
+      cls: document.getElementById("zClass").value,
       carrierIn: document.getElementById("zCarrier").checked,
       shakenIn: document.getElementById("zShaken").checked,
       cleanIn: document.getElementById("zClean").checked
