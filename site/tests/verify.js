@@ -52,6 +52,9 @@ function fire(win, el, type) { el.dispatchEvent(new win.Event(type, { bubbles: t
     bid.value = "1400000"; fire(win, bid, "input");
     ok("総額が計算される (#rTotal)", /¥1,5\d\d,\d00/.test(doc.getElementById("rTotal").textContent), doc.getElementById("rTotal").textContent);
     ok("おトク額が表示", /万円/.test(doc.getElementById("rSave").textContent));
+    // 納車先で陸送費が変わる（ゼロ社水準）
+    doc.getElementById("region").value = "大阪"; fire(win, doc.getElementById("region"), "change");
+    ok("納車先で陸送費が反映 (#rShip)", doc.getElementById("rShip").textContent === "¥82,000", doc.getElementById("rShip").textContent);
     ok("ページエラーなし", !getError(), getError());
   }
 
@@ -72,7 +75,7 @@ function fire(win, el, type) { el.dispatchEvent(new win.Event(type, { bubbles: t
     doc.getElementById("to").value = "北海道";
     doc.querySelector('input[name="cls"][value="suv"]').checked = true;
     fire(win, doc.getElementById("to"), "change");
-    ok("陸送費が計算される (東京→北海道/SUV=¥115,000)", doc.getElementById("rCost").textContent === "¥115,000", doc.getElementById("rCost").textContent);
+    ok("陸送費が計算される (東京→北海道/SUV=¥167,000)", doc.getElementById("rCost").textContent === "¥167,000", doc.getElementById("rCost").textContent);
     ok("ページエラーなし", !getError(), getError());
   }
 
