@@ -1,0 +1,19 @@
+/*
+Theme Name: AIS Corporate
+Theme URI: https://aisjaltd.com
+Author: 合同会社アイズ
+Author URI: https://aisjaltd.com
+Description: 合同会社アイズ コーポレートサイト用 WordPress テーマ。Next.js 版デザインを忠実に移植したクラシックテーマ。自動車事業（カーメル／BUYMO／CARSHICO／天護／レッカー）・IT/WEB事業（APPREX／WEB crews／AIオペレーター24）・FC事業を紹介。Tailwind CSS でビルド。
+Version: 1.0.0
+Requires at least: 6.0
+Tested up to: 6.5
+Requires PHP: 7.4
+License: GNU General Public License v2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: ais-corporate
+*/
+
+/*
+ * 実際のスタイルは Tailwind でビルドした assets/css/theme.css に出力され、
+ * functions.php から読み込まれます。この style.css はテーマ情報の宣言用です。
+ */

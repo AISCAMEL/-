@@ -1,0 +1,65 @@
+# AIS Corporate — WordPress テーマ
+
+合同会社アイズ コーポレートサイト（Next.js 版）を **WordPress クラシックテーマ**として移植したものです。
+デザイン（Tailwind のデザイントークン・レイアウト）、全ページ、サンプルデータ、書体（Zen Kaku Gothic New）、
+スライダー・スクロールアニメーション・事業構造図まで忠実に再現しています。
+
+## 特長
+
+- **ノープラグインで動作**。有効化するだけで固定ページ・フロントページ・サンプル投稿を自動生成します。
+- コンテンツは `inc/data.php` に集約（単一の情報源）。確定情報が出たらここを編集します。
+- 事業・実績・お知らせはカスタム投稿タイプ（`/services/<slug>`・`/works/<slug>`・`/news/<slug>`）で
+  URL を Next.js 版と一致。お知らせは管理画面の本文編集にも対応（入力があれば優先表示）。
+- お問い合わせフォームは `wp_mail()` で実送信（nonce + ハニーポット付き）。送信先は管理者メール。
+
+## インストール
+
+1. このディレクトリ（`ais-corporate`）を WordPress の `wp-content/themes/` に配置します。
+2. 管理画面 → 外観 → テーマ で「AIS Corporate」を有効化します。
+   - 有効化時に固定ページ（ホーム / about / message / philosophy / brands / faq / contact / privacy）、
+     フロントページ設定、サンプル投稿（事業・実績・お知らせ）が自動作成されます。
+3. 管理画面 → 設定 → パーマリンク を一度「変更を保存」して、リライトルールを反映してください
+   （カスタム投稿タイプの URL を有効化するため）。
+
+## スタイルのビルド（編集する場合）
+
+スタイルは Tailwind CSS でビルドし、`assets/css/theme.css`（コミット済み）を読み込みます。
+PHP を編集してクラスを追加・変更した場合は、再ビルドが必要です。
+
+```bash
+# テーマディレクトリで
+npx tailwindcss -c ./tailwind.config.js -i ./assets/css/src.css -o ./assets/css/theme.css --minify
+```
+
+- `tailwind.config.js` … デザイントークン（colors / shadow / font 等）。Next.js 版と一致。
+- `assets/css/src.css` … 入力 CSS（base / components / utilities）。
+- `assets/js/main.js` … モバイルメニュー・ブランドスライダー・FAQ アコーディオン・スクロール表示。
+
+## 主なファイル構成
+
+```
+ais-corporate/
+├─ style.css                 テーマ宣言
+├─ functions.php             読み込み・CPT登録・固定ページ自動生成・フォーム処理
+├─ header.php / footer.php   共通ヘッダー・フッター（ナビ／ドロップダウン）
+├─ front-page.php            トップ（各セクションを template-parts から読込）
+├─ template-parts/home/*     hero / problems / solutions / business-map /
+│                            brand-slider / strengths / workflow / case-studies /
+│                            message / faq
+├─ page-templates/*          about / message / philosophy / brands / faq /
+│                            contact / privacy
+├─ archive-ais_service.php / single-ais_service.php   事業一覧・詳細
+├─ archive-ais_work.php    / single-ais_work.php      実績一覧・詳細
+├─ archive-ais_news.php    / single-ais_news.php      お知らせ一覧・詳細
+├─ index.php / page.php / 404.php                     フォールバック
+├─ inc/data.php             全コンテンツ（データ層）
+├─ inc/helpers.php          表示ヘルパー（アイコン・ボタン・見出し・CTA 等）
+└─ assets/css|js            ビルド済み CSS・スクリプト
+```
+
+## 差し替えポイント（placeholder）
+
+- 代表メッセージ（`inc/data.php` の `ais_representative()`）はドラフトです。
+- 実績・お知らせはサンプル（`is_placeholder`）。確定したら `inc/data.php` を更新、
+  または管理画面の各投稿を編集してください。
+- プライバシーポリシーの制定日・連絡先は実情報に合わせて確認してください。
