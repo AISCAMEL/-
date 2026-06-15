@@ -138,19 +138,19 @@
 <rect x="640" y="730" width="560" height="210" rx="12" fill="#fff" stroke="#e4e8ef" stroke-width="1.5"/>
 <rect x="640" y="730" width="560" height="40" rx="12" fill="#0e1b33"/>
 <rect x="640" y="750" width="560" height="20" fill="#0e1b33"/>
-<text x="658" y="756" font-size="16" font-weight="800" fill="#fff">🟡 未確定（要確認）</text>
-<text x="656" y="798" font-size="14" text-anchor="start" fill="#1a2233" >ローン金利・事務手数料</text>
-<text x="1186" y="798" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">オリコ規定 [要確認]</text>
+<text x="658" y="756" font-size="16" font-weight="800" fill="#fff">E. ローン・違約金・クレーム期間ほか</text>
+<text x="656" y="798" font-size="14" text-anchor="start" fill="#1a2233" >ローン事務手数料</text>
+<text x="1186" y="798" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">無料（金利に含む）</text>
 <line x1="640" y1="808" x2="1200" y2="808" stroke="#e4e8ef"/>
 <rect x="640" y="808" width="560" height="30" fill="#fafbfd"/>
-<text x="656" y="828" font-size="14" text-anchor="start" fill="#1a2233" >パートナー報酬</text>
-<text x="1186" y="828" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">紹介¥15,000〜 [要確認]</text>
+<text x="656" y="828" font-size="14" text-anchor="start" fill="#1a2233" >落札後辞退の違約金</text>
+<text x="1186" y="828" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">手数料相当＋落札10%</text>
 <line x1="640" y1="838" x2="1200" y2="838" stroke="#e4e8ef"/>
-<text x="656" y="858" font-size="14" text-anchor="start" fill="#1a2233" >違約金・クレーム期間</text>
-<text x="1186" y="858" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">弁護士確認前提 [要確認]</text>
+<text x="656" y="858" font-size="14" text-anchor="start" fill="#1a2233" >クレーム期間</text>
+<text x="1186" y="858" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">落札日から2週間（水没等別）</text>
 <line x1="640" y1="868" x2="1200" y2="868" stroke="#e4e8ef"/>
 <rect x="640" y="868" width="560" height="30" fill="#fafbfd"/>
-<text x="656" y="888" font-size="14" text-anchor="start" fill="#1a2233" >会社情報・古物商番号・特商法</text>
+<text x="656" y="888" font-size="14" text-anchor="start" fill="#1a2233" >会社情報・古物商番号</text>
 <text x="1186" y="888" font-size="14" text-anchor="end" fill="#0e1b33" font-weight="700">実データ待ち</text>
 <line x1="640" y1="898" x2="1200" y2="898" stroke="#e4e8ef"/>
 <text x="40" y="1560" font-size="12" fill="#8a93a4">※ 数値の正本は site/assets/js/simulator.js（FEE_TIERS / SELL_TIERS / OPTIONS / AREAS）。本シートはその出力です。</text>

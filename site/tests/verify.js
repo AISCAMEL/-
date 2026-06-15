@@ -114,16 +114,6 @@ function fire(win, el, type) { el.dispatchEvent(new win.Event(type, { bubbles: t
     ok("未ログイン判定", !win.AucAuth.current());
   }
 
-  console.log("partners.html（申込フォーム）");
-  {
-    const { win, doc, getError } = load("partners.html");
-    doc.getElementById("pName").value = "（株）テスト";
-    doc.getElementById("pEmail").value = "p@example.com";
-    fire(win, doc.getElementById("partnerForm"), "submit");
-    ok("申込で成功メッセージ表示", /受け付け/.test(doc.getElementById("pAlert").textContent), doc.getElementById("pAlert").textContent);
-    ok("ページエラーなし", !getError(), getError());
-  }
-
   console.log("\n==== 結果: " + pass + " passed, " + fail + " failed ====");
   process.exit(fail ? 1 : 0);
 })();
