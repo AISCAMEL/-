@@ -1,6 +1,8 @@
 import { Hero } from "@/components/home/Hero";
 import { Problems } from "@/components/home/Problems";
 import { Solutions } from "@/components/home/Solutions";
+import { BusinessMap } from "@/components/home/BusinessMap";
+import { BrandSlider } from "@/components/home/BrandSlider";
 import { Strengths } from "@/components/home/Strengths";
 import { Workflow } from "@/components/home/Workflow";
 import { CaseStudies } from "@/components/home/CaseStudies";
@@ -43,6 +45,8 @@ export default function HomePage() {
       <Hero />
       <Problems />
       <Solutions />
+      <BusinessMap />
+      <BrandSlider />
       <Strengths />
       <Workflow />
       <CaseStudies />

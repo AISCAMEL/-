@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Noto_Sans_JP } from "next/font/google";
+import { Zen_Kaku_Gothic_New } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { site } from "@/content/site";
 
-const notoSansJp = Noto_Sans_JP({
+const sansJp = Zen_Kaku_Gothic_New({
   subsets: ["latin"],
   weight: ["400", "500", "700"],
   display: "swap",
@@ -63,7 +63,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ja" className={notoSansJp.variable}>
+    <html lang="ja" className={sansJp.variable}>
       <body>
         <a
           href="#main"

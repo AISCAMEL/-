@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --font-sans: "Noto Sans JP", system-ui, sans-serif;
+    --font-sans: "Zen Kaku Gothic New", system-ui, sans-serif;
   }
 
   html {

@@ -11,6 +11,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/services",
     "/brands",
     "/about",
+    "/message",
     "/philosophy",
     "/works",
     "/news",

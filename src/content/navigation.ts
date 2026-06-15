@@ -21,7 +21,15 @@ export const mainNav: NavItem[] = [
     ],
   },
   { label: "ブランド一覧", href: "/brands" },
-  { label: "アイズについて", href: "/about" },
+  {
+    label: "アイズについて",
+    href: "/about",
+    children: [
+      { label: "会社概要", href: "/about", description: "会社情報・価値観" },
+      { label: "代表メッセージ", href: "/message", description: "代表からのごあいさつ" },
+      { label: "理念", href: "/philosophy", description: "Always Innovation Solutions" },
+    ],
+  },
   { label: "実績", href: "/works" },
   { label: "お知らせ", href: "/news" },
   { label: "よくある質問", href: "/faq" },
@@ -52,6 +60,7 @@ export const footerNav: { title: string; items: { label: string; href: string }[
     title: "会社情報・サポート",
     items: [
       { label: "アイズについて", href: "/about" },
+      { label: "代表メッセージ", href: "/message" },
       { label: "理念", href: "/philosophy" },
       { label: "実績", href: "/works" },
       { label: "お知らせ", href: "/news" },
