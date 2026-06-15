@@ -191,7 +191,7 @@
       <section class="panel" id="newLoan">
         <div class="panel-head"><h3>オートローン仮申込（オリコ）</h3></div>
         <div class="panel-body">
-          <div class="alert alert-info" id="loanAlert">月々のお支払い目安をその場で計算します。仮申込後、AIで一次判定し、信販会社（オリコ等）へ審査を依頼します（事務手数料は無料）。</div>
+          <div class="alert alert-info" id="loanAlert">月々のお支払い目安をその場で計算します。仮申込後、ご登録メール宛に<strong>オリコ クレジット申込書（PDF）を自動でお送り</strong>します（事務手数料は無料）。</div>
           <form id="loanForm">
             <div class="row-2">
               <div class="field">
@@ -481,7 +481,7 @@
     });
     var box = document.getElementById("loanAlert");
     box.className = "alert alert-ok";
-    box.textContent = "✓ ローン仮申込を受け付けました。AI一次判定のうえ、信販会社（オリコ等）へ審査を依頼し、結果をご連絡します。";
+    box.textContent = "✓ ローン仮申込を受け付けました。ご登録メール宛にオリコ クレジット申込書（PDF）を自動でお送りします。ご記入・ご返送後、オリコへ審査を依頼します。";
     box.scrollIntoView({ behavior: "smooth", block: "center" });
   });
 

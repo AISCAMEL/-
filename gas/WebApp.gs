@@ -111,11 +111,32 @@ function handleLoan_(d) {
   // 簡易スコアリング（既存CarLoan_Systemの考え方を流用）
   var score = loanScore_(d);
 
+  // オリコ クレジット申込書（PDF）を裏で自動生成し、ユーザーのメールへ送付
+  var formUrl = "", mailed = "";
+  try {
+    var pdfFile = makeOricoFormPdf_(id, d, score);
+    formUrl = pdfFile.getUrl();
+    if (d.email) {
+      MailApp.sendEmail({
+        to: d.email,
+        subject: "【AUC-AGENT】オリコ オートローン クレジット申込書のご送付（" + id + "）",
+        body: (d.name || "お客様") + " 様\n\n"
+            + "この度はオートローンのお申込みありがとうございます。\n"
+            + "お見積りの目安：月々 " + yen_(loanMonthly_(d).monthly) + "（" + (d.term || "-") + "回 / 年率 " + (d.rate || "-") + "%）\n\n"
+            + "オリコのクレジット申込書（PDF）を添付いたします。ご記入・必要書類とあわせてご返送ください。\n"
+            + "審査結果は追ってご連絡いたします。\n\n"
+            + "合同会社アイズ（AUC-AGENT）\n福島県いわき市四倉町細谷字大町1番\ninfo@aisjaltd.com",
+        attachments: [pdfFile.getBlob()]
+      });
+      mailed = "送付済(" + d.email + ")";
+    }
+  } catch (e) { formUrl = "生成/送付失敗:" + e; }
+
   sh.appendRow([
-    new Date(), id, "審査待ち",
+    new Date(), id, "申込書送付・審査待ち",
     d.name || "", d.email || "", d.phone || "",
     num_(d.amount), num_(d.term), d.job || "", num_(d.income),
-    score.score, score.grade, d.orderId || "", ""
+    score.score, score.grade, d.orderId || "", "オリコ申込書:" + formUrl + " / " + mailed
   ]);
 
   notifyStaff_(
@@ -123,9 +144,54 @@ function handleLoan_(d) {
     "お名前：" + (d.name || "-") + "\n" +
     "希望額：" + yen_(d.amount) + " / " + (d.term || "-") + "回\n" +
     "AI判定：" + score.grade + "（" + score.score + "点）\n" +
-    "→ オリコ等へ審査依頼してください。"
+    "オリコ申込書：自動生成し " + (d.email || "-") + " へ送付（" + mailed + "）\n" +
+    "→ 返送後、オリコへ審査依頼してください。"
   );
-  return { ok: true, id: id, grade: score.grade };
+  return { ok: true, id: id, grade: score.grade, form: formUrl };
+}
+
+/* ローン月々（元利均等）— GAS側 */
+function loanMonthly_(d) {
+  var p = num_(d.amount), n = num_(d.term) || 1, r = (num_(d.rate) || 0) / 100 / 12;
+  var m = r === 0 ? p / n : p * r / (1 - Math.pow(1 + r, -n));
+  return { monthly: Math.round(m), total: Math.round(m) * n };
+}
+
+/**
+ * オリコ クレジット申込書（PDF）を顧客情報から自動生成し、ドライブに保存。
+ */
+function makeOricoFormPdf_(id, d, score) {
+  var cfg = getConfig();
+  var lm = loanMonthly_(d);
+  var doc = DocumentApp.create("オリコ_クレジット申込書_" + id);
+  var b = doc.getBody();
+  b.appendParagraph("オリコ オートローン クレジット申込書（事前）")
+    .setHeading(DocumentApp.ParagraphHeading.HEADING1);
+  b.appendParagraph("受付番号：" + id + "　作成日：" + new Date().toLocaleDateString("ja-JP"));
+  b.appendParagraph("取扱：合同会社アイズ（AUC-AGENT）／福島県いわき市四倉町細谷字大町1番");
+  b.appendTable([
+    ["お名前", d.name || ""],
+    ["メール", d.email || ""],
+    ["電話", d.phone || ""],
+    ["ローン希望額", yen_(d.amount)],
+    ["支払回数", (d.term || "") + " 回"],
+    ["実質年率（目安）", (d.rate || "") + " %"],
+    ["月々のお支払い（目安）", yen_(lm.monthly)],
+    ["支払総額（目安）", yen_(lm.total)],
+    ["雇用形態", d.job || ""],
+    ["年収", yen_(d.income)],
+    ["AI一次判定", (score ? score.grade : "")]
+  ]);
+  b.appendParagraph("※ 本書は事前申込用です。正式審査にはオリコ所定の書類・本人確認が必要です。記入のうえご返送ください。");
+  doc.saveAndClose();
+
+  var file = DriveApp.getFileById(doc.getId());
+  var pdf = file.getAs("application/pdf");
+  var pdfFile = cfg.SELL_SHEET_PDF_FOLDER_ID
+    ? DriveApp.getFolderById(cfg.SELL_SHEET_PDF_FOLDER_ID).createFile(pdf).setName("オリコ申込書_" + id + ".pdf")
+    : DriveApp.createFile(pdf).setName("オリコ申込書_" + id + ".pdf");
+  file.setTrashed(true);
+  return pdfFile;
 }
 
 /**
