@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
@@ -42,6 +43,14 @@ export default async function MePage() {
           こんにちは、{member?.display_name ?? "ゲスト"}さん🌊
         </p>
 
+        {/* 各ページへの導線 */}
+        <nav className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <MeLink href="/me/edit" label="プロフィール編集" />
+          <MeLink href="/me/posts" label="自分の投稿" />
+          <MeLink href="/me/skills" label="自分のスキル" />
+          <MeLink href="/community" label="コミュニティ" />
+        </nav>
+
         <div className="mt-8 rounded-2xl border border-navy/10 bg-white p-6 shadow-sm">
           <div className="flex flex-wrap gap-2">
             <span className="rounded-full bg-ocean/10 px-3 py-1 text-xs font-medium text-ocean">
@@ -70,10 +79,26 @@ export default async function MePage() {
           </dl>
         </div>
 
-        <p className="mt-6 text-xs text-navy/40">
-          ※ プロフィール編集・自分の投稿一覧は次のステップ（Step5）で追加します。
-        </p>
+        {member?.role === "staff" || member?.role === "admin" ? (
+          <Link
+            href="/admin"
+            className="mt-6 inline-block rounded-lg border border-navy/15 px-4 py-2 text-sm text-navy/70 transition hover:border-ocean hover:text-ocean"
+          >
+            運営管理画面へ →
+          </Link>
+        ) : null}
       </main>
     </div>
+  );
+}
+
+function MeLink({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="rounded-xl border border-navy/10 bg-white p-3 text-center text-sm font-medium text-navy/70 transition hover:border-ocean hover:text-ocean"
+    >
+      {label}
+    </Link>
   );
 }
