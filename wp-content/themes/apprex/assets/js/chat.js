@@ -75,6 +75,36 @@
 
 		var cfg = window.APPREX_REST || {};
 
+		// --- 返信の整形：改行・箇条書き・強調を表示し、URLをクリック可能にする ----
+		function escapeHtml(s) {
+			return String(s)
+				.replace(/&/g, '&amp;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;')
+				.replace(/"/g, '&quot;');
+		}
+		function formatRich(text) {
+			var s = escapeHtml(text);
+			// マークダウン形式リンク [ラベル](https://...)
+			s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, function (m, label, url) {
+				return '<a href="' + url + '" target="_blank" rel="noopener">' + label + '</a>';
+			});
+			// 素のURL（上で作った<a>内のURLは前が " か > なので除外される）
+			s = s.replace(/(^|[^"'>])(https?:\/\/[^\s<]+)/g, function (m, pre, url) {
+				var trail = '';
+				var mt = url.match(/[.,!?。、！？)\]]+$/);
+				if (mt) { trail = mt[0]; url = url.slice(0, -trail.length); }
+				return pre + '<a href="' + url + '" target="_blank" rel="noopener">' + url + '</a>' + trail;
+			});
+			// 強調 **テキスト**
+			s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+			// 行頭の箇条書き記号（- / *）を「・」に
+			s = s.replace(/(^|\n)\s*[-*]\s+/g, '$1・');
+			// 改行
+			s = s.replace(/\r?\n/g, '<br>');
+			return s;
+		}
+
 		function renderSuggestions(list) {
 			if (!list || !list.length) { return; }
 			var wrap = document.createElement('div');
@@ -132,9 +162,14 @@
 				tag.className = 'apprex-msg__tag';
 				tag.textContent = '担当者';
 				el.appendChild(tag);
-				el.appendChild(document.createTextNode(text));
+				var body = document.createElement('span');
+				body.className = 'apprex-msg__body';
+				body.innerHTML = formatRich(text); // 担当者のリンクもクリック可能に。
+				el.appendChild(body);
+			} else if (role === 'user') {
+				el.textContent = text; // ユーザー入力はそのまま（安全のためHTML化しない）。
 			} else {
-				el.textContent = text;
+				el.innerHTML = formatRich(text); // assistant / system：改行・箇条書き・リンクを整形。
 			}
 			log.appendChild(el);
 			log.scrollTop = log.scrollHeight;

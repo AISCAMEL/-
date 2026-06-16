@@ -22,7 +22,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 const APPREX_OPENROUTER_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
-const APPREX_OPENROUTER_DEFAULT_MODEL = 'anthropic/claude-3.5-haiku';
+// バランス型の既定モデル（精度↑・日本語◎・低コスト）。設定 > APPREX チャットで変更可。
+const APPREX_OPENROUTER_DEFAULT_MODEL = 'google/gemini-2.0-flash-001';
 
 /**
  * Resolve the API key from constant or option.
@@ -128,6 +129,12 @@ function apprex_chat_system_prompt() {
 - 必要に応じて「見積もり」や「無料体験」「お問い合わせ」へ自然に案内する。
 - 分からないことは正直に伝え、担当者へのお問い合わせを促す。推測で誤った金額や仕様を断定しない。
 - 日本語で、絵文字は控えめに、敬体（です・ます）で回答する。1〜3文程度を基本に簡潔に。
+
+# 回答の書式（チャット表示用・厳守）
+- 小さなチャット欄に表示される。**長文や過度な装飾は避け、簡潔に**まとめる。
+- 箇条書きが必要なときは行頭に「- 」を使い、各項目は短く（1行）。項目ごとに改行する。
+- 見出しの「#」記号やコードブロック（```）は使わない。強調は控えめに（必要時のみ **太字**）。
+- **リンクは必ずURLをそのまま記載**する（例：https://example.com/ ）。画面側で自動でクリック可能になる。「こちら」だけでURLを隠さない。
 
 # APPREXの基本情報
 - ノーコードでiOS/Androidアプリを開発・運営できるプラットフォーム。制作代行・ホームページ制作も提供。
@@ -271,7 +278,7 @@ function apprex_rest_chat( WP_REST_Request $request ) {
 			array( array( 'role' => 'system', 'content' => $system ) ),
 			$messages
 		),
-		array( 'temperature' => 0.4, 'max_tokens' => 600, 'timeout' => 30 )
+		array( 'temperature' => 0.3, 'max_tokens' => 600, 'timeout' => 30 )
 	);
 
 	if ( is_wp_error( $reply ) ) {
