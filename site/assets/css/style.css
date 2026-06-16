@@ -99,6 +99,13 @@ img { max-width: 100%; display: block; }
 .hero h1 .hl { color: var(--gold-2); }
 .hero p.lead { font-size: 17px; color: #d4dcec; margin: 0 0 28px; }
 .hero .cta-row { display: flex; gap: 14px; flex-wrap: wrap; }
+.hero .online-note {
+  margin: 16px 0 0; font-size: 14px; color: #d4dcec;
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(31,157,107,.14); border: 1px solid rgba(31,157,107,.4);
+  padding: 8px 14px; border-radius: 999px;
+}
+.hero .online-note strong { color: #5fe0a8; font-weight: 800; }
 .hero .trust { display: flex; gap: 26px; margin-top: 34px; flex-wrap: wrap; }
 .hero .trust .t-num { font-size: 28px; font-weight: 900; color: var(--gold-2); }
 .hero .trust .t-lbl { font-size: 13px; color: #aab6cd; }
