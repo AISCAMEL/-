@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import { z } from "zod";
 import {
+  connectorModes,
   createChannelConnectors,
   createMarketConnectors,
   createSupplierConnectors,
@@ -38,6 +39,12 @@ export function buildServer() {
     markets[id as MarketId];
 
   app.get("/health", async () => ({ ok: true, mode: config.connector.mode }));
+
+  // 各コネクタの実効モード（mock | live）。どのデータ源が本番接続かを確認する。
+  app.get("/connectors", async () => ({
+    defaultMode: config.connector.mode,
+    modes: connectorModes(config.connector),
+  }));
 
   // 猫グッズ特化プリセット（リサーチキーワード・推奨スクリーニング・規約注意）
   app.get("/niche/cat-goods", async () => ({

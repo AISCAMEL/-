@@ -51,9 +51,11 @@ pnpm typecheck
 `.env` の `CONNECTOR_MODE` で切り替え。
 
 - `mock`（既定）: 外部APIを叩かず決定的なダミーで動作。設計・開発・テスト用。
-- `live`: 実API連携。各プラットフォームの**審査・契約・キー発行が前提**（取得後にコネクタの live 分岐を実装）。
-  - **楽天は live 実装済み**: `.env` に `RAKUTEN_APP_ID` を設定 ＋ `CONNECTOR_MODE=live` で本物の市場データを取得（無料）。
+- `live`: 実API連携。各プラットフォームの**審査・契約・キー発行が前提**。
+  - **コネクタ単位で自動切替**: キーがあるコネクタだけ live、無いものは mock のまま。
+  - **楽天は live 実装済み**: `.env` に `RAKUTEN_APP_ID` を入れるだけで楽天が実データになる（無料・他は mock のまま）。
   - Amazon は Keepa / PA-API（要契約）の差込口を用意。BASE / Alibaba / THE CKB は審査・契約後に実装。
+  - 現在の各コネクタのモードは `GET /connectors` で確認できる。
 
 ## API クイック例（mock）
 

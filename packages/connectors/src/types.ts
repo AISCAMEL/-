@@ -77,8 +77,24 @@ export interface MarketResearchConnector {
 /** コネクタ動作モード。live は実APIを叩く。 */
 export type ConnectorMode = "mock" | "live";
 
+/** モード解決対象のコネクタ識別子。 */
+export type ConnectorKey = SupplierId | ChannelId | MarketId;
+
 export interface ConnectorConfig {
+  /** 既定モード（コネクタ個別指定が無い場合に使用）。 */
   mode: ConnectorMode;
+  /** コネクタ単位のモード上書き（例: { rakuten: "live" }）。 */
+  modes?: Partial<Record<ConnectorKey, ConnectorMode>>;
   /** live モードで使用する認証情報。 */
   credentials?: Record<string, string | undefined>;
+}
+
+/** コネクタ個別の実効モードを解決する（個別指定 > 既定）。 */
+export function resolveMode(config: ConnectorConfig, key: ConnectorKey): ConnectorMode {
+  return config.modes?.[key] ?? config.mode;
+}
+
+/** 指定コネクタ用に実効モードを埋め込んだ ConnectorConfig を返す。 */
+export function configFor(config: ConnectorConfig, key: ConnectorKey): ConnectorConfig {
+  return { ...config, mode: resolveMode(config, key) };
 }

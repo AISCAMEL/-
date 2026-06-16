@@ -1,3 +1,5 @@
+import ConnectorStatus from "./connector-status";
+
 const sections = [
   { title: "🔎 猫グッズ スクリーニング", desc: "Amazon・楽天で調査し利益率で採点・ランキング", href: "/research", ready: true },
   { title: "📣 SNS集客リンク（UTM）", desc: "投稿ごとの計測リンクを発行（TikTok/Instagram）", href: "/marketing", ready: true },
@@ -14,6 +16,7 @@ export default function DashboardPage() {
       <p style={{ color: "#666" }}>
         Hub API: <code>{process.env.HUB_API_URL}</code>。✅ が利用可能な機能です。
       </p>
+      <ConnectorStatus />
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
         {sections.map((s) => (
           <a

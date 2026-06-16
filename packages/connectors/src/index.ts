@@ -5,3 +5,4 @@ export { AlibabaConnector } from "./alibaba/alibaba-connector.js";
 export { TheCkbConnector } from "./theckb/theckb-connector.js";
 export { AmazonConnector } from "./research/amazon-connector.js";
 export { RakutenConnector } from "./research/rakuten-connector.js";
+export { resolveMode, configFor } from "./types.js";
