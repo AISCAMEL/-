@@ -50,6 +50,7 @@ header{position:sticky;top:0;z-index:80;background:rgba(255,255,255,.92);backdro
 /* ===== HERO : 大中小 ===== */
 .hero{position:relative;background:linear-gradient(160deg,#08322e,#0a8077 60%,#10b5a8);color:#fff;padding:46px 0 54px;text-align:center;overflow:hidden}
 .hero .grain{position:absolute;inset:0;background-image:radial-gradient(circle at 1px 1px,rgba(255,255,255,.1) 1px,transparent 0);background-size:20px 20px;opacity:.5}
+.hero-bg{position:absolute;inset:0;background:url(images/hero.jpg) center/cover no-repeat;opacity:.2;z-index:0;mix-blend-mode:luminosity}
 .hero .slash{position:absolute;font-family:"Noto Sans JP";font-weight:900;color:rgba(255,255,255,.05);font-size:34vw;top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap;z-index:0}
 /* 小 */
 .kicker{font-weight:900;font-size:clamp(13px,3.6vw,16px);letter-spacing:1px;background:var(--red);display:inline-block;padding:6px 16px;border-radius:6px;transform:rotate(-1.5deg);box-shadow:0 8px 16px -8px rgba(227,36,58,.8)}
@@ -122,6 +123,10 @@ section.tint{background:var(--bg)}
 .card:hover{transform:translateY(-6px)}
 .card .rib{position:absolute;top:12px;left:0;background:var(--red);color:#fff;font-size:11px;font-weight:900;padding:3px 12px;border-radius:0 6px 6px 0;z-index:2}
 .card .ph{background:linear-gradient(135deg,#dbe8e8,#c5d8d8);height:104px;display:flex;align-items:center;justify-content:center;color:#8aa0a8;font-size:11px}
+/* image slots */
+.imgbox{position:relative;overflow:hidden}
+.imgbox>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.ph-label{font-size:11px;color:#88a0a8;text-align:center;line-height:1.35;font-weight:700}
 .card .nm{font-weight:700;padding:10px 10px 0;font-size:15px}
 .card .pr{font-family:"Anton";color:var(--red);font-size:34px;padding:2px 10px 12px;line-height:1}
 .card .pr small{font-size:14px;font-family:"Noto Sans JP";font-weight:900}
@@ -207,6 +212,7 @@ footer a{color:#9fb3bb;text-decoration:none}
 
 <!-- HERO（大中小） -->
 <section class="hero">
+  <div class="hero-bg"></div>
   <span class="grain"></span>
   <span class="slash impact">BUYMO</span>
   <div class="wrap">
@@ -281,10 +287,10 @@ footer a{color:#9fb3bb;text-decoration:none}
   <div class="wrap">
     <div class="sec-h reveal"><span class="en">REAL RESULTS</span><h2>リアル<span class="y">買取実績</span></h2><p>実際にこの価格で買い取りました</p></div>
     <div class="cards">
-      <div class="card reveal"><span class="rib">高価買取</span><div class="ph">車両写真【要差替】</div><div class="nm">アクア</div><div class="pr">145<small>万円</small></div></div>
-      <div class="card reveal d1"><span class="rib">高価買取</span><div class="ph">車両写真【要差替】</div><div class="nm">ヴェルファイア</div><div class="pr">178<small>万円</small></div></div>
-      <div class="card reveal d2"><div class="ph">車両写真【要差替】</div><div class="nm">マーチ</div><div class="pr">98<small>万円</small></div></div>
-      <div class="card reveal d3"><div class="ph">車両写真【要差替】</div><div class="nm">【車種】</div><div class="pr">156<small>万円</small></div></div>
+      <div class="card reveal"><span class="rib">高価買取</span><div class="ph imgbox"><span class="ph-label">写真<br>result-1.jpg</span><img src="images/result-1.jpg" alt="アクア 買取実績" onerror="this.remove()"></div><div class="nm">アクア</div><div class="pr">145<small>万円</small></div></div>
+      <div class="card reveal d1"><span class="rib">高価買取</span><div class="ph imgbox"><span class="ph-label">写真<br>result-2.jpg</span><img src="images/result-2.jpg" alt="ヴェルファイア 買取実績" onerror="this.remove()"></div><div class="nm">ヴェルファイア</div><div class="pr">178<small>万円</small></div></div>
+      <div class="card reveal d2"><div class="ph imgbox"><span class="ph-label">写真<br>result-3.jpg</span><img src="images/result-3.jpg" alt="マーチ 買取実績" onerror="this.remove()"></div><div class="nm">マーチ</div><div class="pr">98<small>万円</small></div></div>
+      <div class="card reveal d3"><div class="ph imgbox"><span class="ph-label">写真<br>result-4.jpg</span><img src="images/result-4.jpg" alt="買取実績" onerror="this.remove()"></div><div class="nm">【車種】</div><div class="pr">156<small>万円</small></div></div>
     </div>
     <p style="text-align:center;margin-top:16px;font-size:12.5px;color:var(--muted)">※車種×年式×金額は旧ページより移行 <span class="note">要差替</span></p>
   </div>
@@ -307,9 +313,9 @@ footer a{color:#9fb3bb;text-decoration:none}
   <div class="wrap">
     <div class="sec-h reveal"><span class="en">REVIEWS</span><h2>お客様の<span class="y">声</span></h2></div>
     <div class="voices">
-      <div class="voice reveal"><div class="vhead"><div class="av">写真</div><div><div class="vname">アクア</div><div class="stars">★★★★★ 5.0</div></div></div><p>オンラインだけで査定が完了。来店不要でスムーズでした。<span class="note">本文 要差替</span></p></div>
-      <div class="voice reveal d1"><div class="vhead"><div class="av">写真</div><div><div class="vname">ヴェルファイア</div><div class="stars">★★★★★ 4.9</div></div></div><p>忙しい中でも自宅で完結。査定額にも満足です。<span class="note">本文 要差替</span></p></div>
-      <div class="voice reveal d2"><div class="vhead"><div class="av">写真</div><div><div class="vname">マーチ</div><div class="stars">★★★★☆ 4.7</div></div></div><p>写真を送るだけで対応が早く、すぐに入金されました。<span class="note">本文 要差替</span></p></div>
+      <div class="voice reveal"><div class="vhead"><div class="av imgbox"><span class="ph-label">v1</span><img src="images/voice-1.jpg" alt="お客様" onerror="this.remove()"></div><div><div class="vname">アクア</div><div class="stars">★★★★★ 5.0</div></div></div><p>オンラインだけで査定が完了。来店不要でスムーズでした。<span class="note">本文 要差替</span></p></div>
+      <div class="voice reveal d1"><div class="vhead"><div class="av imgbox"><span class="ph-label">v2</span><img src="images/voice-2.jpg" alt="お客様" onerror="this.remove()"></div><div><div class="vname">ヴェルファイア</div><div class="stars">★★★★★ 4.9</div></div></div><p>忙しい中でも自宅で完結。査定額にも満足です。<span class="note">本文 要差替</span></p></div>
+      <div class="voice reveal d2"><div class="vhead"><div class="av imgbox"><span class="ph-label">v3</span><img src="images/voice-3.jpg" alt="お客様" onerror="this.remove()"></div><div><div class="vname">マーチ</div><div class="stars">★★★★☆ 4.7</div></div></div><p>写真を送るだけで対応が早く、すぐに入金されました。<span class="note">本文 要差替</span></p></div>
     </div>
   </div>
 </section>
