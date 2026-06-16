@@ -32,7 +32,7 @@ class Carmel_Roles {
 		return array(
 			'carmel_change_deal_status', // ステータス変更
 			'carmel_screening',          // 信販審査結果入力（本部のみ）
-			'carmel_send_cloudsign',     // クラウドサイン送付（本部のみ）
+			'carmel_send_contract',      // 契約送付（マネーフォワード契約・本部のみ）
 			'carmel_view_reports',       // 売上レポート
 			'carmel_manage_stores',      // 加盟店管理（本部のみ）
 			'carmel_manage_staff',       // スタッフ管理（オーナー：自店）
@@ -133,7 +133,7 @@ class Carmel_Roles {
 		$caps['hq_admin'] += array(
 			'carmel_change_deal_status' => true,
 			'carmel_screening'          => true,
-			'carmel_send_cloudsign'     => true,
+			'carmel_send_contract'      => true,
 			'carmel_view_reports'       => true,
 			'carmel_manage_stores'      => true,
 			'carmel_manage_staff'       => true,

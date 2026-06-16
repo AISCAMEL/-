@@ -44,7 +44,7 @@ class Carmel_Deal_Status {
 			array(
 				'approved'   => 'carmel_screening',     // 信販審査結果（本部）
 				'rejected'   => 'carmel_screening',
-				'contracted' => 'carmel_send_cloudsign', // 契約（本部）
+				'contracted' => 'carmel_send_contract', // 契約（本部）
 			)
 		);
 	}

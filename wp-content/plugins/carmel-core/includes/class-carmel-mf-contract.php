@@ -1,31 +1,31 @@
 <?php
 /**
- * CloudSign (electronic signature) integration — HQ only.
+ * Money Forward Cloud 契約 (electronic signature) integration — HQ only.
  *
  * HQ sends a contract for signature from the [carmel_hq_contracts] screen
- * (requires the carmel_send_cloudsign cap — stores/staff can never send).
- * The customer is notified to sign; when CloudSign reports completion via the
- * verified webhook, the deal advances to 'contracted'.
+ * (requires the carmel_send_contract cap — stores/staff can never send).
+ * The customer is notified to sign; when Money Forward reports completion via
+ * the verified webhook, the deal advances to 'contracted'.
  *
- * The CloudSign API itself is multi-step; this client posts a normalized
- * payload to a configurable endpoint (direct CloudSign or a thin wrapper) and
- * is filterable so the exact request shape can be adapted at integration time.
+ * The Money Forward 契約 API is multi-step; this client posts a normalized
+ * payload to a configurable endpoint (direct API or a thin wrapper) and is
+ * filterable so the exact request shape can be adapted at integration time.
  *
  * @package CarmelCore
  */
 
 defined( 'ABSPATH' ) || exit;
 
-class Carmel_CloudSign {
+class Carmel_MF_Contract {
 
-	/** @var Carmel_CloudSign|null */
+	/** @var Carmel_MF_Contract|null */
 	private static $instance = null;
 
 	const SHORTCODE      = 'carmel_hq_contracts';
-	const SEND_ACTION    = 'carmel_cloudsign_send';
-	const NONCE          = 'carmel_cloudsign_nonce';
+	const SEND_ACTION    = 'carmel_mf_contract_send';
+	const NONCE          = 'carmel_mf_contract_nonce';
 	const REST_NAMESPACE = 'carmel/v1';
-	const REST_CALLBACK  = '/cloudsign-callback';
+	const REST_CALLBACK  = '/mf-contract-callback';
 
 	public static function instance() {
 		if ( null === self::$instance ) {
@@ -41,11 +41,11 @@ class Carmel_CloudSign {
 	}
 
 	private function endpoint() {
-		return defined( 'CARMEL_CLOUDSIGN_ENDPOINT' ) ? CARMEL_CLOUDSIGN_ENDPOINT : get_option( 'carmel_cloudsign_endpoint', '' );
+		return defined( 'CARMEL_MF_ENDPOINT' ) ? CARMEL_MF_ENDPOINT : get_option( 'carmel_mf_endpoint', '' );
 	}
 
 	private function token() {
-		return defined( 'CARMEL_CLOUDSIGN_TOKEN' ) ? CARMEL_CLOUDSIGN_TOKEN : get_option( 'carmel_cloudsign_token', '' );
+		return defined( 'CARMEL_MF_TOKEN' ) ? CARMEL_MF_TOKEN : get_option( 'carmel_mf_token', '' );
 	}
 
 	public function is_ready() {
@@ -64,21 +64,21 @@ class Carmel_CloudSign {
 	 * @return array|WP_Error
 	 */
 	public function send( $deal_id, array $args = array() ) {
-		if ( empty( $args['system'] ) && ! current_user_can( 'carmel_send_cloudsign' ) ) {
-			return new WP_Error( 'carmel_forbidden', 'クラウドサイン送付は本部のみ可能です。', array( 'status' => 403 ) );
+		if ( empty( $args['system'] ) && ! current_user_can( 'carmel_send_contract' ) ) {
+			return new WP_Error( 'carmel_forbidden', 'マネーフォワード契約の送付は本部のみ可能です。', array( 'status' => 403 ) );
 		}
 		if ( 'carmel_deal' !== get_post_type( $deal_id ) ) {
 			return new WP_Error( 'carmel_not_a_deal', '案件が見つかりません。' );
 		}
 		if ( ! $this->is_ready() ) {
-			return new WP_Error( 'cloudsign_not_configured', 'クラウドサイン未設定です。' );
+			return new WP_Error( 'mf_not_configured', 'マネーフォワード契約が未設定です。' );
 		}
 
 		$customer_id = (int) get_post_meta( $deal_id, 'customer_id', true );
 		$customer    = $customer_id ? get_userdata( $customer_id ) : null;
 
 		$payload = apply_filters(
-			'carmel_cloudsign_payload',
+			'carmel_mf_contract_payload',
 			array(
 				'deal_id' => (int) $deal_id,
 				'title'   => '売買契約書 #' . (int) $deal_id,
@@ -107,15 +107,15 @@ class Carmel_CloudSign {
 		$code = (int) wp_remote_retrieve_response_code( $response );
 		if ( $code < 200 || $code >= 300 ) {
 			$this->notify_failure( $deal_id, 'HTTP ' . $code );
-			return new WP_Error( 'cloudsign_http_' . $code, 'クラウドサイン送付失敗 HTTP ' . $code );
+			return new WP_Error( 'mf_http_' . $code, 'マネーフォワード契約 送付失敗 HTTP ' . $code );
 		}
 
 		$decoded     = json_decode( wp_remote_retrieve_body( $response ), true );
 		$document_id = is_array( $decoded ) && isset( $decoded['document_id'] ) ? $decoded['document_id'] : ( isset( $decoded['id'] ) ? $decoded['id'] : '' );
 
 		// Record on the deal + a contract document.
-		update_post_meta( $deal_id, 'cloudsign_id', sanitize_text_field( $document_id ) );
-		update_post_meta( $deal_id, 'cloudsign_status', 'sent' );
+		update_post_meta( $deal_id, 'mf_contract_id', sanitize_text_field( $document_id ) );
+		update_post_meta( $deal_id, 'mf_contract_status', 'sent' );
 		$this->upsert_contract_document( $deal_id, $document_id );
 
 		// Notify the customer to sign.
@@ -128,14 +128,14 @@ class Carmel_CloudSign {
 			)
 		);
 
-		do_action( 'carmel_cloudsign_sent', $deal_id, $document_id );
+		do_action( 'carmel_mf_contract_sent', $deal_id, $document_id );
 		return array( 'document_id' => $document_id );
 	}
 
 	/**
 	 * Create or update the contract carmel_document for a deal.
 	 */
-	private function upsert_contract_document( $deal_id, $cloudsign_id ) {
+	private function upsert_contract_document( $deal_id, $contract_id ) {
 		$existing = get_posts(
 			array(
 				'post_type'      => 'carmel_document',
@@ -151,10 +151,10 @@ class Carmel_CloudSign {
 		);
 
 		$meta = array(
-			'deal_id'      => (int) $deal_id,
-			'doc_type'     => 'contract',
-			'cloudsign_id' => sanitize_text_field( $cloudsign_id ),
-			'generated_at' => current_time( 'mysql' ),
+			'deal_id'        => (int) $deal_id,
+			'doc_type'       => 'contract',
+			'mf_contract_id' => sanitize_text_field( $contract_id ),
+			'generated_at'   => current_time( 'mysql' ),
 		);
 
 		if ( ! empty( $existing ) ) {
@@ -178,8 +178,8 @@ class Carmel_CloudSign {
 		Carmel_Notifier::notify(
 			'system_error',
 			array(
-				'event_id' => 'cloudsign_fail:' . $deal_id . ':' . time(),
-				'vars'     => array( 'message' => 'クラウドサイン送付失敗 #' . $deal_id . ': ' . $message ),
+				'event_id' => 'mf_contract_fail:' . $deal_id . ':' . time(),
+				'vars'     => array( 'message' => 'マネーフォワード契約 送付失敗 #' . $deal_id . ': ' . $message ),
 			)
 		);
 	}
@@ -189,7 +189,7 @@ class Carmel_CloudSign {
 	 * --------------------------------------------------------------------- */
 
 	public function handle_send() {
-		if ( ! current_user_can( 'carmel_send_cloudsign' ) ) {
+		if ( ! current_user_can( 'carmel_send_contract' ) ) {
 			wp_die( esc_html__( '権限がありません。', 'carmel-core' ), '', array( 'response' => 403 ) );
 		}
 		$deal_id  = isset( $_POST['deal_id'] ) ? (int) $_POST['deal_id'] : 0;
@@ -201,7 +201,7 @@ class Carmel_CloudSign {
 
 		$result = $this->send( $deal_id );
 		$msg    = is_wp_error( $result ) ? 'err' : 'sent';
-		wp_safe_redirect( add_query_arg( 'carmel_cs', $msg, $redirect ) );
+		wp_safe_redirect( add_query_arg( 'carmel_mf', $msg, $redirect ) );
 		exit;
 	}
 
@@ -211,7 +211,7 @@ class Carmel_CloudSign {
 	 * @return string
 	 */
 	public function render() {
-		if ( ! current_user_can( 'carmel_send_cloudsign' ) ) {
+		if ( ! current_user_can( 'carmel_send_contract' ) ) {
 			return '<p class="carmel-notice">契約管理を表示する権限がありません。</p>';
 		}
 
@@ -231,7 +231,7 @@ class Carmel_CloudSign {
 		ob_start();
 		echo $this->styles(); // phpcs:ignore WordPress.Security.EscapeOutput
 		echo $this->banner(); // phpcs:ignore WordPress.Security.EscapeOutput
-		echo '<div class="carmel-contracts"><h2>契約（クラウドサイン）</h2>';
+		echo '<div class="carmel-contracts"><h2>契約（マネーフォワード契約）</h2>';
 
 		if ( empty( $deals ) ) {
 			echo '<p>契約待ちの案件はありません。</p></div>';
@@ -240,7 +240,7 @@ class Carmel_CloudSign {
 
 		echo '<table class="carmel-table"><thead><tr><th>案件</th><th>申込者</th><th>署名状況</th><th>操作</th></tr></thead><tbody>';
 		foreach ( $deals as $deal ) {
-			$cs_status = get_post_meta( $deal->ID, 'cloudsign_status', true );
+			$cs_status = get_post_meta( $deal->ID, 'mf_contract_status', true );
 			$name      = get_post_meta( $deal->ID, 'applicant_name', true );
 			echo '<tr>';
 			echo '<td>#' . (int) $deal->ID . '</td>';
@@ -257,7 +257,7 @@ class Carmel_CloudSign {
 		if ( 'completed' === $cs_status ) {
 			return '<span class="carmel-done">署名完了</span>';
 		}
-		$label = ( 'sent' === $cs_status ) ? '再送付' : 'クラウドサイン送付';
+		$label = ( 'sent' === $cs_status ) ? '再送付' : 'マネーフォワード契約 送付';
 		$nonce = wp_create_nonce( self::SEND_ACTION . '_' . $deal_id );
 		return '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" onsubmit="return confirm(\'契約書を署名依頼として送付します。よろしいですか？\');">'
 			. '<input type="hidden" name="action" value="' . esc_attr( self::SEND_ACTION ) . '">'
@@ -272,7 +272,7 @@ class Carmel_CloudSign {
 	}
 
 	private function banner() {
-		$msg = isset( $_GET['carmel_cs'] ) ? sanitize_key( $_GET['carmel_cs'] ) : '';
+		$msg = isset( $_GET['carmel_mf'] ) ? sanitize_key( $_GET['carmel_mf'] ) : '';
 		$map = array(
 			'sent' => array( 'success', '署名依頼を送付しました。' ),
 			'err'  => array( 'error', '送付できませんでした（設定・権限をご確認ください）。' ),
@@ -312,7 +312,7 @@ class Carmel_CloudSign {
 	}
 
 	/**
-	 * Handle a CloudSign status callback.
+	 * Handle a Money Forward 契約 status callback.
 	 *
 	 * @param WP_REST_Request $request
 	 * @return WP_REST_Response|WP_Error
@@ -323,21 +323,21 @@ class Carmel_CloudSign {
 		$pdf_url = $request->get_param( 'pdf_url' );
 
 		if ( ! $deal_id || 'carmel_deal' !== get_post_type( $deal_id ) ) {
-			return new WP_Error( 'cloudsign_bad_deal', 'deal_id が不正です', array( 'status' => 400 ) );
+			return new WP_Error( 'mf_bad_deal', 'deal_id が不正です', array( 'status' => 400 ) );
 		}
 
 		if ( 'completed' === $status ) {
-			update_post_meta( $deal_id, 'cloudsign_status', 'completed' );
+			update_post_meta( $deal_id, 'mf_contract_status', 'completed' );
 			if ( $pdf_url ) {
 				$this->store_signed_pdf( $deal_id, $pdf_url );
 			}
 			// Advance to contracted (system bypasses the HQ cap check).
-			Carmel_Deal_Status::change( $deal_id, 'contracted', array( 'system' => true, 'note' => 'クラウドサイン署名完了' ) );
+			Carmel_Deal_Status::change( $deal_id, 'contracted', array( 'system' => true, 'note' => 'マネーフォワード契約 署名完了' ) );
 		} elseif ( 'rejected' === $status ) {
-			update_post_meta( $deal_id, 'cloudsign_status', 'rejected' );
+			update_post_meta( $deal_id, 'mf_contract_status', 'rejected' );
 		}
 
-		do_action( 'carmel_cloudsign_callback', $deal_id, $status );
+		do_action( 'carmel_mf_contract_callback', $deal_id, $status );
 		return new WP_REST_Response( array( 'ok' => true ), 200 );
 	}
 

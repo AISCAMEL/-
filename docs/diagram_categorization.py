@@ -89,7 +89,7 @@ exts = [
     "Square：決済（申込金/保証/会費等）",
     "Google Maps：陸送費計算",
     "プロライン：LINE通知",
-    "クラウドサイン：署名(本部のみ)",
+    "マネーフォワード契約：署名(本部のみ)",
     "Notion / bbPress",
 ]
 for i, t in enumerate(exts):
