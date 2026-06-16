@@ -8,7 +8,15 @@ import {
   type SalesChannelConnector,
   type SupplierConnector,
 } from "@hub/connectors";
-import { CAT_GOODS, allKeywords, type ChannelId, type MarketId, type SupplierId } from "@hub/core";
+import {
+  CAT_GOODS,
+  allKeywords,
+  buildSocialLink,
+  type ChannelId,
+  type MarketId,
+  type SocialPlatform,
+  type SupplierId,
+} from "@hub/core";
 import { loadConfig } from "./config.js";
 import { importProduct, publishToChannel } from "./services/listing-service.js";
 import { researchMarket } from "./services/research-service.js";
@@ -36,6 +44,20 @@ export function buildServer() {
     ...CAT_GOODS,
     allKeywords: allKeywords(CAT_GOODS),
   }));
+
+  // SNS集客: UTM付きの計測リンクを生成（どの投稿から売れたか把握）
+  const linkSchema = z.object({
+    url: z.string().url(),
+    platform: z.enum(["instagram", "tiktok", "x", "youtube"]),
+    campaign: z.string().min(1),
+    content: z.string().optional(),
+  });
+  app.get("/marketing/link", async (req, reply) => {
+    const parsed = linkSchema.safeParse(req.query);
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
+    const { url, platform, campaign, content } = parsed.data;
+    return { link: buildSocialLink(url, platform as SocialPlatform, campaign, content) };
+  });
 
   app.get("/suppliers", async () => ({
     suppliers: Object.keys(suppliers),

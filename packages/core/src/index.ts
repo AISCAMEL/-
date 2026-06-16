@@ -7,3 +7,4 @@ export * from "./compliance/compliance.js";
 export * from "./research/market-analysis.js";
 export * from "./research/screening.js";
 export * from "./niche/cat-goods.js";
+export * from "./marketing/utm.js";
