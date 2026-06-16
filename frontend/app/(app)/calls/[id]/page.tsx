@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { api, STATUS_LABEL } from '@/lib/api';
+import { api, STATUS_LABEL, CATEGORY_LABEL } from '@/lib/api';
 import { Card, StatusBadge, CategoryTag, formatDateTime, formatDuration } from '@/components/ui';
 
 export default function CallDetailPage() {
@@ -112,6 +112,36 @@ export default function CallDetailPage() {
               <Row label="通話時間" value={formatDuration(call.duration_sec)} />
             </dl>
           </Card>
+          {/* この発信者の履歴 */}
+          {call.from_number && (
+            <Card>
+              <div className="mb-2 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-gray-500">この発信者</h2>
+                {call.caller_count > 1 && (
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                    リピーター（通算{call.caller_count}回）
+                  </span>
+                )}
+              </div>
+              <div className="text-sm text-gray-600">{call.from_number}</div>
+              {call.caller_history?.length > 0 ? (
+                <ul className="mt-3 space-y-2">
+                  {call.caller_history.map((h: any) => (
+                    <li key={h.id} className="text-sm">
+                      <Link href={`/calls/${h.id}`} className="text-brand hover:underline">{formatDateTime(h.started_at)}</Link>
+                      <span className="ml-2 text-gray-500">{CATEGORY_LABEL[h.category] ?? h.category ?? '—'}</span>
+                      {h.summary && <div className="truncate text-xs text-gray-400">{h.summary}</div>}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-2 text-xs text-gray-400">この番号からの過去の通話はありません（初めてのお客様）。</p>
+              )}
+              <Link href={`/calls?q=${encodeURIComponent(call.from_number)}`} className="mt-3 inline-block text-xs text-brand hover:underline">
+                この番号の通話をすべて見る →
+              </Link>
+            </Card>
+          )}
           <Card>
             <h2 className="mb-2 text-sm font-semibold text-gray-500">ステータス変更</h2>
             <select value={call.status} onChange={(e) => changeStatus(e.target.value)}

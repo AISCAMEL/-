@@ -137,13 +137,21 @@ export async function buildWeeklyDigest(tenantId: string) {
   return { total: calls.length, byCategory, callbacks, transfers, unhandled };
 }
 
-export async function getCall(tenantId: string, callId: string) {  if (!dbEnabled) {
+export async function getCall(tenantId: string, callId: string) {
+  if (!dbEnabled) {
     const c = demoCalls.find((x) => x.id === callId);
     if (!c) return null;
+    const history = demoCalls
+      .filter((x) => x.id !== c.id && x.from_number && x.from_number === c.from_number)
+      .sort((a, b) => b.started_at.localeCompare(a.started_at))
+      .slice(0, 5)
+      .map((x) => ({ id: x.id, started_at: x.started_at, category: x.category, status: x.status, summary: x.summary }));
     return {
       ...stripDemoCall(c),
       transcripts: c.transcripts,
       notes: c.notes,
+      caller_history: history,
+      caller_count: history.length + 1,
     };
   }
   const [call] = await query<any>(`select * from calls where id = $1 and tenant_id = $2`, [callId, tenantId]);
@@ -152,7 +160,20 @@ export async function getCall(tenantId: string, callId: string) {  if (!dbEnable
     `select speaker, message, sequence from transcripts where call_id = $1 order by sequence`, [callId]);
   const notes = await query<any>(
     `select id, note, created_at from call_notes where call_id = $1 order by created_at`, [callId]);
-  return { ...call, transcripts, notes };
+  let caller_history: any[] = [];
+  let caller_count = 1;
+  if (call.from_number) {
+    caller_history = await query<any>(
+      `select id, started_at, category, status, summary from calls
+        where tenant_id = $1 and from_number = $2 and id <> $3
+        order by started_at desc nulls last limit 5`,
+      [tenantId, call.from_number, callId]);
+    const [cnt] = await query<any>(
+      `select count(*)::int as n from calls where tenant_id = $1 and from_number = $2`,
+      [tenantId, call.from_number]);
+    caller_count = cnt?.n ?? 1;
+  }
+  return { ...call, transcripts, notes, caller_history, caller_count };
 }
 
 export async function updateCallStatus(tenantId: string, callId: string, status: string) {
