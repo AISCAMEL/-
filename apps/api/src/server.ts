@@ -8,7 +8,7 @@ import {
   type SalesChannelConnector,
   type SupplierConnector,
 } from "@hub/connectors";
-import type { ChannelId, MarketId, SupplierId } from "@hub/core";
+import { CAT_GOODS, allKeywords, type ChannelId, type MarketId, type SupplierId } from "@hub/core";
 import { loadConfig } from "./config.js";
 import { importProduct, publishToChannel } from "./services/listing-service.js";
 import { researchMarket } from "./services/research-service.js";
@@ -30,6 +30,12 @@ export function buildServer() {
     markets[id as MarketId];
 
   app.get("/health", async () => ({ ok: true, mode: config.connector.mode }));
+
+  // 猫グッズ特化プリセット（リサーチキーワード・推奨スクリーニング・規約注意）
+  app.get("/niche/cat-goods", async () => ({
+    ...CAT_GOODS,
+    allKeywords: allKeywords(CAT_GOODS),
+  }));
 
   app.get("/suppliers", async () => ({
     suppliers: Object.keys(suppliers),

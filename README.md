@@ -1,6 +1,6 @@
-# Dropshipping Hub — 中国輸入 無在庫販売 ハブシステム
+# Dropshipping Hub — 猫グッズ 中国輸入 無在庫販売 ハブシステム
 
-BASE（販売）× Alibaba.com / THE CKB（仕入れ）を連携し、中国輸入の**無在庫ドロップシッピング**を自動化する中核システム（モノレポ・骨組み）。
+BASE（販売）× Alibaba.com / THE CKB（仕入れ）を連携し、**猫グッズ**を中心に中国輸入の**無在庫ドロップシッピング**を自動化する中核システム（モノレポ・骨組み）。猫グッズ特化のリサーチキーワード・推奨スクリーニング・規約注意は `GET /niche/cat-goods`（`packages/core/niche/cat-goods.ts`）。
 
 > 📄 設計の全体像は [`docs/dropshipping-hub-設計書.md`](docs/dropshipping-hub-設計書.md) を参照。
 
