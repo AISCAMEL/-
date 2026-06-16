@@ -361,13 +361,9 @@ function apprex_rest_slack_events( WP_REST_Request $request ) {
 		if ( ( null === $challenge || '' === $challenge ) && is_array( $json ) && isset( $json['challenge'] ) ) {
 			$challenge = $json['challenge'];
 		}
-		// 互換性最優先：challenge をプレーンテキストでそのまま返す（REST ラップ/キャッシュの影響を回避）。
-		if ( ! headers_sent() ) {
-			status_header( 200 );
-			header( 'Content-Type: text/plain; charset=utf-8' );
-		}
-		echo (string) $challenge; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		exit;
+		// Slack 公式の標準形式（JSON）でそのまま返す。exit を使わず WP の REST 応答に委ねる
+		// ことで、nginx/KUSANAGI 環境でも確実に HTTP 200 を返す。
+		return new WP_REST_Response( array( 'challenge' => (string) $challenge ), 200 );
 	}
 
 	// 署名検証。
