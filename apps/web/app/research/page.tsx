@@ -62,7 +62,7 @@ export default function ResearchPage() {
       const res = await fetch("/api/screen", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ candidates, markets: ["amazon", "rakuten"], minMarginRate, minGrade }),
+        body: JSON.stringify({ candidates, markets: ["amazon", "rakuten", "yahoo"], minMarginRate, minGrade }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ? JSON.stringify(data.error) : "スクリーニング失敗");

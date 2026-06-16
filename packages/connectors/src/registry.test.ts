@@ -29,8 +29,11 @@ describe("connectorModes", () => {
       base: "mock",
       alibaba: "mock",
       theckb: "mock",
+      aliexpress: "mock",
       amazon: "mock",
       rakuten: "live",
+      yahoo: "mock",
+      ebay: "mock",
     });
   });
 });

@@ -94,10 +94,10 @@ export function buildServer() {
   // Amazon・楽天で市場調査 → 仕入れ値と突き合わせて利益率を算出
   const researchSchema = z.object({
     keyword: z.string().min(1),
-    markets: z.array(z.enum(["amazon", "rakuten"])).default(["amazon", "rakuten"]),
+    markets: z.array(z.enum(["amazon", "rakuten", "yahoo", "ebay"])).default(["amazon", "rakuten", "yahoo"]),
     limit: z.number().int().positive().max(50).optional(),
     // 任意: 仕入れ商品を指定すると利益・利益率・ROI まで計算
-    supplierId: z.enum(["alibaba", "theckb"]).optional(),
+    supplierId: z.enum(["alibaba", "theckb", "aliexpress"]).optional(),
     externalId: z.string().optional(),
   });
   app.post("/research", async (req, reply) => {
@@ -124,13 +124,13 @@ export function buildServer() {
     candidates: z
       .array(
         z.object({
-          supplierId: z.enum(["alibaba", "theckb"]),
+          supplierId: z.enum(["alibaba", "theckb", "aliexpress"]),
           externalId: z.string(),
           keyword: z.string().optional(),
         }),
       )
       .min(1),
-    markets: z.array(z.enum(["amazon", "rakuten"])).default(["amazon", "rakuten"]),
+    markets: z.array(z.enum(["amazon", "rakuten", "yahoo", "ebay"])).default(["amazon", "rakuten", "yahoo"]),
     minMarginRate: z.number().min(0).max(1).optional(),
     minGrade: z.enum(["A", "B", "C"]).optional(),
     limit: z.number().int().positive().max(50).optional(),

@@ -1,5 +1,5 @@
 /** 市場（売値の調査先）。 */
-export type MarketId = "amazon" | "rakuten";
+export type MarketId = "amazon" | "rakuten" | "yahoo" | "ebay";
 
 /** 市場で見つかった1件の出品（売値）。 */
 export interface MarketListing {
@@ -45,20 +45,20 @@ export function summarize(listings: MarketListing[], scope: MarketStats["scope"]
   };
 }
 
-/** 市場別＋全体の統計をまとめて返す。 */
+/** 市場別＋全体の統計をまとめて返す（出品のあった市場のみ集計）。 */
 export function analyzeMarkets(listings: MarketListing[]): {
   byMarket: Record<MarketId, MarketStats>;
   overall: MarketStats;
 } {
-  const amazon = listings.filter((l) => l.marketId === "amazon");
-  const rakuten = listings.filter((l) => l.marketId === "rakuten");
-  return {
-    byMarket: {
-      amazon: summarize(amazon, "amazon"),
-      rakuten: summarize(rakuten, "rakuten"),
-    },
-    overall: summarize(listings, "all"),
-  };
+  const ids = [...new Set(listings.map((l) => l.marketId))];
+  const byMarket = {} as Record<MarketId, MarketStats>;
+  for (const id of ids) {
+    byMarket[id] = summarize(
+      listings.filter((l) => l.marketId === id),
+      id,
+    );
+  }
+  return { byMarket, overall: summarize(listings, "all") };
 }
 
 /** ある売値で売った場合の採算。 */

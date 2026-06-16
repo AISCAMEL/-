@@ -4,10 +4,13 @@ import { useEffect, useState } from "react";
 
 const LABEL: Record<string, string> = {
   rakuten: "楽天(調査)",
+  yahoo: "Yahoo(調査)",
   amazon: "Amazon(調査)",
+  ebay: "eBay(調査)",
   base: "BASE(販売)",
   theckb: "THE CKB(仕入)",
   alibaba: "Alibaba(仕入)",
+  aliexpress: "AliExpress(仕入)",
 };
 
 export default function ConnectorStatus() {
