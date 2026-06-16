@@ -43,7 +43,7 @@
 | **THE CKB** | API / CSV 連携あり（要契約・キー発行） | 正規連携。仕様確定までは Connector インターフェースで抽象化 |
 | **楽天 商品検索API** | 公式・無料（applicationId 登録のみ） | **live 実装済み**。`RAKUTEN_APP_ID` 設定で本番データ取得 |
 | **Yahoo!ショッピング 商品検索API** | 公式・無料（Client ID 登録のみ） | **live 実装済み**。`YAHOO_APP_ID` 設定で本番データ取得 |
-| **Amazon 価格調査** | 無料の価格検索APIは無い | Keepa（有料）/ PA-API（審査要）の差込口を用意。取得まではモック |
+| **Amazon 価格調査** | 無料の価格検索APIは無い | **Keepa（有料）live 実装済み**（`KEEPA_API_KEY` 設定でAmazon相場を取得）。PA-APIは将来 |
 | **eBay Browse API** | 公式・OAuthトークン要 | 越境/海外相場用。`EBAY_OAUTH_TOKEN` で live（USD→JPY換算が必要） |
 | **AliExpress Open Platform** | 公式・app_key/secret 署名要 | 無在庫向け。仕入れ・自動発注の差込口を用意 |
 | **無在庫転売の規約** | BASE・仕入れ先の規約に抵触する場合がある | 出品前チェック、禁止カテゴリ・ブランド品フィルタを実装 |

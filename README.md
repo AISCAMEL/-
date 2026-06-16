@@ -55,7 +55,8 @@ pnpm typecheck
 - `live`: 実API連携。各プラットフォームの**審査・契約・キー発行が前提**。
   - **コネクタ単位で自動切替**: キーがあるコネクタだけ live、無いものは mock のまま。
   - **楽天は live 実装済み**: `.env` に `RAKUTEN_APP_ID` を入れるだけで楽天が実データになる（無料・他は mock のまま）。
-  - Amazon は Keepa / PA-API（要契約）の差込口を用意。BASE / Alibaba / THE CKB は審査・契約後に実装。
+  - **Amazon は Keepa live 実装済み**: `KEEPA_API_KEY`（Keepa有料契約）を入れると Amazon.co.jp の相場を取得。PA-APIは将来対応。
+  - BASE / Alibaba / THE CKB は審査・契約後に実装。
   - 現在の各コネクタのモードは `GET /connectors` で確認できる。
 
 ## API クイック例（mock）
