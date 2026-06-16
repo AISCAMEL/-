@@ -276,6 +276,11 @@
 		if (opBtn) {
 			opBtn.addEventListener('click', function () {
 				if (opBtn.disabled) { return; }
+				// 営業時間外は担当者へつながず案内（AIは24時間対応）。
+				if (cfg.opOpen === false) {
+					addMessage('system', '担当者の対応時間は' + (cfg.opHours || '9:00〜18:00') + 'です。時間外はAIが24時間ご対応します。お急ぎの場合は下の「✉ メール」からご相談ください（担当者が後ほど返信します）。');
+					return;
+				}
 				opBtn.disabled = true;
 				addMessage('system', '担当者におつなぎしています。少々お待ちください…');
 				startPolling();
@@ -287,7 +292,7 @@
 					.then(function (r) { return r.json(); })
 					.then(function (b) {
 						if (!b || !b.ok) {
-							addMessage('system', 'ただいま担当者につなげませんでした。お手数ですがお問い合わせフォームをご利用ください。');
+							addMessage('system', (b && b.message) ? b.message : 'ただいま担当者につなげませんでした。お手数ですがお問い合わせフォームをご利用ください。');
 						}
 					})
 					.catch(function () {

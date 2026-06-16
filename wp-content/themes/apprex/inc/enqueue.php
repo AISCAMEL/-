@@ -42,6 +42,8 @@ function apprex_enqueue_assets() {
 		'nonce'       => wp_create_nonce( 'wp_rest' ),
 		'chatEnabled' => apprex_chat_enabled(),
 		'opEnabled'   => function_exists( 'apprex_chat_op_enabled' ) && apprex_chat_op_enabled(),
+		'opOpen'      => function_exists( 'apprex_chat_op_within_hours' ) ? apprex_chat_op_within_hours() : true,
+		'opHours'     => function_exists( 'apprex_chat_op_hours_label' ) ? apprex_chat_op_hours_label() : '',
 	);
 
 	// 会員ログイン連携：ログイン中の契約者ならチャットを本人向けに切り替える。

@@ -265,6 +265,26 @@ add_action( 'rest_api_init', function () {
 } );
 
 /** お客様が担当者対応を希望（Slackへ通知）。 */
+/**
+ * 担当者（有人）対応の営業時間。AIチャットは24時間稼働。
+ * 既定 9:00〜18:00。フィルタで変更可。
+ */
+function apprex_chat_op_hours() {
+	return array(
+		'start' => (int) apply_filters( 'apprex_chat_op_hour_start', 9 ),
+		'end'   => (int) apply_filters( 'apprex_chat_op_hour_end', 18 ),
+	);
+}
+function apprex_chat_op_within_hours() {
+	$h    = apprex_chat_op_hours();
+	$hour = (int) current_time( 'G' ); // WP タイムゾーンの時（0-23）。
+	return ( $hour >= $h['start'] && $hour < $h['end'] );
+}
+function apprex_chat_op_hours_label() {
+	$h = apprex_chat_op_hours();
+	return sprintf( '%d:00〜%d:00', $h['start'], $h['end'] );
+}
+
 function apprex_rest_chat_operator( WP_REST_Request $request ) {
 	$nonce = $request->get_header( 'x_wp_nonce' );
 	if ( ! $nonce || ! wp_verify_nonce( $nonce, 'wp_rest' ) ) {
@@ -272,6 +292,16 @@ function apprex_rest_chat_operator( WP_REST_Request $request ) {
 	}
 	if ( ! apprex_chat_op_enabled() ) {
 		return rest_ensure_response( array( 'ok' => false, 'reason' => 'disabled' ) );
+	}
+	// 営業時間外は担当者へつながない（AIが24時間対応・メール誘導）。
+	if ( ! apprex_chat_op_within_hours() ) {
+		return rest_ensure_response(
+			array(
+				'ok'      => false,
+				'reason'  => 'closed',
+				'message' => '担当者の対応時間は' . apprex_chat_op_hours_label() . 'です。時間外はAIが24時間ご対応します。お急ぎの場合は「✉ メール」からご相談ください（担当者が後ほど返信します）。',
+			)
+		);
 	}
 	$session = sanitize_text_field( (string) $request->get_param( 'session' ) );
 	if ( '' === $session ) {

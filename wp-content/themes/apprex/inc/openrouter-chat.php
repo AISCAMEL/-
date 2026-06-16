@@ -22,8 +22,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 const APPREX_OPENROUTER_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
-// バランス型の既定モデル（精度↑・日本語◎・低コスト）。設定 > APPREX チャットで変更可。
-const APPREX_OPENROUTER_DEFAULT_MODEL = 'google/gemini-2.0-flash-001';
+// 安定して使える既定モデル（このアカウントで実績あり）。設定 > APPREX チャットで変更可。
+const APPREX_OPENROUTER_DEFAULT_MODEL = 'anthropic/claude-3.5-haiku';
 
 /**
  * Resolve the API key from constant or option.
@@ -139,7 +139,8 @@ function apprex_chat_system_prompt() {
 # APPREXの基本情報
 - ノーコードでiOS/Androidアプリを開発・運営できるプラットフォーム。制作代行・ホームページ制作も提供。
 - 強み：高性能・低価格（従来の1/10）・スピード公開（最短2週間）・専任サポート・分析機能。
-- 導入実績8,000+。電話窓口は無し（チャット・メール・オンライン相談、平日10:00〜18:00）。
+- 導入実績8,000+。電話窓口は無し。**AIチャットは24時間対応**。担当者（有人）対応は **9:00〜18:00**。
+- 時間外に担当者を希望された場合は、要件を伺ってAIで可能な範囲を案内し、必要ならメール相談（担当者が後ほど返信）へ誘導する。
 
 # 料金（最新・税抜）
 {$pricing}
@@ -273,13 +274,22 @@ function apprex_rest_chat( WP_REST_Request $request ) {
 		}
 	}
 
+	$payload_messages = array_merge(
+		array( array( 'role' => 'system', 'content' => $system ) ),
+		$messages
+	);
 	$reply = apprex_openrouter_complete(
-		array_merge(
-			array( array( 'role' => 'system', 'content' => $system ) ),
-			$messages
-		),
+		$payload_messages,
 		array( 'temperature' => 0.3, 'max_tokens' => 600, 'timeout' => 30 )
 	);
+
+	// 設定モデルが利用不可などで失敗した場合、安全な既定モデルで自動再試行（全件フォーム誘導の回避）。
+	if ( is_wp_error( $reply ) && apprex_openrouter_model() !== APPREX_OPENROUTER_DEFAULT_MODEL ) {
+		$reply = apprex_openrouter_complete(
+			$payload_messages,
+			array( 'model' => APPREX_OPENROUTER_DEFAULT_MODEL, 'temperature' => 0.3, 'max_tokens' => 600, 'timeout' => 30 )
+		);
+	}
 
 	if ( is_wp_error( $reply ) ) {
 		return new WP_Error( 'upstream_error', 'ただいま応答できませんでした。お手数ですがお問い合わせフォームをご利用ください。', array( 'status' => 502 ) );
