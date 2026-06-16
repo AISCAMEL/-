@@ -86,7 +86,7 @@ $apprex_agent_img_sm = get_theme_file_uri( 'assets/images/support-agent-sm.jpg' 
 	</form>
 
 	<div class="apprex-chat__foot">
-		<button type="button" class="apprex-chat__foot-btn apprex-chat__foot-btn--mail" id="apprex-chat-mail"><?php esc_html_e( '✉ メールで相談', 'apprex' ); ?></button>
+		<button type="button" class="apprex-chat__foot-btn apprex-chat__foot-btn--mail" id="apprex-chat-mail"><?php esc_html_e( '✉ メール', 'apprex' ); ?></button>
 		<a class="apprex-chat__foot-btn" href="<?php echo esc_url( apprex_page_url( 'estimate' ) ); ?>"><?php esc_html_e( '見積もり', 'apprex' ); ?></a>
 		<a class="apprex-chat__foot-btn" href="<?php echo esc_url( apprex_page_url( 'meeting' ) ); ?>"><?php esc_html_e( '相談予約', 'apprex' ); ?></a>
 		<?php $apprex_line = apprex_line_url(); ?>

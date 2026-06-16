@@ -4,7 +4,7 @@ Theme URI: https://site.aiscompany.jp/
 Author: AIS Company
 Author URI: https://site.aiscompany.jp/
 Description: クラウド型アプリ開発プラットフォーム「APPREX」公式サイト用テーマ。Hello Elementor の思想を踏襲したライセンス非依存の自作テーマ。固定ページ構成＋カスタム投稿タイプ cases によるリニューアル実装。モバイルファースト・WebP・Lazy Load 対応。
-Version: 1.4.0
+Version: 1.4.1
 Requires at least: 6.0
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -561,11 +561,12 @@ ul { margin: 0; padding: 0; list-style: none; }
 .apprex-chat__mail-result[hidden] { display: none; }
 
 /* フッター：シンプルな操作リンク行 */
-.apprex-chat__foot { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px 12px; background: #fff; border-top: 1px solid var(--color-line); }
+.apprex-chat__foot { display: flex; flex-wrap: nowrap; gap: 6px; padding: 8px 12px 12px; background: #fff; border-top: 1px solid var(--color-line); }
 .apprex-chat__foot-btn {
-  flex: 1; min-width: 64px; text-align: center; text-decoration: none; cursor: pointer;
+  flex: 1 1 0; min-width: 0; text-align: center; text-decoration: none; cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   border: 1px solid var(--color-line); background: #fff; color: var(--color-ink);
-  border-radius: 999px; padding: 8px 10px; font-size: .78rem; font-weight: 700; line-height: 1.2;
+  border-radius: 10px; padding: 9px 6px; font-size: .76rem; font-weight: 700; line-height: 1.2;
   transition: border-color .2s, color .2s, background .2s;
 }
 .apprex-chat__foot-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
