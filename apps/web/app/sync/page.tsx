@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type SyncAction =
   | { type: "unpublish"; externalId: string; reason: string }
@@ -41,10 +41,31 @@ function actionBadge(a: SyncAction) {
   );
 }
 
+interface SyncStatus {
+  enabled: boolean;
+  intervalMinutes: number;
+  schedulerRunning: boolean;
+  lastRun: SyncResult | null;
+}
+
 export default function SyncPage() {
   const [result, setResult] = useState<SyncResult | null>(null);
+  const [status, setStatus] = useState<SyncStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 起動時に定期同期の状態と前回結果を取得
+  useEffect(() => {
+    fetch("/api/sync/status")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.enabled !== undefined) {
+          setStatus(d);
+          if (d.lastRun) setResult(d.lastRun);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   async function run() {
     setLoading(true);
@@ -72,6 +93,22 @@ export default function SyncPage() {
         （実運用では定期ジョブで自動実行）
       </p>
 
+      {status && (
+        <div
+          style={{
+            display: "inline-block", padding: "8px 14px", borderRadius: 8, fontSize: 14,
+            background: status.enabled ? "#dcfce7" : "#f3f4f6",
+            color: status.enabled ? "#166534" : "#6b7280",
+            border: `1px solid ${status.enabled ? "#16a34a" : "#d1d5db"}`,
+          }}
+        >
+          {status.enabled
+            ? `🟢 自動同期：有効（${status.intervalMinutes}分ごと）`
+            : "⚪ 自動同期：無効（SYNC_INTERVAL_MINUTES で設定）"}
+        </div>
+      )}
+
+      <br />
       <button
         onClick={run} disabled={loading}
         style={{ padding: "8px 20px", background: "#2563eb", color: "#fff", border: 0, borderRadius: 8, cursor: "pointer", margin: "12px 0" }}

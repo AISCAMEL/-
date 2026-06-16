@@ -23,7 +23,8 @@ import { importProduct, publishToChannel } from "./services/listing-service.js";
 import { getOrders, getPnl } from "./services/orders-service.js";
 import { researchMarket } from "./services/research-service.js";
 import { screenCandidates } from "./services/screening-service.js";
-import { runSync } from "./services/sync-service.js";
+import { getLastRun, runSync } from "./services/sync-service.js";
+import { getSchedulerInterval, startSyncScheduler } from "./scheduler.js";
 
 export function buildServer() {
   const config = loadConfig();
@@ -157,6 +158,14 @@ export function buildServer() {
   // 在庫・価格同期を実行（欠品の自動非公開・価格更新・在庫更新・再公開）
   app.post("/sync/run", async () => runSync());
 
+  // 定期同期の状態と前回結果
+  app.get("/sync/status", async () => ({
+    enabled: config.syncIntervalMinutes > 0,
+    intervalMinutes: config.syncIntervalMinutes,
+    schedulerRunning: getSchedulerInterval() > 0,
+    lastRun: getLastRun(),
+  }));
+
   // 受注一覧（損益付き）
   app.get("/orders", async () => ({ orders: getOrders() }));
 
@@ -191,8 +200,9 @@ export function buildServer() {
 const isMain = process.argv[1] && import.meta.url.endsWith(process.argv[1].split("/").pop() ?? "");
 if (isMain) {
   const app = buildServer();
-  const port = loadConfig().port;
-  app.listen({ port, host: "0.0.0.0" }).catch((err) => {
+  const cfg = loadConfig();
+  startSyncScheduler(cfg.syncIntervalMinutes, app.log);
+  app.listen({ port: cfg.port, host: "0.0.0.0" }).catch((err) => {
     app.log.error(err);
     process.exit(1);
   });

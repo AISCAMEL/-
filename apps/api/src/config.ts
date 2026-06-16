@@ -3,6 +3,8 @@ import type { ConnectorConfig, ConnectorKey, ConnectorMode } from "@hub/connecto
 export interface AppConfig {
   port: number;
   connector: ConnectorConfig;
+  /** 在庫・価格の定期同期間隔（分）。0 で無効。 */
+  syncIntervalMinutes: number;
 }
 
 /**
@@ -63,6 +65,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const mode: ConnectorMode = env.CONNECTOR_MODE === "live" ? "live" : "mock";
   return {
     port: Number(env.API_PORT ?? 3001),
+    syncIntervalMinutes: Number(env.SYNC_INTERVAL_MINUTES ?? 0),
     connector: {
       mode,
       modes: resolveModes(env, mode),

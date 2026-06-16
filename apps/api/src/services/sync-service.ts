@@ -53,6 +53,12 @@ export interface SyncRunResult {
   summary: { unpublished: number; republished: number; priceUpdates: number; stockUpdates: number; noChange: number };
 }
 
+/** 直近の同期結果（手動・自動どちらも記録）。 */
+let lastRun: SyncRunResult | null = null;
+export function getLastRun(): SyncRunResult | null {
+  return lastRun;
+}
+
 /**
  * 在庫・価格同期を1回実行する。
  * 仕入れ先の在庫/価格を取得 → 価格再計算 → 差分アクションを算出。
@@ -96,5 +102,6 @@ export function runSync(): SyncRunResult {
     };
   });
 
-  return { ranAt: new Date().toISOString(), results, summary };
+  lastRun = { ranAt: new Date().toISOString(), results, summary };
+  return lastRun;
 }
