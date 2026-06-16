@@ -456,3 +456,7 @@ end $$;
 -- 通話タグ（VIP・要注意 等）。配列で保持し GIN インデックスで絞り込み。
 alter table calls add column if not exists tags text[] not null default '{}';
 create index if not exists idx_calls_tags on calls using gin (tags);
+
+-- FAQ表示順（管理画面で並べ替え）。
+alter table faqs add column if not exists sort_order integer not null default 0;
+create index if not exists idx_faqs_tenant_order on faqs(tenant_id, sort_order);

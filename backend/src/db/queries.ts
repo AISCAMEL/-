@@ -268,25 +268,51 @@ export async function resummarizeCall(tenantId: string, callId: string): Promise
 
 // ---------------- FAQ ----------------
 export async function listFaqs(tenantId: string) {
-  if (!dbEnabled) return demoFaqs.filter((f) => f.tenant_id === tenantId || tenantId === demoTenant.id);
-  return query<any>(`select * from faqs where tenant_id = $1 order by created_at`, [tenantId]);
+  if (!dbEnabled) {
+    return demoFaqs
+      .filter((f) => f.tenant_id === tenantId || tenantId === demoTenant.id)
+      .sort((a, b) => (a.sort_order - b.sort_order) || a.created_at.localeCompare(b.created_at));
+  }
+  return query<any>(`select * from faqs where tenant_id = $1 order by sort_order, created_at`, [tenantId]);
 }
 
 export async function createFaq(tenantId: string, input: Partial<DemoFaq>) {
   if (!dbEnabled) {
+    const maxOrder = demoFaqs.filter((f) => f.tenant_id === tenantId || tenantId === demoTenant.id)
+      .reduce((m, f) => Math.max(m, f.sort_order), 0);
     const f: DemoFaq = {
       id: newId('faq'), tenant_id: tenantId, question: input.question ?? '', answer: input.answer ?? '',
       category: input.category ?? null, keywords: input.keywords ?? [], is_active: input.is_active ?? true,
+      sort_order: maxOrder + 1,
       created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
     };
     demoFaqs.push(f);
     return f;
   }
   const [row] = await query<any>(
-    `insert into faqs (tenant_id, question, answer, category, keywords, is_active)
-     values ($1,$2,$3,$4,$5,$6) returning *`,
+    `insert into faqs (tenant_id, question, answer, category, keywords, is_active, sort_order)
+     values ($1,$2,$3,$4,$5,$6, coalesce((select max(sort_order)+1 from faqs where tenant_id=$1),1)) returning *`,
     [tenantId, input.question, input.answer, input.category ?? null, input.keywords ?? [], input.is_active ?? true]);
   return row;
+}
+
+/** FAQの表示順を上下に入れ替える。 */
+export async function moveFaq(tenantId: string, faqId: string, dir: 'up' | 'down') {
+  const list = (await listFaqs(tenantId)) as any[];
+  const idx = list.findIndex((f) => f.id === faqId);
+  if (idx === -1) return false;
+  const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
+  if (swapIdx < 0 || swapIdx >= list.length) return true; // 端なら何もしない
+  const a = list[idx], b = list[swapIdx];
+  if (!dbEnabled) {
+    const fa = demoFaqs.find((f) => f.id === a.id)!;
+    const fb = demoFaqs.find((f) => f.id === b.id)!;
+    const tmp = fa.sort_order; fa.sort_order = fb.sort_order; fb.sort_order = tmp;
+    return true;
+  }
+  await query(`update faqs set sort_order=$3 where id=$1 and tenant_id=$2`, [a.id, tenantId, b.sort_order]);
+  await query(`update faqs set sort_order=$3 where id=$1 and tenant_id=$2`, [b.id, tenantId, a.sort_order]);
+  return true;
 }
 
 export async function updateFaq(tenantId: string, faqId: string, input: Partial<DemoFaq>) {

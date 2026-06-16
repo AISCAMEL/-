@@ -26,6 +26,7 @@ export default function FaqsPage() {
     if (!confirm('このFAQを削除しますか？')) return;
     await api.deleteFaq(id); load();
   }
+  async function move(id: string, dir: 'up' | 'down') { await api.moveFaq(id, dir); load(); }
 
   return (
     <div>
@@ -55,7 +56,7 @@ export default function FaqsPage() {
       )}
 
       <div className="space-y-3">
-        {faqs.map((f) => (
+        {faqs.map((f, i) => (
           <Card key={f.id} className={f.is_active ? '' : 'opacity-50'}>
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -63,7 +64,13 @@ export default function FaqsPage() {
                 <p className="font-medium">Q. {f.question}</p>
                 <p className="mt-1 text-sm text-gray-600">A. {f.answer}</p>
               </div>
-              <div className="flex shrink-0 gap-3 text-sm">
+              <div className="flex shrink-0 items-center gap-3 text-sm">
+                <div className="flex flex-col">
+                  <button onClick={() => move(f.id, 'up')} disabled={i === 0}
+                    className="text-gray-400 hover:text-brand disabled:opacity-30" aria-label="上へ">▲</button>
+                  <button onClick={() => move(f.id, 'down')} disabled={i === faqs.length - 1}
+                    className="text-gray-400 hover:text-brand disabled:opacity-30" aria-label="下へ">▼</button>
+                </div>
                 <button onClick={() => toggle(f)} className="text-gray-500 hover:underline">{f.is_active ? '無効化' : '有効化'}</button>
                 <button onClick={() => setEditing(f)} className="text-brand hover:underline">編集</button>
                 <button onClick={() => remove(f.id)} className="text-red-500 hover:underline">削除</button>

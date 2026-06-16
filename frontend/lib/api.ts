@@ -43,6 +43,7 @@ export const api = {
   createFaq: (body: any) => request<any>('/api/faqs', { method: 'POST', body: JSON.stringify(body) }),
   updateFaq: (id: string, body: any) => request<any>(`/api/faqs/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteFaq: (id: string) => request<any>(`/api/faqs/${id}`, { method: 'DELETE' }),
+  moveFaq: (id: string, dir: 'up' | 'down') => request<any>(`/api/faqs/${id}/move`, { method: 'POST', body: JSON.stringify({ dir }) }),
 
   aiSettings: () => request<any>('/api/settings/ai'),
   saveAiSettings: (body: any) => request<any>('/api/settings/ai', { method: 'PUT', body: JSON.stringify(body) }),

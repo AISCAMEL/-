@@ -31,6 +31,7 @@ export interface DemoCall {
 export interface DemoFaq {
   id: string; tenant_id: string; question: string; answer: string;
   category: string | null; keywords: string[]; is_active: boolean;
+  sort_order: number;
   created_at: string; updated_at: string;
 }
 
@@ -124,9 +125,9 @@ export const demoCalls: DemoCall[] = [
 ];
 
 export const demoFaqs: DemoFaq[] = [
-  { id: 'faq-1', tenant_id: TENANT, question: '営業時間を教えてください', answer: '営業時間は、平日10時から18時までです。土日祝日はお休みです。', category: '営業案内', keywords: ['営業時間', '何時'], is_active: true, created_at: iso(-1000), updated_at: iso(-1000) },
-  { id: 'faq-2', tenant_id: TENANT, question: '駐車場はありますか', answer: '近隣のコインパーキングをご利用ください。提携駐車場はございません。', category: '営業案内', keywords: ['駐車場', '車'], is_active: true, created_at: iso(-1000), updated_at: iso(-1000) },
-  { id: 'faq-3', tenant_id: TENANT, question: 'カットの料金はいくらですか', answer: 'カットは4,400円からとなっております。詳細は担当者よりご案内いたします。', category: '料金', keywords: ['料金', 'カット'], is_active: true, created_at: iso(-1000), updated_at: iso(-1000) },
+  { id: 'faq-1', tenant_id: TENANT, question: '営業時間を教えてください', answer: '営業時間は、平日10時から18時までです。土日祝日はお休みです。', category: '営業案内', keywords: ['営業時間', '何時'], is_active: true, sort_order: 1, created_at: iso(-1000), updated_at: iso(-1000) },
+  { id: 'faq-2', tenant_id: TENANT, question: '駐車場はありますか', answer: '近隣のコインパーキングをご利用ください。提携駐車場はございません。', category: '営業案内', keywords: ['駐車場', '車'], is_active: true, sort_order: 2, created_at: iso(-1000), updated_at: iso(-1000) },
+  { id: 'faq-3', tenant_id: TENANT, question: 'カットの料金はいくらですか', answer: 'カットは4,400円からとなっております。詳細は担当者よりご案内いたします。', category: '料金', keywords: ['料金', 'カット'], is_active: true, sort_order: 3, created_at: iso(-1000), updated_at: iso(-1000) },
 ];
 
 export interface DemoUser {

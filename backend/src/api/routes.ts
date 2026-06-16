@@ -169,6 +169,14 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     if (!ok) return reply.code(404).send({ error: 'not found' });
     return { ok: true };
   });
+  app.post('/api/faqs/:id/move', { preHandler: authenticate }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const { dir } = (req.body ?? {}) as { dir?: string };
+    if (dir !== 'up' && dir !== 'down') return reply.code(400).send({ error: 'dir must be up or down' });
+    await q.moveFaq(p.tenantId, (req.params as any).id, dir);
+    return { ok: true };
+  });
 
   // ---- settings ----
   app.get('/api/settings/ai', { preHandler: authenticate }, async (req, reply) => {
