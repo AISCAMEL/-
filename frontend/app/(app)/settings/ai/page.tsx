@@ -16,12 +16,16 @@ export default function AiSettingsPage() {
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setMsg('保存中…');
-    await api.saveAiSettings({
-      greeting_message: s.greeting_message, ai_tone: s.ai_tone,
-      transfer_phone_number: s.transfer_phone_number, human_transfer_enabled: s.human_transfer_enabled,
-      recording_enabled: s.recording_enabled, fallback_message: s.fallback_message,
-    });
-    setMsg('保存しました。');
+    try {
+      await api.saveAiSettings({
+        greeting_message: s.greeting_message, ai_tone: s.ai_tone,
+        transfer_phone_number: s.transfer_phone_number, human_transfer_enabled: s.human_transfer_enabled,
+        recording_enabled: s.recording_enabled, fallback_message: s.fallback_message,
+      });
+      setMsg('保存しました。');
+    } catch (err: any) {
+      setMsg(`エラー: ${parseErr(err)}`);
+    }
   }
 
   return (
@@ -71,4 +75,12 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
       {label}
     </label>
   );
+}
+
+// エラーメッセージからサーバーの error 文言を抽出
+function parseErr(err: any): string {
+  const m = String(err?.message ?? err);
+  const i = m.indexOf('{');
+  if (i >= 0) { try { return JSON.parse(m.slice(i)).error ?? m; } catch { /* noop */ } }
+  return m;
 }

@@ -16,12 +16,18 @@ export default function NotificationSettingsPage() {
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setMsg('保存中…');
-    await api.saveNotificationSettings({
-      notification_email: s.notification_email, slack_webhook_url: s.slack_webhook_url,
-      notify_on_call_end: s.notify_on_call_end, notify_on_callback: s.notify_on_callback,
-      notify_on_transfer: s.notify_on_transfer,
-    });
-    setMsg('保存しました。');
+    try {
+      await api.saveNotificationSettings({
+        notification_email: s.notification_email, slack_webhook_url: s.slack_webhook_url,
+        notify_on_call_end: s.notify_on_call_end, notify_on_callback: s.notify_on_callback,
+        notify_on_transfer: s.notify_on_transfer,
+      });
+      setMsg('保存しました。');
+    } catch (err: any) {
+      const m = String(err?.message ?? err);
+      const i = m.indexOf('{');
+      setMsg(`エラー: ${i >= 0 ? (() => { try { return JSON.parse(m.slice(i)).error ?? m; } catch { return m; } })() : m}`);
+    }
   }
 
   return (

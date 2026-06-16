@@ -6,6 +6,28 @@ import { getSettings } from '../db/queries.js';
 import { tenantTestReply, type TestTurn } from '../ai/testchat.js';
 import { sendWeeklyDigest } from '../notify/digest.js';
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// 設定更新時の入力検証。問題があればエラーメッセージ、なければ null。
+function validateSettingsPatch(patch: Record<string, unknown>): string | null {
+  const email = patch.notification_email;
+  if (typeof email === 'string' && email.trim() && !EMAIL_RE.test(email.trim())) {
+    return '通知先メールアドレスの形式が正しくありません。';
+  }
+  const phone = patch.transfer_phone_number;
+  if (typeof phone === 'string' && phone.trim()) {
+    const digits = phone.replace(/[\s-]/g, '');
+    if (!/^\+?\d{10,15}$/.test(digits)) {
+      return '転送先電話番号の形式が正しくありません（例: +81901234567 または 0901234567）。';
+    }
+  }
+  const slack = patch.slack_webhook_url;
+  if (typeof slack === 'string' && slack.trim() && !/^https:\/\/hooks\.slack\.com\//.test(slack.trim())) {
+    return 'Slack Webhook URL は https://hooks.slack.com/ で始まる必要があります。';
+  }
+  return null;
+}
+
 // 管理画面 API（docs/api.md 準拠）。全エンドポイントは JWT(またはdevモード) 認証必須。
 export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
   // テナント未解決(super_admin が tenant 指定なし)の保護
@@ -157,7 +179,10 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
   app.put('/api/settings/ai', { preHandler: authenticate }, async (req, reply) => {
     const p = req.principal!;
     if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
-    return q.updateSettings(p.tenantId, (req.body ?? {}) as Record<string, unknown>);
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const err = validateSettingsPatch(body);
+    if (err) return reply.code(400).send({ error: err });
+    return q.updateSettings(p.tenantId, body);
   });
   app.get('/api/settings/notification', { preHandler: authenticate }, async (req, reply) => {
     const p = req.principal!;
@@ -167,7 +192,10 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
   app.put('/api/settings/notification', { preHandler: authenticate }, async (req, reply) => {
     const p = req.principal!;
     if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
-    return q.updateSettings(p.tenantId, (req.body ?? {}) as Record<string, unknown>);
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const err = validateSettingsPatch(body);
+    if (err) return reply.code(400).send({ error: err });
+    return q.updateSettings(p.tenantId, body);
   });
 
   // ---- phone numbers ----
