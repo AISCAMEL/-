@@ -21,6 +21,37 @@
 
 ---
 
+## 0.5 ドメイン・サーバー準備 ＝ **`auc.aiscompany.jp`（サブドメイン）／既存WPサーバー**
+
+> 確定方針：既存の `aiscompany.jp` が動いているサーバーに**サブドメインを追加**し、そこへLP用のWordPressを置く。追加費用はほぼ無し。
+
+### A-1. サブドメインを作成
+1. サーバーのコントロールパネル（エックスサーバーなら「サーバーパネル」）→ **「サブドメイン設定」**。
+2. 対象ドメイン `aiscompany.jp` を選び、サブドメイン名に **`auc`** を入力して追加。
+   → `auc.aiscompany.jp` と、その公開フォルダ（例 `/aiscompany.jp/public_html/auc/`）が作られます。
+3. 反映まで数分〜最大1時間ほど待つ（DNS反映）。
+
+### A-2. SSL（https化）
+1. コントロールパネル →「SSL設定」→ `auc.aiscompany.jp` に**無料SSL（Let's Encrypt）を有効化**。
+2. 反映後 `https://auc.aiscompany.jp` で鍵マークが出ることを確認。
+
+### A-3. このサブドメインにWordPressをインストール
+- パネルの **「WordPress簡単インストール」** で、インストール先を **`auc.aiscompany.jp`** に指定して新規インストール。
+  - 本体 `aiscompany.jp` とは**別のWordPress**になるので、本体に影響しません。
+  - サイトタイトル例：`AUC-AGENT｜車のオークション代行`。
+- 管理画面 `https://auc.aiscompany.jp/wp-admin/` にログインできればOK。
+
+### A-4. 初期設定（最低限）
+- 「設定」→「一般」：サイトアドレスが `https://auc.aiscompany.jp` になっているか確認。
+- 「設定」→「パーマリンク」：`投稿名` などに設定。
+- 不要な初期投稿・プラグインは削除/停止。
+
+> この後、**STEP1（LPtools有効化）以降**に進みます。会員ページ（`login.html`/`mypage.html`）は
+> 同じサブドメイン配下のサブディレクトリ（例 `auc.aiscompany.jp/member/`）に静的設置しても、
+> 別ホスティングでもOK。CTAのURLで繋ぎます。
+
+---
+
 ## STEP 1. LPtools を有効化
 1. WordPress管理画面 →「プラグイン」→ LPtools をインストール・有効化（ライセンス認証）。
 2. 「LPtools」メニューが出ることを確認。
