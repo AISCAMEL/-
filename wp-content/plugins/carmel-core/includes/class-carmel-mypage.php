@@ -148,7 +148,75 @@ class Carmel_MyPage {
 			$out .= $this->render_after_service( $deal );
 		}
 
+		// Repayment schedule / status (loan & lease).
+		$out .= $this->render_repayments( $deal );
+
 		$out .= '</div>';
+		return $out;
+	}
+
+	/**
+	 * Render the deal's repayment schedule with paid / upcoming / overdue state.
+	 *
+	 * @param WP_Post $deal
+	 * @return string
+	 */
+	private function render_repayments( WP_Post $deal ) {
+		$rows = get_posts(
+			array(
+				'post_type'      => 'carmel_repayment',
+				'post_status'    => 'publish',
+				'posts_per_page' => 60,
+				'meta_query'     => array(
+					array( 'key' => 'deal_id', 'value' => $deal->ID ),
+				),
+				'meta_key'       => 'due_date',
+				'orderby'        => 'meta_value',
+				'order'          => 'ASC',
+			)
+		);
+		if ( empty( $rows ) ) {
+			return '';
+		}
+
+		$today      = strtotime( current_time( 'Y-m-d' ) );
+		$paid_count = 0;
+		$next_due   = null;
+		$body       = '';
+
+		foreach ( $rows as $r ) {
+			$due    = get_post_meta( $r->ID, 'due_date', true );
+			$amount = (float) get_post_meta( $r->ID, 'amount', true );
+			$paid    = (string) get_post_meta( $r->ID, 'paid_flag', true );
+			$is_paid = in_array( $paid, array( '1', 'yes', 'true' ), true );
+
+			$state_cls = 'carmel-rp-upcoming';
+			$state_txt = '予定';
+			if ( $is_paid ) {
+				$state_cls = 'carmel-rp-paid';
+				$state_txt = '入金済';
+				$paid_count++;
+			} elseif ( $due && strtotime( $due ) < $today ) {
+				$state_cls = 'carmel-rp-overdue';
+				$delay     = (int) get_post_meta( $r->ID, 'delay_days', true );
+				$state_txt = '延滞' . ( $delay ? '（' . $delay . '日）' : '' );
+			} elseif ( null === $next_due && $due ) {
+				$next_due = $due;
+			}
+
+			$body .= '<tr class="' . $state_cls . '"><td>' . esc_html( $due ) . '</td>'
+				. '<td>¥' . esc_html( number_format( $amount ) ) . '</td>'
+				. '<td>' . esc_html( $state_txt ) . '</td></tr>';
+		}
+
+		$out  = '<div class="carmel-repay"><h4>返済状況</h4>';
+		$out .= '<p class="carmel-repay-sum">入金済 ' . (int) $paid_count . ' / ' . count( $rows ) . ' 回';
+		if ( $next_due ) {
+			$out .= '　次回お支払い：<strong>' . esc_html( $next_due ) . '</strong>';
+		}
+		$out .= '</p>';
+		$out .= '<table class="carmel-repay-table"><thead><tr><th>支払期日</th><th>金額</th><th>状況</th></tr></thead><tbody>'
+			. $body . '</tbody></table></div>';
 		return $out;
 	}
 
@@ -310,6 +378,15 @@ class Carmel_MyPage {
 .carmel-after-title{font-size:.8em;color:#888}
 .carmel-after-date{font-weight:bold}
 .carmel-after-days{font-size:.85em;color:#e67e22;font-weight:bold}
+.carmel-repay{margin-top:1.2em;border-top:1px dashed #e0e3ea;padding-top:1em}
+.carmel-repay h4{margin:0 0 .4em}
+.carmel-repay-sum{font-size:.9em;margin:.2em 0 .6em}
+.carmel-repay-table{width:100%;border-collapse:collapse;font-size:.9em}
+.carmel-repay-table th,.carmel-repay-table td{border:1px solid #eef0f4;padding:.35em .6em;text-align:left}
+.carmel-repay-table th{background:#f4f6fb}
+.carmel-rp-paid td{color:#0e6e58}
+.carmel-rp-overdue td{color:#a5281b;font-weight:bold;background:#fdecea}
+.carmel-rp-upcoming td{color:#555}
 .carmel-notice{padding:1em;background:#f4f6fb;border:1px solid #cdd2dc;border-radius:.4em}
 </style>';
 	}
