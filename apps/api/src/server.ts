@@ -43,6 +43,13 @@ export function buildServer() {
 
   app.get("/health", async () => ({ ok: true, mode: config.connector.mode }));
 
+  // ルート: サービス稼働の確認用（ブラウザで開いたとき向け）
+  app.get("/", async () => ({
+    service: "dropshipping-hub-api",
+    status: "ok",
+    endpoints: ["/health", "/connectors", "/niche/cat-goods", "/research", "/research/screen", "/orders", "/dashboard/pnl", "/sync/run", "/sync/status"],
+  }));
+
   // 各コネクタの実効モード（mock | live）。どのデータ源が本番接続かを確認する。
   app.get("/connectors", async () => ({
     defaultMode: config.connector.mode,
