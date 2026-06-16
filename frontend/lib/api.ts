@@ -71,6 +71,8 @@ export const api = {
   usage: (month?: string) => request<any>(`/api/usage${month ? `?month=${month}` : ''}`),
   adminUsage: (month?: string) => request<any>(`/api/admin/usage${month ? `?month=${month}` : ''}`),
   invoice: (month?: string) => request<any>(`/api/usage/invoice${month ? `?month=${month}` : ''}`),
+  billing: () => request<any>('/api/billing'),
+  invoiceOverage: (month?: string) => request<any>('/api/billing/invoice-overage', { method: 'POST', body: JSON.stringify({ month }) }),
 
   // リード管理（運営・super_admin）
   overview: () => request<any>('/api/admin/overview'),

@@ -5,6 +5,7 @@ import { sendCallNotification } from '../notify/email.js';
 import { getSettings } from '../db/queries.js';
 import { tenantTestReply, type TestTurn } from '../ai/testchat.js';
 import { sendWeeklyDigest } from '../notify/digest.js';
+import { getBillingStatus, createOverageInvoice } from '../billing/square.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -243,6 +244,19 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     const p = req.principal!;
     if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
     return sendWeeklyDigest(p.tenantId);
+  });
+
+  // ---- 請求（Square） ----
+  app.get('/api/billing', { preHandler: authenticate }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    return getBillingStatus(p.tenantId);
+  });
+  app.post('/api/billing/invoice-overage', { preHandler: requireRole(['owner', 'admin', 'super_admin']) }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const { month } = (req.body ?? {}) as { month?: string };
+    return createOverageInvoice(p.tenantId, month);
   });
 
   // ---- usage / 原価モニタリング ----

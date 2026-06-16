@@ -11,6 +11,7 @@ const tenantNav = [
   { href: '/calls', label: '通話履歴', icon: '📞' },
   { href: '/ai-test', label: 'AI応対テスト', icon: '🎙️' },
   { href: '/usage', label: '利用状況・原価', icon: '💰' },
+  { href: '/billing', label: 'お支払い', icon: '💳' },
   { href: '/faqs', label: 'FAQ管理', icon: '❓' },
   { href: '/settings/ai', label: 'AI設定', icon: '🤖' },
   { href: '/settings/notification', label: '通知設定', icon: '✉️' },

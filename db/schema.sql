@@ -460,3 +460,7 @@ create index if not exists idx_calls_tags on calls using gin (tags);
 -- FAQ表示順（管理画面で並べ替え）。
 alter table faqs add column if not exists sort_order integer not null default 0;
 create index if not exists idx_faqs_tenant_order on faqs(tenant_id, sort_order);
+
+-- 決済（Square）連携用。テナントごとの Square 顧客/サブスクID。
+alter table tenants add column if not exists square_customer_id text;
+alter table tenants add column if not exists square_subscription_id text;
