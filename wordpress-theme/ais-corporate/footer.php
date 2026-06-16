@@ -12,7 +12,7 @@ $ais_site = ais_site();
 		<div class="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
 			<div>
 				<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="flex items-center gap-2.5">
-					<img src="<?php echo esc_url( get_theme_file_uri( '/assets/img/logo-mark.svg' ) ); ?>" alt="" class="h-9 w-9" width="36" height="36">
+					<img src="<?php echo esc_url( get_theme_file_uri( '/assets/img/logo-mark.png' ) ); ?>" alt="" class="h-9 w-auto" width="204" height="176">
 					<span class="flex flex-col leading-none">
 						<span class="text-base font-bold text-white"><?php echo esc_html( $ais_site['name'] ); ?></span>
 						<span class="text-[10px] tracking-wider text-brand-300"><?php echo esc_html( $ais_site['tagline'] ); ?></span>

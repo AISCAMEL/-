@@ -20,7 +20,7 @@ $ais_site = ais_site();
 <header class="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur">
 	<div class="container flex h-16 items-center justify-between gap-4">
 		<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="flex items-center" aria-label="<?php echo esc_attr( $ais_site['name'] . ' ホーム' ); ?>">
-			<img src="<?php echo esc_url( get_theme_file_uri( '/assets/img/logo.svg' ) ); ?>" alt="<?php echo esc_attr( $ais_site['name'] . '（AIS）' ); ?>" class="h-9 w-auto sm:h-10" width="128" height="40">
+			<img src="<?php echo esc_url( get_theme_file_uri( '/assets/img/logo.png' ) ); ?>" alt="<?php echo esc_attr( $ais_site['name'] . '（AIS）' ); ?>" class="h-8 w-auto sm:h-9" width="576" height="220">
 		</a>
 
 		<nav class="hidden items-center gap-1 lg:flex" aria-label="メインナビゲーション">
