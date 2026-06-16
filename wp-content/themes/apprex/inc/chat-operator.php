@@ -84,6 +84,19 @@ function apprex_chat_op_session_by_thread( $thread_ts ) {
 	return (string) get_transient( 'apprex_chat_th_' . md5( $thread_ts ) );
 }
 
+/**
+ * 直近にアクティブだったセッションを記録／取得。
+ * チャンネルへ「直接投稿」された担当者返信を、この会話へ振り分けるために使う。
+ */
+function apprex_chat_op_set_last( $session ) {
+	if ( '' !== (string) $session ) {
+		set_transient( 'apprex_chat_op_last', (string) $session, APPREX_OP_TTL );
+	}
+}
+function apprex_chat_op_get_last() {
+	return (string) get_transient( 'apprex_chat_op_last' );
+}
+
 /* -------------------------------------------------------------------------
  * Slack Web API
  * ---------------------------------------------------------------------- */
@@ -134,6 +147,7 @@ function apprex_slack_post_to_thread( $session, $text, $meta = array() ) {
 		return;
 	}
 	$data = apprex_chat_op_get( $session );
+	apprex_chat_op_set_last( $session ); // 直近アクティブな会話として記録（直接返信の振り分け用）。
 
 	// 親スレッドが無ければ作成（ブロッキングで ts を取得）。
 	if ( '' === $data['thread_ts'] ) {
@@ -144,7 +158,7 @@ function apprex_slack_post_to_thread( $session, $text, $meta = array() ) {
 		if ( ! empty( $meta['member'] ) ) {
 			$header .= "会員: " . $meta['member'] . "\n";
 		}
-		$header .= "↩️ このスレッドに返信するとお客様の画面に表示されます（`/ai` でAI応答に戻す）。";
+		$header .= "↩️ このスレッドに返信するか、チャンネルに直接書き込むとお客様の画面に表示されます（`/ai` でAI応答に戻す）。";
 
 		$root = apprex_slack_api( 'chat.postMessage', array( 'channel' => $channel, 'text' => $header ), true );
 		if ( is_array( $root ) && ! empty( $root['ok'] ) && ! empty( $root['ts'] ) ) {
@@ -365,12 +379,21 @@ function apprex_rest_slack_events( WP_REST_Request $request ) {
 	if ( ! empty( $event['bot_id'] ) || isset( $event['subtype'] ) || empty( $event['user'] ) ) {
 		return rest_ensure_response( array( 'ok' => true ) );
 	}
-	// スレッド返信のみ対象（親メッセージそのものは除外）。
-	$thread_ts = isset( $event['thread_ts'] ) ? (string) $event['thread_ts'] : '';
-	if ( '' === $thread_ts || $thread_ts === ( $event['ts'] ?? '' ) ) {
-		return rest_ensure_response( array( 'ok' => true ) );
+	// 返信の振り分け：
+	//  ① スレッド返信 → そのスレッドに対応するセッションへ（複数同時対応でも正確）。
+	//  ② チャンネルへの直接投稿 → 直近のアクティブな会話へ（手軽だが1対1向け）。
+	$channel_id = isset( $event['channel'] ) ? (string) $event['channel'] : '';
+	$thread_ts  = isset( $event['thread_ts'] ) ? (string) $event['thread_ts'] : '';
+	$is_thread_reply = ( '' !== $thread_ts && $thread_ts !== ( $event['ts'] ?? '' ) );
+
+	if ( $is_thread_reply ) {
+		$session = apprex_chat_op_session_by_thread( $thread_ts );
+	} elseif ( '' === $thread_ts && '' !== apprex_slack_channel() && $channel_id === apprex_slack_channel() ) {
+		// スレッド外の直接投稿は、転送先チャンネルのものだけを直近会話へ振り分ける。
+		$session = apprex_chat_op_get_last();
+	} else {
+		$session = '';
 	}
-	$session = apprex_chat_op_session_by_thread( $thread_ts );
 	if ( '' === $session ) {
 		return rest_ensure_response( array( 'ok' => true ) );
 	}
@@ -478,10 +501,13 @@ function apprex_operator_settings_page() {
 		<ol>
 			<li>api.slack.com/apps でアプリを作成 → <strong>OAuth &amp; Permissions</strong> で <code>chat:write</code> を付与しワークスペースにインストール。</li>
 			<li>Bot を転送先チャンネルに招待（<code>/invite @アプリ名</code>）。</li>
-			<li><strong>Event Subscriptions</strong> を ON にして Request URL に以下を設定：<br>
+			<li><strong>Event Subscriptions</strong> を ON にして Request URL に以下を設定し、「<strong>Verified</strong>」になることを確認：<br>
 				<code><?php echo esc_html( $events_url ); ?></code></li>
-			<li>「Subscribe to bot events」で <code>message.channels</code>（公開チャンネル）または <code>message.groups</code>（非公開）を追加して再インストール。</li>
+			<li>「<strong>Subscribe to bot events</strong>」で <code>message.channels</code>（公開チャンネル）または <code>message.groups</code>（非公開チャンネル）を追加。</li>
+			<li>変更後は必ず <strong>「Reinstall to Workspace」でアプリを再インストール</strong>（権限の反映に必須）。</li>
 		</ol>
+		<p><strong>返信方法</strong>：通知スレッドへ返信／チャンネルに直接書き込み、どちらでもお客様に届きます。
+		<br>※ 直接書き込みは「直近のお客様」へ送られます。複数のお客様を同時対応する場合や、社内の雑談が混ざる場合は<strong>スレッド返信</strong>を推奨（このチャットは専用チャンネルでの運用を推奨します）。</p>
 		<p>現在の状態：<strong><?php echo apprex_chat_op_enabled() ? '✅ 有効' : '⛔ 未設定（3項目すべて入力で有効になります）'; ?></strong></p>
 	</div>
 	<?php
