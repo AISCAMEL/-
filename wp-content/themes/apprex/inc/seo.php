@@ -2,8 +2,11 @@
 /**
  * SEO / LLMO 強化。
  *
- * - meta description / Open Graph / Twitter Card
- * - 構造化データ JSON-LD（Organization, WebSite, BreadcrumbList, Article, FAQPage）
+ * - タイトル整形（document_title_parts / separator）＋ページ別の最適タイトル
+ * - meta description（ページ別に最適化）/ Open Graph / Twitter Card
+ * - canonical（全ページタイプ対応）
+ * - robots（検索結果・404 を noindex）
+ * - 構造化データ JSON-LD（Organization, WebSite, Service, BreadcrumbList, Article, FAQPage）
  * - /llms.txt（LLM 向けサイト要約）
  *
  * @package APPREX
@@ -13,13 +16,110 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+const APPREX_BRAND = 'APPREX（アプリックス）';
+
+/**
+ * ページ別の SEO タイトル・説明文（スラッグ基準）。
+ * キー 'front' はトップページ。
+ *
+ * @return array<string,array{title:string,desc:string}>
+ */
+function apprex_seo_pages() {
+	return array(
+		'front'       => array(
+			'title' => 'ノーコードアプリ開発プラットフォーム',
+			'desc'  => 'ノーコードでiOS/Androidアプリを開発できるクラウド型プラットフォーム「APPREX（アプリックス）」。高性能・低価格（従来の1/10）・最短2週間で公開。アプリ制作代行・ホームページ制作も。合同会社アイズ運営。',
+		),
+		'features'    => array(
+			'title' => 'APPREXの特徴',
+			'desc'  => 'APPREXが選ばれる理由。高性能・低価格（従来の1/10）・最短2週間で公開・専任サポート・分析機能。8,000社以上の導入実績を持つノーコードアプリ開発プラットフォームの特徴をご紹介します。',
+		),
+		'functions'   => array(
+			'title' => 'アプリ機能一覧',
+			'desc'  => 'プッシュ通知・予約・EC・会員管理・電子スタンプ・分析など、APPREXで実装できる主要機能をご紹介。ノーコードで多彩なアプリ機能を低コストに実現できます。',
+		),
+		'pricing'     => array(
+			'title' => '料金プラン',
+			'desc'  => 'アプリ開発は月額19,800円〜・初期費用0円。明朗な料金プランとオプションをご案内します。見積もりフォームから概算の確認と、そのままオンライン発注も可能です。',
+		),
+		'estimate'    => array(
+			'title' => '無料見積もり・オンライン発注',
+			'desc'  => 'サービスとオプションを選ぶだけで、アプリ開発費用の概算を自動計算。お見積りからそのままオンラインで発注まで進められます。初期費用0円・月額19,800円〜。',
+		),
+		'hp-creation' => array(
+			'title' => 'ホームページ制作',
+			'desc'  => 'スマホ対応・SEO・集客に強いホームページ制作。アプリと連携した一貫した集客導線を、低価格・スピード納品でご提供します。',
+		),
+		'document'    => array(
+			'title' => '資料請求（無料）',
+			'desc'  => 'APPREXのサービス資料を無料でダウンロードいただけます。機能・料金・導入事例をまとめた資料で、アプリ導入の検討にお役立てください。',
+		),
+		'free-trial'  => array(
+			'title' => '無料体験のお申し込み',
+			'desc'  => 'APPREXを無料でお試しいただけます。ノーコードでのアプリ開発を、実際の管理画面で体験してみませんか。お気軽にお申し込みください。',
+		),
+		'contact'     => array(
+			'title' => 'お問い合わせ',
+			'desc'  => 'APPREX（アプリックス）へのお問い合わせはこちら。アプリ開発・ホームページ制作・料金・お見積りなど、お気軽にご相談ください。',
+		),
+		'meeting'     => array(
+			'title' => 'オンライン相談のご予約',
+			'desc'  => 'APPREXの担当者とオンラインで無料相談。アプリ開発の進め方・費用・機能など、ご希望の日時でお気軽にご相談いただけます（平日10:00〜18:00）。',
+		),
+		'faq'         => array(
+			'title' => 'よくある質問（FAQ）',
+			'desc'  => 'APPREX（アプリックス）に関するよくあるご質問と回答。料金・開発期間・対応OS・サポート体制など、導入前の疑問を解消できます。',
+		),
+		'company'     => array(
+			'title' => '会社概要',
+			'desc'  => 'APPREXを運営する「合同会社アイズ」の会社概要。所在地・事業内容・沿革をご紹介します。',
+		),
+		'partner'     => array(
+			'title' => 'パートナー募集',
+			'desc'  => 'APPREXのパートナー（代理店・紹介）を募集しています。アプリ開発・ホームページ制作で一緒にビジネスを広げませんか。',
+		),
+		'blog'        => array(
+			'title' => 'お役立ちブログ',
+			'desc'  => 'アプリ開発・ノーコード・集客・DXに関するお役立ち情報を発信。APPREX編集部によるコラムをお届けします。',
+		),
+	);
+}
+
+/**
+ * 現在ページに対応する SEO 設定を返す（無ければ null）。
+ *
+ * @return array{title:string,desc:string}|null
+ */
+function apprex_current_seo() {
+	$map = apprex_seo_pages();
+	if ( is_front_page() ) {
+		return $map['front'];
+	}
+	if ( is_page() ) {
+		$post = get_queried_object();
+		if ( $post instanceof WP_Post && isset( $map[ $post->post_name ] ) ) {
+			return $map[ $post->post_name ];
+		}
+	}
+	if ( is_post_type_archive( 'apprex_case' ) || is_singular( 'apprex_case' ) ) {
+		return array(
+			'title' => is_singular( 'apprex_case' ) ? get_the_title() : '導入事例',
+			'desc'  => 'APPREXで開発されたアプリの導入事例をご紹介。業種別の活用方法や成果から、自社アプリのイメージを具体化できます。',
+		);
+	}
+	return null;
+}
+
 /**
  * 現在ページの説明文（meta description / OG 用）。
  *
  * @return string
  */
 function apprex_meta_description() {
-	$default = 'ノーコードでiOS/Androidアプリを開発できるクラウド型プラットフォーム「APPREX（アプリックス）」。高性能・低価格（従来の1/10）・スピード公開（最短2週間）。制作代行・ホームページ制作も。合同会社アイズ運営。';
+	$seo = apprex_current_seo();
+	if ( $seo && ! is_singular( 'post' ) ) {
+		return $seo['desc'];
+	}
 	if ( is_singular() ) {
 		$post = get_queried_object();
 		if ( $post && has_excerpt( $post ) ) {
@@ -33,8 +133,70 @@ function apprex_meta_description() {
 			}
 		}
 	}
-	return $default;
+	return apprex_seo_pages()['front']['desc'];
 }
+
+/* -------------------------------------------------------------------------
+ * タイトル整形
+ * ---------------------------------------------------------------------- */
+add_filter( 'document_title_separator', function () {
+	return '｜';
+} );
+
+add_filter( 'document_title_parts', function ( $parts ) {
+	$seo = apprex_current_seo();
+	if ( is_front_page() ) {
+		$parts = array(
+			'title' => apprex_seo_pages()['front']['title'],
+			'site'  => APPREX_BRAND,
+		);
+		return $parts;
+	}
+	if ( $seo && empty( $parts['title'] ) === false ) {
+		$parts['title'] = $seo['title'];
+	}
+	$parts['site'] = APPREX_BRAND;
+	return $parts;
+} );
+
+/* -------------------------------------------------------------------------
+ * canonical（コア標準は singular のみ → 全ページタイプに対応）
+ * ---------------------------------------------------------------------- */
+remove_action( 'wp_head', 'rel_canonical' );
+add_action( 'wp_head', 'apprex_canonical', 1 );
+function apprex_canonical() {
+	$url = '';
+	if ( is_front_page() ) {
+		$url = home_url( '/' );
+	} elseif ( is_singular() ) {
+		$url = get_permalink();
+	} elseif ( is_home() ) {
+		$pid = (int) get_option( 'page_for_posts' );
+		$url = $pid ? get_permalink( $pid ) : home_url( '/' );
+	} elseif ( is_post_type_archive() ) {
+		$url = get_post_type_archive_link( get_post_type() );
+	} elseif ( is_category() || is_tag() || is_tax() ) {
+		$term = get_queried_object();
+		if ( $term instanceof WP_Term ) {
+			$link = get_term_link( $term );
+			$url  = is_wp_error( $link ) ? '' : $link;
+		}
+	}
+	if ( $url ) {
+		echo '<link rel="canonical" href="' . esc_url( $url ) . '">' . "\n";
+	}
+}
+
+/* -------------------------------------------------------------------------
+ * robots（検索結果・404 はインデックスさせない）
+ * ---------------------------------------------------------------------- */
+add_filter( 'wp_robots', function ( $robots ) {
+	if ( is_search() || is_404() ) {
+		$robots['noindex'] = true;
+		$robots['follow']  = true;
+	}
+	return $robots;
+} );
 
 /**
  * head にメタタグ・OGP・Twitter Card を出力。
@@ -43,11 +205,22 @@ function apprex_head_meta() {
 	$desc  = apprex_meta_description();
 	$title = wp_get_document_title();
 	$url   = is_singular() ? get_permalink() : home_url( add_query_arg( null, null ) );
-	$img   = APPREX_URI . '/assets/images/app-sample-taka.jpg';
+
+	// OG 画像（既定は専用の横長バナー 1200×630）。
+	$img   = APPREX_URI . '/assets/images/apprex-og.jpg';
+	$img_w = 1200;
+	$img_h = 630;
 	if ( is_singular() && has_post_thumbnail() ) {
-		$img = get_the_post_thumbnail_url( null, 'large' );
+		$src = wp_get_attachment_image_src( get_post_thumbnail_id(), 'large' );
+		if ( $src ) {
+			$img   = $src[0];
+			$img_w = (int) $src[1];
+			$img_h = (int) $src[2];
+		}
 	}
-	$gsc = get_option( 'apprex_gsc_verify', '' );
+
+	$gsc     = get_option( 'apprex_gsc_verify', '' );
+	$twitter = get_option( 'apprex_twitter', '' );
 	?>
 	<?php if ( $gsc ) : ?>
 	<meta name="google-site-verification" content="<?php echo esc_attr( $gsc ); ?>">
@@ -57,10 +230,21 @@ function apprex_head_meta() {
 	<meta property="og:title" content="<?php echo esc_attr( $title ); ?>">
 	<meta property="og:description" content="<?php echo esc_attr( $desc ); ?>">
 	<meta property="og:url" content="<?php echo esc_url( $url ); ?>">
-	<meta property="og:site_name" content="APPREX（アプリックス）">
+	<meta property="og:site_name" content="<?php echo esc_attr( APPREX_BRAND ); ?>">
 	<meta property="og:image" content="<?php echo esc_url( $img ); ?>">
+	<meta property="og:image:secure_url" content="<?php echo esc_url( $img ); ?>">
+	<meta property="og:image:width" content="<?php echo esc_attr( $img_w ); ?>">
+	<meta property="og:image:height" content="<?php echo esc_attr( $img_h ); ?>">
+	<meta property="og:image:alt" content="<?php echo esc_attr( $title ); ?>">
 	<meta property="og:locale" content="ja_JP">
+	<?php if ( is_singular( 'post' ) ) : ?>
+	<meta property="article:published_time" content="<?php echo esc_attr( get_the_date( 'c' ) ); ?>">
+	<meta property="article:modified_time" content="<?php echo esc_attr( get_the_modified_date( 'c' ) ); ?>">
+	<?php endif; ?>
 	<meta name="twitter:card" content="summary_large_image">
+	<?php if ( $twitter ) : ?>
+	<meta name="twitter:site" content="<?php echo esc_attr( '@' . ltrim( $twitter, '@' ) ); ?>">
+	<?php endif; ?>
 	<meta name="twitter:title" content="<?php echo esc_attr( $title ); ?>">
 	<meta name="twitter:description" content="<?php echo esc_attr( $desc ); ?>">
 	<meta name="twitter:image" content="<?php echo esc_url( $img ); ?>">
@@ -75,18 +259,24 @@ function apprex_jsonld() {
 	$graph = array();
 
 	$org = array(
-		'@type'       => 'Organization',
-		'@id'         => home_url( '/#organization' ),
-		'name'        => 'APPREX（アプリックス）',
-		'legalName'   => '合同会社アイズ',
-		'url'         => home_url( '/' ),
-		'logo'        => APPREX_URI . '/assets/images/apprex-logo.png',
-		'sameAs'      => array( 'https://www.instagram.com/apprex1173/' ),
-		'description' => 'ノーコードアプリ開発プラットフォーム。制作代行・ホームページ制作も提供。',
-		'email'       => function_exists( 'apprex_contact_email' ) ? apprex_contact_email() : '',
+		'@type'        => 'Organization',
+		'@id'          => home_url( '/#organization' ),
+		'name'         => APPREX_BRAND,
+		'legalName'    => '合同会社アイズ',
+		'url'          => home_url( '/' ),
+		'logo'         => array(
+			'@type'  => 'ImageObject',
+			'url'    => APPREX_URI . '/assets/images/apprex-logo.png',
+			'width'  => 331,
+			'height' => 106,
+		),
+		'image'        => APPREX_URI . '/assets/images/apprex-og.jpg',
+		'sameAs'       => array( 'https://www.instagram.com/apprex1173/' ),
+		'description'  => 'ノーコードアプリ開発プラットフォーム。アプリ制作代行・ホームページ制作も提供。',
+		'email'        => function_exists( 'apprex_contact_email' ) ? apprex_contact_email() : '',
 		'foundingDate' => '2018-10',
-		'founder'     => array( '@type' => 'Person', 'name' => '吉田一平' ),
-		'address'     => array(
+		'founder'      => array( '@type' => 'Person', 'name' => '吉田一平' ),
+		'address'      => array(
 			'@type'           => 'PostalAddress',
 			'addressCountry'  => 'JP',
 			'addressRegion'   => '福島県',
@@ -100,7 +290,7 @@ function apprex_jsonld() {
 		'@type'           => 'WebSite',
 		'@id'             => home_url( '/#website' ),
 		'url'             => home_url( '/' ),
-		'name'            => 'APPREX（アプリックス）',
+		'name'            => APPREX_BRAND,
 		'publisher'       => array( '@id' => home_url( '/#organization' ) ),
 		'inLanguage'      => 'ja',
 		'potentialAction' => array(
@@ -141,15 +331,15 @@ function apprex_jsonld() {
 	if ( is_singular( 'post' ) ) {
 		$post    = get_queried_object();
 		$graph[] = array(
-			'@type'         => 'Article',
-			'headline'      => get_the_title( $post ),
-			'description'   => apprex_meta_description(),
-			'datePublished' => get_the_date( 'c', $post ),
-			'dateModified'  => get_the_modified_date( 'c', $post ),
-			'author'        => array( '@type' => 'Organization', 'name' => 'APPREX編集部' ),
-			'publisher'     => array( '@id' => home_url( '/#organization' ) ),
+			'@type'            => 'Article',
+			'headline'         => get_the_title( $post ),
+			'description'      => apprex_meta_description(),
+			'datePublished'    => get_the_date( 'c', $post ),
+			'dateModified'     => get_the_modified_date( 'c', $post ),
+			'author'           => array( '@type' => 'Organization', 'name' => 'APPREX編集部', '@id' => home_url( '/#organization' ) ),
+			'publisher'        => array( '@id' => home_url( '/#organization' ) ),
 			'mainEntityOfPage' => get_permalink( $post ),
-			'image'         => has_post_thumbnail( $post ) ? get_the_post_thumbnail_url( $post, 'large' ) : ( APPREX_URI . '/assets/images/app-sample-taka.jpg' ),
+			'image'            => has_post_thumbnail( $post ) ? get_the_post_thumbnail_url( $post, 'large' ) : ( APPREX_URI . '/assets/images/apprex-og.jpg' ),
 		);
 	}
 

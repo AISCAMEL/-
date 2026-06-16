@@ -31,6 +31,7 @@ add_action( 'admin_init', function () {
 	register_setting( 'apprex_integrations', 'apprex_gas_webhook_url', array( 'sanitize_callback' => 'esc_url_raw' ) );
 	register_setting( 'apprex_integrations', 'apprex_gas_token', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 	register_setting( 'apprex_integrations', 'apprex_gsc_verify', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+	register_setting( 'apprex_integrations', 'apprex_twitter', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 	register_setting( 'apprex_integrations', 'apprex_slack_webhook', array( 'sanitize_callback' => 'esc_url_raw' ) );
 } );
 
@@ -111,6 +112,11 @@ function apprex_integrations_page() {
 					<td><input type="text" name="apprex_gsc_verify" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_gsc_verify', '' ) ); ?>" placeholder="例：abcd1234...（content= の値だけ）">
 					<p class="description"><?php esc_html_e( 'Search Console の「HTMLタグ」確認で表示される content="..." の中の文字列だけを貼り付け。<head>に確認メタタグを自動出力します。', 'apprex' ); ?></p></td>
 				</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'X（旧Twitter）ユーザー名', 'apprex' ); ?></th>
+						<td><input type="text" name="apprex_twitter" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_twitter', '' ) ); ?>" placeholder="例：apprex（@は不要）">
+						<p class="description"><?php esc_html_e( 'SNSシェア時のTwitterカードに表示するアカウント名（任意）。設定すると twitter:site メタタグを出力します。', 'apprex' ); ?></p></td>
+					</tr>
 			</table>
 			<?php submit_button(); ?>
 		</form>
