@@ -33,36 +33,64 @@ function isSlackCommand_(e) {
 }
 
 /**
- * Slackスラッシュコマンドの処理。
+ * Slackスラッシュコマンドの処理（コマンド名でルーティング）。
+ *   /相場回答 QT-4000 1200000 [コメント]   … 相場見積りに回答→マイページ反映＋メール
+ *   /進捗 OD-2041 落札成立                  … 注文/出品のステータス更新
+ *   /ローン LN-5001 承認                     … ローン審査ステータス更新
  * 返り値はSlackに表示するテキスト（ephemeral）。
  */
 function handleSlackCommand_(e) {
   var cfg = getConfig();
   var p = e.parameter;
-  // トークン検証
   if (cfg.SLACK_SLASH_TOKEN && p.token !== cfg.SLACK_SLASH_TOKEN) {
     return slackText_("⛔ 認証エラー（トークン不一致）");
   }
-  var text = (p.text || "").trim();
-  var parts = text.split(/\s+/);
-  var quoteId = parts[0] || "";
-  var amount = Number((parts[1] || "").replace(/[,¥]/g, ""));
-  var comment = parts.slice(2).join(" ");
+  var cmd = String(p.command || "").replace("/", "");
+  var parts = String(p.text || "").trim().split(/\s+/);
+  var id = (parts[0] || "").toUpperCase();
   var by = p.user_name || "staff";
 
-  if (!/^QT-/i.test(quoteId) || !amount) {
-    return slackText_("使い方： `/相場回答 QT-4000 1200000 任意コメント`");
+  if (cmd === "相場回答" || cmd === "quote") {
+    var amount = Number((parts[1] || "").replace(/[,¥]/g, ""));
+    var comment = parts.slice(2).join(" ");
+    if (!/^QT-/.test(id) || !amount) return slackText_("使い方： `/相場回答 QT-4000 1200000 [コメント]`");
+    var r = answerQuote_(id, amount, comment, by);
+    if (!r.ok) return slackText_("⚠️ " + r.error);
+    return slackText_("✅ 相場回答を登録（" + id + "）" + r.car + "／" + yen_(amount) + "（" + r.kind + "）→ マイページ反映・" + (r.via || "メール") + "で連絡");
   }
 
-  var res = answerQuote_(quoteId.toUpperCase(), amount, comment, by);
-  if (!res.ok) return slackText_("⚠️ " + res.error);
+  if (cmd === "進捗" || cmd === "status") {
+    var status = parts.slice(1).join(" ");
+    if (!id || !status) return slackText_("使い方： `/進捗 OD-2041 落札成立`（OD-/SL-）");
+    var u = updateRowStatus_([cfg.SHEET_ORDERS, cfg.SHEET_SELL], id, status, by);
+    return slackText_(u.ok ? "✅ ステータス更新：" + id + " → " + status : "⚠️ " + u.error);
+  }
 
-  return slackText_(
-    "✅ 相場回答を登録しました（" + quoteId.toUpperCase() + "）\n" +
-    "車両：" + res.car + "\n" +
-    "回答相場額：" + yen_(amount) + "（" + res.kind + "）\n" +
-    "→ マイページに反映、お客様へ " + (res.via || "メール") + " で連絡できます。"
-  );
+  if (cmd === "ローン" || cmd === "loan") {
+    var lstatus = parts.slice(1).join(" ");
+    if (!/^LN-/.test(id) || !lstatus) return slackText_("使い方： `/ローン LN-5001 承認`");
+    var ul = updateRowStatus_([cfg.SHEET_LOAN], id, lstatus, by);
+    return slackText_(ul.ok ? "✅ ローン更新：" + id + " → " + lstatus : "⚠️ " + ul.error);
+  }
+
+  return slackText_("対応コマンド： `/相場回答` `/進捗` `/ローン`");
+}
+
+/* シート群からID一致行を探し、ステータス列(3列目)を更新 */
+function updateRowStatus_(sheetNames, id, status, by) {
+  var ss = openBook_();
+  for (var i = 0; i < sheetNames.length; i++) {
+    var sh = ss.getSheetByName(sheetNames[i]);
+    if (!sh) continue;
+    var v = sh.getDataRange().getValues();
+    for (var r = 1; r < v.length; r++) {
+      if (String(v[r][1]) === id) {
+        sh.getRange(r + 1, 3).setValue(status + (by ? "（" + by + "）" : ""));
+        return { ok: true };
+      }
+    }
+  }
+  return { ok: false, error: id + " が見つかりません" };
 }
 
 /**
