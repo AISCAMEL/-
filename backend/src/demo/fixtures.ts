@@ -142,3 +142,16 @@ export const demoUsers: DemoUser[] = [
 export function newId(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 }
+
+export interface DemoNotification {
+  id: string; tenant_id: string; call_id: string | null; type: string;
+  destination: string | null; status: string; subject: string | null;
+  error_message: string | null; created_at: string; sent_at: string | null;
+}
+
+export const demoNotifications: DemoNotification[] = [
+  { id: 'ntf-1', tenant_id: TENANT, call_id: 'call-1001', type: 'email', destination: 'owner@example.com', status: 'sent', subject: '【AIオペレーター24】新しい電話受付がありました', error_message: null, created_at: iso(-33), sent_at: iso(-33) },
+  { id: 'ntf-2', tenant_id: TENANT, call_id: 'call-1002', type: 'email', destination: 'owner@example.com', status: 'sent', subject: '【AIオペレーター24】新しい電話受付がありました', error_message: null, created_at: iso(-119), sent_at: iso(-119) },
+  { id: 'ntf-3', tenant_id: TENANT, call_id: 'call-1002', type: 'slack', destination: 'slack', status: 'failed', subject: null, error_message: 'Slack 404: invalid_token', created_at: iso(-119), sent_at: null },
+];
+

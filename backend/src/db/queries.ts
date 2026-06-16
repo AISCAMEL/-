@@ -3,7 +3,7 @@
 import { dbEnabled, query } from './index.js';
 import { summarizeCall } from '../ai/summarize.js';
 import {
-  demoCalls, demoFaqs, demoSettings, demoPhoneNumbers, demoTenant, demoUsers, newId,
+  demoCalls, demoFaqs, demoSettings, demoPhoneNumbers, demoTenant, demoUsers, demoNotifications, newId,
   type DemoCall, type DemoFaq, type DemoUser,
 } from '../demo/fixtures.js';
 import type { CallSummary, TenantContext } from '../types.js';
@@ -381,6 +381,21 @@ export async function getTenantAiContext(tenantId: string): Promise<TenantContex
     faqs: (faqRows ?? []).filter((f: any) => f.is_active !== false)
       .map((f: any) => ({ question: f.question, answer: f.answer, category: f.category ?? null })),
   };
+}
+
+// ---------------- 通知ログ ----------------
+export async function listNotifications(tenantId: string, limit = 50) {
+  if (!dbEnabled) {
+    return demoNotifications
+      .filter((n) => n.tenant_id === tenantId || tenantId === demoTenant.id)
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))
+      .slice(0, limit);
+  }
+  return query<any>(
+    `select id, call_id, type, destination, status, subject, error_message, created_at, sent_at
+       from notifications where tenant_id = $1 order by created_at desc limit $2`,
+    [tenantId, limit],
+  );
 }
 
 // ---------------- Phone numbers ----------------

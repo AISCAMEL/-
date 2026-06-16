@@ -2,13 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
-import { Card, PageTitle } from '@/components/ui';
+import { Card, PageTitle, formatDateTime } from '@/components/ui';
 
 export default function NotificationSettingsPage() {
   const [s, setS] = useState<any>(null);
   const [msg, setMsg] = useState('');
+  const [logs, setLogs] = useState<any[]>([]);
 
-  useEffect(() => { api.notificationSettings().then(setS); }, []);
+  useEffect(() => {
+    api.notificationSettings().then(setS);
+    api.notifications().then(setLogs).catch(() => {});
+  }, []);
   if (!s) return <p className="text-gray-400">読み込み中…</p>;
 
   function field(key: string, value: any) { setS({ ...s, [key]: value }); }
@@ -58,6 +62,39 @@ export default function NotificationSettingsPage() {
             {msg && <span className="text-sm text-brand">{msg}</span>}
           </div>
         </form>
+      </Card>
+
+      {/* 送信ログ */}
+      <h2 className="mb-3 mt-8 text-lg font-semibold">送信ログ</h2>
+      <Card className="p-0">
+        <table className="w-full text-sm">
+          <thead className="border-b text-left text-xs text-gray-500">
+            <tr>
+              <th className="px-4 py-3">日時</th>
+              <th className="px-4 py-3">種別</th>
+              <th className="px-4 py-3">宛先</th>
+              <th className="px-4 py-3">結果</th>
+            </tr>
+          </thead>
+          <tbody>
+            {logs.length === 0 && <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-400">送信ログはまだありません。</td></tr>}
+            {logs.map((n) => (
+              <tr key={n.id} className="border-b last:border-0">
+                <td className="whitespace-nowrap px-4 py-3 text-gray-600">{formatDateTime(n.created_at)}</td>
+                <td className="px-4 py-3">{n.type === 'email' ? 'メール' : n.type === 'slack' ? 'Slack' : n.type}</td>
+                <td className="px-4 py-3 text-gray-600">{n.destination ?? '—'}</td>
+                <td className="px-4 py-3">
+                  {n.status === 'sent'
+                    ? <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">送信済</span>
+                    : n.status === 'failed'
+                      ? <span title={n.error_message ?? ''} className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">失敗</span>
+                      : <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{n.status}</span>}
+                  {n.status === 'failed' && n.error_message && <div className="mt-0.5 truncate text-[11px] text-red-500">{n.error_message}</div>}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </Card>
     </div>
   );

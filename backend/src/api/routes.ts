@@ -189,6 +189,11 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
     return q.getSettings(p.tenantId);
   });
+  app.get('/api/notifications', { preHandler: authenticate }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    return q.listNotifications(p.tenantId);
+  });
   app.put('/api/settings/notification', { preHandler: authenticate }, async (req, reply) => {
     const p = req.principal!;
     if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });

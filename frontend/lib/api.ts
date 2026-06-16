@@ -47,6 +47,7 @@ export const api = {
   aiSettings: () => request<any>('/api/settings/ai'),
   saveAiSettings: (body: any) => request<any>('/api/settings/ai', { method: 'PUT', body: JSON.stringify(body) }),
   notificationSettings: () => request<any>('/api/settings/notification'),
+  notifications: () => request<any[]>('/api/notifications'),
   saveNotificationSettings: (body: any) =>
     request<any>('/api/settings/notification', { method: 'PUT', body: JSON.stringify(body) }),
 
