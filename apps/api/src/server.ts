@@ -20,6 +20,7 @@ import {
 } from "@hub/core";
 import { loadConfig } from "./config.js";
 import { importProduct, publishToChannel } from "./services/listing-service.js";
+import { getOrders, getPnl } from "./services/orders-service.js";
 import { researchMarket } from "./services/research-service.js";
 import { screenCandidates } from "./services/screening-service.js";
 
@@ -151,6 +152,12 @@ export function buildServer() {
     });
     return { count: ranked.length, items: ranked };
   });
+
+  // 受注一覧（損益付き）
+  app.get("/orders", async () => ({ orders: getOrders() }));
+
+  // 損益サマリ
+  app.get("/dashboard/pnl", async () => getPnl());
 
   // BASE へ出品
   const publishSchema = z.object({
