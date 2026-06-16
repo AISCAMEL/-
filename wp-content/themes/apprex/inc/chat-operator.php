@@ -333,13 +333,30 @@ function apprex_rest_chat_poll( WP_REST_Request $request ) {
  * REST: Slack Events API（担当者の返信を受信）
  * ---------------------------------------------------------------------- */
 function apprex_rest_slack_events( WP_REST_Request $request ) {
+	// --- 診断ログ：このエンドポイントに「実際に届いた」リクエストを記録 ---
+	// POST が PHP まで到達しているか（=サーバー側で遮断されていないか）を確認するため。
+	$dbg = get_option( 'apprex_slack_debug', array() );
+	if ( ! is_array( $dbg ) ) {
+		$dbg = array();
+	}
+	$dbg[] = array(
+		't'             => current_time( 'mysql' ),
+		'method'        => $request->get_method(),
+		'content_type'  => (string) $request->get_header( 'content_type' ),
+		'body_len'      => strlen( (string) $request->get_body() ),
+		'has_challenge' => ( null !== $request->get_param( 'challenge' ) ) ? 1 : 0,
+	);
+	$dbg = array_slice( $dbg, -8 ); // 直近8件のみ保持。
+	update_option( 'apprex_slack_debug', $dbg, false );
+
 	// GET = ブラウザでの生存確認（このJSONが見えればルートは正しく登録されている）。
 	if ( 'GET' === $request->get_method() ) {
 		return new WP_REST_Response(
 			array(
-				'alive'   => true,
-				'version' => defined( 'APPREX_VERSION' ) ? APPREX_VERSION : '',
-				'note'    => 'APPREX Slack events endpoint. Slack sends POST here.',
+				'alive'       => true,
+				'version'     => defined( 'APPREX_VERSION' ) ? APPREX_VERSION : '',
+				'note'        => 'APPREX Slack events endpoint. Slack sends POST here.',
+				'recent_hits' => $dbg, // ここに POST が記録されていれば、POST は PHP まで届いている。
 			),
 			200
 		);
