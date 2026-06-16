@@ -1,5 +1,13 @@
 import type { ReactNode } from "react";
+import { M_PLUS_Rounded_1c } from "next/font/google";
 import LogoutButton from "./logout-button";
+
+const font = M_PLUS_Rounded_1c({
+  weight: ["400", "500", "700"],
+  subsets: ["latin"],
+  display: "swap",
+  preload: false,
+});
 
 export const metadata = {
   title: "Dropshipping Hub",
@@ -8,8 +16,8 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="ja">
-      <body style={{ fontFamily: "system-ui, sans-serif", margin: 0 }}>
+    <html lang="ja" className={font.className}>
+      <body style={{ margin: 0 }}>
         <header style={{ padding: "16px 24px", borderBottom: "1px solid #eee", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span>
             <strong>🛒 Dropshipping Hub</strong>
