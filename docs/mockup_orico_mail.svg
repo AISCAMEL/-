@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="560" viewBox="0 0 720 560" font-family="'Noto Sans CJK JP','IPAGothic',sans-serif">
+  <rect width="720" height="560" fill="#eef1f6"/>
+  <text x="32" y="34" fill="#0e1b33" font-size="16" font-weight="800">お客様に届くメール（イメージ）</text>
+
+  <rect x="32" y="52" width="656" height="476" rx="12" fill="#fff" stroke="#d7dde6"/>
+  <text x="56" y="92" fill="#1a2233" font-size="15" font-weight="800">【AUC-AGENT】オリコ オートローン クレジット申込書のご送付（LN-5001）</text>
+  <line x1="56" y1="108" x2="664" y2="108" stroke="#eef0f4"/>
+  <circle cx="72" cy="136" r="14" fill="#0e1b33"/><text x="72" y="141" fill="#e0bd6a" font-size="13" font-weight="900" text-anchor="middle">A</text>
+  <text x="96" y="132" fill="#1a2233" font-size="13" font-weight="700">合同会社アイズ（AUC-AGENT）</text>
+  <text x="96" y="150" fill="#5a6675" font-size="12">info@aisjaltd.com</text>
+  <text x="664" y="132" fill="#8a93a4" font-size="11" text-anchor="end">2026/06/15 21:40</text>
+  <text x="96" y="170" fill="#5a6675" font-size="12">To: お客様 ＜ご登録のメールアドレス＞</text>
+  <line x1="56" y1="184" x2="664" y2="184" stroke="#eef0f4"/>
+
+  <g font-size="13" fill="#1a2233">
+    <text x="56" y="212">吉田 一平 様</text>
+    <text x="56" y="240">この度はオートローンのお申込みありがとうございます。</text>
+    <text x="56" y="262">お見積りの目安：月々 ¥46,247（36回 / 年率 6.9%）</text>
+    <text x="56" y="290">オリコのクレジット申込書（PDF）を添付いたします。</text>
+    <text x="56" y="312">ご記入・必要書類とあわせてご返送ください。審査結果は追ってご連絡します。</text>
+    <text x="56" y="344" fill="#5a6675">合同会社アイズ（AUC-AGENT）</text>
+    <text x="56" y="362" fill="#5a6675">福島県いわき市四倉町細谷字大町1番 ／ info@aisjaltd.com</text>
+  </g>
+
+  <rect x="56" y="388" width="320" height="64" rx="10" fill="#f6f8fc" stroke="#d7dde6"/>
+  <rect x="72" y="404" width="34" height="42" rx="4" fill="#c9a14a"/><text x="89" y="431" fill="#fff" font-size="11" font-weight="800" text-anchor="middle">PDF</text>
+  <text x="118" y="418" fill="#1a2233" font-size="13" font-weight="700">オリコ申込書_LN-5001.pdf</text>
+  <text x="118" y="438" fill="#8a93a4" font-size="11">クレジット申込書（自動生成）</text>
+
+  <rect x="56" y="468" width="608" height="44" rx="8" fill="#eaf7f0" stroke="#c4ead6"/>
+  <text x="72" y="486" fill="#1f9d6b" font-size="11.5" font-weight="700">自動化：仮申込 → 申込書PDFを顧客情報から自動生成 → このメールを自動送信</text>
+  <text x="72" y="503" fill="#1f9d6b" font-size="11">（GAS本番デプロイ後に稼働。送信元は自社のGoogleアカウント）</text>
+</svg>

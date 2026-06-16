@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>マイページ｜AUC-AGENT 会員サイト</title>
+<meta name="description" content="AUC-AGENT 会員マイページ。注文状況の確認と、かんたんオーダー（入札代行のご依頼）が行えます。" />
+<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png" />
+<link rel="apple-touch-icon" href="assets/img/favicon-180.png" />
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <span class="logo">A</span>
+      <span>AUC-AGENT<small>CAR AUCTION AGENT</small></span>
+    </a>
+    <nav class="nav">
+      <a class="nav-link" href="index.html#simulator">料金シミュレーション</a>
+      <a class="nav-link" href="index.html">サービス</a>
+      <a class="btn btn-ghost btn-sm" href="#" id="logoutBtn">ログアウト</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-head">
+  <div class="wrap">
+    <h1 id="hello">マイページ</h1>
+    <p id="planLine">会員サイトへようこそ。注文の確認と、新しいオーダーがこちらで完結します。</p>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="mp-grid">
+    <!-- Sidebar -->
+    <aside class="mp-side">
+      <div class="me">
+        <div class="ava" id="avatar">G</div>
+        <div>
+          <div class="nm" id="meName">ゲスト会員</div>
+          <div class="rk" id="mePlan">スタンダード会員</div>
+        </div>
+      </div>
+      <nav class="mp-nav">
+        <a href="#dash" class="active">📊 ダッシュボード</a>
+        <a href="#orders">📦 注文・出品状況</a>
+        <a href="#newOrder">➕ 購入オーダー</a>
+        <a href="#newSell">🏷️ 出品申込</a>
+        <a href="#newLoan">💳 ローン仮申込</a>
+        <a href="#quote">📈 相場見積り</a>
+        <a href="#hiroba">🔑 車ひろばログイン</a>
+        <a href="manual.html">📖 出品マニュアル</a>
+        <a href="index.html#simulator">🧮 料金シミュレーション</a>
+        <a href="index.html">🏠 トップへ</a>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main>
+      <!-- 車ひろば エージェント連携（購入のやりとり） -->
+      <section class="panel" id="hiroba" style="border:2px solid var(--gold);">
+        <div class="panel-head"><h3>🔑 購入のやりとり（車ひろば エージェント）</h3></div>
+        <div class="panel-body">
+          <p style="margin:0 0 12px;">車両のご提案・入札・進捗のやりとりは、専用システム「<strong>車ひろば エージェント</strong>」で行います。<strong>ログインID・パスワードは購入お申込み後に発行</strong>し、登録メールへご連絡します。</p>
+          <div class="alert alert-info" id="hirobaStatus">購入オーダーをお申込みいただくと、ログイン情報を発行します。</div>
+          <a class="btn btn-gold" href="https://agent.car-hiroba.jp/usr/login/" target="_blank" rel="noopener">車ひろば エージェントにログイン →</a>
+        </div>
+      </section>
+
+      <!-- 相場見積り（買取・仕入れ）— メール/チャットで対応しここに反映 -->
+      <section class="panel" id="quote">
+        <div class="panel-head"><h3>📈 相場見積り（買取・仕入れ）</h3></div>
+        <div class="panel-body">
+          <div class="alert alert-info">売る時の<strong>買取相場</strong>、買う時の<strong>仕入れ相場</strong>を無料で見積り。担当が<strong>メール／チャットで査定・回答</strong>し、結果はこのページに反映します。</div>
+          <form id="quoteForm">
+            <div class="row-2">
+              <div class="field">
+                <label>見積り種別</label>
+                <select id="qKind">
+                  <option value="buy">仕入れ相場（購入の目安が知りたい）</option>
+                  <option value="sell">買取相場（売却の目安が知りたい）</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>ご希望の連絡方法</label>
+                <select id="qVia">
+                  <option value="メール">メール</option>
+                  <option value="LINEチャット">LINEチャット</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label>車種・年式・走行など</label>
+              <input type="text" id="qCar" placeholder="例）トヨタ アルファード 2.5S 2020年式 走行4万km / グレード・色など" required />
+            </div>
+            <button class="btn btn-navy btn-block" type="submit">無料で相場見積りを依頼する</button>
+          </form>
+          <div id="quoteList" style="margin-top:18px;"></div>
+        </div>
+      </section>
+
+      <!-- Stats -->
+      <div id="dash" class="stat-row">
+        <div class="stat"><div class="k">進行中の注文</div><div class="v" id="stActive">1</div></div>
+        <div class="stat"><div class="k">累計ご成約</div><div class="v" id="stDone">1</div></div>
+        <div class="stat"><div class="k">累計おトク額（目安）</div><div class="v" id="stSave">¥0</div></div>
+      </div>
+
+      <!-- Orders -->
+      <section class="panel" id="orders">
+        <div class="panel-head">
+          <h3>注文状況</h3>
+          <a class="btn btn-gold btn-sm" href="#newOrder">＋ 新しくオーダー</a>
+        </div>
+        <div class="panel-body" id="orderList">
+          <!-- JSで描画 -->
+        </div>
+      </section>
+
+      <!-- New Order (easy order form, reuses AucSim) -->
+      <section class="panel" id="newOrder">
+        <div class="panel-head"><h3>かんたんオーダー</h3></div>
+        <div class="panel-body">
+          <div class="alert alert-info" id="orderAlert">条件を入力すると、その場で総額の目安を計算します。ご依頼後はバイヤーが候補車両を提案します。</div>
+          <form id="orderForm">
+            <div class="field">
+              <label>ご希望の車種・モデル</label>
+              <input type="text" id="oCar" placeholder="例）トヨタ アルファード 2.5 S（2019〜2021年式 / 走行5万km以下）" required />
+            </div>
+            <div class="row-2">
+              <div class="field">
+                <label>落札上限予算<span class="v" id="oBidOut" style="color:var(--gold)"></span></label>
+                <input type="number" id="oBid" min="200000" max="8000000" step="50000" value="2500000" required />
+              </div>
+              <div class="field">
+                <label>車両クラス</label>
+                <select id="oClass">
+                  <option value="kei">軽自動車</option>
+                  <option value="compact">コンパクト</option>
+                  <option value="sedan" selected>セダン/ミニバン</option>
+                  <option value="suv">SUV/大型</option>
+                  <option value="import">輸入車</option>
+                </select>
+              </div>
+            </div>
+            <div class="row-2">
+              <div class="field">
+                <label>納車先（都道府県）<span style="color:var(--gold);font-size:11px;">福島拠点より配送</span></label>
+                <select id="oRegion"></select>
+              </div>
+              <div class="field">
+                <label>オプション</label>
+                <div class="checks">
+                  <label><input type="checkbox" id="oReg" checked> 名義変更・登録代行</label>
+                  <label><input type="checkbox" id="oInspect"> 12ヶ月点検・整備パック</label>
+                  <label><input type="checkbox" id="oShaken"> 車検整備（車検なし車両）</label>
+                  <label><input type="checkbox" id="oClean"> 内外装クリーニング</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="result" style="box-shadow:none;border:1px solid var(--line);padding:20px;">
+              <div class="line"><span>落札上限予算</span><span id="qBid">¥2,500,000</span></div>
+              <div class="line"><span>代行手数料・諸費用・陸送</span><span id="qFees">¥0</span></div>
+              <div class="grand"><span class="lbl">想定 乗り出し総額</span><span class="val" id="qTotal">¥0</span></div>
+            </div>
+
+            <button class="btn btn-gold btn-block mt-30" type="submit">この内容でオーダーを依頼する</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Sell application (出品申込) -->
+      <section class="panel" id="newSell">
+        <div class="panel-head"><h3>出品申込（売却）</h3></div>
+        <div class="panel-body">
+          <div class="alert alert-info" id="sellAlert">愛車情報を入力すると、手取りの目安をその場で計算します。お申込み後、出品票を制作してご郵送します。</div>
+          <form id="sellForm">
+            <div class="field">
+              <label>売却する車種・モデル</label>
+              <input type="text" id="zCar" placeholder="例）日産 セレナ ハイウェイスター（2019年式 / 走行6万km）" required />
+            </div>
+            <div class="row-2">
+              <div class="field">
+                <label>想定落札価格（中央値）<span class="v" id="zMedOut" style="color:var(--gold)"></span></label>
+                <input type="number" id="zMed" min="100000" max="8000000" step="50000" value="1200000" required />
+              </div>
+              <div class="field">
+                <label>車両の状態</label>
+                <select id="zCond"></select>
+              </div>
+              <div class="field">
+                <label>車種クラス</label>
+                <select id="zClass">
+                  <option value="kei">軽自動車</option>
+                  <option value="compact">コンパクト</option>
+                  <option value="sedan" selected>セダン/ミニバン</option>
+                  <option value="suv">SUV/大型</option>
+                  <option value="import">輸入車</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label>オプション</label>
+              <div class="checks">
+                <label><input type="checkbox" id="zShaken"> 車検整備（車検なし車両／+¥79,800・法定費用別）</label>
+                <label><input type="checkbox" id="zClean"> 内外装クリーニング（+¥19,800）</label>
+                <label><input type="checkbox" id="zCarrier"> 代理搬入を依頼する（+¥18,000）</label>
+              </div>
+            </div>
+
+            <div class="result" style="box-shadow:none;border:1px solid var(--line);padding:20px;">
+              <div class="line"><span>想定落札相場レンジ</span><span id="zRange">—</span></div>
+              <div class="line"><span>出品代行手数料・成約料・搬入</span><span id="zFees">—</span></div>
+              <div class="grand"><span class="lbl">手取り目安</span><span class="val" id="zNet">¥0</span></div>
+            </div>
+
+            <button class="btn btn-navy btn-block mt-30" type="submit">この内容で出品を申し込む</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Loan application (ローン申込・オリコ) -->
+      <section class="panel" id="newLoan">
+        <div class="panel-head"><h3>オートローン仮申込（オリコ）</h3></div>
+        <div class="panel-body">
+          <div class="alert alert-info" id="loanAlert">月々のお支払い目安をその場で計算します。仮申込後、ご登録メール宛に<strong>オリコ クレジット申込書（PDF）を自動でお送り</strong>します（事務手数料は無料）。</div>
+          <form id="loanForm">
+            <div class="row-2">
+              <div class="field">
+                <label>ローン希望額<span class="v" id="lAmtOut" style="color:var(--gold)"></span></label>
+                <input type="number" id="lAmt" min="100000" max="8000000" step="50000" value="1500000" required />
+              </div>
+              <div class="field">
+                <label>支払回数</label>
+                <select id="lTerm">
+                  <option value="12">12回（1年）</option>
+                  <option value="24">24回（2年）</option>
+                  <option value="36" selected>36回（3年）</option>
+                  <option value="48">48回（4年）</option>
+                  <option value="60">60回（5年）</option>
+                  <option value="84">84回（7年）</option>
+                </select>
+              </div>
+            </div>
+            <div class="row-2">
+              <div class="field">
+                <label>実質年率（目安）</label>
+                <select id="lRate">
+                  <option value="3.9">3.9%</option>
+                  <option value="6.9" selected>6.9%</option>
+                  <option value="8.9">8.9%</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>雇用形態</label>
+                <select id="lJob">
+                  <option value="正社員" selected>正社員・公務員</option>
+                  <option value="法人">会社役員・法人</option>
+                  <option value="個人事業">個人事業主</option>
+                  <option value="契約">契約・派遣・パート</option>
+                  <option value="その他">その他</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label>年収（万円）</label>
+              <input type="number" id="lIncome" min="0" max="5000" step="10" value="400" />
+            </div>
+
+            <div class="result" style="box-shadow:none;border:1px solid var(--line);padding:20px;">
+              <div class="line"><span>月々のお支払い（目安）</span><span id="lMonthly" style="font-weight:800;">¥0</span></div>
+              <div class="line"><span>支払総額／うち利息</span><span id="lTotal">—</span></div>
+              <div class="grand"><span class="lbl">AI一次判定（目安）</span><span class="val" id="lGrade" style="font-size:22px;">—</span></div>
+            </div>
+
+            <button class="btn btn-gold btn-block mt-30" type="submit">この内容でローンを仮申込する</button>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="copy">© 2026 合同会社アイズ（AUC-AGENT）. いわき市／福島拠点. これはデモ用の会員サイトです（データはブラウザ内に保存されます）。</div>
+  </div>
+</footer>
+
+<script src="assets/js/simulator.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+  // --- 未ログインならログインページへ ---
+  var user = AucAuth.current();
+  if (!user) { location.href = "login.html"; }
+
+  // --- ヘッダー/サイドバーにユーザー情報を反映 ---
+  document.getElementById("hello").textContent = "こんにちは、" + user.name + " さん";
+  document.getElementById("planLine").textContent = user.plan + " 会員 ／ 登録日 " + user.since;
+  document.getElementById("meName").textContent = user.name;
+  document.getElementById("mePlan").textContent = user.plan + " 会員";
+  document.getElementById("avatar").textContent = (user.name || "G").charAt(0);
+
+  document.getElementById("logoutBtn").onclick = function (e) {
+    e.preventDefault(); AucAuth.logout(); location.href = "index.html";
+  };
+
+  // --- ステータス表示の対応表（購入＋出品） ---
+  var STATUS = {
+    // 購入
+    bid:      { cls: "st-bid",  label: "入札・提案中" },
+    won:      { cls: "st-won",  label: "落札成立" },
+    shipping: { cls: "st-ship", label: "陸送・手続き中" },
+    done:     { cls: "st-done", label: "納車完了" },
+    // 出品
+    apply:    { cls: "st-bid",  label: "出品申込・審査" },
+    listing:  { cls: "st-ship", label: "出品票発送・搬入待ち" },
+    sold:     { cls: "st-won",  label: "成約・入金処理" }
+  };
+
+  function yen(n) { return "¥" + Math.round(n).toLocaleString("ja-JP"); }
+
+  // --- 注文一覧を描画 ---
+  function renderOrders() {
+    var orders = AucAuth.orders();
+    var list = document.getElementById("orderList");
+    if (!orders.length) {
+      list.innerHTML = '<p style="color:var(--muted);margin:0;">まだ注文はありません。下の「かんたんオーダー」からご依頼ください。</p>';
+    } else {
+      list.innerHTML = orders.map(function (o) {
+        var s = STATUS[o.status] || STATUS.bid;
+        var kindTag = (o.kind === "sell")
+          ? '<span class="badge-status" style="background:#efeaff;color:#5b46c4;margin-right:6px;">出品</span>'
+          : '<span class="badge-status" style="background:#e6f0ff;color:#2a64c4;margin-right:6px;">購入</span>';
+        return '<div class="order">' +
+          '<div><div class="car">' + kindTag + o.car + '</div>' +
+          '<div class="meta">受付番号 ' + o.id + ' ／ ' + o.date + '</div>' +
+          '<div class="progress"><i style="width:' + o.progress + '%"></i></div>' +
+          '<div class="meta" style="margin-top:6px;">' + (o.memo || "") + '</div></div>' +
+          '<div class="right"><span class="badge-status ' + s.cls + '">' + s.label + '</span>' +
+          '<div style="margin-top:8px;font-weight:800;">' + yen(o.total) + '</div></div>' +
+          '</div>';
+      }).join("");
+    }
+
+    // 統計を更新
+    var active = orders.filter(function (o) { return o.status !== "done"; }).length;
+    var done = orders.filter(function (o) { return o.status === "done"; }).length;
+    document.getElementById("stActive").textContent = active;
+    document.getElementById("stDone").textContent = done;
+  }
+
+  // 納車先（都道府県）を福島拠点からの配送として生成
+  var oRegionSel = document.getElementById("oRegion");
+  Object.keys(AucSim.PREF).forEach(function (k) {
+    var o = document.createElement("option");
+    o.value = k; o.textContent = k;
+    oRegionSel.appendChild(o);
+  });
+  oRegionSel.value = "福島";
+
+  // --- かんたんオーダーの即時見積もり（AucSim を再利用） ---
+  function quoteParams() {
+    var cls = document.getElementById("oClass").value;
+    var ship = AucSim.estimateShipping({ from: AucSim.HOME_PREF, to: oRegionSel.value, cls: cls }).cost;
+    return {
+      bid: document.getElementById("oBid").value,
+      cls: cls,
+      region: ship,
+      options: {
+        optReg: document.getElementById("oReg").checked,
+        optInspect: document.getElementById("oInspect").checked,
+        optShaken: document.getElementById("oShaken").checked,
+        optClean: document.getElementById("oClean").checked
+      }
+    };
+  }
+  function renderQuote() {
+    var r = AucSim.calculate(quoteParams());
+    document.getElementById("oBidOut").textContent = AucSim.yen(r.bid);
+    document.getElementById("qBid").textContent = AucSim.yen(r.bid);
+    document.getElementById("qFees").textContent =
+      AucSim.yen(r.fee + r.auctionFee + r.recycle + r.ship + r.options);
+    document.getElementById("qTotal").textContent = AucSim.yen(r.total);
+    return r;
+  }
+  document.getElementById("orderForm").addEventListener("input", renderQuote);
+  document.getElementById("orderForm").addEventListener("change", renderQuote);
+
+  // --- オーダー送信（デモ: localStorage に追加） ---
+  document.getElementById("orderForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var r = renderQuote();
+    var clsSel = document.getElementById("oClass");
+    var regSel = document.getElementById("oRegion");
+    var order = AucAuth.addOrder({
+      car: document.getElementById("oCar").value,
+      total: r.total,
+      memo: "オーダーを受け付けました。車ひろばのログインID/PWを発行のうえメールでご連絡します。",
+      payload: {
+        bid: r.bid,
+        cls: clsSel.value,
+        clsLabel: r.classLabel,
+        fee: r.fee,
+        regionLabel: regSel.options[regSel.selectedIndex].text,
+        optionsLabel: [
+          document.getElementById("oReg").checked ? "名義変更・登録" : "",
+          document.getElementById("oInspect").checked ? "12ヶ月点検" : ""
+        ].filter(Boolean).join("・")
+      }
+    });
+    var alertBox = document.getElementById("orderAlert");
+    alertBox.className = "alert alert-ok";
+    alertBox.textContent = "✓ オーダー（" + order.id + "）を受け付けました。注文状況に追加されました。";
+    // 車ひろば：ログイン情報の発行ステータスを更新
+    var hb = document.getElementById("hirobaStatus");
+    hb.className = "alert alert-ok";
+    hb.textContent = "✓ お申込みを受け付けました。車ひろばのログインID／パスワードを発行し、登録メール（" + (user.email || "ご登録先") + "）へお送りします。発行後は下のボタンからログインしてください。";
+    renderOrders();
+    document.getElementById("oCar").value = "";
+    document.getElementById("orders").scrollIntoView({ behavior: "smooth" });
+  });
+
+  // --- 出品申込（売却）の即時手取り計算 ---
+  var zCondSel = document.getElementById("zCond");
+  Object.keys(AucSim.COND).forEach(function (k) {
+    var o = document.createElement("option");
+    o.value = k; o.textContent = AucSim.COND[k].label;
+    if (k === "normal") o.selected = true;
+    zCondSel.appendChild(o);
+  });
+  function sellParams() {
+    return {
+      median: document.getElementById("zMed").value,
+      cond: zCondSel.value,
+      cls: document.getElementById("zClass").value,
+      carrierIn: document.getElementById("zCarrier").checked,
+      shakenIn: document.getElementById("zShaken").checked,
+      cleanIn: document.getElementById("zClean").checked
+    };
+  }
+  function renderSell() {
+    var r = AucSim.estimateSell(sellParams());
+    document.getElementById("zMedOut").textContent = AucSim.yen(document.getElementById("zMed").value);
+    document.getElementById("zRange").textContent = AucSim.yen(r.rangeLow) + "〜" + AucSim.yen(r.rangeHigh);
+    document.getElementById("zFees").textContent = "− " + AucSim.yen(r.sellFee + r.settle + r.optTotal);
+    document.getElementById("zNet").textContent = AucSim.yen(r.net);
+    return r;
+  }
+  document.getElementById("sellForm").addEventListener("input", renderSell);
+  document.getElementById("sellForm").addEventListener("change", renderSell);
+
+  document.getElementById("sellForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var r = renderSell();
+    var order = AucAuth.addOrder({
+      kind: "sell",
+      car: document.getElementById("zCar").value,
+      total: r.net,
+      memo: "出品申込を受け付けました。審査後、出品票を制作・郵送します。",
+      payload: {
+        median: r.mid, cond: r.condLabel,
+        sellFee: r.sellFee, carrierFee: r.carrierFee
+      }
+    });
+    var box = document.getElementById("sellAlert");
+    box.className = "alert alert-ok";
+    box.textContent = "✓ 出品申込（" + order.id + "）を受け付けました。状況に追加されました。";
+    renderOrders();
+    document.getElementById("zCar").value = "";
+    document.getElementById("orders").scrollIntoView({ behavior: "smooth" });
+  });
+
+  // --- ローン仮申込（オリコ）：月々計算＋AI一次判定 ---
+  function loanGrade() {
+    var job = document.getElementById("lJob").value;
+    var income = Number(document.getElementById("lIncome").value) * 10000; // 万円→円
+    var amount = Number(document.getElementById("lAmt").value);
+    var s = 50;
+    if (/正社員|公務員/.test(job)) s += 25; else if (/法人/.test(job)) s += 18;
+    else if (/個人事業/.test(job)) s += 12; else if (/契約/.test(job)) s += 6;
+    if (income > 0 && amount > 0) {
+      var ratio = amount / income;
+      if (ratio < 0.5) s += 20; else if (ratio < 1) s += 12; else if (ratio < 2) s += 4;
+    }
+    s = Math.max(0, Math.min(100, s));
+    return s >= 80 ? "A（即日審査へ）" : s >= 60 ? "B（翌営業日）" : s >= 40 ? "C（要確認）" : "D（要相談）";
+  }
+  function renderLoan() {
+    var amt = document.getElementById("lAmt").value;
+    var term = document.getElementById("lTerm").value;
+    var rate = document.getElementById("lRate").value;
+    var r = AucSim.loanMonthly(amt, rate, term);
+    document.getElementById("lAmtOut").textContent = AucSim.yen(amt);
+    document.getElementById("lMonthly").textContent = AucSim.yen(r.monthly) + " /月";
+    document.getElementById("lTotal").textContent = AucSim.yen(r.total) + "（利息 " + AucSim.yen(r.interest) + "）";
+    document.getElementById("lGrade").textContent = loanGrade();
+    return r;
+  }
+  document.getElementById("loanForm").addEventListener("input", renderLoan);
+  document.getElementById("loanForm").addEventListener("change", renderLoan);
+  document.getElementById("loanForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    renderLoan();
+    AucConfig.send({
+      type: "loan",
+      name: user.name, email: user.email,
+      amount: Number(document.getElementById("lAmt").value),
+      term: Number(document.getElementById("lTerm").value),
+      rate: document.getElementById("lRate").value,
+      job: document.getElementById("lJob").value,
+      income: Number(document.getElementById("lIncome").value) * 10000
+    });
+    var box = document.getElementById("loanAlert");
+    box.className = "alert alert-ok";
+    box.textContent = "✓ ローン仮申込を受け付けました。ご登録メール宛にオリコ クレジット申込書（PDF）を自動でお送りします。ご記入・ご返送後、オリコへ審査を依頼します。";
+    box.scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+
+  // --- 相場見積り（買取・仕入れ）一覧の描画＆依頼送信 ---
+  function renderQuoteList() {
+    var list = AucAuth.quotes();
+    var el = document.getElementById("quoteList");
+    if (!list.length) { el.innerHTML = ""; return; }
+    el.innerHTML = "<div style='font-weight:800;margin-bottom:8px;'>相場見積りの状況</div>" + list.map(function (q) {
+      var kind = q.kind === "sell"
+        ? '<span class="badge-status" style="background:#efeaff;color:#5b46c4;">買取相場</span>'
+        : '<span class="badge-status" style="background:#e6f0ff;color:#2a64c4;">仕入れ相場</span>';
+      var ans = (q.status === "回答済み" && q.value != null)
+        ? '<span class="badge-status st-won">回答済み</span><span style="font-weight:800;margin-left:8px;">' + yen(q.value) + '</span>'
+        : '<span class="badge-status st-bid">回答待ち（' + (q.via || "メール") + 'でご連絡）</span>';
+      return '<div class="order"><div>' + kind + ' <span class="car">' + q.car + '</span>'
+        + '<div class="meta">受付番号 ' + q.id + ' ／ ' + q.date + '</div></div>'
+        + '<div class="right">' + ans + '</div></div>';
+    }).join("");
+  }
+  document.getElementById("quoteForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    AucAuth.addQuote({
+      kind: document.getElementById("qKind").value,
+      via: document.getElementById("qVia").value,
+      car: document.getElementById("qCar").value
+    });
+    var box = document.querySelector("#quote .alert");
+    box.className = "alert alert-ok";
+    box.innerHTML = "✓ 相場見積りを受け付けました。担当が<strong>" + document.getElementById("qVia").value + "</strong>で査定し、回答をこのページに反映します。";
+    document.getElementById("qCar").value = "";
+    renderQuoteList();
+  });
+
+  // バックエンド（スタッフ/Slack）の相場回答をJSONPで取得しマイページに反映
+  function syncQuoteAnswers() {
+    var ep = (window.AucConfig && AucConfig.endpoint) || "";
+    if (!ep || !user.email) return;
+    window.__aucQuotes = function (arr) {
+      if (AucAuth.applyQuoteAnswers(arr)) renderQuoteList();
+    };
+    var s = document.createElement("script");
+    s.src = ep + (ep.indexOf("?") < 0 ? "?" : "&") + "action=quotes&email="
+          + encodeURIComponent(user.email) + "&callback=__aucQuotes&_=" + Date.now();
+    s.onerror = function () { /* 未デプロイ時は無視 */ };
+    document.body.appendChild(s);
+  }
+
+  renderOrders();
+  renderQuote();
+  renderSell();
+  renderLoan();
+  renderQuoteList();
+  syncQuoteAnswers();
+</script>
+</body>
+</html>

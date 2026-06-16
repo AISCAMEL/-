@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>陸送費シミュレーション｜AUC-AGENT</title>
+<meta name="description" content="出発エリアと納車先・車種から、陸送費の概算をその場で計算。オークション代行の総額計画にお役立てください。" />
+<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png" />
+<link rel="apple-touch-icon" href="assets/img/favicon-180.png" />
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <span class="logo">A</span>
+      <span>AUC-AGENT<small>CAR AUCTION AGENT</small></span>
+    </a>
+    <nav class="nav">
+      <a class="nav-link" href="index.html">購入代行</a>
+      <a class="nav-link" href="sell.html">出品代行</a>
+      <a class="nav-link" href="shipping.html">陸送シミュ</a>
+      <a class="btn btn-gold btn-sm" href="login.html">無料会員登録</a>
+    </nav>
+  </div>
+</header>
+
+<section class="sim" style="min-height:calc(100vh - 64px);">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">SHIPPING SIMULATION</div>
+      <h2>陸送費シミュレーション</h2>
+      <p>出発・納車先・車種を選ぶと、陸送費の概算を表示します。料金は<strong>株式会社ゼロ（マイカー陸送）の水準</strong>に準拠（ドアtoドア）。正確な額はゼロ社の区間料金で確定します。</p>
+    </div>
+
+    <div class="sim-grid">
+      <div class="sim-panel">
+        <div class="field">
+          <label>出発（会場の都道府県）</label>
+          <select id="from"></select>
+        </div>
+        <div class="field">
+          <label>納車先（都道府県）</label>
+          <select id="to"></select>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>車種クラス</label>
+          <div class="seg" id="cls">
+            <label><input type="radio" name="cls" value="kei"><span>軽</span></label>
+            <label><input type="radio" name="cls" value="compact" checked><span>コンパクト</span></label>
+            <label><input type="radio" name="cls" value="sedan"><span>セダン/ミニバン</span></label>
+            <label><input type="radio" name="cls" value="suv"><span>SUV/大型</span></label>
+            <label><input type="radio" name="cls" value="import"><span>輸入車</span></label>
+          </div>
+        </div>
+        <p style="font-size:12px;color:#9fb0cc;margin-top:14px;">※ 概算です。実費は会場・距離・繁忙状況で変動します（北海道・沖縄は航送加算あり）。</p>
+      </div>
+
+      <div class="result">
+        <h3>陸送費（概算）</h3>
+        <p class="note">※ 税込・参考値です。</p>
+        <div class="line"><span>区間</span><span id="rRoute">福島 → 東京（約180km）</span></div>
+        <div class="line"><span>車種クラス</span><span id="rCls">コンパクト</span></div>
+        <div class="grand">
+          <span class="lbl">陸送費の目安</span>
+          <span class="val" id="rCost">¥27,000</span>
+        </div>
+        <div class="savings" style="background:#eef3fb;color:#2a64c4;border-color:#cfe0ff;">この金額は購入・出品シミュレーションにも反映できます。</div>
+        <a class="btn btn-navy btn-block mt-30" href="index.html#simulator">購入の総額シミュレーションへ</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="copy">© 2026 合同会社アイズ（AUC-AGENT）. いわき市／福島拠点. これはデモ用ページです。</div>
+  </div>
+</footer>
+
+<script src="assets/js/simulator.js"></script>
+<script>
+  (function () {
+    var S = window.AucSim;
+    var fromSel = document.getElementById("from");
+    var toSel = document.getElementById("to");
+    Object.keys(S.PREF).forEach(function (k) {
+      [fromSel, toSel].forEach(function (sel) {
+        var o = document.createElement("option");
+        o.value = k; o.textContent = k;
+        sel.appendChild(o);
+      });
+    });
+    fromSel.value = "福島"; toSel.value = "東京";
+
+    function render() {
+      var cls = document.querySelector('input[name="cls"]:checked').value;
+      var r = S.estimateShipping({ from: fromSel.value, to: toSel.value, cls: cls });
+      document.getElementById("rRoute").textContent = r.fromLabel + " → " + r.toLabel + "（約" + r.km + "km）";
+      document.getElementById("rCls").textContent = S.CLASS[cls].label;
+      document.getElementById("rCost").textContent = S.yen(r.cost);
+    }
+    document.querySelector(".sim").addEventListener("input", render);
+    document.querySelector(".sim").addEventListener("change", render);
+    render();
+  })();
+</script>
+</body>
+</html>

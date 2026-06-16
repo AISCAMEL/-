@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="1180" viewBox="0 0 960 1180" font-family="'Noto Sans CJK JP','IPAGothic',sans-serif">
+  <defs>
+    <linearGradient id="hero" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0e1b33"/><stop offset="0.7" stop-color="#16294a"/><stop offset="1" stop-color="#1f3a66"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e0bd6a"/><stop offset="1" stop-color="#c9a14a"/>
+    </linearGradient>
+    <linearGradient id="sim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0e1b33"/><stop offset="1" stop-color="#16294a"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="1180" fill="#f6f8fc"/>
+
+  <!-- Header -->
+  <rect width="960" height="60" fill="#0e1b33"/>
+  <rect x="32" y="16" width="28" height="28" rx="7" fill="url(#gold)"/><text x="40" y="35" fill="#0e1b33" font-size="16" font-weight="900">A</text>
+  <text x="70" y="32" fill="#fff" font-size="16" font-weight="800">AUC-AGENT</text>
+  <text x="70" y="46" fill="#e0bd6a" font-size="9" letter-spacing="2">CAR AUCTION AGENT</text>
+  <text x="610" y="36" fill="#d8deea" font-size="12">購入代行</text>
+  <text x="675" y="36" fill="#e0bd6a" font-size="12" font-weight="700">出品代行</text>
+  <rect x="800" y="16" width="128" height="28" rx="14" fill="url(#gold)"/><text x="864" y="35" fill="#0e1b33" font-size="12" font-weight="700" text-anchor="middle">無料会員登録</text>
+
+  <!-- Hero -->
+  <rect x="0" y="60" width="960" height="420" fill="url(#hero)"/>
+  <rect x="40" y="96" width="240" height="28" rx="14" fill="#2a3a5c"/><text x="55" y="115" fill="#e0bd6a" font-size="12" font-weight="700">★ 出品代行 — 高く売りたい方へ</text>
+  <text x="40" y="170" fill="#fff" font-size="29" font-weight="900">その愛車、<tspan fill="#e0bd6a">店頭買取より高く</tspan></text>
+  <text x="40" y="206" fill="#fff" font-size="29" font-weight="900">売れるかも。<tspan fill="#e0bd6a">出品代行</tspan>。</text>
+  <text x="40" y="244" fill="#d4dcec" font-size="13">買取店の提示額には再販利益が引かれています。全国の業者が競り合う</text>
+  <text x="40" y="264" fill="#d4dcec" font-size="13">オークションに直接出品。相場に近い価格での売却を目指せます。</text>
+  <rect x="40" y="292" width="280" height="42" rx="21" fill="url(#gold)"/><text x="180" y="318" fill="#0e1b33" font-size="14" font-weight="700" text-anchor="middle">▶ 手取りシミュレーション</text>
+  <text x="42" y="386" fill="#e0bd6a" font-size="22" font-weight="900">+15<tspan font-size="13">%↑</tspan></text><text x="42" y="404" fill="#aab6cd" font-size="11">買取比の例</text>
+  <text x="170" y="386" fill="#e0bd6a" font-size="20" font-weight="900">全国<tspan font-size="12">会場</tspan></text><text x="170" y="404" fill="#aab6cd" font-size="11">出品ネットワーク</text>
+  <text x="320" y="386" fill="#e0bd6a" font-size="20" font-weight="900">出品票<tspan font-size="12">作成</tspan></text><text x="320" y="404" fill="#aab6cd" font-size="11">郵送までサポート</text>
+  <!-- card -->
+  <rect x="560" y="110" width="360" height="300" rx="16" fill="#26375a" stroke="#3c4f78"/>
+  <text x="584" y="146" fill="#fff" font-size="15" font-weight="700">出品代行の手取りイメージ</text>
+  <text x="584" y="168" fill="#aab6cd" font-size="11">想定落札 120万円・標準状態の場合</text>
+  <line x1="584" y1="186" x2="896" y2="186" stroke="#3c4f78" stroke-dasharray="3 3"/>
+  <text x="584" y="214" fill="#d4dcec" font-size="13">想定落札価格</text><text x="896" y="214" fill="#fff" font-size="13" font-weight="700" text-anchor="end">¥1,200,000</text>
+  <text x="584" y="246" fill="#d4dcec" font-size="13">出品代行手数料</text><text x="896" y="246" fill="#fff" font-size="13" font-weight="700" text-anchor="end">− ¥59,800</text>
+  <text x="584" y="278" fill="#d4dcec" font-size="13">出品料・成約料</text><text x="896" y="278" fill="#fff" font-size="13" font-weight="700" text-anchor="end">− ¥11,000</text>
+  <line x1="584" y1="300" x2="896" y2="300" stroke="#3c4f78" stroke-dasharray="3 3"/>
+  <text x="584" y="344" fill="#d4dcec" font-size="13">手取り目安</text>
+  <text x="896" y="356" fill="#e0bd6a" font-size="26" font-weight="900" text-anchor="end">¥1,129,200</text>
+
+  <!-- Flow -->
+  <text x="480" y="540" fill="#1a2233" font-size="22" font-weight="900" text-anchor="middle">出品代行の流れ（会員サイトで進行）</text>
+  <g>
+    <rect x="40" y="566" width="168" height="120" rx="12" fill="#fff" stroke="#e4e8ef"/>
+    <circle cx="64" cy="594" r="14" fill="#0e1b33"/><text x="64" y="599" fill="#e0bd6a" font-size="13" font-weight="900" text-anchor="middle">1</text>
+    <text x="56" y="636" fill="#1a2233" font-size="14" font-weight="800">出品申込</text><text x="56" y="660" fill="#5a6675" font-size="11">車検証・走行を入力</text>
+    <rect x="220" y="566" width="168" height="120" rx="12" fill="#fff" stroke="#e4e8ef"/>
+    <circle cx="244" cy="594" r="14" fill="#0e1b33"/><text x="244" y="599" fill="#e0bd6a" font-size="13" font-weight="900" text-anchor="middle">2</text>
+    <text x="236" y="636" fill="#1a2233" font-size="14" font-weight="800">想定額・契約</text><text x="236" y="660" fill="#5a6675" font-size="11">手取りを確認</text>
+    <rect x="400" y="566" width="168" height="120" rx="12" fill="#fff" stroke="#e4e8ef"/>
+    <circle cx="424" cy="594" r="14" fill="#0e1b33"/><text x="424" y="599" fill="#e0bd6a" font-size="13" font-weight="900" text-anchor="middle">3</text>
+    <text x="416" y="636" fill="#1a2233" font-size="14" font-weight="800">出品票を郵送</text><text x="416" y="660" fill="#5a6675" font-size="11">情報をもとに制作</text>
+    <rect x="580" y="566" width="168" height="120" rx="12" fill="#fff" stroke="#e4e8ef"/>
+    <circle cx="604" cy="594" r="14" fill="#0e1b33"/><text x="604" y="599" fill="#e0bd6a" font-size="13" font-weight="900" text-anchor="middle">4</text>
+    <text x="596" y="636" fill="#1a2233" font-size="14" font-weight="800">会場へ搬入</text><text x="596" y="660" fill="#5a6675" font-size="11">代理搬入も可</text>
+    <rect x="760" y="566" width="160" height="120" rx="12" fill="#fff" stroke="#e4e8ef"/>
+    <circle cx="784" cy="594" r="14" fill="#0e1b33"/><text x="784" y="599" fill="#e0bd6a" font-size="13" font-weight="900" text-anchor="middle">5</text>
+    <text x="776" y="636" fill="#1a2233" font-size="14" font-weight="800">成約・入金</text><text x="776" y="660" fill="#5a6675" font-size="11">手数料控除後</text>
+  </g>
+
+  <!-- Sell simulator -->
+  <rect x="0" y="720" width="960" height="380" fill="url(#sim)"/>
+  <text x="480" y="772" fill="#fff" font-size="22" font-weight="900" text-anchor="middle">「手取り」をその場でシミュレーション</text>
+  <!-- input -->
+  <rect x="40" y="800" width="430" height="270" rx="16" fill="#26375a" stroke="#3c4f78"/>
+  <text x="64" y="834" fill="#e7ecf6" font-size="13" font-weight="700">想定落札価格（中央値の見込み）</text>
+  <text x="446" y="834" fill="#e0bd6a" font-size="13" font-weight="700" text-anchor="end">¥1,200,000</text>
+  <rect x="64" y="846" width="382" height="6" rx="3" fill="#1f3a66"/><circle cx="230" cy="849" r="9" fill="#e0bd6a"/>
+  <text x="64" y="888" fill="#e7ecf6" font-size="13" font-weight="700">車種クラス</text>
+  <rect x="64" y="898" width="382" height="32" rx="8" fill="#324a72"/><text x="80" y="919" fill="#cdd9ee" font-size="13">セダン/ミニバン　▼</text>
+  <text x="64" y="962" fill="#e7ecf6" font-size="13" font-weight="700">車両の状態</text>
+  <rect x="64" y="972" width="382" height="32" rx="8" fill="#324a72"/><text x="80" y="993" fill="#cdd9ee" font-size="13">標準（評価点3.5〜4）　▼</text>
+  <text x="64" y="1040" fill="#e7ecf6" font-size="13" font-weight="700">オプション</text>
+  <rect x="64" y="1050" width="14" height="14" rx="3" fill="#324a72"/><text x="86" y="1062" fill="#cdd9ee" font-size="11">車検整備 / 内外装クリーニング / 代理搬入</text>
+  <!-- result -->
+  <rect x="490" y="800" width="430" height="270" rx="16" fill="#fff"/>
+  <text x="514" y="834" fill="#1a2233" font-size="16" font-weight="800">手取りシミュレーション</text>
+  <text x="514" y="866" fill="#1a2233" font-size="13">想定落札相場レンジ</text><text x="896" y="866" fill="#1a2233" font-size="13" text-anchor="end">¥1,080,000〜¥1,272,000</text>
+  <text x="514" y="894" fill="#1a2233" font-size="13">想定落札価格（100〜150万円帯）</text><text x="896" y="894" fill="#1a2233" font-size="13" text-anchor="end">¥1,200,000</text>
+  <text x="514" y="922" fill="#5a6675" font-size="13">出品代行手数料</text><text x="896" y="922" fill="#5a6675" font-size="13" text-anchor="end">− ¥59,800</text>
+  <text x="514" y="950" fill="#5a6675" font-size="13">出品料・成約料</text><text x="896" y="950" fill="#5a6675" font-size="13" text-anchor="end">− ¥11,000</text>
+  <rect x="514" y="970" width="382" height="48" rx="10" fill="#0e1b33"/>
+  <text x="532" y="1000" fill="#d4dcec" font-size="13">手取り目安</text>
+  <text x="880" y="1004" fill="#e0bd6a" font-size="22" font-weight="900" text-anchor="end">¥1,129,200</text>
+  <rect x="514" y="1030" width="382" height="30" rx="8" fill="#0e1b33"/><text x="705" y="1050" fill="#fff" font-size="12" font-weight="700" text-anchor="middle">この内容で出品を申し込む（無料登録）</text>
+
+  <!-- CTA -->
+  <rect x="0" y="1100" width="960" height="80" fill="url(#gold)"/>
+  <text x="480" y="1135" fill="#0e1b33" font-size="18" font-weight="900" text-anchor="middle">まずは無料で、いくらで売れるか確かめよう。</text>
+  <text x="480" y="1160" fill="#0e1b33" font-size="12" text-anchor="middle">会員登録は1分。出品票の郵送まで会員サイトで完結。</text>
+</svg>
