@@ -35,6 +35,10 @@ export default function ResearchPage() {
   const [error, setError] = useState<string | null>(null);
   // 出品状態（key 単位）: idle / publishing / done / error
   const [pubState, setPubState] = useState<Record<string, { status: string; msg?: string }>>({});
+  // 実データ(live)の調査先。空なら mock 全体にフォールバック。
+  const [liveMarkets, setLiveMarkets] = useState<string[]>([]);
+
+  const ALL_MARKETS = ["amazon", "rakuten", "yahoo", "ebay"];
 
   // 猫グッズのキーワードと推奨設定を読み込む
   useEffect(() => {
@@ -50,6 +54,21 @@ export default function ResearchPage() {
       .catch(() => setError("猫グッズプリセットの取得に失敗（Hub API 未起動の可能性）"));
   }, []);
 
+  // 各コネクタのモードを取得し、live の調査先を特定
+  useEffect(() => {
+    fetch("/api/connectors")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.modes) {
+          setLiveMarkets(ALL_MARKETS.filter((m) => d.modes[m] === "live"));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // 集計に使う調査先: live があればそれだけ、無ければ日本3モール(mock)
+  const marketsToUse = liveMarkets.length > 0 ? liveMarkets : ["amazon", "rakuten", "yahoo"];
+
   async function runScreen() {
     setLoading(true);
     setError(null);
@@ -62,7 +81,7 @@ export default function ResearchPage() {
       const res = await fetch("/api/screen", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ candidates, markets: ["amazon", "rakuten", "yahoo"], minMarginRate, minGrade }),
+        body: JSON.stringify({ candidates, markets: marketsToUse, minMarginRate, minGrade }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ? JSON.stringify(data.error) : "スクリーニング失敗");
@@ -142,6 +161,29 @@ export default function ResearchPage() {
       <h1>猫グッズ スクリーニング</h1>
       <p style={{ color: "#666" }}>
         猫グッズのキーワードを Amazon・楽天で調査し、仕入れ値と突き合わせて利益率で採点・ランキングします。
+      </p>
+      <p style={{ fontSize: 13, margin: "4px 0 0" }}>
+        調査先:{" "}
+        {marketsToUse.map((m) => {
+          const isLive = liveMarkets.includes(m);
+          return (
+            <span
+              key={m}
+              style={{
+                marginRight: 6, padding: "2px 8px", borderRadius: 999,
+                background: isLive ? "#dcfce7" : "#f3f4f6",
+                color: isLive ? "#166534" : "#6b7280",
+              }}
+            >
+              {isLive ? "🟢" : "⚪"} {m}
+            </span>
+          );
+        })}
+        {liveMarkets.length > 0 ? (
+          <span style={{ color: "#16a34a" }}>（実データのみで集計）</span>
+        ) : (
+          <span style={{ color: "#9ca3af" }}>（全て mock）</span>
+        )}
       </p>
 
       <div style={{ display: "flex", gap: 16, alignItems: "end", flexWrap: "wrap", margin: "16px 0" }}>
