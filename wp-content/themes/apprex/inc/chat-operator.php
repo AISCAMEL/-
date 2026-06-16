@@ -257,7 +257,7 @@ add_action( 'rest_api_init', function () {
 		'apprex/v1',
 		'/slack/events',
 		array(
-			'methods'             => 'POST',
+			'methods'             => array( 'GET', 'POST' ), // GET はブラウザでの生存確認用。
 			'callback'            => 'apprex_rest_slack_events',
 			'permission_callback' => '__return_true',
 		)
@@ -333,6 +333,18 @@ function apprex_rest_chat_poll( WP_REST_Request $request ) {
  * REST: Slack Events API（担当者の返信を受信）
  * ---------------------------------------------------------------------- */
 function apprex_rest_slack_events( WP_REST_Request $request ) {
+	// GET = ブラウザでの生存確認（このJSONが見えればルートは正しく登録されている）。
+	if ( 'GET' === $request->get_method() ) {
+		return new WP_REST_Response(
+			array(
+				'alive'   => true,
+				'version' => defined( 'APPREX_VERSION' ) ? APPREX_VERSION : '',
+				'note'    => 'APPREX Slack events endpoint. Slack sends POST here.',
+			),
+			200
+		);
+	}
+
 	$raw  = $request->get_body();
 	$json = json_decode( $raw, true );
 	if ( ! is_array( $json ) ) {
