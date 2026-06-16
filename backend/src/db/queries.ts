@@ -142,8 +142,7 @@ export async function updateCallTags(tenantId: string, callId: string, tags: str
 }
 
 // 週次サマリー（直近7日）の集計を返す。
-export async function buildWeeklyDigest(tenantId: string) {
-  const calls = await listCalls(tenantId, { period: 'week', limit: 1000 });
+export async function buildWeeklyDigest(tenantId: string) {  const calls = await listCalls(tenantId, { period: 'week', limit: 1000 });
   const byCategory: Record<string, number> = {};
   let callbacks = 0, transfers = 0, unhandled = 0;
   for (const c of calls) {
@@ -153,6 +152,18 @@ export async function buildWeeklyDigest(tenantId: string) {
     if (c.status === 'new' || c.status === 'need_human') unhandled++;
   }
   return { total: calls.length, byCategory, callbacks, transfers, unhandled };
+}
+
+/** 週次サマリーの送信対象テナント（稼働中・通知先メールあり）。 */
+export async function listDigestTargets(): Promise<{ tenantId: string; email: string | null }[]> {
+  if (!dbEnabled) {
+    return [{ tenantId: demoTenant.id, email: demoSettings.notification_email }];
+  }
+  const rows = await query<any>(
+    `select t.id as tenant_id, s.notification_email as email
+       from tenants t join tenant_settings s on s.tenant_id = t.id
+      where t.status in ('active','trial') and coalesce(s.notification_email,'') <> ''`);
+  return rows.map((r) => ({ tenantId: r.tenant_id, email: r.email }));
 }
 
 export async function getCall(tenantId: string, callId: string) {

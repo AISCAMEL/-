@@ -44,6 +44,10 @@ export const config = {
   // ステップメール worker の実行間隔(秒)。0で無効。
   leadWorkerIntervalSec: Number(process.env.LEAD_WORKER_INTERVAL_SEC ?? 60),
 
+  // 週次サマリー自動送信（opt-in）。毎週月曜の指定時刻(UTC)に送信。
+  weeklyDigestEnabled: (process.env.WEEKLY_DIGEST_ENABLED ?? 'false') === 'true',
+  weeklyDigestHourUtc: Number(process.env.WEEKLY_DIGEST_HOUR_UTC ?? 23), // 23 UTC = 月曜8時(JST)
+
   // 管理画面フロントの許可オリジン（CORS）。
   corsOrigin: process.env.CORS_ORIGIN ?? '*',
 

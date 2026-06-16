@@ -11,6 +11,7 @@ import { registerConversationWs } from './ws/conversation.js';
 import { registerApiRoutes } from './api/routes.js';
 import { registerLeadRoutes } from './leads/routes.js';
 import { processDueEmails } from './leads/repo.js';
+import { runWeeklyDigests } from './notify/digest.js';
 
 // アプリ本体を組み立てて返す（listen はしない）。テストから inject で利用する。
 export async function buildApp(opts: { logger?: boolean } = {}): Promise<FastifyInstance> {
@@ -45,6 +46,19 @@ async function main() {
       .then((n) => { if (n > 0) app.log.info(`[lead-worker] sent ${n} emails`); })
       .catch((err) => app.log.error({ err }, 'lead-worker failed'));
     setInterval(tick, config.leadWorkerIntervalSec * 1000).unref();
+  }
+
+  // 週次サマリー自動送信（opt-in）。毎時チェックし、月曜の指定時刻(UTC)に送る。
+  if (config.weeklyDigestEnabled) {
+    const checkWeekly = () => {
+      const now = new Date();
+      if (now.getUTCDay() === 1 && now.getUTCHours() === config.weeklyDigestHourUtc) {
+        runWeeklyDigests((m) => app.log.info(`[weekly-digest] ${m}`))
+          .catch((err) => app.log.error({ err }, 'weekly-digest failed'));
+      }
+    };
+    setInterval(checkWeekly, 60 * 60 * 1000).unref();
+    app.log.info('[weekly-digest] enabled');
   }
 
   try {
