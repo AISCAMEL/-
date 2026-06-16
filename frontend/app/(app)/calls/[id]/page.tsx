@@ -154,7 +154,13 @@ export default function CallDetailPage() {
               ))}
               {(!call.notes || call.notes.length === 0) && <p className="text-sm text-gray-400">メモはありません。</p>}
             </div>
-            <form onSubmit={addNote} className="mt-3 flex gap-2">
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {['折り返し済み', '対応完了', '要確認', '担当者へ共有済み', '不在のため再連絡'].map((t) => (
+                <button key={t} type="button" onClick={() => setNote((n) => (n ? n + ' ' : '') + t)}
+                  className="rounded-full border px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50">{t}</button>
+              ))}
+            </div>
+            <form onSubmit={addNote} className="mt-2 flex gap-2">
               <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="メモを追加"
                 className="flex-1 rounded-lg border px-3 py-2 text-sm" />
               <button className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark">追加</button>

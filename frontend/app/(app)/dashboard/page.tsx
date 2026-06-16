@@ -8,10 +8,21 @@ import { Card, PageTitle, StatusBadge, CategoryTag, formatDateTime, formatDurati
 export default function DashboardPage() {
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState('');
+  const [digestMsg, setDigestMsg] = useState('');
 
   useEffect(() => {
     api.dashboard().then(setData).catch((e) => setError(String(e)));
   }, []);
+
+  async function sendWeekly() {
+    setDigestMsg('送信中…');
+    try {
+      const r = await api.weeklyDigest();
+      setDigestMsg(r.ok ? `今週のサマリーを送信しました（${r.destination}）` : `送信失敗: ${r.error}`);
+    } catch (e: any) {
+      setDigestMsg(`送信失敗: ${e.message ?? e}`);
+    }
+  }
 
   if (error) return <p className="text-red-600">{error}</p>;
   if (!data) return <p className="text-gray-400">読み込み中…</p>;
@@ -29,7 +40,13 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <PageTitle title="ダッシュボード" sub="電話受付の状況をひと目で。" />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <PageTitle title="ダッシュボード" sub="電話受付の状況をひと目で。" />
+        <button onClick={sendWeekly} className="h-10 rounded-lg border px-4 text-sm text-gray-600 hover:bg-gray-50">
+          今週のサマリーをメール送信
+        </button>
+      </div>
+      {digestMsg && <p className="mb-3 text-sm text-brand">{digestMsg}</p>}
 
       {/* 初期設定への導線 */}
       <Link href="/onboarding" className="mb-6 flex items-center justify-between rounded-xl border border-brand/30 bg-brand-light px-4 py-3 text-sm hover:bg-brand-light/70">

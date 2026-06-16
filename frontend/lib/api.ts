@@ -57,6 +57,9 @@ export const api = {
   updateUser: (id: string, body: any) => request<any>(`/api/users/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   deleteUser: (id: string) => request<any>(`/api/users/${id}`, { method: 'DELETE' }),
 
+  weeklyDigest: () => request<{ ok: boolean; destination: string; summary: any; error?: string }>(
+    '/api/digest/weekly', { method: 'POST' }),
+
   aiTest: (message: string, history: { role: 'customer' | 'ai'; content: string }[]) =>
     request<{ reply: string; intent: string; should_transfer: boolean; should_end_call: boolean }>(
       '/api/ai-test', { method: 'POST', body: JSON.stringify({ message, history }) }),

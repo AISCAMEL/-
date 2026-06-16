@@ -2,8 +2,10 @@ import type { FastifyInstance } from 'fastify';
 import { authenticate, requireSuperAdmin, requireRole } from '../auth/jwt.js';
 import * as q from '../db/queries.js';
 import { sendCallNotification } from '../notify/email.js';
+import { sendEmail } from '../notify/email.js';
 import { getSettings } from '../db/queries.js';
 import { tenantTestReply, type TestTurn } from '../ai/testchat.js';
+import { CATEGORY_LABEL } from '../notify/email.js';
 
 // 管理画面 API（docs/api.md 準拠）。全エンドポイントは JWT(またはdevモード) 認証必須。
 export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
@@ -184,6 +186,32 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     const history = Array.isArray(body.history) ? body.history.slice(-12) : [];
     const result = await tenantTestReply(ctx, history, message);
     return result;
+  });
+
+  // ---- 週次サマリーメール（手動送信） ----
+  app.post('/api/digest/weekly', { preHandler: authenticate }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const d = await q.buildWeeklyDigest(p.tenantId);
+    const settings = await getSettings(p.tenantId);
+    const dest = settings?.notification_email ?? 'owner@example.com';
+    const breakdown = Object.entries(d.byCategory)
+      .map(([k, n]) => `  ・${CATEGORY_LABEL[k as keyof typeof CATEGORY_LABEL] ?? k}: ${n}件`).join('\n') || '  （なし）';
+    const body = [
+      '直近7日間の電話受付サマリーです。',
+      '',
+      `■ 総着信数: ${d.total}件`,
+      `■ 折り返し希望: ${d.callbacks}件`,
+      `■ 担当者転送: ${d.transfers}件`,
+      `■ 未対応: ${d.unhandled}件`,
+      '',
+      '■ 要件の内訳',
+      breakdown,
+      '',
+      '管理画面で詳細を確認できます。',
+    ].join('\n');
+    const result = await sendEmail(dest, '【AIオペレーター24】今週の電話サマリー', body);
+    return { ok: result.ok, destination: dest, summary: d, error: result.error };
   });
 
   // ---- usage / 原価モニタリング ----

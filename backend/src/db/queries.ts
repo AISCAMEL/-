@@ -123,8 +123,21 @@ export async function listCalls(tenantId: string, f: CallListFilter) {
   );
 }
 
-export async function getCall(tenantId: string, callId: string) {
-  if (!dbEnabled) {
+// 週次サマリー（直近7日）の集計を返す。
+export async function buildWeeklyDigest(tenantId: string) {
+  const calls = await listCalls(tenantId, { period: 'week', limit: 1000 });
+  const byCategory: Record<string, number> = {};
+  let callbacks = 0, transfers = 0, unhandled = 0;
+  for (const c of calls) {
+    if (c.category) byCategory[c.category] = (byCategory[c.category] ?? 0) + 1;
+    if (c.status === 'callback_requested') callbacks++;
+    if (c.status === 'transferred') transfers++;
+    if (c.status === 'new' || c.status === 'need_human') unhandled++;
+  }
+  return { total: calls.length, byCategory, callbacks, transfers, unhandled };
+}
+
+export async function getCall(tenantId: string, callId: string) {  if (!dbEnabled) {
     const c = demoCalls.find((x) => x.id === callId);
     if (!c) return null;
     return {
