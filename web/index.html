@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>車・廃車・パーツの買取なら BUYMO｜全国対応・無料査定・手数料0円</title>
+<meta name="description" content="BUYMOはあらゆる車・廃車・パーツを買い取る総合買取サービス。全国47都道府県対応、出張・引取無料、最短即日入金。動かない車・事故車・旧車・SUV・キャンピングカー・軽トラ・アルミホイールまで高価買取。">
+<style>
+  :root{
+    --teal:#1aa3a3; --teal-d:#138787; --orange:#ff7a18; --orange-d:#e96900;
+    --ink:#243036; --muted:#6b7c85; --bg:#f4f7f8; --line:#e3eaed; --gold:#f5b50a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;color:var(--ink);line-height:1.7;background:#fff}
+  img{max-width:100%}
+  .wrap{max-width:960px;margin:0 auto;padding:0 16px}
+  .badge-note{background:#fff4e6;color:#a85b00;font-size:12px;border:1px dashed var(--orange);
+    border-radius:4px;padding:1px 6px;display:inline-block;vertical-align:middle}
+  /* header */
+  header{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid var(--line)}
+  .hd{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;max-width:960px;margin:0 auto}
+  .logo{font-weight:800;font-size:24px;letter-spacing:1px;color:var(--teal)}
+  .logo span{color:var(--orange)}
+  .hd .cta{font-size:13px;padding:8px 14px}
+  /* buttons */
+  .cta{display:inline-block;background:var(--orange);color:#fff;font-weight:700;text-decoration:none;
+    border-radius:999px;padding:14px 26px;box-shadow:0 4px 0 var(--orange-d);transition:.1s}
+  .cta:active{transform:translateY(2px);box-shadow:0 2px 0 var(--orange-d)}
+  .cta.line{background:#06c755;box-shadow:0 4px 0 #04a544}
+  .cta.tel{background:#fff;color:var(--teal);border:2px solid var(--teal);box-shadow:none}
+  .cta-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px}
+  /* hero */
+  .hero{background:linear-gradient(135deg,var(--teal),var(--teal-d));color:#fff;text-align:center;padding:40px 16px 48px}
+  .hero h1{font-size:30px;line-height:1.35;margin-bottom:10px}
+  .hero h1 b{color:#fff5d6}
+  .hero p.sub{font-size:15px;opacity:.95}
+  .trust{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:18px 0 4px}
+  .trust span{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);
+    border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600}
+  /* quick form */
+  .qform{background:#fff;color:var(--ink);max-width:560px;margin:22px auto 0;border-radius:14px;
+    padding:18px;box-shadow:0 12px 30px rgba(0,0,0,.18);text-align:left}
+  .qform h2{font-size:16px;text-align:center;margin-bottom:12px;color:var(--teal-d)}
+  .qgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .qform select,.qform input{width:100%;padding:11px;border:1px solid var(--line);border-radius:8px;font-size:14px;background:#fafdfd}
+  .qform .full{grid-column:1/3}
+  .qform .submit{width:100%;border:none;cursor:pointer;margin-top:4px}
+  .chk{font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center;margin-top:8px}
+  /* sections */
+  section{padding:42px 0}
+  section.alt{background:var(--bg)}
+  .sec-h{text-align:center;margin-bottom:26px}
+  .sec-h .en{display:block;color:var(--teal);font-size:12px;font-weight:700;letter-spacing:2px}
+  .sec-h h2{font-size:24px}
+  /* results */
+  .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;text-align:center}
+  .card .ph{background:#dde7ea;height:96px;display:flex;align-items:center;justify-content:center;color:#8aa0a8;font-size:12px}
+  .card .nm{font-weight:700;padding:8px 8px 0}
+  .card .pr{background:#c52d2d;color:#fff;font-weight:800;font-size:20px;padding:6px;margin:8px 0 0}
+  .card .pr small{font-size:12px;font-weight:600}
+  /* voices */
+  .voice{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;display:flex;gap:12px}
+  .voice .av{width:54px;height:54px;border-radius:50%;background:#dde7ea;flex:0 0 54px;display:flex;align-items:center;justify-content:center;color:#8aa0a8;font-size:11px}
+  .stars{color:var(--gold);font-weight:700}
+  .voice .nm{font-weight:700}
+  /* reasons */
+  .reasons{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .reason{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 12px;text-align:center}
+  .reason .ico{font-size:30px}
+  .reason h3{font-size:15px;margin:8px 0 4px;color:var(--teal-d)}
+  .reason p{font-size:12.5px;color:var(--muted)}
+  /* steps */
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .step{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 10px;text-align:center;position:relative}
+  .step .no{width:30px;height:30px;border-radius:50%;background:var(--orange);color:#fff;font-weight:800;
+    display:flex;align-items:center;justify-content:center;margin:0 auto 8px}
+  .step h3{font-size:14px}.step p{font-size:12px;color:var(--muted)}
+  /* category */
+  .cats{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  .cat{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid var(--line);
+    border-radius:12px;padding:14px;text-decoration:none;color:var(--ink)}
+  .cat .ico{font-size:26px}
+  .cat b{display:block;color:var(--teal-d)}
+  .cat small{color:var(--muted);font-size:12px}
+  /* faq */
+  .faq details{background:#fff;border:1px solid var(--line);border-radius:10px;margin-bottom:10px;padding:0 14px}
+  .faq summary{cursor:pointer;font-weight:700;padding:14px 0;list-style:none}
+  .faq summary::before{content:"Q ";color:var(--orange)}
+  .faq p{padding:0 0 14px;color:var(--muted);font-size:14px}
+  /* area */
+  .area{text-align:center}
+  .prefs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:16px}
+  .prefs a{font-size:12.5px;background:#fff;border:1px solid var(--line);border-radius:6px;
+    padding:5px 9px;text-decoration:none;color:var(--ink)}
+  /* final */
+  .final{background:linear-gradient(135deg,var(--orange),var(--orange-d));color:#fff;text-align:center}
+  .final h2{font-size:24px}.final p{margin:6px 0 4px}
+  .final .cta.tel{background:#fff}
+  /* footer */
+  footer{background:#1d2a30;color:#b8c6cc;font-size:13px;padding:30px 0}
+  footer a{color:#b8c6cc}
+  /* sticky mobile cta */
+  .sticky{position:fixed;left:0;right:0;bottom:0;z-index:60;background:#fff;border-top:1px solid var(--line);
+    display:none;gap:8px;padding:8px 12px}
+  .sticky .cta{flex:1;text-align:center;padding:12px}
+  @media(max-width:768px){
+    .hero h1{font-size:25px}
+    .reasons{grid-template-columns:repeat(2,1fr)}
+    .steps{grid-template-columns:repeat(2,1fr)}
+    .cats{grid-template-columns:1fr}
+    .sticky{display:flex}
+    body{padding-bottom:64px}
+    .hd .cta{display:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="hd">
+    <div class="logo">BUY<span>MO</span></div>
+    <a href="#form" class="cta">今すぐ無料査定</a>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap">
+    <h1>その車、<b>まだ価値があります。</b></h1>
+    <p class="sub">動かない車も、古い車も、パーツだけでも。<br>BUYMOがまとめて高価買取。</p>
+    <div class="trust">
+      <span>✅ 全国47都道府県対応</span>
+      <span>✅ 出張・引取無料</span>
+      <span>✅ 査定料・手数料0円</span>
+      <span>✅ 最短即日入金</span>
+    </div>
+
+    <!-- QUICK FORM -->
+    <form class="qform" id="form" onsubmit="return false">
+      <h2>30秒でかんたん無料査定</h2>
+      <div class="qgrid">
+        <select><option>メーカーを選択</option><option>トヨタ</option><option>日産</option><option>ホンダ</option><option>その他</option></select>
+        <input placeholder="車種（例：アクア）">
+        <select><option>年式</option><option>2020年〜</option><option>2015〜2019</option><option>2010〜2014</option><option>〜2009</option></select>
+        <select><option>走行距離</option><option>〜3万km</option><option>〜7万km</option><option>〜10万km</option><option>10万km〜</option></select>
+        <select class="full"><option>車の状態</option><option>自走できる</option><option>動かない・事故車</option></select>
+        <input class="full" placeholder="お名前">
+        <input placeholder="電話番号">
+        <input placeholder="メール / LINE">
+        <select class="full"><option>お住まいの都道府県</option><option>北海道</option><option>東京都</option><option>大阪府</option><option>…他</option></select>
+      </div>
+      <label class="chk"><input type="checkbox"> 個人情報の取扱いに同意する</label>
+      <div style="margin-top:12px"><button class="cta submit">この内容で無料査定を申し込む</button></div>
+    </form>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section class="alt">
+  <div class="wrap">
+    <div class="sec-h"><span class="en">REAL RESULTS</span><h2>リアル買取実績</h2></div>
+    <div class="cards">
+      <div class="card"><div class="ph">車両写真【要差替】</div><div class="nm">アクア</div><div class="pr">145<small>万円</small></div></div>
+      <div class="card"><div class="ph">車両写真【要差替】</div><div class="nm">ヴェルファイア</div><div class="pr">178<small>万円</small></div></div>
+      <div class="card"><div class="ph">車両写真【要差替】</div><div class="nm">マーチ</div><div class="pr">98<small>万円</small></div></div>
+      <div class="card"><div class="ph">車両写真【要差替】</div><div class="nm">【車種】</div><div class="pr">156<small>万円</small></div></div>
+    </div>
+    <p style="text-align:center;margin-top:16px;font-size:13px;color:var(--muted)">※ 実績の車種×年式×金額は旧ページより移行 <span class="badge-note">要差替</span></p>
+    <div class="cta-row"><a href="#" class="cta tel">すべての買取実績を見る</a></div>
+  </div>
+</section>
+
+<!-- VOICES -->
+<section>
+  <div class="wrap">
+    <div class="sec-h"><span class="en">REVIEWS</span><h2>お客様の声</h2></div>
+    <div class="voice"><div class="av">写真</div><div><div class="nm">アクア <span class="stars">★★★★★ 5.0</span></div><p>オンラインだけで査定が完了。来店不要でスムーズでした。<span class="badge-note">本文 要差替</span></p></div></div>
+    <div class="voice"><div class="av">写真</div><div><div class="nm">ヴェルファイア <span class="stars">★★★★★ 4.9</span></div><p>忙しい中でも自宅で完結。査定額にも満足です。<span class="badge-note">本文 要差替</span></p></div></div>
+    <div class="voice"><div class="av">写真</div><div><div class="nm">マーチ <span class="stars">★★★★☆ 4.7</span></div><p>写真を送るだけで対応が早く、すぐに入金されました。<span class="badge-note">本文 要差替</span></p></div></div>
+  </div>
+</section>
+
+<!-- REASONS -->
+<section class="alt">
+  <div class="wrap">
+    <div class="sec-h"><span class="en">WHY BUYMO</span><h2>選ばれる理由</h2></div>
+    <div class="reasons">
+      <div class="reason"><div class="ico">📱</div><h3>オンライン完結</h3><p>来店不要。フォームと写真だけで全国どこからでも。</p></div>
+      <div class="reason"><div class="ico">💰</div><h3>1円でも高く</h3><p>国内外の販路と再生ルートで高価買取。</p></div>
+      <div class="reason"><div class="ico">🆓</div><h3>手数料0円</h3><p>査定料・出張・レッカー引取すべて無料。</p></div>
+      <div class="reason"><div class="ico">♻️</div><h3>廃車もまるごと</h3><p>廃車手続き・名義変更を無料代行、税金還付も。</p></div>
+      <div class="reason"><div class="ico">⚡</div><h3>スピード入金</h3><p>書類が揃えば最短即日でお振込。</p></div>
+      <div class="reason"><div class="ico">🗾</div><h3>全国47都道府県</h3><p>出張買取に対応。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- STEPS -->
+<section>
+  <div class="wrap">
+    <div class="sec-h"><span class="en">FLOW</span><h2>査定の流れ</h2></div>
+    <div class="steps">
+      <div class="step"><div class="no">1</div><h3>フォーム入力</h3><p>最短30秒で申込</p></div>
+      <div class="step"><div class="no">2</div><h3>写真アップロード</h3><p>送るだけで精度UP</p></div>
+      <div class="step"><div class="no">3</div><h3>エントリー・査定</h3><p>結果をご連絡・成約</p></div>
+      <div class="step"><div class="no">4</div><h3>お振込・引取</h3><p>最短即日・引取無料</p></div>
+    </div>
+    <div class="cta-row"><a href="#form" class="cta">今すぐオンライン査定を始める</a></div>
+  </div>
+</section>
+
+<!-- CATEGORIES -->
+<section class="alt">
+  <div class="wrap">
+    <div class="sec-h"><span class="en">CATEGORY</span><h2>専門の買取ページ</h2></div>
+    <div class="cats">
+      <a class="cat" href="/eco"><span class="ico">🚗</span><span><b>BUYMO ECO</b><small>廃車・事故車・不動車</small></span></a>
+      <a class="cat" href="/classic"><span class="ico">🏁</span><span><b>BUYMO CLASSIC</b><small>旧車・絶版車</small></span></a>
+      <a class="cat" href="/suv"><span class="ico">🚙</span><span><b>BUYMO SUV</b><small>SUV・クロカン</small></span></a>
+      <a class="cat" href="/camp"><span class="ico">🚐</span><span><b>BUYMO CAMP</b><small>キャンピングカー</small></span></a>
+      <a class="cat" href="/k"><span class="ico">🛻</span><span><b>BUYMO K</b><small>軽トラ</small></span></a>
+      <a class="cat" href="/wheel"><span class="ico">⭕</span><span><b>BUYMO WHEEL</b><small>アルミホイール</small></span></a>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section>
+  <div class="wrap">
+    <div class="sec-h"><span class="en">FAQ</span><h2>よくある質問</h2></div>
+    <div class="faq">
+      <details><summary>動かない車でも買い取れますか？</summary><p>はい。事故車・不動車・水没車もBUYMO ECOで対応します。</p></details>
+      <details><summary>費用はかかりますか？</summary><p>査定料・出張費・レッカー代・廃車手続きすべて0円です。</p></details>
+      <details><summary>書類が揃っていません。</summary><p>必要書類はご案内し、廃車・名義変更は無料代行します。</p></details>
+      <details><summary>どれくらいで入金されますか？</summary><p>書類が揃えば最短即日でお振込が可能です。</p></details>
+      <details><summary>車以外も買い取れますか？</summary><p>アルミホイール等のパーツ単体も買取可能です（BUYMO WHEEL）。</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- AREA -->
+<section class="alt area">
+  <div class="wrap">
+    <div class="sec-h"><span class="en">NATIONWIDE</span><h2>全国対応買取サービス</h2></div>
+    <p>全国47都道府県に対応。お住まいの地域から査定・出張買取が可能です。</p>
+    <div class="prefs">
+      <a href="/area/hokkaido">北海道</a><a href="/area/tohoku">東北</a><a href="/area/kanto">関東</a>
+      <a href="/area/tokyo">東京都</a><a href="/area/chubu">中部</a><a href="/area/kansai">関西</a>
+      <a href="/area/osaka">大阪府</a><a href="/area/chugoku">中国</a><a href="/area/shikoku">四国</a>
+      <a href="/area/kyushu">九州・沖縄</a><a href="/area">…47都道府県すべて</a>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final">
+  <div class="wrap">
+    <h2>まずは無料査定から。</h2>
+    <p>しつこい営業はありません。お気軽にどうぞ。</p>
+    <div class="cta-row">
+      <a href="#form" class="cta" style="background:#fff;color:var(--orange-d);box-shadow:0 4px 0 #d9d9d9">無料査定をはじめる</a>
+      <a href="#" class="cta line">LINEで査定</a>
+      <a href="tel:000" class="cta tel">電話で相談【要差替】</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="logo" style="color:#fff">BUY<span style="color:var(--orange)">MO</span></div>
+    <p style="margin-top:10px">運営会社：【要差替】／所在地：【要差替】<br>
+    電話：【要差替】（受付時間：【要差替】）<br>
+    古物商許可番号：【要差替】</p>
+    <p style="margin-top:10px">
+      <a href="#">会社概要</a>　|　<a href="#">プライバシーポリシー</a>　|　<a href="#">特定商取引法に基づく表記</a>
+    </p>
+    <p style="margin-top:14px;color:#67787f">© BUYMO</p>
+  </div>
+</footer>
+
+<!-- STICKY MOBILE CTA -->
+<div class="sticky">
+  <a href="#form" class="cta">無料査定</a>
+  <a href="#" class="cta line">LINE</a>
+</div>
+
+</body>
+</html>
