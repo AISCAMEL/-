@@ -64,7 +64,8 @@ function resolveModes(
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const mode: ConnectorMode = env.CONNECTOR_MODE === "live" ? "live" : "mock";
   return {
-    port: Number(env.API_PORT ?? 3001),
+    // Railway/Render 等は PORT を動的注入するため優先して読む
+    port: Number(env.PORT ?? env.API_PORT ?? 3001),
     syncIntervalMinutes: Number(env.SYNC_INTERVAL_MINUTES ?? 0),
     connector: {
       mode,
