@@ -35,6 +35,7 @@ require_once CARMEL_CORE_DIR . 'includes/class-carmel-payments.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-reports.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-mf-contract.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-documents.php';
+require_once CARMEL_CORE_DIR . 'includes/class-carmel-acf-fields.php';
 require_once CARMEL_CORE_DIR . 'includes/notifications/interface-carmel-channel-adapter.php';
 require_once CARMEL_CORE_DIR . 'includes/notifications/class-carmel-notification-log.php';
 require_once CARMEL_CORE_DIR . 'includes/notifications/adapters/class-carmel-proline-adapter.php';
@@ -61,6 +62,7 @@ function carmel_core_init() {
 	Carmel_Reports::instance()->register_hooks();
 	Carmel_MF_Contract::instance()->register_hooks();
 	Carmel_Documents::instance()->register_hooks();
+	Carmel_ACF_Fields::instance()->register_hooks();
 	Carmel_Notifier::instance()->register_hooks();
 }
 add_action( 'plugins_loaded', 'carmel_core_init' );
