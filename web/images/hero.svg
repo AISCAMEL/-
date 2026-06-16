@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice">
+  <!-- transparent background: hero gradient shows through -->
+  <!-- speed lines -->
+  <g stroke="#ffffff" stroke-width="6" stroke-linecap="round" opacity="0.10">
+    <line x1="80" y1="300" x2="360" y2="300"/>
+    <line x1="40" y1="360" x2="260" y2="360"/>
+    <line x1="120" y1="420" x2="300" y2="420"/>
+    <line x1="1240" y1="250" x2="1520" y2="250"/>
+    <line x1="1320" y1="320" x2="1560" y2="320"/>
+  </g>
+  <!-- floating yen coins -->
+  <g font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle">
+    <g opacity="0.85">
+      <circle cx="250" cy="220" r="52" fill="#ffc436"/>
+      <circle cx="250" cy="220" r="52" fill="none" stroke="#e8a800" stroke-width="4"/>
+      <text x="250" y="240" font-size="52" fill="#9a6b00">¥</text>
+    </g>
+    <g opacity="0.7">
+      <circle cx="1360" cy="170" r="40" fill="#ffd766"/>
+      <circle cx="1360" cy="170" r="40" fill="none" stroke="#e8a800" stroke-width="3"/>
+      <text x="1360" y="186" font-size="40" fill="#9a6b00">¥</text>
+    </g>
+    <g opacity="0.55">
+      <circle cx="1180" cy="380" r="30" fill="#ffd766"/>
+      <text x="1180" y="392" font-size="30" fill="#9a6b00">¥</text>
+    </g>
+  </g>
+  <!-- ground -->
+  <rect x="0" y="720" width="1600" height="180" fill="#ffffff" opacity="0.06"/>
+  <line x1="0" y1="720" x2="1600" y2="720" stroke="#ffffff" stroke-width="4" opacity="0.18"/>
+  <g stroke="#ffc436" stroke-width="10" stroke-dasharray="60 46" opacity="0.5">
+    <line x1="0" y1="810" x2="1600" y2="810"/>
+  </g>
+  <!-- car silhouette (modern hatchback), light, semi-transparent -->
+  <g transform="translate(560,470)" opacity="0.9">
+    <!-- body -->
+    <path d="M40,180
+             C20,180 8,168 8,150
+             L10,120
+             C12,104 24,96 40,94
+             L120,90
+             C150,58 200,36 270,34
+             L330,34
+             C400,34 450,58 486,92
+             L560,100
+             C588,104 600,116 600,140
+             L600,152
+             C600,170 588,180 568,180
+             L520,180
+             A48,48 0 0 0 424,180
+             L196,180
+             A48,48 0 0 0 100,180
+             Z"
+          fill="#ffffff" opacity="0.92"/>
+    <!-- windows -->
+    <path d="M150,92 C176,66 214,52 268,50 L300,50 L300,92 Z" fill="#10b5a8" opacity="0.9"/>
+    <path d="M318,50 L330,50 C388,50 430,66 462,92 L318,92 Z" fill="#10b5a8" opacity="0.9"/>
+    <!-- accent stripe -->
+    <rect x="40" y="150" width="540" height="10" rx="5" fill="#ff6a13" opacity="0.9"/>
+    <!-- wheels -->
+    <circle cx="148" cy="180" r="42" fill="#1a2a30"/>
+    <circle cx="148" cy="180" r="18" fill="#cfe3e3"/>
+    <circle cx="472" cy="180" r="42" fill="#1a2a30"/>
+    <circle cx="472" cy="180" r="18" fill="#cfe3e3"/>
+    <!-- headlight -->
+    <circle cx="590" cy="128" r="8" fill="#ffc436"/>
+  </g>
+</svg>

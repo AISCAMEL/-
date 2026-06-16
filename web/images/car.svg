@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8f4f4"/>
+      <stop offset="1" stop-color="#cfe6e6"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="400" fill="url(#sky)"/>
+  <!-- ground -->
+  <rect x="0" y="300" width="600" height="100" fill="#bcd6d6"/>
+  <line x1="0" y1="300" x2="600" y2="300" stroke="#a6c6c6" stroke-width="4"/>
+  <g stroke="#ffffff" stroke-width="8" stroke-dasharray="34 26" opacity="0.8"><line x1="0" y1="350" x2="600" y2="350"/></g>
+  <!-- car -->
+  <g transform="translate(120,150)">
+    <path d="M20,120 C8,120 0,112 0,100 L2,78 C4,66 12,60 24,58 L78,56 C100,32 134,18 182,18 L222,18 C268,18 300,34 326,58 L376,64 C396,68 404,78 404,94 L404,104 C404,116 396,122 382,122 L350,122 A34,34 0 0 0 282,122 L138,122 A34,34 0 0 0 70,122 Z" fill="#10b5a8"/>
+    <path d="M96,58 C116,38 144,28 182,26 L204,26 L204,58 Z" fill="#cdeeea"/>
+    <path d="M218,26 L222,26 C262,26 290,38 318,58 L218,58 Z" fill="#cdeeea"/>
+    <rect x="20" y="100" width="384" height="8" rx="4" fill="#ff6a13"/>
+    <circle cx="104" cy="122" r="30" fill="#1a2a30"/><circle cx="104" cy="122" r="13" fill="#dfeeee"/>
+    <circle cx="316" cy="122" r="30" fill="#1a2a30"/><circle cx="316" cy="122" r="13" fill="#dfeeee"/>
+  </g>
+</svg>
