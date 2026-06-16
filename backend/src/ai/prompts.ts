@@ -11,9 +11,11 @@ export function buildSystemPrompt(ctx: TenantContext): string {
     ? `転送可能。転送が必要なら should_transfer=true。`
     : `転送先が未設定。担当者に繋げないため、転送が必要な場面では折り返し受付に切り替える。`;
 
+  const hoursLine = formatBusinessHours(ctx.businessHours);
+
   return `あなたは「${ctx.companyName}」の電話受付AI「AIオペレーター24」です。${
     ctx.industry ? `業種は「${ctx.industry}」です。` : ''
-  }
+  }${hoursLine ? `\n営業時間：${hoursLine}（記載のない曜日は休業）。営業時間や休業日を聞かれたらこの情報で答える。` : ''}
 
 # 役割
 - 電話に自然に応答し、相手の要件を聞き取り、分類する。
@@ -91,4 +93,19 @@ export function buildSummaryPrompt(): string {
   "callback_requested": false,
   "should_follow_up": false
 }`;
+}
+
+// 営業時間(jsonb)を読みやすい日本語に整形。例: 月〜金 10:00-18:00
+function formatBusinessHours(bh: unknown): string {
+  if (!bh || typeof bh !== 'object') return '';
+  const labels: Record<string, string> = { mon: '月', tue: '火', wed: '水', thu: '木', fri: '金', sat: '土', sun: '日' };
+  const order = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+  const parts: string[] = [];
+  for (const d of order) {
+    const ranges = (bh as Record<string, any>)[d];
+    if (Array.isArray(ranges) && ranges.length > 0 && Array.isArray(ranges[0])) {
+      parts.push(`${labels[d]} ${ranges[0][0]}-${ranges[0][1]}`);
+    }
+  }
+  return parts.join('、');
 }
