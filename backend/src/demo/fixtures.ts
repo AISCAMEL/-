@@ -23,6 +23,7 @@ export interface DemoCall {
   duration_sec: number | null;
   started_at: string;
   ended_at: string | null;
+  tags: string[];
   transcripts: { speaker: string; message: string; sequence: number }[];
   notes: { id: string; note: string; created_at: string }[];
 }
@@ -73,7 +74,7 @@ export const demoCalls: DemoCall[] = [
     status: 'completed', category: 'reservation', customer_name: '山田太郎', company_name: null,
     requested_datetime: '明日の15時', request_detail: 'カットの予約希望', summary: '明日15時にカットの予約希望。山田太郎様。折り返し不要。',
     next_action: '予約枠の確認', urgency: 'normal', sentiment: 'positive', duration_sec: 92,
-    started_at: iso(-35), ended_at: iso(-33),
+    started_at: iso(-35), ended_at: iso(-33), tags: ['VIP'],
     transcripts: [
       { speaker: 'ai', message: 'お電話ありがとうございます。AI受付です。ご用件をお話しください。', sequence: 0 },
       { speaker: 'customer', message: '予約したいんですけど', sequence: 1 },
@@ -92,7 +93,7 @@ export const demoCalls: DemoCall[] = [
     status: 'callback_requested', category: 'callback', customer_name: '佐藤花子', company_name: '佐藤商事',
     requested_datetime: null, request_detail: '見積もりについて折り返し希望', summary: '佐藤商事の佐藤様より見積もりの件で折り返し希望。現在の番号で連絡可。',
     next_action: '担当者より折り返し', urgency: 'normal', sentiment: 'neutral', duration_sec: 64,
-    started_at: iso(-120), ended_at: iso(-119),
+    started_at: iso(-120), ended_at: iso(-119), tags: ['要注意'],
     transcripts: [
       { speaker: 'ai', message: 'お電話ありがとうございます。AI受付です。ご用件をお話しください。', sequence: 0 },
       { speaker: 'customer', message: '担当の人に折り返してほしいんですが', sequence: 1 },
@@ -111,7 +112,7 @@ export const demoCalls: DemoCall[] = [
     status: 'new', category: 'inquiry', customer_name: null, company_name: null,
     requested_datetime: null, request_detail: '営業時間の問い合わせ', summary: '営業時間の問い合わせ。FAQに基づき平日10-18時と回答済み。',
     next_action: null, urgency: 'low', sentiment: 'neutral', duration_sec: 28,
-    started_at: iso(-15), ended_at: iso(-14),
+    started_at: iso(-15), ended_at: iso(-14), tags: [],
     transcripts: [
       { speaker: 'ai', message: 'お電話ありがとうございます。AI受付です。ご用件をお話しください。', sequence: 0 },
       { speaker: 'customer', message: '営業時間を教えてください', sequence: 1 },

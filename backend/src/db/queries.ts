@@ -18,6 +18,7 @@ export interface CallListFilter {
   q?: string;
   period?: string;     // today / week / month
   attention?: boolean; // 要対応のみ（new/need_human）
+  tag?: string;        // タグで絞り込み
   limit?: number;
 }
 
@@ -95,6 +96,7 @@ export async function listCalls(tenantId: string, f: CallListFilter) {
     if (f.status) rows = rows.filter((c) => c.status === f.status);
     if (f.attention) rows = rows.filter((c) => ATTENTION_STATUSES.includes(c.status));
     if (f.category) rows = rows.filter((c) => c.category === f.category);
+    if (f.tag) rows = rows.filter((c) => (c.tags ?? []).includes(f.tag!));
     const since = periodStartIso(f.period);
     if (since) rows = rows.filter((c) => c.started_at >= since);
     if (f.q) {
@@ -112,15 +114,31 @@ export async function listCalls(tenantId: string, f: CallListFilter) {
   if (f.status) { params.push(f.status); where.push(`status = $${params.length}`); }
   if (f.attention) where.push(`status in ('new','need_human')`);
   if (f.category) { params.push(f.category); where.push(`category = $${params.length}`); }
+  if (f.tag) { params.push(f.tag); where.push(`$${params.length} = any(tags)`); }
   const since = periodStartIso(f.period);
   if (since) { params.push(since); where.push(`started_at >= $${params.length}`); }
   if (f.q) { params.push(`%${f.q}%`); where.push(`(customer_name ilike $${params.length} or company_name ilike $${params.length} or summary ilike $${params.length} or from_number ilike $${params.length})`); }
   params.push(f.limit ?? 50);
   return query<any>(
-    `select id, from_number, customer_name, company_name, category, status, summary, started_at, duration_sec
+    `select id, from_number, customer_name, company_name, category, status, summary, started_at, duration_sec, tags
        from calls where ${where.join(' and ')} order by started_at desc nulls last limit $${params.length}`,
     params,
   );
+}
+
+/** 通話のタグを更新（置き換え）。 */
+export async function updateCallTags(tenantId: string, callId: string, tags: string[]) {
+  const clean = Array.from(new Set(tags.map((t) => String(t).trim()).filter(Boolean))).slice(0, 10);
+  if (!dbEnabled) {
+    const c = demoCalls.find((x) => x.id === callId);
+    if (!c) return null;
+    c.tags = clean;
+    return { id: c.id, tags: c.tags };
+  }
+  const [row] = await query<any>(
+    `update calls set tags = $3 where id = $1 and tenant_id = $2 returning id, tags`,
+    [callId, tenantId, clean]);
+  return row ?? null;
 }
 
 // 週次サマリー（直近7日）の集計を返す。
@@ -737,7 +755,8 @@ export async function listAllCalls(filter: CallListFilter) {
 function toCallListItem(c: DemoCall) {
   return {
     id: c.id, from_number: c.from_number, customer_name: c.customer_name, company_name: c.company_name,
-    category: c.category, status: c.status, summary: c.summary, started_at: c.started_at, duration_sec: c.duration_sec,
+    category: c.category, status: c.status, summary: c.summary, started_at: c.started_at,
+    duration_sec: c.duration_sec, tags: c.tags ?? [],
   };
 }
 

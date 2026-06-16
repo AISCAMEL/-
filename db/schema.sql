@@ -449,3 +449,10 @@ begin
     execute format('create policy operator_only on %I using (is_super_admin()) with check (is_super_admin());', t);
   end loop;
 end $$;
+
+-- =============================================================
+-- 追加マイグレーション（既存DBにも安全に適用）
+-- =============================================================
+-- 通話タグ（VIP・要注意 等）。配列で保持し GIN インデックスで絞り込み。
+alter table calls add column if not exists tags text[] not null default '{}';
+create index if not exists idx_calls_tags on calls using gin (tags);

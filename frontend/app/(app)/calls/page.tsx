@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { api, CATEGORY_LABEL, STATUS_LABEL, downloadCallsCsv } from '@/lib/api';
+import { api, CATEGORY_LABEL, STATUS_LABEL, TAG_PRESETS, downloadCallsCsv } from '@/lib/api';
 import { Card, PageTitle, StatusBadge, CategoryTag, formatDateTime, formatDuration } from '@/components/ui';
 
 export default function CallsPage() {
@@ -11,6 +11,7 @@ export default function CallsPage() {
   const [category, setCategory] = useState('');
   const [period, setPeriod] = useState('');
   const [attention, setAttention] = useState(false);
+  const [tag, setTag] = useState('');
   const [q, setQ] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -20,6 +21,7 @@ export default function CallsPage() {
     if (category) params.set('category', category);
     if (period) params.set('period', period);
     if (attention) params.set('attention', '1');
+    if (tag) params.set('tag', tag);
     if (q) params.set('q', q);
     const s = params.toString();
     return s ? `?${s}` : '';
@@ -30,7 +32,7 @@ export default function CallsPage() {
     api.calls(buildQs()).then(setCalls).finally(() => setLoading(false));
   }
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [status, category, period, attention]);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [status, category, period, attention, tag]);
 
   return (
     <div>
@@ -57,6 +59,11 @@ export default function CallsPage() {
           className="rounded-lg border px-3 py-2 text-sm">
           <option value="">すべての要件</option>
           {Object.entries(CATEGORY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        </select>
+        <select value={tag} onChange={(e) => setTag(e.target.value)}
+          className="rounded-lg border px-3 py-2 text-sm">
+          <option value="">すべてのタグ</option>
+          {TAG_PRESETS.map((t) => <option key={t} value={t}>{t}</option>)}
         </select>
         <form onSubmit={(e) => { e.preventDefault(); load(); }} className="flex gap-2">
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="氏名・番号・要約で検索"
@@ -89,7 +96,16 @@ export default function CallsPage() {
               <tr key={c.id} className="border-b last:border-0 hover:bg-gray-50">
                 <td className="whitespace-nowrap px-4 py-3 text-gray-600">{formatDateTime(c.started_at)}</td>
                 <td className="whitespace-nowrap px-4 py-3">{c.from_number}</td>
-                <td className="px-4 py-3">{c.customer_name ?? '—'}{c.company_name ? ` / ${c.company_name}` : ''}</td>
+                <td className="px-4 py-3">
+                  {c.customer_name ?? '—'}{c.company_name ? ` / ${c.company_name}` : ''}
+                  {c.tags?.length > 0 && (
+                    <span className="ml-1 inline-flex flex-wrap gap-1 align-middle">
+                      {c.tags.map((t: string) => (
+                        <span key={t} className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">{t}</span>
+                      ))}
+                    </span>
+                  )}
+                </td>
                 <td className="px-4 py-3"><CategoryTag category={c.category} /></td>
                 <td className="max-w-xs truncate px-4 py-3 text-gray-600">{c.summary ?? '—'}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-gray-600">{formatDuration(c.duration_sec)}</td>

@@ -29,9 +29,9 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/calls', { preHandler: authenticate }, async (req, reply) => {
     const p = req.principal!;
     if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
-    const { status, category, q: qs, period, attention, limit } = req.query as Record<string, string>;
+    const { status, category, q: qs, period, attention, tag, limit } = req.query as Record<string, string>;
     return q.listCalls(p.tenantId, {
-      status, category, q: qs, period, attention: attention === '1' || attention === 'true',
+      status, category, q: qs, period, tag, attention: attention === '1' || attention === 'true',
       limit: limit ? Number(limit) : undefined,
     });
   });
@@ -64,6 +64,16 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     const { status } = (req.body ?? {}) as { status?: string };
     if (!status) return reply.code(400).send({ error: 'status required' });
     const row = await q.updateCallStatus(p.tenantId, (req.params as any).id, status);
+    if (!row) return reply.code(404).send({ error: 'not found' });
+    return row;
+  });
+
+  app.patch('/api/calls/:id/tags', { preHandler: authenticate }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const { tags } = (req.body ?? {}) as { tags?: string[] };
+    if (!Array.isArray(tags)) return reply.code(400).send({ error: 'tags array required' });
+    const row = await q.updateCallTags(p.tenantId, (req.params as any).id, tags);
     if (!row) return reply.code(404).send({ error: 'not found' });
     return row;
   });

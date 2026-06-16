@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { api, STATUS_LABEL, CATEGORY_LABEL } from '@/lib/api';
+import { api, STATUS_LABEL, CATEGORY_LABEL, TAG_PRESETS } from '@/lib/api';
 import { Card, StatusBadge, CategoryTag, formatDateTime, formatDuration } from '@/components/ui';
 
 export default function CallDetailPage() {
@@ -22,6 +22,12 @@ export default function CallDetailPage() {
 
   async function changeStatus(status: string) {
     await api.setCallStatus(id, status);
+    load();
+  }
+  async function toggleTag(tag: string) {
+    const current: string[] = call.tags ?? [];
+    const next = current.includes(tag) ? current.filter((t) => t !== tag) : [...current, tag];
+    await api.setCallTags(id, next);
     load();
   }
   async function addNote(e: React.FormEvent) {
@@ -142,6 +148,20 @@ export default function CallDetailPage() {
               </Link>
             </Card>
           )}
+          <Card>
+            <h2 className="mb-2 text-sm font-semibold text-gray-500">タグ</h2>
+            <div className="flex flex-wrap gap-1.5">
+              {TAG_PRESETS.map((t) => {
+                const on = (call.tags ?? []).includes(t);
+                return (
+                  <button key={t} onClick={() => toggleTag(t)}
+                    className={`rounded-full border px-2.5 py-1 text-xs ${on ? 'border-brand bg-brand text-white' : 'text-gray-600 hover:bg-gray-50'}`}>
+                    {on ? '✓ ' : ''}{t}
+                  </button>
+                );
+              })}
+            </div>
+          </Card>
           <Card>
             <h2 className="mb-2 text-sm font-semibold text-gray-500">ステータス変更</h2>
             <select value={call.status} onChange={(e) => changeStatus(e.target.value)}

@@ -32,6 +32,8 @@ export const api = {
   call: (id: string) => request<any>(`/api/calls/${id}`),
   setCallStatus: (id: string, status: string) =>
     request<any>(`/api/calls/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+  setCallTags: (id: string, tags: string[]) =>
+    request<{ id: string; tags: string[] }>(`/api/calls/${id}/tags`, { method: 'PATCH', body: JSON.stringify({ tags }) }),
   addNote: (id: string, note: string) =>
     request<any>(`/api/calls/${id}/notes`, { method: 'POST', body: JSON.stringify({ note }) }),
   resummarize: (id: string) => request<any>(`/api/calls/${id}/summarize`, { method: 'POST' }),
@@ -109,6 +111,8 @@ export async function sendChat(message: string, history: ChatTurn[]): Promise<st
   const data = await res.json().catch(() => ({}));
   return (data as any).reply ?? '申し訳ありません。うまく応答できませんでした。';
 }
+
+export const TAG_PRESETS = ['VIP', '要注意', '重要', '新規', 'クレーム', '常連'];
 
 export const LEAD_STATUS_LABEL: Record<string, string> = {
   new: '新規', contacted: '連絡済', in_progress: '対応中',
