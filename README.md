@@ -37,6 +37,9 @@ pnpm dev:api                  # http://localhost:3001/health
 
 # ダッシュボード
 pnpm dev:web                  # http://localhost:3000
+#   /research  … 猫グッズをスクリーニングして利益率で採点・ランキング
+#   /marketing … SNS集客の UTM 計測リンクを発行
+#   ※ Hub API(:3001) を起動した状態で利用（web は同一オリジンのプロキシ経由で叩く）
 
 # テスト / 型チェック
 pnpm test
