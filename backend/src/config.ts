@@ -20,6 +20,8 @@ export const config = {
 
   openai: {
     apiKey: process.env.OPENAI_API_KEY ?? '',
+    // OpenAI互換のベースURL。OpenRouter等を使う場合に指定（例: https://openrouter.ai/api/v1）。
+    baseUrl: process.env.OPENAI_BASE_URL ?? '',
     model: process.env.OPENAI_MODEL ?? 'gpt-4o-mini',
     summaryModel: process.env.OPENAI_SUMMARY_MODEL ?? 'gpt-4o-mini',
   },

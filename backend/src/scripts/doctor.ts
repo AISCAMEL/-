@@ -53,6 +53,7 @@ async function main() {
   if (config.openai.apiKey) {
     line('ok', 'OPENAI_API_KEY', '設定済');
     line('ok', 'モデル', `応答=${config.openai.model} / 要約=${config.openai.summaryModel}`);
+    line('ok', 'プロバイダ', config.openai.baseUrl ? config.openai.baseUrl : 'OpenAI（標準）');
   } else {
     line('warn', 'OPENAI_API_KEY 未設定', 'フォールバック応答モードで動作（実機テストには設定推奨）');
   }

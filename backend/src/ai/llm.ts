@@ -1,8 +1,17 @@
 import OpenAI from 'openai';
 import { config } from '../config.js';
 
-// MVPは OpenAI 優先。将来 Claude / Gemini を足す際はこの薄いラッパを差し替える。
-const client = config.openai.apiKey ? new OpenAI({ apiKey: config.openai.apiKey }) : null;
+// MVPは OpenAI 優先。OpenRouter等のOpenAI互換APIは OPENAI_BASE_URL で切り替え可。
+const client = config.openai.apiKey
+  ? new OpenAI({
+      apiKey: config.openai.apiKey,
+      baseURL: config.openai.baseUrl || undefined,
+      // OpenRouter 推奨ヘッダ（任意）。
+      defaultHeaders: config.openai.baseUrl.includes('openrouter')
+        ? { 'HTTP-Referer': config.publicApiBaseUrl, 'X-Title': 'AIオペレーター24' }
+        : undefined,
+    })
+  : null;
 
 export const llmEnabled = Boolean(client);
 
