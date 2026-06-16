@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { M_PLUS_Rounded_1c } from "next/font/google";
 import LogoutButton from "./logout-button";
+import Logo from "./logo";
 import "./globals.css";
 
 const font = M_PLUS_Rounded_1c({
@@ -35,11 +36,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <a href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "var(--ink)" }}>
             <span
               style={{
-                width: 38, height: 38, borderRadius: 12, display: "grid", placeItems: "center",
-                background: "var(--primary-weak)", fontSize: 20,
+                width: 40, height: 40, borderRadius: 12, display: "grid", placeItems: "center",
+                background: "var(--primary-weak)",
               }}
             >
-              🐱
+              <Logo size={30} />
             </span>
             <span>
               <strong style={{ fontSize: 16 }}>necorope</strong>

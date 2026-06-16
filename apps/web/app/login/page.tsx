@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Logo from "../logo";
 
 export default function LoginPage() {
   const [password, setPassword] = useState("");
@@ -32,8 +33,13 @@ export default function LoginPage() {
 
   return (
     <div style={{ maxWidth: 360, margin: "80px auto", textAlign: "center" }}>
-      <h1 style={{ fontSize: 20 }}>🛒 Dropshipping Hub</h1>
-      <p style={{ color: "#777", fontSize: 14 }}>管理画面にログイン</p>
+      <div style={{ display: "grid", placeItems: "center", gap: 8 }}>
+        <span style={{ width: 64, height: 64, borderRadius: 18, display: "grid", placeItems: "center", background: "var(--primary-weak)" }}>
+          <Logo size={48} />
+        </span>
+        <h1 style={{ fontSize: 20, margin: 0 }}>necorope</h1>
+      </div>
+      <p style={{ color: "#777", fontSize: 14 }}>猫グッズ管理画面にログイン</p>
       <form onSubmit={submit} style={{ display: "grid", gap: 12, marginTop: 24 }}>
         <input
           type="password"
