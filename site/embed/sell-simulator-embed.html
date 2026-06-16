@@ -1,0 +1,136 @@
+<!-- =========================================================
+  AUC-AGENT 出品代行（手取り）シミュレーター（LPtools 埋め込み用）
+  使い方：LPtoolsの編集画面で「カスタムHTML」ブロックを追加し、
+  このファイルの中身を丸ごと貼り付けてください。
+  ・CSS/JSはすべて #auc-sell-sim 配下にスコープしてあり、テーマやLPtoolsの
+    既存スタイルと干渉しません（購入用 #auc-sim と同時設置も可）。
+  ・料金ロジックは末尾の SELL_TIERS / SETTLE / CLEAN / SHAKEN / CARRIER を編集すれば変わります。
+  ・数字は site/assets/js/simulator.js の出品ロジックと一致しています。
+========================================================= -->
+<div id="auc-sell-sim">
+  <style>
+    #auc-sell-sim *{box-sizing:border-box}
+    #auc-sell-sim{--navy:#0e1b33;--gold:#c9a14a;--gold2:#e0bd6a;--line:#e4e8ef;--muted:#5a6675;
+      font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",Meiryo,sans-serif;
+      color:#1a2233;line-height:1.7;max-width:980px;margin:0 auto}
+    #auc-sell-sim .sim-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+    #auc-sell-sim .panel{background:linear-gradient(160deg,#0e1b33,#16294a);color:#fff;border-radius:16px;padding:24px}
+    #auc-sell-sim .field{margin-bottom:18px}
+    #auc-sell-sim .field label{display:flex;justify-content:space-between;font-size:14px;font-weight:700;margin-bottom:8px;color:#e7ecf6}
+    #auc-sell-sim .field label .v{color:var(--gold2)}
+    #auc-sell-sim input[type=range]{width:100%;accent-color:var(--gold)}
+    #auc-sell-sim select{width:100%;padding:11px 13px;border-radius:10px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#fff;font-size:15px;font-family:inherit}
+    #auc-sell-sim select option{color:#000}
+    #auc-sell-sim .seg{display:flex;flex-wrap:wrap;gap:8px}
+    #auc-sell-sim .seg label{flex:1 1 auto;position:relative}
+    #auc-sell-sim .seg input{position:absolute;opacity:0}
+    #auc-sell-sim .seg span{display:block;text-align:center;padding:9px 6px;border-radius:9px;font-size:13px;border:1px solid rgba(255,255,255,.22);cursor:pointer;white-space:nowrap}
+    #auc-sell-sim .seg input:checked+span{background:var(--gold);color:var(--navy);border-color:var(--gold);font-weight:800}
+    #auc-sell-sim .checks{display:grid;gap:9px}
+    #auc-sell-sim .checks label{display:flex;align-items:center;gap:9px;font-size:14px;cursor:pointer}
+    #auc-sell-sim .checks input{width:17px;height:17px;accent-color:var(--gold)}
+    #auc-sell-sim .result{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:0 14px 36px rgba(14,27,51,.12)}
+    #auc-sell-sim .result h3{margin:0 0 4px;font-size:18px}
+    #auc-sell-sim .note{font-size:12px;color:var(--muted);margin:0 0 16px}
+    #auc-sell-sim .range{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:13px 15px;background:#f6f8fc;border:1px solid var(--line);border-radius:12px}
+    #auc-sell-sim .range .r{font-size:20px;font-weight:900;color:var(--navy)}
+    #auc-sell-sim .range .t{font-size:11px;color:var(--muted)}
+    #auc-sell-sim .line{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px dashed var(--line);font-size:14.5px}
+    #auc-sell-sim .line .tag{font-size:11px;color:var(--muted)}
+    #auc-sell-sim .line .minus{color:#c0392b}
+    #auc-sell-sim .grand{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding:15px 17px;background:var(--navy);color:#fff;border-radius:12px}
+    #auc-sell-sim .grand .val{font-size:28px;font-weight:900;color:var(--gold2)}
+    #auc-sell-sim .relist{margin-top:12px;background:#eaf7f0;color:#1f9d6b;border:1px solid #c4ead6;border-radius:12px;padding:11px 15px;font-size:13px}
+    #auc-sell-sim .online{margin:12px 0 0;font-size:12.5px;color:#1f9d6b;font-weight:700;text-align:center}
+    #auc-sell-sim .cta{display:block;text-align:center;margin-top:14px;padding:14px;border-radius:999px;background:linear-gradient(135deg,var(--gold2),var(--gold));color:var(--navy);font-weight:800;text-decoration:none}
+    @media(max-width:760px){#auc-sell-sim .sim-grid{grid-template-columns:1fr}}
+  </style>
+
+  <div class="sim-grid">
+    <div class="panel">
+      <div class="field">
+        <label>想定落札価格（オークションでの想定額）<span class="v" id="ss-medOut">¥1,200,000</span></label>
+        <input type="range" id="ss-med" min="100000" max="5000000" step="50000" value="1200000" />
+      </div>
+      <div class="field">
+        <label>車両クラス（クリーニング費の目安）</label>
+        <div class="seg" id="ss-cls">
+          <label><input type="radio" name="ss-cls" value="kei" /><span>軽</span></label>
+          <label><input type="radio" name="ss-cls" value="compact" checked /><span>コンパクト</span></label>
+          <label><input type="radio" name="ss-cls" value="sedan" /><span>セダン/ミニバン</span></label>
+          <label><input type="radio" name="ss-cls" value="suv" /><span>SUV/大型</span></label>
+          <label><input type="radio" name="ss-cls" value="import" /><span>輸入車</span></label>
+        </div>
+      </div>
+      <div class="field">
+        <label>車両の状態（評価点の目安）</label>
+        <div class="seg" id="ss-cond">
+          <label><input type="radio" name="ss-cond" value="good" /><span>良好(4.5〜)</span></label>
+          <label><input type="radio" name="ss-cond" value="normal" checked /><span>標準(3.5〜4)</span></label>
+          <label><input type="radio" name="ss-cond" value="low" /><span>難あり(〜3)</span></label>
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label>オプション（任意）</label>
+        <div class="checks">
+          <label><input type="checkbox" id="ss-shaken"> 車検整備（車検なし車両／法定費用別・+¥79,800）</label>
+          <label><input type="checkbox" id="ss-clean"> 内外装クリーニング（サイズ別 ¥12,000〜¥30,000）</label>
+          <label><input type="checkbox" id="ss-carrier"> 代理搬入（会場へのお運び・+¥18,000）</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="result">
+      <h3>手取りシミュレーション（概算）</h3>
+      <p class="note">※税込・参考値。実際の手取りは落札結果・会場・状態により変動します。</p>
+      <div class="range">
+        <div><div class="t">想定相場レンジ（状態反映）</div><div class="r"><span id="ss-rLow">¥1,080,000</span> 〜 <span id="ss-rHigh">¥1,272,000</span></div></div>
+      </div>
+      <div class="line"><span>想定落札価格</span><span id="ss-rMed">¥1,200,000</span></div>
+      <div class="line"><span>出品代行手数料 <span class="tag" id="ss-feeTag">100〜150万円</span></span><span class="minus" id="ss-rFee">−¥59,800</span></div>
+      <div class="line"><span>出品料・成約料（会場）</span><span class="minus" id="ss-rSettle">−¥11,000</span></div>
+      <div class="line"><span>オプション合計</span><span class="minus" id="ss-rOpt">−¥0</span></div>
+      <div class="grand"><span>手取り目安</span><span class="val" id="ss-rNet">¥1,129,200</span></div>
+      <div class="relist">✓ 流札・再出品料は <b>無料</b>。売れるまで何度でも再出品できます。</div>
+      <p class="online">🟢 相場が分からない方は無料で査定。メール・チャットは24時間受付（お電話は平日 8:00〜17:00）</p>
+      <!-- ↓ 申込ページ/LINE URLに差し替えてください -->
+      <a class="cta" href="#" id="ss-cta">この内容で出品を相談する（無料登録）</a>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    var R=document.getElementById("auc-sell-sim");
+    // ===== 料金設定（ここを編集すれば料金が変わります）=====
+    var SELL_TIERS=[{max:500000,fee:39800},{max:1000000,fee:49800},{max:1500000,fee:59800},{max:2000000,fee:69800},{max:3000000,fee:79800}];
+    var SELL_OVER_RATE=0.03; // 300万円超は想定落札価格の3%
+    var SETTLE=11000;        // 出品料・成約料（会場）
+    var SHAKEN=79800;        // 車検整備（車検なし車両）
+    var CARRIER=18000;       // 代理搬入
+    var CLEAN={kei:12000,compact:16000,sedan:22000,suv:26000,import:30000}; // 内外装クリーニング（サイズ別）
+    var COND={good:{lo:0.95,hi:1.10},normal:{lo:0.90,hi:1.06},low:{lo:0.80,hi:0.98}};
+    var BOUNDS=[50,100,150,200,300];
+    function yen(n){return "¥"+Math.round(n).toLocaleString("ja-JP")}
+    function sellFee(p){for(var i=0;i<SELL_TIERS.length;i++){if(p<SELL_TIERS[i].max)return SELL_TIERS[i].fee}return Math.round(p*SELL_OVER_RATE)}
+    function band(p){for(var i=0;i<SELL_TIERS.length;i++){if(p<SELL_TIERS[i].max)return i===0?"〜50万円":BOUNDS[i-1]+"〜"+BOUNDS[i]+"万円"}return "300万円超（3%）"}
+    function $(id){return R.querySelector("#"+id)}
+    function render(){
+      var med=+$("ss-med").value;
+      var cls=R.querySelector('input[name=ss-cls]:checked').value;
+      var c=COND[R.querySelector('input[name=ss-cond]:checked').value];
+      var opt=($("ss-shaken").checked?SHAKEN:0)+($("ss-clean").checked?(CLEAN[cls]||CLEAN.compact):0)+($("ss-carrier").checked?CARRIER:0);
+      var fee=sellFee(med);
+      var net=med-fee-SETTLE-opt;
+      var low=Math.round(med*c.lo/1000)*1000, high=Math.round(med*c.hi/1000)*1000;
+      $("ss-medOut").textContent=yen(med); $("ss-rMed").textContent=yen(med);
+      $("ss-rLow").textContent=yen(low); $("ss-rHigh").textContent=yen(high);
+      $("ss-rFee").textContent="−"+yen(fee); $("ss-feeTag").textContent=band(med);
+      $("ss-rSettle").textContent="−"+yen(SETTLE);
+      $("ss-rOpt").textContent="−"+yen(opt);
+      $("ss-rNet").textContent=yen(net);
+    }
+    ["input","change"].forEach(function(ev){R.addEventListener(ev,render)});
+    render();
+  })();
+  </script>
+</div>
