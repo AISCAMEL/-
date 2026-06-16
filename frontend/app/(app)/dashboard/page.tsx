@@ -65,6 +65,31 @@ export default function DashboardPage() {
         ))}
       </div>
 
+      {/* 今週の通話（前週比） */}
+      {(() => {
+        const tw = data.calls_this_week ?? 0;
+        const lw = data.calls_last_week ?? 0;
+        const diff = tw - lw;
+        const pct = lw > 0 ? Math.round((diff / lw) * 100) : null;
+        const up = diff > 0;
+        return (
+          <Card className="mt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs text-gray-500">今週の通話（直近7日）</div>
+                <div className="mt-1 text-2xl font-bold">{tw}<span className="ml-1 text-base font-normal text-gray-500">件</span></div>
+              </div>
+              <div className="text-right">
+                <div className={`text-sm font-semibold ${diff === 0 ? 'text-gray-500' : up ? 'text-green-600' : 'text-red-600'}`}>
+                  {diff === 0 ? '前週と同じ' : `${up ? '▲' : '▼'} ${Math.abs(diff)}件${pct !== null ? `（${up ? '+' : '-'}${Math.abs(pct)}%）` : ''}`}
+                </div>
+                <div className="text-xs text-gray-400">先週: {lw}件</div>
+              </div>
+            </div>
+          </Card>
+        );
+      })()}
+
       {/* グラフ */}
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <Card>

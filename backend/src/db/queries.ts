@@ -39,6 +39,10 @@ export async function getDashboard(tenantId: string) {
   if (!dbEnabled) {
     const today = demoCalls; // デモは全件を当日扱い
     const recent = [...today].sort((a, b) => b.started_at.localeCompare(a.started_at)).slice(0, 10);
+    const weekAgo = new Date(Date.now() - 7 * 86400_000).toISOString();
+    const twoWeeksAgo = new Date(Date.now() - 14 * 86400_000).toISOString();
+    const this_week = today.filter((c) => c.started_at >= weekAgo).length;
+    const last_week = today.filter((c) => c.started_at >= twoWeeksAgo && c.started_at < weekAgo).length;
     const byCategory: Record<string, number> = {};
     const byHour = Array.from({ length: 24 }, () => 0);
     const byTag: Record<string, number> = {};
@@ -55,6 +59,8 @@ export async function getDashboard(tenantId: string) {
       transfer_count: today.filter((c) => c.status === 'transferred').length,
       unhandled_count: today.filter((c) => ['new', 'need_human'].includes(c.status)).length,
       avg_duration_sec: Math.round(today.reduce((s, c) => s + (c.duration_sec ?? 0), 0) / (today.length || 1)),
+      calls_this_week: this_week,
+      calls_last_week: last_week,
       by_category: byCategory,
       by_hour: byHour,
       by_tag: byTag,
@@ -69,6 +75,8 @@ export async function getDashboard(tenantId: string) {
        count(*) filter (where status = 'callback_requested') as callback_count,
        count(*) filter (where status = 'transferred')        as transfer_count,
        count(*) filter (where status in ('new','need_human'))as unhandled_count,
+       count(*) filter (where started_at >= now() - interval '7 days')::int as calls_this_week,
+       (count(*) filter (where started_at >= now() - interval '14 days' and started_at < now() - interval '7 days'))::int as calls_last_week,
        coalesce(avg(duration_sec) filter (where started_at >= date_trunc('day', now())),0)::int as avg_duration_sec
      from calls where tenant_id = $1`,
     [tenantId],
