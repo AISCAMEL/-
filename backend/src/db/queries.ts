@@ -41,9 +41,11 @@ export async function getDashboard(tenantId: string) {
     const recent = [...today].sort((a, b) => b.started_at.localeCompare(a.started_at)).slice(0, 10);
     const byCategory: Record<string, number> = {};
     const byHour = Array.from({ length: 24 }, () => 0);
+    const byTag: Record<string, number> = {};
     for (const c of today) {
       if (c.category) byCategory[c.category] = (byCategory[c.category] ?? 0) + 1;
       byHour[new Date(c.started_at).getHours()]++;
+      for (const t of c.tags ?? []) byTag[t] = (byTag[t] ?? 0) + 1;
     }
     return {
       calls_today: today.length,
@@ -55,6 +57,7 @@ export async function getDashboard(tenantId: string) {
       avg_duration_sec: Math.round(today.reduce((s, c) => s + (c.duration_sec ?? 0), 0) / (today.length || 1)),
       by_category: byCategory,
       by_hour: byHour,
+      by_tag: byTag,
       recent: recent.map(toCallListItem),
     };
   }
@@ -86,7 +89,12 @@ export async function getDashboard(tenantId: string) {
       where tenant_id = $1 and started_at >= date_trunc('month', now()) group by h`, [tenantId]);
   const by_hour = Array.from({ length: 24 }, () => 0);
   hourRows.forEach((r) => { by_hour[r.h] = r.n; });
-  return { ...agg, by_category, by_hour, recent };
+  const tagRows = await query<any>(
+    `select unnest(tags) as tag, count(*)::int as n from calls
+      where tenant_id = $1 and started_at >= date_trunc('month', now()) group by tag`, [tenantId]);
+  const by_tag: Record<string, number> = {};
+  tagRows.forEach((r) => { by_tag[r.tag] = r.n; });
+  return { ...agg, by_category, by_hour, by_tag, recent };
 }
 
 // ---------------- Calls ----------------

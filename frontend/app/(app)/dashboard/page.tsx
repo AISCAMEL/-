@@ -77,6 +77,22 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      {/* タグ別（今月） */}
+      {Object.keys(data.by_tag ?? {}).length > 0 && (
+        <Card className="mt-6">
+          <h2 className="mb-3 text-sm font-semibold text-gray-500">タグ別（今月）</h2>
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(data.by_tag).sort((a: any, b: any) => b[1] - a[1]).map(([tag, n]: any) => (
+              <Link key={tag} href={`/calls?tag=${encodeURIComponent(tag)}`}
+                className="flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm hover:bg-gray-50">
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">{tag}</span>
+                <span className="font-semibold">{n}件</span>
+              </Link>
+            ))}
+          </div>
+        </Card>
+      )}
+
       <h2 className="mb-3 mt-8 text-lg font-semibold">最近の通話</h2>
       <Card className="p-0">
         <table className="w-full text-sm">
