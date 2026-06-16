@@ -47,6 +47,7 @@
         <a href="#newOrder">➕ 購入オーダー</a>
         <a href="#newSell">🏷️ 出品申込</a>
         <a href="#newLoan">💳 ローン仮申込</a>
+        <a href="#quote">📈 相場見積り</a>
         <a href="#hiroba">🔑 車ひろばログイン</a>
         <a href="manual.html">📖 出品マニュアル</a>
         <a href="index.html#simulator">🧮 料金シミュレーション</a>
@@ -63,6 +64,38 @@
           <p style="margin:0 0 12px;">車両のご提案・入札・進捗のやりとりは、専用システム「<strong>車ひろば エージェント</strong>」で行います。<strong>ログインID・パスワードは購入お申込み後に発行</strong>し、登録メールへご連絡します。</p>
           <div class="alert alert-info" id="hirobaStatus">購入オーダーをお申込みいただくと、ログイン情報を発行します。</div>
           <a class="btn btn-gold" href="https://agent.car-hiroba.jp/usr/login/" target="_blank" rel="noopener">車ひろば エージェントにログイン →</a>
+        </div>
+      </section>
+
+      <!-- 相場見積り（買取・仕入れ）— メール/チャットで対応しここに反映 -->
+      <section class="panel" id="quote">
+        <div class="panel-head"><h3>📈 相場見積り（買取・仕入れ）</h3></div>
+        <div class="panel-body">
+          <div class="alert alert-info">売る時の<strong>買取相場</strong>、買う時の<strong>仕入れ相場</strong>を無料で見積り。担当が<strong>メール／チャットで査定・回答</strong>し、結果はこのページに反映します。</div>
+          <form id="quoteForm">
+            <div class="row-2">
+              <div class="field">
+                <label>見積り種別</label>
+                <select id="qKind">
+                  <option value="buy">仕入れ相場（購入の目安が知りたい）</option>
+                  <option value="sell">買取相場（売却の目安が知りたい）</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>ご希望の連絡方法</label>
+                <select id="qVia">
+                  <option value="メール">メール</option>
+                  <option value="LINEチャット">LINEチャット</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label>車種・年式・走行など</label>
+              <input type="text" id="qCar" placeholder="例）トヨタ アルファード 2.5S 2020年式 走行4万km / グレード・色など" required />
+            </div>
+            <button class="btn btn-navy btn-block" type="submit">無料で相場見積りを依頼する</button>
+          </form>
+          <div id="quoteList" style="margin-top:18px;"></div>
         </div>
       </section>
 
@@ -485,10 +518,42 @@
     box.scrollIntoView({ behavior: "smooth", block: "center" });
   });
 
+  // --- 相場見積り（買取・仕入れ）一覧の描画＆依頼送信 ---
+  function renderQuoteList() {
+    var list = AucAuth.quotes();
+    var el = document.getElementById("quoteList");
+    if (!list.length) { el.innerHTML = ""; return; }
+    el.innerHTML = "<div style='font-weight:800;margin-bottom:8px;'>相場見積りの状況</div>" + list.map(function (q) {
+      var kind = q.kind === "sell"
+        ? '<span class="badge-status" style="background:#efeaff;color:#5b46c4;">買取相場</span>'
+        : '<span class="badge-status" style="background:#e6f0ff;color:#2a64c4;">仕入れ相場</span>';
+      var ans = (q.status === "回答済み" && q.value != null)
+        ? '<span class="badge-status st-won">回答済み</span><span style="font-weight:800;margin-left:8px;">' + yen(q.value) + '</span>'
+        : '<span class="badge-status st-bid">回答待ち（' + (q.via || "メール") + 'でご連絡）</span>';
+      return '<div class="order"><div>' + kind + ' <span class="car">' + q.car + '</span>'
+        + '<div class="meta">受付番号 ' + q.id + ' ／ ' + q.date + '</div></div>'
+        + '<div class="right">' + ans + '</div></div>';
+    }).join("");
+  }
+  document.getElementById("quoteForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    AucAuth.addQuote({
+      kind: document.getElementById("qKind").value,
+      via: document.getElementById("qVia").value,
+      car: document.getElementById("qCar").value
+    });
+    var box = document.querySelector("#quote .alert");
+    box.className = "alert alert-ok";
+    box.innerHTML = "✓ 相場見積りを受け付けました。担当が<strong>" + document.getElementById("qVia").value + "</strong>で査定し、回答をこのページに反映します。";
+    document.getElementById("qCar").value = "";
+    renderQuoteList();
+  });
+
   renderOrders();
   renderQuote();
   renderSell();
   renderLoan();
+  renderQuoteList();
 </script>
 </body>
 </html>

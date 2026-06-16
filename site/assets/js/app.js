@@ -9,6 +9,7 @@
 
   var USER_KEY = "auc_user";
   var ORDER_KEY = "auc_orders";
+  var QUOTE_KEY = "auc_quotes";
 
   /* =======================================================
      バックエンド送信設定
@@ -108,6 +109,23 @@
         o.payload || {}, { kind: o.kind, car: o.car, total: o.total }
       ));
       return o;
+    },
+    // 相場見積り（買取/仕入れ）：メール/チャットで対応 → マイページに反映
+    quotes: function () { return read(QUOTE_KEY, []); },
+    addQuote: function (q) {
+      var list = read(QUOTE_KEY, []);
+      q.id = "QT-" + (4000 + list.length);
+      q.status = "回答待ち";   // 回答待ち → 回答済み（スタッフが相場を回答）
+      q.value = null;          // 回答後に相場額が入る
+      q.date = new Date().toISOString().slice(0, 10);
+      list.unshift(q);
+      write(QUOTE_KEY, list);
+      var user = read(USER_KEY, {}) || {};
+      sendToBackend(Object.assign(
+        { type: "quote", name: user.name, email: user.email },
+        q
+      ));
+      return q;
     }
   };
 })();

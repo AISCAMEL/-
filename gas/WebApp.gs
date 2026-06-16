@@ -31,6 +31,7 @@ function doPost(e) {
       case "loan":     result = handleLoan_(data);     break;
       case "register": result = handleRegister_(data); break;
       case "contact":  result = handleContact_(data);  break;
+      case "quote":    result = handleQuote_(data);    break;
       default:         result = { ok: false, error: "unknown type" };
     }
     return json_(result);

@@ -111,6 +111,11 @@ function fire(win, el, type) { el.dispatchEvent(new win.Event(type, { bubbles: t
     ok("ローンAI一次判定表示 (#lGrade)", /[ABCD]（/.test(doc.getElementById("lGrade").textContent), doc.getElementById("lGrade").textContent);
     fire(win, doc.getElementById("loanForm"), "submit");
     ok("ローン仮申込で受付表示", /受け付け/.test(doc.getElementById("loanAlert").textContent), doc.getElementById("loanAlert").textContent);
+    // 相場見積り依頼：マイページに反映（一覧に追加）
+    doc.getElementById("qCar").value = "アルファード 2020 4万km";
+    fire(win, doc.getElementById("quoteForm"), "submit");
+    ok("相場見積り依頼が一覧に反映(QT-)", /QT-/.test(doc.getElementById("quoteList").innerHTML), doc.getElementById("quoteList").innerHTML.slice(0,60));
+    ok("相場見積りの状態=回答待ち", /回答待ち/.test(doc.getElementById("quoteList").innerHTML));
     ok("ページエラーなし", !getError(), getError());
   }
 

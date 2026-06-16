@@ -41,6 +41,11 @@ function setupAll() {
     "受付日時", "お名前", "メール", "電話", "お問い合わせ内容", "対応状況"
   ]);
 
+  ensureSheet_(ss, cfg.SHEET_QUOTES, [
+    "受付日時", "見積番号", "種別(買取/仕入れ)", "お名前", "メール", "連絡方法",
+    "車両情報", "回答相場額", "回答状況"
+  ]);
+
   SpreadsheetApp.flush();
   Logger.log("セットアップ完了：" + ss.getUrl());
 }
