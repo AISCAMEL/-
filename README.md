@@ -32,6 +32,7 @@ LLM / FAQ / DB / 通知 / 管理画面
 │   ├── twilio-setup.md                  # 実機通話テスト手順・疎通チェックリスト
 │   ├── cost-analysis.md                 # 経費・原価分析（プラン別採算）
 │   ├── deploy.md                        # 本番デプロイ手順（Render/Vercel/Supabase）
+│   ├── square-billing.md                # 決済（Square）設計
 │   ├── readiness.md                     # 本番リリースに向けた残作業（ギャップ分析）
 │   └── 開発仕様書.md                    # （別案件 CarLoan_System・参考）
 ├── db/
@@ -64,7 +65,7 @@ LLM / FAQ / DB / 通知 / 管理画面
 ## MVPスコープ
 
 MVP完成条件（`docs/AIオペレーター24_開発仕様書.md` 第20章）を満たすことを目標とします。
-後回し機能（Stripe自動課金・Twilio Subaccount自動作成・CRM/LINE連携・ホワイトラベル等）には踏み込みません。
+後回し機能（Square自動課金・Twilio Subaccount自動作成・CRM/LINE連携・ホワイトラベル等）には踏み込みません。
 
 ## セットアップ
 

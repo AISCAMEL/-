@@ -29,6 +29,14 @@ export const config = {
     from: process.env.MAIL_FROM ?? 'AIオペレーター24 <noreply@ai-operator24.com>',
   },
 
+  // 決済（Square）。docs/square-billing.md 参照。未設定時は課金機能オフ。
+  square: {
+    env: process.env.SQUARE_ENV ?? 'sandbox',
+    accessToken: process.env.SQUARE_ACCESS_TOKEN ?? '',
+    locationId: process.env.SQUARE_LOCATION_ID ?? '',
+    webhookSignatureKey: process.env.SQUARE_WEBHOOK_SIGNATURE_KEY ?? '',
+  },
+
   auth: {
     // Supabase の JWT 秘密鍵（HS256）。設定時は署名検証する。
     jwtSecret: process.env.SUPABASE_JWT_SECRET ?? '',

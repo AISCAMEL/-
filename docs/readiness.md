@@ -30,7 +30,7 @@
 | **本物の認証（Supabase Auth）** | ❌ | Supabaseプロジェクト | 現在はデモログイン。招待フロー＋`app_users.auth_user_id`紐付け |
 | **実機通話テスト** | ❌ | Twilio番号・OpenAIキー・公開URL | `docs/twilio-setup.md`の手順で疎通確認 |
 | **法務表記の確定** | ⚠️ | 事業者情報 | 各ページの【要記入】を実値に。表記がないと有料販売不可 |
-| **決済（Stripe）** | ❌ | Stripeアカウント | 請求書は表示のみ。サブスク課金・超過課金の自動化 |
+| **決済（Square）** | ❌ | Squareアカウント | 請求書は表示のみ。サブスク課金・超過課金の自動化（設計: `docs/square-billing.md`） |
 | **メール送信の本番化** | ⚠️ | Resendドメイン認証 | SPF/DKIM設定。現在はキー未設定でdry-run |
 | **HTTPS・独自ドメイン** | ⚠️ | ドメイン | Render/Vercelの独自ドメイン＋証明書 |
 | **本番認証フラグ** | ⚠️ | — | `AUTH_DEV_MODE=false`＋`SUPABASE_JWT_SECRET`、`TWILIO_VALIDATE_SIGNATURE=true`、`CORS_ORIGIN`限定 |
@@ -68,7 +68,7 @@
 
 1. **Supabase Auth 本接続**（B）— これが入らないと「ログインできる本物のSaaS」にならない。
 2. **実機通話テスト**（B）— 製品の核が実際に動くか確認。`npm run doctor`→`twilio-setup.md`。
-3. **Stripe 決済**（B）— 売上を自動で回収する。
+3. **Square 決済**（B）— 売上を自動で回収する（`docs/square-billing.md`）。
 4. **法務情報の確定**（B）— 販売開始の前提。
 
 外部アカウント不要で今すぐ進められるもの：
