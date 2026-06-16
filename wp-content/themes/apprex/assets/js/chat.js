@@ -19,6 +19,12 @@
 		var input = document.getElementById('apprex-chat-input');
 		var quick = document.getElementById('apprex-chat-quick');
 		var opBtn = document.getElementById('apprex-chat-operator');
+		var hint = document.getElementById('apprex-chat-hint');
+		var hintX = document.getElementById('apprex-chat-hint-x');
+		var mailForm = document.getElementById('apprex-chat-mailform');
+		var mailOpenBtn = document.getElementById('apprex-chat-mail');
+		var mailCancel = document.getElementById('apprex-chat-mail-cancel');
+		var mailResult = document.getElementById('apprex-chat-mail-result');
 
 		// 受信音（Web Audio：音声ファイル不要）。ミュートは localStorage に保存。
 		var soundOn = true;
@@ -61,6 +67,8 @@
 		var greeted = false;
 		var busy = false;
 		var human = false;
+		var lastUserText = '';
+		var mailHintShown = false;
 		var pollCursor = 0;
 		var pollTimer = null;
 		var sessionId = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -89,6 +97,7 @@
 			widget.classList.add('is-open');
 			toggle.classList.add('has-seen');
 			toggle.setAttribute('aria-expanded', 'true');
+			hideHint();
 			ensureAudio(); // ユーザー操作の瞬間に音声を有効化（ブラウザ制約対策）。
 			if (!greeted) {
 				greeted = true;
@@ -176,6 +185,7 @@
 		function send(text) {
 			if (busy || !text) { return; }
 			busy = true;
+			lastUserText = text;
 			addMessage('user', text);
 			history.push({ role: 'user', content: text });
 			input.value = '';
@@ -198,10 +208,12 @@
 						addMessage('assistant', res.body.reply);
 						history.push({ role: 'assistant', content: res.body.reply });
 						renderSuggestions(res.body.suggestions);
+						maybeMailHint(); // 解決しない場合のメール誘導を一度だけ提示。
 					} else {
 						var msg = (res.body && res.body.message) ? res.body.message
-							: 'うまく応答できませんでした。お手数ですがお問い合わせフォームをご利用ください。';
+							: 'うまく応答できませんでした。お手数ですがメールでご相談ください。';
 						addMessage('assistant', msg);
+						openMail(); // 応答できない時はそのままメールフォームへ誘導。
 					}
 				})
 				.catch(function () {
@@ -248,6 +260,117 @@
 					})
 					.finally(function () {
 						setTimeout(function () { opBtn.disabled = false; }, 8000);
+					});
+			});
+		}
+
+		// --- あいさつ吹き出し（数秒後にふわっと表示。閉じたら記憶） -------------
+		function hideHint() {
+			if (!hint) { return; }
+			hint.hidden = true;
+			hint.classList.remove('is-in');
+			try { sessionStorage.setItem('apprexHintDismissed', '1'); } catch (e) {}
+		}
+		if (hint) {
+			var hintDismissed = false;
+			try { hintDismissed = sessionStorage.getItem('apprexHintDismissed') === '1'; } catch (e) {}
+			if (!hintDismissed) {
+				setTimeout(function () {
+					if (!widget.classList.contains('is-open')) {
+						hint.hidden = false;
+						// reflow → アニメーションを確実に発火
+						void hint.offsetWidth;
+						hint.classList.add('is-in');
+					}
+				}, 5000);
+			}
+			hint.addEventListener('click', function () { openWidget(); });
+			if (hintX) {
+				hintX.addEventListener('click', function (e) { e.stopPropagation(); hideHint(); });
+			}
+		}
+
+		// --- 未解決時のメール誘導フォーム ----------------------------------------
+		function openMail() {
+			if (!mailForm) { return; }
+			mailForm.hidden = false;
+			if (quick) { quick.style.display = 'none'; }
+			if (mailResult) { mailResult.hidden = true; mailResult.textContent = ''; }
+			if (lastUserText) {
+				var ta = mailForm.querySelector('[name="message"]');
+				if (ta && !ta.value) { ta.value = lastUserText; }
+			}
+			mailForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+			var nameEl = mailForm.querySelector('[name="name"]');
+			if (nameEl) { setTimeout(function () { nameEl.focus(); }, 80); }
+		}
+		function closeMail() {
+			if (!mailForm) { return; }
+			mailForm.hidden = true;
+			if (quick) { quick.style.display = ''; }
+		}
+		// AIが応答したら一度だけ「解決しない場合はメールで相談」を提示。
+		function maybeMailHint() {
+			if (mailHintShown || !mailForm) { return; }
+			mailHintShown = true;
+			var wrap = document.createElement('div');
+			wrap.className = 'apprex-chat-resolve';
+			var span = document.createElement('span');
+			span.textContent = '解決しませんでしたか？';
+			var btn = document.createElement('button');
+			btn.type = 'button';
+			btn.className = 'apprex-chat-resolve__btn';
+			btn.textContent = '✉ メールで相談';
+			btn.addEventListener('click', openMail);
+			wrap.appendChild(span);
+			wrap.appendChild(btn);
+			log.appendChild(wrap);
+			log.scrollTop = log.scrollHeight;
+		}
+		if (mailOpenBtn) { mailOpenBtn.addEventListener('click', openMail); }
+		if (mailCancel) { mailCancel.addEventListener('click', closeMail); }
+		if (mailForm) {
+			mailForm.addEventListener('submit', function (e) {
+				e.preventDefault();
+				if (!mailForm.checkValidity()) { mailForm.reportValidity(); return; }
+				var btn = mailForm.querySelector('button[type="submit"]');
+				var orig = btn.textContent;
+				btn.disabled = true;
+				btn.textContent = '送信中…';
+				var fd = new FormData(mailForm);
+				fetch(cfg.root + 'inquiry', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': cfg.nonce },
+					body: JSON.stringify({
+						type: 'contact',
+						name: fd.get('name'),
+						email: fd.get('email'),
+						message: fd.get('message'),
+						source_url: location.href
+					})
+				})
+					.then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
+					.then(function (res) {
+						if (res.ok && res.body && res.body.ok) {
+							mailForm.reset();
+							closeMail();
+							addMessage('system', '✅ 送信しました。担当者よりメールでご返信いたします。');
+						} else {
+							if (mailResult) {
+								mailResult.hidden = false;
+								mailResult.textContent = (res.body && res.body.message) ? res.body.message : '送信に失敗しました。時間をおいて再度お試しください。';
+							}
+							btn.disabled = false;
+							btn.textContent = orig;
+						}
+					})
+					.catch(function () {
+						if (mailResult) {
+							mailResult.hidden = false;
+							mailResult.textContent = '通信エラーが発生しました。時間をおいて再度お試しください。';
+						}
+						btn.disabled = false;
+						btn.textContent = orig;
 					});
 			});
 		}
