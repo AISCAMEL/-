@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import LogoutButton from "./logout-button";
 
 export const metadata = {
   title: "Dropshipping Hub",
@@ -9,9 +10,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ja">
       <body style={{ fontFamily: "system-ui, sans-serif", margin: 0 }}>
-        <header style={{ padding: "16px 24px", borderBottom: "1px solid #eee" }}>
-          <strong>🛒 Dropshipping Hub</strong>
-          <span style={{ color: "#888", marginLeft: 12 }}>BASE × Alibaba / THE CKB</span>
+        <header style={{ padding: "16px 24px", borderBottom: "1px solid #eee", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span>
+            <strong>🛒 Dropshipping Hub</strong>
+            <span style={{ color: "#888", marginLeft: 12 }}>BASE × Alibaba / THE CKB</span>
+          </span>
+          <LogoutButton />
         </header>
         <main style={{ padding: 24 }}>{children}</main>
       </body>

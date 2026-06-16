@@ -85,6 +85,12 @@ curl -X POST localhost:3001/products/publish \
   -d '{"supplierId":"theckb","externalId":"CKB-0001","channelId":"base"}'
 ```
 
+## 本番公開
+
+- 管理画面は **Vercel**、Hub API は **Railway/Render/VPS**（リポジトリ直下の `Dockerfile`）にデプロイ。
+- 管理画面は **`DASHBOARD_PASSWORD` でログイン必須**（未設定だと認証なし＝開発用）。`AUTH_TOKEN` にランダム秘密文字列を設定。
+- 手順の詳細は [`docs/デプロイ手順.md`](docs/デプロイ手順.md)。
+
 ## 重要な前提・注意
 
 - 本リポジトリは**設計＋骨組み（フェーズ0）**。実API連携は審査・契約後に実装。
