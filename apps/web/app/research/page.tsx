@@ -33,6 +33,8 @@ export default function ResearchPage() {
   const [items, setItems] = useState<ScreenedItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 出品状態（key 単位）: idle / publishing / done / error
+  const [pubState, setPubState] = useState<Record<string, { status: string; msg?: string }>>({});
 
   // 猫グッズのキーワードと推奨設定を読み込む
   useEffect(() => {
@@ -71,6 +73,65 @@ export default function ResearchPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  // 1行をBASEへ出品（key="supplierId:externalId" を分解して送る）
+  async function publish(it: ScreenedItem) {
+    const [supplierId, externalId] = it.key.split(":");
+    setPubState((s) => ({ ...s, [it.key]: { status: "publishing" } }));
+    try {
+      const res = await fetch("/api/publish", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ supplierId, externalId, channelId: "base" }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const reason = data.issues
+          ? data.issues.map((i: { code: string }) => i.code).join(", ")
+          : data.error
+            ? JSON.stringify(data.error)
+            : "出品不可";
+        setPubState((s) => ({ ...s, [it.key]: { status: "error", msg: reason } }));
+        return;
+      }
+      setPubState((s) => ({
+        ...s,
+        [it.key]: { status: "done", msg: data.listing?.externalListingId ?? "出品済み" },
+      }));
+    } catch (e) {
+      setPubState((s) => ({ ...s, [it.key]: { status: "error", msg: String(e) } }));
+    }
+  }
+
+  function renderPublish(it: ScreenedItem) {
+    const st = pubState[it.key];
+    if (st?.status === "done") {
+      return <span style={{ color: "#16a34a", fontSize: 13 }}>✓ 出品済</span>;
+    }
+    if (st?.status === "error") {
+      return (
+        <span title={st.msg}>
+          <span style={{ color: "#dc2626", fontSize: 13 }}>✗ 不可</span>{" "}
+          <button onClick={() => publish(it)} style={{ fontSize: 12, cursor: "pointer" }}>再試行</button>
+        </span>
+      );
+    }
+    const publishing = st?.status === "publishing";
+    // A評価を強調（B/Cも出品は可能）
+    const isA = it.score.grade === "A";
+    return (
+      <button
+        onClick={() => publish(it)}
+        disabled={publishing}
+        style={{
+          padding: "4px 12px", borderRadius: 6, cursor: "pointer", fontSize: 13,
+          border: 0, color: "#fff", background: isA ? "#16a34a" : "#64748b",
+        }}
+      >
+        {publishing ? "出品中…" : "BASE出品"}
+      </button>
+    );
   }
 
   return (
@@ -114,7 +175,7 @@ export default function ResearchPage() {
         <table style={{ borderCollapse: "collapse", width: "100%", fontSize: 14 }}>
           <thead>
             <tr style={{ textAlign: "left", borderBottom: "2px solid #e5e7eb" }}>
-              {["#", "商品", "判定", "スコア", "売値(中央)", "原価", "利益", "利益率", "ROI", "操作"].map((h) => (
+              {["#", "商品", "判定", "スコア", "売値(中央)", "原価", "利益", "利益率", "ROI", "BASE出品", "計測"].map((h) => (
                 <th key={h} style={{ padding: "8px 6px" }}>{h}</th>
               ))}
             </tr>
@@ -135,6 +196,7 @@ export default function ResearchPage() {
                 <td style={{ padding: "8px 6px", fontWeight: 600 }}>{yen(it.chosen?.profit)}</td>
                 <td style={{ padding: "8px 6px" }}>{pct(it.chosen?.marginRate)}</td>
                 <td style={{ padding: "8px 6px" }}>{pct(it.chosen?.roi)}</td>
+                <td style={{ padding: "8px 6px" }}>{renderPublish(it)}</td>
                 <td style={{ padding: "8px 6px" }}>
                   <a href={`/marketing?campaign=${encodeURIComponent(it.key)}`} style={{ color: "#2563eb" }}>UTMリンク</a>
                 </td>
