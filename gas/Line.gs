@@ -5,6 +5,11 @@
  * 空欄のときは何もしません（登録・記録はそのまま動きます）。
  */
 function notifyStaff_(message) {
+  notifyLine_(message);
+  notifySlack_(message); // Slack.gs（Webフックがあれば送信）
+}
+
+function notifyLine_(message) {
   var cfg = getConfig();
   if (!cfg.LINE_CHANNEL_ACCESS_TOKEN || !cfg.LINE_STAFF_IDS) return;
 

@@ -126,6 +126,22 @@
         q
       ));
       return q;
+    },
+    // バックエンド（スタッフ/Slack回答）の相場額をローカルの依頼に反映
+    applyQuoteAnswers: function (answers) {
+      if (!answers || !answers.length) return false;
+      var list = read(QUOTE_KEY, []);
+      var byId = {};
+      answers.forEach(function (a) { byId[a.id] = a; });
+      var changed = false;
+      list.forEach(function (q) {
+        var a = byId[q.id];
+        if (a && (q.value !== a.value || q.status !== "回答済み")) {
+          q.value = a.value; q.status = "回答済み"; changed = true;
+        }
+      });
+      if (changed) write(QUOTE_KEY, list);
+      return changed;
     }
   };
 })();

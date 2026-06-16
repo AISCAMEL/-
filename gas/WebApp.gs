@@ -12,16 +12,30 @@
  * スプレッドシート登録 → AI要約 → LINE通知 まで自動で行います。
  */
 
-// 動作確認用（ブラウザでURLを開くと表示される）
-function doGet() {
-  return ContentService
-    .createTextOutput("AUC-AGENT Web App is running.")
+// 動作確認用 ＋ 会員の回答済み相場をJSONPで返す（マイページ反映用）
+//   例: <script src="…/exec?action=quotes&email=xxx&callback=cb"></script>
+function doGet(e) {
+  if (e && e.parameter && e.parameter.action === "quotes") {
+    var data = getAnsweredQuotes_(e.parameter.email || "");
+    var body = JSON.stringify(data);
+    var cb = e.parameter.callback;
+    if (cb) {
+      return ContentService.createTextOutput(cb + "(" + body + ")")
+        .setMimeType(ContentService.MimeType.JAVASCRIPT);
+    }
+    return ContentService.createTextOutput(body).setMimeType(ContentService.MimeType.JSON);
+  }
+  return ContentService.createTextOutput("AUC-AGENT Web App is running.")
     .setMimeType(ContentService.MimeType.TEXT);
 }
 
-// LPからのPOSTを受ける本体
+// LPからのPOST／Slackスラッシュコマンドを受ける本体
 function doPost(e) {
   try {
+    // Slack スラッシュコマンド（application/x-www-form-urlencoded）
+    if (typeof isSlackCommand_ === "function" && isSlackCommand_(e)) {
+      return handleSlackCommand_(e);
+    }
     var data = JSON.parse((e && e.postData && e.postData.contents) || "{}");
     var result;
 
@@ -318,6 +332,49 @@ function handleContact_(d) {
   sh.appendRow([new Date(), d.name || "", d.email || "", d.phone || "", d.message || "", "未対応"]);
   notifyStaff_("✉️ お問い合わせ\nお名前：" + (d.name || "-") + "\n内容：" + (d.message || "-"));
   return { ok: true };
+}
+
+/* ---------- 相場見積り（買取/仕入れ）受付 ---------- */
+function handleQuote_(d) {
+  var cfg = getConfig();
+  var ss = openBook_();
+  var sh = ss.getSheetByName(cfg.SHEET_QUOTES) || ensureSheet_(ss, cfg.SHEET_QUOTES, []);
+  var id = d.id || ("QT-" + nextSeq_(sh, 4000));
+  var kindLabel = d.kind === "sell" ? "買取相場" : "仕入れ相場";
+
+  sh.appendRow([
+    new Date(), id, kindLabel,
+    d.name || "", d.email || "", d.via || "メール",
+    d.car || "", "", "回答待ち"
+  ]);
+
+  notifyStaff_(
+    "📈 相場見積り依頼 " + id + "（" + kindLabel + "）\n" +
+    "お名前：" + (d.name || "-") + "\n" +
+    "車両：" + (d.car || "-") + "\n" +
+    "連絡方法：" + (d.via || "メール") + "（" + (d.email || "-") + "）\n" +
+    "▶ Slackから回答：　/相場回答 " + id + " 金額　（例: /相場回答 " + id + " 1200000）\n" +
+    "→ 査定のうえ回答し、マイページに反映します。"
+  );
+  return { ok: true, id: id };
+}
+
+/* 会員の回答済み相場（JSONP用） email一致のものを返す */
+function getAnsweredQuotes_(email) {
+  var cfg = getConfig();
+  try {
+    var ss = openBook_();
+    var sh = ss.getSheetByName(cfg.SHEET_QUOTES);
+    if (!sh || !email) return [];
+    var v = sh.getDataRange().getValues();
+    var out = [];
+    for (var r = 1; r < v.length; r++) {
+      if (String(v[r][4]).toLowerCase() === String(email).toLowerCase() && v[r][7]) {
+        out.push({ id: v[r][1], kind: v[r][2], car: v[r][6], value: Number(v[r][7]), status: v[r][8] });
+      }
+    }
+    return out;
+  } catch (e) { return []; }
 }
 
 /* ---------- 共通ユーティリティ ---------- */

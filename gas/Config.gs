@@ -27,6 +27,10 @@ function getConfig() {
     OPENROUTER_API_KEY: "",
     OPENROUTER_MODEL: "deepseek/deepseek-chat", // 無料〜安価モデル。例: google/gemini-flash-1.5
 
+    // ③-2 Slack（スタッフ通知＋Slackから相場回答）任意
+    SLACK_WEBHOOK_URL: "",   // Incoming Webhook のURL（通知先）
+    SLACK_SLASH_TOKEN: "",   // スラッシュコマンドの Verification Token
+
     // ④ 通知に表示する自社名（任意）
     COMPANY_NAME: "AUC-AGENT（オークション代行）",
 

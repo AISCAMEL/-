@@ -549,11 +549,26 @@
     renderQuoteList();
   });
 
+  // バックエンド（スタッフ/Slack）の相場回答をJSONPで取得しマイページに反映
+  function syncQuoteAnswers() {
+    var ep = (window.AucConfig && AucConfig.endpoint) || "";
+    if (!ep || !user.email) return;
+    window.__aucQuotes = function (arr) {
+      if (AucAuth.applyQuoteAnswers(arr)) renderQuoteList();
+    };
+    var s = document.createElement("script");
+    s.src = ep + (ep.indexOf("?") < 0 ? "?" : "&") + "action=quotes&email="
+          + encodeURIComponent(user.email) + "&callback=__aucQuotes&_=" + Date.now();
+    s.onerror = function () { /* 未デプロイ時は無視 */ };
+    document.body.appendChild(s);
+  }
+
   renderOrders();
   renderQuote();
   renderSell();
   renderLoan();
   renderQuoteList();
+  syncQuoteAnswers();
 </script>
 </body>
 </html>
