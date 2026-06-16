@@ -156,7 +156,7 @@ export default function ResearchPage() {
   return (
     <div>
       <p style={{ marginBottom: 16 }}>
-        <a href="/" style={{ color: "#2563eb" }}>← ダッシュボード</a>
+        <a href="/" style={{ color: "#e8612e" }}>← ダッシュボード</a>
       </p>
       <h1>猫グッズ スクリーニング</h1>
       <p style={{ color: "#666" }}>
@@ -205,7 +205,7 @@ export default function ResearchPage() {
         </label>
         <button
           onClick={runScreen} disabled={loading || keywords.length === 0}
-          style={{ padding: "8px 20px", background: "#2563eb", color: "#fff", border: 0, borderRadius: 8, cursor: "pointer" }}
+          style={{ padding: "8px 20px", background: "#e8612e", color: "#fff", border: 0, borderRadius: 8, cursor: "pointer" }}
         >
           {loading ? "調査中…" : `スクリーニング実行（${keywords.length}件）`}
         </button>
@@ -240,7 +240,7 @@ export default function ResearchPage() {
                 <td style={{ padding: "8px 6px" }}>{pct(it.chosen?.roi)}</td>
                 <td style={{ padding: "8px 6px" }}>{renderPublish(it)}</td>
                 <td style={{ padding: "8px 6px" }}>
-                  <a href={`/marketing?campaign=${encodeURIComponent(it.key)}`} style={{ color: "#2563eb" }}>UTMリンク</a>
+                  <a href={`/marketing?campaign=${encodeURIComponent(it.key)}`} style={{ color: "#e8612e" }}>UTMリンク</a>
                 </td>
               </tr>
             ))}

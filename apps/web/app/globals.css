@@ -1,0 +1,30 @@
+:root {
+  --bg: #fff9f4;          /* 温かいクリーム背景 */
+  --surface: #ffffff;     /* カード等 */
+  --primary: #e8612e;     /* コーラル（猫グッズらしい暖色アクセント） */
+  --primary-weak: #fdece4;
+  --ink: #3a2e29;         /* 文字（やわらかいブラウン） */
+  --muted: #8a7d75;
+  --card-border: #f0e6df;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+a {
+  color: var(--primary);
+}
+
+/* 入力要素の角丸・配色を全体で統一 */
+input,
+select,
+button {
+  font-family: inherit;
+}

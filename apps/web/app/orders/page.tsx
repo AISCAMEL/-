@@ -34,7 +34,7 @@ const STATUS_LABEL: Record<string, string> = {
   cancelled: "キャンセル",
 };
 const STATUS_COLOR: Record<string, string> = {
-  received: "#2563eb",
+  received: "#e8612e",
   fulfilling: "#ca8a04",
   ordered_to_supplier: "#7c3aed",
   shipped: "#0891b2",
@@ -74,7 +74,7 @@ export default function OrdersPage() {
   return (
     <div>
       <p style={{ marginBottom: 16 }}>
-        <a href="/" style={{ color: "#2563eb" }}>← ダッシュボード</a>
+        <a href="/" style={{ color: "#e8612e" }}>← ダッシュボード</a>
       </p>
       <h1>受注 / 損益</h1>
       {error && <p style={{ color: "#dc2626" }}>{error}</p>}

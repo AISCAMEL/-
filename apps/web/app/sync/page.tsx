@@ -85,7 +85,7 @@ export default function SyncPage() {
   return (
     <div>
       <p style={{ marginBottom: 16 }}>
-        <a href="/" style={{ color: "#2563eb" }}>← ダッシュボード</a>
+        <a href="/" style={{ color: "#e8612e" }}>← ダッシュボード</a>
       </p>
       <h1>在庫・価格同期</h1>
       <p style={{ color: "#666" }}>
@@ -111,7 +111,7 @@ export default function SyncPage() {
       <br />
       <button
         onClick={run} disabled={loading}
-        style={{ padding: "8px 20px", background: "#2563eb", color: "#fff", border: 0, borderRadius: 8, cursor: "pointer", margin: "12px 0" }}
+        style={{ padding: "8px 20px", background: "#e8612e", color: "#fff", border: 0, borderRadius: 8, cursor: "pointer", margin: "12px 0" }}
       >
         {loading ? "同期中…" : "今すぐ同期"}
       </button>

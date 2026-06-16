@@ -26,9 +26,9 @@ function MarketingInner() {
   return (
     <div style={{ maxWidth: 720 }}>
       <p style={{ marginBottom: 16 }}>
-        <a href="/research" style={{ color: "#2563eb" }}>← スクリーニング</a>
+        <a href="/research" style={{ color: "#e8612e" }}>← スクリーニング</a>
         {"  |  "}
-        <a href="/" style={{ color: "#2563eb" }}>ダッシュボード</a>
+        <a href="/" style={{ color: "#e8612e" }}>ダッシュボード</a>
       </p>
       <h1>SNS集客リンク（UTM）発行</h1>
       <p style={{ color: "#666" }}>投稿ごとに計測リンクを発行し、どの投稿・プラットフォームから売れたかを把握します。</p>
@@ -51,7 +51,7 @@ function MarketingInner() {
         <label>投稿識別子（A/Bテスト用）
           <input value={content} onChange={(e) => setContent(e.target.value)} style={{ width: "100%", padding: 8 }} />
         </label>
-        <button onClick={generate} style={{ padding: "8px 20px", background: "#2563eb", color: "#fff", border: 0, borderRadius: 8, cursor: "pointer", width: "fit-content" }}>
+        <button onClick={generate} style={{ padding: "8px 20px", background: "#e8612e", color: "#fff", border: 0, borderRadius: 8, cursor: "pointer", width: "fit-content" }}>
           リンク生成
         </button>
       </div>

@@ -46,7 +46,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          style={{ padding: 10, background: "#2563eb", color: "#fff", border: 0, borderRadius: 8, cursor: "pointer", fontSize: 16 }}
+          style={{ padding: 10, background: "#e8612e", color: "#fff", border: 0, borderRadius: 8, cursor: "pointer", fontSize: 16 }}
         >
           {loading ? "確認中…" : "ログイン"}
         </button>
