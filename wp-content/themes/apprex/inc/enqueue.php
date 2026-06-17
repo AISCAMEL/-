@@ -61,8 +61,11 @@ function apprex_enqueue_assets() {
 		'apprex-estimate',
 		'APPREX_PRICING',
 		array(
-			'rest'     => $rest,
-			'config'   => apprex_pricing_config(),
+			'rest'       => $rest,
+			'config'     => apprex_pricing_config(),
+			'quotePlans' => function_exists( 'apprex_quote_plans' ) ? apprex_quote_plans() : array(),
+			'meetingUrl' => function_exists( 'apprex_page_url' ) ? apprex_page_url( 'meeting' ) : '',
+			'contactUrl' => home_url( '/contact/' ),
 		)
 	);
 

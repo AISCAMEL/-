@@ -61,6 +61,7 @@ $apprex_agent_img_sm = get_theme_file_uri( 'assets/images/support-agent-sm.jpg' 
 		<button type="button" data-q="料金を教えて"><?php esc_html_e( '料金を知りたい', 'apprex' ); ?></button>
 		<button type="button" data-q="見積もりをしたい"><?php esc_html_e( '見積もりしたい', 'apprex' ); ?></button>
 		<button type="button" data-q="どんなアプリが作れますか？"><?php esc_html_e( '作れるアプリは？', 'apprex' ); ?></button>
+			<button type="button" data-q="オリジナルアプリを作りたいです"><?php esc_html_e( 'オリジナルアプリ相談', 'apprex' ); ?></button>
 		<?php if ( function_exists( 'apprex_chat_op_enabled' ) && apprex_chat_op_enabled() ) : ?>
 			<button type="button" class="apprex-chat__quick--op" id="apprex-chat-operator"><?php esc_html_e( '担当者に相談', 'apprex' ); ?></button>
 		<?php endif; ?>

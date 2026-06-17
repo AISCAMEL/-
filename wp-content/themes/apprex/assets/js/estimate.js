@@ -13,6 +13,9 @@
 		var rest = APPREX_PRICING.rest || {};
 		var services = cfg.services;
 		var toZero = !!(cfg.campaign && cfg.campaign.initial_to_zero);
+		var quotePlans = APPREX_PRICING.quotePlans || {};
+		var meetingUrl = APPREX_PRICING.meetingUrl || '';
+		var contactUrl = APPREX_PRICING.contactUrl || '';
 
 		var elServices = document.getElementById('est-services');
 		var elPlans = document.getElementById('est-plans');
@@ -21,8 +24,9 @@
 		var orderForm = document.getElementById('est-order');
 		var doneBox = document.getElementById('est-done');
 
-		var state = { service: null, plan: null, options: [] };
+		var state = { service: null, plan: null, options: [], quote: null };
 		function yen(n) { return '¥' + Number(n).toLocaleString('ja-JP'); }
+		function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
 		function chip(label, active, sub) {
 			var b = document.createElement('button');
@@ -36,9 +40,20 @@
 			elServices.innerHTML = '';
 			Object.keys(services).forEach(function (key) {
 				var svc = services[key];
-				var b = chip(svc.label, state.service === key, '月額制・初期費用0円キャンペーン');
+				var b = chip(svc.label, state.service === key && !state.quote, '月額制・初期費用0円キャンペーン');
 				b.addEventListener('click', function () {
-					state.service = key; state.plan = null; state.options = [];
+					state.service = key; state.plan = null; state.options = []; state.quote = null;
+					renderServices(); renderPlans(); renderOptions(); renderTotal();
+				});
+				elServices.appendChild(b);
+			});
+			// 要相談メニュー（オリジナルアプリ開発など）→ 価格は出さず、ミーティングへ誘導。
+			Object.keys(quotePlans).forEach(function (qkey) {
+				var q = quotePlans[qkey];
+				var b = chip(q.label, state.quote === qkey, '個別お見積り（要相談）');
+				b.classList.add('est-chip--quote');
+				b.addEventListener('click', function () {
+					state.quote = qkey; state.service = null; state.plan = null; state.options = [];
 					renderServices(); renderPlans(); renderOptions(); renderTotal();
 				});
 				elServices.appendChild(b);
@@ -47,6 +62,7 @@
 
 		function renderPlans() {
 			elPlans.innerHTML = '';
+			if (state.quote) { elPlans.innerHTML = '<p class="estimate__hint">この内容は個別お見積り（要相談）です。右側の「ミーティングで相談」へお進みください。</p>'; return; }
 			if (!state.service) { elPlans.innerHTML = '<p class="estimate__hint">先にサービスを選択してください。</p>'; return; }
 			var plans = services[state.service].plans;
 			Object.keys(plans).forEach(function (key) {
@@ -59,6 +75,7 @@
 
 		function renderOptions() {
 			elOptions.innerHTML = '';
+			if (state.quote) { elOptions.innerHTML = '<p class="estimate__hint">—</p>'; return; }
 			if (!state.service) { elOptions.innerHTML = '<p class="estimate__hint">—</p>'; return; }
 			var opts = services[state.service].options || {};
 			var keys = Object.keys(opts);
@@ -98,6 +115,26 @@
 		}
 
 		function renderTotal() {
+			// 要相談メニュー（オリジナルアプリ開発など）：価格は出さずミーティング予約へ誘導。
+			if (state.quote) {
+				var q = quotePlans[state.quote] || {};
+				var h = '<div class="estimate__quote">';
+				h += '<h4>' + esc(q.label || 'オリジナルアプリ開発') + '</h4>';
+				if (q.lead) { h += '<p>' + esc(q.lead) + '</p>'; }
+				if (q.rows) {
+					h += '<ul class="estimate__sub">';
+					Object.keys(q.rows).forEach(function (k) { h += '<li>' + esc(k) + '：<b>' + esc(q.rows[k]) + '</b></li>'; });
+					h += '</ul>';
+				}
+				h += '<p class="estimate__hint">内容により料金が異なるため、まずは無料のオンライン相談で要件をお聞かせください。</p>';
+				if (meetingUrl) { h += '<a class="btn btn--primary btn--block" href="' + meetingUrl + '">📅 ミーティングで相談（無料）</a>'; }
+				if (contactUrl) { h += '<a class="btn btn--ghost btn--block" href="' + contactUrl + '" style="margin-top:8px">メールで相談する</a>'; }
+				h += '</div>';
+				elTotal.innerHTML = h;
+				orderForm.hidden = true;
+				doneBox.hidden = true;
+				return;
+			}
 			var e = compute();
 			if (!e) { elTotal.innerHTML = '<p class="estimate__hint">サービスとプランを選択してください。</p>'; orderForm.hidden = true; return; }
 			var html = '<ul class="estimate__lines">';
