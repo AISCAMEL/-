@@ -376,9 +376,29 @@ add_action( 'admin_post_apprex_square_test', function () {
 		wp_die( '権限がありません。' );
 	}
 	check_admin_referer( 'apprex_square_test' );
-	$r   = apprex_square_request( 'GET', '/v2/locations' );
-	$msg = $r['ok'] ? 'ok' : ( 'err:' . apprex_square_err( $r ) );
-	wp_safe_redirect( add_query_arg( 'apprex_sqtest', rawurlencode( $msg ), admin_url( 'options-general.php?page=apprex-square' ) ) );
+
+	$loc    = apprex_square_location();
+	$result = array(
+		'env' => apprex_square_env(),
+		'loc' => $loc,
+	);
+	$r = apprex_square_request( 'GET', '/v2/locations' );
+	if ( ! $r['ok'] ) {
+		$result['error'] = apprex_square_err( $r );
+	} else {
+		$locs = array();
+		foreach ( (array) ( isset( $r['data']['locations'] ) ? $r['data']['locations'] : array() ) as $L ) {
+			$locs[] = array(
+				'id'     => isset( $L['id'] ) ? $L['id'] : '',
+				'name'   => isset( $L['name'] ) ? $L['name'] : '',
+				'status' => isset( $L['status'] ) ? $L['status'] : '',
+			);
+		}
+		$result['locations'] = $locs;
+		$result['match']     = in_array( $loc, wp_list_pluck( $locs, 'id' ), true );
+	}
+	set_transient( 'apprex_sqtest_' . get_current_user_id(), $result, 300 );
+	wp_safe_redirect( add_query_arg( 'apprex_sqtest', '1', admin_url( 'options-general.php?page=apprex-square' ) ) );
 	exit;
 } );
 
@@ -386,10 +406,38 @@ add_action( 'admin_notices', function () {
 	if ( empty( $_GET['apprex_sqtest'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		return;
 	}
-	$m = sanitize_text_field( wp_unslash( $_GET['apprex_sqtest'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-	if ( 'ok' === $m ) {
-		echo '<div class="notice notice-success is-dismissible"><p>Square 接続OK（トークン・ロケーションを確認できました）。</p></div>';
-	} elseif ( 0 === strpos( $m, 'err:' ) ) {
-		echo '<div class="notice notice-error is-dismissible"><p>Square 接続エラー：' . esc_html( substr( $m, 4 ) ) . '</p></div>';
+	$res = get_transient( 'apprex_sqtest_' . get_current_user_id() );
+	if ( ! is_array( $res ) ) {
+		return;
+	}
+	$env_label = 'sandbox' === $res['env'] ? 'テスト（Sandbox）' : '本番（Production）';
+
+	// 1) トークン自体がNG
+	if ( isset( $res['error'] ) ) {
+		echo '<div class="notice notice-error"><p><strong>Square 接続エラー（環境：' . esc_html( $env_label ) . '）</strong><br>'
+			. esc_html( $res['error'] )
+			. '<br>→ アクセストークンが正しくない／環境（本番⇄テスト）とトークンが食い違っている可能性があります。</p></div>';
+		return;
+	}
+
+	$rows = '';
+	foreach ( (array) $res['locations'] as $L ) {
+		$mark  = ( $L['id'] === $res['loc'] ) ? ' ✅設定中' : '';
+		$rows .= '<tr><td><code>' . esc_html( $L['id'] ) . '</code>' . esc_html( $mark ) . '</td><td>' . esc_html( $L['name'] ) . '</td><td>' . esc_html( $L['status'] ) . '</td></tr>';
+	}
+	$table = '<table class="widefat striped" style="max-width:680px;margin-top:8px;"><thead><tr><th>ロケーションID</th><th>名前</th><th>状態</th></tr></thead><tbody>' . $rows . '</tbody></table>';
+
+	if ( ! empty( $res['match'] ) ) {
+		// 2) ロケーション一致 → 認可OK
+		echo '<div class="notice notice-success"><p><strong>接続OK（環境：' . esc_html( $env_label ) . '）</strong><br>'
+			. 'このトークンで、設定中のロケーション <code>' . esc_html( $res['loc'] ) . '</code> を利用できます。'
+			. 'これでも請求作成に失敗する場合は、トークンの権限（ORDERS / INVOICES / CUSTOMERS）をご確認ください。</p>'
+			. wp_kses_post( $table ) . '</div>';
+	} else {
+		// 3) ロケーション不一致 ← 今回のエラーの主因
+		echo '<div class="notice notice-error"><p><strong>設定中のロケーションIDが、このトークンでは使えません（環境：' . esc_html( $env_label ) . '）</strong><br>'
+			. '設定中：<code>' . esc_html( $res['loc'] ) . '</code> は、このトークンで利用可能な一覧に<strong>含まれていません</strong>。<br>'
+			. '→ 下の一覧にある正しいIDに置き換えてください。一覧が空/別の店舗しか出ない場合は、<strong>環境（本番⇄テスト）かアカウントが食い違っています</strong>。</p>'
+			. wp_kses_post( $table ) . '</div>';
 	}
 } );
