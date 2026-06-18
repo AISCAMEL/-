@@ -4,7 +4,7 @@ Theme URI: https://site.aiscompany.jp/
 Author: AIS Company
 Author URI: https://site.aiscompany.jp/
 Description: クラウド型アプリ開発プラットフォーム「APPREX」公式サイト用テーマ。Hello Elementor の思想を踏襲したライセンス非依存の自作テーマ。固定ページ構成＋カスタム投稿タイプ cases によるリニューアル実装。モバイルファースト・WebP・Lazy Load 対応。
-Version: 1.7.4
+Version: 1.8.0
 Requires at least: 6.0
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -952,4 +952,56 @@ html, body { overflow-x: hidden; max-width: 100%; }
   .apprex-chat-launch { bottom: 78px; }
   /* 固定バーに隠れないようフッター下に余白 */
   body { padding-bottom: 64px; }
+}
+
+/* ===========================================================================
+   モダンSaaS リニューアル Phase 2（トップ全セクションの統一仕上げ）
+   ======================================================================== */
+
+/* セクション見出し：タイトル下にブランドのアクセントバー（ブルー→オレンジ） */
+.section-head h2 { position: relative; }
+.section-head h2::after {
+  content: ""; display: block; width: 52px; height: 4px; margin: 16px auto 0;
+  border-radius: 999px; background: linear-gradient(90deg, var(--color-primary), var(--color-cta));
+}
+.section-head .eyebrow { letter-spacing: .14em; }
+
+/* CTA帯（HP制作など .callout）をヒーローと同じネイビーで統一 */
+.callout {
+  background: var(--hero-grad);
+  box-shadow: 0 20px 50px rgba(11, 31, 68, .28);
+  position: relative; overflow: hidden;
+}
+.callout .eyebrow { color: #93c5fd !important; opacity: 1 !important; }
+.callout p { color: #c5d2ec; }
+
+/* カードのホバーを全体で統一（problem / price にも付与） */
+.problem-card, .price-card { transition: transform .2s, box-shadow .2s, border-color .2s; }
+.problem-card:hover, .price-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+.problem-card { border-radius: var(--radius); }
+
+/* 料金：おすすめプランを主役化（上部バー＋浮かせ＋オレンジ） */
+.price-card { overflow: hidden; }
+.price-card .price { color: var(--color-primary-dark); }
+.price-card--featured { border-color: var(--color-primary); box-shadow: 0 18px 44px rgba(37, 99, 235, .18); }
+.price-card--featured::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 5px;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-cta));
+}
+.price-card--featured .ribbon { background: var(--color-cta); }
+@media (min-width: 820px) {
+  .price-card--featured { transform: translateY(-10px) scale(1.02); }
+  .price-card--featured:hover { transform: translateY(-14px) scale(1.02); }
+}
+
+/* FAQ：操作感を強調 */
+.faq-item__q:hover { color: var(--color-primary-dark); }
+.faq-item:focus-within { border-color: var(--color-primary); }
+
+/* 解決の数式チップに少し奥行き */
+.solution__formula span { box-shadow: var(--shadow-sm); }
+
+/* アクセシビリティ：フォーカスリングを全体で統一 */
+a:focus-visible, button:focus-visible, .btn:focus-visible, summary:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, .5); outline-offset: 2px; border-radius: 6px;
 }

@@ -57,7 +57,7 @@ $apprex_render_service = function ( $svc, $featured = '' ) use ( $apprex_est, $a
 			<?php if ( ! empty( $p['note'] ) ) : ?>
 				<p class="price-note"><?php echo esc_html( $p['note'] ); ?></p>
 			<?php endif; ?>
-			<a class="btn <?php echo $is_feat ? 'btn--primary' : 'btn--ghost'; ?>" href="<?php echo esc_url( $apprex_est ); ?>"><?php esc_html_e( '見積もり・申込', 'apprex' ); ?></a>
+			<a class="btn <?php echo $is_feat ? 'btn--cta' : 'btn--ghost'; ?>" href="<?php echo esc_url( $apprex_est ); ?>"><?php esc_html_e( '見積もり・申込', 'apprex' ); ?></a>
 		</div>
 		<?php
 	}
