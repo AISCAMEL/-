@@ -95,7 +95,13 @@ function apprex_square_due_date( $day ) {
 function apprex_square_ensure_customer( $id ) {
 	$cid = get_post_meta( $id, 'apprex_c_sq_customer', true );
 	if ( $cid ) {
-		return $cid;
+		// 保存済みIDが現在のアカウント/環境に実在するか確認（環境変更で消える場合があるため）。
+		$chk = apprex_square_request( 'GET', '/v2/customers/' . rawurlencode( $cid ) );
+		if ( $chk['ok'] && ! empty( $chk['data']['customer']['id'] ) ) {
+			return $cid;
+		}
+		// 見つからない → 作り直すため保存値を破棄。
+		delete_post_meta( $id, 'apprex_c_sq_customer' );
 	}
 	$name    = get_post_meta( $id, 'apprex_c_name', true );
 	$email   = get_post_meta( $id, 'apprex_c_email', true );
