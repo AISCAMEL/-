@@ -23,7 +23,6 @@ while ( have_posts() ) :
 		<div class="container">
 			<nav class="breadcrumbs">
 				<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'ホーム', 'apprex' ); ?></a>
-				<span> / </span><?php the_title(); ?>
 			</nav>
 			<h1><?php the_title(); ?></h1>
 			<p><?php esc_html_e( 'ご質問・オンライン相談のご予約はこちらから。担当者より折り返しご連絡します。', 'apprex' ); ?></p>

@@ -33,7 +33,6 @@ while ( have_posts() ) :
 		<div class="container">
 			<nav class="breadcrumbs">
 				<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'ホーム', 'apprex' ); ?></a>
-				<span> / </span><?php the_title(); ?>
 			</nav>
 			<h1><?php the_title(); ?></h1>
 			<p><?php esc_html_e( '初期費用0円・月額制。AI技術を活用した効率的な制作プロセスで、高品質サイトをスピード公開します。', 'apprex' ); ?></p>

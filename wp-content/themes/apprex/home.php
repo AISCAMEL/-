@@ -17,7 +17,6 @@ $apprex_blog_page = get_option( 'page_for_posts' );
 	<div class="container">
 		<nav class="breadcrumbs">
 			<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'ホーム', 'apprex' ); ?></a>
-			<span> / </span><?php esc_html_e( 'ブログ', 'apprex' ); ?>
 		</nav>
 		<h1><?php echo esc_html( $apprex_blog_page ? get_the_title( $apprex_blog_page ) : __( 'ブログ', 'apprex' ) ); ?></h1>
 		<p><?php esc_html_e( 'ノーコードアプリ開発・DX・集客のノウハウを全国へ発信しています。', 'apprex' ); ?></p>

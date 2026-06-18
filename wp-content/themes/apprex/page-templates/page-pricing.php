@@ -18,7 +18,6 @@ while ( have_posts() ) :
 		<div class="container">
 			<nav class="breadcrumbs">
 				<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'ホーム', 'apprex' ); ?></a>
-				<span> / </span><?php the_title(); ?>
 			</nav>
 			<h1><?php the_title(); ?></h1>
 			<p><?php esc_html_e( '開発費0円・月額制。初期設定費は今月キャンペーンで0円。まずは30日間無料でお試しください。', 'apprex' ); ?></p>

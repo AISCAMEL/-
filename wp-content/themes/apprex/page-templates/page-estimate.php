@@ -21,7 +21,6 @@ while ( have_posts() ) :
 		<div class="container">
 			<nav class="breadcrumbs">
 				<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'ホーム', 'apprex' ); ?></a>
-				<span> / </span><?php the_title(); ?>
 			</nav>
 			<h1><?php the_title(); ?></h1>
 			<p><?php esc_html_e( 'サービスとプランを選ぶだけで概算が表示され、そのままお見積り＆お申し込み（発注）まで完結できます。', 'apprex' ); ?></p>

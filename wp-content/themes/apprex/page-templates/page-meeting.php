@@ -20,7 +20,6 @@ while ( have_posts() ) :
 		<div class="container">
 			<nav class="breadcrumbs">
 				<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'ホーム', 'apprex' ); ?></a>
-				<span> / </span><?php the_title(); ?>
 			</nav>
 			<h1><?php the_title(); ?></h1>
 			<p><?php esc_html_e( 'Google Meet での無料オンライン相談をご予約いただけます。予約するとMeetの参加URL・招待・リマインダーが自動で届きます。', 'apprex' ); ?></p>

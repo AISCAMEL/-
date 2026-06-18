@@ -20,7 +20,6 @@ while ( have_posts() ) :
 				<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'ホーム', 'apprex' ); ?></a>
 				<span> / </span>
 				<a href="<?php echo esc_url( apprex_page_url( 'blog' ) ); ?>"><?php esc_html_e( 'ブログ', 'apprex' ); ?></a>
-				<span> / </span><?php the_title(); ?>
 			</nav>
 			<?php
 			$apprex_cats = get_the_category();

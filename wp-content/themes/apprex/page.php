@@ -18,7 +18,6 @@ while ( have_posts() ) :
 		<div class="container">
 			<nav class="breadcrumbs" aria-label="<?php esc_attr_e( 'パンくず', 'apprex' ); ?>">
 				<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'ホーム', 'apprex' ); ?></a>
-				<span> / </span><?php the_title(); ?>
 			</nav>
 			<h1><?php the_title(); ?></h1>
 			<?php if ( has_excerpt() ) : ?>

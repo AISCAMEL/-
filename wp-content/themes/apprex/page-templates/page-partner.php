@@ -20,7 +20,6 @@ while ( have_posts() ) :
 		<div class="container">
 			<nav class="breadcrumbs">
 				<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'ホーム', 'apprex' ); ?></a>
-				<span> / </span><?php the_title(); ?>
 			</nav>
 			<h1><?php the_title(); ?></h1>
 			<p><?php esc_html_e( 'アプリ市場の拡大を、紹介ビジネスの機会に。紹介するだけで継続収益が積み上がる、APPREXのパートナー制度です。', 'apprex' ); ?></p>

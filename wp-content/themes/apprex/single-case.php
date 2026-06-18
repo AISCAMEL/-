@@ -26,7 +26,6 @@ while ( have_posts() ) :
 				<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'ホーム', 'apprex' ); ?></a>
 				<span> / </span>
 				<a href="<?php echo esc_url( get_post_type_archive_link( 'case' ) ); ?>"><?php esc_html_e( '導入事例', 'apprex' ); ?></a>
-				<span> / </span><?php the_title(); ?>
 			</nav>
 			<?php if ( $apprex_industry ) : ?>
 				<span class="case-card__industry"><?php echo esc_html( $apprex_industry ); ?></span>

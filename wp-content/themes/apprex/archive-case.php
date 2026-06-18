@@ -23,7 +23,6 @@ $apprex_current = get_queried_object();
 	<div class="container">
 		<nav class="breadcrumbs" aria-label="<?php esc_attr_e( 'パンくず', 'apprex' ); ?>">
 			<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'ホーム', 'apprex' ); ?></a>
-			<span> / </span><?php esc_html_e( '導入事例', 'apprex' ); ?>
 		</nav>
 		<h1><?php esc_html_e( '導入事例', 'apprex' ); ?></h1>
 		<p><?php esc_html_e( '9業種8,000社以上。業種別の成果につながった APPREX の活用事例をご紹介します。', 'apprex' ); ?></p>
