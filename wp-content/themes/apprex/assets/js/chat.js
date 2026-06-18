@@ -90,9 +90,10 @@
 				return '<a href="' + url + '" target="_blank" rel="noopener">' + label + '</a>';
 			});
 			// 素のURL（上で作った<a>内のURLは前が " か > なので除外される）
-			s = s.replace(/(^|[^"'>])(https?:\/\/[^\s<]+)/g, function (m, pre, url) {
+			// URLに使える半角文字のみを対象にし、日本語や全角括弧（）で確実に区切る（巻き込み防止）。
+			s = s.replace(/(^|[^"'>])(https?:\/\/[A-Za-z0-9\-._~:/?#@!$&'()*+,;=%[\]]+)/g, function (m, pre, url) {
 				var trail = '';
-				var mt = url.match(/[.,!?。、！？)\]]+$/);
+				var mt = url.match(/[.,!?)\]]+$/);
 				if (mt) { trail = mt[0]; url = url.slice(0, -trail.length); }
 				return pre + '<a href="' + url + '" target="_blank" rel="noopener">' + url + '</a>' + trail;
 			});
