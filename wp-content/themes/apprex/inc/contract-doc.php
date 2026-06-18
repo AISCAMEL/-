@@ -65,8 +65,7 @@ function apprex_contract_placeholders() {
 
 /** 事業者情報（甲）の既定値。 */
 function apprex_contract_provider_default() {
-	$name = get_bloginfo( 'name' );
-	return "会社名：{$name}\n所在地：\n代表者：";
+	return "会社名：合同会社アイズ\n所在地：福島県いわき市四倉町細谷字大町1番\n代表者：吉田一平";
 }
 
 /** 契約書テンプレートの既定値（アプリワン サービス利用規約）。 */
@@ -86,7 +85,7 @@ function apprex_contract_template_default() {
 2.「知的財産権」とは、著作権、特許権、実用新案権、意匠権、商標権その他の知的財産権（それらの権利を取得し、又はそれらの権利につき登録等を出願する権利を含みます。）を意味します。<br>
 3.「送信データ」とは、乙が本サービスを利用して作成するアプリケーション（以下「アプリ」といいます。）に使用するために、乙が甲に対して送信するコンテンツ（文章、画像、動画その他データを含みますが、これらに限りません。）を意味します。<br>
 4.「乙」とは、第３条（登録）各項に基づいて本サービスの利用者としての登録がなされた個人又は法人を意味します。<br>
-5.「本サービス」とは、甲が提供する「アプリワン」という名称のサービス（モバイルデバイス向けアプリ作成支援サービスとし、ただし、理由の如何を問わずサービスの名称又は内容が変更された場合には、当該変更後のサービスを含みます。）を意味します。<br>
+5.「本サービス」とは、甲が提供する「APPREX（アプリックス）」という名称のサービス（モバイルデバイス向けアプリ作成支援サービス及びこれに付随するホームページ制作等のサービスとし、ただし、理由の如何を問わずサービスの名称又は内容が変更された場合には、当該変更後のサービスを含みます。）を意味します。<br>
 6.「アプリ利用者」とは、乙が本サービスを利用して作成したアプリを、AppStore、GooglePlayその他のモバイルプラットフォーム（以下「登録プラットフォーム」といいます。）に登録した後、当該登録プラットフォームから取得したうえで利用する者を意味します。</p>
 
 <h2>第３条（登録）</h2>
@@ -218,7 +217,7 @@ function apprex_contract_template_default() {
 
 <h2>第２０条（準拠法及び管轄裁判所）</h2>
 <p>１.本規約及びサービス利用契約の準拠法は日本法とします。なお、本サービスにおいて物品の売買が発生する場合であっても、国際物品売買契約に関する国際連合条約の適用を排除することに同意します。<br>
-２.本規約又はサービス利用契約に起因し、又は関連する一切の紛争については、東京地方裁判所又は東京簡易裁判所を第一審の専属的合意管轄裁判所とします。</p>
+２.本規約又はサービス利用契約に起因し、又は関連する一切の紛争については、甲の本店所在地を管轄する福島地方裁判所いわき支部又はいわき簡易裁判所を第一審の専属的合意管轄裁判所とします。</p>
 
 <p style="text-align:center;margin-top:32px;">{{today}}</p>
 
@@ -252,6 +251,35 @@ add_action( 'admin_init', function () {
 	register_setting( 'apprex_contract_doc', 'apprex_contract_doc_title', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 	register_setting( 'apprex_contract_doc', 'apprex_contract_provider', array( 'sanitize_callback' => 'wp_kses_post' ) );
 	register_setting( 'apprex_contract_doc', 'apprex_contract_template', array( 'sanitize_callback' => 'wp_kses_post' ) );
+} );
+
+/**
+ * 既に管理画面で保存済みのテンプレ／甲情報にも、本拠地ベースの管轄・サービス名称の
+ * 変更を一度だけ反映する（旧・既定の文言のみを安全に置換）。
+ */
+add_action( 'admin_init', function () {
+	if ( get_option( 'apprex_contract_doc_iwaki_v1' ) ) {
+		return;
+	}
+	$tpl = (string) get_option( 'apprex_contract_template', '' );
+	if ( '' !== $tpl ) {
+		$new = str_replace(
+			array( '東京地方裁判所又は東京簡易裁判所', '「アプリワン」' ),
+			array( '甲の本店所在地を管轄する福島地方裁判所いわき支部又はいわき簡易裁判所', '「APPREX（アプリックス）」' ),
+			$tpl
+		);
+		if ( $new !== $tpl ) {
+			update_option( 'apprex_contract_template', $new );
+		}
+	}
+	// 甲（事業者）情報が未設定、または旧・自動既定（合同会社アイズ未記載）の場合のみ補完。
+	$prov = (string) get_option( 'apprex_contract_provider', '' );
+	if ( '' === $prov || false === mb_strpos( $prov, '合同会社アイズ' ) ) {
+		if ( '' === $prov || false !== mb_strpos( $prov, "所在地：\n" ) || preg_match( '/所在地[：:]\s*$/u', $prov ) ) {
+			update_option( 'apprex_contract_provider', apprex_contract_provider_default() );
+		}
+	}
+	update_option( 'apprex_contract_doc_iwaki_v1', 1 );
 } );
 
 /** 契約書テンプレート編集画面。 */
