@@ -141,11 +141,14 @@ function apprex_email_wrap( $subject, $content_html, $args = array() ) {
 		? '<h1 style="margin:0 0 18px;font-size:20px;line-height:1.5;color:#111827;font-weight:bold;">' . esc_html( $heading ) . '</h1>'
 		: '';
 
-	// フッター
-	$footer  = '<p style="margin:0 0 6px;font-weight:bold;color:#374151;">APPREX（アップレックス）</p>';
+	// フッター（会社情報）
+	$email   = function_exists( 'apprex_contact_email' ) ? apprex_contact_email() : get_option( 'admin_email' );
+	$footer  = '<p style="margin:0 0 6px;font-weight:bold;color:#374151;">APPREX（アプリックス）</p>';
 	$footer .= '<p style="margin:0 0 4px;color:#6b7280;font-size:12px;line-height:1.7;">'
-		. 'ノーコードアプリ開発プラットフォーム / 合同会社アイズ<br>'
-		. '受付：平日 10:00〜18:00（チャット・メール・オンライン相談）</p>';
+		. 'クラウド型ノーコードアプリ開発プラットフォーム<br>'
+		. '<strong>合同会社アイズ</strong><br>'
+		. '受付：平日 10:00〜18:00（チャット・メール・オンライン相談）<br>'
+		. 'メール：<a href="mailto:' . esc_attr( $email ) . '" style="color:' . $color . ';text-decoration:none;">' . esc_html( $email ) . '</a></p>';
 	$links = array();
 	$links[] = '<a href="' . esc_url( $site ) . '" style="color:' . $color . ';text-decoration:none;">サイトを見る</a>';
 	if ( $line ) {
@@ -542,6 +545,77 @@ add_action( 'admin_post_apprex_test_mail', function () {
 	exit;
 } );
 
+/**
+ * 1通だけテスト送信するハンドラ（プレビュー横の「この1通をテスト送信」用）。
+ * part: autoreply / admin / step / reminder。step は id=オフセット(分)、reminder は id=キー。
+ */
+add_action( 'admin_post_apprex_test_mail_one', function () {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( '権限がありません。' );
+	}
+	check_admin_referer( 'apprex_test_one' );
+
+	$to   = isset( $_POST['to'] ) ? sanitize_email( wp_unslash( $_POST['to'] ) ) : '';
+	$type = isset( $_POST['type'] ) ? sanitize_key( wp_unslash( $_POST['type'] ) ) : 'contact';
+	$part = isset( $_POST['part'] ) ? sanitize_key( wp_unslash( $_POST['part'] ) ) : 'autoreply';
+	$id   = isset( $_POST['id'] ) ? sanitize_text_field( wp_unslash( $_POST['id'] ) ) : '';
+	$back = admin_url( 'options-general.php?page=apprex-mail' );
+
+	if ( ! is_email( $to ) ) {
+		wp_safe_redirect( add_query_arg( 'apprex_test', 'bademail', $back ) );
+		exit;
+	}
+
+	$fields  = apprex_sample_fields( $type, $to );
+	$headers = apprex_mail_headers();
+	$subject = '';
+	$html    = '';
+
+	switch ( $part ) {
+		case 'admin':
+			$labels  = apprex_mail_types();
+			$tlabel  = isset( $labels[ $type ] ) ? $labels[ $type ] : 'お問い合わせ';
+			$subject = sprintf( '[APPREX] %s #%s — %s', $tlabel, '0000', $fields['name'] );
+			$html    = apprex_email_wrap( $subject, apprex_admin_notify_html( $tlabel, $fields, 0 ), array( 'heading' => '新しい' . $tlabel . 'が届きました' ) );
+			break;
+
+		case 'step':
+			$steps  = apprex_step_mails( apprex_drip_key_for( $type ) );
+			$offset = (int) $id;
+			if ( isset( $steps[ $offset ] ) ) {
+				$m       = $steps[ $offset ];
+				$body    = str_replace( '{name}', $fields['name'], $m['body'] );
+				$subject = $m['subject'];
+				$html    = apprex_render_email( $subject, $body, array( 'heading' => apprex_email_heading_from_subject( $subject ) ) );
+			}
+			break;
+
+		case 'reminder':
+			$reminders = apprex_meeting_reminders();
+			if ( isset( $reminders[ $id ] ) ) {
+				$r       = $reminders[ $id ];
+				$when    = wp_date( 'Y年n月j日(D) H:i', (int) $fields['meeting_at'] );
+				$body    = str_replace( array( '{name}', '{when}' ), array( $fields['name'], $when ), $r['body'] );
+				$subject = $r['subject'];
+				$html    = apprex_render_email( $subject, $body, array( 'heading' => apprex_email_heading_from_subject( $subject ) ) );
+			}
+			break;
+
+		case 'autoreply':
+		default:
+			list( $subject, $body ) = apprex_autoreply_message( $type, $fields );
+			$html = apprex_render_email( $subject, $body, array( 'heading' => apprex_email_heading_from_subject( $subject ) ) );
+			break;
+	}
+
+	if ( $subject && $html && wp_mail( $to, '[テスト] ' . $subject, $html, $headers ) ) {
+		wp_safe_redirect( add_query_arg( array( 'apprex_test' => 'sent', 'n' => 1 ), $back ) );
+		exit;
+	}
+	wp_safe_redirect( add_query_arg( 'apprex_test', 'failed', $back ) );
+	exit;
+} );
+
 /** オフセット（分）を人が読めるラベルに（10分後 / 1時間後 / 1日後）。 */
 function apprex_offset_label( $minutes ) {
 	$minutes = (int) $minutes;
@@ -649,6 +723,8 @@ function apprex_mail_admin_page() {
 				<div class="notice notice-success is-dismissible"><p>配信処理を実行しました。期限が来ているステップメールを送信しました（受信トレイをご確認ください）。</p></div>
 			<?php elseif ( 'mode' === $_GET['apprex_test'] ) : ?>
 				<div class="notice notice-success is-dismissible"><p>テストモードを切り替えました。</p></div>
+			<?php elseif ( 'failed' === $_GET['apprex_test'] ) : ?>
+				<div class="notice notice-error is-dismissible"><p>テストメールを送信できませんでした。送信設定（SMTP等）をご確認ください。</p></div>
 			<?php endif; ?>
 		<?php endif; ?>
 
@@ -657,8 +733,9 @@ function apprex_mail_admin_page() {
 			<div class="notice notice-warning"><p>⚠️ <strong>ステップメール テストモードが ON</strong> です（「日」を「分」に圧縮中）。本番運用前に必ず OFF に戻してください。</p></div>
 		<?php endif; ?>
 
-		<h2>テスト送信</h2>
-		<p>指定アドレスへ「自動返信 ＋ 管理者通知 ＋ ステップ1通目」をまとめて送り、実際に届くか・デザインを確認できます。</p>
+		<h2>テスト送信（まとめて）</h2>
+		<p>指定アドレスへ「自動返信 ＋ 管理者通知 ＋ ステップ1通目」をまとめて送り、実際に届くか・デザインを確認できます。<br>
+		<strong>メールを1通ずつ個別に送りたい場合</strong>は、下の「メール内容プレビュー」の各メール下にある「この1通をテスト送信」をご利用ください。</p>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin:0 0 8px;">
 			<input type="hidden" name="action" value="apprex_test_mail">
 			<?php wp_nonce_field( 'apprex_test_mail' ); ?>
@@ -748,23 +825,30 @@ function apprex_mail_admin_page() {
 		</table>
 
 		<hr>
-		<h2>メール内容プレビュー</h2>
-		<p>送信される全メール（自動返信・ステップメール・リマインダー）を実際の見た目で確認できます。</p>
+		<h2>メール内容プレビュー / 1通ずつテスト送信</h2>
+		<p>送信される全メール（自動返信・管理者通知・ステップメール・リマインダー）を実際の見た目で確認できます。<br>
+		各プレビューの下の「<strong>この1通をテスト送信</strong>」で、メールを<strong>1通ずつ個別に</strong>指定アドレスへ送れます（送信先は初期値であなたのメールが入っています）。</p>
 		<?php
 		foreach ( $types as $type => $label ) {
 			echo '<h3 style="margin-top:28px;border-left:4px solid #2563eb;padding-left:8px;">' . esc_html( $label ) . '（' . esc_html( $type ) . '）</h3>';
 
-			// 自動返信
+			// 自動返信（お客様向け）
 			$fields = apprex_sample_fields( $type );
 			list( $asub, $abody ) = apprex_autoreply_message( $type, $fields );
-			apprex_render_preview( '自動返信（申込直後）', $asub, apprex_render_email( $asub, $abody, array( 'heading' => apprex_email_heading_from_subject( $asub ) ) ) );
+			apprex_render_preview( '自動返信（申込直後）', $asub, apprex_render_email( $asub, $abody, array( 'heading' => apprex_email_heading_from_subject( $asub ) ) ), array( 'type' => $type, 'part' => 'autoreply' ), $default );
 
-			// ステップメール
+			// 管理者通知（社内向け）
+			$tlabel = isset( $types[ $type ] ) ? $types[ $type ] : 'お問い合わせ';
+			$nsub   = sprintf( '[APPREX] %s #%s — %s', $tlabel, '0000', $fields['name'] );
+			$nhtml  = apprex_email_wrap( $nsub, apprex_admin_notify_html( $tlabel, $fields, 0 ), array( 'heading' => '新しい' . $tlabel . 'が届きました' ) );
+			apprex_render_preview( '管理者通知', $nsub, $nhtml, array( 'type' => $type, 'part' => 'admin' ), $default );
+
+			// ステップメール / リマインダー
 			if ( 'meeting' === $type ) {
 				if ( get_option( 'apprex_wp_meeting_reminders', 0 ) ) {
-					foreach ( apprex_meeting_reminders() as $r ) {
+					foreach ( apprex_meeting_reminders() as $rk => $r ) {
 						$b = str_replace( array( '{name}', '{when}' ), array( $fields['name'], wp_date( 'Y年n月j日(D) H:i', (int) $fields['meeting_at'] ) ), $r['body'] );
-						apprex_render_preview( 'リマインダー', $r['subject'], apprex_render_email( $r['subject'], $b, array( 'heading' => apprex_email_heading_from_subject( $r['subject'] ) ) ) );
+						apprex_render_preview( 'リマインダー', $r['subject'], apprex_render_email( $r['subject'], $b, array( 'heading' => apprex_email_heading_from_subject( $r['subject'] ) ) ), array( 'type' => $type, 'part' => 'reminder', 'id' => $rk ), $default );
 					}
 				} else {
 					echo '<p style="color:#6b7280;">※ ミーティングのリマインダーはGoogleカレンダーが送信（WordPressからは送信しない設定）。</p>';
@@ -774,7 +858,7 @@ function apprex_mail_admin_page() {
 				ksort( $steps );
 				foreach ( $steps as $offset => $mail ) {
 					$b = str_replace( '{name}', $fields['name'], $mail['body'] );
-					apprex_render_preview( $offset . '日後', $mail['subject'], apprex_render_email( $mail['subject'], $b, array( 'heading' => apprex_email_heading_from_subject( $mail['subject'] ) ) ) );
+					apprex_render_preview( apprex_offset_label( $offset ), $mail['subject'], apprex_render_email( $mail['subject'], $b, array( 'heading' => apprex_email_heading_from_subject( $mail['subject'] ) ) ), array( 'type' => $type, 'part' => 'step', 'id' => $offset ), $default );
 				}
 			}
 		}
@@ -783,10 +867,29 @@ function apprex_mail_admin_page() {
 	<?php
 }
 
-/** 1通分のプレビューを iframe（隔離）で描画。 */
-function apprex_render_preview( $tag, $subject, $html ) {
+/**
+ * 1通分のプレビューを iframe（隔離）で描画。
+ *
+ * @param string     $tag     ラベル。
+ * @param string     $subject 件名。
+ * @param string     $html    本文HTML。
+ * @param array|null $send    指定時、この1通をテスト送信するフォームを表示（type/part/id）。
+ * @param string     $to      送信先の初期値。
+ */
+function apprex_render_preview( $tag, $subject, $html, $send = null, $to = '' ) {
 	echo '<div style="margin:0 0 18px;max-width:640px;">';
 	echo '<div style="font-size:13px;color:#374151;margin-bottom:4px;"><strong style="display:inline-block;min-width:90px;color:#2563eb;">' . esc_html( $tag ) . '</strong> 件名：' . esc_html( $subject ) . '</div>';
 	echo '<iframe srcdoc="' . esc_attr( $html ) . '" style="width:100%;height:420px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;" loading="lazy"></iframe>';
+	if ( is_array( $send ) ) {
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:flex;gap:6px;align-items:center;margin:6px 0 0;flex-wrap:wrap;">';
+		echo '<input type="hidden" name="action" value="apprex_test_mail_one">';
+		echo wp_nonce_field( 'apprex_test_one', '_wpnonce', true, false );
+		echo '<input type="hidden" name="type" value="' . esc_attr( $send['type'] ) . '">';
+		echo '<input type="hidden" name="part" value="' . esc_attr( $send['part'] ) . '">';
+		echo '<input type="hidden" name="id" value="' . esc_attr( isset( $send['id'] ) ? $send['id'] : '' ) . '">';
+		echo '<input type="email" name="to" value="' . esc_attr( $to ) . '" required style="max-width:240px;" placeholder="送信先メール">';
+		echo '<button type="submit" class="button button-secondary">この1通をテスト送信</button>';
+		echo '</form>';
+	}
 	echo '</div>';
 }
