@@ -451,6 +451,9 @@ function apprex_rest_slack_events( WP_REST_Request $request ) {
 		$data['human'] = false;
 		$data['seq']   = (int) $data['seq'] + 1;
 		$data['queue'][] = array( 'id' => $data['seq'], 'text' => 'AIによる自動応答に戻りました。', 'who' => 'system' );
+		if ( function_exists( 'apprex_chat_log_append' ) ) {
+			apprex_chat_log_append( $session, 'システム', 'AI自動応答に戻りました（担当者対応を終了）。' );
+		}
 	} else {
 		if ( '' === $text ) {
 			return rest_ensure_response( array( 'ok' => true ) );
@@ -458,6 +461,9 @@ function apprex_rest_slack_events( WP_REST_Request $request ) {
 		$data['human'] = true; // 担当者が応答 → 有人対応に切替。
 		$data['seq']   = (int) $data['seq'] + 1;
 		$data['queue'][] = array( 'id' => $data['seq'], 'text' => $text, 'who' => 'operator' );
+		if ( function_exists( 'apprex_chat_log_append' ) ) {
+			apprex_chat_log_append( $session, '担当者', $text ); // 有人対応の発言も会話ログに記録。
+		}
 	}
 	// キューは直近50件に制限。
 	if ( count( $data['queue'] ) > 50 ) {

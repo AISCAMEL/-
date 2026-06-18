@@ -51,8 +51,8 @@ add_action( 'init', function () {
  * @return bool リードを新規獲得したら true。
  */
 function apprex_chat_after_reply( $messages, $reply, $session ) {
-	$transcript = apprex_chat_transcript( $messages, $reply );
-	apprex_chat_log_save( $session, $transcript );
+	// 会話ログにAIの応答を追記（お客様の発言はリクエスト受信時に追記済み）。
+	apprex_chat_log_append( $session, 'AI', $reply );
 
 	// 既存の契約者（ログイン済み）はリード化しない。
 	if ( apprex_chat_is_member() ) {
@@ -72,7 +72,7 @@ function apprex_chat_after_reply( $messages, $reply, $session ) {
 	if ( ! $email || ! is_email( $email ) ) {
 		return false;
 	}
-	return apprex_chat_register_lead( $email, $transcript, $session );
+	return apprex_chat_register_lead( $email, apprex_chat_transcript( $messages, $reply ), $session );
 }
 
 /** 会話を読みやすいテキストに整形。 */
@@ -123,6 +123,61 @@ function apprex_chat_log_save( $session, $transcript ) {
 		update_post_meta( $id, 'apprex_session', $session );
 	}
 	return $id;
+}
+
+/** セッションのチャットログ投稿IDを取得（無ければ作成）。 */
+function apprex_chat_log_id( $session ) {
+	$session  = $session ? $session : 'anon-' . gmdate( 'Ymd' );
+	$existing = get_posts(
+		array(
+			'post_type'      => 'apprex_chatlog',
+			'post_status'    => 'publish',
+			'posts_per_page' => 1,
+			'fields'         => 'ids',
+			'meta_key'       => 'apprex_session',
+			'meta_value'     => $session,
+		)
+	);
+	if ( $existing ) {
+		return (int) $existing[0];
+	}
+	$id = wp_insert_post(
+		array(
+			'post_type'   => 'apprex_chatlog',
+			'post_status' => 'publish',
+			'post_title'  => '会話 ' . wp_date( 'Y-m-d H:i' ) . ' / ' . $session,
+		)
+	);
+	if ( $id ) {
+		update_post_meta( $id, 'apprex_session', $session );
+	}
+	return (int) $id;
+}
+
+/**
+ * 1発言をチャットログに追記（誰の発言かを明記して時系列で残す）。
+ *
+ * @param string $session セッションID。
+ * @param string $who     発言者ラベル（お客様／AI／担当者／システム）。
+ * @param string $text    発言内容。
+ */
+function apprex_chat_log_append( $session, $who, $text ) {
+	$text = trim( (string) $text );
+	if ( '' === $text ) {
+		return;
+	}
+	$id = apprex_chat_log_id( $session );
+	if ( ! $id ) {
+		return;
+	}
+	$line = $who . '：' . $text;
+	$prev = (string) get_post_field( 'post_content', $id );
+	wp_update_post(
+		array(
+			'ID'           => $id,
+			'post_content' => ( '' !== $prev ? $prev . "\n" . $line : $line ),
+		)
+	);
 }
 
 /**

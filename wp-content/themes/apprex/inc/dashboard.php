@@ -519,6 +519,23 @@ function apprex_dashboard_page() {
 			?>
 		</div>
 
+		<h2 style="margin-top:24px;">最近のチャット</h2>
+		<table class="widefat striped"><tbody>
+			<?php
+			$chatlogs = get_posts( array( 'post_type' => 'apprex_chatlog', 'post_status' => 'publish', 'posts_per_page' => 10, 'fields' => 'ids', 'orderby' => 'modified', 'order' => 'DESC' ) );
+			if ( ! $chatlogs ) {
+				echo '<tr><td>チャット履歴はまだありません。</td></tr>';
+			}
+			foreach ( $chatlogs as $cid ) {
+				$excerpt = wp_trim_words( wp_strip_all_tags( (string) get_post_field( 'post_content', $cid ) ), 28, '…' );
+				echo '<tr><td><a href="' . esc_url( admin_url( 'post.php?post=' . $cid . '&action=edit' ) ) . '">' . esc_html( get_the_title( $cid ) ) . '</a>'
+					. '<br><small style="color:#6b7280;">' . esc_html( $excerpt ) . '</small>'
+					. '<br><small style="color:#9ca3af;">' . esc_html( get_the_modified_date( 'Y-m-d H:i', $cid ) ) . '</small></td></tr>';
+			}
+			?>
+		</tbody></table>
+		<p><a class="button" href="<?php echo esc_url( admin_url( 'edit.php?post_type=apprex_chatlog' ) ); ?>">すべてのチャットログを見る</a></p>
+
 		<h2 style="margin-top:24px;">データ書き出し（CSV）</h2>
 		<p style="color:#6b7280;">Excel／スプレッドシートで開けるCSV（UTF-8 BOM付き）をダウンロードします。</p>
 		<?php

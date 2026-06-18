@@ -247,6 +247,15 @@ function apprex_rest_chat( WP_REST_Request $request ) {
 
 	$session = sanitize_text_field( (string) $request->get_param( 'session' ) );
 
+	// 会話ログ：今回のお客様の発言を記録（AI／有人対応いずれの場合も残す）。
+	if ( function_exists( 'apprex_chat_log_append' ) ) {
+		$last_user = end( $messages );
+		reset( $messages );
+		if ( $last_user && 'user' === $last_user['role'] ) {
+			apprex_chat_log_append( $session, 'お客様', $last_user['content'] );
+		}
+	}
+
 	// オペレーター連携：発言を Slack へ転送。有人対応中ならAI応答を止める。
 	if ( function_exists( 'apprex_chat_op_ingest' ) ) {
 		$is_human = apprex_chat_op_ingest( $session, $messages );
