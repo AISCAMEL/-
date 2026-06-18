@@ -76,7 +76,8 @@ function apprex_integrations_page() {
 				<tr>
 					<th scope="row"><?php esc_html_e( '資料ダウンロード URL', 'apprex' ); ?></th>
 					<td><input type="url" name="apprex_document_url" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_document_url', '' ) ); ?>" placeholder="https://example.com/apprex-document.pdf">
-					<p class="description"><?php esc_html_e( '資料請求の自動返信メールに記載されるダウンロードリンクです。', 'apprex' ); ?></p></td>
+					<p class="description"><?php esc_html_e( '資料請求の自動返信メール・成功画面・ステップメールに記載されるダウンロードリンクです。', 'apprex' ); ?><br>
+					<?php printf( esc_html__( '未入力の場合は、テーマ同梱の APPREX サービス資料を自動的に使用します（現在の既定：%s）。', 'apprex' ), '<code>/assets/docs/apprex-service-guide.html</code>' ); ?></p></td>
 				</tr>
 				<tr>
 					<th scope="row"><?php esc_html_e( 'ミーティング予約URL（Google Meet）', 'apprex' ); ?></th>
@@ -156,6 +157,23 @@ function apprex_line_url() {
  */
 function apprex_meeting_url() {
 	return (string) get_option( 'apprex_meeting_url', 'https://calendar.app.google/6xgkopT97tSwsHb76' );
+}
+
+/**
+ * 資料ダウンロード URL。
+ *
+ * 管理画面（連携設定）で URL を設定すればそれを優先。未設定なら、テーマ同梱の
+ * APPREX サービス資料（自己完結HTML）を既定値として返す。これにより資料請求の
+ * 自動返信メール・成功画面・ステップメールのダウンロードリンクが常に有効になる。
+ *
+ * @return string
+ */
+function apprex_document_url() {
+	$url = (string) get_option( 'apprex_document_url', '' );
+	if ( $url ) {
+		return $url;
+	}
+	return APPREX_URI . '/assets/docs/apprex-service-guide.html';
 }
 
 /**
@@ -401,7 +419,7 @@ function apprex_rest_inquiry( WP_REST_Request $request ) {
 		'message' => apprex_autoreply_onscreen( $type ),
 	);
 	if ( 'document' === $type ) {
-		$doc = get_option( 'apprex_document_url', '' );
+		$doc = apprex_document_url();
 		if ( $doc ) {
 			$result['download'] = esc_url_raw( $doc );
 		}
@@ -485,7 +503,7 @@ function apprex_enroll_drip( $post_id, $type, $email, $name, $meeting_at = 0 ) {
  */
 function apprex_autoreply_message( $type, $fields ) {
 	$name = isset( $fields['name'] ) ? $fields['name'] : '';
-	$doc  = get_option( 'apprex_document_url', '' );
+	$doc  = apprex_document_url();
 
 	switch ( $type ) {
 		case 'document':
