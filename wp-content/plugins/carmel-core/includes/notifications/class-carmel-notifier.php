@@ -94,6 +94,8 @@ class Carmel_Notifier {
 			'maintenance_notice'   => array( $cust( 'proline', 'mail' ) ),
 			'system_error'         => array( $d( 'system', 'slack' ) ),
 			'weekly_report'        => array( $d( 'system', 'slack' ), $d( 'hq', 'mail' ) ),
+			'membership_renewal'   => array( $d( 'store', 'lineworks' ), $d( 'store', 'mail' ) ),
+			'membership_expired'   => array( $d( 'store', 'lineworks' ), $d( 'hq', 'lineworks' ), $d( 'store', 'mail' ) ),
 		);
 
 		return apply_filters( 'carmel_routing_table', $table );
@@ -208,7 +210,11 @@ class Carmel_Notifier {
 				break;
 
 			case 'store':
-				$store_id = $deal_id ? (int) get_post_meta( $deal_id, 'store_id', true ) : 0;
+				// Prefer an explicit store_id (e.g. membership events with no deal).
+				$store_id = isset( $context['store_id'] ) ? (int) $context['store_id'] : 0;
+				if ( ! $store_id && $deal_id ) {
+					$store_id = (int) get_post_meta( $deal_id, 'store_id', true );
+				}
 				if ( $store_id ) {
 					$users = get_users(
 						array(
@@ -287,6 +293,8 @@ class Carmel_Notifier {
 			'maintenance_notice'    => array( '定期点検のご案内', "{name} 様\n定期点検の時期です。" ),
 			'system_error'          => array( 'システム通知', '{message}' ),
 			'weekly_report'         => array( '週次レポート', "{report}" ),
+			'membership_renewal'    => array( '会費お支払いのご案内', "{store} 御中\n会費のお支払い期日が近づいています（{due}）。" ),
+			'membership_expired'    => array( '会費の期限切れ', "{store} の会費が期限切れです。ご対応をお願いします。" ),
 		);
 
 		$subject = isset( $defaults[ $event_type ][0] ) ? $defaults[ $event_type ][0] : 'カーメルからのお知らせ';

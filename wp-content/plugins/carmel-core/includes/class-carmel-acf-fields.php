@@ -151,6 +151,14 @@ class Carmel_ACF_Fields {
 			$this->f( 'store', 'square_location_id', 'SquareロケーションID' ),
 			$this->f( 'store', 'notion_url', 'Notion 学習URL', 'url' ),
 			$this->f( 'store', 'current_deal_count', '担当案件数', 'number' ),
+			$this->f( 'store', 'membership_status', '会費ステータス', 'select', array(
+				'choices'    => array( 'active' => '有効', 'grace' => '猶予', 'expired' => '期限切れ', 'none' => '未加入' ),
+				'allow_null' => 1,
+				'ui'         => 1,
+			) ),
+			$this->f( 'store', 'membership_plan', '会費プラン' ),
+			$this->f( 'store', 'membership_fee', '会費（月額）', 'number' ),
+			$this->f( 'store', 'membership_next_billing', '次回請求日', 'date_picker', array( 'display_format' => 'Y-m-d', 'return_format' => 'Y-m-d' ) ),
 		) );
 	}
 

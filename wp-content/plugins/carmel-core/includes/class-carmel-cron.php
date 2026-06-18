@@ -117,6 +117,9 @@ class Carmel_Cron {
 		$this->process_repayments();
 		$this->process_inspections();
 		$this->process_insurance();
+		if ( class_exists( 'Carmel_Membership' ) ) {
+			Carmel_Membership::instance()->process_renewals();
+		}
 		do_action( 'carmel_daily_cron_done' );
 	}
 
