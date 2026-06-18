@@ -234,7 +234,7 @@ function apprex_contract_box( $post ) {
 				<option value="invoice" <?php selected( $pm, 'invoice' ); ?>>請求書（振込）</option>
 			</select>
 		</td></tr>
-		<tr><th>支払い期日</th><td>毎月 <input type="number" name="apprex_c_payment_day" value="<?php echo esc_attr( $g( 'apprex_c_payment_day', 27 ) ); ?>" min="1" max="31" style="width:70px"> 日</td></tr>
+		<tr><th>支払い期日</th><td>毎月 <input type="number" name="apprex_c_payment_day" value="<?php echo esc_attr( $g( 'apprex_c_payment_day', 27 ) ); ?>" min="1" max="31" style="width:70px"> 日<br><span class="description"><strong>Square（自動課金）</strong>は保存時に<strong>契約開始日と同じ日（毎月同日）</strong>へ自動設定されます（29〜31日は月末ズレ防止で28日に調整）。<strong>請求書（振込）</strong>はこの欄で指定した日が支払期日になります。</span></td></tr>
 		<tr><th>最終入金確認日<br><span class="description">（消し込み）</span></th><td><input type="date" name="apprex_c_last_paid" value="<?php echo esc_attr( $g( 'apprex_c_last_paid' ) ); ?>"><br><span class="description">入金を確認したらこの日付を更新。一定期間更新が無いと延滞としてSlack通知します。</span></td></tr>
 		<tr><th>アプリ製作ページURL</th><td><input type="url" name="apprex_c_app_url" class="regular-text" value="<?php echo esc_attr( $g( 'apprex_c_app_url' ) ); ?>" placeholder="https://…（コントロールパネル/アプリビルダー）"><br><span class="description">会員マイページの「アプリ製作ページを開く」ボタンのリンク先。</span></td></tr>
 		<tr><th>アプリ ログインID</th><td><input type="text" name="apprex_c_app_login" class="regular-text" value="<?php echo esc_attr( $g( 'apprex_c_app_login' ) ); ?>" autocomplete="off" placeholder="お客様ごとに発行したログインID"><br><span class="description">手動入力。会員マイページの「アプリログイン情報」に表示されます。</span></td></tr>
@@ -302,7 +302,20 @@ add_action( 'save_post_apprex_contract', function ( $post_id ) {
 	update_post_meta( $post_id, 'apprex_c_term', max( 1, isset( $_POST['apprex_c_term'] ) ? absint( $_POST['apprex_c_term'] ) : 1 ) );
 	update_post_meta( $post_id, 'apprex_c_autorenew', isset( $_POST['apprex_c_autorenew'] ) ? 1 : 0 );
 	update_post_meta( $post_id, 'apprex_c_payment_method', ( isset( $_POST['apprex_c_payment_method'] ) && 'invoice' === $_POST['apprex_c_payment_method'] ) ? 'invoice' : 'square' );
-	update_post_meta( $post_id, 'apprex_c_payment_day', min( 31, max( 1, isset( $_POST['apprex_c_payment_day'] ) ? absint( $_POST['apprex_c_payment_day'] ) : 27 ) ) );
+	// 支払日：Square（自動課金）は契約開始日と同じ「日」に毎月課金（月末ズレ防止で28日を上限にクランプ）。
+	// 請求書（振込）は管理画面で指定した日を使用。
+	$pay_method = get_post_meta( $post_id, 'apprex_c_payment_method', true );
+	$pay_day    = min( 31, max( 1, isset( $_POST['apprex_c_payment_day'] ) ? absint( $_POST['apprex_c_payment_day'] ) : 27 ) );
+	if ( 'square' === $pay_method ) {
+		$cstart = get_post_meta( $post_id, 'apprex_c_start', true );
+		if ( $cstart ) {
+			$d = (int) wp_date( 'j', strtotime( $cstart ) );
+			if ( $d >= 1 ) {
+				$pay_day = min( 28, $d );
+			}
+		}
+	}
+	update_post_meta( $post_id, 'apprex_c_payment_day', $pay_day );
 	update_post_meta( $post_id, 'apprex_c_app_url', isset( $_POST['apprex_c_app_url'] ) ? esc_url_raw( wp_unslash( $_POST['apprex_c_app_url'] ) ) : '' );
 	update_post_meta( $post_id, 'apprex_c_note', isset( $_POST['apprex_c_note'] ) ? sanitize_textarea_field( wp_unslash( $_POST['apprex_c_note'] ) ) : '' );
 
