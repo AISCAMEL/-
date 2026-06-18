@@ -211,7 +211,10 @@ function apprex_contract_box( $post ) {
 			</select>
 			<span class="description">選んだプランがマイページ・契約書・集計に反映されます。</span>
 		</td></tr>
-		<tr><th>月額(円)</th><td><input type="number" name="apprex_c_monthly" value="<?php echo esc_attr( $g( 'apprex_c_monthly', 0 ) ); ?>" min="0" step="100"> 円（税抜）</td></tr>
+		<tr><th>月額(円)</th><td><input type="number" name="apprex_c_monthly" value="<?php echo esc_attr( $g( 'apprex_c_monthly', 0 ) ); ?>" min="0" step="100"> 円（税抜）<br><span class="description">契約書 第6条の月額利用料に反映されます。</span></td></tr>
+		<tr><th>初期費用(円)</th><td><input type="number" name="apprex_c_initial" value="<?php echo esc_attr( $g( 'apprex_c_initial', 0 ) ); ?>" min="0" step="100"> 円（税抜）<br><span class="description">契約書 第6条の初期費用に反映（キャンペーン無料なら 0）。</span></td></tr>
+		<tr><th>制作費(円)</th><td><input type="number" name="apprex_c_production" value="<?php echo esc_attr( $g( 'apprex_c_production', 0 ) ); ?>" min="0" step="1000"> 円（税抜）<br><span class="description">契約書 第6条の制作費に反映（不要なら 0）。</span></td></tr>
+		<tr><th>初期費用の支払期日</th><td><input type="date" name="apprex_c_initial_due" value="<?php echo esc_attr( $g( 'apprex_c_initial_due' ) ); ?>"><br><span class="description">契約書 第6条「初期費用は◯年◯月◯日までに支払う」に反映（未入力時は「別途甲が定める日」）。</span></td></tr>
 		<tr><th>契約開始日</th><td><input type="date" name="apprex_c_start" value="<?php echo esc_attr( $g( 'apprex_c_start' ) ); ?>"></td></tr>
 		<tr><th>契約年数</th><td><input type="number" name="apprex_c_term" value="<?php echo esc_attr( $g( 'apprex_c_term', 1 ) ); ?>" min="1" step="1"> 年</td></tr>
 		<tr><th>次回更新日</th><td><strong><?php echo esc_html( $g( 'apprex_c_renewal', '（保存時に自動計算）' ) ); ?></strong><br><span class="description">契約開始日 + 契約年数で自動計算されます。</span></td></tr>
@@ -293,6 +296,9 @@ add_action( 'save_post_apprex_contract', function ( $post_id ) {
 	}
 	update_post_meta( $post_id, 'apprex_c_email', isset( $_POST['apprex_c_email'] ) ? sanitize_email( wp_unslash( $_POST['apprex_c_email'] ) ) : '' );
 	update_post_meta( $post_id, 'apprex_c_monthly', isset( $_POST['apprex_c_monthly'] ) ? absint( $_POST['apprex_c_monthly'] ) : 0 );
+	update_post_meta( $post_id, 'apprex_c_initial', isset( $_POST['apprex_c_initial'] ) ? absint( $_POST['apprex_c_initial'] ) : 0 );
+	update_post_meta( $post_id, 'apprex_c_production', isset( $_POST['apprex_c_production'] ) ? absint( $_POST['apprex_c_production'] ) : 0 );
+	update_post_meta( $post_id, 'apprex_c_initial_due', isset( $_POST['apprex_c_initial_due'] ) ? sanitize_text_field( wp_unslash( $_POST['apprex_c_initial_due'] ) ) : '' );
 	update_post_meta( $post_id, 'apprex_c_term', max( 1, isset( $_POST['apprex_c_term'] ) ? absint( $_POST['apprex_c_term'] ) : 1 ) );
 	update_post_meta( $post_id, 'apprex_c_autorenew', isset( $_POST['apprex_c_autorenew'] ) ? 1 : 0 );
 	update_post_meta( $post_id, 'apprex_c_payment_method', ( isset( $_POST['apprex_c_payment_method'] ) && 'invoice' === $_POST['apprex_c_payment_method'] ) ? 'invoice' : 'square' );
@@ -450,6 +456,7 @@ add_action( 'admin_post_apprex_order_to_contract', function () {
 		update_post_meta( $contract_id, 'apprex_c_service', $est['service_label'] ?? '' );
 		update_post_meta( $contract_id, 'apprex_c_plan', $est['plan_label'] ?? '' );
 		update_post_meta( $contract_id, 'apprex_c_monthly', (int) ( $est['monthly'] ?? 0 ) );
+		update_post_meta( $contract_id, 'apprex_c_initial', (int) ( $est['initial'] ?? 0 ) ); // 見積りの初期費用（キャンペーン適用後）を初期反映。
 		update_post_meta( $contract_id, 'apprex_c_start', $today );
 		update_post_meta( $contract_id, 'apprex_c_term', 1 );
 		update_post_meta( $contract_id, 'apprex_c_renewal', wp_date( 'Y-m-d', strtotime( $today . ' +1 year' ) ) );

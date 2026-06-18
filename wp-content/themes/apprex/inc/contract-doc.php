@@ -54,6 +54,10 @@ function apprex_contract_placeholders() {
 		'{{plan}}'        => 'プラン',
 		'{{monthly}}'     => '月額（数字のみ）',
 		'{{monthly_yen}}' => '月額（¥表記）',
+		'{{initial_yen}}'    => '初期費用（¥表記）',
+		'{{production_yen}}' => '制作費（¥表記）',
+		'{{initial_due}}'    => '初期費用の支払期日',
+		'{{monthly_due_day}}'=> '月額の支払日（毎月◯日）',
 		'{{start}}'       => '契約開始日',
 		'{{term}}'        => '契約年数',
 		'{{renewal}}'     => '次回更新日',
@@ -109,11 +113,11 @@ function apprex_contract_template_default() {
 
 <h2>第６条（料金、支払方法、契約期間、中途解約）</h2>
 <p>１.乙は、本サービスの利用の対価として、別途甲が定めた利用料金を、甲が指定する支払い方法により甲に支払うものとします。</p>
-<p>初期費用は ○○円（税別）とする。<br>
-制作費は ○○万円（税別）とする。<br>
+<p>初期費用は {{initial_yen}}（税別）とする。<br>
+制作費は {{production_yen}}（税別）とする。<br>
 月額利用料は {{monthly_yen}}（税別）とする。<br>
-初期費用 ○○円（税別）は △△年△△月△△日までに支払うものとする。<br>
-月額利用料 {{monthly_yen}}（税別）は 毎月△△日正午までに支払うものとする。<br>
+初期費用 {{initial_yen}}（税別）は {{initial_due}}までに支払うものとする。<br>
+月額利用料 {{monthly_yen}}（税別）は 毎月{{monthly_due_day}}正午までに支払うものとする。<br>
 支払い済みの初期費用、制作費及び月額管理費はいかなる理由であっても返金はできません。</p>
 <p>2.乙が本サービスを利用し作成したアプリを、登録プラットフォームに登録申請したにもかかわらず、当該アプリが登録プラットフォームの審査等に合格せず、登録を拒絶された場合でも、甲は本サービスの利用料金の返金義務を負いません。<br>
 3.契約開始日は {{start}}（申込日の翌月の一日）とし、申込日から契約開始日までは無料でご利用できる。</p>
@@ -310,6 +314,37 @@ add_action( 'admin_init', function () {
 	update_option( 'apprex_contract_doc_penalty_v1', 1 );
 } );
 
+/**
+ * 保存済みテンプレの第6条「○○円／△△年△△月△△日」を、入力可能な差し込みタグに一度だけ置換。
+ */
+add_action( 'admin_init', function () {
+	if ( get_option( 'apprex_contract_doc_amounts_v1' ) ) {
+		return;
+	}
+	$tpl = (string) get_option( 'apprex_contract_template', '' );
+	if ( '' !== $tpl ) {
+		$new = str_replace(
+			array(
+				'初期費用は ○○円（税別）とする。',
+				'制作費は ○○万円（税別）とする。',
+				'初期費用 ○○円（税別）は △△年△△月△△日までに支払うものとする。',
+				'月額利用料 {{monthly_yen}}（税別）は 毎月△△日正午までに支払うものとする。',
+			),
+			array(
+				'初期費用は {{initial_yen}}（税別）とする。',
+				'制作費は {{production_yen}}（税別）とする。',
+				'初期費用 {{initial_yen}}（税別）は {{initial_due}}までに支払うものとする。',
+				'月額利用料 {{monthly_yen}}（税別）は 毎月{{monthly_due_day}}正午までに支払うものとする。',
+			),
+			$tpl
+		);
+		if ( $new !== $tpl ) {
+			update_option( 'apprex_contract_template', $new );
+		}
+	}
+	update_option( 'apprex_contract_doc_amounts_v1', 1 );
+} );
+
 /** 契約書テンプレート編集画面。 */
 function apprex_contract_template_page() {
 	$title    = get_option( 'apprex_contract_doc_title', '契約書' );
@@ -424,8 +459,13 @@ function apprex_contract_doc_body( $contract_id ) {
 		$provider_name = get_bloginfo( 'name' );
 	}
 
-	$mtype   = $m( 'apprex_c_member_type' );
-	$monthly = (int) $m( 'apprex_c_monthly' );
+	$mtype      = $m( 'apprex_c_member_type' );
+	$monthly    = (int) $m( 'apprex_c_monthly' );
+	$initial    = (int) $m( 'apprex_c_initial' );
+	$production = (int) $m( 'apprex_c_production' );
+	$initial_due = $m( 'apprex_c_initial_due' );
+	$initial_due = $initial_due ? wp_date( 'Y年n月j日', strtotime( $initial_due ) ) : '別途甲が定める日';
+	$pay_day     = (int) $m( 'apprex_c_payment_day' );
 	$map     = array(
 		'{{contract_id}}' => (string) $contract_id,
 		'{{name}}'        => $m( 'apprex_c_name' ),
@@ -436,6 +476,10 @@ function apprex_contract_doc_body( $contract_id ) {
 		'{{plan}}'        => $m( 'apprex_c_plan' ),
 		'{{monthly}}'     => (string) $monthly,
 		'{{monthly_yen}}' => '¥' . number_format( $monthly ),
+		'{{initial_yen}}'     => '¥' . number_format( $initial ),
+		'{{production_yen}}'  => '¥' . number_format( $production ),
+		'{{initial_due}}'     => $initial_due,
+		'{{monthly_due_day}}' => $pay_day ? $pay_day . '日' : '末日',
 		'{{start}}'       => $m( 'apprex_c_start' ),
 		'{{term}}'        => $m( 'apprex_c_term' ) ? $m( 'apprex_c_term' ) . '年' : '',
 		'{{renewal}}'     => $m( 'apprex_c_renewal' ),
