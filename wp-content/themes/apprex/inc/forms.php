@@ -177,6 +177,52 @@ function apprex_document_url() {
 }
 
 /**
+ * 資料の共有用ショートURL（例：https://example.com/service-guide ）。
+ * 共有・ボタン用のきれいでテーマ非依存のURL。
+ *
+ * @return string
+ */
+function apprex_document_view_url() {
+	return home_url( '/service-guide' );
+}
+
+/**
+ * /service-guide でサービス資料を表示するエンドポイント。
+ * 管理画面で外部URLが設定されていればそこへリダイレクト、無ければ同梱資料を配信。
+ */
+add_action( 'init', function () {
+	add_rewrite_rule( '^service-guide/?$', 'index.php?apprex_doc=1', 'top' );
+	// 初回のみリライト規則を反映（再有効化不要で /service-guide が使えるように）。
+	if ( '1' !== get_option( 'apprex_doc_rw' ) ) {
+		flush_rewrite_rules( false );
+		update_option( 'apprex_doc_rw', '1' );
+	}
+} );
+add_filter( 'query_vars', function ( $vars ) {
+	$vars[] = 'apprex_doc';
+	return $vars;
+} );
+add_action( 'template_redirect', function () {
+	if ( ! get_query_var( 'apprex_doc' ) ) {
+		return;
+	}
+	$override = (string) get_option( 'apprex_document_url', '' );
+	if ( $override ) {
+		wp_redirect( $override ); // phpcs:ignore WordPress.Security.SafeRedirect
+		exit;
+	}
+	$file = APPREX_DIR . '/assets/docs/apprex-service-guide.html';
+	if ( is_readable( $file ) ) {
+		header( 'Content-Type: text/html; charset=UTF-8' );
+		header( 'X-Robots-Tag: noindex' );
+		readfile( $file ); // phpcs:ignore WordPressVIPMinimum.Performance.FetchingRemoteData
+		exit;
+	}
+	wp_safe_redirect( home_url( '/' ) );
+	exit;
+} );
+
+/**
  * Resolve the notification recipient.
  *
  * @return string
