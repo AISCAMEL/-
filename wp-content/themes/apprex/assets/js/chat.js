@@ -105,6 +105,21 @@
 			return s;
 		}
 
+		// ログイン会員向けのクイックメニュー（契約者専用の付加価値メニュー）に差し替え。
+		function buildMemberQuick() {
+			if (!quick || !(cfg.member && cfg.member.loggedIn)) { return; }
+			Array.prototype.forEach.call(quick.querySelectorAll('button[data-q]'), function (b) { b.remove(); });
+			var opEl = document.getElementById('apprex-chat-operator');
+			['プラン変更について', '解約・違約金について', '支払い・請求について', '契約内容を確認したい'].forEach(function (q) {
+				var b = document.createElement('button');
+				b.type = 'button';
+				b.setAttribute('data-q', q);
+				b.textContent = q;
+				quick.insertBefore(b, opEl || null);
+			});
+		}
+		buildMemberQuick();
+
 		function renderSuggestions(list) {
 			if (!list || !list.length) { return; }
 			var wrap = document.createElement('div');
