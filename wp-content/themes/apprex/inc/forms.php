@@ -202,12 +202,21 @@ add_filter( 'query_vars', function ( $vars ) {
 	$vars[] = 'apprex_doc';
 	return $vars;
 } );
+// /service-guide の末尾スラッシュ正規化リダイレクトを抑止（リダイレクトループ防止）。
+add_filter( 'redirect_canonical', function ( $redirect ) {
+	return get_query_var( 'apprex_doc' ) ? false : $redirect;
+} );
 add_action( 'template_redirect', function () {
 	if ( ! get_query_var( 'apprex_doc' ) ) {
 		return;
 	}
 	$override = (string) get_option( 'apprex_document_url', '' );
-	if ( $override ) {
+	$self     = home_url( '/service-guide' );
+	// 自己参照（無限ループ）防止：override が /service-guide 自身を指す場合は無視して同梱資料を表示。
+	if ( $override
+		&& false === strpos( $override, 'service-guide' )
+		&& false === strpos( $override, 'apprex_doc' )
+		&& untrailingslashit( $override ) !== untrailingslashit( $self ) ) {
 		wp_redirect( $override ); // phpcs:ignore WordPress.Security.SafeRedirect
 		exit;
 	}
