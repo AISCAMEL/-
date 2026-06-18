@@ -195,7 +195,7 @@ class Carmel_MF_Contract {
 		$deal_id  = isset( $_POST['deal_id'] ) ? (int) $_POST['deal_id'] : 0;
 		$redirect = wp_get_referer() ? wp_get_referer() : home_url( '/hq' );
 
-		if ( ! wp_verify_nonce( isset( $_POST[ self::NONCE ] ) ? $_POST[ self::NONCE ] : '', self::SEND_ACTION . '_' . $deal_id ) ) {
+		if ( ! wp_verify_nonce( isset( $_POST[ self::NONCE ] ) ? sanitize_text_field( wp_unslash( $_POST[ self::NONCE ] ) ) : '', self::SEND_ACTION . '_' . $deal_id ) ) {
 			wp_die( esc_html__( '不正なリクエストです。', 'carmel-core' ), '', array( 'response' => 400 ) );
 		}
 

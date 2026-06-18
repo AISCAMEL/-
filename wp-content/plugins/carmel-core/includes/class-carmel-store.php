@@ -95,7 +95,7 @@ class Carmel_Store {
 		$delivery  = isset( $_POST['delivery_date'] ) ? sanitize_text_field( wp_unslash( $_POST['delivery_date'] ) ) : '';
 		$redirect  = wp_get_referer() ? wp_get_referer() : home_url( '/store' );
 
-		if ( ! wp_verify_nonce( isset( $_POST[ self::NONCE ] ) ? $_POST[ self::NONCE ] : '', self::ACTION . '_' . $deal_id ) ) {
+		if ( ! wp_verify_nonce( isset( $_POST[ self::NONCE ] ) ? sanitize_text_field( wp_unslash( $_POST[ self::NONCE ] ) ) : '', self::ACTION . '_' . $deal_id ) ) {
 			wp_die( esc_html__( '不正なリクエストです。', 'carmel-core' ), '', array( 'response' => 400 ) );
 		}
 

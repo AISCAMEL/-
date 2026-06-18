@@ -97,7 +97,7 @@ class Carmel_Documents {
 		$category = isset( $_POST['category'] ) ? sanitize_key( $_POST['category'] ) : 'other';
 		$redirect = wp_get_referer() ? wp_get_referer() : home_url( '/mypage' );
 
-		if ( ! wp_verify_nonce( isset( $_POST[ self::NONCE ] ) ? $_POST[ self::NONCE ] : '', self::UPLOAD_ACTION . '_' . $deal_id ) ) {
+		if ( ! wp_verify_nonce( isset( $_POST[ self::NONCE ] ) ? sanitize_text_field( wp_unslash( $_POST[ self::NONCE ] ) ) : '', self::UPLOAD_ACTION . '_' . $deal_id ) ) {
 			wp_die( esc_html__( '不正なリクエストです。', 'carmel-core' ), '', array( 'response' => 400 ) );
 		}
 		if ( ! $this->can_access_deal( $deal_id ) ) {
@@ -203,7 +203,7 @@ class Carmel_Documents {
 	public function handle_download() {
 		$doc_id = isset( $_GET['doc'] ) ? (int) $_GET['doc'] : 0;
 
-		if ( ! wp_verify_nonce( isset( $_GET['_wpnonce'] ) ? $_GET['_wpnonce'] : '', self::DOWNLOAD_ACTION . '_' . $doc_id ) ) {
+		if ( ! wp_verify_nonce( isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '', self::DOWNLOAD_ACTION . '_' . $doc_id ) ) {
 			wp_die( esc_html__( '不正なリクエストです。', 'carmel-core' ), '', array( 'response' => 400 ) );
 		}
 		if ( 'carmel_document' !== get_post_type( $doc_id ) ) {

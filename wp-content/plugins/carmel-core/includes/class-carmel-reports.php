@@ -204,7 +204,7 @@ class Carmel_Reports {
 	 * Stream a CSV of in-scope deals.
 	 */
 	public function export_csv() {
-		if ( ! $this->can_view() || ! isset( $_POST['_carmel_csv_nonce'] ) || ! wp_verify_nonce( $_POST['_carmel_csv_nonce'], self::CSV_ACTION ) ) {
+		if ( ! $this->can_view() || ! isset( $_POST['_carmel_csv_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_carmel_csv_nonce'] ) ), self::CSV_ACTION ) ) {
 			wp_die( esc_html__( '権限がありません。', 'carmel-core' ), '', array( 'response' => 403 ) );
 		}
 
