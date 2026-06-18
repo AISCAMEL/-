@@ -92,6 +92,11 @@ function apprex_crm_notes_box( $post ) {
 			<p class="desc">Googleドライブでこのお客様用フォルダを作成し、「共有」→ リンクをここに貼り付けてください。</p>
 		<?php endif; ?>
 
+		<?php
+		// Drive連携（サービスアカウント）が有効なら、自動作成ボタン等を差し込む。
+		do_action( 'apprex_crm_after_drive', $post, $drive );
+		?>
+
 		<label class="h" for="apprex_crm_links">関連リンク（議事録ファイル・ミーティング動画・資料など）</label>
 		<textarea id="apprex_crm_links" name="apprex_crm_links" rows="4" placeholder="キックオフ議事録 | https://docs.google.com/...&#10;初回MTG動画 | https://drive.google.com/file/d/..."><?php echo esc_textarea( $links ); ?></textarea>
 		<p class="desc">1行に1つ。「ラベル | URL」の形式（縦棒で区切り）。URLだけでも可。</p>
