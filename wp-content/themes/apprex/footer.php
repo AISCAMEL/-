@@ -59,6 +59,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	</div>
 </footer>
 
+<!-- モバイル固定CTAバー（スマホのみ表示） -->
+<div class="apprex-mobilebar" aria-label="<?php esc_attr_e( 'お問い合わせ導線', 'apprex' ); ?>">
+	<a class="apprex-mobilebar__btn apprex-mobilebar__btn--cta" href="<?php echo esc_url( apprex_page_url( 'meeting' ) ); ?>"><?php esc_html_e( '無料で相談', 'apprex' ); ?></a>
+	<a class="apprex-mobilebar__btn" href="<?php echo esc_url( apprex_page_url( 'estimate' ) ); ?>"><?php esc_html_e( '見積もり', 'apprex' ); ?></a>
+</div>
+
 <?php wp_footer(); ?>
 </body>
 </html>

@@ -80,7 +80,7 @@ function apprex_section_head( $eyebrow, $title, $lead = '' ) {
  * @param string $variant 'accent' for hero, 'light' for dark backgrounds.
  */
 function apprex_cta_buttons( $variant = 'accent' ) {
-	$primary_class = 'btn btn--' . ( 'light' === $variant ? 'light' : 'accent' );
+	$primary_class = 'btn btn--' . ( 'light' === $variant ? 'light' : 'cta' );
 	printf(
 		'<a class="%1$s" href="%2$s">%3$s</a>',
 		esc_attr( $primary_class ),
