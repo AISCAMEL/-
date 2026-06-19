@@ -4,91 +4,80 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>車・廃車・パーツの買取なら BUYMO｜全国対応・無料査定・手数料0円</title>
-<meta name="description" content="BUYMOはあらゆる車・廃車・パーツを買い取る総合買取サービス。全国47都道府県対応、出張・引取無料、最短即日入金。動かない車・事故車・旧車・SUV・キャンピングカー・軽トラ・アルミホイールまで高価買取。">
+<meta name="description" content="BUYMOはあらゆる車・廃車・パーツを買い取る総合買取サービス。全国47都道府県対応、出張・引取無料、最短即日入金。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
 :root{
-  --teal:#10b5a8; --teal-d:#0a8077; --navy:#0a1f27; --ink:#15262c;
-  --orange:#ff6a13; --orange-d:#e85600; --red:#e3243a; --gold:#ffc436; --yellow:#ffe44d;
-  --muted:#6a7c85; --bg:#f2f7f7; --line:#e1ecec; --white:#fff;
+  --teal:#13c2b4; --teal-d:#0a8077; --ink:#0b1a1f; --bg:#0c1a20;
+  --orange:#ff6a13; --orange-d:#e85600; --gold:#ffc436; --red:#ff3b54;
+  --paper:#f5f8f8; --line:#e3eded; --muted:#7d8f97; --muted-d:#9fb3bb;
   --grad-o:linear-gradient(135deg,#ff9a3d,#ff6a13 55%,#e85600);
-  --shadow:0 18px 50px -18px rgba(10,31,39,.4);
+  --shadow:0 30px 70px -28px rgba(0,0,0,.55);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{font-family:"Noto Sans JP",sans-serif;color:var(--ink);line-height:1.7;background:var(--white);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+body{font-family:"Noto Sans JP",sans-serif;color:var(--ink);line-height:1.75;background:#fff;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 img{max-width:100%}
-.impact{font-family:"Noto Sans JP",sans-serif;font-weight:900;letter-spacing:.5px;line-height:1.18}
-.num{font-family:"Anton",sans-serif;font-weight:400;letter-spacing:1px;line-height:.9}
 .en{font-family:"Anton",sans-serif;letter-spacing:3px}
-.wrap{max-width:1080px;margin:0 auto;padding:0 18px;position:relative;z-index:2}
-.reveal{opacity:0;transform:translateY(30px);transition:.7s cubic-bezier(.2,.7,.2,1)}
+.num{font-family:"Anton",sans-serif}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px;position:relative;z-index:2}
+.reveal{opacity:0;transform:translateY(34px);transition:.85s cubic-bezier(.2,.7,.2,1)}
 .reveal.in{opacity:1;transform:none}
-.reveal.d1{transition-delay:.1s}.reveal.d2{transition-delay:.2s}.reveal.d3{transition-delay:.3s}
-.note{background:#fff3e2;color:#a85b00;font-size:11px;border:1px dashed var(--orange);border-radius:5px;padding:0 6px;display:inline-block;font-family:"Noto Sans JP"}
+.reveal.d1{transition-delay:.12s}.reveal.d2{transition-delay:.24s}.reveal.d3{transition-delay:.36s}
+.note{background:#fff3e2;color:#a85b00;font-size:11px;border:1px dashed var(--orange);border-radius:5px;padding:0 6px;display:inline-block}
 
 /* buttons */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:900;text-decoration:none;border-radius:999px;
-  padding:19px 34px;font-size:clamp(16px,4.5vw,20px);cursor:pointer;border:none;transition:transform .15s;white-space:nowrap}
-.btn-cta{background:var(--grad-o);color:#fff;box-shadow:0 14px 30px -8px rgba(255,106,19,.8);animation:pulse 1.8s infinite}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
-.btn-cta:hover{transform:translateY(-3px) scale(1.02)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-weight:900;text-decoration:none;border-radius:999px;
+  padding:18px 36px;font-size:clamp(16px,4.4vw,19px);cursor:pointer;border:none;transition:transform .15s,box-shadow .15s;white-space:nowrap}
+.btn-cta{background:var(--grad-o);color:#fff;box-shadow:0 16px 36px -10px rgba(255,106,19,.85)}
+.btn-cta:hover{transform:translateY(-3px)}
 .btn-cta::after{content:"›";font-size:24px}
 .btn-line{background:#06c755;color:#fff}
-.btn-ghost{background:rgba(255,255,255,.16);color:#fff;border:2px solid rgba(255,255,255,.7)}
-.cta-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:24px}
+.btn-glass{background:rgba(255,255,255,.12);color:#fff;border:1.5px solid rgba(255,255,255,.55);backdrop-filter:blur(6px)}
+.btn-tel{background:#fff;color:var(--teal-d);border:2px solid var(--teal)}
+.cta-row{display:flex;gap:13px;flex-wrap:wrap;justify-content:center;margin-top:26px}
 
 /* header */
-header{position:sticky;top:0;z-index:80;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
-.hd{display:flex;align-items:center;justify-content:space-between;max-width:1080px;margin:0 auto;padding:10px 18px}
-.logo{font-family:"Anton";font-size:30px;color:var(--teal-d);line-height:1;letter-spacing:1px}
+header{position:fixed;top:0;left:0;right:0;z-index:90;transition:.3s}
+header.scrolled{background:rgba(8,20,24,.86);backdrop-filter:blur(12px);box-shadow:0 6px 24px -12px rgba(0,0,0,.6)}
+.hd{display:flex;align-items:center;justify-content:space-between;max-width:1120px;margin:0 auto;padding:16px 20px}
+.logo{font-family:"Anton";font-size:30px;color:#fff;line-height:1;letter-spacing:1px;text-shadow:0 2px 12px rgba(0,0,0,.4)}
 .logo span{color:var(--orange)}
-.hd .btn{padding:11px 22px;font-size:14px;animation:none}
+.hd .btn{padding:12px 22px;font-size:14px}
 
-/* ===== HERO : 大中小 ===== */
-.hero{position:relative;background:linear-gradient(160deg,#08322e,#0a8077 60%,#10b5a8);color:#fff;padding:46px 0 54px;text-align:center;overflow:hidden}
-.hero .grain{position:absolute;inset:0;background-image:radial-gradient(circle at 1px 1px,rgba(255,255,255,.1) 1px,transparent 0);background-size:20px 20px;opacity:.5}
-.hero-bg{position:absolute;inset:0;background:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNjAwIDkwMCIgcHJlc2VydmVBc3BlY3RSYXRpbz0ieE1pZFlNYXggc2xpY2UiPgogIDwhLS0gdHJhbnNwYXJlbnQgYmFja2dyb3VuZDogaGVybyBncmFkaWVudCBzaG93cyB0aHJvdWdoIC0tPgogIDwhLS0gc3BlZWQgbGluZXMgLS0+CiAgPGcgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgb3BhY2l0eT0iMC4xMCI+CiAgICA8bGluZSB4MT0iODAiIHkxPSIzMDAiIHgyPSIzNjAiIHkyPSIzMDAiLz4KICAgIDxsaW5lIHgxPSI0MCIgeTE9IjM2MCIgeDI9IjI2MCIgeTI9IjM2MCIvPgogICAgPGxpbmUgeDE9IjEyMCIgeTE9IjQyMCIgeDI9IjMwMCIgeTI9IjQyMCIvPgogICAgPGxpbmUgeDE9IjEyNDAiIHkxPSIyNTAiIHgyPSIxNTIwIiB5Mj0iMjUwIi8+CiAgICA8bGluZSB4MT0iMTMyMCIgeTE9IjMyMCIgeDI9IjE1NjAiIHkyPSIzMjAiLz4KICA8L2c+CiAgPCEtLSBmbG9hdGluZyB5ZW4gY29pbnMgLS0+CiAgPGcgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iYm9sZCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+CiAgICA8ZyBvcGFjaXR5PSIwLjg1Ij4KICAgICAgPGNpcmNsZSBjeD0iMjUwIiBjeT0iMjIwIiByPSI1MiIgZmlsbD0iI2ZmYzQzNiIvPgogICAgICA8Y2lyY2xlIGN4PSIyNTAiIGN5PSIyMjAiIHI9IjUyIiBmaWxsPSJub25lIiBzdHJva2U9IiNlOGE4MDAiIHN0cm9rZS13aWR0aD0iNCIvPgogICAgICA8dGV4dCB4PSIyNTAiIHk9IjI0MCIgZm9udC1zaXplPSI1MiIgZmlsbD0iIzlhNmIwMCI+wqU8L3RleHQ+CiAgICA8L2c+CiAgICA8ZyBvcGFjaXR5PSIwLjciPgogICAgICA8Y2lyY2xlIGN4PSIxMzYwIiBjeT0iMTcwIiByPSI0MCIgZmlsbD0iI2ZmZDc2NiIvPgogICAgICA8Y2lyY2xlIGN4PSIxMzYwIiBjeT0iMTcwIiByPSI0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZThhODAwIiBzdHJva2Utd2lkdGg9IjMiLz4KICAgICAgPHRleHQgeD0iMTM2MCIgeT0iMTg2IiBmb250LXNpemU9IjQwIiBmaWxsPSIjOWE2YjAwIj7CpTwvdGV4dD4KICAgIDwvZz4KICAgIDxnIG9wYWNpdHk9IjAuNTUiPgogICAgICA8Y2lyY2xlIGN4PSIxMTgwIiBjeT0iMzgwIiByPSIzMCIgZmlsbD0iI2ZmZDc2NiIvPgogICAgICA8dGV4dCB4PSIxMTgwIiB5PSIzOTIiIGZvbnQtc2l6ZT0iMzAiIGZpbGw9IiM5YTZiMDAiPsKlPC90ZXh0PgogICAgPC9nPgogIDwvZz4KICA8IS0tIGdyb3VuZCAtLT4KICA8cmVjdCB4PSIwIiB5PSI3MjAiIHdpZHRoPSIxNjAwIiBoZWlnaHQ9IjE4MCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC4wNiIvPgogIDxsaW5lIHgxPSIwIiB5MT0iNzIwIiB4Mj0iMTYwMCIgeTI9IjcyMCIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjQiIG9wYWNpdHk9IjAuMTgiLz4KICA8ZyBzdHJva2U9IiNmZmM0MzYiIHN0cm9rZS13aWR0aD0iMTAiIHN0cm9rZS1kYXNoYXJyYXk9IjYwIDQ2IiBvcGFjaXR5PSIwLjUiPgogICAgPGxpbmUgeDE9IjAiIHkxPSI4MTAiIHgyPSIxNjAwIiB5Mj0iODEwIi8+CiAgPC9nPgogIDwhLS0gY2FyIHNpbGhvdWV0dGUgKG1vZGVybiBoYXRjaGJhY2spLCBsaWdodCwgc2VtaS10cmFuc3BhcmVudCAtLT4KICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSg1NjAsNDcwKSIgb3BhY2l0eT0iMC45Ij4KICAgIDwhLS0gYm9keSAtLT4KICAgIDxwYXRoIGQ9Ik00MCwxODAKICAgICAgICAgICAgIEMyMCwxODAgOCwxNjggOCwxNTAKICAgICAgICAgICAgIEwxMCwxMjAKICAgICAgICAgICAgIEMxMiwxMDQgMjQsOTYgNDAsOTQKICAgICAgICAgICAgIEwxMjAsOTAKICAgICAgICAgICAgIEMxNTAsNTggMjAwLDM2IDI3MCwzNAogICAgICAgICAgICAgTDMzMCwzNAogICAgICAgICAgICAgQzQwMCwzNCA0NTAsNTggNDg2LDkyCiAgICAgICAgICAgICBMNTYwLDEwMAogICAgICAgICAgICAgQzU4OCwxMDQgNjAwLDExNiA2MDAsMTQwCiAgICAgICAgICAgICBMNjAwLDE1MgogICAgICAgICAgICAgQzYwMCwxNzAgNTg4LDE4MCA1NjgsMTgwCiAgICAgICAgICAgICBMNTIwLDE4MAogICAgICAgICAgICAgQTQ4LDQ4IDAgMCAwIDQyNCwxODAKICAgICAgICAgICAgIEwxOTYsMTgwCiAgICAgICAgICAgICBBNDgsNDggMCAwIDAgMTAwLDE4MAogICAgICAgICAgICAgWiIKICAgICAgICAgIGZpbGw9IiNmZmZmZmYiIG9wYWNpdHk9IjAuOTIiLz4KICAgIDwhLS0gd2luZG93cyAtLT4KICAgIDxwYXRoIGQ9Ik0xNTAsOTIgQzE3Niw2NiAyMTQsNTIgMjY4LDUwIEwzMDAsNTAgTDMwMCw5MiBaIiBmaWxsPSIjMTBiNWE4IiBvcGFjaXR5PSIwLjkiLz4KICAgIDxwYXRoIGQ9Ik0zMTgsNTAgTDMzMCw1MCBDMzg4LDUwIDQzMCw2NiA0NjIsOTIgTDMxOCw5MiBaIiBmaWxsPSIjMTBiNWE4IiBvcGFjaXR5PSIwLjkiLz4KICAgIDwhLS0gYWNjZW50IHN0cmlwZSAtLT4KICAgIDxyZWN0IHg9IjQwIiB5PSIxNTAiIHdpZHRoPSI1NDAiIGhlaWdodD0iMTAiIHJ4PSI1IiBmaWxsPSIjZmY2YTEzIiBvcGFjaXR5PSIwLjkiLz4KICAgIDwhLS0gd2hlZWxzIC0tPgogICAgPGNpcmNsZSBjeD0iMTQ4IiBjeT0iMTgwIiByPSI0MiIgZmlsbD0iIzFhMmEzMCIvPgogICAgPGNpcmNsZSBjeD0iMTQ4IiBjeT0iMTgwIiByPSIxOCIgZmlsbD0iI2NmZTNlMyIvPgogICAgPGNpcmNsZSBjeD0iNDcyIiBjeT0iMTgwIiByPSI0MiIgZmlsbD0iIzFhMmEzMCIvPgogICAgPGNpcmNsZSBjeD0iNDcyIiBjeT0iMTgwIiByPSIxOCIgZmlsbD0iI2NmZTNlMyIvPgogICAgPCEtLSBoZWFkbGlnaHQgLS0+CiAgICA8Y2lyY2xlIGN4PSI1OTAiIGN5PSIxMjgiIHI9IjgiIGZpbGw9IiNmZmM0MzYiLz4KICA8L2c+Cjwvc3ZnPgo=") center bottom/cover no-repeat;opacity:.85;z-index:0}
-.hero .slash{position:absolute;font-family:"Noto Sans JP";font-weight:900;color:rgba(255,255,255,.05);font-size:34vw;top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap;z-index:0}
-/* 小 */
-.kicker{font-weight:900;font-size:clamp(13px,3.6vw,16px);letter-spacing:1px;background:var(--red);display:inline-block;padding:6px 16px;border-radius:6px;transform:rotate(-1.5deg);box-shadow:0 8px 16px -8px rgba(227,36,58,.8)}
-/* 大 */
-.hero h1{margin:18px 0 6px}
-.hero h1 .l1{display:block;font-family:"Noto Sans JP";font-weight:900;font-size:clamp(34px,10vw,82px);line-height:1.08;text-shadow:0 6px 24px rgba(0,0,0,.22)}
-.hero h1 .l1 em{font-style:normal;color:var(--yellow)}
-.hero h1 .l1 .box{background:var(--yellow);color:#08322e;padding:0 .12em;border-radius:8px;display:inline-block;transform:rotate(-1deg)}
-/* 中 */
-.hero .mid{font-weight:900;font-size:clamp(16px,4.6vw,26px);margin-top:10px}
-.hero .mid u{text-decoration:none;background:linear-gradient(transparent 60%,rgba(255,228,77,.55) 60%)}
-/* 小 */
-.hero .small{font-size:clamp(12px,3.4vw,15px);opacity:.9;margin-top:10px;font-weight:500}
+/* ===== HERO (full-bleed photo type) ===== */
+.hero{position:relative;min-height:100svh;min-height:100vh;display:flex;align-items:center;color:#fff;overflow:hidden;padding:90px 0 60px}
+.hero-art{position:absolute;inset:0;z-index:0}
+.hero-art svg{width:100%;height:100%;display:block;object-fit:cover}
+/* optional real photo overrides the art */
+.hero-photo{position:absolute;inset:0;z-index:1;background:url(images/hero.jpg) center/cover no-repeat}
+.hero-shade{position:absolute;inset:0;z-index:2;background:
+   linear-gradient(90deg,rgba(7,18,22,.85) 0%,rgba(7,18,22,.45) 48%,rgba(7,18,22,.15) 100%),
+   linear-gradient(0deg,rgba(7,18,22,.85) 0%,rgba(7,18,22,0) 45%)}
+.hero .wrap{z-index:3}
+.hero-inner{max-width:680px}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;background:rgba(255,59,84,.95);color:#fff;font-weight:900;font-size:clamp(12px,3.4vw,15px);padding:8px 18px;border-radius:999px;box-shadow:0 10px 24px -10px rgba(255,59,84,.8)}
+.hero h1{font-weight:900;font-size:clamp(38px,9.2vw,80px);line-height:1.1;margin:20px 0 4px;letter-spacing:.5px;text-shadow:0 6px 30px rgba(0,0,0,.4)}
+.hero h1 .y{color:var(--gold)}
+.hero h1 .box{background:var(--gold);color:#08322e;padding:0 .1em;border-radius:10px;display:inline-block}
+.hero .lead{font-size:clamp(15px,4.2vw,20px);font-weight:700;opacity:.96;margin-top:14px;text-shadow:0 2px 14px rgba(0,0,0,.5)}
+.hero .mini{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.hero .mini span{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);border-radius:10px;padding:8px 14px;font-size:13.5px;font-weight:800;backdrop-filter:blur(4px)}
+.scrollcue{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);z-index:3;color:rgba(255,255,255,.7);font-size:11px;font-weight:800;letter-spacing:2px;text-align:center}
+.scrollcue::after{content:"";display:block;width:1px;height:34px;background:rgba(255,255,255,.5);margin:8px auto 0;animation:cue 1.6s infinite}
+@keyframes cue{0%{opacity:.2;transform:scaleY(.4)}50%{opacity:1}100%{opacity:.2;transform:scaleY(.4)}}
 
-/* big price callout */
-.pricepop{display:inline-flex;align-items:baseline;gap:10px;background:#fff;color:#08322e;border-radius:18px;padding:14px 26px;margin-top:22px;box-shadow:0 18px 40px -14px rgba(0,0,0,.4);transform:rotate(-1deg)}
-.pricepop .lab{font-weight:900;font-size:clamp(13px,3.6vw,17px)}
-.pricepop .v{font-family:"Anton";font-size:clamp(44px,13vw,86px);color:var(--red);line-height:.8}
-.pricepop .yen{font-family:"Anton";font-size:clamp(20px,6vw,38px);color:var(--red)}
-.pricepop .plus{font-family:"Anton";font-size:clamp(28px,8vw,52px);color:var(--orange)}
-.pricepop em{font-style:normal;font-size:11px;font-weight:700;color:var(--muted);align-self:flex-end}
-
-/* ===== IMPACT WORD BAND（大中小の3連） ===== */
-.band{background:var(--navy);color:#fff;padding:48px 0}
-.band3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;text-align:center}
-.bw .big{font-family:"Anton";font-size:clamp(54px,14vw,110px);line-height:.85;color:var(--gold)}
-.bw .big small{font-family:"Noto Sans JP";font-size:.26em;font-weight:900;color:#fff;margin-left:4px}
-.bw .mid{font-family:"Noto Sans JP";font-weight:900;font-size:clamp(16px,4.4vw,22px);margin-top:8px}
-.bw .sm{font-size:12px;color:#9fb3bb;margin-top:4px}
-
-/* form card */
-.formwrap{max-width:600px;margin:-30px auto 0;position:relative;z-index:6}
-.fcard{background:#fff;border-radius:22px;box-shadow:0 26px 60px -22px rgba(0,0,0,.5);overflow:hidden;border:1px solid var(--line)}
-.fcard .fhd{background:var(--grad-o);color:#fff;text-align:center;padding:16px;position:relative}
-.fcard .fhd .t45{position:absolute;top:-10px;right:14px;background:var(--red);color:#fff;font-size:11px;font-weight:900;padding:5px 12px;border-radius:999px;transform:rotate(7deg);font-family:"Noto Sans JP"}
-.fcard .fhd b{font-family:"Noto Sans JP";font-weight:900;font-size:clamp(18px,5vw,24px);display:block}
+/* ===== floating form ===== */
+.formband{background:linear-gradient(180deg,#08151a,#0c1a20);padding:0 0 64px}
+.formwrap{max-width:640px;margin:0 auto;transform:translateY(-46px)}
+.fcard{background:#fff;border-radius:24px;box-shadow:var(--shadow);overflow:hidden;border:1px solid rgba(255,255,255,.1)}
+.fcard .fhd{background:var(--grad-o);color:#fff;text-align:center;padding:18px;position:relative}
+.fcard .fhd .t45{position:absolute;top:-10px;right:16px;background:var(--red);color:#fff;font-size:11px;font-weight:900;padding:5px 12px;border-radius:999px;transform:rotate(7deg)}
+.fcard .fhd b{font-size:clamp(19px,5vw,24px);display:block}
 .fcard .fhd small{font-size:12px}
-.fbody{padding:18px}
+.fbody{padding:20px}
 .steps-dot{display:flex;gap:6px;justify-content:center;margin-bottom:14px}
 .steps-dot span{font-size:11px;color:var(--muted);background:#eef4f4;border-radius:999px;padding:3px 10px;font-weight:700}
 .steps-dot span.on{background:var(--teal);color:#fff}
@@ -100,186 +89,232 @@ header{position:sticky;top:0;z-index:80;background:rgba(255,255,255,.92);backdro
 .full{grid-column:1/3}
 .fbody .btn{width:100%;margin-top:12px}
 .chk{font-size:11.5px;color:var(--muted);display:flex;gap:6px;align-items:center;margin-top:10px;justify-content:center}
+.trustrow{display:flex;justify-content:center;gap:26px;flex-wrap:wrap;margin-top:26px;color:#cfe0e0}
+.trustrow b{font-family:"Anton";font-size:30px;color:#fff;display:block;line-height:1}
+.trustrow b small{font-size:15px}
+.trustrow span{font-size:12px;color:var(--muted-d);font-weight:700}
+.trustrow .ti{text-align:center}
+
+/* ===== full-bleed photo band ===== */
+.bleed{position:relative;color:#fff;text-align:center;padding:clamp(80px,16vw,140px) 0;background-position:center;background-size:cover;background-color:#0c1a20}
+.bleed::before{content:"";position:absolute;inset:0;background:linear-gradient(rgba(8,20,24,.62),rgba(8,20,24,.72))}
+.bleed .wrap{position:relative;z-index:2}
+.bleed.b1{background-image:linear-gradient(120deg,rgba(10,128,119,.5),rgba(8,20,24,.2)),url(images/band-1.jpg)}
+.bleed.b2{background-image:linear-gradient(120deg,rgba(255,106,19,.4),rgba(8,20,24,.2)),url(images/band-2.jpg)}
+.bleed .big{font-weight:900;font-size:clamp(28px,7.6vw,56px);line-height:1.22;text-shadow:0 5px 22px rgba(0,0,0,.5)}
+.bleed .big .w{background:#fff;color:var(--ink);padding:0 .1em;border-radius:8px}
+.bleed .big .y{color:var(--gold)}
+.bleed .s{margin-top:14px;font-weight:700;font-size:clamp(13px,3.6vw,17px);opacity:.95}
 
 /* sections */
-section.blk{padding:62px 0}
-section.tint{background:var(--bg)}
-.sec-h{text-align:center;margin-bottom:34px}
-.sec-h .en{display:block;color:var(--orange);font-size:14px;margin-bottom:6px}
-.sec-h h2{font-family:"Noto Sans JP";font-weight:900;font-size:clamp(24px,6.5vw,40px);line-height:1.25}
-.sec-h h2 .y{color:var(--orange)}
-.sec-h h2 .box{background:var(--gold);padding:0 .14em;border-radius:6px}
+section.blk{padding:clamp(56px,11vw,84px) 0}
+section.tint{background:var(--paper)}
+.sec-h{text-align:center;margin-bottom:40px}
+.sec-h .en{display:block;color:var(--orange);font-size:14px;margin-bottom:8px}
+.sec-h h2{font-size:clamp(26px,7vw,40px);font-weight:900;line-height:1.25}
+.sec-h h2 .u{position:relative;white-space:nowrap}
+.sec-h h2 .u::after{content:"";position:absolute;left:-2px;right:-2px;bottom:-4px;height:9px;background:var(--gold);border-radius:5px;opacity:.55;z-index:-1}
 .sec-h p{color:var(--muted);font-size:14px;margin-top:12px}
 
-/* full-bleed impact statement */
-.shout{background:var(--grad-o);color:#fff;text-align:center;padding:56px 0}
-.shout .l{font-family:"Noto Sans JP";font-weight:900;font-size:clamp(26px,7.5vw,52px);line-height:1.22;text-shadow:0 5px 18px rgba(0,0,0,.18)}
-.shout .l .w{background:#fff;color:var(--orange-d);padding:0 .1em;border-radius:8px}
-.shout .s{margin-top:12px;font-weight:700;font-size:clamp(13px,3.6vw,16px);opacity:.96}
-
 /* results */
-.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-.card{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 12px 34px -20px rgba(10,31,39,.5);transition:.25s;position:relative}
-.card:hover{transform:translateY(-6px)}
-.card .rib{position:absolute;top:12px;left:0;background:var(--red);color:#fff;font-size:11px;font-weight:900;padding:3px 12px;border-radius:0 6px 6px 0;z-index:2}
-.card .ph{background:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MDAgNDAwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBzbGljZSI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9InNreSIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNlOGY0ZjQiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjY2ZlNmU2Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0idXJsKCNza3kpIi8+CiAgPCEtLSBncm91bmQgLS0+CiAgPHJlY3QgeD0iMCIgeT0iMzAwIiB3aWR0aD0iNjAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2JjZDZkNiIvPgogIDxsaW5lIHgxPSIwIiB5MT0iMzAwIiB4Mj0iNjAwIiB5Mj0iMzAwIiBzdHJva2U9IiNhNmM2YzYiIHN0cm9rZS13aWR0aD0iNCIvPgogIDxnIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSI4IiBzdHJva2UtZGFzaGFycmF5PSIzNCAyNiIgb3BhY2l0eT0iMC44Ij48bGluZSB4MT0iMCIgeTE9IjM1MCIgeDI9IjYwMCIgeTI9IjM1MCIvPjwvZz4KICA8IS0tIGNhciAtLT4KICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMjAsMTUwKSI+CiAgICA8cGF0aCBkPSJNMjAsMTIwIEM4LDEyMCAwLDExMiAwLDEwMCBMMiw3OCBDNCw2NiAxMiw2MCAyNCw1OCBMNzgsNTYgQzEwMCwzMiAxMzQsMTggMTgyLDE4IEwyMjIsMTggQzI2OCwxOCAzMDAsMzQgMzI2LDU4IEwzNzYsNjQgQzM5Niw2OCA0MDQsNzggNDA0LDk0IEw0MDQsMTA0IEM0MDQsMTE2IDM5NiwxMjIgMzgyLDEyMiBMMzUwLDEyMiBBMzQsMzQgMCAwIDAgMjgyLDEyMiBMMTM4LDEyMiBBMzQsMzQgMCAwIDAgNzAsMTIyIFoiIGZpbGw9IiMxMGI1YTgiLz4KICAgIDxwYXRoIGQ9Ik05Niw1OCBDMTE2LDM4IDE0NCwyOCAxODIsMjYgTDIwNCwyNiBMMjA0LDU4IFoiIGZpbGw9IiNjZGVlZWEiLz4KICAgIDxwYXRoIGQ9Ik0yMTgsMjYgTDIyMiwyNiBDMjYyLDI2IDI5MCwzOCAzMTgsNTggTDIxOCw1OCBaIiBmaWxsPSIjY2RlZWVhIi8+CiAgICA8cmVjdCB4PSIyMCIgeT0iMTAwIiB3aWR0aD0iMzg0IiBoZWlnaHQ9IjgiIHJ4PSI0IiBmaWxsPSIjZmY2YTEzIi8+CiAgICA8Y2lyY2xlIGN4PSIxMDQiIGN5PSIxMjIiIHI9IjMwIiBmaWxsPSIjMWEyYTMwIi8+PGNpcmNsZSBjeD0iMTA0IiBjeT0iMTIyIiByPSIxMyIgZmlsbD0iI2RmZWVlZSIvPgogICAgPGNpcmNsZSBjeD0iMzE2IiBjeT0iMTIyIiByPSIzMCIgZmlsbD0iIzFhMmEzMCIvPjxjaXJjbGUgY3g9IjMxNiIgY3k9IjEyMiIgcj0iMTMiIGZpbGw9IiNkZmVlZWUiLz4KICA8L2c+Cjwvc3ZnPgo=") center/cover no-repeat;height:104px;display:flex;align-items:flex-end;justify-content:flex-end;color:#88a0a8;font-size:10px}
-/* image slots */
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.card{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 20px 44px -26px rgba(0,0,0,.5);transition:.28s;position:relative}
+.card:hover{transform:translateY(-8px);box-shadow:0 30px 56px -26px rgba(0,0,0,.55)}
+.card .rib{position:absolute;top:14px;left:0;background:var(--red);color:#fff;font-size:11px;font-weight:900;padding:4px 13px;border-radius:0 6px 6px 0;z-index:2}
+.card .ph{height:130px}
 .imgbox{position:relative;overflow:hidden}
 .imgbox>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.card .ph.imgbox{background:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MDAgNDAwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBzbGljZSI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9InNreSIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNlOGY0ZjQiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjY2ZlNmU2Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0idXJsKCNza3kpIi8+CiAgPHJlY3QgeD0iMCIgeT0iMzAwIiB3aWR0aD0iNjAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2JjZDZkNiIvPgogIDxsaW5lIHgxPSIwIiB5MT0iMzAwIiB4Mj0iNjAwIiB5Mj0iMzAwIiBzdHJva2U9IiNhNmM2YzYiIHN0cm9rZS13aWR0aD0iNCIvPgogIDxnIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSI4IiBzdHJva2UtZGFzaGFycmF5PSIzNCAyNiIgb3BhY2l0eT0iMC44Ij48bGluZSB4MT0iMCIgeTE9IjM1MCIgeDI9IjYwMCIgeTI9IjM1MCIvPjwvZz4KICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMjAsMTUwKSI+CiAgICA8cGF0aCBkPSJNMjAsMTIwIEM4LDEyMCAwLDExMiAwLDEwMCBMMiw3OCBDNCw2NiAxMiw2MCAyNCw1OCBMNzgsNTYgQzEwMCwzMiAxMzQsMTggMTgyLDE4IEwyMjIsMTggQzI2OCwxOCAzMDAsMzQgMzI2LDU4IEwzNzYsNjQgQzM5Niw2OCA0MDQsNzggNDA0LDk0IEw0MDQsMTA0IEM0MDQsMTE2IDM5NiwxMjIgMzgyLDEyMiBMMzUwLDEyMiBBMzQsMzQgMCAwIDAgMjgyLDEyMiBMMTM4LDEyMiBBMzQsMzQgMCAwIDAgNzAsMTIyIFoiIGZpbGw9IiMxMGI1YTgiLz4KICAgIDxwYXRoIGQ9Ik05Niw1OCBDMTE2LDM4IDE0NCwyOCAxODIsMjYgTDIwNCwyNiBMMjA0LDU4IFoiIGZpbGw9IiNjZGVlZWEiLz4KICAgIDxwYXRoIGQ9Ik0yMTgsMjYgTDIyMiwyNiBDMjYyLDI2IDI5MCwzOCAzMTgsNTggTDIxOCw1OCBaIiBmaWxsPSIjY2RlZWVhIi8+CiAgICA8cmVjdCB4PSIyMCIgeT0iMTAwIiB3aWR0aD0iMzg0IiBoZWlnaHQ9IjgiIHJ4PSI0IiBmaWxsPSIjZmY2YTEzIi8+CiAgICA8Y2lyY2xlIGN4PSIxMDQiIGN5PSIxMjIiIHI9IjMwIiBmaWxsPSIjMWEyYTMwIi8+PGNpcmNsZSBjeD0iMTA0IiBjeT0iMTIyIiByPSIxMyIgZmlsbD0iI2RmZWVlZSIvPgogICAgPGNpcmNsZSBjeD0iMzE2IiBjeT0iMTIyIiByPSIzMCIgZmlsbD0iIzFhMmEzMCIvPjxjaXJjbGUgY3g9IjMxNiIgY3k9IjEyMiIgcj0iMTMiIGZpbGw9IiNkZmVlZWUiLz4KICA8L2c+Cjwvc3ZnPgo=") center/cover no-repeat}
 .av.imgbox{background:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNkN2VjZWMiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjYmNkOWQ5Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0idXJsKCNnKSIvPgogIDxjaXJjbGUgY3g9IjEwMCIgY3k9Ijc4IiByPSIzNCIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC45MiIvPgogIDxwYXRoIGQ9Ik00MCwxNzggQzQwLDEzNCA3MCwxMTYgMTAwLDExNiBDMTMwLDExNiAxNjAsMTM0IDE2MCwxNzggWiIgZmlsbD0iI2ZmZmZmZiIgb3BhY2l0eT0iMC45MiIvPgo8L3N2Zz4K") center/cover no-repeat}
-.ph-label{font-size:9px;color:rgba(255,255,255,.85);background:rgba(16,181,168,.65);padding:1px 5px;border-radius:4px 0 0 0;line-height:1.3;font-weight:700}
-.av .ph-label{display:none}
-.card .nm{font-weight:700;padding:10px 10px 0;font-size:15px}
-.card .pr{font-family:"Anton";color:var(--red);font-size:34px;padding:2px 10px 12px;line-height:1}
+.card .nm{font-weight:700;padding:12px 12px 0;font-size:15px}
+.card .pr{font-family:"Anton";color:var(--red);font-size:36px;padding:2px 12px 14px;line-height:1}
 .card .pr small{font-size:14px;font-family:"Noto Sans JP";font-weight:900}
 
 /* voices */
-.voices{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.voice{background:#fff;border-radius:16px;padding:22px;box-shadow:0 12px 34px -22px rgba(10,31,39,.5);position:relative}
-.voice::before{content:"\201C";position:absolute;top:2px;right:16px;font-family:"Anton";font-size:64px;color:var(--gold);opacity:.32}
+.voices{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.voice{background:#fff;border-radius:18px;padding:24px;box-shadow:0 20px 44px -28px rgba(0,0,0,.5);position:relative}
+.voice::before{content:"\201C";position:absolute;top:4px;right:18px;font-family:"Anton";font-size:66px;color:var(--gold);opacity:.32}
 .vhead{display:flex;align-items:center;gap:12px;margin-bottom:10px}
-.av{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#d7e6e6,#bcd2d2);flex:0 0 48px;display:flex;align-items:center;justify-content:center;color:#8aa0a8;font-size:10px}
+.av{width:52px;height:52px;border-radius:50%;flex:0 0 52px}
 .vname{font-weight:700}.stars{color:var(--gold);font-weight:700;font-size:13px}
 .voice p{font-size:13.5px;color:#42565e}
 
 /* steps */
-.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-.step{background:#fff;border-radius:16px;padding:24px 14px;text-align:center;box-shadow:0 12px 34px -24px rgba(10,31,39,.5)}
-.step .no{font-family:"Anton";width:46px;height:46px;border-radius:50%;background:var(--grad-o);color:#fff;font-size:24px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.step{background:#fff;border-radius:18px;padding:26px 16px;text-align:center;box-shadow:0 20px 44px -30px rgba(0,0,0,.5)}
+.step .no{font-family:"Anton";width:48px;height:48px;border-radius:50%;background:var(--grad-o);color:#fff;font-size:24px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
 .step h3{font-size:15px;margin-bottom:4px;font-weight:900}.step p{font-size:12px;color:var(--muted)}
 
 /* cats */
-.cats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-.cat{display:flex;gap:14px;align-items:center;background:#fff;border-radius:14px;padding:18px;text-decoration:none;color:var(--ink);border:1px solid var(--line);transition:.2s;position:relative;overflow:hidden}
-.cat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--grad-o)}
-.cat:hover{transform:translateX(4px);box-shadow:var(--shadow)}
-.cat .ico{font-size:28px}
-.cat b{display:block;font-family:"Anton";color:var(--teal-d);font-size:19px;letter-spacing:1px}
+.cats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.cat{display:flex;gap:14px;align-items:center;background:#fff;border-radius:16px;padding:20px;text-decoration:none;color:var(--ink);border:1px solid var(--line);transition:.2s;position:relative;overflow:hidden}
+.cat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--grad-o)}
+.cat:hover{transform:translateX(5px);box-shadow:0 20px 40px -28px rgba(0,0,0,.4)}
+.cat .ico{font-size:30px}
+.cat b{display:block;font-family:"Anton";color:var(--teal-d);font-size:20px;letter-spacing:1px}
 .cat small{color:var(--muted);font-size:12px}
 
 /* faq */
-.faq{max-width:760px;margin:0 auto}
-.faq details{background:#fff;border-radius:13px;margin-bottom:12px;padding:0 20px;box-shadow:0 8px 24px -18px rgba(10,31,39,.5);border:1px solid var(--line)}
-.faq summary{cursor:pointer;font-weight:700;padding:17px 30px 17px 28px;list-style:none;position:relative;font-size:15px}
+.faq{max-width:780px;margin:0 auto}
+.faq details{background:#fff;border-radius:14px;margin-bottom:12px;padding:0 22px;box-shadow:0 10px 28px -20px rgba(0,0,0,.4);border:1px solid var(--line)}
+.faq summary{cursor:pointer;font-weight:700;padding:18px 30px 18px 28px;list-style:none;position:relative;font-size:15px}
 .faq summary::-webkit-details-marker{display:none}
-.faq summary::before{content:"Q";font-family:"Anton";color:#fff;background:var(--orange);width:22px;height:22px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;position:absolute;left:0;top:16px}
-.faq summary::after{content:"+";position:absolute;right:2px;top:12px;font-size:24px;color:var(--teal);transition:.2s}
+.faq summary::before{content:"Q";font-family:"Anton";color:#fff;background:var(--orange);width:23px;height:23px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;position:absolute;left:0;top:17px}
+.faq summary::after{content:"+";position:absolute;right:2px;top:13px;font-size:25px;color:var(--teal);transition:.2s}
 .faq details[open] summary::after{transform:rotate(45deg)}
-.faq p{padding:0 0 17px 28px;color:var(--muted);font-size:14px}
+.faq p{padding:0 0 18px 28px;color:var(--muted);font-size:14px}
 
 /* area */
 .area{text-align:center}
-.prefs{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:20px;max-width:760px;margin:20px auto 0}
-.prefs a{font-size:13px;font-weight:700;background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 16px;text-decoration:none;color:var(--teal-d);transition:.15s}
+.prefs{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:780px;margin:22px auto 0}
+.prefs a{font-size:13px;font-weight:700;background:#fff;border:1px solid var(--line);border-radius:999px;padding:9px 17px;text-decoration:none;color:var(--teal-d);transition:.15s}
 .prefs a:hover{background:var(--teal);color:#fff}
 
-/* final */
-.final{position:relative;background:var(--navy);color:#fff;text-align:center;padding:64px 0;overflow:hidden}
-.final .slash{position:absolute;font-family:"Noto Sans JP";font-weight:900;color:rgba(255,255,255,.04);font-size:30vw;top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap}
-.final h2{font-family:"Noto Sans JP";font-weight:900;font-size:clamp(26px,7vw,46px)}
-.final h2 .y{color:var(--gold)}
-.final p{margin:12px 0 2px;font-size:15px;opacity:.94}
-
 /* footer */
-footer{background:#06171c;color:#9fb3bb;font-size:13px;padding:42px 0 30px}
+footer{background:#08141a;color:#9fb3bb;font-size:13px;padding:48px 0 34px}
 footer .logo{color:#fff}
 footer a{color:#9fb3bb;text-decoration:none}
 .fnav{margin-top:14px;display:flex;gap:18px;flex-wrap:wrap}
 
 /* sticky */
-.sticky{position:fixed;left:0;right:0;bottom:0;z-index:90;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-top:1px solid var(--line);display:none;gap:10px;padding:9px 12px;box-shadow:0 -8px 24px -12px rgba(0,0,0,.25)}
-.sticky .btn{flex:1;padding:13px;font-size:14px;animation:none}
+.sticky{position:fixed;left:0;right:0;bottom:0;z-index:95;background:rgba(8,20,24,.92);backdrop-filter:blur(10px);display:none;gap:10px;padding:10px 12px;box-shadow:0 -8px 24px -12px rgba(0,0,0,.5)}
+.sticky .btn{flex:1;padding:14px;font-size:14px}
 
 @media(max-width:880px){
-  .band3{grid-template-columns:1fr;gap:28px}
   .cards{grid-template-columns:repeat(2,1fr)}
   .voices{grid-template-columns:1fr}
   .steps{grid-template-columns:repeat(2,1fr)}
   .cats{grid-template-columns:1fr}
-  .sticky{display:flex}body{padding-bottom:68px}
+  .sticky{display:flex}body{padding-bottom:70px}
   .hd .btn{display:none}
-  .pricepop{transform:none}
+  .hero-shade{background:linear-gradient(0deg,rgba(7,18,22,.92) 0%,rgba(7,18,22,.3) 70%,rgba(7,18,22,.5) 100%)}
 }
 </style>
 </head>
 <body>
 
 <!-- HEADER -->
-<header>
+<header id="hdr">
   <div class="hd">
     <div class="logo">BUY<span>MO</span></div>
     <a href="#form" class="btn btn-cta">無料査定</a>
   </div>
 </header>
 
-<!-- HERO（大中小） -->
+<!-- HERO -->
 <section class="hero">
-  <div class="hero-bg"></div>
-  <span class="grain"></span>
-  <span class="slash impact">BUYMO</span>
-  <div class="wrap">
-    <!-- 小 -->
-    <span class="kicker reveal">そのまま下取り、損してませんか？</span>
-    <!-- 大 -->
-    <h1 class="reveal d1">
-      <span class="l1">売るなら、<em>高く。</em></span>
-      <span class="l1"><span class="box">まだ</span>イケる。</span>
-    </h1>
-    <!-- 中 -->
-    <p class="mid reveal d2">動かない車も、古い車も、パーツだけでも。<br><u>BUYMOが、まとめて高価買取。</u></p>
-    <!-- 小 -->
-    <p class="small reveal d2">全国47都道府県 ／ 出張・手数料0円 ／ 最短即日入金</p>
-
-    <!-- 大数字 -->
-    <div class="pricepop reveal d3">
-      <span class="lab">下取りより</span>
-      <span class="plus">＋</span><span class="v">30</span><span class="yen">万円</span>
-      <em>※車種により異なる／要差替</em>
-    </div>
+  <!-- default cinematic art (replaced by images/hero.jpg if present) -->
+  <div class="hero-art">
+    <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#0a2b30"/><stop offset="0.5" stop-color="#0e6f6a"/>
+          <stop offset="0.82" stop-color="#ff7a2e"/><stop offset="1" stop-color="#ffb24d"/>
+        </linearGradient>
+        <radialGradient id="sun" cx="50%" cy="78%" r="40%">
+          <stop offset="0" stop-color="#fff3c0" stop-opacity="0.95"/><stop offset="1" stop-color="#ffb24d" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="road" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#11343a"/><stop offset="1" stop-color="#040c0f"/>
+        </linearGradient>
+      </defs>
+      <rect width="1600" height="900" fill="url(#sky)"/>
+      <ellipse cx="800" cy="640" rx="900" ry="420" fill="url(#sun)"/>
+      <!-- skyline -->
+      <g fill="#072024" opacity="0.85">
+        <rect x="60" y="430" width="70" height="220"/><rect x="150" y="380" width="54" height="270"/>
+        <rect x="225" y="470" width="80" height="180"/><rect x="330" y="410" width="48" height="240"/>
+        <rect x="1180" y="450" width="70" height="200"/><rect x="1270" y="400" width="56" height="250"/>
+        <rect x="1350" y="470" width="84" height="180"/><rect x="1460" y="420" width="50" height="230"/>
+      </g>
+      <!-- road -->
+      <polygon points="640,650 960,650 1300,900 300,900" fill="url(#road)"/>
+      <g fill="#ffc436" opacity="0.85">
+        <polygon points="792,660 808,660 812,690 788,690"/>
+        <polygon points="785,716 815,716 821,760 779,760"/>
+        <polygon points="775,792 825,792 833,856 767,856"/>
+      </g>
+      <!-- car (rear 3/4 silhouette with glow) -->
+      <g transform="translate(610,560)">
+        <ellipse cx="200" cy="232" rx="220" ry="30" fill="#000" opacity="0.35"/>
+        <path d="M30,210 C14,210 4,198 6,180 L14,140 C18,116 36,104 64,98
+                 L120,66 C150,48 196,40 250,42 L300,44 C356,46 398,62 420,96
+                 L452,140 C464,158 470,178 470,196 L470,206 C470,222 458,232 440,232
+                 L392,232 A44,44 0 0 0 304,232 L196,232 A44,44 0 0 0 108,232
+                 L60,232 C44,232 34,224 30,210 Z" fill="#0c1f24"/>
+        <path d="M120,72 C150,54 196,46 250,48 L292,50 L300,96 L150,96 Z" fill="#15c2b4" opacity="0.5"/>
+        <rect x="40" y="176" width="430" height="12" rx="6" fill="#ff6a13" opacity="0.85"/>
+        <circle cx="150" cy="232" r="44" fill="#05100f"/><circle cx="150" cy="232" r="18" fill="#2a4a4a"/>
+        <circle cx="350" cy="232" r="44" fill="#05100f"/><circle cx="350" cy="232" r="18" fill="#2a4a4a"/>
+        <!-- tail lights glow -->
+        <rect x="20" y="150" width="20" height="30" rx="8" fill="#ff3b54"/>
+        <rect x="450" y="150" width="20" height="30" rx="8" fill="#ff3b54"/>
+        <ellipse cx="30" cy="165" rx="60" ry="26" fill="#ff3b54" opacity="0.25"/>
+      </g>
+      <!-- bokeh -->
+      <g fill="#ffffff" opacity="0.12">
+        <circle cx="200" cy="180" r="6"/><circle cx="1400" cy="150" r="8"/><circle cx="1100" cy="120" r="5"/>
+        <circle cx="500" cy="120" r="4"/><circle cx="900" cy="90" r="6"/>
+      </g>
+    </svg>
   </div>
-</section>
+  <div class="hero-photo" id="heroPhoto"></div>
+  <div class="hero-shade"></div>
 
-<!-- FORM -->
-<div class="formwrap reveal">
-  <form class="fcard" id="form" onsubmit="return false">
-    <div class="fhd">
-      <span class="t45">入力45秒</span>
-      <b>無料 かんたん査定</b>
-      <small>今いくら？まずは概算をチェック</small>
-    </div>
-    <div class="fbody">
-      <div class="steps-dot"><span class="on">①車の情報</span><span>②お客様情報</span><span>③査定結果</span></div>
-      <div class="qgrid">
-        <div class="field"><label>メーカー</label><select><option>選択</option><option>トヨタ</option><option>日産</option><option>ホンダ</option><option>その他</option></select></div>
-        <div class="field"><label>車種</label><input placeholder="例：アクア"></div>
-        <div class="field"><label>年式</label><select><option>選択</option><option>2020年〜</option><option>2015〜2019</option><option>2010〜2014</option><option>〜2009</option></select></div>
-        <div class="field"><label>走行距離</label><select><option>選択</option><option>〜3万km</option><option>〜7万km</option><option>〜10万km</option><option>10万km〜</option></select></div>
-        <div class="field full"><label>車の状態</label><select><option>選択</option><option>自走できる</option><option>動かない・事故車</option></select></div>
-        <div class="field"><label>お名前</label><input placeholder="山田 太郎"></div>
-        <div class="field"><label>電話番号</label><input placeholder="090-0000-0000"></div>
-        <div class="field full"><label>都道府県</label><select><option>選択</option><option>北海道</option><option>東京都</option><option>大阪府</option><option>…他</option></select></div>
+  <div class="wrap">
+    <div class="hero-inner">
+      <span class="eyebrow reveal">そのまま下取り、損してませんか？</span>
+      <h1 class="reveal d1">愛車は、<br><span class="box">まだ高く</span><span class="y">売れる。</span></h1>
+      <p class="lead reveal d2">動かない車も、古い車も、パーツだけでも。<br>BUYMOが全国どこでも、オンラインで高価買取。</p>
+      <div class="mini reveal d2">
+        <span>全国47都道府県</span><span>手数料0円</span><span>最短即日入金</span><span>入力45秒</span>
       </div>
-      <label class="chk"><input type="checkbox"> 個人情報の取扱いに同意する</label>
-      <button class="btn btn-cta">無料査定スタート</button>
+      <div class="cta-row reveal d3" style="justify-content:flex-start">
+        <a href="#form" class="btn btn-cta">無料査定をはじめる</a>
+        <a href="#" class="btn btn-glass">LINEで査定</a>
+      </div>
     </div>
-  </form>
-</div>
+  </div>
+  <div class="scrollcue">SCROLL</div>
+</section>
 
-<!-- IMPACT WORD BAND（大中小の3連） -->
-<section class="band">
-  <div class="wrap">
-    <div class="band3">
-      <div class="bw reveal"><div class="big">0<small>円</small></div><div class="mid">手数料</div><div class="sm">査定・出張・引取すべて無料</div></div>
-      <div class="bw reveal d1"><div class="big">47</div><div class="mid">都道府県</div><div class="sm">全国どこでも出張買取</div></div>
-      <div class="bw reveal d2"><div class="big">即日</div><div class="mid">スピード入金</div><div class="sm">書類が揃えば最短即日</div></div>
+<!-- FORM BAND -->
+<section class="formband">
+  <div class="formwrap reveal">
+    <form class="fcard" id="form" onsubmit="return false">
+      <div class="fhd">
+        <span class="t45">入力45秒</span>
+        <b>無料 かんたん査定</b>
+        <small>今いくら？まずは概算をチェック</small>
+      </div>
+      <div class="fbody">
+        <div class="steps-dot"><span class="on">①車の情報</span><span>②お客様情報</span><span>③査定結果</span></div>
+        <div class="qgrid">
+          <div class="field"><label>メーカー</label><select><option>選択</option><option>トヨタ</option><option>日産</option><option>ホンダ</option><option>その他</option></select></div>
+          <div class="field"><label>車種</label><input placeholder="例：アクア"></div>
+          <div class="field"><label>年式</label><select><option>選択</option><option>2020年〜</option><option>2015〜2019</option><option>2010〜2014</option><option>〜2009</option></select></div>
+          <div class="field"><label>走行距離</label><select><option>選択</option><option>〜3万km</option><option>〜7万km</option><option>〜10万km</option><option>10万km〜</option></select></div>
+          <div class="field full"><label>車の状態</label><select><option>選択</option><option>自走できる</option><option>動かない・事故車</option></select></div>
+          <div class="field"><label>お名前</label><input placeholder="山田 太郎"></div>
+          <div class="field"><label>電話番号</label><input placeholder="090-0000-0000"></div>
+          <div class="field full"><label>都道府県</label><select><option>選択</option><option>北海道</option><option>東京都</option><option>大阪府</option><option>…他</option></select></div>
+        </div>
+        <label class="chk"><input type="checkbox"> 個人情報の取扱いに同意する</label>
+        <button class="btn btn-cta">無料査定スタート</button>
+      </div>
+    </form>
+    <div class="trustrow reveal d1">
+      <div class="ti"><b><span class="cu" data-count="47">0</span></b><span>都道府県対応</span></div>
+      <div class="ti"><b><span class="cu" data-count="0">0</span><small>円</small></b><span>査定・手数料</span></div>
+      <div class="ti"><b>即日</b><span>スピード入金</span></div>
     </div>
   </div>
 </section>
 
-<!-- SHOUT 1 -->
-<section class="shout">
+<!-- BLEED 1 -->
+<section class="bleed b1">
   <div class="wrap">
-    <p class="l reveal">動かない車も、<br><span class="w">1円以上</span>で買い取る。</p>
+    <p class="big reveal">動かない車も、<br><span class="w">1円以上</span>で買い取る。</p>
     <p class="s reveal d1">事故車・不動車・水没車・廃車もOK。だから、あきらめないで。</p>
   </div>
 </section>
@@ -287,45 +322,42 @@ footer a{color:#9fb3bb;text-decoration:none}
 <!-- RESULTS -->
 <section class="blk tint">
   <div class="wrap">
-    <div class="sec-h reveal"><span class="en">REAL RESULTS</span><h2>リアル<span class="y">買取実績</span></h2><p>実際にこの価格で買い取りました</p></div>
+    <div class="sec-h reveal"><span class="en">REAL RESULTS</span><h2>リアル<span class="u">買取実績</span></h2><p>実際にこの価格で買い取りました</p></div>
     <div class="cards">
-      <div class="card reveal"><span class="rib">高価買取</span><div class="ph imgbox"><span class="ph-label">写真<br>result-1.jpg</span><img src="images/result-1.jpg" alt="アクア 買取実績" onerror="this.remove()"></div><div class="nm">アクア</div><div class="pr">145<small>万円</small></div></div>
-      <div class="card reveal d1"><span class="rib">高価買取</span><div class="ph imgbox"><span class="ph-label">写真<br>result-2.jpg</span><img src="images/result-2.jpg" alt="ヴェルファイア 買取実績" onerror="this.remove()"></div><div class="nm">ヴェルファイア</div><div class="pr">178<small>万円</small></div></div>
-      <div class="card reveal d2"><div class="ph imgbox"><span class="ph-label">写真<br>result-3.jpg</span><img src="images/result-3.jpg" alt="マーチ 買取実績" onerror="this.remove()"></div><div class="nm">マーチ</div><div class="pr">98<small>万円</small></div></div>
-      <div class="card reveal d3"><div class="ph imgbox"><span class="ph-label">写真<br>result-4.jpg</span><img src="images/result-4.jpg" alt="買取実績" onerror="this.remove()"></div><div class="nm">【車種】</div><div class="pr">156<small>万円</small></div></div>
+      <div class="card reveal"><span class="rib">高価買取</span><div class="ph imgbox"><img src="images/result-1.jpg" alt="アクア" onerror="this.remove()"></div><div class="nm">アクア</div><div class="pr">145<small>万円</small></div></div>
+      <div class="card reveal d1"><span class="rib">高価買取</span><div class="ph imgbox"><img src="images/result-2.jpg" alt="ヴェルファイア" onerror="this.remove()"></div><div class="nm">ヴェルファイア</div><div class="pr">178<small>万円</small></div></div>
+      <div class="card reveal d2"><div class="ph imgbox"><img src="images/result-3.jpg" alt="マーチ" onerror="this.remove()"></div><div class="nm">マーチ</div><div class="pr">98<small>万円</small></div></div>
+      <div class="card reveal d3"><div class="ph imgbox"><img src="images/result-4.jpg" alt="買取実績" onerror="this.remove()"></div><div class="nm">【車種】</div><div class="pr">156<small>万円</small></div></div>
     </div>
-    <p style="text-align:center;margin-top:16px;font-size:12.5px;color:var(--muted)">※車種×年式×金額は旧ページより移行 <span class="note">要差替</span></p>
+    <p style="text-align:center;margin-top:18px;font-size:12.5px;color:var(--muted)">※車種×年式×金額は旧ページより移行 <span class="note">要差替</span></p>
   </div>
 </section>
 
-<!-- WHY -->
-<section class="blk">
+<!-- BLEED 2 -->
+<section class="bleed b2">
   <div class="wrap">
-    <div class="sec-h reveal"><span class="en">WHY BUYMO</span><h2>なぜ、<span class="box">高く</span>買える？</h2></div>
-    <div class="cats" style="grid-template-columns:repeat(3,1fr)">
-      <div class="cat reveal" style="display:block;text-align:center"><div class="ico">🌐</div><b style="font-family:'Noto Sans JP';font-weight:900;font-size:16px;color:var(--ink)">国内外の販路</b><small style="display:block;margin-top:6px">中間マージンを省いて還元</small></div>
-      <div class="cat reveal d1" style="display:block;text-align:center"><div class="ico">♻️</div><b style="font-family:'Noto Sans JP';font-weight:900;font-size:16px;color:var(--ink)">再生・部品ルート</b><small style="display:block;margin-top:6px">不動車もパーツで価値化</small></div>
-      <div class="cat reveal d2" style="display:block;text-align:center"><div class="ico">📱</div><b style="font-family:'Noto Sans JP';font-weight:900;font-size:16px;color:var(--ink)">オンライン運営</b><small style="display:block;margin-top:6px">店舗コストを買取額に上乗せ</small></div>
-    </div>
+    <p class="big reveal">下取りより、<span class="y">高い</span>。<br>その差、あとで知っても遅い。</p>
+    <p class="s reveal d1">まずは45秒、今いくらかチェック。しつこい営業はありません。</p>
+    <div class="cta-row reveal d1"><a href="#form" class="btn btn-cta">無料で査定する</a></div>
   </div>
 </section>
 
 <!-- VOICES -->
-<section class="blk tint">
+<section class="blk">
   <div class="wrap">
-    <div class="sec-h reveal"><span class="en">REVIEWS</span><h2>お客様の<span class="y">声</span></h2></div>
+    <div class="sec-h reveal"><span class="en">REVIEWS</span><h2>お客様の<span class="u">声</span></h2></div>
     <div class="voices">
-      <div class="voice reveal"><div class="vhead"><div class="av imgbox"><span class="ph-label">v1</span><img src="images/voice-1.jpg" alt="お客様" onerror="this.remove()"></div><div><div class="vname">アクア</div><div class="stars">★★★★★ 5.0</div></div></div><p>オンラインだけで査定が完了。来店不要でスムーズでした。<span class="note">本文 要差替</span></p></div>
-      <div class="voice reveal d1"><div class="vhead"><div class="av imgbox"><span class="ph-label">v2</span><img src="images/voice-2.jpg" alt="お客様" onerror="this.remove()"></div><div><div class="vname">ヴェルファイア</div><div class="stars">★★★★★ 4.9</div></div></div><p>忙しい中でも自宅で完結。査定額にも満足です。<span class="note">本文 要差替</span></p></div>
-      <div class="voice reveal d2"><div class="vhead"><div class="av imgbox"><span class="ph-label">v3</span><img src="images/voice-3.jpg" alt="お客様" onerror="this.remove()"></div><div><div class="vname">マーチ</div><div class="stars">★★★★☆ 4.7</div></div></div><p>写真を送るだけで対応が早く、すぐに入金されました。<span class="note">本文 要差替</span></p></div>
+      <div class="voice reveal"><div class="vhead"><div class="av imgbox"><img src="images/voice-1.jpg" alt="" onerror="this.remove()"></div><div><div class="vname">アクア</div><div class="stars">★★★★★ 5.0</div></div></div><p>オンラインだけで査定が完了。来店不要でスムーズでした。<span class="note">本文 要差替</span></p></div>
+      <div class="voice reveal d1"><div class="vhead"><div class="av imgbox"><img src="images/voice-2.jpg" alt="" onerror="this.remove()"></div><div><div class="vname">ヴェルファイア</div><div class="stars">★★★★★ 4.9</div></div></div><p>忙しい中でも自宅で完結。査定額にも満足です。<span class="note">本文 要差替</span></p></div>
+      <div class="voice reveal d2"><div class="vhead"><div class="av imgbox"><img src="images/voice-3.jpg" alt="" onerror="this.remove()"></div><div><div class="vname">マーチ</div><div class="stars">★★★★☆ 4.7</div></div></div><p>写真を送るだけで対応が早く、すぐに入金されました。<span class="note">本文 要差替</span></p></div>
     </div>
   </div>
 </section>
 
 <!-- STEPS -->
-<section class="blk">
+<section class="blk tint">
   <div class="wrap">
-    <div class="sec-h reveal"><span class="en">FLOW</span><h2>査定の<span class="y">流れ</span></h2><p>申込から入金まで、オンラインでスムーズに</p></div>
+    <div class="sec-h reveal"><span class="en">FLOW</span><h2>査定の<span class="u">流れ</span></h2><p>申込から入金まで、オンラインでスムーズに</p></div>
     <div class="steps">
       <div class="step reveal"><div class="no">1</div><h3>フォーム入力</h3><p>最短45秒で申込</p></div>
       <div class="step reveal d1"><div class="no">2</div><h3>写真アップロード</h3><p>送るだけで精度UP</p></div>
@@ -336,9 +368,9 @@ footer a{color:#9fb3bb;text-decoration:none}
 </section>
 
 <!-- CATEGORIES -->
-<section class="blk tint">
+<section class="blk">
   <div class="wrap">
-    <div class="sec-h reveal"><span class="en">CATEGORY</span><h2>専門の<span class="y">買取ページ</span></h2></div>
+    <div class="sec-h reveal"><span class="en">CATEGORY</span><h2>専門の<span class="u">買取ページ</span></h2></div>
     <div class="cats">
       <a class="cat reveal" href="/eco"><span class="ico">🚗</span><span><b>BUYMO ECO</b><small>廃車・事故車・不動車</small></span></a>
       <a class="cat reveal d1" href="/classic"><span class="ico">🏁</span><span><b>BUYMO CLASSIC</b><small>旧車・絶版車</small></span></a>
@@ -351,9 +383,9 @@ footer a{color:#9fb3bb;text-decoration:none}
 </section>
 
 <!-- FAQ -->
-<section class="blk">
+<section class="blk tint">
   <div class="wrap">
-    <div class="sec-h reveal"><span class="en">FAQ</span><h2>よくある<span class="y">質問</span></h2></div>
+    <div class="sec-h reveal"><span class="en">FAQ</span><h2>よくある<span class="u">質問</span></h2></div>
     <div class="faq reveal">
       <details open><summary>動かない車でも買い取れますか？</summary><p>はい。事故車・不動車・水没車も BUYMO ECO で対応します。</p></details>
       <details><summary>費用はかかりますか？</summary><p>査定料・出張費・レッカー代・廃車手続きすべて0円です。</p></details>
@@ -365,9 +397,9 @@ footer a{color:#9fb3bb;text-decoration:none}
 </section>
 
 <!-- AREA -->
-<section class="blk tint area">
+<section class="blk area">
   <div class="wrap">
-    <div class="sec-h reveal"><span class="en">NATIONWIDE</span><h2>全国<span class="y">47都道府県</span>対応</h2><p>お住まいの地域から出張買取が可能です</p></div>
+    <div class="sec-h reveal"><span class="en">NATIONWIDE</span><h2>全国<span class="u">47都道府県</span>対応</h2><p>お住まいの地域から出張買取が可能です</p></div>
     <div class="prefs reveal">
       <a href="/area/hokkaido">北海道</a><a href="/area/tohoku">東北</a><a href="/area/kanto">関東</a>
       <a href="/area/tokyo">東京都</a><a href="/area/chubu">中部</a><a href="/area/kansai">関西</a>
@@ -377,16 +409,15 @@ footer a{color:#9fb3bb;text-decoration:none}
   </div>
 </section>
 
-<!-- FINAL -->
-<section class="final">
-  <span class="slash">SELL HIGH</span>
+<!-- FINAL BLEED -->
+<section class="bleed b1">
   <div class="wrap">
-    <h2 class="reveal">今すぐ、<span class="y">無料査定。</span></h2>
-    <p class="reveal d1">しつこい営業はありません。45秒で今いくらかチェック。</p>
-    <div class="cta-row reveal d2">
-      <a href="#form" class="btn" style="background:#fff;color:var(--orange-d)">無料査定をはじめる</a>
+    <p class="big reveal">今すぐ、<span class="y">無料査定。</span></p>
+    <p class="s reveal d1">45秒で今いくらかチェック。しつこい営業はありません。</p>
+    <div class="cta-row reveal d1">
+      <a href="#form" class="btn btn-cta">無料査定をはじめる</a>
       <a href="#" class="btn btn-line">LINEで査定</a>
-      <a href="tel:000" class="btn btn-ghost">📞 電話で相談【要差替】</a>
+      <a href="tel:000" class="btn btn-glass">📞 電話で相談【要差替】</a>
     </div>
   </div>
 </section>
@@ -408,8 +439,23 @@ footer a{color:#9fb3bb;text-decoration:none}
 </div>
 
 <script>
+// header scroll state
+const hdr=document.getElementById('hdr');
+addEventListener('scroll',()=>{hdr.classList.toggle('scrolled',scrollY>40)});
+// hero photo: hide layer if image missing so the SVG art shows
+(()=>{const hp=document.getElementById('heroPhoto');const im=new Image();
+  im.onload=()=>{hp.style.display='block'};im.onerror=()=>{hp.style.display='none'};im.src='images/hero.jpg';
+  hp.style.display='none';
+})();
+// reveal
 const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.14});
 document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+// count up
+const cio=new IntersectionObserver((es)=>{es.forEach(e=>{
+  if(!e.isIntersecting)return;const el=e.target;const t=+el.dataset.count;const step=Math.max(1,Math.ceil(t/40));let n=0;
+  const tick=()=>{n+=step;if(n>=t)n=t;el.textContent=n;if(n<t)requestAnimationFrame(tick)};tick();cio.unobserve(el);
+})},{threshold:.6});
+document.querySelectorAll('.cu[data-count]').forEach(el=>cio.observe(el));
 </script>
 </body>
 </html>
