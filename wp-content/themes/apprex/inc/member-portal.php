@@ -163,6 +163,13 @@ function apprex_mypage_render() {
 		echo '<button type="submit" style="width:100%;min-height:48px;background:#2563eb;color:#fff;border:0;border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;">ログイン</button>';
 		echo '</form>';
 		echo '<p style="text-align:center;margin:14px 0 0;font-size:14px;"><a href="' . esc_url( wp_lostpassword_url( apprex_mypage_url() ) ) . '">パスワードをお忘れの方はこちら</a></p>';
+
+		// ソーシャルログイン（各媒体）：連携設定でショートコードが入っていれば表示。
+		$apprex_social = (string) get_option( 'apprex_social_login_shortcode', '' );
+		if ( '' !== trim( $apprex_social ) ) {
+			echo '<div style="display:flex;align-items:center;gap:10px;color:#9ca3af;font-size:13px;margin:18px 0 14px;"><span style="flex:1;height:1px;background:#e5e7eb;"></span>または<span style="flex:1;height:1px;background:#e5e7eb;"></span></div>';
+			echo '<div class="apprex-social-login" style="text-align:center;">' . do_shortcode( $apprex_social ) . '</div>';
+		}
 		echo '</div>';
 		return ob_get_clean();
 	}

@@ -33,6 +33,7 @@ add_action( 'admin_init', function () {
 	register_setting( 'apprex_integrations', 'apprex_gsc_verify', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 	register_setting( 'apprex_integrations', 'apprex_twitter', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 	register_setting( 'apprex_integrations', 'apprex_slack_webhook', array( 'sanitize_callback' => 'esc_url_raw' ) );
+	register_setting( 'apprex_integrations', 'apprex_social_login_shortcode', array( 'sanitize_callback' => 'wp_kses_post' ) );
 } );
 
 /**
@@ -52,6 +53,11 @@ function apprex_integrations_page() {
 					<th scope="row"><?php esc_html_e( 'LINE 公式アカウント URL', 'apprex' ); ?></th>
 					<td><input type="url" name="apprex_line_url" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_line_url', '' ) ); ?>" placeholder="https://lin.ee/xxxxxxx">
 					<p class="description"><?php esc_html_e( '設定すると、チャット・フォーム・資料請求にLINE誘導ボタンが表示されます。', 'apprex' ); ?></p></td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'ソーシャルログイン ショートコード', 'apprex' ); ?></th>
+					<td><input type="text" name="apprex_social_login_shortcode" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_social_login_shortcode', '' ) ); ?>" placeholder="[nextend_social_login] など">
+					<p class="description"><?php esc_html_e( '会員マイページ（/mypage）のログイン画面に表示するソーシャルログインのショートコード。導入プラグインのショートコード（例：[nextend_social_login]）を貼ると、Google/LINE/Apple/Facebook 等のボタンが表示されます。', 'apprex' ); ?></p></td>
 				</tr>
 				<tr>
 					<th scope="row"><?php esc_html_e( 'LINE配信バナー：バッジ文言', 'apprex' ); ?></th>
