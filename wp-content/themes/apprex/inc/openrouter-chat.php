@@ -22,8 +22,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 const APPREX_OPENROUTER_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
-// 安定して使える既定モデル（このアカウントで実績あり）。設定 > APPREX チャットで変更可。
-const APPREX_OPENROUTER_DEFAULT_MODEL = 'anthropic/claude-3.5-haiku';
+// 安定して使える既定モデル（OpenAI直・安価・広く利用可）。設定 > APPREX チャットで変更可。
+const APPREX_OPENROUTER_DEFAULT_MODEL = 'openai/gpt-4o-mini';
 
 /**
  * Resolve the API key from constant or option.
@@ -77,10 +77,9 @@ function apprex_openrouter_complete( $messages, $args = array() ) {
 		'messages'    => $messages,
 		'temperature' => isset( $args['temperature'] ) ? (float) $args['temperature'] : 0.4,
 		'max_tokens'  => isset( $args['max_tokens'] ) ? (int) $args['max_tokens'] : 600,
-		// 提供終了プロバイダ（例：Amazon Bedrockの旧モデル）を避け、生きている提供元へ自動フォールバック。
+		// 提供終了プロバイダ等で失敗しても、生きている提供元へ自動フォールバック。
 		'provider'    => isset( $args['provider'] ) ? $args['provider'] : array(
 			'allow_fallbacks' => true,
-			'ignore'          => array( 'Amazon Bedrock' ),
 		),
 	);
 	$payload = apply_filters( 'apprex_openrouter_payload', $payload, $args );
