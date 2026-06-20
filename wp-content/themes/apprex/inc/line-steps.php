@@ -308,7 +308,7 @@ add_action( 'admin_post_apprex_line_steps_save', function () {
 	} );
 	update_option( 'apprex_line_steps', $steps );
 
-	wp_safe_redirect( add_query_arg( 'apprex_ls', 'saved', admin_url( 'options-general.php?page=apprex-line-steps' ) ) );
+	wp_safe_redirect( add_query_arg( array( 'apprex_ls' => 'saved', 'n' => count( $steps ) ), admin_url( 'options-general.php?page=apprex-line-steps' ) ) );
 	exit;
 } );
 
@@ -327,6 +327,41 @@ function apprex_line_offset_label( $min ) {
 	return $min . '分後';
 }
 
+/** ステップ1行のHTMLを返す（$i はインデックス。テンプレ用に文字列キーも可）。 */
+function apprex_line_step_row_html( $i, $s ) {
+	$min = (int) ( isset( $s['offset'] ) ? $s['offset'] : 1440 );
+	if ( $min > 0 && 0 === $min % 1440 ) {
+		$unit = 1440;
+		$val  = $min / 1440;
+	} elseif ( $min > 0 && 0 === $min % 60 ) {
+		$unit = 60;
+		$val  = $min / 60;
+	} else {
+		$unit = $min > 0 ? 1 : 1440;
+		$val  = $min > 0 ? $min : 1;
+	}
+	$text = isset( $s['text'] ) ? $s['text'] : '';
+	$img  = isset( $s['image'] ) ? $s['image'] : '';
+	ob_start();
+	?>
+	<tr>
+		<td>
+			<input type="number" name="offset[<?php echo esc_attr( $i ); ?>]" value="<?php echo esc_attr( $val ); ?>" min="0" style="width:80px;">
+			<select name="unit[<?php echo esc_attr( $i ); ?>]">
+				<option value="1440" <?php selected( $unit, 1440 ); ?>>日後</option>
+				<option value="60" <?php selected( $unit, 60 ); ?>>時間後</option>
+				<option value="1" <?php selected( $unit, 1 ); ?>>分後</option>
+			</select>
+		</td>
+		<td>
+			<textarea name="text[<?php echo esc_attr( $i ); ?>]" rows="3" style="width:100%;" placeholder="例）友だち追加ありがとうございます！APPREXは…"><?php echo esc_textarea( $text ); ?></textarea>
+			<input type="url" name="image[<?php echo esc_attr( $i ); ?>]" value="<?php echo esc_attr( $img ); ?>" style="width:100%;margin-top:4px;" placeholder="画像URL（任意・https）">
+		</td>
+	</tr>
+	<?php
+	return ob_get_clean();
+}
+
 function apprex_line_steps_page() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return;
@@ -335,16 +370,19 @@ function apprex_line_steps_page() {
 	$secret  = apprex_line_channel_secret();
 	$hook    = home_url( '/line/webhook' );
 	$friends = (int) wp_count_posts( 'apprex_line_friend' )->publish;
-	// 編集用に空行を2つ足す。
-	$rows = $steps;
-	$rows[] = array( 'offset' => 1440, 'text' => '', 'image' => '' );
-	$rows[] = array( 'offset' => 4320, 'text' => '', 'image' => '' );
 	?>
 	<div class="wrap">
 		<h1>APPREX LINEステップ配信</h1>
 
-		<?php if ( isset( $_GET['apprex_ls'] ) && 'saved' === $_GET['apprex_ls'] ) : ?>
-			<div class="notice notice-success is-dismissible"><p>保存しました。</p></div>
+		<?php if ( isset( $_GET['apprex_ls'] ) && 'saved' === $_GET['apprex_ls'] ) : $saved_n = isset( $_GET['n'] ) ? (int) $_GET['n'] : 0; ?>
+			<div class="notice notice-<?php echo $saved_n > 0 ? 'success' : 'warning'; ?> is-dismissible"><p>
+				<?php if ( $saved_n > 0 ) : ?>
+					ステップを <strong><?php echo (int) $saved_n; ?>件</strong> 保存しました。
+				<?php else : ?>
+					保存処理は実行しましたが <strong>入力が0件</strong>でした。本文を入力して「保存する」を押してください。
+					（本文を入れても0件になる場合は、セキュリティ系プラグインやサーバーのWAFが送信内容をブロックしている可能性があります）
+				<?php endif; ?>
+			</p></div>
 		<?php endif; ?>
 
 		<div class="notice notice-info"><p>
@@ -372,41 +410,40 @@ function apprex_line_steps_page() {
 			</tbody></table>
 
 			<h2>ステップ（経過時間順に自動並び替え）</h2>
-			<p class="description">本文・画像が両方空の行は削除されます。画像はhttpsのURLのみ。</p>
+			<p class="description">現在 <strong><?php echo count( $steps ); ?>件</strong> 登録中。本文・画像が両方空の行は削除されます。画像はhttpsのURLのみ。</p>
 			<table class="widefat striped" style="max-width:920px;">
 				<thead><tr><th style="width:160px;">送信タイミング</th><th>本文 / 画像URL（任意）</th></tr></thead>
-				<tbody>
-				<?php foreach ( $rows as $i => $s ) :
-					// 既存はラベル、単位の初期値は日。
-					$min  = (int) ( isset( $s['offset'] ) ? $s['offset'] : 0 );
-					if ( 0 === $min % 1440 ) { $unit = 1440; $val = $min / 1440; }
-					elseif ( 0 === $min % 60 ) { $unit = 60; $val = $min / 60; }
-					else { $unit = 1; $val = $min; }
-					?>
-					<tr>
-						<td>
-							<input type="number" name="offset[<?php echo (int) $i; ?>]" value="<?php echo esc_attr( $val ); ?>" min="0" style="width:80px;">
-							<select name="unit[<?php echo (int) $i; ?>]">
-								<option value="1440" <?php selected( $unit, 1440 ); ?>>日後</option>
-								<option value="60" <?php selected( $unit, 60 ); ?>>時間後</option>
-								<option value="1" <?php selected( $unit, 1 ); ?>>分後</option>
-							</select>
-							<?php if ( isset( $steps[ $i ] ) ) : ?>
-								<p class="description"><?php echo esc_html( apprex_line_offset_label( $min ) ); ?></p>
-							<?php endif; ?>
-						</td>
-						<td>
-							<textarea name="text[<?php echo (int) $i; ?>]" rows="3" style="width:100%;" placeholder="例）友だち追加ありがとうございます！APPREXは…"><?php echo esc_textarea( isset( $s['text'] ) ? $s['text'] : '' ); ?></textarea>
-							<input type="url" name="image[<?php echo (int) $i; ?>]" value="<?php echo esc_attr( isset( $s['image'] ) ? $s['image'] : '' ); ?>" style="width:100%;margin-top:4px;" placeholder="画像URL（任意・https）">
-						</td>
-					</tr>
-				<?php endforeach; ?>
+				<tbody id="apprex-steps-body">
+				<?php
+				$ri = 0;
+				foreach ( $steps as $s ) {
+					echo apprex_line_step_row_html( $ri, $s ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					$ri++;
+				}
+				// 常に1つ空行を表示。
+				echo apprex_line_step_row_html( $ri, array( 'offset' => 1440, 'text' => '', 'image' => '' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				?>
 				</tbody>
 			</table>
-			<p class="description">＋ さらに追加したい場合は、一番下の空行に入力して保存すると新しい空行が増えます。</p>
+			<p style="margin:10px 0;">
+				<button type="button" class="button" id="apprex-add-step">＋ ステップを追加</button>
+			</p>
 
 			<?php submit_button( '保存する' ); ?>
 		</form>
+
+		<template id="apprex-step-tpl"><?php echo apprex_line_step_row_html( '__I__', array( 'offset' => 1440, 'text' => '', 'image' => '' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></template>
+		<script>
+		(function(){
+			var n = 1000, btn = document.getElementById('apprex-add-step'),
+			    body = document.getElementById('apprex-steps-body'),
+			    tpl = document.getElementById('apprex-step-tpl');
+			if(!btn||!body||!tpl) return;
+			btn.addEventListener('click', function(){
+				body.insertAdjacentHTML('beforeend', tpl.innerHTML.replace(/__I__/g, n++));
+			});
+		})();
+		</script>
 	</div>
 	<?php
 }
