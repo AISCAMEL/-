@@ -129,6 +129,8 @@ add_action( 'template_redirect', function () {
 					update_post_meta( $fid, 'apprex_active', 0 );
 				}
 			}
+			// 他モジュール（AI自動応答など）へイベントを渡す。
+			do_action( 'apprex_line_event', $ev, $uid, $type );
 		}
 	}
 	status_header( 200 );

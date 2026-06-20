@@ -277,6 +277,11 @@ function apprex_line_settings_page() {
 					<td><label><input type="checkbox" name="apprex_line_distribute_default" value="1" <?php checked( 1, (int) get_option( 'apprex_line_distribute_default', 1 ) ); ?>> 新しい記事は既定で「公開時にLINE配信」をONにする</label>
 					<p class="description">各記事の編集画面でON/OFFを個別に切り替えられます。</p></td>
 				</tr>
+				<tr>
+					<th scope="row">AI自動応答</th>
+					<td><label><input type="checkbox" name="apprex_line_ai_enabled" value="1" <?php checked( 1, (int) get_option( 'apprex_line_ai_enabled', 0 ) ); ?>> LINEに届いたメッセージへAIが自動返信する</label>
+					<p class="description">サイトのAIチャットと同じ頭脳で返信します。<strong>「APPREX チャット」のOpenRouter APIキー</strong>と、上のチャネルアクセストークン、Webhook（/line/webhook）の設定が必要です。</p></td>
+				</tr>
 			</tbody></table>
 			<?php submit_button( '保存する' ); ?>
 		</form>
