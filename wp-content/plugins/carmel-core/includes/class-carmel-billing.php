@@ -116,11 +116,17 @@ class Carmel_Billing {
 	 * リンク先ページのスラッグはフィルタで変更可能。
 	 */
 	public function dashboard_nav() {
-		$billing = home_url( '/' . ltrim( apply_filters( 'carmel_billing_page_slug', 'store-billing' ), '/' ) );
-		$support = home_url( '/' . ltrim( apply_filters( 'carmel_sales_support_page_slug', 'sales-support' ), '/' ) );
+		$links = array(
+			array( apply_filters( 'carmel_billing_page_slug', 'store-billing' ), '📄 帳票・契約書を発行', '#6b4fbb' ),
+			array( apply_filters( 'carmel_sales_support_page_slug', 'sales-support' ), '🤝 販売支援', '#2e86de' ),
+			array( apply_filters( 'carmel_store_inventory_page_slug', 'store-inventory' ), '🚗 在庫共有', '#16a085' ),
+			array( apply_filters( 'carmel_community_page_slug', 'community' ), '💬 コミュニティ', '#e67e22' ),
+		);
 		echo '<div class="carmel-dash-nav" style="display:flex;gap:.6em;flex-wrap:wrap;margin:.4em 0 1em">';
-		echo '<a class="carmel-btn carmel-btn-purple" style="text-decoration:none;background:#6b4fbb;color:#fff;border-radius:.3em;padding:.5em 1.1em" href="' . esc_url( $billing ) . '">📄 帳票・契約書を発行</a>';
-		echo '<a class="carmel-btn carmel-btn-blue" style="text-decoration:none;background:#2e86de;color:#fff;border-radius:.3em;padding:.5em 1.1em" href="' . esc_url( $support ) . '">🤝 販売支援</a>';
+		foreach ( $links as $l ) {
+			$url = home_url( '/' . ltrim( $l[0], '/' ) );
+			echo '<a class="carmel-btn" style="text-decoration:none;background:' . esc_attr( $l[2] ) . ';color:#fff;border-radius:.3em;padding:.5em 1.1em" href="' . esc_url( $url ) . '">' . esc_html( $l[1] ) . '</a>';
+		}
 		echo '</div>';
 	}
 
