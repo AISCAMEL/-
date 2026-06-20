@@ -107,3 +107,36 @@ add_action( 'apprex_line_event', function ( $ev, $uid, $type ) {
 add_action( 'admin_init', function () {
 	register_setting( 'apprex_line_dist', 'apprex_line_ai_enabled', array( 'sanitize_callback' => 'absint' ) );
 } );
+
+/** AI単体テスト：LINEを介さずOpenRouterだけを直接叩いて結果を表示。 */
+add_action( 'admin_post_apprex_line_ai_test', function () {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( '権限がありません。' );
+	}
+	check_admin_referer( 'apprex_line_ai_test' );
+	$back = admin_url( 'options-general.php?page=apprex-line' );
+
+	if ( ! function_exists( 'apprex_openrouter_complete' ) || '' === apprex_openrouter_key() ) {
+		wp_safe_redirect( add_query_arg( 'apprex_ai_test', rawurlencode( 'OpenRouter APIキーが未設定です（APPREX チャット）' ), $back ) );
+		exit;
+	}
+	$msgs = array(
+		array( 'role' => 'system', 'content' => 'あなたはテスト用アシスタントです。1文で短く挨拶してください。' ),
+		array( 'role' => 'user', 'content' => 'こんにちは' ),
+	);
+	$model = apprex_openrouter_model();
+	$r = apprex_openrouter_complete( $msgs, array( 'max_tokens' => 60, 'timeout' => 25 ) );
+	if ( is_wp_error( $r ) && $model !== APPREX_OPENROUTER_DEFAULT_MODEL ) {
+		$r = apprex_openrouter_complete( $msgs, array( 'model' => APPREX_OPENROUTER_DEFAULT_MODEL, 'max_tokens' => 60, 'timeout' => 25 ) );
+		if ( ! is_wp_error( $r ) ) {
+			$model = APPREX_OPENROUTER_DEFAULT_MODEL . '（フォールバック）';
+		}
+	}
+	if ( is_wp_error( $r ) ) {
+		$msg = 'NG（モデル：' . $model . '）：' . $r->get_error_message();
+	} else {
+		$msg = 'OK（モデル：' . $model . '）：' . mb_substr( (string) $r, 0, 80 );
+	}
+	wp_safe_redirect( add_query_arg( 'apprex_ai_test', rawurlencode( $msg ), $back ) );
+	exit;
+} );

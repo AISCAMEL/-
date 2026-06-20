@@ -307,6 +307,20 @@ function apprex_line_settings_page() {
 			② 受信はあるのに応答しない →「AI 最終応答」のエラー文を確認。
 			③ LINE公式アカウントの<strong>「応答モード」をBotにし、「あいさつ/応答メッセージ（定型）」をOFF</strong>。
 		</p>
+
+		<h3>AI単体テスト（LINEを介さず、AIだけを直接確認）</h3>
+		<?php if ( isset( $_GET['apprex_ai_test'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$ai_msg = rawurldecode( wp_unslash( $_GET['apprex_ai_test'] ) ); // phpcs:ignore
+			$ai_ng  = ( 0 === strpos( $ai_msg, 'NG' ) || 0 === strpos( $ai_msg, 'OpenRouter' ) );
+			?>
+			<div class="notice notice-<?php echo $ai_ng ? 'error' : 'success'; ?> inline"><p><?php echo esc_html( $ai_msg ); ?></p></div>
+		<?php endif; ?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-bottom:8px;">
+			<input type="hidden" name="action" value="apprex_line_ai_test">
+			<?php wp_nonce_field( 'apprex_line_ai_test' ); ?>
+			<button type="submit" class="button">AIに「こんにちは」と聞いてみる</button>
+			<span class="description" style="margin-left:8px;">OK＝AIの頭脳は正常（問題はLINE側）／NG＝OpenRouterのキー・モデル・残高が原因</span>
+		</form>
 		<hr>
 
 		<form method="post" action="options.php">
