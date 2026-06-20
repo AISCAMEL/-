@@ -122,16 +122,36 @@ add_action( 'template_redirect', function () {
 				continue;
 			}
 			if ( 'follow' === $type ) {
-				$fid = apprex_line_friend_get( $uid, true );
+				$existing = apprex_line_friend_get( $uid, false );
+				$fid      = $existing ? $existing : apprex_line_friend_get( $uid, true );
 				if ( $fid ) {
 					update_post_meta( $fid, 'apprex_follow_at', time() );
 					update_post_meta( $fid, 'apprex_active', 1 );
-					update_post_meta( $fid, 'apprex_steps_sent', array() );
+					if ( ! $existing ) {
+						// 新規追加：ステップ配信を最初から開始。
+						update_post_meta( $fid, 'apprex_steps_sent', array() );
+					} else {
+						// 再追加（ブロック解除など）：おかえりメッセージを返信。
+						update_post_meta( $fid, 'apprex_readded_at', time() );
+						$wb = (string) get_option( 'apprex_line_welcome_back', '' );
+						$rt = isset( $ev['replyToken'] ) ? sanitize_text_field( $ev['replyToken'] ) : '';
+						if ( '' !== trim( $wb ) && '' !== $rt && function_exists( 'apprex_line_reply' ) ) {
+							apprex_line_reply( $rt, array( array( 'type' => 'text', 'text' => mb_substr( $wb, 0, 4900 ) ) ) );
+						}
+						// 再追加でステップを再走させたい場合のみ（既定はしない＝再送防止）。
+						if ( get_option( 'apprex_line_readd_restart', 0 ) ) {
+							update_post_meta( $fid, 'apprex_steps_sent', array() );
+						}
+					}
 				}
 			} elseif ( 'unfollow' === $type ) {
 				$fid = apprex_line_friend_get( $uid, false );
 				if ( $fid ) {
 					update_post_meta( $fid, 'apprex_active', 0 );
+					update_post_meta( $fid, 'apprex_blocked_at', time() );
+				}
+				if ( get_option( 'apprex_line_block_notify', 0 ) && function_exists( 'apprex_slack_notify' ) ) {
+					apprex_slack_notify( ':no_entry: LINEをブロックされました（userId: ' . substr( $uid, 0, 12 ) . '…）' );
 				}
 			}
 			// 他モジュール（AI自動応答など）へイベントを渡す。
