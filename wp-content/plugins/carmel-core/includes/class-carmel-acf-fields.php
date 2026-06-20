@@ -94,6 +94,7 @@ class Carmel_ACF_Fields {
 		$this->register_repayment();
 		$this->register_inspection();
 		$this->register_insurance();
+		$this->register_content();
 	}
 
 	/* ------------------------------------------------------------------ */
@@ -210,6 +211,19 @@ class Carmel_ACF_Fields {
 			) ),
 			$this->f( 'inspection', 'quote_amount', '見積額', 'number' ),
 			$this->f( 'inspection', 'assigned_store_id', '実施加盟店', 'post_object', array( 'post_type' => array( 'carmel_store' ), 'return_format' => 'id', 'ui' => 1 ) ),
+		) );
+	}
+
+	private function register_content() {
+		$this->group( 'content', '加盟店コンテンツ設定', 'carmel_content', array(
+			$this->f( 'content', 'content_type', '種別', 'select', array(
+				'choices' => array( 'notice' => 'お知らせ', 'manual' => 'マニュアル・資料', 'faq' => 'FAQ' ),
+				'ui'      => 1,
+			) ),
+			$this->f( 'content', 'summary', '概要（一覧表示用）', 'text' ),
+			$this->f( 'content', 'file_url', '添付ファイルURL（資料DL用）', 'url' ),
+			$this->f( 'content', 'pinned', '重要（上部に固定）', 'true_false' ),
+			$this->f( 'content', 'notify_stores', '公開時に加盟店へ通知する', 'true_false' ),
 		) );
 	}
 

@@ -79,6 +79,13 @@ class Carmel_Post_Types {
 				'icon'     => 'dashicons-shield',
 				'cap_type' => 'carmel_insurance',
 			),
+			'carmel_content'      => array(
+				'label'    => '加盟店コンテンツ',
+				'plural'   => '加盟店コンテンツ',
+				'icon'     => 'dashicons-welcome-learn-more',
+				'cap_type' => 'carmel_content',
+				'supports' => array( 'title', 'editor' ),
+			),
 			'carmel_notify_log'   => array(
 				'label'         => '通知ログ',
 				'plural'        => '通知ログ',

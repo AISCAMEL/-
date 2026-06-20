@@ -98,6 +98,7 @@ class Carmel_Notifier {
 			'membership_expired'   => array( $d( 'store', 'lineworks' ), $d( 'hq', 'lineworks' ), $d( 'store', 'mail' ) ),
 			'franchise_application'=> array( $d( 'hq', 'lineworks' ), $d( 'hq', 'mail' ) ),
 			'franchise_approved'   => array( $d( 'store', 'lineworks' ), $d( 'store', 'mail' ) ),
+			'store_notice'         => array( $d( 'all_stores', 'lineworks' ), $d( 'all_stores', 'mail' ) ),
 		);
 
 		return apply_filters( 'carmel_routing_table', $table );
@@ -237,6 +238,13 @@ class Carmel_Notifier {
 				}
 				break;
 
+			case 'all_stores':
+				// Broadcast to every franchise user (owners + staff).
+				foreach ( get_users( array( 'role__in' => array( 'store_owner', 'store_staff' ) ) ) as $u ) {
+					$out[] = $this->normalize_user( $u->ID );
+				}
+				break;
+
 			case 'system':
 				// Slack has no per-user address; one pseudo recipient.
 				$out[] = array(
@@ -299,6 +307,7 @@ class Carmel_Notifier {
 			'membership_expired'    => array( '会費の期限切れ', "{store} の会費が期限切れです。ご対応をお願いします。" ),
 			'franchise_application'  => array( '加盟店応募がありました', "新規加盟店の応募がありました：{store}（担当：{contact}）。/hq で審査してください。" ),
 			'franchise_approved'     => array( '加盟店登録のご案内', "{store} 御中\n加盟店として登録されました。初回ログイン（パスワード設定）はこちら：\n{set_password_url}" ),
+			'store_notice'           => array( '本部からのお知らせ', "【{title}】\n{summary}\n加盟店ポータルでご確認ください。" ),
 		);
 
 		$subject = isset( $defaults[ $event_type ][0] ) ? $defaults[ $event_type ][0] : 'カーメルからのお知らせ';

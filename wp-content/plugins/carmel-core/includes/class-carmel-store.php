@@ -217,6 +217,14 @@ class Carmel_Store {
 		echo '<div class="carmel-store">';
 		echo '<h2>加盟店ダッシュボード' . ( $is_hq && ! $store_id ? '（全店）' : '' ) . '</h2>';
 
+		/**
+		 * Allow modules (e.g. franchise content) to render at the top of the
+		 * store dashboard.
+		 */
+		ob_start();
+		do_action( 'carmel_store_dashboard_top' );
+		echo ob_get_clean(); // phpcs:ignore WordPress.Security.EscapeOutput
+
 		echo $this->dashboard( $deals ); // phpcs:ignore WordPress.Security.EscapeOutput
 		echo $this->staff_form(); // phpcs:ignore WordPress.Security.EscapeOutput
 
