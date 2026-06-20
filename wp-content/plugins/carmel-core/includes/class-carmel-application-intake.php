@@ -202,6 +202,52 @@ class Carmel_Application_Intake {
 	}
 
 	/**
+	 * Generic account provisioning for any role (owner / staff / customer).
+	 * Reuses an existing user by email (adding the role if missing); otherwise
+	 * creates one and returns a password-set link.
+	 *
+	 * @param string $name
+	 * @param string $email
+	 * @param string $role
+	 * @return array|WP_Error [ user_id, created(bool), set_password_url ]
+	 */
+	public static function provision_user( $name, $email, $role ) {
+		$email = sanitize_email( $email );
+		$name  = sanitize_text_field( $name );
+		if ( '' === $email || ! is_email( $email ) ) {
+			return new WP_Error( 'carmel_bad_email', '有効なメールアドレスが必要です。' );
+		}
+
+		$existing = get_user_by( 'email', $email );
+		if ( $existing ) {
+			if ( ! in_array( $role, (array) $existing->roles, true ) ) {
+				$existing->add_role( $role );
+			}
+			return array( 'user_id' => (int) $existing->ID, 'created' => false, 'set_password_url' => '' );
+		}
+
+		$user_id = wp_insert_user(
+			array(
+				'user_login'   => self::unique_username_from_email( $email ),
+				'user_email'   => $email,
+				'display_name' => $name,
+				'first_name'   => $name,
+				'user_pass'    => wp_generate_password( 24, true, true ),
+				'role'         => $role,
+			)
+		);
+		if ( is_wp_error( $user_id ) ) {
+			return $user_id;
+		}
+
+		$user       = get_userdata( $user_id );
+		$key        = get_password_reset_key( $user );
+		$set_pw_url = is_wp_error( $key ) ? '' : network_site_url( "wp-login.php?action=rp&key={$key}&login=" . rawurlencode( $user->user_login ), 'login' );
+
+		return array( 'user_id' => (int) $user_id, 'created' => true, 'set_password_url' => $set_pw_url );
+	}
+
+	/**
 	 * Derive a unique, sanitized username from an email local part.
 	 *
 	 * @param string $email

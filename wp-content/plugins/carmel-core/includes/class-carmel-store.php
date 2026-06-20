@@ -62,6 +62,49 @@ class Carmel_Store {
 	public function register_hooks() {
 		add_shortcode( self::SHORTCODE, array( $this, 'render' ) );
 		add_action( 'admin_post_' . self::ACTION, array( $this, 'handle_post' ) );
+		add_action( 'admin_post_carmel_staff_add', array( $this, 'handle_staff_add' ) );
+	}
+
+	/**
+	 * Owner adds a staff member to their own store (cap carmel_manage_staff).
+	 */
+	public function handle_staff_add() {
+		$redirect = wp_get_referer() ? wp_get_referer() : home_url( '/store' );
+
+		if ( ! current_user_can( 'carmel_manage_staff' ) ) {
+			wp_die( esc_html__( '権限がありません。', 'carmel-core' ), '', array( 'response' => 403 ) );
+		}
+		if ( ! wp_verify_nonce( isset( $_POST['carmel_staff_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['carmel_staff_nonce'] ) ) : '', 'carmel_staff_add' ) ) {
+			wp_die( esc_html__( '不正なリクエストです。', 'carmel-core' ), '', array( 'response' => 400 ) );
+		}
+
+		$store_id = $this->current_store_id();
+		if ( ! $store_id ) {
+			wp_safe_redirect( add_query_arg( 'carmel_msg', 'err', $redirect ) );
+			exit;
+		}
+
+		$name  = isset( $_POST['staff_name'] ) ? sanitize_text_field( wp_unslash( $_POST['staff_name'] ) ) : '';
+		$email = isset( $_POST['staff_email'] ) ? sanitize_email( wp_unslash( $_POST['staff_email'] ) ) : '';
+
+		$account = Carmel_Application_Intake::provision_user( $name ? $name : $email, $email, 'store_staff' );
+		if ( is_wp_error( $account ) ) {
+			wp_safe_redirect( add_query_arg( 'carmel_msg', 'err', $redirect ) );
+			exit;
+		}
+		// Bind the staff to this owner's store.
+		update_user_meta( (int) $account['user_id'], 'store_id', $store_id );
+
+		if ( ! empty( $account['set_password_url'] ) && $email ) {
+			wp_mail(
+				$email,
+				'カーメル：スタッフアカウント発行のご案内',
+				"スタッフアカウントが発行されました。初回ログイン（パスワード設定）はこちら：\n" . $account['set_password_url']
+			);
+		}
+
+		wp_safe_redirect( add_query_arg( 'carmel_msg', 'staff_ok', $redirect ) );
+		exit;
 	}
 
 	/**
@@ -175,6 +218,7 @@ class Carmel_Store {
 		echo '<h2>加盟店ダッシュボード' . ( $is_hq && ! $store_id ? '（全店）' : '' ) . '</h2>';
 
 		echo $this->dashboard( $deals ); // phpcs:ignore WordPress.Security.EscapeOutput
+		echo $this->staff_form(); // phpcs:ignore WordPress.Security.EscapeOutput
 
 		if ( empty( $deals ) ) {
 			echo '<p>担当案件はありません。</p></div>';
@@ -267,6 +311,27 @@ class Carmel_Store {
 		return $out;
 	}
 
+	/**
+	 * Staff invitation form (owners only — carmel_manage_staff).
+	 *
+	 * @return string
+	 */
+	private function staff_form() {
+		if ( ! current_user_can( 'carmel_manage_staff' ) || ! $this->current_store_id() ) {
+			return '';
+		}
+		$nonce = wp_create_nonce( 'carmel_staff_add' );
+		$out   = '<div class="carmel-staff-add"><h3>スタッフを追加</h3>';
+		$out  .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="carmel-staff-form">';
+		$out  .= '<input type="hidden" name="action" value="carmel_staff_add">';
+		$out  .= '<input type="hidden" name="carmel_staff_nonce" value="' . esc_attr( $nonce ) . '">';
+		$out  .= '<input type="text" name="staff_name" placeholder="氏名">';
+		$out  .= '<input type="email" name="staff_email" placeholder="メールアドレス" required>';
+		$out  .= '<button type="submit" class="carmel-btn carmel-btn-green">発行</button>';
+		$out  .= '</form><p class="carmel-staff-note">自店のスタッフ（store_staff）アカウントを発行します。ログイン設定リンクをメールで送付します。</p></div>';
+		return $out;
+	}
+
 	private function notice_banner() {
 		$msg = isset( $_GET['carmel_msg'] ) ? sanitize_key( $_GET['carmel_msg'] ) : '';
 		if ( '' === $msg ) {
@@ -277,6 +342,7 @@ class Carmel_Store {
 			'err'       => array( 'error', '更新できませんでした。' ),
 			'forbidden' => array( 'error', 'この操作は本部のみ可能です。' ),
 			'badstep'   => array( 'error', 'この遷移は許可されていません。' ),
+			'staff_ok'  => array( 'success', 'スタッフアカウントを発行しました（ログイン設定メールを送付）。' ),
 		);
 		if ( ! isset( $map[ $msg ] ) ) {
 			return '';

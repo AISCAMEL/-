@@ -39,6 +39,42 @@ class Carmel_Access_Control {
 
 	public function register_hooks() {
 		add_action( 'template_redirect', array( $this, 'guard' ) );
+		add_filter( 'login_redirect', array( $this, 'role_login_redirect' ), 10, 3 );
+	}
+
+	/**
+	 * Route users to their portal after login, by role.
+	 *
+	 * @param string           $redirect_to Default redirect.
+	 * @param string           $requested   Requested redirect.
+	 * @param WP_User|WP_Error $user
+	 * @return string
+	 */
+	public function role_login_redirect( $redirect_to, $requested, $user ) {
+		if ( ! ( $user instanceof WP_User ) || empty( $user->roles ) ) {
+			return $redirect_to;
+		}
+		// Respect an explicit, valid same-site requested destination.
+		if ( $requested && false === strpos( $requested, 'wp-admin' ) && wp_validate_redirect( $requested, false ) ) {
+			return $redirect_to;
+		}
+
+		$roles = (array) $user->roles;
+		$map   = apply_filters(
+			'carmel_role_home',
+			array(
+				'hq_admin'    => '/hq',
+				'store_owner' => '/store',
+				'store_staff' => '/store',
+				'customer'    => '/mypage',
+			)
+		);
+		foreach ( $map as $role => $path ) {
+			if ( in_array( $role, $roles, true ) ) {
+				return home_url( $path );
+			}
+		}
+		return $redirect_to;
 	}
 
 	/**

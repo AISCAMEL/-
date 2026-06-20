@@ -96,6 +96,8 @@ class Carmel_Notifier {
 			'weekly_report'        => array( $d( 'system', 'slack' ), $d( 'hq', 'mail' ) ),
 			'membership_renewal'   => array( $d( 'store', 'lineworks' ), $d( 'store', 'mail' ) ),
 			'membership_expired'   => array( $d( 'store', 'lineworks' ), $d( 'hq', 'lineworks' ), $d( 'store', 'mail' ) ),
+			'franchise_application'=> array( $d( 'hq', 'lineworks' ), $d( 'hq', 'mail' ) ),
+			'franchise_approved'   => array( $d( 'store', 'lineworks' ), $d( 'store', 'mail' ) ),
 		);
 
 		return apply_filters( 'carmel_routing_table', $table );
@@ -295,6 +297,8 @@ class Carmel_Notifier {
 			'weekly_report'         => array( '週次レポート', "{report}" ),
 			'membership_renewal'    => array( '会費お支払いのご案内', "{store} 御中\n会費のお支払い期日が近づいています（{due}）。" ),
 			'membership_expired'    => array( '会費の期限切れ', "{store} の会費が期限切れです。ご対応をお願いします。" ),
+			'franchise_application'  => array( '加盟店応募がありました', "新規加盟店の応募がありました：{store}（担当：{contact}）。/hq で審査してください。" ),
+			'franchise_approved'     => array( '加盟店登録のご案内', "{store} 御中\n加盟店として登録されました。初回ログイン（パスワード設定）はこちら：\n{set_password_url}" ),
 		);
 
 		$subject = isset( $defaults[ $event_type ][0] ) ? $defaults[ $event_type ][0] : 'カーメルからのお知らせ';
