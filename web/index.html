@@ -27,10 +27,10 @@ img{max-width:100%}
 .reveal.d1{transition-delay:.1s}.reveal.d2{transition-delay:.2s}.reveal.d3{transition-delay:.3s}
 .note{background:#fff3e2;color:#a85b00;font-size:11px;border:1px dashed var(--orange);border-radius:5px;padding:0 6px;display:inline-block}
 
-/* mascot helper: cream spotlight + multiply blends the image's light bg */
+/* mascot: transparent PNG with soft shadow */
 .mascot{position:relative;display:inline-block}
-.mascot::before{content:"";position:absolute;inset:-6% -4%;background:radial-gradient(circle at 50% 46%,var(--cream) 58%,rgba(251,247,236,0) 72%);z-index:0}
-.mascot img{position:relative;z-index:1;mix-blend-mode:multiply;display:block}
+.mascot img{display:block;filter:drop-shadow(0 12px 16px rgba(0,0,0,.28))}
+.peek{position:absolute;z-index:3;pointer-events:none;filter:drop-shadow(0 8px 10px rgba(0,0,0,.2))}
 
 /* buttons */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-weight:900;text-decoration:none;border-radius:999px;
@@ -203,7 +203,10 @@ footer a{color:#aebdd9;text-decoration:none}
 <!-- HEADER -->
 <header>
   <div class="hd">
-    <div class="logo">BUY<span>MO</span><small>オンライン車買取</small></div>
+    <div style="display:flex;align-items:center;gap:9px">
+      <img src="images/characters/camel-icon.png" alt="" style="height:40px;width:auto">
+      <div class="logo">BUY<span>MO</span><small>オンライン車買取</small></div>
+    </div>
     <a href="#form" class="btn btn-cta">今すぐオンライン査定</a>
   </div>
 </header>
@@ -227,7 +230,7 @@ footer a{color:#aebdd9;text-decoration:none}
       </div>
       <div class="h-right reveal d1">
         <div class="h-bubble">高く売れる！</div>
-        <div class="mascot"><img src="images/characters/frog-10.jpg" alt="BUYMOキャラクター（カエル）"></div>
+        <div class="mascot"><img src="images/characters/camel-face.png" alt="BUYMOキャラクター（ラクダ）"></div>
       </div>
     </div>
   </div>
@@ -236,6 +239,7 @@ footer a{color:#aebdd9;text-decoration:none}
 <!-- FORM -->
 <section class="formband">
   <div class="formwrap reveal">
+    <img class="peek" src="images/characters/camel-face-flip.png" style="top:-40px;left:6px;width:92px;transform:rotate(6deg)" alt="">
     <form class="fcard" id="form" onsubmit="return false">
       <div class="fhd">
         <span class="t45">入力45秒</span>
@@ -303,7 +307,7 @@ footer a{color:#aebdd9;text-decoration:none}
 <section class="blk tint">
   <div class="wrap flow">
     <div class="sec-h reveal"><span class="en">FLOW</span><h2>査定の<span class="u">流れ</span></h2><p>申込から入金まで、オンラインでスムーズに</p></div>
-    <div class="flow-mascot reveal"><div class="mascot"><img src="images/characters/frog-3.jpg" alt="案内するカエル"></div></div>
+    <div class="flow-mascot reveal"><div class="mascot"><img src="images/characters/camel-face-flip.png" alt="案内するラクダ"></div></div>
     <div class="steps">
       <div class="step reveal"><div class="circle"><span class="s">STEP</span><span class="n">01</span></div><h3>フォーム入力</h3><p>最短45秒で申込</p></div>
       <div class="step reveal d1"><div class="circle"><span class="s">STEP</span><span class="n">02</span></div><h3>写真アップロード</h3><p>送るだけで精度UP</p></div>
@@ -358,7 +362,7 @@ footer a{color:#aebdd9;text-decoration:none}
 <!-- FINAL -->
 <section class="final">
   <div class="wrap">
-    <div class="mascot reveal"><img src="images/characters/frog-5.jpg" alt="ナイス！のカエル"></div>
+    <div class="mascot reveal" style="width:150px"><img src="images/characters/camel-face.png" alt="ラクダ" style="width:100%"></div>
     <h2 class="reveal">今すぐ、<span class="y">無料査定。</span></h2>
     <p class="reveal d1">45秒で今いくらかチェック。しつこい営業はありません。</p>
     <div class="cta-row reveal d1">
