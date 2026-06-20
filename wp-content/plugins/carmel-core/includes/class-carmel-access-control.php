@@ -54,9 +54,15 @@ class Carmel_Access_Control {
 		if ( ! ( $user instanceof WP_User ) || empty( $user->roles ) ) {
 			return $redirect_to;
 		}
-		// Respect an explicit, valid same-site requested destination.
+		// Honor an explicit, safe deep-link — but not the login page or home,
+		// so default logins fall through to role-based routing.
+		$login = untrailingslashit( home_url( '/login' ) );
+		$home  = untrailingslashit( home_url( '/' ) );
 		if ( $requested && false === strpos( $requested, 'wp-admin' ) && wp_validate_redirect( $requested, false ) ) {
-			return $redirect_to;
+			$req = untrailingslashit( $requested );
+			if ( $req !== $login && $req !== $home ) {
+				return $redirect_to;
+			}
 		}
 
 		$roles = (array) $user->roles;
