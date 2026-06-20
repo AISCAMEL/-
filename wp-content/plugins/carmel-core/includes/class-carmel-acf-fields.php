@@ -141,7 +141,16 @@ class Carmel_ACF_Fields {
 			$this->f( 'deal', 'gps_equipped', 'GPS搭載', 'true_false', array( 'conditional_logic' => $this->when_type( 'lease' ) ) ),
 		);
 
-		$this->group( 'deal', '案件情報', 'carmel_deal', array_merge( $common, $loan, $buyback, $lease ) );
+		// 販売支援（保証）— 種別共通。Carmel_Sales_Support / Carmel_Billing が利用。
+		$support = array(
+			$this->f( 'deal', 'warranty_plan', '保証プラン' ),
+			$this->f( 'deal', 'warranty_term', '保証期間' ),
+			$this->f( 'deal', 'warranty_scope', '保証範囲' ),
+			$this->f( 'deal', 'warranty_fee', '保証料', 'number' ),
+			$this->f( 'deal', 'warranty_start', '保証開始日', 'date_picker', array( 'display_format' => 'Y-m-d', 'return_format' => 'Y-m-d' ) ),
+		);
+
+		$this->group( 'deal', '案件情報', 'carmel_deal', array_merge( $common, $loan, $buyback, $lease, $support ) );
 	}
 
 	private function register_store() {
@@ -217,7 +226,7 @@ class Carmel_ACF_Fields {
 	private function register_content() {
 		$this->group( 'content', '加盟店コンテンツ設定', 'carmel_content', array(
 			$this->f( 'content', 'content_type', '種別', 'select', array(
-				'choices' => array( 'notice' => 'お知らせ', 'manual' => 'マニュアル・資料', 'faq' => 'FAQ' ),
+				'choices' => array( 'notice' => 'お知らせ', 'manual' => 'マニュアル・資料', 'faq' => 'FAQ', 'promo' => '販促ツール' ),
 				'ui'      => 1,
 			) ),
 			$this->f( 'content', 'summary', '概要（一覧表示用）', 'text' ),

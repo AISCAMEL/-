@@ -41,6 +41,8 @@ require_once CARMEL_CORE_DIR . 'includes/class-carmel-payments.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-reports.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-mf-contract.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-documents.php';
+require_once CARMEL_CORE_DIR . 'includes/class-carmel-billing.php';
+require_once CARMEL_CORE_DIR . 'includes/class-carmel-sales-support.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-acf-fields.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-hq-board.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-membership.php';
@@ -77,6 +79,8 @@ function carmel_core_init() {
 	Carmel_Reports::instance()->register_hooks();
 	Carmel_MF_Contract::instance()->register_hooks();
 	Carmel_Documents::instance()->register_hooks();
+	Carmel_Billing::instance()->register_hooks();
+	Carmel_Sales_Support::instance()->register_hooks();
 	Carmel_ACF_Fields::instance()->register_hooks();
 	Carmel_HQ_Board::instance()->register_hooks();
 	Carmel_Membership::instance()->register_hooks();

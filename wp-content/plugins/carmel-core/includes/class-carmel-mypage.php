@@ -151,6 +151,11 @@ class Carmel_MyPage {
 		// Repayment schedule / status (loan & lease).
 		$out .= $this->render_repayments( $deal );
 
+		// 発行書類（見積書・請求書・各種契約書）。
+		if ( class_exists( 'Carmel_Billing' ) ) {
+			$out .= Carmel_Billing::customer_deal_documents_html( $deal->ID, false );
+		}
+
 		$out .= '</div>';
 		return $out;
 	}

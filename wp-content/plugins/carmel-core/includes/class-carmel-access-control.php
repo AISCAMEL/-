@@ -30,9 +30,11 @@ class Carmel_Access_Control {
 		return apply_filters(
 			'carmel_protected_pages',
 			array(
-				'mypage' => array( 'customer', 'hq_admin' ),
-				'store'  => array( 'store_owner', 'store_staff', 'hq_admin' ),
-				'hq'     => array( 'hq_admin' ),
+				'mypage'        => array( 'customer', 'hq_admin' ),
+				'store'         => array( 'store_owner', 'store_staff', 'hq_admin' ),
+				'store-billing' => array( 'store_owner', 'store_staff', 'hq_admin' ),
+				'sales-support' => array( 'store_owner', 'store_staff', 'hq_admin' ),
+				'hq'            => array( 'hq_admin' ),
 			)
 		);
 	}
