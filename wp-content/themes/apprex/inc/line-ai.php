@@ -85,6 +85,10 @@ add_action( 'apprex_line_event', function ( $ev, $uid, $type ) {
 		array( 'role' => 'user', 'content' => mb_substr( $user_text, 0, 2000 ) ),
 	);
 	$reply = apprex_openrouter_complete( $messages, array( 'temperature' => 0.4, 'max_tokens' => 500, 'timeout' => 25 ) );
+	// 設定モデルが利用不可（404等）の場合、安全な既定モデルで自動再試行（サイトのAIチャットと同じ挙動）。
+	if ( is_wp_error( $reply ) && function_exists( 'apprex_openrouter_model' ) && apprex_openrouter_model() !== APPREX_OPENROUTER_DEFAULT_MODEL ) {
+		$reply = apprex_openrouter_complete( $messages, array( 'model' => APPREX_OPENROUTER_DEFAULT_MODEL, 'temperature' => 0.4, 'max_tokens' => 500, 'timeout' => 25 ) );
+	}
 	if ( is_wp_error( $reply ) || '' === trim( (string) $reply ) ) {
 		$note = is_wp_error( $reply ) ? $reply->get_error_message() : 'AIの返答が空でした';
 		update_option( 'apprex_line_ai_last', array( 't' => time(), 's' => 'err', 'n' => 'AI生成エラー：' . $note ), false );
