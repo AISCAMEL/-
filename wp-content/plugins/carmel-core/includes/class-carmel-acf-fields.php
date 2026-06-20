@@ -226,9 +226,10 @@ class Carmel_ACF_Fields {
 	private function register_content() {
 		$this->group( 'content', '加盟店コンテンツ設定', 'carmel_content', array(
 			$this->f( 'content', 'content_type', '種別', 'select', array(
-				'choices' => array( 'notice' => 'お知らせ', 'manual' => 'マニュアル・資料', 'faq' => 'FAQ', 'promo' => '販促ツール' ),
+				'choices' => array( 'guide' => 'スタートガイド（始め方）', 'notice' => 'お知らせ', 'manual' => 'マニュアル・資料', 'faq' => 'FAQ', 'promo' => '販促ツール' ),
 				'ui'      => 1,
 			) ),
+			$this->f( 'content', 'step_order', '表示順（スタートガイド用）', 'number' ),
 			$this->f( 'content', 'summary', '概要（一覧表示用）', 'text' ),
 			$this->f( 'content', 'file_url', '添付ファイルURL（資料DL用）', 'url' ),
 			$this->f( 'content', 'pinned', '重要（上部に固定）', 'true_false' ),

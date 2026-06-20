@@ -34,6 +34,7 @@ require_once CARMEL_CORE_DIR . 'includes/class-carmel-hq-screening.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-mypage.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-store.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-store-content.php';
+require_once CARMEL_CORE_DIR . 'includes/class-carmel-content-seeder.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-cron.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-gas-client.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-transport.php';
@@ -96,6 +97,7 @@ function carmel_core_activate() {
 	Carmel_Post_Types::instance()->register_post_types();
 	Carmel_Roles::add_roles_and_caps();
 	Carmel_Cron::schedule();
+	Carmel_Content_Seeder::seed();
 	flush_rewrite_rules();
 }
 register_activation_hook( __FILE__, 'carmel_core_activate' );

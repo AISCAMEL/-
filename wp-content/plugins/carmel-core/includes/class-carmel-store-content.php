@@ -29,6 +29,8 @@ class Carmel_Store_Content {
 
 	public function register_hooks() {
 		add_shortcode( self::SHORTCODE, array( $this, 'render' ) );
+		// スタートガイドへの導線をダッシュボード最上部に。
+		add_action( 'carmel_store_dashboard_top', array( $this, 'render_dashboard_guide' ), 5 );
 		// Surface latest notices at the top of the store dashboard.
 		add_action( 'carmel_store_dashboard_top', array( $this, 'render_dashboard_notices' ) );
 		// Broadcast a notice to franchises when published with the notify flag.
@@ -67,6 +69,44 @@ class Carmel_Store_Content {
 				),
 			)
 		);
+	}
+
+	/**
+	 * スタートガイド（始め方）を step_order 順で取得。
+	 *
+	 * @param int $limit
+	 * @return WP_Post[]
+	 */
+	private function get_guides( $limit = 50 ) {
+		return get_posts(
+			array(
+				'post_type'      => 'carmel_content',
+				'post_status'    => 'publish',
+				'posts_per_page' => $limit,
+				'meta_key'       => 'step_order',
+				'orderby'        => array( 'meta_value_num' => 'ASC', 'date' => 'ASC' ),
+				'meta_query'     => array(
+					array( 'key' => 'content_type', 'value' => 'guide' ),
+				),
+			)
+		);
+	}
+
+	/* --------------------------------------------------------------------- *
+	 * Dashboard guide pointer (top of /store)
+	 * --------------------------------------------------------------------- */
+
+	public function render_dashboard_guide() {
+		$guides = $this->get_guides();
+		if ( empty( $guides ) ) {
+			return;
+		}
+		$slug = home_url( '/' . ltrim( apply_filters( 'carmel_store_content_page_slug', 'store-content' ), '/' ) );
+		echo '<div class="carmel-guide-cta">';
+		echo '<div class="carmel-guide-cta-main"><span class="carmel-guide-badge">はじめての方へ</span> ';
+		echo '<strong>始め方マニュアル（スタートガイド）</strong>　全' . (int) count( $guides ) . 'ステップで基本操作をご案内します。</div>';
+		echo '<a class="carmel-btn carmel-btn-purple" style="text-decoration:none;background:#6b4fbb;color:#fff;border-radius:.3em;padding:.5em 1.1em" href="' . esc_url( $slug ) . '">スタートガイドを開く</a>';
+		echo '</div>';
 	}
 
 	/* --------------------------------------------------------------------- *
@@ -110,12 +150,38 @@ class Carmel_Store_Content {
 		echo $this->styles(); // phpcs:ignore WordPress.Security.EscapeOutput
 		echo '<div class="carmel-content">';
 
+		echo $this->guide_section();   // phpcs:ignore WordPress.Security.EscapeOutput
 		echo $this->notices_section(); // phpcs:ignore WordPress.Security.EscapeOutput
 		echo $this->manuals_section(); // phpcs:ignore WordPress.Security.EscapeOutput
 		echo $this->faq_section();     // phpcs:ignore WordPress.Security.EscapeOutput
 
 		echo '</div>';
 		return ob_get_clean();
+	}
+
+	private function guide_section() {
+		$items = $this->get_guides();
+		$out   = '<section class="carmel-guide-sec"><h2>🚀 始め方マニュアル（スタートガイド）</h2>';
+		if ( empty( $items ) ) {
+			return $out . '<p>スタートガイドはありません。</p></section>';
+		}
+		$out .= '<p class="carmel-guide-lead">基本操作をステップ順にまとめています。上から順にご確認ください。</p>';
+		$out .= '<ol class="carmel-guide-list">';
+		foreach ( $items as $i => $g ) {
+			$summary = get_post_meta( $g->ID, 'summary', true );
+			$open    = ( 0 === $i ) ? ' open' : '';
+			$out    .= '<li class="carmel-guide-step">';
+			$out    .= '<details' . $open . '><summary><span class="carmel-step-no">' . ( $i + 1 ) . '</span>'
+				. '<span class="carmel-step-ttl">' . esc_html( get_the_title( $g->ID ) ) . '</span>';
+			if ( $summary ) {
+				$out .= '<span class="carmel-step-sum">' . esc_html( $summary ) . '</span>';
+			}
+			$out .= '</summary>';
+			$out .= '<div class="carmel-guide-body">' . wp_kses_post( wpautop( get_post_field( 'post_content', $g->ID ) ) ) . '</div>';
+			$out .= '</details></li>';
+		}
+		$out .= '</ol></section>';
+		return $out;
 	}
 
 	private function notices_section() {
@@ -229,6 +295,17 @@ class Carmel_Store_Content {
 .carmel-notice-list li{padding:.3em 0;border-top:1px solid #ece6f5}
 .carmel-notice-list li:first-child{border-top:0}
 .carmel-notice-sum{color:#7a7488}
+.carmel-guide-cta{display:flex;align-items:center;justify-content:space-between;gap:1em;flex-wrap:wrap;background:#f1ecfb;border:1px solid #ddd2f5;border-radius:12px;padding:.9em 1.2em;margin:1em 0}
+.carmel-guide-badge{background:#6b4fbb;color:#fff;border-radius:.3em;padding:.1em .6em;font-size:.78em;font-weight:bold}
+.carmel-guide-sec .carmel-guide-lead{color:#7a7488;font-size:.9em}
+.carmel-guide-list{list-style:none;counter-reset:none;padding:0;margin:0}
+.carmel-guide-step{margin:.5em 0}
+.carmel-guide-step details{border:1px solid #e7e2ef;border-radius:10px;background:#fff;padding:.2em .4em}
+.carmel-guide-step summary{cursor:pointer;display:flex;align-items:center;gap:.7em;padding:.7em .6em;flex-wrap:wrap}
+.carmel-step-no{flex:0 0 auto;width:1.9em;height:1.9em;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:#6b4fbb;color:#fff;font-weight:bold;font-size:.9em}
+.carmel-step-ttl{font-weight:700}
+.carmel-step-sum{color:#7a7488;font-size:.85em;flex-basis:100%;padding-left:2.6em}
+.carmel-guide-body{padding:.2em 1em 1em 2.6em;color:#46414f;line-height:1.85}
 </style>';
 	}
 }

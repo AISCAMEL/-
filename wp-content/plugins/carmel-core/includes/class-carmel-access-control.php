@@ -34,6 +34,7 @@ class Carmel_Access_Control {
 				'store'         => array( 'store_owner', 'store_staff', 'hq_admin' ),
 				'store-billing' => array( 'store_owner', 'store_staff', 'hq_admin' ),
 				'sales-support' => array( 'store_owner', 'store_staff', 'hq_admin' ),
+				'store-content' => array( 'store_owner', 'store_staff', 'hq_admin' ),
 				'hq'            => array( 'hq_admin' ),
 			)
 		);
