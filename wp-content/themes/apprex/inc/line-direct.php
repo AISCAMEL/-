@@ -264,6 +264,51 @@ function apprex_line_settings_page() {
 			「チャネルアクセストークン（長期）」を発行 → 下に貼り付け。これで<strong>GASなしで</strong>記事公開時にLINEへ自動配信されます。
 		</p></div>
 
+		<?php
+		// ── AI自動応答 診断 ──────────────────────────────
+		$diag_token  = '' !== apprex_line_channel_token();
+		$diag_secret = function_exists( 'apprex_line_channel_secret' ) && '' !== apprex_line_channel_secret();
+		$diag_ai     = (int) get_option( 'apprex_line_ai_enabled', 0 );
+		$diag_key    = function_exists( 'apprex_openrouter_key' ) && '' !== apprex_openrouter_key();
+		$hook_last   = (int) get_option( 'apprex_line_hook_last', 0 );
+		$hook_note   = (string) get_option( 'apprex_line_hook_note', '' );
+		$ai_last     = get_option( 'apprex_line_ai_last', array() );
+		$ok = function ( $b ) {
+			return $b ? '<span style="color:#15803d;font-weight:700;">✓ OK</span>' : '<span style="color:#b91c1c;font-weight:700;">✗ 未設定</span>';
+		};
+		?>
+		<h2>AI自動応答の診断</h2>
+		<table class="widefat striped" style="max-width:760px;">
+			<tbody>
+				<tr><td style="width:280px;">AI自動応答スイッチ</td><td><?php echo $diag_ai ? '<span style="color:#15803d;font-weight:700;">✓ ON</span>' : '<span style="color:#b91c1c;font-weight:700;">✗ OFF（下でONにしてください）</span>'; ?></td></tr>
+				<tr><td>OpenRouter APIキー（AIの頭脳）</td><td><?php echo wp_kses_post( $ok( $diag_key ) ); ?> <span class="description">設定：APPREX チャット</span></td></tr>
+				<tr><td>チャネルアクセストークン（返信用）</td><td><?php echo wp_kses_post( $ok( $diag_token ) ); ?></td></tr>
+				<tr><td>チャネルシークレット（署名検証）</td><td><?php echo wp_kses_post( $ok( $diag_secret ) ); ?> <span class="description">設定：APPREX LINEステップ</span></td></tr>
+				<tr><td>Webhook 最終受信</td><td><?php
+					if ( $hook_last ) {
+						echo esc_html( wp_date( 'n/j H:i', $hook_last ) ) . '　' . esc_html( $hook_note );
+					} else {
+						echo '<span style="color:#b91c1c;font-weight:700;">✗ まだ一度も受信していません</span><br><span class="description">→ LINE DevelopersでWebhook URL登録＋「Webhookの利用」ONを確認。URL：<code>' . esc_html( home_url( '/line/webhook' ) ) . '</code></span>';
+					}
+				?></td></tr>
+				<tr><td>AI 最終応答</td><td><?php
+					if ( is_array( $ai_last ) && ! empty( $ai_last['t'] ) ) {
+						$col = ( 'ok' === $ai_last['s'] ) ? '#15803d' : '#b91c1c';
+						echo '<span style="color:' . esc_attr( $col ) . ';font-weight:700;">' . esc_html( 'ok' === $ai_last['s'] ? '✓ 応答成功' : '✗ 失敗' ) . '</span> ' . esc_html( wp_date( 'n/j H:i', (int) $ai_last['t'] ) . '：' . ( isset( $ai_last['n'] ) ? $ai_last['n'] : '' ) );
+					} else {
+						echo '<span class="description">まだ応答記録なし（LINEでメッセージを送ってテスト）</span>';
+					}
+				?></td></tr>
+			</tbody>
+		</table>
+		<p class="description" style="max-width:760px;">
+			<strong>動かない時のチェック順：</strong>
+			①「Webhook 最終受信」が「未受信」→ LINE側のWebhook URL登録／「Webhookの利用」ON／<a href="<?php echo esc_url( admin_url( 'options-general.php?page=apprex-line-steps' ) ); ?>">シークレット入力</a>／パーマリンク保存 を確認。
+			② 受信はあるのに応答しない →「AI 最終応答」のエラー文を確認。
+			③ LINE公式アカウントの<strong>「応答モード」をBotにし、「あいさつ/応答メッセージ（定型）」をOFF</strong>。
+		</p>
+		<hr>
+
 		<form method="post" action="options.php">
 			<?php settings_fields( 'apprex_line_dist' ); ?>
 			<table class="form-table" role="presentation"><tbody>

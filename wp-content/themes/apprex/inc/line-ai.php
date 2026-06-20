@@ -72,7 +72,8 @@ add_action( 'apprex_line_event', function ( $ev, $uid, $type ) {
 		return;
 	}
 	if ( ! function_exists( 'apprex_openrouter_complete' ) || '' === apprex_openrouter_key() ) {
-		return; // AIキー未設定なら何もしない（公式アカウント側の自動応答に委ねる）。
+		update_option( 'apprex_line_ai_last', array( 't' => time(), 's' => 'err', 'n' => 'OpenRouter APIキーが未設定（APPREX チャット）' ), false );
+		return;
 	}
 
 	// サイトのAIと同じ頭脳＋LINE向けの簡潔指示。
@@ -85,10 +86,17 @@ add_action( 'apprex_line_event', function ( $ev, $uid, $type ) {
 	);
 	$reply = apprex_openrouter_complete( $messages, array( 'temperature' => 0.4, 'max_tokens' => 500, 'timeout' => 25 ) );
 	if ( is_wp_error( $reply ) || '' === trim( (string) $reply ) ) {
-		error_log( '[APPREX LINE AI] ' . ( is_wp_error( $reply ) ? $reply->get_error_message() : 'empty reply' ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		$note = is_wp_error( $reply ) ? $reply->get_error_message() : 'AIの返答が空でした';
+		update_option( 'apprex_line_ai_last', array( 't' => time(), 's' => 'err', 'n' => 'AI生成エラー：' . $note ), false );
+		error_log( '[APPREX LINE AI] ' . $note ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		return;
 	}
-	apprex_line_reply( $reply_token, array( array( 'type' => 'text', 'text' => mb_substr( (string) $reply, 0, 4900 ) ) ) );
+	$sent = apprex_line_reply( $reply_token, array( array( 'type' => 'text', 'text' => mb_substr( (string) $reply, 0, 4900 ) ) ) );
+	if ( is_wp_error( $sent ) ) {
+		update_option( 'apprex_line_ai_last', array( 't' => time(), 's' => 'err', 'n' => 'LINE返信エラー：' . $sent->get_error_message() ), false );
+	} else {
+		update_option( 'apprex_line_ai_last', array( 't' => time(), 's' => 'ok', 'n' => mb_substr( $user_text, 0, 30 ) ), false );
+	}
 }, 10, 3 );
 
 /** 設定（APPREX 配信(LINE) ページのグループに相乗り）。 */

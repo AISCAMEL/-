@@ -99,14 +99,19 @@ add_action( 'template_redirect', function () {
 	$body   = file_get_contents( 'php://input' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
 	$sig    = isset( $_SERVER['HTTP_X_LINE_SIGNATURE'] ) ? wp_unslash( $_SERVER['HTTP_X_LINE_SIGNATURE'] ) : '';
 
+	// 診断：Webhookに到達した記録。
+	update_option( 'apprex_line_hook_last', time(), false );
+
 	// 署名検証（シークレット設定時）。
 	if ( $secret ) {
 		$calc = base64_encode( hash_hmac( 'sha256', $body, $secret, true ) );
 		if ( ! hash_equals( $calc, (string) $sig ) ) {
+			update_option( 'apprex_line_hook_note', '署名不一致：チャネルシークレットを確認してください', false );
 			status_header( 403 );
 			exit;
 		}
 	}
+	update_option( 'apprex_line_hook_note', $secret ? '受信OK（署名検証あり）' : '受信OK（署名検証なし＝シークレット未設定）', false );
 
 	$data = json_decode( $body, true );
 	if ( ! empty( $data['events'] ) && is_array( $data['events'] ) ) {
