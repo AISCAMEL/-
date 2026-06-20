@@ -103,6 +103,7 @@ class Carmel_Application_Intake {
 					'applicant_name'  => $name,
 					'applicant_email' => $email,
 					'applicant_phone' => isset( $data['phone'] ) ? sanitize_text_field( $data['phone'] ) : '',
+					'applicant_address' => isset( $data['address'] ) ? sanitize_text_field( $data['address'] ) : '',
 					'application_note'=> isset( $data['message'] ) ? sanitize_textarea_field( $data['message'] ) : '',
 				),
 			),
@@ -279,6 +280,7 @@ class Carmel_Application_Intake {
 			'email'     => $request->get_param( 'email' ),
 			'phone'     => $request->get_param( 'phone' ),
 			'deal_type' => $request->get_param( 'deal_type' ),
+			'address'   => $request->get_param( 'address' ),
 			'message'   => $request->get_param( 'message' ),
 			'extra'     => $request->get_param( 'extra' ),
 			'source'    => 'rest',
@@ -314,6 +316,7 @@ class Carmel_Application_Intake {
 				'email'     => 'your-email',
 				'phone'     => 'your-tel',
 				'deal_type' => 'deal-type',
+				'address'   => 'your-address',
 				'message'   => 'your-message',
 			),
 			$contact_form

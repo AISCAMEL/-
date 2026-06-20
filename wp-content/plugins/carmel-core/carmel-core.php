@@ -24,6 +24,7 @@ require_once CARMEL_CORE_DIR . 'includes/class-carmel-post-types.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-roles.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-access-control.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-application-intake.php';
+require_once CARMEL_CORE_DIR . 'includes/class-carmel-application-form.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-deal-status.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-hq-screening.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-mypage.php';
@@ -54,6 +55,7 @@ function carmel_core_init() {
 	Carmel_Post_Types::instance()->register_hooks();
 	Carmel_Access_Control::instance()->register_hooks();
 	Carmel_Application_Intake::instance()->register_hooks();
+	Carmel_Application_Form::instance()->register_hooks();
 	Carmel_Deal_Status::instance()->register_hooks();
 	Carmel_HQ_Screening::instance()->register_hooks();
 	Carmel_MyPage::instance()->register_hooks();

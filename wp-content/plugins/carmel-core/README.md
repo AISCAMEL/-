@@ -105,6 +105,17 @@ $result = Carmel_Application_Intake::process( array(
 
 REST エンドポイントは `CARMEL_INTAKE_TOKEN`（定数）または `carmel_intake_token`（オプション）未設定時は既定で拒否（`carmel_intake_allow_unauthenticated` フィルタで開放可）。
 
+### 組み込み申込フォーム（`[carmel_application_form]`）
+
+フォームプラグイン不要の**自己完結フォーム**。HPの任意ページに設置でき、送信は `Carmel_Application_Intake::process()` に直結（アカウント自動発行＋案件作成＋通知）。
+
+- 属性：`type="loan|buyback|lease"`（種別を固定し選択欄を隠す）、`thanks="/thanks"`（完了後リダイレクト先）、`title`
+- 項目：種別・氏名(必須)・メール(必須)・電話・**住所（納車先＝陸送費計算に使用）**・ご要望
+- スパム対策：nonce ＋ ハニーポット。未ログイン送信に対応（admin-post nopriv）
+- 例：`[carmel_application_form type="loan" thanks="/thanks"]`
+
+> 既存のフォーム（CF7 / Gravity Forms / 独自・REST）からも接続可。`address` を含む正規化キーで受け取り、住所は陸送費自動計算に利用される。
+
 ## ステータス遷移（Phase 2 実装済み）
 
 `Carmel_Deal_Status` が案件ステータスのステートマシン。**ステータスが変わると通知・在庫連動・監査ログが自動発火**する。
