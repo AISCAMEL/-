@@ -162,6 +162,10 @@ function apprex_send_payment_notice( $id ) {
 	if ( apply_filters( 'apprex_send_payment_via_square', false, $id ) ) {
 		return;
 	}
+	// マネーフォワード クラウド請求書（振込）で発行したら、通常の通知メールは送らない。
+	if ( apply_filters( 'apprex_send_payment_via_mf', false, $id ) ) {
+		return;
+	}
 	$email = get_post_meta( $id, 'apprex_c_email', true );
 	if ( ! is_email( $email ) ) {
 		return;
