@@ -378,6 +378,30 @@ add_action( 'admin_post_apprex_line_steps_save', function () {
 	exit;
 } );
 
+/** 自由入力テスト送信（保存不要・指定userIdへ任意本文をpush）。 */
+add_action( 'admin_post_apprex_line_freetest', function () {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( '権限がありません。' );
+	}
+	check_admin_referer( 'apprex_line_freetest' );
+	$back    = admin_url( 'options-general.php?page=apprex-line-steps' );
+	$uid     = isset( $_POST['uid'] ) ? sanitize_text_field( wp_unslash( $_POST['uid'] ) ) : '';
+	$message = isset( $_POST['message'] ) ? sanitize_textarea_field( wp_unslash( $_POST['message'] ) ) : '';
+	set_transient( 'apprex_lst_msg_' . get_current_user_id(), $message, 600 ); // 入力本文を保持。
+	if ( '' === $uid ) {
+		wp_safe_redirect( add_query_arg( 'apprex_lst', rawurlencode( '送信先 userId を入力してください。' ), $back ) );
+		exit;
+	}
+	if ( '' === trim( $message ) ) {
+		wp_safe_redirect( add_query_arg( 'apprex_lst', rawurlencode( '本文を入力してください。' ), $back ) );
+		exit;
+	}
+	$r   = apprex_line_push( $uid, array( array( 'type' => 'text', 'text' => mb_substr( $message, 0, 4900 ) ) ) );
+	$msg = is_wp_error( $r ) ? ( 'NG：' . $r->get_error_message() ) : 'OK：テスト送信しました（LINEをご確認ください）。';
+	wp_safe_redirect( add_query_arg( 'apprex_lst', rawurlencode( $msg ), $back ) );
+	exit;
+} );
+
 /** ステップのテスト送信（指定userIdへ即push）。 */
 add_action( 'admin_post_apprex_line_step_test', function () {
 	if ( ! current_user_can( 'manage_options' ) ) {
@@ -541,32 +565,42 @@ function apprex_line_steps_page() {
 		$default_uid = $latest ? (string) get_post_meta( $latest[0], 'apprex_uid', true ) : '';
 		?>
 		<?php if ( ! function_exists( 'apprex_line_direct_ready' ) || ! apprex_line_direct_ready() ) : ?>
-			<p style="color:#b91c1c;">チャネルアクセストークンが未設定です（<a href="<?php echo esc_url( admin_url( 'options-general.php?page=apprex-line' ) ); ?>">APPREX 配信(LINE)</a>）。</p>
-		<?php elseif ( ! $steps ) : ?>
-			<p class="description">先にステップを保存すると、ここからテスト送信できます。</p>
+			<p style="color:#b91c1c;">チャネルアクセストークンが未設定です（<a href="<?php echo esc_url( admin_url( 'options-general.php?page=apprex-line' ) ); ?>">APPREX 配信(LINE)</a>）。先に設定してください。</p>
 		<?php else : ?>
+			<h3>かんたんテスト送信（保存不要・すぐ確認できます）</h3>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-				<input type="hidden" name="action" value="apprex_line_step_test">
-				<?php wp_nonce_field( 'apprex_line_step_test' ); ?>
+				<input type="hidden" name="action" value="apprex_line_freetest">
+				<?php wp_nonce_field( 'apprex_line_freetest' ); ?>
 				<p>送信先 LINE userId：
 					<input type="text" name="uid" class="regular-text" value="<?php echo esc_attr( $default_uid ); ?>" placeholder="U××××…" style="width:360px;">
-					<span class="description">「<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=apprex_line_friend' ) ); ?>">LINE友だち</a>」で確認できます（自分で友だち追加すると登録されます）。</span>
+					<span class="description">「<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=apprex_line_friend' ) ); ?>">LINE友だち</a>」で確認（自分で友だち追加すると自動登録）。</span>
 				</p>
-				<table class="widefat striped" style="max-width:920px;">
-					<thead><tr><th style="width:140px;">タイミング</th><th>本文（冒頭）</th><th style="width:170px;"></th></tr></thead>
-					<tbody>
-					<?php foreach ( $steps as $si => $s ) : ?>
-						<tr>
-							<td><?php echo esc_html( apprex_line_offset_label( (int) $s['offset'] ) ); ?></td>
-							<td><?php echo esc_html( mb_substr( wp_strip_all_tags( (string) $s['text'] ), 0, 40 ) ); ?></td>
-							<td><button type="submit" name="step" value="<?php echo (int) $si; ?>" class="button">このステップをテスト送信</button></td>
-						</tr>
-					<?php endforeach; ?>
-					</tbody>
-				</table>
-				<p class="description">指定userIdへ即push送信します（実際の配信と同じ内容）。</p>
+				<textarea name="message" rows="4" style="width:100%;max-width:920px;" placeholder="テストで送る本文を入力してください"><?php echo esc_textarea( (string) get_transient( 'apprex_lst_msg_' . get_current_user_id() ) ); ?></textarea>
+				<p><button type="submit" class="button button-primary">この本文をテスト送信</button></p>
 			</form>
+
+			<?php if ( $steps ) : ?>
+				<h3 style="margin-top:18px;">保存済みステップを送る</h3>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<input type="hidden" name="action" value="apprex_line_step_test">
+					<?php wp_nonce_field( 'apprex_line_step_test' ); ?>
+					<input type="hidden" name="uid" value="<?php echo esc_attr( $default_uid ); ?>">
+					<p class="description">送信先は上のuserId（<?php echo esc_html( $default_uid ? $default_uid : '未登録' ); ?>）宛。</p>
+					<table class="widefat striped" style="max-width:920px;">
+						<thead><tr><th style="width:140px;">タイミング</th><th>本文（冒頭）</th><th style="width:170px;"></th></tr></thead>
+						<tbody>
+						<?php foreach ( $steps as $si => $s ) : ?>
+							<tr>
+								<td><?php echo esc_html( apprex_line_offset_label( (int) $s['offset'] ) ); ?></td>
+								<td><?php echo esc_html( mb_substr( wp_strip_all_tags( (string) $s['text'] ), 0, 40 ) ); ?></td>
+								<td><button type="submit" name="step" value="<?php echo (int) $si; ?>" class="button">この内容を送信</button></td>
+							</tr>
+						<?php endforeach; ?>
+						</tbody>
+					</table>
+				</form>
+			<?php endif; ?>
 		<?php endif; ?>
-	</div>
+		</div>
 	<?php
 }
