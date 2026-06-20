@@ -27,6 +27,92 @@ function apprex_line_steps() {
 	return is_array( $s ) ? $s : array();
 }
 
+/** 分→トークン（保存/編集用：0 / N分後 / N時間後 / N日後）。 */
+function apprex_line_offset_token( $min ) {
+	$min = (int) $min;
+	if ( $min <= 0 ) {
+		return '0';
+	}
+	if ( 0 === $min % 1440 ) {
+		return ( $min / 1440 ) . '日後';
+	}
+	if ( 0 === $min % 60 ) {
+		return ( $min / 60 ) . '時間後';
+	}
+	return $min . '分後';
+}
+
+/** タイミング文字列→分。 */
+function apprex_line_parse_timing( $s ) {
+	$s = trim( (string) $s );
+	if ( '' === $s || preg_match( '/^(0|直後|即時|すぐ)/u', $s ) ) {
+		return 0;
+	}
+	if ( preg_match( '/([0-9]+)\s*分/u', $s, $m ) ) {
+		return (int) $m[1];
+	}
+	if ( preg_match( '/([0-9]+)\s*時間/u', $s, $m ) ) {
+		return (int) $m[1] * 60;
+	}
+	if ( preg_match( '/([0-9]+)\s*日/u', $s, $m ) ) {
+		return (int) $m[1] * 1440;
+	}
+	if ( preg_match( '/^([0-9]+)$/', $s, $m ) ) {
+		return (int) $m[1] * 1440; // 数字のみ＝日。
+	}
+	return 0;
+}
+
+/** ステップ配列 → 編集用テキスト（1ブロック＝1ステップ、--- で区切り）。 */
+function apprex_line_steps_to_raw( $steps ) {
+	$blocks = array();
+	foreach ( (array) $steps as $s ) {
+		$b = apprex_line_offset_token( isset( $s['offset'] ) ? $s['offset'] : 0 ) . "\n" . ( isset( $s['text'] ) ? $s['text'] : '' );
+		if ( ! empty( $s['image'] ) ) {
+			$b .= "\n画像: " . $s['image'];
+		}
+		$blocks[] = rtrim( $b );
+	}
+	return implode( "\n---\n", $blocks );
+}
+
+/** 編集用テキスト → ステップ配列。 */
+function apprex_line_raw_to_steps( $raw ) {
+	$raw    = str_replace( "\r\n", "\n", (string) $raw );
+	$blocks = preg_split( '/^\s*-{3,}\s*$/m', $raw );
+	$steps  = array();
+	foreach ( (array) $blocks as $blk ) {
+		$lines = explode( "\n", trim( $blk ) );
+		if ( ! $lines || '' === trim( implode( '', $lines ) ) ) {
+			continue;
+		}
+		$timing = array_shift( $lines );
+		$offset = apprex_line_parse_timing( $timing );
+		$image  = '';
+		$body   = array();
+		foreach ( $lines as $ln ) {
+			if ( preg_match( '/^\s*(?:画像|image)\s*[:：]\s*(\S+)/u', $ln, $m ) ) {
+				$image = $m[1];
+				continue;
+			}
+			$body[] = $ln;
+		}
+		$text = trim( implode( "\n", $body ) );
+		if ( '' === $text && '' === $image ) {
+			continue;
+		}
+		$steps[] = array(
+			'offset' => $offset,
+			'text'   => $text,
+			'image'  => esc_url_raw( $image ),
+		);
+	}
+	usort( $steps, function ( $a, $b ) {
+		return $a['offset'] <=> $b['offset'];
+	} );
+	return $steps;
+}
+
 /* =========================================================================
  * 友だちCPT
  * ====================================================================== */
@@ -283,29 +369,9 @@ add_action( 'admin_post_apprex_line_steps_save', function () {
 
 	update_option( 'apprex_line_channel_secret', isset( $_POST['secret'] ) ? sanitize_text_field( wp_unslash( $_POST['secret'] ) ) : '' );
 
-	$steps = array();
-	$units = isset( $_POST['unit'] ) ? (array) $_POST['unit'] : array();
-	$vals  = isset( $_POST['offset'] ) ? (array) $_POST['offset'] : array();
-	$texts = isset( $_POST['text'] ) ? (array) $_POST['text'] : array();
-	$imgs  = isset( $_POST['image'] ) ? (array) $_POST['image'] : array();
-	foreach ( $texts as $i => $t ) {
-		$t = sanitize_textarea_field( wp_unslash( $t ) );
-		$img = isset( $imgs[ $i ] ) ? esc_url_raw( wp_unslash( $imgs[ $i ] ) ) : '';
-		if ( '' === trim( $t ) && '' === $img ) {
-			continue; // 空行は削除扱い。
-		}
-		$unit = isset( $units[ $i ] ) ? (int) $units[ $i ] : 1440;
-		$val  = isset( $vals[ $i ] ) ? max( 0, (int) $vals[ $i ] ) : 0;
-		$steps[] = array(
-			'offset' => $val * $unit, // 分換算
-			'text'   => $t,
-			'image'  => $img,
-		);
-	}
-	// 経過時間順に並べ替え。
-	usort( $steps, function ( $a, $b ) {
-		return $a['offset'] <=> $b['offset'];
-	} );
+	// 1つのテキストエリアから全ステップを解析（WAF等のブロックに強い単一フィールド方式）。
+	$raw   = isset( $_POST['steps_raw'] ) ? sanitize_textarea_field( wp_unslash( $_POST['steps_raw'] ) ) : '';
+	$steps = apprex_line_raw_to_steps( $raw );
 	update_option( 'apprex_line_steps', $steps );
 
 	wp_safe_redirect( add_query_arg( array( 'apprex_ls' => 'saved', 'n' => count( $steps ) ), admin_url( 'options-general.php?page=apprex-line-steps' ) ) );
@@ -439,41 +505,28 @@ function apprex_line_steps_page() {
 				</tr>
 			</tbody></table>
 
-			<h2>ステップ（経過時間順に自動並び替え）</h2>
-			<p class="description">現在 <strong><?php echo count( $steps ); ?>件</strong> 登録中。本文・画像が両方空の行は削除されます。画像はhttpsのURLのみ。</p>
-			<table class="widefat striped" style="max-width:920px;">
-				<thead><tr><th style="width:160px;">送信タイミング</th><th>本文 / 画像URL（任意）</th></tr></thead>
-				<tbody id="apprex-steps-body">
-				<?php
-				$ri = 0;
-				foreach ( $steps as $s ) {
-					echo apprex_line_step_row_html( $ri, $s ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-					$ri++;
-				}
-				// 常に1つ空行を表示。
-				echo apprex_line_step_row_html( $ri, array( 'offset' => 1440, 'text' => '', 'image' => '' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-				?>
-				</tbody>
-			</table>
-			<p style="margin:10px 0;">
-				<button type="button" class="button" id="apprex-add-step">＋ ステップを追加</button>
-			</p>
+			<h2>ステップ（1ブロック＝1通・上から順に送信）</h2>
+			<p class="description">現在 <strong><?php echo count( $steps ); ?>件</strong> 登録中。<br>
+			書式：<strong>1行目＝送信タイミング</strong>（例：<code>0</code>＝直後 / <code>30分後</code> / <code>3時間後</code> / <code>1日後</code>）、<strong>2行目以降＝本文</strong>。画像を付けるなら <code>画像: https://…</code> の行を追加。<strong>ステップの区切りは <code>---</code> だけの行</strong>です。</p>
+			<textarea name="steps_raw" rows="22" style="width:100%;max-width:920px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;line-height:1.7;" placeholder="0&#10;友だち追加ありがとうございます！気軽に質問してください。&#10;---&#10;1日後&#10;アプリ開発に数百万円は過去の話です。&#10;https://site.aiscompany.jp/estimate"><?php echo esc_textarea( apprex_line_steps_to_raw( $steps ) ); ?></textarea>
 
 			<?php submit_button( '保存する' ); ?>
 		</form>
 
-		<template id="apprex-step-tpl"><?php echo apprex_line_step_row_html( '__I__', array( 'offset' => 1440, 'text' => '', 'image' => '' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></template>
-		<script>
-		(function(){
-			var n = 1000, btn = document.getElementById('apprex-add-step'),
-			    body = document.getElementById('apprex-steps-body'),
-			    tpl = document.getElementById('apprex-step-tpl');
-			if(!btn||!body||!tpl) return;
-			btn.addEventListener('click', function(){
-				body.insertAdjacentHTML('beforeend', tpl.innerHTML.replace(/__I__/g, n++));
-			});
-		})();
-		</script>
+		<?php if ( $steps ) : ?>
+			<h3>現在登録されているステップ（保存後の確認）</h3>
+			<table class="widefat striped" style="max-width:920px;">
+				<thead><tr><th style="width:140px;">タイミング</th><th>本文（冒頭）</th></tr></thead>
+				<tbody>
+				<?php foreach ( $steps as $s ) : ?>
+					<tr>
+						<td><?php echo esc_html( apprex_line_offset_label( (int) $s['offset'] ) ); ?></td>
+						<td><?php echo esc_html( mb_substr( wp_strip_all_tags( (string) $s['text'] ), 0, 50 ) ); ?><?php echo ! empty( $s['image'] ) ? ' 🖼️' : ''; ?></td>
+					</tr>
+				<?php endforeach; ?>
+				</tbody>
+			</table>
+		<?php endif; ?>
 
 		<hr>
 		<h2>ステップのテスト送信</h2>
