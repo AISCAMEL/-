@@ -24,6 +24,7 @@ class Carmel_Community {
 	const CPT             = 'carmel_community';
 	const NEW_ACTION      = 'carmel_comm_new';
 	const REPLY_ACTION    = 'carmel_comm_reply';
+	const PIN_ACTION      = 'carmel_comm_pin';
 	const NONCE           = 'carmel_comm_nonce';
 
 	public static function instance() {
@@ -31,6 +32,25 @@ class Carmel_Community {
 			self::$instance = new self();
 		}
 		return self::$instance;
+	}
+
+	/** トピックのカテゴリ（フィルタで調整可能）。 */
+	public static function categories() {
+		return apply_filters(
+			'carmel_community_categories',
+			array(
+				'announce' => 'お知らせ',
+				'question' => '質問',
+				'case'     => '事例共有',
+				'sales'    => '販売・在庫',
+				'chat'     => '雑談',
+			)
+		);
+	}
+
+	public static function category_label( $key ) {
+		$c = self::categories();
+		return isset( $c[ $key ] ) ? $c[ $key ] : 'その他';
 	}
 
 	public function register_hooks() {
@@ -41,6 +61,7 @@ class Carmel_Community {
 		add_shortcode( self::BOARD_SHORTCODE, array( $this, 'render_board' ) );
 		add_action( 'admin_post_' . self::NEW_ACTION, array( $this, 'handle_new_topic' ) );
 		add_action( 'admin_post_' . self::REPLY_ACTION, array( $this, 'handle_reply' ) );
+		add_action( 'admin_post_' . self::PIN_ACTION, array( $this, 'handle_pin' ) );
 	}
 
 	/**
@@ -166,13 +187,21 @@ class Carmel_Community {
 
 	/** トピック一覧＋新規投稿フォーム。 */
 	private function render_topic_list() {
+		$cat = isset( $_GET['cat'] ) ? sanitize_key( $_GET['cat'] ) : '';
+
+		$meta_query = array( 'relation' => 'AND' );
+		if ( $cat && isset( self::categories()[ $cat ] ) ) {
+			$meta_query[] = array( 'key' => 'category', 'value' => $cat );
+		}
 		$topics = get_posts(
 			array(
 				'post_type'      => self::CPT,
 				'post_status'    => 'publish',
-				'posts_per_page' => 50,
-				'orderby'        => 'modified',
-				'order'          => 'DESC',
+				'posts_per_page' => 80,
+				// ピン留め優先 → 更新日。
+				'meta_key'       => 'pinned',
+				'orderby'        => array( 'meta_value_num' => 'DESC', 'modified' => 'DESC' ),
+				'meta_query'     => count( $meta_query ) > 1 ? $meta_query : array(),
 			)
 		);
 
@@ -186,8 +215,22 @@ class Carmel_Community {
 			. '<input type="hidden" name="action" value="' . esc_attr( self::NEW_ACTION ) . '">'
 			. '<input type="hidden" name="' . esc_attr( self::NONCE ) . '" value="' . esc_attr( $nonce ) . '">'
 			. '<input type="text" name="title" placeholder="タイトル" required>'
+			. '<select name="category">';
+		foreach ( self::categories() as $k => $label ) {
+			$out .= '<option value="' . esc_attr( $k ) . '">' . esc_html( $label ) . '</option>';
+		}
+		$out .= '</select>'
 			. '<textarea name="body" rows="4" placeholder="内容" required></textarea>'
 			. '<button type="submit" class="carmel-btn carmel-btn-purple">投稿する</button></form></details>';
+
+		// カテゴリ絞り込みタブ。
+		$base = remove_query_arg( array( 'carmel_comm', 'cat' ) );
+		$out .= '<div class="carmel-comm-cats"><a class="' . ( '' === $cat ? 'on' : '' ) . '" href="' . esc_url( $base ) . '">すべて</a>';
+		foreach ( self::categories() as $k => $label ) {
+			$url  = add_query_arg( 'cat', $k, $base );
+			$out .= '<a class="' . ( $cat === $k ? 'on' : '' ) . '" href="' . esc_url( $url ) . '">' . esc_html( $label ) . '</a>';
+		}
+		$out .= '</div>';
 
 		if ( empty( $topics ) ) {
 			return $out . '<p>まだ投稿はありません。最初のトピックを投稿してみましょう。</p></div>';
@@ -197,13 +240,26 @@ class Carmel_Community {
 		foreach ( $topics as $t ) {
 			$author  = get_the_author_meta( 'display_name', $t->post_author );
 			$replies = get_comments_number( $t->ID );
-			$link    = add_query_arg( 'topic', $t->ID, remove_query_arg( array( 'carmel_comm' ) ) );
-			$out    .= '<li><a class="carmel-comm-ttl" href="' . esc_url( $link ) . '">' . esc_html( get_the_title( $t->ID ) ) . '</a>'
+			$tcat    = (string) get_post_meta( $t->ID, 'category', true );
+			$pinned  = $this->is_pinned( $t->ID );
+			$link    = add_query_arg( 'topic', $t->ID, remove_query_arg( array( 'carmel_comm', 'cat' ) ) );
+			$out    .= '<li>';
+			if ( $pinned ) {
+				$out .= '<span class="carmel-comm-pin">📌 固定</span> ';
+			}
+			if ( $tcat ) {
+				$out .= '<span class="carmel-comm-cat">' . esc_html( self::category_label( $tcat ) ) . '</span> ';
+			}
+			$out .= '<a class="carmel-comm-ttl" href="' . esc_url( $link ) . '">' . esc_html( get_the_title( $t->ID ) ) . '</a>'
 				. '<div class="carmel-comm-meta">' . esc_html( $author ) . '・' . esc_html( get_the_date( 'Y-m-d', $t->ID ) )
 				. '・返信 ' . (int) $replies . '</div></li>';
 		}
 		$out .= '</ul></div>';
 		return $out;
+	}
+
+	private function is_pinned( $topic_id ) {
+		return in_array( (string) get_post_meta( $topic_id, 'pinned', true ), array( '1', 'yes', 'true' ), true );
 	}
 
 	/** 単一トピック（本文＋返信＋返信フォーム）。 */
@@ -213,7 +269,18 @@ class Carmel_Community {
 		$back    = remove_query_arg( array( 'topic', 'carmel_comm' ) );
 
 		$out  = '<div class="carmel-comm"><a class="carmel-comm-back" href="' . esc_url( $back ) . '">← 一覧へ戻る</a>';
-		$out .= '<article class="carmel-comm-topic"><h2>' . esc_html( get_the_title( $topic_id ) ) . '</h2>';
+		$out .= '<article class="carmel-comm-topic">';
+		$out .= '<div class="carmel-comm-topbar">';
+		$tcat = (string) get_post_meta( $topic_id, 'category', true );
+		if ( $this->is_pinned( $topic_id ) ) {
+			$out .= '<span class="carmel-comm-pin">📌 固定</span> ';
+		}
+		if ( $tcat ) {
+			$out .= '<span class="carmel-comm-cat">' . esc_html( self::category_label( $tcat ) ) . '</span>';
+		}
+		$out .= $this->pin_button( $topic_id ); // phpcs:ignore WordPress.Security.EscapeOutput
+		$out .= '</div>';
+		$out .= '<h2>' . esc_html( get_the_title( $topic_id ) ) . '</h2>';
 		$out .= '<div class="carmel-comm-meta">' . esc_html( $author ) . '・' . esc_html( get_the_date( 'Y-m-d', $topic_id ) ) . '</div>';
 		$out .= '<div class="carmel-comm-body">' . wp_kses_post( wpautop( $post->post_content ) ) . '</div></article>';
 
@@ -254,6 +321,10 @@ class Carmel_Community {
 		}
 		$title = isset( $_POST['title'] ) ? sanitize_text_field( wp_unslash( $_POST['title'] ) ) : '';
 		$body  = isset( $_POST['body'] ) ? sanitize_textarea_field( wp_unslash( $_POST['body'] ) ) : '';
+		$cat   = isset( $_POST['category'] ) ? sanitize_key( $_POST['category'] ) : '';
+		if ( ! isset( self::categories()[ $cat ] ) ) {
+			$cat = 'chat';
+		}
 		if ( '' === $title || '' === $body ) {
 			wp_safe_redirect( add_query_arg( 'carmel_comm', 'err', $redirect ) );
 			exit;
@@ -265,6 +336,7 @@ class Carmel_Community {
 				'post_title'   => $title,
 				'post_content' => $body,
 				'post_author'  => get_current_user_id(),
+				'meta_input'   => array( 'category' => $cat, 'pinned' => 0 ),
 			)
 		);
 		if ( is_wp_error( $id ) || ! $id ) {
@@ -273,6 +345,39 @@ class Carmel_Community {
 		}
 		do_action( 'carmel_community_topic_created', (int) $id );
 		wp_safe_redirect( add_query_arg( array( 'topic' => (int) $id, 'carmel_comm' => 'new_ok' ), remove_query_arg( 'carmel_comm', $redirect ) ) );
+		exit;
+	}
+
+	/** 本部向けのピン留めトグルボタン（HQ以外には何も出さない）。 */
+	private function pin_button( $topic_id ) {
+		if ( ! current_user_can( 'carmel_manage_stores' ) ) {
+			return '';
+		}
+		$pinned = $this->is_pinned( $topic_id );
+		$nonce  = wp_create_nonce( self::PIN_ACTION . '_' . $topic_id );
+		$label  = $pinned ? '固定を解除' : '上部に固定';
+		return '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="carmel-comm-pinform">'
+			. '<input type="hidden" name="action" value="' . esc_attr( self::PIN_ACTION ) . '">'
+			. '<input type="hidden" name="topic_id" value="' . (int) $topic_id . '">'
+			. '<input type="hidden" name="' . esc_attr( self::NONCE ) . '" value="' . esc_attr( $nonce ) . '">'
+			. '<button type="submit" class="carmel-btn carmel-btn-ghost">' . esc_html( $label ) . '</button></form>';
+	}
+
+	public function handle_pin() {
+		$topic_id = isset( $_POST['topic_id'] ) ? (int) $_POST['topic_id'] : 0;
+		$redirect = wp_get_referer() ? wp_get_referer() : home_url( '/' );
+
+		if ( ! current_user_can( 'carmel_manage_stores' ) ) {
+			wp_die( esc_html__( '固定は本部のみ可能です。', 'carmel-core' ), '', array( 'response' => 403 ) );
+		}
+		if ( ! wp_verify_nonce( isset( $_POST[ self::NONCE ] ) ? sanitize_text_field( wp_unslash( $_POST[ self::NONCE ] ) ) : '', self::PIN_ACTION . '_' . $topic_id ) ) {
+			wp_die( esc_html__( '不正なリクエストです。', 'carmel-core' ), '', array( 'response' => 400 ) );
+		}
+		if ( self::CPT !== get_post_type( $topic_id ) ) {
+			wp_die( esc_html__( 'トピックが見つかりません。', 'carmel-core' ), '', array( 'response' => 404 ) );
+		}
+		update_post_meta( $topic_id, 'pinned', $this->is_pinned( $topic_id ) ? 0 : 1 );
+		wp_safe_redirect( add_query_arg( array( 'topic' => $topic_id, 'carmel_comm' => 'pin_ok' ), remove_query_arg( 'carmel_comm', $redirect ) ) );
 		exit;
 	}
 
@@ -315,6 +420,7 @@ class Carmel_Community {
 		$map = array(
 			'new_ok'   => array( 'success', 'トピックを投稿しました。' ),
 			'reply_ok' => array( 'success', '返信を投稿しました。' ),
+			'pin_ok'   => array( 'success', '固定状態を更新しました。' ),
 			'err'      => array( 'error', '投稿できませんでした。入力をご確認ください。' ),
 		);
 		if ( ! isset( $map[ $key ] ) ) {
@@ -329,7 +435,14 @@ class Carmel_Community {
 .carmel-comm-lead{color:#7a7488}
 .carmel-comm-new{border:1px solid #e7e2ef;border-radius:10px;padding:.5em 1em;margin:1em 0;background:#fff}
 .carmel-comm-new summary{cursor:pointer;font-weight:700;padding:.3em 0}
-.carmel-comm-new input,.carmel-comm-new textarea,.carmel-comm-replyform textarea{width:100%;border:1px solid #ccc;border-radius:.3em;padding:.5em;margin:.3em 0}
+.carmel-comm-new input,.carmel-comm-new textarea,.carmel-comm-new select,.carmel-comm-replyform textarea{width:100%;border:1px solid #ccc;border-radius:.3em;padding:.5em;margin:.3em 0}
+.carmel-comm-cats{display:flex;gap:.4em;flex-wrap:wrap;margin:.8em 0}
+.carmel-comm-cats a{font-size:.85em;text-decoration:none;color:#6b4fbb;border:1px solid #ddd2f5;border-radius:1em;padding:.2em .9em}
+.carmel-comm-cats a.on{background:#6b4fbb;color:#fff;border-color:#6b4fbb}
+.carmel-comm-pin{background:#e67e22;color:#fff;border-radius:.3em;padding:.05em .5em;font-size:.78em}
+.carmel-comm-cat{background:#eee9fb;color:#6b4fbb;border-radius:.3em;padding:.05em .5em;font-size:.8em}
+.carmel-comm-topbar{display:flex;gap:.5em;align-items:center;flex-wrap:wrap;margin-bottom:.3em}
+.carmel-comm-pinform{margin:0 0 0 auto}
 .carmel-comm-list{list-style:none;padding:0;margin:1em 0}
 .carmel-comm-list li{border-top:1px solid #ece6f5;padding:.7em 0}
 .carmel-comm-ttl{font-weight:700;font-size:1.05em;text-decoration:none;color:#5b2a86}
