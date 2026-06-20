@@ -55,11 +55,11 @@ class Carmel_Login {
 		$atts = shortcode_atts(
 			array(
 				'title'   => 'ログイン',
-				'logo'    => '',                         // ロゴ画像URL（空なら文字ロゴ）
-				'wordmark'=> 'CARMEL',                   // 文字ロゴ
-				'tagline' => 'クルマのことは、カーメルにおまかせ。', // キャッチコピー
-				'brand'   => '#1a1a2e',                  // メインカラー
-				'accent'  => '#2e86de',                  // アクセントカラー
+				'logo'    => '',                         // ロゴ画像URL（空なら assets/logo.png → 文字ロゴ）
+				'wordmark'=> 'CarMel',                   // 文字ロゴ
+				'tagline' => 'ネットで安心してクルマ頼める！', // キャッチコピー
+				'brand'   => '#5b2a86',                  // ブランドカラー（紫）
+				'accent'  => '#7c3aed',                  // アクセントカラー（紫）
 			),
 			$atts,
 			self::SHORTCODE
@@ -74,10 +74,16 @@ class Carmel_Login {
 		echo '<div class="carmel-login-wrap" style="' . esc_attr( $style ) . '">';
 		echo '<div class="carmel-login-card">';
 
+		// Logo: explicit attr → bundled assets/logo.png → text wordmark.
+		$logo = $atts['logo'];
+		if ( '' === $logo && defined( 'CARMEL_CORE_DIR' ) && file_exists( CARMEL_CORE_DIR . 'assets/logo.png' ) ) {
+			$logo = CARMEL_CORE_URL . 'assets/logo.png';
+		}
+
 		// Brand header.
 		echo '<div class="carmel-login-brand">';
-		if ( $atts['logo'] ) {
-			echo '<img class="carmel-login-logo" src="' . esc_url( $atts['logo'] ) . '" alt="' . esc_attr( $atts['wordmark'] ) . '">';
+		if ( $logo ) {
+			echo '<img class="carmel-login-logo" src="' . esc_url( $logo ) . '" alt="' . esc_attr( $atts['wordmark'] ) . '">';
 		} else {
 			echo '<span class="carmel-login-wordmark">' . esc_html( $atts['wordmark'] ) . '</span>';
 		}
@@ -189,7 +195,7 @@ class Carmel_Login {
   box-shadow:0 12px 40px rgba(26,26,46,.12);padding:2.4em 2em}
 .carmel-login-brand{text-align:center;margin-bottom:1.6em}
 .carmel-login-logo{max-height:54px;width:auto}
-.carmel-login-wordmark{font-size:2em;font-weight:800;letter-spacing:.18em;color:var(--carmel-brand)}
+.carmel-login-wordmark{font-size:2.2em;font-weight:800;letter-spacing:.01em;font-style:italic;color:var(--carmel-brand)}
 .carmel-login-tagline{margin:.5em 0 0;color:#7a8090;font-size:.85em}
 .carmel-login-title{text-align:center;font-size:1.1em;color:var(--carmel-brand);margin:0 0 1.2em;
   position:relative}
