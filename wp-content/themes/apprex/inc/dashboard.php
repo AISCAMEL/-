@@ -466,6 +466,8 @@ function apprex_dashboard_page() {
 			<span style="margin-left:8px;color:#9ca3af;font-size:13px;">毎日自動でもSlackに要約通知します（延滞がある日のみ）。</span>
 		</form>
 
+		<?php do_action( 'apprex_dashboard_after_overdue' ); ?>
+
 		<h2>推移（直近6ヶ月）</h2>
 		<?php
 		$trend_inq = apprex_dash_monthly_counts( 'apprex_inquiry', 'publish' );

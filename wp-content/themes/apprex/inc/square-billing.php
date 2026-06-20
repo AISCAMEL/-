@@ -447,3 +447,153 @@ add_action( 'admin_notices', function () {
 			. wp_kses_post( $table ) . '</div>';
 	}
 } );
+
+/* -------------------------------------------------------------------------
+ * 請求ステータス同期（支払済み/未払い）＋ダッシュボード表示
+ * ---------------------------------------------------------------------- */
+
+/** Square請求ステータス → 日本語ラベル＋色（label, 文字色, 背景色）。 */
+function apprex_square_status_label( $status ) {
+	$map = array(
+		'PAID'               => array( '支払済み', '#15803d', '#dcfce7' ),
+		'PARTIALLY_PAID'     => array( '一部入金', '#a16207', '#fef9c3' ),
+		'UNPAID'             => array( '未払い', '#b91c1c', '#fee2e2' ),
+		'SCHEDULED'          => array( '送信予定', '#6b7280', '#f3f4f6' ),
+		'PAYMENT_PENDING'    => array( '処理中', '#a16207', '#fef9c3' ),
+		'CANCELED'           => array( '取消', '#6b7280', '#f3f4f6' ),
+		'FAILED'             => array( '失敗', '#b91c1c', '#fee2e2' ),
+		'REFUNDED'           => array( '返金', '#6b7280', '#f3f4f6' ),
+		'PARTIALLY_REFUNDED' => array( '一部返金', '#6b7280', '#f3f4f6' ),
+		'DRAFT'              => array( '下書き', '#6b7280', '#f3f4f6' ),
+	);
+	return isset( $map[ $status ] ) ? $map[ $status ] : array( '' !== $status ? $status : '—', '#6b7280', '#f3f4f6' );
+}
+
+/** 1契約の請求ステータスをSquareから取得して更新。支払済みなら自動で消し込み。 */
+function apprex_square_refresh_invoice( $id ) {
+	$inv = get_post_meta( $id, 'apprex_c_sq_invoice_id', true );
+	if ( ! $inv || ! apprex_square_enabled() ) {
+		return false;
+	}
+	$r = apprex_square_request( 'GET', '/v2/invoices/' . rawurlencode( $inv ) );
+	if ( ! $r['ok'] || empty( $r['data']['invoice'] ) ) {
+		return false;
+	}
+	$status = isset( $r['data']['invoice']['status'] ) ? $r['data']['invoice']['status'] : '';
+	update_post_meta( $id, 'apprex_c_sq_invoice_status', $status );
+	if ( in_array( $status, array( 'PAID', 'PARTIALLY_PAID' ), true ) ) {
+		if ( ! get_post_meta( $id, 'apprex_c_sq_paid_at', true ) ) {
+			update_post_meta( $id, 'apprex_c_sq_paid_at', current_time( 'mysql' ) );
+		}
+		update_post_meta( $id, 'apprex_c_last_paid', current_time( 'Y-m-d' ) ); // 自動消し込み。
+	}
+	return $status;
+}
+
+/** Squareで請求した全契約のステータスを更新。更新件数を返す。 */
+function apprex_square_refresh_all() {
+	$ids = get_posts(
+		array(
+			'post_type'      => 'apprex_contract',
+			'post_status'    => 'any',
+			'posts_per_page' => 300,
+			'fields'         => 'ids',
+			'meta_key'       => 'apprex_c_sq_invoice_id',
+		)
+	);
+	$n = 0;
+	foreach ( $ids as $id ) {
+		if ( false !== apprex_square_refresh_invoice( $id ) ) {
+			$n++;
+		}
+	}
+	return $n;
+}
+
+add_action( 'init', function () {
+	if ( ! wp_next_scheduled( 'apprex_square_sync_cron' ) ) {
+		wp_schedule_event( time() + 15 * MINUTE_IN_SECONDS, 'daily', 'apprex_square_sync_cron' );
+	}
+} );
+add_action( 'apprex_square_sync_cron', function () {
+	if ( apprex_square_enabled() ) {
+		apprex_square_refresh_all();
+	}
+} );
+
+add_action( 'admin_post_apprex_square_sync', function () {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( '権限がありません。' );
+	}
+	check_admin_referer( 'apprex_square_sync' );
+	$n = apprex_square_enabled() ? apprex_square_refresh_all() : 0;
+	wp_safe_redirect( add_query_arg( 'apprex_sqsync', (int) $n, admin_url( 'admin.php?page=apprex-dashboard' ) ) );
+	exit;
+} );
+
+add_action( 'apprex_dashboard_after_overdue', function () {
+	if ( ! apprex_square_enabled() ) {
+		return;
+	}
+	$ids = get_posts(
+		array(
+			'post_type'      => 'apprex_contract',
+			'post_status'    => 'any',
+			'posts_per_page' => 300,
+			'fields'         => 'ids',
+			'meta_key'       => 'apprex_c_sq_invoice_id',
+		)
+	);
+	$paid   = 0;
+	$unpaid = 0;
+	foreach ( $ids as $id ) {
+		$st = (string) get_post_meta( $id, 'apprex_c_sq_invoice_status', true );
+		if ( 'PAID' === $st ) {
+			$paid++;
+		} elseif ( in_array( $st, array( 'UNPAID', 'PARTIALLY_PAID', 'PAYMENT_PENDING', 'SCHEDULED' ), true ) ) {
+			$unpaid++;
+		}
+	}
+	?>
+	<h2 style="margin-top:24px;">Square請求状況</h2>
+	<?php if ( isset( $_GET['apprex_sqsync'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
+		<div class="notice notice-success inline"><p><?php echo (int) $_GET['apprex_sqsync']; // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?> 件の請求状況を更新しました。</p></div>
+	<?php endif; ?>
+	<p style="color:#6b7280;">
+		支払済み <strong style="color:#15803d;"><?php echo (int) $paid; ?></strong> 件 ／
+		未払い・処理中 <strong style="color:#b91c1c;"><?php echo (int) $unpaid; ?></strong> 件
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:inline;margin-left:10px;">
+			<input type="hidden" name="action" value="apprex_square_sync">
+			<?php wp_nonce_field( 'apprex_square_sync' ); ?>
+			<button type="submit" class="button">状況を更新（Squareから取得）</button>
+		</form>
+	</p>
+	<?php if ( $ids ) : ?>
+		<table class="widefat striped" style="max-width:920px;">
+			<thead><tr><th>顧客 / 会社</th><th style="text-align:right;">月額</th><th>請求月</th><th>状況</th><th>入金日</th><th></th></tr></thead>
+			<tbody>
+			<?php foreach ( $ids as $id ) :
+				$name    = get_post_meta( $id, 'apprex_c_name', true );
+				$comp    = get_post_meta( $id, 'apprex_c_company', true );
+				$mon     = get_post_meta( $id, 'apprex_c_sq_invoice_month', true );
+				$monthly = (int) get_post_meta( $id, 'apprex_c_monthly', true );
+				$st      = (string) get_post_meta( $id, 'apprex_c_sq_invoice_status', true );
+				$paid_at = (string) get_post_meta( $id, 'apprex_c_last_paid', true );
+				$url     = get_post_meta( $id, 'apprex_c_sq_invoice_url', true );
+				list( $lbl, $fg, $bg ) = apprex_square_status_label( $st );
+				?>
+				<tr>
+					<td><a href="<?php echo esc_url( admin_url( 'post.php?post=' . $id . '&action=edit' ) ); ?>"><?php echo esc_html( $name ? $name : ( '契約#' . $id ) ); ?></a><?php echo $comp ? '<br><span style="color:#9ca3af;font-size:12px;">' . esc_html( $comp ) . '</span>' : ''; ?></td>
+					<td style="text-align:right;">¥<?php echo esc_html( number_format( $monthly ) ); ?></td>
+					<td><?php echo esc_html( $mon ? $mon : '—' ); ?></td>
+					<td><span style="display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700;color:<?php echo esc_attr( $fg ); ?>;background:<?php echo esc_attr( $bg ); ?>;"><?php echo esc_html( $lbl ); ?></span></td>
+					<td><?php echo esc_html( ( 'PAID' === $st && $paid_at ) ? $paid_at : '—' ); ?></td>
+					<td><?php echo $url ? '<a href="' . esc_url( $url ) . '" target="_blank" rel="noopener">請求書</a>' : ''; ?></td>
+				</tr>
+			<?php endforeach; ?>
+			</tbody>
+		</table>
+	<?php else : ?>
+		<p style="color:#6b7280;">まだSquareでの請求はありません。</p>
+	<?php endif;
+} );
