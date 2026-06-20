@@ -206,7 +206,7 @@ add_action( 'admin_menu', function () {
 add_action( 'admin_init', function () {
 	register_setting( 'apprex_line_dist', 'apprex_line_channel_token', array( 'sanitize_callback' => 'apprex_line_sanitize_token' ) );
 	register_setting( 'apprex_line_dist', 'apprex_line_distribute_default', array( 'sanitize_callback' => 'absint' ) );
-	register_setting( 'apprex_line_dist', 'apprex_line_welcome_back', array( 'sanitize_callback' => 'sanitize_textarea_field' ) );
+	register_setting( 'apprex_line_dist', 'apprex_line_welcome_back', array( 'sanitize_callback' => 'apprex_line_wb_sanitize' ) );
 	register_setting( 'apprex_line_dist', 'apprex_line_block_notify', array( 'sanitize_callback' => 'absint' ) );
 	register_setting( 'apprex_line_dist', 'apprex_line_readd_restart', array( 'sanitize_callback' => 'absint' ) );
 } );
@@ -346,7 +346,7 @@ function apprex_line_settings_page() {
 				</tr>
 				<tr>
 					<th scope="row">再追加（ブロック解除）時のおかえり返信</th>
-					<td><textarea name="apprex_line_welcome_back" rows="3" class="large-text" placeholder="例）おかえりなさい！またご利用ありがとうございます。ご不明点はこのトークにお気軽にどうぞ。"><?php echo esc_textarea( (string) get_option( 'apprex_line_welcome_back', '' ) ); ?></textarea>
+					<td><textarea name="apprex_line_welcome_back" rows="3" class="large-text" placeholder="例）おかえりなさい！またご利用ありがとうございます。ご不明点はこのトークにお気軽にどうぞ。"><?php echo esc_textarea( function_exists( 'apprex_line_wb_get' ) ? apprex_line_wb_get() : '' ); ?></textarea>
 					<p class="description">⚠️ ブロック中の方には送れません（LINE仕様）。<strong>ブロック解除して再追加した瞬間</strong>に、この文面を自動返信します。空欄なら送りません。</p>
 					<label style="display:block;margin-top:8px;"><input type="checkbox" name="apprex_line_readd_restart" value="1" <?php checked( 1, (int) get_option( 'apprex_line_readd_restart', 0 ) ); ?>> 再追加時にステップ配信も最初からやり直す（既定OFF＝再送しない）</label></td>
 				</tr>

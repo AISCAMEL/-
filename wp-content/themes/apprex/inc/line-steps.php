@@ -23,8 +23,39 @@ function apprex_line_channel_secret() {
 
 /** ステップ定義（配列：[ offset(分), text, image ]）。 */
 function apprex_line_steps() {
-	$s = get_option( 'apprex_line_steps', array() );
-	return is_array( $s ) ? $s : array();
+	return apprex_b64_read( get_option( 'apprex_line_steps', '' ), array() );
+}
+
+/**
+ * 絵文字（4バイト文字）を含む値でも壊れずに保存するため、Base64(JSON)でASCII化。
+ * DBが utf8mb4 でない環境での「保存すると消える」を回避する。
+ */
+function apprex_b64_save( $value ) {
+	return base64_encode( wp_json_encode( $value ) );
+}
+function apprex_b64_read( $stored, $default = '' ) {
+	if ( is_array( $stored ) ) {
+		return $stored; // 旧形式（PHPシリアライズ配列）後方互換。
+	}
+	if ( is_string( $stored ) && '' !== $stored ) {
+		$dec = base64_decode( $stored, true );
+		if ( false !== $dec ) {
+			$json = json_decode( $dec, true );
+			if ( null !== $json ) {
+				return $json;
+			}
+		}
+		return $stored; // 旧形式（プレーン文字列）後方互換。
+	}
+	return $default;
+}
+/** おかえりメッセージ（Base64保存からデコード）。 */
+function apprex_line_wb_get() {
+	return (string) apprex_b64_read( get_option( 'apprex_line_welcome_back', '' ), '' );
+}
+/** おかえりメッセージ保存時：サニタイズ→Base64化（絵文字対応）。 */
+function apprex_line_wb_sanitize( $v ) {
+	return apprex_b64_save( sanitize_textarea_field( (string) wp_unslash( $v ) ) );
 }
 
 /** 分→トークン（保存/編集用：0 / N分後 / N時間後 / N日後）。 */
@@ -219,7 +250,7 @@ add_action( 'template_redirect', function () {
 					} else {
 						// 再追加（ブロック解除など）：おかえりメッセージを返信。
 						update_post_meta( $fid, 'apprex_readded_at', time() );
-						$wb = (string) get_option( 'apprex_line_welcome_back', '' );
+						$wb = apprex_line_wb_get();
 						$rt = isset( $ev['replyToken'] ) ? sanitize_text_field( $ev['replyToken'] ) : '';
 						if ( '' !== trim( $wb ) && '' !== $rt && function_exists( 'apprex_line_reply' ) ) {
 							apprex_line_reply( $rt, array( array( 'type' => 'text', 'text' => mb_substr( $wb, 0, 4900 ) ) ) );
@@ -372,7 +403,7 @@ add_action( 'admin_post_apprex_line_steps_save', function () {
 	// 1つのテキストエリアから全ステップを解析（WAF等のブロックに強い単一フィールド方式）。
 	$raw   = isset( $_POST['steps_raw'] ) ? sanitize_textarea_field( wp_unslash( $_POST['steps_raw'] ) ) : '';
 	$steps = apprex_line_raw_to_steps( $raw );
-	update_option( 'apprex_line_steps', $steps );
+	update_option( 'apprex_line_steps', apprex_b64_save( $steps ) ); // 絵文字対応：Base64で保存。
 
 	wp_safe_redirect( add_query_arg( array( 'apprex_ls' => 'saved', 'n' => count( $steps ) ), admin_url( 'options-general.php?page=apprex-line-steps' ) ) );
 	exit;
