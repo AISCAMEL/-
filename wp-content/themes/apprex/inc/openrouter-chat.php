@@ -99,7 +99,15 @@ function apprex_openrouter_complete( $messages, $args = array() ) {
 	$code = (int) wp_remote_retrieve_response_code( $response );
 	$body = json_decode( wp_remote_retrieve_body( $response ), true );
 	if ( 200 !== $code || empty( $body['choices'][0]['message']['content'] ) ) {
-		$detail = isset( $body['error']['message'] ) ? ' ' . $body['error']['message'] : '';
+		$err    = isset( $body['error'] ) && is_array( $body['error'] ) ? $body['error'] : array();
+		$detail = ! empty( $err['message'] ) ? ' ' . $err['message'] : '';
+		if ( ! empty( $err['metadata']['provider_name'] ) ) {
+			$detail .= ' [' . $err['metadata']['provider_name'] . ']';
+		}
+		if ( ! empty( $err['metadata']['raw'] ) ) {
+			$raw     = $err['metadata']['raw'];
+			$detail .= ' / ' . ( is_string( $raw ) ? $raw : wp_json_encode( $raw, JSON_UNESCAPED_UNICODE ) );
+		}
 		return new WP_Error( 'upstream_error', '生成に失敗しました（HTTP ' . $code . '）。' . $detail );
 	}
 	return (string) $body['choices'][0]['message']['content'];
