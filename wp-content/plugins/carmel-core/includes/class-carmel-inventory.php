@@ -761,7 +761,9 @@ window.carmelInitMap=function(){
 				continue;
 			}
 			$published = in_array( (string) get_post_meta( $id, 'published', true ), array( '1', 'yes', 'true' ), true );
-			if ( $published || in_array( $scope, array( 'store', 'hq' ), true ) ) {
+			// 公開車両は誰でも比較可。未公開は本部、または自店の在庫のみ（他店の未公開は除外）。
+			$own = ( 'store' === $scope ) && ( (int) get_post_meta( $id, 'store_id', true ) === $this->current_store_id() );
+			if ( $published || 'hq' === $scope || $own ) {
 				$cars[] = get_post( $id );
 			}
 		}
