@@ -77,6 +77,10 @@ class Carmel_Community {
 		$table['community_reply'] = array(
 			array( 'audience' => 'customer', 'channel' => 'proline', 'fallback' => 'mail' ),
 		);
+		// メンションされた本人へ（recipient_id で指定）。
+		$table['community_mention'] = array(
+			array( 'audience' => 'customer', 'channel' => 'proline', 'fallback' => 'mail' ),
+		);
 		return $table;
 	}
 
@@ -92,6 +96,11 @@ class Carmel_Community {
 			$by    = isset( $vars['author'] ) ? $vars['author'] : '';
 			$message['subject'] = 'コミュニティ：あなたのトピックに返信';
 			$message['body']    = '「' . $title . '」に ' . $by . ' さんから返信がありました。コミュニティでご確認ください。';
+		} elseif ( 'community_mention' === $event_type ) {
+			$title = isset( $vars['title'] ) ? $vars['title'] : '';
+			$by    = isset( $vars['author'] ) ? $vars['author'] : '';
+			$message['subject'] = 'コミュニティ：あなたへのメンション';
+			$message['body']    = $by . ' さんがコミュニティ「' . $title . '」であなたにメンションしました。';
 		}
 		return $message;
 	}
@@ -127,6 +136,63 @@ class Carmel_Community {
 	 */
 	private function can_use_community() {
 		return (bool) apply_filters( 'carmel_community_can_use', is_user_logged_in() );
+	}
+
+	/**
+	 * 添付画像をアップロードして添付ファイルIDを返す（画像のみ・任意）。
+	 *
+	 * @param int $parent_id 親投稿ID。
+	 * @return int 添付ID（無し/失敗時0）。
+	 */
+	private function handle_image_upload( $parent_id ) {
+		if ( empty( $_FILES['image']['name'] ) ) {
+			return 0;
+		}
+		$check = wp_check_filetype( $_FILES['image']['name'], array( 'jpg|jpeg' => 'image/jpeg', 'png' => 'image/png', 'gif' => 'image/gif', 'webp' => 'image/webp' ) );
+		if ( ! $check['type'] ) {
+			return 0;
+		}
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		require_once ABSPATH . 'wp-admin/includes/media.php';
+		$att_id = media_handle_upload( 'image', $parent_id );
+		return is_wp_error( $att_id ) ? 0 : (int) $att_id;
+	}
+
+	/**
+	 * 本文中の @ユーザー名 を抽出し、該当ユーザーへ通知する。
+	 *
+	 * @param string $body
+	 * @param int    $topic_id
+	 */
+	private function notify_mentions( $body, $topic_id ) {
+		if ( ! preg_match_all( '/@([A-Za-z0-9_\-\.]{2,60})/', $body, $m ) ) {
+			return;
+		}
+		$me   = get_current_user_id();
+		$seen = array();
+		foreach ( array_unique( $m[1] ) as $login ) {
+			$user = get_user_by( 'login', $login );
+			if ( ! $user || (int) $user->ID === $me || isset( $seen[ $user->ID ] ) ) {
+				continue;
+			}
+			$seen[ $user->ID ] = true;
+			Carmel_Notifier::notify(
+				'community_mention',
+				array(
+					'event_id'     => 'community_mention:' . $topic_id . ':' . $user->ID . ':' . time(),
+					'recipient_id' => (int) $user->ID,
+					'vars'         => array( 'title' => get_the_title( $topic_id ), 'author' => wp_get_current_user()->display_name ),
+				)
+			);
+		}
+	}
+
+	/** @ユーザー名 を強調表示に変換（エスケープ後のHTMLを返す）。 */
+	private function format_text( $text ) {
+		$text = esc_html( $text );
+		$text = preg_replace( '/@([A-Za-z0-9_\-\.]{2,60})/', '<span class="carmel-mention">@$1</span>', $text );
+		return nl2br( $text );
 	}
 
 	/** Community (bbPress) URL from settings, if configured. */
@@ -243,7 +309,7 @@ class Carmel_Community {
 		// 新規トピック。
 		$nonce = wp_create_nonce( self::NEW_ACTION );
 		$out  .= '<details class="carmel-comm-new"><summary>＋ 新しいトピックを投稿</summary>';
-		$out  .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">'
+		$out  .= '<form method="post" enctype="multipart/form-data" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">'
 			. '<input type="hidden" name="action" value="' . esc_attr( self::NEW_ACTION ) . '">'
 			. '<input type="hidden" name="' . esc_attr( self::NONCE ) . '" value="' . esc_attr( $nonce ) . '">'
 			. '<input type="text" name="title" placeholder="タイトル" required>'
@@ -252,7 +318,8 @@ class Carmel_Community {
 			$out .= '<option value="' . esc_attr( $k ) . '">' . esc_html( $label ) . '</option>';
 		}
 		$out .= '</select>'
-			. '<textarea name="body" rows="4" placeholder="内容" required></textarea>'
+			. '<textarea name="body" rows="4" placeholder="内容（@ユーザー名 でメンションできます）" required></textarea>'
+			. '<label class="carmel-comm-file">画像を添付（任意）<input type="file" name="image" accept="image/*"></label>'
 			. '<button type="submit" class="carmel-btn carmel-btn-purple">投稿する</button></form></details>';
 
 		// カテゴリ絞り込みタブ。
@@ -314,7 +381,10 @@ class Carmel_Community {
 		$out .= '</div>';
 		$out .= '<h2>' . esc_html( get_the_title( $topic_id ) ) . '</h2>';
 		$out .= '<div class="carmel-comm-meta">' . esc_html( $author ) . '・' . esc_html( get_the_date( 'Y-m-d', $topic_id ) ) . '</div>';
-		$out .= '<div class="carmel-comm-body">' . wp_kses_post( wpautop( $post->post_content ) ) . '</div></article>';
+		if ( has_post_thumbnail( $topic_id ) ) {
+			$out .= '<div class="carmel-comm-img">' . get_the_post_thumbnail( $topic_id, 'medium' ) . '</div>';
+		}
+		$out .= '<div class="carmel-comm-body">' . $this->format_text( $post->post_content ) . '</div></article>';
 
 		// 返信一覧。
 		$comments = get_comments( array( 'post_id' => $topic_id, 'status' => 'approve', 'order' => 'ASC' ) );
@@ -322,8 +392,11 @@ class Carmel_Community {
 		if ( $comments ) {
 			$out .= '<ul class="carmel-comm-replies">';
 			foreach ( $comments as $c ) {
+				$img    = (int) get_comment_meta( $c->comment_ID, 'carmel_image', true );
+				$imghtml = $img ? '<div class="carmel-comm-img">' . wp_get_attachment_image( $img, 'medium' ) . '</div>' : '';
 				$out .= '<li><div class="carmel-comm-meta">' . esc_html( $c->comment_author ) . '・' . esc_html( mysql2date( 'Y-m-d H:i', $c->comment_date ) ) . '</div>'
-					. '<div class="carmel-comm-rbody">' . nl2br( esc_html( $c->comment_content ) ) . '</div></li>';
+					. $imghtml
+					. '<div class="carmel-comm-rbody">' . $this->format_text( $c->comment_content ) . '</div></li>';
 			}
 			$out .= '</ul>';
 		} else {
@@ -332,11 +405,12 @@ class Carmel_Community {
 
 		// 返信フォーム。
 		$nonce = wp_create_nonce( self::REPLY_ACTION . '_' . $topic_id );
-		$out  .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="carmel-comm-replyform">'
+		$out  .= '<form method="post" enctype="multipart/form-data" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="carmel-comm-replyform">'
 			. '<input type="hidden" name="action" value="' . esc_attr( self::REPLY_ACTION ) . '">'
 			. '<input type="hidden" name="topic_id" value="' . (int) $topic_id . '">'
 			. '<input type="hidden" name="' . esc_attr( self::NONCE ) . '" value="' . esc_attr( $nonce ) . '">'
-			. '<textarea name="body" rows="3" placeholder="返信を書く" required></textarea>'
+			. '<textarea name="body" rows="3" placeholder="返信を書く（@ユーザー名 でメンション）" required></textarea>'
+			. '<label class="carmel-comm-file">画像を添付（任意）<input type="file" name="image" accept="image/*"></label>'
 			. '<button type="submit" class="carmel-btn carmel-btn-purple">返信する</button></form>';
 
 		$out .= '</div>';
@@ -375,6 +449,12 @@ class Carmel_Community {
 			wp_safe_redirect( add_query_arg( 'carmel_comm', 'err', $redirect ) );
 			exit;
 		}
+		// 添付画像（任意）。
+		$att = $this->handle_image_upload( (int) $id );
+		if ( $att ) {
+			set_post_thumbnail( (int) $id, $att );
+		}
+
 		do_action( 'carmel_community_topic_created', (int) $id );
 
 		// 本部へ新着通知。
@@ -385,6 +465,9 @@ class Carmel_Community {
 				'vars'     => array( 'title' => $title, 'author' => wp_get_current_user()->display_name ),
 			)
 		);
+
+		// メンション通知。
+		$this->notify_mentions( $body, (int) $id );
 
 		wp_safe_redirect( add_query_arg( array( 'topic' => (int) $id, 'carmel_comm' => 'new_ok' ), remove_query_arg( 'carmel_comm', $redirect ) ) );
 		exit;
@@ -441,8 +524,8 @@ class Carmel_Community {
 			wp_safe_redirect( add_query_arg( array( 'topic' => $topic_id, 'carmel_comm' => 'err' ), $redirect ) );
 			exit;
 		}
-		$user = wp_get_current_user();
-		wp_insert_comment(
+		$user       = wp_get_current_user();
+		$comment_id = wp_insert_comment(
 			array(
 				'comment_post_ID'      => $topic_id,
 				'comment_content'      => $body,
@@ -452,7 +535,17 @@ class Carmel_Community {
 				'comment_approved'     => 1,
 			)
 		);
+
+		// 添付画像（任意）→ コメントメタに保存。
+		$att = $this->handle_image_upload( $topic_id );
+		if ( $att && $comment_id ) {
+			update_comment_meta( (int) $comment_id, 'carmel_image', $att );
+		}
+
 		do_action( 'carmel_community_reply_created', $topic_id, $user->ID );
+
+		// メンション通知。
+		$this->notify_mentions( $body, $topic_id );
 
 		// トピック投稿者へ返信通知（自分の返信は除く）。
 		$author_id = (int) get_post_field( 'post_author', $topic_id );
@@ -510,6 +603,10 @@ class Carmel_Community {
 .carmel-comm-replies{list-style:none;padding:0;margin:0}
 .carmel-comm-replies li{border:1px solid #eef0f4;border-radius:10px;padding:.7em 1em;margin:.5em 0;background:#fff}
 .carmel-comm-rbody{margin-top:.3em;line-height:1.7}
+.carmel-comm-img{margin:.5em 0}
+.carmel-comm-img img{max-width:100%;height:auto;border-radius:8px}
+.carmel-comm-file{display:block;font-size:.82em;color:#7a7488;margin:.3em 0}
+.carmel-mention{color:#5b2a86;font-weight:700}
 .carmel-comm-replyform{margin-top:1em}
 .carmel-btn{display:inline-block;border:0;border-radius:.3em;padding:.5em 1.1em;color:#fff;cursor:pointer;font-size:.9em;text-decoration:none}
 .carmel-btn-purple{background:#6b4fbb}

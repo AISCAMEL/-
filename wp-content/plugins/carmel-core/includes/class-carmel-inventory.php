@@ -277,13 +277,69 @@ class Carmel_Inventory {
 		$post = get_post( $vid );
 		echo $this->card_actions( $post, $scope, 'public', $store_id ); // phpcs:ignore WordPress.Security.EscapeOutput
 
+		// SNSシェア。
+		echo $this->share_buttons( $vid, $title ); // phpcs:ignore WordPress.Security.EscapeOutput
+
 		// お客様向け：この車両への問い合わせフォーム。
 		if ( 'customer' === $scope ) {
 			echo $this->customer_inquiry_form( $vid ); // phpcs:ignore WordPress.Security.EscapeOutput
 		}
 
+		// 取扱店の地図。
+		echo $this->store_map( $store_id ); // phpcs:ignore WordPress.Security.EscapeOutput
+
 		echo '</div></div></div>';
 		return ob_get_clean();
+	}
+
+	/** Google Maps APIキー。 */
+	private function maps_api_key() {
+		return defined( 'CARMEL_MAPS_API_KEY' ) ? CARMEL_MAPS_API_KEY : get_option( 'carmel_maps_api_key', '' );
+	}
+
+	/** この在庫詳細の公開URL。 */
+	private function detail_url( $vid ) {
+		$base = get_permalink();
+		if ( ! $base ) {
+			$base = home_url( '/' . ltrim( apply_filters( 'carmel_inventory_page_slug', 'inventory' ), '/' ) );
+		}
+		return add_query_arg( 'vehicle', (int) $vid, $base );
+	}
+
+	/** SNSシェアボタン（LINE / X / Facebook / URLコピー）。 */
+	private function share_buttons( $vid, $title ) {
+		$url  = $this->detail_url( $vid );
+		$enc  = rawurlencode( $url );
+		$text = rawurlencode( $title . '｜カーメル認定在庫' );
+		$line = 'https://social-plugins.line.me/lineit/share?url=' . $enc;
+		$x    = 'https://twitter.com/intent/tweet?url=' . $enc . '&text=' . $text;
+		$fb   = 'https://www.facebook.com/sharer/sharer.php?u=' . $enc;
+
+		$out  = '<div class="carmel-share"><span class="carmel-share-label">シェア：</span>';
+		$out .= '<a class="carmel-share-btn carmel-sh-line" href="' . esc_url( $line ) . '" target="_blank" rel="noopener">LINE</a>';
+		$out .= '<a class="carmel-share-btn carmel-sh-x" href="' . esc_url( $x ) . '" target="_blank" rel="noopener">X</a>';
+		$out .= '<a class="carmel-share-btn carmel-sh-fb" href="' . esc_url( $fb ) . '" target="_blank" rel="noopener">Facebook</a>';
+		$out .= '<button type="button" class="carmel-share-btn carmel-sh-copy" data-url="' . esc_attr( $url ) . '" onclick="navigator.clipboard&&navigator.clipboard.writeText(this.getAttribute(\'data-url\'));this.textContent=\'コピー済\'">URLコピー</button>';
+		$out .= '</div>';
+		return $out;
+	}
+
+	/** 取扱店の所在地マップ（Embed APIキーがあれば埋め込み、無ければ外部リンク）。 */
+	private function store_map( $store_id ) {
+		$address = $store_id ? (string) get_post_meta( $store_id, 'store_address', true ) : '';
+		if ( '' === $address ) {
+			return '';
+		}
+		$sname = (string) get_post_meta( $store_id, 'store_name', true );
+		$key   = $this->maps_api_key();
+		$out   = '<div class="carmel-map"><h3>取扱店の所在地' . ( $sname ? '（' . esc_html( $sname ) . '）' : '' ) . '</h3>';
+		if ( $key ) {
+			$src  = 'https://www.google.com/maps/embed/v1/place?key=' . rawurlencode( $key ) . '&q=' . rawurlencode( $address );
+			$out .= '<iframe class="carmel-map-frame" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="' . esc_url( $src ) . '"></iframe>';
+		}
+		$out .= '<p><a href="' . esc_url( 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode( $address ) ) . '" target="_blank" rel="noopener">🗺 Googleマップで開く</a></p>';
+		$out .= '</div>';
+		return $out;
 	}
 
 	private function read_filters() {
@@ -489,6 +545,11 @@ class Carmel_Inventory {
 			} elseif ( 'guest' === $scope ) {
 				$out .= '<a class="carmel-btn carmel-btn-ghost" href="' . esc_url( home_url( '/login' ) ) . '">ログインして相談</a>';
 			}
+			// 取扱店の地図リンク。
+			$addr = $holding_store ? (string) get_post_meta( $holding_store, 'store_address', true ) : '';
+			if ( $addr ) {
+				$out .= '<a class="carmel-btn carmel-btn-ghost" href="' . esc_url( 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode( $addr ) ) . '" target="_blank" rel="noopener">🗺 地図</a>';
+			}
 		}
 
 		$out .= '</div>';
@@ -598,6 +659,7 @@ class Carmel_Inventory {
 		$header  = array_map( 'trim', $header );
 		$allowed = array_merge( self::import_columns(), array( 'store_id' ) );
 		$created = 0;
+		$updated = 0;
 		$rows    = 0;
 
 		foreach ( $lines as $line ) {
@@ -639,7 +701,19 @@ class Carmel_Inventory {
 			);
 
 			$title = trim( $meta['maker'] . ' ' . $meta['model'] . ' ' . $meta['grade'] );
-			$id    = wp_insert_post(
+
+			// VIN重複チェック → 既存があれば更新（upsert）。
+			$existing_id = '' !== $meta['vin'] ? $this->find_by_vin( $meta['vin'], $store_id, $is_hq ) : 0;
+			if ( $existing_id ) {
+				wp_update_post( array( 'ID' => $existing_id, 'post_title' => $title ? $title : '車両' ) );
+				foreach ( $meta as $k => $v ) {
+					update_post_meta( $existing_id, $k, $v );
+				}
+				$updated++;
+				continue;
+			}
+
+			$id = wp_insert_post(
 				array(
 					'post_type'   => 'carmel_vehicle',
 					'post_status' => 'publish',
@@ -652,9 +726,38 @@ class Carmel_Inventory {
 			}
 		}
 
-		do_action( 'carmel_inventory_imported', $created );
-		wp_safe_redirect( add_query_arg( array( 'carmel_inv' => 'import_ok', 'n' => $created ), $redirect ) );
+		do_action( 'carmel_inventory_imported', $created, $updated );
+		wp_safe_redirect( add_query_arg( array( 'carmel_inv' => 'import_ok', 'n' => $created, 'u' => $updated ), $redirect ) );
 		exit;
+	}
+
+	/**
+	 * VINで既存車両を検索（加盟店は自店内、本部は全体）。
+	 *
+	 * @param string $vin
+	 * @param int    $store_id 取込先店舗
+	 * @param bool   $is_hq
+	 * @return int 見つかった車両ID（無ければ0）
+	 */
+	private function find_by_vin( $vin, $store_id, $is_hq ) {
+		$meta_query = array(
+			'relation' => 'AND',
+			array( 'key' => 'vin', 'value' => $vin ),
+		);
+		// 加盟店は自店の在庫のみ更新対象（他店の在庫は触れない）。
+		if ( ! $is_hq && $store_id ) {
+			$meta_query[] = array( 'key' => 'store_id', 'value' => (int) $store_id );
+		}
+		$found = get_posts(
+			array(
+				'post_type'      => 'carmel_vehicle',
+				'post_status'    => 'publish',
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'meta_query'     => $meta_query,
+			)
+		);
+		return ! empty( $found ) ? (int) $found[0] : 0;
 	}
 
 	/* --------------------------------------------------------------------- *
@@ -923,13 +1026,14 @@ class Carmel_Inventory {
 	private function banner() {
 		$key = isset( $_GET['carmel_inv'] ) ? sanitize_key( $_GET['carmel_inv'] ) : '';
 		$n   = isset( $_GET['n'] ) ? (int) $_GET['n'] : 0;
+		$u   = isset( $_GET['u'] ) ? (int) $_GET['u'] : 0;
 		$map = array(
 			'published'    => array( 'success', '在庫を掲載しました（共有開始）。' ),
 			'unpublished'  => array( 'success', '在庫の掲載を停止しました。' ),
 			'inquiry_ok'   => array( 'success', '取り寄せ・商談を依頼し、商談（案件）を起票しました。保有店・本部へ通知しました。' ),
 			'cust_ok'      => array( 'success', 'お問い合わせを送信しました。担当店舗よりご連絡します。' ),
 			'cust_err'     => array( 'error', '内容を入力してください。' ),
-			'import_ok'    => array( 'success', sprintf( '%d件の在庫を取り込みました。', $n ) ),
+			'import_ok'    => array( 'success', sprintf( '在庫を取り込みました（新規%d件・更新%d件）。', $n, $u ) ),
 			'import_nofile'=> array( 'error', 'CSVファイルが選択されていません。' ),
 			'import_empty' => array( 'error', 'データ行がありません。' ),
 			'import_err'   => array( 'error', 'CSVの読み込みに失敗しました。' ),
@@ -987,6 +1091,13 @@ class Carmel_Inventory {
 .carmel-inq-form{margin-top:1.2em;border-top:1px dashed #e7e2ef;padding-top:1em}
 .carmel-inq-form h3{margin:.2em 0 .5em}
 .carmel-inq-form textarea{width:100%;border:1px solid #ccc;border-radius:.3em;padding:.5em;margin-bottom:.5em}
+.carmel-share{display:flex;align-items:center;gap:.4em;flex-wrap:wrap;margin:1em 0}
+.carmel-share-label{font-size:.85em;color:#7a7488}
+.carmel-share-btn{border:0;cursor:pointer;text-decoration:none;color:#fff;border-radius:.3em;padding:.35em .8em;font-size:.82em}
+.carmel-sh-line{background:#06c755}.carmel-sh-x{background:#000}.carmel-sh-fb{background:#1877f2}.carmel-sh-copy{background:#6b4fbb}
+.carmel-map{margin-top:1.2em;border-top:1px dashed #e7e2ef;padding-top:1em}
+.carmel-map h3{margin:.2em 0 .5em}
+.carmel-map-frame{width:100%;height:300px;border:0;border-radius:10px}
 @media(max-width:640px){.carmel-detail{grid-template-columns:1fr}}
 .carmel-banner{padding:.7em 1em;border-radius:.4em;margin:1em 0}
 .carmel-banner-success{background:#e8f8f3;color:#0e6e58;border:1px solid #16a085}

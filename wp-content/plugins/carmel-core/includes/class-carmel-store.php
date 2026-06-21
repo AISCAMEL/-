@@ -59,10 +59,71 @@ class Carmel_Store {
 		);
 	}
 
+	const LINK_ACTION = 'carmel_link_customer';
+
 	public function register_hooks() {
 		add_shortcode( self::SHORTCODE, array( $this, 'render' ) );
 		add_action( 'admin_post_' . self::ACTION, array( $this, 'handle_post' ) );
 		add_action( 'admin_post_carmel_staff_add', array( $this, 'handle_staff_add' ) );
+		add_action( 'admin_post_' . self::LINK_ACTION, array( $this, 'handle_link_customer' ) );
+	}
+
+	/**
+	 * 案件に顧客をひも付け（在庫共有商談など顧客未確定の案件向け）。
+	 * 既存ユーザーはメールで再利用、新規は customer ロールで発行しパスワード設定リンクを送付。
+	 */
+	public function handle_link_customer() {
+		if ( ! $this->can_access() ) {
+			wp_die( esc_html__( '権限がありません。', 'carmel-core' ), '', array( 'response' => 403 ) );
+		}
+		$deal_id  = isset( $_POST['deal_id'] ) ? (int) $_POST['deal_id'] : 0;
+		$redirect = wp_get_referer() ? wp_get_referer() : home_url( '/store' );
+
+		if ( ! wp_verify_nonce( isset( $_POST['carmel_link_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['carmel_link_nonce'] ) ) : '', self::LINK_ACTION . '_' . $deal_id ) ) {
+			wp_die( esc_html__( '不正なリクエストです。', 'carmel-core' ), '', array( 'response' => 400 ) );
+		}
+
+		// 自店スコープ（本部はバイパス）。
+		$deal_store = (int) get_post_meta( $deal_id, 'store_id', true );
+		$my_store   = $this->current_store_id();
+		if ( ! current_user_can( 'carmel_manage_stores' ) && ( ! $my_store || $deal_store !== $my_store ) ) {
+			wp_die( esc_html__( '他店舗の案件は操作できません。', 'carmel-core' ), '', array( 'response' => 403 ) );
+		}
+
+		$name  = isset( $_POST['cust_name'] ) ? sanitize_text_field( wp_unslash( $_POST['cust_name'] ) ) : '';
+		$email = isset( $_POST['cust_email'] ) ? sanitize_email( wp_unslash( $_POST['cust_email'] ) ) : '';
+		$phone = isset( $_POST['cust_phone'] ) ? sanitize_text_field( wp_unslash( $_POST['cust_phone'] ) ) : '';
+		if ( '' === $email || ! is_email( $email ) ) {
+			wp_safe_redirect( add_query_arg( 'carmel_msg', 'link_err', $redirect ) );
+			exit;
+		}
+
+		$account = Carmel_Application_Intake::provision_user( $name ? $name : $email, $email, 'customer' );
+		if ( is_wp_error( $account ) ) {
+			wp_safe_redirect( add_query_arg( 'carmel_msg', 'link_err', $redirect ) );
+			exit;
+		}
+
+		update_post_meta( $deal_id, 'customer_id', (int) $account['user_id'] );
+		if ( $name ) {
+			update_post_meta( $deal_id, 'applicant_name', $name );
+		}
+		update_post_meta( $deal_id, 'applicant_email', $email );
+		if ( $phone ) {
+			update_post_meta( $deal_id, 'applicant_phone', $phone );
+		}
+
+		if ( ! empty( $account['set_password_url'] ) && ! empty( $account['created'] ) ) {
+			wp_mail(
+				$email,
+				'カーメル：お手続きのご案内',
+				"お車のお手続きを開始しました。マイページのログイン設定（パスワード設定）はこちら：\n" . $account['set_password_url']
+			);
+		}
+
+		do_action( 'carmel_deal_customer_linked', $deal_id, (int) $account['user_id'] );
+		wp_safe_redirect( add_query_arg( 'carmel_msg', 'link_ok', $redirect ) );
+		exit;
 	}
 
 	/**
@@ -244,11 +305,17 @@ class Carmel_Store {
 			$label  = $this->status_label( $status );
 
 			echo '<tr>';
+			$customer_id = (int) get_post_meta( $deal->ID, 'customer_id', true );
 			echo '<td>#' . (int) $deal->ID . '</td>';
-			echo '<td>' . esc_html( $name ? $name : $deal->post_title ) . '</td>';
+			echo '<td>' . esc_html( $name ? $name : $deal->post_title );
+			if ( ! $customer_id ) {
+				echo ' <span class="carmel-no-cust">顧客未確定</span>';
+			}
+			echo '</td>';
 			echo '<td>' . esc_html( $this->type_label( $type ) ) . '</td>';
 			echo '<td><span class="carmel-badge">' . esc_html( $label ) . '</span></td>';
-			echo '<td>' . $this->action_cell( $deal->ID, $status ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput
+			echo '<td>' . $this->action_cell( $deal->ID, $status ) // phpcs:ignore WordPress.Security.EscapeOutput
+				. $this->customer_link_cell( $deal->ID, $customer_id ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput
 			echo '</tr>';
 		}
 
@@ -320,6 +387,32 @@ class Carmel_Store {
 	}
 
 	/**
+	 * 顧客未確定の案件に顧客をひも付けるフォーム（在庫共有商談など）。
+	 *
+	 * @param int $deal_id
+	 * @param int $customer_id
+	 * @return string
+	 */
+	private function customer_link_cell( $deal_id, $customer_id ) {
+		if ( $customer_id ) {
+			return '';
+		}
+		$nonce = wp_create_nonce( self::LINK_ACTION . '_' . $deal_id );
+		$out   = '<details class="carmel-link-cust"><summary>顧客をひも付け</summary>';
+		$out  .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="carmel-link-form">'
+			. '<input type="hidden" name="action" value="' . esc_attr( self::LINK_ACTION ) . '">'
+			. '<input type="hidden" name="deal_id" value="' . (int) $deal_id . '">'
+			. '<input type="hidden" name="carmel_link_nonce" value="' . esc_attr( $nonce ) . '">'
+			. '<input type="text" name="cust_name" placeholder="氏名">'
+			. '<input type="email" name="cust_email" placeholder="メールアドレス" required>'
+			. '<input type="text" name="cust_phone" placeholder="電話番号">'
+			. '<button type="submit" class="carmel-btn carmel-btn-green">ひも付け</button>'
+			. '<p class="carmel-staff-note">既存ユーザーは再利用、新規はアカウント発行＋設定リンクを送付します。</p>'
+			. '</form></details>';
+		return $out;
+	}
+
+	/**
 	 * Staff invitation form (owners only — carmel_manage_staff).
 	 *
 	 * @return string
@@ -351,6 +444,8 @@ class Carmel_Store {
 			'forbidden' => array( 'error', 'この操作は本部のみ可能です。' ),
 			'badstep'   => array( 'error', 'この遷移は許可されていません。' ),
 			'staff_ok'  => array( 'success', 'スタッフアカウントを発行しました（ログイン設定メールを送付）。' ),
+			'link_ok'   => array( 'success', '顧客をひも付けました。' ),
+			'link_err'  => array( 'error', '顧客のひも付けに失敗しました（メールアドレスをご確認ください）。' ),
 		);
 		if ( ! isset( $map[ $msg ] ) ) {
 			return '';
@@ -385,6 +480,11 @@ class Carmel_Store {
 .carmel-btn-green{background:#16a085}.carmel-btn-red{background:#c0392b}
 .carmel-date{border:1px solid #ccc;border-radius:.3em;padding:.3em}
 .carmel-wait{color:#999;font-size:.85em}
+.carmel-no-cust{display:inline-block;background:#fff6ec;color:#e67e22;border:1px solid #f0c89a;border-radius:.3em;padding:.05em .5em;font-size:.75em}
+.carmel-link-cust{margin-top:.4em}
+.carmel-link-cust summary{cursor:pointer;color:#2e86de;font-size:.85em}
+.carmel-link-form{display:flex;flex-direction:column;gap:.3em;margin-top:.4em}
+.carmel-link-form input{border:1px solid #ccc;border-radius:.3em;padding:.35em}
 .carmel-banner{padding:.7em 1em;border-radius:.4em;margin:1em 0}
 .carmel-banner-success{background:#e8f8f3;color:#0e6e58;border:1px solid #16a085}
 .carmel-banner-error{background:#fdecea;color:#a5281b;border:1px solid #c0392b}
