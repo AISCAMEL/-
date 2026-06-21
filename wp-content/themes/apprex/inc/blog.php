@@ -121,7 +121,11 @@ add_action( 'transition_post_status', function ( $new, $old, $post ) {
 		'ai'      => (bool) get_post_meta( $post->ID, '_apprex_ai_generated', true ),
 	);
 	// GAS（任意）と Slack 直結（任意）の両方へ。
-	if ( function_exists( 'apprex_dispatch_event' ) ) {
+	// ただし WordPress 直接LINE配信が有効なときは、GASへ記事公開を送らない
+	// （GAS側のLINEテキスト配信との「二重配信」を防ぐ）。Flex(ボタン)は直接配信が担当。
+	$direct_line = function_exists( 'apprex_line_direct_ready' ) && apprex_line_direct_ready();
+	$send_to_gas = apply_filters( 'apprex_dispatch_post_published', ! $direct_line, $post, $data );
+	if ( $send_to_gas && function_exists( 'apprex_dispatch_event' ) ) {
 		apprex_dispatch_event( 'post_published', $data );
 	}
 	if ( function_exists( 'apprex_slack_notify_post' ) ) {
