@@ -524,16 +524,20 @@ class Carmel_Inventory {
 		if ( ! in_array( $status ? $status : '販売中', self::sellable_statuses(), true ) ) {
 			return;
 		}
-		$users = get_users(
-			array(
-				'meta_key' => 'carmel_saved_searches',
-				'fields'   => 'ID',
-				'number'   => 1000,
-			)
-		);
+		// 保存検索を持つユーザーはリクエスト内でキャッシュ（CSV大量取込時の再取得を回避）。
+		static $cached_users = null;
+		if ( null === $cached_users ) {
+			$cached_users = get_users(
+				array(
+					'meta_key' => 'carmel_saved_searches',
+					'fields'   => 'ID',
+					'number'   => 1000,
+				)
+			);
+		}
 		$inv_url = home_url( '/' . ltrim( apply_filters( 'carmel_inventory_page_slug', 'inventory' ), '/' ) );
 
-		foreach ( $users as $uid ) {
+		foreach ( $cached_users as $uid ) {
 			$list = get_user_meta( $uid, 'carmel_saved_searches', true );
 			if ( ! is_array( $list ) ) {
 				continue;

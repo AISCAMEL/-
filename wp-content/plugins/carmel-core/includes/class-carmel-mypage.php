@@ -19,6 +19,7 @@ class Carmel_MyPage {
 	private static $instance = null;
 
 	const SHORTCODE = 'carmel_mypage';
+	const GUIDE_SHORTCODE = 'carmel_customer_guide';
 
 	public static function instance() {
 		if ( null === self::$instance ) {
@@ -74,6 +75,67 @@ class Carmel_MyPage {
 
 	public function register_hooks() {
 		add_shortcode( self::SHORTCODE, array( $this, 'render' ) );
+		add_shortcode( self::GUIDE_SHORTCODE, array( $this, 'render_guide' ) );
+	}
+
+	/**
+	 * 顧客向け 使い方ガイド（静的・アコーディオン）。
+	 *
+	 * @return string
+	 */
+	public function render_guide() {
+		$items = apply_filters(
+			'carmel_customer_guide_items',
+			array(
+				array(
+					'お手続き状況の確認',
+					'マイページでは、お申込みからご納車までの進み具合（フェーズ）をいつでもご確認いただけます。審査結果やご契約のご案内もこちらに表示されます。',
+				),
+				array(
+					'必要書類の提出',
+					'本人確認書類・収入証明などは、マイページの「書類のご提出」からJPG/PNG/PDF（各10MBまで）でアップロードできます。提出済みの書類も一覧で確認できます。',
+				),
+				array(
+					'発行書類の確認（見積書・請求書・契約書）',
+					'担当店が発行した見積書・請求書・各種契約書は、案件カードの「発行書類」または「発行書類」ページから表示・印刷（PDF保存）いただけます。',
+				),
+				array(
+					'お車を探す・問い合わせる',
+					'在庫ページで気になるお車を探し、詳細ページの「このお車について問い合わせる」からご質問いただけます。お問い合わせ後は担当店よりご連絡します。',
+				),
+				array(
+					'お気に入り・比較',
+					'在庫の♥でお気に入り登録、「比較に追加」で最大4台を並べて比較できます。「保存した検索条件」を登録すると、条件に合う新着が入荷した際にお知らせします。',
+				),
+				array(
+					'お支払い・返済状況',
+					'お申込金や保証などのお支払い、ローン/リースの返済予定と入金状況はマイページでご確認いただけます。お支払い期日が近づくとご案内が届きます。',
+				),
+				array(
+					'納車後（車検・保険）',
+					'ご納車後は、車検満了日・保険満了日が近づくと自動でご案内します。マイページの「愛車情報」に残り日数が表示されます。',
+				),
+			)
+		);
+
+		ob_start();
+		echo $this->styles(); // phpcs:ignore WordPress.Security.EscapeOutput
+		echo '<div class="carmel-mypage"><h2>カーメルの使い方ガイド</h2>';
+		echo '<p class="carmel-guide-lead">はじめての方へ。よくあるご利用の流れをまとめています。</p>';
+		echo '<div class="carmel-cguide">';
+		foreach ( $items as $i => $it ) {
+			$open = ( 0 === $i ) ? ' open' : '';
+			echo '<details class="carmel-cguide-item"' . esc_attr( $open ) . '><summary>' . esc_html( $it[0] ) . '</summary>';
+			echo '<div class="carmel-cguide-body">' . esc_html( $it[1] ) . '</div></details>';
+		}
+		echo '</div></div>';
+		echo '<style>
+.carmel-guide-lead{color:#666}
+.carmel-cguide-item{border:1px solid #e0e3ea;border-radius:.5em;margin:.5em 0;background:#fff;padding:.3em .9em}
+.carmel-cguide-item summary{cursor:pointer;font-weight:700;padding:.5em 0}
+.carmel-cguide-body{color:#46414f;line-height:1.85;padding:.2em 0 .7em}
+</style>';
+		return ob_get_clean();
 	}
 
 	/**
