@@ -62,8 +62,11 @@ class Carmel_Inventory {
 		add_action( 'admin_post_' . self::SAVE_SEARCH, array( $this, 'handle_save_search' ) );
 		add_action( 'admin_post_' . self::DEL_SEARCH, array( $this, 'handle_delete_search' ) );
 
-		// 新着アラート（日次cron後に実行）。
-		add_action( 'carmel_daily_cron_done', array( $this, 'run_new_arrival_alerts' ) );
+		// 新着アラート（日次/週次cron後・即時は公開検知）。
+		add_action( 'carmel_daily_cron_done', array( $this, 'run_daily_alerts' ) );
+		add_action( 'carmel_weekly_cron_done', array( $this, 'run_weekly_alerts' ) );
+		add_action( 'added_post_meta', array( $this, 'on_vehicle_meta' ), 20, 4 );
+		add_action( 'updated_post_meta', array( $this, 'on_vehicle_meta' ), 20, 4 );
 
 		// 在庫取り寄せ依頼の通知ルーティング／文面。
 		add_filter( 'carmel_routing_table', array( $this, 'add_routing' ) );
@@ -266,10 +269,15 @@ class Carmel_Inventory {
 		if ( ! is_user_logged_in() ) {
 			wp_die( esc_html__( 'ログインが必要です。', 'carmel-core' ), '', array( 'response' => 403 ) );
 		}
+		$freq = isset( $_POST['freq'] ) ? sanitize_key( $_POST['freq'] ) : 'daily';
+		if ( ! in_array( $freq, array( 'immediate', 'daily', 'weekly' ), true ) ) {
+			$freq = 'daily';
+		}
 		$f = array(
 			'maker'     => isset( $_POST['maker'] ) ? sanitize_text_field( wp_unslash( $_POST['maker'] ) ) : '',
 			'q'         => isset( $_POST['q'] ) ? sanitize_text_field( wp_unslash( $_POST['q'] ) ) : '',
 			'price_max' => isset( $_POST['price_max'] ) ? (int) $_POST['price_max'] : 0,
+			'freq'      => $freq,
 			'last'      => current_time( 'mysql' ),
 		);
 		$list   = $this->saved_searches();
@@ -317,6 +325,7 @@ class Carmel_Inventory {
 			. '<input type="hidden" name="q" value="' . esc_attr( $filters['q'] ) . '">'
 			. '<input type="hidden" name="price_max" value="' . esc_attr( $filters['price_max'] ) . '">'
 			. '<span class="carmel-hint">現在の条件：' . esc_html( $this->search_label( $filters ) ) . '</span> '
+			. '<select name="freq"><option value="immediate">即時</option><option value="daily" selected>日次</option><option value="weekly">週次</option></select> '
 			. '<button type="submit" class="carmel-btn carmel-btn-purple">この条件を保存</button></form>';
 
 		$list = $this->saved_searches();
@@ -330,8 +339,11 @@ class Carmel_Inventory {
 					array_filter( array( 'maker' => $f['maker'], 'q' => $f['q'], 'price_max' => $f['price_max'] ) ),
 					$base
 				);
-				$del = wp_create_nonce( self::DEL_SEARCH . '_' . $i );
+				$del   = wp_create_nonce( self::DEL_SEARCH . '_' . $i );
+				$flabel = array( 'immediate' => '即時', 'daily' => '日次', 'weekly' => '週次' );
+				$fk    = isset( $f['freq'] ) ? $f['freq'] : 'daily';
 				$out .= '<li><a href="' . esc_url( $run ) . '">' . esc_html( $this->search_label( $f ) ) . '</a>'
+					. ' <span class="carmel-freq-badge">' . esc_html( isset( $flabel[ $fk ] ) ? $flabel[ $fk ] : '日次' ) . '</span>'
 					. '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="carmel-saved-del">'
 					. '<input type="hidden" name="action" value="' . esc_attr( self::DEL_SEARCH ) . '">'
 					. '<input type="hidden" name="idx" value="' . (int) $i . '">'
@@ -344,10 +356,22 @@ class Carmel_Inventory {
 		return $out;
 	}
 
+	/** 日次cron：頻度=daily の保存検索を処理。 */
+	public function run_daily_alerts() {
+		$this->run_alerts( 'daily' );
+	}
+
+	/** 週次cron：頻度=weekly の保存検索を処理。 */
+	public function run_weekly_alerts() {
+		$this->run_alerts( 'weekly' );
+	}
+
 	/**
-	 * 日次：保存検索ごとに前回以降の新着公開在庫を検出し、本人へ通知。
+	 * 指定頻度の保存検索ごとに、前回以降の新着公開在庫を検出して本人へ通知。
+	 *
+	 * @param string $freq daily|weekly
 	 */
-	public function run_new_arrival_alerts() {
+	public function run_alerts( $freq ) {
 		$users = get_users(
 			array(
 				'meta_key' => 'carmel_saved_searches',
@@ -364,6 +388,10 @@ class Carmel_Inventory {
 				continue;
 			}
 			foreach ( $list as $i => $f ) {
+				$sfreq = isset( $f['freq'] ) ? $f['freq'] : 'daily';
+				if ( $sfreq !== $freq ) {
+					continue;
+				}
 				$since = ! empty( $f['last'] ) ? $f['last'] : current_time( 'mysql' );
 				$count = $this->count_new_since( $f, $since );
 				$list[ $i ]['last'] = current_time( 'mysql' );
@@ -387,6 +415,91 @@ class Carmel_Inventory {
 				update_user_meta( $uid, 'carmel_saved_searches', $list );
 			}
 		}
+	}
+
+	/**
+	 * 在庫が公開（published=truthy）になった瞬間、頻度=immediate の保存検索に
+	 * 合致するユーザーへ即時通知する。
+	 *
+	 * @param int    $meta_id
+	 * @param int    $post_id
+	 * @param string $key
+	 * @param mixed  $val
+	 */
+	public function on_vehicle_meta( $meta_id, $post_id, $key, $val ) {
+		static $done = array();
+		if ( 'published' !== $key || isset( $done[ $post_id ] ) ) {
+			return;
+		}
+		if ( ! in_array( (string) $val, array( '1', 'yes', 'true' ), true ) ) {
+			return;
+		}
+		if ( 'carmel_vehicle' !== get_post_type( $post_id ) ) {
+			return;
+		}
+		$done[ $post_id ] = true;
+		$this->notify_immediate( (int) $post_id );
+	}
+
+	/** 即時アラート：この車両に合致する immediate 保存検索の持ち主へ通知。 */
+	private function notify_immediate( $vehicle_id ) {
+		$status = (string) get_post_meta( $vehicle_id, 'vehicle_status', true );
+		if ( ! in_array( $status ? $status : '販売中', self::sellable_statuses(), true ) ) {
+			return;
+		}
+		$users = get_users(
+			array(
+				'meta_key' => 'carmel_saved_searches',
+				'fields'   => 'ID',
+				'number'   => 1000,
+			)
+		);
+		$inv_url = home_url( '/' . ltrim( apply_filters( 'carmel_inventory_page_slug', 'inventory' ), '/' ) );
+
+		foreach ( $users as $uid ) {
+			$list = get_user_meta( $uid, 'carmel_saved_searches', true );
+			if ( ! is_array( $list ) ) {
+				continue;
+			}
+			foreach ( $list as $f ) {
+				if ( 'immediate' !== ( isset( $f['freq'] ) ? $f['freq'] : 'daily' ) ) {
+					continue;
+				}
+				if ( ! $this->vehicle_matches( $vehicle_id, $f ) ) {
+					continue;
+				}
+				$run = add_query_arg(
+					array_filter( array( 'maker' => $f['maker'], 'q' => $f['q'], 'price_max' => $f['price_max'] ) ),
+					$inv_url
+				);
+				Carmel_Notifier::notify(
+					'inventory_new_arrival',
+					array(
+						'event_id'     => 'inv_immediate:' . $uid . ':' . $vehicle_id,
+						'recipient_id' => (int) $uid,
+						'vars'         => array( 'cond' => $this->search_label( $f ), 'count' => 1, 'url' => $run ),
+					)
+				);
+				break; // 同一車両につき1ユーザー1通。
+			}
+		}
+	}
+
+	/** 車両が保存検索条件に合致するか。 */
+	private function vehicle_matches( $vehicle_id, $f ) {
+		if ( ! empty( $f['maker'] ) && (string) get_post_meta( $vehicle_id, 'maker', true ) !== $f['maker'] ) {
+			return false;
+		}
+		if ( ! empty( $f['price_max'] ) && (float) get_post_meta( $vehicle_id, 'price', true ) > (float) $f['price_max'] ) {
+			return false;
+		}
+		if ( ! empty( $f['q'] ) ) {
+			$hay = get_the_title( $vehicle_id ) . ' ' . get_post_meta( $vehicle_id, 'maker', true ) . ' ' . get_post_meta( $vehicle_id, 'model', true ) . ' ' . get_post_meta( $vehicle_id, 'grade', true );
+			if ( false === mb_stripos( $hay, $f['q'] ) ) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/** 条件に合致し、指定日時以降に公開された在庫数。 */
@@ -805,8 +918,78 @@ window.carmelInitMap=function(){
 		// 取扱店の地図。
 		echo $this->store_map( $store_id ); // phpcs:ignore WordPress.Security.EscapeOutput
 
-		echo '</div></div></div>';
+		echo '</div>'; // .carmel-detail-body
+		echo '</div>'; // .carmel-detail
+
+		// 類似在庫レコメンド。
+		echo $this->similar_block( $vid, $scope ); // phpcs:ignore WordPress.Security.EscapeOutput
+
+		echo '</div>'; // .carmel-inv
 		return ob_get_clean();
+	}
+
+	/**
+	 * 類似在庫（同メーカー優先→価格帯±30%で補完）。現在の車両は除外。
+	 *
+	 * @param int    $vid
+	 * @param string $scope
+	 * @return string
+	 */
+	private function similar_block( $vid, $scope ) {
+		$maker = (string) get_post_meta( $vid, 'maker', true );
+		$price = (float) get_post_meta( $vid, 'price', true );
+
+		$base_meta = array(
+			'relation' => 'AND',
+			array( 'key' => 'published', 'value' => array( '1', 'yes', 'true' ), 'compare' => 'IN' ),
+			array( 'key' => 'vehicle_status', 'value' => self::sellable_statuses(), 'compare' => 'IN' ),
+		);
+
+		$found = array();
+		// 1) 同メーカー。
+		if ( '' !== $maker ) {
+			$m   = $base_meta;
+			$m[] = array( 'key' => 'maker', 'value' => $maker );
+			$found = get_posts(
+				array(
+					'post_type'      => 'carmel_vehicle',
+					'post_status'    => 'publish',
+					'posts_per_page' => 5,
+					'post__not_in'   => array( (int) $vid ),
+					'orderby'        => 'rand',
+					'meta_query'     => $m,
+				)
+			);
+		}
+		// 2) 不足分を価格帯で補完。
+		if ( count( $found ) < 4 && $price > 0 ) {
+			$m   = $base_meta;
+			$m[] = array( 'key' => 'price', 'value' => array( (int) ( $price * 0.7 ), (int) ( $price * 1.3 ) ), 'type' => 'NUMERIC', 'compare' => 'BETWEEN' );
+			$exclude = array_merge( array( (int) $vid ), wp_list_pluck( $found, 'ID' ) );
+			$more = get_posts(
+				array(
+					'post_type'      => 'carmel_vehicle',
+					'post_status'    => 'publish',
+					'posts_per_page' => 4,
+					'post__not_in'   => $exclude,
+					'orderby'        => 'rand',
+					'meta_query'     => $m,
+				)
+			);
+			$found = array_merge( $found, $more );
+		}
+
+		$found = array_slice( $found, 0, 4 );
+		if ( empty( $found ) ) {
+			return '';
+		}
+
+		$out = '<div class="carmel-similar"><h3>類似の在庫</h3><div class="carmel-car-grid">';
+		foreach ( $found as $car ) {
+			$out .= $this->car_card( $car, $scope, 'public' );
+		}
+		$out .= '</div></div>';
+		return $out;
 	}
 
 	/**
@@ -1134,8 +1317,11 @@ window.carmelInitMap=function(){
 
 	/** 取込対象の列（CSVヘッダ名）。 */
 	public static function import_columns() {
-		return array( 'maker', 'model', 'grade', 'year', 'mileage', 'color', 'vin', 'plate_no', 'price', 'cost', 'vehicle_status', 'published' );
+		return array( 'maker', 'model', 'grade', 'year', 'mileage', 'color', 'vin', 'plate_no', 'price', 'cost', 'vehicle_status', 'published', 'image_urls' );
 	}
+
+	/** 1回の取込でサイドロードする画像の総数上限。 */
+	private $image_budget = 40;
 
 	private function import_form() {
 		$is_hq = current_user_can( 'carmel_manage_stores' );
@@ -1175,7 +1361,8 @@ window.carmelInitMap=function(){
 		$sample = array(
 			'maker' => 'トヨタ', 'model' => 'アクア', 'grade' => 'S', 'year' => '2019', 'mileage' => '45000',
 			'color' => 'ホワイト', 'vin' => 'XXX-1234567', 'plate_no' => '品川 300 あ 12-34', 'price' => '1280000',
-			'cost' => '980000', 'vehicle_status' => '販売中', 'published' => '1', 'store_id' => '',
+			'cost' => '980000', 'vehicle_status' => '販売中', 'published' => '1',
+			'image_urls' => 'https://example.com/car-front.jpg|https://example.com/car-side.jpg', 'store_id' => '',
 		);
 		$row = array();
 		foreach ( $columns as $c ) {
@@ -1272,7 +1459,8 @@ window.carmelInitMap=function(){
 				'published'      => $publish_all || ( isset( $data['published'] ) && in_array( strtolower( $data['published'] ), array( '1', 'yes', 'true', '公開' ), true ) ) ? 1 : 0,
 			);
 
-			$title = trim( $meta['maker'] . ' ' . $meta['model'] . ' ' . $meta['grade'] );
+			$title  = trim( $meta['maker'] . ' ' . $meta['model'] . ' ' . $meta['grade'] );
+			$images = isset( $data['image_urls'] ) ? trim( $data['image_urls'] ) : '';
 
 			// VIN重複チェック → 既存があれば更新（upsert）。
 			$existing_id = '' !== $meta['vin'] ? $this->find_by_vin( $meta['vin'], $store_id, $is_hq ) : 0;
@@ -1280,6 +1468,10 @@ window.carmelInitMap=function(){
 				wp_update_post( array( 'ID' => $existing_id, 'post_title' => $title ? $title : '車両' ) );
 				foreach ( $meta as $k => $v ) {
 					update_post_meta( $existing_id, $k, $v );
+				}
+				// 既存に画像が無く、URL指定があればサイドロード（再取込での重複を避ける）。
+				if ( '' !== $images && ! has_post_thumbnail( $existing_id ) ) {
+					$this->sideload_images( $existing_id, $images );
 				}
 				$updated++;
 				continue;
@@ -1294,6 +1486,9 @@ window.carmelInitMap=function(){
 				)
 			);
 			if ( ! is_wp_error( $id ) && $id ) {
+				if ( '' !== $images ) {
+					$this->sideload_images( (int) $id, $images );
+				}
 				$created++;
 			}
 		}
@@ -1543,6 +1738,45 @@ window.carmelInitMap=function(){
 		return (int) $deal_id;
 	}
 
+	/**
+	 * 画像URL（| / カンマ / 空白区切り）をメディアにサイドロードして車両へ添付。
+	 * 先頭画像をアイキャッチに設定。予算（総数）で制限。
+	 *
+	 * @param int    $vehicle_id
+	 * @param string $urls
+	 */
+	private function sideload_images( $vehicle_id, $urls ) {
+		if ( $this->image_budget <= 0 ) {
+			return;
+		}
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		require_once ABSPATH . 'wp-admin/includes/media.php';
+
+		$list  = preg_split( '/[\s,|]+/', $urls, -1, PREG_SPLIT_NO_EMPTY );
+		$first = true;
+		$n     = 0;
+		foreach ( $list as $url ) {
+			if ( $this->image_budget <= 0 || $n >= 6 ) {
+				break; // 1台あたり最大6枚。
+			}
+			$url = esc_url_raw( $url );
+			if ( '' === $url || ! preg_match( '#^https?://#i', $url ) ) {
+				continue;
+			}
+			$att_id = media_sideload_image( $url, $vehicle_id, null, 'id' );
+			$this->image_budget--;
+			$n++;
+			if ( is_wp_error( $att_id ) ) {
+				continue;
+			}
+			if ( $first && ! has_post_thumbnail( $vehicle_id ) ) {
+				set_post_thumbnail( $vehicle_id, (int) $att_id );
+				$first = false;
+			}
+		}
+	}
+
 	/** 自店の在庫か（本部は全件可）。 */
 	private function can_manage_vehicle( $vehicle_id ) {
 		if ( 'carmel_vehicle' !== get_post_type( $vehicle_id ) ) {
@@ -1687,6 +1921,9 @@ window.carmelInitMap=function(){
 .carmel-saved-list li{display:flex;align-items:center;gap:.5em;padding:.3em 0;border-top:1px solid #f0f1f5}
 .carmel-saved-del{margin:0}
 .carmel-saved-x{border:0;background:#f0f1f5;color:#a5281b;border-radius:.3em;cursor:pointer;padding:.1em .5em}
+.carmel-freq-badge{background:#eee9fb;color:#6b4fbb;border-radius:.3em;padding:.05em .5em;font-size:.78em}
+.carmel-similar{margin-top:1.6em;border-top:1px dashed #e7e2ef;padding-top:1em}
+.carmel-similar h3{margin:.2em 0 .6em}
 .carmel-inv-import{border:1px solid #e7e2ef;border-radius:10px;padding:.6em 1em;margin:.8em 0;background:#fff}
 .carmel-inv-import summary{cursor:pointer;font-weight:700}
 .carmel-inv-import code{background:#f4f6fb;padding:.1em .4em;border-radius:.2em;font-size:.85em}

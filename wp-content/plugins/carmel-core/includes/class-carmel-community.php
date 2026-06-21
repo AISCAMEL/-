@@ -86,6 +86,10 @@ class Carmel_Community {
 		$table['community_mention'] = array(
 			array( 'audience' => 'customer', 'channel' => 'proline', 'fallback' => 'mail' ),
 		);
+		// いいねされた本人へ（recipient_id で指定）。
+		$table['community_like'] = array(
+			array( 'audience' => 'customer', 'channel' => 'proline', 'fallback' => 'mail' ),
+		);
 		return $table;
 	}
 
@@ -106,6 +110,11 @@ class Carmel_Community {
 			$by    = isset( $vars['author'] ) ? $vars['author'] : '';
 			$message['subject'] = 'コミュニティ：あなたへのメンション';
 			$message['body']    = $by . ' さんがコミュニティ「' . $title . '」であなたにメンションしました。';
+		} elseif ( 'community_like' === $event_type ) {
+			$title = isset( $vars['title'] ) ? $vars['title'] : '';
+			$by    = isset( $vars['author'] ) ? $vars['author'] : '';
+			$message['subject'] = 'コミュニティ：👍がつきました';
+			$message['body']    = $by . ' さんがコミュニティ「' . $title . '」のあなたの投稿にいいねしました。';
 		}
 		return $message;
 	}
@@ -435,6 +444,9 @@ class Carmel_Community {
 			. '<label class="carmel-comm-file">画像を添付（任意）<input type="file" name="image" accept="image/*"></label>'
 			. '<button type="submit" class="carmel-btn carmel-btn-purple">投稿する</button></form></details>';
 
+		// 人気のトピック（いいね数ランキング）。
+		$out .= $this->ranking_block();
+
 		// カテゴリ絞り込みタブ。
 		$base = remove_query_arg( array( 'carmel_comm', 'cat' ) );
 		$out .= '<div class="carmel-comm-cats"><a class="' . ( '' === $cat ? 'on' : '' ) . '" href="' . esc_url( $base ) . '">すべて</a>';
@@ -475,6 +487,34 @@ class Carmel_Community {
 
 	private function is_pinned( $topic_id ) {
 		return in_array( (string) get_post_meta( $topic_id, 'pinned', true ), array( '1', 'yes', 'true' ), true );
+	}
+
+	/** いいね数ランキング（上位5・count>0）。 */
+	private function ranking_block() {
+		$top = get_posts(
+			array(
+				'post_type'      => self::CPT,
+				'post_status'    => 'publish',
+				'posts_per_page' => 5,
+				'meta_key'       => '_carmel_like_count',
+				'orderby'        => 'meta_value_num',
+				'order'          => 'DESC',
+				'meta_query'     => array(
+					array( 'key' => '_carmel_like_count', 'value' => 0, 'compare' => '>', 'type' => 'NUMERIC' ),
+				),
+			)
+		);
+		if ( empty( $top ) ) {
+			return '';
+		}
+		$out = '<div class="carmel-rank"><h3>🔥 人気のトピック</h3><ol class="carmel-rank-list">';
+		foreach ( $top as $t ) {
+			$likes = (int) get_post_meta( $t->ID, '_carmel_like_count', true );
+			$link  = add_query_arg( 'topic', $t->ID, remove_query_arg( array( 'carmel_comm', 'cat' ) ) );
+			$out  .= '<li><a href="' . esc_url( $link ) . '">' . esc_html( get_the_title( $t->ID ) ) . '</a> <span class="carmel-rank-likes">👍' . $likes . '</span></li>';
+		}
+		$out .= '</ol></div>';
+		return $out;
 	}
 
 	/** 単一トピック（本文＋返信＋返信フォーム）。 */
@@ -653,18 +693,37 @@ class Carmel_Community {
 		}
 		$uid    = get_current_user_id();
 		$likers = $this->likers( $ctype, $id );
+		$added  = false;
 		if ( in_array( $uid, $likers, true ) ) {
 			$likers = array_values( array_diff( $likers, array( $uid ) ) );
 		} else {
 			$likers[] = $uid;
+			$added    = true;
 		}
 		if ( 'reply' === $ctype ) {
+			$comment  = get_comment( $id );
+			$topic_id = (int) $comment->comment_post_ID;
 			update_comment_meta( $id, '_carmel_likes', $likers );
-			$topic_id = (int) get_comment( $id )->comment_post_ID;
+			$author_id = (int) $comment->user_id;
 		} else {
-			update_post_meta( $id, '_carmel_likes', $likers );
 			$topic_id = $id;
+			update_post_meta( $id, '_carmel_likes', $likers );
+			update_post_meta( $id, '_carmel_like_count', count( $likers ) ); // ランキング用。
+			$author_id = (int) get_post_field( 'post_author', $id );
 		}
+
+		// いいねされた本人へ通知（新規いいね・自分以外）。
+		if ( $added && $author_id && $author_id !== $uid ) {
+			Carmel_Notifier::notify(
+				'community_like',
+				array(
+					'event_id'     => 'community_like:' . $ctype . ':' . $id . ':' . $uid,
+					'recipient_id' => $author_id,
+					'vars'         => array( 'title' => get_the_title( $topic_id ), 'author' => wp_get_current_user()->display_name ),
+				)
+			);
+		}
+
 		wp_safe_redirect( add_query_arg( 'topic', $topic_id, remove_query_arg( 'carmel_comm', $redirect ) ) );
 		exit;
 	}
@@ -852,6 +911,12 @@ class Carmel_Community {
 .carmel-best{border:2px solid #16a085!important;background:#f1fbf8}
 .carmel-best-badge{color:#0e6e58;font-weight:700;font-size:.85em;margin-bottom:.2em}
 .carmel-comm-solved{background:#e8f8f3;color:#0e6e58;border:1px solid #16a085;border-radius:.3em;padding:.05em .5em;font-size:.78em}
+.carmel-rank{background:#fff7ed;border:1px solid #f3d9b8;border-radius:10px;padding:.6em 1em;margin:1em 0}
+.carmel-rank h3{margin:0 0 .4em}
+.carmel-rank-list{margin:0;padding-left:1.4em}
+.carmel-rank-list li{padding:.2em 0}
+.carmel-rank-list a{text-decoration:none;color:#5b2a86;font-weight:600}
+.carmel-rank-likes{color:#e67e22;font-size:.85em}
 .carmel-btn{display:inline-block;border:0;border-radius:.3em;padding:.5em 1.1em;color:#fff;cursor:pointer;font-size:.9em;text-decoration:none}
 .carmel-btn-purple{background:#6b4fbb}
 .carmel-banner{padding:.7em 1em;border-radius:.4em;margin:1em 0}
