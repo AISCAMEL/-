@@ -28,8 +28,13 @@ class Carmel_Inventory {
 	const IMPORT_ACTION    = 'carmel_inv_import';
 	const TEMPLATE_ACTION  = 'carmel_inv_template';
 	const CINQUIRY_ACTION  = 'carmel_inv_cust_inquiry';
+	const FAV_ACTION       = 'carmel_inv_fav';
 	const NONCE            = 'carmel_inv_nonce';
 	const IMPORT_MAX_ROWS  = 500;
+	const COMPARE_MAX      = 4;
+
+	/** 1リクエストあたりの新規ジオコーディング上限（タイムアウト防止）。 */
+	private $geocode_budget = 8;
 
 	public static function instance() {
 		if ( null === self::$instance ) {
@@ -51,6 +56,7 @@ class Carmel_Inventory {
 		add_action( 'admin_post_' . self::IMPORT_ACTION, array( $this, 'handle_import' ) );
 		add_action( 'admin_post_' . self::TEMPLATE_ACTION, array( $this, 'handle_template' ) );
 		add_action( 'admin_post_' . self::CINQUIRY_ACTION, array( $this, 'handle_customer_inquiry' ) );
+		add_action( 'admin_post_' . self::FAV_ACTION, array( $this, 'handle_favorite' ) );
 
 		// 在庫取り寄せ依頼の通知ルーティング／文面。
 		add_filter( 'carmel_routing_table', array( $this, 'add_routing' ) );
@@ -145,11 +151,302 @@ class Carmel_Inventory {
 	}
 
 	/* --------------------------------------------------------------------- *
+	 * お気に入り
+	 * --------------------------------------------------------------------- */
+
+	/** 現在ユーザーのお気に入り車両ID配列。 */
+	private function user_favorites() {
+		if ( ! is_user_logged_in() ) {
+			return array();
+		}
+		$f = get_user_meta( get_current_user_id(), 'carmel_favorites', true );
+		return is_array( $f ) ? array_map( 'intval', $f ) : array();
+	}
+
+	private function is_favorite( $vehicle_id ) {
+		return in_array( (int) $vehicle_id, $this->user_favorites(), true );
+	}
+
+	/** お気に入り（公開・販売可能なもの）を取得。 */
+	private function query_favorites() {
+		$ids = $this->user_favorites();
+		if ( empty( $ids ) ) {
+			return array();
+		}
+		return get_posts(
+			array(
+				'post_type'      => 'carmel_vehicle',
+				'post_status'    => 'publish',
+				'post__in'       => $ids,
+				'orderby'        => 'post__in',
+				'posts_per_page' => 50,
+				'meta_query'     => array(
+					'relation' => 'AND',
+					array( 'key' => 'published', 'value' => array( '1', 'yes', 'true' ), 'compare' => 'IN' ),
+				),
+			)
+		);
+	}
+
+	public function handle_favorite() {
+		$vehicle_id = isset( $_POST['vehicle_id'] ) ? (int) $_POST['vehicle_id'] : 0;
+		$redirect   = wp_get_referer() ? wp_get_referer() : home_url( '/inventory' );
+
+		if ( ! wp_verify_nonce( isset( $_POST[ self::NONCE ] ) ? sanitize_text_field( wp_unslash( $_POST[ self::NONCE ] ) ) : '', self::FAV_ACTION . '_' . $vehicle_id ) ) {
+			wp_die( esc_html__( '不正なリクエストです。', 'carmel-core' ), '', array( 'response' => 400 ) );
+		}
+		if ( ! is_user_logged_in() || 'carmel_vehicle' !== get_post_type( $vehicle_id ) ) {
+			wp_die( esc_html__( 'ログインが必要です。', 'carmel-core' ), '', array( 'response' => 403 ) );
+		}
+		$favs = $this->user_favorites();
+		if ( in_array( $vehicle_id, $favs, true ) ) {
+			$favs = array_values( array_diff( $favs, array( $vehicle_id ) ) );
+		} else {
+			$favs[] = $vehicle_id;
+		}
+		update_user_meta( get_current_user_id(), 'carmel_favorites', $favs );
+		wp_safe_redirect( $redirect );
+		exit;
+	}
+
+	/** お気に入りトグルボタン（ログイン時のみ）。 */
+	private function favorite_button( $vehicle_id ) {
+		if ( ! is_user_logged_in() ) {
+			return '';
+		}
+		$on    = $this->is_favorite( $vehicle_id );
+		$nonce = wp_create_nonce( self::FAV_ACTION . '_' . $vehicle_id );
+		return '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="carmel-fav-form">'
+			. '<input type="hidden" name="action" value="' . esc_attr( self::FAV_ACTION ) . '">'
+			. '<input type="hidden" name="vehicle_id" value="' . (int) $vehicle_id . '">'
+			. '<input type="hidden" name="' . esc_attr( self::NONCE ) . '" value="' . esc_attr( $nonce ) . '">'
+			. '<button type="submit" class="carmel-fav-btn' . ( $on ? ' on' : '' ) . '" title="お気に入り">' . ( $on ? '♥' : '♡' ) . '</button></form>';
+	}
+
+	/* --------------------------------------------------------------------- *
+	 * ジオコーディング & 地図
+	 * --------------------------------------------------------------------- */
+
+	/**
+	 * 取扱店の緯度経度（store メタにキャッシュ。未取得なら予算内でジオコーディング）。
+	 *
+	 * @param int $store_id
+	 * @return array{lat:float,lng:float}|null
+	 */
+	private function store_coords( $store_id ) {
+		if ( ! $store_id ) {
+			return null;
+		}
+		$lat = get_post_meta( $store_id, 'store_lat', true );
+		$lng = get_post_meta( $store_id, 'store_lng', true );
+		if ( '' !== (string) $lat && '' !== (string) $lng ) {
+			return array( 'lat' => (float) $lat, 'lng' => (float) $lng );
+		}
+		$key  = $this->maps_api_key();
+		$addr = (string) get_post_meta( $store_id, 'store_address', true );
+		if ( '' === $key || '' === $addr || $this->geocode_budget <= 0 ) {
+			return null;
+		}
+		$this->geocode_budget--;
+		$url  = add_query_arg(
+			array( 'address' => rawurlencode( $addr ), 'language' => 'ja', 'key' => $key ),
+			'https://maps.googleapis.com/maps/api/geocode/json'
+		);
+		$res = wp_remote_get( $url, array( 'timeout' => 15 ) );
+		if ( is_wp_error( $res ) ) {
+			return null;
+		}
+		$body = json_decode( wp_remote_retrieve_body( $res ), true );
+		$loc  = isset( $body['results'][0]['geometry']['location'] ) ? $body['results'][0]['geometry']['location'] : null;
+		if ( ! $loc ) {
+			return null;
+		}
+		update_post_meta( $store_id, 'store_lat', (float) $loc['lat'] );
+		update_post_meta( $store_id, 'store_lng', (float) $loc['lng'] );
+		return array( 'lat' => (float) $loc['lat'], 'lng' => (float) $loc['lng'] );
+	}
+
+	/** 在庫一覧の複数マーカー地図（Maps JS API。キー無しなら非表示）。 */
+	private function map_block( array $cars ) {
+		$key = $this->maps_api_key();
+		if ( '' === $key ) {
+			return '';
+		}
+		$points = array();
+		foreach ( $cars as $car ) {
+			$store_id = (int) get_post_meta( $car->ID, 'store_id', true );
+			$c        = $this->store_coords( $store_id );
+			if ( ! $c ) {
+				continue;
+			}
+			$title = trim( get_post_meta( $car->ID, 'maker', true ) . ' ' . get_post_meta( $car->ID, 'model', true ) );
+			$points[] = array(
+				'lat'   => $c['lat'],
+				'lng'   => $c['lng'],
+				'title' => $title ? $title : get_the_title( $car->ID ),
+				'price' => '¥' . number_format( (float) get_post_meta( $car->ID, 'price', true ) ),
+				'url'   => $this->detail_url( $car->ID ),
+			);
+		}
+		if ( empty( $points ) ) {
+			return '';
+		}
+		$json = wp_json_encode( $points );
+		ob_start();
+		?>
+<details class="carmel-invmap-wrap" open><summary>🗺 在庫マップ（<?php echo count( $points ); // phpcs:ignore ?>台）</summary>
+<div id="carmel-invmap" class="carmel-invmap"></div>
+<script>
+window.carmelMapPoints=<?php echo $json; // phpcs:ignore WordPress.Security.EscapeOutput ?>;
+window.carmelInitMap=function(){
+	var pts=window.carmelMapPoints||[];if(!pts.length)return;
+	var map=new google.maps.Map(document.getElementById('carmel-invmap'),{zoom:6,center:{lat:pts[0].lat,lng:pts[0].lng}});
+	var bounds=new google.maps.LatLngBounds();var iw=new google.maps.InfoWindow();
+	pts.forEach(function(p){
+		var m=new google.maps.Marker({position:{lat:p.lat,lng:p.lng},map:map,title:p.title});
+		bounds.extend(m.getPosition());
+		m.addListener('click',function(){iw.setContent('<div style="font-size:13px"><strong>'+p.title+'</strong><br>'+p.price+'<br><a href="'+p.url+'">詳細を見る</a></div>');iw.open(map,m);});
+	});
+	if(pts.length>1)map.fitBounds(bounds);
+};
+</script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=<?php echo esc_attr( $key ); ?>&callback=carmelInitMap"></script>
+</details>
+		<?php
+		return ob_get_clean();
+	}
+
+	/* --------------------------------------------------------------------- *
+	 * 比較
+	 * --------------------------------------------------------------------- */
+
+	/** 比較バー（JSでlocalStorageの選択を表示）。 */
+	private function compare_bar() {
+		$base = remove_query_arg( array( 'vehicle', 'compare', 'fav' ) );
+		ob_start();
+		?>
+<div id="carmel-cmpbar" class="carmel-cmpbar" style="display:none">
+	<span class="carmel-cmpbar-txt">比較リスト：<span id="carmel-cmpcount">0</span>台</span>
+	<a id="carmel-cmpgo" class="carmel-btn carmel-btn-purple" href="#">比較する</a>
+	<button type="button" id="carmel-cmpclear" class="carmel-btn carmel-btn-ghost">クリア</button>
+</div>
+<script>
+(function(){
+	var KEY='carmelCompare',MAX=<?php echo (int) self::COMPARE_MAX; ?>,base='<?php echo esc_js( $base ); ?>';
+	function get(){try{return JSON.parse(localStorage.getItem(KEY))||[];}catch(e){return [];}}
+	function set(a){localStorage.setItem(KEY,JSON.stringify(a));sync();}
+	window.carmelToggleCompare=function(id,btn){
+		id=parseInt(id);var a=get();var i=a.indexOf(id);
+		if(i>=0){a.splice(i,1);}else{if(a.length>=MAX){alert('比較は最大'+MAX+'台までです');return;}a.push(id);}
+		set(a);if(btn){btn.classList.toggle('on',a.indexOf(id)>=0);btn.textContent=a.indexOf(id)>=0?'比較中':'比較に追加';}
+	};
+	function sync(){
+		var a=get();var bar=document.getElementById('carmel-cmpbar');if(!bar)return;
+		document.getElementById('carmel-cmpcount').textContent=a.length;
+		bar.style.display=a.length?'flex':'none';
+		var go=document.getElementById('carmel-cmpgo');
+		go.href=base+(base.indexOf('?')>=0?'&':'?')+'compare='+a.join(',');
+		document.querySelectorAll('.carmel-cmp-btn').forEach(function(b){
+			var on=a.indexOf(parseInt(b.getAttribute('data-id')))>=0;
+			b.classList.toggle('on',on);b.textContent=on?'比較中':'比較に追加';
+		});
+	}
+	document.getElementById('carmel-cmpclear').addEventListener('click',function(){set([]);});
+	sync();
+})();
+</script>
+		<?php
+		return ob_get_clean();
+	}
+
+	/** 比較ボタン（カード用・JS制御）。 */
+	private function compare_button( $vehicle_id ) {
+		return '<button type="button" class="carmel-cmp-btn" data-id="' . (int) $vehicle_id . '" onclick="carmelToggleCompare(' . (int) $vehicle_id . ',this)">比較に追加</button>';
+	}
+
+	/** 比較ページ（?compare=1,2,3）。 */
+	private function render_compare( $scope ) {
+		$ids = array_filter( array_map( 'intval', explode( ',', sanitize_text_field( wp_unslash( $_GET['compare'] ) ) ) ) );
+		$ids = array_slice( array_unique( $ids ), 0, self::COMPARE_MAX );
+		$cars = array();
+		foreach ( $ids as $id ) {
+			if ( 'carmel_vehicle' !== get_post_type( $id ) ) {
+				continue;
+			}
+			$published = in_array( (string) get_post_meta( $id, 'published', true ), array( '1', 'yes', 'true' ), true );
+			if ( $published || in_array( $scope, array( 'store', 'hq' ), true ) ) {
+				$cars[] = get_post( $id );
+			}
+		}
+
+		ob_start();
+		echo $this->styles(); // phpcs:ignore WordPress.Security.EscapeOutput
+		echo '<div class="carmel-inv"><a class="carmel-comm-back" style="color:#6b4fbb;text-decoration:none" href="' . esc_url( remove_query_arg( 'compare' ) ) . '">← 在庫一覧へ戻る</a>';
+		echo '<h2>在庫を比較</h2>';
+		if ( count( $cars ) < 1 ) {
+			echo '<p>比較するお車が選択されていません。一覧で「比較に追加」を押してください。</p></div>';
+			return ob_get_clean();
+		}
+
+		$rows = array(
+			'画像'     => 'thumb',
+			'価格'     => 'price',
+			'メーカー' => 'maker',
+			'車種'     => 'model',
+			'グレード' => 'grade',
+			'年式'     => 'year',
+			'走行距離' => 'mileage',
+			'色'       => 'color',
+			'在庫状況' => 'vehicle_status',
+			'車検満了' => 'inspection_expiry',
+			'取扱店'   => 'store',
+			''         => 'cta',
+		);
+
+		echo '<div class="carmel-cmp-scroll"><table class="carmel-cmp-table"><tbody>';
+		foreach ( $rows as $label => $field ) {
+			echo '<tr><th>' . esc_html( $label ) . '</th>';
+			foreach ( $cars as $car ) {
+				echo '<td>' . $this->compare_cell( $car, $field, $scope ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput
+			}
+			echo '</tr>';
+		}
+		echo '</tbody></table></div></div>';
+		return ob_get_clean();
+	}
+
+	private function compare_cell( $car, $field, $scope ) {
+		switch ( $field ) {
+			case 'thumb':
+				return has_post_thumbnail( $car->ID )
+					? get_the_post_thumbnail( $car->ID, 'medium', array( 'class' => 'carmel-cmp-img' ) )
+					: '<div class="carmel-car-noimg" style="height:90px">NO IMAGE</div>';
+			case 'price':
+				return '<strong style="color:#6b4fbb">¥' . esc_html( number_format( (float) get_post_meta( $car->ID, 'price', true ) ) ) . '</strong>';
+			case 'mileage':
+				$m = get_post_meta( $car->ID, 'mileage', true );
+				return '' !== (string) $m ? esc_html( number_format( (float) $m ) ) . 'km' : '—';
+			case 'year':
+				$y = get_post_meta( $car->ID, 'year', true );
+				return $y ? esc_html( $y ) . '年' : '—';
+			case 'store':
+				$sid = (int) get_post_meta( $car->ID, 'store_id', true );
+				$sn  = $sid ? get_post_meta( $sid, 'store_name', true ) : '';
+				return $sn ? esc_html( $sn ) : '—';
+			case 'cta':
+				return '<a class="carmel-btn carmel-btn-blue" href="' . esc_url( $this->detail_url( $car->ID ) ) . '">詳細を見る</a>';
+			default:
+				$v = get_post_meta( $car->ID, $field, true );
+				return '' !== (string) $v ? esc_html( $v ) : '—';
+		}
+	}
+
+	/* --------------------------------------------------------------------- *
 	 * カーメル在庫ページ（公開・ログイン分け）
 	 * --------------------------------------------------------------------- */
 
 	public function render_public() {
-		$scope   = $this->viewer_scope();
+		$scope = $this->viewer_scope();
 
 		// 在庫詳細ページ（?vehicle=ID）。
 		$vid = isset( $_GET['vehicle'] ) ? (int) $_GET['vehicle'] : 0;
@@ -157,33 +454,54 @@ class Carmel_Inventory {
 			return $this->render_detail( $vid, $scope );
 		}
 
-		$filters = $this->read_filters();
-		$cars    = $this->query_public( $filters );
+		// 比較ページ（?compare=1,2,3）。
+		if ( ! empty( $_GET['compare'] ) ) {
+			return $this->render_compare( $scope );
+		}
+
+		$fav_mode = ! empty( $_GET['fav'] ) && is_user_logged_in();
+		$filters  = $this->read_filters();
+		$cars     = $fav_mode ? $this->query_favorites() : $this->query_public( $filters );
 
 		ob_start();
 		echo $this->styles(); // phpcs:ignore WordPress.Security.EscapeOutput
 		echo $this->banner(); // phpcs:ignore WordPress.Security.EscapeOutput
-		echo '<div class="carmel-inv"><h2>カーメル認定在庫</h2>';
+		echo '<div class="carmel-inv"><h2>' . ( $fav_mode ? '♥ お気に入りの在庫' : 'カーメル認定在庫' ) . '</h2>';
 
 		// ログイン分けの案内帯。
 		if ( 'guest' === $scope ) {
-			echo '<div class="carmel-inv-login">気になるお車は<a href="' . esc_url( home_url( '/login' ) ) . '">ログイン</a>するとお問い合わせ・お申込みいただけます。</div>';
+			echo '<div class="carmel-inv-login">気になるお車は<a href="' . esc_url( home_url( '/login' ) ) . '">ログイン</a>するとお問い合わせ・お気に入り登録ができます。</div>';
 		} elseif ( 'store' === $scope || 'hq' === $scope ) {
 			echo '<div class="carmel-inv-login">加盟店の方は<a href="' . esc_url( home_url( '/' . ltrim( apply_filters( 'carmel_store_inventory_page_slug', 'store-inventory' ), '/' ) ) ) . '">加盟店在庫ページ</a>で在庫共有・管理ができます。</div>';
 		}
 
-		echo $this->filter_bar( $filters ); // phpcs:ignore WordPress.Security.EscapeOutput
+		// お気に入り/通常の切替リンク（ログイン時）。
+		if ( is_user_logged_in() ) {
+			$base = remove_query_arg( array( 'fav', 'vehicle', 'compare' ) );
+			echo '<div class="carmel-inv-tabs">';
+			echo '<a class="' . ( $fav_mode ? '' : 'on' ) . '" href="' . esc_url( $base ) . '">すべて</a>';
+			echo '<a class="' . ( $fav_mode ? 'on' : '' ) . '" href="' . esc_url( add_query_arg( 'fav', 1, $base ) ) . '">♥ お気に入り（' . count( $this->user_favorites() ) . '）</a>';
+			echo '</div>';
+		}
+
+		if ( ! $fav_mode ) {
+			echo $this->filter_bar( $filters ); // phpcs:ignore WordPress.Security.EscapeOutput
+		}
 
 		if ( empty( $cars ) ) {
-			echo '<p>条件に合うお車が見つかりませんでした。</p></div>';
+			echo '<p>' . ( $fav_mode ? 'お気に入りに登録されたお車はありません。' : '条件に合うお車が見つかりませんでした。' ) . '</p></div>';
 			return ob_get_clean();
 		}
+
+		echo $this->map_block( $cars ); // phpcs:ignore WordPress.Security.EscapeOutput
 
 		echo '<div class="carmel-car-grid">';
 		foreach ( $cars as $car ) {
 			echo $this->car_card( $car, $scope, 'public' ); // phpcs:ignore WordPress.Security.EscapeOutput
 		}
-		echo '</div></div>';
+		echo '</div>';
+		echo $this->compare_bar(); // phpcs:ignore WordPress.Security.EscapeOutput
+		echo '</div>';
 		return ob_get_clean();
 	}
 
@@ -467,7 +785,11 @@ class Carmel_Inventory {
 			: '<div class="carmel-car-noimg">NO IMAGE</div>';
 
 		$out  = '<article class="carmel-car-card">';
-		$out .= '<div class="carmel-car-thumb">' . $thumb . '<span class="carmel-car-badge">' . esc_html( $status ? $status : '販売中' ) . '</span></div>';
+		$out .= '<div class="carmel-car-thumb">' . $thumb . '<span class="carmel-car-badge">' . esc_html( $status ? $status : '販売中' ) . '</span>';
+		if ( 'public' === $context ) {
+			$out .= $this->favorite_button( $car->ID );
+		}
+		$out .= '</div>';
 		$out .= '<div class="carmel-car-info">';
 		if ( 'public' === $context ) {
 			$detail = esc_url( add_query_arg( 'vehicle', (int) $car->ID, remove_query_arg( array( 'maker', 'q', 'price_max' ) ) ) );
@@ -550,6 +872,8 @@ class Carmel_Inventory {
 			if ( $addr ) {
 				$out .= '<a class="carmel-btn carmel-btn-ghost" href="' . esc_url( 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode( $addr ) ) . '" target="_blank" rel="noopener">🗺 地図</a>';
 			}
+			// 比較に追加。
+			$out .= $this->compare_button( $car->ID );
 		}
 
 		$out .= '</div>';
@@ -1078,6 +1402,24 @@ class Carmel_Inventory {
 .carmel-btn-purple{background:#6b4fbb}.carmel-btn-blue{background:#2e86de}.carmel-btn-green{background:#16a085}
 .carmel-btn-ghost{background:#eef2fb;color:#2e86de}
 .carmel-car-link{color:#5b2a86;text-decoration:none}
+.carmel-inv-tabs{display:flex;gap:.5em;margin:.6em 0}
+.carmel-inv-tabs a{font-size:.85em;text-decoration:none;color:#6b4fbb;border:1px solid #ddd2f5;border-radius:1em;padding:.2em .9em}
+.carmel-inv-tabs a.on{background:#6b4fbb;color:#fff;border-color:#6b4fbb}
+.carmel-fav-form{position:absolute;top:.4em;right:.4em;margin:0}
+.carmel-fav-btn{border:0;background:rgba(255,255,255,.9);color:#c0392b;border-radius:50%;width:2em;height:2em;font-size:1em;cursor:pointer;line-height:1;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.carmel-fav-btn.on{background:#c0392b;color:#fff}
+.carmel-cmp-btn{border:1px solid #6b4fbb;background:#fff;color:#6b4fbb;border-radius:.3em;padding:.4em .8em;font-size:.82em;cursor:pointer}
+.carmel-cmp-btn.on{background:#6b4fbb;color:#fff}
+.carmel-cmpbar{position:sticky;bottom:0;display:flex;gap:.6em;align-items:center;justify-content:center;background:#fff;border:1px solid #ddd2f5;border-radius:10px;padding:.6em 1em;margin:1em 0;box-shadow:0 -2px 10px rgba(0,0,0,.08)}
+.carmel-cmpbar-txt{font-weight:700}
+.carmel-invmap-wrap{margin:.6em 0}
+.carmel-invmap-wrap summary{cursor:pointer;font-weight:700;padding:.3em 0}
+.carmel-invmap{width:100%;height:360px;border-radius:10px;margin:.4em 0}
+.carmel-cmp-scroll{overflow-x:auto}
+.carmel-cmp-table{border-collapse:collapse;min-width:480px}
+.carmel-cmp-table th,.carmel-cmp-table td{border:1px solid #e7e2ef;padding:.55em .7em;text-align:left;vertical-align:top;font-size:.9em}
+.carmel-cmp-table th{background:#f4f6fb;white-space:nowrap}
+.carmel-cmp-img{max-width:160px;height:auto;border-radius:6px}
 .carmel-inv-import{border:1px solid #e7e2ef;border-radius:10px;padding:.6em 1em;margin:.8em 0;background:#fff}
 .carmel-inv-import summary{cursor:pointer;font-weight:700}
 .carmel-inv-import code{background:#f4f6fb;padding:.1em .4em;border-radius:.2em;font-size:.85em}

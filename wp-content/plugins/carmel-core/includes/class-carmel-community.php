@@ -62,6 +62,7 @@ class Carmel_Community {
 		add_action( 'admin_post_' . self::NEW_ACTION, array( $this, 'handle_new_topic' ) );
 		add_action( 'admin_post_' . self::REPLY_ACTION, array( $this, 'handle_reply' ) );
 		add_action( 'admin_post_' . self::PIN_ACTION, array( $this, 'handle_pin' ) );
+		add_action( 'wp_ajax_carmel_comm_mention', array( $this, 'ajax_mention' ) );
 
 		// 新着トピック・返信の通知ルーティング／文面。
 		add_filter( 'carmel_routing_table', array( $this, 'add_routing' ) );
@@ -155,7 +156,20 @@ class Carmel_Community {
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		require_once ABSPATH . 'wp-admin/includes/media.php';
+
+		// ロール未更新の環境でも添付できるよう、本処理中のみ upload_files を許可。
+		$grant = null;
+		if ( ! current_user_can( 'upload_files' ) ) {
+			$grant = function ( $allcaps ) {
+				$allcaps['upload_files'] = true;
+				return $allcaps;
+			};
+			add_filter( 'user_has_cap', $grant );
+		}
 		$att_id = media_handle_upload( 'image', $parent_id );
+		if ( $grant ) {
+			remove_filter( 'user_has_cap', $grant );
+		}
 		return is_wp_error( $att_id ) ? 0 : (int) $att_id;
 	}
 
@@ -280,6 +294,101 @@ class Carmel_Community {
 		} else {
 			echo $this->render_topic_list(); // phpcs:ignore WordPress.Security.EscapeOutput
 		}
+		echo $this->mention_js(); // phpcs:ignore WordPress.Security.EscapeOutput
+		return ob_get_clean();
+	}
+
+	/**
+	 * メンション候補をユーザー名で検索（AJAX・ログイン必須）。
+	 */
+	public function ajax_mention() {
+		if ( ! is_user_logged_in() ) {
+			wp_send_json( array() );
+		}
+		check_ajax_referer( self::NONCE, 'nonce' );
+		$term = isset( $_GET['term'] ) ? sanitize_text_field( wp_unslash( $_GET['term'] ) ) : '';
+		if ( strlen( $term ) < 1 ) {
+			wp_send_json( array() );
+		}
+		$users = get_users(
+			array(
+				'search'         => '*' . $term . '*',
+				'search_columns' => array( 'user_login', 'display_name', 'user_nicename' ),
+				'number'         => 8,
+				'fields'         => array( 'user_login', 'display_name' ),
+			)
+		);
+		$out = array();
+		foreach ( $users as $u ) {
+			$out[] = array( 'login' => $u->user_login, 'name' => $u->display_name );
+		}
+		wp_send_json( $out );
+	}
+
+	/** @メンション候補のサジェストUI（コミュニティのtextarea向け）。 */
+	private function mention_js() {
+		$nonce = wp_create_nonce( self::NONCE );
+		ob_start();
+		?>
+<style>
+.carmel-mention-box{position:absolute;z-index:50;background:#fff;border:1px solid #ddd2f5;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.12);min-width:200px;max-height:220px;overflow:auto}
+.carmel-mention-box div{padding:.45em .8em;cursor:pointer;font-size:.9em}
+.carmel-mention-box div:hover,.carmel-mention-box div.on{background:#f1ecfb}
+.carmel-mention-box small{color:#9298a5}
+</style>
+<script>
+(function(){
+	var ajax='<?php echo esc_js( admin_url( 'admin-ajax.php' ) ); ?>',nonce='<?php echo esc_js( $nonce ); ?>';
+	var box=null,active=-1,items=[],target=null,timer=null;
+	function close(){if(box){box.remove();box=null;}active=-1;items=[];}
+	function tokenAt(ta){
+		var v=ta.value.slice(0,ta.selectionStart);var m=v.match(/@([A-Za-z0-9_\-\.]*)$/);return m?m[1]:null;
+	}
+	function place(ta){
+		var r=ta.getBoundingClientRect();
+		box.style.left=(window.scrollX+r.left)+'px';
+		box.style.top=(window.scrollY+r.bottom+2)+'px';
+	}
+	function render(){
+		if(!box){box=document.createElement('div');box.className='carmel-mention-box';document.body.appendChild(box);}
+		box.innerHTML='';
+		items.forEach(function(it,i){
+			var d=document.createElement('div');d.className=(i===active?'on':'');
+			d.innerHTML='@'+it.login+' <small>'+(it.name||'')+'</small>';
+			d.addEventListener('mousedown',function(e){e.preventDefault();pick(i);});
+			box.appendChild(d);
+		});
+		place(target);
+	}
+	function pick(i){
+		var it=items[i];if(!it||!target)return;
+		var s=target.selectionStart,v=target.value;
+		var before=v.slice(0,s).replace(/@([A-Za-z0-9_\-\.]*)$/,'@'+it.login+' ');
+		target.value=before+v.slice(s);target.focus();close();
+	}
+	function search(ta,term){
+		clearTimeout(timer);
+		timer=setTimeout(function(){
+			fetch(ajax+'?action=carmel_comm_mention&nonce='+nonce+'&term='+encodeURIComponent(term))
+				.then(function(r){return r.json();}).then(function(list){
+					items=list||[];active=items.length?0:-1;if(items.length){target=ta;render();}else close();
+				}).catch(close);
+		},180);
+	}
+	document.querySelectorAll('.carmel-comm textarea').forEach(function(ta){
+		ta.addEventListener('input',function(){var t=tokenAt(ta);if(t===null){close();return;}target=ta;search(ta,t);});
+		ta.addEventListener('keydown',function(e){
+			if(!box)return;
+			if(e.key==='ArrowDown'){active=(active+1)%items.length;render();e.preventDefault();}
+			else if(e.key==='ArrowUp'){active=(active-1+items.length)%items.length;render();e.preventDefault();}
+			else if(e.key==='Enter'&&active>=0){pick(active);e.preventDefault();}
+			else if(e.key==='Escape'){close();}
+		});
+		ta.addEventListener('blur',function(){setTimeout(close,150);});
+	});
+})();
+</script>
+		<?php
 		return ob_get_clean();
 	}
 

@@ -150,6 +150,11 @@ class Carmel_Roles {
 			'carmel_view_own' => true,
 		);
 
+		// 画像添付（コミュニティ等）のためのメディアアップロード権限。
+		foreach ( array( 'hq_admin', 'store_owner', 'store_staff', 'customer' ) as $role ) {
+			$caps[ $role ]['upload_files'] = true;
+		}
+
 		// --- Persist roles ----------------------------------------------------
 		foreach ( self::ROLES as $slug => $name ) {
 			remove_role( $slug ); // ensure caps are refreshed on re-activation
