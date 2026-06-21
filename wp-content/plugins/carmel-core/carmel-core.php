@@ -40,6 +40,7 @@ require_once CARMEL_CORE_DIR . 'includes/class-carmel-gas-client.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-transport.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-payments.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-reports.php';
+require_once CARMEL_CORE_DIR . 'includes/class-carmel-hq-dashboard.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-mf-contract.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-documents.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-billing.php';
@@ -80,6 +81,7 @@ function carmel_core_init() {
 	Carmel_Transport::instance()->register_hooks();
 	Carmel_Payments::instance()->register_hooks();
 	Carmel_Reports::instance()->register_hooks();
+	Carmel_HQ_Dashboard::instance()->register_hooks();
 	Carmel_MF_Contract::instance()->register_hooks();
 	Carmel_Documents::instance()->register_hooks();
 	Carmel_Billing::instance()->register_hooks();

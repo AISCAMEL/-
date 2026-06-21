@@ -76,6 +76,81 @@ class Carmel_Inventory {
 
 		// サムネイル対応（テーマ非依存で在庫画像を使う）。
 		add_action( 'after_setup_theme', array( $this, 'ensure_thumbnail_support' ) );
+
+		// 在庫詳細のSEO（構造化データ＋OGP）。
+		add_action( 'wp_head', array( $this, 'seo_head' ) );
+	}
+
+	/**
+	 * 在庫詳細（?vehicle=ID）で schema.org/Car の JSON-LD と OGP を出力。
+	 * 公開・販売可能な車両のみ。
+	 */
+	public function seo_head() {
+		$vid = isset( $_GET['vehicle'] ) ? (int) $_GET['vehicle'] : 0;
+		if ( ! $vid || 'carmel_vehicle' !== get_post_type( $vid ) ) {
+			return;
+		}
+		if ( ! in_array( (string) get_post_meta( $vid, 'published', true ), array( '1', 'yes', 'true' ), true ) ) {
+			return;
+		}
+		$maker = (string) get_post_meta( $vid, 'maker', true );
+		$model = (string) get_post_meta( $vid, 'model', true );
+		$name  = trim( $maker . ' ' . $model );
+		$name  = '' !== $name ? $name : get_the_title( $vid );
+		$price = (float) get_post_meta( $vid, 'price', true );
+		$img   = has_post_thumbnail( $vid ) ? get_the_post_thumbnail_url( $vid, 'large' ) : '';
+		$url   = $this->detail_url( $vid );
+
+		$ld = array(
+			'@context' => 'https://schema.org',
+			'@type'    => 'Car',
+			'name'     => $name,
+			'url'      => $url,
+		);
+		if ( $maker ) {
+			$ld['brand'] = array( '@type' => 'Brand', 'name' => $maker );
+		}
+		if ( $model ) {
+			$ld['model'] = $model;
+		}
+		$year = get_post_meta( $vid, 'year', true );
+		if ( $year ) {
+			$ld['vehicleModelDate'] = (string) $year;
+			$ld['productionDate']   = (string) $year;
+		}
+		$mileage = get_post_meta( $vid, 'mileage', true );
+		if ( '' !== (string) $mileage ) {
+			$ld['mileageFromOdometer'] = array( '@type' => 'QuantitativeValue', 'value' => (float) $mileage, 'unitCode' => 'KMT' );
+		}
+		$color = get_post_meta( $vid, 'color', true );
+		if ( $color ) {
+			$ld['color'] = $color;
+		}
+		if ( $img ) {
+			$ld['image'] = $img;
+		}
+		if ( $price > 0 ) {
+			$ld['offers'] = array(
+				'@type'         => 'Offer',
+				'price'         => (string) (int) $price,
+				'priceCurrency' => 'JPY',
+				'availability'  => 'https://schema.org/InStock',
+				'url'           => $url,
+			);
+		}
+
+		echo "\n<!-- Carmel inventory SEO -->\n";
+		echo '<script type="application/ld+json">' . wp_json_encode( $ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . "</script>\n"; // phpcs:ignore WordPress.Security.EscapeOutput
+		echo '<meta property="og:type" content="product">' . "\n";
+		echo '<meta property="og:title" content="' . esc_attr( $name ) . '">' . "\n";
+		echo '<meta property="og:url" content="' . esc_url( $url ) . '">' . "\n";
+		if ( $img ) {
+			echo '<meta property="og:image" content="' . esc_url( $img ) . '">' . "\n";
+		}
+		if ( $price > 0 ) {
+			echo '<meta property="product:price:amount" content="' . esc_attr( (int) $price ) . '">' . "\n";
+			echo '<meta property="product:price:currency" content="JPY">' . "\n";
+		}
 	}
 
 	public function ensure_thumbnail_support() {
