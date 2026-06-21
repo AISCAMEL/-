@@ -25,6 +25,8 @@ class Carmel_Community {
 	const NEW_ACTION      = 'carmel_comm_new';
 	const REPLY_ACTION    = 'carmel_comm_reply';
 	const PIN_ACTION      = 'carmel_comm_pin';
+	const LIKE_ACTION     = 'carmel_comm_like';
+	const BEST_ACTION     = 'carmel_comm_best';
 	const NONCE           = 'carmel_comm_nonce';
 
 	public static function instance() {
@@ -63,6 +65,8 @@ class Carmel_Community {
 		add_action( 'admin_post_' . self::REPLY_ACTION, array( $this, 'handle_reply' ) );
 		add_action( 'admin_post_' . self::PIN_ACTION, array( $this, 'handle_pin' ) );
 		add_action( 'wp_ajax_carmel_comm_mention', array( $this, 'ajax_mention' ) );
+		add_action( 'admin_post_' . self::LIKE_ACTION, array( $this, 'handle_like' ) );
+		add_action( 'admin_post_' . self::BEST_ACTION, array( $this, 'handle_best' ) );
 
 		// 新着トピック・返信の通知ルーティング／文面。
 		add_filter( 'carmel_routing_table', array( $this, 'add_routing' ) );
@@ -458,6 +462,9 @@ class Carmel_Community {
 			if ( $tcat ) {
 				$out .= '<span class="carmel-comm-cat">' . esc_html( self::category_label( $tcat ) ) . '</span> ';
 			}
+			if ( (int) get_post_meta( $t->ID, 'best_answer', true ) ) {
+				$out .= '<span class="carmel-comm-solved">✔ 解決済</span> ';
+			}
 			$out .= '<a class="carmel-comm-ttl" href="' . esc_url( $link ) . '">' . esc_html( get_the_title( $t->ID ) ) . '</a>'
 				. '<div class="carmel-comm-meta">' . esc_html( $author ) . '・' . esc_html( get_the_date( 'Y-m-d', $t->ID ) )
 				. '・返信 ' . (int) $replies . '</div></li>';
@@ -493,19 +500,42 @@ class Carmel_Community {
 		if ( has_post_thumbnail( $topic_id ) ) {
 			$out .= '<div class="carmel-comm-img">' . get_the_post_thumbnail( $topic_id, 'medium' ) . '</div>';
 		}
-		$out .= '<div class="carmel-comm-body">' . $this->format_text( $post->post_content ) . '</div></article>';
+		$out .= '<div class="carmel-comm-body">' . $this->format_text( $post->post_content ) . '</div>';
+		$out .= '<div class="carmel-comm-react">' . $this->like_button( 'topic', $topic_id ) . '</div></article>';
 
-		// 返信一覧。
+		// 返信一覧（ベストアンサーを先頭に）。
 		$comments = get_comments( array( 'post_id' => $topic_id, 'status' => 'approve', 'order' => 'ASC' ) );
-		$out     .= '<h3 class="carmel-comm-reph">返信（' . count( $comments ) . '）</h3>';
+		$best     = (int) get_post_meta( $topic_id, 'best_answer', true );
+		if ( $best ) {
+			usort(
+				$comments,
+				function ( $a, $b ) use ( $best ) {
+					$ab = ( (int) $a->comment_ID === $best ) ? 0 : 1;
+					$bb = ( (int) $b->comment_ID === $best ) ? 0 : 1;
+					if ( $ab === $bb ) {
+						return strcmp( $a->comment_date, $b->comment_date );
+					}
+					return $ab - $bb;
+				}
+			);
+		}
+		$out .= '<h3 class="carmel-comm-reph">返信（' . count( $comments ) . '）</h3>';
 		if ( $comments ) {
 			$out .= '<ul class="carmel-comm-replies">';
 			foreach ( $comments as $c ) {
-				$img    = (int) get_comment_meta( $c->comment_ID, 'carmel_image', true );
+				$cid     = (int) $c->comment_ID;
+				$img     = (int) get_comment_meta( $cid, 'carmel_image', true );
 				$imghtml = $img ? '<div class="carmel-comm-img">' . wp_get_attachment_image( $img, 'medium' ) . '</div>' : '';
-				$out .= '<li><div class="carmel-comm-meta">' . esc_html( $c->comment_author ) . '・' . esc_html( mysql2date( 'Y-m-d H:i', $c->comment_date ) ) . '</div>'
+				$is_best = ( $best === $cid );
+				$out    .= '<li class="' . ( $is_best ? 'carmel-best' : '' ) . '">';
+				if ( $is_best ) {
+					$out .= '<div class="carmel-best-badge">✔ ベストアンサー</div>';
+				}
+				$out .= '<div class="carmel-comm-meta">' . esc_html( $c->comment_author ) . '・' . esc_html( mysql2date( 'Y-m-d H:i', $c->comment_date ) ) . '</div>'
 					. $imghtml
-					. '<div class="carmel-comm-rbody">' . $this->format_text( $c->comment_content ) . '</div></li>';
+					. '<div class="carmel-comm-rbody">' . $this->format_text( $c->comment_content ) . '</div>'
+					. '<div class="carmel-comm-react">' . $this->like_button( 'reply', $cid ) . $this->best_button( $topic_id, $cid ) . '</div>'
+					. '</li>';
 			}
 			$out .= '</ul>';
 		} else {
@@ -579,6 +609,103 @@ class Carmel_Community {
 		$this->notify_mentions( $body, (int) $id );
 
 		wp_safe_redirect( add_query_arg( array( 'topic' => (int) $id, 'carmel_comm' => 'new_ok' ), remove_query_arg( 'carmel_comm', $redirect ) ) );
+		exit;
+	}
+
+	/* --------------------------------------------------------------------- *
+	 * いいね / ベストアンサー
+	 * --------------------------------------------------------------------- */
+
+	/** いいねした人のID配列（topic=投稿メタ / reply=コメントメタ）。 */
+	private function likers( $ctype, $id ) {
+		$v = ( 'reply' === $ctype ) ? get_comment_meta( $id, '_carmel_likes', true ) : get_post_meta( $id, '_carmel_likes', true );
+		return is_array( $v ) ? array_map( 'intval', $v ) : array();
+	}
+
+	private function like_button( $ctype, $id ) {
+		if ( ! $this->can_use_community() ) {
+			return '';
+		}
+		$likers = $this->likers( $ctype, $id );
+		$on     = in_array( get_current_user_id(), $likers, true );
+		$nonce  = wp_create_nonce( self::LIKE_ACTION . '_' . $ctype . '_' . $id );
+		return '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="carmel-like-form">'
+			. '<input type="hidden" name="action" value="' . esc_attr( self::LIKE_ACTION ) . '">'
+			. '<input type="hidden" name="ctype" value="' . esc_attr( $ctype ) . '">'
+			. '<input type="hidden" name="id" value="' . (int) $id . '">'
+			. '<input type="hidden" name="' . esc_attr( self::NONCE ) . '" value="' . esc_attr( $nonce ) . '">'
+			. '<button type="submit" class="carmel-like-btn' . ( $on ? ' on' : '' ) . '">👍 <span>' . count( $likers ) . '</span></button></form>';
+	}
+
+	public function handle_like() {
+		$ctype    = isset( $_POST['ctype'] ) ? sanitize_key( $_POST['ctype'] ) : '';
+		$id       = isset( $_POST['id'] ) ? (int) $_POST['id'] : 0;
+		$redirect = wp_get_referer() ? wp_get_referer() : home_url( '/' );
+
+		if ( ! in_array( $ctype, array( 'topic', 'reply' ), true ) ) {
+			wp_die( esc_html__( '不正なリクエストです。', 'carmel-core' ), '', array( 'response' => 400 ) );
+		}
+		if ( ! wp_verify_nonce( isset( $_POST[ self::NONCE ] ) ? sanitize_text_field( wp_unslash( $_POST[ self::NONCE ] ) ) : '', self::LIKE_ACTION . '_' . $ctype . '_' . $id ) ) {
+			wp_die( esc_html__( '不正なリクエストです。', 'carmel-core' ), '', array( 'response' => 400 ) );
+		}
+		if ( ! $this->can_use_community() ) {
+			wp_die( esc_html__( '権限がありません。', 'carmel-core' ), '', array( 'response' => 403 ) );
+		}
+		$uid    = get_current_user_id();
+		$likers = $this->likers( $ctype, $id );
+		if ( in_array( $uid, $likers, true ) ) {
+			$likers = array_values( array_diff( $likers, array( $uid ) ) );
+		} else {
+			$likers[] = $uid;
+		}
+		if ( 'reply' === $ctype ) {
+			update_comment_meta( $id, '_carmel_likes', $likers );
+			$topic_id = (int) get_comment( $id )->comment_post_ID;
+		} else {
+			update_post_meta( $id, '_carmel_likes', $likers );
+			$topic_id = $id;
+		}
+		wp_safe_redirect( add_query_arg( 'topic', $topic_id, remove_query_arg( 'carmel_comm', $redirect ) ) );
+		exit;
+	}
+
+	/** ベストアンサーに設定できるか（トピック投稿者 or 本部）。 */
+	private function can_set_best( $topic_id ) {
+		return current_user_can( 'carmel_manage_stores' ) || (int) get_post_field( 'post_author', $topic_id ) === get_current_user_id();
+	}
+
+	private function best_button( $topic_id, $comment_id ) {
+		if ( ! $this->can_set_best( $topic_id ) ) {
+			return '';
+		}
+		$current = (int) get_post_meta( $topic_id, 'best_answer', true );
+		$is_best = ( $current === (int) $comment_id );
+		$nonce   = wp_create_nonce( self::BEST_ACTION . '_' . $comment_id );
+		$label   = $is_best ? 'ベスト解除' : 'ベストアンサーにする';
+		return '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="carmel-best-form">'
+			. '<input type="hidden" name="action" value="' . esc_attr( self::BEST_ACTION ) . '">'
+			. '<input type="hidden" name="comment_id" value="' . (int) $comment_id . '">'
+			. '<input type="hidden" name="' . esc_attr( self::NONCE ) . '" value="' . esc_attr( $nonce ) . '">'
+			. '<button type="submit" class="carmel-best-btn">' . esc_html( $label ) . '</button></form>';
+	}
+
+	public function handle_best() {
+		$comment_id = isset( $_POST['comment_id'] ) ? (int) $_POST['comment_id'] : 0;
+		$redirect   = wp_get_referer() ? wp_get_referer() : home_url( '/' );
+		$comment    = $comment_id ? get_comment( $comment_id ) : null;
+		if ( ! $comment ) {
+			wp_die( esc_html__( '返信が見つかりません。', 'carmel-core' ), '', array( 'response' => 404 ) );
+		}
+		$topic_id = (int) $comment->comment_post_ID;
+		if ( ! wp_verify_nonce( isset( $_POST[ self::NONCE ] ) ? sanitize_text_field( wp_unslash( $_POST[ self::NONCE ] ) ) : '', self::BEST_ACTION . '_' . $comment_id ) ) {
+			wp_die( esc_html__( '不正なリクエストです。', 'carmel-core' ), '', array( 'response' => 400 ) );
+		}
+		if ( ! $this->can_set_best( $topic_id ) ) {
+			wp_die( esc_html__( '権限がありません。', 'carmel-core' ), '', array( 'response' => 403 ) );
+		}
+		$current = (int) get_post_meta( $topic_id, 'best_answer', true );
+		update_post_meta( $topic_id, 'best_answer', $current === $comment_id ? 0 : $comment_id );
+		wp_safe_redirect( add_query_arg( 'topic', $topic_id, remove_query_arg( 'carmel_comm', $redirect ) ) );
 		exit;
 	}
 
@@ -717,6 +844,14 @@ class Carmel_Community {
 .carmel-comm-file{display:block;font-size:.82em;color:#7a7488;margin:.3em 0}
 .carmel-mention{color:#5b2a86;font-weight:700}
 .carmel-comm-replyform{margin-top:1em}
+.carmel-comm-react{display:flex;gap:.5em;align-items:center;margin-top:.5em}
+.carmel-like-form,.carmel-best-form{margin:0}
+.carmel-like-btn{border:1px solid #ddd2f5;background:#fff;border-radius:1em;padding:.2em .8em;cursor:pointer;font-size:.85em}
+.carmel-like-btn.on{background:#f1ecfb;border-color:#6b4fbb;color:#5b2a86;font-weight:700}
+.carmel-best-btn{border:1px solid #16a085;background:#fff;color:#0e6e58;border-radius:1em;padding:.2em .8em;cursor:pointer;font-size:.82em}
+.carmel-best{border:2px solid #16a085!important;background:#f1fbf8}
+.carmel-best-badge{color:#0e6e58;font-weight:700;font-size:.85em;margin-bottom:.2em}
+.carmel-comm-solved{background:#e8f8f3;color:#0e6e58;border:1px solid #16a085;border-radius:.3em;padding:.05em .5em;font-size:.78em}
 .carmel-btn{display:inline-block;border:0;border-radius:.3em;padding:.5em 1.1em;color:#fff;cursor:pointer;font-size:.9em;text-decoration:none}
 .carmel-btn-purple{background:#6b4fbb}
 .carmel-banner{padding:.7em 1em;border-radius:.4em;margin:1em 0}

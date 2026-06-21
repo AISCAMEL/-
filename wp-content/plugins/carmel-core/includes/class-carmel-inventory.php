@@ -29,6 +29,8 @@ class Carmel_Inventory {
 	const TEMPLATE_ACTION  = 'carmel_inv_template';
 	const CINQUIRY_ACTION  = 'carmel_inv_cust_inquiry';
 	const FAV_ACTION       = 'carmel_inv_fav';
+	const SAVE_SEARCH      = 'carmel_inv_save_search';
+	const DEL_SEARCH       = 'carmel_inv_del_search';
 	const NONCE            = 'carmel_inv_nonce';
 	const IMPORT_MAX_ROWS  = 500;
 	const COMPARE_MAX      = 4;
@@ -57,6 +59,11 @@ class Carmel_Inventory {
 		add_action( 'admin_post_' . self::TEMPLATE_ACTION, array( $this, 'handle_template' ) );
 		add_action( 'admin_post_' . self::CINQUIRY_ACTION, array( $this, 'handle_customer_inquiry' ) );
 		add_action( 'admin_post_' . self::FAV_ACTION, array( $this, 'handle_favorite' ) );
+		add_action( 'admin_post_' . self::SAVE_SEARCH, array( $this, 'handle_save_search' ) );
+		add_action( 'admin_post_' . self::DEL_SEARCH, array( $this, 'handle_delete_search' ) );
+
+		// 新着アラート（日次cron後に実行）。
+		add_action( 'carmel_daily_cron_done', array( $this, 'run_new_arrival_alerts' ) );
 
 		// 在庫取り寄せ依頼の通知ルーティング／文面。
 		add_filter( 'carmel_routing_table', array( $this, 'add_routing' ) );
@@ -221,6 +228,192 @@ class Carmel_Inventory {
 			. '<input type="hidden" name="vehicle_id" value="' . (int) $vehicle_id . '">'
 			. '<input type="hidden" name="' . esc_attr( self::NONCE ) . '" value="' . esc_attr( $nonce ) . '">'
 			. '<button type="submit" class="carmel-fav-btn' . ( $on ? ' on' : '' ) . '" title="お気に入り">' . ( $on ? '♥' : '♡' ) . '</button></form>';
+	}
+
+	/* --------------------------------------------------------------------- *
+	 * 保存検索 & 新着アラート
+	 * --------------------------------------------------------------------- */
+
+	/** 現在ユーザーの保存済み検索条件。 */
+	private function saved_searches() {
+		if ( ! is_user_logged_in() ) {
+			return array();
+		}
+		$s = get_user_meta( get_current_user_id(), 'carmel_saved_searches', true );
+		return is_array( $s ) ? $s : array();
+	}
+
+	/** 条件を人が読めるラベルに。 */
+	private function search_label( $f ) {
+		$parts = array();
+		if ( ! empty( $f['maker'] ) ) {
+			$parts[] = $f['maker'];
+		}
+		if ( ! empty( $f['q'] ) ) {
+			$parts[] = '「' . $f['q'] . '」';
+		}
+		if ( ! empty( $f['price_max'] ) ) {
+			$parts[] = '¥' . number_format( (int) $f['price_max'] ) . '以下';
+		}
+		return $parts ? implode( ' / ', $parts ) : 'すべての在庫';
+	}
+
+	public function handle_save_search() {
+		$redirect = wp_get_referer() ? wp_get_referer() : home_url( '/inventory' );
+		if ( ! wp_verify_nonce( isset( $_POST[ self::NONCE ] ) ? sanitize_text_field( wp_unslash( $_POST[ self::NONCE ] ) ) : '', self::SAVE_SEARCH ) ) {
+			wp_die( esc_html__( '不正なリクエストです。', 'carmel-core' ), '', array( 'response' => 400 ) );
+		}
+		if ( ! is_user_logged_in() ) {
+			wp_die( esc_html__( 'ログインが必要です。', 'carmel-core' ), '', array( 'response' => 403 ) );
+		}
+		$f = array(
+			'maker'     => isset( $_POST['maker'] ) ? sanitize_text_field( wp_unslash( $_POST['maker'] ) ) : '',
+			'q'         => isset( $_POST['q'] ) ? sanitize_text_field( wp_unslash( $_POST['q'] ) ) : '',
+			'price_max' => isset( $_POST['price_max'] ) ? (int) $_POST['price_max'] : 0,
+			'last'      => current_time( 'mysql' ),
+		);
+		$list   = $this->saved_searches();
+		$list[] = $f;
+		// 最大10件。
+		if ( count( $list ) > 10 ) {
+			$list = array_slice( $list, -10 );
+		}
+		update_user_meta( get_current_user_id(), 'carmel_saved_searches', $list );
+		wp_safe_redirect( add_query_arg( 'carmel_inv', 'search_saved', $redirect ) );
+		exit;
+	}
+
+	public function handle_delete_search() {
+		$redirect = wp_get_referer() ? wp_get_referer() : home_url( '/inventory' );
+		$idx      = isset( $_POST['idx'] ) ? (int) $_POST['idx'] : -1;
+		if ( ! wp_verify_nonce( isset( $_POST[ self::NONCE ] ) ? sanitize_text_field( wp_unslash( $_POST[ self::NONCE ] ) ) : '', self::DEL_SEARCH . '_' . $idx ) ) {
+			wp_die( esc_html__( '不正なリクエストです。', 'carmel-core' ), '', array( 'response' => 400 ) );
+		}
+		if ( ! is_user_logged_in() ) {
+			wp_die( esc_html__( 'ログインが必要です。', 'carmel-core' ), '', array( 'response' => 403 ) );
+		}
+		$list = $this->saved_searches();
+		if ( isset( $list[ $idx ] ) ) {
+			unset( $list[ $idx ] );
+			update_user_meta( get_current_user_id(), 'carmel_saved_searches', array_values( $list ) );
+		}
+		wp_safe_redirect( add_query_arg( 'carmel_inv', 'search_deleted', $redirect ) );
+		exit;
+	}
+
+	/** 保存検索の管理UI＋現在条件の保存ボタン。 */
+	private function saved_search_block( array $filters ) {
+		if ( ! is_user_logged_in() ) {
+			return '';
+		}
+		$out  = '<details class="carmel-saved"><summary>🔔 保存した検索条件・新着アラート</summary>';
+
+		// 現在の条件を保存。
+		$nonce = wp_create_nonce( self::SAVE_SEARCH );
+		$out  .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="carmel-saved-add">'
+			. '<input type="hidden" name="action" value="' . esc_attr( self::SAVE_SEARCH ) . '">'
+			. '<input type="hidden" name="' . esc_attr( self::NONCE ) . '" value="' . esc_attr( $nonce ) . '">'
+			. '<input type="hidden" name="maker" value="' . esc_attr( $filters['maker'] ) . '">'
+			. '<input type="hidden" name="q" value="' . esc_attr( $filters['q'] ) . '">'
+			. '<input type="hidden" name="price_max" value="' . esc_attr( $filters['price_max'] ) . '">'
+			. '<span class="carmel-hint">現在の条件：' . esc_html( $this->search_label( $filters ) ) . '</span> '
+			. '<button type="submit" class="carmel-btn carmel-btn-purple">この条件を保存</button></form>';
+
+		$list = $this->saved_searches();
+		if ( empty( $list ) ) {
+			$out .= '<p class="carmel-hint">保存された条件はありません。新着が入荷すると登録メール/LINEへお知らせします。</p>';
+		} else {
+			$out  .= '<ul class="carmel-saved-list">';
+			$base  = remove_query_arg( array( 'vehicle', 'compare', 'fav', 'carmel_inv' ) );
+			foreach ( $list as $i => $f ) {
+				$run = add_query_arg(
+					array_filter( array( 'maker' => $f['maker'], 'q' => $f['q'], 'price_max' => $f['price_max'] ) ),
+					$base
+				);
+				$del = wp_create_nonce( self::DEL_SEARCH . '_' . $i );
+				$out .= '<li><a href="' . esc_url( $run ) . '">' . esc_html( $this->search_label( $f ) ) . '</a>'
+					. '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="carmel-saved-del">'
+					. '<input type="hidden" name="action" value="' . esc_attr( self::DEL_SEARCH ) . '">'
+					. '<input type="hidden" name="idx" value="' . (int) $i . '">'
+					. '<input type="hidden" name="' . esc_attr( self::NONCE ) . '" value="' . esc_attr( $del ) . '">'
+					. '<button type="submit" class="carmel-saved-x" title="削除">×</button></form></li>';
+			}
+			$out .= '</ul>';
+		}
+		$out .= '</details>';
+		return $out;
+	}
+
+	/**
+	 * 日次：保存検索ごとに前回以降の新着公開在庫を検出し、本人へ通知。
+	 */
+	public function run_new_arrival_alerts() {
+		$users = get_users(
+			array(
+				'meta_key' => 'carmel_saved_searches',
+				'fields'   => 'ID',
+				'number'   => 1000,
+			)
+		);
+		$inv_url = home_url( '/' . ltrim( apply_filters( 'carmel_inventory_page_slug', 'inventory' ), '/' ) );
+
+		foreach ( $users as $uid ) {
+			$list    = get_user_meta( $uid, 'carmel_saved_searches', true );
+			$changed = false;
+			if ( ! is_array( $list ) ) {
+				continue;
+			}
+			foreach ( $list as $i => $f ) {
+				$since = ! empty( $f['last'] ) ? $f['last'] : current_time( 'mysql' );
+				$count = $this->count_new_since( $f, $since );
+				$list[ $i ]['last'] = current_time( 'mysql' );
+				$changed            = true;
+				if ( $count > 0 ) {
+					$run = add_query_arg(
+						array_filter( array( 'maker' => $f['maker'], 'q' => $f['q'], 'price_max' => $f['price_max'] ) ),
+						$inv_url
+					);
+					Carmel_Notifier::notify(
+						'inventory_new_arrival',
+						array(
+							'event_id'     => 'inv_new_arrival:' . $uid . ':' . $i . ':' . gmdate( 'Ymd' ),
+							'recipient_id' => (int) $uid,
+							'vars'         => array( 'cond' => $this->search_label( $f ), 'count' => $count, 'url' => $run ),
+						)
+					);
+				}
+			}
+			if ( $changed ) {
+				update_user_meta( $uid, 'carmel_saved_searches', $list );
+			}
+		}
+	}
+
+	/** 条件に合致し、指定日時以降に公開された在庫数。 */
+	private function count_new_since( $f, $since ) {
+		$meta = array(
+			'relation' => 'AND',
+			array( 'key' => 'published', 'value' => array( '1', 'yes', 'true' ), 'compare' => 'IN' ),
+			array( 'key' => 'vehicle_status', 'value' => self::sellable_statuses(), 'compare' => 'IN' ),
+		);
+		if ( ! empty( $f['maker'] ) ) {
+			$meta[] = array( 'key' => 'maker', 'value' => $f['maker'] );
+		}
+		if ( ! empty( $f['price_max'] ) ) {
+			$meta[] = array( 'key' => 'price', 'value' => (int) $f['price_max'], 'type' => 'NUMERIC', 'compare' => '<=' );
+		}
+		$args = array(
+			'post_type'      => 'carmel_vehicle',
+			'post_status'    => 'publish',
+			'posts_per_page' => 50,
+			'fields'         => 'ids',
+			'date_query'     => array( array( 'column' => 'post_date', 'after' => $since ) ),
+			'meta_query'     => $meta,
+		);
+		if ( ! empty( $f['q'] ) ) {
+			$args['s'] = $f['q'];
+		}
+		return count( get_posts( $args ) );
 	}
 
 	/* --------------------------------------------------------------------- *
@@ -484,8 +677,18 @@ window.carmelInitMap=function(){
 			echo '</div>';
 		}
 
+		// お気に入りをまとめて比較（サーバー側のお気に入りから比較URLを生成）。
+		if ( $fav_mode ) {
+			$favs = array_slice( $this->user_favorites(), 0, self::COMPARE_MAX );
+			if ( count( $favs ) >= 2 ) {
+				$cmp = add_query_arg( 'compare', implode( ',', $favs ), remove_query_arg( array( 'fav', 'vehicle' ) ) );
+				echo '<p><a class="carmel-btn carmel-btn-purple" href="' . esc_url( $cmp ) . '">♥ お気に入りを比較（' . count( $favs ) . '台）</a></p>';
+			}
+		}
+
 		if ( ! $fav_mode ) {
 			echo $this->filter_bar( $filters ); // phpcs:ignore WordPress.Security.EscapeOutput
+			echo $this->saved_search_block( $filters ); // phpcs:ignore WordPress.Security.EscapeOutput
 		}
 
 		if ( empty( $cars ) ) {
@@ -531,16 +734,12 @@ window.carmelInitMap=function(){
 		$store_id = (int) $g( 'store_id' );
 		$back     = esc_url( remove_query_arg( 'vehicle' ) );
 
-		$thumb = has_post_thumbnail( $vid )
-			? get_the_post_thumbnail( $vid, 'large', array( 'class' => 'carmel-detail-img' ) )
-			: '<div class="carmel-car-noimg carmel-detail-img">NO IMAGE</div>';
-
 		ob_start();
 		echo $this->styles(); // phpcs:ignore WordPress.Security.EscapeOutput
 		echo $this->banner(); // phpcs:ignore WordPress.Security.EscapeOutput
 		echo '<div class="carmel-inv"><a class="carmel-comm-back" style="color:#6b4fbb;text-decoration:none" href="' . $back . '">← 在庫一覧へ戻る</a>';
 		echo '<div class="carmel-detail">';
-		echo '<div class="carmel-detail-media">' . $thumb . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput
+		echo '<div class="carmel-detail-media">' . $this->gallery_html( $vid ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput
 		echo '<div class="carmel-detail-body">';
 		echo '<h2>' . esc_html( $title ) . '</h2>';
 		if ( $g( 'grade' ) ) {
@@ -608,6 +807,55 @@ window.carmelInitMap=function(){
 
 		echo '</div></div></div>';
 		return ob_get_clean();
+	}
+
+	/**
+	 * 在庫の画像ギャラリー（アイキャッチ＋添付画像）。サムネクリックでメイン切替。
+	 *
+	 * @param int $vid
+	 * @return string
+	 */
+	private function gallery_html( $vid ) {
+		$ids = array();
+		if ( has_post_thumbnail( $vid ) ) {
+			$ids[] = (int) get_post_thumbnail_id( $vid );
+		}
+		$attached = get_posts(
+			array(
+				'post_type'      => 'attachment',
+				'post_mime_type' => 'image',
+				'post_parent'    => (int) $vid,
+				'posts_per_page' => 20,
+				'orderby'        => 'menu_order',
+				'order'          => 'ASC',
+				'fields'         => 'ids',
+			)
+		);
+		foreach ( $attached as $aid ) {
+			if ( ! in_array( (int) $aid, $ids, true ) ) {
+				$ids[] = (int) $aid;
+			}
+		}
+
+		if ( empty( $ids ) ) {
+			return '<div class="carmel-car-noimg carmel-detail-img">NO IMAGE</div>';
+		}
+
+		$main = wp_get_attachment_image_url( $ids[0], 'large' );
+		$out  = '<div class="carmel-gallery">';
+		$out .= '<img id="carmel-gal-main" class="carmel-detail-img" src="' . esc_url( $main ) . '" alt="">';
+		if ( count( $ids ) > 1 ) {
+			$out .= '<div class="carmel-gal-thumbs">';
+			foreach ( $ids as $k => $aid ) {
+				$thumb = wp_get_attachment_image_url( $aid, 'thumbnail' );
+				$large = wp_get_attachment_image_url( $aid, 'large' );
+				$out  .= '<img class="carmel-gal-thumb' . ( 0 === $k ? ' on' : '' ) . '" src="' . esc_url( $thumb ) . '" data-large="' . esc_url( $large ) . '" alt="" '
+					. 'onclick="var m=document.getElementById(\'carmel-gal-main\');m.src=this.getAttribute(\'data-large\');this.parentNode.querySelectorAll(\'.carmel-gal-thumb\').forEach(function(t){t.classList.remove(\'on\')});this.classList.add(\'on\')">';
+			}
+			$out .= '</div>';
+		}
+		$out .= '</div>';
+		return $out;
 	}
 
 	/** Google Maps APIキー。 */
@@ -1323,6 +1571,10 @@ window.carmelInitMap=function(){
 			array( 'audience' => 'store', 'channel' => 'lineworks', 'fallback' => 'mail' ),
 			array( 'audience' => 'hq', 'channel' => 'lineworks', 'fallback' => null ),
 		);
+		// 保存検索の新着アラート（recipient_id で本人へ）。
+		$table['inventory_new_arrival'] = array(
+			array( 'audience' => 'customer', 'channel' => 'proline', 'fallback' => 'mail' ),
+		);
 		return $table;
 	}
 
@@ -1339,6 +1591,12 @@ window.carmelInitMap=function(){
 			$msg  = isset( $vars['message'] ) ? $vars['message'] : '';
 			$message['subject'] = '在庫へのお問い合わせ';
 			$message['body']    = $cust . ' 様より「' . $car . '」へのお問い合わせがありました。' . ( '' !== $msg ? "\n内容：" . $msg : '' );
+		} elseif ( 'inventory_new_arrival' === $event_type ) {
+			$cond = isset( $vars['cond'] ) ? $vars['cond'] : '保存した条件';
+			$cnt  = isset( $vars['count'] ) ? $vars['count'] : '';
+			$url  = isset( $vars['url'] ) ? $vars['url'] : '';
+			$message['subject'] = '【カーメル】新着在庫のお知らせ';
+			$message['body']    = "保存条件「" . $cond . "」に合う新着が " . $cnt . " 台入荷しました。\n" . $url;
 		}
 		return $message;
 	}
@@ -1357,6 +1615,8 @@ window.carmelInitMap=function(){
 			'inquiry_ok'   => array( 'success', '取り寄せ・商談を依頼し、商談（案件）を起票しました。保有店・本部へ通知しました。' ),
 			'cust_ok'      => array( 'success', 'お問い合わせを送信しました。担当店舗よりご連絡します。' ),
 			'cust_err'     => array( 'error', '内容を入力してください。' ),
+			'search_saved' => array( 'success', '検索条件を保存しました。新着が入荷するとお知らせします。' ),
+			'search_deleted' => array( 'success', '保存した検索条件を削除しました。' ),
 			'import_ok'    => array( 'success', sprintf( '在庫を取り込みました（新規%d件・更新%d件）。', $n, $u ) ),
 			'import_nofile'=> array( 'error', 'CSVファイルが選択されていません。' ),
 			'import_empty' => array( 'error', 'データ行がありません。' ),
@@ -1420,11 +1680,22 @@ window.carmelInitMap=function(){
 .carmel-cmp-table th,.carmel-cmp-table td{border:1px solid #e7e2ef;padding:.55em .7em;text-align:left;vertical-align:top;font-size:.9em}
 .carmel-cmp-table th{background:#f4f6fb;white-space:nowrap}
 .carmel-cmp-img{max-width:160px;height:auto;border-radius:6px}
+.carmel-saved{margin:.6em 0;border:1px solid #e7e2ef;border-radius:10px;padding:.5em 1em;background:#fff}
+.carmel-saved summary{cursor:pointer;font-weight:700}
+.carmel-saved-add{display:flex;gap:.5em;align-items:center;flex-wrap:wrap;margin:.5em 0}
+.carmel-saved-list{list-style:none;padding:0;margin:.3em 0}
+.carmel-saved-list li{display:flex;align-items:center;gap:.5em;padding:.3em 0;border-top:1px solid #f0f1f5}
+.carmel-saved-del{margin:0}
+.carmel-saved-x{border:0;background:#f0f1f5;color:#a5281b;border-radius:.3em;cursor:pointer;padding:.1em .5em}
 .carmel-inv-import{border:1px solid #e7e2ef;border-radius:10px;padding:.6em 1em;margin:.8em 0;background:#fff}
 .carmel-inv-import summary{cursor:pointer;font-weight:700}
 .carmel-inv-import code{background:#f4f6fb;padding:.1em .4em;border-radius:.2em;font-size:.85em}
 .carmel-detail{display:grid;grid-template-columns:minmax(280px,1fr) 1fr;gap:1.4em;margin-top:.6em}
 .carmel-detail-img{width:100%;border-radius:12px;object-fit:cover}
+.carmel-gallery{display:flex;flex-direction:column;gap:.5em}
+.carmel-gal-thumbs{display:flex;gap:.4em;flex-wrap:wrap}
+.carmel-gal-thumb{width:64px;height:48px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid transparent;opacity:.8}
+.carmel-gal-thumb.on,.carmel-gal-thumb:hover{border-color:#6b4fbb;opacity:1}
 .carmel-detail-body h2{margin:.1em 0}
 .carmel-detail-spec{width:100%;border-collapse:collapse;margin:.8em 0;font-size:.92em}
 .carmel-detail-spec th,.carmel-detail-spec td{border:1px solid #eef0f4;padding:.5em .7em;text-align:left}
