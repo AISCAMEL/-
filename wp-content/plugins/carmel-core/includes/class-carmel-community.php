@@ -62,6 +62,38 @@ class Carmel_Community {
 		add_action( 'admin_post_' . self::NEW_ACTION, array( $this, 'handle_new_topic' ) );
 		add_action( 'admin_post_' . self::REPLY_ACTION, array( $this, 'handle_reply' ) );
 		add_action( 'admin_post_' . self::PIN_ACTION, array( $this, 'handle_pin' ) );
+
+		// 新着トピック・返信の通知ルーティング／文面。
+		add_filter( 'carmel_routing_table', array( $this, 'add_routing' ) );
+		add_filter( 'carmel_notification_message', array( $this, 'add_message' ), 10, 3 );
+	}
+
+	public function add_routing( $table ) {
+		// 新着トピックは本部へ（モデレート・把握用）。
+		$table['community_new_topic'] = array(
+			array( 'audience' => 'hq', 'channel' => 'lineworks', 'fallback' => 'mail' ),
+		);
+		// 返信は投稿者本人へ（recipient_id で指定）。
+		$table['community_reply'] = array(
+			array( 'audience' => 'customer', 'channel' => 'proline', 'fallback' => 'mail' ),
+		);
+		return $table;
+	}
+
+	public function add_message( $message, $event_type, $context ) {
+		$vars = isset( $context['vars'] ) ? (array) $context['vars'] : array();
+		if ( 'community_new_topic' === $event_type ) {
+			$title = isset( $vars['title'] ) ? $vars['title'] : '';
+			$by    = isset( $vars['author'] ) ? $vars['author'] : '';
+			$message['subject'] = 'コミュニティ：新着トピック';
+			$message['body']    = "新しいトピックが投稿されました。\n「" . $title . '」（投稿者：' . $by . '）';
+		} elseif ( 'community_reply' === $event_type ) {
+			$title = isset( $vars['title'] ) ? $vars['title'] : '';
+			$by    = isset( $vars['author'] ) ? $vars['author'] : '';
+			$message['subject'] = 'コミュニティ：あなたのトピックに返信';
+			$message['body']    = '「' . $title . '」に ' . $by . ' さんから返信がありました。コミュニティでご確認ください。';
+		}
+		return $message;
 	}
 
 	/**
@@ -344,6 +376,16 @@ class Carmel_Community {
 			exit;
 		}
 		do_action( 'carmel_community_topic_created', (int) $id );
+
+		// 本部へ新着通知。
+		Carmel_Notifier::notify(
+			'community_new_topic',
+			array(
+				'event_id' => 'community_new_topic:' . (int) $id,
+				'vars'     => array( 'title' => $title, 'author' => wp_get_current_user()->display_name ),
+			)
+		);
+
 		wp_safe_redirect( add_query_arg( array( 'topic' => (int) $id, 'carmel_comm' => 'new_ok' ), remove_query_arg( 'carmel_comm', $redirect ) ) );
 		exit;
 	}
@@ -411,6 +453,20 @@ class Carmel_Community {
 			)
 		);
 		do_action( 'carmel_community_reply_created', $topic_id, $user->ID );
+
+		// トピック投稿者へ返信通知（自分の返信は除く）。
+		$author_id = (int) get_post_field( 'post_author', $topic_id );
+		if ( $author_id && $author_id !== (int) $user->ID ) {
+			Carmel_Notifier::notify(
+				'community_reply',
+				array(
+					'event_id'     => 'community_reply:' . $topic_id . ':' . time(),
+					'recipient_id' => $author_id,
+					'vars'         => array( 'title' => get_the_title( $topic_id ), 'author' => $user->display_name ),
+				)
+			);
+		}
+
 		wp_safe_redirect( add_query_arg( array( 'topic' => $topic_id, 'carmel_comm' => 'reply_ok' ), remove_query_arg( 'carmel_comm', $redirect ) ) );
 		exit;
 	}

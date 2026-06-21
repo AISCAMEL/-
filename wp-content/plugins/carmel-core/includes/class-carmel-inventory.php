@@ -26,6 +26,8 @@ class Carmel_Inventory {
 	const PUBLISH_ACTION   = 'carmel_inv_publish';
 	const INQUIRY_ACTION   = 'carmel_inv_inquiry';
 	const IMPORT_ACTION    = 'carmel_inv_import';
+	const TEMPLATE_ACTION  = 'carmel_inv_template';
+	const CINQUIRY_ACTION  = 'carmel_inv_cust_inquiry';
 	const NONCE            = 'carmel_inv_nonce';
 	const IMPORT_MAX_ROWS  = 500;
 
@@ -47,6 +49,8 @@ class Carmel_Inventory {
 		add_action( 'admin_post_' . self::PUBLISH_ACTION, array( $this, 'handle_publish' ) );
 		add_action( 'admin_post_' . self::INQUIRY_ACTION, array( $this, 'handle_inquiry' ) );
 		add_action( 'admin_post_' . self::IMPORT_ACTION, array( $this, 'handle_import' ) );
+		add_action( 'admin_post_' . self::TEMPLATE_ACTION, array( $this, 'handle_template' ) );
+		add_action( 'admin_post_' . self::CINQUIRY_ACTION, array( $this, 'handle_customer_inquiry' ) );
 
 		// 在庫取り寄せ依頼の通知ルーティング／文面。
 		add_filter( 'carmel_routing_table', array( $this, 'add_routing' ) );
@@ -272,6 +276,11 @@ class Carmel_Inventory {
 		// CTA（ログイン分け）。
 		$post = get_post( $vid );
 		echo $this->card_actions( $post, $scope, 'public', $store_id ); // phpcs:ignore WordPress.Security.EscapeOutput
+
+		// お客様向け：この車両への問い合わせフォーム。
+		if ( 'customer' === $scope ) {
+			echo $this->customer_inquiry_form( $vid ); // phpcs:ignore WordPress.Security.EscapeOutput
+		}
 
 		echo '</div></div></div>';
 		return ob_get_clean();
@@ -505,6 +514,8 @@ class Carmel_Inventory {
 		$out .= '<p class="carmel-inv-hint">列：<code>' . esc_html( $cols ) . '</code>';
 		$out .= $is_hq ? '（本部は store_id 列で店舗指定可。未指定はご自身の店舗）' : '（自店の在庫として取り込みます）';
 		$out .= '</p>';
+		$tpl_url = wp_nonce_url( admin_url( 'admin-post.php?action=' . self::TEMPLATE_ACTION ), self::TEMPLATE_ACTION );
+		$out .= '<p class="carmel-inv-hint"><a href="' . esc_url( $tpl_url ) . '">⬇ テンプレCSVをダウンロード</a>（記入例つき・Excel対応UTF-8）</p>';
 		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" enctype="multipart/form-data">'
 			. '<input type="hidden" name="action" value="' . esc_attr( self::IMPORT_ACTION ) . '">'
 			. '<input type="hidden" name="' . esc_attr( self::NONCE ) . '" value="' . esc_attr( $nonce ) . '">'
@@ -513,6 +524,40 @@ class Carmel_Inventory {
 			. '<button type="submit" class="carmel-btn carmel-btn-green">取り込む</button>'
 			. '</form></details>';
 		return $out;
+	}
+
+	/** 記入例つきテンプレCSVを出力（Excel対応のUTF-8 BOM付き）。 */
+	public function handle_template() {
+		if ( ! wp_verify_nonce( isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '', self::TEMPLATE_ACTION ) ) {
+			wp_die( esc_html__( '不正なリクエストです。', 'carmel-core' ), '', array( 'response' => 400 ) );
+		}
+		if ( ! in_array( $this->viewer_scope(), array( 'store', 'hq' ), true ) ) {
+			wp_die( esc_html__( '権限がありません。', 'carmel-core' ), '', array( 'response' => 403 ) );
+		}
+		$is_hq   = current_user_can( 'carmel_manage_stores' );
+		$columns = self::import_columns();
+		if ( $is_hq ) {
+			$columns[] = 'store_id';
+		}
+		$sample = array(
+			'maker' => 'トヨタ', 'model' => 'アクア', 'grade' => 'S', 'year' => '2019', 'mileage' => '45000',
+			'color' => 'ホワイト', 'vin' => 'XXX-1234567', 'plate_no' => '品川 300 あ 12-34', 'price' => '1280000',
+			'cost' => '980000', 'vehicle_status' => '販売中', 'published' => '1', 'store_id' => '',
+		);
+		$row = array();
+		foreach ( $columns as $c ) {
+			$row[] = isset( $sample[ $c ] ) ? $sample[ $c ] : '';
+		}
+
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=UTF-8' );
+		header( 'Content-Disposition: attachment; filename="carmel-inventory-template.csv"' );
+		echo "\xEF\xBB\xBF"; // BOM
+		$out = fopen( 'php://output', 'w' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		fputcsv( $out, $columns );
+		fputcsv( $out, $row );
+		fclose( $out ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		exit;
 	}
 
 	public function handle_import() {
@@ -613,6 +658,82 @@ class Carmel_Inventory {
 	}
 
 	/* --------------------------------------------------------------------- *
+	 * お客様問い合わせ（在庫詳細）
+	 * --------------------------------------------------------------------- */
+
+	private function customer_inquiry_form( $vehicle_id ) {
+		$nonce = wp_create_nonce( self::CINQUIRY_ACTION . '_' . $vehicle_id );
+		$user  = wp_get_current_user();
+		$out  = '<div class="carmel-inq-form"><h3>このお車について問い合わせる</h3>';
+		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">'
+			. '<input type="hidden" name="action" value="' . esc_attr( self::CINQUIRY_ACTION ) . '">'
+			. '<input type="hidden" name="vehicle_id" value="' . (int) $vehicle_id . '">'
+			. '<input type="hidden" name="' . esc_attr( self::NONCE ) . '" value="' . esc_attr( $nonce ) . '">'
+			. '<p class="carmel-inv-hint">' . esc_html( $user->display_name ) . ' 様としてお問い合わせします。</p>'
+			. '<textarea name="message" rows="3" placeholder="ご質問・ご希望（試乗希望、見積り希望、在庫確認など）" required></textarea>'
+			. '<button type="submit" class="carmel-btn carmel-btn-purple">問い合わせる</button>'
+			. '</form></div>';
+		return $out;
+	}
+
+	public function handle_customer_inquiry() {
+		$vehicle_id = isset( $_POST['vehicle_id'] ) ? (int) $_POST['vehicle_id'] : 0;
+		$redirect   = wp_get_referer() ? wp_get_referer() : home_url( '/inventory' );
+
+		if ( ! wp_verify_nonce( isset( $_POST[ self::NONCE ] ) ? sanitize_text_field( wp_unslash( $_POST[ self::NONCE ] ) ) : '', self::CINQUIRY_ACTION . '_' . $vehicle_id ) ) {
+			wp_die( esc_html__( '不正なリクエストです。', 'carmel-core' ), '', array( 'response' => 400 ) );
+		}
+		if ( ! is_user_logged_in() || 'carmel_vehicle' !== get_post_type( $vehicle_id ) ) {
+			wp_die( esc_html__( 'ログインが必要です。', 'carmel-core' ), '', array( 'response' => 403 ) );
+		}
+		$message = isset( $_POST['message'] ) ? sanitize_textarea_field( wp_unslash( $_POST['message'] ) ) : '';
+		if ( '' === $message ) {
+			wp_safe_redirect( add_query_arg( array( 'vehicle' => $vehicle_id, 'carmel_inv' => 'cust_err' ), $redirect ) );
+			exit;
+		}
+
+		$user          = wp_get_current_user();
+		$holding_store = (int) get_post_meta( $vehicle_id, 'store_id', true );
+		$car_title     = trim( get_post_meta( $vehicle_id, 'maker', true ) . ' ' . get_post_meta( $vehicle_id, 'model', true ) );
+		$car_title     = $car_title ? $car_title : get_the_title( $vehicle_id );
+
+		// サポートチケット（問い合わせ）として記録。
+		wp_insert_post(
+			array(
+				'post_type'   => 'carmel_support',
+				'post_status' => 'publish',
+				'post_title'  => '在庫問い合わせ：' . $car_title,
+				'meta_input'  => array(
+					'support_type' => 'inventory_inquiry',
+					'vehicle_id'   => (int) $vehicle_id,
+					'customer_id'  => (int) $user->ID,
+					'store_id'     => (int) $holding_store,
+					'message'      => $message,
+					'created_at'   => current_time( 'mysql' ),
+				),
+			)
+		);
+
+		// 保有店＋本部へ通知。
+		Carmel_Notifier::notify(
+			'inventory_customer_inquiry',
+			array(
+				'event_id' => 'inv_cust_inquiry:' . $vehicle_id . ':' . $user->ID . ':' . time(),
+				'store_id' => $holding_store,
+				'vars'     => array(
+					'car'      => $car_title,
+					'customer' => $user->display_name,
+					'message'  => $message,
+				),
+			)
+		);
+		do_action( 'carmel_inventory_customer_inquiry', $vehicle_id, $user->ID );
+
+		wp_safe_redirect( add_query_arg( array( 'vehicle' => $vehicle_id, 'carmel_inv' => 'cust_ok' ), $redirect ) );
+		exit;
+	}
+
+	/* --------------------------------------------------------------------- *
 	 * 操作ハンドラ
 	 * --------------------------------------------------------------------- */
 
@@ -677,8 +798,74 @@ class Carmel_Inventory {
 		);
 		do_action( 'carmel_inventory_inquiry', $vehicle_id, $from_store );
 
-		wp_safe_redirect( add_query_arg( 'carmel_inv', 'inquiry_ok', $redirect ) );
+		// 依頼元の店舗で商談（案件）を自動起票し、在庫保有店をセット（手数料が自動連動）。
+		$deal_id = $this->create_prospect_deal( $vehicle_id, $from_store, $holding_store );
+
+		$args = array( 'carmel_inv' => 'inquiry_ok' );
+		if ( $deal_id ) {
+			$args['deal'] = $deal_id;
+		}
+		wp_safe_redirect( add_query_arg( $args, $redirect ) );
 		exit;
+	}
+
+	/**
+	 * 在庫共有の依頼から、依頼元店舗の商談（案件）を起票する。
+	 * 既に同一の未クローズ商談があれば再利用する。
+	 *
+	 * @param int $vehicle_id
+	 * @param int $selling_store 依頼元（販売店）
+	 * @param int $holding_store 在庫保有店
+	 * @return int 起票/再利用した案件ID（失敗時0）
+	 */
+	private function create_prospect_deal( $vehicle_id, $selling_store, $holding_store ) {
+		if ( ! $selling_store ) {
+			return 0; // 本部からの依頼など、販売店が定まらない場合は起票しない。
+		}
+
+		// 重複ガード：同じ車両×販売店の商談が既にあれば再利用。
+		$existing = get_posts(
+			array(
+				'post_type'      => 'carmel_deal',
+				'post_status'    => 'publish',
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'meta_query'     => array(
+					'relation' => 'AND',
+					array( 'key' => 'vehicle_id', 'value' => (int) $vehicle_id ),
+					array( 'key' => 'store_id', 'value' => (int) $selling_store ),
+					array( 'key' => 'source_store_id', 'value' => (int) $holding_store ),
+				),
+			)
+		);
+		if ( ! empty( $existing ) ) {
+			return (int) $existing[0];
+		}
+
+		$car_title = trim( get_post_meta( $vehicle_id, 'maker', true ) . ' ' . get_post_meta( $vehicle_id, 'model', true ) );
+		$deal_id   = wp_insert_post(
+			array(
+				'post_type'   => 'carmel_deal',
+				'post_status' => 'publish',
+				'post_title'  => '在庫共有商談：' . ( $car_title ? $car_title : get_the_title( $vehicle_id ) ),
+				'meta_input'  => array(
+					'deal_type'       => 'loan',
+					'store_id'        => (int) $selling_store,
+					'source_store_id' => (int) $holding_store,
+					'vehicle_id'      => (int) $vehicle_id,
+					'applicant_name'  => '（在庫共有・お客様未確定）',
+					'application_note'=> '在庫共有ネットワークから起票された商談です。',
+				),
+			)
+		);
+		if ( is_wp_error( $deal_id ) || ! $deal_id ) {
+			return 0;
+		}
+
+		// ステータスを「加盟店マッチング」に（在庫連動・履歴・通知が発火）。
+		Carmel_Deal_Status::change( (int) $deal_id, 'matched', array( 'system' => true, 'note' => '在庫共有から商談起票' ) );
+		do_action( 'carmel_inventory_prospect_created', (int) $deal_id, $vehicle_id, $selling_store, $holding_store );
+		return (int) $deal_id;
 	}
 
 	/** 自店の在庫か（本部は全件可）。 */
@@ -705,16 +892,26 @@ class Carmel_Inventory {
 			array( 'audience' => 'store', 'channel' => 'lineworks', 'fallback' => 'mail' ),
 			array( 'audience' => 'hq', 'channel' => 'lineworks', 'fallback' => null ),
 		);
+		$table['inventory_customer_inquiry'] = array(
+			array( 'audience' => 'store', 'channel' => 'lineworks', 'fallback' => 'mail' ),
+			array( 'audience' => 'hq', 'channel' => 'lineworks', 'fallback' => null ),
+		);
 		return $table;
 	}
 
 	public function add_message( $message, $event_type, $context ) {
+		$vars = isset( $context['vars'] ) ? (array) $context['vars'] : array();
 		if ( 'inventory_inquiry' === $event_type ) {
-			$vars = isset( $context['vars'] ) ? (array) $context['vars'] : array();
 			$car  = isset( $vars['car'] ) ? $vars['car'] : '車両';
 			$from = isset( $vars['from_store'] ) ? $vars['from_store'] : '他店';
 			$message['subject'] = '在庫の取り寄せ・商談依頼';
 			$message['body']    = $from . ' より「' . $car . '」の取り寄せ・商談依頼が届きました。ご対応をお願いします。';
+		} elseif ( 'inventory_customer_inquiry' === $event_type ) {
+			$car  = isset( $vars['car'] ) ? $vars['car'] : '車両';
+			$cust = isset( $vars['customer'] ) ? $vars['customer'] : 'お客様';
+			$msg  = isset( $vars['message'] ) ? $vars['message'] : '';
+			$message['subject'] = '在庫へのお問い合わせ';
+			$message['body']    = $cust . ' 様より「' . $car . '」へのお問い合わせがありました。' . ( '' !== $msg ? "\n内容：" . $msg : '' );
 		}
 		return $message;
 	}
@@ -729,7 +926,9 @@ class Carmel_Inventory {
 		$map = array(
 			'published'    => array( 'success', '在庫を掲載しました（共有開始）。' ),
 			'unpublished'  => array( 'success', '在庫の掲載を停止しました。' ),
-			'inquiry_ok'   => array( 'success', '取り寄せ・商談を依頼しました。保有店・本部へ通知しました。' ),
+			'inquiry_ok'   => array( 'success', '取り寄せ・商談を依頼し、商談（案件）を起票しました。保有店・本部へ通知しました。' ),
+			'cust_ok'      => array( 'success', 'お問い合わせを送信しました。担当店舗よりご連絡します。' ),
+			'cust_err'     => array( 'error', '内容を入力してください。' ),
 			'import_ok'    => array( 'success', sprintf( '%d件の在庫を取り込みました。', $n ) ),
 			'import_nofile'=> array( 'error', 'CSVファイルが選択されていません。' ),
 			'import_empty' => array( 'error', 'データ行がありません。' ),
@@ -738,7 +937,13 @@ class Carmel_Inventory {
 		if ( ! isset( $map[ $key ] ) ) {
 			return '';
 		}
-		return '<div class="carmel-banner carmel-banner-' . esc_attr( $map[ $key ][0] ) . '">' . esc_html( $map[ $key ][1] ) . '</div>';
+		$extra = '';
+		if ( 'inquiry_ok' === $key && isset( $_GET['deal'] ) ) {
+			$deal = (int) $_GET['deal'];
+			$url  = home_url( '/' . ltrim( apply_filters( 'carmel_store_page_slug', 'store' ), '/' ) );
+			$extra = ' <a href="' . esc_url( $url ) . '">起票した商談 #' . $deal . ' を見る</a>';
+		}
+		return '<div class="carmel-banner carmel-banner-' . esc_attr( $map[ $key ][0] ) . '">' . esc_html( $map[ $key ][1] ) . $extra . '</div>';
 	}
 
 	private function styles() {
@@ -779,6 +984,9 @@ class Carmel_Inventory {
 .carmel-detail-spec th,.carmel-detail-spec td{border:1px solid #eef0f4;padding:.5em .7em;text-align:left}
 .carmel-detail-spec th{background:#f4f6fb;width:35%;white-space:nowrap}
 .carmel-detail-desc{line-height:1.85;margin:.8em 0}
+.carmel-inq-form{margin-top:1.2em;border-top:1px dashed #e7e2ef;padding-top:1em}
+.carmel-inq-form h3{margin:.2em 0 .5em}
+.carmel-inq-form textarea{width:100%;border:1px solid #ccc;border-radius:.3em;padding:.5em;margin-bottom:.5em}
 @media(max-width:640px){.carmel-detail{grid-template-columns:1fr}}
 .carmel-banner{padding:.7em 1em;border-radius:.4em;margin:1em 0}
 .carmel-banner-success{background:#e8f8f3;color:#0e6e58;border:1px solid #16a085}
