@@ -178,6 +178,9 @@ class Carmel_Reports {
 		}
 		echo '</tbody></table>';
 
+		// 在庫・問い合わせKPI。
+		echo $this->inventory_section( $store_id ); // phpcs:ignore WordPress.Security.EscapeOutput
+
 		// Per-store comparison (HQ only).
 		if ( $is_hq ) {
 			echo '<h3>加盟店別 案件数</h3>';
@@ -235,6 +238,79 @@ class Carmel_Reports {
 		}
 		fclose( $out );
 		exit;
+	}
+
+	/**
+	 * 在庫・問い合わせKPIセクション。
+	 *
+	 * @param int $store_id 0=全店（HQ）。
+	 * @return string
+	 */
+	private function inventory_section( $store_id ) {
+		// 在庫集計。
+		$args = array(
+			'post_type'      => 'carmel_vehicle',
+			'post_status'    => 'publish',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+		);
+		if ( $store_id ) {
+			$args['meta_query'] = array( array( 'key' => 'store_id', 'value' => $store_id ) );
+		}
+		$vids       = get_posts( $args );
+		$total      = count( $vids );
+		$published  = 0;
+		$by_status  = array();
+		foreach ( $vids as $vid ) {
+			if ( in_array( (string) get_post_meta( $vid, 'published', true ), array( '1', 'yes', 'true' ), true ) ) {
+				$published++;
+			}
+			$st = (string) get_post_meta( $vid, 'vehicle_status', true );
+			$st = '' !== $st ? $st : '未設定';
+			$by_status[ $st ] = isset( $by_status[ $st ] ) ? $by_status[ $st ] + 1 : 1;
+		}
+
+		// 問い合わせ集計（在庫問い合わせ：carmel_support）。
+		$inq_args = array(
+			'post_type'      => 'carmel_support',
+			'post_status'    => 'publish',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+			'meta_query'     => array(
+				'relation' => 'AND',
+				array( 'key' => 'support_type', 'value' => 'inventory_inquiry' ),
+			),
+		);
+		if ( $store_id ) {
+			$inq_args['meta_query'][] = array( 'key' => 'store_id', 'value' => $store_id );
+		}
+		$inq_ids   = get_posts( $inq_args );
+		$inq_total = count( $inq_ids );
+		$since     = strtotime( '-30 days', current_time( 'timestamp' ) );
+		$inq_30    = 0;
+		foreach ( $inq_ids as $iid ) {
+			if ( strtotime( get_post_field( 'post_date', $iid ) ) >= $since ) {
+				$inq_30++;
+			}
+		}
+
+		$out  = '<h3>在庫・問い合わせ</h3>';
+		$out .= '<div class="carmel-kpis">';
+		$out .= $this->kpi( '在庫総数', number_format( $total ) );
+		$out .= $this->kpi( '公開（掲載中）', number_format( $published ) );
+		$out .= $this->kpi( '在庫問い合わせ', number_format( $inq_total ) );
+		$out .= $this->kpi( '直近30日の問い合わせ', number_format( $inq_30 ) );
+		$out .= '</div>';
+
+		if ( ! empty( $by_status ) ) {
+			arsort( $by_status );
+			$out .= '<table class="carmel-table"><thead><tr><th>在庫ステータス</th><th>台数</th></tr></thead><tbody>';
+			foreach ( $by_status as $st => $n ) {
+				$out .= '<tr><td>' . esc_html( $st ) . '</td><td>' . (int) $n . '</td></tr>';
+			}
+			$out .= '</tbody></table>';
+		}
+		return $out;
 	}
 
 	private function kpi( $label, $value ) {

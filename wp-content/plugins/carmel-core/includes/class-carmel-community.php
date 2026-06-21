@@ -27,6 +27,7 @@ class Carmel_Community {
 	const PIN_ACTION      = 'carmel_comm_pin';
 	const LIKE_ACTION     = 'carmel_comm_like';
 	const BEST_ACTION     = 'carmel_comm_best';
+	const SUBS_ACTION     = 'carmel_comm_subs';
 	const NONCE           = 'carmel_comm_nonce';
 
 	public static function instance() {
@@ -55,6 +56,89 @@ class Carmel_Community {
 		return isset( $c[ $key ] ) ? $c[ $key ] : 'その他';
 	}
 
+	/** 購読中カテゴリ（user_meta）。 */
+	private function subscriptions() {
+		if ( ! is_user_logged_in() ) {
+			return array();
+		}
+		$s = get_user_meta( get_current_user_id(), 'carmel_comm_subs', true );
+		return is_array( $s ) ? $s : array();
+	}
+
+	/** カテゴリ別の最終既読時刻マップ。 */
+	private function read_map() {
+		if ( ! is_user_logged_in() ) {
+			return array();
+		}
+		$r = get_user_meta( get_current_user_id(), 'carmel_comm_read', true );
+		return is_array( $r ) ? $r : array();
+	}
+
+	/** 指定カテゴリを既読化（現在時刻）。 */
+	private function mark_read( $cat ) {
+		if ( ! is_user_logged_in() || '' === $cat ) {
+			return;
+		}
+		$r         = $this->read_map();
+		$r[ $cat ] = current_time( 'mysql' );
+		update_user_meta( get_current_user_id(), 'carmel_comm_read', $r );
+	}
+
+	/** カテゴリの未読件数（最終既読以降に更新されたトピック数）。 */
+	private function unread_count( $cat ) {
+		if ( ! is_user_logged_in() ) {
+			return 0;
+		}
+		$r     = $this->read_map();
+		$since = isset( $r[ $cat ] ) ? $r[ $cat ] : '1970-01-01 00:00:00';
+		$ids   = get_posts(
+			array(
+				'post_type'      => self::CPT,
+				'post_status'    => 'publish',
+				'posts_per_page' => 30,
+				'fields'         => 'ids',
+				'date_query'     => array( array( 'column' => 'post_modified', 'after' => $since ) ),
+				'meta_query'     => array( array( 'key' => 'category', 'value' => $cat ) ),
+			)
+		);
+		return count( $ids );
+	}
+
+	public function handle_subscriptions() {
+		$redirect = wp_get_referer() ? wp_get_referer() : home_url( '/' );
+		if ( ! wp_verify_nonce( isset( $_POST[ self::NONCE ] ) ? sanitize_text_field( wp_unslash( $_POST[ self::NONCE ] ) ) : '', self::SUBS_ACTION ) ) {
+			wp_die( esc_html__( '不正なリクエストです。', 'carmel-core' ), '', array( 'response' => 400 ) );
+		}
+		if ( ! is_user_logged_in() ) {
+			wp_die( esc_html__( 'ログインが必要です。', 'carmel-core' ), '', array( 'response' => 403 ) );
+		}
+		$subs  = isset( $_POST['subs'] ) ? array_map( 'sanitize_key', (array) wp_unslash( $_POST['subs'] ) ) : array();
+		$valid = array_keys( self::categories() );
+		$subs  = array_values( array_intersect( $subs, $valid ) );
+		update_user_meta( get_current_user_id(), 'carmel_comm_subs', $subs );
+		wp_safe_redirect( add_query_arg( 'carmel_comm', 'subs_ok', remove_query_arg( 'carmel_comm', $redirect ) ) );
+		exit;
+	}
+
+	/** 通知設定UI（カテゴリ購読チェックボックス）。 */
+	private function subscriptions_block() {
+		if ( ! is_user_logged_in() ) {
+			return '';
+		}
+		$subs  = $this->subscriptions();
+		$nonce = wp_create_nonce( self::SUBS_ACTION );
+		$out   = '<details class="carmel-subs"><summary>🔔 カテゴリの通知設定</summary>';
+		$out  .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">'
+			. '<input type="hidden" name="action" value="' . esc_attr( self::SUBS_ACTION ) . '">'
+			. '<input type="hidden" name="' . esc_attr( self::NONCE ) . '" value="' . esc_attr( $nonce ) . '">'
+			. '<p class="carmel-hint">チェックしたカテゴリに新着トピックが投稿されると通知します。</p>';
+		foreach ( self::categories() as $k => $label ) {
+			$out .= '<label class="carmel-subs-item"><input type="checkbox" name="subs[]" value="' . esc_attr( $k ) . '"' . ( in_array( $k, $subs, true ) ? ' checked' : '' ) . '> ' . esc_html( $label ) . '</label>';
+		}
+		$out .= '<button type="submit" class="carmel-btn carmel-btn-purple">保存</button></form></details>';
+		return $out;
+	}
+
 	public function register_hooks() {
 		add_shortcode( self::SHORTCODE, array( $this, 'render' ) );
 
@@ -67,6 +151,7 @@ class Carmel_Community {
 		add_action( 'wp_ajax_carmel_comm_mention', array( $this, 'ajax_mention' ) );
 		add_action( 'admin_post_' . self::LIKE_ACTION, array( $this, 'handle_like' ) );
 		add_action( 'admin_post_' . self::BEST_ACTION, array( $this, 'handle_best' ) );
+		add_action( 'admin_post_' . self::SUBS_ACTION, array( $this, 'handle_subscriptions' ) );
 
 		// 新着トピック・返信の通知ルーティング／文面。
 		add_filter( 'carmel_routing_table', array( $this, 'add_routing' ) );
@@ -88,6 +173,10 @@ class Carmel_Community {
 		);
 		// いいねされた本人へ（recipient_id で指定）。
 		$table['community_like'] = array(
+			array( 'audience' => 'customer', 'channel' => 'proline', 'fallback' => 'mail' ),
+		);
+		// カテゴリ購読者への新着（recipient_id で指定）。
+		$table['community_category_new'] = array(
 			array( 'audience' => 'customer', 'channel' => 'proline', 'fallback' => 'mail' ),
 		);
 		return $table;
@@ -115,6 +204,11 @@ class Carmel_Community {
 			$by    = isset( $vars['author'] ) ? $vars['author'] : '';
 			$message['subject'] = 'コミュニティ：👍がつきました';
 			$message['body']    = $by . ' さんがコミュニティ「' . $title . '」のあなたの投稿にいいねしました。';
+		} elseif ( 'community_category_new' === $event_type ) {
+			$title = isset( $vars['title'] ) ? $vars['title'] : '';
+			$cat   = isset( $vars['cat'] ) ? $vars['cat'] : '';
+			$message['subject'] = 'コミュニティ：' . $cat . ' の新着';
+			$message['body']    = '購読中のカテゴリ「' . $cat . '」に新しいトピック「' . $title . '」が投稿されました。';
 		}
 		return $message;
 	}
@@ -444,15 +538,25 @@ class Carmel_Community {
 			. '<label class="carmel-comm-file">画像を添付（任意）<input type="file" name="image" accept="image/*"></label>'
 			. '<button type="submit" class="carmel-btn carmel-btn-purple">投稿する</button></form></details>';
 
+		// 通知設定（カテゴリ購読）。
+		$out .= $this->subscriptions_block();
+
 		// 人気のトピック（いいね数ランキング）。
 		$out .= $this->ranking_block();
 
-		// カテゴリ絞り込みタブ。
+		// カテゴリ閲覧で既読化。
+		if ( $cat ) {
+			$this->mark_read( $cat );
+		}
+
+		// カテゴリ絞り込みタブ（未読バッジつき）。
 		$base = remove_query_arg( array( 'carmel_comm', 'cat' ) );
 		$out .= '<div class="carmel-comm-cats"><a class="' . ( '' === $cat ? 'on' : '' ) . '" href="' . esc_url( $base ) . '">すべて</a>';
 		foreach ( self::categories() as $k => $label ) {
-			$url  = add_query_arg( 'cat', $k, $base );
-			$out .= '<a class="' . ( $cat === $k ? 'on' : '' ) . '" href="' . esc_url( $url ) . '">' . esc_html( $label ) . '</a>';
+			$url    = add_query_arg( 'cat', $k, $base );
+			$unread = $this->unread_count( $k );
+			$badge  = $unread > 0 ? ' <span class="carmel-unread">' . (int) $unread . '</span>' : '';
+			$out   .= '<a class="' . ( $cat === $k ? 'on' : '' ) . '" href="' . esc_url( $url ) . '">' . esc_html( $label ) . $badge . '</a>';
 		}
 		$out .= '</div>';
 
@@ -537,6 +641,9 @@ class Carmel_Community {
 		$out .= '</div>';
 		$out .= '<h2>' . esc_html( get_the_title( $topic_id ) ) . '</h2>';
 		$out .= '<div class="carmel-comm-meta">' . esc_html( $author ) . '・' . esc_html( get_the_date( 'Y-m-d', $topic_id ) ) . '</div>';
+		if ( $tcat ) {
+			$this->mark_read( $tcat ); // トピック閲覧でカテゴリ既読化。
+		}
 		if ( has_post_thumbnail( $topic_id ) ) {
 			$out .= '<div class="carmel-comm-img">' . get_the_post_thumbnail( $topic_id, 'medium' ) . '</div>';
 		}
@@ -647,6 +754,9 @@ class Carmel_Community {
 
 		// メンション通知。
 		$this->notify_mentions( $body, (int) $id );
+
+		// カテゴリ購読者へ新着通知（投稿者本人は除外）。
+		$this->notify_category_subscribers( $cat, $title, (int) $id );
 
 		wp_safe_redirect( add_query_arg( array( 'topic' => (int) $id, 'carmel_comm' => 'new_ok' ), remove_query_arg( 'carmel_comm', $redirect ) ) );
 		exit;
@@ -768,6 +878,35 @@ class Carmel_Community {
 		exit;
 	}
 
+	/** カテゴリ購読者へ新着トピックを通知。 */
+	private function notify_category_subscribers( $cat, $title, $topic_id ) {
+		$author = get_current_user_id();
+		$users  = get_users(
+			array(
+				'meta_key'   => 'carmel_comm_subs',
+				'fields'     => 'ID',
+				'number'     => 1000,
+			)
+		);
+		foreach ( $users as $uid ) {
+			if ( (int) $uid === $author ) {
+				continue;
+			}
+			$subs = get_user_meta( $uid, 'carmel_comm_subs', true );
+			if ( ! is_array( $subs ) || ! in_array( $cat, $subs, true ) ) {
+				continue;
+			}
+			Carmel_Notifier::notify(
+				'community_category_new',
+				array(
+					'event_id'     => 'community_cat_new:' . $topic_id . ':' . $uid,
+					'recipient_id' => (int) $uid,
+					'vars'         => array( 'title' => $title, 'cat' => self::category_label( $cat ) ),
+				)
+			);
+		}
+	}
+
 	/** 本部向けのピン留めトグルボタン（HQ以外には何も出さない）。 */
 	private function pin_button( $topic_id ) {
 		if ( ! current_user_can( 'carmel_manage_stores' ) ) {
@@ -865,6 +1004,7 @@ class Carmel_Community {
 			'new_ok'   => array( 'success', 'トピックを投稿しました。' ),
 			'reply_ok' => array( 'success', '返信を投稿しました。' ),
 			'pin_ok'   => array( 'success', '固定状態を更新しました。' ),
+			'subs_ok'  => array( 'success', '通知設定を保存しました。' ),
 			'err'      => array( 'error', '投稿できませんでした。入力をご確認ください。' ),
 		);
 		if ( ! isset( $map[ $key ] ) ) {
@@ -917,6 +1057,10 @@ class Carmel_Community {
 .carmel-rank-list li{padding:.2em 0}
 .carmel-rank-list a{text-decoration:none;color:#5b2a86;font-weight:600}
 .carmel-rank-likes{color:#e67e22;font-size:.85em}
+.carmel-unread{background:#c0392b;color:#fff;border-radius:1em;padding:0 .45em;font-size:.72em;vertical-align:top}
+.carmel-subs{margin:.6em 0;border:1px solid #e7e2ef;border-radius:10px;padding:.5em 1em;background:#fff}
+.carmel-subs summary{cursor:pointer;font-weight:700}
+.carmel-subs-item{display:inline-flex;align-items:center;gap:.3em;margin:.3em .8em .3em 0;font-size:.9em}
 .carmel-btn{display:inline-block;border:0;border-radius:.3em;padding:.5em 1.1em;color:#fff;cursor:pointer;font-size:.9em;text-decoration:none}
 .carmel-btn-purple{background:#6b4fbb}
 .carmel-banner{padding:.7em 1em;border-radius:.4em;margin:1em 0}

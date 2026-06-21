@@ -31,6 +31,7 @@ class Carmel_Inventory {
 	const FAV_ACTION       = 'carmel_inv_fav';
 	const SAVE_SEARCH      = 'carmel_inv_save_search';
 	const DEL_SEARCH       = 'carmel_inv_del_search';
+	const EXPORT_ACTION    = 'carmel_inv_export';
 	const NONCE            = 'carmel_inv_nonce';
 	const IMPORT_MAX_ROWS  = 500;
 	const COMPARE_MAX      = 4;
@@ -61,6 +62,7 @@ class Carmel_Inventory {
 		add_action( 'admin_post_' . self::FAV_ACTION, array( $this, 'handle_favorite' ) );
 		add_action( 'admin_post_' . self::SAVE_SEARCH, array( $this, 'handle_save_search' ) );
 		add_action( 'admin_post_' . self::DEL_SEARCH, array( $this, 'handle_delete_search' ) );
+		add_action( 'admin_post_' . self::EXPORT_ACTION, array( $this, 'handle_export' ) );
 
 		// 新着アラート（日次/週次cron後・即時は公開検知）。
 		add_action( 'carmel_daily_cron_done', array( $this, 'run_daily_alerts' ) );
@@ -1334,7 +1336,8 @@ window.carmelInitMap=function(){
 		$out .= $is_hq ? '（本部は store_id 列で店舗指定可。未指定はご自身の店舗）' : '（自店の在庫として取り込みます）';
 		$out .= '</p>';
 		$tpl_url = wp_nonce_url( admin_url( 'admin-post.php?action=' . self::TEMPLATE_ACTION ), self::TEMPLATE_ACTION );
-		$out .= '<p class="carmel-inv-hint"><a href="' . esc_url( $tpl_url ) . '">⬇ テンプレCSVをダウンロード</a>（記入例つき・Excel対応UTF-8）</p>';
+		$exp_url = wp_nonce_url( admin_url( 'admin-post.php?action=' . self::EXPORT_ACTION ), self::EXPORT_ACTION );
+		$out .= '<p class="carmel-inv-hint"><a href="' . esc_url( $tpl_url ) . '">⬇ テンプレCSVをダウンロード</a>（記入例つき・Excel対応UTF-8）　|　<a href="' . esc_url( $exp_url ) . '">📤 現在の在庫をCSVエクスポート</a></p>';
 		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" enctype="multipart/form-data">'
 			. '<input type="hidden" name="action" value="' . esc_attr( self::IMPORT_ACTION ) . '">'
 			. '<input type="hidden" name="' . esc_attr( self::NONCE ) . '" value="' . esc_attr( $nonce ) . '">'
@@ -1527,6 +1530,62 @@ window.carmelInitMap=function(){
 		return ! empty( $found ) ? (int) $found[0] : 0;
 	}
 
+	/** 在庫一覧をCSVエクスポート（加盟店=自店 / 本部=全店）。 */
+	public function handle_export() {
+		if ( ! wp_verify_nonce( isset( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '', self::EXPORT_ACTION ) ) {
+			wp_die( esc_html__( '不正なリクエストです。', 'carmel-core' ), '', array( 'response' => 400 ) );
+		}
+		if ( ! in_array( $this->viewer_scope(), array( 'store', 'hq' ), true ) ) {
+			wp_die( esc_html__( '権限がありません。', 'carmel-core' ), '', array( 'response' => 403 ) );
+		}
+		$args = array(
+			'post_type'      => 'carmel_vehicle',
+			'post_status'    => 'publish',
+			'posts_per_page' => -1,
+			'orderby'        => 'date',
+			'order'          => 'DESC',
+		);
+		if ( ! current_user_can( 'carmel_manage_stores' ) ) {
+			$store = $this->current_store_id();
+			$args['meta_query'] = array( array( 'key' => 'store_id', 'value' => $store ) );
+		}
+		$vehicles = get_posts( $args );
+
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=UTF-8' );
+		header( 'Content-Disposition: attachment; filename="carmel-inventory-' . gmdate( 'Ymd' ) . '.csv"' );
+		echo "\xEF\xBB\xBF"; // BOM
+		$out  = fopen( 'php://output', 'w' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$cols = array( 'id', 'maker', 'model', 'grade', 'year', 'mileage', 'color', 'vin', 'plate_no', 'price', 'cost', 'vehicle_status', 'published', 'store_id', 'store_name', 'created' );
+		fputcsv( $out, $cols );
+		foreach ( $vehicles as $v ) {
+			$sid = (int) get_post_meta( $v->ID, 'store_id', true );
+			fputcsv(
+				$out,
+				array(
+					$v->ID,
+					get_post_meta( $v->ID, 'maker', true ),
+					get_post_meta( $v->ID, 'model', true ),
+					get_post_meta( $v->ID, 'grade', true ),
+					get_post_meta( $v->ID, 'year', true ),
+					get_post_meta( $v->ID, 'mileage', true ),
+					get_post_meta( $v->ID, 'color', true ),
+					get_post_meta( $v->ID, 'vin', true ),
+					get_post_meta( $v->ID, 'plate_no', true ),
+					get_post_meta( $v->ID, 'price', true ),
+					get_post_meta( $v->ID, 'cost', true ),
+					get_post_meta( $v->ID, 'vehicle_status', true ),
+					in_array( (string) get_post_meta( $v->ID, 'published', true ), array( '1', 'yes', 'true' ), true ) ? 1 : 0,
+					$sid,
+					$sid ? get_post_meta( $sid, 'store_name', true ) : '',
+					get_the_date( 'Y-m-d', $v->ID ),
+				)
+			);
+		}
+		fclose( $out ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		exit;
+	}
+
 	/* --------------------------------------------------------------------- *
 	 * お客様問い合わせ（在庫詳細）
 	 * --------------------------------------------------------------------- */
@@ -1567,6 +1626,9 @@ window.carmelInitMap=function(){
 		$car_title     = trim( get_post_meta( $vehicle_id, 'maker', true ) . ' ' . get_post_meta( $vehicle_id, 'model', true ) );
 		$car_title     = $car_title ? $car_title : get_the_title( $vehicle_id );
 
+		// 問い合わせを商談（案件）として自動起票（顧客×車両・重複は再利用）。
+		$deal_id = $this->create_customer_deal( $vehicle_id, (int) $user->ID, $holding_store, $message );
+
 		// サポートチケット（問い合わせ）として記録。
 		wp_insert_post(
 			array(
@@ -1578,6 +1640,7 @@ window.carmelInitMap=function(){
 					'vehicle_id'   => (int) $vehicle_id,
 					'customer_id'  => (int) $user->ID,
 					'store_id'     => (int) $holding_store,
+					'deal_id'      => (int) $deal_id,
 					'message'      => $message,
 					'created_at'   => current_time( 'mysql' ),
 				),
@@ -1601,6 +1664,60 @@ window.carmelInitMap=function(){
 
 		wp_safe_redirect( add_query_arg( array( 'vehicle' => $vehicle_id, 'carmel_inv' => 'cust_ok' ), $redirect ) );
 		exit;
+	}
+
+	/**
+	 * 顧客の在庫問い合わせから商談（案件）を起票。顧客×車両で重複ガード。
+	 *
+	 * @param int    $vehicle_id
+	 * @param int    $customer_id
+	 * @param int    $store_id 取扱（保有）店＝販売店
+	 * @param string $message
+	 * @return int 案件ID（失敗時0）
+	 */
+	private function create_customer_deal( $vehicle_id, $customer_id, $store_id, $message ) {
+		$existing = get_posts(
+			array(
+				'post_type'      => 'carmel_deal',
+				'post_status'    => 'publish',
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'meta_query'     => array(
+					'relation' => 'AND',
+					array( 'key' => 'vehicle_id', 'value' => (int) $vehicle_id ),
+					array( 'key' => 'customer_id', 'value' => (int) $customer_id ),
+				),
+			)
+		);
+		if ( ! empty( $existing ) ) {
+			return (int) $existing[0];
+		}
+
+		$user      = get_userdata( $customer_id );
+		$car_title = trim( get_post_meta( $vehicle_id, 'maker', true ) . ' ' . get_post_meta( $vehicle_id, 'model', true ) );
+		$deal_id   = wp_insert_post(
+			array(
+				'post_type'   => 'carmel_deal',
+				'post_status' => 'publish',
+				'post_title'  => '在庫問い合わせ商談：' . ( $car_title ? $car_title : get_the_title( $vehicle_id ) ),
+				'meta_input'  => array(
+					'deal_type'        => 'loan',
+					'store_id'         => (int) $store_id,
+					'vehicle_id'       => (int) $vehicle_id,
+					'customer_id'      => (int) $customer_id,
+					'applicant_name'   => $user ? $user->display_name : '',
+					'applicant_email'  => $user ? $user->user_email : '',
+					'application_note' => '在庫詳細のお問い合わせから起票：' . $message,
+				),
+			)
+		);
+		if ( is_wp_error( $deal_id ) || ! $deal_id ) {
+			return 0;
+		}
+		// 加盟店マッチング（在庫連動・履歴・店舗への通知が発火）。
+		Carmel_Deal_Status::change( (int) $deal_id, 'matched', array( 'system' => true, 'note' => '在庫問い合わせから商談起票' ) );
+		do_action( 'carmel_inventory_customer_deal_created', (int) $deal_id, $vehicle_id, $customer_id );
+		return (int) $deal_id;
 	}
 
 	/* --------------------------------------------------------------------- *
@@ -1847,7 +1964,7 @@ window.carmelInitMap=function(){
 			'published'    => array( 'success', '在庫を掲載しました（共有開始）。' ),
 			'unpublished'  => array( 'success', '在庫の掲載を停止しました。' ),
 			'inquiry_ok'   => array( 'success', '取り寄せ・商談を依頼し、商談（案件）を起票しました。保有店・本部へ通知しました。' ),
-			'cust_ok'      => array( 'success', 'お問い合わせを送信しました。担当店舗よりご連絡します。' ),
+			'cust_ok'      => array( 'success', 'お問い合わせを送信しました。担当店舗より折り返しご連絡します（お手続き状況はマイページでご確認いただけます）。' ),
 			'cust_err'     => array( 'error', '内容を入力してください。' ),
 			'search_saved' => array( 'success', '検索条件を保存しました。新着が入荷するとお知らせします。' ),
 			'search_deleted' => array( 'success', '保存した検索条件を削除しました。' ),
