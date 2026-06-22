@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BUYMO（バイモ）｜オンライン車買取サービス｜全国対応・手数料0円</title>
+<meta name="description" content="BUYMO（バイモ）は、スマホで完結するオンライン車買取サービス。全国47都道府県対応、出張・引取無料、最短即日入金。車・廃車・事故車もまとめて高価買取します。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#284684; --navy-d:#1b2f5e; --navy-l:#36589e;
+  --gold:#e7ad33; --gold-d:#cf9620; --orange:#ff7a1a; --orange-d:#ec6608;
+  --cream:#fbf7ec; --paper:#f3f6fb; --ink:#22304f; --line:#e3e8f1; --muted:#6e7c98; --red:#e23b4e;
+  --shadow:0 22px 50px -24px rgba(27,47,94,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:"Noto Sans JP",sans-serif;color:var(--ink);line-height:1.8;background:#fff;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+img{max-width:100%;display:block}
+a{color:inherit}
+.en{font-family:"Anton",sans-serif;letter-spacing:3px}
+.num{font-family:"Anton",sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:0 18px;position:relative;z-index:2}
+.reveal{opacity:0;transform:translateY(28px);transition:.7s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1;transform:none}
+.reveal.d1{transition-delay:.1s}.reveal.d2{transition-delay:.2s}.reveal.d3{transition-delay:.3s}
+.note{background:#fff3e2;color:#a85b00;font-size:11px;border:1px dashed var(--orange);border-radius:5px;padding:1px 6px;display:inline-block}
+.mascot img{filter:drop-shadow(0 12px 16px rgba(0,0,0,.28))}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-weight:900;text-decoration:none;border-radius:999px;
+  padding:16px 30px;font-size:clamp(15px,4vw,17px);cursor:pointer;border:none;transition:transform .15s,box-shadow .15s;white-space:nowrap}
+.btn-cta{background:linear-gradient(180deg,#ff8c33,var(--orange-d));color:#fff;box-shadow:0 12px 26px -8px rgba(236,102,8,.7)}
+.btn-cta:hover{transform:translateY(-3px)}
+.btn-cta::after{content:"›";font-size:22px}
+.btn-line{background:#06c755;color:#fff}
+.btn-ghost{background:rgba(255,255,255,.14);color:#fff;border:1.5px solid rgba(255,255,255,.6)}
+.cta-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:24px}
+
+/* header + global nav */
+header{position:sticky;top:0;z-index:90;background:#fff;border-bottom:2px solid var(--gold);box-shadow:0 4px 18px -12px rgba(0,0,0,.3)}
+.hd{display:flex;align-items:center;justify-content:space-between;max-width:1180px;margin:0 auto;padding:9px 18px;gap:14px}
+.brand{display:flex;align-items:center;gap:9px}
+.brand img{height:38px;width:auto;filter:none}
+.logo{font-family:"Anton";font-size:26px;color:var(--navy);line-height:1;letter-spacing:1px}
+.logo span{color:var(--orange)}
+.logo small{display:block;font-family:"Noto Sans JP";font-weight:700;font-size:8.5px;letter-spacing:2px;color:var(--muted)}
+.gnav{display:flex;align-items:center;gap:20px;margin-left:auto}
+.gnav a{text-decoration:none;font-weight:700;font-size:14px;color:var(--ink)}
+.gnav a:hover{color:var(--orange)}
+.hd-tel{text-align:right;line-height:1.1}
+.hd-tel b{font-family:"Anton";font-size:20px;color:var(--navy);letter-spacing:1px}
+.hd-tel small{display:block;font-size:10px;color:var(--muted)}
+.hd .btn{padding:11px 18px;font-size:13px}
+.burger{display:none;flex-direction:column;gap:4px;background:none;border:none;cursor:pointer;padding:6px}
+.burger span{width:24px;height:2.5px;background:var(--navy);border-radius:2px}
+
+/* hero */
+.hero{position:relative;background:linear-gradient(140deg,var(--navy-d),var(--navy) 55%,var(--navy-l));color:#fff;overflow:hidden}
+.hero::before{content:"";position:absolute;top:-130px;right:-120px;width:440px;height:440px;background:radial-gradient(circle,rgba(231,173,51,.45),transparent 65%)}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:14px;align-items:center;padding:14px 0 30px}
+.h-left{padding:30px 0}
+.pill{display:inline-block;background:var(--gold);color:var(--navy-d);font-weight:900;font-size:13px;padding:6px 16px;border-radius:999px}
+.h-left h1{font-size:clamp(28px,6.6vw,46px);font-weight:900;line-height:1.25;margin:16px 0 12px;text-shadow:0 4px 18px rgba(0,0,0,.25)}
+.h-left h1 .y{color:var(--gold)}
+.h-left .lead{font-size:clamp(14px,3.6vw,17px);font-weight:700;opacity:.96}
+.hchecks{display:grid;gap:7px;margin-top:16px}
+.hchecks li{list-style:none;font-weight:800;font-size:14px;display:flex;align-items:center;gap:8px}
+.hchecks li::before{content:"✓";background:var(--gold);color:var(--navy-d);width:21px;height:21px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex:0 0 21px}
+.h-right{position:relative;text-align:center;align-self:end}
+.h-right .mascot{display:inline-block;width:90%;max-width:360px}
+.h-bubble{position:absolute;top:2%;left:0%;background:#fff;color:var(--navy);font-weight:900;font-size:14px;padding:8px 14px;border-radius:14px 14px 14px 2px;box-shadow:var(--shadow);z-index:3}
+
+/* trust bar */
+.trust{background:var(--cream);border-bottom:1px solid var(--line)}
+.trust-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:18px 0;text-align:center}
+.trust-grid .t b{font-family:"Anton";font-size:clamp(22px,5vw,32px);color:var(--navy);display:block;line-height:1}
+.trust-grid .t b i{font-style:normal;color:var(--orange);font-size:.62em}
+.trust-grid .t span{font-size:12px;font-weight:700;color:var(--muted)}
+
+/* section base */
+section{padding:56px 0}
+.sec-h{text-align:center;margin-bottom:34px}
+.sec-h .ey{font-family:"Anton";color:var(--orange);font-size:14px;letter-spacing:3px;display:block}
+.sec-h h2{font-size:clamp(23px,5.4vw,34px);font-weight:900;color:var(--navy);line-height:1.3}
+.sec-h p{color:var(--muted);font-weight:700;margin-top:8px;font-size:14px}
+
+/* services */
+.svc{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.svc .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:26px 18px;text-align:center;box-shadow:0 16px 36px -28px rgba(27,47,94,.5);transition:transform .2s}
+.svc .card:hover{transform:translateY(-5px)}
+.svc .ic{width:62px;height:62px;border-radius:16px;background:linear-gradient(180deg,var(--navy),var(--navy-d));color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 14px}
+.svc .card h3{font-size:17px;color:var(--navy);margin-bottom:6px}
+.svc .card p{font-size:13px;color:var(--muted);font-weight:500}
+
+/* deal cards (取扱い) */
+.deal{background:var(--paper)}
+.deal-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.deal-grid .d{background:#fff;border-radius:14px;overflow:hidden;border:1px solid var(--line);text-align:center;padding:22px 12px}
+.deal-grid .d .em{font-size:34px}
+.deal-grid .d b{display:block;margin-top:8px;color:var(--navy);font-size:16px}
+.deal-grid .d span{font-size:12px;color:var(--muted)}
+
+/* flow */
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;counter-reset:s}
+.flow .step{background:#fff;border:1px solid var(--line);border-radius:16px;padding:26px 16px 20px;position:relative;text-align:center}
+.flow .step::before{counter-increment:s;content:"0" counter(s);position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-family:"Anton";font-size:18px;background:var(--orange);color:#fff;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 16px -6px rgba(236,102,8,.6)}
+.flow .step .em{font-size:30px;margin-top:6px}
+.flow .step h4{color:var(--navy);font-size:16px;margin:8px 0 4px}
+.flow .step p{font-size:12.5px;color:var(--muted);font-weight:500}
+
+/* reasons band (navy) */
+.why{background:linear-gradient(140deg,var(--navy-d),var(--navy));color:#fff;position:relative;overflow:hidden}
+.why .sec-h h2{color:#fff}.why .sec-h .ey{color:var(--gold)}
+.why-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.why .r{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);border-radius:16px;padding:24px}
+.why .r .n{font-family:"Anton";color:var(--gold);font-size:15px;letter-spacing:2px}
+.why .r h3{font-size:18px;margin:6px 0 8px}
+.why .r p{font-size:13.5px;opacity:.9;font-weight:500}
+.why-peek{position:absolute;right:3%;bottom:0;width:150px;opacity:.96}
+
+/* voices */
+.voices{background:var(--cream)}
+.v-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.v-grid .v{background:#fff;border-radius:16px;padding:22px;border:1px solid var(--line);box-shadow:0 16px 36px -30px rgba(27,47,94,.5)}
+.v-grid .stars{color:var(--gold);font-size:15px}
+.v-grid .v p{font-size:13.5px;margin:8px 0 12px}
+.v-grid .who{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--muted);font-weight:700}
+.v-grid .who .av{width:34px;height:34px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px}
+
+/* company table */
+.company .tbl{max-width:760px;margin:0 auto;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.company .tbl .row{display:grid;grid-template-columns:200px 1fr}
+.company .tbl .row:nth-child(odd){background:var(--paper)}
+.company .tbl .row .k{font-weight:800;color:var(--navy);padding:14px 18px;border-right:1px solid var(--line)}
+.company .tbl .row .vv{padding:14px 18px;font-weight:500}
+
+/* faq */
+.faq{background:var(--paper)}
+.faq .q{max-width:780px;margin:0 auto 12px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.faq .q summary{list-style:none;cursor:pointer;padding:16px 20px;font-weight:800;color:var(--navy);display:flex;justify-content:space-between;gap:10px;align-items:center}
+.faq .q summary::-webkit-details-marker{display:none}
+.faq .q summary::after{content:"+";font-family:"Anton";color:var(--orange);font-size:22px}
+.faq .q[open] summary::after{content:"–"}
+.faq .q .a{padding:0 20px 18px;font-size:14px;color:var(--ink)}
+
+/* cta band */
+.ctaband{background:linear-gradient(140deg,var(--orange),var(--orange-d));color:#fff;text-align:center}
+.ctaband h2{font-size:clamp(24px,5.6vw,36px);font-weight:900;line-height:1.3}
+.ctaband p{font-weight:700;margin-top:8px;opacity:.96}
+
+/* footer */
+footer{background:var(--navy-d);color:#cdd7ea;padding:46px 0 26px;font-size:13px}
+.f-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:24px;margin-bottom:26px}
+.f-grid .logo{color:#fff}.f-grid .logo span{color:var(--gold)}
+.f-grid h5{color:#fff;font-size:13px;margin-bottom:10px;letter-spacing:1px}
+.f-grid a{display:block;text-decoration:none;color:#cdd7ea;padding:3px 0;opacity:.85}
+.f-grid a:hover{opacity:1;color:var(--gold)}
+.copy{border-top:1px solid rgba(255,255,255,.12);padding-top:16px;text-align:center;font-size:11px;opacity:.7}
+
+/* responsive */
+@media(max-width:880px){
+  .gnav,.hd-tel{display:none}
+  .burger{display:flex}
+  .hero-grid{grid-template-columns:1fr;text-align:center}
+  .h-left{padding:24px 0 0}.hchecks{justify-items:center}.hchecks li{justify-content:center}
+  .h-right .mascot{max-width:260px}
+  .trust-grid{grid-template-columns:repeat(2,1fr);gap:14px}
+  .svc,.deal-grid,.flow,.why-grid,.v-grid{grid-template-columns:1fr 1fr}
+  .why-peek{display:none}
+  .company .tbl .row{grid-template-columns:1fr}
+  .company .tbl .row .k{border-right:none;border-bottom:1px solid var(--line)}
+  .f-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:520px){
+  .svc,.deal-grid,.flow,.why-grid,.v-grid,.f-grid{grid-template-columns:1fr}
+  .trust-grid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hd">
+    <a class="brand" href="#top">
+      <img src="../images/characters/camel-icon.png" alt="BUYMO">
+      <span class="logo">BUY<span>MO</span><small>オンライン車買取</small></span>
+    </a>
+    <nav class="gnav">
+      <a href="#service">サービス</a>
+      <a href="#flow">買取の流れ</a>
+      <a href="#deal">取扱い</a>
+      <a href="#company">会社概要</a>
+      <a href="#faq">よくある質問</a>
+    </nav>
+    <div class="hd-tel">
+      <b>0120-000-000</b>
+      <small>受付 9:00–20:00 / 年中無休</small>
+    </div>
+    <a href="#cta" class="btn btn-cta">無料査定</a>
+    <button class="burger" aria-label="メニュー"><span></span><span></span><span></span></button>
+  </div>
+</header>
+
+<a id="top"></a>
+<!-- HERO -->
+<section class="hero" style="padding:0">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div class="h-left reveal">
+        <span class="pill">スマホで完結・全国対応</span>
+        <h1>あなたの愛車、<br><span class="y">いちばん高く</span>買います。</h1>
+        <p class="lead">オンライン車買取サービス「BUYMO（バイモ）」。<br>カンタン入力で最短即日査定、出張・引取もすべて無料です。</p>
+        <ul class="hchecks">
+          <li>全国47都道府県どこでも対応</li>
+          <li>動かない車・事故車・廃車もOK</li>
+          <li>手数料・出張費・引取費すべて0円</li>
+        </ul>
+        <div class="cta-row" style="justify-content:flex-start">
+          <a href="#cta" class="btn btn-cta">無料査定を申し込む</a>
+          <a href="tel:0120000000" class="btn btn-ghost">📞 電話で相談</a>
+        </div>
+      </div>
+      <div class="h-right reveal d1">
+        <div class="h-bubble">高く売れる！</div>
+        <div class="mascot"><img src="../images/characters/camel-face.png" alt="BUYMOキャラクター カーメル"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST -->
+<div class="trust">
+  <div class="wrap">
+    <div class="trust-grid">
+      <div class="t reveal"><b class="num">47<i>都道府県</i></b><span>全国対応エリア</span></div>
+      <div class="t reveal d1"><b class="num">98<i>%</i></b><span>お客様満足度<span class="note">※要数値</span></span></div>
+      <div class="t reveal d2"><b class="num">0<i>円</i></b><span>手数料・出張費</span></div>
+      <div class="t reveal d3"><b class="num">最短<i>即日</i></b><span>査定・お支払い</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- SERVICE -->
+<section id="service">
+  <div class="wrap">
+    <div class="sec-h reveal">
+      <span class="ey">SERVICE</span>
+      <h2>BUYMOが選ばれる4つの特長</h2>
+      <p>「高く・カンタン・無料・安心」をぜんぶ叶える車買取サービスです</p>
+    </div>
+    <div class="svc">
+      <div class="card reveal"><div class="ic">💰</div><h3>高価買取</h3><p>独自の販売ルートで一台一台を適正かつ高価格で査定します。</p></div>
+      <div class="card reveal d1"><div class="ic">📱</div><h3>オンライン完結</h3><p>スマホ入力だけで査定。来店不要、忙しい方でもかんたん。</p></div>
+      <div class="card reveal d2"><div class="ic">🚚</div><h3>全国・無料引取</h3><p>全国どこでも出張・引取に対応。費用はすべて0円です。</p></div>
+      <div class="card reveal d3"><div class="ic">🛡️</div><h3>安心・即日入金</h3><p>面倒な手続きは丸投げOK。最短即日でお支払いします。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- DEAL -->
+<section id="deal" class="deal">
+  <div class="wrap">
+    <div class="sec-h reveal">
+      <span class="ey">LINE UP</span>
+      <h2>こんなお車、すべて買取OK</h2>
+      <p>他社で断られた車も、まずはBUYMOにご相談ください</p>
+    </div>
+    <div class="deal-grid">
+      <div class="d reveal"><div class="em">🚗</div><b>普通車・軽自動車</b><span>新しい車から旧車まで</span></div>
+      <div class="d reveal d1"><div class="em">🛠️</div><b>事故車・故障車</b><span>動かなくてもOK</span></div>
+      <div class="d reveal d2"><div class="em">♻️</div><b>廃車・不動車</b><span>面倒な手続き不要</span></div>
+      <div class="d reveal d3"><div class="em">🏍️</div><b>バイク・その他<span class="note">※対応可なら</span></b><span>まとめて査定</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- FLOW -->
+<section id="flow">
+  <div class="wrap">
+    <div class="sec-h reveal">
+      <span class="ey">FLOW</span>
+      <h2>かんたん4ステップ</h2>
+      <p>申し込みから入金まで、最短即日で完了します</p>
+    </div>
+    <div class="flow">
+      <div class="step reveal"><div class="em">📝</div><h4>かんたん入力</h4><p>車種・年式などをスマホで入力するだけ。</p></div>
+      <div class="step reveal d1"><div class="em">🔍</div><h4>無料査定</h4><p>プロが査定額をすばやくご提示します。</p></div>
+      <div class="step reveal d2"><div class="em">🤝</div><h4>ご成約</h4><p>金額にご納得いただけたら契約・引取日を決定。</p></div>
+      <div class="step reveal d3"><div class="em">💴</div><h4>入金・完了</h4><p>引取後、最短即日でお支払いします。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY (navy) -->
+<section class="why">
+  <div class="wrap">
+    <div class="sec-h reveal">
+      <span class="ey">REASON</span>
+      <h2>BUYMOが高く買い取れる理由</h2>
+    </div>
+    <div class="why-grid">
+      <div class="r reveal"><div class="n">REASON 01</div><h3>中間マージンをカット</h3><p>オンライン化で余分なコストを削減し、その分を買取価格に還元します。</p></div>
+      <div class="r reveal d1"><div class="n">REASON 02</div><h3>独自の販売ネットワーク</h3><p>国内外の幅広い販売ルートで、一台ごとに最大限の価値を引き出します。</p></div>
+      <div class="r reveal d2"><div class="n">REASON 03</div><h3>どんな車も買い取る体制</h3><p>事故車・不動車・廃車も自社で対応。だから高く・早く買い取れます。</p></div>
+    </div>
+  </div>
+  <div class="mascot why-peek reveal"><img src="../images/characters/camel-face-flip.png" alt=""></div>
+</section>
+
+<!-- VOICES -->
+<section class="voices">
+  <div class="wrap">
+    <div class="sec-h reveal">
+      <span class="ey">VOICE</span>
+      <h2>お客様の声</h2>
+      <p class="note">※掲載内容は実際のアンケートに差し替えてください</p>
+    </div>
+    <div class="v-grid">
+      <div class="v reveal"><div class="stars">★★★★★</div><p>他社より3万円も高い査定でびっくり。スマホだけで完結して本当に楽でした。</p><div class="who"><span class="av">T</span>30代・男性／東京都</div></div>
+      <div class="v reveal d1"><div class="stars">★★★★★</div><p>動かなくなった車を無料で引き取ってもらえました。対応も丁寧で安心。</p><div class="who"><span class="av">M</span>40代・女性／大阪府</div></div>
+      <div class="v reveal d2"><div class="stars">★★★★★</div><p>申込から入金までが早い！廃車手続きもお任せできて助かりました。</p><div class="who"><span class="av">S</span>50代・男性／福岡県</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPANY -->
+<section id="company" class="company">
+  <div class="wrap">
+    <div class="sec-h reveal">
+      <span class="ey">COMPANY</span>
+      <h2>会社概要</h2>
+      <p class="note">※下記はサンプルです。正式な情報に差し替えてください</p>
+    </div>
+    <div class="tbl reveal">
+      <div class="row"><div class="k">会社名</div><div class="vv">株式会社〇〇〇〇</div></div>
+      <div class="row"><div class="k">サービス名</div><div class="vv">BUYMO（バイモ）オンライン車買取</div></div>
+      <div class="row"><div class="k">所在地</div><div class="vv">〒000-0000　〇〇県〇〇市〇〇 0-0-0</div></div>
+      <div class="row"><div class="k">電話番号</div><div class="vv">0120-000-000（受付 9:00–20:00／年中無休）</div></div>
+      <div class="row"><div class="k">事業内容</div><div class="vv">自動車・廃車の買取販売、輸出入 ほか</div></div>
+      <div class="row"><div class="k">古物商許可番号</div><div class="vv">〇〇公安委員会 第000000000000号</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="faq">
+  <div class="wrap">
+    <div class="sec-h reveal">
+      <span class="ey">FAQ</span>
+      <h2>よくあるご質問</h2>
+    </div>
+    <details class="q reveal"><summary>査定は無料ですか？</summary><div class="a">はい、査定・出張・引取はすべて無料です。費用は一切かかりません。</div></details>
+    <details class="q reveal"><summary>動かない車や事故車でも買い取ってもらえますか？</summary><div class="a">もちろん可能です。不動車・事故車・廃車もまとめて高価買取いたします。</div></details>
+    <details class="q reveal"><summary>申し込みから入金までどれくらいかかりますか？</summary><div class="a">お車の状態や地域によりますが、最短で即日のお支払いが可能です。</div></details>
+    <details class="q reveal"><summary>必要な書類は何ですか？</summary><div class="a">車検証・印鑑など。詳しくはご成約時に担当よりご案内します。</div></details>
+    <details class="q reveal"><summary>全国どこでも対応していますか？</summary><div class="a">はい、全国47都道府県に対応しています。離島など一部地域はご相談ください。</div></details>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta" class="ctaband">
+  <div class="wrap">
+    <h2 class="reveal">まずは無料査定から。<br>かんたん入力1分。</h2>
+    <p class="reveal d1">広告でご覧の方はこちら、しつこい営業は一切いたしません。</p>
+    <div class="cta-row reveal d2">
+      <a href="../index.html" class="btn btn-navy" style="background:#fff;color:var(--orange-d)">無料査定ページへ ›</a>
+      <a href="tel:0120000000" class="btn btn-ghost">📞 0120-000-000</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="f-grid">
+      <div>
+        <div class="logo" style="font-family:Anton;font-size:26px">BUY<span>MO</span></div>
+        <p style="margin-top:10px;opacity:.8;line-height:1.7">スマホで完結するオンライン車買取サービス。<br>全国対応・手数料0円であなたの愛車を高価買取します。</p>
+      </div>
+      <div>
+        <h5>メニュー</h5>
+        <a href="#service">サービス特長</a>
+        <a href="#flow">買取の流れ</a>
+        <a href="#deal">取扱い車種</a>
+        <a href="#company">会社概要</a>
+        <a href="#faq">よくある質問</a>
+      </div>
+      <div>
+        <h5>査定・お問い合わせ</h5>
+        <a href="../index.html">無料査定ページ</a>
+        <a href="tel:0120000000">電話で相談（0120-000-000）</a>
+        <a href="#">プライバシーポリシー</a>
+        <a href="#">特定商取引法に基づく表記</a>
+      </div>
+    </div>
+    <div class="copy">© 2026 BUYMO. All rights reserved.</div>
+  </div>
+</footer>
+
+<script>
+// reveal on scroll
+const io=new IntersectionObserver((es)=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+// mobile menu: jump to nav anchors via simple toggle (scrolls to sections)
+document.querySelector('.burger').addEventListener('click',()=>{document.querySelector('#service').scrollIntoView({behavior:'smooth'})});
+</script>
+</body>
+</html>
