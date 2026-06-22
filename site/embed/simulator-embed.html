@@ -1,54 +1,98 @@
 <!-- =========================================================
-  AUC-AGENT 料金シミュレーター（LPtools 埋め込み用）
-  使い方：LPtoolsの編集画面で「カスタムHTML」ブロックを追加し、
-  このファイルの中身を丸ごと貼り付けてください。
-  ・CSS/JSはすべて #auc-sim 配下にスコープしてあり、テーマやLPtoolsの
-    既存スタイルと干渉しません。
-  ・料金ロジックは末尾の FEE_TIERS / CLASS / OPTIONS を編集すれば変わります。
+  AUC-AGENT 料金シミュレーター v2（LPtools 埋め込み用）
+  使い方：カスタムHTMLブロックに、このファイルの中身を丸ごと貼り付け。
+  ・CSS/JSはすべて #auc-sim 配下にスコープ。テーマと干渉しません。
+  ・陸送費は「いわき(福島)起点の目安」。SHIP_FEE で簡単に調整できます。
+  ・料金ロジックは FEE_TIERS / CLASS / OPT を編集すれば変わります。
 ========================================================= -->
 <div id="auc-sim">
   <style>
     #auc-sim *{box-sizing:border-box}
-    #auc-sim{--navy:#0e1b33;--gold:#c9a14a;--gold2:#e0bd6a;--line:#e4e8ef;--muted:#5a6675;
+    #auc-sim{
+      --navy:#0e1b33; --navy2:#16294a; --gold:#c9a14a; --gold2:#e0bd6a;
+      --line:#e6eaf1; --muted:#6b7689; --ink:#1a2233; --bg:#f6f8fc;
       font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",Meiryo,sans-serif;
-      color:#1a2233;line-height:1.7;max-width:980px;margin:0 auto}
-    #auc-sim .sim-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
-    #auc-sim .panel{background:linear-gradient(160deg,#0e1b33,#16294a);color:#fff;border-radius:16px;padding:24px}
-    #auc-sim .field{margin-bottom:18px}
-    #auc-sim .field label{display:flex;justify-content:space-between;font-size:14px;font-weight:700;margin-bottom:8px;color:#e7ecf6}
-    #auc-sim .field label .v{color:var(--gold2)}
-    #auc-sim input[type=range]{width:100%;accent-color:var(--gold)}
-    #auc-sim select{width:100%;padding:11px 13px;border-radius:10px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#fff;font-size:15px;font-family:inherit}
-    #auc-sim select option{color:#000}
-    #auc-sim .seg{display:flex;flex-wrap:wrap;gap:8px}
-    #auc-sim .seg label{flex:1 1 auto;position:relative}
-    #auc-sim .seg input{position:absolute;opacity:0}
-    #auc-sim .seg span{display:block;text-align:center;padding:9px 6px;border-radius:9px;font-size:13px;border:1px solid rgba(255,255,255,.22);cursor:pointer;white-space:nowrap}
-    #auc-sim .seg input:checked+span{background:var(--gold);color:var(--navy);border-color:var(--gold);font-weight:800}
-    #auc-sim .checks{display:grid;gap:9px}
-    #auc-sim .checks label{display:flex;align-items:center;gap:9px;font-size:14px;cursor:pointer}
-    #auc-sim .checks input{width:17px;height:17px;accent-color:var(--gold)}
-    #auc-sim .result{background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:0 14px 36px rgba(14,27,51,.12)}
-    #auc-sim .result h3{margin:0 0 4px;font-size:18px}
-    #auc-sim .note{font-size:12px;color:var(--muted);margin:0 0 16px}
-    #auc-sim .line{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px dashed var(--line);font-size:14.5px}
-    #auc-sim .line .tag{font-size:11px;color:var(--muted)}
-    #auc-sim .grand{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding:15px 17px;background:var(--navy);color:#fff;border-radius:12px}
-    #auc-sim .grand .val{font-size:28px;font-weight:900;color:var(--gold2)}
-    #auc-sim .savings{margin-top:12px;background:#eaf7f0;color:#1f9d6b;border:1px solid #c4ead6;border-radius:12px;padding:13px 17px;font-size:14px}
-    #auc-sim .savings b{font-size:19px}
-    #auc-sim .cta{display:block;text-align:center;margin-top:18px;padding:14px;border-radius:999px;background:linear-gradient(135deg,var(--gold2),var(--gold));color:var(--navy);font-weight:800;text-decoration:none}
-    @media(max-width:760px){#auc-sim .sim-grid{grid-template-columns:1fr}}
+      color:var(--ink); line-height:1.7; max-width:1000px; margin:0 auto; padding:4px;
+    }
+    #auc-sim .sim-head{text-align:center; margin:0 0 22px}
+    #auc-sim .sim-badge{display:inline-block; background:rgba(201,161,74,.14); color:#9a7b2e;
+      font-size:12.5px; font-weight:800; letter-spacing:.04em; padding:6px 14px; border-radius:999px; margin-bottom:10px}
+    #auc-sim .sim-title{font-size:23px; font-weight:900; letter-spacing:.01em; margin:0}
+    #auc-sim .sim-sub{font-size:13.5px; color:var(--muted); margin:6px 0 0}
+    #auc-sim .sim-grid{display:grid; grid-template-columns:1fr 1fr; gap:22px; align-items:start}
+    #auc-sim .panel{background:linear-gradient(165deg,var(--navy),var(--navy2)); color:#fff;
+      border-radius:20px; padding:26px; box-shadow:0 18px 40px rgba(14,27,51,.22)}
+    #auc-sim .field{margin-bottom:20px}
+    #auc-sim .field:last-child{margin-bottom:0}
+    #auc-sim .field label.lab{display:flex; justify-content:space-between; align-items:baseline;
+      font-size:13.5px; font-weight:800; margin-bottom:9px; color:#e7ecf6; letter-spacing:.02em}
+    #auc-sim .field label.lab .v{color:var(--gold2); font-size:18px; font-weight:900}
+    #auc-sim input[type=range]{-webkit-appearance:none; width:100%; height:6px; border-radius:999px;
+      background:rgba(255,255,255,.22); outline:none; accent-color:var(--gold)}
+    #auc-sim input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:22px; height:22px;
+      border-radius:50%; background:var(--gold2); border:3px solid #fff; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.3)}
+    #auc-sim input[type=range]::-moz-range-thumb{width:20px; height:20px; border-radius:50%;
+      background:var(--gold2); border:3px solid #fff; cursor:pointer}
+    #auc-sim .range-cap{display:flex; justify-content:space-between; font-size:11px; color:rgba(255,255,255,.5); margin-top:6px}
+    #auc-sim select{width:100%; padding:13px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.24);
+      background:rgba(255,255,255,.09); color:#fff; font-size:15px; font-family:inherit; appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23e0bd6a' d='M6 8 0 0h12z'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 14px center}
+    #auc-sim select option, #auc-sim select optgroup{color:#000}
+    #auc-sim .seg{display:flex; flex-wrap:wrap; gap:8px}
+    #auc-sim .seg label{flex:1 1 auto; position:relative}
+    #auc-sim .seg input{position:absolute; opacity:0; pointer-events:none}
+    #auc-sim .seg span{display:block; text-align:center; padding:10px 6px; border-radius:11px; font-size:13px;
+      border:1px solid rgba(255,255,255,.24); cursor:pointer; white-space:nowrap; transition:.15s}
+    #auc-sim .seg input:checked+span{background:var(--gold); color:var(--navy); border-color:var(--gold); font-weight:900}
+    #auc-sim .checks{display:grid; gap:11px}
+    #auc-sim .checks label{display:flex; align-items:center; gap:10px; font-size:14px; cursor:pointer}
+    #auc-sim .checks input{width:18px; height:18px; accent-color:var(--gold)}
+
+    #auc-sim .result{background:#fff; border:1px solid var(--line); border-radius:20px; padding:26px;
+      box-shadow:0 18px 40px rgba(14,27,51,.10)}
+    #auc-sim .result h3{margin:0 0 3px; font-size:18px; font-weight:900}
+    #auc-sim .note{font-size:11.5px; color:var(--muted); margin:0 0 18px}
+    #auc-sim .line{display:flex; justify-content:space-between; align-items:center; padding:11px 0;
+      border-bottom:1px dashed var(--line); font-size:14.5px}
+    #auc-sim .line .lbl{color:#3a465c}
+    #auc-sim .line .tag{display:inline-block; font-size:10.5px; color:var(--muted); margin-left:6px;
+      background:var(--bg); padding:2px 7px; border-radius:6px}
+    #auc-sim .line .num{font-weight:700; font-variant-numeric:tabular-nums}
+    #auc-sim .grand{display:flex; justify-content:space-between; align-items:center; margin-top:16px;
+      padding:18px 20px; background:linear-gradient(135deg,var(--navy),var(--navy2)); color:#fff; border-radius:14px}
+    #auc-sim .grand .glabel{font-size:14px; font-weight:800}
+    #auc-sim .grand .val{font-size:30px; font-weight:900; color:var(--gold2); font-variant-numeric:tabular-nums; line-height:1}
+    #auc-sim .savings{margin-top:13px; background:#eaf7f0; color:#1f9d6b; border:1px solid #c4ead6;
+      border-radius:14px; padding:14px 18px; font-size:14px; text-align:center}
+    #auc-sim .savings b{font-size:20px}
+    #auc-sim .recv{margin:13px 0 0; font-size:12.5px; color:#1f9d6b; font-weight:800; text-align:center}
+    #auc-sim .cta{display:block; text-align:center; margin-top:18px; padding:16px; border-radius:999px;
+      background:linear-gradient(135deg,var(--gold2),var(--gold)); color:var(--navy); font-weight:900;
+      font-size:16px; text-decoration:none; box-shadow:0 10px 24px rgba(201,161,74,.4); transition:.15s}
+    #auc-sim .cta:hover{transform:translateY(-2px); box-shadow:0 14px 30px rgba(201,161,74,.5)}
+    @media(max-width:760px){
+      #auc-sim .sim-grid{grid-template-columns:1fr}
+      #auc-sim .panel,#auc-sim .result{padding:22px; border-radius:16px}
+      #auc-sim .grand .val{font-size:26px}
+    }
   </style>
+
+  <div class="sim-head">
+    <span class="sim-badge">★ 無料・1分でわかる</span>
+    <h2 class="sim-title">乗り出し総額シミュレーター</h2>
+    <p class="sim-sub">予算・クラス・お届け先を選ぶだけ。代行手数料から陸送費まで含めた総額がその場でわかります。</p>
+  </div>
 
   <div class="sim-grid">
     <div class="panel">
       <div class="field">
-        <label>落札予算（希望上限価格）<span class="v" id="as-bidOut">¥1,400,000</span></label>
+        <label class="lab">落札予算（希望上限価格）<span class="v" id="as-bidOut">¥1,400,000</span></label>
         <input type="range" id="as-bid" min="200000" max="6000000" step="50000" value="1400000" />
+        <div class="range-cap"><span>20万円</span><span>600万円</span></div>
       </div>
       <div class="field">
-        <label>車両クラス</label>
+        <label class="lab">車両クラス</label>
         <div class="seg" id="as-cls">
           <label><input type="radio" name="as-cls" value="kei" /><span>軽</span></label>
           <label><input type="radio" name="as-cls" value="compact" checked /><span>コンパクト</span></label>
@@ -58,18 +102,79 @@
         </div>
       </div>
       <div class="field">
-        <label>陸送エリア（納車先）</label>
+        <label class="lab">陸送エリア（納車先・都道府県）</label>
         <select id="as-region">
-          <option value="20000">関東</option>
-          <option value="28000">中部・東海</option>
-          <option value="30000">関西</option>
-          <option value="40000">東北・北陸・中国・四国</option>
-          <option value="60000">北海道・九州</option>
-          <option value="90000">沖縄・離島</option>
+          <optgroup label="東北">
+            <option value="15000">福島県</option>
+            <option value="18000">宮城県</option>
+            <option value="18000">山形県</option>
+            <option value="22000">岩手県</option>
+            <option value="24000">秋田県</option>
+            <option value="28000">青森県</option>
+          </optgroup>
+          <optgroup label="関東">
+            <option value="16000">茨城県</option>
+            <option value="16000">栃木県</option>
+            <option value="18000">群馬県</option>
+            <option value="18000">埼玉県</option>
+            <option value="18000">千葉県</option>
+            <option value="18000" selected>東京都</option>
+            <option value="20000">神奈川県</option>
+          </optgroup>
+          <optgroup label="甲信越">
+            <option value="20000">新潟県</option>
+            <option value="22000">山梨県</option>
+            <option value="24000">長野県</option>
+          </optgroup>
+          <optgroup label="北陸">
+            <option value="28000">富山県</option>
+            <option value="30000">石川県</option>
+            <option value="32000">福井県</option>
+          </optgroup>
+          <optgroup label="東海">
+            <option value="22000">静岡県</option>
+            <option value="26000">愛知県</option>
+            <option value="28000">岐阜県</option>
+            <option value="30000">三重県</option>
+          </optgroup>
+          <optgroup label="近畿">
+            <option value="30000">滋賀県</option>
+            <option value="32000">京都府</option>
+            <option value="32000">大阪府</option>
+            <option value="34000">兵庫県</option>
+            <option value="34000">奈良県</option>
+            <option value="38000">和歌山県</option>
+          </optgroup>
+          <optgroup label="中国">
+            <option value="38000">岡山県</option>
+            <option value="40000">鳥取県</option>
+            <option value="42000">広島県</option>
+            <option value="44000">島根県</option>
+            <option value="48000">山口県</option>
+          </optgroup>
+          <optgroup label="四国">
+            <option value="42000">香川県</option>
+            <option value="42000">徳島県</option>
+            <option value="46000">愛媛県</option>
+            <option value="46000">高知県</option>
+          </optgroup>
+          <optgroup label="九州">
+            <option value="52000">福岡県</option>
+            <option value="54000">佐賀県</option>
+            <option value="54000">大分県</option>
+            <option value="56000">熊本県</option>
+            <option value="58000">長崎県</option>
+            <option value="60000">宮崎県</option>
+            <option value="62000">鹿児島県</option>
+          </optgroup>
+          <optgroup label="北海道・沖縄">
+            <option value="60000">北海道</option>
+            <option value="90000">沖縄県</option>
+          </optgroup>
         </select>
       </div>
-      <div class="field" style="margin-bottom:0">
-        <label>オプション（任意）</label>
+      <div class="field">
+        <label class="lab">オプション（任意）</label>
         <div class="checks">
           <label><input type="checkbox" id="as-reg" checked> 名義変更・登録代行（+¥25,000）</label>
           <label><input type="checkbox" id="as-garage"> 車庫証明 取得代行（+¥12,000）</label>
@@ -81,16 +186,16 @@
 
     <div class="result">
       <h3>お見積り（概算）</h3>
-      <p class="note">※税込・参考値。実際の費用は車両・落札状況により変動します。</p>
-      <div class="line"><span>落札価格</span><span id="as-rBid">¥1,400,000</span></div>
-      <div class="line"><span>代行手数料 <span class="tag" id="as-feeTag">100〜150万円帯</span></span><span id="as-rFee">¥59,800</span></div>
-      <div class="line"><span>オークション落札料</span><span id="as-rAuc">¥11,000</span></div>
-      <div class="line"><span>リサイクル料・税等（預り）</span><span id="as-rRec">¥18,000</span></div>
-      <div class="line"><span>陸送費</span><span id="as-rShip">¥20,000</span></div>
-      <div class="line"><span>オプション合計</span><span id="as-rOpt">¥25,000</span></div>
-      <div class="grand"><span>乗り出し総額（目安）</span><span class="val" id="as-rTotal">¥1,533,800</span></div>
+      <p class="note">※税込・参考値。陸送費は目安です。実際の費用は車両・落札状況により変動します。</p>
+      <div class="line"><span class="lbl">落札価格</span><span class="num" id="as-rBid">¥1,400,000</span></div>
+      <div class="line"><span class="lbl">代行手数料<span class="tag" id="as-feeTag">100〜150万円帯</span></span><span class="num" id="as-rFee">¥59,800</span></div>
+      <div class="line"><span class="lbl">オークション落札料</span><span class="num" id="as-rAuc">¥11,000</span></div>
+      <div class="line"><span class="lbl">リサイクル料・税等（預り）</span><span class="num" id="as-rRec">¥18,000</span></div>
+      <div class="line"><span class="lbl">陸送費</span><span class="num" id="as-rShip">¥18,000</span></div>
+      <div class="line"><span class="lbl">オプション合計</span><span class="num" id="as-rOpt">¥25,000</span></div>
+      <div class="grand"><span class="glabel">乗り出し総額（目安）</span><span class="val" id="as-rTotal">¥1,531,800</span></div>
       <div class="savings">店頭購入の目安より <b id="as-rSave">約 16万円</b> おトク（相場比較の概算）</div>
-      <p style="margin:12px 0 0;font-size:12.5px;color:#1f9d6b;font-weight:700;text-align:center">🟢 メール・チャットは24時間受付（お電話は平日 8:00〜17:00）</p>
+      <p class="recv">🟢 メール・チャットは24時間受付（お電話は平日 8:00〜17:00）</p>
       <!-- ↓ 申込ページ/LINE URLに差し替えてください -->
       <a class="cta" href="#" id="as-cta">この条件でオーダーする（無料登録）</a>
     </div>
