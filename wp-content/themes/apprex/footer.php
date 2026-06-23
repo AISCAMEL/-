@@ -11,6 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 ?>
 </main><!-- #main -->
 
+<?php do_action( 'apprex_footer_before' ); ?>
+
 <footer class="site-footer">
 	<div class="container">
 		<div class="site-footer__grid">

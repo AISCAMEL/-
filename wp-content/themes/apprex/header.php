@@ -88,4 +88,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 <div class="mobile-drawer__overlay" id="mobile-drawer-overlay" hidden></div>
 
+<?php do_action( 'apprex_header_after' ); ?>
+
 <main id="main">
