@@ -72,6 +72,18 @@ function apprex_sns_ads_settings_page() {
 	<div class="wrap">
 		<h1>APPREX SNS広告連携</h1>
 		<p>各SNS広告の「ピクセル（計測タグ）」を設置し、ページ閲覧とフォーム送信（リード）を自動計測します。IDを入れるだけで連携できます。</p>
+
+		<div style="background:#fff;border:1px solid #dcdcde;border-radius:8px;padding:14px 16px;margin:0 0 18px;max-width:860px;">
+			<strong>各媒体の広告管理画面（出稿・ID取得はこちら）：</strong>
+			<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">
+				<a class="button" href="https://www.facebook.com/adsmanager/" target="_blank" rel="noopener">Meta広告 ↗</a>
+				<a class="button" href="https://business.facebook.com/events_manager2" target="_blank" rel="noopener">Metaイベントマネージャ ↗</a>
+				<a class="button" href="https://ads.twitter.com/" target="_blank" rel="noopener">X（Twitter）広告 ↗</a>
+				<a class="button" href="https://ads.tiktok.com/" target="_blank" rel="noopener">TikTok広告 ↗</a>
+				<a class="button" href="https://admanager.line.biz/" target="_blank" rel="noopener">LINE広告 ↗</a>
+				<a class="button" href="https://ads.google.com/" target="_blank" rel="noopener">Google広告 ↗</a>
+			</div>
+		</div>
 		<form method="post" action="options.php">
 			<?php settings_fields( 'apprex_sns_ads' ); ?>
 			<table class="form-table" role="presentation"><tbody>
@@ -81,7 +93,12 @@ function apprex_sns_ads_settings_page() {
 					<p class="description">OFFの間はタグを一切出力しません。設定が済んでからONにしてください。</p></td>
 				</tr>
 
-				<tr><th colspan="2"><h2 style="margin:.4em 0;">Meta（Facebook / Instagram）</h2></th></tr>
+				<tr><th colspan="2">
+					<h2 style="margin:.4em 0;">Meta（Facebook / Instagram）
+						<a class="button button-small" href="https://business.facebook.com/events_manager2" target="_blank" rel="noopener">イベントマネージャを開く ↗</a>
+						<a class="button button-small" href="https://www.facebook.com/adsmanager/" target="_blank" rel="noopener">広告マネージャを開く ↗</a>
+					</h2>
+				</th></tr>
 				<tr>
 					<th>Meta ピクセルID</th>
 					<td><input type="text" name="apprex_px_meta" class="regular-text" value="<?php echo esc_attr( apprex_sns_opt( 'apprex_px_meta' ) ); ?>" placeholder="例：1234567890123456">
@@ -98,7 +115,11 @@ function apprex_sns_ads_settings_page() {
 					<p class="description">CAPIの動作確認に使うコード。確認が済んだら空にしてください。</p></td>
 				</tr>
 
-				<tr><th colspan="2"><h2 style="margin:.4em 0;">X（旧Twitter）</h2></th></tr>
+				<tr><th colspan="2">
+					<h2 style="margin:.4em 0;">X（旧Twitter）
+						<a class="button button-small" href="https://ads.twitter.com/" target="_blank" rel="noopener">X広告マネージャを開く ↗</a>
+					</h2>
+				</th></tr>
 				<tr>
 					<th>X ピクセルID</th>
 					<td><input type="text" name="apprex_px_x" class="regular-text" value="<?php echo esc_attr( apprex_sns_opt( 'apprex_px_x' ) ); ?>" placeholder="例：o1abc">
@@ -110,21 +131,33 @@ function apprex_sns_ads_settings_page() {
 					<p class="description">フォーム送信を計測したい場合のイベントID（任意）。</p></td>
 				</tr>
 
-				<tr><th colspan="2"><h2 style="margin:.4em 0;">TikTok</h2></th></tr>
+				<tr><th colspan="2">
+					<h2 style="margin:.4em 0;">TikTok
+						<a class="button button-small" href="https://ads.tiktok.com/" target="_blank" rel="noopener">TikTok広告マネージャを開く ↗</a>
+					</h2>
+				</th></tr>
 				<tr>
 					<th>TikTok ピクセルID</th>
 					<td><input type="text" name="apprex_px_tiktok" class="regular-text" value="<?php echo esc_attr( apprex_sns_opt( 'apprex_px_tiktok' ) ); ?>" placeholder="例：CABC1D2E3F…">
 					<p class="description">TikTok広告マネージャー → アセット → イベント のピクセルID。</p></td>
 				</tr>
 
-				<tr><th colspan="2"><h2 style="margin:.4em 0;">LINE広告</h2></th></tr>
+				<tr><th colspan="2">
+					<h2 style="margin:.4em 0;">LINE広告
+						<a class="button button-small" href="https://admanager.line.biz/" target="_blank" rel="noopener">LINE広告マネージャを開く ↗</a>
+					</h2>
+				</th></tr>
 				<tr>
 					<th>LINE Tag ID</th>
 					<td><input type="text" name="apprex_px_line" class="regular-text" value="<?php echo esc_attr( apprex_sns_opt( 'apprex_px_line' ) ); ?>" placeholder="例：00000000-0000-0000-0000-000000000000">
 					<p class="description">LINE広告マネージャー → トラッキング（LINE Tag）のタグID。</p></td>
 				</tr>
 
-				<tr><th colspan="2"><h2 style="margin:.4em 0;">Google 広告</h2></th></tr>
+				<tr><th colspan="2">
+					<h2 style="margin:.4em 0;">Google 広告
+						<a class="button button-small" href="https://ads.google.com/" target="_blank" rel="noopener">Google広告を開く ↗</a>
+					</h2>
+				</th></tr>
 				<tr>
 					<th>Google 広告 ID</th>
 					<td><input type="text" name="apprex_px_gads" class="regular-text" value="<?php echo esc_attr( apprex_sns_opt( 'apprex_px_gads' ) ); ?>" placeholder="AW-XXXXXXXXX">
