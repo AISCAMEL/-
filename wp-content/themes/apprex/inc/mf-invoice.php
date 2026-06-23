@@ -188,41 +188,90 @@ function apprex_mf_err( $r ) {
 	if ( is_wp_error( $r ) ) {
 		return $r->get_error_message();
 	}
+	$code = isset( $r['code'] ) ? $r['code'] : '?';
 	if ( ! empty( $r['data']['errors'][0]['message'] ) ) {
-		return $r['data']['errors'][0]['message'];
+		return $r['data']['errors'][0]['message'] . '（HTTP ' . $code . '）';
+	}
+	if ( ! empty( $r['data']['errors'] ) ) {
+		return wp_json_encode( $r['data']['errors'], JSON_UNESCAPED_UNICODE ) . '（HTTP ' . $code . '）';
 	}
 	if ( ! empty( $r['data']['message'] ) ) {
-		return $r['data']['message'];
+		return $r['data']['message'] . '（HTTP ' . $code . '）';
 	}
-	return 'MFエラー（HTTP ' . ( isset( $r['code'] ) ? $r['code'] : '?' ) . '）';
+	// 生レスポンスの先頭を添える（原因特定用）。
+	$raw = isset( $r['data'] ) ? wp_json_encode( $r['data'], JSON_UNESCAPED_UNICODE ) : '';
+	return 'MFエラー（HTTP ' . $code . '）' . ( $raw ? ' ' . mb_substr( (string) $raw, 0, 200 ) : '' );
+}
+
+/** MFレスポンスから取引先の部門ID（department_id）を取り出す。 */
+function apprex_mf_extract_dept( $r ) {
+	if ( is_wp_error( $r ) || empty( $r['ok'] ) || empty( $r['data'] ) ) {
+		return '';
+	}
+	$d = isset( $r['data']['data'] ) && is_array( $r['data']['data'] ) ? $r['data']['data'] : $r['data'];
+	if ( ! empty( $d['departments'][0]['id'] ) ) {
+		return (string) $d['departments'][0]['id'];
+	}
+	if ( ! empty( $d['department_id'] ) ) {
+		return (string) $d['department_id'];
+	}
+	return '';
 }
 
 /* =========================================================================
  * 取引先（partner）＋請求書（billing）発行
  * ====================================================================== */
 
-/** 契約に対応するMF取引先IDを取得（無ければ作成）。 */
+/** 契約に対応するMF取引先の「部門ID（department_id）」を取得（無ければ取引先を作成）。 */
 function apprex_mf_ensure_partner( $id ) {
-	$pid = get_post_meta( $id, 'apprex_c_mf_partner_id', true );
-	if ( $pid ) {
-		return $pid;
+	// 既に部門IDを保持していればそれを使う。
+	$dept = (string) get_post_meta( $id, 'apprex_c_mf_dept_id', true );
+	if ( $dept ) {
+		return $dept;
 	}
 	$name  = (string) get_post_meta( $id, 'apprex_c_company', true );
 	$name  = '' !== $name ? $name : (string) get_post_meta( $id, 'apprex_c_name', true );
 	$email = (string) get_post_meta( $id, 'apprex_c_email', true );
+
+	// 既存の取引先がある場合は取得して部門IDを拾う。
+	$pid = (string) get_post_meta( $id, 'apprex_c_mf_partner_id', true );
+	if ( $pid ) {
+		$g    = apprex_mf_request( 'GET', '/partners/' . rawurlencode( $pid ) );
+		$dept = apprex_mf_extract_dept( $g );
+		if ( $dept ) {
+			update_post_meta( $id, 'apprex_c_mf_dept_id', $dept );
+			return $dept;
+		}
+	}
+
+	// 取引先を新規作成（既定の部門も同時に作成）。
 	$r = apprex_mf_request(
 		'POST',
 		'/partners',
 		array(
-			'name'  => $name,
-			'email' => $email,
+			'name'        => $name,
+			'departments' => array(
+				array(
+					'name'          => $name,
+					'person_name'   => (string) get_post_meta( $id, 'apprex_c_name', true ),
+					'email'         => $email,
+				),
+			),
 		)
 	);
-	if ( is_wp_error( $r ) || empty( $r['ok'] ) || empty( $r['data']['id'] ) ) {
+	if ( is_wp_error( $r ) || empty( $r['ok'] ) ) {
 		return new WP_Error( 'mf', '取引先の作成に失敗：' . apprex_mf_err( $r ) );
 	}
-	update_post_meta( $id, 'apprex_c_mf_partner_id', $r['data']['id'] );
-	return $r['data']['id'];
+	$data = isset( $r['data']['data'] ) && is_array( $r['data']['data'] ) ? $r['data']['data'] : $r['data'];
+	if ( ! empty( $data['id'] ) ) {
+		update_post_meta( $id, 'apprex_c_mf_partner_id', $data['id'] );
+	}
+	$dept = apprex_mf_extract_dept( $r );
+	if ( ! $dept ) {
+		return new WP_Error( 'mf', '取引先の部門IDが取得できませんでした：' . apprex_mf_err( $r ) );
+	}
+	update_post_meta( $id, 'apprex_c_mf_dept_id', $dept );
+	return $dept;
 }
 
 /** 支払期日（今月の指定日。過ぎていれば翌月）。 */
@@ -245,34 +294,34 @@ function apprex_mf_issue_invoice( $id ) {
 	if ( $monthly <= 0 ) {
 		return new WP_Error( 'mf', '月額が0円です。' );
 	}
-	$partner = apprex_mf_ensure_partner( $id );
-	if ( is_wp_error( $partner ) ) {
-		return $partner;
+	$dept = apprex_mf_ensure_partner( $id ); // 取引先の部門ID。
+	if ( is_wp_error( $dept ) ) {
+		return $dept;
 	}
 	$day  = (int) get_post_meta( $id, 'apprex_c_payment_day', true );
 	$plan = trim( get_post_meta( $id, 'apprex_c_service', true ) . ' ' . get_post_meta( $id, 'apprex_c_plan', true ) );
 	$body = array(
-		'department_id' => apprex_mf_opt( 'apprex_mf_department_id' ),
-		'partner_id'    => $partner,
+		'department_id' => $dept, // 取引先（お客様）の部門ID。
 		'billing_date'  => wp_date( 'Y-m-d' ),
 		'due_date'      => apprex_mf_due_date( $day ),
 		'title'         => 'APPREX ご利用料金（' . wp_date( 'Y年n月' ) . '）',
 		'items'         => array(
 			array(
-				'name'      => ( $plan ? $plan : 'APPREX' ) . ' 月額利用料',
-				'quantity'  => 1,
+				'name'       => ( $plan ? $plan : 'APPREX' ) . ' 月額利用料',
+				'quantity'   => 1,
 				'unit_price' => $monthly,
-				'excise'    => 'ten_percent', // 税区分（必要に応じて設定で変更可）。
+				'excise'     => 'ten_percent', // 税区分（必要に応じて設定で変更可）。
 			),
 		),
 	);
 	$body = apply_filters( 'apprex_mf_billing_body', $body, $id );
 
 	$r = apprex_mf_request( 'POST', '/billings', $body );
-	if ( is_wp_error( $r ) || empty( $r['ok'] ) || empty( $r['data']['id'] ) ) {
+	$data = ( ! is_wp_error( $r ) && isset( $r['data']['data'] ) && is_array( $r['data']['data'] ) ) ? $r['data']['data'] : ( is_wp_error( $r ) ? array() : $r['data'] );
+	if ( is_wp_error( $r ) || empty( $r['ok'] ) || empty( $data['id'] ) ) {
 		return new WP_Error( 'mf', '請求書の発行に失敗：' . apprex_mf_err( $r ) );
 	}
-	$iv = $r['data'];
+	$iv = $data;
 	update_post_meta( $id, 'apprex_c_mf_billing_id', $iv['id'] );
 	update_post_meta( $id, 'apprex_c_mf_billing_month', current_time( 'Y-m' ) );
 	if ( ! empty( $iv['pdf_url'] ) ) {
@@ -324,7 +373,7 @@ function apprex_mf_refresh_invoice( $id ) {
 	if ( is_wp_error( $r ) || empty( $r['ok'] ) || empty( $r['data'] ) ) {
 		return false;
 	}
-	$iv     = $r['data'];
+	$iv     = isset( $r['data']['data'] ) && is_array( $r['data']['data'] ) ? $r['data']['data'] : $r['data'];
 	$status = isset( $iv['payment_status'] ) ? $iv['payment_status'] : ( isset( $iv['posting_status'] ) ? $iv['posting_status'] : '' );
 	update_post_meta( $id, 'apprex_c_mf_billing_status', $status );
 	if ( apprex_mf_is_paid( $status ) ) {
