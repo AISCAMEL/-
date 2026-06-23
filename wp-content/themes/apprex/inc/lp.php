@@ -56,6 +56,8 @@ function apprex_lp_settings_page() {
 	}
 	$host  = apprex_lp_host();
 	$pages = get_pages( array( 'sort_column' => 'post_modified', 'sort_order' => 'desc' ) );
+	$clps  = post_type_exists( 'clp' ) ? get_posts( array( 'post_type' => 'clp', 'numberposts' => 200, 'post_status' => 'publish', 'orderby' => 'modified', 'order' => 'DESC' ) ) : array();
+	$cur   = (int) get_option( 'apprex_lp_page', 0 );
 	$site_host = wp_parse_url( home_url(), PHP_URL_HOST );
 	?>
 	<div class="wrap">
@@ -75,11 +77,20 @@ function apprex_lp_settings_page() {
 					<td>
 						<select name="apprex_lp_page">
 							<option value="0"><?php esc_html_e( '— 選択 —', 'apprex' ); ?></option>
-							<?php foreach ( $pages as $p ) : ?>
-								<option value="<?php echo (int) $p->ID; ?>" <?php selected( (int) get_option( 'apprex_lp_page', 0 ), $p->ID ); ?>><?php echo esc_html( $p->post_title ); ?></option>
-							<?php endforeach; ?>
+							<?php if ( $clps ) : ?>
+								<optgroup label="LPtools（LPを作る）">
+									<?php foreach ( $clps as $p ) : ?>
+										<option value="<?php echo (int) $p->ID; ?>" <?php selected( $cur, $p->ID ); ?>><?php echo esc_html( $p->post_title ? $p->post_title : '(無題 #' . $p->ID . ')' ); ?></option>
+									<?php endforeach; ?>
+								</optgroup>
+							<?php endif; ?>
+							<optgroup label="固定ページ">
+								<?php foreach ( $pages as $p ) : ?>
+									<option value="<?php echo (int) $p->ID; ?>" <?php selected( $cur, $p->ID ); ?>><?php echo esc_html( $p->post_title ); ?></option>
+								<?php endforeach; ?>
+							</optgroup>
 						</select>
-						<p class="description">テンプレート「LP（広告用・1カラム）」で作成した固定ページを選んでください。サブドメインのトップ（<code>/</code>）でこのLPが表示されます。</p>
+						<p class="description">LPtoolsの「LPを作る」で作成したLP、または LPtoolsテンプレート/「LP（広告用・1カラム）」を割り当てた固定ページを選択。サブドメインのトップ（<code>/</code>）でこのLPが表示されます。</p>
 					</td>
 				</tr>
 			</tbody></table>
@@ -89,12 +100,13 @@ function apprex_lp_settings_page() {
 		<hr>
 		<h2>設定手順</h2>
 		<ol style="max-width:820px;line-height:1.9;">
-			<li><strong>LPページを作る：</strong>「固定ページ → 新規追加」で作成。作り方は2通り。
+			<li><strong>LPを作る（LPtools）：</strong>管理メニュー<strong>「LPを作る」→「新しいLPを追加」</strong>でLPを作成・公開。
 				<ul style="list-style:disc;margin:6px 0 6px 1.4em;">
-					<li><strong>LPプラグイン（Elementor等）で作る場合：</strong>ページ属性のテンプレートで<strong>「空白キャンバス（LPプラグイン用）」</strong>を選び、あとはプラグインのエディタで自由に作成（ヘッダー/フッターを出さない真っさらな状態になります）。</li>
-					<li><strong>プラグイン無しで手早く作る場合：</strong>テンプレートで<strong>「LP（広告用・1カラム）」</strong>を選択（見出し＋本文＋お問い合わせフォーム＋追従CTAが自動で付きます）。</li>
+					<li><strong>【重要・計測のため】</strong>各LPの設定で <strong>「wp_head」「wp_footer」を“使う”（both）</strong>にしてください。これでSNS広告の計測タグ（ピクセル/Conversions API）が自動で入ります。OFFのままだと計測されません。</li>
+					<li>固定ページで作る場合は、ページ属性のテンプレートで<strong>「【LPtools】LPを作る」</strong>を選んでもOK（同じく上のwp_head設定が必要）。</li>
+					<li>プラグインを使わず手早く作る場合は、固定ページのテンプレートで<strong>「LP（広告用・1カラム）」</strong>を選択（フォーム＋追従CTA付き・計測は自動）。</li>
 				</ul>
-			どちらの場合もSNS広告の計測タグは自動で入ります。</li>
+			</li>
 			<li><strong>DNS設定：</strong>ドメイン管理画面で <code>lp</code> のレコードを追加。
 				<ul style="list-style:disc;margin:6px 0 6px 1.4em;">
 					<li>同じサーバーのIPに向ける <code>A</code> レコード（例：<code>lp → 〇〇.〇〇.〇〇.〇〇</code>）、または</li>
@@ -175,18 +187,48 @@ add_filter( 'rest_url', function ( $url ) {
 	return $url;
 } );
 
-// LPサブドメインでは、指定したLP固定ページを「サイトのトップページ」として扱う。
+/** 設定されたLPの投稿ID。 */
+function apprex_lp_target_id() {
+	return (int) get_option( 'apprex_lp_page', 0 );
+}
+
+/** 設定されたLPが公開済みの固定ページか。 */
+function apprex_lp_target_is_page() {
+	$id = apprex_lp_target_id();
+	return $id && 'publish' === get_post_status( $id ) && 'page' === get_post_type( $id );
+}
+
+/** 設定されたLPがLPtoolsの clp 投稿か。 */
+function apprex_lp_target_is_clp() {
+	$id = apprex_lp_target_id();
+	return $id && 'publish' === get_post_status( $id ) && 'clp' === get_post_type( $id );
+}
+
+// LPサブドメインでは、指定したLPを「サイトのトップページ」として表示する。
 // こうすることで、ページに割り当てた“どんなテンプレート/LPプラグインの出力”でも
-// そのままネイティブ表示される（Elementor等のページビルダーにも対応）。
+// そのままネイティブ表示される（LPtools / Elementor 等に対応）。
+
+// (1) 固定ページの場合：フロントページに差し替え（LPtoolsのページテンプレート出力もそのまま）。
 add_filter( 'option_show_on_front', function ( $v ) {
-	return ( apprex_lp_is_host() && (int) get_option( 'apprex_lp_page', 0 ) ) ? 'page' : $v;
+	return ( apprex_lp_is_host() && apprex_lp_target_is_page() ) ? 'page' : $v;
 } );
 add_filter( 'option_page_on_front', function ( $v ) {
-	return apprex_lp_is_host() ? (int) get_option( 'apprex_lp_page', $v ) : $v;
+	return ( apprex_lp_is_host() && apprex_lp_target_is_page() ) ? apprex_lp_target_id() : $v;
 } );
 add_filter( 'option_page_for_posts', function ( $v ) {
-	// LPホストではブログ一覧の割り当てを無効化（トップ＝LP固定に専念）。
+	// LPホストではブログ一覧の割り当てを無効化（トップ＝LPに専念）。
 	return apprex_lp_is_host() ? 0 : $v;
+} );
+
+// (2) LPtoolsの clp 投稿の場合：ルート（/）をその clp 個別表示に割り当てる。
+add_filter( 'request', function ( $qv ) {
+	if ( apprex_lp_is_host() && empty( $qv ) && apprex_lp_target_is_clp() ) {
+		return array(
+			'post_type' => 'clp',
+			'p'         => apprex_lp_target_id(),
+		);
+	}
+	return $qv;
 } );
 
 /* =========================================================================
