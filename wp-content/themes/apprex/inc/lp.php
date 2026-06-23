@@ -89,7 +89,12 @@ function apprex_lp_settings_page() {
 		<hr>
 		<h2>設定手順</h2>
 		<ol style="max-width:820px;line-height:1.9;">
-			<li><strong>LPページを作る：</strong>「固定ページ → 新規追加」で本文を作成し、ページ属性のテンプレートで<strong>「LP（広告用・1カラム）」</strong>を選択して公開。</li>
+			<li><strong>LPページを作る：</strong>「固定ページ → 新規追加」で作成。作り方は2通り。
+				<ul style="list-style:disc;margin:6px 0 6px 1.4em;">
+					<li><strong>LPプラグイン（Elementor等）で作る場合：</strong>ページ属性のテンプレートで<strong>「空白キャンバス（LPプラグイン用）」</strong>を選び、あとはプラグインのエディタで自由に作成（ヘッダー/フッターを出さない真っさらな状態になります）。</li>
+					<li><strong>プラグイン無しで手早く作る場合：</strong>テンプレートで<strong>「LP（広告用・1カラム）」</strong>を選択（見出し＋本文＋お問い合わせフォーム＋追従CTAが自動で付きます）。</li>
+				</ul>
+			どちらの場合もSNS広告の計測タグは自動で入ります。</li>
 			<li><strong>DNS設定：</strong>ドメイン管理画面で <code>lp</code> のレコードを追加。
 				<ul style="list-style:disc;margin:6px 0 6px 1.4em;">
 					<li>同じサーバーのIPに向ける <code>A</code> レコード（例：<code>lp → 〇〇.〇〇.〇〇.〇〇</code>）、または</li>
@@ -170,23 +175,19 @@ add_filter( 'rest_url', function ( $url ) {
 	return $url;
 } );
 
-// LPサブドメインのトップ（/）で、指定LPページを直接描画する。
-add_action( 'template_redirect', function () {
-	if ( ! apprex_lp_is_host() ) {
-		return;
-	}
-	// ルート（/）のみ対象。wp-admin / REST / 個別URLには干渉しない。
-	$path = wp_parse_url( isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '/', PHP_URL_PATH );
-	if ( '/' !== (string) $path && '' !== (string) $path ) {
-		return;
-	}
-	$lp_id = (int) get_option( 'apprex_lp_page', 0 );
-	if ( ! $lp_id || 'publish' !== get_post_status( $lp_id ) ) {
-		return;
-	}
-	apprex_lp_render_page( $lp_id );
-	exit;
-}, 0 );
+// LPサブドメインでは、指定したLP固定ページを「サイトのトップページ」として扱う。
+// こうすることで、ページに割り当てた“どんなテンプレート/LPプラグインの出力”でも
+// そのままネイティブ表示される（Elementor等のページビルダーにも対応）。
+add_filter( 'option_show_on_front', function ( $v ) {
+	return ( apprex_lp_is_host() && (int) get_option( 'apprex_lp_page', 0 ) ) ? 'page' : $v;
+} );
+add_filter( 'option_page_on_front', function ( $v ) {
+	return apprex_lp_is_host() ? (int) get_option( 'apprex_lp_page', $v ) : $v;
+} );
+add_filter( 'option_page_for_posts', function ( $v ) {
+	// LPホストではブログ一覧の割り当てを無効化（トップ＝LP固定に専念）。
+	return apprex_lp_is_host() ? 0 : $v;
+} );
 
 /* =========================================================================
  * LP描画（テンプレート・ルーティング共通）
