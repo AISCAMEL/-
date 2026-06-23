@@ -71,7 +71,12 @@ function apprex_ads_active( $placement ) {
 		if ( ( $ad['placement'] ?? '' ) !== $placement ) {
 			continue;
 		}
-		if ( '' === trim( (string) ( $ad['image'] ?? '' ) ) ) {
+		$type = $ad['type'] ?? 'image';
+		if ( 'code' === $type ) {
+			if ( '' === trim( (string) ( $ad['code'] ?? '' ) ) ) {
+				continue;
+			}
+		} elseif ( '' === trim( (string) ( $ad['image'] ?? '' ) ) ) {
 			continue;
 		}
 		// 掲載期間。
@@ -122,6 +127,12 @@ function apprex_ad_render( $placement ) {
 	}
 	$html = '<div class="apprex-ad-slot apprex-ad-slot--' . esc_attr( $placement ) . '"><div class="container">';
 	foreach ( $ads as $ad ) {
+		if ( 'code' === ( $ad['type'] ?? 'image' ) ) {
+			// 広告ネットワークのタグ（AdSense / Audience Network 等）。管理者が入力した信頼済みコード。
+			$html .= '<div class="apprex-ad apprex-ad--code"><span class="apprex-ad__pr">PR</span>'
+				. $ad['code'] . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- 管理者入力の広告タグ。
+			continue;
+		}
 		$href   = apprex_ad_click_url( (int) ( $ad['id'] ?? 0 ) );
 		$newtab = ! empty( $ad['new_tab'] );
 		$target = $newtab ? ' target="_blank" rel="noopener nofollow sponsored"' : ' rel="nofollow sponsored"';
@@ -222,10 +233,16 @@ add_action( 'admin_post_apprex_ads_save', function () {
 	$next = (int) get_option( 'apprex_ads_seq', 0 );
 
 	foreach ( $rows as $row ) {
+		$type  = ( isset( $row['type'] ) && 'code' === $row['type'] ) ? 'code' : 'image';
 		$image = isset( $row['image'] ) ? esc_url_raw( trim( $row['image'] ) ) : '';
 		$label = isset( $row['label'] ) ? sanitize_text_field( $row['label'] ) : '';
-		// 画像もラベルも空の行はスキップ。
-		if ( '' === $image && '' === $label ) {
+		// 広告タグ（スクリプト含む）は管理者のみ入力。script/iframe を許可。
+		$code = '';
+		if ( isset( $row['code'] ) ) {
+			$code = current_user_can( 'unfiltered_html' ) ? trim( (string) $row['code'] ) : wp_kses_post( trim( (string) $row['code'] ) );
+		}
+		// 画像・コード・ラベルすべて空の行はスキップ。
+		if ( '' === $image && '' === $label && '' === $code ) {
 			continue;
 		}
 		$id = isset( $row['id'] ) ? absint( $row['id'] ) : 0;
@@ -238,8 +255,10 @@ add_action( 'admin_post_apprex_ads_save', function () {
 		$ads[] = array(
 			'id'        => $id,
 			'enabled'   => ! empty( $row['enabled'] ),
+			'type'      => $type,
 			'label'     => $label,
 			'image'     => $image,
+			'code'      => $code,
 			'link'      => isset( $row['link'] ) ? esc_url_raw( trim( $row['link'] ) ) : '',
 			'new_tab'   => ! empty( $row['new_tab'] ),
 			'placement' => $placement,
@@ -342,6 +361,8 @@ function apprex_ads_settings_page() {
 		.apprex-ad-row .ad-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 		.apprex-ad-row .ad-clicks{color:#2271b1;font-weight:700}
 		.apprex-ad-row input[type=text],.apprex-ad-row input[type=url],.apprex-ad-row select{width:100%;max-width:420px}
+		.apprex-ad-row[data-type="image"] .only-code{display:none}
+		.apprex-ad-row[data-type="code"] .only-image{display:none}
 		</style>
 		<script>
 		( function () {
@@ -354,6 +375,13 @@ function apprex_ads_settings_page() {
 				var wrap = document.createElement( 'div' );
 				wrap.innerHTML = html.trim();
 				list.appendChild( wrap.firstChild );
+			} );
+
+			// 種別の切替（画像／コード）。
+			list.addEventListener( 'change', function ( e ) {
+				if ( e.target.classList.contains( 'ad-type' ) ) {
+					e.target.closest( '.apprex-ad-row' ).setAttribute( 'data-type', e.target.value );
+				}
 			} );
 
 			list.addEventListener( 'click', function ( e ) {
@@ -400,8 +428,9 @@ function apprex_ads_row_html( $i, $ad, $placements, $scopes ) {
 		return isset( $ad[ $k ] ) ? $ad[ $k ] : $d;
 	};
 	$image = (string) $v( 'image' );
+	$type  = $v( 'type', 'image' );
 	?>
-	<div class="apprex-ad-row">
+	<div class="apprex-ad-row" data-type="<?php echo esc_attr( $type ); ?>">
 		<div class="ad-head">
 			<label><input type="checkbox" name="<?php echo $n; ?>[enabled]" value="1" <?php checked( ! empty( $ad['enabled'] ) || empty( $ad ) ); ?>> <strong>この広告を表示する</strong></label>
 			<span class="ad-clicks">クリック数：<?php echo (int) $v( 'clicks', 0 ); ?></span>
@@ -411,18 +440,27 @@ function apprex_ads_row_html( $i, $ad, $placements, $scopes ) {
 			<label>管理名（任意）</label>
 			<input type="text" name="<?php echo $n; ?>[label]" value="<?php echo esc_attr( $v( 'label' ) ); ?>" placeholder="例：夏キャンペーン用バナー">
 
-			<label>バナー画像</label>
-			<div>
+			<label>種別</label>
+			<select name="<?php echo $n; ?>[type]" class="ad-type">
+				<option value="image" <?php selected( $type, 'image' ); ?>>画像バナー（自社広告）</option>
+				<option value="code" <?php selected( $type, 'code' ); ?>>広告タグ（コード：AdSense / Audience Network 等）</option>
+			</select>
+
+			<label class="only-image">バナー画像</label>
+			<div class="only-image">
 				<button type="button" class="button ad-pick">画像を選択</button>
 				<input type="url" class="ad-image" name="<?php echo $n; ?>[image]" value="<?php echo esc_attr( $image ); ?>" placeholder="https://… 画像URL">
 				<img class="ad-preview" src="<?php echo esc_url( $image ); ?>" alt="" style="<?php echo $image ? '' : 'display:none;'; ?>">
 			</div>
 
-			<label>リンク先URL</label>
-			<input type="url" name="<?php echo $n; ?>[link]" value="<?php echo esc_attr( $v( 'link' ) ); ?>" placeholder="https://…">
+			<label class="only-image">リンク先URL</label>
+			<input type="url" class="only-image" name="<?php echo $n; ?>[link]" value="<?php echo esc_attr( $v( 'link' ) ); ?>" placeholder="https://…">
 
-			<label>別タブで開く</label>
-			<label><input type="checkbox" name="<?php echo $n; ?>[new_tab]" value="1" <?php checked( ! empty( $ad['new_tab'] ) || empty( $ad ) ); ?>> 別タブ（target="_blank"）で開く</label>
+			<label class="only-image">別タブで開く</label>
+			<label class="only-image"><input type="checkbox" name="<?php echo $n; ?>[new_tab]" value="1" <?php checked( ! empty( $ad['new_tab' ] ) || empty( $ad ) ); ?>> 別タブ（target="_blank"）で開く</label>
+
+			<label class="only-code">広告タグ（コード）</label>
+			<textarea class="only-code" name="<?php echo $n; ?>[code]" rows="4" style="width:100%;max-width:420px;font-family:monospace;" placeholder="<ins class=&quot;adsbygoogle&quot;>… などの広告コードを貼り付け"><?php echo esc_textarea( (string) $v( 'code' ) ); ?></textarea>
 
 			<label>掲載位置</label>
 			<select name="<?php echo $n; ?>[placement]">

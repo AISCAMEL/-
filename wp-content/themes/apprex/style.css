@@ -4,7 +4,7 @@ Theme URI: https://site.aiscompany.jp/
 Author: AIS Company
 Author URI: https://site.aiscompany.jp/
 Description: クラウド型アプリ開発プラットフォーム「APPREX」公式サイト用テーマ。Hello Elementor の思想を踏襲したライセンス非依存の自作テーマ。固定ページ構成＋カスタム投稿タイプ cases によるリニューアル実装。モバイルファースト・WebP・Lazy Load 対応。
-Version: 1.24.0
+Version: 1.25.0
 Requires at least: 6.0
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -1079,3 +1079,8 @@ a:focus-visible, button:focus-visible, .btn:focus-visible, summary:focus-visible
 @media (max-width: 600px) {
 	.apprex-ad-slot--footer { padding: 18px 0; }
 }
+
+/* 広告ネットワーク枠（コード型：AdSense / Audience Network 等）（v1.25.0） */
+.apprex-ad--code { position: relative; max-width: 728px; width: 100%; line-height: normal; box-shadow: none; }
+.apprex-ad--code:hover { transform: none; box-shadow: none; }
+.apprex-ad--code .apprex-ad__pr { z-index: 2; }

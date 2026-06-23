@@ -475,9 +475,22 @@ function apprex_rest_inquiry( WP_REST_Request $request ) {
 		);
 	}
 
+	/**
+	 * フォーム送信完了フック（SNS広告のコンバージョンAPI等で利用）。
+	 *
+	 * @param int    $post_id 受付ID。
+	 * @param string $type    フォーム種別。
+	 * @param array  $fields  送信内容（name/company/email/phone/message/meeting_at）。
+	 */
+	do_action( 'apprex_inquiry_submitted', $post_id, $type, $fields );
+
 	$result = array(
 		'ok'      => true,
 		'message' => apprex_autoreply_onscreen( $type ),
+		'lead'    => array(
+			'type'     => $type,
+			'event_id' => 'lead_' . $post_id,
+		),
 	);
 	if ( 'document' === $type ) {
 		$doc = apprex_document_url();

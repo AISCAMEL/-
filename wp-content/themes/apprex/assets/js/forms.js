@@ -46,6 +46,12 @@
 					.then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
 					.then(function (res) {
 						if (res.ok && res.body && res.body.ok) {
+							// SNS広告のコンバージョン計測用イベント（sns-ads.js が購読）。
+							try {
+								document.dispatchEvent(new CustomEvent('apprex:lead', {
+									detail: (res.body.lead || { type: payload.type })
+								}));
+							} catch (err) {}
 							form.querySelectorAll('input, textarea, button').forEach(function (el) { el.style.display = 'none'; });
 							var html = '<div class="apprex-form__success"><h4>✅ 送信が完了しました</h4><p>' +
 								(res.body.message || '') + '</p>';
