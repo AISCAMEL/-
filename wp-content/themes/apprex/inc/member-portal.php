@@ -196,8 +196,55 @@ function apprex_mypage_render() {
 		echo apprex_member_contract_card( $id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- 内部でエスケープ済み。
 	}
 
+	echo apprex_member_preview_app_section(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- 内部でエスケープ済み。
+
 	echo '<p style="margin-top:24px;font-size:13px;color:#9ca3af;">登録情報の変更・ご解約などは、担当者またはお問い合わせ窓口へご連絡ください。</p>';
 	echo '</div>';
+	return ob_get_clean();
+}
+
+/**
+ * 会員サイト：プレビューアプリ設定方法（ログイン後のみ表示）。
+ * 完成前のアプリを実機で確認するための手順。外部リンクは別タブ。
+ *
+ * @return string
+ */
+function apprex_member_preview_app_section() {
+	$ios_testflight = 'https://apps.apple.com/jp/app/testflight/id899247664';
+	$ios_preview    = 'https://testflight.apple.com/join/gCQwEpKa';
+	$android_dl      = 'https://adminhb.app1.jp/ipadownload/preview/preview.html';
+
+	ob_start();
+	?>
+	<div class="preview-app" style="margin-top:32px;border-top:1px solid #e5e7eb;padding-top:24px;">
+		<h3 style="margin:0 0 6px;font-size:18px;">プレビューアプリ設定方法</h3>
+		<p style="color:#6b7280;font-size:14px;margin:0 0 18px;">公開前のアプリを、お手元のスマートフォンで確認いただけます。下記の手順でインストールしてください。</p>
+		<div class="preview-app__grid" style="display:grid;gap:20px;grid-template-columns:1fr;">
+			<div class="preview-app__card" style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:22px;box-shadow:0 1px 3px rgba(0,0,0,.05);">
+				<h4 style="margin:0 0 14px;font-size:16px;color:#0b1f44;">iPhone / iPad（iOS）</h4>
+				<div style="margin-bottom:18px;">
+					<span style="display:inline-block;font-weight:700;color:#2563eb;font-size:13px;margin-bottom:6px;">STEP 1：TestFlight をインストール</span>
+					<p style="margin:0 0 8px;font-size:13px;color:#374151;">Apple公式アプリ「TestFlight」をインストールします。</p>
+					<a href="<?php echo esc_url( $ios_testflight ); ?>" target="_blank" rel="noopener" style="display:inline-block;background:#111827;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:700;">TestFlight を入手 →</a>
+				</div>
+				<div>
+					<span style="display:inline-block;font-weight:700;color:#2563eb;font-size:13px;margin-bottom:6px;">STEP 2：プレビューアプリを開く</span>
+					<p style="margin:0 0 8px;font-size:13px;color:#374151;">TestFlightインストール後、下記ボタンからプレビューに参加してください。</p>
+					<a href="<?php echo esc_url( $ios_preview ); ?>" target="_blank" rel="noopener" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:700;">プレビューアプリを開く →</a>
+				</div>
+			</div>
+			<div class="preview-app__card" style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:22px;box-shadow:0 1px 3px rgba(0,0,0,.05);">
+				<h4 style="margin:0 0 14px;font-size:16px;color:#0b1f44;">Android</h4>
+				<div>
+					<span style="display:inline-block;font-weight:700;color:#2563eb;font-size:13px;margin-bottom:6px;">プレビューアプリをダウンロード</span>
+					<p style="margin:0 0 8px;font-size:13px;color:#374151;">下記ボタンからダウンロードページを開き、画面の案内に沿ってインストールしてください。</p>
+					<a href="<?php echo esc_url( $android_dl ); ?>" target="_blank" rel="noopener" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:700;">ダウンロードページを開く →</a>
+				</div>
+			</div>
+		</div>
+		<p style="font-size:12px;color:#9ca3af;margin:14px 0 0;">※ こちらは公開前の確認用（プレビュー）アプリです。内容は開発中のため、実際のリリース版とは異なる場合があります。</p>
+	</div>
+	<?php
 	return ob_get_clean();
 }
 

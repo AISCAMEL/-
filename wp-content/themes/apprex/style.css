@@ -4,7 +4,7 @@ Theme URI: https://site.aiscompany.jp/
 Author: AIS Company
 Author URI: https://site.aiscompany.jp/
 Description: クラウド型アプリ開発プラットフォーム「APPREX」公式サイト用テーマ。Hello Elementor の思想を踏襲したライセンス非依存の自作テーマ。固定ページ構成＋カスタム投稿タイプ cases によるリニューアル実装。モバイルファースト・WebP・Lazy Load 対応。
-Version: 1.22.0
+Version: 1.23.0
 Requires at least: 6.0
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -1040,3 +1040,27 @@ a:focus-visible, button:focus-visible, .btn:focus-visible, summary:focus-visible
 .content-prose table { width: 100%; border-collapse: collapse; margin: 1.4em 0; font-size: .95rem; }
 .content-prose th, .content-prose td { border: 1px solid var(--color-line); padding: 11px 14px; text-align: left; vertical-align: top; }
 .content-prose th { background: var(--color-bg-soft); font-weight: 700; white-space: nowrap; }
+
+/* ===== 料金ページ：ご依頼の流れ / オプション単品（v1.23.0） ===== */
+.flow-steps { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 760px) { .flow-steps { grid-template-columns: repeat(4, 1fr); } }
+.flow-step { background: #fff; border: 1px solid var(--color-line); border-radius: var(--radius); padding: 24px 16px; text-align: center; box-shadow: var(--shadow-sm); }
+.flow-step__no { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--color-primary), var(--color-cta)); color: #fff; font-weight: 800; font-size: 1.2rem; margin-bottom: 10px; }
+.flow-step p { margin: 0; font-weight: 600; color: var(--color-ink); font-size: .95rem; }
+.flow-step small { font-weight: 400; color: var(--color-muted); font-size: .8rem; }
+.opt-table { width: 100%; border-collapse: collapse; font-size: .85rem; margin: 8px 0 16px; }
+.opt-table th { text-align: left; white-space: nowrap; padding: 7px 8px 7px 0; vertical-align: top; color: var(--color-ink); font-weight: 700; width: 34%; }
+.opt-table .opt-price { white-space: nowrap; font-weight: 700; color: var(--color-primary-dark); padding: 7px 10px 7px 0; vertical-align: top; }
+.opt-table td { padding: 7px 0; border-bottom: 1px solid var(--color-line); vertical-align: top; color: var(--color-body); }
+@media (max-width: 600px) { .opt-table, .opt-table tbody, .opt-table tr, .opt-table th, .opt-table td { display: block; width: 100%; } .opt-table th { padding-bottom: 0; } .opt-table .opt-price { padding: 0 0 4px; } .opt-table td { border-bottom: 1px solid var(--color-line); padding-bottom: 10px; } }
+
+/* ===== 会員サイト：プレビューアプリ設定方法（v1.23.0） ===== */
+.preview-app { margin-top: 28px; }
+.preview-app__grid { display: grid; gap: 20px; grid-template-columns: 1fr; }
+@media (min-width: 760px) { .preview-app__grid { grid-template-columns: 1fr 1fr; } }
+.preview-app__card { background: #fff; border: 1px solid var(--color-line); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow-sm); }
+.preview-app__card h4 { margin: 0 0 12px; font-size: 1.05rem; color: var(--color-navy); }
+.preview-app__step { margin: 0 0 14px; padding-left: 0; }
+.preview-app__step .step-label { display: inline-block; font-weight: 700; color: var(--color-primary-dark); font-size: .85rem; margin-bottom: 6px; }
+.preview-app__card .btn { margin-top: 4px; }
+.preview-app__note { font-size: .8rem; color: var(--color-muted); margin: 14px 0 0; }

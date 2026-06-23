@@ -85,6 +85,45 @@ $apprex_render_service = function ( $svc, $featured = '' ) use ( $apprex_est, $a
 <h3 class="plan-group-title"><?php esc_html_e( 'ホームページ制作（初期費用0円・月額制）', 'apprex' ); ?></h3>
 <?php $apprex_render_service( $apprex_cfg['services']['hp'], 'standard' ); ?>
 
+<h3 class="plan-group-title"><?php esc_html_e( 'ホームページ制作 比較表', 'apprex' ); ?></h3>
+<div class="compare-wrap">
+	<table class="compare-table">
+		<thead>
+			<tr>
+				<th><?php esc_html_e( '項目', 'apprex' ); ?></th>
+				<th><?php esc_html_e( 'Light', 'apprex' ); ?></th>
+				<th class="is-feat"><?php esc_html_e( 'Standard', 'apprex' ); ?></th>
+				<th><?php esc_html_e( 'Premium', 'apprex' ); ?></th>
+			</tr>
+		</thead>
+		<tbody>
+			<?php
+			$apprex_hp_rows = array(
+				array( '月額（税抜）', '9,800円', '19,800円', '39,800円' ),
+				array( '初期費用', '0円', '0円', '0円' ),
+				array( 'ページ数', '〜5ページ', '〜10ページ＋LP1本', '〜20ページ' ),
+				array( '更新サポート', '月1回', '月2回', '月3回' ),
+				array( 'LP制作', '—', '◯（1本込み）', '◯（複数対応）' ),
+				array( 'お問い合わせフォーム', '◯', '◯', '◯' ),
+				array( '予約・問い合わせ強化', '—', '◯', '◯' ),
+				array( 'EC・会員機能', '—', '—', '◯' ),
+				array( '構造化データ（SEO）', '基本', '◯', '◯' ),
+				array( '優先サポート', '—', '—', '◯' ),
+				array( '最低利用期間', '1年契約', '1年契約', '1年契約' ),
+			);
+			foreach ( $apprex_hp_rows as $r ) :
+				?>
+				<tr>
+					<th><?php echo esc_html( $r[0] ); ?></th>
+					<td><?php echo esc_html( $r[1] ); ?></td>
+					<td class="is-feat"><?php echo esc_html( $r[2] ); ?></td>
+					<td><?php echo esc_html( $r[3] ); ?></td>
+				</tr>
+			<?php endforeach; ?>
+		</tbody>
+	</table>
+</div>
+
 <p class="plan-note"><?php esc_html_e( '※ 価格はすべて税抜表示です。マッチングアプリ等の上位プランは個別見積（要相談）。', 'apprex' ); ?>
 	<a href="<?php echo esc_url( $apprex_contact ); ?>"><?php esc_html_e( 'お問い合わせ', 'apprex' ); ?></a>
 </p>
