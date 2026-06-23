@@ -377,6 +377,24 @@ function apprex_render_form( $type = 'contact' ) {
 	<?php
 }
 
+/**
+ * フォーム埋め込み用ショートコード。
+ * 例：[apprex_form type="contact"] / [apprex_form type="estimate"]
+ * LP（LPtools等）の本文に貼ると、計測（Lead）・自動返信・CRM連携付きフォームを表示。
+ *
+ * @param array $atts 属性（type）。
+ * @return string
+ */
+add_shortcode( 'apprex_form', function ( $atts ) {
+	$atts = shortcode_atts( array( 'type' => 'contact' ), $atts, 'apprex_form' );
+	$type = in_array( $atts['type'], apprex_inquiry_types(), true ) ? $atts['type'] : 'contact';
+	ob_start();
+	echo '<div class="apprex-form-embed">';
+	apprex_render_form( $type );
+	echo '</div>';
+	return ob_get_clean();
+} );
+
 /* -------------------------------------------------------------------------
  * REST submit
  * ---------------------------------------------------------------------- */
