@@ -4,7 +4,7 @@ Theme URI: https://site.aiscompany.jp/
 Author: AIS Company
 Author URI: https://site.aiscompany.jp/
 Description: クラウド型アプリ開発プラットフォーム「APPREX」公式サイト用テーマ。Hello Elementor の思想を踏襲したライセンス非依存の自作テーマ。固定ページ構成＋カスタム投稿タイプ cases によるリニューアル実装。モバイルファースト・WebP・Lazy Load 対応。
-Version: 1.25.1
+Version: 1.26.0
 Requires at least: 6.0
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -1084,3 +1084,27 @@ a:focus-visible, button:focus-visible, .btn:focus-visible, summary:focus-visible
 .apprex-ad--code { position: relative; max-width: 728px; width: 100%; line-height: normal; box-shadow: none; }
 .apprex-ad--code:hover { transform: none; box-shadow: none; }
 .apprex-ad--code .apprex-ad__pr { z-index: 2; }
+
+/* ===== 広告用LP（1カラム・ヘッダー/フッター無し）（v1.26.0） ===== */
+.apprex-lp-body { margin: 0; background: #fff; }
+.lp-container { width: 100%; max-width: 880px; margin: 0 auto; padding-inline: 20px; }
+.lp-bar { border-bottom: 1px solid var(--color-line); background: #fff; position: sticky; top: 0; z-index: 50; }
+.lp-bar__inner { max-width: 880px; margin: 0 auto; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; }
+.lp-bar__logo img { display: block; height: 40px; width: auto; }
+.lp-bar__tel { font-weight: 800; color: var(--color-navy); text-decoration: none; font-size: 1.05rem; }
+.lp-hero { background: linear-gradient(135deg, var(--color-bg-soft), #fff); padding: 48px 0 40px; text-align: center; }
+.lp-hero__title { font-size: clamp(1.6rem, 5vw, 2.6rem); line-height: 1.3; margin: 0 0 16px; color: var(--color-navy); font-weight: 800; }
+.lp-hero__lead { font-size: clamp(1rem, 2.6vw, 1.2rem); color: var(--color-body); margin: 0 0 26px; }
+.lp-hero__cta { font-size: 1.15rem; padding: 16px 38px; }
+.lp-content { padding: 36px 0; }
+.lp-content .content-prose { font-size: 1.02rem; line-height: 1.9; }
+.lp-content img { max-width: 100%; height: auto; border-radius: var(--radius); }
+.lp-form-section { background: var(--color-bg-soft); padding: 44px 0 56px; }
+.lp-form__title { text-align: center; font-size: clamp(1.4rem, 4vw, 2rem); color: var(--color-navy); margin: 0 0 8px; }
+.lp-form__note { text-align: center; color: var(--color-muted); margin: 0 0 24px; }
+.lp-form-section .apprex-form { max-width: 620px; margin: 0 auto; background: #fff; padding: 28px 26px; border-radius: var(--radius); box-shadow: var(--shadow-sm); }
+.lp-footer { background: var(--color-navy); color: #cbd5e1; text-align: center; padding: 26px 0 90px; font-size: .85rem; }
+.lp-footer a { color: #fff; }
+.lp-footer p { margin: 4px 0; }
+.lp-stickycta { position: fixed; left: 16px; right: 16px; bottom: 14px; z-index: 60; display: none; text-align: center; background: var(--color-cta); color: #fff; font-weight: 800; padding: 15px; border-radius: 999px; text-decoration: none; box-shadow: 0 8px 24px rgba(249,115,22,.4); }
+@media (max-width: 768px) { .lp-stickycta { display: block; } .lp-hero { padding: 36px 0 32px; } }
