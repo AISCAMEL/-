@@ -3,7 +3,7 @@
  * カーメル在庫 STEP UI 修正一式（テスト用・統合スニペット）
  * ---------------------------------------------------------------------------
  *  見積初期費用: 軽/普通車のA/B定型費用 設定ページ          (carmel_fee_presets_*)
- *  STEP1-2 : 基本情報＋装備＋タイトルを ACF へ反映          (carmel_step_ui_acf_bridge)
+ *  STEP1-2 : 基本情報＋装備（名前一致で全連動）＋タイトル    (carmel_step_ui_acf_bridge)
  *  STEP3   : 見積もり明細パネル＋自動計算（明細ACFは非表示） (carmel_step3_estimate)
  *  支払回数: 並び順を昇順・120回まで整理                    (carmel_kaisuu_fix)
  *  STEP4   : 担当店舗→店舗情報を ACF へ反映                (carmel_step4_shop_bridge)
@@ -226,43 +226,66 @@ function carmel_step_ui_acf_bridge() {
 			// 'type'（型式）は 車種＋グレード を結合して別途セット
 		};
 
-		/* STEP2 装備値 → ACF data-name（1択チェックボックス）
-		   ※ ACF 側に対応のある装備のみ。未対応（Apple CarPlay / Android Auto /
-		     レーンアシスト / ドラレコ / 革シート / パノラマルーフ / LEDヘッドライト
-		     等）は意図的に未マッピング。 */
-		var EQUIP_MAP = {
-			'フルセグTV': 'nav5',
-			'DVD再生': 'dvd',
-			'Bluetooth': 'bluetooth',
-			'自動ブレーキ': 'shoutotu',
+		/* 装備の連動は「名前一致」を基本にする：
+		   STEP2 の装備名と ACF チェックボックスの表示ラベルが同じなら自動で連動。
+		   → 全装備をチェックしても、名前が一致するものは全部 ACF に入る。
+
+		   下の EQUIP_ALIAS は「STEP2 と ACF で呼び名が違う」ものだけの別名表。
+		   （STEP2の装備名 → ACF の data-name）。名前一致で拾えないものを補う。 */
+		var EQUIP_ALIAS = {
+			'自動ブレーキ': 'shoutotu',          // ACF: 衝突被害軽減ブレーキ
+			'衝突軽減ブレーキ': 'shoutotu',
 			'クルーズコントロール': 'controll',
 			'アダプティブクルーズ': 'controll',
-			'バックカメラ': 'kamera3',
-			'360度カメラ': 'kamera4',
+			'360度カメラ': 'kamera4',            // ACF: 全周囲カメラ
+			'全方位カメラ': 'kamera4',
 			'コーナーセンサー': 'sensar',
-			'シートヒーター': 'heater',
-			'電動シート': 'seat',
-			'サンルーフ': 'sunroof',
-			'パワーバックドア': 'gate',
-			'電動スライドドア': 'door',
-			'スマートキー': 'smartkey',
-			'アルミホイール': 'almi',
+			'パワーバックドア': 'gate',          // ACF: 電動トランク・リアゲート
+			'電動リアゲート': 'gate',
 			'純正アルミ': 'almi',
-			'ローダウン': 'down',
-			'エアロパーツ': 'earo',
-			'ETC': 'etc',
 			'ETC2.0': 'etc'
 		};
 
-		/* data-name → 装備値（逆引き：初期反映用。最初に一致したものを採用） */
-		var EQUIP_REVERSE = (function () {
-			var r = {};
-			Object.keys( EQUIP_MAP ).forEach( function ( label ) {
-				var name = EQUIP_MAP[ label ];
-				if ( ! ( name in r ) ) { r[ name ] = label; }
+		/* 文字正規化（空白除去・小文字化）して名前一致の精度を上げる */
+		function norm( s ) {
+			return ( s == null ? '' : String( s ) ).replace( /[\s　]+/g, '' ).toLowerCase();
+		}
+
+		/* ACF 側の全チェックボックスを「ラベル名 → 要素」で索引化（装備の名前一致用） */
+		var ACF_EQUIP_INDEX = {};
+		function buildAcfEquipIndex() {
+			ACF_EQUIP_INDEX = {};
+			$( '.acf-field input[type="checkbox"]' ).each( function () {
+				var $cb = $( this );
+				var byLabel = norm( $cb.closest( 'label' ).text() );
+				var byValue = norm( $cb.val() );
+				if ( byLabel && ! ( byLabel in ACF_EQUIP_INDEX ) ) { ACF_EQUIP_INDEX[ byLabel ] = this; }
+				if ( byValue && ! ( byValue in ACF_EQUIP_INDEX ) ) { ACF_EQUIP_INDEX[ byValue ] = this; }
 			} );
-			return r;
-		})();
+		}
+
+		/* チェックボックス要素をオン/オフ */
+		function setCheckbox( $cb, on ) {
+			if ( ! $cb.length || $cb.prop( 'checked' ) === on ) { return; }
+			$cb.prop( 'checked', on );
+			$cb.closest( 'label' ).toggleClass( 'selected', on );
+			$cb.trigger( 'change' );
+		}
+
+		/* 装備名 → 対応する ACF チェックボックス（名前一致 → 別名表）をオン/オフ */
+		function tickEquipByName( name, on ) {
+			var cb = ACF_EQUIP_INDEX[ norm( name ) ];
+			if ( cb ) { setCheckbox( $( cb ), on ); return true; }
+			var dn = EQUIP_ALIAS[ $.trim( name ) ];
+			if ( dn ) { tickAcf( dn, on ); return true; }
+			return false;
+		}
+
+		/* STEP2 のチェック要素から装備名を取得（value 優先、無ければラベル文字） */
+		function equipName( $chk ) {
+			var v = $.trim( $chk.val() );
+			return v || $.trim( $chk.closest( 'label' ).text() );
+		}
 
 		/* ------------------------------------------------------------------ */
 		/* ヘルパー                                                            */
@@ -349,11 +372,10 @@ function carmel_step_ui_acf_bridge() {
 			if ( ph ) { ph.style.display = 'none'; }
 		}
 
-		/* 装備（STEP2）→ ACF（全件） */
+		/* 装備（STEP2）→ ACF（全件、名前一致＋別名） */
 		function syncEquip() {
 			$( '.cs-equip-check' ).each( function () {
-				var name = EQUIP_MAP[ $.trim( $( this ).val() ) ];
-				if ( name ) { tickAcf( name, $( this ).is( ':checked' ) ); }
+				tickEquipByName( equipName( $( this ) ), $( this ).is( ':checked' ) );
 			} );
 		}
 
@@ -369,14 +391,20 @@ function carmel_step_ui_acf_bridge() {
 		/* ------------------------------------------------------------------ */
 
 		function prefillEquipFromAcf() {
-			Object.keys( EQUIP_REVERSE ).forEach( function ( dataName ) {
-				var $field = $( '.acf-field[data-name="' + dataName + '"]' );
-				if ( ! $field.length ) { return; }
-				if ( ! $field.find( 'input[type="checkbox"]' ).first().is( ':checked' ) ) { return; }
-				var label = EQUIP_REVERSE[ dataName ];
-				$( '.cs-equip-check' ).filter( function () {
-					return $.trim( $( this ).val() ) === label;
-				} ).prop( 'checked', true );
+			$( '.cs-equip-check' ).each( function () {
+				var $s   = $( this );
+				var name = equipName( $s );
+				var cb   = ACF_EQUIP_INDEX[ norm( name ) ];
+				var checked = false;
+				if ( cb ) {
+					checked = $( cb ).is( ':checked' );
+				} else {
+					var dn = EQUIP_ALIAS[ $.trim( name ) ];
+					if ( dn ) {
+						checked = $( '.acf-field[data-name="' + dn + '"]' ).find( 'input[type="checkbox"]' ).first().is( ':checked' );
+					}
+				}
+				if ( checked ) { $s.prop( 'checked', true ); }
 			} );
 		}
 
@@ -386,6 +414,9 @@ function carmel_step_ui_acf_bridge() {
 
 		$( function () {
 			if ( ! document.getElementById( 'carmel_step_ui' ) ) { return; }
+
+			// ACF チェックボックスの索引を作成（名前一致用）
+			buildAcfEquipIndex();
 
 			// 既存装備を STEP2 に戻す
 			prefillEquipFromAcf();
@@ -418,8 +449,8 @@ function carmel_step_ui_acf_bridge() {
 			// 全リセットで装備 ACF もオフ
 			$( document ).on( 'click', '#cs-reset-all-btn', function () {
 				setTimeout( function () {
-					Object.keys( EQUIP_REVERSE ).forEach( function ( dataName ) {
-						tickAcf( dataName, false );
+					$( '.cs-equip-check' ).each( function () {
+						tickEquipByName( equipName( $( this ) ), false );
 					} );
 				}, 80 );
 			} );
