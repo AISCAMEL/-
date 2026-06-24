@@ -199,15 +199,49 @@ add_filter( 'wp_robots', function ( $robots ) {
 } );
 
 /**
- * 広告LP（LPtools の clp / テンプレート）は検索インデックス対象外。
- * 広告専用ページのため、本体ページとの競合・薄いページ評価を避ける。
+ * 広告LP（LPtools の clp / テンプレート）の検索インデックス可否。
+ * 既定は noindex（広告専用）。ただし clp 個別の設定で「インデックスする」を
+ * ONにしたLPは検索対象にする（検索でも集客したいLP向け）。
  *
- * @return bool
+ * @return bool noindex にすべきなら true。
  */
 function apprex_is_noindex_lp() {
-	return is_singular( 'clp' ) || is_post_type_archive( 'clp' )
-		|| is_singular( 'lptools_template' ) || is_post_type_archive( 'lptools_template' );
+	if ( is_singular( 'clp' ) ) {
+		// 個別LPで「インデックスする」がONなら検索対象（noindexにしない）。
+		return '1' !== (string) get_post_meta( get_queried_object_id(), '_apprex_lp_index', true );
+	}
+	if ( is_post_type_archive( 'clp' ) ) {
+		return true;
+	}
+	return is_singular( 'lptools_template' ) || is_post_type_archive( 'lptools_template' );
 }
+
+/* LPごとの「検索に表示する（インデックス）」スイッチ。 */
+add_action( 'add_meta_boxes', function () {
+	if ( post_type_exists( 'clp' ) ) {
+		add_meta_box( 'apprex_lp_seo', '検索エンジン（SEO）', 'apprex_lp_seo_box', 'clp', 'side', 'high' );
+	}
+} );
+function apprex_lp_seo_box( $post ) {
+	wp_nonce_field( 'apprex_lp_seo', 'apprex_lp_seo_nonce' );
+	$idx = (string) get_post_meta( $post->ID, '_apprex_lp_index', true );
+	?>
+	<p><label><input type="checkbox" name="apprex_lp_index" value="1" <?php checked( $idx, '1' ); ?>> <strong>このLPを検索に表示する（インデックス）</strong></label></p>
+	<p class="description">広告LP（/clp/）は既定で検索に出しません（noindex）。<br>検索からの集客もしたいLPだけ、ここをONにしてください。</p>
+	<?php
+}
+add_action( 'save_post_clp', function ( $post_id ) {
+	if ( ! isset( $_POST['apprex_lp_seo_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['apprex_lp_seo_nonce'] ) ), 'apprex_lp_seo' ) ) {
+		return;
+	}
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+		return;
+	}
+	if ( ! current_user_can( 'edit_post', $post_id ) ) {
+		return;
+	}
+	update_post_meta( $post_id, '_apprex_lp_index', isset( $_POST['apprex_lp_index'] ) ? '1' : '0' );
+} );
 
 // wp_head が無効なLPでも確実に効くよう、HTTPヘッダーでも noindex を送る。
 add_action( 'template_redirect', function () {
