@@ -42,6 +42,8 @@ function carmel_step3_estimate() {
 	}
 	?>
 	<style>
+	/* 「見積もり明細」ACFボックスを非表示（入力はDOMに残るので保存はされる） */
+	#acf-group_carmel_estimate { display:none !important; }
 	#cs-est { margin-top:12px; border:1px solid #d9dee5; border-radius:8px; background:#fff; }
 	#cs-est .cs-est-h { padding:10px 14px; background:#1f2d3d; color:#fff; border-radius:8px 8px 0 0; font-weight:700; }
 	#cs-est .cs-est-grp { padding:6px 14px 2px; font-weight:700; color:#1f2d3d; border-top:1px solid #eef1f4; margin-top:4px; }
