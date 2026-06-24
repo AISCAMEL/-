@@ -3,224 +3,216 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BUYMO（バイモ）｜オンライン車買取｜全国対応・手数料0円・最短即日入金</title>
-<meta name="description" content="BUYMO（バイモ）はスマホで完結するオンライン車買取サービス。普通車・軽・廃車・旧車・トラック・商用車まで高価買取。全国47都道府県対応、出張引取無料、最短即日入金。">
+<title>BUYMO（バイモ）｜日本全国対応の車買取｜高価買取・手数料0円・最短即日</title>
+<meta name="description" content="BUYMO（バイモ）はあなたのクルマを高く・賢く売れるオンライン車買取。面倒な手続きは一切なし。事故車・不動車・廃車も買取金額0円以上保証。全国対応・最短即日入金。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
 :root{
-  --navy:#284684; --navy-d:#1b2f5e; --navy-l:#36589e;
-  --gold:#e7ad33; --gold-d:#cf9620; --orange:#ff7a1a; --orange-d:#ec6608;
-  --cream:#fbf7ec; --paper:#f3f6fb; --ink:#22304f; --line:#e3e8f1; --muted:#6e7c98; --red:#e23b4e;
-  --shadow:0 22px 50px -24px rgba(27,47,94,.4);
+  --orange:#f5821f; --orange-d:#e2670c; --orange-l:#ff9b3a; --orange-soft:#fff4ea;
+  --peach:#fff6ee; --peach2:#fdeede;
+  --navy:#243149; --navy-d:#1b2740; --ink:#2c3346; --muted:#7b8499;
+  --red:#e8492f; --line:#f0e4d6; --gold:#e7ad33;
+  --shadow:0 22px 50px -26px rgba(180,110,30,.5);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{font-family:"Noto Sans JP",sans-serif;color:var(--ink);line-height:1.8;background:#fff;overflow-x:hidden;-webkit-font-smoothing:antialiased}
-img{max-width:100%;display:block}
-a{color:inherit}
-.en{font-family:"Anton",sans-serif;letter-spacing:3px}.num{font-family:"Anton",sans-serif}
-.wrap{max-width:1140px;margin:0 auto;padding:0 18px;position:relative;z-index:2}
-.reveal{opacity:0;transform:translateY(28px);transition:.7s cubic-bezier(.2,.7,.2,1)}
+img{max-width:100%;display:block}a{color:inherit}
+.num{font-family:"Anton",sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:0 18px;position:relative;z-index:2}
+.reveal{opacity:0;transform:translateY(26px);transition:.65s cubic-bezier(.2,.7,.2,1)}
 .reveal.in{opacity:1;transform:none}
-.reveal.d1{transition-delay:.1s}.reveal.d2{transition-delay:.2s}.reveal.d3{transition-delay:.3s}.reveal.d4{transition-delay:.4s}
+.reveal.d1{transition-delay:.1s}.reveal.d2{transition-delay:.2s}.reveal.d3{transition-delay:.3s}
 .note{background:#fff3e2;color:#a85b00;font-size:11px;border:1px dashed var(--orange);border-radius:5px;padding:1px 6px;display:inline-block}
-.mascot img{filter:drop-shadow(0 12px 16px rgba(0,0,0,.28))}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-weight:900;text-decoration:none;border-radius:999px;padding:16px 30px;font-size:clamp(15px,4vw,17px);cursor:pointer;border:none;transition:transform .15s,box-shadow .15s;white-space:nowrap}
-.btn-cta{background:linear-gradient(180deg,#ff8c33,var(--orange-d));color:#fff;box-shadow:0 12px 26px -8px rgba(236,102,8,.7)}
+.mascot img{filter:drop-shadow(0 10px 14px rgba(0,0,0,.22))}
+
+/* photo placeholder */
+.ph{position:relative;background:linear-gradient(135deg,#e9eef5,#d7dfea);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#9aa6b8;font-weight:800;overflow:hidden}
+.ph .em{font-size:40px;opacity:.6}
+.ph small{font-size:11px;margin-top:4px}
+.ph .tag{position:absolute;top:8px;left:8px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-weight:900;text-decoration:none;border-radius:999px;padding:16px 32px;font-size:clamp(15px,4vw,18px);cursor:pointer;border:none;transition:transform .15s,box-shadow .15s;white-space:nowrap}
+.btn-cta{background:linear-gradient(180deg,#ff9b3a,var(--orange-d));color:#fff;box-shadow:0 12px 26px -8px rgba(226,103,12,.7)}
 .btn-cta:hover{transform:translateY(-3px)}.btn-cta::after{content:"›";font-size:22px}
-.btn-ghost{background:rgba(255,255,255,.14);color:#fff;border:1.5px solid rgba(255,255,255,.6)}
+.btn-wh{background:#fff;color:var(--orange-d);box-shadow:0 10px 22px -10px rgba(0,0,0,.3)}
 .btn-line{background:#06c755;color:#fff}
+.btn-ghost{background:rgba(255,255,255,.16);color:#fff;border:1.5px solid rgba(255,255,255,.7)}
+.btn-out{background:#fff;color:var(--navy);border:1.5px solid var(--line)}
 .cta-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:24px}
 
-/* announcement bar */
-.topbar{background:var(--red);color:#fff;text-align:center;font-size:13px;font-weight:800;padding:7px 12px}
-.topbar b{color:var(--gold);font-family:Anton;letter-spacing:1px}
-
 /* header */
-header{position:sticky;top:0;z-index:90;background:#fff;border-bottom:2px solid var(--gold);box-shadow:0 4px 18px -12px rgba(0,0,0,.3)}
-.hd{display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;padding:9px 18px;gap:14px}
+header{position:sticky;top:0;z-index:90;background:#fff;border-bottom:3px solid var(--orange);box-shadow:0 4px 18px -12px rgba(0,0,0,.3)}
+.hd{display:flex;align-items:center;justify-content:space-between;max-width:1180px;margin:0 auto;padding:8px 18px;gap:14px}
 .brand{display:flex;align-items:center;gap:9px;text-decoration:none}
 .brand img{height:40px;width:auto;filter:none}
 .logo{font-family:"Anton";font-size:26px;color:var(--navy);line-height:1;letter-spacing:1px}
 .logo span{color:var(--orange)}
 .logo small{display:block;font-family:"Noto Sans JP";font-weight:700;font-size:8.5px;letter-spacing:2px;color:var(--muted)}
-.gnav{display:flex;align-items:center;gap:18px;margin-left:auto}
+.gnav{display:flex;align-items:center;gap:17px;margin-left:auto}
 .gnav a{text-decoration:none;font-weight:700;font-size:14px;color:var(--ink)}
 .gnav a:hover{color:var(--orange)}
 .hd-tel{text-align:right;line-height:1.1}
-.hd-tel b{font-family:"Anton";font-size:19px;color:var(--navy);letter-spacing:1px}
+.hd-tel b{font-family:"Anton";font-size:19px;color:var(--navy)}
 .hd-tel small{display:block;font-size:9.5px;color:var(--muted)}
 .hd .btn{padding:11px 18px;font-size:13px}
 .burger{display:none;flex-direction:column;gap:4px;background:none;border:none;cursor:pointer;padding:6px}
-.burger span{width:24px;height:2.5px;background:var(--navy);border-radius:2px}
+.burger span{width:24px;height:2.5px;background:var(--orange);border-radius:2px}
 
-/* hero */
-.hero{position:relative;background:linear-gradient(140deg,var(--navy-d),var(--navy) 52%,var(--navy-l));color:#fff;overflow:hidden}
-.hero::before{content:"";position:absolute;top:-130px;right:-120px;width:480px;height:480px;background:radial-gradient(circle,rgba(231,173,51,.45),transparent 65%)}
-.hero::after{content:"";position:absolute;bottom:-160px;left:-120px;width:420px;height:420px;background:radial-gradient(circle,rgba(54,88,158,.6),transparent 68%)}
-.hero-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:14px;align-items:center;padding:22px 0 34px}
-.h-left{padding:24px 0}
-.pill{display:inline-flex;gap:6px;align-items:center;background:var(--gold);color:var(--navy-d);font-weight:900;font-size:13px;padding:6px 16px;border-radius:999px}
-.h-left h1{font-size:clamp(31px,7.2vw,54px);font-weight:900;line-height:1.18;margin:16px 0 12px;text-shadow:0 4px 18px rgba(0,0,0,.25)}
-.h-left h1 .y{color:var(--gold)}
-.h-left h1 .box{background:var(--gold);color:var(--navy-d);padding:0 .12em;border-radius:8px;display:inline-block}
-.h-left .lead{font-size:clamp(14px,3.6vw,17px);font-weight:700;opacity:.96}
-.hchecks{display:grid;grid-template-columns:1fr 1fr;gap:7px 14px;margin-top:16px}
-.hchecks li{list-style:none;font-weight:800;font-size:13.5px;display:flex;align-items:center;gap:8px}
-.hchecks li::before{content:"✓";background:var(--gold);color:var(--navy-d);width:21px;height:21px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex:0 0 21px}
+/* HERO (orange) */
+.hero{position:relative;background:linear-gradient(120deg,#ff9b3a,var(--orange) 45%,var(--orange-d));color:#fff;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 80% 20%,rgba(255,255,255,.25),transparent 55%)}
+.hero .city{position:absolute;left:0;right:0;bottom:0;height:90px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.13) 0 12px,transparent 12px 40px);-webkit-mask:linear-gradient(transparent,#000);mask:linear-gradient(transparent,#000);opacity:.5}
+.hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:6px;align-items:center;padding:26px 0 8px}
+.h-left .badge{display:inline-block;background:#fff;color:var(--orange-d);font-weight:900;font-size:13px;padding:5px 14px;border-radius:8px;box-shadow:0 6px 14px -6px rgba(0,0,0,.3)}
+.h-left h1{font-size:clamp(30px,7.4vw,52px);font-weight:900;line-height:1.18;margin:14px 0 10px;text-shadow:0 4px 16px rgba(150,60,0,.35)}
+.h-left h1 .u{position:relative}
+.h-left h1 .u::after{content:"";position:absolute;left:0;right:0;bottom:.04em;height:.18em;background:rgba(255,255,255,.45)}
+.h-left .sub{font-size:clamp(16px,4.4vw,24px);font-weight:900;background:var(--navy);display:inline-block;padding:3px 14px;border-radius:8px;margin-top:4px}
+.h-left .cta-row{justify-content:flex-start;margin-top:22px}
 .h-right{position:relative;text-align:center;align-self:end}
-.h-right .mascot{display:inline-block;width:92%;max-width:380px}
-.h-bubble{position:absolute;top:0;left:-2%;background:#fff;color:var(--navy);font-weight:900;font-size:15px;padding:9px 15px;border-radius:14px 14px 14px 2px;box-shadow:var(--shadow);z-index:3;animation:bob 2.6s ease-in-out infinite}
+.h-right .mascot{display:inline-block;width:90%;max-width:330px}
+.h-bubble{position:absolute;top:4%;left:-3%;background:#fff;color:var(--orange-d);font-weight:900;font-size:14px;padding:8px 14px;border-radius:14px 14px 14px 2px;box-shadow:var(--shadow);z-index:3;animation:bob 2.6s ease-in-out infinite}
 @keyframes bob{50%{transform:translateY(-7px)}}
 
-/* marquee */
-.marquee{background:var(--navy-d);color:#fff;overflow:hidden;border-top:1px solid rgba(255,255,255,.1)}
-.marquee .track{display:flex;gap:34px;white-space:nowrap;padding:11px 0;animation:scroll 24s linear infinite;font-weight:800;font-size:14px}
-.marquee .track span{color:var(--gold)}
-@keyframes scroll{to{transform:translateX(-50%)}}
+/* quote band */
+.quote{background:var(--peach)}
+.quote-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:center;padding:42px 0}
+.quote-grid .lead h2{font-size:clamp(21px,5vw,30px);color:var(--navy);font-weight:900;line-height:1.35}
+.quote-grid .lead h2 .o{color:var(--orange-d)}
+.quote-grid .lead p{margin-top:8px;font-weight:700;color:var(--muted)}
+.quote-grid .photo{height:230px;border-radius:14px}
+.qform{background:#fff;border:2px solid var(--orange);border-radius:16px;padding:18px;box-shadow:var(--shadow);margin-top:16px}
+.qform .ttl{background:var(--navy);color:#fff;text-align:center;font-weight:900;border-radius:10px;padding:9px;margin-bottom:12px;font-size:15px}
+.qform .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.qform select,.qform input{width:100%;padding:12px;border:1.5px solid var(--line);border-radius:9px;font-size:14px;font-family:inherit;background:#fdfbf8}
+.qform .btn{width:100%;margin-top:12px}
 
-/* stats counter */
-.stats{background:var(--cream)}
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:32px 0;text-align:center}
-.stats-grid .s b{font-family:"Anton";font-size:clamp(30px,7vw,52px);color:var(--navy);display:block;line-height:1}
-.stats-grid .s b i{font-style:normal;color:var(--orange);font-size:.42em}
-.stats-grid .s span{font-size:13px;font-weight:800;color:var(--muted)}
+/* section base */
+section{padding:56px 0}
+.sec-h{text-align:center;margin-bottom:32px}
+.sec-h h2{font-size:clamp(22px,5.2vw,32px);font-weight:900;color:var(--navy);line-height:1.3;display:inline-block;position:relative;padding-bottom:12px}
+.sec-h h2::after{content:"";position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:54px;height:4px;border-radius:3px;background:var(--orange)}
+.sec-h p{color:var(--muted);font-weight:700;margin-top:12px;font-size:14px}
 
-section{padding:60px 0}
-.sec-h{text-align:center;margin-bottom:36px}
-.sec-h .ey{font-family:"Anton";color:var(--orange);font-size:14px;letter-spacing:3px;display:block}
-.sec-h h2{font-size:clamp(24px,5.6vw,38px);font-weight:900;color:var(--navy);line-height:1.28}
-.sec-h h2 .u{background:linear-gradient(transparent 60%,rgba(231,173,51,.5) 0)}
-.sec-h p{color:var(--muted);font-weight:700;margin-top:8px;font-size:14px}
+/* merits 3 */
+.merits{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.merits .m{padding:32px 22px;text-align:center}
+.merits .m+.m{border-left:1px solid var(--line)}
+.merits .m .ic{font-size:46px;color:var(--orange);line-height:1}
+.merits .m h3{color:var(--navy);font-size:18px;margin:12px 0 6px}
+.merits .m p{font-size:13px;color:var(--muted);font-weight:500}
 
-/* buy menu grid (7 specializations) */
-.menu{background:#fff}
-.menu-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-.menu-grid a{position:relative;display:block;text-decoration:none;background:linear-gradient(160deg,#fff,#f7faff);border:1px solid var(--line);border-radius:18px;padding:26px 18px;text-align:center;box-shadow:0 18px 40px -30px rgba(27,47,94,.6);transition:transform .2s,border-color .2s}
-.menu-grid a:hover{transform:translateY(-6px);border-color:var(--orange)}
-.menu-grid a .em{font-size:40px}
-.menu-grid a h3{color:var(--navy);font-size:17px;margin:10px 0 4px}
-.menu-grid a p{font-size:12px;color:var(--muted);font-weight:600}
-.menu-grid a .go{display:inline-block;margin-top:10px;color:var(--orange);font-weight:900;font-size:13px}
-.menu-grid a.more{background:linear-gradient(160deg,var(--navy),var(--navy-d));color:#fff}
-.menu-grid a.more h3,.menu-grid a.more .go{color:#fff}
+/* guarantee banner */
+.guar{background:var(--peach2)}
+.gbox{background:linear-gradient(120deg,var(--orange),var(--orange-d));border-radius:18px;padding:8px;box-shadow:var(--shadow)}
+.gbox .inner{border:2px dashed rgba(255,255,255,.7);border-radius:13px;padding:20px;display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;color:#fff}
+.gbox .mascot{width:96px;flex:0 0 96px}
+.gbox .tx .s{display:inline-block;background:#fff;color:var(--orange-d);font-weight:900;font-size:12px;padding:3px 12px;border-radius:999px}
+.gbox .tx h3{font-size:clamp(20px,5vw,30px);font-weight:900;margin-top:6px;line-height:1.25}
+.gbox .tx h3 b{color:#fff200}
+.gbox .btn{flex:0 0 auto}
 
-/* service cards */
-.svc{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-.svc .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:26px 18px;text-align:center;box-shadow:0 16px 36px -28px rgba(27,47,94,.5);transition:transform .2s}
-.svc .card:hover{transform:translateY(-5px)}
-.svc .ic{width:64px;height:64px;border-radius:16px;background:linear-gradient(180deg,var(--navy),var(--navy-d));color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 14px}
-.svc .card h3{font-size:17px;color:var(--navy);margin-bottom:6px}
-.svc .card p{font-size:13px;color:var(--muted);font-weight:500}
+/* gallery */
+.gal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.gal .card{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 14px 30px -26px rgba(180,110,30,.6)}
+.gal .card .photo{height:150px}
+.gal .card .bd{padding:12px 14px}
+.gal .card .bd .row{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);font-weight:700}
+.gal .card .price{margin-top:6px;font-family:"Anton";color:var(--orange-d);font-size:24px}
+.gal .card .price small{font-size:13px;font-family:"Noto Sans JP";color:var(--ink)}
 
-/* compare band */
-.compare{background:linear-gradient(140deg,var(--navy-d),var(--navy));color:#fff;position:relative;overflow:hidden}
-.compare .sec-h h2{color:#fff}.compare .sec-h .ey{color:var(--gold)}
-.ctable{max-width:760px;margin:0 auto;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:18px;overflow:hidden}
-.ctable .row{display:grid;grid-template-columns:1.4fr 1fr 1fr;align-items:center;text-align:center}
-.ctable .row+.row{border-top:1px solid rgba(255,255,255,.13)}
-.ctable .row.head{background:rgba(255,255,255,.08);font-weight:900}
-.ctable .row .c{padding:15px 10px;font-size:14px;font-weight:700}
-.ctable .row .c.k{text-align:left;padding-left:20px}
-.ctable .row .c.b{background:rgba(231,173,51,.16)}
-.ctable .row .c.b b{color:var(--gold);font-size:18px}
-.ctable .row .c .x{color:#ff7d7d;font-size:18px}
-.compare-peek{position:absolute;right:2%;bottom:0;width:150px}
-
-/* promise */
-.promise-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-.promise-grid .p{text-align:center;background:#fff;border:1px solid var(--line);border-radius:18px;padding:30px 20px;box-shadow:0 16px 36px -30px rgba(27,47,94,.5)}
-.promise-grid .p .no{font-family:"Anton";color:#fff;background:var(--orange);width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:20px}
-.promise-grid .p h3{color:var(--navy);font-size:19px;margin-bottom:6px}
-.promise-grid .p p{font-size:13.5px;color:var(--muted);font-weight:500}
+/* buy menu */
+.menu{background:var(--peach)}
+.menu-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}
+.menu-grid a{display:block;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 12px;text-align:center;box-shadow:0 14px 30px -26px rgba(180,110,30,.6);transition:transform .15s,border-color .15s}
+.menu-grid a:hover{transform:translateY(-5px);border-color:var(--orange)}
+.menu-grid a .em{font-size:34px}
+.menu-grid a h3{color:var(--navy);font-size:15px;margin:8px 0 2px}
+.menu-grid a span{font-size:11px;color:var(--orange-d);font-weight:900}
+.menu-grid a.more{background:var(--navy);color:#fff}.menu-grid a.more h3,.menu-grid a.more span{color:#fff}
 
 /* flow */
-.flow{background:var(--paper)}
 .flow-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;counter-reset:s}
-.flow-grid .step{background:#fff;border:1px solid var(--line);border-radius:16px;padding:28px 16px 20px;position:relative;text-align:center}
-.flow-grid .step::before{counter-increment:s;content:"0" counter(s);position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-family:"Anton";font-size:18px;background:var(--orange);color:#fff;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 16px -6px rgba(236,102,8,.6)}
-.flow-grid .step .em{font-size:30px;margin-top:6px}
-.flow-grid .step h4{color:var(--navy);font-size:15px;margin:8px 0 4px}
-.flow-grid .step p{font-size:12.5px;color:var(--muted);font-weight:500}
+.flow-grid .step{background:#fff;border:1px solid var(--line);border-radius:16px;padding:30px 14px 18px;position:relative;text-align:center;box-shadow:0 14px 30px -26px rgba(180,110,30,.6)}
+.flow-grid .step::before{counter-increment:s;content:counter(s);position:absolute;top:-15px;left:14px;font-family:"Anton";font-size:16px;background:var(--orange);color:#fff;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 16px -6px rgba(226,103,12,.6)}
+.flow-grid .step .em{font-size:34px}
+.flow-grid .step h4{color:var(--navy);font-size:14px;margin-top:8px}
 
-/* voices */
-.voices{background:var(--cream)}
-.v-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.v-grid .v{background:#fff;border-radius:16px;padding:24px;border:1px solid var(--line);box-shadow:0 16px 36px -30px rgba(27,47,94,.5)}
-.v-grid .stars{color:var(--gold);font-size:15px}
-.v-grid .v p{font-size:13.5px;margin:8px 0 12px}
-.v-grid .who{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--muted);font-weight:700}
-.v-grid .who .av{width:36px;height:36px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px}
-
-/* area */
-.area-list{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;max-width:900px;margin:0 auto}
-.area-list a{text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:999px;padding:9px 18px;font-weight:800;font-size:13.5px;color:var(--navy);transition:.15s}
-.area-list a:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
-
-/* blog */
-.blog-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-.blog-grid .post{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;text-decoration:none;box-shadow:0 16px 36px -30px rgba(27,47,94,.5);transition:transform .2s}
-.blog-grid .post:hover{transform:translateY(-5px)}
-.blog-grid .post .ph{height:130px;background:linear-gradient(135deg,var(--navy-l),var(--navy));display:flex;align-items:center;justify-content:center;font-size:40px}
-.blog-grid .post .bd{padding:16px}
-.blog-grid .post .cat{font-size:11px;font-weight:900;color:var(--orange)}
-.blog-grid .post h4{color:var(--navy);font-size:15px;margin:4px 0;line-height:1.5}
-.blog-grid .post time{font-size:11px;color:var(--muted)}
+/* area map */
+.area{background:var(--navy);color:#fff;position:relative;overflow:hidden}
+.area-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:center}
+.area-grid h2{font-size:clamp(22px,5.4vw,34px);font-weight:900;line-height:1.3}
+.area-grid h2 .o{color:var(--gold)}
+.area-grid p{margin:10px 0 18px;opacity:.9;font-weight:700}
+.area-map{height:300px;border-radius:16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;position:relative}
+.area-map .jp{font-size:120px;filter:grayscale(.2)}
+.area-map .pin{position:absolute;font-size:22px;animation:drop 2s ease-in-out infinite}
+@keyframes drop{50%{transform:translateY(-6px)}}
+.area-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.area-chips a{text-decoration:none;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:800;color:#fff}
+.area-chips a:hover{background:var(--gold);color:var(--navy);border-color:var(--gold)}
 
 /* faq */
-.faq{background:var(--paper)}
+.faq{background:var(--peach)}
 .faq .q{max-width:820px;margin:0 auto 12px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .faq .q summary{list-style:none;cursor:pointer;padding:16px 20px;font-weight:800;color:var(--navy);display:flex;justify-content:space-between;gap:10px;align-items:center}
 .faq .q summary::-webkit-details-marker{display:none}
-.faq .q summary::after{content:"+";font-family:"Anton";color:var(--orange);font-size:22px}
-.faq .q[open] summary::after{content:"–"}
+.faq .q summary::after{content:"⌄";color:var(--orange);font-size:20px;font-weight:900}
+.faq .q[open] summary::after{transform:rotate(180deg)}
 .faq .q .a{padding:0 20px 18px;font-size:14px}
 
+/* voices */
+.v-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.v-grid .v{background:#fff;border-radius:16px;padding:22px;border:1px solid var(--line);box-shadow:0 14px 30px -26px rgba(180,110,30,.6)}
+.v-grid .who{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.v-grid .who .av{width:42px;height:42px;border-radius:50%;background:var(--orange-soft);color:var(--orange-d);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;flex:0 0 42px}
+.v-grid .who b{color:var(--navy);font-size:13px}.v-grid .who small{display:block;color:var(--muted);font-size:11px}
+.v-grid .stars{color:var(--gold);font-size:14px}
+.v-grid .v p{font-size:13px;margin-top:8px}
+
 /* big cta */
-.ctaband{background:linear-gradient(140deg,var(--orange),var(--orange-d));color:#fff;text-align:center;position:relative;overflow:hidden}
-.ctaband h2{font-size:clamp(26px,6vw,42px);font-weight:900;line-height:1.25}
+.ctaband{background:linear-gradient(120deg,var(--orange),var(--orange-d));color:#fff;text-align:center;position:relative;overflow:hidden}
+.ctaband h2{font-size:clamp(24px,5.8vw,38px);font-weight:900;line-height:1.25}
 .ctaband p{font-weight:700;margin-top:10px;opacity:.97}
 
-/* footer w/ sitemap */
-footer{background:var(--navy-d);color:#cdd7ea;padding:50px 0 26px;font-size:13px}
-.f-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:22px;margin-bottom:26px}
-.f-grid h5{color:#fff;font-size:13px;margin-bottom:10px;letter-spacing:1px}
-.f-grid a{display:block;text-decoration:none;color:#cdd7ea;padding:3px 0;opacity:.85;font-size:12.5px}
-.f-grid a:hover{opacity:1;color:var(--gold)}
-.f-logo{font-family:Anton;font-size:28px;color:#fff}.f-logo span{color:var(--gold)}
+/* footer */
+footer{background:var(--navy-d);color:#c7cedd;padding:46px 0 80px;font-size:13px}
+.f-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:22px;margin-bottom:24px}
+.f-grid h5{color:#fff;font-size:13px;margin-bottom:10px}
+.f-grid a{display:block;text-decoration:none;color:#c7cedd;padding:3px 0;opacity:.85;font-size:12.5px}
+.f-grid a:hover{opacity:1;color:var(--orange-l)}
+.f-logo{font-family:Anton;font-size:26px;color:#fff}.f-logo span{color:var(--orange-l)}
+.sns{display:flex;gap:10px;margin-top:12px}
+.sns a{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:15px}
 .copy{border-top:1px solid rgba(255,255,255,.12);padding-top:16px;text-align:center;font-size:11px;opacity:.7}
-.copy a{color:#cdd7ea;margin:0 7px}
 
 /* sticky mobile cta */
 .sticky-cta{display:none}
 
 @media(max-width:880px){
-  .gnav,.hd-tel{display:none}
-  .burger{display:flex}
-  .hero-grid{grid-template-columns:1fr;text-align:center}
-  .h-left{padding:20px 0 0}.hchecks{grid-template-columns:1fr;justify-items:center}.hchecks li{justify-content:center}
-  .h-right .mascot{max-width:250px}
-  .cta-row{justify-content:center!important}
-  .stats-grid{grid-template-columns:repeat(2,1fr);gap:22px}
-  .menu-grid,.svc,.flow-grid,.v-grid,.blog-grid,.promise-grid{grid-template-columns:1fr 1fr}
-  .compare-peek{display:none}
+  .gnav,.hd-tel{display:none}.burger{display:flex}
+  .hero-grid{grid-template-columns:1fr;text-align:center;padding-bottom:0}
+  .h-left .cta-row{justify-content:center}
+  .h-right .mascot{max-width:230px}
+  .quote-grid{grid-template-columns:1fr}.quote-grid .photo{height:180px;order:-1}
+  .merits{grid-template-columns:1fr}.merits .m+.m{border-left:none;border-top:1px solid var(--line)}
+  .gbox .inner{grid-template-columns:1fr;text-align:center}.gbox .mascot{margin:0 auto}
+  .gal-grid,.v-grid{grid-template-columns:1fr 1fr}
+  .menu-grid{grid-template-columns:1fr 1fr}
+  .flow-grid{grid-template-columns:1fr 1fr}
+  .area-grid{grid-template-columns:1fr}
   .f-grid{grid-template-columns:1fr 1fr}
-  .sticky-cta{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:80;gap:0}
+  .sticky-cta{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:80}
   .sticky-cta a{flex:1;border-radius:0;padding:14px;font-size:14px}
-  body{padding-bottom:54px}
 }
-@media(max-width:520px){
-  .menu-grid,.svc,.flow-grid,.v-grid,.blog-grid,.promise-grid,.f-grid{grid-template-columns:1fr}
-  .stats-grid{grid-template-columns:repeat(2,1fr)}
-  .ctable .row{grid-template-columns:1.3fr .85fr .85fr}
-}
+@media(max-width:520px){.gal-grid,.v-grid,.menu-grid,.flow-grid,.f-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-
-<div class="topbar">🎉 期間限定！今なら<b>買取金額UPキャンペーン</b>実施中 <span class="note">※内容差し替え</span></div>
 
 <header>
   <div class="hd">
@@ -229,15 +221,15 @@ footer{background:var(--navy-d);color:#cdd7ea;padding:50px 0 26px;font-size:13px
       <span class="logo">BUY<span>MO</span><small>オンライン車買取</small></span>
     </a>
     <nav class="gnav">
+      <a href="#merit">選ばれる理由</a>
       <a href="#menu">買取メニュー</a>
-      <a href="#service">サービス</a>
+      <a href="#gallery">買取実績</a>
       <a href="#flow">買取の流れ</a>
       <a href="#area">対応エリア</a>
       <a href="#faq">FAQ</a>
-      <a href="#company">会社案内</a>
     </nav>
     <div class="hd-tel"><b>0120-000-000</b><small>9:00–20:00 / 年中無休</small></div>
-    <a href="#cta" class="btn btn-cta">無料査定</a>
+    <a href="#quote" class="btn btn-cta">無料査定</a>
     <button class="burger" aria-label="メニュー"><span></span><span></span><span></span></button>
   </div>
 </header>
@@ -245,20 +237,15 @@ footer{background:var(--navy-d);color:#cdd7ea;padding:50px 0 26px;font-size:13px
 <a id="top"></a>
 <!-- HERO -->
 <section class="hero" style="padding:0">
+  <div class="city"></div>
   <div class="wrap">
     <div class="hero-grid">
       <div class="h-left reveal">
-        <span class="pill">⭐ 顧客満足度98%<span class="note">※要数値</span></span>
-        <h1>その愛車、<br><span class="box">日本一</span>高く<br><span class="y">売れるかも。</span></h1>
-        <p class="lead">スマホで完結するオンライン車買取「BUYMO（バイモ）」。<br>普通車も廃車も、まとめて高価買取・最短即日入金。</p>
-        <ul class="hchecks">
-          <li>全国47都道府県対応</li>
-          <li>出張・引取・手数料0円</li>
-          <li>不動車・事故車もOK</li>
-          <li>最短即日でお支払い</li>
-        </ul>
-        <div class="cta-row" style="justify-content:flex-start">
-          <a href="#cta" class="btn btn-cta">無料査定を申し込む</a>
+        <span class="badge">🚗 買取は BUYMO におまかせ</span>
+        <h1>あなたのクルマを、<br><span class="u">高く、賢く</span>売る！</h1>
+        <span class="sub">面倒な手続きは一切なし！</span>
+        <div class="cta-row">
+          <a href="#quote" class="btn btn-wh">無料査定はこちら ›</a>
           <a href="tel:0120000000" class="btn btn-ghost">📞 電話で相談</a>
         </div>
       </div>
@@ -270,210 +257,194 @@ footer{background:var(--navy-d);color:#cdd7ea;padding:50px 0 26px;font-size:13px
   </div>
 </section>
 
-<!-- marquee -->
-<div class="marquee"><div class="track">
-  <div>🚗 普通車&nbsp; <span>●</span>&nbsp; 軽自動車&nbsp; <span>●</span>&nbsp; 廃車・不動車&nbsp; <span>●</span>&nbsp; 旧車・絶版車&nbsp; <span>●</span>&nbsp; 軽トラ&nbsp; <span>●</span>&nbsp; トラック&nbsp; <span>●</span>&nbsp; 商用車&nbsp; <span>●</span>&nbsp; ランクル&nbsp; <span>●</span>&nbsp; アルミホイール&nbsp; <span>●</span>&nbsp;</div>
-  <div>🚗 普通車&nbsp; <span>●</span>&nbsp; 軽自動車&nbsp; <span>●</span>&nbsp; 廃車・不動車&nbsp; <span>●</span>&nbsp; 旧車・絶版車&nbsp; <span>●</span>&nbsp; 軽トラ&nbsp; <span>●</span>&nbsp; トラック&nbsp; <span>●</span>&nbsp; 商用車&nbsp; <span>●</span>&nbsp; ランクル&nbsp; <span>●</span>&nbsp; アルミホイール&nbsp; <span>●</span>&nbsp;</div>
-</div></div>
+<!-- QUOTE BAND -->
+<section id="quote" class="quote">
+  <div class="wrap">
+    <div class="quote-grid">
+      <div class="lead reveal">
+        <h2>日本全国対応！<br>あなたの愛車、<span class="o">高価買取！</span></h2>
+        <p>スマートに、クルマを売って、次のステップへ。</p>
+        <div class="ph photo" style="margin-top:14px"><span class="tag note">写真（納車・家族）差し替え</span><span class="em">📸</span><small>イメージ写真</small></div>
+      </div>
+      <div class="reveal d1">
+        <form class="qform" onsubmit="return false">
+          <div class="ttl">かんたん無料査定（1分）</div>
+          <div class="grid2">
+            <select><option>メーカー</option><option>トヨタ</option><option>ホンダ</option><option>日産</option><option>その他</option></select>
+            <input placeholder="車種">
+            <input placeholder="年式（例 2018）">
+            <input placeholder="走行距離（km）">
+          </div>
+          <button class="btn btn-cta">無料査定スタート</button>
+          <p style="text-align:center;font-size:11px;color:var(--muted);margin-top:8px">※フォームは本番でDB/メール送信に接続します</p>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
 
-<!-- STATS -->
-<div class="stats"><div class="wrap"><div class="stats-grid">
-  <div class="s reveal"><b><span class="cnt" data-to="47">0</span><i>都道府県</i></b><span>全国対応エリア</span></div>
-  <div class="s reveal d1"><b><span class="cnt" data-to="120000">0</span><i>件＋</i></b><span>累計査定実績<span class="note">※要数値</span></span></div>
-  <div class="s reveal d2"><b><span class="cnt" data-to="98">0</span><i>%</i></b><span>お客様満足度</span></div>
-  <div class="s reveal d3"><b><span class="cnt" data-to="0">0</span><i>円</i></b><span>手数料・出張費</span></div>
-</div></div></div>
+<!-- MERITS -->
+<section id="merit">
+  <div class="wrap">
+    <div class="sec-h reveal"><h2>サービスの優位性</h2></div>
+    <div class="merits reveal">
+      <div class="m"><div class="ic">🤝</div><h3>スピード査定・即日払い</h3><p>最短15分で査定完了！その場で現金お支払いも可能です。</p></div>
+      <div class="m"><div class="ic">📋</div><h3>面倒な手続き・全て無料</h3><p>名義変更などの手続きは、当社がすべて無料で代行します。</p></div>
+      <div class="m"><div class="ic">🚗</div><h3>事故車・不動車も高価買取</h3><p>どんな状態の車でも、価値を正しく評価します。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- GUARANTEE -->
+<section class="guar">
+  <div class="wrap">
+    <div class="gbox reveal">
+      <div class="inner">
+        <div class="mascot"><img src="../images/characters/camel-face.png" alt=""></div>
+        <div class="tx">
+          <span class="s">0円以上保証</span>
+          <h3>動かなくても、古くても。<br>買取金額<b>0円以上保証！</b></h3>
+        </div>
+        <a href="#quote" class="btn btn-wh">まずは無料相談</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GALLERY -->
+<section id="gallery">
+  <div class="wrap">
+    <div class="sec-h reveal"><h2>買取実例ギャラリー</h2><p class="note">※写真・金額は実例に差し替えてください</p></div>
+    <div class="gal gal-grid">
+      <div class="card reveal"><div class="ph photo"><span class="em">🚗</span><small>車両写真</small></div><div class="bd"><div class="row"><span>年式：2015年</span><span>走行：5万km</span></div><div class="price">86<small>万円</small></div></div></div>
+      <div class="card reveal d1"><div class="ph photo"><span class="em">🚙</span><small>車両写真</small></div><div class="bd"><div class="row"><span>年式：2015年</span><span>走行：3万km</span></div><div class="price">65<small>万円</small></div></div></div>
+      <div class="card reveal d2"><div class="ph photo"><span class="em">🚐</span><small>車両写真</small></div><div class="bd"><div class="row"><span>年式：2015年</span><span>走行：5万km</span></div><div class="price">84<small>万円</small></div></div></div>
+      <div class="card reveal"><div class="ph photo"><span class="em">🚗</span><small>車両写真</small></div><div class="bd"><div class="row"><span>2008年・車検切れ</span><span></span></div><div class="price">30<small>万円</small></div></div></div>
+      <div class="card reveal d1"><div class="ph photo"><span class="em">🚘</span><small>車両写真</small></div><div class="bd"><div class="row"><span>事故車・不動車</span><span></span></div><div class="price">15<small>万円</small></div></div></div>
+      <div class="card reveal d2"><div class="ph photo"><span class="em">🏎️</span><small>車両写真</small></div><div class="bd"><div class="row"><span>旧車・絶版車</span><span></span></div><div class="price">15<small>万円〜</small></div></div></div>
+    </div>
+    <div class="cta-row reveal"><a href="#" class="btn btn-out">買取実績をもっと見る ›</a></div>
+  </div>
+</section>
 
 <!-- BUY MENU -->
 <section id="menu" class="menu">
   <div class="wrap">
-    <div class="sec-h reveal"><span class="ey">LINE UP</span><h2><span class="u">専門特化</span>の買取メニュー</h2><p>車種・状態ごとに専門チームが対応。だから高く・早い。</p></div>
+    <div class="sec-h reveal"><h2>専門特化の買取メニュー</h2><p>車種・状態ごとに専門チームが対応します</p></div>
     <div class="menu-grid">
-      <a class="reveal" href="../kaitori/haisha/"><div class="em">♻️</div><h3>廃車買取</h3><p>不動車・事故車もOK</p><span class="go">詳しく ›</span></a>
-      <a class="reveal d1" href="../kaitori/kyusha/"><div class="em">🏎️</div><h3>旧車買取</h3><p>絶版・希少車を高評価</p><span class="go">詳しく ›</span></a>
-      <a class="reveal d2" href="../kaitori/keitora/"><div class="em">🚜</div><h3>軽トラ買取</h3><p>農機・働く軽トラ歓迎</p><span class="go">詳しく ›</span></a>
-      <a class="reveal d3" href="../kaitori/truck/"><div class="em">🚛</div><h3>トラック買取</h3><p>大型・中型も対応</p><span class="go">詳しく ›</span></a>
-      <a class="reveal" href="../kaitori/shoyosha/"><div class="em">🚐</div><h3>商用車買取</h3><p>バン・ハイエース等</p><span class="go">詳しく ›</span></a>
-      <a class="reveal d1" href="../kaitori/landcruiser/"><div class="em">🚙</div><h3>ランクル買取</h3><p>高年式も旧型も強い</p><span class="go">詳しく ›</span></a>
-      <a class="reveal d2" href="../kaitori/wheel/"><div class="em">⭕</div><h3>ホイール買取</h3><p>アルミホイール単品も</p><span class="go">詳しく ›</span></a>
-      <a class="reveal d3 more" href="../kaitori/"><div class="em">📋</div><h3>すべて見る</h3><p>買取メニュー一覧</p><span class="go">一覧へ ›</span></a>
-    </div>
-  </div>
-</section>
-
-<!-- SERVICE -->
-<section id="service">
-  <div class="wrap">
-    <div class="sec-h reveal"><span class="ey">SERVICE</span><h2>BUYMOが選ばれる<span class="u">4つの特長</span></h2><p>「高く・カンタン・無料・安心」をぜんぶ叶えます</p></div>
-    <div class="svc">
-      <div class="card reveal"><div class="ic">💰</div><h3>高価買取</h3><p>独自の販売ルートで一台一台を適正かつ高価格で査定。</p></div>
-      <div class="card reveal d1"><div class="ic">📱</div><h3>オンライン完結</h3><p>スマホ入力だけ。来店不要で忙しい方も簡単。</p></div>
-      <div class="card reveal d2"><div class="ic">🚚</div><h3>全国・無料引取</h3><p>全国どこでも出張・引取に対応、費用は0円。</p></div>
-      <div class="card reveal d3"><div class="ic">🛡️</div><h3>安心・即日入金</h3><p>面倒な手続きは丸投げOK、最短即日入金。</p></div>
-    </div>
-  </div>
-</section>
-
-<!-- COMPARE -->
-<section class="compare">
-  <div class="wrap">
-    <div class="sec-h reveal"><span class="ey">COMPARE</span><h2>他社との違い</h2></div>
-    <div class="ctable reveal">
-      <div class="row head"><div class="c k">項目</div><div class="c b">BUYMO</div><div class="c">他社一般</div></div>
-      <div class="row"><div class="c k">出張・引取費用</div><div class="c b"><b>0円</b></div><div class="c">有料の場合あり</div></div>
-      <div class="row"><div class="c k">廃車・不動車</div><div class="c b"><b>買取OK</b></div><div class="c"><span class="x">断られがち</span></div></div>
-      <div class="row"><div class="c k">査定方法</div><div class="c b"><b>スマホ完結</b></div><div class="c">来店・電話中心</div></div>
-      <div class="row"><div class="c k">入金スピード</div><div class="c b"><b>最短即日</b></div><div class="c">数日〜</div></div>
-      <div class="row"><div class="c k">手続き代行</div><div class="c b"><b>無料代行</b></div><div class="c">自分で対応</div></div>
-    </div>
-  </div>
-  <div class="mascot compare-peek reveal"><img src="../images/characters/camel-face-flip.png" alt=""></div>
-</section>
-
-<!-- PROMISE -->
-<section>
-  <div class="wrap">
-    <div class="sec-h reveal"><span class="ey">PROMISE</span><h2>BUYMO <span class="u">3つの約束</span></h2></div>
-    <div class="promise-grid">
-      <div class="p reveal"><div class="no">1</div><h3>明朗会計</h3><p>査定後の減額や追加費用は一切なし。提示した金額をお支払いします。</p></div>
-      <div class="p reveal d1"><div class="no">2</div><h3>しつこい営業なし</h3><p>無理な勧誘は行いません。査定だけのご利用も大歓迎です。</p></div>
-      <div class="p reveal d2"><div class="no">3</div><h3>個人情報を厳守</h3><p>お客様の情報は厳重に管理。安心してご相談いただけます。</p></div>
+      <a class="reveal" href="../kaitori/haisha/"><div class="em">♻️</div><h3>廃車買取</h3><span>詳しく ›</span></a>
+      <a class="reveal d1" href="../kaitori/kyusha/"><div class="em">🏎️</div><h3>旧車買取</h3><span>詳しく ›</span></a>
+      <a class="reveal d2" href="../kaitori/keitora/"><div class="em">🚜</div><h3>軽トラ買取</h3><span>詳しく ›</span></a>
+      <a class="reveal d3" href="../kaitori/truck/"><div class="em">🚛</div><h3>トラック買取</h3><span>詳しく ›</span></a>
+      <a class="reveal" href="../kaitori/shoyosha/"><div class="em">🚐</div><h3>商用車買取</h3><span>詳しく ›</span></a>
+      <a class="reveal d1" href="../kaitori/landcruiser/"><div class="em">🚙</div><h3>ランクル買取</h3><span>詳しく ›</span></a>
+      <a class="reveal d2" href="../kaitori/wheel/"><div class="em">⭕</div><h3>ホイール買取</h3><span>詳しく ›</span></a>
+      <a class="reveal d3 more" href="../kaitori/"><div class="em">📋</div><h3>すべて見る</h3><span>一覧へ ›</span></a>
     </div>
   </div>
 </section>
 
 <!-- FLOW -->
-<section id="flow" class="flow">
+<section id="flow">
   <div class="wrap">
-    <div class="sec-h reveal"><span class="ey">FLOW</span><h2>かんたん<span class="u">4ステップ</span></h2><p>申込から入金まで、最短即日で完了</p></div>
+    <div class="sec-h reveal"><h2>かんたん4ステップ</h2></div>
     <div class="flow-grid">
-      <div class="step reveal"><div class="em">📝</div><h4>かんたん入力</h4><p>車種・年式をスマホで入力。</p></div>
-      <div class="step reveal d1"><div class="em">🔍</div><h4>無料査定</h4><p>プロが査定額を素早く提示。</p></div>
-      <div class="step reveal d2"><div class="em">🤝</div><h4>ご成約</h4><p>金額にご納得で契約・引取日決定。</p></div>
-      <div class="step reveal d3"><div class="em">💴</div><h4>入金・完了</h4><p>引取後、最短即日でお支払い。</p></div>
+      <div class="step reveal"><div class="em">📱</div><h4>無料査定申込み</h4></div>
+      <div class="step reveal d1"><div class="em">🧑‍🔧</div><h4>スタッフが査定</h4></div>
+      <div class="step reveal d2"><div class="em">📝</div><h4>ご成約・お支払い</h4></div>
+      <div class="step reveal d3"><div class="em">🚚</div><h4>引き取り・お引渡し</h4></div>
     </div>
   </div>
 </section>
 
-<!-- VOICES -->
-<section class="voices">
+<!-- AREA MAP -->
+<section id="area" class="area">
   <div class="wrap">
-    <div class="sec-h reveal"><span class="ey">VOICE</span><h2>お客様の声</h2><p class="note">※実アンケートに差し替えてください</p></div>
-    <div class="v-grid">
-      <div class="v reveal"><div class="stars">★★★★★</div><p>他社より3万円も高い査定でびっくり。スマホだけで完結して本当に楽でした。</p><div class="who"><span class="av">T</span>30代・男性／東京都</div></div>
-      <div class="v reveal d1"><div class="stars">★★★★★</div><p>動かなくなった車を無料で引き取ってもらえました。対応も丁寧で安心。</p><div class="who"><span class="av">M</span>40代・女性／大阪府</div></div>
-      <div class="v reveal d2"><div class="stars">★★★★★</div><p>申込から入金までが早い！廃車手続きもお任せできて助かりました。</p><div class="who"><span class="av">S</span>50代・男性／福岡県</div></div>
+    <div class="area-grid">
+      <div class="reveal">
+        <h2>日本全国<span class="o">100以上の拠点</span>で対応中！</h2>
+        <p>あなたの街にも伺います。お近くのエリアから買取情報をチェック。</p>
+        <a href="../area/" class="btn btn-wh">近くの店舗を探す ›</a>
+        <div class="area-chips">
+          <a href="../area/tokyo/">東京</a><a href="../area/kanagawa/">神奈川</a><a href="../area/osaka/">大阪</a>
+          <a href="../area/aichi/">愛知</a><a href="../area/fukuoka/">福岡</a><a href="../area/hokkaido/">北海道</a><a href="../area/">他</a>
+        </div>
+      </div>
+      <div class="area-map reveal d1">
+        <span class="jp">🗾</span>
+        <span class="pin" style="top:30%;left:62%">📍</span>
+        <span class="pin" style="top:46%;left:54%;animation-delay:.3s">📍</span>
+        <span class="pin" style="top:58%;left:46%;animation-delay:.6s">📍</span>
+        <span class="pin" style="top:40%;left:40%;animation-delay:.9s">📍</span>
+        <span class="tag note" style="position:absolute;bottom:8px;right:8px">地図画像に差し替え可</span>
+      </div>
     </div>
-  </div>
-</section>
-
-<!-- AREA -->
-<section id="area">
-  <div class="wrap">
-    <div class="sec-h reveal"><span class="ey">AREA</span><h2>全国<span class="u">47都道府県</span >対応</h2><p>お住まいのエリアから、地域別の買取情報をチェック</p></div>
-    <div class="area-list reveal">
-      <a href="../area/">対応エリア一覧</a>
-      <a href="../area/tokyo/">東京都</a><a href="../area/kanagawa/">神奈川県</a><a href="../area/osaka/">大阪府</a>
-      <a href="../area/aichi/">愛知県</a><a href="../area/fukuoka/">福岡県</a><a href="../area/hokkaido/">北海道</a>
-      <a href="../area/miyagi/">宮城県</a><a href="../area/hiroshima/">広島県</a><a href="../area/">…他</a>
-    </div>
-  </div>
-</section>
-
-<!-- BLOG -->
-<section style="background:var(--cream)">
-  <div class="wrap">
-    <div class="sec-h reveal"><span class="ey">COLUMN</span><h2>お役立ちコラム</h2><p class="note">※記事は順次追加</p></div>
-    <div class="blog-grid">
-      <a class="post reveal" href="#"><div class="ph">📑</div><div class="bd"><span class="cat">廃車</span><h4>廃車にかかる費用は？還付金で“もらえる”ケースを解説</h4><time>2026.06.01</time></div></a>
-      <a class="post reveal d1" href="#"><div class="ph">💹</div><div class="bd"><span class="cat">高く売るコツ</span><h4>車を1円でも高く売る5つのポイント</h4><time>2026.05.20</time></div></a>
-      <a class="post reveal d2" href="#"><div class="ph">📋</div><div class="bd"><span class="cat">手続き</span><h4>名義変更・必要書類のすべて｜売却前チェックリスト</h4><time>2026.05.10</time></div></a>
-    </div>
-  </div>
-</section>
-
-<!-- COMPANY brief -->
-<section id="company">
-  <div class="wrap">
-    <div class="sec-h reveal"><span class="ey">COMPANY</span><h2>私たちについて</h2></div>
-    <p class="reveal" style="max-width:720px;margin:0 auto;text-align:center;font-weight:600;color:var(--ink)">
-      BUYMO（バイモ）は「車の売却を、もっと簡単に・もっと高く」を使命に運営するオンライン車買取サービスです。<br>
-      お客様一人ひとりに寄り添い、納得のいく取引をお約束します。<span class="note">※会社紹介文は差し替え</span>
-    </p>
-    <div class="cta-row reveal d1"><a href="#" class="btn btn-cta">会社概要を見る</a></div>
   </div>
 </section>
 
 <!-- FAQ -->
 <section id="faq" class="faq">
   <div class="wrap">
-    <div class="sec-h reveal"><span class="ey">FAQ</span><h2>よくあるご質問</h2></div>
-    <details class="q reveal"><summary>査定は無料ですか？</summary><div class="a">はい、査定・出張・引取はすべて無料です。費用は一切かかりません。</div></details>
-    <details class="q reveal"><summary>動かない車や事故車でも買い取ってもらえますか？</summary><div class="a">もちろん可能です。不動車・事故車・廃車もまとめて高価買取いたします。</div></details>
-    <details class="q reveal"><summary>申し込みから入金までどれくらい？</summary><div class="a">お車の状態や地域によりますが、最短で即日のお支払いが可能です。</div></details>
-    <details class="q reveal"><summary>必要な書類は何ですか？</summary><div class="a">車検証・印鑑など。詳しくはご成約時に担当よりご案内します。</div></details>
-    <details class="q reveal"><summary>全国どこでも対応していますか？</summary><div class="a">はい、全国47都道府県に対応しています。離島など一部地域はご相談ください。</div></details>
+    <div class="sec-h reveal"><h2>よくあるご質問</h2></div>
+    <details class="q reveal"><summary>古い車や動かない車でも買い取ってもらえますか？</summary><div class="a">はい、事故車・不動車・廃車も買取対象です。0円以上保証で評価します。</div></details>
+    <details class="q reveal"><summary>査定にはどのくらい時間がかかりますか？</summary><div class="a">最短15分で査定完了。オンライン入力なら24時間いつでもお申し込みいただけます。</div></details>
+    <details class="q reveal"><summary>どのような書類が必要ですか？</summary><div class="a">車検証・印鑑などが基本です。詳しくはご成約時に担当よりご案内します。</div></details>
+    <details class="q reveal"><summary>査定は本当に無料ですか？</summary><div class="a">はい、査定・出張・引取はすべて無料。費用は一切かかりません。</div></details>
+    <div class="cta-row reveal"><a href="#faq" class="btn btn-out">FAQをもっと見る ›</a></div>
+  </div>
+</section>
+
+<!-- VOICES -->
+<section>
+  <div class="wrap">
+    <div class="sec-h reveal"><h2>お客様の声とレビュー</h2><p class="note">※実アンケートに差し替え</p></div>
+    <div class="v-grid">
+      <div class="v reveal"><div class="who"><span class="av">T</span><div><b>匿名希望 様</b><small>30代・男性／東京都</small></div></div><div class="stars">★★★★★</div><p>初めての売却で不安でしたが、スタッフの方が親切で、高価買取いただき大満足です！</p></div>
+      <div class="v reveal d1"><div class="who"><span class="av">M</span><div><b>匿名希望 様</b><small>40代・女性／大阪府</small></div></div><div class="stars">★★★★★</div><p>動かない車を無料で引き取ってもらえて助かりました。対応も丁寧で安心でした。</p></div>
+      <div class="v reveal d2"><div class="who"><span class="av">S</span><div><b>匿名希望 様</b><small>50代・男性／福岡県</small></div></div><div class="stars">★★★★★</div><p>申込から入金まで早い！廃車手続きもお任せできて本当に楽でした。</p></div>
+    </div>
+    <div class="cta-row reveal"><a href="#" class="btn btn-out">お客様の声をもっと見る ›</a></div>
   </div>
 </section>
 
 <!-- CTA -->
-<section id="cta" class="ctaband">
+<section class="ctaband">
   <div class="wrap">
-    <h2 class="reveal">まずは無料査定から。<br>かんたん入力1分。</h2>
-    <p class="reveal d1">しつこい営業は一切いたしません。査定だけでも大歓迎です。</p>
+    <h2 class="reveal">あなたのクルマ、今いくら？<br>まずは無料査定から。</h2>
+    <p class="reveal d1">かんたん1分入力・しつこい営業なし。査定だけでも大歓迎です。</p>
     <div class="cta-row reveal d2">
-      <a href="../index.html" class="btn" style="background:#fff;color:var(--orange-d)">無料査定ページへ ›</a>
+      <a href="#quote" class="btn btn-wh">無料査定はこちら ›</a>
       <a href="tel:0120000000" class="btn btn-ghost">📞 0120-000-000</a>
     </div>
   </div>
 </section>
 
-<!-- FOOTER + SITEMAP -->
+<!-- FOOTER -->
 <footer>
   <div class="wrap">
     <div class="f-grid">
       <div>
         <div class="f-logo">BUY<span>MO</span></div>
-        <p style="margin-top:10px;opacity:.8;line-height:1.7">スマホで完結するオンライン車買取。全国対応・手数料0円であなたの愛車を高価買取します。</p>
-        <p style="margin-top:12px"><b style="color:#fff;font-family:Anton;font-size:18px">0120-000-000</b><br><small style="opacity:.7">受付 9:00–20:00 / 年中無休</small></p>
+        <p style="margin-top:10px;opacity:.8;line-height:1.7">あなたのクルマを高く・賢く。全国対応・手数料0円のオンライン車買取。</p>
+        <p style="margin-top:10px"><b style="color:#fff;font-family:Anton;font-size:18px">0120-000-000</b><br><small style="opacity:.7">9:00–20:00 / 年中無休</small></p>
+        <div class="sns"><a href="#">🟢</a><a href="#">✕</a><a href="#">📷</a></div>
       </div>
-      <div>
-        <h5>サービス</h5>
-        <a href="#menu">買取メニュー</a><a href="#service">サービス特長</a><a href="#flow">買取の流れ</a>
-        <a href="#">高く売れる理由</a><a href="#">買取実績</a><a href="#area">対応エリア</a>
-      </div>
-      <div>
-        <h5>買取メニュー</h5>
-        <a href="../kaitori/haisha/">廃車買取</a><a href="../kaitori/kyusha/">旧車買取</a><a href="../kaitori/keitora/">軽トラ買取</a>
-        <a href="../kaitori/truck/">トラック買取</a><a href="../kaitori/shoyosha/">商用車買取</a><a href="../kaitori/landcruiser/">ランクル買取</a><a href="../kaitori/wheel/">ホイール買取</a>
-      </div>
-      <div>
-        <h5>会社案内・サポート</h5>
-        <a href="#company">私たちについて</a><a href="#faq">よくある質問</a><a href="../index.html">無料査定フォーム</a>
-        <a href="#">お役立ちコラム</a><a href="#">プライバシーポリシー</a><a href="#">特定商取引法に基づく表記</a>
-      </div>
+      <div><h5>サービス</h5><a href="#merit">選ばれる理由</a><a href="#flow">買取の流れ</a><a href="#gallery">買取実績</a><a href="#area">対応エリア</a></div>
+      <div><h5>買取メニュー</h5><a href="../kaitori/haisha/">廃車買取</a><a href="../kaitori/kyusha/">旧車買取</a><a href="../kaitori/keitora/">軽トラ買取</a><a href="../kaitori/truck/">トラック買取</a><a href="../kaitori/">メニュー一覧</a></div>
+      <div><h5>会社案内</h5><a href="#">会社概要</a><a href="#faq">よくある質問</a><a href="../index.html">無料査定フォーム</a><a href="#">お問い合わせ</a></div>
     </div>
-    <div class="copy">© 2026 BUYMO. All rights reserved. <a href="#">プライバシーポリシー</a>｜<a href="#">特商法表記</a>｜<a href="#">利用規約</a></div>
+    <div class="copy">© 2026 BUYMO Co., Ltd. ｜<a href="#" style="color:inherit">利用規約</a>｜<a href="#" style="color:inherit">プライバシーポリシー</a>｜<a href="#" style="color:inherit">特商法表記</a></div>
   </div>
 </footer>
 
-<!-- sticky mobile cta -->
 <div class="sticky-cta">
   <a href="tel:0120000000" class="btn btn-line">📞 電話</a>
-  <a href="#cta" class="btn btn-cta">無料査定 ›</a>
+  <a href="#quote" class="btn btn-cta">無料査定 ›</a>
 </div>
 
 <script>
-const io=new IntersectionObserver((es)=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
+const io=new IntersectionObserver((es)=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.1});
 document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
-// counter animation
-function fmt(n){return n>=10000?Math.round(n).toLocaleString():Math.round(n)}
-const co=new IntersectionObserver((es)=>es.forEach(e=>{
-  if(!e.isIntersecting)return; const el=e.target,to=+el.dataset.to; let s=0;const t0=performance.now(),dur=1400;
-  (function tick(t){const p=Math.min((t-t0)/dur,1);el.textContent=fmt(to*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(tick)})(t0);
-  co.unobserve(el);
-},{threshold:.6});
-document.querySelectorAll('.cnt').forEach(el=>co.observe(el));
 document.querySelector('.burger').addEventListener('click',()=>document.querySelector('#menu').scrollIntoView({behavior:'smooth'}));
 </script>
 </body>
