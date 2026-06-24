@@ -33,6 +33,10 @@ img{max-width:100%;display:block}a{color:inherit}
 .ph .em{font-size:40px;opacity:.6}
 .ph small{font-size:11px;margin-top:4px}
 .ph .tag{position:absolute;top:8px;left:8px}
+.cphoto{height:150px;background:linear-gradient(135deg,#eef3f9,#dde6f1);display:flex;align-items:center;justify-content:center;padding:8px}
+.cphoto img{width:90%;height:auto}
+.qscene{margin-top:14px;border-radius:14px;overflow:hidden;box-shadow:0 14px 30px -22px rgba(180,110,30,.6)}
+.qscene img{width:100%;display:block}
 
 /* buttons */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-weight:900;text-decoration:none;border-radius:999px;padding:16px 32px;font-size:clamp(15px,4vw,18px);cursor:pointer;border:none;transition:transform .15s,box-shadow .15s;white-space:nowrap}
@@ -264,7 +268,7 @@ footer{background:var(--navy-d);color:#c7cedd;padding:46px 0 80px;font-size:13px
       <div class="lead reveal">
         <h2>日本全国対応！<br>あなたの愛車、<span class="o">高価買取！</span></h2>
         <p>スマートに、クルマを売って、次のステップへ。</p>
-        <div class="ph photo" style="margin-top:14px"><span class="tag note">写真（納車・家族）差し替え</span><span class="em">📸</span><small>イメージ写真</small></div>
+        <div class="qscene"><img src="../images/illust/hero-scene.svg" alt="クルマ買取イメージ"></div>
       </div>
       <div class="reveal d1">
         <form class="qform" onsubmit="return false">
@@ -316,12 +320,12 @@ footer{background:var(--navy-d);color:#c7cedd;padding:46px 0 80px;font-size:13px
   <div class="wrap">
     <div class="sec-h reveal"><h2>買取実例ギャラリー</h2><p class="note">※写真・金額は実例に差し替えてください</p></div>
     <div class="gal gal-grid">
-      <div class="card reveal"><div class="ph photo"><span class="em">🚗</span><small>車両写真</small></div><div class="bd"><div class="row"><span>年式：2015年</span><span>走行：5万km</span></div><div class="price">86<small>万円</small></div></div></div>
-      <div class="card reveal d1"><div class="ph photo"><span class="em">🚙</span><small>車両写真</small></div><div class="bd"><div class="row"><span>年式：2015年</span><span>走行：3万km</span></div><div class="price">65<small>万円</small></div></div></div>
-      <div class="card reveal d2"><div class="ph photo"><span class="em">🚐</span><small>車両写真</small></div><div class="bd"><div class="row"><span>年式：2015年</span><span>走行：5万km</span></div><div class="price">84<small>万円</small></div></div></div>
-      <div class="card reveal"><div class="ph photo"><span class="em">🚗</span><small>車両写真</small></div><div class="bd"><div class="row"><span>2008年・車検切れ</span><span></span></div><div class="price">30<small>万円</small></div></div></div>
-      <div class="card reveal d1"><div class="ph photo"><span class="em">🚘</span><small>車両写真</small></div><div class="bd"><div class="row"><span>事故車・不動車</span><span></span></div><div class="price">15<small>万円</small></div></div></div>
-      <div class="card reveal d2"><div class="ph photo"><span class="em">🏎️</span><small>車両写真</small></div><div class="bd"><div class="row"><span>旧車・絶版車</span><span></span></div><div class="price">15<small>万円〜</small></div></div></div>
+      <div class="card reveal"><div class="cphoto"><img src="../images/illust/car-sedan.svg" alt="セダン買取例"></div><div class="bd"><div class="row"><span>年式：2015年</span><span>走行：5万km</span></div><div class="price">86<small>万円</small></div></div></div>
+      <div class="card reveal d1"><div class="cphoto"><img src="../images/illust/car-suv.svg" alt="SUV買取例"></div><div class="bd"><div class="row"><span>年式：2015年</span><span>走行：3万km</span></div><div class="price">65<small>万円</small></div></div></div>
+      <div class="card reveal d2"><div class="cphoto"><img src="../images/illust/car-van.svg" alt="ミニバン買取例"></div><div class="bd"><div class="row"><span>年式：2015年</span><span>走行：5万km</span></div><div class="price">84<small>万円</small></div></div></div>
+      <div class="card reveal"><div class="cphoto"><img src="../images/illust/car-wagon.svg" alt="ワゴン買取例"></div><div class="bd"><div class="row"><span>2008年・車検切れ</span><span></span></div><div class="price">30<small>万円</small></div></div></div>
+      <div class="card reveal d1"><div class="cphoto"><img src="../images/illust/car-truck.svg" alt="軽トラ買取例"></div><div class="bd"><div class="row"><span>事故車・不動車</span><span></span></div><div class="price">15<small>万円</small></div></div></div>
+      <div class="card reveal d2"><div class="cphoto"><img src="../images/illust/car-classic.svg" alt="旧車買取例"></div><div class="bd"><div class="row"><span>旧車・絶版車</span><span></span></div><div class="price">15<small>万円〜</small></div></div></div>
     </div>
     <div class="cta-row reveal"><a href="#" class="btn btn-out">買取実績をもっと見る ›</a></div>
   </div>
