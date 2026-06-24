@@ -243,6 +243,66 @@ add_action( 'save_post_clp', function ( $post_id ) {
 	update_post_meta( $post_id, '_apprex_lp_index', isset( $_POST['apprex_lp_index'] ) ? '1' : '0' );
 } );
 
+/* -------------------------------------------------------------------------
+ * 旧サイト（.html）URL → 新URL への 301 リダイレクト
+ * 移行前の静的HTMLのリンク・SEO評価を新ページへ引き継ぐ。転送エラー/404を解消。
+ * ---------------------------------------------------------------------- */
+add_action( 'template_redirect', function () {
+	$path = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH ) : '';
+	if ( '' === $path || '.html' !== substr( $path, -5 ) ) {
+		return;
+	}
+	$slug = sanitize_title( basename( $path, '.html' ) );
+
+	// 既知の旧→新マッピング。
+	$map = array(
+		'index'       => '/',
+		'home'        => '/',
+		'blog'        => '/blog/',
+		'blog-detail' => '/blog/',
+		'estimate'    => '/estimate/',
+		'cases'       => '/cases/',
+		'case'        => '/cases/',
+		'faq'         => '/faq/',
+		'features'    => '/features/',
+		'feature'     => '/features/',
+		'functions'   => '/functions/',
+		'function'    => '/functions/',
+		'hp-creation' => '/hp-creation/',
+		'pricing'     => '/pricing/',
+		'price'       => '/pricing/',
+		'company'     => '/company/',
+		'contact'     => '/contact/',
+		'partner'     => '/partner/',
+		'document'    => '/document/',
+		'free-trial'  => '/free-trial/',
+		'meeting'     => '/meeting/',
+		'subsidy'     => '/pricing/',
+	);
+	if ( isset( $map[ $slug ] ) ) {
+		wp_safe_redirect( home_url( $map[ $slug ] ), 301 );
+		exit;
+	}
+	// 同名スラッグの固定ページ/投稿があればそこへ。
+	$page = get_page_by_path( $slug );
+	if ( $page instanceof WP_Post ) {
+		wp_safe_redirect( get_permalink( $page ), 301 );
+		exit;
+	}
+	$posts = get_posts( array(
+		'name'           => $slug,
+		'post_type'      => array( 'post', 'page' ),
+		'post_status'    => 'publish',
+		'numberposts'    => 1,
+		'fields'         => 'ids',
+	) );
+	if ( ! empty( $posts ) ) {
+		wp_safe_redirect( get_permalink( $posts[0] ), 301 );
+		exit;
+	}
+	// 該当が無ければ何もしない（自然に404）。
+}, 1 );
+
 // wp_head が無効なLPでも確実に効くよう、HTTPヘッダーでも noindex を送る。
 add_action( 'template_redirect', function () {
 	if ( apprex_is_noindex_lp() && ! headers_sent() ) {
