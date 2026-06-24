@@ -191,11 +191,29 @@ function apprex_canonical() {
  * robots（検索結果・404 はインデックスさせない）
  * ---------------------------------------------------------------------- */
 add_filter( 'wp_robots', function ( $robots ) {
-	if ( is_search() || is_404() || apprex_is_noindex_lp() ) {
+	// 薄い/重複になりやすい自動生成ページもインデックス対象外（クロール済み-未登録の主因）。
+	if ( is_search() || is_404() || apprex_is_noindex_lp()
+		|| is_author() || is_date() || is_attachment() ) {
 		$robots['noindex'] = true;
 		$robots['follow']  = true;
 	}
 	return $robots;
+} );
+
+/* 添付ファイル（画像）個別ページは薄いため、画像本体 or 親記事へ301。 */
+add_action( 'template_redirect', function () {
+	if ( ! is_attachment() ) {
+		return;
+	}
+	$post = get_queried_object();
+	if ( ! $post instanceof WP_Post ) {
+		return;
+	}
+	$dest = $post->post_parent ? get_permalink( $post->post_parent ) : wp_get_attachment_url( $post->ID );
+	if ( $dest ) {
+		wp_safe_redirect( $dest, 301 );
+		exit;
+	}
 } );
 
 /* REST API の自動探索リンクを <head>/Link ヘッダーから除去。
