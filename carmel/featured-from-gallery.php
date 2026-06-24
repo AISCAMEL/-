@@ -39,6 +39,12 @@ function carmel_featured_from_gallery( $post_id ) {
 
 /* ギャラリーの添付ID配列を取得（自動判定） */
 function carmel_get_gallery_ids( $post_id ) {
+	// 0) STEP5 ギャラリー（carmel_gallery / カンマ区切りID）
+	$cg = get_post_meta( $post_id, 'carmel_gallery', true );
+	if ( ! empty( $cg ) ) {
+		return array_values( array_filter( array_map( 'intval', explode( ',', $cg ) ) ) );
+	}
+
 	// 1) Easy Image Gallery（カンマ区切りID）
 	$eig = get_post_meta( $post_id, '_easy_image_gallery', true );
 	if ( ! empty( $eig ) ) {
