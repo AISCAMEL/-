@@ -1,33 +1,20 @@
 <?php
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
- * Description: 在庫(portfolio)のSTEP UI連携（基本情報・装備・見積もり・担当店舗）、支払回数修正、見積初期費用設定、管理画面整理、フロント装備表示 [carmel_equipment] を一括提供。ACFフィールド（見積もり明細・追加装備）も自動登録。
- * Version: 1.0.0
+ * Description: 在庫(portfolio)のSTEP UI連携（基本情報・装備・見積もり・担当店舗）、支払回数修正、見積初期費用設定、管理画面整理、フロント装備表示[carmel_equipment]、金額コンマ自動化、ギャラリー1枚目→アイキャッチ自動。ACFフィールド（見積もり明細・追加装備）も自動登録。
+ * Version: 1.1.0
  * Author: カーメル
  * ---------------------------------------------------------------------------
- *  導入方法（どちらか）:
- *   (1) プラグインとして: 本ファイルを wp-content/plugins/carmel-stock-ui.php に置く
- *       → 管理画面「プラグイン」で『カーメル在庫 STEP UI 一式』を有効化。
- *   (2) 子テーマに: 本ファイルの先頭プラグインヘッダーを除いた中身を
- *       子テーマの functions.php 末尾に貼り付け。
- *
- *  これ1つで完結します。旧 WPCode スニペット（carmel_step1_autofill / 旧装備JS /
- *  これまでの修正一式）と、手動インポートした ACF「見積もり明細」「追加装備」グループは
- *  不要です（重複防止のため旧スニペットは無効化してください。ACFグループはキーが同じため
- *  自動的に1つに統合されます）。
+ *  導入: (1) 本ファイルを wp-content/plugins/carmel-stock-ui.php に置き、プラグインを有効化。
+ *        (2) もしくは先頭のプラグインヘッダーを除いた中身を子テーマ functions.php に貼り付け。
+ *  これ1つで完結。旧WPCodeスニペット/手動ACFインポートは不要（同キーで自動統合）。
  * ---------------------------------------------------------------------------
  */
-
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-/* =========================================================================
- *  ACF フィールドグループをコードから自動登録（手動インポート不要）
- *  ※ DBに同キーのグループが既にある場合はそちらが優先され重複しません。
- * ========================================================================= */
 add_action( 'acf/init', 'carmel_register_local_field_groups' );
 function carmel_register_local_field_groups() {
 	if ( ! function_exists( 'acf_add_local_field_group' ) ) { return; }
-
 	$estimate = json_decode( <<<'CARMEL_ESTIMATE_JSON'
 [
  {
@@ -2394,5 +2381,151 @@ function carmel_equipment_style() {
 		background:#f3f6fa; border:1px solid #d9e0e8; border-radius:14px; color:#333; }
 	</style>
 	<?php
+}
+
+
+/* ===================== money-format.php ===================== */
+
+/**
+ * カーメル：金額入力のコンマ自動化
+ * ---------------------------------------------------------------------------
+ * 目的 : 在庫編集画面で金額を「50000」や全角「５００００」で打っても
+ *        自動で「50,000」に整形する。全角数字→半角化＋3桁カンマ。
+ *
+ * 対象 : STEP UI 内の「円」が付く金額入力／会員ローン系の金額テキスト欄。
+ *        ※ 計算用の数値フィールド（type=number）はそのまま（計算に影響させない）。
+ *
+ * 導入 : WPCode PHP Snippet（Run Everywhere）／統合プラグインに内包。
+ * ---------------------------------------------------------------------------
+ */
+
+add_action( 'admin_footer-post.php',     'carmel_money_format' );
+add_action( 'admin_footer-post-new.php', 'carmel_money_format' );
+
+function carmel_money_format() {
+	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+	if ( ! $screen || $screen->post_type !== 'portfolio' ) {
+		return;
+	}
+	?>
+	<script>
+	(function ($) {
+		'use strict';
+
+		// コンマ整形する ACF 金額テキスト欄（data-name）
+		var MONEY_FIELDS = [ 'kariire_gaku', 'monthly_pay', 'loan_amount', 'monthly_payment' ];
+
+		// 全角→半角、全角カンマ→半角
+		function z2h( s ) {
+			return String( s == null ? '' : s )
+				.replace( /[０-９]/g, function ( c ) { return String.fromCharCode( c.charCodeAt( 0 ) - 0xFEE0 ); } )
+				.replace( /[，]/g, ',' );
+		}
+		function digits( s ) { return z2h( s ).replace( /[^0-9]/g, '' ); }
+		function withCommas( s ) {
+			var d = digits( s );
+			return d ? Number( d ).toLocaleString( 'en-US' ) : '';
+		}
+
+		function attach( inp ) {
+			var $i = $( inp );
+			if ( ! $i.length || $i.data( 'cmf' ) ) { return; }
+			$i.data( 'cmf', 1 );
+			$i.on( 'input', function () { this.value = withCommas( this.value ); } );
+			$i.on( 'blur',  function () { this.value = withCommas( this.value ); } );
+			if ( $i.val() ) { $i.val( withCommas( $i.val() ) ); }
+		}
+
+		$( function () {
+			// ACF 金額テキスト欄
+			MONEY_FIELDS.forEach( function ( dn ) {
+				$( '.acf-field[data-name="' + dn + '"]' ).find( 'input[type="text"]' ).each( function () { attach( this ); } );
+			} );
+
+			// STEP UI 内：「円」が近くにある金額入力（万円含む）
+			var ui = document.getElementById( 'carmel_step_ui' );
+			if ( ui ) {
+				$( ui ).find( 'input[type="text"]' ).each( function () {
+					if ( /円/.test( $( this ).parent().text() ) ) { attach( this ); }
+				} );
+			}
+		} );
+
+	})( jQuery );
+	</script>
+	<?php
+}
+
+
+/* ===================== featured-from-gallery.php ===================== */
+
+/**
+ * カーメル：ギャラリー1枚目を自動でアイキャッチ（featured image）に
+ * ---------------------------------------------------------------------------
+ * 目的 : 在庫(portfolio)を保存したとき、画像ギャラリーの1枚目を
+ *        アイキャッチ画像として自動設定する。
+ *
+ * 対応ギャラリー（自動判定）:
+ *   1) Easy Image Gallery プラグイン（meta: _easy_image_gallery / カンマ区切りID）
+ *   2) ACF の画像ギャラリー(gallery)フィールド
+ *   3) フィルタ carmel_gallery_ids で独自指定も可
+ *
+ * 挙動 : 保存時、ギャラリーに画像があれば「常に1枚目」をアイキャッチに同期。
+ *        （手動アイキャッチを優先したい場合は CARMEL_FEATURED_OVERWRITE を false に）
+ *
+ * 導入 : WPCode PHP Snippet（Run Everywhere）／統合プラグインに内包。
+ * ---------------------------------------------------------------------------
+ */
+
+if ( ! defined( 'CARMEL_FEATURED_OVERWRITE' ) ) {
+	define( 'CARMEL_FEATURED_OVERWRITE', true ); // true=常に1枚目に同期 / false=未設定時のみ
+}
+
+add_action( 'save_post_portfolio', 'carmel_featured_from_gallery', 20, 1 );
+function carmel_featured_from_gallery( $post_id ) {
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) { return; }
+	if ( wp_is_post_revision( $post_id ) ) { return; }
+
+	if ( ! CARMEL_FEATURED_OVERWRITE && has_post_thumbnail( $post_id ) ) { return; }
+
+	$ids = carmel_get_gallery_ids( $post_id );
+	if ( empty( $ids ) ) { return; }
+
+	$first = (int) $ids[0];
+	if ( $first > 0 && 'attachment' === get_post_type( $first ) ) {
+		set_post_thumbnail( $post_id, $first );
+	}
+}
+
+/* ギャラリーの添付ID配列を取得（自動判定） */
+function carmel_get_gallery_ids( $post_id ) {
+	// 1) Easy Image Gallery（カンマ区切りID）
+	$eig = get_post_meta( $post_id, '_easy_image_gallery', true );
+	if ( ! empty( $eig ) ) {
+		if ( is_array( $eig ) ) {
+			return array_values( array_filter( array_map( 'intval', $eig ) ) );
+		}
+		return array_values( array_filter( array_map( 'intval', explode( ',', $eig ) ) ) );
+	}
+
+	// 2) ACF の gallery フィールド
+	if ( function_exists( 'get_field_objects' ) ) {
+		$fields = get_field_objects( $post_id );
+		if ( is_array( $fields ) ) {
+			foreach ( $fields as $f ) {
+				if ( isset( $f['type'] ) && 'gallery' === $f['type'] && ! empty( $f['value'] ) ) {
+					$out = array();
+					foreach ( (array) $f['value'] as $img ) {
+						if ( is_array( $img ) && isset( $img['ID'] ) ) { $out[] = (int) $img['ID']; }
+						elseif ( is_numeric( $img ) ) { $out[] = (int) $img; }
+					}
+					if ( $out ) { return $out; }
+				}
+			}
+		}
+	}
+
+	// 3) 独自指定（必要なら add_filter で）
+	return (array) apply_filters( 'carmel_gallery_ids', array(), $post_id );
 }
 
