@@ -191,11 +191,29 @@ function apprex_canonical() {
  * robots（検索結果・404 はインデックスさせない）
  * ---------------------------------------------------------------------- */
 add_filter( 'wp_robots', function ( $robots ) {
-	if ( is_search() || is_404() ) {
+	if ( is_search() || is_404() || apprex_is_noindex_lp() ) {
 		$robots['noindex'] = true;
 		$robots['follow']  = true;
 	}
 	return $robots;
+} );
+
+/**
+ * 広告LP（LPtools の clp / テンプレート）は検索インデックス対象外。
+ * 広告専用ページのため、本体ページとの競合・薄いページ評価を避ける。
+ *
+ * @return bool
+ */
+function apprex_is_noindex_lp() {
+	return is_singular( 'clp' ) || is_post_type_archive( 'clp' )
+		|| is_singular( 'lptools_template' ) || is_post_type_archive( 'lptools_template' );
+}
+
+// wp_head が無効なLPでも確実に効くよう、HTTPヘッダーでも noindex を送る。
+add_action( 'template_redirect', function () {
+	if ( apprex_is_noindex_lp() && ! headers_sent() ) {
+		header( 'X-Robots-Tag: noindex, follow', true );
+	}
 } );
 
 /**
