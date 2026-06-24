@@ -1,0 +1,677 @@
+[
+ {
+  "key": "group_carmel_equip_extra",
+  "title": "追加装備（STEP2連携）",
+  "fields": [
+   {
+    "key": "field_xh1",
+    "label": "── ナビ・AV ──",
+    "name": "_xh1",
+    "aria-label": "",
+    "type": "message",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "message": "── ナビ・AV ──",
+    "new_lines": "wpautop",
+    "esc_html": 0
+   },
+   {
+    "key": "field_junsei_nav",
+    "label": "純正ナビ",
+    "name": "junsei_nav",
+    "aria-label": "",
+    "type": "checkbox",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "choices": {
+     "純正ナビ": "純正ナビ"
+    },
+    "default_value": [],
+    "return_format": "value",
+    "allow_custom": 0,
+    "save_custom": 0,
+    "toggle": 0,
+    "layout": "vertical",
+    "custom_choice_button_text": "他を追加"
+   },
+   {
+    "key": "field_shagai_nav",
+    "label": "社外ナビ",
+    "name": "shagai_nav",
+    "aria-label": "",
+    "type": "checkbox",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "choices": {
+     "社外ナビ": "社外ナビ"
+    },
+    "default_value": [],
+    "return_format": "value",
+    "allow_custom": 0,
+    "save_custom": 0,
+    "toggle": 0,
+    "layout": "vertical",
+    "custom_choice_button_text": "他を追加"
+   },
+   {
+    "key": "field_carplay",
+    "label": "Apple CarPlay",
+    "name": "carplay",
+    "aria-label": "",
+    "type": "checkbox",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "choices": {
+     "Apple CarPlay": "Apple CarPlay"
+    },
+    "default_value": [],
+    "return_format": "value",
+    "allow_custom": 0,
+    "save_custom": 0,
+    "toggle": 0,
+    "layout": "vertical",
+    "custom_choice_button_text": "他を追加"
+   },
+   {
+    "key": "field_androidauto",
+    "label": "Android Auto",
+    "name": "androidauto",
+    "aria-label": "",
+    "type": "checkbox",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "choices": {
+     "Android Auto": "Android Auto"
+    },
+    "default_value": [],
+    "return_format": "value",
+    "allow_custom": 0,
+    "save_custom": 0,
+    "toggle": 0,
+    "layout": "vertical",
+    "custom_choice_button_text": "他を追加"
+   },
+   {
+    "key": "field_xh2",
+    "label": "── 安全・運転支援 ──",
+    "name": "_xh2",
+    "aria-label": "",
+    "type": "message",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "message": "── 安全・運転支援 ──",
+    "new_lines": "wpautop",
+    "esc_html": 0
+   },
+   {
+    "key": "field_lane_assist",
+    "label": "レーンアシスト",
+    "name": "lane_assist",
+    "aria-label": "",
+    "type": "checkbox",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "choices": {
+     "レーンアシスト": "レーンアシスト"
+    },
+    "default_value": [],
+    "return_format": "value",
+    "allow_custom": 0,
+    "save_custom": 0,
+    "toggle": 0,
+    "layout": "vertical",
+    "custom_choice_button_text": "他を追加"
+   },
+   {
+    "key": "field_acc",
+    "label": "アダプティブクルーズ",
+    "name": "acc",
+    "aria-label": "",
+    "type": "checkbox",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "choices": {
+     "アダプティブクルーズ": "アダプティブクルーズ"
+    },
+    "default_value": [],
+    "return_format": "value",
+    "allow_custom": 0,
+    "save_custom": 0,
+    "toggle": 0,
+    "layout": "vertical",
+    "custom_choice_button_text": "他を追加"
+   },
+   {
+    "key": "field_corner_sensor",
+    "label": "コーナーセンサー",
+    "name": "corner_sensor",
+    "aria-label": "",
+    "type": "checkbox",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "choices": {
+     "コーナーセンサー": "コーナーセンサー"
+    },
+    "default_value": [],
+    "return_format": "value",
+    "allow_custom": 0,
+    "save_custom": 0,
+    "toggle": 0,
+    "layout": "vertical",
+    "custom_choice_button_text": "他を追加"
+   },
+   {
+    "key": "field_drive_recorder",
+    "label": "ドライブレコーダー",
+    "name": "drive_recorder",
+    "aria-label": "",
+    "type": "checkbox",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "choices": {
+     "ドライブレコーダー": "ドライブレコーダー"
+    },
+    "default_value": [],
+    "return_format": "value",
+    "allow_custom": 0,
+    "save_custom": 0,
+    "toggle": 0,
+    "layout": "vertical",
+    "custom_choice_button_text": "他を追加"
+   },
+   {
+    "key": "field_xh3",
+    "label": "── シート ──",
+    "name": "_xh3",
+    "aria-label": "",
+    "type": "message",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "message": "── シート ──",
+    "new_lines": "wpautop",
+    "esc_html": 0
+   },
+   {
+    "key": "field_ventilation_seat",
+    "label": "ベンチレーションシート",
+    "name": "ventilation_seat",
+    "aria-label": "",
+    "type": "checkbox",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "choices": {
+     "ベンチレーションシート": "ベンチレーションシート"
+    },
+    "default_value": [],
+    "return_format": "value",
+    "allow_custom": 0,
+    "save_custom": 0,
+    "toggle": 0,
+    "layout": "vertical",
+    "custom_choice_button_text": "他を追加"
+   },
+   {
+    "key": "field_leather_seat",
+    "label": "革シート",
+    "name": "leather_seat",
+    "aria-label": "",
+    "type": "checkbox",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "choices": {
+     "革シート": "革シート"
+    },
+    "default_value": [],
+    "return_format": "value",
+    "allow_custom": 0,
+    "save_custom": 0,
+    "toggle": 0,
+    "layout": "vertical",
+    "custom_choice_button_text": "他を追加"
+   },
+   {
+    "key": "field_xh4",
+    "label": "── ルーフ ──",
+    "name": "_xh4",
+    "aria-label": "",
+    "type": "message",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "message": "── ルーフ ──",
+    "new_lines": "wpautop",
+    "esc_html": 0
+   },
+   {
+    "key": "field_panorama_roof",
+    "label": "パノラマルーフ",
+    "name": "panorama_roof",
+    "aria-label": "",
+    "type": "checkbox",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "choices": {
+     "パノラマルーフ": "パノラマルーフ"
+    },
+    "default_value": [],
+    "return_format": "value",
+    "allow_custom": 0,
+    "save_custom": 0,
+    "toggle": 0,
+    "layout": "vertical",
+    "custom_choice_button_text": "他を追加"
+   },
+   {
+    "key": "field_xh5",
+    "label": "── ライト・キー ──",
+    "name": "_xh5",
+    "aria-label": "",
+    "type": "message",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "message": "── ライト・キー ──",
+    "new_lines": "wpautop",
+    "esc_html": 0
+   },
+   {
+    "key": "field_push_start",
+    "label": "プッシュスタート",
+    "name": "push_start",
+    "aria-label": "",
+    "type": "checkbox",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "choices": {
+     "プッシュスタート": "プッシュスタート"
+    },
+    "default_value": [],
+    "return_format": "value",
+    "allow_custom": 0,
+    "save_custom": 0,
+    "toggle": 0,
+    "layout": "vertical",
+    "custom_choice_button_text": "他を追加"
+   },
+   {
+    "key": "field_led_light",
+    "label": "LEDヘッドライト",
+    "name": "led_light",
+    "aria-label": "",
+    "type": "checkbox",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "choices": {
+     "LEDヘッドライト": "LEDヘッドライト"
+    },
+    "default_value": [],
+    "return_format": "value",
+    "allow_custom": 0,
+    "save_custom": 0,
+    "toggle": 0,
+    "layout": "vertical",
+    "custom_choice_button_text": "他を追加"
+   },
+   {
+    "key": "field_fog_lamp",
+    "label": "フォグランプ",
+    "name": "fog_lamp",
+    "aria-label": "",
+    "type": "checkbox",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "choices": {
+     "フォグランプ": "フォグランプ"
+    },
+    "default_value": [],
+    "return_format": "value",
+    "allow_custom": 0,
+    "save_custom": 0,
+    "toggle": 0,
+    "layout": "vertical",
+    "custom_choice_button_text": "他を追加"
+   },
+   {
+    "key": "field_adaptive_light",
+    "label": "アダプティブライト",
+    "name": "adaptive_light",
+    "aria-label": "",
+    "type": "checkbox",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "choices": {
+     "アダプティブライト": "アダプティブライト"
+    },
+    "default_value": [],
+    "return_format": "value",
+    "allow_custom": 0,
+    "save_custom": 0,
+    "toggle": 0,
+    "layout": "vertical",
+    "custom_choice_button_text": "他を追加"
+   },
+   {
+    "key": "field_xh6",
+    "label": "── 車歴・状態 ──",
+    "name": "_xh6",
+    "aria-label": "",
+    "type": "message",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "message": "── 車歴・状態 ──",
+    "new_lines": "wpautop",
+    "esc_html": 0
+   },
+   {
+    "key": "field_kinen_sha",
+    "label": "禁煙車",
+    "name": "kinen_sha",
+    "aria-label": "",
+    "type": "checkbox",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "choices": {
+     "禁煙車": "禁煙車"
+    },
+    "default_value": [],
+    "return_format": "value",
+    "allow_custom": 0,
+    "save_custom": 0,
+    "toggle": 0,
+    "layout": "vertical",
+    "custom_choice_button_text": "他を追加"
+   },
+   {
+    "key": "field_one_owner",
+    "label": "ワンオーナー",
+    "name": "one_owner",
+    "aria-label": "",
+    "type": "checkbox",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "choices": {
+     "ワンオーナー": "ワンオーナー"
+    },
+    "default_value": [],
+    "return_format": "value",
+    "allow_custom": 0,
+    "save_custom": 0,
+    "toggle": 0,
+    "layout": "vertical",
+    "custom_choice_button_text": "他を追加"
+   },
+   {
+    "key": "field_kirokubo",
+    "label": "記録簿あり",
+    "name": "kirokubo",
+    "aria-label": "",
+    "type": "checkbox",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "choices": {
+     "記録簿あり": "記録簿あり"
+    },
+    "default_value": [],
+    "return_format": "value",
+    "allow_custom": 0,
+    "save_custom": 0,
+    "toggle": 0,
+    "layout": "vertical",
+    "custom_choice_button_text": "他を追加"
+   },
+   {
+    "key": "field_seibi_zumi",
+    "label": "整備済み",
+    "name": "seibi_zumi",
+    "aria-label": "",
+    "type": "checkbox",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "choices": {
+     "整備済み": "整備済み"
+    },
+    "default_value": [],
+    "return_format": "value",
+    "allow_custom": 0,
+    "save_custom": 0,
+    "toggle": 0,
+    "layout": "vertical",
+    "custom_choice_button_text": "他を追加"
+   },
+   {
+    "key": "field_shuufuku_nashi",
+    "label": "修復歴なし",
+    "name": "shuufuku_nashi",
+    "aria-label": "",
+    "type": "checkbox",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "choices": {
+     "修復歴なし": "修復歴なし"
+    },
+    "default_value": [],
+    "return_format": "value",
+    "allow_custom": 0,
+    "save_custom": 0,
+    "toggle": 0,
+    "layout": "vertical",
+    "custom_choice_button_text": "他を追加"
+   },
+   {
+    "key": "field_xh7",
+    "label": "── その他 ──",
+    "name": "_xh7",
+    "aria-label": "",
+    "type": "message",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "message": "── その他 ──",
+    "new_lines": "wpautop",
+    "esc_html": 0
+   },
+   {
+    "key": "field_etc2",
+    "label": "ETC2.0",
+    "name": "etc2",
+    "aria-label": "",
+    "type": "checkbox",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": {
+     "width": "",
+     "class": "",
+     "id": ""
+    },
+    "choices": {
+     "ETC2.0": "ETC2.0"
+    },
+    "default_value": [],
+    "return_format": "value",
+    "allow_custom": 0,
+    "save_custom": 0,
+    "toggle": 0,
+    "layout": "vertical",
+    "custom_choice_button_text": "他を追加"
+   }
+  ],
+  "location": [
+   [
+    {
+     "param": "post_type",
+     "operator": "==",
+     "value": "portfolio"
+    }
+   ]
+  ],
+  "menu_order": 2,
+  "position": "normal",
+  "style": "default",
+  "label_placement": "top",
+  "instruction_placement": "label",
+  "hide_on_screen": "",
+  "active": true,
+  "description": "STEP2の装備でACFに無かった項目。名前一致でSTEP2と連動する。",
+  "show_in_rest": 0
+ }
+]

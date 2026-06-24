@@ -10,8 +10,9 @@
  *
  *  導入: WPCode →「+ スニペットを追加」→ コードタイプ「PHP Snippet」
  *        挿入位置「自動挿入・どこでも (Run Everywhere)」で本コードを貼り付け、有効化。
+ *  ACF: acf-estimate-fields.json（見積明細）と acf-equip-extra.json（追加装備21件）
+ *        を ACF→ツール→インポート で取り込む。
  *  注意: 旧スニペット（carmel_step1_autofill / 旧装備JS）は無効化してください。
- *        STEP3 の保存には acf-estimate-fields.json のインポートが必要です。
  * ---------------------------------------------------------------------------
  */
 
@@ -235,15 +236,12 @@ function carmel_step_ui_acf_bridge() {
 		var EQUIP_ALIAS = {
 			'自動ブレーキ': 'shoutotu',          // ACF: 衝突被害軽減ブレーキ
 			'衝突軽減ブレーキ': 'shoutotu',
-			'クルーズコントロール': 'controll',
-			'アダプティブクルーズ': 'controll',
 			'360度カメラ': 'kamera4',            // ACF: 全周囲カメラ
 			'全方位カメラ': 'kamera4',
-			'コーナーセンサー': 'sensar',
 			'パワーバックドア': 'gate',          // ACF: 電動トランク・リアゲート
 			'電動リアゲート': 'gate',
-			'純正アルミ': 'almi',
-			'ETC2.0': 'etc'
+			'純正アルミ': 'almi',                // ACF: アルミホイール
+			'電動シート': 'seat'                 // ACF: 運転席電動シート
 		};
 
 		/* 文字正規化（空白除去・小文字化）して名前一致の精度を上げる */
