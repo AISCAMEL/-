@@ -198,6 +198,12 @@ add_filter( 'wp_robots', function ( $robots ) {
 	return $robots;
 } );
 
+/* REST API の自動探索リンクを <head>/Link ヘッダーから除去。
+ * /wp-json/ はページではないため、検索ボットに辿らせない（403クロールの露出を防ぐ）。
+ * フォーム等のREST機能は localize 済みURLを使うため影響しない。 */
+remove_action( 'wp_head', 'rest_output_link_wp_head', 10 );
+remove_action( 'template_redirect', 'rest_output_link_header', 11 );
+
 /**
  * 広告LP（LPtools の clp / テンプレート）の検索インデックス可否。
  * 既定は noindex（広告専用）。ただし clp 個別の設定で「インデックスする」を
