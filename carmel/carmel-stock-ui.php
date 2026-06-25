@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（基本情報・装備・見積もり・担当店舗・複数画像・全体図確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 1.4.0
+ * Version: 1.5.0
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -1522,9 +1522,14 @@ function carmel_step_ui_acf_bridge() {
 			cs_displacement: 'displacement',
 			cs_inspection:   'inspection',
 			cs_mission:      'mission',
-			cs_kudou:        'kudou'
-			// 'type'（型式）は 車種＋グレード を結合して別途セット
+			cs_kudou:        'kudou',
+			cs_handle:       'handle'
+			// 'type'（車種）は 車種＋グレード を結合して別途セット
+			// cs_shaken（車検期限）は date_picker のため別途対応（保留）
 		};
+
+		/* 数値だけにすべき ACF（number型）。記号や単位を除去して入れる。 */
+		var NUMERIC_FIELDS = { mileage: 1 };
 
 		/* 装備の連動は「名前一致」を基本にする：
 		   STEP2 の装備名と ACF チェックボックスの表示ラベルが同じなら自動で連動。
@@ -1540,7 +1545,18 @@ function carmel_step_ui_acf_bridge() {
 			'パワーバックドア': 'gate',          // ACF: 電動トランク・リアゲート
 			'電動リアゲート': 'gate',
 			'純正アルミ': 'almi',                // ACF: アルミホイール
-			'電動シート': 'seat'                 // ACF: 運転席電動シート
+			'アルミホイール': 'almi',
+			'電動シート': 'seat',                // ACF: 運転席電動シート
+			// ↓ ラベル無しの旧ACFチェックボックスへの対応（data-name直結・確度高め）
+			'DVD再生': 'dvd',
+			'Bluetooth': 'bluetooth',
+			'クルーズコントロール': 'controll',
+			'サンルーフ': 'sunroof',
+			'スマートキー': 'smartkey',
+			'シートヒーター': 'heater',
+			'ローダウン': 'down',
+			'エアロパーツ': 'earo',
+			'ETC': 'etc'
 		};
 
 		/* 文字正規化（空白除去・小文字化）して名前一致の精度を上げる */
@@ -1633,9 +1649,12 @@ function carmel_step_ui_acf_bridge() {
 		/* 基本情報（STEP1）→ ACF */
 		function syncBasic() {
 			Object.keys( BASIC_MAP ).forEach( function ( id ) {
-				setAcf( BASIC_MAP[ id ], v( id ) );
+				var dataName = BASIC_MAP[ id ];
+				var val = v( id );
+				if ( NUMERIC_FIELDS[ dataName ] ) { val = val.replace( /[^0-9.]/g, '' ); }
+				setAcf( dataName, val );
 			} );
-			// 型式 = 車種＋グレード
+			// 車種(type) = 車種＋グレード
 			var model = v( 'cs_car_model' );
 			var grade = v( 'cs_grade' );
 			setAcf( 'type', grade ? ( model + ' ' + grade ) : model );
@@ -1754,6 +1773,27 @@ function carmel_step_ui_acf_bridge() {
 
 			// 保存直前に最終同期（STEP2以降で直した値の取りこぼし防止）
 			$( '#post' ).on( 'submit', syncAll );
+
+			/* ★ライブ同期（今回の不具合修正の本体）
+			   基本情報の各入力を「入力した瞬間」にACFへ反映する。
+			   従来は「次へ／戻る／保存submit」時しか同期せず、ブロックエディタ等
+			   submitが発火しない保存経路では 走行距離・排気量 等が反映されなかった。 */
+			var BASIC_IDS = Object.keys( BASIC_MAP ).concat( [ 'cs_car_model', 'cs_grade' ] );
+			var basicSel  = BASIC_IDS.map( function ( id ) { return '#' + id; } ).join( ',' );
+			$( document ).on( 'input change', basicSel, function () {
+				syncBasic();
+				setTitle();
+			} );
+
+			/* ★装備ライブ同期（class非依存・ラベル名一致でACFへ）
+			   STEP UI内の装備チェックは class が付かない個体があるため、
+			   #carmel_step_ui 内の全チェックボックスをラベル名で拾って
+			   対応するACFチェックを一括ON/OFFする。 */
+			$( '#carmel_step_ui' ).find( 'input[type="checkbox"]' ).on( 'change', function () {
+				var name = $.trim( $( this ).val() );
+				if ( ! name ) { name = $.trim( $( this ).closest( 'label' ).text() ); }
+				if ( name ) { tickEquipByName( name, this.checked ); }
+			} );
 		} );
 
 	})( jQuery );
