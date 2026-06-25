@@ -9,6 +9,9 @@ import { getBillingStatus, createOverageInvoice } from '../billing/square.js';
 import * as outbound from '../outbound/repo.js';
 import { runCampaign } from '../outbound/caller.js';
 import { INDUSTRY_TEMPLATES, getTemplate } from '../templates/industry.js';
+import * as contacts from '../outbound/contacts.js';
+import { chatText } from '../ai/llm.js';
+import { sendEmail } from '../notify/email.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -36,6 +39,8 @@ function validateSettingsPatch(patch: Record<string, unknown>): string | null {
 export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
   // テナント未解決(super_admin が tenant 指定なし)の保護
   const needTenant = (tenantId: string | null | undefined): tenantId is string => Boolean(tenantId);
+  // owner/admin/super_admin のみ操作可（架電・連絡先など）
+  const manageOutbound = requireRole(['owner', 'admin', 'super_admin']);
 
   // ---- me ----
   app.get('/api/me', { preHandler: authenticate }, async (req) => {
@@ -359,8 +364,79 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     return { ok: true };
   });
 
+  // ---- 連絡先リスト（見込み客CRM） ----
+  app.get('/api/contacts', { preHandler: authenticate }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const { category, q: qs } = req.query as Record<string, string>;
+    return contacts.listContacts(p.tenantId, { category, q: qs });
+  });
+  app.get('/api/contacts/categories', { preHandler: authenticate }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    return contacts.contactCategories(p.tenantId);
+  });
+  app.post('/api/contacts', { preHandler: manageOutbound }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const body = (req.body ?? {}) as any;
+    const items = Array.isArray(body.contacts) ? body.contacts : [body];
+    return contacts.createContacts(p.tenantId, items);
+  });
+  app.patch('/api/contacts/:id', { preHandler: manageOutbound }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const row = await contacts.updateContact(p.tenantId, (req.params as any).id, (req.body ?? {}) as any);
+    if (!row) return reply.code(404).send({ error: 'not found' });
+    return row;
+  });
+  app.delete('/api/contacts/:id', { preHandler: manageOutbound }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const ok = await contacts.deleteContact(p.tenantId, (req.params as any).id);
+    if (!ok) return reply.code(404).send({ error: 'not found' });
+    return { ok: true };
+  });
+  // 連絡先（カテゴリ）から架電キャンペーンを作成
+  app.post('/api/contacts/to-campaign', { preHandler: manageOutbound }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const body = (req.body ?? {}) as any;
+    if (!body.name) return reply.code(400).send({ error: 'キャンペーン名を入力してください' });
+    return contacts.campaignFromContacts(p.tenantId, body);
+  });
+  // 連絡先へメール送信（個別）
+  app.post('/api/contacts/:id/email', { preHandler: manageOutbound }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const { subject, body: text } = (req.body ?? {}) as { subject?: string; body?: string };
+    if (!subject || !text) return reply.code(400).send({ error: 'subject and body required' });
+    const list = await contacts.listContacts(p.tenantId);
+    const c = list.find((x: any) => x.id === (req.params as any).id);
+    if (!c?.email) return reply.code(400).send({ error: 'この連絡先にメールアドレスがありません' });
+    const r = await sendEmail(c.email, subject, text);
+    return { ok: r.ok, destination: c.email, error: r.error };
+  });
+
+  // AIで営業メール/トーク文面を作成（会社データは作らない。文面作成のみ）
+  app.post('/api/ai/draft', { preHandler: authenticate }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const { kind, product, target, tone } = (req.body ?? {}) as { kind?: string; product?: string; target?: string; tone?: string };
+    if (!product) return reply.code(400).send({ error: '商品・サービスの説明を入力してください' });
+    const isEmail = kind !== 'call';
+    const sys = `あなたは日本のBtoB営業アシスタントです。${isEmail ? '丁寧な営業メールの件名と本文' : '電話の営業トークスクリプト'}を作成します。誇大表現や虚偽は書かない。簡潔に。`;
+    const usr = `商品/サービス: ${product}\n想定の相手: ${target || '中小企業のご担当者'}\nトーン: ${tone || '丁寧'}\n${isEmail ? '件名と本文を作って。' : '最初の挨拶〜用件〜打診の短いトークを作って。'}`;
+    const text = await chatText([{ role: 'system', content: sys }, { role: 'user', content: usr }]);
+    if (text) return { ok: true, text };
+    // フォールバック（LLM未接続）
+    const fb = isEmail
+      ? `件名：【ご案内】${product}のご提案\n\nお世話になっております。〇〇です。\n${product}についてご案内したくご連絡しました。貴社の業務効率化にお役立ていただける内容です。\nもしご関心がございましたら、5分ほどお打合せのお時間をいただけますでしょうか。\nどうぞよろしくお願いいたします。`
+      : `お世話になっております、〇〇です。${product}のご案内でお電話しました。少しだけお時間よろしいでしょうか。実は〜という課題を解決できるサービスでして、もしご関心あれば担当より詳しくご説明します。`;
+    return { ok: true, text: fb, fallback: true };
+  });
+
   // ---- アウトバウンド架電（AI営業/催促 等） ----
-  const manageOutbound = requireRole(['owner', 'admin', 'super_admin']);
   app.get('/api/campaigns', { preHandler: authenticate }, async (req, reply) => {
     const p = req.principal!;
     if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });

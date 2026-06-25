@@ -189,3 +189,14 @@ export const demoNotifications: DemoNotification[] = [
   { id: 'ntf-3', tenant_id: TENANT, call_id: 'call-1002', type: 'slack', destination: 'slack', status: 'failed', subject: null, error_message: 'Slack 404: invalid_token', created_at: iso(-119), sent_at: null },
 ];
 
+
+export interface DemoContact {
+  id: string; tenant_id: string; name: string | null; company: string | null;
+  phone_number: string | null; email: string | null; category: string | null;
+  note: string | null; tags: string[]; status: string; created_at: string;
+}
+export const demoContacts: DemoContact[] = [
+  { id: 'ct-1', tenant_id: TENANT, name: '田中太郎', company: '田中商店', phone_number: '+819012340001', email: 'tanaka@example.com', category: '見込み客', note: '展示会で名刺交換。予約システムに関心。', tags: ['ホット'], status: 'active', created_at: iso(-60 * 24 * 3) },
+  { id: 'ct-2', tenant_id: TENANT, name: '佐藤花子', company: '佐藤クリニック', phone_number: '+819012340002', email: 'sato@example.com', category: '既存顧客', note: '毎月利用。アップセル候補。', tags: ['VIP'], status: 'active', created_at: iso(-60 * 24 * 10) },
+  { id: 'ct-3', tenant_id: TENANT, name: '鈴木一郎', company: '鈴木工務店', phone_number: '+819012340003', email: null, category: '休眠', note: '半年連絡なし。再アプローチ。', tags: [], status: 'active', created_at: iso(-60 * 24 * 30) },
+];

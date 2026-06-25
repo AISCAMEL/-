@@ -547,3 +547,30 @@ end $$;
 -- 入金案内用：対象ごとの未収金額・支払期日（任意）
 alter table outbound_targets add column if not exists amount numeric(12,0);
 alter table outbound_targets add column if not exists due_date date;
+
+-- =============================================================
+-- contacts  (見込み客・取引先リスト。カテゴリ/メモ/タグで管理)
+-- =============================================================
+create table if not exists contacts (
+  id           uuid primary key default gen_random_uuid(),
+  tenant_id    uuid not null references tenants(id) on delete cascade,
+  name         text,
+  company      text,
+  phone_number text,
+  email        text,
+  category     text,                          -- 見込み/既存/休眠 等、自由分類
+  note         text,
+  tags         text[] not null default '{}',
+  status       text not null default 'active',-- active / do_not_contact
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+create index if not exists idx_contacts_tenant on contacts(tenant_id, created_at desc);
+create index if not exists idx_contacts_category on contacts(tenant_id, category);
+create trigger trg_contacts_updated before update on contacts
+  for each row execute function set_updated_at();
+alter table contacts enable row level security;
+drop policy if exists tenant_isolation on contacts;
+create policy tenant_isolation on contacts
+  using (is_super_admin() or tenant_id = current_tenant_id())
+  with check (is_super_admin() or tenant_id = current_tenant_id());

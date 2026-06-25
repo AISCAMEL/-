@@ -79,6 +79,15 @@ export const api = {
   invoiceOverage: (month?: string) => request<any>('/api/billing/invoice-overage', { method: 'POST', body: JSON.stringify({ month }) }),
 
   // リード管理（運営・super_admin）
+  contacts: (qs = '') => request<any[]>(`/api/contacts${qs}`),
+  contactCategories: () => request<string[]>('/api/contacts/categories'),
+  createContacts: (items: any[]) => request<any>('/api/contacts', { method: 'POST', body: JSON.stringify({ contacts: items }) }),
+  updateContact: (id: string, body: any) => request<any>(`/api/contacts/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  deleteContact: (id: string) => request<any>(`/api/contacts/${id}`, { method: 'DELETE' }),
+  contactsToCampaign: (body: any) => request<any>('/api/contacts/to-campaign', { method: 'POST', body: JSON.stringify(body) }),
+  emailContact: (id: string, subject: string, body: string) => request<any>(`/api/contacts/${id}/email`, { method: 'POST', body: JSON.stringify({ subject, body }) }),
+  aiDraft: (body: any) => request<any>('/api/ai/draft', { method: 'POST', body: JSON.stringify(body) }),
+
   industryTemplates: () => request<any[]>('/api/industry-templates'),
   applyTemplate: (key: string, opts: any = {}) => request<any>(`/api/industry-templates/${key}/apply`, { method: 'POST', body: JSON.stringify(opts) }),
 
