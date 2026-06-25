@@ -15,8 +15,8 @@
 ?>
 <script>
 (function () {
-	// ★審査申込ページのURL（ここを変更してください）
-	var SHINSA_URL = 'https://carmelonline.jp/loan_new2/';
+	// 審査申込ページ（post=7348）。正式なパーマリンクがあれば差し替え可。
+	var SHINSA_URL = 'https://carmelonline.jp/?p=7348';
 
 	function ready(fn){ if(document.readyState!=='loading'){fn();}else{document.addEventListener('DOMContentLoaded',fn);} }
 	ready(function () {
