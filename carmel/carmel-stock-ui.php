@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（プラグイン内蔵の新ステップUI／基本情報・装備・見積もり・担当店舗・複数画像・内容確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 2.9.0
+ * Version: 2.10.0
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -3450,17 +3450,29 @@ function carmel_equip_checked( $name, $pid ) {
 	return ! empty( $v ) && $v !== '0';
 }
 
-/* 装備一覧HTMLを返す */
+/* 装備一覧HTMLを返す（個別フィールド＋equip CSV の和集合で確実に表示） */
 function carmel_render_equipment( $pid = 0 ) {
 	if ( ! $pid ) { $pid = get_the_ID(); }
 	if ( ! $pid ) { return ''; }
+
+	// equip CSV（STEP2で選んだラベル）→ data-name 集合
+	$csv_names = array();
+	$equip = get_post_meta( $pid, 'equip', true );
+	if ( is_array( $equip ) ) { $equip = implode( ',', $equip ); }
+	$equip_labels = array_filter( array_map( 'trim', explode( ',', (string) $equip ) ) );
+	if ( $equip_labels && function_exists( 'carmel_theme_equip_map' ) ) {
+		$tmap = carmel_theme_equip_map();
+		foreach ( $equip_labels as $l ) {
+			if ( isset( $tmap[ $l ] ) ) { $csv_names[ $tmap[ $l ] ] = true; }
+		}
+	}
 
 	$map = carmel_equipment_map();
 	$out = '';
 	foreach ( $map as $cat => $items ) {
 		$badges = '';
 		foreach ( $items as $name => $label ) {
-			if ( carmel_equip_checked( $name, $pid ) ) {
+			if ( isset( $csv_names[ $name ] ) || carmel_equip_checked( $name, $pid ) ) {
 				$badges .= '<li class="carmel-eq-item">' . esc_html( $label ) . '</li>';
 			}
 		}
@@ -3608,6 +3620,15 @@ function carmel_featured_from_gallery( $post_id ) {
 	$first = (int) $ids[0];
 	if ( $first > 0 && 'attachment' === get_post_type( $first ) ) {
 		set_post_thumbnail( $post_id, $first );
+	}
+
+	// WPEX（Total）の Image Gallery へ転写：1枚目以降をギャラリーに同期
+	$rest = array_slice( array_map( 'intval', $ids ), 1 );
+	$rest = array_values( array_filter( $rest ) );
+	if ( ! empty( $rest ) ) {
+		$gstr = implode( ',', $rest );
+		update_post_meta( $post_id, '_wpex_custom_gallery', $gstr );
+		update_post_meta( $post_id, 'wpex_custom_gallery', $gstr );
 	}
 }
 
@@ -3805,11 +3826,21 @@ function carmel_apply_equip_csv( $post_id ) {
 	if ( empty( $labels ) ) { return; } // 空CSVでは何も消さない
 
 	$map = carmel_theme_equip_map();
+
+	// data-name => そのフィールドが期待する選択肢の値（＝フロント表示ラベル）
+	$name_to_value = array();
+	if ( function_exists( 'carmel_equipment_map' ) ) {
+		foreach ( carmel_equipment_map() as $cat => $items ) {
+			foreach ( $items as $dn => $lbl ) { $name_to_value[ $dn ] = $lbl; }
+		}
+	}
+
 	foreach ( $labels as $label ) {
 		if ( ! isset( $map[ $label ] ) ) { continue; }
-		$name = $map[ $label ];
-		if ( function_exists( 'update_field' ) ) { update_field( $name, array( $label ), $post_id ); }
-		else { update_post_meta( $post_id, $name, $label ); }
+		$name  = $map[ $label ];
+		$value = isset( $name_to_value[ $name ] ) ? $name_to_value[ $name ] : $label; // 正しい選択肢の値で保存
+		if ( function_exists( 'update_field' ) ) { update_field( $name, array( $value ), $post_id ); }
+		else { update_post_meta( $post_id, $name, $value ); }
 	}
 }
 
