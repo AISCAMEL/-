@@ -1,0 +1,47 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BUYMO 書体パターン比較</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=M+PLUS+Rounded+1c:wght@400;700;900&family=Zen+Maru+Gothic:wght@500;700;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Kosugi+Maru&family=BIZ+UDPGothic:wght@400;700&family=Noto+Sans+JP:wght@500;700;900&family=Mochiy+Pop+One&family=Kiwi+Maru:wght@500&family=Yusei+Magic&family=Hachi+Maru+Pop&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#f3f6fb;color:#243149;padding:24px 14px 60px}
+h1{text-align:center;font-family:"M PLUS Rounded 1c";font-size:22px;margin-bottom:6px}
+.lead{text-align:center;color:#7b8499;font-size:13px;margin-bottom:24px}
+.card{max-width:760px;margin:0 auto 18px;background:#fff;border:1px solid #e3e8f1;border-radius:16px;overflow:hidden;box-shadow:0 14px 34px -26px rgba(27,47,94,.4)}
+.tag{display:flex;justify-content:space-between;align-items:center;background:#fff6ee;border-bottom:1px solid #f0e4d6;padding:8px 16px}
+.tag b{color:#e2670c;font-size:14px}.tag span{color:#7b8499;font-size:11.5px}
+.demo{padding:22px 20px}
+.h{font-size:clamp(26px,5.4vw,38px);font-weight:900;line-height:1.25;color:#243149}
+.h .o{color:#f5821f}
+.sub{display:inline-block;background:#243149;color:#fff;font-weight:900;font-size:clamp(14px,3.4vw,18px);padding:3px 12px;border-radius:8px;margin:8px 0}
+.bd{font-size:14px;color:#445;margin-top:6px;line-height:1.9}
+.btn{display:inline-block;margin-top:12px;background:linear-gradient(180deg,#ff9b3a,#e2670c);color:#fff;font-weight:900;padding:11px 22px;border-radius:999px;font-size:15px}
+.num{font-family:"Anton";font-size:30px;color:#243149}.num i{font-style:normal;color:#f5821f;font-size:.55em}
+</style></head><body>
+<h1>BUYMO 書体パターン比較</h1>
+<p class="lead">同じ見出しを各フォントで表示。好みの番号を教えてください（全ページに適用します）。英字・数字はAnton固定です。</p>
+<div id="root"></div>
+<script>
+var fonts=[
+ ["① M PLUS Rounded 1c（現在）","丸ゴシック・標準的でバランス良","'M PLUS Rounded 1c'"],
+ ["② Zen Maru Gothic","より丸く可愛い・やわらかさ強め","'Zen Maru Gothic'"],
+ ["③ Zen Kaku Gothic New","角ゴシックだが優しい・clean/現代的","'Zen Kaku Gothic New'"],
+ ["④ Kosugi Maru","丸ゴ・親しみ＋ややレトロ","'Kosugi Maru'"],
+ ["⑤ BIZ UDPGothic","UD設計・はっきり読みやすい・力強い","'BIZ UDPGothic'"],
+ ["⑥ Noto Sans JP","標準的な角ゴ・無難で読みやすい","'Noto Sans JP'"],
+ ["⑦ Mochiy Pop One","ポップで太い・元気/キャッチ向き","'Mochiy Pop One'"],
+ ["⑧ Kiwi Maru","細めの丸ゴ・上品でやわらかい","'Kiwi Maru'"],
+ ["⑨ Yusei Magic","マーカー手書き風・親近感","'Yusei Magic'"],
+ ["⑩ Hachi Maru Pop","手書きポップ・かわいい系","'Hachi Maru Pop'"]
+];
+document.getElementById('root').innerHTML=fonts.map(function(f){return (
+'<div class="card"><div class="tag"><b>'+f[0]+'</b><span>'+f[1]+'</span></div>'+
+'<div class="demo" style="font-family:'+f[2]+',sans-serif">'+
+'<div class="h">あなたのクルマを、<span class="o">高く、賢く</span>売る！</div>'+
+'<div class="sub">面倒な手続きは一切なし！</div>'+
+'<div class="bd">スマホで完結するオンライン車買取。全国対応・手数料0円、最短即日入金。事故車・廃車もまとめて高価買取します。</div>'+
+'<div><span class="num">98<i>%</i></span> <span style="font-weight:800">お客様満足度</span></div>'+
+'<span class="btn">無料査定はこちら ›</span>'+
+'</div></div>')}).join('');
+</script></body></html>
