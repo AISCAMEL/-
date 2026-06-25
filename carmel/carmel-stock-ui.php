@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（プラグイン内蔵の新ステップUI／基本情報・装備・見積もり・担当店舗・複数画像・内容確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 2.11.0
+ * Version: 2.12.0
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -3811,21 +3811,14 @@ function carmel_theme_equip_map() {
 	);
 }
 
-add_action( 'save_post_portfolio', 'carmel_apply_equip_csv', 30, 1 );
-function carmel_apply_equip_csv( $post_id ) {
-	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) { return; }
-	if ( wp_is_post_revision( $post_id ) ) { return; }
-	// テーマのAJAX保存（carmel_publish_post）の時だけ実行
-	if ( ! ( defined( 'DOING_AJAX' ) && DOING_AJAX ) ) { return; }
-	if ( ! isset( $_POST['action'] ) || 'carmel_publish_post' !== $_POST['action'] ) { return; }
-
+/* equip CSV → 個別装備フィールドへ反映（共通ロジック・1台分） */
+function carmel_equip_csv_to_fields( $post_id ) {
 	$equip = get_post_meta( $post_id, 'equip', true );
 	if ( is_array( $equip ) ) { $equip = implode( ',', $equip ); }
 	$labels = array_filter( array_map( 'trim', explode( ',', (string) $equip ) ) );
-	if ( empty( $labels ) ) { return; } // 空CSVでは何も消さない
+	if ( empty( $labels ) ) { return 0; } // 空CSVでは何もしない
 
 	$map = carmel_theme_equip_map();
-
 	// data-name => そのフィールドが期待する選択肢の値（＝フロント表示ラベル）
 	$name_to_value = array();
 	if ( function_exists( 'carmel_equipment_map' ) ) {
@@ -3833,14 +3826,98 @@ function carmel_apply_equip_csv( $post_id ) {
 			foreach ( $items as $dn => $lbl ) { $name_to_value[ $dn ] = $lbl; }
 		}
 	}
-
+	$done = 0;
 	foreach ( $labels as $label ) {
 		if ( ! isset( $map[ $label ] ) ) { continue; }
 		$name  = $map[ $label ];
-		$value = isset( $name_to_value[ $name ] ) ? $name_to_value[ $name ] : $label; // 正しい選択肢の値で保存
+		$value = isset( $name_to_value[ $name ] ) ? $name_to_value[ $name ] : $label;
 		if ( function_exists( 'update_field' ) ) { update_field( $name, array( $value ), $post_id ); }
 		else { update_post_meta( $post_id, $name, $value ); }
+		$done++;
 	}
+	return $done;
+}
+
+add_action( 'save_post_portfolio', 'carmel_apply_equip_csv', 30, 1 );
+function carmel_apply_equip_csv( $post_id ) {
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) { return; }
+	if ( wp_is_post_revision( $post_id ) ) { return; }
+	// テーマのAJAX保存（carmel_publish_post）の時だけ実行
+	if ( ! ( defined( 'DOING_AJAX' ) && DOING_AJAX ) ) { return; }
+	if ( ! isset( $_POST['action'] ) || 'carmel_publish_post' !== $_POST['action'] ) { return; }
+	carmel_equip_csv_to_fields( $post_id );
+}
+
+/* 詳細テンプレ用ミラー（修復歴/法定点検）を1台分実行 */
+function carmel_mirror_detail_fields_one( $post_id ) {
+	$pairs = array( 'repair_history' => 'shuufuku', 'inspection' => 'tenken' );
+	foreach ( $pairs as $src => $dst ) {
+		$v = get_post_meta( $post_id, $src, true );
+		if ( is_array( $v ) ) { $v = implode( '・', array_filter( $v ) ); }
+		$v = is_string( $v ) ? trim( $v ) : $v;
+		if ( '' === $v || null === $v ) { continue; }
+		update_post_meta( $post_id, $dst, $v );
+		if ( function_exists( 'update_field' ) ) { update_field( $dst, $v, $post_id ); }
+	}
+}
+
+/* 画像（1枚目=アイキャッチ／2枚目以降=Image Gallery）を1台分同期 */
+function carmel_sync_images_one( $post_id ) {
+	$ids = carmel_get_gallery_ids( $post_id );
+	if ( empty( $ids ) ) { return; }
+	$first = (int) $ids[0];
+	if ( $first > 0 && 'attachment' === get_post_type( $first ) ) { set_post_thumbnail( $post_id, $first ); }
+	$rest = array_values( array_filter( array_slice( array_map( 'intval', $ids ), 1 ) ) );
+	if ( ! empty( $rest ) ) {
+		$g = implode( ',', $rest );
+		update_post_meta( $post_id, '_wpex_custom_gallery', $g );
+		update_post_meta( $post_id, 'wpex_custom_gallery', $g );
+	}
+}
+
+/* ===== 既存在庫への一括反映（バックフィル） ===== */
+add_action( 'admin_menu', 'carmel_backfill_menu' );
+function carmel_backfill_menu() {
+	add_submenu_page( 'edit.php?post_type=portfolio', '在庫データ一括反映', '🔄 一括反映', 'manage_options', 'carmel-backfill', 'carmel_backfill_render' );
+}
+function carmel_backfill_render() {
+	$msg = '';
+	if ( isset( $_POST['carmel_backfill_run'] ) && check_admin_referer( 'carmel_backfill' ) ) {
+		$n = carmel_backfill_run();
+		$msg = $n . ' 台の在庫に反映しました。';
+	}
+	$total = wp_count_posts( 'portfolio' );
+	$num   = isset( $total->publish ) ? ( (int) $total->publish + (int) ( $total->draft ?? 0 ) + (int) ( $total->private ?? 0 ) ) : 0;
+	?>
+	<div class="wrap">
+		<h1>🔄 在庫データ 一括反映（バックフィル）</h1>
+		<?php if ( $msg ) : ?><div class="notice notice-success"><p><?php echo esc_html( $msg ); ?></p></div><?php endif; ?>
+		<p>これまでに登録した在庫すべてに、最新の反映処理をまとめて適用します。<br>
+		内容：<strong>修復歴／法定点検のミラー</strong>・<strong>装備（選択リスト→個別フィールド）</strong>・<strong>画像（1枚目=アイキャッチ／2枚目以降=ギャラリー）</strong>。<br>
+		※ データを消す処理はありません（空欄は上書きしません）。</p>
+		<p>対象：約 <strong><?php echo (int) $num; ?></strong> 台</p>
+		<form method="post">
+			<?php wp_nonce_field( 'carmel_backfill' ); ?>
+			<p><button type="submit" name="carmel_backfill_run" value="1" class="button button-primary button-hero">今すぐ全在庫に反映する</button></p>
+		</form>
+	</div>
+	<?php
+}
+function carmel_backfill_run() {
+	$ids = get_posts( array(
+		'post_type'      => 'portfolio',
+		'post_status'    => array( 'publish', 'draft', 'private', 'pending' ),
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+	) );
+	$count = 0;
+	foreach ( $ids as $pid ) {
+		carmel_mirror_detail_fields_one( $pid );
+		carmel_equip_csv_to_fields( $pid );
+		carmel_sync_images_one( $pid );
+		$count++;
+	}
+	return $count;
 }
 
 
@@ -3856,19 +3933,7 @@ add_action( 'save_post_portfolio', 'carmel_mirror_detail_fields', 35, 1 );
 function carmel_mirror_detail_fields( $post_id ) {
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) { return; }
 	if ( wp_is_post_revision( $post_id ) ) { return; }
-
-	$pairs = array(
-		'repair_history' => 'shuufuku', // 修復歴
-		'inspection'     => 'tenken',   // 法定点検（上部）
-	);
-	foreach ( $pairs as $src => $dst ) {
-		$v = get_post_meta( $post_id, $src, true );
-		if ( is_array( $v ) ) { $v = implode( '・', array_filter( $v ) ); }
-		$v = is_string( $v ) ? trim( $v ) : $v;
-		if ( '' === $v || null === $v ) { continue; }
-		update_post_meta( $post_id, $dst, $v );
-		if ( function_exists( 'update_field' ) ) { update_field( $dst, $v, $post_id ); }
-	}
+	carmel_mirror_detail_fields_one( $post_id );
 }
 
 
