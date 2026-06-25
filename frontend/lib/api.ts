@@ -79,6 +79,9 @@ export const api = {
   invoiceOverage: (month?: string) => request<any>('/api/billing/invoice-overage', { method: 'POST', body: JSON.stringify({ month }) }),
 
   // リード管理（運営・super_admin）
+  industryTemplates: () => request<any[]>('/api/industry-templates'),
+  applyTemplate: (key: string, opts: any = {}) => request<any>(`/api/industry-templates/${key}/apply`, { method: 'POST', body: JSON.stringify(opts) }),
+
   campaigns: () => request<any[]>('/api/campaigns'),
   campaign: (id: string) => request<any>(`/api/campaigns/${id}`),
   createCampaign: (body: any) => request<any>('/api/campaigns', { method: 'POST', body: JSON.stringify(body) }),

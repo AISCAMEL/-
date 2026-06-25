@@ -14,6 +14,7 @@ const tenantNav = [
   { href: '/usage', label: '利用状況・原価', icon: '💰' },
   { href: '/billing', label: 'お支払い', icon: '💳' },
   { href: '/faqs', label: 'FAQ管理', icon: '❓' },
+  { href: '/settings/template', label: '業種テンプレート', icon: '🏷️' },
   { href: '/settings/ai', label: 'AI設定', icon: '🤖' },
   { href: '/settings/notification', label: '通知設定', icon: '✉️' },
   { href: '/phone-numbers', label: '電話番号設定', icon: '☎️' },

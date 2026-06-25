@@ -8,6 +8,7 @@ import { sendWeeklyDigest } from '../notify/digest.js';
 import { getBillingStatus, createOverageInvoice } from '../billing/square.js';
 import * as outbound from '../outbound/repo.js';
 import { runCampaign } from '../outbound/caller.js';
+import { INDUSTRY_TEMPLATES, getTemplate } from '../templates/industry.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -403,6 +404,31 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
     await outbound.updateCampaign(p.tenantId, (req.params as any).id, { status: 'running' });
     return runCampaign(p.tenantId, (req.params as any).id);
+  });
+
+  // ---- 業種テンプレート ----
+  app.get('/api/industry-templates', { preHandler: authenticate }, async () =>
+    INDUSTRY_TEMPLATES.map((t) => ({ key: t.key, label: t.label, summary: t.summary, faq_count: t.faqs.length, campaign_count: t.campaigns.length })));
+
+  app.post('/api/industry-templates/:key/apply', { preHandler: requireRole(['owner', 'admin', 'super_admin']) }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const tpl = getTemplate((req.params as any).key);
+    if (!tpl) return reply.code(404).send({ error: 'template not found' });
+    const opts = (req.body ?? {}) as { faqs?: boolean; campaigns?: boolean; settings?: boolean };
+
+    if (opts.settings !== false) {
+      await q.updateSettings(p.tenantId, { greeting_message: tpl.greeting, ai_tone: tpl.ai_tone });
+      await q.updateTenant(p.tenantId, { industry: tpl.industry });
+    }
+    let faqs = 0, campaigns = 0;
+    if (opts.faqs !== false) {
+      for (const f of tpl.faqs) { await q.createFaq(p.tenantId, f); faqs++; }
+    }
+    if (opts.campaigns !== false) {
+      for (const c of tpl.campaigns) { await outbound.createCampaign(p.tenantId, c); campaigns++; }
+    }
+    return { ok: true, applied: { settings: opts.settings !== false, faqs, campaigns } };
   });
 
   // ---- super admin ----
