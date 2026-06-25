@@ -26,20 +26,40 @@ interface ChatMessage {
  */
 export async function chatJson<T>(messages: ChatMessage[], model?: string): Promise<T | null> {
   if (!client) return null;
+  const useModel = model ?? config.openai.model;
   try {
     const res = await client.chat.completions.create({
-      model: model ?? config.openai.model,
+      model: useModel,
       messages,
       temperature: 0.3,
       response_format: { type: 'json_object' },
     });
     const text = res.choices[0]?.message?.content;
     if (!text) return null;
-    return JSON.parse(text) as T;
+    return parseJsonLoose<T>(text);
   } catch (err) {
+    // 一部のOpenRouter無料モデル等は JSON モード(response_format)に非対応。
+    // その場合は response_format なしで再試行し、本文からJSONを抽出する。
+    try {
+      const res = await client.chat.completions.create({
+        model: useModel,
+        messages: [...messages, { role: 'system', content: '出力は必ず有効なJSONオブジェクトのみ。前後に説明文やコードブロックを付けない。' }],
+        temperature: 0.3,
+      });
+      const text = res.choices[0]?.message?.content;
+      if (text) { const v = parseJsonLoose<T>(text); if (v) return v; }
+    } catch { /* fallthrough */ }
     console.error('[llm] chatJson failed:', err);
     return null;
   }
+}
+
+/** モデルが ```json ... ``` で包んだり前後にテキストを付けても、JSON部分を取り出して解析する。 */
+function parseJsonLoose<T>(text: string): T | null {
+  try { return JSON.parse(text) as T; } catch { /* try extract */ }
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const candidate = fenced ? fenced[1] : text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1);
+  try { return JSON.parse(candidate) as T; } catch { return null; }
 }
 
 /** プレーンテキスト応答を返すチャット補完（チャットボット用）。未設定/失敗時は null。 */
