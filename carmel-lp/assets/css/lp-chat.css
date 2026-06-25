@@ -231,6 +231,87 @@
   }
 }
 
+/* ---- 担当者(有人)メッセージ ---- */
+.chat-msg--operator {
+  align-self: flex-start;
+  background: #fff7e6;
+  border: 1px solid #f0d9a8;
+  border-bottom-left-radius: 4px;
+}
+
+.chat-msg__who {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #b07d1a;
+  margin-bottom: 2px;
+}
+
+/* ---- システム的なお知らせ行 ---- */
+.chat-note {
+  align-self: center;
+  max-width: 92%;
+  text-align: center;
+  font-size: 0.76rem;
+  color: var(--color-text-muted);
+  background: var(--color-bg, #f3f4f6);
+  border-radius: var(--radius-md);
+  padding: 6px var(--space-md);
+}
+
+/* ---- 後日連絡フォーム ---- */
+.chat-callback {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  background: #fff;
+}
+
+.chat-callback__title {
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin: 0 0 2px;
+}
+
+.chat-callback__input {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm, 6px);
+  padding: 8px var(--space-sm);
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+
+.chat-callback__submit {
+  border: none;
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 700;
+  border-radius: var(--radius-pill);
+  padding: 8px var(--space-md);
+  cursor: pointer;
+}
+
+.chat-callback__submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.chat-suggestion--accent {
+  border-color: #b07d1a;
+  color: #b07d1a;
+  font-weight: 700;
+}
+
+.chat-suggestion--accent:hover {
+  background: #b07d1a;
+  color: #fff;
+}
+
 /* ---- 回答後の誘導CTA（LINE/電話） ---- */
 .chat-msg__cta {
   align-self: flex-start;

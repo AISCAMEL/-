@@ -82,6 +82,38 @@ export const CHAT_CONFIG = {
       error: 'chatbot_error',
       suggestionClick: 'chatbot_suggestion_click'
     }
+  },
+
+  // ---- 有人ハイブリッド対応（Slack連携） ----
+  // バックエンド(/api/handoff)が無効/時間外のときは自動的にAI＋LINE/電話へフォールバック。
+  handoff: {
+    entryLabel: '👤 担当者と話す',
+    pollIntervalMs: 2500, // 担当者返信の取得間隔
+    connectingMessage: '担当者におつなぎしています。少々お待ちください…',
+    connectedNote: '担当者につながりました。このままご相談ください。',
+    operatorName: '担当者',
+    // 営業時間外
+    offHoursMessage:
+      'ただいま営業時間外のため、担当者が不在です。LINE・お電話で受け付けております。後日のご連絡をご希望の場合は、以下からお知らせください。',
+    // 20秒応答なし（オペレーター不在）
+    unavailableMessage:
+      'ただいま担当者が立て込んでおり、すぐにお繋ぎできませんでした。お手数ですが、LINE・お電話でのご相談、または後日のご連絡をご利用ください。',
+    // 後日連絡フォーム
+    callback: {
+      title: '📋 後日ご連絡（無料）',
+      nameLabel: 'お名前',
+      contactLabel: 'ご連絡先（電話番号 / LINE）',
+      messageLabel: 'ご相談内容（任意）',
+      submitLabel: 'この内容で送信',
+      doneMessage: 'ありがとうございます。担当者より改めてご連絡いたします。'
+    },
+    events: {
+      start: 'handoff_start',
+      connected: 'handoff_connected',
+      unavailable: 'handoff_unavailable',
+      offHours: 'handoff_off_hours',
+      callbackSent: 'handoff_callback_sent'
+    }
   }
 };
 

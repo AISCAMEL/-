@@ -18,6 +18,7 @@ const fs = require('fs');
 const path = require('path');
 const { streamChat } = require('./lib/carmel-bot');
 const { appendLog } = require('./lib/chat-log');
+const handoff = require('./lib/handoff');
 
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
@@ -71,6 +72,91 @@ async function handleChat(req, res) {
   });
 }
 
+function readBody(req) {
+  return new Promise((resolve) => {
+    let raw = '';
+    req.on('data', (c) => {
+      raw += c;
+      if (raw.length > 1e6) req.destroy();
+    });
+    req.on('end', () => {
+      try {
+        resolve(JSON.parse(raw || '{}'));
+      } catch (_e) {
+        resolve({});
+      }
+    });
+    req.on('error', () => resolve({}));
+  });
+}
+
+function sendJson(res, code, obj) {
+  res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8' });
+  res.end(JSON.stringify(obj));
+}
+
+/**
+ * 有人ハイブリッド対応(Slack連携)のエンドポイント群。
+ *   GET  /api/handoff/status            -> { enabled, withinHours, timeoutMs }
+ *   POST /api/handoff/start  {question} -> { sessionId, timeoutMs } | { available:false, reason }
+ *   POST /api/handoff/send   {sessionId,text}
+ *   GET  /api/handoff/poll?sessionId=   -> { messages:[{ts,text}] }
+ *   POST /api/handoff/callback {name,contact,message}
+ *   POST /api/handoff/end    {sessionId}
+ */
+async function handleHandoff(req, res) {
+  const url = new URL(req.url, 'http://localhost');
+  const op = url.pathname.replace('/api/handoff/', '').replace('/api/handoff', '');
+
+  try {
+    if (op === 'status') {
+      return sendJson(res, 200, {
+        enabled: handoff.isEnabled(),
+        withinHours: handoff.isWithinBusinessHours(),
+        timeoutMs: handoff.config().timeoutMs
+      });
+    }
+
+    if (op === 'poll') {
+      const sessionId = url.searchParams.get('sessionId');
+      const out = await handoff.pollOperator(sessionId);
+      return sendJson(res, 200, out);
+    }
+
+    // 以降は POST
+    const body = await readBody(req);
+
+    if (op === 'start') {
+      if (!handoff.isEnabled() || !handoff.isWithinBusinessHours()) {
+        return sendJson(res, 200, {
+          available: false,
+          reason: !handoff.isEnabled() ? 'disabled' : 'off-hours'
+        });
+      }
+      const out = await handoff.startHandoff(body.question);
+      return sendJson(res, 200, { available: true, ...out });
+    }
+
+    if (op === 'send') {
+      const out = await handoff.sendUserMessage(body.sessionId, body.text);
+      return sendJson(res, 200, out);
+    }
+
+    if (op === 'callback') {
+      const out = await handoff.requestCallback(body);
+      return sendJson(res, 200, out);
+    }
+
+    if (op === 'end') {
+      return sendJson(res, 200, handoff.endHandoff(body.sessionId));
+    }
+
+    return sendJson(res, 404, { error: 'unknown handoff op' });
+  } catch (err) {
+    return sendJson(res, 500, { error: (err && err.message) || 'handoff failed' });
+  }
+}
+
 function serveStatic(req, res) {
   let urlPath = decodeURIComponent(req.url.split('?')[0]);
   if (urlPath === '/') urlPath = '/index.html';
@@ -97,6 +183,10 @@ function serveStatic(req, res) {
 const server = http.createServer((req, res) => {
   if (req.method === 'POST' && req.url.startsWith('/api/chat')) {
     handleChat(req, res);
+    return;
+  }
+  if (req.url.startsWith('/api/handoff')) {
+    handleHandoff(req, res);
     return;
   }
   serveStatic(req, res);

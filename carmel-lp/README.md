@@ -108,3 +108,41 @@ CHAT_LOG=1 OPENROUTER_API_KEY=sk-or-... npm start
 - 運用イメージ: ログを見て、答えが弱かった質問を `knowledge.csv` に1行追加 → AIが賢くなる。
 - サーバーレス(Vercel等)はファイルが揮発するため、永続保存するなら `CHAT_LOG_DIR` に
   永続ボリュームを指定するか、ログ基盤への連携を別途検討してください。
+
+## 有人ハイブリッド対応（任意 / Slack連携）
+
+営業時間内はお客様の相談を **Slack に通知**し、担当者がSlackで返信するとその内容が
+チャット画面に届く——という有人対応を組み込めます。
+
+```
+お客様 ──質問──▶ Webチャット
+        営業時間内 & Slack設定あり?
+   ┌──────┴───────┐
+  Yes            No / 時間外
+   │               │
+ Slackへ通知     AIが回答（従来）
+ 担当者がSlackで返信 ──▶ チャットに「担当者」メッセージとして表示
+   │
+ 20秒応答なし ──▶「担当者不在」案内＋LINE/電話＋後日連絡フォーム
+```
+
+- **Slack未設定/営業時間外なら自動的にAI＋LINE/電話へフォールバック**するため、
+  設定しなくてもLPは通常どおり動作します（段階導入が可能）。
+- 設定する環境変数は `.env.example` の「有人ハイブリッド対応」の項を参照。
+  - `SLACK_BOT_TOKEN`（`chat:write` と `channels:history`／`groups:history` 権限）
+  - `SLACK_CHANNEL`（通知先チャンネルID）
+  - 営業時間: `BUSINESS_HOURS_START` / `BUSINESS_HOURS_END` / `BUSINESS_TZ_OFFSET` / `BUSINESS_DAYS`
+  - 未応答タイムアウト: `HANDOFF_TIMEOUT_MS`（既定20000=20秒）
+- Slack側準備: Slackアプリを作成しBotを対象チャンネルに招待 → Botトークンを設定。
+- エンドポイント: `/api/handoff/{status,start,send,poll,callback,end}`（`server.js`）。
+- 注意: セッションはメモリ保持のためNodeサーバー(`server.js`)前提。
+  サーバーレスで使う場合は外部ストア(Redis等)への置き換えが必要です。
+
+## テスト
+
+```bash
+npm test   # 実APIキー/実Slackトークン不要。モックで全フローを検証
+```
+
+- `tests/e2e/run.js` … AI応答（ストリーミング/ナレッジ注入/フォールバック/ログ）
+- `tests/e2e/handoff.test.js` … 有人対応（営業時間/Slack通知/担当者返信/後日連絡）
