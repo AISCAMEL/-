@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（基本情報・装備・見積もり・担当店舗・複数画像・全体図確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 1.7.0
+ * Version: 1.8.0
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -1899,15 +1899,34 @@ function carmel_step_ui_acf_bridge() {
 				setTitle();
 			} );
 
-			/* ★排気量：入力欄から離れたら（blur）区切りの良い表記へ自動補正
-			   例: 2360cc → 2400cc。見た目の欄も書き換えてACFへ反映する。 */
-			$( document ).on( 'change', '#cs_displacement', function () {
-				var nm = normalizeCC( this.value );
-				if ( nm && nm !== this.value ) {
-					this.value = nm;
+			/* ★排気量：手入力でも「型式検索の自動入力」でも区切りの良い表記へ補正。
+			   例: 2360cc → 2400cc。
+			   自動入力は change を発火しないため、blur検知だけでは効かない。
+			   そこで値の変化を見張って補正する（プログラム代入も確実に拾う）。 */
+			function applyCCNormalize() {
+				var el = document.getElementById( 'cs_displacement' );
+				if ( ! el ) { return false; }
+				var nm = normalizeCC( el.value );
+				if ( nm && nm !== el.value ) {
+					el.value = nm;
+					syncBasic();
+					return true;
 				}
-				syncBasic();
-			} );
+				return false;
+			}
+			// blur（手入力確定）で補正
+			$( document ).on( 'change', '#cs_displacement', applyCCNormalize );
+			// 値の変化を監視（型式検索などの自動入力に対応）
+			( function watchCC() {
+				var el = document.getElementById( 'cs_displacement' );
+				if ( ! el ) { setTimeout( watchCC, 800 ); return; }
+				var last = el.value;
+				setInterval( function () {
+					if ( el.value === last ) { return; }
+					last = el.value;
+					if ( applyCCNormalize() ) { last = el.value; }
+				}, 600 );
+			} )();
 
 		} );
 
