@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（プラグイン内蔵の新ステップUI／基本情報・装備・見積もり・担当店舗・複数画像・内容確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 2.3.0
+ * Version: 2.4.0
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -2098,6 +2098,7 @@ function carmel_step3_estimate() {
 	if ( ! $screen || $screen->post_type !== 'portfolio' ) {
 		return;
 	}
+	$fee_settings = function_exists( 'carmel_get_fee_settings' ) ? carmel_get_fee_settings() : array();
 	?>
 	<style>
 	/* 「見積もり明細」ACFボックスを非表示（入力はDOMに残るので保存はされる） */
@@ -2114,10 +2115,19 @@ function carmel_step3_estimate() {
 		background:#fff7e6; border-top:2px solid #f0c36d; border-radius:0 0 8px 8px; }
 	#cs-est .cs-est-total b { font-size:20px; color:#c0392b; }
 	#cs-est .cs-est-note { padding:2px 14px 10px; font-size:11px; color:#888; }
+	#cs-est .cs-est-kind { display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+		padding:8px 14px; background:#eef4ff; border-bottom:1px solid #d9e3f5; font-size:13px; }
+	#cs-est .cs-est-kind label { cursor:pointer; font-weight:600; color:#1f2d3d; }
+	#cs-est .cs-est-kind #cs-est-autofee { margin-left:auto; padding:6px 14px; border:0;
+		border-radius:6px; background:#1d7a46; color:#fff; font-weight:700; cursor:pointer; font-size:12px; }
+	#cs-est .cs-est-kind #cs-est-autofee:hover { filter:brightness(1.08); }
 	</style>
 	<script>
 	(function ($) {
 		'use strict';
+
+		// 諸経費設定（普通車 futsu / 軽 kei）。「諸経費を自動入力」で使用。
+		var FEE = <?php echo wp_json_encode( $fee_settings ); ?>;
 
 		// 入力項目（cs_est_<key> → ACF data-name est_<key>）
 		var IN = [
@@ -2251,6 +2261,13 @@ function carmel_step3_estimate() {
 			return '<div id="cs-est">'+
 				'<div class="cs-est-h">📝 見積もり明細</div>'+
 
+				'<div class="cs-est-kind">'+
+					'<span>車種区分：</span>'+
+					'<label><input type="radio" name="cs-est-kind" value="futsu" checked> 普通車</label>'+
+					'<label><input type="radio" name="cs-est-kind" value="kei"> 軽自動車</label>'+
+					'<button type="button" id="cs-est-autofee">諸経費を自動入力</button>'+
+				'</div>'+
+
 				'<div class="cs-est-grp">車両</div>'+
 				row('honntai','車両本体価格')+
 				row('nebiki','値引き')+
@@ -2290,6 +2307,28 @@ function carmel_step3_estimate() {
 			'</div>';
 		}
 
+		// 排気量から普通車/軽を自動判定（660cc以下＝軽）
+		function detectKind(){
+			var d = parseInt(String($('#cs_displacement').val()||'').replace(/[^0-9]/g,''),10) || 0;
+			var kind = (d > 0 && d <= 660) ? 'kei' : 'futsu';
+			$('input[name=cs-est-kind][value="'+kind+'"]').prop('checked', true);
+		}
+
+		// 諸経費設定（普通車/軽）から該当行へ自動入力（あとから手編集可）
+		function autoFees(){
+			var kind = $('input[name=cs-est-kind]:checked').val() || 'futsu';
+			var f = (FEE && FEE[kind]) ? FEE[kind] : {};
+			function num(v){ var x = parseInt(String(v==null?0:v).replace(/[^0-9]/g,''),10); return isNaN(x)?0:x; }
+			function set(id, val){ var el = document.getElementById('cs_est_'+id); if (el) el.value = val; }
+			set('seibi',         num(f.shaken_seibi));                       // 点検整備費用
+			set('nousha',        num(f.nousha));                            // 納車費用
+			set('touroku_daiko', num(f.kensa_daiko));                       // 登録代行費用
+			set('shako',         num(f.shako_daiko));                       // 車庫証明代行
+			set('inshi',         num(f.kensa_touroku) + num(f.shako_inshi)); // 登録時印紙代（検査登録＋車庫証明）
+			set('hoshou',        num(f.hoshou_hiyou));                      // 保証料
+			calc();
+		}
+
 		$(function(){
 			var ui = document.getElementById('carmel_step_ui');
 			if (!ui) return;
@@ -2309,9 +2348,12 @@ function carmel_step3_estimate() {
 			}
 
 			prefill();
+			detectKind();
 			calc();
 
 			$(document).on('input change', '#cs-est input', calc);
+			$(document).on('click', '#cs-est-autofee', autoFees);
+			$(document).on('change', '#cs_displacement', detectKind);
 			// 保存直前にも再計算（取りこぼし防止）
 			$('#post').on('submit', calc);
 		});
@@ -3414,6 +3456,31 @@ function carmel_get_gallery_ids( $post_id ) {
 
 	// 3) 独自指定（必要なら add_filter で）
 	return (array) apply_filters( 'carmel_gallery_ids', array(), $post_id );
+}
+
+
+/* ===================== title-year.php（タイトルの年式に「年」を自動付与） ===================== */
+
+/**
+ * 在庫(portfolio)タイトルの自動反映時、年式の4桁西暦に「年」を自動付与する。
+ * 例 : 「信用回復ローン 三菱 デリカD:5 G 2012 65,000km CM-0175」
+ *      →「… デリカD:5 G 2012年 65,000km CM-0175」
+ *
+ * - 1900〜2099 の単独4桁のみ対象（前後が数字でない場合）。
+ * - 走行距離「65,000km」やコード「CM-0175」等は対象外（先頭0や桁数で除外）。
+ * - 既に「年」が付いている場合は二重付与しない。
+ * - 保存直前の最終データに適用するため、他のタイトル自動生成より後に効く。
+ */
+add_filter( 'wp_insert_post_data', 'carmel_title_add_year_suffix', 999, 2 );
+function carmel_title_add_year_suffix( $data, $postarr ) {
+	if ( ! isset( $data['post_type'] ) || 'portfolio' !== $data['post_type'] ) { return $data; }
+	if ( empty( $data['post_title'] ) ) { return $data; }
+	$title = $data['post_title'];
+	$new   = preg_replace( '/(?<![0-9])(19\d{2}|20\d{2})(?!年)(?![0-9])/u', '$1年', $title );
+	if ( $new && $new !== $title ) {
+		$data['post_title'] = $new;
+	}
+	return $data;
 }
 
 
