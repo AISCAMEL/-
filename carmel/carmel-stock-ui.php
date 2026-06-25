@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（プラグイン内蔵の新ステップUI／基本情報・装備・見積もり・担当店舗・複数画像・内容確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 2.0.0
+ * Version: 2.1.0
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -3327,11 +3327,14 @@ function carmel_get_gallery_ids( $post_id ) {
  * 【重要】旧フォーム描画スニペット（外部の #carmel_step_ui を出すもの）は必ずOFFに。
  *         ONのままだと #carmel_step_ui が二重になり誤作動します。
  *
- * 切替 : 一時的に旧へ戻したい時は wp-config.php 等で
- *        define('CARMEL_NEW_STEP_UI', false); にすると新UIを描画しません。
+ * 切替 : 既定では描画しません（旧フォームの「型式から自動入力」を主に使うため）。
+ *        新UIを使いたい時だけ wp-config.php 等で
+ *        define('CARMEL_NEW_STEP_UI', true); を追加してください。
+ *        ※ 新UIをONにする場合は、旧フォーム描画スニペットを必ずOFFに
+ *          （#carmel_step_ui の二重化防止）。
  * ---------------------------------------------------------------------------
  */
-if ( ! defined( 'CARMEL_NEW_STEP_UI' ) ) { define( 'CARMEL_NEW_STEP_UI', true ); }
+if ( ! defined( 'CARMEL_NEW_STEP_UI' ) ) { define( 'CARMEL_NEW_STEP_UI', false ); }
 
 add_action( 'edit_form_after_title', 'carmel_new_step_ui_render' );
 function carmel_new_step_ui_render( $post ) {
