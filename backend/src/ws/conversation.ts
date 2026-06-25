@@ -5,7 +5,7 @@ import { ConversationOrchestrator } from '../ai/orchestrator.js';
 import { putSession, getSession } from '../twilio/sessionStore.js';
 import { resolveTenantByPhone, createCall, saveTranscriptLine } from '../db/index.js';
 import { getTenantAiContext } from '../db/queries.js';
-import { getCampaignById } from '../outbound/repo.js';
+import { getCampaignById, getTargetByPhone } from '../outbound/repo.js';
 import type { TenantContext } from '../types.js';
 
 // Twilio Conversation Relay から届くメッセージ種別（主要なもの）。
@@ -59,7 +59,18 @@ export async function registerConversationWs(app: FastifyInstance): Promise<void
             const campaign = await getCampaignById(campaignId).catch(() => null);
             const tId = campaign?.tenant_id ?? config.demoTenantId;
             tenant = await getTenantAiContext(tId).catch(() => demoContext());
-            outbound = { purpose: campaign?.purpose ?? 'sales', goal: campaign?.goal_prompt ?? '' };
+            // 相手（架電先=to）を特定し、入金案内なら金額・期日を文脈に追加。
+            const target = await getTargetByPhone(campaignId, to).catch(() => null);
+            let goal = campaign?.goal_prompt ?? '';
+            if (target) {
+              const bits: string[] = [];
+              if (target.name) bits.push(`相手のお名前: ${target.name}`);
+              if (target.company) bits.push(`会社: ${target.company}`);
+              if (target.amount != null) bits.push(`未収金額: ${target.amount}円`);
+              if (target.due_date) bits.push(`お支払期日: ${target.due_date}`);
+              if (bits.length) goal += `\n# 今回の相手の情報\n${bits.join('、')}`;
+            }
+            outbound = { purpose: campaign?.purpose ?? 'sales', goal };
           } else {
             tenant = (await resolveTenantByPhone(to).catch(() => null)) ?? demoContext();
           }

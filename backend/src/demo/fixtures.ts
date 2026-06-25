@@ -150,7 +150,8 @@ export interface DemoCampaign {
 }
 export interface DemoTarget {
   id: string; campaign_id: string; tenant_id: string; name: string | null; company: string | null;
-  phone_number: string; status: string; outcome: string | null; note: string | null; created_at: string;
+  phone_number: string; status: string; outcome: string | null; note: string | null;
+  amount: number | null; due_date: string | null; created_at: string;
 }
 
 export const demoCampaigns: DemoCampaign[] = [
@@ -162,8 +163,8 @@ export const demoCampaigns: DemoCampaign[] = [
   },
 ];
 export const demoTargets: DemoTarget[] = [
-  { id: 'tgt-1', campaign_id: 'camp-1', tenant_id: TENANT, name: '田中様', company: '田中商店', phone_number: '+819012340001', status: 'pending', outcome: null, note: null, created_at: iso(-60 * 24) },
-  { id: 'tgt-2', campaign_id: 'camp-1', tenant_id: TENANT, name: '鈴木様', company: null, phone_number: '+819012340002', status: 'pending', outcome: null, note: null, created_at: iso(-60 * 24) },
+  { id: 'tgt-1', campaign_id: 'camp-1', tenant_id: TENANT, name: '田中様', company: '田中商店', phone_number: '+819012340001', status: 'pending', outcome: null, note: null, amount: null, due_date: null, created_at: iso(-60 * 24) },
+  { id: 'tgt-2', campaign_id: 'camp-1', tenant_id: TENANT, name: '鈴木様', company: null, phone_number: '+819012340002', status: 'pending', outcome: null, note: null, amount: null, due_date: null, created_at: iso(-60 * 24) },
 ];
 
 export interface DemoNotification {

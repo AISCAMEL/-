@@ -543,3 +543,7 @@ do $$ declare t text; begin
     execute format('create policy tenant_isolation on %I using (is_super_admin() or tenant_id = current_tenant_id()) with check (is_super_admin() or tenant_id = current_tenant_id());', t);
   end loop;
 end $$;
+
+-- 入金案内用：対象ごとの未収金額・支払期日（任意）
+alter table outbound_targets add column if not exists amount numeric(12,0);
+alter table outbound_targets add column if not exists due_date date;

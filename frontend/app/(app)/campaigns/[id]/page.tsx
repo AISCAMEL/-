@@ -28,12 +28,15 @@ export default function CampaignDetailPage() {
 
   async function addTargets(e: React.FormEvent) {
     e.preventDefault();
-    // 1行=「名前,会社,電話番号」 or 「電話番号」だけでも可
+    // 1行：電話番号 / 名前,電話番号 / 名前,会社,電話番号[,金額][,期日]
     const targets = bulk.split('\n').map((line) => line.trim()).filter(Boolean).map((line) => {
-      const parts = line.split(/[,\t]/).map((s) => s.trim());
-      if (parts.length >= 3) return { name: parts[0], company: parts[1], phone_number: parts[2] };
-      if (parts.length === 2) return { name: parts[0], phone_number: parts[1] };
-      return { phone_number: parts[0] };
+      const p = line.split(/[,\t]/).map((s) => s.trim());
+      const num = (v?: string) => (v && /^\d+$/.test(v.replace(/[,，円]/g, '')) ? Number(v.replace(/[,，円]/g, '')) : null);
+      if (p.length === 1) return { phone_number: p[0] };
+      if (p.length === 2) return { name: p[0], phone_number: p[1] };
+      if (p.length === 3) return { name: p[0], company: p[1], phone_number: p[2] };
+      if (p.length === 4) return { name: p[0], company: p[1], phone_number: p[2], amount: num(p[3]) };
+      return { name: p[0], company: p[1], phone_number: p[2], amount: num(p[3]), due_date: p[4] || null };
     });
     await api.addTargets(id, targets);
     setBulk('');
@@ -79,10 +82,11 @@ export default function CampaignDetailPage() {
       </Card>
 
       <Card className="mb-6">
-        <h2 className="mb-2 text-sm font-semibold text-gray-500">対象を追加（1行ずつ：名前,会社,電話番号 ／ 電話番号だけでも可）</h2>
+        <h2 className="mb-2 text-sm font-semibold text-gray-500">対象を追加</h2>
+        <p className="mb-2 text-xs text-gray-400">1行ずつ：<code>電話番号</code> / <code>名前,電話番号</code> / <code>名前,会社,電話番号,金額,期日</code>（入金案内は金額・期日も）</p>
         <form onSubmit={addTargets} className="space-y-2">
           <textarea value={bulk} onChange={(e) => setBulk(e.target.value)} rows={4}
-            placeholder={'田中様,田中商店,+819012340001\n鈴木様,,+819012340002\n+819012340003'}
+            placeholder={'田中様,田中商店,+819012340001,12000,2026-06-30\n鈴木様,,+819012340002\n+819012340003'}
             className="w-full rounded-lg border px-3 py-2 font-mono text-sm" />
           <button className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark">追加</button>
         </form>
@@ -91,14 +95,15 @@ export default function CampaignDetailPage() {
       <Card className="p-0">
         <table className="w-full text-sm">
           <thead className="border-b text-left text-xs text-gray-500">
-            <tr><th className="px-4 py-3">名前 / 会社</th><th className="px-4 py-3">電話番号</th><th className="px-4 py-3">状態</th><th className="px-4 py-3">結果</th></tr>
+            <tr><th className="px-4 py-3">名前 / 会社</th><th className="px-4 py-3">電話番号</th><th className="px-4 py-3">金額/期日</th><th className="px-4 py-3">状態</th><th className="px-4 py-3">結果</th></tr>
           </thead>
           <tbody>
-            {(c.targets ?? []).length === 0 && <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-400">対象がありません。</td></tr>}
+            {(c.targets ?? []).length === 0 && <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-400">対象がありません。</td></tr>}
             {(c.targets ?? []).map((t: any) => (
               <tr key={t.id} className="border-b last:border-0">
                 <td className="px-4 py-3">{t.name ?? '—'}{t.company ? ` / ${t.company}` : ''}</td>
                 <td className="px-4 py-3 text-gray-600">{t.phone_number}</td>
+                <td className="px-4 py-3 text-gray-600">{t.amount != null ? `¥${Number(t.amount).toLocaleString()}` : '—'}{t.due_date ? ` / ${String(t.due_date).slice(0, 10)}` : ''}</td>
                 <td className="px-4 py-3"><span className={`rounded-full px-2 py-0.5 text-xs ${TS_COLOR[t.status] ?? 'bg-gray-100'}`}>{TS_LABEL[t.status] ?? t.status}</span></td>
                 <td className="px-4 py-3 text-gray-600">{t.outcome ?? '—'}</td>
               </tr>

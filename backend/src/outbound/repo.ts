@@ -55,22 +55,30 @@ export async function updateCampaign(tenantId: string, id: string, patch: any) {
   return row ?? null;
 }
 
-export async function addTargets(tenantId: string, campaignId: string, targets: { name?: string; company?: string; phone_number: string }[]) {
+export async function addTargets(tenantId: string, campaignId: string, targets: { name?: string; company?: string; phone_number: string; amount?: number | null; due_date?: string | null }[]) {
   const clean = targets.filter((t) => t.phone_number && String(t.phone_number).trim());
   if (!dbEnabled) {
-    const created = clean.map((t) => ({ id: newId('tgt'), campaign_id: campaignId, tenant_id: tenantId, name: t.name ?? null, company: t.company ?? null, phone_number: String(t.phone_number).trim(), status: 'pending', outcome: null, note: null, created_at: new Date().toISOString() }));
+    const created = clean.map((t) => ({ id: newId('tgt'), campaign_id: campaignId, tenant_id: tenantId, name: t.name ?? null, company: t.company ?? null, phone_number: String(t.phone_number).trim(), status: 'pending', outcome: null, note: null, amount: t.amount ?? null, due_date: t.due_date ?? null, created_at: new Date().toISOString() }));
     demoTargets.push(...created);
     return created;
   }
   const out: any[] = [];
   for (const t of clean) {
     const [row] = await query<any>(
-      `insert into outbound_targets (campaign_id, tenant_id, name, company, phone_number)
-       values ($1,$2,$3,$4,$5) returning *`,
-      [campaignId, tenantId, t.name ?? null, t.company ?? null, String(t.phone_number).trim()]);
+      `insert into outbound_targets (campaign_id, tenant_id, name, company, phone_number, amount, due_date)
+       values ($1,$2,$3,$4,$5,$6,$7) returning *`,
+      [campaignId, tenantId, t.name ?? null, t.company ?? null, String(t.phone_number).trim(), t.amount ?? null, t.due_date ?? null]);
     out.push(row);
   }
   return out;
+}
+
+// 架電時に相手を特定して個別案内するための検索（Webhook内部用）。
+export async function getTargetByPhone(campaignId: string, phone: string) {
+  if (!phone) return null;
+  if (!dbEnabled) return demoTargets.find((t) => t.campaign_id === campaignId && t.phone_number === phone) ?? null;
+  const [row] = await query<any>(`select * from outbound_targets where campaign_id=$1 and phone_number=$2 limit 1`, [campaignId, phone]);
+  return row ?? null;
 }
 
 export async function updateTarget(tenantId: string, id: string, patch: { status?: string; outcome?: string; note?: string }) {
