@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（プラグイン内蔵の新ステップUI／基本情報・装備・見積もり・担当店舗・複数画像・内容確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 2.13.0
+ * Version: 2.13.1
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -4105,6 +4105,18 @@ function carmel_detail_style() {
 	.carmel-monthly{display:inline-flex;align-items:baseline;gap:4px;color:#2cac44;font-weight:800;}
 	.carmel-monthly b{font-size:1.6em;}
 	.carmel-monthly__pre{font-size:.85em;color:#6b7280;font-weight:600;}
+
+	/* --- 詳細ページ（テーマ）の余白・バランス調整 --- */
+	/* 基本情報テーブルを全幅で左右バランス良く */
+	.p-single-sec2__table{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start;}
+	.p-single-sec2__table > div{flex:1 1 320px;min-width:0;}
+	.c-table01{width:100% !important;border-collapse:collapse;}
+	.c-table01 th{white-space:nowrap;}
+	@media(max-width:640px){.p-single-sec2__table{gap:0;}.p-single-sec2__table > div{flex:1 1 100%;}}
+	/* 黒枠セクション内の中身を広げ、上下の余白を詰める */
+	body.single-portfolio .wpb_text_column,
+	body.single-portfolio .vc_column-inner{max-width:100% !important;}
+	body.single-portfolio .vc_section[class*="vc_custom_"]{padding-top:20px !important;padding-bottom:20px !important;}
 	</style>
 	<?php
 }
