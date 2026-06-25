@@ -2,10 +2,19 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（プラグイン内蔵の新ステップUI／基本情報・装備・見積もり・担当店舗・複数画像・内容確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 2.1.0
+ * Version: 2.2.0
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
+
+/**
+ * テーマ内蔵の「車両入力 STEP UI（型式から自動入力つき）」を主役にするモード。
+ * true の間、プラグインは見積もり/画像/確認/店舗パネルを差し込まず（重複防止）、
+ * ACF反映・画面整理・フロント表示などの裏方支援だけを行う。
+ * 旧来のプラグイン側パネルを使いたい時だけ false にする。
+ */
+if ( ! defined( 'CARMEL_DEFER_TO_THEME_FORM' ) ) { define( 'CARMEL_DEFER_TO_THEME_FORM', true ); }
+
 add_action( 'acf/init', 'carmel_register_local_field_groups' );
 function carmel_register_local_field_groups() {
 	if ( ! function_exists( 'acf_add_local_field_group' ) ) { return; }
@@ -2076,6 +2085,7 @@ add_action( 'admin_footer-post.php',     'carmel_step3_estimate' );
 add_action( 'admin_footer-post-new.php', 'carmel_step3_estimate' );
 
 function carmel_step3_estimate() {
+	if ( CARMEL_DEFER_TO_THEME_FORM ) { return; } // テーマの見積もりを使う
 	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 	if ( ! $screen || $screen->post_type !== 'portfolio' ) {
 		return;
@@ -2301,6 +2311,7 @@ add_action( 'admin_footer-post.php',     'carmel_kaisuu_fix' );
 add_action( 'admin_footer-post-new.php', 'carmel_kaisuu_fix' );
 
 function carmel_kaisuu_fix() {
+	if ( CARMEL_DEFER_TO_THEME_FORM ) { return; } // テーマの見積もりを使う
 	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 	if ( ! $screen || $screen->post_type !== 'portfolio' ) {
 		return;
@@ -2391,6 +2402,7 @@ add_action( 'admin_footer-post.php',     'carmel_step4_shop_bridge' );
 add_action( 'admin_footer-post-new.php', 'carmel_step4_shop_bridge' );
 
 function carmel_step4_shop_bridge() {
+	if ( CARMEL_DEFER_TO_THEME_FORM ) { return; } // テーマの担当店舗を使う
 	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 	if ( ! $screen || $screen->post_type !== 'portfolio' ) {
 		return;
@@ -2567,6 +2579,7 @@ function carmel_step5_enqueue( $hook ) {
 add_action( 'admin_footer-post.php',     'carmel_step5_gallery' );
 add_action( 'admin_footer-post-new.php', 'carmel_step5_gallery' );
 function carmel_step5_gallery() {
+	if ( CARMEL_DEFER_TO_THEME_FORM ) { return; } // テーマの画像機能を使う
 	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 	if ( ! $screen || $screen->post_type !== 'portfolio' ) { return; }
 
@@ -2754,6 +2767,7 @@ function carmel_gallery_style() {
 add_action( 'admin_footer-post.php',     'carmel_step6_review' );
 add_action( 'admin_footer-post-new.php', 'carmel_step6_review' );
 function carmel_step6_review() {
+	if ( CARMEL_DEFER_TO_THEME_FORM ) { return; } // テーマの最終確認を使う
 	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 	if ( ! $screen || $screen->post_type !== 'portfolio' ) { return; }
 	?>
@@ -2894,6 +2908,7 @@ function carmel_tidy_admin() {
 	if ( ! $screen || $screen->post_type !== 'portfolio' ) {
 		return;
 	}
+	$new_ui = defined( 'CARMEL_NEW_STEP_UI' ) && CARMEL_NEW_STEP_UI;
 	?>
 	<style>
 	/* ============================================================
@@ -2909,6 +2924,17 @@ function carmel_tidy_admin() {
 	#trackbacksdiv, #postexcerpt, #revisionsdiv, #formatdiv,
 	#tagsdiv-post_tag, #authordiv { display:none !important; }
 
+	/* --- 7) 折りたたみ保存先ボックスは控えめに --- */
+	#acf-group_65ccb2f7bc7b0 .postbox-header,
+	#acf-group_65ccb275da4af .postbox-header,
+	#acf-group_65ccb37dee5a8 .postbox-header,
+	#acf-group_65ccb40340cec .postbox-header,
+	#acf-group_65cc94fadb356 .postbox-header,
+	#acf-group_65ccb11906c02 .postbox-header { background:#f7f9fc; }
+	</style>
+	<?php if ( $new_ui ) : ?>
+	<style>
+	/* === 以下はプラグイン内蔵の新フォーム用の装飾。テーマのフォーム使用時は適用しない === */
 	/* --- 3) STEP UI 本体をカード化して主役に --- */
 	#carmel_step_ui {
 		background:#fff;
@@ -2988,15 +3014,8 @@ function carmel_tidy_admin() {
 	/* --- 6) 装備チェックを読みやすく（折り返し・余白） --- */
 	#carmel_step_ui input[type="checkbox"] + label,
 	#carmel_step_ui label > input[type="checkbox"] { margin-right:6px; }
-
-	/* --- 7) 折りたたみ保存先ボックスは控えめに（クリックで開ける案内） --- */
-	#acf-group_65ccb2f7bc7b0 .postbox-header,
-	#acf-group_65ccb275da4af .postbox-header,
-	#acf-group_65ccb37dee5a8 .postbox-header,
-	#acf-group_65ccb40340cec .postbox-header,
-	#acf-group_65cc94fadb356 .postbox-header,
-	#acf-group_65ccb11906c02 .postbox-header { background:#f7f9fc; }
 	</style>
+	<?php endif; ?>
 	<script>
 	(function ($) {
 		'use strict';
@@ -3019,8 +3038,9 @@ function carmel_tidy_admin() {
 				if ( el ) { el.classList.add( 'closed' ); }
 			} );
 
-			// STEP UI の上に見出し帯を一度だけ差し込む
-			if ( ! ui.querySelector( '.cs-ui-head' ) && ! document.getElementById( 'cs-ui-head-injected' ) ) {
+			// STEP UI の上に見出し帯を一度だけ差し込む（新フォーム使用時のみ）
+			var injectHead = <?php echo $new_ui ? 'true' : 'false'; ?>;
+			if ( injectHead && ! ui.querySelector( '.cs-ui-head' ) && ! document.getElementById( 'cs-ui-head-injected' ) ) {
 				var head = document.createElement( 'div' );
 				head.className = 'cs-ui-head';
 				head.id = 'cs-ui-head-injected';
