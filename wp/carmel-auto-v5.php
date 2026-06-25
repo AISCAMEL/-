@@ -207,7 +207,8 @@ function carmel_auto_run() {
     // CTAボタンのURLが壊れていれば /contact/ に自動修正
     $cta_msg = '';
     if (!empty($s['fix_cta']) && $post_id) {
-        $cta_msg = ' | CTA: ' . carmel_auto_fix_cta($post_id, $s);
+        $cta_n = carmel_auto_fix_cta($post_id, $s);
+        $cta_msg = ' | CTA: ' . ($cta_n > 0 ? "{$cta_n}箇所修正" : '修正不要');
     }
 
     $img_msg = '';
@@ -498,6 +499,8 @@ function carmel_auto_get_acf_value($post_id, $field_key, $field_name) {
 function carmel_auto_set_acf_value($post_id, $field_key, $field_name, $value) {
     if (function_exists('update_field')) {
         update_field($field_key, $value, $post_id);
+        // ACFが未登録のページでも値が残るよう、名前でも保存（同値なので安全）
+        update_post_meta($post_id, $field_name, $value);
     } else {
         update_post_meta($post_id, $field_name, $value);
         update_post_meta($post_id, '_' . $field_name, $field_key);
@@ -525,7 +528,37 @@ function carmel_auto_fix_cta($post_id, $s) {
             $fixed++;
         }
     }
-    return $fixed > 0 ? "{$fixed}件を{$contact}に修正" : '修正不要';
+    return $fixed; // 直した箇所の数（0なら修正不要）
+}
+
+// 既存の全ページ（記事・固定ページ・投稿）のCTAをまとめてチェック＆修正
+function carmel_auto_fix_cta_bulk($s) {
+    @set_time_limit(300);
+    $ids = get_posts(array(
+        'post_type'      => array('media_article', 'page', 'post'),
+        'post_status'    => 'any',
+        'posts_per_page' => 3000,
+        'fields'         => 'ids',
+        'no_found_rows'  => true,
+        'meta_query'     => array(
+            'relation' => 'OR',
+            array('key' => 'main_cta_url',   'compare' => 'EXISTS'),
+            array('key' => 'cta_button_url', 'compare' => 'EXISTS'),
+        ),
+    ));
+
+    $checked = 0;
+    $posts_fixed = 0;
+    $fields_fixed = 0;
+    foreach ($ids as $pid) {
+        $checked++;
+        $n = carmel_auto_fix_cta((int)$pid, $s);
+        if ($n > 0) {
+            $posts_fixed++;
+            $fields_fixed += $n;
+        }
+    }
+    return array('checked' => $checked, 'posts' => $posts_fixed, 'fields' => $fields_fixed);
 }
 
 /* ===== 本文セクション画像（裏側で1枚ずつ生成） ===== */
@@ -768,6 +801,19 @@ add_action('admin_post_carmel_auto_reset_done', function () {
     exit;
 });
 
+// 既存の全ページのCTAをまとめてチェック＆修正
+add_action('admin_post_carmel_auto_fix_cta_all', function () {
+    if (!current_user_can('manage_options')) wp_die('権限がありません');
+    check_admin_referer('carmel_auto_fix_cta_all');
+
+    $s = carmel_auto_get_settings();
+    $r = carmel_auto_fix_cta_bulk($s);
+    set_transient('carmel_auto_cta_bulk_msg', $r, 120);
+
+    wp_safe_redirect(admin_url('admin.php?page=carmel-auto&ctaall=1'));
+    exit;
+});
+
 // 本文画像（保留中ジョブ）を手動で1枚だけ進める
 add_action('admin_post_carmel_auto_process_image', function () {
     if (!current_user_can('manage_options')) wp_die('権限がありません');
@@ -807,6 +853,12 @@ function carmel_auto_settings_page() {
         <?php if (isset($_GET['imgran'])): ?>
             <div class="notice notice-info"><p>本文画像を1枚処理しました。残りがあれば、もう一度ボタンを押してください。</p></div>
         <?php endif; ?>
+        <?php if (isset($_GET['ctaall'])):
+            $cta_bulk = get_transient('carmel_auto_cta_bulk_msg');
+            delete_transient('carmel_auto_cta_bulk_msg');
+            if (is_array($cta_bulk)): ?>
+            <div class="notice notice-success"><p>CTA一括チェック完了：<strong><?php echo (int)$cta_bulk['checked']; ?></strong>ページを確認し、<strong><?php echo (int)$cta_bulk['posts']; ?></strong>ページ（<strong><?php echo (int)$cta_bulk['fields']; ?></strong>箇所）を修正しました。</p></div>
+        <?php endif; endif; ?>
         <?php if (!$engine_ok): ?>
             <div class="notice notice-error"><p><strong>注意：</strong>既存プラグイン（CARMEL統合管理 v5.7）が無効か、関数が見つかりません。先に有効化してください。これが無いと自動生成は動きません。</p></div>
         <?php endif; ?>
@@ -982,6 +1034,13 @@ function carmel_auto_settings_page() {
                 <input type="hidden" name="post_id" value="<?php echo esc_attr($pending_post_id); ?>">
                 <?php wp_nonce_field('carmel_auto_process_image'); ?>
                 <button type="submit" class="button" <?php echo $pending_count > 0 ? '' : 'disabled'; ?>>本文画像を今すぐ1枚進める<?php echo $pending_count > 0 ? '（残り' . (int)$pending_count . '枚 / 記事#' . (int)$pending_post_id . '）' : '（待ち無し）'; ?></button>
+            </form>
+
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="margin:0"
+                  onsubmit="return confirm('既存の記事・固定ページ・投稿の中で、CTAボタンのURLが壊れているものを探して、連絡先URLに一括修正します。よろしいですか？（正常なURLは変更しません）');">
+                <input type="hidden" name="action" value="carmel_auto_fix_cta_all">
+                <?php wp_nonce_field('carmel_auto_fix_cta_all'); ?>
+                <button type="submit" class="button">全ページのCTAを一括チェック＆修正</button>
             </form>
         </div>
 
