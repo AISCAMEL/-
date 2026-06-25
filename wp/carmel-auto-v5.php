@@ -531,11 +531,11 @@ function carmel_auto_fix_cta($post_id, $s) {
     return $fixed; // 直した箇所の数（0なら修正不要）
 }
 
-// 既存の全ページ（記事・固定ページ・投稿）のCTAをまとめてチェック＆修正
+// 既存のメディア記事(media_article)のCTAをまとめてチェック＆修正
 function carmel_auto_fix_cta_bulk($s) {
     @set_time_limit(300);
     $ids = get_posts(array(
-        'post_type'      => array('media_article', 'page', 'post'),
+        'post_type'      => array('media_article'),
         'post_status'    => 'any',
         'posts_per_page' => 3000,
         'fields'         => 'ids',
@@ -1037,10 +1037,10 @@ function carmel_auto_settings_page() {
             </form>
 
             <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="margin:0"
-                  onsubmit="return confirm('既存の記事・固定ページ・投稿の中で、CTAボタンのURLが壊れているものを探して、連絡先URLに一括修正します。よろしいですか？（正常なURLは変更しません）');">
+                  onsubmit="return confirm('既存のメディア記事の中で、CTAボタン欄(main_cta_url / cta_button_url)のURLが壊れているものを探して、連絡先URLに一括修正します。よろしいですか？（正常なURL・記事本文は変更しません）');">
                 <input type="hidden" name="action" value="carmel_auto_fix_cta_all">
                 <?php wp_nonce_field('carmel_auto_fix_cta_all'); ?>
-                <button type="submit" class="button">全ページのCTAを一括チェック＆修正</button>
+                <button type="submit" class="button">記事のCTAを一括チェック＆修正</button>
             </form>
         </div>
 
