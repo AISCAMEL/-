@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（プラグイン内蔵の新ステップUI／基本情報・装備・見積もり・担当店舗・複数画像・内容確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 2.10.1
+ * Version: 2.11.0
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -3840,6 +3840,34 @@ function carmel_apply_equip_csv( $post_id ) {
 		$value = isset( $name_to_value[ $name ] ) ? $name_to_value[ $name ] : $label; // 正しい選択肢の値で保存
 		if ( function_exists( 'update_field' ) ) { update_field( $name, array( $value ), $post_id ); }
 		else { update_post_meta( $post_id, $name, $value ); }
+	}
+}
+
+
+/* ===================== detail-mirror.php（詳細テンプレが読む項目名へミラー） ===================== */
+
+/**
+ * 詳細ページ（WPBakeryテンプレ）が読む項目名と、STEP UI/見積もりの保存名が違う分を補う。
+ *   - 修復歴 : repair_history（STEP）→ shuufuku（テンプレ）
+ *   - 法定点検: inspection（STEP）   → tenken（テンプレ上部）
+ * すべての保存タイミングで、元の値があれば対応する項目名へコピーする。
+ */
+add_action( 'save_post_portfolio', 'carmel_mirror_detail_fields', 35, 1 );
+function carmel_mirror_detail_fields( $post_id ) {
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) { return; }
+	if ( wp_is_post_revision( $post_id ) ) { return; }
+
+	$pairs = array(
+		'repair_history' => 'shuufuku', // 修復歴
+		'inspection'     => 'tenken',   // 法定点検（上部）
+	);
+	foreach ( $pairs as $src => $dst ) {
+		$v = get_post_meta( $post_id, $src, true );
+		if ( is_array( $v ) ) { $v = implode( '・', array_filter( $v ) ); }
+		$v = is_string( $v ) ? trim( $v ) : $v;
+		if ( '' === $v || null === $v ) { continue; }
+		update_post_meta( $post_id, $dst, $v );
+		if ( function_exists( 'update_field' ) ) { update_field( $dst, $v, $post_id ); }
 	}
 }
 
