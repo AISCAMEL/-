@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（プラグイン内蔵の新ステップUI／基本情報・装備・見積もり・担当店舗・複数画像・内容確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 2.6.1
+ * Version: 2.7.0
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -2793,6 +2793,69 @@ function carmel_step4_theme_shop_bridge() {
 
 			$sel.on( 'change', apply );
 			$( '#cs-shop-btn' ).on( 'click', function () { setTimeout( apply, 50 ); } );
+		} );
+	})( jQuery );
+	</script>
+	<?php
+}
+
+
+/* ===================== equip-checkall.php（装備の一括チェック） ===================== */
+
+/**
+ * テーマフォームの STEP2「装備」に「すべてチェック／すべて解除」ボタンを付ける。
+ * 全体ボタン＋カテゴリ（セクション）ごとのボタンを追加。
+ * チェック変更時は change を発火させ、ACF反映ブリッジへ確実に同期する。
+ */
+add_action( 'admin_footer-post.php',     'carmel_equip_checkall_buttons' );
+add_action( 'admin_footer-post-new.php', 'carmel_equip_checkall_buttons' );
+function carmel_equip_checkall_buttons() {
+	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+	if ( ! $screen || $screen->post_type !== 'portfolio' ) { return; }
+	?>
+	<style>
+	.carmel-eqall-bar{display:flex;gap:8px;align-items:center;margin:6px 0 14px;padding:9px 12px;background:#eef4ff;border:1px solid #d9e3f5;border-radius:8px;flex-wrap:wrap;}
+	.carmel-eqall-bar b{font-size:13px;color:#1f2d3d;margin-right:auto;}
+	.carmel-eqall-btn{padding:7px 16px;border:0;border-radius:6px;font-weight:700;cursor:pointer;font-size:12px;}
+	.carmel-eqall-all{background:#1f6feb;color:#fff;}
+	.carmel-eqall-none{background:#fff;color:#b42318;border:1px solid #f0c4bf;}
+	.carmel-eqsec-btn{margin-left:6px;font-size:11px;padding:2px 9px;border:1px solid #cfd8e3;background:#fff;border-radius:5px;cursor:pointer;font-weight:600;}
+	.carmel-eqsec-btn:hover{background:#eef3fb;}
+	</style>
+	<script>
+	(function ($) {
+		'use strict';
+		function toggleAll( $scope, on ) {
+			$scope.find( 'input[type="checkbox"]' ).each( function () {
+				if ( this.checked !== on ) { this.checked = on; $( this ).trigger( 'change' ); }
+			} );
+		}
+		$( function () {
+			var $step2 = $( '#carmel_step_ui .cs-panel[data-panel="2"]' );
+			if ( ! $step2.length ) { return; }
+
+			// 全体ボタン（先頭に1度だけ）
+			if ( ! $step2.find( '.carmel-eqall-bar' ).length ) {
+				$step2.prepend(
+					'<div class="carmel-eqall-bar"><b>装備チェック</b>'+
+					'<button type="button" class="carmel-eqall-btn carmel-eqall-all">すべてチェック</button>'+
+					'<button type="button" class="carmel-eqall-btn carmel-eqall-none">すべて解除</button></div>'
+				);
+			}
+			// カテゴリ（セクション）ごとのボタン
+			$step2.find( '.cs-equip-section-title' ).each( function () {
+				var $t = $( this );
+				if ( $t.find( '.carmel-eqsec-btn' ).length ) { return; }
+				$t.append(
+					'<button type="button" class="carmel-eqsec-btn carmel-eqsec-all">全選択</button>'+
+					'<button type="button" class="carmel-eqsec-btn carmel-eqsec-none">解除</button>'
+				);
+			} );
+
+			$step2.on( 'click', '.carmel-eqall-all',  function () { toggleAll( $step2, true ); } );
+			$step2.on( 'click', '.carmel-eqall-none', function () { toggleAll( $step2, false ); } );
+			$step2.on( 'click', '.carmel-eqsec-all',  function () { toggleAll( $( this ).closest( '.cs-equip-section' ), true ); } );
+			$step2.on( 'click', '.carmel-eqsec-none', function () { toggleAll( $( this ).closest( '.cs-equip-section' ), false ); } );
 		} );
 	})( jQuery );
 	</script>
