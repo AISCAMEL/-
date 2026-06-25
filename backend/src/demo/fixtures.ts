@@ -144,6 +144,28 @@ export function newId(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+export interface DemoCampaign {
+  id: string; tenant_id: string; name: string; purpose: string;
+  goal_prompt: string | null; opening: string | null; status: string; created_at: string;
+}
+export interface DemoTarget {
+  id: string; campaign_id: string; tenant_id: string; name: string | null; company: string | null;
+  phone_number: string; status: string; outcome: string | null; note: string | null; created_at: string;
+}
+
+export const demoCampaigns: DemoCampaign[] = [
+  {
+    id: 'camp-1', tenant_id: TENANT, name: '新サービス案内（5月）', purpose: 'sales',
+    goal_prompt: '当社の新しい予約システムを紹介し、興味があれば担当者との打合せを打診する。',
+    opening: 'お世話になっております。デモ美容室AISALONのAI担当です。新サービスのご案内でお電話しました。少しお時間よろしいでしょうか？',
+    status: 'draft', created_at: iso(-60 * 24 * 2),
+  },
+];
+export const demoTargets: DemoTarget[] = [
+  { id: 'tgt-1', campaign_id: 'camp-1', tenant_id: TENANT, name: '田中様', company: '田中商店', phone_number: '+819012340001', status: 'pending', outcome: null, note: null, created_at: iso(-60 * 24) },
+  { id: 'tgt-2', campaign_id: 'camp-1', tenant_id: TENANT, name: '鈴木様', company: null, phone_number: '+819012340002', status: 'pending', outcome: null, note: null, created_at: iso(-60 * 24) },
+];
+
 export interface DemoNotification {
   id: string; tenant_id: string; call_id: string | null; type: string;
   destination: string | null; status: string; subject: string | null;

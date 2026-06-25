@@ -79,6 +79,13 @@ export const api = {
   invoiceOverage: (month?: string) => request<any>('/api/billing/invoice-overage', { method: 'POST', body: JSON.stringify({ month }) }),
 
   // リード管理（運営・super_admin）
+  campaigns: () => request<any[]>('/api/campaigns'),
+  campaign: (id: string) => request<any>(`/api/campaigns/${id}`),
+  createCampaign: (body: any) => request<any>('/api/campaigns', { method: 'POST', body: JSON.stringify(body) }),
+  updateCampaign: (id: string, body: any) => request<any>(`/api/campaigns/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  addTargets: (id: string, targets: any[]) => request<any>(`/api/campaigns/${id}/targets`, { method: 'POST', body: JSON.stringify({ targets }) }),
+  runCampaign: (id: string) => request<any>(`/api/campaigns/${id}/run`, { method: 'POST' }),
+
   overview: () => request<any>('/api/admin/overview'),
   tenant: (id: string) => request<any>(`/api/admin/tenants/${id}`),
   updateTenant: (id: string, body: any) => request<any>(`/api/admin/tenants/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),

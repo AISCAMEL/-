@@ -10,6 +10,7 @@ const tenantNav = [
   { href: '/dashboard', label: 'ダッシュボード', icon: '📊' },
   { href: '/calls', label: '通話履歴', icon: '📞' },
   { href: '/ai-test', label: 'AI応対テスト', icon: '🎙️' },
+  { href: '/campaigns', label: 'AI営業・架電', icon: '📣' },
   { href: '/usage', label: '利用状況・原価', icon: '💰' },
   { href: '/billing', label: 'お支払い', icon: '💳' },
   { href: '/faqs', label: 'FAQ管理', icon: '❓' },

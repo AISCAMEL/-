@@ -488,3 +488,58 @@ drop policy if exists tenant_isolation on caller_rules;
 create policy tenant_isolation on caller_rules
   using (is_super_admin() or tenant_id = current_tenant_id())
   with check (is_super_admin() or tenant_id = current_tenant_id());
+
+-- =============================================================
+-- アウトバウンド架電（AI営業 / 催促 / アンケート 等）
+-- =============================================================
+do $$ begin
+  create type campaign_purpose as enum ('sales','reminder','survey','followup','other');
+exception when duplicate_object then null; end $$;
+do $$ begin
+  create type campaign_status  as enum ('draft','running','paused','done');
+exception when duplicate_object then null; end $$;
+do $$ begin
+  create type target_status    as enum ('pending','calling','answered','no_answer','done','failed','do_not_call');
+exception when duplicate_object then null; end $$;
+
+create table if not exists outbound_campaigns (
+  id           uuid primary key default gen_random_uuid(),
+  tenant_id    uuid not null references tenants(id) on delete cascade,
+  name         text not null,
+  purpose      campaign_purpose not null default 'sales',
+  goal_prompt  text,                          -- AIへの目的指示（商品説明・打合せ打診 等）
+  opening      text,                          -- 最初に話す文（welcomeGreeting）
+  status       campaign_status not null default 'draft',
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+create index if not exists idx_campaigns_tenant on outbound_campaigns(tenant_id, created_at desc);
+create trigger trg_campaigns_updated before update on outbound_campaigns
+  for each row execute function set_updated_at();
+
+create table if not exists outbound_targets (
+  id           uuid primary key default gen_random_uuid(),
+  campaign_id  uuid not null references outbound_campaigns(id) on delete cascade,
+  tenant_id    uuid not null references tenants(id) on delete cascade,
+  name         text,
+  company      text,
+  phone_number text not null,                 -- E.164
+  status       target_status not null default 'pending',
+  outcome      text,                          -- 興味あり/打合せ希望/不要/担当者転送 等
+  call_id      uuid references calls(id) on delete set null,
+  note         text,
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+create index if not exists idx_targets_campaign on outbound_targets(campaign_id, status);
+create trigger trg_targets_updated before update on outbound_targets
+  for each row execute function set_updated_at();
+
+alter table outbound_campaigns enable row level security;
+alter table outbound_targets   enable row level security;
+do $$ declare t text; begin
+  foreach t in array array['outbound_campaigns','outbound_targets'] loop
+    execute format('drop policy if exists tenant_isolation on %I;', t);
+    execute format('create policy tenant_isolation on %I using (is_super_admin() or tenant_id = current_tenant_id()) with check (is_super_admin() or tenant_id = current_tenant_id());', t);
+  end loop;
+end $$;

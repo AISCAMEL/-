@@ -6,6 +6,8 @@ import { getSettings } from '../db/queries.js';
 import { tenantTestReply, type TestTurn } from '../ai/testchat.js';
 import { sendWeeklyDigest } from '../notify/digest.js';
 import { getBillingStatus, createOverageInvoice } from '../billing/square.js';
+import * as outbound from '../outbound/repo.js';
+import { runCampaign } from '../outbound/caller.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -354,6 +356,53 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     const ok = await q.deleteUser(p.tenantId, id);
     if (!ok) return reply.code(404).send({ error: 'not found' });
     return { ok: true };
+  });
+
+  // ---- アウトバウンド架電（AI営業/催促 等） ----
+  const manageOutbound = requireRole(['owner', 'admin', 'super_admin']);
+  app.get('/api/campaigns', { preHandler: authenticate }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    return outbound.listCampaigns(p.tenantId);
+  });
+  app.get('/api/campaigns/:id', { preHandler: authenticate }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const c = await outbound.getCampaign(p.tenantId, (req.params as any).id);
+    if (!c) return reply.code(404).send({ error: 'not found' });
+    return c;
+  });
+  app.post('/api/campaigns', { preHandler: manageOutbound }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    return outbound.createCampaign(p.tenantId, (req.body ?? {}) as any);
+  });
+  app.patch('/api/campaigns/:id', { preHandler: manageOutbound }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const row = await outbound.updateCampaign(p.tenantId, (req.params as any).id, (req.body ?? {}) as any);
+    if (!row) return reply.code(404).send({ error: 'not found' });
+    return row;
+  });
+  app.post('/api/campaigns/:id/targets', { preHandler: manageOutbound }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const { targets } = (req.body ?? {}) as { targets?: any[] };
+    if (!Array.isArray(targets) || targets.length === 0) return reply.code(400).send({ error: 'targets required' });
+    return outbound.addTargets(p.tenantId, (req.params as any).id, targets);
+  });
+  app.patch('/api/targets/:id', { preHandler: manageOutbound }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const row = await outbound.updateTarget(p.tenantId, (req.params as any).id, (req.body ?? {}) as any);
+    if (!row) return reply.code(404).send({ error: 'not found' });
+    return row;
+  });
+  app.post('/api/campaigns/:id/run', { preHandler: manageOutbound }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    await outbound.updateCampaign(p.tenantId, (req.params as any).id, { status: 'running' });
+    return runCampaign(p.tenantId, (req.params as any).id);
   });
 
   // ---- super admin ----

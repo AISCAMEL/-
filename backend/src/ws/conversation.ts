@@ -4,10 +4,12 @@ import { config } from '../config.js';
 import { ConversationOrchestrator } from '../ai/orchestrator.js';
 import { putSession, getSession } from '../twilio/sessionStore.js';
 import { resolveTenantByPhone, createCall, saveTranscriptLine } from '../db/index.js';
+import { getTenantAiContext } from '../db/queries.js';
+import { getCampaignById } from '../outbound/repo.js';
 import type { TenantContext } from '../types.js';
 
 // Twilio Conversation Relay から届くメッセージ種別（主要なもの）。
-interface SetupMsg { type: 'setup'; callSid: string; sessionId?: string; from?: string; to?: string; }
+interface SetupMsg { type: 'setup'; callSid: string; sessionId?: string; from?: string; to?: string; customParameters?: Record<string, string>; }
 interface PromptMsg { type: 'prompt'; voicePrompt: string; last?: boolean; }
 interface InterruptMsg { type: 'interrupt'; }
 type IncomingMsg = SetupMsg | PromptMsg | InterruptMsg | { type: string; [k: string]: unknown };
@@ -49,7 +51,18 @@ export async function registerConversationWs(app: FastifyInstance): Promise<void
           const to = m.to ?? '';
           const from = m.from ?? '';
 
-          const tenant = (await resolveTenantByPhone(to).catch(() => null)) ?? demoContext();
+          // アウトバウンド架電なら campaignId が渡る → 発信側プロンプトに切替。
+          const campaignId = m.customParameters?.campaignId;
+          let tenant: TenantContext;
+          let outbound: { purpose: string; goal: string } | undefined;
+          if (campaignId) {
+            const campaign = await getCampaignById(campaignId).catch(() => null);
+            const tId = campaign?.tenant_id ?? config.demoTenantId;
+            tenant = await getTenantAiContext(tId).catch(() => demoContext());
+            outbound = { purpose: campaign?.purpose ?? 'sales', goal: campaign?.goal_prompt ?? '' };
+          } else {
+            tenant = (await resolveTenantByPhone(to).catch(() => null)) ?? demoContext();
+          }
           // セッションには DB 上の tenant_id を保持（デモは seed の固定 UUID にマップ）。
           const tenantId = dbTenant(tenant.tenantId);
           const callId = await createCall({
@@ -66,9 +79,9 @@ export async function registerConversationWs(app: FastifyInstance): Promise<void
             callId,
             from, to,
             startedAt: Date.now(),
-            orchestrator: new ConversationOrchestrator(tenant),
+            orchestrator: new ConversationOrchestrator(tenant, outbound),
           });
-          app.log.info({ callSid, from, to, tenant: tenant.companyName }, 'ws setup');
+          app.log.info({ callSid, from, to, tenant: tenant.companyName, outbound: Boolean(outbound) }, 'ws setup');
           break;
         }
 

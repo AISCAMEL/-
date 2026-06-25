@@ -8,6 +8,7 @@ import { sendCallNotification } from '../notify/email.js';
 import { sendSlackNotification } from '../notify/slack.js';
 import { billableMinutes, aiCostJpy, transferAddCostJpy } from '../billing/rates.js';
 import { getCallerRule } from '../db/queries.js';
+import { getCampaignById } from '../outbound/repo.js';
 
 // TwiML 生成（ConversationRelay へ接続）。
 function buildConnectTwiml(greeting: string): string {
@@ -52,6 +53,26 @@ export async function registerTwilioRoutes(app: FastifyInstance): Promise<void> 
       ? rule.message
       : (tenant?.greetingMessage ?? config.defaultGreeting);
     return reply.send(buildConnectTwiml(greeting));
+  });
+
+  // アウトバウンド架電の TwiML。発信時にTwilioが取得する。campaign の opening で会話開始。
+  app.post('/api/twilio/outbound-twiml', async (req, reply) => {
+    const body = (req.body ?? {}) as Record<string, string>;
+    if (!verifyTwilioSignature(req, body)) return reply.code(403).send('invalid signature');
+    const campaignId = (req.query as any)?.campaign ?? '';
+    const campaign = await getCampaignById(campaignId).catch(() => null);
+    const opening = campaign?.opening || 'お世話になっております。AIオペレーター24です。ご連絡のお電話です。';
+    const wsUrl = `${config.publicWsBaseUrl}/ws/conversation`;
+    const action = `${config.publicApiBaseUrl}/api/twilio/connect-ended`;
+    reply.header('Content-Type', 'text/xml');
+    return reply.send(`<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Connect action="${action}">
+    <ConversationRelay url="${wsUrl}" welcomeGreeting="${escapeXml(opening)}" language="ja-JP" interruptible="any">
+      <Parameter name="campaignId" value="${escapeXml(campaignId)}" />
+    </ConversationRelay>
+  </Connect>
+</Response>`);
   });
 
   // 通話ステータスコールバック（記録用。MVPはログのみ）。

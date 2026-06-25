@@ -1,5 +1,5 @@
 import { chatJson, llmEnabled } from './llm.js';
-import { buildSystemPrompt } from './prompts.js';
+import { buildSystemPrompt, buildOutboundSystemPrompt } from './prompts.js';
 import type { AiTurnResult, ExtractedFields, TenantContext, TranscriptLine } from '../types.js';
 
 const EMPTY_EXTRACTED: ExtractedFields = {
@@ -20,7 +20,14 @@ export class ConversationOrchestrator {
   private extracted: ExtractedFields = { ...EMPTY_EXTRACTED };
   private lastResult: AiTurnResult | null = null;
 
-  constructor(private readonly ctx: TenantContext) {}
+  // outbound を渡すと「電話をかける側」のプロンプトに切り替わる。
+  constructor(private readonly ctx: TenantContext, private readonly outbound?: { purpose: string; goal: string }) {}
+
+  private systemPrompt(): string {
+    return this.outbound
+      ? buildOutboundSystemPrompt(this.ctx, this.outbound.purpose, this.outbound.goal)
+      : buildSystemPrompt(this.ctx);
+  }
 
   get transcript(): TranscriptLine[] {
     return this.history;
@@ -48,7 +55,7 @@ export class ConversationOrchestrator {
   private async callLlm(): Promise<AiTurnResult | null> {
     if (!llmEnabled) return null;
     const messages = [
-      { role: 'system' as const, content: buildSystemPrompt(this.ctx) },
+      { role: 'system' as const, content: this.systemPrompt() },
       ...this.history.map((l) => ({
         role: (l.speaker === 'customer' ? 'user' : 'assistant') as 'user' | 'assistant',
         content: l.message,
