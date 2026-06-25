@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
- * Description: 在庫STEP UI一式（基本情報・装備・見積もり・担当店舗・複数画像・全体図確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 1.9.0
+ * Description: 在庫STEP UI一式（プラグイン内蔵の新ステップUI／基本情報・装備・見積もり・担当店舗・複数画像・内容確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
+ * Version: 2.0.0
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -3308,5 +3308,288 @@ function carmel_get_gallery_ids( $post_id ) {
 
 	// 3) 独自指定（必要なら add_filter で）
 	return (array) apply_filters( 'carmel_gallery_ids', array(), $post_id );
+}
+
+
+/* ===================== new-step-ui.php（全面リニューアル版 STEP UI） ===================== */
+
+/**
+ * カーメル：新ステップUI（プラグイン内で描画）
+ * ---------------------------------------------------------------------------
+ * 旧・外部フォーム（#carmel_step_ui を描いていたWPCodeスニペット）を置き換える、
+ * プラグイン内蔵のステップ入力UI。保存は既存の検証済みロジックを再利用：
+ *   - 基本情報 : 同じ入力ID（cs_maker 等）→ step-ui-acf-bridge が自動でACF同期
+ *   - 装備     : data-acf 属性で対象ACFチェックボックスへ直接同期（取りこぼし無し）
+ *   - 見積/画像/確認 : 既存インジェクタが #cs-est-mount / #cs-gallery-mount /
+ *                      #cs-step6-mount を見つけて自動描画
+ *   - 担当店舗 : 「店舗を選択」プレースホルダ付き select を step4-shop-bridge が検出
+ *
+ * 【重要】旧フォーム描画スニペット（外部の #carmel_step_ui を出すもの）は必ずOFFに。
+ *         ONのままだと #carmel_step_ui が二重になり誤作動します。
+ *
+ * 切替 : 一時的に旧へ戻したい時は wp-config.php 等で
+ *        define('CARMEL_NEW_STEP_UI', false); にすると新UIを描画しません。
+ * ---------------------------------------------------------------------------
+ */
+if ( ! defined( 'CARMEL_NEW_STEP_UI' ) ) { define( 'CARMEL_NEW_STEP_UI', true ); }
+
+add_action( 'edit_form_after_title', 'carmel_new_step_ui_render' );
+function carmel_new_step_ui_render( $post ) {
+	if ( ! CARMEL_NEW_STEP_UI ) { return; }
+	if ( ! $post || ! isset( $post->post_type ) || $post->post_type !== 'portfolio' ) { return; }
+	static $done = false;
+	if ( $done ) { return; }   // 1リクエスト1回だけ
+	$done = true;
+	$pid = (int) $post->ID;
+
+	/* 基本情報: 入力ID => array( ラベル, ACF data-name ) */
+	$basics = array(
+		'cs_maker'        => array( 'メーカー',      'marker' ),
+		'cs_car_model'    => array( '車種',          'type' ), // 車種＋グレードは type に結合される
+		'cs_grade'        => array( 'グレード',      '' ),
+		'cs_year'         => array( '年式',          'year' ),
+		'cs_mileage'      => array( '走行距離(km)',  'mileage' ),
+		'cs_displacement' => array( '排気量',        'displacement' ),
+		'cs_color'        => array( 'ボディカラー',  'color' ),
+		'cs_mission'      => array( 'ミッション',    'mission' ),
+		'cs_kudou'        => array( '駆動方式',      'kudou' ),
+		'cs_handle'       => array( 'ハンドル',      'handle' ),
+		'cs_inspection'   => array( '車検',          'inspection' ),
+	);
+
+	$equip = function_exists( 'carmel_equipment_map' ) ? carmel_equipment_map() : array();
+	$shops = get_posts( array(
+		'post_type'   => 'shop',
+		'post_status' => 'publish',
+		'numberposts' => -1,
+		'orderby'     => 'title',
+		'order'       => 'ASC',
+	) );
+	?>
+	<style>
+	.cs2 .cs2-tabs { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 16px; }
+	.cs2 .cs2-tab {
+		flex:1 1 auto; min-width:96px; padding:9px 8px; cursor:pointer;
+		background:#eef2f8; color:#445; border:1px solid #d7e0ec; border-radius:8px;
+		font-weight:700; font-size:12.5px; text-align:center; transition:all .12s;
+	}
+	.cs2 .cs2-tab .cs2-tab-no {
+		display:inline-block; min-width:18px; height:18px; line-height:18px; margin-right:5px;
+		background:#b9c6d8; color:#fff; border-radius:50%; font-size:11px; text-align:center;
+	}
+	.cs2 .cs2-tab.current { background:#1f6feb; color:#fff; border-color:#1f6feb; }
+	.cs2 .cs2-tab.current .cs2-tab-no { background:#fff; color:#1f6feb; }
+	.cs2 .cs2-tab.done .cs2-tab-no { background:#22a06b; }
+
+	.cs2 .cs2-pane { display:none; }
+	.cs2 .cs2-pane.current { display:block; animation:cs2fade .15s ease; }
+	@keyframes cs2fade { from{opacity:.4;transform:translateY(3px)} to{opacity:1;transform:none} }
+
+	.cs2 .cs2-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 16px; }
+	@media (max-width:782px){ .cs2 .cs2-grid { grid-template-columns:1fr; } }
+	.cs2 .cs2-field { display:flex; flex-direction:column; gap:4px; }
+	.cs2 .cs2-field label { font-weight:600; color:#243044; font-size:12.5px; }
+	.cs2 .cs2-field input, .cs2 .cs2-field select { width:100%; }
+
+	.cs2 .cs2-eqgroup { margin:0 0 14px; border:1px solid #e3e8ef; border-radius:10px; overflow:hidden; }
+	.cs2 .cs2-eqhead {
+		display:flex; align-items:center; gap:8px; padding:8px 12px;
+		background:#f4f7fc; font-weight:700; color:#243044; font-size:13px;
+	}
+	.cs2 .cs2-eqtools { margin-left:auto; display:flex; gap:6px; }
+	.cs2 .cs2-eqtools button {
+		font-size:11px; padding:3px 9px; border-radius:6px; cursor:pointer;
+		border:1px solid #cfd8e3; background:#fff; color:#345; font-weight:600;
+	}
+	.cs2 .cs2-eqtools button:hover { background:#eef3fb; }
+	.cs2 .cs2-eqgrid {
+		display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+		gap:6px 10px; padding:12px;
+	}
+	.cs2 .cs2-eqitem {
+		display:flex; align-items:center; gap:6px; padding:5px 8px; border-radius:7px;
+		font-size:12.5px; cursor:pointer; border:1px solid transparent;
+	}
+	.cs2 .cs2-eqitem:hover { background:#f3f6fb; }
+	.cs2 .cs2-eqitem input:checked + span { color:#1f6feb; font-weight:700; }
+
+	.cs2 .cs2-nav { display:flex; align-items:center; gap:10px; margin-top:18px;
+		padding-top:14px; border-top:1px solid #eef1f6; }
+	.cs2 .cs2-nav .cs2-reset { margin-left:auto; }
+	.cs2 .cs2-hint { color:#667; font-size:12px; margin:0 0 12px; }
+	</style>
+
+	<div id="carmel_step_ui" class="cs2">
+		<div class="cs2-tabs">
+			<?php
+			$tabs = array( '基本情報', '装備', '見積もり', '担当店舗', '車両画像', '内容確認' );
+			foreach ( $tabs as $i => $t ) {
+				$n = $i + 1;
+				printf(
+					'<div class="cs2-tab%s" data-go="%d"><span class="cs2-tab-no">%d</span>%s</div>',
+					( 1 === $n ? ' current' : '' ), $n, $n, esc_html( $t )
+				);
+			}
+			?>
+		</div>
+
+		<!-- STEP1 基本情報 -->
+		<div class="cs2-pane current" data-pane="1">
+			<p class="cs2-hint">車の基本情報を入力してください。保存先フィールドへ自動反映されます。</p>
+			<div class="cs2-grid">
+				<?php
+				foreach ( $basics as $id => $def ) {
+					list( $label, $dataname ) = $def;
+					$value   = '';
+					$choices = array();
+					if ( $dataname && function_exists( 'get_field_object' ) ) {
+						$obj = get_field_object( $dataname, $pid );
+						if ( is_array( $obj ) ) {
+							if ( ! empty( $obj['choices'] ) && is_array( $obj['choices'] ) ) {
+								$choices = $obj['choices'];
+							}
+							$v = isset( $obj['value'] ) ? $obj['value'] : '';
+							if ( is_array( $v ) ) { $v = reset( $v ); }
+							$value = (string) $v;
+						}
+					}
+					echo '<div class="cs2-field">';
+					echo '<label for="' . esc_attr( $id ) . '">' . esc_html( $label ) . '</label>';
+					if ( $choices ) {
+						echo '<select id="' . esc_attr( $id ) . '"><option value="">選択してください</option>';
+						foreach ( $choices as $cv => $ct ) {
+							echo '<option value="' . esc_attr( $cv ) . '"' . selected( $value, $cv, false ) . '>' . esc_html( $ct ) . '</option>';
+						}
+						echo '</select>';
+					} else {
+						$type = ( 'cs_mileage' === $id || 'cs_displacement' === $id ) ? 'number' : 'text';
+						echo '<input type="' . $type . '" id="' . esc_attr( $id ) . '" value="' . esc_attr( $value ) . '">';
+					}
+					echo '</div>';
+				}
+				?>
+			</div>
+		</div>
+
+		<!-- STEP2 装備 -->
+		<div class="cs2-pane" data-pane="2">
+			<p class="cs2-hint">付いている装備にチェック。チェックした装備は保存先フィールドへ自動反映されます。</p>
+			<?php
+			foreach ( $equip as $cat => $items ) {
+				echo '<div class="cs2-eqgroup"><div class="cs2-eqhead">' . esc_html( $cat );
+				echo '<span class="cs2-eqtools"><button type="button" class="cs2-eq-all">全選択</button><button type="button" class="cs2-eq-none">解除</button></span></div>';
+				echo '<div class="cs2-eqgrid">';
+				foreach ( $items as $dn => $lbl ) {
+					$on = function_exists( 'carmel_equip_checked' ) ? carmel_equip_checked( $dn, $pid ) : false;
+					echo '<label class="cs2-eqitem"><input type="checkbox" data-acf="' . esc_attr( $dn ) . '"' . checked( $on, true, false ) . '><span>' . esc_html( $lbl ) . '</span></label>';
+				}
+				echo '</div></div>';
+			}
+			?>
+		</div>
+
+		<!-- STEP3 見積もり（既存インジェクタが描画） -->
+		<div class="cs2-pane" data-pane="3">
+			<p class="cs2-hint">車両本体価格や諸費用を入力すると、支払総額・月々支払額を自動計算します。</p>
+			<div id="cs-est-mount"></div>
+		</div>
+
+		<!-- STEP4 担当店舗 -->
+		<div class="cs2-pane" data-pane="4">
+			<p class="cs2-hint">担当店舗を選ぶと、電話番号やリンクが保存先フィールドへ自動反映されます。</p>
+			<div class="cs2-field" style="max-width:420px;">
+				<label for="cs_shop">担当店舗</label>
+				<select id="cs_shop">
+					<option value="">店舗を選択</option>
+					<?php
+					foreach ( $shops as $s ) {
+						echo '<option value="' . esc_attr( $s->ID ) . '">' . esc_html( get_the_title( $s ) ) . '</option>';
+					}
+					?>
+				</select>
+			</div>
+		</div>
+
+		<!-- STEP5 車両画像（既存インジェクタが描画） -->
+		<div class="cs2-pane" data-pane="5">
+			<p class="cs2-hint">車の画像を複数アップロードできます。1枚目がアイキャッチ（サムネイル）になります。</p>
+			<div id="cs-gallery-mount"></div>
+		</div>
+
+		<!-- STEP6 内容確認（既存インジェクタが描画） -->
+		<div class="cs2-pane" data-pane="6">
+			<p class="cs2-hint">入力内容の最終確認です。問題なければ右上の「公開／更新」で保存してください。</p>
+			<div id="cs-step6-mount"></div>
+		</div>
+
+		<div class="cs2-nav">
+			<button type="button" class="cs-btn-back cs2-prev" style="visibility:hidden;">← 戻る</button>
+			<button type="button" class="cs-reset-all-btn cs2-reset">入力をリセット</button>
+			<button type="button" class="cs-btn-next cs2-next">次へ →</button>
+		</div>
+	</div>
+
+	<script>
+	(function ($) {
+		'use strict';
+		$( function () {
+			var $ui = $( '#carmel_step_ui.cs2' );
+			if ( ! $ui.length ) { return; }
+			var total = 6, cur = 1;
+
+			function show( n ) {
+				n = Math.max( 1, Math.min( total, n ) );
+				cur = n;
+				$ui.find( '.cs2-pane' ).removeClass( 'current' )
+					.filter( '[data-pane="' + n + '"]' ).addClass( 'current' );
+				$ui.find( '.cs2-tab' ).each( function () {
+					var tn = parseInt( $( this ).attr( 'data-go' ), 10 );
+					$( this ).toggleClass( 'current', tn === n ).toggleClass( 'done', tn < n );
+				} );
+				$ui.find( '.cs2-prev' ).css( 'visibility', n === 1 ? 'hidden' : 'visible' );
+				$ui.find( '.cs2-next' ).text( n === total ? '完了' : '次へ →' );
+				var top = $ui.offset();
+				if ( top && n !== 1 ) { $( 'html,body' ).animate( { scrollTop: top.top - 40 }, 150 ); }
+			}
+
+			$ui.on( 'click', '.cs2-tab', function () { show( parseInt( $( this ).attr( 'data-go' ), 10 ) ); } );
+			$ui.on( 'click', '.cs2-next', function () { if ( cur < total ) { show( cur + 1 ); } } );
+			$ui.on( 'click', '.cs2-prev', function () { show( cur - 1 ); } );
+
+			/* 装備：data-acf で対象ACFチェックボックスへ直接同期（取りこぼし無し） */
+			function tickAcf( dn, on ) {
+				var $f = $( '.acf-field[data-name="' + dn + '"]' );
+				if ( ! $f.length ) { return; }
+				var $cb = $f.find( 'input[type="checkbox"]' ).first();
+				if ( ! $cb.length || $cb.prop( 'checked' ) === on ) { return; }
+				$cb.prop( 'checked', on );
+				$cb.closest( 'label' ).toggleClass( 'selected', on );
+				$cb.trigger( 'change' );
+			}
+			$ui.on( 'change', 'input[data-acf]', function () {
+				tickAcf( this.getAttribute( 'data-acf' ), this.checked );
+			} );
+
+			/* グループ単位の全選択 / 解除 */
+			$ui.on( 'click', '.cs2-eq-all, .cs2-eq-none', function () {
+				var on = $( this ).hasClass( 'cs2-eq-all' );
+				$( this ).closest( '.cs2-eqgroup' ).find( 'input[data-acf]' ).each( function () {
+					if ( this.checked !== on ) { this.checked = on; $( this ).trigger( 'change' ); }
+				} );
+			} );
+
+			/* 全リセット（装備チェックのみクリア。基本情報・見積もりは消さない） */
+			$ui.on( 'click', '.cs2-reset', function () {
+				if ( ! window.confirm( '装備のチェックを全て解除します。よろしいですか？' ) ) { return; }
+				$ui.find( 'input[data-acf]:checked' ).each( function () {
+					this.checked = false; $( this ).trigger( 'change' );
+				} );
+			} );
+
+			show( 1 );
+		} );
+	})( jQuery );
+	</script>
+	<?php
 }
 
