@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（基本情報・装備・見積もり・担当店舗・複数画像・全体図確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 1.6.0
+ * Version: 1.7.0
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -1538,31 +1538,102 @@ function carmel_step_ui_acf_bridge() {
 		   下の EQUIP_ALIAS は「STEP2 と ACF で呼び名が違う」ものだけの別名表。
 		   （STEP2の装備名 → ACF の data-name）。名前一致で拾えないものを補う。 */
 		var EQUIP_ALIAS = {
-			'自動ブレーキ': 'shoutotu',          // ACF: 衝突被害軽減ブレーキ
-			'衝突軽減ブレーキ': 'shoutotu',
-			'360度カメラ': 'kamera4',            // ACF: 全周囲カメラ
-			'全方位カメラ': 'kamera4',
-			'パワーバックドア': 'gate',          // ACF: 電動トランク・リアゲート
-			'電動リアゲート': 'gate',
-			'純正アルミ': 'almi',                // ACF: アルミホイール
-			'アルミホイール': 'almi',
-			'電動シート': 'seat',                // ACF: 運転席電動シート
-			// ↓ ラベル無しの旧ACFチェックボックスへの対応（data-name直結・確度高め）
+			/* ナビ・AV */
+			'純正ナビ': 'junsei_nav',
+			'社外ナビ': 'shagai_nav',
+			'DVDナビ': 'nav',
+			'HDDナビ': 'nav2',
+			'メモリーナビ': 'nav3',
+			'メモリーナビ他': 'nav3',
+			'ワンセグTV': 'nav4',
+			'フルセグTV': 'nav5',
+			'後席モニター': 'monitar',
 			'DVD再生': 'dvd',
+			'ブルーレイ再生': 'blueray',
+			'CD再生': 'cd',
+			'USB入力': 'usb',
+			'HDMI入力': 'hdmi',
 			'Bluetooth': 'bluetooth',
+			'Apple CarPlay': 'carplay',
+			'Android Auto': 'androidauto',
+			'ミュージックサーバー': 'sarver',
+			/* 安全装備 */
+			'自動ブレーキ': 'shoutotu',
+			'衝突軽減ブレーキ': 'shoutotu',
+			'衝突被害軽減ブレーキ': 'shoutotu',
+			'レーンアシスト': 'lane_assist',
 			'クルーズコントロール': 'controll',
-			'サンルーフ': 'sunroof',
-			'スマートキー': 'smartkey',
+			'アダプティブクルーズ': 'acc',
+			'バックカメラ': 'kamera3',           // ACF kamera3 の選択肢＝バックカメラ
+			'サイドカメラ': 'kamera2',
+			'フロントカメラ': 'kamera',
+			'360度カメラ': 'kamera4',
+			'全方位カメラ': 'kamera4',
+			'全周囲カメラ': 'kamera4',
+			'コーナーセンサー': 'corner_sensor',
+			'ドライブレコーダー': 'drive_recorder',
+			'運転席エアバッグ': 'airbag',
+			'助手席エアバッグ': 'airbag2',
+			'サイドエアバッグ': 'airbag3',
+			'カーテンエアバッグ': 'airbag4',
+			'ABS': 'abs',
+			'横滑り防止装置': 'esc',
+			/* 快適装備 */
 			'シートヒーター': 'heater',
+			'ベンチレーションシート': 'ventilation_seat',
+			'電動シート': 'seat',
+			'運転席電動シート': 'seat',
+			'助手席電動シート': 'seat2',
+			'メモリーシート': 'memory',
+			'革シート': 'leather_seat',
+			'サンルーフ': 'sunroof',
+			'パノラマルーフ': 'panorama_roof',
+			'オットマン': 'otman',
+			'エアコン': 'aircon',
+			'オートエアコン': 'aircon2',
+			'パワーウィンドウ': 'window',
+			/* ドア・外装 */
+			'パワーバックドア': 'gate',
+			'電動リアゲート': 'gate',
+			'電動スライドドア': 'door',
+			'両側電動スライドドア': 'door2',
+			'アルミホイール': 'almi',
+			'純正アルミ': 'almi',
 			'ローダウン': 'down',
 			'エアロパーツ': 'earo',
-			'ETC': 'etc'
+			'リフトアップ': 'liftup',
+			/* キー・灯火 */
+			'スマートキー': 'smartkey',
+			'キーレスエントリー': 'keyless',
+			'プッシュスタート': 'push_start',
+			'LEDヘッドライト': 'led_light',
+			'フォグランプ': 'fog_lamp',
+			'アダプティブライト': 'adaptive_light',
+			'アイドリングストップ': 'stop',
+			'盗難防止装置': 'tounan',
+			/* 車歴 */
+			'禁煙車': 'kinen_sha',
+			'ワンオーナー': 'one_owner',
+			'記録簿あり': 'kirokubo',
+			'整備済み': 'seibi_zumi',
+			'修復歴なし': 'shuufuku_nashi',
+			/* ETC */
+			'ETC': 'etc',
+			'ETC2.0': 'etc2'
 		};
+
+		/* 別名表を「正規化キー」でも引けるようにした版（空白/大小無視で確実に当てる） */
+		var EQUIP_ALIAS_NORM = {};
 
 		/* 文字正規化（空白除去・小文字化）して名前一致の精度を上げる */
 		function norm( s ) {
 			return ( s == null ? '' : String( s ) ).replace( /[\s　]+/g, '' ).toLowerCase();
 		}
+
+		/* EQUIP_ALIAS を正規化キーへ展開（一度だけ） */
+		Object.keys( EQUIP_ALIAS ).forEach( function ( k ) {
+			EQUIP_ALIAS_NORM[ norm( k ) ] = EQUIP_ALIAS[ k ];
+		} );
 
 		/* ACF 側の全チェックボックスを「ラベル名 → 要素」で索引化（装備の名前一致用） */
 		var ACF_EQUIP_INDEX = {};
@@ -1585,19 +1656,22 @@ function carmel_step_ui_acf_bridge() {
 			$cb.trigger( 'change' );
 		}
 
-		/* 装備名 → 対応する ACF チェックボックス（名前一致 → 別名表）をオン/オフ */
+		/* 装備名 → 対応する ACF チェックボックス（別名表 → 名前一致）をオン/オフ
+		   ※ 別名表(data-name直結)を優先。確実なので取りこぼしが無い。 */
 		function tickEquipByName( name, on ) {
-			var cb = ACF_EQUIP_INDEX[ norm( name ) ];
-			if ( cb ) { setCheckbox( $( cb ), on ); return true; }
-			var dn = EQUIP_ALIAS[ $.trim( name ) ];
+			var key = norm( name );
+			var dn  = EQUIP_ALIAS[ $.trim( name ) ] || EQUIP_ALIAS_NORM[ key ];
 			if ( dn ) { tickAcf( dn, on ); return true; }
+			var cb = ACF_EQUIP_INDEX[ key ];
+			if ( cb ) { setCheckbox( $( cb ), on ); return true; }
 			return false;
 		}
 
-		/* STEP2 のチェック要素から装備名を取得（value 優先、無ければラベル文字） */
+		/* STEP UI のチェック要素から装備名を取得（ラベル文字優先・value は on/1 を除外） */
 		function equipName( $chk ) {
 			var v = $.trim( $chk.val() );
-			return v || $.trim( $chk.closest( 'label' ).text() );
+			if ( v && v.toLowerCase() !== 'on' && v !== '1' && v !== 'true' ) { return v; }
+			return $.trim( $chk.closest( 'label' ).text() );
 		}
 
 		/* ------------------------------------------------------------------ */
@@ -1646,12 +1720,35 @@ function carmel_step_ui_acf_bridge() {
 		/* 同期処理                                                            */
 		/* ------------------------------------------------------------------ */
 
+		/* 排気量を「区切りの良い表記」に正規化する。
+		   例: 2360→2400cc / 1496→1500cc / 1997→2000cc（100cc単位に丸め）。
+		       軽自動車は 660cc（旧規格は 550cc）へ寄せる。
+		       "2.4" や "2.4L" のリットル入力にも対応。判定できない時は元の文字のまま。 */
+		function normalizeCC( raw ) {
+			var s = ( raw == null ? '' : String( raw ) ).trim();
+			if ( ! s ) { return ''; }
+			var n;
+			var lit = s.match( /^(\d+)\.(\d+)\s*[lLℓ]*$/ );  // 2.4 / 2.4L → リットル
+			if ( lit ) {
+				n = Math.round( parseFloat( lit[1] + '.' + lit[2] ) * 1000 );
+			} else {
+				n = parseInt( s.replace( /[^0-9]/g, '' ), 10 );
+			}
+			if ( ! n || isNaN( n ) || n < 200 ) { return s; } // 拾えない/小さすぎは触らない
+			var cc;
+			if ( n >= 530 && n <= 580 )      { cc = 550; }   // 旧規格 軽
+			else if ( n >= 600 && n <= 700 ) { cc = 660; }   // 軽
+			else { cc = Math.round( n / 100 ) * 100; }       // 100cc単位に丸め
+			return cc + 'cc';
+		}
+
 		/* 基本情報（STEP1）→ ACF */
 		function syncBasic() {
 			Object.keys( BASIC_MAP ).forEach( function ( id ) {
 				var dataName = BASIC_MAP[ id ];
 				var val = v( id );
 				if ( NUMERIC_FIELDS[ dataName ] ) { val = val.replace( /[^0-9.]/g, '' ); }
+				if ( dataName === 'displacement' ) { val = normalizeCC( val ); }
 				setAcf( dataName, val );
 			} );
 			// 車種(type) = 車種＋グレード
@@ -1688,10 +1785,20 @@ function carmel_step_ui_acf_bridge() {
 			if ( ph ) { ph.style.display = 'none'; }
 		}
 
-		/* 装備（STEP2）→ ACF（全件、名前一致＋別名） */
+		/* STEP UI 内の装備チェックを全部拾う（class非依存）。
+		   従来は .cs-equip-check 限定で、実際のチェックにそのclassが無く同期されなかった。 */
+		function stepEquipCheckboxes() {
+			var $ui = $( '#carmel_step_ui' );
+			if ( ! $ui.length ) { return $(); }
+			// 基本情報側の hidden 等を避け、ラベル付きの装備チェックだけを対象にする
+			return $ui.find( 'input[type="checkbox"]' );
+		}
+
+		/* 装備（STEP2）→ ACF（全件・別名表＋名前一致／チェック方法を問わず同期） */
 		function syncEquip() {
-			$( '.cs-equip-check' ).each( function () {
-				tickEquipByName( equipName( $( this ) ), $( this ).is( ':checked' ) );
+			stepEquipCheckboxes().each( function () {
+				var name = equipName( $( this ) );
+				if ( name ) { tickEquipByName( name, this.checked ); }
 			} );
 		}
 
@@ -1707,18 +1814,17 @@ function carmel_step_ui_acf_bridge() {
 		/* ------------------------------------------------------------------ */
 
 		function prefillEquipFromAcf() {
-			$( '.cs-equip-check' ).each( function () {
+			stepEquipCheckboxes().each( function () {
 				var $s   = $( this );
 				var name = equipName( $s );
-				var cb   = ACF_EQUIP_INDEX[ norm( name ) ];
+				if ( ! name ) { return; }
+				var key  = norm( name );
+				var dn   = EQUIP_ALIAS[ $.trim( name ) ] || EQUIP_ALIAS_NORM[ key ];
 				var checked = false;
-				if ( cb ) {
-					checked = $( cb ).is( ':checked' );
-				} else {
-					var dn = EQUIP_ALIAS[ $.trim( name ) ];
-					if ( dn ) {
-						checked = $( '.acf-field[data-name="' + dn + '"]' ).find( 'input[type="checkbox"]' ).first().is( ':checked' );
-					}
+				if ( dn ) {
+					checked = $( '.acf-field[data-name="' + dn + '"]' ).find( 'input[type="checkbox"]' ).first().is( ':checked' );
+				} else if ( ACF_EQUIP_INDEX[ key ] ) {
+					checked = $( ACF_EQUIP_INDEX[ key ] ).is( ':checked' );
 				}
 				if ( checked ) { $s.prop( 'checked', true ); }
 			} );
@@ -1754,8 +1860,16 @@ function carmel_step_ui_acf_bridge() {
 				}, 80 );
 			}, true );
 
-			// 装備チェック変更で即同期
-			$( document ).on( 'change', '.cs-equip-check', syncEquip );
+			// 装備チェック変更で即同期（class非依存：STEP UI内の全チェックを対象）
+			$( '#carmel_step_ui' ).on( 'change', 'input[type="checkbox"]', syncEquip );
+
+			// 「全選択」等のボタンは change を発火しない場合があるため、
+			// STEP UI内のクリック後に必ず装備を再同期（取りこぼし防止の保険）
+			var equipSyncTimer = null;
+			$( '#carmel_step_ui' ).on( 'click', function () {
+				clearTimeout( equipSyncTimer );
+				equipSyncTimer = setTimeout( syncEquip, 150 );
+			} );
 
 			// ステップ移動（次へ/戻る/ナビ）で取りこぼし防止のため全同期
 			$( document ).on( 'click', '.cs-nav-btn, .cs-btn-next, .cs-btn-back', function () {
@@ -1785,15 +1899,16 @@ function carmel_step_ui_acf_bridge() {
 				setTitle();
 			} );
 
-			/* ★装備ライブ同期（class非依存・ラベル名一致でACFへ）
-			   STEP UI内の装備チェックは class が付かない個体があるため、
-			   #carmel_step_ui 内の全チェックボックスをラベル名で拾って
-			   対応するACFチェックを一括ON/OFFする。 */
-			$( '#carmel_step_ui' ).find( 'input[type="checkbox"]' ).on( 'change', function () {
-				var name = $.trim( $( this ).val() );
-				if ( ! name ) { name = $.trim( $( this ).closest( 'label' ).text() ); }
-				if ( name ) { tickEquipByName( name, this.checked ); }
+			/* ★排気量：入力欄から離れたら（blur）区切りの良い表記へ自動補正
+			   例: 2360cc → 2400cc。見た目の欄も書き換えてACFへ反映する。 */
+			$( document ).on( 'change', '#cs_displacement', function () {
+				var nm = normalizeCC( this.value );
+				if ( nm && nm !== this.value ) {
+					this.value = nm;
+				}
+				syncBasic();
 			} );
+
 		} );
 
 	})( jQuery );
@@ -1854,25 +1969,25 @@ function carmel_equip_label_map() {
 		'esc'       => '横滑り防止装置（ESC）',
 		'shoutotu'  => '衝突被害軽減ブレーキ',
 		'kamera4'   => '全周囲カメラ（360度）',
-		// --- 内容が確定しきれないもの（管理画面で確認・要修正） ---
-		'stea'      => '本革ステアリング（要確認）',
-		'sarver'    => '装備 sarver（要確認）',
-		'nav'       => 'カーナビ（要確認）',
-		'nav2'      => 'カーナビ2（要確認）',
-		'nav3'      => 'カーナビ3（要確認）',
-		'nav4'      => 'カーナビ4（要確認）',
-		'nav5'      => 'カーナビ5（要確認）',
-		'seat3'     => 'シート3（要確認）',
-		'work'      => '装備 work（要確認）',
-		'door'      => '電動スライドドア（左）（要確認）',
-		'door2'     => '電動スライドドア（両側）（要確認）',
-		'kamera'    => 'バックカメラ（要確認）',
-		'kamera2'   => 'サイドカメラ（要確認）',
-		'kamera3'   => 'フロントカメラ（要確認）',
-		'asist'     => '運転支援アシスト（要確認）',
-		'asist2'    => '運転支援アシスト2（要確認）',
-		'sensar'    => 'コーナーセンサー（要確認）',
-		'sensar2'   => 'センサー2（要確認）',
+		// --- 画面の選択肢で正体が判明したもの ---
+		'nav'       => 'DVDナビ',
+		'nav2'      => 'HDDナビ',
+		'nav3'      => 'メモリーナビ',
+		'nav4'      => 'ワンセグTV',
+		'nav5'      => 'フルセグTV',
+		'sarver'    => 'ミュージックサーバー',
+		// --- 補完用の控えめな名称（基本は①の選択肢テキストが使われる） ---
+		'stea'      => '本革ステアリング',
+		'seat3'     => 'リアシート',
+		'door'      => '電動スライドドア（左）',
+		'door2'     => '電動スライドドア（両側）',
+		'kamera'    => 'バックカメラ',
+		'kamera2'   => 'サイドカメラ',
+		'kamera3'   => 'フロントカメラ',
+		'asist'     => '運転支援アシスト',
+		'asist2'    => '運転支援アシスト2',
+		'sensar'    => 'コーナーセンサー',
+		'sensar2'   => 'センサー',
 	);
 }
 
@@ -1884,6 +1999,17 @@ function carmel_autolabel_equip_field( $field ) {
 	// 既にラベルがある（＝ACFで設定済み or 手で直した）ものは尊重して触らない
 	if ( isset( $field['label'] ) && $field['label'] !== '' ) { return $field; }
 
+	// ① 最優先：そのフィールド自身が持つ「選択肢テキスト」をラベルにする。
+	//    （推測ゼロ・画面の表記と必ず一致するので「（要確認）」が消える）
+	if ( ! empty( $field['choices'] ) && is_array( $field['choices'] ) ) {
+		$first = reset( $field['choices'] );
+		if ( is_string( $first ) && $first !== '' ) {
+			$field['label'] = $first;
+			return $field;
+		}
+	}
+
+	// ② 選択肢が取れない場合だけ、補完用の対応表を使う。
 	$map = carmel_equip_label_map();
 	if ( isset( $map[ $field['name'] ] ) ) {
 		$field['label'] = $map[ $field['name'] ];
