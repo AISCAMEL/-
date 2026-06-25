@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（プラグイン内蔵の新ステップUI／基本情報・装備・見積もり・担当店舗・複数画像・内容確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 2.7.0
+ * Version: 2.7.1
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -3749,6 +3749,58 @@ function carmel_plan_shortcode( $atts ) {
 		. '</div>'
 		. $price_html
 		. '</div></div>';
+}
+
+
+/* ===================== equip-csv-sync.php（装備CSV→個別フィールド反映） ===================== */
+
+/**
+ * テーマSTEP UIの保存（AJAX: carmel_publish_post）では、装備が "equip" のCSV
+ * （ラベルのカンマ区切り）にだけ保存され、個別の装備ACF（nav/kamera3…）が空のまま
+ * になり、詳細ページの「装備」が空になることがある。その対策。
+ *
+ * テーマAJAX保存の時だけ、equip CSV を個別フィールドへ「追加反映」する（安全側）。
+ * ※ チェックが付いた装備だけセット。空CSVや未チェックでは既存値を消さない。
+ */
+function carmel_theme_equip_map() {
+	// テーマSTEP2のラベル => 個別装備フィールドの data-name
+	return array(
+		'純正ナビ' => 'junsei_nav', '社外ナビ' => 'shagai_nav', 'フルセグTV' => 'nav5',
+		'DVD再生' => 'dvd', 'Bluetooth' => 'bluetooth', 'Apple CarPlay' => 'carplay', 'Android Auto' => 'androidauto',
+		'自動ブレーキ' => 'shoutotu', 'レーンアシスト' => 'lane_assist', 'クルーズコントロール' => 'controll',
+		'アダプティブクルーズ' => 'acc', 'バックカメラ' => 'kamera3', '360度カメラ' => 'kamera4',
+		'コーナーセンサー' => 'corner_sensor', 'ドライブレコーダー' => 'drive_recorder',
+		'シートヒーター' => 'heater', 'ベンチレーションシート' => 'ventilation_seat', '電動シート' => 'seat',
+		'革シート' => 'leather_seat', 'サンルーフ' => 'sunroof', 'パノラマルーフ' => 'panorama_roof',
+		'パワーバックドア' => 'gate', '電動スライドドア' => 'door',
+		'スマートキー' => 'smartkey', 'プッシュスタート' => 'push_start', 'LEDヘッドライト' => 'led_light',
+		'フォグランプ' => 'fog_lamp', 'アダプティブライト' => 'adaptive_light',
+		'アルミホイール' => 'almi', '純正アルミ' => 'almi', 'ローダウン' => 'down', 'エアロパーツ' => 'earo',
+		'禁煙車' => 'kinen_sha', 'ワンオーナー' => 'one_owner', '記録簿あり' => 'kirokubo',
+		'整備済み' => 'seibi_zumi', '修復歴なし' => 'shuufuku_nashi', 'ETC' => 'etc', 'ETC2.0' => 'etc2',
+	);
+}
+
+add_action( 'save_post_portfolio', 'carmel_apply_equip_csv', 30, 1 );
+function carmel_apply_equip_csv( $post_id ) {
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) { return; }
+	if ( wp_is_post_revision( $post_id ) ) { return; }
+	// テーマのAJAX保存（carmel_publish_post）の時だけ実行
+	if ( ! ( defined( 'DOING_AJAX' ) && DOING_AJAX ) ) { return; }
+	if ( ! isset( $_POST['action'] ) || 'carmel_publish_post' !== $_POST['action'] ) { return; }
+
+	$equip = get_post_meta( $post_id, 'equip', true );
+	if ( is_array( $equip ) ) { $equip = implode( ',', $equip ); }
+	$labels = array_filter( array_map( 'trim', explode( ',', (string) $equip ) ) );
+	if ( empty( $labels ) ) { return; } // 空CSVでは何も消さない
+
+	$map = carmel_theme_equip_map();
+	foreach ( $labels as $label ) {
+		if ( ! isset( $map[ $label ] ) ) { continue; }
+		$name = $map[ $label ];
+		if ( function_exists( 'update_field' ) ) { update_field( $name, array( $label ), $post_id ); }
+		else { update_post_meta( $post_id, $name, $label ); }
+	}
 }
 
 
