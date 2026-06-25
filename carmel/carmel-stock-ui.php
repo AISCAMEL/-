@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（プラグイン内蔵の新ステップUI／基本情報・装備・見積もり・担当店舗・複数画像・内容確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 2.6.0
+ * Version: 2.6.1
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -2257,7 +2257,7 @@ function carmel_step3_estimate() {
 			$('#cs-est-month-val').text(yen(getsugaku));
 
 			// 購入プラン（回数別の月々）プレビュー＝フロント[carmel_plan]と同じ計算
-			var PLAN_COUNTS = [12,24,36,48,60];
+			var PLAN_COUNTS = [12,24,36,48,60,72,84];
 			var ph = '', minM = 0;
 			PLAN_COUNTS.forEach(function(c){
 				var m = monthlyFor(principal, nenritsu, c);
@@ -3594,7 +3594,7 @@ function carmel_get_gallery_ids( $post_id ) {
  * 画像の競合店レイアウトに準拠。※ご要望により「現金一括価格」は表示しない。
  *
  * 使い方 : 車両詳細テンプレート/本文に [carmel_plan]
- *          回数を変えたい時 : [carmel_plan counts="12,24,36,48,60"]
+ *          回数を変えたい時 : [carmel_plan counts="12,24,36,48,60,72,84"]
  *          別IDを出す時     : [carmel_plan id="123"]
  */
 function carmel_plan_monthly( $principal, $nenritsu, $count ) {
@@ -3610,7 +3610,7 @@ function carmel_plan_monthly( $principal, $nenritsu, $count ) {
 
 add_shortcode( 'carmel_plan', 'carmel_plan_shortcode' );
 function carmel_plan_shortcode( $atts ) {
-	$atts = shortcode_atts( array( 'id' => 0, 'counts' => '12,24,36,48,60' ), $atts, 'carmel_plan' );
+	$atts = shortcode_atts( array( 'id' => 0, 'counts' => '12,24,36,48,60,72,84' ), $atts, 'carmel_plan' );
 	$pid  = $atts['id'] ? (int) $atts['id'] : get_the_ID();
 	if ( ! $pid ) { return ''; }
 
@@ -3757,7 +3757,7 @@ function carmel_comment_shortcode( $atts ) {
 /* [carmel_monthly] 月々（最安）をコンパクト表示（一覧・詳細どちらでも） */
 add_shortcode( 'carmel_monthly', 'carmel_monthly_shortcode' );
 function carmel_monthly_shortcode( $atts ) {
-	$atts = shortcode_atts( array( 'id' => 0, 'counts' => '12,24,36,48,60', 'prefix' => '月々', 'suffix' => '円〜' ), $atts, 'carmel_monthly' );
+	$atts = shortcode_atts( array( 'id' => 0, 'counts' => '12,24,36,48,60,72,84', 'prefix' => '月々', 'suffix' => '円〜' ), $atts, 'carmel_monthly' );
 	$pid  = $atts['id'] ? (int) $atts['id'] : get_the_ID();
 	if ( ! $pid ) { return ''; }
 
