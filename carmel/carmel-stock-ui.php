@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（プラグイン内蔵の新ステップUI／基本情報・装備・見積もり・担当店舗・複数画像・内容確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 2.5.0
+ * Version: 2.5.1
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -2339,7 +2339,7 @@ function carmel_step3_estimate() {
 
 				'<div class="cs-est-grp">購入プラン（フロント表示プレビュー）</div>'+
 				'<div id="cs-est-plan">'+
-					'<div class="cs-plan-headline">自社ローン月々支払額　<b id="cs-est-plan-head">—</b></div>'+
+					'<div class="cs-plan-headline">低与信ローン月々支払額　<b id="cs-est-plan-head">—</b></div>'+
 					'<div id="cs-est-plan-rows"></div>'+
 					'<div class="cs-plan-price">車両本体価格　<b id="cs-est-plan-price">—</b></div>'+
 					'<div class="cs-plan-note">※ このプレビューと同じ内容を、車両ページに <code>[carmel_plan]</code> で表示できます（現金一括価格は表示しません）。</div>'+
@@ -3596,7 +3596,7 @@ function carmel_plan_shortcode( $atts ) {
 		. '<div class="carmel-plan__head">購入プラン</div>'
 		. '<div class="carmel-plan__body">'
 		. '<div class="carmel-plan__loan">'
-		. '<div class="carmel-plan__loan-label">自社ローン月々支払額</div>'
+		. '<div class="carmel-plan__loan-label">低与信ローン月々支払額</div>'
 		. '<div class="carmel-plan__loan-main">月々 <b>' . number_format( $min ) . '</b>円〜</div>'
 		. '<div class="carmel-plan__rows">' . $rows_html . '</div>'
 		. '</div>'
