@@ -1,0 +1,57 @@
+/* ============================================================
+   BUYMO お問い合わせページ 個別スタイル
+   （共通スタイルは buymo.css を継承）
+   ============================================================ */
+
+/* ---- ページヘッダー ---- */
+.page-hero{
+  background:linear-gradient(180deg,#fff 0%,#FFE8D6 100%);
+  padding:48px 0 56px;text-align:center;
+}
+.breadcrumb{font-size:13px;color:#777;margin-bottom:16px;}
+.breadcrumb a{color:var(--orange);}
+.breadcrumb span{margin:0 8px;}
+.page-hero h1{font-size:40px;font-weight:900;margin-bottom:14px;}
+.page-hero h1::after{content:"";display:block;width:60px;height:4px;background:var(--orange);border-radius:2px;margin:16px auto 0;}
+.page-lead{color:#555;font-size:16px;}
+
+/* ---- 連絡先カード ---- */
+.contact-cards{background:#fff;padding:60px 0;}
+.contact-card{text-align:center;display:flex;flex-direction:column;align-items:center;}
+.contact-card h2{font-size:18px;font-weight:700;margin:6px 0 12px;}
+.contact-tel{font-size:30px;font-weight:900;color:var(--orange);line-height:1.2;}
+.contact-big{font-size:26px;font-weight:900;color:var(--orange);}
+.contact-note{font-size:14px;color:#666;margin:10px 0 16px;}
+.contact-card .btn{width:auto;height:46px;padding:0 28px;font-size:15px;margin-top:auto;}
+
+/* ---- フォーム追加分（textarea / checkbox） ---- */
+.quote-form textarea{
+  width:100%;border:1px solid #ddd;border-radius:8px;padding:12px 14px;
+  font-size:16px;font-family:inherit;color:var(--text);resize:vertical;min-height:120px;
+  transition:border-color .2s,box-shadow .2s;
+}
+.quote-form textarea:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,107,53,.15);}
+.quote-form textarea.invalid{border-color:#e53935;background:#fff6f6;}
+.field-check label{display:flex;align-items:center;gap:8px;font-weight:500;font-size:14px;}
+.field-check input{width:18px;height:18px;height:auto;accent-color:var(--orange);}
+.field-check a{color:var(--orange);text-decoration:underline;}
+
+/* ---- アクセス ---- */
+.access{background:var(--cream);padding:80px 0;}
+.access-grid{align-items:center;}
+.access-map{
+  position:relative;background:linear-gradient(135deg,#e6f7ff,#eef3ff);
+  border-radius:var(--radius);min-height:260px;display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--shadow);overflow:hidden;
+}
+.access-map .map-emoji{font-size:140px;line-height:1;opacity:.85;}
+.access-map .map-pin{position:absolute;font-size:48px;top:38%;left:48%;}
+
+@media (max-width:991px){
+  .access-grid{grid-template-columns:1fr;}
+}
+@media (max-width:767px){
+  .page-hero h1{font-size:30px;}
+  .contact-cards{padding:40px 0;}
+  .access{padding:48px 0;}
+}

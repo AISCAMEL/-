@@ -149,6 +149,10 @@
     }
 
     function validateField(el) {
+      if (el.type === 'checkbox') {
+        if (el.hasAttribute('required') && !el.checked) return setErr(el, '同意が必要です');
+        return setErr(el, '');
+      }
       var v = (el.value || '').trim();
       if (el.hasAttribute('required') && !v) return setErr(el, '入力してください');
       if (el.type === 'email' && v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return setErr(el, 'メールアドレスの形式が正しくありません');
@@ -157,10 +161,11 @@
       return setErr(el, '');
     }
 
-    var fields = form.querySelectorAll('input,select');
+    var fields = form.querySelectorAll('input,select,textarea');
     fields.forEach(function (el) {
       el.addEventListener('blur', function () { validateField(el); });
       el.addEventListener('input', function () { if (el.classList.contains('invalid')) validateField(el); });
+      el.addEventListener('change', function () { if (el.classList.contains('invalid')) validateField(el); });
     });
 
     form.addEventListener('submit', function (e) {
