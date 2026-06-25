@@ -271,6 +271,14 @@ img{max-width:100%;display:block;}
 
 /* ============ フッター ============ */
 .site-footer{background:var(--navy);color:#fff;padding:60px 0 0;font-size:14px;}
+/* ジャンル別買取（フッター上部バンド） */
+.footer-genres{background:#152a63;padding:28px 0;border-bottom:1px solid rgba(255,255,255,.12);}
+.footer-genres h3{font-size:16px;font-weight:700;color:var(--yellow);margin-bottom:14px;}
+.genre-list{display:flex;flex-wrap:wrap;gap:10px;}
+.genre-link{display:inline-block;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:30px;padding:8px 16px;font-size:13px;font-weight:700;color:#fff;transition:background .2s,transform .2s;}
+a.genre-link:hover{background:var(--orange);border-color:var(--orange);transform:translateY(-2px);}
+.genre-link.disabled{opacity:.55;cursor:default;}
+.genre-link .soon{display:inline-block;background:rgba(255,255,255,.2);color:#fff;font-size:10px;font-weight:700;border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:middle;}
 .footer-grid{align-items:start;}
 .logo-light{color:#fff;font-size:24px;}
 .footer-company{font-size:18px;font-weight:700;margin:10px 0;}

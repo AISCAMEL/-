@@ -101,6 +101,12 @@ function header(rel, active) {
 }
 function footer(rel) {
   return `<footer class="site-footer">
+  <nav class="footer-genres" aria-label="ジャンル別の買取">
+    <div class="container">
+      <h3>ジャンル別の買取</h3>
+      <ul id="genre-nav" class="genre-list"></ul>
+    </div>
+  </nav>
   <div class="container grid grid-3 footer-grid">
     <div class="footer-col">
       <a href="${rel}buymo.html#top" class="logo logo-light"><span class="logo-mark" aria-hidden="true">🐮</span><span class="logo-text">BUYMO</span></a>
@@ -126,6 +132,7 @@ function footer(rel) {
   <div class="footer-bottom"><p>Copyright © 2026 合同会社アイズ（BUYMO） All Rights Reserved.</p></div>
 </footer>
 <button class="to-top" id="toTop" aria-label="トップに戻る" hidden>▲</button>
+<script src="${rel}assets/js/genres.js" defer></script>
 <script src="${rel}assets/js/buymo.js" defer></script>`;
 }
 
