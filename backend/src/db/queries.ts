@@ -3,7 +3,7 @@
 import { dbEnabled, query } from './index.js';
 import { summarizeCall } from '../ai/summarize.js';
 import {
-  demoCalls, demoFaqs, demoSettings, demoPhoneNumbers, demoTenant, demoUsers, demoNotifications, newId,
+  demoCalls, demoFaqs, demoSettings, demoPhoneNumbers, demoTenant, demoUsers, demoNotifications, demoCallerRules, newId,
   type DemoCall, type DemoFaq, type DemoUser,
 } from '../demo/fixtures.js';
 import type { CallSummary, TenantContext } from '../types.js';
@@ -407,6 +407,52 @@ export async function getTenantAiContext(tenantId: string): Promise<TenantContex
     faqs: (faqRows ?? []).filter((f: any) => f.is_active !== false)
       .map((f: any) => ({ question: f.question, answer: f.answer, category: f.category ?? null })),
   };
+}
+
+// ---------------- 発信者ルール（ブロック/専用アナウンス） ----------------
+export async function getCallerRule(tenantId: string, phoneNumber: string) {
+  if (!phoneNumber) return null;
+  if (!dbEnabled) {
+    return demoCallerRules.find((r) => (r.tenant_id === tenantId || tenantId === demoTenant.id) && r.phone_number === phoneNumber) ?? null;
+  }
+  const [row] = await query<any>(
+    `select * from caller_rules where tenant_id = $1 and phone_number = $2 limit 1`,
+    [tenantId, phoneNumber]);
+  return row ?? null;
+}
+
+export async function listCallerRules(tenantId: string) {
+  if (!dbEnabled) return demoCallerRules.filter((r) => r.tenant_id === tenantId || tenantId === demoTenant.id);
+  return query<any>(`select * from caller_rules where tenant_id = $1 order by created_at desc`, [tenantId]);
+}
+
+export async function createCallerRule(tenantId: string, input: { phone_number: string; action: string; message?: string; label?: string }) {
+  const action = input.action === 'block' ? 'block' : 'greeting';
+  if (!dbEnabled) {
+    const existing = demoCallerRules.find((r) => (r.tenant_id === tenantId || tenantId === demoTenant.id) && r.phone_number === input.phone_number);
+    if (existing) { existing.action = action as any; existing.message = input.message ?? null; existing.label = input.label ?? null; return existing; }
+    const r = { id: newId('cr'), tenant_id: tenantId, phone_number: input.phone_number, action: action as any, message: input.message ?? null, label: input.label ?? null, created_at: new Date().toISOString() };
+    demoCallerRules.push(r);
+    return r;
+  }
+  const [row] = await query<any>(
+    `insert into caller_rules (tenant_id, phone_number, action, message, label)
+     values ($1,$2,$3,$4,$5)
+     on conflict (tenant_id, phone_number) do update set action=excluded.action, message=excluded.message, label=excluded.label
+     returning *`,
+    [tenantId, input.phone_number, action, input.message ?? null, input.label ?? null]);
+  return row;
+}
+
+export async function deleteCallerRule(tenantId: string, id: string) {
+  if (!dbEnabled) {
+    const i = demoCallerRules.findIndex((r) => r.id === id && (r.tenant_id === tenantId || tenantId === demoTenant.id));
+    if (i === -1) return false;
+    demoCallerRules.splice(i, 1);
+    return true;
+  }
+  const rows = await query(`delete from caller_rules where id=$1 and tenant_id=$2 returning id`, [id, tenantId]);
+  return rows.length > 0;
 }
 
 // ---------------- 通知ログ ----------------

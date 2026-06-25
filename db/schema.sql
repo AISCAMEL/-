@@ -464,3 +464,27 @@ create index if not exists idx_faqs_tenant_order on faqs(tenant_id, sort_order);
 -- 決済（Square）連携用。テナントごとの Square 顧客/サブスクID。
 alter table tenants add column if not exists square_customer_id text;
 alter table tenants add column if not exists square_subscription_id text;
+
+-- =============================================================
+-- caller_rules  (発信者番号ごとのルール：ブロック/専用アナウンス)
+-- =============================================================
+do $$ begin
+  create type caller_action as enum ('block','greeting');
+exception when duplicate_object then null; end $$;
+
+create table if not exists caller_rules (
+  id           uuid primary key default gen_random_uuid(),
+  tenant_id    uuid not null references tenants(id) on delete cascade,
+  phone_number text not null,                 -- 発信者番号（E.164推奨）
+  action       caller_action not null,        -- block=着信拒否/専用文言、greeting=専用挨拶
+  message      text,                          -- 読み上げる文言（任意）
+  label        text,                          -- 管理用ラベル（例:クレーマー/VIP）
+  created_at   timestamptz not null default now(),
+  unique (tenant_id, phone_number)
+);
+create index if not exists idx_caller_rules_lookup on caller_rules(tenant_id, phone_number);
+alter table caller_rules enable row level security;
+drop policy if exists tenant_isolation on caller_rules;
+create policy tenant_isolation on caller_rules
+  using (is_super_admin() or tenant_id = current_tenant_id())
+  with check (is_super_admin() or tenant_id = current_tenant_id());

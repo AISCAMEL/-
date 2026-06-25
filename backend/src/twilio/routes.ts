@@ -7,6 +7,7 @@ import { summarizeCall } from '../ai/summarize.js';
 import { sendCallNotification } from '../notify/email.js';
 import { sendSlackNotification } from '../notify/slack.js';
 import { billableMinutes, aiCostJpy, transferAddCostJpy } from '../billing/rates.js';
+import { getCallerRule } from '../db/queries.js';
 
 // TwiML 生成（ConversationRelay へ接続）。
 function buildConnectTwiml(greeting: string): string {
@@ -36,10 +37,20 @@ export async function registerTwilioRoutes(app: FastifyInstance): Promise<void> 
     }
 
     const to = body.To ?? '';
+    const from = body.From ?? '';
     const tenant = await resolveTenantByPhone(to).catch(() => null);
-    const greeting = tenant?.greetingMessage ?? config.defaultGreeting;
+    const tenantId = tenant?.tenantId ?? config.demoTenantId;
 
+    // 発信者ルール（ブロック/専用アナウンス）を適用。
+    const rule = await getCallerRule(tenantId, from).catch(() => null);
     reply.header('Content-Type', 'text/xml');
+    if (rule?.action === 'block') {
+      const msg = escapeXml(rule.message || '申し訳ありませんが、このお電話はお受けできません。');
+      return reply.send(`<?xml version="1.0" encoding="UTF-8"?>\n<Response><Say language="ja-JP">${msg}</Say><Hangup/></Response>`);
+    }
+    const greeting = rule?.action === 'greeting' && rule.message
+      ? rule.message
+      : (tenant?.greetingMessage ?? config.defaultGreeting);
     return reply.send(buildConnectTwiml(greeting));
   });
 

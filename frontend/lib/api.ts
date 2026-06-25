@@ -52,6 +52,10 @@ export const api = {
   saveNotificationSettings: (body: any) =>
     request<any>('/api/settings/notification', { method: 'PUT', body: JSON.stringify(body) }),
 
+  callerRules: () => request<any[]>('/api/caller-rules'),
+  createCallerRule: (body: any) => request<any>('/api/caller-rules', { method: 'POST', body: JSON.stringify(body) }),
+  deleteCallerRule: (id: string) => request<any>(`/api/caller-rules/${id}`, { method: 'DELETE' }),
+
   phoneNumbers: () => request<any[]>('/api/phone-numbers'),
   updatePhoneNumber: (id: string, body: any) =>
     request<any>(`/api/phone-numbers/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),

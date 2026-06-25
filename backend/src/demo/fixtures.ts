@@ -150,6 +150,16 @@ export interface DemoNotification {
   error_message: string | null; created_at: string; sent_at: string | null;
 }
 
+export interface DemoCallerRule {
+  id: string; tenant_id: string; phone_number: string;
+  action: 'block' | 'greeting'; message: string | null; label: string | null; created_at: string;
+}
+
+export const demoCallerRules: DemoCallerRule[] = [
+  { id: 'cr-1', tenant_id: TENANT, phone_number: '+819099990000', action: 'block', message: '申し訳ありませんが、このお電話はお受けできません。', label: '迷惑電話', created_at: iso(-60 * 24) },
+  { id: 'cr-2', tenant_id: TENANT, phone_number: '+819011112222', action: 'greeting', message: 'いつもありがとうございます。VIPのお客様として担当者へおつなぎします。', label: 'VIP', created_at: iso(-60 * 24) },
+];
+
 export const demoNotifications: DemoNotification[] = [
   { id: 'ntf-1', tenant_id: TENANT, call_id: 'call-1001', type: 'email', destination: 'owner@example.com', status: 'sent', subject: '【AIオペレーター24】新しい電話受付がありました', error_message: null, created_at: iso(-33), sent_at: iso(-33) },
   { id: 'ntf-2', tenant_id: TENANT, call_id: 'call-1002', type: 'email', destination: 'owner@example.com', status: 'sent', subject: '【AIオペレーター24】新しい電話受付がありました', error_message: null, created_at: iso(-119), sent_at: iso(-119) },

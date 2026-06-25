@@ -212,6 +212,28 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     return q.updateSettings(p.tenantId, body);
   });
 
+  // ---- 発信者ルール（ブロック/専用アナウンス） ----
+  app.get('/api/caller-rules', { preHandler: authenticate }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    return q.listCallerRules(p.tenantId);
+  });
+  app.post('/api/caller-rules', { preHandler: requireRole(['owner', 'admin', 'super_admin']) }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const body = (req.body ?? {}) as any;
+    if (!body.phone_number) return reply.code(400).send({ error: '電話番号を入力してください' });
+    if (body.action !== 'block' && body.action !== 'greeting') return reply.code(400).send({ error: 'action は block か greeting' });
+    return q.createCallerRule(p.tenantId, body);
+  });
+  app.delete('/api/caller-rules/:id', { preHandler: requireRole(['owner', 'admin', 'super_admin']) }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const ok = await q.deleteCallerRule(p.tenantId, (req.params as any).id);
+    if (!ok) return reply.code(404).send({ error: 'not found' });
+    return { ok: true };
+  });
+
   // ---- phone numbers ----
   app.get('/api/phone-numbers', { preHandler: authenticate }, async (req, reply) => {
     const p = req.principal!;
