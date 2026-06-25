@@ -22,6 +22,11 @@
       var o = document.createElement('option');
       o.textContent = p; o.value = p; prefSel.appendChild(o);
     });
+    // エリアLPから ?pref=◯◯県 で来た場合は都道府県を自動選択
+    try {
+      var qp = new URLSearchParams(window.location.search).get('pref');
+      if (qp && prefs.indexOf(qp) !== -1) prefSel.value = qp;
+    } catch (e) { /* noop */ }
   }
 
   /* ---- 1. ハンバーガーメニュー ---- */
