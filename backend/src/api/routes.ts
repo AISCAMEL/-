@@ -368,8 +368,13 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/contacts', { preHandler: authenticate }, async (req, reply) => {
     const p = req.principal!;
     if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
-    const { category, q: qs } = req.query as Record<string, string>;
-    return contacts.listContacts(p.tenantId, { category, q: qs });
+    const { category, q: qs, status } = req.query as Record<string, string>;
+    return contacts.listContacts(p.tenantId, { category, q: qs, status });
+  });
+  app.get('/api/contacts/:id/activities', { preHandler: authenticate }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    return contacts.listActivities(p.tenantId, (req.params as any).id);
   });
   app.get('/api/contacts/categories', { preHandler: authenticate }, async (req, reply) => {
     const p = req.principal!;
@@ -409,7 +414,8 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     for (const c of targets) {
       const personalize = (s: string) => s.replace(/\{\{name\}\}/g, c.name || 'ご担当者').replace(/\{\{company\}\}/g, c.company || '');
       const r = await sendEmail(c.email, personalize(subject), personalize(text));
-      if (r.ok) sent++; else failed++;
+      if (r.ok) { sent++; await contacts.logActivity(p.tenantId, c.id, 'email_sent', `一斉メール：${subject}`); }
+      else failed++;
     }
     return { ok: true, total: targets.length, sent, failed };
   });
@@ -432,6 +438,7 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     const c = list.find((x: any) => x.id === (req.params as any).id);
     if (!c?.email) return reply.code(400).send({ error: 'この連絡先にメールアドレスがありません' });
     const r = await sendEmail(c.email, subject, text);
+    if (r.ok) await contacts.logActivity(p.tenantId, c.id, 'email_sent', subject);
     return { ok: r.ok, destination: c.email, error: r.error };
   });
 

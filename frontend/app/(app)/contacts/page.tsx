@@ -1,16 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
-import { Card, PageTitle } from '@/components/ui';
+import { api, CONTACT_STATUS_LABEL, CONTACT_STATUS_COLOR, CONTACT_ACTIVITY_LABEL } from '@/lib/api';
+import { Card, PageTitle, formatDateTime } from '@/components/ui';
 
 export default function ContactsPage() {
   const router = useRouter();
   const [rows, setRows] = useState<any[]>([]);
   const [cats, setCats] = useState<string[]>([]);
   const [category, setCategory] = useState('');
+  const [status, setStatus] = useState('');
   const [q, setQ] = useState('');
+  const [openRow, setOpenRow] = useState<string | null>(null);
+  const [acts, setActs] = useState<any[]>([]);
   const [bulk, setBulk] = useState('');
   const [bulkCat, setBulkCat] = useState('');
   const [msg, setMsg] = useState('');
@@ -25,12 +28,24 @@ export default function ContactsPage() {
   function load() {
     const p = new URLSearchParams();
     if (category) p.set('category', category);
+    if (status) p.set('status', status);
     if (q) p.set('q', q);
     const s = p.toString();
     api.contacts(s ? `?${s}` : '').then(setRows);
     api.contactCategories().then(setCats);
   }
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [category]);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [category, status]);
+
+  async function changeStatus(id: string, st: string) {
+    await api.updateContact(id, { status: st });
+    setRows((rs) => rs.map((r) => (r.id === id ? { ...r, status: st } : r)));
+    if (openRow === id) api.contactActivities(id).then(setActs);
+  }
+  async function toggleActivities(id: string) {
+    if (openRow === id) { setOpenRow(null); return; }
+    setOpenRow(id); setActs([]);
+    setActs(await api.contactActivities(id));
+  }
 
   async function importBulk(e: React.FormEvent) {
     e.preventDefault();
@@ -143,6 +158,10 @@ export default function ContactsPage() {
           <option value="">すべてのカテゴリ</option>
           {cats.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
+        <select value={status} onChange={(e) => setStatus(e.target.value)} className="rounded-lg border px-3 py-2 text-sm">
+          <option value="">すべてのステータス</option>
+          {Object.entries(CONTACT_STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        </select>
         <form onSubmit={(e) => { e.preventDefault(); load(); }} className="flex gap-2">
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="名前・会社・番号で検索" className="rounded-lg border px-3 py-2 text-sm" />
           <button className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark">検索</button>
@@ -152,18 +171,49 @@ export default function ContactsPage() {
       <Card className="p-0">
         <table className="w-full text-sm">
           <thead className="border-b text-left text-xs text-gray-500">
-            <tr><th className="px-4 py-3">名前 / 会社</th><th className="px-4 py-3">電話 / メール</th><th className="px-4 py-3">カテゴリ</th><th className="px-4 py-3">メモ</th><th className="px-4 py-3"></th></tr>
+            <tr><th className="px-4 py-3">名前 / 会社</th><th className="px-4 py-3">電話 / メール</th><th className="px-4 py-3">カテゴリ</th><th className="px-4 py-3">ステータス</th><th className="px-4 py-3">メモ</th><th className="px-4 py-3"></th></tr>
           </thead>
           <tbody>
-            {rows.length === 0 && <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-400">連絡先がありません。「＋ 取込」から追加してください。</td></tr>}
+            {rows.length === 0 && <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400">連絡先がありません。「＋ 取込」から追加してください。</td></tr>}
             {rows.map((c) => (
-              <tr key={c.id} className="border-b last:border-0 align-top">
-                <td className="px-4 py-3">{c.name ?? '—'}{c.company ? <div className="text-xs text-gray-500">{c.company}</div> : null}</td>
-                <td className="px-4 py-3 text-gray-600">{c.phone_number ?? '—'}<div className="text-xs text-gray-400">{c.email ?? ''}</div></td>
-                <td className="px-4 py-3">{c.category && <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs">{c.category}</span>}</td>
-                <td className="px-4 py-3"><input defaultValue={c.note ?? ''} onBlur={(e) => saveNote(c.id, e.target.value)} placeholder="メモ（入力で保存）" className="w-full rounded border px-2 py-1 text-xs" /></td>
-                <td className="px-4 py-3 text-right"><button onClick={() => remove(c.id)} className="text-red-500 hover:underline">削除</button></td>
-              </tr>
+              <Fragment key={c.id}>
+                <tr className="border-b last:border-0 align-top">
+                  <td className="px-4 py-3">{c.name ?? '—'}{c.company ? <div className="text-xs text-gray-500">{c.company}</div> : null}</td>
+                  <td className="px-4 py-3 text-gray-600">{c.phone_number ?? '—'}<div className="text-xs text-gray-400">{c.email ?? ''}</div></td>
+                  <td className="px-4 py-3">{c.category && <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs">{c.category}</span>}</td>
+                  <td className="px-4 py-3">
+                    <select value={c.status || 'active'} onChange={(e) => changeStatus(c.id, e.target.value)}
+                      className={`rounded-full border-0 px-2 py-1 text-xs ${CONTACT_STATUS_COLOR[c.status || 'active'] ?? 'bg-gray-100'}`}>
+                      {Object.entries(CONTACT_STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    </select>
+                  </td>
+                  <td className="px-4 py-3"><input defaultValue={c.note ?? ''} onBlur={(e) => saveNote(c.id, e.target.value)} placeholder="メモ（入力で保存）" className="w-full rounded border px-2 py-1 text-xs" /></td>
+                  <td className="px-4 py-3 text-right">
+                    <button onClick={() => toggleActivities(c.id)} className="text-brand hover:underline">履歴</button>
+                    <button onClick={() => remove(c.id)} className="ml-3 text-red-500 hover:underline">削除</button>
+                  </td>
+                </tr>
+                {openRow === c.id && (
+                  <tr className="border-b bg-gray-50/60">
+                    <td colSpan={6} className="px-4 py-3">
+                      <h3 className="mb-2 text-xs font-semibold text-gray-500">活動履歴</h3>
+                      {acts.length === 0 ? (
+                        <p className="text-xs text-gray-400">まだ履歴はありません（メール送信・ステータス変更が記録されます）。</p>
+                      ) : (
+                        <ul className="space-y-1">
+                          {acts.map((a) => (
+                            <li key={a.id} className="flex gap-3 text-xs text-gray-600">
+                              <span className="text-gray-400">{formatDateTime(a.created_at)}</span>
+                              <span className="rounded bg-gray-200 px-1.5 py-0.5">{CONTACT_ACTIVITY_LABEL[a.type] ?? a.type}</span>
+                              <span>{a.detail ?? ''}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
             ))}
           </tbody>
         </table>

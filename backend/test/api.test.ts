@@ -85,3 +85,40 @@ test('認証必須エンドポイントの権限境界（運営概要は super_a
   assert.equal((await app.inject({ url: '/api/admin/overview', headers: owner })).statusCode, 403);
   assert.equal((await app.inject({ url: '/api/admin/overview', headers: sa })).statusCode, 200);
 });
+
+test('連絡先: ステータス変更で活動履歴が記録される / ステータス絞り込み', async () => {
+  // 連絡先を1件作成
+  const created = await app.inject({ method: 'POST', url: '/api/contacts', headers: J,
+    payload: { contacts: [{ name: 'テスト商談', company: 'テスト社', email: 't@e.com', category: 'テスト' }] } });
+  assert.equal(created.statusCode, 200);
+  const id = created.json()[0].id;
+
+  // ステータスを商談中へ変更
+  const upd = await app.inject({ method: 'PATCH', url: `/api/contacts/${id}`, headers: J, payload: { status: 'in_progress' } });
+  assert.equal(upd.statusCode, 200);
+  assert.equal(upd.json().status, 'in_progress');
+
+  // 活動履歴に status_changed が残る
+  const acts = await app.inject({ url: `/api/contacts/${id}/activities`, headers: owner });
+  assert.equal(acts.statusCode, 200);
+  assert.ok(acts.json().some((a: any) => a.type === 'status_changed'));
+
+  // status 絞り込みで該当が返る
+  const filtered = await app.inject({ url: '/api/contacts?status=in_progress', headers: owner });
+  assert.equal(filtered.statusCode, 200);
+  assert.ok(filtered.json().some((c: any) => c.id === id));
+});
+
+test('連絡先: 一斉メール送信で送信履歴(email_sent)が記録される', async () => {
+  const created = await app.inject({ method: 'POST', url: '/api/contacts', headers: J,
+    payload: { contacts: [{ name: 'メール宛', email: 'mail-target@e.com', category: '一斉テスト' }] } });
+  const id = created.json()[0].id;
+
+  const r = await app.inject({ method: 'POST', url: '/api/contacts/bulk-email', headers: J,
+    payload: { subject: 'ご案内', body: '{{name}}様へ', category: '一斉テスト' } });
+  assert.equal(r.statusCode, 200);
+  assert.ok(r.json().total >= 1);
+
+  const acts = await app.inject({ url: `/api/contacts/${id}/activities`, headers: owner });
+  assert.ok(acts.json().some((a: any) => a.type === 'email_sent'));
+});

@@ -84,6 +84,7 @@ export const api = {
   createContacts: (items: any[]) => request<any>('/api/contacts', { method: 'POST', body: JSON.stringify({ contacts: items }) }),
   updateContact: (id: string, body: any) => request<any>(`/api/contacts/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   deleteContact: (id: string) => request<any>(`/api/contacts/${id}`, { method: 'DELETE' }),
+  contactActivities: (id: string) => request<any[]>(`/api/contacts/${id}/activities`),
   contactsToCampaign: (body: any) => request<any>('/api/contacts/to-campaign', { method: 'POST', body: JSON.stringify(body) }),
   emailContact: (id: string, subject: string, body: string) => request<any>(`/api/contacts/${id}/email`, { method: 'POST', body: JSON.stringify({ subject, body }) }),
   bulkEmail: (subject: string, body: string, category?: string) => request<any>('/api/contacts/bulk-email', { method: 'POST', body: JSON.stringify({ subject, body, category }) }),
@@ -141,6 +142,19 @@ export async function sendChat(message: string, history: ChatTurn[]): Promise<st
 }
 
 export const TAG_PRESETS = ['VIP', '要注意', '重要', '新規', 'クレーム', '常連'];
+
+// 連絡先の営業ステータス（パイプライン）
+export const CONTACT_STATUS_LABEL: Record<string, string> = {
+  active: '見込み', in_progress: '商談中', won: '成約', lost: '見送り', do_not_contact: '連絡しない',
+};
+export const CONTACT_STATUS_COLOR: Record<string, string> = {
+  active: 'bg-gray-100 text-gray-700', in_progress: 'bg-blue-100 text-blue-800',
+  won: 'bg-green-100 text-green-800', lost: 'bg-gray-100 text-gray-500',
+  do_not_contact: 'bg-red-100 text-red-700',
+};
+export const CONTACT_ACTIVITY_LABEL: Record<string, string> = {
+  email_sent: 'メール送信', status_changed: 'ステータス変更', call: '架電', note: 'メモ',
+};
 
 export const LEAD_STATUS_LABEL: Record<string, string> = {
   new: '新規', contacted: '連絡済', in_progress: '対応中',

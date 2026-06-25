@@ -574,3 +574,24 @@ drop policy if exists tenant_isolation on contacts;
 create policy tenant_isolation on contacts
   using (is_super_admin() or tenant_id = current_tenant_id())
   with check (is_super_admin() or tenant_id = current_tenant_id());
+
+-- 営業ステータス（パイプライン）の取り得る値: active(見込み)/in_progress(商談中)/won(成約)/lost(見送り)/do_not_contact(連絡しない)
+-- 既存の status カラムを流用するため追加変更なし。
+
+-- =============================================================
+-- contact_activities  (連絡先ごとの活動履歴: メール送信・ステータス変更など)
+-- =============================================================
+create table if not exists contact_activities (
+  id         uuid primary key default gen_random_uuid(),
+  tenant_id  uuid not null references tenants(id) on delete cascade,
+  contact_id uuid not null references contacts(id) on delete cascade,
+  type       text not null,                   -- email_sent / status_changed / call / note
+  detail     text,
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_contact_activities on contact_activities(tenant_id, contact_id, created_at desc);
+alter table contact_activities enable row level security;
+drop policy if exists tenant_isolation on contact_activities;
+create policy tenant_isolation on contact_activities
+  using (is_super_admin() or tenant_id = current_tenant_id())
+  with check (is_super_admin() or tenant_id = current_tenant_id());

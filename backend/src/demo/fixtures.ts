@@ -196,7 +196,17 @@ export interface DemoContact {
   note: string | null; tags: string[]; status: string; created_at: string;
 }
 export const demoContacts: DemoContact[] = [
-  { id: 'ct-1', tenant_id: TENANT, name: '田中太郎', company: '田中商店', phone_number: '+819012340001', email: 'tanaka@example.com', category: '見込み客', note: '展示会で名刺交換。予約システムに関心。', tags: ['ホット'], status: 'active', created_at: iso(-60 * 24 * 3) },
-  { id: 'ct-2', tenant_id: TENANT, name: '佐藤花子', company: '佐藤クリニック', phone_number: '+819012340002', email: 'sato@example.com', category: '既存顧客', note: '毎月利用。アップセル候補。', tags: ['VIP'], status: 'active', created_at: iso(-60 * 24 * 10) },
+  { id: 'ct-1', tenant_id: TENANT, name: '田中太郎', company: '田中商店', phone_number: '+819012340001', email: 'tanaka@example.com', category: '見込み客', note: '展示会で名刺交換。予約システムに関心。', tags: ['ホット'], status: 'in_progress', created_at: iso(-60 * 24 * 3) },
+  { id: 'ct-2', tenant_id: TENANT, name: '佐藤花子', company: '佐藤クリニック', phone_number: '+819012340002', email: 'sato@example.com', category: '既存顧客', note: '毎月利用。アップセル候補。', tags: ['VIP'], status: 'won', created_at: iso(-60 * 24 * 10) },
   { id: 'ct-3', tenant_id: TENANT, name: '鈴木一郎', company: '鈴木工務店', phone_number: '+819012340003', email: null, category: '休眠', note: '半年連絡なし。再アプローチ。', tags: [], status: 'active', created_at: iso(-60 * 24 * 30) },
+];
+
+export interface DemoContactActivity {
+  id: string; tenant_id: string; contact_id: string; type: string;
+  detail: string | null; created_at: string;
+}
+export const demoContactActivities: DemoContactActivity[] = [
+  { id: 'ca-1', tenant_id: TENANT, contact_id: 'ct-1', type: 'status_changed', detail: '見込み → 商談中', created_at: iso(-60 * 24 * 1) },
+  { id: 'ca-2', tenant_id: TENANT, contact_id: 'ct-2', type: 'email_sent', detail: '【ご案内】新サービスのお知らせ', created_at: iso(-60 * 24 * 5) },
+  { id: 'ca-3', tenant_id: TENANT, contact_id: 'ct-2', type: 'status_changed', detail: '商談中 → 成約', created_at: iso(-60 * 24 * 4) },
 ];
