@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { api, CATEGORY_LABEL } from '@/lib/api';
+import { api, CATEGORY_LABEL, CONTACT_STATUS_LABEL, CONTACT_STATUS_COLOR } from '@/lib/api';
 import { Card, PageTitle, StatusBadge, CategoryTag, formatDateTime, formatDuration } from '@/components/ui';
 
 export default function DashboardPage() {
@@ -114,6 +114,28 @@ export default function DashboardPage() {
                 <span className="font-semibold">{n}件</span>
               </Link>
             ))}
+          </div>
+        </Card>
+      )}
+
+      {/* 連絡先のステータス別サマリー（営業パイプライン） */}
+      {(data.contacts_summary?.total ?? 0) > 0 && (
+        <Card className="mt-6">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-gray-500">連絡先パイプライン（全{data.contacts_summary.total}件）</h2>
+            <Link href="/contacts" className="text-xs text-brand hover:underline">連絡先リストへ →</Link>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+            {Object.keys(CONTACT_STATUS_LABEL).map((k) => {
+              const n = data.contacts_summary.by_status?.[k] ?? 0;
+              return (
+                <Link key={k} href={`/contacts?status=${k}`}
+                  className="rounded-lg border px-3 py-2 hover:bg-gray-50">
+                  <span className={`inline-block rounded-full px-2 py-0.5 text-xs ${CONTACT_STATUS_COLOR[k] ?? 'bg-gray-100'}`}>{CONTACT_STATUS_LABEL[k]}</span>
+                  <div className="mt-1 text-xl font-bold">{n}<span className="ml-0.5 text-xs font-normal text-gray-400">件</span></div>
+                </Link>
+              );
+            })}
           </div>
         </Card>
       )}

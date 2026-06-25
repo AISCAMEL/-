@@ -14,6 +14,15 @@ export default function ContactsPage() {
   const [q, setQ] = useState('');
   const [openRow, setOpenRow] = useState<string | null>(null);
   const [acts, setActs] = useState<any[]>([]);
+
+  // ダッシュボード等からの ?status=... / ?category=... を初期反映
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const st = sp.get('status'); const cat = sp.get('category');
+    if (st) setStatus(st);
+    if (cat) setCategory(cat);
+  // eslint-disable-next-line
+  }, []);
   const [bulk, setBulk] = useState('');
   const [bulkCat, setBulkCat] = useState('');
   const [msg, setMsg] = useState('');

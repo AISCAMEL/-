@@ -52,7 +52,11 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/dashboard', { preHandler: authenticate }, async (req, reply) => {
     const p = req.principal!;
     if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
-    return q.getDashboard(p.tenantId);
+    const [dash, contactSummary] = await Promise.all([
+      q.getDashboard(p.tenantId),
+      contacts.contactStatusSummary(p.tenantId),
+    ]);
+    return { ...dash, contacts_summary: contactSummary };
   });
 
   // ---- calls ----

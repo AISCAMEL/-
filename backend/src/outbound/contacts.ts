@@ -25,6 +25,22 @@ export async function listContacts(tenantId: string, f: ContactFilter = {}) {
   return query<any>(`select * from contacts where ${where.join(' and ')} order by created_at desc limit 500`, params);
 }
 
+/** ステータス別の連絡先件数サマリー（ダッシュボード用）。 */
+export async function contactStatusSummary(tenantId: string): Promise<{ total: number; by_status: Record<string, number> }> {
+  const by_status: Record<string, number> = {};
+  let total = 0;
+  if (!dbEnabled) {
+    for (const c of demoContacts.filter((c) => c.tenant_id === tenantId || tenantId === demoTenant.id)) {
+      const s = c.status || 'active';
+      by_status[s] = (by_status[s] ?? 0) + 1; total++;
+    }
+    return { total, by_status };
+  }
+  const rows = await query<any>(`select coalesce(status,'active') as status, count(*)::int as n from contacts where tenant_id=$1 group by status`, [tenantId]);
+  rows.forEach((r) => { by_status[r.status] = r.n; total += r.n; });
+  return { total, by_status };
+}
+
 /** 連絡先ごとの活動履歴（メール送信・ステータス変更など）を記録する。 */
 export async function logActivity(tenantId: string, contactId: string, type: string, detail?: string | null) {
   if (!dbEnabled) {
