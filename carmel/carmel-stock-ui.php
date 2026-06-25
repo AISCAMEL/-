@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（プラグイン内蔵の新ステップUI／基本情報・装備・見積もり・担当店舗・複数画像・内容確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 2.5.1
+ * Version: 2.6.0
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -385,6 +385,42 @@ function carmel_register_local_field_groups() {
      "class": "",
      "id": ""
     },
+    "default_value": "",
+    "min": "",
+    "max": "",
+    "placeholder": "",
+    "step": "",
+    "prepend": "",
+    "append": "円"
+   },
+   {
+    "key": "field_cest_hanbai_tesuu",
+    "label": "販売手数料",
+    "name": "est_hanbai_tesuu",
+    "aria-label": "",
+    "type": "number",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": { "width": "", "class": "", "id": "" },
+    "default_value": "",
+    "min": "",
+    "max": "",
+    "placeholder": "",
+    "step": "",
+    "prepend": "",
+    "append": "円"
+   },
+   {
+    "key": "field_cest_auction",
+    "label": "オークション諸経費",
+    "name": "est_auction",
+    "aria-label": "",
+    "type": "number",
+    "instructions": "",
+    "required": 0,
+    "conditional_logic": 0,
+    "wrapper": { "width": "", "class": "", "id": "" },
     "default_value": "",
     "min": "",
     "max": "",
@@ -2121,6 +2157,9 @@ function carmel_step3_estimate() {
 	#cs-est .cs-est-kind #cs-est-autofee { margin-left:auto; padding:6px 14px; border:0;
 		border-radius:6px; background:#1d7a46; color:#fff; font-weight:700; cursor:pointer; font-size:12px; }
 	#cs-est .cs-est-kind #cs-est-autofee:hover { filter:brightness(1.08); }
+	#cs-est .cs-est-pp { padding:10px 14px; background:#fff8e6; border-bottom:1px solid #f0e2b8; display:flex; align-items:center; gap:10px; }
+	#cs-est .cs-est-pp label { font-weight:700; color:#8a6d00; font-size:12px; }
+	#cs-est .cs-est-pp input { width:160px; padding:6px 8px; border:1px solid #e0cf8a; border-radius:5px; }
 	#cs-est #cs-est-plan { margin:0 14px 8px; padding:10px 12px; background:#f7faff; border:1px solid #d9e3f5; border-radius:8px; }
 	#cs-est .cs-plan-headline { font-size:13px; color:#1f2d3d; margin-bottom:6px; }
 	#cs-est .cs-plan-headline b { font-size:20px; color:#c0392b; }
@@ -2142,13 +2181,13 @@ function carmel_step3_estimate() {
 		var IN = [
 			'honntai','nebiki','shitadori',
 			'jidoshazei','jibaiseki','juuryouzei','inshi','recycle',
-			'touroku_daiko','shako','nousha','kensa_daiko','seibi','hoshou',
+			'touroku_daiko','shako','nousha','kensa_daiko','seibi','hoshou','hanbai_tesuu','auction',
 			'atamakin','kaisuu','nenritsu'
 		];
 		// 自動計算（出力）項目
 		var OUT = ['shouhizei','total','getsugaku'];
 
-		var TAXABLE_FEES = ['touroku_daiko','shako','nousha','kensa_daiko','seibi','hoshou'];
+		var TAXABLE_FEES = ['touroku_daiko','shako','nousha','kensa_daiko','seibi','hoshou','hanbai_tesuu','auction'];
 		var NONTAX_FEES  = ['jidoshazei','jibaiseki','juuryouzei','inshi','recycle'];
 
 		function yen(n){ return (isFinite(n)?Math.round(n):0).toLocaleString(); }
@@ -2321,6 +2360,8 @@ function carmel_step3_estimate() {
 				row('kensa_daiko','検査登録手続代行')+
 				row('seibi','点検整備費用')+
 				row('hoshou','保証料')+
+				row('hanbai_tesuu','販売手数料')+
+				row('auction','オークション諸経費')+
 
 				'<div class="cs-est-grp">計算結果（自動）</div>'+
 				calcRow('shouhizei','消費税（課税対象×10%）')+
@@ -2357,7 +2398,30 @@ function carmel_step3_estimate() {
 			$('input[name=cs-est-kind][value="'+kind+'"]').prop('checked', true);
 		}
 
-		// 諸経費設定（普通車/軽）から該当行へ自動入力（あとから手編集可）
+		// 自動車税（種別割・年額／2019年10月以降の新税率）
+		function autoTax(cc, kind){
+			if (kind === 'kei') return 10800;
+			if (cc <= 0)    return 0;
+			if (cc <= 1000) return 25000;
+			if (cc <= 1500) return 30500;
+			if (cc <= 2000) return 36000;
+			if (cc <= 2500) return 43500;
+			if (cc <= 3000) return 50000;
+			if (cc <= 3500) return 57000;
+			if (cc <= 4000) return 65500;
+			if (cc <= 4500) return 75500;
+			if (cc <= 6000) return 87000;
+			return 110000;
+		}
+		// 自賠責保険料（本土・近似値）。月数は諸経費設定の jibai_months を使用。
+		function autoJibai(kind, months){
+			var futsu = {12:11500,13:12010,24:17650,25:18160,36:23690,37:24190};
+			var kei   = {12:11440,13:11950,24:17540,25:18040,36:23520,37:23970};
+			var t = (kind === 'kei') ? kei : futsu;
+			return t[months] || t[24];
+		}
+
+		// 諸経費設定（普通車/軽）から該当行へ自動入力＋税・自賠責を自動計算（あとから手編集可）
 		function autoFees(){
 			var kind = $('input[name=cs-est-kind]:checked').val() || 'futsu';
 			var f = (FEE && FEE[kind]) ? FEE[kind] : {};
@@ -2369,6 +2433,12 @@ function carmel_step3_estimate() {
 			set('shako',         num(f.shako_daiko));                       // 車庫証明代行
 			set('inshi',         num(f.kensa_touroku) + num(f.shako_inshi)); // 登録時印紙代（検査登録＋車庫証明）
 			set('hoshou',        num(f.hoshou_hiyou));                      // 保証料
+
+			// 自動車税・自賠責の自動計算
+			var cc     = parseInt(String($('#cs_displacement').val()||'').replace(/[^0-9]/g,''),10) || 0;
+			var months = parseInt((FEE && FEE.jibai_months) || 24, 10) || 24;
+			set('jidoshazei', autoTax(cc, kind));   // 自動車税
+			set('jibaiseki',  autoJibai(kind, months)); // 自賠責保険料
 			calc();
 		}
 
@@ -2388,6 +2458,14 @@ function carmel_step3_estimate() {
 				} else {
 					$(ui).append(html());
 				}
+			}
+
+			// 仕入れ価格（社内用）をSTEP4から見積もり先頭へ移動
+			var $pp = $('#cs_purchase_price').closest('.cs-group');
+			if ($pp.length && $('#cs-est').length) {
+				$pp.find('label').text('仕入れ価格（社内用・万円）');
+				$pp.addClass('cs-est-pp');
+				$('#cs-est').prepend($pp);
 			}
 
 			prefill();
@@ -3465,7 +3543,13 @@ function carmel_featured_from_gallery( $post_id ) {
 
 /* ギャラリーの添付ID配列を取得（自動判定） */
 function carmel_get_gallery_ids( $post_id ) {
-	// 0) STEP5 ギャラリー（carmel_gallery / カンマ区切りID）
+	// 0) テーマSTEP UIの車両画像（vehicle_image_ids / カンマ区切りID）＝1枚目をアイキャッチに
+	$vi = get_post_meta( $post_id, 'vehicle_image_ids', true );
+	if ( ! empty( $vi ) ) {
+		return array_values( array_filter( array_map( 'intval', explode( ',', $vi ) ) ) );
+	}
+
+	// 0b) STEP5 ギャラリー（carmel_gallery / カンマ区切りID）
 	$cg = get_post_meta( $post_id, 'carmel_gallery', true );
 	if ( ! empty( $cg ) ) {
 		return array_values( array_filter( array_map( 'intval', explode( ',', $cg ) ) ) );
@@ -3602,6 +3686,123 @@ function carmel_plan_shortcode( $atts ) {
 		. '</div>'
 		. $price_html
 		. '</div></div>';
+}
+
+
+/* ===================== detail-display.php（詳細ページ用の表示） ===================== */
+
+/* 値取得（テキスト）: get_field → post_meta フォールバック */
+function carmel_detail_get( $pid, $key ) {
+	$v = function_exists( 'get_field' ) ? get_field( $key, $pid ) : '';
+	if ( null === $v || '' === $v || false === $v ) { $v = get_post_meta( $pid, $key, true ); }
+	if ( is_array( $v ) ) { $v = implode( '・', array_filter( $v ) ); }
+	return is_string( $v ) ? trim( $v ) : $v;
+}
+
+/* [carmel_condition] 状態・車歴（修復歴/外装/内装/法定点検/車検/保証 など）を表示 */
+add_shortcode( 'carmel_condition', 'carmel_condition_shortcode' );
+function carmel_condition_shortcode( $atts ) {
+	$atts = shortcode_atts( array( 'id' => 0 ), $atts, 'carmel_condition' );
+	$pid  = $atts['id'] ? (int) $atts['id'] : get_the_ID();
+	if ( ! $pid ) { return ''; }
+
+	$rows = array(
+		'修復歴'      => carmel_detail_get( $pid, 'repair_history' ),
+		'外装状態'    => carmel_detail_get( $pid, 'exterior_cond' ),
+		'内装状態'    => carmel_detail_get( $pid, 'interior_cond' ),
+		'法定点検'    => carmel_detail_get( $pid, 'inspection' ),
+		'車検'        => carmel_detail_get( $pid, 'shaken' ),
+		'ミッション'  => carmel_detail_get( $pid, 'mission' ),
+		'駆動方式'    => carmel_detail_get( $pid, 'kudou' ),
+		'燃料'        => carmel_detail_get( $pid, 'fuel_type' ),
+	);
+
+	// 保証：専用フィールド → 無ければ諸経費設定の保証内容
+	$warranty = carmel_detail_get( $pid, 'hosho' );
+	if ( '' === $warranty ) { $warranty = carmel_detail_get( $pid, 'hoshou' ); }
+	if ( '' === $warranty ) { $warranty = carmel_detail_get( $pid, 'warranty' ); }
+	if ( '' === $warranty && function_exists( 'carmel_get_fee_settings' ) ) {
+		$fee = carmel_get_fee_settings();
+		if ( ! empty( $fee['hoshou_umu'] ) && 'yes' === $fee['hoshou_umu'] ) {
+			$warranty = ! empty( $fee['hoshou_naiyou'] ) ? $fee['hoshou_naiyou'] : '保証付';
+		}
+	}
+	$rows['保証'] = $warranty;
+
+	$html = '';
+	foreach ( $rows as $label => $val ) {
+		if ( '' === $val || null === $val ) { continue; }
+		$html .= '<tr><th>' . esc_html( $label ) . '</th><td>' . esc_html( $val ) . '</td></tr>';
+	}
+	if ( '' === $html ) { return ''; }
+	return '<div class="carmel-cond"><table>' . $html . '</table></div>';
+}
+
+/* [carmel_comment] 担当者コメントを吹き出しで表示 */
+add_shortcode( 'carmel_comment', 'carmel_comment_shortcode' );
+function carmel_comment_shortcode( $atts ) {
+	$atts = shortcode_atts( array( 'id' => 0, 'name' => '担当者より' ), $atts, 'carmel_comment' );
+	$pid  = $atts['id'] ? (int) $atts['id'] : get_the_ID();
+	if ( ! $pid ) { return ''; }
+	$c = carmel_detail_get( $pid, 'comment' );
+	if ( '' === $c ) { return ''; }
+	return '<div class="carmel-comment">'
+		. '<div class="carmel-comment__icon">🧑‍💼</div>'
+		. '<div class="carmel-comment__bubble">'
+		. '<div class="carmel-comment__name">' . esc_html( $atts['name'] ) . '</div>'
+		. nl2br( esc_html( $c ) )
+		. '</div></div>';
+}
+
+/* [carmel_monthly] 月々（最安）をコンパクト表示（一覧・詳細どちらでも） */
+add_shortcode( 'carmel_monthly', 'carmel_monthly_shortcode' );
+function carmel_monthly_shortcode( $atts ) {
+	$atts = shortcode_atts( array( 'id' => 0, 'counts' => '12,24,36,48,60', 'prefix' => '月々', 'suffix' => '円〜' ), $atts, 'carmel_monthly' );
+	$pid  = $atts['id'] ? (int) $atts['id'] : get_the_ID();
+	if ( ! $pid ) { return ''; }
+
+	$num = function ( $key ) use ( $pid ) {
+		$v = function_exists( 'get_field' ) ? get_field( $key, $pid ) : '';
+		if ( null === $v || '' === $v || false === $v ) { $v = get_post_meta( $pid, $key, true ); }
+		return (float) preg_replace( '/[^0-9.]/', '', (string) $v );
+	};
+	$total = $num( 'est_total' );
+	$atama = $num( 'est_atamakin' );
+	$nen   = $num( 'est_nenritsu' );
+	if ( $total <= 0 ) { return ''; }
+	$principal = max( 0, $total - $atama );
+	$counts = array_filter( array_map( 'intval', explode( ',', $atts['counts'] ) ), function ( $c ) { return $c > 0; } );
+	$min = 0;
+	foreach ( $counts as $c ) {
+		$m = carmel_plan_monthly( $principal, $nen, $c );
+		if ( $m > 0 && ( 0 === $min || $m < $min ) ) { $min = $m; }
+	}
+	if ( $min <= 0 ) { return ''; }
+	return '<span class="carmel-monthly"><span class="carmel-monthly__pre">' . esc_html( $atts['prefix'] ) . '</span> <b>'
+		. number_format( $min ) . '</b>' . esc_html( $atts['suffix'] ) . '</span>';
+}
+
+/* 詳細表示の共通スタイル */
+add_action( 'wp_head', 'carmel_detail_style' );
+function carmel_detail_style() {
+	if ( is_admin() ) { return; }
+	?>
+	<style>
+	.carmel-cond{max-width:560px;margin:16px 0;border:1px solid #e6e9ef;border-radius:10px;overflow:hidden;}
+	.carmel-cond table{width:100%;border-collapse:collapse;}
+	.carmel-cond th,.carmel-cond td{padding:9px 12px;font-size:14px;text-align:left;border-bottom:1px solid #eef1f5;}
+	.carmel-cond th{width:38%;background:#f7f9fc;color:#4b5563;font-weight:700;}
+	.carmel-cond tr:last-child th,.carmel-cond tr:last-child td{border-bottom:0;}
+	.carmel-comment{display:flex;gap:12px;align-items:flex-start;max-width:600px;margin:16px 0;}
+	.carmel-comment__icon{flex:0 0 46px;width:46px;height:46px;border-radius:50%;background:#fde8d7;display:flex;align-items:center;justify-content:center;font-size:24px;}
+	.carmel-comment__bubble{position:relative;background:#fff7ef;border:1px solid #f3d9bf;border-radius:12px;padding:12px 16px;font-size:14px;line-height:1.7;color:#3a3a3a;}
+	.carmel-comment__bubble::before{content:'';position:absolute;left:-8px;top:16px;border-width:8px 8px 8px 0;border-style:solid;border-color:transparent #fff7ef transparent transparent;}
+	.carmel-comment__name{font-size:11px;color:#b06a2c;font-weight:700;margin-bottom:4px;}
+	.carmel-monthly{display:inline-flex;align-items:baseline;gap:4px;color:#e8500a;font-weight:700;}
+	.carmel-monthly b{font-size:1.5em;}
+	.carmel-monthly__pre{font-size:.85em;color:#6b7280;font-weight:600;}
+	</style>
+	<?php
 }
 
 
