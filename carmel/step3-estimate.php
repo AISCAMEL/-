@@ -127,19 +127,25 @@ function carmel_step3_estimate() {
 			$('#cs-est-total-val').text(yen(total));
 			$('#cs-est-month-val').text(yen(getsugaku));
 
-			// 見積もり明細ACF（est_*）へ
-			IN.concat(OUT).forEach(function(k){
-				setAcf('est_'+k, document.getElementById('cs_est_'+k) ? n(k) : '');
-			});
-			// 計算結果も est_* へ（n() は出力欄も読む）
-			setAcf('est_shouhizei', shouhizei);
-			setAcf('est_total', total);
-			setAcf('est_getsugaku', getsugaku);
+			// 見積もりに数字が入っているか（全項目0なら未入力とみなす）
+			var hasInput = false;
+			IN.forEach(function(k){ if (n(k) > 0) hasInput = true; });
 
-			// 既存フィールドへミラー
-			setAcf('total',   yen(getsugaku) + '円');                 // 月々のお支払い
-			setAcf('keihi',   yen(taxFees + nonTax + shouhizei) + '円'); // 諸経費合計
-			setAcf('recicle', n('recycle') ? yen(n('recycle')) + '円' : '');
+			// 見積もり明細ACF（est_*）へ ※未入力なら触らない（既存値を消さない）
+			if (hasInput) {
+				IN.concat(OUT).forEach(function(k){
+					setAcf('est_'+k, document.getElementById('cs_est_'+k) ? n(k) : '');
+				});
+				setAcf('est_shouhizei', shouhizei);
+				setAcf('est_total', total);
+				setAcf('est_getsugaku', getsugaku);
+			}
+
+			// 既存フィールドへミラー ※0/空のときは上書きしない（手入力の月額等を保護）
+			if (getsugaku > 0) { setAcf('total', yen(getsugaku) + '円'); }      // 月々のお支払い
+			var feesTotal = taxFees + nonTax + shouhizei;
+			if (feesTotal > 0) { setAcf('keihi', yen(feesTotal) + '円'); }       // 諸経費合計
+			if (n('recycle') > 0) { setAcf('recicle', yen(n('recycle')) + '円'); } // リサイクル料
 		}
 
 		function setOut(id, val){

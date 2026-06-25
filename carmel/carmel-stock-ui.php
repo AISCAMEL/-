@@ -1,13 +1,11 @@
 <?php
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
- * Description: 在庫STEP UI（基本情報・装備・見積もり・担当店舗・複数画像・全体図確認）、支払回数修正、見積初期費用、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACFも自動登録。
- * Version: 1.3.0
+ * Description: 在庫STEP UI一式（基本情報・装備・見積もり・担当店舗・複数画像・全体図確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
+ * Version: 1.3.1
  * Author: カーメル
- * 導入: wp-content/plugins/carmel-stock-ui.php に置いて有効化（or 子テーマfunctions.phpにヘッダー除き貼付）。
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
-
 add_action( 'acf/init', 'carmel_register_local_field_groups' );
 function carmel_register_local_field_groups() {
 	if ( ! function_exists( 'acf_add_local_field_group' ) ) { return; }
@@ -1834,19 +1832,25 @@ function carmel_step3_estimate() {
 			$('#cs-est-total-val').text(yen(total));
 			$('#cs-est-month-val').text(yen(getsugaku));
 
-			// 見積もり明細ACF（est_*）へ
-			IN.concat(OUT).forEach(function(k){
-				setAcf('est_'+k, document.getElementById('cs_est_'+k) ? n(k) : '');
-			});
-			// 計算結果も est_* へ（n() は出力欄も読む）
-			setAcf('est_shouhizei', shouhizei);
-			setAcf('est_total', total);
-			setAcf('est_getsugaku', getsugaku);
+			// 見積もりに数字が入っているか（全項目0なら未入力とみなす）
+			var hasInput = false;
+			IN.forEach(function(k){ if (n(k) > 0) hasInput = true; });
 
-			// 既存フィールドへミラー
-			setAcf('total',   yen(getsugaku) + '円');                 // 月々のお支払い
-			setAcf('keihi',   yen(taxFees + nonTax + shouhizei) + '円'); // 諸経費合計
-			setAcf('recicle', n('recycle') ? yen(n('recycle')) + '円' : '');
+			// 見積もり明細ACF（est_*）へ ※未入力なら触らない（既存値を消さない）
+			if (hasInput) {
+				IN.concat(OUT).forEach(function(k){
+					setAcf('est_'+k, document.getElementById('cs_est_'+k) ? n(k) : '');
+				});
+				setAcf('est_shouhizei', shouhizei);
+				setAcf('est_total', total);
+				setAcf('est_getsugaku', getsugaku);
+			}
+
+			// 既存フィールドへミラー ※0/空のときは上書きしない（手入力の月額等を保護）
+			if (getsugaku > 0) { setAcf('total', yen(getsugaku) + '円'); }      // 月々のお支払い
+			var feesTotal = taxFees + nonTax + shouhizei;
+			if (feesTotal > 0) { setAcf('keihi', yen(feesTotal) + '円'); }       // 諸経費合計
+			if (n('recycle') > 0) { setAcf('recicle', yen(n('recycle')) + '円'); } // リサイクル料
 		}
 
 		function setOut(id, val){
