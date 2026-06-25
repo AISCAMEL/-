@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（プラグイン内蔵の新ステップUI／基本情報・装備・見積もり・担当店舗・複数画像・内容確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 2.8.0
+ * Version: 2.9.0
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -2163,9 +2163,11 @@ function carmel_step3_estimate() {
 	#cs-est #cs-est-plan { margin:0 14px 8px; padding:10px 12px; background:#f7faff; border:1px solid #d9e3f5; border-radius:8px; }
 	#cs-est .cs-plan-headline { font-size:13px; color:#1f2d3d; margin-bottom:6px; }
 	#cs-est .cs-plan-headline b { font-size:20px; color:#c0392b; }
-	#cs-est #cs-est-plan-rows { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:4px 10px; }
-	#cs-est .cs-plan-row { display:flex; justify-content:space-between; font-size:12px; padding:3px 6px; background:#fff; border:1px solid #e6edf7; border-radius:5px; }
-	#cs-est .cs-plan-row b { color:#1f5fae; }
+	#cs-est #cs-est-plan-rows { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:4px 10px; }
+	#cs-est .cs-plan-row { display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 8px; font-size:12px; padding:4px 8px; background:#fff; border:1px solid #e6edf7; border-radius:5px; }
+	#cs-est .cs-plan-row > span { font-weight:700; color:#1f2d3d; }
+	#cs-est .cs-plan-row b { color:#1f5fae; margin-left:auto; }
+	#cs-est .cs-plan-row i { font-style:normal; color:#888; font-size:11px; width:100%; text-align:right; }
 	#cs-est .cs-plan-price { margin-top:8px; font-size:13px; color:#1f2d3d; }
 	#cs-est .cs-plan-price b { font-size:16px; }
 	#cs-est .cs-plan-note { margin-top:6px; font-size:11px; color:#888; }
@@ -2255,14 +2257,18 @@ function carmel_step3_estimate() {
 			// 合計表示
 			$('#cs-est-total-val').text(yen(total));
 			$('#cs-est-month-val').text(yen(getsugaku));
+			// 金利込み総額（選択中の回数）＝ 月々 × 回数 ＋ 頭金
+			var loanTotal = ( getsugaku > 0 && kaisuu > 0 ) ? ( getsugaku * kaisuu + n('atamakin') ) : 0;
+			$('#cs-est-loan-total-val').text(yen(loanTotal));
 
-			// 購入プラン（回数別の月々）プレビュー＝フロント[carmel_plan]と同じ計算
+			// 購入プラン（回数別の月々＋金利込み総額）プレビュー＝フロント[carmel_plan]と同じ計算
 			var PLAN_COUNTS = [12,24,36,48,60,72,84];
 			var ph = '', minM = 0;
 			PLAN_COUNTS.forEach(function(c){
 				var m = monthlyFor(principal, nenritsu, c);
+				var tt = ( m > 0 ) ? ( m * c + n('atamakin') ) : 0;
 				if (m > 0 && (minM === 0 || m < minM)) minM = m;
-				ph += '<div class="cs-plan-row"><span>'+c+'回</span><b>月々 '+yen(m)+'円</b></div>';
+				ph += '<div class="cs-plan-row"><span>'+c+'回</span><b>月々 '+yen(m)+'円</b><i>総額 '+yen(tt)+'円</i></div>';
 			});
 			$('#cs-est-plan-rows').html(ph);
 			$('#cs-est-plan-head').text(minM > 0 ? ('月々 '+yen(minM)+'円〜') : '—');
@@ -2320,7 +2326,7 @@ function carmel_step3_estimate() {
 		function row(id, label, append){
 			return '<div class="cs-est-row">'+
 				'<label for="cs_est_'+id+'">'+label+'</label>'+
-				'<input type="number" inputmode="numeric" class="cs-est-in" id="cs_est_'+id+'">'+
+				'<input type="number" inputmode="decimal" step="any" class="cs-est-in" id="cs_est_'+id+'">'+
 				'<span class="yen">'+(append||'円')+'</span></div>';
 		}
 		function calcRow(id, label){
@@ -2376,6 +2382,7 @@ function carmel_step3_estimate() {
 				'<div class="cs-est-total">'+
 					'<span>月々 <b id="cs-est-month-val">0</b> 円</span>'+
 					'<span>支払総額 <b id="cs-est-total-val">0</b> 円</span>'+
+					'<span>金利込み総額 <b id="cs-est-loan-total-val">0</b> 円</span>'+
 				'</div>'+
 
 				'<div class="cs-est-grp">購入プラン（フロント表示プレビュー）</div>'+
@@ -3714,10 +3721,11 @@ function carmel_plan_shortcode( $atts ) {
 		.carmel-plan__loan-label{font-size:12px;color:#6b7280;font-weight:700;}
 		.carmel-plan__loan-main{font-size:15px;color:#1f2d3d;margin:2px 0 10px;}
 		.carmel-plan__loan-main b{font-size:30px;color:#e8500a;font-weight:900;}
-		.carmel-plan__rows{display:flex;flex-direction:column;gap:5px;}
-		.carmel-plan__row{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:#374151;border-bottom:1px dashed #e6e9ef;padding-bottom:4px;}
+		.carmel-plan__rows{display:flex;flex-direction:column;gap:6px;}
+		.carmel-plan__row{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;font-size:14px;color:#374151;border-bottom:1px dashed #e6e9ef;padding-bottom:5px;}
 		.carmel-plan__row-c{font-weight:700;color:#1f2d3d;}
-		.carmel-plan__row-m{font-weight:700;}
+		.carmel-plan__row-m{font-weight:700;margin-left:auto;}
+		.carmel-plan__row-t{width:100%;text-align:right;font-size:11px;color:#9aa3af;}
 		.carmel-plan__price{flex:1 1 160px;padding:14px 16px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;background:#fafbfc;box-sizing:border-box;}
 		.carmel-plan__price-label{font-size:13px;color:#6b7280;font-weight:700;margin-bottom:6px;}
 		.carmel-plan__price-val{font-size:26px;font-weight:900;color:#1f2d3d;}
@@ -3728,8 +3736,10 @@ function carmel_plan_shortcode( $atts ) {
 
 	$rows_html = '';
 	foreach ( $rows as $c => $m ) {
+		$tt = ( $m > 0 ) ? ( $m * $c + $atama ) : 0; // 金利込み総額（頭金含む）
 		$rows_html .= '<div class="carmel-plan__row"><span class="carmel-plan__row-c">' . (int) $c . '回</span>'
-			. '<span class="carmel-plan__row-m">月々 ' . number_format( $m ) . '円</span></div>';
+			. '<span class="carmel-plan__row-m">月々 ' . number_format( $m ) . '円</span>'
+			. '<span class="carmel-plan__row-t">総額 ' . number_format( $tt ) . '円</span></div>';
 	}
 
 	$price_html = '';
