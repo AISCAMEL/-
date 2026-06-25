@@ -27,6 +27,7 @@ LLM / FAQ / DB / 通知 / 管理画面
 ├── README.md
 ├── docs/
 │   ├── AIオペレーター24_開発仕様書.md   # マスター仕様書（本プロジェクトの正）
+│   ├── architecture-overview.md         # 全体構造（フロー図・マインドマップ）
 │   ├── ai-conversation.md               # AI会話仕様・プロンプト・state machine
 │   ├── api.md                           # API / Webhook 仕様
 │   ├── twilio-setup.md                  # 実機通話テスト手順・疎通チェックリスト
