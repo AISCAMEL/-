@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（基本情報・装備・見積もり・担当店舗・複数画像・全体図確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 1.8.0
+ * Version: 1.9.0
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -2896,9 +2896,106 @@ function carmel_tidy_admin() {
 	}
 	?>
 	<style>
-	/* STEP UI が全て担うボックスは非表示（入力はDOMに残るので保存は維持・フロント表示に影響なし） */
+	/* ============================================================
+	   カーメル 在庫編集画面 ブラッシュアップ（見た目だけ・保存先は不変）
+	   ============================================================ */
+
+	/* --- 1) STEP UI が全て担う保存先ボックスは非表示（DOMに残るので保存は維持） --- */
 	#acf-group_carmel_equip_extra,
 	#acf-group_carmel_estimate { display:none !important; }
+
+	/* --- 2) WordPress標準の雑多なボックスを在庫画面では隠してスッキリ --- */
+	#slugdiv, #postcustom, #commentsdiv, #commentstatusdiv,
+	#trackbacksdiv, #postexcerpt, #revisionsdiv, #formatdiv,
+	#tagsdiv-post_tag, #authordiv { display:none !important; }
+
+	/* --- 3) STEP UI 本体をカード化して主役に --- */
+	#carmel_step_ui {
+		background:#fff;
+		border:1px solid #e3e8ef;
+		border-radius:12px;
+		padding:18px 22px 22px;
+		margin:6px 0 22px;
+		box-shadow:0 2px 12px rgba(20,40,80,.06);
+	}
+	/* 上に付ける見出し帯（JSで .cs-ui-head を差し込む） */
+	.cs-ui-head {
+		display:flex; align-items:center; gap:10px;
+		margin:2px 0 14px; padding:10px 14px;
+		background:linear-gradient(90deg,#1f6feb,#3b82f6);
+		color:#fff; border-radius:10px; font-weight:700; font-size:15px;
+		box-shadow:0 2px 8px rgba(31,111,235,.25);
+	}
+	.cs-ui-head .cs-ui-head-ico { font-size:18px; }
+	.cs-ui-head .cs-ui-head-sub { margin-left:auto; font-weight:500; font-size:12px; opacity:.9; }
+
+	/* --- 4) 入力要素に統一感（枠線・角丸・余白・フォーカス） --- */
+	#carmel_step_ui input[type="text"],
+	#carmel_step_ui input[type="number"],
+	#carmel_step_ui input[type="search"],
+	#carmel_step_ui input[type="tel"],
+	#carmel_step_ui input[type="url"],
+	#carmel_step_ui input[type="date"],
+	#carmel_step_ui select,
+	#carmel_step_ui textarea {
+		border:1px solid #cfd8e3 !important;
+		border-radius:8px !important;
+		padding:8px 10px !important;
+		font-size:14px !important;
+		background:#fff !important;
+		box-shadow:none !important;
+		transition:border-color .12s, box-shadow .12s;
+	}
+	#carmel_step_ui input[type="text"]:focus,
+	#carmel_step_ui input[type="number"]:focus,
+	#carmel_step_ui input[type="search"]:focus,
+	#carmel_step_ui select:focus,
+	#carmel_step_ui textarea:focus {
+		border-color:#3b82f6 !important;
+		box-shadow:0 0 0 3px rgba(59,130,246,.18) !important;
+		outline:none !important;
+	}
+	#carmel_step_ui label { font-weight:600; color:#243044; }
+
+	/* --- 5) ボタンの見た目を整える（次へ＝青／戻る＝白） --- */
+	#carmel_step_ui .cs-nav-btn,
+	#carmel_step_ui .cs-btn-next,
+	#carmel_step_ui .cs-btn-back,
+	#carmel_step_ui .cs-reset-all-btn {
+		border-radius:8px !important;
+		padding:9px 18px !important;
+		font-weight:700 !important;
+		border:1px solid transparent !important;
+		cursor:pointer;
+		transition:filter .12s, background .12s;
+	}
+	#carmel_step_ui .cs-btn-next {
+		background:#1f6feb !important; color:#fff !important;
+		border-color:#1f6feb !important;
+	}
+	#carmel_step_ui .cs-btn-next:hover { filter:brightness(1.08); }
+	#carmel_step_ui .cs-btn-back {
+		background:#fff !important; color:#243044 !important;
+		border-color:#cfd8e3 !important;
+	}
+	#carmel_step_ui .cs-btn-back:hover { background:#f3f6fb !important; }
+	#carmel_step_ui .cs-reset-all-btn {
+		background:#fff !important; color:#b42318 !important;
+		border-color:#f0c4bf !important; font-weight:600 !important;
+	}
+	#carmel_step_ui .cs-reset-all-btn:hover { background:#fdf2f1 !important; }
+
+	/* --- 6) 装備チェックを読みやすく（折り返し・余白） --- */
+	#carmel_step_ui input[type="checkbox"] + label,
+	#carmel_step_ui label > input[type="checkbox"] { margin-right:6px; }
+
+	/* --- 7) 折りたたみ保存先ボックスは控えめに（クリックで開ける案内） --- */
+	#acf-group_65ccb2f7bc7b0 .postbox-header,
+	#acf-group_65ccb275da4af .postbox-header,
+	#acf-group_65ccb37dee5a8 .postbox-header,
+	#acf-group_65ccb40340cec .postbox-header,
+	#acf-group_65cc94fadb356 .postbox-header,
+	#acf-group_65ccb11906c02 .postbox-header { background:#f7f9fc; }
 	</style>
 	<script>
 	(function ($) {
@@ -2913,11 +3010,25 @@ function carmel_tidy_admin() {
 			'acf-group_65ccb11906c02'  // 安全装備
 		];
 		$( function () {
-			if ( ! document.getElementById( 'carmel_step_ui' ) ) { return; }
+			var ui = document.getElementById( 'carmel_step_ui' );
+			if ( ! ui ) { return; }
+
+			// 保存先ACFボックスを初期折りたたみ
 			COLLAPSE.forEach( function ( id ) {
 				var el = document.getElementById( id );
 				if ( el ) { el.classList.add( 'closed' ); }
 			} );
+
+			// STEP UI の上に見出し帯を一度だけ差し込む
+			if ( ! ui.querySelector( '.cs-ui-head' ) && ! document.getElementById( 'cs-ui-head-injected' ) ) {
+				var head = document.createElement( 'div' );
+				head.className = 'cs-ui-head';
+				head.id = 'cs-ui-head-injected';
+				head.innerHTML = '<span class="cs-ui-head-ico">🚗</span>' +
+					'<span>車両入力 STEP UI</span>' +
+					'<span class="cs-ui-head-sub">ここに入力すれば保存先フィールドへ自動反映されます</span>';
+				ui.parentNode.insertBefore( head, ui );
+			}
 		} );
 	})( jQuery );
 	</script>
