@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（プラグイン内蔵の新ステップUI／基本情報・装備・見積もり・担当店舗・複数画像・内容確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 2.13.1
+ * Version: 2.14.0
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -4043,15 +4043,64 @@ function carmel_condition_shortcode( $atts ) {
 }
 
 /* [carmel_comment] 担当者コメントを吹き出しで表示 */
+/* 値を画像URLに変換（ACF画像配列 / 添付ID / URL文字列のいずれにも対応） */
+function carmel_img_url( $v, $size = 'thumbnail' ) {
+	if ( empty( $v ) ) { return ''; }
+	if ( is_array( $v ) ) {
+		if ( ! empty( $v['url'] ) ) { return $v['url']; }
+		if ( ! empty( $v['ID'] ) ) { $u = wp_get_attachment_image_url( (int) $v['ID'], $size ); return $u ? $u : ''; }
+		return '';
+	}
+	if ( is_numeric( $v ) ) { $u = wp_get_attachment_image_url( (int) $v, $size ); return $u ? $u : ''; }
+	if ( is_string( $v ) && preg_match( '#^https?://#', $v ) ) { return $v; }
+	return '';
+}
+
+/* 店舗スラッグ => ショップ投稿ID（テーマと同じ対応） */
+function carmel_shop_post_map() {
+	return apply_filters( 'carmel_shop_post_map', array(
+		'fukushima' => 698, 'chiba' => 705, 'odawara' => 715, 'yamanashi' => 2450,
+	) );
+}
+
+/* 担当者の顔写真URLを解決：①車両ごと ②店舗の担当者写真 ③店舗のアイキャッチ */
+function carmel_staff_photo_url( $pid ) {
+	$cands = array( 'tantou_photo', 'tantousha_photo', 'staff_photo', 'tantou_image', 'staff_image', 'tantousha', 'tantou' );
+	$get = function ( $k, $id ) {
+		$v = function_exists( 'get_field' ) ? get_field( $k, $id ) : '';
+		if ( null === $v || '' === $v || false === $v ) { $v = get_post_meta( $id, $k, true ); }
+		return $v;
+	};
+	// ① 車両ごとの担当者写真
+	foreach ( $cands as $k ) { $u = carmel_img_url( $get( $k, $pid ) ); if ( $u ) { return $u; } }
+	// ② 選択された店舗から
+	$slug = get_post_meta( $pid, 'shop', true );
+	$map  = carmel_shop_post_map();
+	if ( $slug && isset( $map[ $slug ] ) ) {
+		$sid = (int) $map[ $slug ];
+		foreach ( $cands as $k ) { $u = carmel_img_url( $get( $k, $sid ) ); if ( $u ) { return $u; } }
+		// ③ 店舗のアイキャッチ画像
+		$t = get_the_post_thumbnail_url( $sid, 'thumbnail' );
+		if ( $t ) { return $t; }
+	}
+	return '';
+}
+
 add_shortcode( 'carmel_comment', 'carmel_comment_shortcode' );
 function carmel_comment_shortcode( $atts ) {
-	$atts = shortcode_atts( array( 'id' => 0, 'name' => '担当者より' ), $atts, 'carmel_comment' );
+	$atts = shortcode_atts( array( 'id' => 0, 'name' => '担当者より', 'photo' => '' ), $atts, 'carmel_comment' );
 	$pid  = $atts['id'] ? (int) $atts['id'] : get_the_ID();
 	if ( ! $pid ) { return ''; }
 	$c = carmel_detail_get( $pid, 'comment' );
 	if ( '' === $c ) { return ''; }
+
+	$photo = $atts['photo'] ? carmel_img_url( $atts['photo'] ) : carmel_staff_photo_url( $pid );
+	$icon  = $photo
+		? '<span class="carmel-comment__icon has-photo"><img src="' . esc_url( $photo ) . '" alt="担当者"></span>'
+		: '<span class="carmel-comment__icon">🧑‍💼</span>';
+
 	return '<div class="carmel-comment">'
-		. '<div class="carmel-comment__icon">🧑‍💼</div>'
+		. $icon
 		. '<div class="carmel-comment__bubble">'
 		. '<div class="carmel-comment__name">' . esc_html( $atts['name'] ) . '</div>'
 		. nl2br( esc_html( $c ) )
@@ -4098,7 +4147,9 @@ function carmel_detail_style() {
 	.carmel-cond th{width:38%;background:#f3faf5;color:#1c7a3a;font-weight:700;}
 	.carmel-cond tr:last-child th,.carmel-cond tr:last-child td{border-bottom:0;}
 	.carmel-comment{display:flex;gap:14px;align-items:flex-start;max-width:100%;margin:8px 0;}
-	.carmel-comment__icon{flex:0 0 52px;width:52px;height:52px;border-radius:50%;background:#fff0e3;border:2px solid #f7c79b;display:flex;align-items:center;justify-content:center;font-size:26px;}
+	.carmel-comment__icon{flex:0 0 60px;width:60px;height:60px;border-radius:50%;background:#fff0e3;border:2px solid #f7c79b;display:flex;align-items:center;justify-content:center;font-size:28px;overflow:hidden;}
+	.carmel-comment__icon.has-photo{background:#fff;}
+	.carmel-comment__icon img{width:100%;height:100%;object-fit:cover;display:block;}
 	.carmel-comment__bubble{position:relative;flex:1;background:#fff8f1;border:1px solid #f3d4b2;border-radius:14px;padding:14px 18px;font-size:15px;line-height:1.85;color:#3a3a3a;box-shadow:0 2px 8px rgba(244,121,32,.06);}
 	.carmel-comment__bubble::before{content:'';position:absolute;left:-9px;top:18px;border-width:9px 9px 9px 0;border-style:solid;border-color:transparent #fff8f1 transparent transparent;}
 	.carmel-comment__name{display:inline-block;background:#f47920;color:#fff;font-size:12px;font-weight:700;padding:2px 12px;border-radius:20px;margin-bottom:8px;}
