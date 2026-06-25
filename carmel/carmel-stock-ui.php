@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（プラグイン内蔵の新ステップUI／基本情報・装備・見積もり・担当店舗・複数画像・内容確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 2.16.0
+ * Version: 2.16.1
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -2241,16 +2241,8 @@ function carmel_step3_estimate() {
 			var principal = Math.max(0, total - n('atamakin'));
 			var kaisuu    = Math.max(0, Math.floor(n('kaisuu')));
 			var nenritsu  = n('nenritsu');
-			var getsugaku = 0;
-			if (kaisuu > 0){
-				if (nenritsu > 0){
-					var r = (nenritsu/100)/12;
-					getsugaku = principal * r / (1 - Math.pow(1+r, -kaisuu));
-				} else {
-					getsugaku = principal / kaisuu;
-				}
-				getsugaku = Math.ceil(getsugaku);
-			}
+			// 月々は購入プラン／フロント[carmel_plan]と同じ計算（100円単位切り上げ）に統一
+			var getsugaku = monthlyFor(principal, nenritsu, kaisuu);
 
 			// 出力欄へ反映
 			setOut('shouhizei', shouhizei);
