@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（プラグイン内蔵の新ステップUI／基本情報・装備・見積もり・担当店舗・複数画像・内容確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 2.15.0
+ * Version: 2.16.0
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -2157,6 +2157,9 @@ function carmel_step3_estimate() {
 	#cs-est .cs-est-kind #cs-est-autofee { margin-left:auto; padding:6px 14px; border:0;
 		border-radius:6px; background:#1d7a46; color:#fff; font-weight:700; cursor:pointer; font-size:12px; }
 	#cs-est .cs-est-kind #cs-est-autofee:hover { filter:brightness(1.08); }
+	#cs-est .cs-est-kind #cs-est-reset { padding:6px 14px; border:1px solid #d08; border-color:#d35;
+		border-radius:6px; background:#fff; color:#d23; font-weight:700; cursor:pointer; font-size:12px; }
+	#cs-est .cs-est-kind #cs-est-reset:hover { background:#ffeaea; }
 	#cs-est .cs-est-pp { padding:10px 14px; background:#fff8e6; border-bottom:1px solid #f0e2b8; display:flex; align-items:center; gap:10px; }
 	#cs-est .cs-est-pp label { font-weight:700; color:#8a6d00; font-size:12px; }
 	#cs-est .cs-est-pp input { width:160px; padding:6px 8px; border:1px solid #e0cf8a; border-radius:5px; }
@@ -2345,6 +2348,7 @@ function carmel_step3_estimate() {
 					'<label><input type="radio" name="cs-est-kind" value="futsu" checked> 普通車</label>'+
 					'<label><input type="radio" name="cs-est-kind" value="kei"> 軽自動車</label>'+
 					'<button type="button" id="cs-est-autofee">諸経費を自動入力</button>'+
+					'<button type="button" id="cs-est-reset">リセット</button>'+
 				'</div>'+
 
 				'<div class="cs-est-grp">車両</div>'+
@@ -2449,6 +2453,24 @@ function carmel_step3_estimate() {
 			calc();
 		}
 
+		// 見積もりをリセット：入力欄・計算欄・対応ACF(est_*)・ミラー先をすべて空に戻す
+		function resetEst(){
+			if (!window.confirm('見積もりの入力内容をすべてリセットします。よろしいですか？')) { return; }
+			// パネル上の入力・計算欄を空に
+			IN.concat(OUT).forEach(function(k){
+				var el = document.getElementById('cs_est_'+k);
+				if (el) el.value = '';
+			});
+			// 見積もり明細ACF(est_*)を空に
+			IN.concat(OUT).forEach(function(k){ setAcf('est_'+k, ''); });
+			// 既存フィールドのミラー先も空に（月々/諸経費/リサイクル/車両本体/月々）
+			['total','keihi','recicle','price','monthly'].forEach(function(k){ setAcf(k, ''); });
+			var pm = document.getElementById('cs_price_man'); if (pm) pm.value = '';
+			var md = document.getElementById('cs-monthly-amt'); if (md) md.textContent = '';
+			// 合計表示・プレビューを更新
+			calc();
+		}
+
 		$(function(){
 			var ui = document.getElementById('carmel_step_ui');
 			if (!ui) return;
@@ -2481,6 +2503,7 @@ function carmel_step3_estimate() {
 
 			$(document).on('input change', '#cs-est input', calc);
 			$(document).on('click', '#cs-est-autofee', autoFees);
+			$(document).on('click', '#cs-est-reset', resetEst);
 			$(document).on('change', '#cs_displacement', detectKind);
 			// 保存直前にも再計算（取りこぼし防止）
 			$('#post').on('submit', calc);
