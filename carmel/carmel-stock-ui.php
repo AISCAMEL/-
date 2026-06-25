@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（プラグイン内蔵の新ステップUI／基本情報・装備・見積もり・担当店舗・複数画像・内容確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 2.2.0
+ * Version: 2.3.0
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -14,6 +14,13 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
  * 旧来のプラグイン側パネルを使いたい時だけ false にする。
  */
 if ( ! defined( 'CARMEL_DEFER_TO_THEME_FORM' ) ) { define( 'CARMEL_DEFER_TO_THEME_FORM', true ); }
+
+/**
+ * テーマのステップ内に、プラグインの高機能版を「埋め込む」モード。
+ * true の間：STEP3 に詳細見積もり明細を組み込み（テーマ簡易版は隠す）、
+ *            STEP4 に店舗ブリッジ（TEL/LINE/問い合わせリンクの自動反映）を組み込む。
+ */
+if ( ! defined( 'CARMEL_EMBED_FEATURES' ) ) { define( 'CARMEL_EMBED_FEATURES', true ); }
 
 add_action( 'acf/init', 'carmel_register_local_field_groups' );
 function carmel_register_local_field_groups() {
@@ -2085,7 +2092,8 @@ add_action( 'admin_footer-post.php',     'carmel_step3_estimate' );
 add_action( 'admin_footer-post-new.php', 'carmel_step3_estimate' );
 
 function carmel_step3_estimate() {
-	if ( CARMEL_DEFER_TO_THEME_FORM ) { return; } // テーマの見積もりを使う
+	// テーマ簡易見積もりを使う設定なら何もしない。ただし「埋め込み」指定時は詳細版を出す。
+	if ( CARMEL_DEFER_TO_THEME_FORM && ! CARMEL_EMBED_FEATURES ) { return; }
 	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
 	if ( ! $screen || $screen->post_type !== 'portfolio' ) {
 		return;
@@ -2196,6 +2204,18 @@ function carmel_step3_estimate() {
 			var feesTotal = taxFees + nonTax + shouhizei;
 			if (feesTotal > 0) { setAcf('keihi', yen(feesTotal) + '円'); }       // 諸経費合計
 			if (n('recycle') > 0) { setAcf('recicle', yen(n('recycle')) + '円'); } // リサイクル料
+
+			// テーマフォーム互換ミラー（フロント[price]やテーマ保存・プレビューと整合）
+			if (honntai > 0) {
+				setAcf('price', honntai);                       // 車両本体価格（フロント[price]用）
+				var pm = document.getElementById('cs_price_man');
+				if (pm) pm.value = Math.round(honntai / 10000); // テーマSTEP6プレビュー/公開タイトル用（万円）
+			}
+			if (getsugaku > 0) {
+				setAcf('monthly', getsugaku);                   // 月々（フロント用）
+				var md = document.getElementById('cs-monthly-amt');
+				if (md) md.textContent = yen(getsugaku) + '円'; // テーマ公開AJAX(acf_monthly)用
+			}
 		}
 
 		function setOut(id, val){
@@ -2275,8 +2295,18 @@ function carmel_step3_estimate() {
 			if (!ui) return;
 
 			var $mount = $('#cs-est-mount');
-			if ($mount.length) $mount.html(html());
-			else $(ui).append(html());
+			if ($mount.length) {
+				$mount.html(html());
+			} else {
+				// テーマフォームのSTEP3パネル内に埋め込み、テーマの簡易見積もりは隠す
+				var $themeStep3 = $(ui).find('.cs-panel[data-panel="3"]');
+				if ($themeStep3.length) {
+					$themeStep3.find('.cs-estimate').hide(); // テーマ簡易版を隠す（入力はDOMに残る）
+					$themeStep3.prepend(html());             // 詳細版をステップ先頭に挿入
+				} else {
+					$(ui).append(html());
+				}
+			}
 
 			prefill();
 			calc();
@@ -2545,6 +2575,62 @@ function carmel_step4_shop_bridge() {
 			}
 		} );
 
+	})( jQuery );
+	</script>
+	<?php
+}
+
+
+/* ===================== step4 テーマ店舗ブリッジ（埋め込み版） ===================== */
+
+/**
+ * テーマフォームの STEP4「担当店舗」セレクト(#cs_shop_select)を選んだ時に、
+ * テーマ標準の AJAX（carmel_get_shop_info）で TEL/LINE/問い合わせリンクを取得し、
+ * 在庫(portfolio)の ACF（tel / line-link / contact-link）へ自動反映する。
+ * ※ テーマのボタンは「メッセージ表示のみ」で値を書き込まないため、ここで補完する。
+ */
+add_action( 'admin_footer-post.php',     'carmel_step4_theme_shop_bridge' );
+add_action( 'admin_footer-post-new.php', 'carmel_step4_theme_shop_bridge' );
+function carmel_step4_theme_shop_bridge() {
+	if ( ! CARMEL_EMBED_FEATURES ) { return; }
+	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+	if ( ! $screen || $screen->post_type !== 'portfolio' ) { return; }
+	$nonce = wp_create_nonce( 'carmel_shop_info_nonce' );
+	?>
+	<script>
+	(function ($) {
+		'use strict';
+		var NONCE = '<?php echo esc_js( $nonce ); ?>';
+
+		function setAcf( dataName, value ) {
+			var $f = $( '.acf-field[data-name="' + dataName + '"]' );
+			if ( ! $f.length ) { return; }
+			var $i = $f.find( 'input[type="text"], input[type="url"], input[type="number"], textarea' ).first();
+			if ( ! $i.length ) { return; }
+			var s = ( value == null ) ? '' : String( value );
+			if ( $i.val() === s ) { return; }
+			$i.val( s ).trigger( 'input' ).trigger( 'change' );
+		}
+
+		$( function () {
+			var $sel = $( '#cs_shop_select' );
+			if ( ! $sel.length ) { return; }
+
+			function apply() {
+				var slug = $sel.val();
+				if ( ! slug ) { return; }
+				$.post( ajaxurl, { action: 'carmel_get_shop_info', nonce: NONCE, shop_value: slug }, function ( res ) {
+					if ( res && res.success && res.data ) {
+						setAcf( 'tel', res.data.tel );
+						setAcf( 'line-link', res.data.line_link );
+						setAcf( 'contact-link', res.data.contact_link );
+					}
+				} );
+			}
+
+			$sel.on( 'change', apply );
+			$( '#cs-shop-btn' ).on( 'click', function () { setTimeout( apply, 50 ); } );
+		} );
 	})( jQuery );
 	</script>
 	<?php
