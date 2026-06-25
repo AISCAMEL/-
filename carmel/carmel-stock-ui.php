@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（プラグイン内蔵の新ステップUI／基本情報・装備・見積もり・担当店舗・複数画像・内容確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 2.7.1
+ * Version: 2.8.0
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -3812,6 +3812,62 @@ function carmel_detail_get( $pid, $key ) {
 	if ( null === $v || '' === $v || false === $v ) { $v = get_post_meta( $pid, $key, true ); }
 	if ( is_array( $v ) ) { $v = implode( '・', array_filter( $v ) ); }
 	return is_string( $v ) ? trim( $v ) : $v;
+}
+
+/* 複数の候補キーから最初に見つかった値を返す */
+function carmel_detail_get_any( $pid, $keys ) {
+	foreach ( (array) $keys as $k ) {
+		$v = carmel_detail_get( $pid, $k );
+		if ( '' !== $v && null !== $v ) { return $v; }
+	}
+	return '';
+}
+
+/* [carmel_basic] 基本情報（メーカー/車種/年式/走行距離/排気量… を確実に表示） */
+add_shortcode( 'carmel_basic', 'carmel_basic_shortcode' );
+function carmel_basic_shortcode( $atts ) {
+	$atts = shortcode_atts( array( 'id' => 0, 'empty' => 'hide' ), $atts, 'carmel_basic' );
+	$pid  = $atts['id'] ? (int) $atts['id'] : get_the_ID();
+	if ( ! $pid ) { return ''; }
+
+	// ラベル => 候補となる data-name（複数あれば最初に見つかった値を使う）
+	$fields = array(
+		'メーカー'   => array( 'marker', 'maker', 'メーカー' ),
+		'車種・型式' => array( 'type', 'name', 'car_model', 'shashu' ),
+		'年式'       => array( 'year', 'nenshiki' ),
+		'走行距離'   => array( 'mileage', 'soukou', 'soukou_kyori', 'kyori' ),
+		'排気量'     => array( 'displacement', 'haikiryou', 'haiki' ),
+		'ミッション' => array( 'mission', 'mt' ),
+		'駆動方式'   => array( 'kudou', 'drive' ),
+		'ハンドル'   => array( 'handle' ),
+		'ボディカラー' => array( 'color', 'body_color', 'iro' ),
+		'燃料'       => array( 'fuel_type', 'fuel', 'nenryou' ),
+		'車検'       => array( 'shaken' ),
+		'法定点検'   => array( 'inspection' ),
+		'リサイクル料' => array( 'recicle', 'recycle' ),
+	);
+
+	$hide_empty = ( 'hide' === $atts['empty'] );
+	$rows = '';
+	foreach ( $fields as $label => $keys ) {
+		$val = carmel_detail_get_any( $pid, $keys );
+
+		// 走行距離は数値ならカンマ＋km
+		if ( '走行距離' === $label && '' !== $val ) {
+			$n = (int) preg_replace( '/[^0-9]/', '', (string) $val );
+			if ( $n > 0 ) { $val = number_format( $n ) . 'km'; }
+		}
+		// リサイクル料は数値なら円
+		if ( 'リサイクル料' === $label && '' !== $val ) {
+			$n = (int) preg_replace( '/[^0-9]/', '', (string) $val );
+			if ( $n > 0 ) { $val = number_format( $n ) . '円'; }
+		}
+
+		if ( '' === $val && $hide_empty ) { continue; }
+		$rows .= '<tr><th>' . esc_html( $label ) . '</th><td>' . esc_html( $val ) . '</td></tr>';
+	}
+	if ( '' === $rows ) { return ''; }
+	return '<div class="carmel-cond carmel-basic"><table>' . $rows . '</table></div>';
 }
 
 /* [carmel_condition] 状態・車歴（修復歴/外装/内装/法定点検/車検/保証 など）を表示 */
