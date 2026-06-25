@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（プラグイン内蔵の新ステップUI／基本情報・装備・見積もり・担当店舗・複数画像・内容確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 2.14.1
+ * Version: 2.15.0
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -3622,13 +3622,29 @@ function carmel_featured_from_gallery( $post_id ) {
 		set_post_thumbnail( $post_id, $first );
 	}
 
-	// WPEX（Total）の Image Gallery へ転写：1枚目以降をギャラリーに同期
-	$rest = array_slice( array_map( 'intval', $ids ), 1 );
-	$rest = array_values( array_filter( $rest ) );
-	if ( ! empty( $rest ) ) {
-		$gstr = implode( ',', $rest );
-		update_post_meta( $post_id, '_wpex_custom_gallery', $gstr );
-		update_post_meta( $post_id, 'wpex_custom_gallery', $gstr );
+	carmel_write_post_gallery( $post_id, $ids );
+}
+
+/**
+ * WPEX（Total）の画像スライダー（[vcex_image_galleryslider post_gallery="true"]）が
+ * 参照する「投稿ギャラリー」メタへ転写する。
+ *   - 1枚目はアイキャッチ（詳細ページ先頭）に使うが、スライダーで全枚数を
+ *     めくれるよう、ギャラリー本体には【全画像】を入れる。
+ *   - テーマのバージョン差を吸収するため、想定キーすべてに書き込む。
+ */
+function carmel_write_post_gallery( $post_id, $ids ) {
+	$ids = array_values( array_filter( array_map( 'intval', (array) $ids ) ) );
+	if ( empty( $ids ) ) { return; }
+	$all  = implode( ',', $ids );                                  // 全画像（1枚目含む）
+	$rest = implode( ',', array_slice( $ids, 1 ) );                // 2枚目以降
+
+	// Total の投稿ギャラリー（スライダーが読むメインのキー）＝全画像
+	update_post_meta( $post_id, 'wpex_post_gallery_ids',  $all );
+	update_post_meta( $post_id, '_wpex_post_gallery_ids', $all );
+	// 旧・カスタムギャラリー／他要素互換（2枚目以降）
+	if ( '' !== $rest ) {
+		update_post_meta( $post_id, '_wpex_custom_gallery', $rest );
+		update_post_meta( $post_id, 'wpex_custom_gallery',  $rest );
 	}
 }
 
@@ -3875,12 +3891,7 @@ function carmel_sync_images_one( $post_id ) {
 	if ( empty( $ids ) ) { return; }
 	$first = (int) $ids[0];
 	if ( $first > 0 && 'attachment' === get_post_type( $first ) ) { set_post_thumbnail( $post_id, $first ); }
-	$rest = array_values( array_filter( array_slice( array_map( 'intval', $ids ), 1 ) ) );
-	if ( ! empty( $rest ) ) {
-		$g = implode( ',', $rest );
-		update_post_meta( $post_id, '_wpex_custom_gallery', $g );
-		update_post_meta( $post_id, 'wpex_custom_gallery', $g );
-	}
+	carmel_write_post_gallery( $post_id, $ids );
 }
 
 /* ===== 既存在庫への一括反映（バックフィル） ===== */
@@ -4198,9 +4209,21 @@ function carmel_title_add_year_suffix( $data, $postarr ) {
 	if ( ! isset( $data['post_type'] ) || 'portfolio' !== $data['post_type'] ) { return $data; }
 	if ( empty( $data['post_title'] ) ) { return $data; }
 	$title = $data['post_title'];
-	$new   = preg_replace( '/(?<![0-9])(19\d{2}|20\d{2})(?!年)(?![0-9])/u', '$1年', $title );
-	if ( $new && $new !== $title ) {
-		$data['post_title'] = $new;
+
+	// 年式の4桁西暦に「年」を付与
+	$new = preg_replace( '/(?<![0-9])(19\d{2}|20\d{2})(?!年)(?![0-9])/u', '$1年', $title );
+	if ( $new ) { $title = $new; }
+
+	// タイトルから金額（例「300万円」「3,000,000円」「￥300万」など）を除去。
+	// ※走行距離「65,000km」は対象外（円/万 が付かないため安全）。
+	$title = preg_replace( '/\s*[￥¥]?\s*[0-9０-９][0-9０-９,，.．]*\s*万\s*円?/u', '', $title ); // 〜万 / 〜万円
+	$title = preg_replace( '/\s*[￥¥]\s*[0-9０-９][0-9０-９,，.．]*/u', '', $title );            // ￥3,000,000
+	$title = preg_replace( '/\s*[0-9０-９][0-9０-９,，.．]*\s*円/u', '', $title );                // 3,000,000円
+	$title = preg_replace( '/\s{2,}/u', ' ', $title );
+	$title = trim( $title );
+
+	if ( $title && $title !== $data['post_title'] ) {
+		$data['post_title'] = $title;
 	}
 	return $data;
 }
