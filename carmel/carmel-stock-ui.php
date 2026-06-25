@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（プラグイン内蔵の新ステップUI／基本情報・装備・見積もり・担当店舗・複数画像・内容確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 2.16.1
+ * Version: 2.16.2
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -3970,6 +3970,25 @@ function carmel_mirror_detail_fields( $post_id ) {
 	carmel_mirror_detail_fields_one( $post_id );
 }
 
+/* STEP1 追加項目（法定整備／寒冷地仕様／状態・付属品／保証内容）を保存。
+   ACF登録に依存せず、テンプレが [cf_value] で読む post_meta に直接書き込む。 */
+add_action( 'save_post_portfolio', 'carmel_save_basic_extra', 12, 1 );
+function carmel_save_basic_extra( $post_id ) {
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) { return; }
+	if ( wp_is_post_revision( $post_id ) ) { return; }
+	if ( ! current_user_can( 'edit_post', $post_id ) ) { return; }
+	if ( ! isset( $_POST['carmel_basic_extra'] ) || ! is_array( $_POST['carmel_basic_extra'] ) ) { return; }
+
+	$allow = array( 'seibi', 'kanreichi', 'joutai', 'hoshou' );
+	$in    = wp_unslash( $_POST['carmel_basic_extra'] );
+	foreach ( $allow as $k ) {
+		if ( ! array_key_exists( $k, $in ) ) { continue; }
+		$val = sanitize_text_field( (string) $in[ $k ] );
+		update_post_meta( $post_id, $k, $val );
+		if ( function_exists( 'update_field' ) ) { update_field( $k, $val, $post_id ); }
+	}
+}
+
 
 /* ===================== detail-display.php（詳細ページ用の表示） ===================== */
 
@@ -4401,6 +4420,23 @@ function carmel_new_step_ui_render( $post ) {
 						$type = ( 'cs_mileage' === $id || 'cs_displacement' === $id ) ? 'number' : 'text';
 						echo '<input type="' . $type . '" id="' . esc_attr( $id ) . '" value="' . esc_attr( $value ) . '">';
 					}
+					echo '</div>';
+				}
+
+				/* 追加の基本情報（テンプレ参照だが入力欄が無かった項目）。
+				   ACF登録に依存せず name付きで直接 submit し save_post で保存する。 */
+				$extra_basics = array(
+					'seibi'     => '法定整備',
+					'kanreichi' => '寒冷地仕様',
+					'joutai'    => '状態・付属品',
+					'hoshou'    => '保証内容',
+				);
+				foreach ( $extra_basics as $mkey => $mlabel ) {
+					$mval = get_post_meta( $pid, $mkey, true );
+					if ( is_array( $mval ) ) { $mval = implode( '・', array_filter( $mval ) ); }
+					echo '<div class="cs2-field">';
+					echo '<label for="cs_' . esc_attr( $mkey ) . '">' . esc_html( $mlabel ) . '</label>';
+					echo '<input type="text" id="cs_' . esc_attr( $mkey ) . '" name="carmel_basic_extra[' . esc_attr( $mkey ) . ']" value="' . esc_attr( (string) $mval ) . '">';
 					echo '</div>';
 				}
 				?>
