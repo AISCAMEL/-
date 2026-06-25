@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（基本情報・装備・見積もり・担当店舗・複数画像・全体図確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 1.5.0
+ * Version: 1.6.0
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -1799,6 +1799,96 @@ function carmel_step_ui_acf_bridge() {
 	})( jQuery );
 	</script>
 	<?php
+}
+
+
+/* ===================== 装備フィールド 自動ラベル付与 ===================== */
+/**
+ * カーメル：ラベル未設定の装備ACFフィールドへ、自動でラベルを一括付与。
+ * ---------------------------------------------------------------------------
+ * 背景 : 旧い装備チェックボックス（aircon / stea / kamera 等）は ACF 側の
+ *        「ラベル」が空のまま運用されていて、管理画面で何の装備か分からない。
+ * 役割 : acf/load_field フックで、ラベルが空のフィールドだけにラベルを補完。
+ *        フィールドグループ本体は書き換えないので元データは汚さない。
+ *        StepUI の装備名と同じ表記に寄せてあるので、名前一致の連動精度も上がる。
+ * 注意 : 内容が確実でない data-name は末尾「（要確認）」付き。管理画面で見て
+ *        実物と違うものは、ACFのフィールド編集でラベルを直してください
+ *        （直すと load_field 側は空でなくなるので、こちらは上書きしません）。
+ * ---------------------------------------------------------------------------
+ */
+function carmel_equip_label_map() {
+	return array(
+		// --- 確度高め（StepUI表記に合わせる） ---
+		'aircon'    => 'エアコン',
+		'aircon2'   => 'オートエアコン',
+		'window'    => 'パワーウィンドウ',
+		'keyless'   => 'キーレスエントリー',
+		'smartkey'  => 'スマートキー',
+		'sunroof'   => 'サンルーフ',
+		'controll'  => 'クルーズコントロール',
+		'stop'      => 'アイドリングストップ',
+		'etc'       => 'ETC',
+		'tounan'    => '盗難防止装置',
+		'dvd'       => 'DVD再生',
+		'usb'       => 'USB入力',
+		'cd'        => 'CD再生',
+		'bluetooth' => 'Bluetooth',
+		'hdmi'      => 'HDMI入力',
+		'blueray'   => 'ブルーレイ再生',
+		'monitar'   => '後席モニター',
+		'seat'      => '運転席電動シート',
+		'seat2'     => '助手席電動シート',
+		'memory'    => 'メモリーシート',
+		'heater'    => 'シートヒーター',
+		'otman'     => 'オットマン',
+		'gate'      => 'パワーバックドア',
+		'almi'      => 'アルミホイール',
+		'earo'      => 'エアロパーツ',
+		'down'      => 'ローダウン',
+		'liftup'    => 'リフトアップ',
+		'airbag'    => 'エアバッグ（運転席）',
+		'airbag2'   => 'エアバッグ（助手席）',
+		'airbag3'   => 'サイドエアバッグ',
+		'airbag4'   => 'カーテンエアバッグ',
+		'abs'       => 'ABS',
+		'esc'       => '横滑り防止装置（ESC）',
+		'shoutotu'  => '衝突被害軽減ブレーキ',
+		'kamera4'   => '全周囲カメラ（360度）',
+		// --- 内容が確定しきれないもの（管理画面で確認・要修正） ---
+		'stea'      => '本革ステアリング（要確認）',
+		'sarver'    => '装備 sarver（要確認）',
+		'nav'       => 'カーナビ（要確認）',
+		'nav2'      => 'カーナビ2（要確認）',
+		'nav3'      => 'カーナビ3（要確認）',
+		'nav4'      => 'カーナビ4（要確認）',
+		'nav5'      => 'カーナビ5（要確認）',
+		'seat3'     => 'シート3（要確認）',
+		'work'      => '装備 work（要確認）',
+		'door'      => '電動スライドドア（左）（要確認）',
+		'door2'     => '電動スライドドア（両側）（要確認）',
+		'kamera'    => 'バックカメラ（要確認）',
+		'kamera2'   => 'サイドカメラ（要確認）',
+		'kamera3'   => 'フロントカメラ（要確認）',
+		'asist'     => '運転支援アシスト（要確認）',
+		'asist2'    => '運転支援アシスト2（要確認）',
+		'sensar'    => 'コーナーセンサー（要確認）',
+		'sensar2'   => 'センサー2（要確認）',
+	);
+}
+
+add_filter( 'acf/load_field', 'carmel_autolabel_equip_field' );
+function carmel_autolabel_equip_field( $field ) {
+	// 管理画面のみ（フロント表示は変えない）
+	if ( ! is_admin() ) { return $field; }
+	if ( empty( $field['name'] ) ) { return $field; }
+	// 既にラベルがある（＝ACFで設定済み or 手で直した）ものは尊重して触らない
+	if ( isset( $field['label'] ) && $field['label'] !== '' ) { return $field; }
+
+	$map = carmel_equip_label_map();
+	if ( isset( $map[ $field['name'] ] ) ) {
+		$field['label'] = $map[ $field['name'] ];
+	}
+	return $field;
 }
 
 
