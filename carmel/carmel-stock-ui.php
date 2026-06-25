@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（プラグイン内蔵の新ステップUI／基本情報・装備・見積もり・担当店舗・複数画像・内容確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 2.10.0
+ * Version: 2.10.1
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -2271,7 +2271,7 @@ function carmel_step3_estimate() {
 				ph += '<div class="cs-plan-row"><span>'+c+'回</span><b>月々 '+yen(m)+'円</b><i>総額 '+yen(tt)+'円</i></div>';
 			});
 			$('#cs-est-plan-rows').html(ph);
-			$('#cs-est-plan-head').text(minM > 0 ? ('月々 '+yen(minM)+'円〜') : '—');
+			$('#cs-est-plan-head').text(minM > 0 ? ('月々 '+yen(minM)+'円') : '—');
 			$('#cs-est-plan-price').text(honntai > 0 ? (honntai/10000).toFixed(1)+'万円' : '—');
 
 			// 見積もりに数字が入っているか（全項目0なら未入力とみなす）
@@ -3757,10 +3757,9 @@ function carmel_plan_shortcode( $atts ) {
 
 	$rows_html = '';
 	foreach ( $rows as $c => $m ) {
-		$tt = ( $m > 0 ) ? ( $m * $c + $atama ) : 0; // 金利込み総額（頭金含む）
+		// ユーザー向けページは「回数＋月々」のみ表示（金利込み総額は出さない）
 		$rows_html .= '<div class="carmel-plan__row"><span class="carmel-plan__row-c">' . (int) $c . '回</span>'
-			. '<span class="carmel-plan__row-m">月々 ' . number_format( $m ) . '円</span>'
-			. '<span class="carmel-plan__row-t">総額 ' . number_format( $tt ) . '円</span></div>';
+			. '<span class="carmel-plan__row-m">月々 ' . number_format( $m ) . '円</span></div>';
 	}
 
 	$price_html = '';
@@ -3775,7 +3774,7 @@ function carmel_plan_shortcode( $atts ) {
 		. '<div class="carmel-plan__body">'
 		. '<div class="carmel-plan__loan">'
 		. '<div class="carmel-plan__loan-label">低与信ローン月々支払額</div>'
-		. '<div class="carmel-plan__loan-main">月々 <b>' . number_format( $min ) . '</b>円〜</div>'
+		. '<div class="carmel-plan__loan-main">月々 <b>' . number_format( $min ) . '</b>円</div>'
 		. '<div class="carmel-plan__rows">' . $rows_html . '</div>'
 		. '</div>'
 		. $price_html
@@ -3969,7 +3968,7 @@ function carmel_comment_shortcode( $atts ) {
 /* [carmel_monthly] 月々（最安）をコンパクト表示（一覧・詳細どちらでも） */
 add_shortcode( 'carmel_monthly', 'carmel_monthly_shortcode' );
 function carmel_monthly_shortcode( $atts ) {
-	$atts = shortcode_atts( array( 'id' => 0, 'counts' => '12,24,36,48,60,72,84', 'prefix' => '月々', 'suffix' => '円〜' ), $atts, 'carmel_monthly' );
+	$atts = shortcode_atts( array( 'id' => 0, 'counts' => '12,24,36,48,60,72,84', 'prefix' => '月々', 'suffix' => '円' ), $atts, 'carmel_monthly' );
 	$pid  = $atts['id'] ? (int) $atts['id'] : get_the_ID();
 	if ( ! $pid ) { return ''; }
 
