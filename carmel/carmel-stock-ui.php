@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（プラグイン内蔵の新ステップUI／基本情報・装備・見積もり・担当店舗・複数画像・内容確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 2.12.0
+ * Version: 2.13.0
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -3735,23 +3735,23 @@ function carmel_plan_shortcode( $atts ) {
 	if ( ! $style_done ) {
 		$style_done = true;
 		$style = '<style>
-		.carmel-plan{max-width:560px;margin:18px 0;border-radius:12px;overflow:hidden;background:#fff;border:1px solid #e6e9ef;box-shadow:0 2px 10px rgba(20,40,80,.06);}
-		.carmel-plan__head{background:#5b6675;color:#fff;font-weight:700;font-size:16px;padding:10px 16px;letter-spacing:.04em;}
+		.carmel-plan{max-width:100%;margin:6px 0;border-radius:14px;overflow:hidden;background:#fff;border:2px solid #2cac44;box-shadow:0 4px 16px rgba(44,172,68,.10);}
+		.carmel-plan__head{background:#2cac44;color:#fff;font-weight:800;font-size:18px;padding:13px 22px;letter-spacing:.06em;display:flex;align-items:center;gap:8px;}
+		.carmel-plan__head::before{content:"🚗";font-size:18px;}
 		.carmel-plan__body{display:flex;flex-wrap:wrap;}
-		.carmel-plan__loan{flex:1 1 300px;padding:14px 16px;border-right:1px solid #eef1f5;box-sizing:border-box;}
-		.carmel-plan__loan-label{font-size:12px;color:#6b7280;font-weight:700;}
-		.carmel-plan__loan-main{font-size:15px;color:#1f2d3d;margin:2px 0 10px;}
-		.carmel-plan__loan-main b{font-size:30px;color:#e8500a;font-weight:900;}
-		.carmel-plan__rows{display:flex;flex-direction:column;gap:6px;}
-		.carmel-plan__row{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;font-size:14px;color:#374151;border-bottom:1px dashed #e6e9ef;padding-bottom:5px;}
-		.carmel-plan__row-c{font-weight:700;color:#1f2d3d;}
-		.carmel-plan__row-m{font-weight:700;margin-left:auto;}
-		.carmel-plan__row-t{width:100%;text-align:right;font-size:11px;color:#9aa3af;}
-		.carmel-plan__price{flex:1 1 160px;padding:14px 16px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;background:#fafbfc;box-sizing:border-box;}
-		.carmel-plan__price-label{font-size:13px;color:#6b7280;font-weight:700;margin-bottom:6px;}
-		.carmel-plan__price-val{font-size:26px;font-weight:900;color:#1f2d3d;}
-		.carmel-plan__price-val span{font-size:14px;font-weight:700;margin-left:2px;}
-		@media(max-width:600px){.carmel-plan__loan{border-right:0;border-bottom:1px solid #eef1f5;}}
+		.carmel-plan__loan{flex:1 1 420px;padding:20px 24px;box-sizing:border-box;}
+		.carmel-plan__loan-label{display:inline-block;background:#eaf6ee;color:#1c7a3a;font-size:13px;font-weight:800;padding:4px 14px;border-radius:20px;}
+		.carmel-plan__loan-main{font-size:16px;color:#333;margin:12px 0 16px;}
+		.carmel-plan__loan-main b{font-size:42px;color:#2cac44;font-weight:900;letter-spacing:-.5px;vertical-align:-2px;}
+		.carmel-plan__rows{display:grid;grid-template-columns:1fr 1fr;gap:9px 16px;}
+		.carmel-plan__row{display:flex;align-items:center;justify-content:space-between;background:#f6faf7;border:1px solid #e1efe6;border-radius:9px;padding:9px 14px;font-size:14px;}
+		.carmel-plan__row-c{font-weight:800;color:#fff;background:#5cb874;border-radius:6px;padding:3px 11px;font-size:12px;letter-spacing:.02em;}
+		.carmel-plan__row-m{font-weight:800;color:#333;}
+		.carmel-plan__price{flex:1 1 210px;padding:20px 24px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;background:#f3faf5;border-left:1px dashed #c7e6d2;box-sizing:border-box;}
+		.carmel-plan__price-label{display:inline-block;background:#fff;border:1px solid #cfe7d8;color:#1c7a3a;font-size:13px;font-weight:800;padding:3px 14px;border-radius:20px;margin-bottom:10px;}
+		.carmel-plan__price-val{font-size:36px;font-weight:900;color:#333;line-height:1.05;}
+		.carmel-plan__price-val span{font-size:16px;font-weight:800;margin-left:3px;color:#666;}
+		@media(max-width:680px){.carmel-plan__rows{grid-template-columns:1fr;}.carmel-plan__price{border-left:0;border-top:1px dashed #c7e6d2;}.carmel-plan__loan-main b{font-size:36px;}}
 		</style>';
 	}
 
@@ -4092,18 +4092,18 @@ function carmel_detail_style() {
 	if ( is_admin() ) { return; }
 	?>
 	<style>
-	.carmel-cond{max-width:560px;margin:16px 0;border:1px solid #e6e9ef;border-radius:10px;overflow:hidden;}
+	.carmel-cond{max-width:100%;margin:8px 0;border:1px solid #e2e8e4;border-radius:12px;overflow:hidden;}
 	.carmel-cond table{width:100%;border-collapse:collapse;}
-	.carmel-cond th,.carmel-cond td{padding:9px 12px;font-size:14px;text-align:left;border-bottom:1px solid #eef1f5;}
-	.carmel-cond th{width:38%;background:#f7f9fc;color:#4b5563;font-weight:700;}
+	.carmel-cond th,.carmel-cond td{padding:11px 14px;font-size:14px;text-align:left;border-bottom:1px solid #eef2ef;}
+	.carmel-cond th{width:38%;background:#f3faf5;color:#1c7a3a;font-weight:700;}
 	.carmel-cond tr:last-child th,.carmel-cond tr:last-child td{border-bottom:0;}
-	.carmel-comment{display:flex;gap:12px;align-items:flex-start;max-width:600px;margin:16px 0;}
-	.carmel-comment__icon{flex:0 0 46px;width:46px;height:46px;border-radius:50%;background:#fde8d7;display:flex;align-items:center;justify-content:center;font-size:24px;}
-	.carmel-comment__bubble{position:relative;background:#fff7ef;border:1px solid #f3d9bf;border-radius:12px;padding:12px 16px;font-size:14px;line-height:1.7;color:#3a3a3a;}
-	.carmel-comment__bubble::before{content:'';position:absolute;left:-8px;top:16px;border-width:8px 8px 8px 0;border-style:solid;border-color:transparent #fff7ef transparent transparent;}
-	.carmel-comment__name{font-size:11px;color:#b06a2c;font-weight:700;margin-bottom:4px;}
-	.carmel-monthly{display:inline-flex;align-items:baseline;gap:4px;color:#e8500a;font-weight:700;}
-	.carmel-monthly b{font-size:1.5em;}
+	.carmel-comment{display:flex;gap:14px;align-items:flex-start;max-width:100%;margin:8px 0;}
+	.carmel-comment__icon{flex:0 0 52px;width:52px;height:52px;border-radius:50%;background:#fff0e3;border:2px solid #f7c79b;display:flex;align-items:center;justify-content:center;font-size:26px;}
+	.carmel-comment__bubble{position:relative;flex:1;background:#fff8f1;border:1px solid #f3d4b2;border-radius:14px;padding:14px 18px;font-size:15px;line-height:1.85;color:#3a3a3a;box-shadow:0 2px 8px rgba(244,121,32,.06);}
+	.carmel-comment__bubble::before{content:'';position:absolute;left:-9px;top:18px;border-width:9px 9px 9px 0;border-style:solid;border-color:transparent #fff8f1 transparent transparent;}
+	.carmel-comment__name{display:inline-block;background:#f47920;color:#fff;font-size:12px;font-weight:700;padding:2px 12px;border-radius:20px;margin-bottom:8px;}
+	.carmel-monthly{display:inline-flex;align-items:baseline;gap:4px;color:#2cac44;font-weight:800;}
+	.carmel-monthly b{font-size:1.6em;}
 	.carmel-monthly__pre{font-size:.85em;color:#6b7280;font-weight:600;}
 	</style>
 	<?php
