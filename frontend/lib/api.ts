@@ -86,6 +86,7 @@ export const api = {
   deleteContact: (id: string) => request<any>(`/api/contacts/${id}`, { method: 'DELETE' }),
   contactsToCampaign: (body: any) => request<any>('/api/contacts/to-campaign', { method: 'POST', body: JSON.stringify(body) }),
   emailContact: (id: string, subject: string, body: string) => request<any>(`/api/contacts/${id}/email`, { method: 'POST', body: JSON.stringify({ subject, body }) }),
+  bulkEmail: (subject: string, body: string, category?: string) => request<any>('/api/contacts/bulk-email', { method: 'POST', body: JSON.stringify({ subject, body, category }) }),
   aiDraft: (body: any) => request<any>('/api/ai/draft', { method: 'POST', body: JSON.stringify(body) }),
 
   industryTemplates: () => request<any[]>('/api/industry-templates'),

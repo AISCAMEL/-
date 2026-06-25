@@ -397,6 +397,23 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     if (!ok) return reply.code(404).send({ error: 'not found' });
     return { ok: true };
   });
+  // 連絡先へ一斉メール送信（カテゴリ絞り込み可。{{name}}/{{company}}差し込み）
+  app.post('/api/contacts/bulk-email', { preHandler: manageOutbound }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const { subject, body: text, category } = (req.body ?? {}) as { subject?: string; body?: string; category?: string };
+    if (!subject || !text) return reply.code(400).send({ error: '件名と本文を入力してください' });
+    const list = await contacts.listContacts(p.tenantId, { category });
+    const targets = list.filter((c: any) => c.email && c.status !== 'do_not_contact');
+    let sent = 0, failed = 0;
+    for (const c of targets) {
+      const personalize = (s: string) => s.replace(/\{\{name\}\}/g, c.name || 'ご担当者').replace(/\{\{company\}\}/g, c.company || '');
+      const r = await sendEmail(c.email, personalize(subject), personalize(text));
+      if (r.ok) sent++; else failed++;
+    }
+    return { ok: true, total: targets.length, sent, failed };
+  });
+
   // 連絡先（カテゴリ）から架電キャンペーンを作成
   app.post('/api/contacts/to-campaign', { preHandler: manageOutbound }, async (req, reply) => {
     const p = req.principal!;

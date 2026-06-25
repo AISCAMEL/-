@@ -59,6 +59,13 @@ export default function CallDetailPage() {
     setFaq(null);
     setMsg('FAQに追加しました。今後はAIが自動で回答します。');
   }
+  async function addToContacts() {
+    await api.createContacts([{
+      name: call.customer_name, company: call.company_name, phone_number: call.from_number,
+      category: '問い合わせ', note: call.summary || call.request_detail || '',
+    }]);
+    setMsg('連絡先リストに追加しました（カテゴリ：問い合わせ）。');
+  }
 
   return (
     <div>
@@ -73,6 +80,7 @@ export default function CallDetailPage() {
             <button onClick={() => changeStatus('completed')} className="rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700">対応済みにする</button>
           )}
           <button onClick={openFaq} className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">FAQに追加</button>
+          <button onClick={addToContacts} className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">連絡先に追加</button>
           <Link href={`/calls/${id}/print`} className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">印刷 / PDF</Link>
           <button onClick={resummarize} className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">要約を再生成</button>
           <button onClick={renotify} className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">通知を再送</button>
