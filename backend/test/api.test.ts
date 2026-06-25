@@ -122,3 +122,22 @@ test('連絡先: 一斉メール送信で送信履歴(email_sent)が記録され
   const acts = await app.inject({ url: `/api/contacts/${id}/activities`, headers: owner });
   assert.ok(acts.json().some((a: any) => a.type === 'email_sent'));
 });
+
+test('業種テンプレート: 7業種が返る / clinicを適用するとFAQが追加される', async () => {
+  const list = await app.inject({ url: '/api/industry-templates', headers: owner });
+  assert.equal(list.statusCode, 200);
+  const keys = list.json().map((t: any) => t.key);
+  for (const k of ['car_dealer', 'salon', 'restaurant', 'clinic', 'seitai', 'real_estate', 'professional']) {
+    assert.ok(keys.includes(k), `missing template: ${k}`);
+  }
+
+  const before = (await app.inject({ url: '/api/faqs', headers: owner })).json().length;
+  const apply = await app.inject({ method: 'POST', url: '/api/industry-templates/clinic/apply', headers: J, payload: {} });
+  assert.equal(apply.statusCode, 200);
+  assert.ok(apply.json().applied.faqs > 0);
+  const after = (await app.inject({ url: '/api/faqs', headers: owner })).json().length;
+  assert.ok(after > before);
+
+  // staff は適用不可（403）
+  assert.equal((await app.inject({ method: 'POST', url: '/api/industry-templates/clinic/apply', headers: { ...J, ...staff }, payload: {} })).statusCode, 403);
+});
