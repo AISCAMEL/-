@@ -44,7 +44,8 @@ export default function CampaignDetailPage() {
     setBusy(true); setMsg('');
     try {
       const r = await api.runCampaign(id);
-      setMsg(r.simulated ? `（デモ）${r.placed}件の架電をシミュレートしました。Twilio接続で実発信されます。` : `${r.placed}件に発信しました。`);
+      if (r.blocked) setMsg(`⏰ ${r.blocked}`);
+      else setMsg(r.simulated ? `（デモ）${r.placed}件の架電をシミュレートしました。Twilio接続で実発信されます。` : `${r.placed}件に発信しました。`);
       load();
     } catch (e: any) { setMsg(`エラー: ${e.message ?? e}`); }
     finally { setBusy(false); }
@@ -63,6 +64,13 @@ export default function CampaignDetailPage() {
         </button>
       </div>
       {msg && <p className="mb-4 text-sm text-brand">{msg}</p>}
+
+      {c.purpose === 'reminder' && (
+        <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <strong>入金案内のご利用について：</strong> これは<strong>自社の売掛金の入金確認・お支払い案内</strong>用です。
+          他人の債権の回収代行（弁護士・サービサーのみ可）には使用できません。架電は許可時間帯のみ・威迫的な催促は禁止です。
+        </div>
+      )}
 
       <Card className="mb-6">
         <h2 className="mb-2 text-sm font-semibold text-gray-500">AIの動き</h2>

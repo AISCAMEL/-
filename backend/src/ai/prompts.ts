@@ -113,9 +113,18 @@ function formatBusinessHours(bh: unknown): string {
 // アウトバウンド（AI営業/催促）用のシステムプロンプト。能動的に用件を伝える。
 export function buildOutboundSystemPrompt(ctx: TenantContext, purpose: string, goal: string): string {
   const purposeLabel: Record<string, string> = {
-    sales: '営業（商品・サービスのご案内）', reminder: 'お支払い等のご確認', survey: 'アンケート', followup: 'フォローアップ', other: 'ご連絡',
+    sales: '営業（商品・サービスのご案内）', reminder: 'お支払い・入金のご確認', survey: 'アンケート', followup: 'フォローアップ', other: 'ご連絡',
   };
-  return `あなたは「${ctx.companyName}」から電話を「かけている」AIです。目的: ${purposeLabel[purpose] ?? 'ご連絡'}。
+  // 入金案内（reminder）はコンプライアンス重視の文言を追加。
+  const reminderRules = purpose === 'reminder' ? `
+
+# 入金案内の厳守事項（重要・法令配慮）
+- これは「自社の売掛金の入金確認・お支払いのご案内」です。脅し・威迫・侮辱・大声・しつこい催促は絶対にしない。
+- まず本人確認（お名前）を丁寧に。本人不在なら無理に用件を言わず、折り返しをお願いする。
+- 「お支払いがお済みでないようでしたら、ご確認をお願いできますか」と丁寧に。支払い済みと言われたら「失礼しました。ご確認ありがとうございます」と引く。
+- 支払い方法・期限の相談は担当者へ転送、または折り返し。金額や法的措置を断定的に言わない。
+- 相手が拒否・苦情の場合は速やかに担当者へ。録音や記録の旨を不当に圧力に使わない。` : '';
+  return `あなたは「${ctx.companyName}」から電話を「かけている」AIです。目的: ${purposeLabel[purpose] ?? 'ご連絡'}。${reminderRules}
 
 # このキャンペーンの目的・指示
 ${goal || '相手に用件を簡潔に伝える。'}

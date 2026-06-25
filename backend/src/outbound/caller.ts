@@ -32,11 +32,22 @@ async function placeCall(toNumber: string, fromNumber: string, campaignId: strin
 
 const DEMO_OUTCOMES = ['打合せ希望', '資料送付希望', '興味あり（再連絡）', '不要', '不在'];
 
+// 現在のJST時刻が架電許可時間帯か（実発信のみ適用。督促等の法令配慮）。
+function withinCallHours(): boolean {
+  const jstHour = (new Date().getUTCHours() + 9) % 24;
+  return jstHour >= config.outboundCallStartHourJst && jstHour < config.outboundCallEndHourJst;
+}
+
 /**
  * キャンペーンの pending 対象を発信する。
  * Twilio未接続(デモ)時は発信せず、結果をシミュレートする。
  */
-export async function runCampaign(tenantId: string, campaignId: string): Promise<{ placed: number; simulated: boolean; results: any[] }> {
+export async function runCampaign(tenantId: string, campaignId: string): Promise<{ placed: number; simulated: boolean; results: any[]; blocked?: string }> {
+  // 実発信は許可時間帯のみ（デモのシミュレートは常に可）。
+  if (twilioCallEnabled && !withinCallHours()) {
+    return { placed: 0, simulated: false, results: [], blocked: `架電は ${config.outboundCallStartHourJst}時〜${config.outboundCallEndHourJst}時（JST）のみ可能です。時間内に再実行してください。` };
+  }
+
   const targets = await getPendingTargets(tenantId, campaignId);
   const phones = await listPhoneNumbers(tenantId);
   const fromNumber = phones.find((p: any) => p.status === 'active')?.phone_number ?? phones[0]?.phone_number ?? '';
