@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル在庫 STEP UI 一式
  * Description: 在庫STEP UI一式（プラグイン内蔵の新ステップUI／基本情報・装備・見積もり・担当店舗・複数画像・内容確認）、支払回数、諸経費設定、画面整理、フロント[carmel_equipment]/[carmel_gallery]、金額コンマ、1枚目アイキャッチ。ACF自動登録。
- * Version: 2.14.0
+ * Version: 2.14.1
  * Author: カーメル
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -2289,7 +2289,7 @@ function carmel_step3_estimate() {
 			}
 
 			// 既存フィールドへミラー ※0/空のときは上書きしない（手入力の月額等を保護）
-			if (getsugaku > 0) { setAcf('total', yen(getsugaku) + '円'); }      // 月々のお支払い
+			if (getsugaku > 0) { setAcf('total', yen(getsugaku)); }            // 月々のお支払い（円はテンプレ側で付与）
 			var feesTotal = taxFees + nonTax + shouhizei;
 			if (feesTotal > 0) { setAcf('keihi', yen(feesTotal) + '円'); }       // 諸経費合計
 			if (n('recycle') > 0) { setAcf('recicle', yen(n('recycle')) + '円'); } // リサイクル料
@@ -3848,7 +3848,7 @@ function carmel_apply_equip_csv( $post_id ) {
 	carmel_equip_csv_to_fields( $post_id );
 }
 
-/* 詳細テンプレ用ミラー（修復歴/法定点検）を1台分実行 */
+/* 詳細テンプレ用ミラー（修復歴/法定点検）＋「円」二重表示の解消を1台分実行 */
 function carmel_mirror_detail_fields_one( $post_id ) {
 	$pairs = array( 'repair_history' => 'shuufuku', 'inspection' => 'tenken' );
 	foreach ( $pairs as $src => $dst ) {
@@ -3858,6 +3858,14 @@ function carmel_mirror_detail_fields_one( $post_id ) {
 		if ( '' === $v || null === $v ) { continue; }
 		update_post_meta( $post_id, $dst, $v );
 		if ( function_exists( 'update_field' ) ) { update_field( $dst, $v, $post_id ); }
+	}
+
+	// 月々(total)はテンプレが「円」を付けるため、値からは「円」を除去（二重表示防止）
+	$total = get_post_meta( $post_id, 'total', true );
+	if ( is_string( $total ) && false !== strpos( $total, '円' ) ) {
+		$clean = trim( str_replace( array( '円', '　', ' ' ), '', $total ) );
+		update_post_meta( $post_id, 'total', $clean );
+		if ( function_exists( 'update_field' ) ) { update_field( 'total', $clean, $post_id ); }
 	}
 }
 
