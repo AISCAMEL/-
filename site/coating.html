@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ボディコーティング（CARMELコート）｜AUC-AGENT・合同会社アイズ</title>
+<meta name="description" content="愛車の美しさを長く保つ、高品質なボディコーティング『CARMELコート』。高純度ガラスコーティング剤で紫外線や雨から塗装面を守り、約3年の光沢を維持。施工工程・料金・メンテナンス方法をご案内します。" />
+
+<!-- favicon -->
+<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png" />
+<link rel="apple-touch-icon" href="assets/img/favicon-180.png" />
+
+<!-- OGP -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="AUC-AGENT｜合同会社アイズ" />
+<meta property="og:title" content="ボディコーティング（CARMELコート）｜AUC-AGENT" />
+<meta property="og:description" content="高純度ガラスコーティング剤で約3年の光沢を維持。紫外線・酸性雨から塗装面を守る高品質ボディコーティング。" />
+<meta property="og:image" content="assets/img/ogp.png" />
+<meta property="og:url" content="" />
+<meta name="twitter:card" content="summary_large_image" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet" href="assets/css/style.css" />
+
+<!-- このページ専用の追加スタイル（番号付き特徴／工程／メンテ） -->
+<style>
+  /* ヒーロー（コーティング用の暗背景ヒーロー） */
+  .coat-hero {
+    background:
+      linear-gradient(rgba(14,27,51,.82), rgba(14,27,51,.88)),
+      linear-gradient(135deg, #16294a, #0e1b33);
+    color: #fff;
+    text-align: center;
+  }
+  .coat-hero .eyebrow { color: var(--gold-2); font-weight: 800; letter-spacing: .16em; font-size: 13px; }
+  .coat-hero h1 { font-size: 48px; font-weight: 900; margin: 10px 0 16px; letter-spacing: .04em; }
+  .coat-hero h1 .hl { color: #ec6e6a; }
+  .coat-hero p.lead { max-width: 680px; margin: 0 auto; color: #d8deea; font-size: 18px; }
+
+  /* 暗背景セクション（特徴・工程・比較・評価・料金） */
+  .sec-dark { background: linear-gradient(135deg, #16294a, #0e1b33); color: #fff; }
+  .sec-dark .section-head h2 { color: #fff; }
+  .sec-dark .section-head .eyebrow { color: var(--gold-2); }
+  .sec-dark .section-head p { color: #b9c4d8; }
+  .sec-dark .accent { color: #ec6e6a; }
+
+  /* スタイル違いのアイコンカード（特徴.1 上段 / 特徴.2） */
+  .feat-card { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.10); border-radius: var(--radius); padding: 28px 24px; height: 100%; }
+  .feat-card .fi { font-size: 30px; color: #ec6e6a; }
+  .feat-card h3 { color: #fff; font-size: 20px; margin: 12px 0 8px; font-weight: 800; }
+  .feat-card p { color: #c8d2e2; margin: 0; }
+
+  /* 番号付き特徴ボックス */
+  .num-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; max-width: 920px; margin: 0 auto; }
+  .num-box { display: flex; gap: 16px; align-items: flex-start; }
+  .num-box .n {
+    flex: 0 0 auto; width: 46px; height: 46px; border-radius: 10px;
+    background: #2a3a59; color: #ec6e6a; display: grid; place-items: center;
+    font-weight: 900; font-size: 20px;
+  }
+  .num-box h3 { color: #ec6e6a; font-size: 19px; margin: 4px 0 6px; font-weight: 800; }
+  .num-box p { color: #e7ebf3; margin: 0; font-size: 15px; }
+
+  /* 施工工程 */
+  .proc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 980px; margin: 0 auto; }
+  .proc-box { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.10); border-radius: var(--radius); padding: 24px; }
+  .proc-box .n {
+    width: 44px; height: 44px; border-radius: 10px; background: #2a3a59; color: #ec6e6a;
+    display: grid; place-items: center; font-weight: 900; font-size: 19px; margin-bottom: 12px;
+  }
+  .proc-box h3 { color: #ec6e6a; font-size: 19px; margin: 0 0 6px; font-weight: 800; }
+  .proc-box p { color: #d6deec; margin: 0; font-size: 14.5px; }
+
+  /* 暗背景テーブル（比較・料金） */
+  .table-dark { width: 100%; max-width: 900px; margin: 0 auto; border-collapse: collapse;
+    background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.12); border-radius: var(--radius); overflow: hidden; }
+  .table-dark th, .table-dark td { padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,.10); font-size: 15px; text-align: left; color: #e7ebf3; }
+  .table-dark thead th { background: rgba(236,110,106,.18); color: #fff; font-weight: 800; }
+  .table-dark tr:last-child td { border-bottom: none; }
+  .table-dark tr.feat-row td { background: rgba(236,110,106,.12); font-weight: 700; }
+  .table-dark tr.feat-row td:first-child { color: #ec6e6a; }
+
+  /* 評価バー */
+  .eval-list { max-width: 560px; }
+  .eval-item { margin-bottom: 22px; }
+  .eval-item .et { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .eval-item .et h3 { color: #ec6e6a; font-size: 18px; margin: 0; font-weight: 800; }
+  .eval-item .et span { color: #c8d2e2; font-size: 13px; }
+  .eval-item p { color: #e7ebf3; margin: 0; font-size: 15px; }
+
+  /* メンテナンス2カラム行 */
+  .maint-row { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: center; margin-bottom: 34px; }
+  .maint-row.rev .maint-text { order: 2; }
+  .maint-row h3 { font-size: 26px; font-weight: 900; margin: 0 0 10px; }
+  .maint-row p { color: var(--muted); margin: 0; font-size: 16px; }
+
+  /* 画像プレースホルダー（実画像は差し替え） */
+  .img-ph {
+    border-radius: var(--radius); min-height: 220px;
+    background: linear-gradient(135deg, #23344f, #1c2c44);
+    border: 1px dashed rgba(255,255,255,.25);
+    display: grid; place-items: center; color: #9fb0cc; font-size: 13px; text-align: center; padding: 16px;
+  }
+  .img-ph.light { background: #eef2f9; border-color: var(--line); color: var(--muted); }
+
+  @media (max-width: 860px) {
+    .coat-hero h1 { font-size: 34px; }
+    .num-grid, .proc-grid, .maint-row { grid-template-columns: 1fr; }
+    .maint-row.rev .maint-text { order: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== Header ===== -->
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <span class="logo">A</span>
+      <span>AUC-AGENT<small>CAR AUCTION AGENT</small></span>
+    </a>
+    <nav class="nav">
+      <a class="nav-link" href="index.html">購入代行</a>
+      <a class="nav-link" href="sell.html">出品代行</a>
+      <a class="nav-link" href="shipping.html">陸送シミュ</a>
+      <a class="nav-link" href="coating.html">コーティング</a>
+      <a class="nav-link" href="mypage.html">マイページ</a>
+      <a class="btn btn-gold btn-sm" href="login.html">無料会員登録</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ===== Hero ===== -->
+<section class="coat-hero">
+  <div class="wrap">
+    <div class="eyebrow">BODY COATING</div>
+    <h1>ボディ<span class="hl">コーティング</span></h1>
+    <p class="lead">愛車の美しさを長く保つ、高品質なボディコーティング。<br />紫外線や雨から塗装面を守り、輝きを維持します。</p>
+    <div class="cta-row" style="justify-content:center;margin-top:26px;">
+      <a class="btn btn-gold" href="#price">▶ コーティング料金を見る</a>
+      <a class="btn btn-ghost" href="#contact">相談・お見積り</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 特徴.1 ===== -->
+<section class="sec-dark">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">FEATURES 01</div>
+      <h2>CARMELコートの特徴.1</h2>
+    </div>
+
+    <!-- 上段：3つの強み -->
+    <div class="grid-3">
+      <div class="feat-card">
+        <div class="fi">🏆</div>
+        <h3>高純度ガラスコーティング剤</h3>
+        <p>最高級の光沢を実現する高純度ガラスコーティング剤を使用しています。</p>
+      </div>
+      <div class="feat-card">
+        <div class="fi">🛡️</div>
+        <h3>優れた耐久性</h3>
+        <p>硬度の高いシリカ被膜が長期間にわたって塗装面を美しく保ちます。</p>
+      </div>
+      <div class="feat-card">
+        <div class="fi">✨</div>
+        <h3>抜群の光沢感</h3>
+        <p>塗装面に圧倒的な光沢を与え、時間とともに劣化することなく輝き続けます。</p>
+      </div>
+    </div>
+
+    <!-- 下段：番号付き4特徴 -->
+    <div class="num-grid" style="margin-top:44px;">
+      <div class="num-box">
+        <div class="n">1</div>
+        <div>
+          <h3>高含有量シリカ</h3>
+          <p>95%以上のシリカ含有量で、高い硬度と光沢感を実現します。</p>
+        </div>
+      </div>
+      <div class="num-box">
+        <div class="n">2</div>
+        <div>
+          <h3>完全硬化</h3>
+          <p>完全に硬化した膜が長期的な輝きを維持します。</p>
+        </div>
+      </div>
+      <div class="num-box">
+        <div class="n">3</div>
+        <div>
+          <h3>優れた防汚性</h3>
+          <p>汚れが付きにくく、洗車も簡単。車の美しさを長く保てます。</p>
+        </div>
+      </div>
+      <div class="num-box">
+        <div class="n">4</div>
+        <div>
+          <h3>環境に優しい</h3>
+          <p>有害な化学物質を含まない安全な製品です。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 特徴.2 ===== -->
+<section class="sec-dark" style="border-top:1px solid rgba(255,255,255,.06);">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">FEATURES 02</div>
+      <h2>CARMELコートの特徴.2</h2>
+    </div>
+    <div class="grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:22px;max-width:840px;margin:0 auto;">
+      <div class="feat-card">
+        <div class="fi">✔️</div>
+        <h3>汚れを防ぐ撥水力</h3>
+        <p>優れた撥水性で汚れが固着しにくく、洗車の手間を大幅に削減できます。</p>
+      </div>
+      <div class="feat-card">
+        <div class="fi">🔧</div>
+        <h3>確かな技術力</h3>
+        <p>経験豊富なプロの技術者が担当し、最高の仕上がりを実現します。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 施工工程 ===== -->
+<section class="sec-dark" style="border-top:1px solid rgba(255,255,255,.06);">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">PROCESS</div>
+      <h2>施工工程</h2>
+    </div>
+    <div class="proc-grid">
+      <div class="proc-box"><div class="n">1</div><h3>洗車</h3><p>ボディに付着している鉄粉や油分、汚れをしっかりと落とします。</p></div>
+      <div class="proc-box"><div class="n">2</div><h3>研磨</h3><p>コーティング前に下地を整え、キズを除去し、鏡面状態に仕上げます。</p></div>
+      <div class="proc-box"><div class="n">3</div><h3>塗り込み</h3><p>専門スタッフが特殊技術でガラスコーティング剤の塗り込みを行います。</p></div>
+      <div class="proc-box"><div class="n">4</div><h3>仕上げ</h3><p>独自開発の仕上げ剤を用い、ガラスコーティングの表面を整えます。</p></div>
+      <div class="proc-box"><div class="n">5</div><h3>施工完了</h3><p>ガラス被膜がボディを完全に包み、高い光沢と水切れを実現します。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 比較 ===== -->
+<section class="sec-dark" style="border-top:1px solid rgba(255,255,255,.06);">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">COMPARISON</div>
+      <h2>一般的なコーティングとの比較</h2>
+    </div>
+    <table class="table-dark">
+      <thead>
+        <tr>
+          <th>コーティング種類</th>
+          <th>持続期間目安</th>
+          <th>耐久性／耐候性</th>
+          <th>汚れ／付着物</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="feat-row">
+          <td>CARMELコート</td>
+          <td>約3年</td>
+          <td>非常に高い</td>
+          <td>汚れが付着しづらい</td>
+        </tr>
+        <tr>
+          <td>ガラス系コーティング</td>
+          <td>2年程度</td>
+          <td>やや高い</td>
+          <td>防汚性能に優れる</td>
+        </tr>
+        <tr>
+          <td>ポリマー系コーティング</td>
+          <td>半年〜1年程度</td>
+          <td>低い</td>
+          <td>油汚れが付着しやすい</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===== 評価 ===== -->
+<section class="sec-dark" style="border-top:1px solid rgba(255,255,255,.06);">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">EVALUATION</div>
+      <h2>CARMELコートの評価</h2>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center;max-width:980px;margin:0 auto;">
+      <div class="eval-list">
+        <div class="eval-item">
+          <div class="et"><h3>① 持続性</h3><span>★★★★★</span></div>
+          <p>約3年間の長期持続が可能です。</p>
+        </div>
+        <div class="eval-item">
+          <div class="et"><h3>② 艶</h3><span>★★★★★</span></div>
+          <p>高純度ガラスコーティング剤による抜群の光沢を実現します。</p>
+        </div>
+        <div class="eval-item">
+          <div class="et"><h3>③ 耐候性</h3><span>★★★★★</span></div>
+          <p>紫外線や酸性雨による劣化に強い耐久性を持ちます。</p>
+        </div>
+      </div>
+      <div class="img-ph">施工後の光沢イメージ画像<br />（実写真に差し替え）</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 料金表 ===== -->
+<section id="price" class="sec-dark" style="border-top:1px solid rgba(255,255,255,.06);">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">PRICING</div>
+      <h2>CARMELコート料金表</h2>
+    </div>
+    <table class="table-dark">
+      <thead>
+        <tr>
+          <th>コーティング名</th>
+          <th>軽自動車・コンパクト</th>
+          <th>セダン／ミニバン／SUV／その他</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="feat-row">
+          <td>カーメルコート70（光沢持続3年）</td>
+          <td>49,800円（税込）</td>
+          <td>59,800円（税込）</td>
+        </tr>
+        <tr>
+          <td>カーメルコート85（光沢持続5年）</td>
+          <td>69,800円（税込）</td>
+          <td>79,800円（税込）</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="center" style="margin-top:18px;color:#9fb0cc;font-size:13px;">
+      ※ 価格には下地処理の費用は含まれておりません。ユーザーメンテナンスキット（4,800円税抜）は別売りです。
+    </p>
+  </div>
+</section>
+
+<!-- ===== メンテナンス方法 ===== -->
+<section id="maintenance">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow" style="color:#ec6e6a;">MAINTENANCE</div>
+      <h2>メンテナンス方法</h2>
+    </div>
+
+    <div class="maint-row">
+      <div class="maint-text">
+        <h3>日々の洗車</h3>
+        <p>CARMELガラスコーティングは完全硬化により長期的な輝きを維持し、優れた防汚性で洗車も簡単です。さらに、有害な化学物質を含まない環境に優しい製品です。日常のお手入れは水洗いで十分。汚れが気になる場合は中性シャンプーをご使用ください。</p>
+      </div>
+      <div class="img-ph light">日々の洗車イメージ（差し替え）</div>
+    </div>
+
+    <div class="maint-row rev">
+      <div class="maint-text">
+        <h3>撥水性能の復活</h3>
+        <p>撥水性能が弱くなったら、専用メンテナンス剤を使用してください。本来の撥水性能が復活します。</p>
+      </div>
+      <div class="img-ph light">撥水イメージ（差し替え）</div>
+    </div>
+
+    <div class="maint-row">
+      <div class="maint-text">
+        <h3>汚れの除去</h3>
+        <p>固着した汚れは、濡れたタオルと熱湯で除去できます。困難な場合は担当店舗にご相談ください。</p>
+      </div>
+      <div class="img-ph light">汚れ除去イメージ（差し替え）</div>
+    </div>
+
+    <div class="maint-row rev">
+      <div class="maint-text">
+        <h3>機械式洗車機の使用</h3>
+        <p>施工1ヶ月後から水洗いコースのみ利用可能です。専用メンテナンスキットでの仕上げ拭きを推奨します。</p>
+      </div>
+      <div class="img-ph light">洗車機イメージ（差し替え）</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CTA band ===== -->
+<section class="cta-band">
+  <div class="wrap">
+    <h2>愛車の輝きを、約3年キープ。</h2>
+    <p>車種・状態に合わせて最適なコーティングをご提案します。まずはお気軽にご相談ください。</p>
+    <a class="btn btn-navy" href="#contact">コーティングを相談する</a>
+  </div>
+</section>
+
+<!-- ===== Contact ===== -->
+<section id="contact" style="background:#eef2f9;">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">CONTACT</div>
+      <h2>ご相談・お見積り</h2>
+      <p>コーティングの種類・料金・施工期間など、お気軽にお問い合わせください。<strong>メール・チャットは24時間受付</strong>（お電話は平日 8:00〜17:00）。</p>
+    </div>
+    <div class="card" style="max-width:640px;margin:0 auto;">
+      <form id="coatForm" class="contact-form">
+        <div class="field"><label>お名前</label><input type="text" id="cName" placeholder="山田 太郎" required /></div>
+        <div class="row-2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div class="field"><label>メール</label><input type="email" id="cEmail" placeholder="you@example.com" required /></div>
+          <div class="field"><label>電話（任意）</label><input type="tel" id="cPhone" placeholder="090-0000-0000" /></div>
+        </div>
+        <div class="field"><label>車種・ご希望</label><textarea id="cMsg" rows="3" placeholder="例）アルファード／カーメルコート85を検討中" required></textarea></div>
+        <div class="alert alert-ok" id="cDone" style="display:none;">✓ 送信しました。担当より折り返しご連絡します。</div>
+        <button class="btn btn-navy btn-block" type="submit">送信する</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Footer ===== -->
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <a class="brand" href="index.html" style="color:#fff;margin-bottom:12px;"><span class="logo">A</span><span>AUC-AGENT</span></a>
+        <p style="max-width:340px;">購入も売却もコーティングも、愛車のことをまるごとサポート。相場価格で、安心・かんたんに。</p>
+      </div>
+      <div>
+        <h4>サービス</h4>
+        <a href="index.html">購入代行</a>
+        <a href="sell.html">出品代行</a>
+        <a href="shipping.html">陸送シミュレーション</a>
+        <a href="coating.html">ボディコーティング</a>
+        <a href="manual.html">出品マニュアル</a>
+      </div>
+      <div>
+        <h4>会員</h4>
+        <a href="login.html">会員登録 / ログイン</a>
+        <a href="mypage.html">マイページ</a>
+        <a href="index.html#company">特定商取引法に基づく表記</a>
+        <a href="privacy.html">プライバシーポリシー</a>
+      </div>
+    </div>
+    <div class="copy">© 2026 合同会社アイズ（AUC-AGENT）. いわき市／福島拠点. これはデモ用ランディングページです。</div>
+  </div>
+</footer>
+
+<script src="assets/js/app.js"></script>
+<script>
+  // お問い合わせフォーム送信（GAS未設定でもデモとして完了表示）
+  document.getElementById("coatForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (window.AucConfig && AucConfig.send) {
+      AucConfig.send({
+        type: "coating",
+        name: document.getElementById("cName").value,
+        email: document.getElementById("cEmail").value,
+        phone: document.getElementById("cPhone").value,
+        message: document.getElementById("cMsg").value
+      });
+    }
+    document.getElementById("cDone").style.display = "block";
+    this.reset();
+  });
+</script>
+</body>
+</html>
