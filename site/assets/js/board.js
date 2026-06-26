@@ -1,14 +1,11 @@
 /* ============================================================
-   BUYMO 看板ボード（案件カンバン）＋ 営業サマリー
-   - ENDPOINT 未設定：localStorage でデモ動作（サンプル投入）
-   - ENDPOINT 設定時：GAS doGet(action=cases) で取得 / doPost(type:"case") で更新
-   - role=hq（本部：全件） / role=partner（加盟店：担当のみ who=店名）
+   BUYMO 看板ボード（案件カンバン）＋ 営業サマリー＋ 案件詳細パネル/対応履歴
+   データは HQ（hq-common.js）経由で共有。
+   role=hq（本部：全件） / role=partner（加盟店：担当のみ who=店名）
    ============================================================ */
 (function () {
   'use strict';
-  var ENDPOINT = ''; // 例: https://script.google.com/macros/s/XXXX/exec（空ならデモ）
-  var STAGES = ['新規受付', '査定中', '商談中', '契約', '入金待ち', '完了'];
-  var KEY = 'buymo_cases';
+  var STAGES = HQ.STAGES;
   var qs = new URLSearchParams(location.search);
   var role = qs.get('role') || localStorage.getItem('buymo_role') || 'hq';
   var who = qs.get('who') || localStorage.getItem('buymo_who') || '';
@@ -17,37 +14,11 @@
   var roleLabel = { hq: '本部', partner: '加盟店', member: '会員' }[role] || '本部';
   var rEl = document.getElementById('roleLabel'); if (rEl) rEl.textContent = roleLabel + (who ? '／' + who : '');
 
-  function seed() {
-    return [
-      { id: 'CS-7001', name: '佐藤 様', tel: '090-xxxx', genre: '廃車', assignee: 'いわき店', stage: '新規受付', amount: 0, memo: '不動車・引取希望' },
-      { id: 'CS-7002', name: '田中 様', tel: '080-xxxx', genre: '事故車', assignee: 'いわき店', stage: '査定中', amount: 120000, memo: '前方損傷' },
-      { id: 'CS-7003', name: '鈴木 様', tel: '070-xxxx', genre: 'SUV', assignee: '郡山店', stage: '商談中', amount: 1820000, memo: '他社相見積中' },
-      { id: 'CS-7004', name: '山田 様', tel: '090-xxxx', genre: '軽', assignee: 'いわき店', stage: '契約', amount: 740000, memo: '' },
-      { id: 'CS-7005', name: '高橋 様', tel: '080-xxxx', genre: 'EV', assignee: '郡山店', stage: '入金待ち', amount: 1180000, memo: '書類待ち' },
-      { id: 'CS-7006', name: '伊藤 様', tel: '070-xxxx', genre: 'セダン', assignee: 'いわき店', stage: '完了', amount: 1500000, memo: '' }
-    ];
-  }
-  function readLS() { try { var a = JSON.parse(localStorage.getItem(KEY)); return (a && a.length) ? a : seed(); } catch (e) { return seed(); } }
-  function saveLS() { try { localStorage.setItem(KEY, JSON.stringify(cases)); } catch (e) {} }
-
-  function load() {
-    if (ENDPOINT) {
-      window.__cases = function (d) { cases = (d && d.length) ? d : []; render(); };
-      var s = document.createElement('script');
-      s.src = ENDPOINT + '?action=cases' + (role === 'partner' && who ? '&assignee=' + encodeURIComponent(who) : '') + '&callback=__cases';
-      s.onerror = function () { cases = readLS(); render(); };
-      document.body.appendChild(s);
-    } else { cases = readLS(); render(); }
-  }
-
-  function postCase(c) {
-    if (!ENDPOINT) return;
-    fetch(ENDPOINT, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ type: 'case', id: c.id, name: c.name, phone: c.tel, genre: c.genre, assignee: c.assignee, stage: c.stage, amount: c.amount, memo: c.memo }) }).catch(function () {});
-  }
-
   function visible() { return (role === 'partner' && who) ? cases.filter(function (c) { return c.assignee === who; }) : cases; }
-  function yen(n) { return '¥' + (Number(n) || 0).toLocaleString('en-US'); }
+  function findCase(id) { for (var i = 0; i < cases.length; i++) if (cases[i].id === id) return cases[i]; return null; }
+  function nowStr() { var d = new Date(); function p(n) { return ('0' + n).slice(-2); } return d.getFullYear() + '/' + p(d.getMonth() + 1) + '/' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()); }
+  function addHistory(c, m) { c.history = c.history || []; c.history.unshift({ t: nowStr(), m: m }); }
+  function save(c) { HQ.upsertCase(c); }
 
   function render() {
     var board = document.getElementById('board');
@@ -62,62 +33,145 @@
       items.forEach(function (c) {
         var card = document.createElement('div');
         card.className = 'kb-card'; card.draggable = true; card.dataset.id = c.id;
+        var hist = (c.history && c.history.length) ? '<span class="kb-hist">📝' + c.history.length + '</span>' : '';
         card.innerHTML = '<div class="kb-card-top"><span class="kb-id">' + c.id + '</span>' +
-          (c.genre ? '<span class="kb-tag">' + c.genre + '</span>' : '') + '</div>' +
-          '<div class="kb-name">' + (c.name || '') + '</div>' +
-          '<div class="kb-meta">' + (c.assignee || '担当未定') + (c.amount ? '・' + yen(c.amount) : '') + '</div>' +
-          (c.memo ? '<div class="kb-memo">' + c.memo + '</div>' : '');
+          (c.genre ? '<span class="kb-tag">' + HQ.esc(c.genre) + '</span>' : '') + hist + '</div>' +
+          '<div class="kb-name">' + HQ.esc(c.name || '') + '</div>' +
+          '<div class="kb-meta">' + HQ.esc(c.assignee || '担当未定') + (c.amount ? '・' + HQ.yen(c.amount) : '') + '</div>' +
+          (c.memo ? '<div class="kb-memo">' + HQ.esc(c.memo) + '</div>' : '');
         card.addEventListener('dragstart', function (e) { e.dataTransfer.setData('text/plain', c.id); card.classList.add('dragging'); });
         card.addEventListener('dragend', function () { card.classList.remove('dragging'); });
+        card.addEventListener('click', function (e) { if (!card.classList.contains('dragging')) openPanel(c.id); });
         body.appendChild(card);
       });
       col.appendChild(body);
       col.addEventListener('dragover', function (e) { e.preventDefault(); col.classList.add('over'); });
       col.addEventListener('dragleave', function () { col.classList.remove('over'); });
-      col.addEventListener('drop', function (e) {
-        e.preventDefault(); col.classList.remove('over');
-        var id = e.dataTransfer.getData('text/plain');
-        move(id, stage);
-      });
+      col.addEventListener('drop', function (e) { e.preventDefault(); col.classList.remove('over'); move(e.dataTransfer.getData('text/plain'), stage); });
       board.appendChild(col);
     });
     summary();
   }
 
   function move(id, stage) {
-    var c = cases.filter(function (x) { return x.id === id; })[0];
+    var c = findCase(id);
     if (!c || c.stage === stage) return;
-    c.stage = stage; saveLS(); render(); postCase(c);
+    addHistory(c, 'ステージ変更：' + c.stage + ' → ' + stage);
+    c.stage = stage; save(c); render();
+    if (panelId === id) fillPanel(c);
   }
 
   function summary() {
     var list = visible();
-    var won = list.filter(function (c) { return ['契約', '入金待ち', '完了'].indexOf(c.stage) >= 0; });
+    var won = list.filter(function (c) { return HQ.WON.indexOf(c.stage) >= 0; });
     var amount = won.reduce(function (s, c) { return s + (Number(c.amount) || 0); }, 0);
-    set('sumTotal', list.length + '件');
-    set('sumWon', won.length + '件');
-    set('sumAmount', yen(amount));
-    set('sumDone', list.filter(function (c) { return c.stage === '完了'; }).length + '件');
+    set('sumTotal', list.length + '件'); set('sumWon', won.length + '件');
+    set('sumAmount', HQ.yen(amount)); set('sumDone', list.filter(function (c) { return c.stage === '完了'; }).length + '件');
   }
   function set(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
 
-  // 新規案件の追加
+  /* ---- 詳細パネル ---- */
+  var panel, panelId = null;
+  function ensurePanel() {
+    if (panel) return;
+    panel = document.createElement('div');
+    panel.className = 'case-panel'; panel.id = 'casePanel';
+    panel.innerHTML =
+      '<div class="cp-overlay" data-close></div>' +
+      '<aside class="cp-body" role="dialog" aria-label="案件詳細">' +
+        '<div class="cp-head"><span id="cpId" class="cp-id"></span><button class="cp-close" data-close aria-label="閉じる">×</button></div>' +
+        '<div class="cp-fields">' +
+          '<label>お名前<input id="cpName"></label>' +
+          '<label>連絡先<input id="cpTel"></label>' +
+          '<label>メール<input id="cpEmail"></label>' +
+          '<label>ジャンル<input id="cpGenre"></label>' +
+          '<label>担当（加盟店）<select id="cpAssignee"></select></label>' +
+          '<label>ステージ<select id="cpStage"></select></label>' +
+          '<label>金額<input id="cpAmount" type="number" min="0"></label>' +
+          '<label class="cp-full">メモ<textarea id="cpMemo" rows="2"></textarea></label>' +
+        '</div>' +
+        '<button class="cp-save" id="cpSave">保存する</button>' +
+        '<div class="cp-hist-area"><h3>対応履歴</h3>' +
+          '<div class="cp-note-add"><input id="cpNote" placeholder="対応メモを記録（例：電話で出張日程を調整）"><button id="cpNoteBtn">記録</button></div>' +
+          '<ol class="cp-timeline" id="cpTimeline"></ol>' +
+        '</div>' +
+      '</aside>';
+    document.body.appendChild(panel);
+    panel.addEventListener('click', function (e) { if (e.target.hasAttribute('data-close')) closePanel(); });
+    document.getElementById('cpSave').addEventListener('click', savePanel);
+    document.getElementById('cpNoteBtn').addEventListener('click', addNote);
+    document.getElementById('cpNote').addEventListener('keydown', function (e) { if (e.key === 'Enter') addNote(); });
+  }
+  function opts(arr, sel, withEmpty) {
+    var o = withEmpty ? '<option value="">— 未割当 —</option>' : '';
+    return o + arr.map(function (v) { return '<option' + (v === sel ? ' selected' : '') + '>' + HQ.esc(v) + '</option>'; }).join('');
+  }
+  function fillPanel(c) {
+    document.getElementById('cpId').textContent = c.id + (c.genre ? '（' + c.genre + '）' : '');
+    document.getElementById('cpName').value = c.name || '';
+    document.getElementById('cpTel').value = c.tel || '';
+    document.getElementById('cpEmail').value = c.email || '';
+    document.getElementById('cpGenre').value = c.genre || '';
+    document.getElementById('cpAssignee').innerHTML = opts(HQ.getStores().map(function (s) { return s.name; }), c.assignee, true);
+    document.getElementById('cpStage').innerHTML = opts(STAGES, c.stage, false);
+    document.getElementById('cpAmount').value = c.amount || '';
+    document.getElementById('cpMemo').value = c.memo || '';
+    renderTimeline(c);
+  }
+  function renderTimeline(c) {
+    var tl = document.getElementById('cpTimeline');
+    var h = c.history || [];
+    tl.innerHTML = h.length ? h.map(function (e) {
+      return '<li><span class="cp-time">' + HQ.esc(e.t) + '</span><span class="cp-msg">' + HQ.esc(e.m) + '</span></li>';
+    }).join('') : '<li class="cp-empty">まだ記録はありません。</li>';
+  }
+  function openPanel(id) {
+    ensurePanel();
+    var c = findCase(id); if (!c) return;
+    panelId = id; fillPanel(c);
+    panel.classList.add('open');
+  }
+  function closePanel() { if (panel) panel.classList.remove('open'); panelId = null; }
+  function savePanel() {
+    var c = findCase(panelId); if (!c) return;
+    var newStage = document.getElementById('cpStage').value;
+    if (newStage !== c.stage) addHistory(c, 'ステージ変更：' + c.stage + ' → ' + newStage);
+    var newAsg = document.getElementById('cpAssignee').value;
+    if (newAsg !== (c.assignee || '')) addHistory(c, '担当変更：' + (c.assignee || '未割当') + ' → ' + (newAsg || '未割当'));
+    c.name = document.getElementById('cpName').value.trim();
+    c.tel = document.getElementById('cpTel').value.trim();
+    c.email = document.getElementById('cpEmail').value.trim();
+    c.genre = document.getElementById('cpGenre').value.trim();
+    c.assignee = newAsg; c.stage = newStage;
+    c.amount = Number(document.getElementById('cpAmount').value) || 0;
+    c.memo = document.getElementById('cpMemo').value.trim();
+    save(c); render(); fillPanel(c);
+    flash(document.getElementById('cpSave'), '保存しました ✓');
+  }
+  function addNote() {
+    var inp = document.getElementById('cpNote');
+    var txt = inp.value.trim(); if (!txt) return;
+    var c = findCase(panelId); if (!c) return;
+    addHistory(c, txt); save(c); HQ.note(c.id, txt);
+    inp.value = ''; renderTimeline(c); render();
+  }
+  function flash(btn, msg) { var o = btn.textContent; btn.textContent = msg; btn.disabled = true; setTimeout(function () { btn.textContent = o; btn.disabled = false; }, 1200); }
+
+  /* ---- 新規案件 ---- */
   var form = document.getElementById('addForm');
   if (form) {
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var name = document.getElementById('acName').value.trim();
       if (!name) return;
-      var c = {
-        id: 'CS-' + Date.now().toString().slice(-5),
-        name: name, tel: document.getElementById('acTel').value.trim(),
+      var c = { id: 'CS-' + Date.now().toString().slice(-5), name: name, tel: document.getElementById('acTel').value.trim(),
         genre: document.getElementById('acGenre').value.trim(),
         assignee: (role === 'partner' && who) ? who : document.getElementById('acAssignee').value.trim(),
-        stage: '新規受付', amount: 0, memo: ''
-      };
-      cases.unshift(c); saveLS(); render(); postCase(c); form.reset();
+        stage: '新規受付', amount: 0, memo: '', history: [] };
+      addHistory(c, '案件を作成');
+      cases.unshift(c); save(c); render(); form.reset();
     });
   }
 
-  load();
+  HQ.loadCases(function (list) { cases = list; render(); });
 })();

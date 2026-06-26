@@ -53,6 +53,12 @@ window.HQ = (function () {
       body: JSON.stringify({ type: 'case', id: c.id, name: c.name, phone: c.tel, email: c.email, genre: c.genre, assignee: c.assignee, stage: c.stage, amount: c.amount, memo: c.memo }) }).catch(function () {});
   }
 
+  function note(id, text) {
+    if (!ENDPOINT) return;
+    fetch(ENDPOINT, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ type: 'note', id: id, text: text }) }).catch(function () {});
+  }
+
   function getStores() { return readLS(SKEY, seedStores); }
   function saveStores(arr) { try { localStorage.setItem(SKEY, JSON.stringify(arr)); } catch (e) {} }
 
@@ -78,7 +84,7 @@ window.HQ = (function () {
   return {
     ENDPOINT: ENDPOINT, STAGES: STAGES, WON: WON,
     loadCases: loadCases, getCasesLS: getCasesLS, saveCases: saveCases, upsertCase: upsertCase,
-    getStores: getStores, saveStores: saveStores,
+    getStores: getStores, saveStores: saveStores, note: note,
     yen: yen, esc: esc, stageIdx: stageIdx, nav: nav
   };
 })();

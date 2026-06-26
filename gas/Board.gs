@@ -81,6 +81,16 @@ function getMyCasesJson_(email) {
   return out;
 }
 
+/* 対応履歴メモ（doPost type:"note"）→ 「対応履歴」シートに追記＋通知 */
+function handleNote_(d) {
+  if (!d.id || !d.text) return { ok: false, error: "id/text required" };
+  var ss = openBook_();
+  var sh = ss.getSheetByName("対応履歴") || ensureSheet_(ss, "対応履歴", ["日時", "案件ID", "内容"]);
+  sh.appendRow([new Date(), d.id, String(d.text).slice(0, 500)]);
+  notifyStaff_("📝 対応メモ " + d.id + "\n" + d.text);
+  return { ok: true };
+}
+
 /* 案件一覧を返す（doGet action=cases）。assignee 指定で担当の案件のみ。 */
 function getCasesJson_(assignee) {
   var out = [];

@@ -72,6 +72,7 @@ function doPost(e) {
       case "buymo":    result = handleBuymoLead_(data); break;
       case "stepmail": result = handleStepMailTrigger_(data); break; // WP等から後発でステップメール発動
       case "case":     result = handleCase_(data);     break; // 看板ボードの作成/更新
+      case "note":     result = handleNote_(data);     break; // 案件の対応履歴メモ
       default:         result = { ok: false, error: "unknown type" };
     }
     return json_(result);
