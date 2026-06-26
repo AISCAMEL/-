@@ -147,6 +147,12 @@ async function handleHandoff(req, res) {
       return sendJson(res, 200, out);
     }
 
+    if (op === 'reserve') {
+      // 予約は営業時間・Slack有無に関わらず受付（控えを保存し、設定時は通知）
+      const out = await handoff.requestBooking(body);
+      return sendJson(res, 200, out);
+    }
+
     if (op === 'end') {
       return sendJson(res, 200, handoff.endHandoff(body.sessionId));
     }

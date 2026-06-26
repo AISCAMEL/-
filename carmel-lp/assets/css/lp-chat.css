@@ -312,6 +312,28 @@
   color: #fff;
 }
 
+.chat-suggestion--book {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.chat-suggestion--book:hover {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.chat-callback__label {
+  font-size: 0.74rem;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+select.chat-callback__input {
+  appearance: auto;
+  background: #fff;
+}
+
 /* ---- 回答後の誘導CTA（LINE/電話） ---- */
 .chat-msg__cta {
   align-self: flex-start;

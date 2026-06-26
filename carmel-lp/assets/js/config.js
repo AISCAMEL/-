@@ -116,6 +116,24 @@ export const CHAT_CONFIG = {
       offHours: 'handoff_off_hours',
       callbackSent: 'handoff_callback_sent'
     }
+  },
+
+  // ---- 予約（来店・査定・電話相談） ----
+  // 営業時間に関係なく受付。Slack未設定でも控えを保存して受付確認する。
+  booking: {
+    entryLabel: '📅 来店・査定を予約',
+    title: '📅 ご予約（無料）',
+    typeLabel: 'ご希望の種別',
+    types: ['来店予約', '出張査定', '電話相談'],
+    dateLabel: 'ご希望日',
+    timeLabel: 'ご希望の時間帯',
+    times: ['午前（10-12時）', '午後（12-15時）', '夕方（15-18時）', '夜（18-19時）', 'いつでも可'],
+    nameLabel: 'お名前',
+    contactLabel: 'ご連絡先（電話番号 / LINE）',
+    noteLabel: 'ご相談内容・ご希望（任意）',
+    submitLabel: 'この内容で予約する',
+    doneMessage: 'ご予約ありがとうございます。担当者より確認のご連絡をいたします。',
+    event: 'booking_submitted'
   }
 };
 

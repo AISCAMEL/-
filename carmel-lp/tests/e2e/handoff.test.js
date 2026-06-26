@@ -123,6 +123,21 @@ const inject = (text) =>
     });
     assert.strictEqual(cb.ok, true);
     ok('callback: 後日連絡をSlackへ通知');
+
+    // 予約（Slack有効時はSlackへ通知される）
+    const rv = await j(4611, '/api/handoff/reserve', {
+      type: '出張査定',
+      date: '2026-07-01',
+      time: '午後（12-15時）',
+      name: '鈴木',
+      contact: '080-1111-2222',
+      note: '車種相談も希望'
+    });
+    assert.strictEqual(rv.ok, true);
+    const last = await fetch(`http://localhost:${SLACK_PORT}/__last`).then((r) => r.json());
+    assert.ok(last.text.includes('予約リクエスト'), 'Slackに予約通知が来ていない');
+    assert.ok(last.text.includes('出張査定') && last.text.includes('2026-07-01'), '予約内容が欠落');
+    ok('reserve: 予約をSlackへ通知（種別・希望日を含む）');
   } catch (e) {
     ng('営業時間内フロー', e);
   } finally {
@@ -149,8 +164,12 @@ const inject = (text) =>
   }
 
   // ---- C) Slack未設定（disabled） ----
+  const fs = require('fs');
+  const os = require('os');
+  const path = require('path');
+  const bookDir = fs.mkdtempSync(path.join(os.tmpdir(), 'book-'));
   const offSrv = startServer(
-    { SLACK_BOT_TOKEN: '', SLACK_CHANNEL: '', SLACK_BASE_URL: '' },
+    { SLACK_BOT_TOKEN: '', SLACK_CHANNEL: '', SLACK_BASE_URL: '', BOOKINGS_DIR: bookDir },
     4613
   );
   try {
@@ -161,6 +180,19 @@ const inject = (text) =>
     assert.strictEqual(started.available, false);
     assert.strictEqual(started.reason, 'disabled');
     ok('disabled: Slack未設定なら available:false (reason=disabled)');
+
+    // 予約はSlack未設定でも受付し、控えがファイルに残る
+    const rv = await j(4613, '/api/handoff/reserve', {
+      type: '来店予約',
+      date: '2026-07-02',
+      contact: '070-3333-4444'
+    });
+    assert.strictEqual(rv.ok, true);
+    const files = fs.readdirSync(bookDir).filter((f) => f.endsWith('.jsonl'));
+    assert.strictEqual(files.length, 1, '予約の控えが保存されていない');
+    const rec = JSON.parse(fs.readFileSync(path.join(bookDir, files[0]), 'utf8').trim());
+    assert.strictEqual(rec.contact, '070-3333-4444');
+    ok('reserve: Slack未設定でも受付し控えを保存');
   } catch (e) {
     ng('未設定フロー', e);
   } finally {

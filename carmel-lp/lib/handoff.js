@@ -22,6 +22,8 @@
 'use strict';
 
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 
 function slackBase() {
   return process.env.SLACK_BASE_URL || 'https://slack.com/api';
@@ -189,6 +191,60 @@ function endHandoff(sessionId) {
   return { ok: true };
 }
 
+/* ---------- 予約（来店・査定・電話相談） ---------- */
+
+function bookingsDir() {
+  return process.env.BOOKINGS_DIR || path.join(__dirname, '..', 'data', 'bookings');
+}
+
+function bookingStamp(d) {
+  const x = d instanceof Date ? d : new Date();
+  const p = (n) => String(n).padStart(2, '0');
+  return `${x.getUTCFullYear()}-${p(x.getUTCMonth() + 1)}-${p(x.getUTCDate())}`;
+}
+
+/** 予約の控えをJSONLで保存（Slack未設定でもリードを失わないため）。失敗は握りつぶす。 */
+function saveBooking(rec) {
+  try {
+    const dir = bookingsDir();
+    fs.mkdirSync(dir, { recursive: true });
+    fs.appendFileSync(path.join(dir, `${bookingStamp()}.jsonl`), JSON.stringify(rec) + '\n');
+  } catch (_e) {
+    /* 保存失敗は受付自体を止めない */
+  }
+}
+
+/**
+ * 来店/査定/電話相談の予約リクエストを受け付ける。
+ * 営業時間に関係なく受付可能。控えを保存し、Slack設定時は通知する。
+ */
+async function requestBooking(p = {}) {
+  const s = (v) => String(v || '').slice(0, 200).trim();
+  const rec = {
+    ts: new Date().toISOString(),
+    type: s(p.type) || '来店予約',
+    date: s(p.date),
+    time: s(p.time),
+    name: s(p.name),
+    contact: s(p.contact),
+    note: String(p.note || '').slice(0, 1000)
+  };
+  saveBooking(rec);
+
+  if (isEnabled()) {
+    const text =
+      `📅 *予約リクエスト*\n` +
+      `• 種別: ${rec.type}\n` +
+      `• 希望日: ${rec.date || '(未入力)'}\n` +
+      `• 希望時間: ${rec.time || '(未入力)'}\n` +
+      `• お名前: ${rec.name || '(未入力)'}\n` +
+      `• ご連絡先: ${rec.contact || '(未入力)'}\n` +
+      `• メモ: ${rec.note || '(なし)'}`;
+    await slackPost('chat.postMessage', { channel: config().channel, text });
+  }
+  return { ok: true };
+}
+
 module.exports = {
   config,
   isEnabled,
@@ -197,6 +253,7 @@ module.exports = {
   sendUserMessage,
   pollOperator,
   requestCallback,
+  requestBooking,
   endHandoff,
   _sessions: sessions // テスト用
 };

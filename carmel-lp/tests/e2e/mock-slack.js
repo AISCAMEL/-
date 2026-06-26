@@ -16,6 +16,7 @@ const PORT = process.env.MOCK_SLACK_PORT || 4600;
 // threadTs -> [{ts,text,user?,bot_id?}]
 const threads = new Map();
 let lastThreadTs = null;
+let lastPostedText = '';
 let seq = 1000;
 const nextTs = () => String((seq++) + 0.0001).padStart(4, '0');
 
@@ -50,9 +51,15 @@ const server = http.createServer(async (req, res) => {
     return send({ ok: true });
   }
 
+  // テスト用: 直近のボット投稿テキストを覗く
+  if (url.pathname === '/__last') {
+    return send({ ok: true, text: lastPostedText });
+  }
+
   if (url.pathname === '/chat.postMessage') {
     const body = await readBody(req);
     const ts = nextTs();
+    lastPostedText = body.text || '';
     // ボット投稿には bot_id を付ける（人間の返信と区別するため）
     const msg = { ts, text: body.text, bot_id: 'B_CARMEL' };
     const threadTs = body.thread_ts || ts;

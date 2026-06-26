@@ -20,6 +20,7 @@ import { track } from './analytics.js';
 
 const cfg = CHAT_CONFIG.chatbot;
 const hcfg = CHAT_CONFIG.handoff;
+const bcfg = CHAT_CONFIG.booking;
 
 let started = false;
 let streaming = false;
@@ -273,6 +274,7 @@ function renderHandoffEntry() {
 function restoreAiEntry() {
   appendNote(hcfg.aiContinueNote);
   renderSuggestions();
+  renderBookingEntry();
   if (handoff.available) renderHandoffEntry();
 }
 
@@ -440,6 +442,82 @@ function makeNote(text) {
   return el;
 }
 
+/* ---------- 予約（来店・査定・電話相談） ---------- */
+
+/** 「来店・査定を予約」入口ボタンをサジェスト領域に追加（常時）。 */
+function renderBookingEntry() {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'chat-suggestion chat-suggestion--book';
+  btn.textContent = bcfg.entryLabel;
+  btn.addEventListener('click', () => {
+    clearSuggestions();
+    renderBookingForm();
+    // 続けてAI/予約導線に戻れるように
+    renderSuggestions();
+    renderBookingEntry();
+    if (handoff.available) renderHandoffEntry();
+  });
+  dom.suggestions.appendChild(btn);
+}
+
+/** 予約フォームをスレッド内に表示。送信で /api/handoff/reserve に送る。 */
+function renderBookingForm() {
+  const form = document.createElement('form');
+  form.className = 'chat-callback';
+  const opts = (arr) => arr.map((v) => `<option value="${v}">${v}</option>`).join('');
+  form.innerHTML = `
+    <p class="chat-callback__title">${bcfg.title}</p>
+    <label class="chat-callback__label">${bcfg.typeLabel}</label>
+    <select class="chat-callback__input" name="type">${opts(bcfg.types)}</select>
+    <label class="chat-callback__label">${bcfg.dateLabel}</label>
+    <input class="chat-callback__input" type="date" name="date" />
+    <label class="chat-callback__label">${bcfg.timeLabel}</label>
+    <select class="chat-callback__input" name="time">${opts(bcfg.times)}</select>
+    <input class="chat-callback__input" name="name" placeholder="${bcfg.nameLabel}" autocomplete="name" />
+    <input class="chat-callback__input" name="contact" placeholder="${bcfg.contactLabel}" />
+    <textarea class="chat-callback__input" name="note" rows="2" placeholder="${bcfg.noteLabel}"></textarea>
+    <button class="chat-callback__submit" type="submit">${bcfg.submitLabel}</button>
+  `;
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    const payload = {
+      type: fd.get('type'),
+      date: fd.get('date'),
+      time: fd.get('time'),
+      name: fd.get('name'),
+      contact: fd.get('contact'),
+      note: fd.get('note')
+    };
+    // 最低限：連絡先と希望日は必須
+    if (!String(payload.contact || '').trim()) {
+      form.querySelector('[name="contact"]').focus();
+      return;
+    }
+    if (!String(payload.date || '').trim()) {
+      form.querySelector('[name="date"]').focus();
+      return;
+    }
+    const submit = form.querySelector('button');
+    submit.disabled = true;
+    try {
+      await fetch('/api/handoff/reserve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      form.replaceWith(makeNote(bcfg.doneMessage));
+      track(bcfg.event, { type: payload.type });
+    } catch (_e) {
+      submit.disabled = false;
+      appendNote('送信に失敗しました。お手数ですがLINE・お電話をご利用ください。');
+    }
+  });
+  dom.thread.appendChild(form);
+  scrollToBottom();
+}
+
 /* ---------- 入力UI ---------- */
 
 function setInputEnabled(enabled) {
@@ -469,6 +547,7 @@ export function initChatbot() {
   // 初期グリーティング + サジェスト
   appendMessage('assistant', cfg.greeting);
   renderSuggestions();
+  renderBookingEntry(); // 「来店・査定を予約」（常時表示）
   initHandoff(); // 有人対応が有効なら「担当者と話す」を追加表示
   track(cfg.events.chatStart);
 
