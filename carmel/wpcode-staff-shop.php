@@ -29,10 +29,10 @@ if ( ! function_exists( 'carmelx_staff_shop_shortcode' ) ) {
 	 * Find a staff post ID: スタッフ -> open the staff -> the URL shows post=NNN. */
 	function carmelx_ss_shop_staff_map() {
 		return array(
-			'fukushima' => 0,
-			'chiba'     => 0,
-			'odawara'   => 0,
-			'yamanashi' => 0,
+			'fukushima' => 0,     // <- staff post ID for fukushima
+			'chiba'     => 0,     // <- staff post ID for chiba
+			'odawara'   => 3520,
+			'yamanashi' => 3065,
 		);
 	}
 
