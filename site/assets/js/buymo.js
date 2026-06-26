@@ -199,8 +199,9 @@
       var source = 'BUYMO ' + (document.title || '') + ' [' + window.location.pathname + ']';
       if (params.genre) lines.push('ジャンル：' + params.genre);
       return {
-        type: 'contact',
+        type: 'buymo',
         source: source,
+        genre: params.genre || '',
         name: get('f-name'),
         email: get('f-email'),
         phone: get('f-tel'),
@@ -238,7 +239,9 @@
       note.className = 'form-note';
 
       sendLead(buildPayload()).then(function () {
-        note.textContent = '送信しました。担当者より最短即日でご連絡いたします。ありがとうございました。';
+        note.innerHTML = '送信しました。担当者より最短即日でご連絡いたします。<br>' +
+          '査定状況は会員ページでいつでも確認できます。<br>' +
+          '<a class="member-link" href="login.html">▶ 会員登録して査定状況を確認する</a>';
         note.className = 'form-note ok';
         form.reset();
       }).catch(function () {

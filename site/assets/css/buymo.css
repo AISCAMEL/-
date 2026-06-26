@@ -386,6 +386,26 @@ a.genre-card:hover{transform:translateY(-8px);box-shadow:var(--shadow-hover);}
 .trust-badge span{font-size:24px;}
 .trust-badge:hover{filter:grayscale(0);opacity:1;transform:translateY(-3px);}
 
+/* ============ 会員専用ページ誘導 ============ */
+.member-cta{background:linear-gradient(135deg,#23357a,#1E3A8A);color:#fff;padding:56px 0;}
+.member-cta-inner{display:grid;grid-template-columns:1.3fr .7fr;gap:36px;align-items:center;}
+.member-badge{display:inline-block;background:var(--yellow);color:#5a4300;font-weight:900;font-size:13px;letter-spacing:.06em;padding:5px 14px;border-radius:30px;margin-bottom:12px;}
+.member-cta h2{font-size:26px;font-weight:900;line-height:1.4;margin-bottom:12px;}
+.member-cta-copy>p{color:#dbe2f5;font-size:15px;margin-bottom:16px;}
+.member-points{display:flex;flex-direction:column;gap:8px;}
+.member-points li{padding-left:26px;position:relative;font-weight:700;font-size:14px;}
+.member-points li::before{content:"✓";position:absolute;left:0;color:var(--yellow);font-weight:900;}
+.member-cta-actions{text-align:center;}
+.member-cta-actions .btn-lg{width:100%;max-width:280px;}
+.member-login{display:inline-block;margin-top:14px;color:#cdd6ee;font-weight:700;font-size:14px;}
+.member-login:hover{color:#fff;}
+.member-link{display:inline-block;margin-top:6px;color:var(--orange);font-weight:700;}
+@media (max-width:767px){
+  .member-cta{padding:44px 0;}
+  .member-cta-inner{grid-template-columns:1fr;gap:22px;}
+  .member-cta h2{font-size:21px;}
+}
+
 /* ============ フッター ============ */
 .site-footer{background:var(--navy);color:#fff;padding:60px 0 0;font-size:14px;}
 /* ジャンル別買取（フッター上部バンド） */

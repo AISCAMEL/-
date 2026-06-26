@@ -15,6 +15,13 @@
 // 動作確認用 ＋ 会員の回答済み相場をJSONPで返す（マイページ反映用）
 //   例: <script src="…/exec?action=quotes&email=xxx&callback=cb"></script>
 function doGet(e) {
+  // ステップメールの配信停止（メール末尾リンク）
+  if (e && e.parameter && e.parameter.action === "unsub") {
+    var m = (typeof unsubscribeByToken_ === "function")
+      ? unsubscribeByToken_(e.parameter.t || "")
+      : "受け付けました。";
+    return ContentService.createTextOutput(m).setMimeType(ContentService.MimeType.TEXT);
+  }
   if (e && e.parameter && e.parameter.action === "quotes") {
     var data = getAnsweredQuotes_(e.parameter.email || "");
     var body = JSON.stringify(data);
@@ -46,6 +53,7 @@ function doPost(e) {
       case "register": result = handleRegister_(data); break;
       case "contact":  result = handleContact_(data);  break;
       case "quote":    result = handleQuote_(data);    break;
+      case "buymo":    result = handleBuymoLead_(data); break;
       default:         result = { ok: false, error: "unknown type" };
     }
     return json_(result);
@@ -332,6 +340,29 @@ function handleContact_(d) {
   sh.appendRow([new Date(), d.name || "", d.email || "", d.phone || "", d.message || "", "未対応"]);
   notifyStaff_("✉️ お問い合わせ\nお名前：" + (d.name || "-") + "\n内容：" + (d.message || "-"));
   return { ok: true };
+}
+
+/* ---------- BUYMO 査定/問い合わせ（ステップメール登録あり） ---------- */
+function handleBuymoLead_(d) {
+  var cfg = getConfig();
+  var ss = openBook_();
+  var sh = ss.getSheetByName(cfg.SHEET_CONTACTS) || ensureSheet_(ss, cfg.SHEET_CONTACTS, []);
+  var id = "BM-" + nextSeq_(sh, 5000);
+
+  sh.appendRow([new Date(), d.name || "", d.email || "", d.phone || "", "[BUYMO]" + (d.genre ? "(" + d.genre + ")" : "") + " " + (d.message || ""), "未対応"]);
+  notifyStaff_(
+    "🐮 BUYMO 査定/問い合わせ " + id + "\n" +
+    "お名前：" + (d.name || "-") + "\n" +
+    "TEL：" + (d.phone || "-") + " / メール：" + (d.email || "-") + "\n" +
+    (d.genre ? "ジャンル：" + d.genre + "\n" : "") +
+    (d.message || "")
+  );
+
+  // ステップメール（StepMail.gs）に登録。未デプロイでもエラーにしない。
+  if (typeof enrollStepMail_ === "function") {
+    enrollStepMail_({ id: id, name: d.name, email: d.email, genre: d.genre, source: d.source });
+  }
+  return { ok: true, id: id };
 }
 
 /* ---------- 相場見積り（買取/仕入れ）受付 ---------- */
