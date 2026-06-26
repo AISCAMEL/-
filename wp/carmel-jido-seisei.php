@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 6.2
+ * Version: 6.3
  * Author: CARMEL
  */
 
@@ -607,7 +607,7 @@ function carmel3_auto_build_section_jobs($post_id, $s) {
     $jobs = array();
     foreach ($fields as $n => $f) {
         $existing = carmel3_auto_get_acf_value($post_id, $f[0], $f[1]);
-        if (trim($existing) !== '' && $existing !== '0') continue; // すでに画像あり→飛ばす
+        if (trim($existing) !== '' && $existing !== '0') continue; // すでに画像あり飛ばす
         $heading = carmel3_auto_section_has_content($post_id, $n);
         if ($heading === '') continue; // 中身の無いセクションは作らない
         $prompt = $base_prompt . ' , section illustration about: ' . $heading
@@ -733,8 +733,8 @@ function carmel3_auto_register_menu() {
     $parent = 'carmel-manager';
     if (isset($admin_page_hooks[$parent])) {
         // 「カーメル管理」の中にサブメニューとして入れる
-        add_submenu_page($parent, 'かんたんホーム', '🏠 かんたんホーム', 'manage_options', 'carmel3-home', 'carmel3_home_page');
-        add_submenu_page($parent, 'CARMEL 自動生成', '🤖 自動生成', 'manage_options', 'carmel3-auto', 'carmel3_auto_settings_page');
+        add_submenu_page($parent, 'かんたんホーム', 'かんたんホーム', 'manage_options', 'carmel3-home', 'carmel3_home_page');
+        add_submenu_page($parent, 'CARMEL 自動生成', '自動生成', 'manage_options', 'carmel3-auto', 'carmel3_auto_settings_page');
     } else {
         // 親が見つからない場合は従来どおりトップに出す（消えない保険）
         add_menu_page('かんたんホーム', 'かんたんホーム', 'manage_options', 'carmel3-home', 'carmel3_home_page', 'dashicons-admin-home', 3);
@@ -768,13 +768,13 @@ function carmel3_home_page() {
     ?>
     <div style="max-width:1000px;margin:20px auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
         <div style="background:linear-gradient(135deg,#1a1a2e,#0f3460);color:#fff;padding:24px;border-radius:16px;margin-bottom:18px">
-            <h1 style="margin:0 0 6px;font-size:24px">🏠 カーメル かんたんホーム</h1>
+            <h1 style="margin:0 0 6px;font-size:24px">カーメル かんたんホーム</h1>
             <p style="margin:0;opacity:.9">迷ったらここから。「記事を作る」「自動で毎日作る」「作った記事を見る」がすぐできます。</p>
         </div>
 
         <!-- 今の状態 -->
         <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:18px">
-            <h2 style="margin:0 0 12px;font-size:16px">📊 今の状態</h2>
+            <h2 style="margin:0 0 12px;font-size:16px">今の状態</h2>
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
                 <div style="background:#f8fafc;border-radius:10px;padding:12px">
                     <div style="font-size:12px;color:#666">毎日自動生成</div>
@@ -808,26 +808,26 @@ function carmel3_home_page() {
 
         <!-- やりたいこと（大ボタン） -->
         <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:18px">
-            <h2 style="margin:0 0 12px;font-size:16px">🚀 やりたいことを選ぶ</h2>
+            <h2 style="margin:0 0 12px;font-size:16px">やりたいことを選ぶ</h2>
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
                 <a href="<?php echo esc_url($url_gen); ?>" style="text-decoration:none;display:block;background:#5b3df5;color:#fff;border-radius:12px;padding:16px">
-                    <div style="font-size:18px;font-weight:800">✍️ 今すぐ1記事つくる</div>
+                    <div style="font-size:18px;font-weight:800">今すぐ1記事つくる</div>
                     <div style="font-size:12px;opacity:.9;margin-top:4px">タイトルを入れてボタンを押すだけ（手動）</div>
                 </a>
                 <a href="<?php echo esc_url($url_auto); ?>" style="text-decoration:none;display:block;background:#0f766e;color:#fff;border-radius:12px;padding:16px">
-                    <div style="font-size:18px;font-weight:800">🤖 自動生成の設定</div>
+                    <div style="font-size:18px;font-weight:800">自動生成の設定</div>
                     <div style="font-size:12px;opacity:.9;margin-top:4px">毎日自動で作る／テーマを登録する</div>
                 </a>
                 <a href="<?php echo esc_url($url_posts); ?>" style="text-decoration:none;display:block;background:#1f2937;color:#fff;border-radius:12px;padding:16px">
-                    <div style="font-size:18px;font-weight:800">📄 作った記事を見る</div>
+                    <div style="font-size:18px;font-weight:800">作った記事を見る</div>
                     <div style="font-size:12px;opacity:.9;margin-top:4px">下書き・公開記事の一覧／編集</div>
                 </a>
                 <a href="<?php echo esc_url($url_sns); ?>" style="text-decoration:none;display:block;background:#b45309;color:#fff;border-radius:12px;padding:16px">
-                    <div style="font-size:18px;font-weight:800">📣 SNS投稿</div>
+                    <div style="font-size:18px;font-weight:800">SNS投稿</div>
                     <div style="font-size:12px;opacity:.9;margin-top:4px">記事をSNS用の文章にして投稿</div>
                 </a>
                 <a href="<?php echo esc_url($url_set); ?>" style="text-decoration:none;display:block;background:#374151;color:#fff;border-radius:12px;padding:16px">
-                    <div style="font-size:18px;font-weight:800">⚙️ 設定（APIキー）</div>
+                    <div style="font-size:18px;font-weight:800">設定（APIキー）</div>
                     <div style="font-size:12px;opacity:.9;margin-top:4px">OpenRouterキー・ブランド設定</div>
                 </a>
             </div>
@@ -835,14 +835,14 @@ function carmel3_home_page() {
 
         <!-- メニューの使い方ガイド -->
         <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px">
-            <h2 style="margin:0 0 12px;font-size:16px">📖 メニューの使い方（かんたん説明）</h2>
+            <h2 style="margin:0 0 12px;font-size:16px">メニューの使い方（かんたん説明）</h2>
             <table style="width:100%;border-collapse:collapse;font-size:14px">
-                <tr style="border-bottom:1px solid #eee"><td style="padding:10px 8px;width:170px;font-weight:700">🏠 かんたんホーム</td><td style="padding:10px 8px;color:#444">今この画面。状態の確認と、各機能への入口。迷ったらここ。</td></tr>
-                <tr style="border-bottom:1px solid #eee"><td style="padding:10px 8px;font-weight:700">📝 記事生成</td><td style="padding:10px 8px;color:#444">手動で1記事だけ作る。タイトル・カテゴリ・地域を入れて「✨記事を生成」。</td></tr>
-                <tr style="border-bottom:1px solid #eee"><td style="padding:10px 8px;font-weight:700">🤖 自動生成</td><td style="padding:10px 8px;color:#444">テーマを登録しておくと、毎日自動で記事を作る（＋画像・CTA修正・公開）。<strong>毎日運用はここ。</strong></td></tr>
-                <tr style="border-bottom:1px solid #eee"><td style="padding:10px 8px;font-weight:700">📣 SNS投稿</td><td style="padding:10px 8px;color:#444">作った記事をSNS用の文章にして投稿（記録）。</td></tr>
-                <tr style="border-bottom:1px solid #eee"><td style="padding:10px 8px;font-weight:700">📊 生成履歴</td><td style="padding:10px 8px;color:#444">いつ何を作ったかの記録。</td></tr>
-                <tr><td style="padding:10px 8px;font-weight:700">⚙️ 設定</td><td style="padding:10px 8px;color:#444">OpenRouterのAPIキー、ブランド設定（画像の雰囲気など）。最初に1回だけ。</td></tr>
+                <tr style="border-bottom:1px solid #eee"><td style="padding:10px 8px;width:170px;font-weight:700">かんたんホーム</td><td style="padding:10px 8px;color:#444">今この画面。状態の確認と、各機能への入口。迷ったらここ。</td></tr>
+                <tr style="border-bottom:1px solid #eee"><td style="padding:10px 8px;font-weight:700">記事生成</td><td style="padding:10px 8px;color:#444">手動で1記事だけ作る。タイトル・カテゴリ・地域を入れて「記事を生成」。</td></tr>
+                <tr style="border-bottom:1px solid #eee"><td style="padding:10px 8px;font-weight:700">自動生成</td><td style="padding:10px 8px;color:#444">テーマを登録しておくと、毎日自動で記事を作る（＋画像・CTA修正・公開）。<strong>毎日運用はここ。</strong></td></tr>
+                <tr style="border-bottom:1px solid #eee"><td style="padding:10px 8px;font-weight:700">SNS投稿</td><td style="padding:10px 8px;color:#444">作った記事をSNS用の文章にして投稿（記録）。</td></tr>
+                <tr style="border-bottom:1px solid #eee"><td style="padding:10px 8px;font-weight:700">生成履歴</td><td style="padding:10px 8px;color:#444">いつ何を作ったかの記録。</td></tr>
+                <tr><td style="padding:10px 8px;font-weight:700">設定</td><td style="padding:10px 8px;color:#444">OpenRouterのAPIキー、ブランド設定（画像の雰囲気など）。最初に1回だけ。</td></tr>
             </table>
             <p style="margin:14px 0 0;color:#666;font-size:12px">※ この「かんたんホーム」は説明用の入口です。本体「カーメル管理 v5.7」の機能はそのまま使います（本体のコードは変更していません）。</p>
         </div>
@@ -979,7 +979,7 @@ function carmel3_auto_settings_page() {
             <p style="margin:0">自動生成: <strong><?php echo !empty($s['enabled']) ? 'ON' : 'OFF'; ?></strong>
                ／ 画像: <strong><?php echo !empty($s['gen_images']) ? 'ON' : 'OFF'; ?></strong>
                ／ Google投稿: <strong><?php echo !empty($s['gmb_post']) ? 'ON' : 'OFF'; ?></strong>
-               ／ エンジン: <strong><?php echo $engine_ok ? '✅ 接続OK' : '❌ 未接続'; ?></strong>
+               ／ エンジン: <strong><?php echo $engine_ok ? '接続OK' : '未接続'; ?></strong>
                ／ 次回実行: <strong><?php echo $next ? esc_html(get_date_from_gmt(gmdate('Y-m-d H:i:s', $next), 'Y-m-d H:i')) : '未スケジュール'; ?></strong></p>
             <?php
             $done_count = isset($s['done']) && is_array($s['done']) ? count($s['done']) : 0;
@@ -1076,7 +1076,7 @@ function carmel3_auto_settings_page() {
             </label><br>
             <?php if ($gmb_fn_ok): ?>
                 <span style="color:#666;font-size:12px">記事生成後に、本体v5.7のGoogle投稿機能で自動投稿します。投稿文はSNS下書きがあればそれを、無ければタイトル＋リード文を使います。アイキャッチ画像を添付します。<br>
-                ※ 事前に「カーメル管理 → 設定 → SNS認証情報」でGoogleのアクセストークン・アカウントID・ロケーションIDを登録しておく必要があります。<br>
+                ※ 事前に「カーメル管理 設定 SNS認証情報」でGoogleのアクセストークン・アカウントID・ロケーションIDを登録しておく必要があります。<br>
                 ※ 「生成後すぐ公開」をONにしておくと、記事URLも投稿文に付きます（下書きのままだとURLは付きません）。</span>
             <?php else: ?>
                 <span style="color:#c2410c;font-size:12px">本体v5.7のGoogle投稿関数が見つからないため、この機能は使えません。CARMEL統合管理 v5.7が有効か確認してください。</span>
