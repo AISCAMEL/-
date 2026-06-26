@@ -1,6 +1,6 @@
 :root{
-  --orange:#f5821f; --orange-d:#e2670c; --orange-l:#ff9b3a; --orange-soft:#fff4ea;
-  --peach:#fff6ee; --peach2:#fdeede; --navy:#243149; --navy-d:#1b2740;
+  --orange:#2E9E5B; --orange-d:#23814a; --orange-l:#49b974; --orange-soft:#eaf7ef;
+  --peach:#F4FBF4; --peach2:#e9f6ec; --navy:#243149; --navy-d:#1b2740;
   --ink:#2c3346; --muted:#7b8499; --red:#e8492f; --line:#f0e4d6; --gold:#e7ad33;
   --shadow:0 22px 50px -26px rgba(180,110,30,.5);
 }
@@ -16,7 +16,7 @@ img{max-width:100%;display:block}a{color:inherit}
 .note{background:#fff3e2;color:#a85b00;font-size:11px;border:1px dashed var(--orange);border-radius:5px;padding:1px 6px;display:inline-block}
 .mascot img{filter:drop-shadow(0 10px 14px rgba(0,0,0,.22))}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-weight:900;text-decoration:none;border-radius:999px;padding:15px 28px;font-size:clamp(15px,4vw,17px);cursor:pointer;border:none;transition:transform .15s;white-space:nowrap}
-.btn-cta{background:linear-gradient(180deg,#ff9b3a,var(--orange-d));color:#fff;box-shadow:0 12px 26px -8px rgba(226,103,12,.7)}
+.btn-cta{background:linear-gradient(180deg,#49b974,var(--orange-d));color:#fff;box-shadow:0 12px 26px -8px rgba(35,129,74,.7)}
 .btn-cta:hover{transform:translateY(-3px)}.btn-cta::after{content:"›";font-size:22px}
 .btn-wh{background:#fff;color:var(--orange-d);box-shadow:0 10px 22px -10px rgba(0,0,0,.3)}
 .btn-ghost{background:rgba(255,255,255,.16);color:#fff;border:1.5px solid rgba(255,255,255,.7)}
@@ -33,7 +33,7 @@ header{position:sticky;top:0;z-index:90;background:#fff;border-bottom:3px solid 
 .crumb{background:var(--peach);font-size:12px;color:var(--muted)}
 .crumb .wrap{padding:9px 18px}
 .crumb a{text-decoration:none;color:var(--orange-d);font-weight:700}
-.hero{position:relative;background:linear-gradient(120deg,#ff9b3a,var(--orange) 45%,var(--orange-d));color:#fff;overflow:hidden}
+.hero{position:relative;background:linear-gradient(120deg,#49b974,var(--orange) 45%,var(--orange-d));color:#fff;overflow:hidden}
 .hero::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 82% 18%,rgba(255,255,255,.25),transparent 55%)}
 .hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:10px;align-items:center;padding:24px 0 8px}
 .h-left .badge{display:inline-block;background:#fff;color:var(--orange-d);font-weight:900;font-size:12.5px;padding:5px 13px;border-radius:8px}
