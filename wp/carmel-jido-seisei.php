@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
- * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。WPCode不要の単独プラグイン版。
- * Version: 6.0
+ * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
+ * Version: 6.1
  * Author: CARMEL
  */
 
@@ -729,15 +729,15 @@ function carmel3_auto_post_to_gmb($post_id, $account = 'main') {
 add_action('admin_menu', 'carmel3_auto_register_menu', 99);
 
 function carmel3_auto_register_menu() {
-    add_menu_page(
-        'CARMEL 自動生成',
-        'CARMEL自動生成',
-        'manage_options',
-        'carmel3-auto',
-        'carmel3_auto_settings_page',
-        'dashicons-update',
-        4
-    );
+    global $admin_page_hooks;
+    $parent = 'carmel-manager';
+    if (isset($admin_page_hooks[$parent])) {
+        // 「カーメル管理」の中にサブメニューとして入れる
+        add_submenu_page($parent, 'CARMEL 自動生成', '🤖 自動生成', 'manage_options', 'carmel3-auto', 'carmel3_auto_settings_page');
+    } else {
+        // 親が見つからない場合は従来どおりトップに出す（消えない保険）
+        add_menu_page('CARMEL 自動生成', 'CARMEL自動生成', 'manage_options', 'carmel3-auto', 'carmel3_auto_settings_page', 'dashicons-update', 4);
+    }
 }
 
 add_action('admin_post_carmel3_auto_save', function () {
