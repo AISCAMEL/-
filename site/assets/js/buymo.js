@@ -261,4 +261,24 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
+
+  /* ---- 8. 追従CTAバー（スクロールで表示／フォーム表示中は隠す） ---- */
+  var sticky = document.getElementById('stickyCta');
+  if (sticky) {
+    var formEl = document.getElementById('form');
+    var formInView = false;
+    function updateSticky() {
+      var show = window.pageYOffset > 600 && !formInView;
+      sticky.classList.toggle('show', show);
+      sticky.setAttribute('aria-hidden', String(!show));
+      document.body.classList.toggle('has-sticky', show);
+    }
+    if ('IntersectionObserver' in window && formEl) {
+      new IntersectionObserver(function (es) {
+        formInView = es[0].isIntersecting; updateSticky();
+      }, { threshold: 0 }).observe(formEl);
+    }
+    window.addEventListener('scroll', updateSticky, { passive: true });
+    updateSticky();
+  }
 })();

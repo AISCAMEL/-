@@ -157,6 +157,43 @@ img{max-width:100%;display:block;}
 }
 @media (prefers-reduced-motion:reduce){.hero .btn-primary{animation:none;}}
 
+/* 他社比較表 */
+.compare{background:#fff;padding:72px 0;}
+.compare-table{max-width:840px;margin:0 auto;border-collapse:separate;border-spacing:0;width:100%;box-shadow:var(--shadow);border-radius:14px;overflow:hidden;}
+.compare-table th,.compare-table td{padding:16px 14px;text-align:center;border-bottom:1px solid #eee;}
+.compare-table thead th{background:var(--navy);color:#fff;font-size:15px;}
+.compare-table thead th.col-buymo{background:linear-gradient(135deg,#FF8552,#F2591F);font-size:17px;}
+.compare-table tbody th{background:#FBF6EF;text-align:left;font-weight:700;font-size:14px;width:34%;}
+.compare-table td.col-buymo{background:#FFF6F1;font-weight:700;color:#333;}
+.compare-table .yes{color:#2e9e44;font-weight:900;font-size:20px;}
+.compare-table .no{color:#c9c9c9;font-weight:900;font-size:20px;}
+.compare-table tbody tr:last-child th,.compare-table tbody tr:last-child td{border-bottom:none;}
+.compare-note{text-align:center;color:#999;font-size:13px;margin-top:14px;}
+@media (max-width:767px){
+  .compare{padding:48px 0;}
+  .compare-table th,.compare-table td{padding:12px 8px;font-size:13px;}
+  .compare-table thead th,.compare-table thead th.col-buymo{font-size:13px;}
+}
+
+/* 追従CTAバー */
+.sticky-cta{
+  position:fixed;left:0;right:0;bottom:0;z-index:95;
+  background:linear-gradient(135deg,#FF8552,#F2591F);color:#fff;
+  display:flex;align-items:center;justify-content:center;gap:18px;padding:12px 16px;
+  box-shadow:0 -4px 16px rgba(0,0,0,.18);transform:translateY(110%);transition:transform .35s ease;
+}
+.sticky-cta.show{transform:translateY(0);}
+.sticky-cta p{font-weight:900;font-size:15px;white-space:nowrap;}
+.sticky-cta .btn{background:#fff;color:var(--orange);height:46px;padding:0 24px;font-size:16px;}
+.sticky-cta .btn:hover{filter:brightness(1.03);}
+.sticky-cta .s-tel{color:#fff;font-weight:900;font-size:18px;white-space:nowrap;}
+.has-sticky .to-top{bottom:84px;}
+@media (max-width:767px){
+  .sticky-cta{gap:10px;padding:10px 12px;}
+  .sticky-cta p,.sticky-cta .s-tel{display:none;}
+  .sticky-cta .btn{flex:1;max-width:420px;}
+}
+
 /* ============ 4大特長 ============ */
 .features{background:var(--yellow);padding:60px 0;position:relative;}
 .feature-card{position:relative;text-align:center;border-radius:var(--radius);}
