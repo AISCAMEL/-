@@ -79,6 +79,12 @@ class Carmel_Application_Intake {
 			$deal_type = 'loan';
 		}
 
+		// intent: application（正式申込＝AIスコア対象） / inquiry（反響・問い合わせ＝スコア無し）。
+		$intent = isset( $data['intent'] ) ? sanitize_key( $data['intent'] ) : 'application';
+		if ( ! in_array( $intent, array( 'application', 'inquiry' ), true ) ) {
+			$intent = 'application';
+		}
+
 		// --- 1. Provision (or reuse) the customer account -------------------
 		$account = self::provision_customer( $name, $email );
 		if ( is_wp_error( $account ) ) {
@@ -87,6 +93,11 @@ class Carmel_Application_Intake {
 		$customer_id    = $account['user_id'];
 		$created        = $account['created'];
 		$set_pw_url     = $account['set_password_url'];
+
+		// LINE ユーザーID（LIFF等から）を顧客に保存。以後の通知がLINEへ届く鍵。
+		if ( ! empty( $data['line_user_id'] ) ) {
+			update_user_meta( $customer_id, 'line_user_id', sanitize_text_field( $data['line_user_id'] ) );
+		}
 
 		// --- 2. Create the deal --------------------------------------------
 		$deal_id = wp_insert_post(
@@ -99,6 +110,7 @@ class Carmel_Application_Intake {
 					'deal_type'   => $deal_type,
 					'deal_status' => self::initial_status( $deal_type ),
 					'customer_id' => $customer_id,
+					'lead_intent' => $intent,
 					'created_via' => isset( $data['source'] ) ? sanitize_key( $data['source'] ) : 'form',
 					'applicant_name'  => $name,
 					'applicant_email' => $email,
@@ -121,7 +133,14 @@ class Carmel_Application_Intake {
 			}
 		}
 
-		do_action( 'carmel_application_created', $deal_id, $customer_id, $data );
+		// 正式申込のみ AIスコア等の後続処理（carmel_application_created）を発火。
+		// 反響（inquiry）はスコアを走らせず、別イベントで通知/集計のみ。
+		if ( 'inquiry' === $intent ) {
+			update_post_meta( $deal_id, 'is_lead', 1 );
+			do_action( 'carmel_inquiry_created', $deal_id, $customer_id, $data );
+		} else {
+			do_action( 'carmel_application_created', $deal_id, $customer_id, $data );
+		}
 
 		// --- 3. Notify (welcome + account info) ----------------------------
 		$account_notice = $created && $set_pw_url
@@ -322,14 +341,16 @@ class Carmel_Application_Intake {
 	 */
 	public function handle_rest( $request ) {
 		$data = array(
-			'name'      => $request->get_param( 'name' ),
-			'email'     => $request->get_param( 'email' ),
-			'phone'     => $request->get_param( 'phone' ),
-			'deal_type' => $request->get_param( 'deal_type' ),
-			'address'   => $request->get_param( 'address' ),
-			'message'   => $request->get_param( 'message' ),
-			'extra'     => $request->get_param( 'extra' ),
-			'source'    => 'rest',
+			'name'         => $request->get_param( 'name' ),
+			'email'        => $request->get_param( 'email' ),
+			'phone'        => $request->get_param( 'phone' ),
+			'deal_type'    => $request->get_param( 'deal_type' ),
+			'address'      => $request->get_param( 'address' ),
+			'message'      => $request->get_param( 'message' ),
+			'line_user_id' => $request->get_param( 'line_user_id' ),
+			'intent'       => $request->get_param( 'intent' ),
+			'extra'        => $request->get_param( 'extra' ),
+			'source'       => 'rest',
 		);
 
 		$result = self::process( $data );
@@ -358,19 +379,24 @@ class Carmel_Application_Intake {
 		$map = apply_filters(
 			'carmel_cf7_field_map',
 			array(
-				'name'      => 'your-name',
-				'email'     => 'your-email',
-				'phone'     => 'your-tel',
-				'deal_type' => 'deal-type',
-				'address'   => 'your-address',
-				'message'   => 'your-message',
+				'name'         => 'your-name',
+				'email'        => 'your-email',
+				'phone'        => 'your-tel',
+				'deal_type'    => 'deal-type',
+				'address'      => 'your-address',
+				'message'      => 'your-message',
+				'line_user_id' => 'line-user-id',
+				'intent'       => 'intent',
 			),
 			$contact_form
 		);
 
-		$data = array( 'source' => 'cf7' );
+		// フォーム単位の intent 既定（フィルタで上書き可。例：問い合わせフォームは inquiry）。
+		$data = array( 'source' => 'cf7', 'intent' => apply_filters( 'carmel_cf7_intent', 'application', $contact_form ) );
 		foreach ( $map as $key => $field ) {
-			$data[ $key ] = isset( $posted[ $field ] ) ? $posted[ $field ] : '';
+			if ( isset( $posted[ $field ] ) && '' !== $posted[ $field ] ) {
+				$data[ $key ] = is_array( $posted[ $field ] ) ? reset( $posted[ $field ] ) : $posted[ $field ];
+			}
 		}
 
 		self::process( $data );
