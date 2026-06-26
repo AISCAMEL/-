@@ -6,7 +6,27 @@
 .portal-header .logo{color:#fff;font-size:22px;}
 .portal-title{font-weight:700;font-size:16px;}
 .portal-role{margin-left:auto;background:rgba(255,255,255,.15);border-radius:30px;padding:6px 16px;font-weight:700;font-size:14px;}
+.portal-nav{display:flex;gap:6px;margin-left:auto;}
+.portal-nav a{color:#cdd6ee;font-weight:700;font-size:14px;padding:6px 14px;border-radius:30px;}
+.portal-nav a[aria-current],.portal-nav a:hover{background:rgba(255,255,255,.15);color:#fff;}
+.portal-nav + .portal-logout{margin-left:16px;}
 .portal-logout{color:#cdd6ee;font-weight:700;font-size:14px;}
+
+/* 営業レポート */
+.kpi-row-5{grid-template-columns:repeat(5,1fr);}
+.rep-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.rep-grid .rep-card:first-child{grid-column:1 / -1;}
+.rep-card{background:#fff;border-radius:14px;box-shadow:var(--shadow);padding:22px 24px;}
+.rep-card h2{font-size:16px;font-weight:900;color:var(--navy);margin-bottom:16px;}
+.bars{display:flex;flex-direction:column;gap:12px;}
+.bar-row{display:grid;grid-template-columns:96px 1fr auto;align-items:center;gap:12px;}
+.bar-label{font-size:13px;font-weight:700;color:#555;}
+.bar-track{background:#eef1f6;border-radius:30px;height:16px;overflow:hidden;}
+.bar-fill{display:block;height:100%;background:linear-gradient(90deg,#FF8552,#FF6B35);border-radius:30px;min-width:2px;transition:width .5s ease;}
+.bar-val{font-size:13px;font-weight:700;color:#333;white-space:nowrap;}
+
+@media (max-width:991px){.kpi-row-5{grid-template-columns:repeat(3,1fr);}.rep-grid{grid-template-columns:1fr;}}
+@media (max-width:767px){.kpi-row-5{grid-template-columns:repeat(2,1fr);}.portal-nav{font-size:13px;}}
 
 .portal-main{background:var(--gray);min-height:calc(100vh - 64px);padding:24px 0 60px;}
 .portal-main h1{font-size:24px;font-weight:900;margin-bottom:6px;}
