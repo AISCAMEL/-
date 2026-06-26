@@ -4,12 +4,13 @@
  * ---------------------------------------------------------------------------
  * Future-proofing: the plugin ships a hardcoded 4-shop map but exposes the
  * 'carmel_shop_post_map' filter. This snippet adds EVERY published shop post
- * (keyed by its slug = post_name) so that when a new 加盟店 (franchise shop)
- * is added, it automatically flows through everywhere the map is used:
- *   - the 担当店舗 dropdown on the スタッフ screen
- *   - the detail-page staff card resolution
- *   - staff photo / shop info lookups
- * Hardcoded defaults are kept authoritative (never overwritten).
+ * (keyed by its slug = post_name) so a newly added 加盟店 flows through
+ * automatically. ONLY NEEDED ONCE YOU ADD A 5TH SHOP — the first 4 already
+ * work without it.
+ *
+ * SAFE VERSION: reads slugs with a direct $wpdb query (no get_posts(), so it
+ * cannot trigger query hooks) and guards against re-entrancy, so it can never
+ * recurse or fatal. The previous get_posts()-based version could recurse.
  *
  * Install: WPCode -> Add Snippet -> PHP Snippet -> paste from <?php ->
  *          Run Everywhere -> Activate.  (Pure ASCII; no Japanese literals.)
@@ -25,22 +26,25 @@ if ( ! function_exists( 'carmelx_shop_map_auto' ) ) {
 
 	function carmelx_shop_map_auto( $map ) {
 		static $cache = null;
-		if ( null === $cache ) {
-			$cache = array();
-			$shops = get_posts( array(
-				'post_type'   => 'shop',
-				'post_status' => 'publish',
-				'numberposts' => -1,
-				'orderby'     => 'menu_order title',
-				'order'       => 'ASC',
-				'fields'      => 'all',
-			) );
-			foreach ( $shops as $s ) {
-				if ( ! empty( $s->post_name ) ) { $cache[ $s->post_name ] = (int) $s->ID; }
-			}
-		}
+		static $busy  = false;
 		if ( ! is_array( $map ) ) { $map = array(); }
-		// Add any shop not already present; keep hardcoded defaults authoritative.
+
+		if ( null === $cache ) {
+			if ( $busy ) { return $map; }            // re-entry guard: never recurse
+			$busy  = true;
+			$cache = array();
+			global $wpdb;
+			$rows = $wpdb->get_results(
+				"SELECT ID, post_name FROM {$wpdb->posts} WHERE post_type = 'shop' AND post_status = 'publish'"
+			);
+			if ( $rows ) {
+				foreach ( $rows as $r ) {
+					if ( ! empty( $r->post_name ) ) { $cache[ $r->post_name ] = (int) $r->ID; }
+				}
+			}
+			$busy = false;
+		}
+
 		foreach ( $cache as $slug => $id ) {
 			if ( ! isset( $map[ $slug ] ) ) { $map[ $slug ] = $id; }
 		}
