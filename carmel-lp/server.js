@@ -19,6 +19,7 @@ const path = require('path');
 const { streamChat } = require('./lib/carmel-bot');
 const { appendLog } = require('./lib/chat-log');
 const handoff = require('./lib/handoff');
+const admin = require('./lib/admin');
 
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
@@ -163,6 +164,53 @@ async function handleHandoff(req, res) {
   }
 }
 
+/**
+ * 管理画面（任意・Basic認証）。ADMIN_USER/ADMIN_PASS 未設定なら 404（存在しない扱い）。
+ *   GET /admin              -> ダッシュボードHTML
+ *   GET /api/admin/data     -> 集計JSON
+ *   GET /api/admin/ics?id=  -> 予約のカレンダーファイル(.ics)
+ */
+function handleAdmin(req, res) {
+  if (!admin.isEnabled()) {
+    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('Not Found');
+    return;
+  }
+  if (!admin.checkAuth(req)) {
+    res.writeHead(401, {
+      'WWW-Authenticate': 'Basic realm="Carmel Admin", charset="UTF-8"',
+      'Content-Type': 'text/plain; charset=utf-8'
+    });
+    res.end('Authentication required');
+    return;
+  }
+
+  const url = new URL(req.url, 'http://localhost');
+
+  if (url.pathname === '/api/admin/data') {
+    return sendJson(res, 200, admin.collectData());
+  }
+
+  if (url.pathname === '/api/admin/ics') {
+    const ics = admin.icsById(url.searchParams.get('id'));
+    if (!ics) {
+      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end('booking not found');
+      return;
+    }
+    res.writeHead(200, {
+      'Content-Type': 'text/calendar; charset=utf-8',
+      'Content-Disposition': 'attachment; filename="carmel-booking.ics"'
+    });
+    res.end(ics);
+    return;
+  }
+
+  // それ以外（/admin など）はダッシュボード
+  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+  res.end(admin.adminHtml());
+}
+
 function serveStatic(req, res) {
   let urlPath = decodeURIComponent(req.url.split('?')[0]);
   if (urlPath === '/') urlPath = '/index.html';
@@ -193,6 +241,10 @@ const server = http.createServer((req, res) => {
   }
   if (req.url.startsWith('/api/handoff')) {
     handleHandoff(req, res);
+    return;
+  }
+  if (req.url === '/admin' || req.url.startsWith('/admin') || req.url.startsWith('/api/admin')) {
+    handleAdmin(req, res);
     return;
   }
   serveStatic(req, res);

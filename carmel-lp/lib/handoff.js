@@ -221,6 +221,7 @@ function saveBooking(rec) {
 async function requestBooking(p = {}) {
   const s = (v) => String(v || '').slice(0, 200).trim();
   const rec = {
+    id: crypto.randomUUID(),
     ts: new Date().toISOString(),
     type: s(p.type) || '来店予約',
     date: s(p.date),

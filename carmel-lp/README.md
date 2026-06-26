@@ -176,11 +176,30 @@ CHAT_LOG=1 OPENROUTER_API_KEY=sk-or-... npm start
 - 将来 Google カレンダー等へ連携する場合は、`lib/handoff.js` の `requestBooking` の
   通知部分を差し替えれば拡張できます。
 
+## 管理画面（任意 / `/admin`）
+
+`ADMIN_USER` と `ADMIN_PASS` を設定すると、`/admin` で運用ダッシュボードを表示します
+（Basic認証）。未設定なら `/admin` は404（存在しない扱い）。
+
+- 表示内容: **予約一覧 / よくある質問（会話ログ集計）/ 最近の会話ログ / 件数サマリ**。
+- 予約ごとに **「＋カレンダー」** リンク（`.ics`）があり、クリックで Google カレンダー等に登録できます。
+- 注意: Basic認証は平文のため、**本番は必ずHTTPS下**で利用してください。
+- データ元: 予約 `data/bookings/`、会話ログ `data/chat-logs/`（`CHAT_LOG=1` で記録）。
+
+### カレンダー連携（.ics）について
+
+各予約は `/api/admin/ics?id=...` で **カレンダー追加ファイル(.ics)** を生成します。
+担当者が自分のGoogle/Outlookカレンダーへワンクリックで登録でき、**OAuth等の設定は不要**です。
+（双方向の自動同期や担当者の空き時間チェックまで行う「Googleカレンダー本連携」は、
+Googleアカウント接続が前提になるため別途対応します。`lib/handoff.js` の `requestBooking`、
+または `lib/admin.js` の ICS 部を起点に拡張できます。）
+
 ## テスト
 
 ```bash
 npm test   # 実APIキー/実Slackトークン不要。モックで全フローを検証
 ```
 
-- `tests/e2e/run.js` … AI応答（ストリーミング/ナレッジ注入/フォールバック/ログ）
-- `tests/e2e/handoff.test.js` … 有人対応（営業時間/Slack通知/担当者返信/後日連絡）
+- `tests/e2e/run.js` … AI応答（ストリーミング/RAG/車種提案/フォールバック/ログ）
+- `tests/e2e/handoff.test.js` … 有人対応・予約（営業時間/Slack通知/担当者返信/後日連絡/予約）
+- `tests/e2e/admin.test.js` … 管理画面（Basic認証/集計/カレンダー.ics）

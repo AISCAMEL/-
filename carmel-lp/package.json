@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "node tests/e2e/run.js && node tests/e2e/handoff.test.js"
+    "test": "node tests/e2e/run.js && node tests/e2e/handoff.test.js && node tests/e2e/admin.test.js"
   },
   "engines": {
     "node": ">=18"
