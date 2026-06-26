@@ -18,10 +18,7 @@
   <div class="container">
     <a href="portal-login.html" class="logo"><span aria-hidden="true">🐮</span> BUYMO</a>
     <span class="portal-title">本部</span>
-    <nav class="portal-nav">
-      <a href="hq.html?role=hq">案件ボード</a>
-      <a href="report.html" aria-current="page">営業レポート</a>
-    </nav>
+    <nav class="portal-nav" id="hqNav"></nav>
     <a href="portal-login.html" class="portal-logout">ログアウト</a>
   </div>
 </header>
@@ -56,6 +53,8 @@
   </div>
 </main>
 
+<script src="assets/js/hq-common.js"></script>
+<script>HQ.nav('report');</script>
 <script src="assets/js/report.js" defer></script>
 </body>
 </html>

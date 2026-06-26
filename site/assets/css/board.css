@@ -28,6 +28,62 @@
 @media (max-width:991px){.kpi-row-5{grid-template-columns:repeat(3,1fr);}.rep-grid{grid-template-columns:1fr;}}
 @media (max-width:767px){.kpi-row-5{grid-template-columns:repeat(2,1fr);}.portal-nav{font-size:13px;}}
 
+/* ===== 本部システム共通：テーブル・ダッシュボード・加盟店 ===== */
+.hq-2col{display:grid;grid-template-columns:1.2fr .8fr;gap:18px;}
+@media (max-width:991px){.hq-2col{grid-template-columns:1fr;}}
+
+.hq-table-wrap{overflow-x:auto;}
+.hq-table{width:100%;border-collapse:collapse;font-size:14px;}
+.hq-table th,.hq-table td{padding:11px 12px;text-align:left;border-bottom:1px solid #eef1f6;white-space:nowrap;}
+.hq-table thead th{background:#f4f6fa;color:#555;font-size:13px;font-weight:700;}
+.hq-table tbody tr:hover{background:#fafbfe;}
+.td-sub{color:#999;font-size:12px;}
+.hq-table select{height:34px;border:1px solid #ddd;border-radius:7px;padding:0 8px;font-family:inherit;font-size:13px;background:#fff;}
+
+/* ステージ色 */
+.stage-pill{display:inline-block;color:#fff;font-weight:700;font-size:12px;border-radius:30px;padding:3px 12px;}
+.stage-sel{font-weight:700;}
+.s0{background:#94a3b8;} .stage-sel.s0{color:#475569;}
+.s1{background:#3b82f6;} .stage-sel.s1{color:#1d4ed8;}
+.s2{background:#f59e0b;} .stage-sel.s2{color:#b45309;}
+.s3{background:#fb923c;} .stage-sel.s3{color:#c2410c;}
+.s4{background:#f97316;} .stage-sel.s4{color:#c2410c;}
+.s5{background:#22a34a;} .stage-sel.s5{color:#15803d;}
+
+/* フィルタバー */
+.filter-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:#fff;border-radius:14px;box-shadow:var(--shadow);padding:12px 14px;margin-bottom:18px;}
+.filter-bar input,.filter-bar select{height:42px;border:1px solid #ddd;border-radius:8px;padding:0 12px;font-size:14px;font-family:inherit;}
+.filter-bar #fSearch{flex:1;min-width:180px;}
+.filter-count{margin-left:auto;color:#888;font-weight:700;font-size:13px;}
+
+/* アラート */
+.alert-list{display:flex;flex-direction:column;gap:10px;}
+.alert{display:flex;gap:10px;align-items:center;border-radius:10px;padding:12px 14px;font-weight:700;font-size:14px;text-decoration:none;}
+.alert.warn{background:#FFF4E5;color:#9A5B00;border:1px solid #FFE0B2;}
+.alert.info{background:#E8F1FF;color:#1d4ed8;border:1px solid #C7DBFF;}
+.alert:hover{filter:brightness(.98);}
+.alert-none{color:#888;font-size:14px;}
+
+/* クイックリンク */
+.quick-links{display:flex;flex-direction:column;gap:10px;}
+.quick-links a{background:var(--cream);border:1px solid #f0e2cf;border-radius:10px;padding:12px 14px;font-weight:700;font-size:14px;transition:transform .15s;}
+.quick-links a:hover{transform:translateX(3px);color:var(--orange);}
+
+/* 加盟店カード */
+.store-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.store-card{background:#fff;border-radius:14px;box-shadow:var(--shadow);padding:20px;}
+.store-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.store-name{font-weight:900;font-size:16px;}
+.store-status{margin-left:auto;border:none;cursor:pointer;border-radius:30px;padding:4px 12px;font-weight:700;font-size:12px;}
+.store-status.on{background:#E3F7E8;color:#15803d;}
+.store-status.off{background:#eee;color:#777;}
+.store-meta{color:#666;font-size:13px;line-height:1.7;margin-bottom:14px;}
+.store-stats{display:flex;justify-content:space-between;border-top:1px solid #eee;padding-top:12px;text-align:center;gap:8px;}
+.store-stats .ss-num{display:block;font-weight:900;color:var(--navy);font-size:18px;}
+.store-stats .ss-label{font-size:11px;color:#999;}
+@media (max-width:991px){.store-grid{grid-template-columns:repeat(2,1fr);}}
+@media (max-width:767px){.store-grid{grid-template-columns:1fr;}}
+
 .portal-main{background:var(--gray);min-height:calc(100vh - 64px);padding:24px 0 60px;}
 .portal-main h1{font-size:24px;font-weight:900;margin-bottom:6px;}
 .portal-sub{color:#666;font-size:14px;margin-bottom:20px;}
