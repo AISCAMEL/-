@@ -2,26 +2,22 @@
 /**
  * CARMEL: [carmel_photos] vehicle photo gallery (main image + thumbnails).
  * ---------------------------------------------------------------------------
- * Shows ALL images entered in the STEP UI gallery (carmel_gallery), i.e. the
- * featured image (1st) plus every following image. Main image + thumbnail
- * strip; click a thumb or use the < > arrows to switch. The counter bottom-
- * left shows "current / total" where total = the actual number of images.
+ * Shows ALL images entered in the STEP UI gallery (carmel_gallery): featured
+ * (1st) plus every following image. Main image + thumbnail strip; click a
+ * thumb or the < > arrows to switch. Counter bottom-left = "current / total"
+ * where total = the actual number of images.
  *
- * Image source priority:
- *   (1) carmel_get_gallery_ids() (plugin helper: carmel_gallery -> ACF ...)
- *   (2) carmel_gallery meta (comma-separated attachment IDs)
- *   (3) featured image only (fallback)
+ * ROBUST BUILD: no JSON blob in markup; each thumb carries data-full and the
+ * JS (printed once in the footer) reads it from the DOM. Pure ASCII.
  *
  * Place [carmel_photos] in the detail template where the main image goes.
- * Install: WPCode -> Add Snippet -> PHP Snippet -> paste from <?php ->
- *          Run Everywhere -> Activate.  (Pure ASCII; no Japanese literals.)
+ * Install: WPCode -> Add Snippet -> PHP Snippet -> Run Everywhere -> Activate.
  * ---------------------------------------------------------------------------
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 if ( ! function_exists( 'carmelx_photos_shortcode' ) ) {
 
-	/* collect attachment IDs for this vehicle */
 	function carmelx_photos_ids( $pid ) {
 		$ids = array();
 		if ( function_exists( 'carmel_get_gallery_ids' ) ) {
@@ -47,56 +43,55 @@ if ( ! function_exists( 'carmelx_photos_shortcode' ) ) {
 		$ids = carmelx_photos_ids( $pid );
 		if ( empty( $ids ) ) { return ''; }
 
-		$slides = array();
 		$thumbs = '';
-		$first_full = '';
-		foreach ( $ids as $idx => $id ) {
-			$full  = wp_get_attachment_image_url( $id, 'large' );
+		$first  = '';
+		$total  = 0;
+		foreach ( $ids as $id ) {
+			$full = wp_get_attachment_image_url( $id, 'large' );
 			if ( ! $full ) { $full = wp_get_attachment_image_url( $id, 'full' ); }
 			if ( ! $full ) { continue; }
 			$thumb = wp_get_attachment_image_url( $id, 'thumbnail' );
 			if ( ! $thumb ) { $thumb = $full; }
-			if ( '' === $first_full ) { $first_full = $full; }
-			$slides[] = $full;
-			$active = ( '' === $thumbs ) ? ' is-active' : '';
-			$thumbs .= '<button type="button" class="cx-gal__t' . $active . '" data-i="' . (int) $idx . '">'
+			$active = ( 0 === $total ) ? ' is-active' : '';
+			if ( '' === $first ) { $first = $full; }
+			$thumbs .= '<button type="button" class="cx-gal__t' . $active . '" data-full="' . esc_url( $full ) . '">'
 				. '<img src="' . esc_url( $thumb ) . '" alt="" loading="lazy"></button>';
+			$total++;
 		}
-		if ( empty( $slides ) ) { return ''; }
-
-		$total = count( $slides );
-		$uid   = 'cxgal-' . $pid;
-		$data  = esc_attr( wp_json_encode( $slides ) );
+		if ( 0 === $total ) { return ''; }
 
 		$nav = $total > 1
 			? '<button type="button" class="cx-gal__nav prev" aria-label="prev">&#8249;</button>'
 			. '<button type="button" class="cx-gal__nav next" aria-label="next">&#8250;</button>'
 			: '';
-		$count = '<span class="cx-gal__count"><span class="cur">1</span> / ' . $total . '</span>';
 
-		$out  = '<div class="cx-gal" id="' . esc_attr( $uid ) . '" data-slides="' . $data . '">';
-		$out .= '<div class="cx-gal__main"><img class="cx-gal__img" src="' . esc_url( $first_full ) . '" alt="">'
-			. $nav . $count . '</div>';
+		$out  = '<div class="cx-gal">';
+		$out .= '<div class="cx-gal__main"><img class="cx-gal__img" src="' . esc_url( $first ) . '" alt="">'
+			. $nav
+			. '<span class="cx-gal__count"><span class="cur">1</span> / ' . (int) $total . '</span>'
+			. '</div>';
 		if ( $total > 1 ) { $out .= '<div class="cx-gal__thumbs">' . $thumbs . '</div>'; }
 		$out .= '</div>';
-
-		// per-instance initializer (guarded so it binds once)
-		$out .= '<script>(function(){var r=document.getElementById(' . wp_json_encode( $uid ) . ');'
-			. 'if(!r||r.dataset.cxReady)return;r.dataset.cxReady=1;'
-			. 'var s=JSON.parse(r.getAttribute("data-slides")||"[]");var i=0;'
-			. 'var img=r.querySelector(".cx-gal__img");var cur=r.querySelector(".cur");'
-			. 'var ts=r.querySelectorAll(".cx-gal__t");'
-			. 'function show(n){i=(n+s.length)%s.length;img.src=s[i];if(cur)cur.textContent=i+1;'
-			. 'for(var k=0;k<ts.length;k++){ts[k].className="cx-gal__t"+(k===i?" is-active":"");}}'
-			. 'for(var k=0;k<ts.length;k++){(function(b){b.addEventListener("click",function(){show(parseInt(b.getAttribute("data-i"),10)||0);});})(ts[k]);}'
-			. 'var p=r.querySelector(".prev"),n=r.querySelector(".next");'
-			. 'if(p)p.addEventListener("click",function(){show(i-1);});'
-			. 'if(n)n.addEventListener("click",function(){show(i+1);});'
-			. '})();</script>';
-
 		return $out;
 	}
 	add_shortcode( 'carmel_photos', 'carmelx_photos_shortcode' );
+
+	/* one global initializer for every .cx-gal on the page */
+	add_action( 'wp_footer', function () {
+		echo '<script>(function(){'
+			. 'function init(r){if(r.dataset.cxReady)return;r.dataset.cxReady=1;'
+			. 'var img=r.querySelector(".cx-gal__img");var cur=r.querySelector(".cur");'
+			. 'var ts=r.querySelectorAll(".cx-gal__t");var i=0;'
+			. 'function show(n){var L=ts.length;if(!L)return;i=(n+L)%L;'
+			. 'var f=ts[i].getAttribute("data-full");if(f&&img)img.src=f;if(cur)cur.textContent=i+1;'
+			. 'for(var k=0;k<L;k++){ts[k].className="cx-gal__t"+(k===i?" is-active":"");}}'
+			. 'for(var k=0;k<ts.length;k++){(function(b,idx){b.addEventListener("click",function(){show(idx);});})(ts[k],k);}'
+			. 'var p=r.querySelector(".prev"),n=r.querySelector(".next");'
+			. 'if(p)p.addEventListener("click",function(){show(i-1);});'
+			. 'if(n)n.addEventListener("click",function(){show(i+1);});}'
+			. 'var all=document.querySelectorAll(".cx-gal");for(var j=0;j<all.length;j++){init(all[j]);}'
+			. '})();</script>';
+	}, 99 );
 
 	add_action( 'wp_head', function () {
 		echo '<style>
