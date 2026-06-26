@@ -20,15 +20,15 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 if ( ! function_exists( 'carmelx_staff_shop_shortcode' ) ) {
 
-	/* ---- per-shop staff photo map (shop slug => image URL) -----------------
-	 * EDIT HERE to set each shop's staff face photo. Keys are the shop slugs
-	 * used in the vehicle "shop" field. Same photos the /search page uses. */
-	function carmelx_ss_shop_photo_map() {
+	/* ---- per-shop staff map (shop slug => name + photo) --------------------
+	 * EDIT HERE to set each shop's staff. Keys are the shop slugs used in the
+	 * vehicle "shop" field. 'name' may be left '' to use the shop name. */
+	function carmelx_ss_shop_staff_map() {
 		return array(
-			'fukushima' => 'https://carmelonline.jp/wp-content/uploads/2024/10/Gemini_Generated_Image_ladg0lladg0lladg.png',
-			'chiba'     => 'https://carmelonline.jp/wp-content/uploads/2024/10/Gemini_Generated_Image_frcqqofrcqqofrcq.jpg',
-			'odawara'   => 'https://carmelonline.jp/wp-content/uploads/2026/06/A_medium_close-up_studio_portrait_of_an_East_Asian-1782484950384-scaled.png',
-			'yamanashi' => 'https://carmelonline.jp/wp-content/uploads/2024/10/Replace_the_face_in_the_purple_hoodie_image_with_t-1776843109134.png',
+			'fukushima' => array( 'name' => '', 'photo' => 'https://carmelonline.jp/wp-content/uploads/2024/10/Gemini_Generated_Image_ladg0lladg0lladg.png' ),
+			'chiba'     => array( 'name' => '', 'photo' => 'https://carmelonline.jp/wp-content/uploads/2024/10/Gemini_Generated_Image_frcqqofrcqqofrcq.jpg' ),
+			'odawara'   => array( 'name' => '', 'photo' => 'https://carmelonline.jp/wp-content/uploads/2026/06/A_medium_close-up_studio_portrait_of_an_East_Asian-1782484950384-scaled.png' ),
+			'yamanashi' => array( 'name' => '', 'photo' => 'https://carmelonline.jp/wp-content/uploads/2024/10/Replace_the_face_in_the_purple_hoodie_image_with_t-1776843109134.png' ),
 		);
 	}
 
@@ -80,29 +80,24 @@ if ( ! function_exists( 'carmelx_staff_shop_shortcode' ) ) {
 		$role_keys  = array( 'tantou_role', 'tantou_yakushoku', 'staff_role', 'position' );
 		$photo_keys = array( 'tantou_photo', 'tantousha_photo', 'staff_photo', 'tantou_image', 'staff_image' );
 
-		$st_name  = carmelx_ss_first( $pid, $name_keys );
+		$smap     = carmelx_ss_shop_staff_map();
+		$ss       = ( $slug && isset( $smap[ $slug ] ) ) ? $smap[ $slug ] : array();
+
 		$st_role  = carmelx_ss_first( $pid, $role_keys );
-		$st_photo = carmelx_ss_imgurl( carmelx_ss_first( $pid, $photo_keys ) ); // (1) vehicle
-
-		if ( '' === $st_name && $sid ) { $st_name = carmelx_ss_first( $sid, $name_keys ); }
 		if ( '' === $st_role && $sid ) { $st_role = carmelx_ss_first( $sid, $role_keys ); }
-
-		// (2) per-shop staff photo map (same source idea as /search)
-		if ( '' === $st_photo && $slug ) {
-			$pmap = carmelx_ss_shop_photo_map();
-			if ( ! empty( $pmap[ $slug ] ) ) { $st_photo = $pmap[ $slug ]; }
-		}
-		// (3) shop meta tantou_photo
-		if ( '' === $st_photo && $sid ) { $st_photo = carmelx_ss_imgurl( carmelx_ss_first( $sid, $photo_keys ) ); }
-		// (4) generic fallback (may return the shop logo)
-		if ( '' === $st_photo && function_exists( 'carmel_staff_photo_url' ) ) { $st_photo = carmel_staff_photo_url( $pid ); }
-
-		// staff post (first one) to fill missing name only
-		if ( '' === $st_name && post_type_exists( 'staff' ) ) {
-			$staff = get_posts( array( 'post_type' => 'staff', 'numberposts' => 1, 'post_status' => 'publish' ) );
-			if ( $staff && '' === $st_name ) { $st_name = get_the_title( $staff[0] ); }
-		}
 		if ( '' === $st_role ) { $st_role = '&#21942;&#26989;&#25285;&#24403;'; } // eigyo tantou
+
+		// NAME : vehicle override -> per-shop map -> shop name (same as /search).
+		// (no global staff-post fallback, so each shop shows its own name.)
+		$st_name = carmelx_ss_first( $pid, $name_keys );
+		if ( '' === $st_name && ! empty( $ss['name'] ) ) { $st_name = $ss['name']; }
+		if ( '' === $st_name && $sid ) { $st_name = (string) get_the_title( $sid ); }
+
+		// PHOTO : vehicle override -> per-shop map -> shop meta -> generic fallback.
+		$st_photo = carmelx_ss_imgurl( carmelx_ss_first( $pid, $photo_keys ) );
+		if ( '' === $st_photo && ! empty( $ss['photo'] ) ) { $st_photo = $ss['photo']; }
+		if ( '' === $st_photo && $sid ) { $st_photo = carmelx_ss_imgurl( carmelx_ss_first( $sid, $photo_keys ) ); }
+		if ( '' === $st_photo && function_exists( 'carmel_staff_photo_url' ) ) { $st_photo = carmel_staff_photo_url( $pid ); }
 
 		$comment = function_exists( 'carmel_detail_get' ) ? carmel_detail_get( $pid, 'comment' ) : get_post_meta( $pid, 'comment', true );
 
@@ -127,15 +122,16 @@ if ( ! function_exists( 'carmelx_staff_shop_shortcode' ) ) {
 		/* ---- output ---- */
 		$out = '';
 
-		// tantou staff
+		// tantou staff  (alt="" so a missing image shows a small icon, not giant text)
 		$icon = $st_photo
-			? '<span class="cx-staff__photo has"><img src="' . esc_url( $st_photo ) . '" alt="' . esc_attr( $st_name ) . '"></span>'
+			? '<span class="cx-staff__photo has"><img src="' . esc_url( $st_photo ) . '" alt="" loading="lazy"></span>'
 			: '<span class="cx-staff__photo">&#128104;&#8205;&#128188;</span>';
+		$show_shop_sub = ( $shop_name && $shop_name !== $st_name );
 		$out .= '<div class="cx-sec"><div class="cx-ttl"><h2>&#25285;&#24403;&#12473;&#12479;&#12483;&#12501;</h2></div><div class="cx-staff">'
 			. $icon . '<div class="cx-staff__body">'
 			. ( $st_role ? '<span class="cx-staff__role">' . $st_role . '</span>' : '' )
 			. ( $st_name ? '<div class="cx-staff__name">' . esc_html( $st_name ) . '</div>' : '' )
-			. ( $shop_name ? '<div class="cx-staff__shop">' . esc_html( $shop_name ) . '</div>' : '' )
+			. ( $show_shop_sub ? '<div class="cx-staff__shop">' . esc_html( $shop_name ) . '</div>' : '' )
 			. ( $comment ? '<div class="cx-staff__msg">' . nl2br( esc_html( $comment ) ) . '</div>' : '' )
 			. '<div class="cx-staff__tags"><span>&#12525;&#12540;&#12531;&#30456;&#35527;OK</span><span>&#20302;&#19982;&#20449;&#12525;&#12540;&#12531;&#23550;&#24540;</span><span>&#20840;&#22269;&#32013;&#36554;</span></div>'
 			. '</div></div></div>';
