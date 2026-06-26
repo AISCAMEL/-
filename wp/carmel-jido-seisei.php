@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 6.3
+ * Version: 6.4
  * Author: CARMEL
  */
 
@@ -735,10 +735,12 @@ function carmel3_auto_register_menu() {
         // 「カーメル管理」の中にサブメニューとして入れる
         add_submenu_page($parent, 'かんたんホーム', 'かんたんホーム', 'manage_options', 'carmel3-home', 'carmel3_home_page');
         add_submenu_page($parent, 'CARMEL 自動生成', '自動生成', 'manage_options', 'carmel3-auto', 'carmel3_auto_settings_page');
+        add_submenu_page($parent, 'その他掲載ページ（MEO対策）', 'その他掲載ページ（MEO対策）', 'manage_options', 'carmel3-meo', 'carmel3_meo_page');
     } else {
         // 親が見つからない場合は従来どおりトップに出す（消えない保険）
         add_menu_page('かんたんホーム', 'かんたんホーム', 'manage_options', 'carmel3-home', 'carmel3_home_page', 'dashicons-admin-home', 3);
         add_menu_page('CARMEL 自動生成', 'CARMEL自動生成', 'manage_options', 'carmel3-auto', 'carmel3_auto_settings_page', 'dashicons-update', 4);
+        add_menu_page('その他掲載ページ（MEO対策）', 'その他掲載ページ(MEO)', 'manage_options', 'carmel3-meo', 'carmel3_meo_page', 'dashicons-location-alt', 5);
     }
 }
 
@@ -845,6 +847,140 @@ function carmel3_home_page() {
                 <tr><td style="padding:10px 8px;font-weight:700">設定</td><td style="padding:10px 8px;color:#444">OpenRouterのAPIキー、ブランド設定（画像の雰囲気など）。最初に1回だけ。</td></tr>
             </table>
             <p style="margin:14px 0 0;color:#666;font-size:12px">※ この「かんたんホーム」は説明用の入口です。本体「カーメル管理 v5.7」の機能はそのまま使います（本体のコードは変更していません）。</p>
+        </div>
+    </div>
+    <?php
+}
+
+/* ===== その他掲載ページ（MEO対策）：掲載先サイトの管理リスト（本体v5.7には触れません） ===== */
+
+function carmel3_meo_sites() {
+    return array(
+        array('id'=>'google_business', 'name'=>'Googleビジネスプロフィール', 'cat'=>'地図検索（最重要）', 'use'=>'Googleマップ／検索の店舗情報・クチコミ。MEOの土台。', 'url'=>'https://business.google.com/'),
+        array('id'=>'yahoo_place',     'name'=>'Yahoo!プレイス',           'cat'=>'地図検索', 'use'=>'Yahoo!地図・検索に店舗情報を掲載。', 'url'=>'https://business-place.yahoo.co.jp/'),
+        array('id'=>'apple_business',  'name'=>'Appleビジネスコネクト',    'cat'=>'地図検索', 'use'=>'iPhoneのAppleマップに店舗情報を掲載。', 'url'=>'https://businessconnect.apple.com/'),
+        array('id'=>'bing_places',     'name'=>'Bing Places',              'cat'=>'地図検索', 'use'=>'Bing地図・検索に店舗情報を掲載。', 'url'=>'https://www.bingplaces.com/'),
+        array('id'=>'ekiten',          'name'=>'エキテン',                 'cat'=>'地域ポータル', 'use'=>'地域の口コミ・店舗情報ポータル。', 'url'=>'https://www.ekiten.jp/'),
+        array('id'=>'itownpage',       'name'=>'iタウンページ',            'cat'=>'地域ポータル', 'use'=>'NTTタウンページの店舗情報。', 'url'=>'https://itp.ne.jp/'),
+        array('id'=>'navitime',        'name'=>'NAVITIME',                 'cat'=>'地図／ナビ', 'use'=>'カーナビ・地図アプリの施設情報。', 'url'=>'https://www.navitime.co.jp/'),
+        array('id'=>'mapfan',          'name'=>'MapFan（ゼンリン）',       'cat'=>'地図／ナビ', 'use'=>'ゼンリン地図の施設情報。', 'url'=>'https://mapfan.com/'),
+        array('id'=>'carsensor',       'name'=>'カーセンサー',             'cat'=>'中古車ポータル', 'use'=>'リクルートの中古車掲載。集客の主力。', 'url'=>'https://www.carsensor.net/'),
+        array('id'=>'goonet',          'name'=>'グーネット',               'cat'=>'中古車ポータル', 'use'=>'プロトの中古車掲載。', 'url'=>'https://www.goo-net.com/'),
+        array('id'=>'google_reviews',  'name'=>'Googleクチコミ（返信運用）','cat'=>'口コミ', 'use'=>'クチコミ獲得と返信。MEO順位に影響。', 'url'=>'https://business.google.com/'),
+        array('id'=>'instagram',       'name'=>'Instagram',                'cat'=>'SNS', 'use'=>'在庫・事例の発信。プロフィールに地図導線。', 'url'=>'https://www.instagram.com/'),
+        array('id'=>'facebook',        'name'=>'Facebookページ',           'cat'=>'SNS', 'use'=>'店舗情報・投稿。Googleにも紐づく。', 'url'=>'https://www.facebook.com/'),
+        array('id'=>'line',            'name'=>'LINE公式アカウント',       'cat'=>'SNS／集客', 'use'=>'問い合わせ・再来店の導線。', 'url'=>'https://www.linebiz.com/jp/'),
+        array('id'=>'tiktok',          'name'=>'TikTok',                   'cat'=>'SNS', 'use'=>'動画での集客・認知。', 'url'=>'https://www.tiktok.com/'),
+    );
+}
+
+function carmel3_meo_get_data() {
+    $d = get_option('carmel3_meo_listings', array());
+    return is_array($d) ? $d : array();
+}
+
+add_action('admin_post_carmel3_meo_save', function () {
+    if (!current_user_can('manage_options')) wp_die('権限がありません');
+    check_admin_referer('carmel3_meo_save');
+
+    $statuses = (isset($_POST['status']) && is_array($_POST['status'])) ? $_POST['status'] : array();
+    $memos    = (isset($_POST['memo'])   && is_array($_POST['memo']))   ? $_POST['memo']   : array();
+
+    $data = array();
+    foreach (carmel3_meo_sites() as $site) {
+        $id = $site['id'];
+        $st = isset($statuses[$id]) ? sanitize_text_field(wp_unslash($statuses[$id])) : '未対応';
+        if (!in_array($st, array('未対応', '登録済み', '要更新'), true)) $st = '未対応';
+        $mm = isset($memos[$id]) ? sanitize_text_field(wp_unslash($memos[$id])) : '';
+        $data[$id] = array('status' => $st, 'memo' => $mm);
+    }
+    update_option('carmel3_meo_listings', $data);
+
+    wp_safe_redirect(admin_url('admin.php?page=carmel3-meo&saved=1'));
+    exit;
+});
+
+function carmel3_meo_page() {
+    $sites = carmel3_meo_sites();
+    $data  = carmel3_meo_get_data();
+
+    $done = 0;
+    foreach ($sites as $st) {
+        if (isset($data[$st['id']]['status']) && $data[$st['id']]['status'] === '登録済み') $done++;
+    }
+    $total = count($sites);
+    $statuses = array('未対応', '登録済み', '要更新');
+    ?>
+    <div style="max-width:1100px;margin:20px auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+        <div style="background:linear-gradient(135deg,#1a1a2e,#0f3460);color:#fff;padding:24px;border-radius:16px;margin-bottom:18px">
+            <h1 style="margin:0 0 6px;font-size:24px">その他掲載ページ（MEO対策）</h1>
+            <p style="margin:0;opacity:.9">Googleマップなど「地図検索」で見つけてもらうための掲載先リストです。各サイトに同じ店舗情報（店名・住所・電話・営業時間・写真）を登録・統一すると効果が出ます。</p>
+        </div>
+
+        <?php if (isset($_GET['saved'])): ?>
+            <div class="notice notice-success"><p>掲載状況を保存しました。</p></div>
+        <?php endif; ?>
+
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;margin-bottom:16px">
+            <strong>登録の進捗：</strong> <?php echo (int)$done; ?> / <?php echo (int)$total; ?> サイト 登録済み
+            <div style="height:10px;background:#eef2f7;border-radius:999px;margin-top:8px;overflow:hidden">
+                <div style="height:10px;width:<?php echo $total ? round($done / $total * 100) : 0; ?>%;background:#16a34a"></div>
+            </div>
+            <p style="margin:10px 0 0;color:#666;font-size:12px">※ このページは「掲載先の管理メモ」です。各サイトへの実際の登録は「管理画面へ」ボタンから各サイトで行います。</p>
+        </div>
+
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:8px 16px 16px">
+            <input type="hidden" name="action" value="carmel3_meo_save">
+            <?php wp_nonce_field('carmel3_meo_save'); ?>
+            <table style="width:100%;border-collapse:collapse;font-size:14px">
+                <thead>
+                    <tr style="text-align:left;border-bottom:2px solid #e5e7eb">
+                        <th style="padding:10px 6px">掲載先</th>
+                        <th style="padding:10px 6px">種類</th>
+                        <th style="padding:10px 6px">用途</th>
+                        <th style="padding:10px 6px;width:110px">状況</th>
+                        <th style="padding:10px 6px;width:200px">メモ</th>
+                        <th style="padding:10px 6px;width:110px">リンク</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($sites as $site):
+                    $id = $site['id'];
+                    $cur = isset($data[$id]['status']) ? $data[$id]['status'] : '未対応';
+                    $memo = isset($data[$id]['memo']) ? $data[$id]['memo'] : '';
+                ?>
+                    <tr style="border-bottom:1px solid #f0f0f0">
+                        <td style="padding:10px 6px;font-weight:700"><?php echo esc_html($site['name']); ?></td>
+                        <td style="padding:10px 6px;color:#555"><?php echo esc_html($site['cat']); ?></td>
+                        <td style="padding:10px 6px;color:#444"><?php echo esc_html($site['use']); ?></td>
+                        <td style="padding:10px 6px">
+                            <select name="status[<?php echo esc_attr($id); ?>]" style="width:100%">
+                                <?php foreach ($statuses as $opt): ?>
+                                    <option value="<?php echo esc_attr($opt); ?>" <?php selected($cur, $opt); ?>><?php echo esc_html($opt); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </td>
+                        <td style="padding:10px 6px">
+                            <input type="text" name="memo[<?php echo esc_attr($id); ?>]" value="<?php echo esc_attr($memo); ?>" placeholder="例: ID/担当/更新日" style="width:100%">
+                        </td>
+                        <td style="padding:10px 6px">
+                            <a href="<?php echo esc_url($site['url']); ?>" target="_blank" rel="noopener" class="button button-small">管理画面へ</a>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+            <p style="margin-top:14px"><button type="submit" class="button button-primary">掲載状況を保存</button></p>
+        </form>
+
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;margin-top:16px">
+            <h2 style="margin:0 0 8px;font-size:15px">MEO対策のコツ（かんたん）</h2>
+            <ul style="margin:0 0 0 18px;line-height:1.9;color:#444">
+                <li><strong>店舗情報（NAP）を全サイトで統一</strong>：店名・住所・電話番号を一字一句そろえる。</li>
+                <li><strong>写真を多く・新しく</strong>：店舗外観、在庫車、スタッフ。Googleは更新を評価。</li>
+                <li><strong>クチコミを集めて返信</strong>：来店客にお願い→届いたら必ず返信。</li>
+                <li><strong>Google投稿をこまめに</strong>：自動生成記事をGoogleビジネスにも投稿（自動生成のGoogle投稿機能）。</li>
+            </ul>
         </div>
     </div>
     <?php
