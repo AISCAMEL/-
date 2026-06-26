@@ -239,7 +239,9 @@
       note.textContent = '送信しています…';
       note.className = 'form-note';
 
-      sendLead(buildPayload()).then(function () {
+      var payload = buildPayload();
+      if (window.BuymoGA) BuymoGA.track('generate_lead', { genre: payload.genre || '', source: payload.source || '' });
+      sendLead(payload).then(function () {
         note.innerHTML = '送信しました。担当者より最短即日でご連絡いたします。<br>' +
           '査定状況は会員ページでいつでも確認できます。<br>' +
           '<a class="member-link" href="member.html">▶ 会員ページで査定状況を確認する</a>';

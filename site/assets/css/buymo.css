@@ -376,6 +376,9 @@ a.genre-card:hover{transform:translateY(-8px);box-shadow:var(--shadow-hover);}
 .input-unit input{flex:1;}
 .input-unit .unit{font-weight:700;color:#666;}
 .err{color:#e53935;font-size:13px;min-height:0;margin-top:4px;}
+.field-check label{display:flex;align-items:center;gap:8px;font-weight:500;font-size:14px;}
+.field-check input{width:18px;height:18px;accent-color:var(--orange);}
+.field-check a{color:var(--orange);text-decoration:underline;}
 .form-note{text-align:center;font-weight:700;margin-top:14px;}
 .form-note.ok{color:#2e7d32;}
 .form-note.ng{color:#e53935;}

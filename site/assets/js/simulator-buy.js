@@ -86,6 +86,7 @@ window.BuymoSim = (function () {
       document.getElementById('bsMax').textContent = yen(r.max);
       var q = '?genre=' + encodeURIComponent(cls) + '&est=' + encodeURIComponent(yen(r.min) + '〜' + yen(r.max));
       document.getElementById('bsCta').href = 'buymo-contact.html' + q;
+      if (window.BuymoGA) BuymoGA.track('simulate', { car_class: cls, min: r.min, max: r.max });
       var res = document.getElementById('bsResult');
       res.hidden = false;
       if (res.scrollIntoView) res.scrollIntoView({ behavior: 'smooth', block: 'nearest' });

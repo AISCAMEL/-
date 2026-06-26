@@ -440,6 +440,11 @@
           </div>
         </div>
 
+        <div class="field field-check">
+          <label><input type="checkbox" id="f-agree" name="agree" required /> <a href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a>に同意します</label>
+          <p class="err" data-for="f-agree"></p>
+        </div>
+
         <button type="submit" class="btn btn-primary btn-block btn-lg">査定を依頼</button>
         <p class="form-note" id="formNote" role="status" aria-live="polite"></p>
       </form>
@@ -550,7 +555,7 @@
       <ul class="footer-links">
         <li><a href="#company">会社概要</a></li>
         <li><a href="privacy.html">プライバシーポリシー</a></li>
-        <li><a href="#company">特定商取引法</a></li>
+        <li><a href="tokushoho.html">特定商取引法・古物商表記</a></li>
         <li><a href="#faq">よくある質問</a></li>
         <li><a href="#features">サービス内容</a></li>
         <li><a href="#form">お問い合わせ</a></li>
@@ -575,6 +580,7 @@
 <!-- トップに戻る -->
 <button class="to-top" id="toTop" aria-label="トップに戻る" hidden>▲</button>
 
+<script src="assets/js/analytics.js" defer></script>
 <script src="assets/js/genres.js" defer></script>
 <script src="assets/js/simulator-buy.js" defer></script>
 <script>document.addEventListener('DOMContentLoaded',function(){if(window.BuymoSim)BuymoSim.init('buymoSim');});</script>

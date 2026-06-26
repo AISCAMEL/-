@@ -42,6 +42,7 @@ function footer(rel) {
     <nav class="footer-col" aria-label="サイトマップ"><h3>サイトマップ</h3><ul class="footer-links">
       <li><a href="${rel}buymo.html#company">会社概要</a></li>
       <li><a href="${rel}privacy.html">プライバシーポリシー</a></li>
+      <li><a href="${rel}tokushoho.html">特定商取引法・古物商表記</a></li>
       <li><a href="${rel}genre/">買取ジャンル一覧</a></li>
       <li><a href="${rel}area/">対応エリア一覧</a></li>
       <li><a href="${rel}buymo-partner.html">パートナー募集</a></li>
@@ -57,6 +58,7 @@ function footer(rel) {
   <div class="footer-bottom"><p>Copyright © 2026 合同会社アイズ（BUYMO） All Rights Reserved.</p></div>
 </footer>
 <button class="to-top" id="toTop" aria-label="トップに戻る" hidden>▲</button>
+<script src="${rel}assets/js/analytics.js" defer></script>
 <script src="${rel}assets/js/genres.js" defer></script>
 <script src="${rel}assets/js/buymo.js" defer></script>`;
 }
