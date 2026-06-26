@@ -123,6 +123,10 @@ img{max-width:100%;display:block;}
 .hero-car{font-size:150px;line-height:1;position:relative;z-index:1;animation:floaty 4s ease-in-out infinite;}
 .hero-mascot{font-size:96px;position:absolute;right:14%;bottom:6%;z-index:2;animation:floaty 3.4s ease-in-out infinite .4s;}
 .hero-staff{font-size:48px;position:absolute;left:6%;bottom:8%;z-index:2;}
+/* 画像スロット（差し替え対応） */
+.hero-img-main{width:100%;max-width:560px;height:auto;position:relative;z-index:1;animation:floaty 4.4s ease-in-out infinite;}
+.hero-img-mascot{position:absolute;right:4%;bottom:0;width:140px;height:auto;z-index:2;animation:floaty 3.4s ease-in-out infinite .4s;filter:drop-shadow(0 8px 16px rgba(0,0,0,.12));}
+@media (max-width:767px){.hero-img-mascot{width:96px;}}
 @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
 
 /* ===== B：元気・訴求 強化 ===== */
