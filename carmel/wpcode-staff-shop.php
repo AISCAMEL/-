@@ -20,16 +20,34 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 if ( ! function_exists( 'carmelx_staff_shop_shortcode' ) ) {
 
-	/* ---- per-shop staff map (shop slug => name + photo) --------------------
+	/* ---- per-shop staff map (shop slug => staff source) --------------------
 	 * EDIT HERE to set each shop's staff. Keys are the shop slugs used in the
-	 * vehicle "shop" field. 'name' may be left '' to use the shop name. */
+	 * vehicle "shop" field. Each value can be EITHER:
+	 *   - a staff post ID (integer)  -> name + photo pulled from that スタッフ post
+	 *   - array( 'name' => '...', 'photo' => 'https://...' )  -> literal override
+	 *   - 0  -> fall back to shop name / shop photo
+	 * Find a staff post ID: スタッフ -> open the staff -> the URL shows post=NNN. */
 	function carmelx_ss_shop_staff_map() {
 		return array(
-			'fukushima' => array( 'name' => '', 'photo' => 'https://carmelonline.jp/wp-content/uploads/2024/10/Gemini_Generated_Image_ladg0lladg0lladg.png' ),
-			'chiba'     => array( 'name' => '', 'photo' => 'https://carmelonline.jp/wp-content/uploads/2024/10/Gemini_Generated_Image_frcqqofrcqqofrcq.jpg' ),
-			'odawara'   => array( 'name' => '', 'photo' => 'https://carmelonline.jp/wp-content/uploads/2026/06/A_medium_close-up_studio_portrait_of_an_East_Asian-1782484950384-scaled.png' ),
-			'yamanashi' => array( 'name' => '', 'photo' => 'https://carmelonline.jp/wp-content/uploads/2024/10/Replace_the_face_in_the_purple_hoodie_image_with_t-1776843109134.png' ),
+			'fukushima' => 0,
+			'chiba'     => 0,
+			'odawara'   => 0,
+			'yamanashi' => 0,
 		);
+	}
+
+	/* resolve a map value into array( name, photo ) */
+	function carmelx_ss_resolve_staff( $val ) {
+		$out = array( 'name' => '', 'photo' => '' );
+		if ( is_numeric( $val ) && (int) $val > 0 ) {
+			$sid = (int) $val;
+			$out['name']  = (string) get_the_title( $sid );
+			$out['photo'] = (string) get_the_post_thumbnail_url( $sid, 'medium' );
+		} elseif ( is_array( $val ) ) {
+			$out['name']  = isset( $val['name'] ) ? (string) $val['name'] : '';
+			$out['photo'] = isset( $val['photo'] ) ? (string) $val['photo'] : '';
+		}
+		return $out;
 	}
 
 	/* first non-empty value from candidate keys (ACF -> meta) */
@@ -81,7 +99,7 @@ if ( ! function_exists( 'carmelx_staff_shop_shortcode' ) ) {
 		$photo_keys = array( 'tantou_photo', 'tantousha_photo', 'staff_photo', 'tantou_image', 'staff_image' );
 
 		$smap     = carmelx_ss_shop_staff_map();
-		$ss       = ( $slug && isset( $smap[ $slug ] ) ) ? $smap[ $slug ] : array();
+		$ss       = ( $slug && isset( $smap[ $slug ] ) ) ? carmelx_ss_resolve_staff( $smap[ $slug ] ) : array( 'name' => '', 'photo' => '' );
 
 		$st_role  = carmelx_ss_first( $pid, $role_keys );
 		if ( '' === $st_role && $sid ) { $st_role = carmelx_ss_first( $sid, $role_keys ); }
