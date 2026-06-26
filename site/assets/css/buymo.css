@@ -192,6 +192,7 @@ img{max-width:100%;display:block;}
 .sticky-cta .btn:hover{filter:brightness(1.03);}
 .sticky-cta .s-tel{color:#fff;font-weight:900;font-size:18px;white-space:nowrap;}
 .has-sticky .to-top{bottom:84px;}
+.has-bot .to-top{right:auto;left:24px;}
 @media (max-width:767px){
   .sticky-cta{gap:10px;padding:10px 12px;}
   .sticky-cta p,.sticky-cta .s-tel{display:none;}

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>トークスクリプト集｜BUYMO 加盟店</title>
+<meta name="robots" content="noindex,nofollow" />
+<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" />
+<link rel="stylesheet" href="assets/css/buymo.css" />
+<link rel="stylesheet" href="assets/css/board.css" />
+<link rel="stylesheet" href="assets/css/academy.css" />
+</head>
+<body>
+<script src="assets/js/auth.js"></script><script>AUTH.guard("staff");</script>
+<header class="portal-header">
+  <div class="container">
+    <a href="partner-academy.html" class="logo"><span aria-hidden="true">🐮</span> BUYMO</a>
+    <span class="portal-title">加盟店</span>
+    <nav class="portal-nav">
+      <a href="hq.html?role=partner">案件ボード</a>
+      <a href="partner-academy.html">アカデミー</a>
+      <a href="partner-scripts.html" aria-current="page">スクリプト</a>
+      <a href="partner-community.html">コミュニティ</a>
+    </nav>
+    <a href="portal-login.html" class="portal-logout">ログアウト</a>
+  </div>
+</header>
+
+<main class="portal-main">
+  <div class="container">
+    <h1>トークスクリプト集</h1>
+    <p class="portal-sub">場面別の話法。ボタンでコピーして、現場でそのまま使えます。</p>
+    <div id="scriptGroups"></div>
+  </div>
+</main>
+
+<script src="assets/js/auth.js"></script>
+<script>
+  var SCRIPTS = [
+    { cat: '📞 電話アポイント', items: [
+      { t: '初回の受電', s: 'お電話ありがとうございます、BUYMO（店名）です。お車の査定のご相談ですね。差し支えなければ、車種・年式・走行距離をお伺いできますか？ご都合のよい日に無料で出張査定に伺います。' },
+      { t: '出張日程の調整', s: 'ありがとうございます。査定はその場で金額をお出しします。今週ですと◯日と◯日が空いておりますが、ご都合いかがでしょうか？所要時間は30分ほどです。' }
+    ]},
+    { cat: '🚗 査定・提示', items: [
+      { t: '金額提示', s: '拝見しました。状態を踏まえ、買取金額は◯◯円をご提示します。この価格は装備・人気・相場を評価した金額です。ご不明点があればご説明します。' },
+      { t: '事故車・不動車', s: '動かないお車・修復歴のあるお車も、部品や素材として価値があります。廃車にする前にぜひご相談ください。引取も無料です。' }
+    ]},
+    { cat: '🛡️ 反論処理', items: [
+      { t: '「他社の方が高い」', s: '他社様のご提示、ありがとうございます。BUYMOは手数料・名義変更・出張すべて無料で、表示金額がそのまま手取りに近くなります。総額でぜひ比較してください。' },
+      { t: '「少し考えたい」', s: 'もちろんです。お車は日々価値が変わりますので、本日の金額は◯日まで有効とさせていただきます。ご不明点があればいつでもご連絡ください。' }
+    ]},
+    { cat: '🤝 クロージング', items: [
+      { t: '契約のご案内', s: '金額にご納得いただけましたら、ご契約に進みます。必要書類は車検証・自賠責・本人確認書類・印鑑です。名義変更などの手続きはすべて無料で代行します。' },
+      { t: '入金の安心案内', s: 'ご契約と書類確認後、最短即日でご指定口座へお振込みします。進捗は会員マイページでもご確認いただけます。' }
+    ]}
+  ];
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  document.getElementById('scriptGroups').innerHTML = SCRIPTS.map(function(g){
+    return '<section class="sc-group"><h2>'+esc(g.cat)+'</h2>'+g.items.map(function(it){
+      return '<div class="sc-card"><div class="sc-card-head"><strong>'+esc(it.t)+'</strong><button class="sc-copy" data-s="'+esc(it.s)+'">コピー</button></div><p>'+esc(it.s)+'</p></div>';
+    }).join('')+'</section>';
+  }).join('');
+  document.getElementById('scriptGroups').addEventListener('click', function(e){
+    var b=e.target.closest('.sc-copy'); if(!b)return;
+    var txt=b.getAttribute('data-s');
+    function ok(){ var o=b.textContent; b.textContent='コピー済み ✓'; setTimeout(function(){b.textContent=o;},1200); }
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(ok,ok); }
+    else { var ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} ta.remove(); ok(); }
+  });
+</script>
+<script>window.BUYMO_BOT_MODE='partner';</script>
+<script src="assets/js/chatbot.js" defer></script>
+</body>
+</html>

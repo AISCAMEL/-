@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>加盟店コミュニティ｜BUYMO</title>
+<meta name="robots" content="noindex,nofollow" />
+<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" />
+<link rel="stylesheet" href="assets/css/buymo.css" />
+<link rel="stylesheet" href="assets/css/board.css" />
+<link rel="stylesheet" href="assets/css/academy.css" />
+</head>
+<body>
+<script src="assets/js/auth.js"></script><script>AUTH.guard("staff");</script>
+<header class="portal-header">
+  <div class="container">
+    <a href="partner-academy.html" class="logo"><span aria-hidden="true">🐮</span> BUYMO</a>
+    <span class="portal-title">加盟店</span>
+    <nav class="portal-nav">
+      <a href="hq.html?role=partner">案件ボード</a>
+      <a href="partner-academy.html">アカデミー</a>
+      <a href="partner-scripts.html">スクリプト</a>
+      <a href="partner-community.html" aria-current="page">コミュニティ</a>
+    </nav>
+    <a href="portal-login.html" class="portal-logout">ログアウト</a>
+  </div>
+</header>
+
+<main class="portal-main">
+  <div class="container">
+    <h1>加盟店コミュニティ</h1>
+    <p class="portal-sub">加盟店どうしのQ&A・情報共有の場です。成功事例や困りごとを気軽に投稿してください。</p>
+
+    <div class="cm-post">
+      <input id="cmTitle" placeholder="タイトル（例：水没車の出品で気をつける点）" />
+      <textarea id="cmBody" rows="3" placeholder="本文を入力…"></textarea>
+      <button class="btn btn-primary" id="cmPost">投稿する</button>
+    </div>
+
+    <div id="cmList" class="cm-list"></div>
+  </div>
+</main>
+
+<script src="assets/js/auth.js"></script>
+<script>
+  var CKEY='buymo_community';
+  function load(){ try{return JSON.parse(localStorage.getItem(CKEY))||seed();}catch(e){return seed();} }
+  function save(a){ try{localStorage.setItem(CKEY,JSON.stringify(a));}catch(e){} }
+  function who(){ var s=(window.AUTH&&AUTH.get())?AUTH.get():null; return s?(s.name||'加盟店'):'加盟店'; }
+  function nowStr(){ var d=new Date(); function p(n){return('0'+n).slice(-2);} return d.getFullYear()+'/'+p(d.getMonth()+1)+'/'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes()); }
+  function seed(){ return [
+    {who:'いわき店',t:'はじめまして',b:'本部のサポートで開業しました。事故車の問い合わせが多いです。よろしくお願いします！',time:'2026/06/20 10:12',likes:3},
+    {who:'郡山店',t:'過走行車の相場感',b:'10万km超でも輸出需要で値がつくケースが増えています。皆さんの感触はどうですか？',time:'2026/06/22 15:40',likes:5}
+  ]; }
+  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  var posts=load();
+  function render(){
+    document.getElementById('cmList').innerHTML = posts.map(function(p,i){
+      return '<article class="cm-card"><div class="cm-card-head"><span class="cm-who">🏪 '+esc(p.who)+'</span><span class="cm-time">'+esc(p.time)+'</span></div>'+
+        '<h3>'+esc(p.t)+'</h3><p>'+esc(p.b).replace(/\n/g,'<br>')+'</p>'+
+        '<button class="cm-like" data-i="'+i+'">👍 役に立った <b>'+(p.likes||0)+'</b></button></article>';
+    }).join('');
+  }
+  document.getElementById('cmPost').addEventListener('click', function(){
+    var t=document.getElementById('cmTitle').value.trim(); var b=document.getElementById('cmBody').value.trim();
+    if(!t||!b)return;
+    posts.unshift({who:who(),t:t,b:b,time:nowStr(),likes:0}); save(posts); render();
+    document.getElementById('cmTitle').value=''; document.getElementById('cmBody').value='';
+  });
+  document.getElementById('cmList').addEventListener('click', function(e){
+    var b=e.target.closest('.cm-like'); if(!b)return; var i=Number(b.getAttribute('data-i'));
+    posts[i].likes=(posts[i].likes||0)+1; save(posts); render();
+  });
+  render();
+</script>
+<script>window.BUYMO_BOT_MODE='partner';</script>
+<script src="assets/js/chatbot.js" defer></script>
+</body>
+</html>

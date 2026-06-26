@@ -70,7 +70,13 @@ window.HQ = (function () {
   function nav(active) {
     var el = document.getElementById('hqNav');
     if (!el) return;
-    var items = [
+    var r = (window.AUTH && AUTH.role) ? AUTH.role() : null;
+    var items = (r === 'partner') ? [
+      ['board', '案件ボード', 'hq.html?role=partner'],
+      ['academy', 'アカデミー', 'partner-academy.html'],
+      ['scripts', 'スクリプト', 'partner-scripts.html'],
+      ['community', 'コミュニティ', 'partner-community.html']
+    ] : [
       ['dashboard', 'ダッシュボード', 'hq-dashboard.html'],
       ['board', '案件ボード', 'hq.html?role=hq'],
       ['leads', 'リード', 'hq-leads.html'],
