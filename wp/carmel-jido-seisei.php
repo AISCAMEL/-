@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 6.1
+ * Version: 6.2
  * Author: CARMEL
  */
 
@@ -733,11 +733,121 @@ function carmel3_auto_register_menu() {
     $parent = 'carmel-manager';
     if (isset($admin_page_hooks[$parent])) {
         // 「カーメル管理」の中にサブメニューとして入れる
+        add_submenu_page($parent, 'かんたんホーム', '🏠 かんたんホーム', 'manage_options', 'carmel3-home', 'carmel3_home_page');
         add_submenu_page($parent, 'CARMEL 自動生成', '🤖 自動生成', 'manage_options', 'carmel3-auto', 'carmel3_auto_settings_page');
     } else {
         // 親が見つからない場合は従来どおりトップに出す（消えない保険）
+        add_menu_page('かんたんホーム', 'かんたんホーム', 'manage_options', 'carmel3-home', 'carmel3_home_page', 'dashicons-admin-home', 3);
         add_menu_page('CARMEL 自動生成', 'CARMEL自動生成', 'manage_options', 'carmel3-auto', 'carmel3_auto_settings_page', 'dashicons-update', 4);
     }
+}
+
+/* ===== かんたんホーム（カーメル管理をわかりやすく：本体v5.7には触れません） ===== */
+
+function carmel3_home_page() {
+    $s = carmel3_auto_get_settings();
+    $next = wp_next_scheduled(CARMEL3_AUTO_HOOK);
+    $engine_ok = function_exists('carmel_generate_article_api');
+    $api_ok = function_exists('carmel_openrouter_is_ready') ? carmel_openrouter_is_ready() : (carmel3_img_api_key() !== '');
+    $remaining = carmel3_auto_remaining_count($s);
+
+    $counts = wp_count_posts('media_article');
+    $draft_count = isset($counts->draft) ? (int)$counts->draft : 0;
+    $pub_count   = isset($counts->publish) ? (int)$counts->publish : 0;
+
+    $url_gen   = admin_url('admin.php?page=carmel-manager');        // 本体：手動で1記事
+    $url_auto  = admin_url('admin.php?page=carmel3-auto');          // 自動生成の設定
+    $url_sns   = admin_url('admin.php?page=carmel-sns');            // 本体：SNS投稿
+    $url_set   = admin_url('admin.php?page=carmel-settings');       // 本体：設定（APIキー）
+    $url_posts = admin_url('edit.php?post_type=media_article');     // 作った記事一覧
+
+    $badge = function ($ok, $on = 'ON', $off = 'OFF') {
+        $c = $ok ? '#16a34a' : '#9ca3af';
+        return '<span style="display:inline-block;padding:2px 10px;border-radius:999px;background:' . $c . ';color:#fff;font-weight:700;font-size:12px">' . ($ok ? $on : $off) . '</span>';
+    };
+    ?>
+    <div style="max-width:1000px;margin:20px auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+        <div style="background:linear-gradient(135deg,#1a1a2e,#0f3460);color:#fff;padding:24px;border-radius:16px;margin-bottom:18px">
+            <h1 style="margin:0 0 6px;font-size:24px">🏠 カーメル かんたんホーム</h1>
+            <p style="margin:0;opacity:.9">迷ったらここから。「記事を作る」「自動で毎日作る」「作った記事を見る」がすぐできます。</p>
+        </div>
+
+        <!-- 今の状態 -->
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:18px">
+            <h2 style="margin:0 0 12px;font-size:16px">📊 今の状態</h2>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
+                <div style="background:#f8fafc;border-radius:10px;padding:12px">
+                    <div style="font-size:12px;color:#666">毎日自動生成</div>
+                    <div style="margin-top:4px"><?php echo $badge(!empty($s['enabled'])); ?></div>
+                </div>
+                <div style="background:#f8fafc;border-radius:10px;padding:12px">
+                    <div style="font-size:12px;color:#666">次回の自動実行</div>
+                    <div style="margin-top:4px;font-weight:700"><?php echo $next ? esc_html(get_date_from_gmt(gmdate('Y-m-d H:i:s', $next), 'n月j日 H:i')) : '—'; ?></div>
+                </div>
+                <div style="background:#f8fafc;border-radius:10px;padding:12px">
+                    <div style="font-size:12px;color:#666">未生成テーマ（残り）</div>
+                    <div style="margin-top:4px;font-weight:700"><?php echo (int)$remaining; ?> 件</div>
+                </div>
+                <div style="background:#f8fafc;border-radius:10px;padding:12px">
+                    <div style="font-size:12px;color:#666">記事生成エンジン</div>
+                    <div style="margin-top:4px"><?php echo $badge($engine_ok, '接続OK', '未接続'); ?></div>
+                </div>
+                <div style="background:#f8fafc;border-radius:10px;padding:12px">
+                    <div style="font-size:12px;color:#666">APIキー（OpenRouter）</div>
+                    <div style="margin-top:4px"><?php echo $badge($api_ok, '設定済み', '未設定'); ?></div>
+                </div>
+                <div style="background:#f8fafc;border-radius:10px;padding:12px">
+                    <div style="font-size:12px;color:#666">記事数</div>
+                    <div style="margin-top:4px;font-weight:700">下書き <?php echo $draft_count; ?> ／ 公開 <?php echo $pub_count; ?></div>
+                </div>
+            </div>
+            <?php if (!empty($s['last_msg'])): ?>
+                <p style="margin:12px 0 0;color:#555;font-size:12px">自動生成の最終結果：<?php echo esc_html($s['last_run'] ?: '—'); ?> ／ <?php echo esc_html($s['last_msg'] ?: '—'); ?></p>
+            <?php endif; ?>
+        </div>
+
+        <!-- やりたいこと（大ボタン） -->
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:18px">
+            <h2 style="margin:0 0 12px;font-size:16px">🚀 やりたいことを選ぶ</h2>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+                <a href="<?php echo esc_url($url_gen); ?>" style="text-decoration:none;display:block;background:#5b3df5;color:#fff;border-radius:12px;padding:16px">
+                    <div style="font-size:18px;font-weight:800">✍️ 今すぐ1記事つくる</div>
+                    <div style="font-size:12px;opacity:.9;margin-top:4px">タイトルを入れてボタンを押すだけ（手動）</div>
+                </a>
+                <a href="<?php echo esc_url($url_auto); ?>" style="text-decoration:none;display:block;background:#0f766e;color:#fff;border-radius:12px;padding:16px">
+                    <div style="font-size:18px;font-weight:800">🤖 自動生成の設定</div>
+                    <div style="font-size:12px;opacity:.9;margin-top:4px">毎日自動で作る／テーマを登録する</div>
+                </a>
+                <a href="<?php echo esc_url($url_posts); ?>" style="text-decoration:none;display:block;background:#1f2937;color:#fff;border-radius:12px;padding:16px">
+                    <div style="font-size:18px;font-weight:800">📄 作った記事を見る</div>
+                    <div style="font-size:12px;opacity:.9;margin-top:4px">下書き・公開記事の一覧／編集</div>
+                </a>
+                <a href="<?php echo esc_url($url_sns); ?>" style="text-decoration:none;display:block;background:#b45309;color:#fff;border-radius:12px;padding:16px">
+                    <div style="font-size:18px;font-weight:800">📣 SNS投稿</div>
+                    <div style="font-size:12px;opacity:.9;margin-top:4px">記事をSNS用の文章にして投稿</div>
+                </a>
+                <a href="<?php echo esc_url($url_set); ?>" style="text-decoration:none;display:block;background:#374151;color:#fff;border-radius:12px;padding:16px">
+                    <div style="font-size:18px;font-weight:800">⚙️ 設定（APIキー）</div>
+                    <div style="font-size:12px;opacity:.9;margin-top:4px">OpenRouterキー・ブランド設定</div>
+                </a>
+            </div>
+        </div>
+
+        <!-- メニューの使い方ガイド -->
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px">
+            <h2 style="margin:0 0 12px;font-size:16px">📖 メニューの使い方（かんたん説明）</h2>
+            <table style="width:100%;border-collapse:collapse;font-size:14px">
+                <tr style="border-bottom:1px solid #eee"><td style="padding:10px 8px;width:170px;font-weight:700">🏠 かんたんホーム</td><td style="padding:10px 8px;color:#444">今この画面。状態の確認と、各機能への入口。迷ったらここ。</td></tr>
+                <tr style="border-bottom:1px solid #eee"><td style="padding:10px 8px;font-weight:700">📝 記事生成</td><td style="padding:10px 8px;color:#444">手動で1記事だけ作る。タイトル・カテゴリ・地域を入れて「✨記事を生成」。</td></tr>
+                <tr style="border-bottom:1px solid #eee"><td style="padding:10px 8px;font-weight:700">🤖 自動生成</td><td style="padding:10px 8px;color:#444">テーマを登録しておくと、毎日自動で記事を作る（＋画像・CTA修正・公開）。<strong>毎日運用はここ。</strong></td></tr>
+                <tr style="border-bottom:1px solid #eee"><td style="padding:10px 8px;font-weight:700">📣 SNS投稿</td><td style="padding:10px 8px;color:#444">作った記事をSNS用の文章にして投稿（記録）。</td></tr>
+                <tr style="border-bottom:1px solid #eee"><td style="padding:10px 8px;font-weight:700">📊 生成履歴</td><td style="padding:10px 8px;color:#444">いつ何を作ったかの記録。</td></tr>
+                <tr><td style="padding:10px 8px;font-weight:700">⚙️ 設定</td><td style="padding:10px 8px;color:#444">OpenRouterのAPIキー、ブランド設定（画像の雰囲気など）。最初に1回だけ。</td></tr>
+            </table>
+            <p style="margin:14px 0 0;color:#666;font-size:12px">※ この「かんたんホーム」は説明用の入口です。本体「カーメル管理 v5.7」の機能はそのまま使います（本体のコードは変更していません）。</p>
+        </div>
+    </div>
+    <?php
 }
 
 add_action('admin_post_carmel3_auto_save', function () {
