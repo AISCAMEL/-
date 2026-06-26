@@ -15,6 +15,17 @@
 // 動作確認用 ＋ 会員の回答済み相場をJSONPで返す（マイページ反映用）
 //   例: <script src="…/exec?action=quotes&email=xxx&callback=cb"></script>
 function doGet(e) {
+  // ログイン（JSONP）／ログアウト
+  if (e && e.parameter && e.parameter.action === "login") {
+    var lr = (typeof authLogin_ === "function") ? authLogin_(e.parameter.email, e.parameter.pw, e.parameter.role) : { ok: false, error: "auth module missing" };
+    var lbody = JSON.stringify(lr), lcb = e.parameter.callback;
+    if (lcb) return ContentService.createTextOutput(lcb + "(" + lbody + ")").setMimeType(ContentService.MimeType.JAVASCRIPT);
+    return ContentService.createTextOutput(lbody).setMimeType(ContentService.MimeType.JSON);
+  }
+  if (e && e.parameter && e.parameter.action === "logout") {
+    if (typeof authLogout_ === "function") authLogout_(e.parameter.t || "");
+    return ContentService.createTextOutput("ok").setMimeType(ContentService.MimeType.TEXT);
+  }
   // ステップメールの配信停止（メール末尾リンク）
   if (e && e.parameter && e.parameter.action === "unsub") {
     var m = (typeof unsubscribeByToken_ === "function")
@@ -71,8 +82,8 @@ function doPost(e) {
       case "quote":    result = handleQuote_(data);    break;
       case "buymo":    result = handleBuymoLead_(data); break;
       case "stepmail": result = handleStepMailTrigger_(data); break; // WP等から後発でステップメール発動
-      case "case":     result = handleCase_(data);     break; // 看板ボードの作成/更新
-      case "note":     result = handleNote_(data);     break; // 案件の対応履歴メモ
+      case "case":     result = (typeof requireAuth_!=="function"||requireAuth_(data)) ? handleCase_(data) : { ok:false, error:"unauthorized" }; break; // 看板ボードの作成/更新（要ログイン）
+      case "note":     result = (typeof requireAuth_!=="function"||requireAuth_(data)) ? handleNote_(data) : { ok:false, error:"unauthorized" }; break; // 対応履歴メモ（要ログイン）
       default:         result = { ok: false, error: "unknown type" };
     }
     return json_(result);

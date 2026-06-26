@@ -47,16 +47,17 @@ window.HQ = (function () {
     if (i >= 0) { var m; for (m in c) arr[i][m] = c[m]; } else { arr.unshift(c); }
     saveCases(arr); postCase(c);
   }
+  function authToken() { return (window.AUTH && AUTH.token) ? AUTH.token() : ''; }
   function postCase(c) {
     if (!ENDPOINT) return;
     fetch(ENDPOINT, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ type: 'case', id: c.id, name: c.name, phone: c.tel, email: c.email, genre: c.genre, assignee: c.assignee, stage: c.stage, amount: c.amount, memo: c.memo }) }).catch(function () {});
+      body: JSON.stringify({ type: 'case', token: authToken(), id: c.id, name: c.name, phone: c.tel, email: c.email, genre: c.genre, assignee: c.assignee, stage: c.stage, amount: c.amount, memo: c.memo }) }).catch(function () {});
   }
 
   function note(id, text) {
     if (!ENDPOINT) return;
     fetch(ENDPOINT, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ type: 'note', id: id, text: text }) }).catch(function () {});
+      body: JSON.stringify({ type: 'note', token: (window.AUTH && AUTH.token) ? AUTH.token() : '', id: id, text: text }) }).catch(function () {});
   }
 
   function getStores() { return readLS(SKEY, seedStores); }
