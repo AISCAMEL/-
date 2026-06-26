@@ -125,6 +125,38 @@ img{max-width:100%;display:block;}
 .hero-staff{font-size:48px;position:absolute;left:6%;bottom:8%;z-index:2;}
 @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
 
+/* ===== B：元気・訴求 強化 ===== */
+/* CTA微コピー */
+.cta-micro{margin-top:12px;font-weight:700;color:var(--orange);font-size:15px;}
+/* 脈動するヒーローCTA */
+.hero .btn-primary{animation:pulse 2.2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 8px 20px rgba(255,107,53,.30)}50%{box-shadow:0 10px 30px rgba(255,107,53,.55)}}
+/* 査定無料バースト（黄色丸バッジ） */
+.hero-burst{
+  position:absolute;top:6%;left:2%;z-index:3;width:92px;height:92px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#FFE873,#FFD700);color:#7a4a00;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  font-weight:900;font-size:17px;line-height:1.15;transform:rotate(-12deg);
+  box-shadow:0 8px 18px rgba(216,170,0,.4);border:3px solid #fff;
+}
+/* セクション見出しのアイブロウ（黄色ピル） */
+.eyebrow{display:inline-block;background:var(--yellow);color:#7a5a00;font-weight:900;font-size:13px;letter-spacing:.08em;padding:5px 16px;border-radius:30px;margin-bottom:14px;}
+.eyebrow-wrap{text-align:center;}
+
+/* 数字バンド（数字で見るBUYMO） */
+.stats-band{background:linear-gradient(135deg,#FF8552,#FF6B35 60%,#F2591F);color:#fff;padding:40px 0;position:relative;overflow:hidden;}
+.stats-band::after{content:"";position:absolute;right:-30px;top:-30px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.08);}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;position:relative;z-index:1;}
+.stat-b{text-align:center;}
+.stat-b .num{display:block;font-size:48px;font-weight:900;color:var(--yellow);line-height:1;text-shadow:0 2px 0 rgba(0,0,0,.08);}
+.stat-b .num small{font-size:20px;margin-left:2px;}
+.stat-b p{margin-top:8px;font-weight:700;font-size:14px;}
+@media (max-width:767px){
+  .stats-grid{grid-template-columns:repeat(2,1fr);gap:24px;}
+  .stat-b .num{font-size:40px;}
+}
+@media (prefers-reduced-motion:reduce){.hero .btn-primary{animation:none;}}
+
 /* ============ 4大特長 ============ */
 .features{background:var(--yellow);padding:60px 0;position:relative;}
 .feature-card{position:relative;text-align:center;border-radius:var(--radius);}
