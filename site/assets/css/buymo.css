@@ -40,6 +40,7 @@ img{max-width:100%;display:block;}
   content:"";display:block;width:60px;height:4px;background:var(--orange);
   border-radius:2px;margin:16px auto 0;
 }
+.section-note{text-align:center;font-size:13px;color:#999;margin:-32px auto 36px;max-width:760px;}
 
 /* ---- grid utilities ---- */
 .grid{display:grid;gap:20px;}
