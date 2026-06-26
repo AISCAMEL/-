@@ -98,8 +98,29 @@ if ( ! function_exists( 'carmelx_staff_shop_shortcode' ) ) {
 		$role_keys  = array( 'tantou_role', 'tantou_yakushoku', 'staff_role', 'position' );
 		$photo_keys = array( 'tantou_photo', 'tantousha_photo', 'staff_photo', 'tantou_image', 'staff_image' );
 
-		$smap     = carmelx_ss_shop_staff_map();
-		$ss       = ( $slug && isset( $smap[ $slug ] ) ) ? carmelx_ss_resolve_staff( $smap[ $slug ] ) : array( 'name' => '', 'photo' => '' );
+		// (A) staff post assigned to this shop in the スタッフ screen (no code).
+		//     Managed by franchises: set staff_shop = this shop, set アイキャッチ.
+		$ss = array( 'name' => '', 'photo' => '' );
+		if ( $slug && post_type_exists( 'staff' ) ) {
+			$assigned = get_posts( array(
+				'post_type'   => 'staff',
+				'post_status' => 'publish',
+				'numberposts' => 1,
+				'meta_key'    => 'staff_shop',
+				'meta_value'  => $slug,
+				'orderby'     => 'menu_order date',
+				'order'       => 'ASC',
+			) );
+			if ( $assigned ) {
+				$ss['name']  = (string) get_the_title( $assigned[0] );
+				$ss['photo'] = (string) get_the_post_thumbnail_url( $assigned[0]->ID, 'medium' );
+			}
+		}
+		// (B) optional manual override map (back-compat; usually all 0 now).
+		if ( '' === $ss['name'] && '' === $ss['photo'] ) {
+			$smap = carmelx_ss_shop_staff_map();
+			if ( $slug && isset( $smap[ $slug ] ) ) { $ss = carmelx_ss_resolve_staff( $smap[ $slug ] ); }
+		}
 
 		$st_role  = carmelx_ss_first( $pid, $role_keys );
 		if ( '' === $st_role && $sid ) { $st_role = carmelx_ss_first( $sid, $role_keys ); }
