@@ -28,6 +28,10 @@ if (!defined('CARMEL_F_SEC3_IMG')) { define('CARMEL_F_SEC3_IMG', 'field_69ffb8a0
 if (!defined('CARMEL_F_CTA1_URL')) { define('CARMEL_F_CTA1_URL', 'field_69fef07b6cbf3'); } // main_cta_url
 if (!defined('CARMEL_F_CTA2_URL')) { define('CARMEL_F_CTA2_URL', 'field_69ffb66cd3733'); } // cta_button_url
 
+// 安全装置：このスニペットが二重に読み込まれても「関数の二重宣言」で
+// 落ちないようにする（WPCodeが勝手に無効化されるのを防ぐ）。
+if (function_exists('carmel_auto_run')) { return; }
+
 /* ===== 設定 ===== */
 
 function carmel_auto_get_settings() {
