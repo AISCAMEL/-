@@ -4,6 +4,15 @@
 (function () {
   'use strict';
 
+  /* =======================================================
+     GAS 送信先（査定・問い合わせ・パートナー応募 共通）
+     gas/WebApp.gs をデプロイしたら、その /exec URL をここに設定。
+     空欄のままならデモ動作（送信せず完了メッセージのみ）。
+     送信は type:"contact" として既存ハンドラに格納されます
+     （GAS側の改修は不要。詳細は message にまとめて送信）。
+     ======================================================= */
+  var ENDPOINT = '';
+
   /* ---- 0. 年式・都道府県の動的生成 ---- */
   var yearSel = document.getElementById('f-year');
   if (yearSel) {
@@ -173,6 +182,44 @@
       el.addEventListener('change', function () { if (el.classList.contains('invalid')) validateField(el); });
     });
 
+    // フォーム内容→GASペイロード（type:"contact"・詳細は message に整形）
+    function buildPayload() {
+      var get = function (id) { var el = document.getElementById(id); return el ? (el.value || '').trim() : ''; };
+      var labels = {
+        type: '種別', maker: '車種', year: '年式', mileage: '走行距離(km)',
+        pref: '都道府県', addr: 'ご住所', company: '会社名・屋号', message: 'お問い合わせ内容'
+      };
+      var lines = [];
+      Object.keys(labels).forEach(function (id) {
+        var v = get('f-' + id);
+        if (v) lines.push(labels[id] + '：' + v);
+      });
+      var params = {};
+      try { new URLSearchParams(window.location.search).forEach(function (v, k) { params[k] = v; }); } catch (e) {}
+      var source = 'BUYMO ' + (document.title || '') + ' [' + window.location.pathname + ']';
+      if (params.genre) lines.push('ジャンル：' + params.genre);
+      return {
+        type: 'contact',
+        source: source,
+        name: get('f-name'),
+        email: get('f-email'),
+        phone: get('f-tel'),
+        message: lines.join('\n') + '\n— ' + source
+      };
+    }
+
+    function sendLead(payload) {
+      if (!ENDPOINT) return Promise.resolve({ ok: true, demo: true });
+      return fetch(ENDPOINT, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // プリフライト回避
+        body: JSON.stringify(payload)
+      }).then(function () { return { ok: true }; });
+    }
+
+    var submitBtn = form.querySelector('button[type="submit"]');
+
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var ok = true, first = null;
@@ -185,10 +232,21 @@
         if (first) first.focus();
         return;
       }
-      note.textContent = '送信しました。担当者より最短即日でご連絡いたします。ありがとうございました。';
-      note.className = 'form-note ok';
-      form.reset();
-      // 実運用では gas/WebApp.gs の ENDPOINT へ POST 送信
+
+      if (submitBtn) { submitBtn.disabled = true; }
+      note.textContent = '送信しています…';
+      note.className = 'form-note';
+
+      sendLead(buildPayload()).then(function () {
+        note.textContent = '送信しました。担当者より最短即日でご連絡いたします。ありがとうございました。';
+        note.className = 'form-note ok';
+        form.reset();
+      }).catch(function () {
+        note.textContent = '送信に失敗しました。お手数ですが 0120-123-456 へお電話ください。';
+        note.className = 'form-note ng';
+      }).then(function () {
+        if (submitBtn) { submitBtn.disabled = false; }
+      });
     });
   }
 
