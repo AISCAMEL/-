@@ -266,6 +266,16 @@ function renderHandoffEntry() {
   dom.suggestions.appendChild(btn);
 }
 
+/**
+ * 有人対応につながらなかった後、AIで会話を続けられるよう導線を復帰する。
+ * （担当者は営業時間内のみ。時間外・不在でもAIは常に応答する）
+ */
+function restoreAiEntry() {
+  appendNote(hcfg.aiContinueNote);
+  renderSuggestions();
+  if (handoff.available) renderHandoffEntry();
+}
+
 /** 有人対応を開始。営業時間外/不在時はフォールバックUIを出す。 */
 async function startHandoff() {
   if (handoff.active || streaming) return;
@@ -291,6 +301,8 @@ async function startHandoff() {
   typingEl.remove();
 
   if (!started || !started.available) {
+    // 時間外/未設定でも担当者にはつながない＝AIが引き続き対応する。
+    // handoff.active は false のままなので、以降の入力は通常どおりAIへ。
     if (started && started.reason === 'off-hours') {
       appendNote(hcfg.offHoursMessage);
       track(hcfg.events.offHours);
@@ -299,6 +311,7 @@ async function startHandoff() {
     }
     renderCtaButtons();
     renderCallbackForm();
+    restoreAiEntry(); // AIで会話を続けられるよう導線を復帰（行き止まりにしない）
     return;
   }
 
@@ -360,6 +373,7 @@ function onOperatorTimeout() {
   track(hcfg.events.unavailable);
   renderCtaButtons();
   renderCallbackForm();
+  restoreAiEntry(); // 担当者につながらなくてもAIで継続できるように
 }
 
 /** 有人セッションを終了（ポーリング/タイマー停止）。 */
