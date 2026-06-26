@@ -24,7 +24,7 @@ function stepCfg_() {
     BRAND: "BUYMO",
     FROM_NAME: "BUYMO 査定サポート",
     SITE_URL: "",                    // 例: "https://buymo.example.jp"（末尾スラッシュ無し）。空ならリンクは相対表記
-    MEMBER_URL: "/login.html",       // 会員登録/ログインページ
+    MEMBER_URL: "/member.html",      // 会員マイページ（査定状況の確認）
     FORM_URL: "/buymo-contact.html", // 再査定/問い合わせ
     TEL: "0120-123-456",
     SHEET: "BUYMOステップメール",

@@ -241,7 +241,7 @@
       sendLead(buildPayload()).then(function () {
         note.innerHTML = '送信しました。担当者より最短即日でご連絡いたします。<br>' +
           '査定状況は会員ページでいつでも確認できます。<br>' +
-          '<a class="member-link" href="login.html">▶ 会員登録して査定状況を確認する</a>';
+          '<a class="member-link" href="member.html">▶ 会員ページで査定状況を確認する</a>';
         note.className = 'form-note ok';
         form.reset();
       }).catch(function () {

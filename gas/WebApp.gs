@@ -30,6 +30,14 @@ function doGet(e) {
     if (jcb) return ContentService.createTextOutput(jcb + "(" + jbody + ")").setMimeType(ContentService.MimeType.JAVASCRIPT);
     return ContentService.createTextOutput(jbody).setMimeType(ContentService.MimeType.JSON);
   }
+  // 会員マイページ：自分の案件（メール一致・JSONP）
+  if (e && e.parameter && e.parameter.action === "mycase") {
+    var mine = (typeof getMyCasesJson_ === "function") ? getMyCasesJson_(e.parameter.email || "") : [];
+    var mbody = JSON.stringify(mine);
+    var mcb = e.parameter.callback;
+    if (mcb) return ContentService.createTextOutput(mcb + "(" + mbody + ")").setMimeType(ContentService.MimeType.JAVASCRIPT);
+    return ContentService.createTextOutput(mbody).setMimeType(ContentService.MimeType.JSON);
+  }
   if (e && e.parameter && e.parameter.action === "quotes") {
     var data = getAnsweredQuotes_(e.parameter.email || "");
     var body = JSON.stringify(data);

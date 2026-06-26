@@ -64,6 +64,23 @@ function handleCase_(d) {
   return { ok: true, id: id, stage: stage };
 }
 
+/* 会員マイページ用：メールアドレス一致の自分の案件を返す（doGet action=mycase）。 */
+function getMyCasesJson_(email) {
+  var out = [];
+  email = String(email || "").trim().toLowerCase();
+  if (!email) return out;
+  try {
+    var sh = openBook_().getSheetByName(BOARD_SHEET);
+    if (!sh) return out;
+    var v = sh.getDataRange().getValues();
+    for (var r = 1; r < v.length; r++) {
+      if (String(v[r][4]).trim().toLowerCase() !== email) continue;
+      out.push({ id: v[r][1], name: v[r][2], genre: v[r][5], stage: v[r][7], amount: Number(v[r][8]) || 0, updated: v[r][0] });
+    }
+  } catch (e) { Logger.log("getMyCasesJson_: " + e); }
+  return out;
+}
+
 /* 案件一覧を返す（doGet action=cases）。assignee 指定で担当の案件のみ。 */
 function getCasesJson_(assignee) {
   var out = [];
