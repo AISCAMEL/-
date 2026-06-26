@@ -55,6 +55,24 @@ class Carmel_Application_Intake {
 
 		// Gravity Forms: fire after submission.
 		add_action( 'gform_after_submission', array( $this, 'handle_gform' ), 10, 2 );
+
+		// WPForms: fire after a completed submission.
+		add_action( 'wpforms_process_complete', array( $this, 'handle_wpforms' ), 10, 4 );
+	}
+
+	/**
+	 * 取り込み対象の WPForms フォームID（許可制）。
+	 * 未指定のフォームは処理しない（無関係なフォームの誤起票を防ぐ）。
+	 *
+	 * @param array $form_data
+	 * @return array<int>  許可フォームID
+	 */
+	private function wpforms_allowed_forms( $form_data ) {
+		$maps    = apply_filters( 'carmel_wpforms_field_map', array(), $form_data );
+		$inquiry = (array) apply_filters( 'carmel_wpforms_inquiry_forms', get_option( 'carmel_wpforms_inquiry_forms', array() ) );
+		$forms   = (array) apply_filters( 'carmel_wpforms_forms', get_option( 'carmel_wpforms_forms', array() ) );
+		$ids     = array_merge( array_keys( (array) $maps ), $inquiry, $forms );
+		return array_map( 'intval', $ids );
 	}
 
 	/**
@@ -424,5 +442,103 @@ class Carmel_Application_Intake {
 		}
 
 		self::process( $data );
+	}
+
+	/**
+	 * WPForms bridge. Runs on `wpforms_process_complete`.
+	 *
+	 * 安全のため許可制：`carmel_wpforms_field_map` / `carmel_wpforms_forms`(option) /
+	 * `carmel_wpforms_inquiry_forms`(option) のいずれかに含まれるフォームのみ処理する。
+	 * 明示マップが無ければフィールド型・ラベルから自動マッピングする。
+	 *
+	 * @param array $fields    送信フィールド（id => [ name(label), value, type, ... ]）
+	 * @param array $entry     生エントリ
+	 * @param array $form_data フォーム定義（id を含む）
+	 * @param int   $entry_id
+	 */
+	public function handle_wpforms( $fields, $entry, $form_data, $entry_id ) {
+		$form_id = isset( $form_data['id'] ) ? (int) $form_data['id'] : 0;
+		if ( ! $form_id ) {
+			return;
+		}
+
+		$allowed = $this->wpforms_allowed_forms( $form_data );
+		if ( ! in_array( $form_id, $allowed, true ) && ! apply_filters( 'carmel_wpforms_enabled', false, $form_id, $form_data ) ) {
+			return; // 許可されていないフォームは無視。
+		}
+
+		// フィールドID => 値。
+		$by_id = array();
+		foreach ( (array) $fields as $fid => $f ) {
+			$by_id[ (string) $fid ] = isset( $f['value'] ) ? $f['value'] : '';
+		}
+
+		$maps = apply_filters( 'carmel_wpforms_field_map', array(), $form_data );
+		$data = array( 'source' => 'wpforms' );
+		if ( ! empty( $maps[ $form_id ] ) ) {
+			foreach ( (array) $maps[ $form_id ] as $key => $fid ) {
+				$data[ $key ] = isset( $by_id[ (string) $fid ] ) ? $by_id[ (string) $fid ] : '';
+			}
+		} else {
+			$data = array_merge( $data, $this->wpforms_auto_map( (array) $fields ) );
+		}
+
+		// LIFF が挿入する hidden（WPForms は AJAX でフォーム全体を送るため $_POST に入る）。
+		if ( empty( $data['line_user_id'] ) && ! empty( $_POST['line_user_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$data['line_user_id'] = sanitize_text_field( wp_unslash( $_POST['line_user_id'] ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		}
+
+		// intent / deal_type（フォーム単位）。
+		$inquiry = array_map( 'intval', (array) apply_filters( 'carmel_wpforms_inquiry_forms', get_option( 'carmel_wpforms_inquiry_forms', array() ) ) );
+		$intent  = in_array( $form_id, $inquiry, true ) ? 'inquiry' : 'application';
+		$data['intent']    = apply_filters( 'carmel_wpforms_intent', $intent, $form_id, $form_data );
+		if ( empty( $data['deal_type'] ) ) {
+			$data['deal_type'] = apply_filters( 'carmel_wpforms_deal_type', 'loan', $form_id, $form_data );
+		}
+
+		self::process( $data );
+	}
+
+	/**
+	 * WPForms のフィールドを型・ラベルから正規化キーへ自動マッピング。
+	 *
+	 * @param array $fields
+	 * @return array
+	 */
+	private function wpforms_auto_map( array $fields ) {
+		$out = array();
+		foreach ( $fields as $f ) {
+			$type  = isset( $f['type'] ) ? strtolower( (string) $f['type'] ) : '';
+			$label = isset( $f['name'] ) ? (string) $f['name'] : '';
+			$val   = isset( $f['value'] ) ? $f['value'] : '';
+			if ( is_array( $val ) ) {
+				$val = implode( ' ', $val );
+			}
+			$val = trim( (string) $val );
+			$lc  = strtolower( $label );
+
+			// LINE userId（hidden 等・ラベル/メタ名が line_user_id）。
+			if ( 'line_user_id' === $lc || false !== strpos( $lc, 'line_user_id' ) || false !== strpos( $lc, 'line-user-id' ) ) {
+				if ( '' !== $val ) {
+					$out['line_user_id'] = $val;
+				}
+				continue;
+			}
+			if ( '' === $val ) {
+				continue;
+			}
+			if ( empty( $out['email'] ) && ( 'email' === $type || false !== strpos( $lc, 'email' ) || false !== strpos( $label, 'メール' ) ) ) {
+				$out['email'] = $val;
+			} elseif ( empty( $out['name'] ) && ( 'name' === $type || false !== strpos( $lc, 'name' ) || false !== strpos( $label, '氏名' ) || false !== strpos( $label, 'お名前' ) ) ) {
+				$out['name'] = $val;
+			} elseif ( empty( $out['phone'] ) && ( 'phone' === $type || false !== strpos( $lc, 'phone' ) || false !== strpos( $lc, 'tel' ) || false !== strpos( $label, '電話' ) ) ) {
+				$out['phone'] = $val;
+			} elseif ( empty( $out['address'] ) && ( 'address' === $type || false !== strpos( $label, '住所' ) ) ) {
+				$out['address'] = $val;
+			} elseif ( empty( $out['message'] ) && ( 'textarea' === $type || false !== strpos( $label, '内容' ) || false !== strpos( $label, '問い合わせ' ) || false !== strpos( $label, '備考' ) || false !== strpos( $label, 'ご要望' ) ) ) {
+				$out['message'] = $val;
+			}
+		}
+		return $out;
 	}
 }

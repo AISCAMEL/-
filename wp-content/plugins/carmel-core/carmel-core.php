@@ -59,6 +59,7 @@ require_once CARMEL_CORE_DIR . 'includes/notifications/adapters/class-carmel-pro
 require_once CARMEL_CORE_DIR . 'includes/notifications/adapters/class-carmel-lineworks-adapter.php';
 require_once CARMEL_CORE_DIR . 'includes/notifications/adapters/class-carmel-slack-adapter.php';
 require_once CARMEL_CORE_DIR . 'includes/notifications/adapters/class-carmel-mail-adapter.php';
+require_once CARMEL_CORE_DIR . 'includes/notifications/adapters/class-carmel-line-adapter.php';
 require_once CARMEL_CORE_DIR . 'includes/notifications/class-carmel-notifier.php';
 
 /**
@@ -97,6 +98,10 @@ function carmel_core_init() {
 	Carmel_Membership::instance()->register_hooks();
 	Carmel_Community::instance()->register_hooks();
 	Carmel_Notifier::instance()->register_hooks();
+
+	// LINE 公式（Messaging API）アダプタを登録し、モードに応じて配信を切替（プロライン→LINE）。
+	add_filter( 'carmel_notification_adapters', array( 'Carmel_LINE_Adapter', 'register_adapter' ) );
+	add_filter( 'carmel_routing_table', array( 'Carmel_LINE_Adapter', 'rewrite_routing' ), 99 );
 }
 add_action( 'plugins_loaded', 'carmel_core_init' );
 
