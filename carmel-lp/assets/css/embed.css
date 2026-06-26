@@ -1,0 +1,75 @@
+/**
+ * embed.css — WordPress等への埋め込み用 自己完結スタイル
+ * ------------------------------------------------------------------
+ * チャットウィジェット(.chat-layer 配下)に必要な変数・部品・レイアウトを内包。
+ * 変数はグローバル(:root)ではなく .chat-layer にスコープし、
+ * 設置先テーマの色変数(--color-primary 等)を汚染しないようにする。
+ */
+
+@import url("./lp-chat.css");
+
+/* 設置先テーマの影響を受けにくいよう、ウィジェット配下の箱モデルを固定 */
+.chat-layer,
+.chat-layer *,
+.chat-layer *::before,
+.chat-layer *::after {
+  box-sizing: border-box;
+}
+
+/* ウィジェットが参照する変数（テーマを汚さないよう .chat-layer にスコープ） */
+.chat-layer {
+  --color-primary: #1a3a6b;
+  --color-primary-dark: #12294c;
+  --color-accent: #ffd700;
+  --color-line: #06c755;
+  --color-tel: #1a3a6b;
+  --color-danger: #e53935;
+  --color-text: #222222;
+  --color-text-muted: #5b6472;
+  --color-bg: #ffffff;
+  --color-surface: #f8f9fb;
+  --color-border: #e3e7ee;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.16);
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+  --z-widget: 2147483000;
+  --z-popup: 2147483001;
+  --z-toast: 2147483002;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  line-height: 1.6;
+}
+
+/* エスカレーション等で使う最小限のボタン（components.css相当を内包・スコープ） */
+.chat-layer .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  min-height: 44px;
+  padding: 0 var(--space-md);
+  border: 0;
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+}
+.chat-layer .btn--line {
+  background: var(--color-line);
+  color: #fff;
+}
+.chat-layer .btn--tel {
+  background: var(--color-tel);
+  color: #fff;
+}
+.chat-layer .btn--block {
+  width: 100%;
+}

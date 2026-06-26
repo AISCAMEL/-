@@ -22,6 +22,9 @@ const cfg = CHAT_CONFIG.chatbot;
 const hcfg = CHAT_CONFIG.handoff;
 const bcfg = CHAT_CONFIG.booking;
 
+/** APIエンドポイントを解決（埋め込み時は別ドメインの apiBase を前置）。 */
+const api = (path) => `${CHAT_CONFIG.apiBase}${path}`;
+
 let started = false;
 let streaming = false;
 /** @type {{role:'user'|'assistant', content:string}[]} */
@@ -247,7 +250,7 @@ function showFallback() {
 /** 起動時にバックエンドの有効状態を取得し、入口ボタンを出す。 */
 async function initHandoff() {
   try {
-    const res = await fetch('/api/handoff/status');
+    const res = await fetch(api('/api/handoff/status'));
     if (!res.ok) return;
     const s = await res.json();
     handoff.available = Boolean(s.enabled);
@@ -291,7 +294,7 @@ async function startHandoff() {
   const typingEl = showTyping();
   let started;
   try {
-    const res = await fetch('/api/handoff/start', {
+    const res = await fetch(api('/api/handoff/start'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ question })
@@ -334,7 +337,7 @@ async function startHandoff() {
 /** お客様メッセージを担当者(Slack)へ中継。 */
 async function relayToOperator(text) {
   try {
-    await fetch('/api/handoff/send', {
+    await fetch(api('/api/handoff/send'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessionId: handoff.sessionId, text })
@@ -349,7 +352,7 @@ async function pollOperator() {
   if (!handoff.active) return;
   try {
     const res = await fetch(
-      `/api/handoff/poll?sessionId=${encodeURIComponent(handoff.sessionId)}`
+      api(`/api/handoff/poll?sessionId=${encodeURIComponent(handoff.sessionId)}`)
     );
     if (!res.ok) return;
     const data = await res.json();
@@ -384,7 +387,7 @@ function stopHandoff() {
   clearInterval(handoff.pollTimer);
   clearTimeout(handoff.giveupTimer);
   if (handoff.sessionId) {
-    fetch('/api/handoff/end', {
+    fetch(api('/api/handoff/end'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessionId: handoff.sessionId })
@@ -419,7 +422,7 @@ function renderCallbackForm() {
     const submit = form.querySelector('button');
     submit.disabled = true;
     try {
-      await fetch('/api/handoff/callback', {
+      await fetch(api('/api/handoff/callback'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -502,7 +505,7 @@ function renderBookingForm() {
     const submit = form.querySelector('button');
     submit.disabled = true;
     try {
-      await fetch('/api/handoff/reserve', {
+      await fetch(api('/api/handoff/reserve'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

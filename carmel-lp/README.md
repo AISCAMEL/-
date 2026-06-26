@@ -194,6 +194,22 @@ CHAT_LOG=1 OPENROUTER_API_KEY=sk-or-... npm start
 Googleアカウント接続が前提になるため別途対応します。`lib/handoff.js` の `requestBooking`、
 または `lib/admin.js` の ICS 部を起点に拡張できます。）
 
+## WordPress等への埋め込み
+
+ウィジェットを外部サイト（WordPress）の右下に設置できます。WordPress には
+読み込みタグを1つ貼るだけ、頭脳はこの Node アプリ側で動きます。
+
+```html
+<script src="https://YOUR-HOST/assets/embed.js"
+        data-api-base="https://YOUR-HOST"
+        data-line-url="https://lin.ee/u2tox5s"
+        data-tel="050-1793-5554"></script>
+```
+
+- 配信元ホストは **HTTPS** で公開し、`ALLOWED_ORIGINS` に設置先ドメインを設定。
+- CSSは `.chat-layer` 配下にスコープしてあり、**設置先テーマを汚しません**。
+- 手順詳細・プラグイン版は **`docs/wordpress.md`** を参照。
+
 ## テスト
 
 ```bash

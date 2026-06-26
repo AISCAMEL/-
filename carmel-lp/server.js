@@ -234,7 +234,36 @@ function serveStatic(req, res) {
   });
 }
 
+/**
+ * CORS。WordPress等の別ドメインからウィジェットを埋め込めるようにする。
+ * ALLOWED_ORIGINS（カンマ区切り）を設定すると許可元を限定。未設定なら全許可(*)。
+ * 認証情報(Cookie)は使わないステートレスAPIのため * でも安全。
+ */
+function applyCors(req, res) {
+  const allow = process.env.ALLOWED_ORIGINS;
+  const origin = req.headers.origin;
+  if (allow) {
+    const list = allow.split(',').map((s) => s.trim()).filter(Boolean);
+    if (origin && list.includes(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    } else if (list.length) {
+      res.setHeader('Access-Control-Allow-Origin', list[0]);
+    }
+    res.setHeader('Vary', 'Origin');
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
 const server = http.createServer((req, res) => {
+  applyCors(req, res);
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
   if (req.method === 'POST' && req.url.startsWith('/api/chat')) {
     handleChat(req, res);
     return;

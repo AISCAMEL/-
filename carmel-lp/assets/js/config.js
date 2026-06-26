@@ -7,11 +7,19 @@
  * (仕様定義書 第2部 10. 実装上の設定値一覧 / 16. 変更容易性の設計方針)
  */
 
+// 埋め込み時の外部設定（embed.js が window.CARMEL_CHAT を先にセットする）。
+// apiBase: /api/* の接続先（別ドメインのNodeホスト）。未指定なら同一オリジン相対。
+const EXT = (typeof window !== 'undefined' && window.CARMEL_CHAT) || {};
+const API_BASE = String(EXT.apiBase || '').replace(/\/$/, '');
+
 export const CHAT_CONFIG = {
-  // ---- 主要導線（要確認: 本番値であること） ----
-  lineUrl: 'https://lin.ee/u2tox5s',
-  telUrl: 'tel:050-1793-5554',
-  telDisplay: '050-1793-5554',
+  // API 接続先のベース（WordPress等の別ドメイン埋め込みで使用。空＝同一オリジン）
+  apiBase: API_BASE,
+
+  // ---- 主要導線（要確認: 本番値であること。埋め込み側で上書き可） ----
+  lineUrl: EXT.lineUrl || 'https://lin.ee/u2tox5s',
+  telUrl: EXT.telUrl || 'tel:050-1793-5554',
+  telDisplay: EXT.telDisplay || '050-1793-5554',
 
   // ---- 自動ポップアップ ----
   autoPopupDelay: 3000, // ページロード後の表示までの待機(ms)
@@ -59,7 +67,7 @@ export const CHAT_CONFIG = {
   // APIキーはサーバー側プロキシ(/api/chat)に保持。クライアントには置かない。
   chatbot: {
     enabled: true,
-    endpoint: '/api/chat', // サーバープロキシのエンドポイント
+    endpoint: API_BASE + '/api/chat', // サーバープロキシのエンドポイント（埋め込み時は別ドメイン）
     greeting:
       'こんにちは！カーメル相談AIです🚗\n自社ローン・信用回復ローンのご相談を承ります。審査の不安や手続きなど、お気軽にどうぞ。',
     // 初期サジェスト（タップで質問送信）
