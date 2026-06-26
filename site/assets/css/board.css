@@ -1,0 +1,48 @@
+/* ============================================================
+   BUYMO 看板ボード（hq.html / portal）スタイル
+   ============================================================ */
+.portal-header{background:var(--navy);color:#fff;height:64px;display:flex;align-items:center;}
+.portal-header .container{display:flex;align-items:center;gap:16px;width:100%;}
+.portal-header .logo{color:#fff;font-size:22px;}
+.portal-title{font-weight:700;font-size:16px;}
+.portal-role{margin-left:auto;background:rgba(255,255,255,.15);border-radius:30px;padding:6px 16px;font-weight:700;font-size:14px;}
+.portal-logout{color:#cdd6ee;font-weight:700;font-size:14px;}
+
+.portal-main{background:var(--gray);min-height:calc(100vh - 64px);padding:24px 0 60px;}
+.portal-main h1{font-size:24px;font-weight:900;margin-bottom:6px;}
+.portal-sub{color:#666;font-size:14px;margin-bottom:20px;}
+
+/* 営業サマリー */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+.kpi{background:#fff;border-radius:14px;box-shadow:var(--shadow);padding:18px 20px;}
+.kpi .kpi-label{font-size:13px;color:#888;font-weight:700;}
+.kpi .kpi-num{font-size:30px;font-weight:900;color:var(--navy);line-height:1.2;margin-top:4px;}
+.kpi.accent .kpi-num{color:var(--orange);}
+
+/* 追加フォーム */
+.add-bar{background:#fff;border-radius:14px;box-shadow:var(--shadow);padding:14px 16px;margin-bottom:20px;}
+.add-bar form{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.add-bar input{height:42px;border:1px solid #ddd;border-radius:8px;padding:0 12px;font-size:14px;font-family:inherit;}
+.add-bar .ac-name{flex:1;min-width:140px;}
+.add-bar button{height:42px;}
+
+/* カンバン */
+.kanban{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,1fr);gap:14px;overflow-x:auto;padding-bottom:10px;align-items:start;}
+.kb-col{background:#eef1f6;border-radius:12px;min-height:120px;display:flex;flex-direction:column;}
+.kb-col.over{outline:2px dashed var(--orange);outline-offset:-2px;background:#fff4ee;}
+.kb-col-head{font-weight:900;font-size:14px;color:var(--navy);padding:12px 14px;display:flex;align-items:center;gap:8px;border-bottom:2px solid #dfe4ec;}
+.kb-count{margin-left:auto;background:var(--navy);color:#fff;font-size:12px;border-radius:30px;padding:1px 9px;}
+.kb-col-body{padding:10px;display:flex;flex-direction:column;gap:10px;min-height:40px;}
+.kb-card{background:#fff;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,.08);padding:12px;cursor:grab;border-left:4px solid var(--orange);transition:box-shadow .2s,transform .1s;}
+.kb-card:hover{box-shadow:0 6px 16px rgba(0,0,0,.14);}
+.kb-card.dragging{opacity:.5;}
+.kb-card-top{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.kb-id{font-size:11px;color:#999;font-weight:700;}
+.kb-tag{margin-left:auto;background:#FFF1E6;color:var(--orange);font-size:11px;font-weight:700;border-radius:6px;padding:1px 8px;}
+.kb-name{font-weight:700;font-size:15px;}
+.kb-meta{font-size:12px;color:#777;margin-top:2px;}
+.kb-memo{font-size:12px;color:#555;margin-top:6px;background:#f7f7f7;border-radius:6px;padding:6px 8px;}
+
+@media (max-width:767px){
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+}

@@ -22,6 +22,14 @@ function doGet(e) {
       : "受け付けました。";
     return ContentService.createTextOutput(m).setMimeType(ContentService.MimeType.TEXT);
   }
+  // 看板ボード：案件一覧（JSONP）。assignee 指定で担当のみ。
+  if (e && e.parameter && e.parameter.action === "cases") {
+    var cases = (typeof getCasesJson_ === "function") ? getCasesJson_(e.parameter.assignee || "") : [];
+    var jbody = JSON.stringify(cases);
+    var jcb = e.parameter.callback;
+    if (jcb) return ContentService.createTextOutput(jcb + "(" + jbody + ")").setMimeType(ContentService.MimeType.JAVASCRIPT);
+    return ContentService.createTextOutput(jbody).setMimeType(ContentService.MimeType.JSON);
+  }
   if (e && e.parameter && e.parameter.action === "quotes") {
     var data = getAnsweredQuotes_(e.parameter.email || "");
     var body = JSON.stringify(data);
@@ -54,6 +62,8 @@ function doPost(e) {
       case "contact":  result = handleContact_(data);  break;
       case "quote":    result = handleQuote_(data);    break;
       case "buymo":    result = handleBuymoLead_(data); break;
+      case "stepmail": result = handleStepMailTrigger_(data); break; // WP等から後発でステップメール発動
+      case "case":     result = handleCase_(data);     break; // 看板ボードの作成/更新
       default:         result = { ok: false, error: "unknown type" };
     }
     return json_(result);
@@ -325,9 +335,10 @@ function handleRegister_(d) {
   var sh = ss.getSheetByName(cfg.SHEET_MEMBERS) || ensureSheet_(ss, cfg.SHEET_MEMBERS, []);
 
   var id = "M-" + nextSeq_(sh, 1000);
-  sh.appendRow([new Date(), id, d.name || "", d.email || "", d.plan || "", d.source || "LP"]);
+  var role = d.role || "member"; // member / partner / hq
+  sh.appendRow([new Date(), id, d.name || "", d.email || "", d.plan || "", d.source || "LP", role]);
 
-  notifyStaff_("👤 新規会員登録 " + id + "\nお名前：" + (d.name || "-") + "\nメール：" + (d.email || "-") + "\n希望プラン：" + (d.plan || "-"));
+  notifyStaff_("👤 新規登録 " + id + "（" + role + "）\nお名前：" + (d.name || "-") + "\nメール：" + (d.email || "-") + "\n希望プラン：" + (d.plan || "-"));
   return { ok: true, id: id };
 }
 
@@ -362,7 +373,27 @@ function handleBuymoLead_(d) {
   if (typeof enrollStepMail_ === "function") {
     enrollStepMail_({ id: id, name: d.name, email: d.email, genre: d.genre, source: d.source });
   }
+  // 看板ボードに案件を自動生成（Board.gs）
+  if (typeof createCaseFromLead_ === "function") {
+    createCaseFromLead_({ id: id, name: d.name, phone: d.phone, email: d.email, genre: d.genre, message: d.message });
+  }
   return { ok: true, id: id };
+}
+
+/* ---------- ステップメールの外部トリガー（WP/Zapier等から） ----------
+   POST {type:"stepmail", token, email, name, genre}
+   token は StepMail.gs の stepCfg_().TRIGGER_TOKEN と一致が必要。 */
+function handleStepMailTrigger_(d) {
+  var cfg = (typeof stepCfg_ === "function") ? stepCfg_() : { TRIGGER_TOKEN: "" };
+  if (cfg.TRIGGER_TOKEN && String(d.token || "") !== String(cfg.TRIGGER_TOKEN)) {
+    return { ok: false, error: "invalid token" };
+  }
+  if (!d.email) return { ok: false, error: "email required" };
+  if (typeof enrollStepMail_ === "function") {
+    enrollStepMail_({ id: d.id || "", name: d.name, email: d.email, genre: d.genre, source: d.source || "external" });
+    return { ok: true };
+  }
+  return { ok: false, error: "stepmail module missing" };
 }
 
 /* ---------- 相場見積り（買取/仕入れ）受付 ---------- */

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ログイン｜BUYMO（会員／加盟店／本部）</title>
+<meta name="robots" content="noindex,nofollow" />
+<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" />
+<link rel="stylesheet" href="assets/css/buymo.css" />
+<style>
+  .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(800px 300px at 80% -10%,#FFD9C2,transparent 60%),linear-gradient(180deg,#fff,#FFF1E6);}
+  .login-card{background:#fff;border-radius:20px;box-shadow:var(--shadow-hover);padding:40px 32px;max-width:460px;width:92%;text-align:center;}
+  .login-card .logo{justify-content:center;font-size:28px;margin-bottom:8px;}
+  .login-card h1{font-size:20px;font-weight:900;margin-bottom:6px;}
+  .login-card p{color:#666;font-size:14px;margin-bottom:24px;}
+  .role-tiles{display:grid;gap:14px;}
+  .role-tile{display:flex;align-items:center;gap:14px;text-align:left;background:var(--cream);border:1px solid #f0e2cf;
+    border-radius:14px;padding:18px 20px;cursor:pointer;transition:transform .2s,box-shadow .2s;}
+  .role-tile:hover{transform:translateY(-3px);box-shadow:var(--shadow);}
+  .role-ico{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#FFF1E6,#FFE3D0);
+    display:flex;align-items:center;justify-content:center;font-size:26px;flex:0 0 auto;}
+  .role-tile h2{font-size:17px;font-weight:700;margin:0;}
+  .role-tile span{font-size:13px;color:#777;}
+  .login-note{margin-top:20px;font-size:12px;color:#999;}
+</style>
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-card">
+    <a href="buymo.html" class="logo"><span aria-hidden="true">🐮</span> BUYMO</a>
+    <h1>ログイン</h1>
+    <p>ご利用の区分をお選びください。</p>
+    <div class="role-tiles">
+      <a class="role-tile" href="login.html">
+        <span class="role-ico" aria-hidden="true">👤</span>
+        <div><h2>会員（お客様）</h2><span>査定状況・買取の進捗を確認</span></div>
+      </a>
+      <a class="role-tile" data-role="partner" href="hq.html?role=partner">
+        <span class="role-ico" aria-hidden="true">🏪</span>
+        <div><h2>加盟店</h2><span>担当案件の管理・対応</span></div>
+      </a>
+      <a class="role-tile" data-role="hq" href="hq.html?role=hq">
+        <span class="role-ico" aria-hidden="true">🏢</span>
+        <div><h2>本部</h2><span>全案件の看板ボード・営業管理</span></div>
+      </a>
+    </div>
+    <p class="login-note">デモ版です。本番では各区分にID/パスワード認証を設定します（設計は docs/BUYMO_業務システム設計.md）。</p>
+  </div>
+</div>
+<script>
+  document.querySelectorAll('.role-tile[data-role]').forEach(function (a) {
+    a.addEventListener('click', function () {
+      try { localStorage.setItem('buymo_role', a.getAttribute('data-role')); } catch (e) {}
+    });
+  });
+</script>
+</body>
+</html>

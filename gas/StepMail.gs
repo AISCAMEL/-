@@ -27,7 +27,10 @@ function stepCfg_() {
     MEMBER_URL: "/login.html",       // 会員登録/ログインページ
     FORM_URL: "/buymo-contact.html", // 再査定/問い合わせ
     TEL: "0120-123-456",
-    SHEET: "BUYMOステップメール"
+    SHEET: "BUYMOステップメール",
+    // WP/Zapier等から POST {type:"stepmail", token, email,...} で配信を発動する際の合言葉。
+    // 空ならトークン無しでも受け付け（公開エンドポイントなので本番では必ず設定）。
+    TRIGGER_TOKEN: ""
   };
 }
 
