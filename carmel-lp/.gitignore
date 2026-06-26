@@ -10,3 +10,6 @@ data/chat-logs/
 
 # 予約の控え（個人情報を含むためコミットしない）
 data/bookings/
+
+# ビルド成果物（プラグインZIP）
+docs/carmel-chat.zip
