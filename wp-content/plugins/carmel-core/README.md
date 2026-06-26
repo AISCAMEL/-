@@ -581,6 +581,22 @@ AI自動応答：LINE Webhook → ボット(GAS/LLM)でFAQ応答・必要時にL
             （ボットがREST intakeを叩いて反響起票も可）
 ```
 
+### LINE 自動応答ボット（Webhook・実装済み）
+
+`Carmel_LINE_Bot`。公式アカウントの **Webhook 受信口**：`POST /wp-json/carmel/v1/line-webhook`。
+
+- **署名検証**：`X-Line-Signature` を チャネルシークレット（`CARMEL_LINE_CHANNEL_SECRET` / `carmel_line_channel_secret`）で HMAC-SHA256 検証。未設定なら拒否（オープン回避）
+- **応答ロジック**（reply API・チャネルアクセストークン使用）：
+  1. 「審査/申込/ローン」等 → **審査フォーム(LIFF)へ誘導**（クイックリプライ）
+  2. 「在庫/車」等 → 在庫ページへ誘導
+  3. `carmel_line_ai_endpoint`（GAS/LLM）設定時 → メッセージを委譲し `{"reply": "..."}` を返信（**AI自動応答**）
+  4. 未設定なら**組み込みFAQ**（営業時間/場所/見積/保証/納車・`carmel_line_faqs` で編集可）
+  5. いずれも無ければ既定の案内＋メニュー
+- **follow（友だち追加）**：ウェルカム＋導線。`carmel_line_message` / `carmel_line_follow` / `carmel_line_postback` アクションで拡張可
+- 設定：`carmel_line_form_url`（審査フォームのLIFF URL）、`carmel_line_ai_endpoint`（任意のAI応答先）
+
+> LINE Developers 側で Webhook URL に上記エンドポイントを登録し、応答メッセージ（自動応答）をオフ、Webhookをオンにする。チャネルアクセストークン＝返信、チャネルシークレット＝署名検証に使用。
+
 ## セットアップ手順
 
 1. **前提プラグイン**：ACF Pro（フィールド表示）、WooCommerce＋Square for WooCommerce（決済）、任意で Contact Form 7 / Gravity Forms、bbPress、WooCommerce Subscriptions（会費サブスク時）
