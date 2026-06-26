@@ -27,8 +27,8 @@ if ( ! function_exists( 'carmelx_staff_shop_shortcode' ) ) {
 		return array(
 			'fukushima' => 'https://carmelonline.jp/wp-content/uploads/2024/10/Gemini_Generated_Image_ladg0lladg0lladg.png',
 			'chiba'     => 'https://carmelonline.jp/wp-content/uploads/2024/10/Gemini_Generated_Image_frcqqofrcqqofrcq.jpg',
-			// 'odawara'   => '',
-			// 'yamanashi' => '',
+			'odawara'   => 'https://carmelonline.jp/wp-content/uploads/2026/06/A_medium_close-up_studio_portrait_of_an_East_Asian-1782484950384-scaled.png',
+			'yamanashi' => 'https://carmelonline.jp/wp-content/uploads/2024/10/Replace_the_face_in_the_purple_hoodie_image_with_t-1776843109134.png',
 		);
 	}
 
