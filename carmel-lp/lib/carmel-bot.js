@@ -65,15 +65,19 @@ const SYSTEM_PROMPT = [
 ].join('\n');
 
 /**
- * ナレッジCSVの場所。環境変数 KNOWLEDGE_CSV で差し替え可能。
- * 既定は data/knowledge.csv（営業担当が編集する想定の "知識スプレッド"）。
+ * ナレッジ/車種CSVの場所。環境変数で差し替え可能。
+ * 既定は data/knowledge.csv（FAQ）と data/vehicles.csv（取扱車種）。
  */
 function getKnowledgePath() {
   return process.env.KNOWLEDGE_CSV || path.join(__dirname, '..', 'data', 'knowledge.csv');
 }
+function getVehiclesPath() {
+  return process.env.VEHICLES_CSV || path.join(__dirname, '..', 'data', 'vehicles.csv');
+}
 
 // CSVはファイル更新(mtime)を見てキャッシュ。編集すれば次リクエストから反映される。
-let _kbCache = { mtimeMs: 0, text: '' };
+let _kbCache = { mtimeMs: 0, items: [] };
+let _vehCache = { mtimeMs: 0, items: [] };
 
 /**
  * 1行のCSVをパース（ダブルクオート/エスケープ"" に対応した簡易パーサ）。
@@ -107,62 +111,184 @@ function parseCsvLine(line) {
 }
 
 /**
- * ナレッジCSVを読み、AIに渡す参考知識テキストを生成する。
- * 形式: 「category,question,answer」のヘッダ付きCSV。
- * 読み込み失敗時は空文字（＝ナレッジ無しでも従来通り動作する）。
+ * ヘッダ付きCSVを行オブジェクトの配列として読み込む（mtimeキャッシュ）。
+ * 読み込み失敗時は空配列（＝データ無しでも従来通り動作する）。
  */
-function loadKnowledge() {
-  const file = getKnowledgePath();
+function loadCsvItems(file, cache) {
   let stat;
   try {
     stat = fs.statSync(file);
   } catch (_e) {
-    return ''; // ファイルが無ければナレッジ無しで継続
+    return [];
   }
-  if (stat.mtimeMs === _kbCache.mtimeMs) return _kbCache.text;
+  if (stat.mtimeMs === cache.mtimeMs) return cache.items;
 
-  let text = '';
+  let items = [];
   try {
     const raw = fs.readFileSync(file, 'utf8').replace(/^﻿/, '');
     const lines = raw.split(/\r?\n/).filter((l) => l.trim());
     if (lines.length > 1) {
       const header = parseCsvLine(lines[0]).map((h) => h.trim().toLowerCase());
-      const qi = header.indexOf('question');
-      const ai = header.indexOf('answer');
-      const ci = header.indexOf('category');
-      if (qi !== -1 && ai !== -1) {
-        const items = lines.slice(1).map((line) => {
-          const cols = parseCsvLine(line);
-          const cat = ci !== -1 ? (cols[ci] || '').trim() : '';
-          const q = (cols[qi] || '').trim();
-          const a = (cols[ai] || '').trim();
-          const tag = cat ? `【${cat}】` : '';
-          return q && a ? `- ${tag}Q: ${q}\n  A: ${a}` : '';
-        });
-        text = items.filter(Boolean).join('\n');
-      }
+      items = lines.slice(1).map((line) => {
+        const cols = parseCsvLine(line);
+        const row = {};
+        header.forEach((h, i) => (row[h] = (cols[i] || '').trim()));
+        return row;
+      });
     }
   } catch (_e) {
-    text = '';
+    items = [];
   }
-  _kbCache = { mtimeMs: stat.mtimeMs, text };
-  return text;
+  cache.mtimeMs = stat.mtimeMs;
+  cache.items = items;
+  return items;
+}
+
+function loadKnowledgeItems() {
+  return loadCsvItems(getKnowledgePath(), _kbCache).filter((r) => r.question && r.answer);
+}
+function loadVehicleItems() {
+  return loadCsvItems(getVehiclesPath(), _vehCache).filter((r) => r.name);
+}
+
+/** 後方互換: 全FAQを整形テキストで返す（現在はbuildSystemPromptが関連抽出を使用）。 */
+function loadKnowledge() {
+  return loadKnowledgeItems()
+    .map((r) => `- ${r.category ? `【${r.category}】` : ''}Q: ${r.question}\n  A: ${r.answer}`)
+    .join('\n');
+}
+
+/* ---------- 関連抽出（RAG-lite / 日本語向け簡易スコアリング） ---------- */
+
+function normalizeText(s) {
+  return String(s || '')
+    .toLowerCase()
+    .replace(/[\s、。,.!?！？「」『』（）()・/\-]/g, '');
+}
+
+/** 文字バイグラム集合（1文字語にも対応）。 */
+function bigrams(s) {
+  const n = normalizeText(s);
+  const set = new Set();
+  if (n.length === 1) set.add(n);
+  for (let i = 0; i < n.length - 1; i++) set.add(n.slice(i, i + 2));
+  return set;
+}
+
+/** クエリと対象テキストの一致度(0〜1)。クエリのバイグラムが対象にどれだけ含まれるか。 */
+function relevance(query, text) {
+  const q = bigrams(query);
+  if (!q.size) return 0;
+  const t = normalizeText(text);
+  let hit = 0;
+  for (const g of q) if (t.includes(g)) hit++;
+  return hit / q.size;
 }
 
 /**
- * システムプロンプト本体に、CSVナレッジを参考情報として連結して返す。
+ * クエリに関連する上位アイテムを返す。
+ * @param {Array} items
+ * @param {string} query
+ * @param {(it:any)=>string} textOf スコア対象テキスト
+ * @param {{k:number, threshold:number, boost?:(query:string,it:any)=>number}} opt
  */
-function buildSystemPrompt() {
-  const kb = loadKnowledge();
-  if (!kb) return SYSTEM_PROMPT;
-  return [
-    SYSTEM_PROMPT,
-    '',
-    '# 参考ナレッジ（カーメルの確認済み情報。回答の根拠として優先的に活用する）',
-    '- 以下のQ&Aに該当する内容は、これを踏まえて自然な日本語で回答する。',
-    '- 該当が無い場合は無理に当てはめず、一般的な案内とLINE/電話への誘導にとどめる。',
-    kb
-  ].join('\n');
+function retrieve(items, query, textOf, opt) {
+  const { k, threshold, boost } = opt;
+  if (!query || !items.length) return [];
+  return items
+    .map((it) => ({
+      it,
+      score: relevance(query, textOf(it)) + (boost ? boost(query, it) : 0)
+    }))
+    .filter((r) => r.score >= threshold)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, k)
+    .map((r) => r.it);
+}
+
+/**
+ * 車種提案の意図ブースト。用途キーワードから車種タイプを推定し加点する。
+ * （長い質問でも「家族＝ミニバン」「軽＝軽自動車」等を確実に拾うため）
+ */
+const CAR_INTENTS = [
+  { kw: ['家族', 'ファミリー', '大人数', '子供', '子ども', '3列', '広い', '大きい', '7人', '8人'], type: /ミニバン/ },
+  { kw: ['軽', '維持費', '安い', '街乗り', '通勤', '小さい', '取り回し', 'セカンド'], type: /軽/ },
+  { kw: ['燃費', 'ハイブリッド', 'ガソリン代', 'エコ', '低燃費'], type: /ハイブリッド/ },
+  { kw: ['suv', 'アウトドア', 'キャンプ', 'レジャー', '雪'], type: /SUV/ }
+];
+
+function vehicleBoost(query, row) {
+  const q = normalizeText(query);
+  let b = 0;
+  for (const intent of CAR_INTENTS) {
+    if (intent.kw.some((k) => q.includes(normalizeText(k)))) {
+      const hay = `${row.type} ${row.features}`;
+      if (intent.type.test(hay)) b += 0.5;
+    }
+  }
+  return b;
+}
+
+/**
+ * システムプロンプト本体に、質問に関連するFAQと車種だけを連結して返す。
+ * @param {string} [query] 直近のお客様の質問
+ */
+function buildSystemPrompt(query = '') {
+  const faq = retrieve(
+    loadKnowledgeItems(),
+    query,
+    (it) => `${it.category} ${it.question} ${it.answer}`,
+    { k: 6, threshold: 0.12 }
+  );
+  const cars = retrieve(
+    loadVehicleItems(),
+    query,
+    (it) => `${it.type} ${it.name} ${it.features} ${it.seats}人 ${it.price_range}`,
+    { k: 4, threshold: 0.16, boost: vehicleBoost }
+  );
+
+  const parts = [SYSTEM_PROMPT];
+
+  if (faq.length) {
+    parts.push(
+      '',
+      '# 参考ナレッジ（カーメルの確認済み情報。回答の根拠として優先的に活用する）',
+      '- 以下のQ&Aに該当する内容は、これを踏まえて自然な日本語で回答する。',
+      '- 該当が無い場合は無理に当てはめず、一般的な案内とLINE/電話への誘導にとどめる。',
+      faq
+        .map((r) => `- ${r.category ? `【${r.category}】` : ''}Q: ${r.question}\n  A: ${r.answer}`)
+        .join('\n')
+    );
+  }
+
+  if (cars.length) {
+    parts.push(
+      '',
+      '# 取扱車種（目安。提案の参考に使う）',
+      '- ご希望（人数・用途・ご予算）に合いそうな車種を1〜3台、理由を添えて提案する。',
+      '- 価格は目安であり、最終的なお支払い・在庫の有無は審査・面談・在庫状況によると必ず添える。',
+      cars
+        .map(
+          (r) =>
+            `- ${r.name}（${r.type}・${r.seats}人乗り・${r.price_range}）: ${r.features}`
+        )
+        .join('\n')
+    );
+  }
+
+  return parts.join('\n');
+}
+
+/** 直近のお客様メッセージ（関連抽出のクエリ）を取り出す。 */
+function latestUserQuery(clientMessages) {
+  const arr = Array.isArray(clientMessages) ? clientMessages : [];
+  for (let i = arr.length - 1; i >= 0; i--) {
+    const m = arr[i];
+    if (m && m.role === 'user' && typeof m.content === 'string' && m.content.trim()) {
+      return m.content;
+    }
+  }
+  return '';
 }
 
 /**
@@ -181,7 +307,8 @@ function buildMessages(clientMessages) {
     .map((m) => ({ role: m.role, content: String(m.content).slice(0, 2000) }))
     .slice(-12);
 
-  return [{ role: 'system', content: buildSystemPrompt() }, ...safe];
+  const query = latestUserQuery(safe);
+  return [{ role: 'system', content: buildSystemPrompt(query) }, ...safe];
 }
 
 /**
@@ -277,6 +404,10 @@ module.exports = {
   buildMessages,
   buildSystemPrompt,
   loadKnowledge,
+  loadKnowledgeItems,
+  loadVehicleItems,
+  retrieve,
+  relevance,
   getModels,
   SYSTEM_PROMPT
 };

@@ -70,12 +70,28 @@ async function collect(messages) {
     assert.ok(model.includes('deepseek'));
     ok('正常ストリーミング（差分連結 = 全文 / 先頭モデル使用）');
     // CSVナレッジが system プロンプトに載って送信されているか
-    const sys = (m1.ctx.lastBody.messages || []).find((x) => x.role === 'system');
-    assert.ok(sys && sys.content.includes('参考ナレッジ'), 'ナレッジ見出しが無い');
-    assert.ok(sys.content.includes('滞納歴'), 'CSVの内容が反映されていない');
-    ok('CSVナレッジがシステムプロンプトに注入されOpenRouterへ送信される');
+    // RAG: 質問に関連するFAQだけが注入され、無関係は除外される
+    await collect([{ role: 'user', content: '頭金がなくても大丈夫ですか？' }]);
+    let sys = (m1.ctx.lastBody.messages || []).find((x) => x.role === 'system');
+    assert.ok(sys && sys.content.includes('参考ナレッジ'), 'FAQ見出しが無い');
+    assert.ok(sys.content.includes('頭金'), '関連FAQが入っていない');
+    assert.ok(!sys.content.includes('営業時間'), '無関係FAQが混入（RAGが効いていない）');
+    ok('RAG: 質問に関連するFAQのみ注入（無関係は除外）');
+
+    // 車種提案: 家族向けの質問でミニバンが注入される
+    await collect([{ role: 'user', content: '家族で乗れる広い車はありますか？' }]);
+    sys = (m1.ctx.lastBody.messages || []).find((x) => x.role === 'system');
+    assert.ok(sys.content.includes('取扱車種'), '車種見出しが無い');
+    assert.ok(/セレナ|ヴォクシー|フリード|ミニバン/.test(sys.content), '家族質問でミニバンが出ない');
+    ok('車種提案: 家族向け質問でミニバンを注入');
+
+    // 金融質問では車種を出さない（精度確認）
+    await collect([{ role: 'user', content: '審査の流れを教えてください' }]);
+    sys = (m1.ctx.lastBody.messages || []).find((x) => x.role === 'system');
+    assert.ok(!sys.content.includes('取扱車種'), '無関係な質問に車種が混入');
+    ok('車種提案: 車に無関係な質問では車種を出さない');
   } catch (e) {
-    ng('正常ストリーミング/ナレッジ注入', e);
+    ng('正常ストリーミング/RAG/車種', e);
   } finally {
     m1.srv.close();
   }
