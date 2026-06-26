@@ -198,6 +198,7 @@
       try { new URLSearchParams(window.location.search).forEach(function (v, k) { params[k] = v; }); } catch (e) {}
       var source = 'BUYMO ' + (document.title || '') + ' [' + window.location.pathname + ']';
       if (params.genre) lines.push('ジャンル：' + params.genre);
+      if (params.est) lines.push('シミュレーター概算：' + params.est);
       return {
         type: 'buymo',
         source: source,

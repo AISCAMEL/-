@@ -113,6 +113,16 @@
     </div>
   </section>
 
+  <!-- ============ かんたん査定シミュレーター ============ -->
+  <section class="sim-section" id="sim" aria-labelledby="sim-title">
+    <div class="container">
+      <div class="eyebrow-wrap"><span class="eyebrow">SIMULATION</span></div>
+      <h2 id="sim-title" class="section-title">30秒でかんたん査定シミュレーション</h2>
+      <p class="sim-lead">車種クラス・年式・走行距離・状態を選ぶだけ。今のおおよその買取額がすぐ分かります。</p>
+      <div id="buymoSim"></div>
+    </div>
+  </section>
+
   <!-- ============ 4大特長 ============ -->
   <section class="features" id="features" aria-labelledby="features-title">
     <div class="container">
@@ -566,6 +576,8 @@
 <button class="to-top" id="toTop" aria-label="トップに戻る" hidden>▲</button>
 
 <script src="assets/js/genres.js" defer></script>
+<script src="assets/js/simulator-buy.js" defer></script>
+<script>document.addEventListener('DOMContentLoaded',function(){if(window.BuymoSim)BuymoSim.init('buymoSim');});</script>
 <script src="assets/js/buymo.js" defer></script>
 </body>
 </html>

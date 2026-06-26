@@ -257,6 +257,31 @@ img{max-width:100%;display:block;}
 .reason-card h3{font-size:20px;font-weight:700;margin-bottom:8px;}
 .reason-card p{font-size:14px;color:#666;}
 
+/* ============ 査定シミュレーター ============ */
+.sim-section{background:linear-gradient(180deg,#FFF4EA,#FFE8D6);padding:72px 0;}
+.sim-lead{text-align:center;color:#555;font-size:16px;margin:-28px auto 30px;max-width:680px;}
+.bsim{max-width:760px;margin:0 auto;background:#fff;border-radius:20px;box-shadow:var(--shadow-hover);padding:30px;}
+.bsim-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+.bsim-grid label{display:flex;flex-direction:column;gap:6px;font-weight:700;font-size:14px;}
+.bsim-grid select{height:50px;border:1px solid #ddd;border-radius:10px;padding:0 12px;font-size:16px;font-family:inherit;background:#fff;
+  appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23FF6B35' d='M6 8 0 0h12z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:34px;}
+.bsim-grid select:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,107,53,.15);}
+.bsim-btn{width:100%;height:56px;margin-top:18px;border:none;border-radius:30px;cursor:pointer;font-weight:900;font-size:18px;color:#fff;
+  background:linear-gradient(135deg,#FF8552,#F2591F);box-shadow:0 8px 20px rgba(255,107,53,.3);transition:transform .2s,box-shadow .2s;}
+.bsim-btn:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(255,107,53,.45);}
+.bsim-result{margin-top:24px;text-align:center;background:var(--navy);color:#fff;border-radius:16px;padding:26px;}
+.bsim-cap{font-weight:700;font-size:14px;color:#cdd6ee;}
+.bsim-range{font-size:34px;font-weight:900;color:var(--yellow);margin:6px 0 10px;line-height:1.2;}
+.bsim-note{font-size:12px;color:#b9c2dd;margin-bottom:16px;}
+.bsim-cta{display:inline-block;background:var(--orange);color:#fff;font-weight:900;font-size:16px;border-radius:30px;padding:14px 28px;transition:filter .2s,transform .2s;}
+.bsim-cta:hover{filter:brightness(1.06);transform:translateY(-2px);}
+@media (max-width:767px){
+  .sim-section{padding:48px 0;}
+  .bsim{padding:22px;}
+  .bsim-grid{grid-template-columns:1fr;}
+  .bsim-range{font-size:26px;}
+}
+
 /* ============ ジャンル別買取（カード） ============ */
 .genres-section{background:#fff;padding:80px 0;}
 .genres-lead{text-align:center;color:#555;font-size:16px;margin:-24px auto 36px;max-width:760px;}
