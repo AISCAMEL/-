@@ -158,12 +158,30 @@ class Carmel_ACF_Fields {
 		$this->group( 'deal', '案件情報', 'carmel_deal', array_merge( $common, $loan, $buyback, $lease, $support ) );
 	}
 
+	/** エリア選択肢（Carmel_LINE_Bot::regions と共通）。 */
+	private function region_choices() {
+		$regions = class_exists( 'Carmel_LINE_Bot' ) ? Carmel_LINE_Bot::regions() : array( '北海道', '東北', '関東', '中部', '近畿', '中国・四国', '九州・沖縄', 'その他' );
+		$out = array();
+		foreach ( $regions as $r ) {
+			$out[ $r ] = $r;
+		}
+		return $out;
+	}
+
 	private function register_store() {
 		$this->group( 'store', '加盟店情報', 'carmel_store', array(
 			$this->f( 'store', 'store_name', '店舗名' ),
 			$this->f( 'store', 'store_address', '店舗住所（陸送元・公開ページ地図）' ),
 			$this->f( 'store', 'store_tel', '電話番号（公開ページ）' ),
 			$this->f( 'store', 'store_hours', '営業時間（公開ページ）' ),
+			$this->f( 'store', 'store_area', 'エリア（加盟店検索）', 'select', array(
+				'choices'    => $this->region_choices(),
+				'allow_null' => 1,
+				'ui'         => 1,
+			) ),
+			$this->f( 'store', 'store_services', '取扱種別（加盟店検索）', 'checkbox', array(
+				'choices' => array( 'loan' => 'ローン販売', 'buyback' => '車買取', 'lease' => '自社リース' ),
+			) ),
 			$this->f( 'store', 'owner_user_id', 'オーナーのユーザーID', 'number' ),
 			$this->f( 'store', 'square_location_id', 'SquareロケーションID' ),
 			$this->f( 'store', 'notion_url', 'Notion 学習URL', 'url' ),

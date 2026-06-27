@@ -882,6 +882,19 @@ window.carmelInitMap=function(){
 			}
 		}
 
+		// 店舗で絞り込み中のチップ。
+		if ( ! empty( $filters['store_id'] ) && 'carmel_store' === get_post_type( $filters['store_id'] ) ) {
+			$sid   = (int) $filters['store_id'];
+			$sname = get_post_meta( $sid, 'store_name', true );
+			$sname = $sname ? $sname : get_the_title( $sid );
+			$clear = remove_query_arg( 'store_id' );
+			echo '<div class="carmel-inv-storechip">🏬 <strong>' . esc_html( $sname ) . '</strong> の在庫を表示中';
+			if ( class_exists( 'Carmel_Store_Profile' ) ) {
+				echo ' <a href="' . esc_url( Carmel_Store_Profile::url( $sid ) ) . '">店舗ページ</a>';
+			}
+			echo ' <a href="' . esc_url( $clear ) . '">✕ すべての在庫</a></div>';
+		}
+
 		if ( ! $fav_mode ) {
 			echo $this->filter_bar( $filters ); // phpcs:ignore WordPress.Security.EscapeOutput
 			echo $this->saved_search_block( $filters ); // phpcs:ignore WordPress.Security.EscapeOutput
@@ -1196,6 +1209,9 @@ window.carmelInitMap=function(){
 	private function filter_bar( array $filters ) {
 		$makers = $this->known_makers();
 		$out  = '<form method="get" class="carmel-inv-filter">';
+		if ( ! empty( $filters['store_id'] ) ) {
+			$out .= '<input type="hidden" name="store_id" value="' . (int) $filters['store_id'] . '">';
+		}
 		$out .= '<input type="text" name="q" value="' . esc_attr( $filters['q'] ) . '" placeholder="車種・キーワード">';
 		$out .= '<select name="maker"><option value="">メーカー（すべて）</option>';
 		foreach ( $makers as $m ) {
@@ -2086,6 +2102,8 @@ window.carmelInitMap=function(){
 .carmel-inv{font-size:14px}
 .carmel-inv section{margin-bottom:1.6em}
 .carmel-inv-login{background:#f1ecfb;border:1px solid #ddd2f5;border-radius:.5em;padding:.6em 1em;margin:.6em 0}
+.carmel-inv-storechip{background:#eef2fb;border:1px solid #cdd9f0;border-radius:.5em;padding:.5em 1em;margin:.6em 0;font-size:.92em}
+.carmel-inv-storechip a{color:#2e86de;text-decoration:none;margin-left:.6em}
 .carmel-inv-hint{color:#7a7488;font-size:.88em}
 .carmel-inv-filter{display:flex;gap:.5em;flex-wrap:wrap;margin:.8em 0}
 .carmel-inv-filter input,.carmel-inv-filter select{border:1px solid #ccc;border-radius:.3em;padding:.45em}

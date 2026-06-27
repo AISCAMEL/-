@@ -17,7 +17,9 @@ class Carmel_Store_Profile {
 	/** @var Carmel_Store_Profile|null */
 	private static $instance = null;
 
-	const SHORTCODE = 'carmel_store_profile';
+	const SHORTCODE      = 'carmel_store_profile';
+	const REVIEW_ACTION  = 'carmel_store_review';
+	const COMMENT_TYPE   = 'carmel_review';
 
 	public static function instance() {
 		if ( null === self::$instance ) {
@@ -29,6 +31,8 @@ class Carmel_Store_Profile {
 	public function register_hooks() {
 		add_shortcode( self::SHORTCODE, array( $this, 'render' ) );
 		add_action( 'wp_head', array( $this, 'seo_head' ) );
+		add_action( 'admin_post_' . self::REVIEW_ACTION, array( $this, 'handle_review' ) );
+		add_action( 'admin_post_nopriv_' . self::REVIEW_ACTION, array( $this, 'handle_review' ) );
 	}
 
 	/** 店舗ページのスラッグ（フィルタ可）。 */
@@ -71,6 +75,18 @@ class Carmel_Store_Profile {
 	 * --------------------------------------------------------------------- */
 
 	private function render_directory() {
+		$area    = isset( $_GET['area'] ) ? sanitize_text_field( wp_unslash( $_GET['area'] ) ) : '';
+		$service = isset( $_GET['service'] ) ? sanitize_key( $_GET['service'] ) : '';
+
+		$meta = array( 'relation' => 'AND' );
+		if ( '' !== $area ) {
+			$meta[] = array( 'key' => 'store_area', 'value' => $area );
+		}
+		if ( in_array( $service, array( 'loan', 'buyback', 'lease' ), true ) ) {
+			// ACF checkbox は配列をシリアライズ保存 → 値を LIKE で包含一致。
+			$meta[] = array( 'key' => 'store_services', 'value' => '"' . $service . '"', 'compare' => 'LIKE' );
+		}
+
 		$stores = get_posts(
 			array(
 				'post_type'      => 'carmel_store',
@@ -78,14 +94,16 @@ class Carmel_Store_Profile {
 				'posts_per_page' => 100,
 				'orderby'        => 'title',
 				'order'          => 'ASC',
+				'meta_query'     => count( $meta ) > 1 ? $meta : array(),
 			)
 		);
 
 		ob_start();
 		echo $this->styles(); // phpcs:ignore WordPress.Security.EscapeOutput
 		echo '<div class="carmel-sp"><h2>加盟店一覧</h2>';
+		echo $this->directory_filter( $area, $service ); // phpcs:ignore WordPress.Security.EscapeOutput
 		if ( empty( $stores ) ) {
-			echo '<p>現在ご案内できる加盟店はありません。</p></div>';
+			echo '<p>条件に合う加盟店が見つかりませんでした。</p></div>';
 			return ob_get_clean();
 		}
 		echo '<div class="carmel-sp-grid">';
@@ -103,6 +121,27 @@ class Carmel_Store_Profile {
 		}
 		echo '</div></div>';
 		return ob_get_clean();
+	}
+
+	/** エリア・取扱種別の絞り込みフォーム。 */
+	private function directory_filter( $area, $service ) {
+		$regions  = class_exists( 'Carmel_LINE_Bot' ) ? Carmel_LINE_Bot::regions() : array( '北海道', '東北', '関東', '中部', '近畿', '中国・四国', '九州・沖縄', 'その他' );
+		$services = array( 'loan' => 'ローン販売', 'buyback' => '車買取', 'lease' => '自社リース' );
+
+		$out  = '<form method="get" class="carmel-sp-filter">';
+		$out .= '<select name="area"><option value="">エリア（すべて）</option>';
+		foreach ( $regions as $r ) {
+			$out .= '<option value="' . esc_attr( $r ) . '"' . selected( $area, $r, false ) . '>' . esc_html( $r ) . '</option>';
+		}
+		$out .= '</select>';
+		$out .= '<select name="service"><option value="">取扱（すべて）</option>';
+		foreach ( $services as $k => $label ) {
+			$out .= '<option value="' . esc_attr( $k ) . '"' . selected( $service, $k, false ) . '>' . esc_html( $label ) . '</option>';
+		}
+		$out .= '</select>';
+		$out .= '<button type="submit" class="carmel-btn carmel-btn-purple">絞り込む</button>';
+		$out .= '</form>';
+		return $out;
 	}
 
 	/* --------------------------------------------------------------------- *
@@ -140,8 +179,14 @@ class Carmel_Store_Profile {
 			echo '<div class="carmel-sp-desc">' . wp_kses_post( wpautop( $desc ) ) . '</div>';
 		}
 
+		// 実績。
+		echo $this->stats_section( $store_id ); // phpcs:ignore WordPress.Security.EscapeOutput
+
 		// 地図。
 		echo $this->map( $addr, $name ); // phpcs:ignore WordPress.Security.EscapeOutput
+
+		// スタッフ紹介。
+		echo $this->staff_section( $store_id ); // phpcs:ignore WordPress.Security.EscapeOutput
 
 		// この店舗の公開在庫。
 		$cars = $this->stock( $store_id, 12 );
@@ -161,8 +206,203 @@ class Carmel_Store_Profile {
 		$apply = home_url( '/' . ltrim( apply_filters( 'carmel_apply_page_slug', 'apply' ), '/' ) );
 		echo '<div class="carmel-sp-cta"><a class="carmel-btn carmel-btn-blue" href="' . esc_url( $apply ) . '">この店舗に相談・お問い合わせ</a></div>';
 
+		// レビュー。
+		echo $this->reviews_section( $store_id ); // phpcs:ignore WordPress.Security.EscapeOutput
+
 		echo '</div>';
 		return ob_get_clean();
+	}
+
+	/* --------------------------------------------------------------------- *
+	 * 実績
+	 * --------------------------------------------------------------------- */
+
+	private function won_statuses() {
+		if ( class_exists( 'Carmel_Reports' ) ) {
+			return Carmel_Reports::WON;
+		}
+		return array( 'contracted', 'delivered', 'closed', 'bb_agreed', 'bb_collected', 'bb_closed', 'lease_contracted', 'lease_delivered', 'lease_completed', 'lease_closed' );
+	}
+
+	private function stats_section( $store_id ) {
+		$ids = get_posts(
+			array(
+				'post_type'      => 'carmel_deal',
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'meta_query'     => array( array( 'key' => 'store_id', 'value' => (int) $store_id ) ),
+			)
+		);
+		$won = $this->won_statuses();
+		$deals = count( $ids );
+		$closed = 0;
+		foreach ( $ids as $id ) {
+			if ( in_array( get_post_meta( $id, 'deal_status', true ), $won, true ) ) {
+				$closed++;
+			}
+		}
+		$stock = $this->stock_count( $store_id );
+
+		$cards = array(
+			array( '公開在庫', $stock . ' 台' ),
+			array( '成約実績', $closed . ' 件' ),
+			array( '取扱案件', $deals . ' 件' ),
+		);
+		$out = '<div class="carmel-sp-stats">';
+		foreach ( $cards as $c ) {
+			$out .= '<div class="carmel-sp-stat"><div class="carmel-sp-stat-num">' . esc_html( $c[1] ) . '</div><div class="carmel-sp-stat-lbl">' . esc_html( $c[0] ) . '</div></div>';
+		}
+		$out .= '</div>';
+		return $out;
+	}
+
+	/* --------------------------------------------------------------------- *
+	 * スタッフ紹介
+	 * --------------------------------------------------------------------- */
+
+	private function staff_section( $store_id ) {
+		if ( ! apply_filters( 'carmel_store_show_staff', true, $store_id ) ) {
+			return '';
+		}
+		$users = get_users(
+			array(
+				'role__in'   => array( 'store_owner', 'store_staff' ),
+				'meta_key'   => 'store_id',
+				'meta_value' => (int) $store_id,
+				'number'     => 20,
+			)
+		);
+		if ( empty( $users ) ) {
+			return '';
+		}
+		$out = '<h3>スタッフ紹介</h3><div class="carmel-sp-staff">';
+		foreach ( $users as $u ) {
+			$role = in_array( 'store_owner', (array) $u->roles, true ) ? '店長' : 'スタッフ';
+			$out .= '<div class="carmel-sp-member">' . get_avatar( $u->ID, 56, '', '', array( 'class' => 'carmel-sp-ava' ) )
+				. '<div class="carmel-sp-mname">' . esc_html( $u->display_name ) . '</div>'
+				. '<div class="carmel-sp-mrole">' . esc_html( $role ) . '</div></div>';
+		}
+		$out .= '</div>';
+		return $out;
+	}
+
+	/* --------------------------------------------------------------------- *
+	 * レビュー
+	 * --------------------------------------------------------------------- */
+
+	private function reviews_section( $store_id ) {
+		$reviews = get_comments(
+			array(
+				'post_id' => (int) $store_id,
+				'status'  => 'approve',
+				'type'    => self::COMMENT_TYPE,
+				'number'  => 30,
+				'orderby' => 'comment_date',
+				'order'   => 'DESC',
+			)
+		);
+
+		$out = '<h3>お客様の声・レビュー</h3>';
+
+		// 平均評価。
+		if ( ! empty( $reviews ) ) {
+			$sum = 0;
+			$n   = 0;
+			foreach ( $reviews as $r ) {
+				$rt = (int) get_comment_meta( $r->comment_ID, 'rating', true );
+				if ( $rt >= 1 && $rt <= 5 ) {
+					$sum += $rt;
+					$n++;
+				}
+			}
+			if ( $n ) {
+				$avg = round( $sum / $n, 1 );
+				$out .= '<div class="carmel-sp-avg">' . $this->stars( (int) round( $avg ) ) . ' <strong>' . esc_html( $avg ) . '</strong> / 5（' . (int) $n . '件）</div>';
+			}
+		}
+
+		if ( empty( $reviews ) ) {
+			$out .= '<p class="carmel-sp-norev">まだレビューはありません。最初の口コミをお寄せください。</p>';
+		} else {
+			$out .= '<ul class="carmel-sp-reviews">';
+			foreach ( $reviews as $r ) {
+				$rt = (int) get_comment_meta( $r->comment_ID, 'rating', true );
+				$out .= '<li><div class="carmel-sp-rhead">' . $this->stars( $rt ) . ' <span class="carmel-sp-rauthor">' . esc_html( $r->comment_author ? $r->comment_author : '匿名' ) . '</span> <span class="carmel-sp-rdate">' . esc_html( mysql2date( 'Y-m-d', $r->comment_date ) ) . '</span></div>'
+					. '<div class="carmel-sp-rbody">' . nl2br( esc_html( $r->comment_content ) ) . '</div></li>';
+			}
+			$out .= '</ul>';
+		}
+
+		$out .= $this->review_form( $store_id );
+		return $out;
+	}
+
+	private function stars( $n ) {
+		$n = max( 0, min( 5, (int) $n ) );
+		return '<span class="carmel-sp-stars">' . str_repeat( '★', $n ) . str_repeat( '☆', 5 - $n ) . '</span>';
+	}
+
+	private function review_form( $store_id ) {
+		$nonce = wp_create_nonce( self::REVIEW_ACTION . '_' . $store_id );
+		$name  = is_user_logged_in() ? wp_get_current_user()->display_name : '';
+		$msg   = isset( $_GET['carmel_rev'] ) ? sanitize_key( $_GET['carmel_rev'] ) : '';
+		$banner = '';
+		if ( 'ok' === $msg ) {
+			$banner = '<div class="carmel-sp-revbanner">レビューを受け付けました。承認後に掲載されます。ありがとうございました。</div>';
+		} elseif ( 'err' === $msg ) {
+			$banner = '<div class="carmel-sp-revbanner err">入力内容をご確認ください（評価と本文は必須）。</div>';
+		}
+
+		$out  = '<details class="carmel-sp-revform"><summary>口コミを投稿する</summary>' . $banner;
+		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">'
+			. '<input type="hidden" name="action" value="' . esc_attr( self::REVIEW_ACTION ) . '">'
+			. '<input type="hidden" name="store_id" value="' . (int) $store_id . '">'
+			. '<input type="hidden" name="carmel_rev_nonce" value="' . esc_attr( $nonce ) . '">'
+			// ハニーポット（スパム対策）。
+			. '<input type="text" name="carmel_hp" value="" style="display:none" tabindex="-1" autocomplete="off">'
+			. '<label>お名前 <input type="text" name="rev_name" value="' . esc_attr( $name ) . '" placeholder="匿名可"></label>'
+			. '<label>評価 <select name="rev_rating"><option value="5">★★★★★</option><option value="4">★★★★☆</option><option value="3">★★★☆☆</option><option value="2">★★☆☆☆</option><option value="1">★☆☆☆☆</option></select></label>'
+			. '<textarea name="rev_body" rows="3" placeholder="ご利用の感想をお書きください" required></textarea>'
+			. '<button type="submit" class="carmel-btn carmel-btn-purple">投稿する</button>'
+			. '<p class="carmel-sp-revnote">投稿は本部の承認後に掲載されます。</p>'
+			. '</form></details>';
+		return $out;
+	}
+
+	public function handle_review() {
+		$store_id = isset( $_POST['store_id'] ) ? (int) $_POST['store_id'] : 0;
+		$redirect = wp_get_referer() ? wp_get_referer() : home_url( '/' . self::page_slug() );
+
+		if ( ! wp_verify_nonce( isset( $_POST['carmel_rev_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['carmel_rev_nonce'] ) ) : '', self::REVIEW_ACTION . '_' . $store_id ) ) {
+			wp_die( esc_html__( '不正なリクエストです。', 'carmel-core' ), '', array( 'response' => 400 ) );
+		}
+		// ハニーポット or 不正。
+		$rating = isset( $_POST['rev_rating'] ) ? (int) $_POST['rev_rating'] : 0;
+		$body   = isset( $_POST['rev_body'] ) ? sanitize_textarea_field( wp_unslash( $_POST['rev_body'] ) ) : '';
+		if ( ! empty( $_POST['carmel_hp'] ) || 'carmel_store' !== get_post_type( $store_id ) || $rating < 1 || $rating > 5 || '' === $body ) {
+			wp_safe_redirect( add_query_arg( 'carmel_rev', 'err', self::url( $store_id ) ) );
+			exit;
+		}
+		$name = isset( $_POST['rev_name'] ) ? sanitize_text_field( wp_unslash( $_POST['rev_name'] ) ) : '';
+		$name = $name ? $name : '匿名';
+
+		$cid = wp_insert_comment(
+			array(
+				'comment_post_ID'  => $store_id,
+				'comment_content'  => $body,
+				'comment_author'   => $name,
+				'comment_type'     => self::COMMENT_TYPE,
+				'user_id'          => get_current_user_id(),
+				'comment_approved' => 0, // 承認待ち（本部がモデレート）。
+			)
+		);
+		if ( $cid ) {
+			update_comment_meta( $cid, 'rating', $rating );
+			do_action( 'carmel_store_review_submitted', $store_id, (int) $cid );
+		}
+		wp_safe_redirect( add_query_arg( 'carmel_rev', 'ok', self::url( $store_id ) ) );
+		exit;
 	}
 
 	/* --------------------------------------------------------------------- *
@@ -284,6 +524,8 @@ class Carmel_Store_Profile {
 .carmel-sp-name{font-weight:bold;font-size:1.05em}
 .carmel-sp-addr{color:#7a7488;font-size:.85em;margin:.3em 0}
 .carmel-sp-stock{color:#6b4fbb;font-size:.85em}
+.carmel-sp-filter{display:flex;gap:.5em;flex-wrap:wrap;margin:.8em 0}
+.carmel-sp-filter select{border:1px solid #ccc;border-radius:.3em;padding:.45em}
 .carmel-sp-info{border-collapse:collapse;margin:.6em 0}
 .carmel-sp-info th,.carmel-sp-info td{border:1px solid #eef0f4;padding:.5em .7em;text-align:left;font-size:.92em}
 .carmel-sp-info th{background:#f4f6fb;white-space:nowrap}
@@ -298,8 +540,32 @@ class Carmel_Store_Profile {
 .carmel-sp-car-name{padding:.5em .6em 0;font-size:.88em;font-weight:600}
 .carmel-sp-car-price{padding:0 .6em .6em;color:#6b4fbb;font-weight:bold}
 .carmel-sp-cta{margin:1.4em 0}
-.carmel-btn{display:inline-block;border:0;border-radius:.3em;padding:.6em 1.2em;color:#fff;text-decoration:none}
+.carmel-btn{display:inline-block;border:0;border-radius:.3em;padding:.6em 1.2em;color:#fff;text-decoration:none;cursor:pointer}
 .carmel-btn-purple{background:#6b4fbb}.carmel-btn-blue{background:#2e86de}
+.carmel-sp-stats{display:flex;gap:.7em;flex-wrap:wrap;margin:1em 0}
+.carmel-sp-stat{border:1px solid #e7e2ef;border-radius:.6em;padding:.7em 1.1em;min-width:100px;text-align:center;background:#fff}
+.carmel-sp-stat-num{font-size:1.4em;font-weight:bold;color:#6b4fbb}
+.carmel-sp-stat-lbl{font-size:.78em;color:#666}
+.carmel-sp-staff{display:flex;gap:1em;flex-wrap:wrap;margin:.6em 0}
+.carmel-sp-member{text-align:center;width:90px}
+.carmel-sp-ava{border-radius:50%}
+.carmel-sp-mname{font-size:.85em;font-weight:600;margin-top:.3em}
+.carmel-sp-mrole{font-size:.75em;color:#888}
+.carmel-sp-stars{color:#e6a100;letter-spacing:.05em}
+.carmel-sp-avg{font-size:1.05em;margin:.3em 0}
+.carmel-sp-reviews{list-style:none;padding:0;margin:.6em 0}
+.carmel-sp-reviews li{border-top:1px solid #ece6f5;padding:.7em 0}
+.carmel-sp-rauthor{font-weight:600;margin-left:.4em}
+.carmel-sp-rdate{color:#9298a5;font-size:.82em;margin-left:.4em}
+.carmel-sp-rbody{margin-top:.3em;line-height:1.7}
+.carmel-sp-norev{color:#888}
+.carmel-sp-revform{margin:1em 0;border:1px solid #e7e2ef;border-radius:10px;padding:.5em 1em;background:#fff}
+.carmel-sp-revform summary{cursor:pointer;font-weight:700}
+.carmel-sp-revform label{display:block;font-size:.85em;color:#555;margin:.4em 0}
+.carmel-sp-revform input[type=text],.carmel-sp-revform select,.carmel-sp-revform textarea{width:100%;border:1px solid #ccc;border-radius:.3em;padding:.45em;margin-top:.2em}
+.carmel-sp-revnote{font-size:.78em;color:#888}
+.carmel-sp-revbanner{background:#e8f8f3;color:#0e6e58;border:1px solid #16a085;border-radius:.4em;padding:.6em 1em;margin:.5em 0}
+.carmel-sp-revbanner.err{background:#fdecea;color:#a5281b;border-color:#c0392b}
 </style>';
 	}
 }
