@@ -15,8 +15,9 @@ class Carmel_Store_Follow {
 	/** @var Carmel_Store_Follow|null */
 	private static $instance = null;
 
-	const ACTION = 'carmel_store_follow';
-	const NONCE  = 'carmel_follow_nonce';
+	const ACTION       = 'carmel_store_follow';
+	const MY_SHORTCODE = 'carmel_my_stores';
+	const NONCE        = 'carmel_follow_nonce';
 
 	public static function instance() {
 		if ( null === self::$instance ) {
@@ -26,6 +27,7 @@ class Carmel_Store_Follow {
 	}
 
 	public function register_hooks() {
+		add_shortcode( self::MY_SHORTCODE, array( $this, 'render_my' ) );
 		add_action( 'admin_post_' . self::ACTION, array( $this, 'handle_follow' ) );
 		// 在庫公開を検知してフォロワーへ通知。
 		add_action( 'added_post_meta', array( $this, 'on_vehicle_meta' ), 25, 4 );
@@ -66,6 +68,43 @@ class Carmel_Store_Follow {
 			. '<input type="hidden" name="store_id" value="' . (int) $store_id . '">'
 			. '<input type="hidden" name="' . esc_attr( self::NONCE ) . '" value="' . esc_attr( $nonce ) . '">'
 			. '<button type="submit" class="carmel-btn ' . $cls . '">' . esc_html( $label ) . '</button></form>';
+	}
+
+	/** マイページ用：フォロー中の店舗一覧（会員が管理）。 */
+	public function render_my() {
+		if ( ! is_user_logged_in() ) {
+			return '<p class="carmel-notice">ログインするとフォロー中の店舗を確認できます。</p>';
+		}
+		$ids = $this->followed();
+		$out = '<style>
+.carmel-mystores{font-size:14px;max-width:640px}
+.carmel-mystores ul{list-style:none;padding:0;margin:.6em 0}
+.carmel-mystores li{display:flex;align-items:center;justify-content:space-between;gap:1em;border:1px solid #e7e2ef;border-radius:10px;padding:.7em 1em;margin:.5em 0;background:#fff}
+.carmel-mystores a.name{font-weight:600;color:#5b2a86;text-decoration:none}
+.carmel-mystores .addr{color:#7a7488;font-size:.82em}
+.carmel-btn{display:inline-block;border:0;border-radius:.3em;padding:.4em .9em;color:#fff;cursor:pointer;font-size:.85em;text-decoration:none}
+.carmel-btn-purple{background:#6b4fbb}.carmel-btn-ghost{background:#eef2fb;color:#2e86de}
+.carmel-notice{padding:1em;background:#f4f6fb;border:1px solid #cdd2dc;border-radius:.4em}
+</style>';
+		$out .= '<div class="carmel-mystores"><h2>フォロー中の店舗</h2>';
+		if ( empty( $ids ) ) {
+			$out .= '<p>フォロー中の店舗はありません。店舗ページからフォローすると、新着在庫をお知らせします。</p></div>';
+			return $out;
+		}
+		$out .= '<ul>';
+		foreach ( $ids as $sid ) {
+			if ( 'carmel_store' !== get_post_type( $sid ) || 'publish' !== get_post_status( $sid ) ) {
+				continue;
+			}
+			$name = get_post_meta( $sid, 'store_name', true ) ?: get_the_title( $sid );
+			$addr = (string) get_post_meta( $sid, 'store_address', true );
+			$url  = class_exists( 'Carmel_Store_Profile' ) ? Carmel_Store_Profile::url( $sid ) : '#';
+			$out .= '<li><div><a class="name" href="' . esc_url( $url ) . '">' . esc_html( $name ) . '</a>'
+				. ( $addr ? '<div class="addr">' . esc_html( $addr ) . '</div>' : '' ) . '</div>'
+				. '<div>' . $this->follow_button( $sid ) . '</div></li>';
+		}
+		$out .= '</ul></div>';
+		return $out;
 	}
 
 	public function handle_follow() {

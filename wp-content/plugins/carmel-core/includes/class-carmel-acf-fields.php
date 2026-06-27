@@ -173,7 +173,12 @@ class Carmel_ACF_Fields {
 			$this->f( 'store', 'store_name', '店舗名' ),
 			$this->f( 'store', 'store_address', '店舗住所（陸送元・公開ページ地図）' ),
 			$this->f( 'store', 'store_tel', '電話番号（公開ページ）' ),
-			$this->f( 'store', 'store_hours', '営業時間（公開ページ）' ),
+			$this->f( 'store', 'store_hours', '営業時間メモ（補足・任意）' ),
+			$this->f( 'store', 'store_open', '開店時刻（例 10:00）' ),
+			$this->f( 'store', 'store_close', '閉店時刻（例 19:00）' ),
+			$this->f( 'store', 'store_closed_days', '定休日', 'checkbox', array(
+				'choices' => array( 'Mo' => '月', 'Tu' => '火', 'We' => '水', 'Th' => '木', 'Fr' => '金', 'Sa' => '土', 'Su' => '日' ),
+			) ),
 			$this->f( 'store', 'store_area', 'エリア（加盟店検索）', 'select', array(
 				'choices'    => $this->region_choices(),
 				'allow_null' => 1,

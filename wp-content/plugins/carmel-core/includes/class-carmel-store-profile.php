@@ -198,6 +198,7 @@ class Carmel_Store_Profile {
 			echo '<p>条件に合う加盟店が見つかりませんでした。</p></div>';
 			return ob_get_clean();
 		}
+		echo $this->directory_map( $stores ); // phpcs:ignore WordPress.Security.EscapeOutput
 		echo '<div class="carmel-sp-grid">';
 		foreach ( $stores as $s ) {
 			$name  = $this->store_name( $s );
@@ -212,6 +213,82 @@ class Carmel_Store_Profile {
 			echo '</a>';
 		}
 		echo '</div></div>';
+		return ob_get_clean();
+	}
+
+	/** 1リクエストのジオコーディング上限。 */
+	private $geocode_budget = 8;
+
+	/** 店舗の緯度経度（store_lat/store_lng にキャッシュ・在庫地図と共通）。 */
+	private function store_coords( $store_id ) {
+		$lat = get_post_meta( $store_id, 'store_lat', true );
+		$lng = get_post_meta( $store_id, 'store_lng', true );
+		if ( '' !== (string) $lat && '' !== (string) $lng ) {
+			return array( (float) $lat, (float) $lng );
+		}
+		$key  = $this->maps_api_key();
+		$addr = (string) get_post_meta( $store_id, 'store_address', true );
+		if ( '' === $key || '' === $addr || $this->geocode_budget <= 0 ) {
+			return null;
+		}
+		$this->geocode_budget--;
+		$url = add_query_arg( array( 'address' => rawurlencode( $addr ), 'language' => 'ja', 'key' => $key ), 'https://maps.googleapis.com/maps/api/geocode/json' );
+		$res = wp_remote_get( $url, array( 'timeout' => 15 ) );
+		if ( is_wp_error( $res ) ) {
+			return null;
+		}
+		$body = json_decode( wp_remote_retrieve_body( $res ), true );
+		$loc  = isset( $body['results'][0]['geometry']['location'] ) ? $body['results'][0]['geometry']['location'] : null;
+		if ( ! $loc ) {
+			return null;
+		}
+		update_post_meta( $store_id, 'store_lat', (float) $loc['lat'] );
+		update_post_meta( $store_id, 'store_lng', (float) $loc['lng'] );
+		return array( (float) $loc['lat'], (float) $loc['lng'] );
+	}
+
+	/** 加盟店ディレクトリの複数マーカー地図（Maps JS API）。 */
+	private function directory_map( array $stores ) {
+		$key = $this->maps_api_key();
+		if ( '' === $key ) {
+			return '';
+		}
+		$points = array();
+		foreach ( $stores as $s ) {
+			$c = $this->store_coords( $s->ID );
+			if ( ! $c ) {
+				continue;
+			}
+			$points[] = array(
+				'lat'  => $c[0],
+				'lng'  => $c[1],
+				'name' => $this->store_name( $s ),
+				'url'  => self::url( $s->ID ),
+			);
+		}
+		if ( empty( $points ) ) {
+			return '';
+		}
+		$json = wp_json_encode( $points );
+		ob_start();
+		?>
+<div id="carmel-storemap" class="carmel-sp-dirmap"></div>
+<script>
+window.carmelStorePoints=<?php echo $json; // phpcs:ignore WordPress.Security.EscapeOutput ?>;
+window.carmelInitStoreMap=function(){
+	var pts=window.carmelStorePoints||[];if(!pts.length)return;
+	var map=new google.maps.Map(document.getElementById('carmel-storemap'),{zoom:6,center:{lat:pts[0].lat,lng:pts[0].lng}});
+	var b=new google.maps.LatLngBounds(),iw=new google.maps.InfoWindow();
+	pts.forEach(function(p){
+		var m=new google.maps.Marker({position:{lat:p.lat,lng:p.lng},map:map,title:p.name});
+		b.extend(m.getPosition());
+		m.addListener('click',function(){iw.setContent('<div style="font-size:13px"><strong>'+p.name+'</strong><br><a href="'+p.url+'">店舗ページ</a></div>');iw.open(map,m);});
+	});
+	if(pts.length>1)map.fitBounds(b);
+};
+</script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=<?php echo esc_attr( $key ); ?>&callback=carmelInitStoreMap"></script>
+		<?php
 		return ob_get_clean();
 	}
 
@@ -270,6 +347,9 @@ class Carmel_Store_Profile {
 			echo '<tr><th>営業時間</th><td>' . esc_html( $hours ) . '</td></tr>';
 		}
 		echo '</table>';
+
+		// 曜日別 営業時間表。
+		echo $this->hours_table( $store_id ); // phpcs:ignore WordPress.Security.EscapeOutput
 
 		if ( $desc ) {
 			echo '<div class="carmel-sp-desc">' . wp_kses_post( wpautop( $desc ) ) . '</div>';
@@ -505,6 +585,37 @@ class Carmel_Store_Profile {
 	 * 補助
 	 * --------------------------------------------------------------------- */
 
+	/** 曜日コード => 日本語/英語名。 */
+	private static function days() {
+		return array(
+			'Mo' => array( '月', 'Monday' ), 'Tu' => array( '火', 'Tuesday' ), 'We' => array( '水', 'Wednesday' ),
+			'Th' => array( '木', 'Thursday' ), 'Fr' => array( '金', 'Friday' ), 'Sa' => array( '土', 'Saturday' ), 'Su' => array( '日', 'Sunday' ),
+		);
+	}
+
+	private function closed_days( $store_id ) {
+		$c = get_post_meta( $store_id, 'store_closed_days', true );
+		return is_array( $c ) ? $c : ( $c ? array( $c ) : array() );
+	}
+
+	/** 曜日別営業時間表（開店/閉店＋定休日）。 */
+	private function hours_table( $store_id ) {
+		$open  = (string) get_post_meta( $store_id, 'store_open', true );
+		$close = (string) get_post_meta( $store_id, 'store_close', true );
+		if ( '' === $open && '' === $close && empty( $this->closed_days( $store_id ) ) ) {
+			return '';
+		}
+		$closed = $this->closed_days( $store_id );
+		$out    = '<table class="carmel-sp-hours"><tbody>';
+		foreach ( self::days() as $code => $d ) {
+			$is_closed = in_array( $code, $closed, true );
+			$val = $is_closed ? '定休日' : ( ( $open || $close ) ? ( $open . '〜' . $close ) : '—' );
+			$out .= '<tr class="' . ( $is_closed ? 'carmel-sp-closed' : '' ) . '"><th>' . esc_html( $d[0] ) . '</th><td>' . esc_html( $val ) . '</td></tr>';
+		}
+		$out .= '</tbody></table>';
+		return $out;
+	}
+
 	private function store_name( $store ) {
 		$n = (string) get_post_meta( $store->ID, 'store_name', true );
 		return $n ? $n : get_the_title( $store );
@@ -603,6 +714,26 @@ class Carmel_Store_Profile {
 		if ( $tel ) {
 			$ld['telephone'] = $tel;
 		}
+		// 営業時間（openingHoursSpecification）。
+		$open  = (string) get_post_meta( $store_id, 'store_open', true );
+		$close = (string) get_post_meta( $store_id, 'store_close', true );
+		if ( $open && $close ) {
+			$closed   = $this->closed_days( $store_id );
+			$open_days = array();
+			foreach ( self::days() as $code => $d ) {
+				if ( ! in_array( $code, $closed, true ) ) {
+					$open_days[] = $d[1]; // 英語曜日名
+				}
+			}
+			if ( $open_days ) {
+				$ld['openingHoursSpecification'] = array(
+					'@type'     => 'OpeningHoursSpecification',
+					'dayOfWeek' => $open_days,
+					'opens'     => $open,
+					'closes'    => $close,
+				);
+			}
+		}
 		echo "\n<!-- Carmel store SEO -->\n";
 		echo '<script type="application/ld+json">' . wp_json_encode( $ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES ) . "</script>\n"; // phpcs:ignore WordPress.Security.EscapeOutput
 		echo '<meta property="og:type" content="business.business">' . "\n";
@@ -622,10 +753,15 @@ class Carmel_Store_Profile {
 .carmel-sp-stock{color:#6b4fbb;font-size:.85em}
 .carmel-sp-filter{display:flex;gap:.5em;flex-wrap:wrap;margin:.8em 0}
 .carmel-sp-filter select{border:1px solid #ccc;border-radius:.3em;padding:.45em}
+.carmel-sp-dirmap{width:100%;height:340px;border-radius:10px;margin:.6em 0}
 .carmel-sp-info{border-collapse:collapse;margin:.6em 0}
 .carmel-sp-info th,.carmel-sp-info td{border:1px solid #eef0f4;padding:.5em .7em;text-align:left;font-size:.92em}
 .carmel-sp-info th{background:#f4f6fb;white-space:nowrap}
 .carmel-sp-desc{line-height:1.85;margin:.8em 0}
+.carmel-sp-hours{border-collapse:collapse;margin:.4em 0 1em}
+.carmel-sp-hours th,.carmel-sp-hours td{border:1px solid #eef0f4;padding:.3em .9em;text-align:left;font-size:.88em}
+.carmel-sp-hours th{background:#f7f5fb;width:3em;text-align:center}
+.carmel-sp-hours tr.carmel-sp-closed td,.carmel-sp-hours tr.carmel-sp-closed th{color:#c0392b}
 .carmel-sp-map{margin:1em 0}
 .carmel-sp-map iframe{width:100%;height:280px;border:0;border-radius:10px}
 .carmel-sp-cars{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.8em;margin:.6em 0}
