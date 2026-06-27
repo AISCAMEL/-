@@ -592,8 +592,10 @@ AI自動応答：LINE Webhook → ボット(GAS/LLM)でFAQ応答・必要時にL
   3. `carmel_line_ai_endpoint`（GAS/LLM）設定時 → メッセージを委譲し `{"reply": "..."}` を返信（**AI自動応答**）
   4. 未設定なら**組み込みFAQ**（営業時間/場所/見積/保証/納車・`carmel_line_faqs` で編集可）
   5. いずれも無ければ既定の案内＋メニュー
-- **follow（友だち追加）**：ウェルカム＋導線。`carmel_line_message` / `carmel_line_follow` / `carmel_line_postback` アクションで拡張可
-- 設定：`carmel_line_form_url`（審査フォームのLIFF URL）、`carmel_line_ai_endpoint`（任意のAI応答先）
+- **会話型ヒアリング**：クイックリプライ「チャットで相談」→ 氏名→電話→内容 を対話で聞き取り、**`carmel_support`（`support_type=line_inquiry`・`line_user_id`）として反響起票**＋本部へ `line_lead` 通知（状態は transient で保持・「キャンセル」で中止）
+- **follow（友だち追加）**：ウェルカム＋導線。`carmel_line_message` / `carmel_line_follow` / `carmel_line_postback` / `carmel_line_lead_created` アクションで拡張可
+- 設定：`carmel_line_form_url`（審査フォームのLIFF URL）、`carmel_line_ai_endpoint`（任意のAI応答先・GAS雛形は `docs/line-ai-endpoint.gs`）
+- **実機テスト手順**：`docs/LINE_LIFF_セットアップとテスト.md`
 
 > LINE Developers 側で Webhook URL に上記エンドポイントを登録し、応答メッセージ（自動応答）をオフ、Webhookをオンにする。チャネルアクセストークン＝返信、チャネルシークレット＝署名検証に使用。
 
