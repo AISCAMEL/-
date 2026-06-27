@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 6.5
+ * Version: 6.6
  * Author: CARMEL
  */
 
@@ -43,6 +43,15 @@ function carmel3_auto_get_settings() {
         'image_model'  => CARMEL3_IMG_DEFAULT_MODEL,
         'banner_field' => 'hero_image',
         'gmb_post'     => 0,
+        // 追加で自動生成する投稿タイプ（メディア記事は常に本体エンジンで生成。ここは“追加分”）
+        'extra_types'  => array(),
+        // 通知（Slack / LINE）
+        'notify_on'     => 'draft',   // draft=下書きができた時 / publish=公開した時
+        'slack_enabled' => 0,
+        'slack_webhook' => '',
+        'line_enabled'  => 0,
+        'line_token'    => '',
+        'line_to'       => '',
         'eyecatch_w'   => 1200,
         'eyecatch_h'   => 630,
         'banner_w'     => 1200,
@@ -241,6 +250,26 @@ function carmel3_auto_run() {
         $gmb_msg = ' | Google: ' . carmel3_auto_post_to_gmb($post_id, $item['account'] !== '' ? $item['account'] : 'main');
     }
 
+    // 追加投稿タイプ（NEWS・加盟店ブログ等）にも同じテーマでAI生成
+    $extra_msg = '';
+    $extra_titles = array();
+    $extra_types = (isset($s['extra_types']) && is_array($s['extra_types'])) ? $s['extra_types'] : array();
+    foreach ($extra_types as $pt) {
+        if ($pt === 'media_article' || !post_type_exists($pt)) continue;
+        $epid = carmel3_gen_post($pt, $item, $s);
+        if (is_wp_error($epid)) {
+            $extra_msg .= ' | ' . $pt . '失敗(' . $epid->get_error_message() . ')';
+        } else {
+            $obj = get_post_type_object($pt);
+            $lbl = $obj ? ($obj->labels->singular_name ?: $pt) : $pt;
+            $extra_titles[] = $lbl . '#' . $epid;
+            $extra_msg .= ' | ' . $lbl . 'OK#' . $epid;
+            // 追加記事も通知（テスト宛プレビュー）
+            $note = '（メディア記事「' . $title . '」と同テーマ）';
+            carmel3_notify_new_post($s, $epid, $note);
+        }
+    }
+
     if (function_exists('carmel_history_add')) {
         carmel_history_add('auto_generate', $title, $post_id, array(
             'account'  => $item['account'],
@@ -248,9 +277,18 @@ function carmel3_auto_run() {
         ));
     }
 
+    // 通知（Slack / LINE）：メディア記事の本体ぶん
+    $notify_msg = '';
+    $notify_now = (isset($s['notify_on']) && $s['notify_on'] === 'publish') ? !empty($s['publish']) : true;
+    if ($notify_now && (!empty($s['slack_enabled']) || !empty($s['line_enabled']))) {
+        $extra_note = !empty($extra_titles) ? ('同時作成: ' . implode('、', $extra_titles)) : '';
+        $r = carmel3_notify_new_post($s, $post_id, $extra_note);
+        if ($r !== '') $notify_msg = ' | 通知: ' . $r;
+    }
+
     $remaining = carmel3_auto_remaining_count($s);
     $status_label = !empty($s['publish']) ? '公開' : '下書き';
-    carmel3_auto_log($s, "成功: {$title}（{$status_label}） post#{$post_id}{$cta_msg}{$img_msg}{$gmb_msg} | 残り{$remaining}件");
+    carmel3_auto_log($s, "成功: {$title}（{$status_label}） post#{$post_id}{$cta_msg}{$img_msg}{$gmb_msg}{$extra_msg}{$notify_msg} | 残り{$remaining}件");
     return $post_id;
 }
 
@@ -724,6 +762,141 @@ function carmel3_auto_post_to_gmb($post_id, $account = 'main') {
     return !empty($r['success']) ? '投稿成功' : ('投稿失敗(' . ($r['message'] ?? '不明') . ')');
 }
 
+/* ===== 追加投稿タイプ（NEWS・加盟店ブログ等）をAIでゼロから生成 ===== */
+
+// 選べる投稿タイプ（メディア記事と添付などを除く）
+function carmel3_selectable_post_types() {
+    $out = array();
+    $types = get_post_types(array('show_ui' => true), 'objects');
+    $skip = array('attachment', 'media_article', 'wp_block', 'wp_template', 'wp_template_part', 'wp_navigation');
+    foreach ($types as $pt) {
+        if (in_array($pt->name, $skip, true)) continue;
+        $out[$pt->name] = $pt->labels->singular_name ? $pt->labels->singular_name : $pt->label;
+    }
+    return $out;
+}
+
+// 1つの投稿タイプに、テーマから記事をAI生成して保存
+function carmel3_gen_post($post_type, $item, $s) {
+    if (!function_exists('carmel_call_openrouter_chat')) {
+        return new WP_Error('no_engine', '本体のAI関数(carmel_call_openrouter_chat)が見つかりません');
+    }
+    $kw    = ($item['keyword'] !== '') ? $item['keyword'] : $item['title'];
+    $title = ($item['title'] !== '') ? $item['title'] : $kw;
+    $area  = trim($item['prefecture'] . ' ' . $item['city']);
+
+    $obj = get_post_type_object($post_type);
+    $type_label = ($obj && !empty($obj->labels->singular_name)) ? $obj->labels->singular_name : $post_type;
+
+    $system = 'あなたは中古車販売店カーメルの日本語編集者です。自然な日本語で、JSONのみ返してください。中国語は禁止。';
+    $user = "次の条件で「{$type_label}」向けの記事をJSONで作成してください。\n"
+        . "【テーマ/タイトル案】{$title}\n"
+        . "【キーワード】{$kw}\n"
+        . "【対象地域】{$area}\n\n"
+        . "JSONキー:\n{\n  \"title\": \"\",\n  \"excerpt\": \"100〜140文字\",\n  \"content_html\": \"<h2>..</h2><p>..</p> 形式で1000文字以上\"\n}\n"
+        . "注意: 自然な日本語 / HTMLで本文 / 誇大表現は避ける。";
+
+    $res = carmel_call_openrouter_chat(array(
+        array('role' => 'system', 'content' => $system),
+        array('role' => 'user',   'content' => $user),
+    ), '', 0.7, 90);
+
+    if (!empty($res['error'])) return new WP_Error('api', $res['error']);
+
+    $content = isset($res['content']) ? (string)$res['content'] : '';
+    $json = function_exists('carmel_extract_json_from_text') ? carmel_extract_json_from_text($content) : json_decode(trim($content), true);
+    if (!is_array($json)) return new WP_Error('parse', 'AI応答の解析に失敗');
+
+    $t  = sanitize_text_field(isset($json['title']) && $json['title'] !== '' ? $json['title'] : $title);
+    $ex = sanitize_textarea_field(isset($json['excerpt']) ? $json['excerpt'] : '');
+    $html = wp_kses_post(isset($json['content_html']) ? $json['content_html'] : '');
+    if (function_exists('carmel_normalize_ja_text')) { $t = carmel_normalize_ja_text($t); }
+
+    $status = !empty($s['publish']) ? 'publish' : 'draft';
+    $pid = wp_insert_post(array(
+        'post_type'    => $post_type,
+        'post_status'  => $status,
+        'post_title'   => $t,
+        'post_content' => $html,
+        'post_excerpt' => $ex,
+    ), true);
+    if (is_wp_error($pid)) return $pid;
+
+    update_post_meta($pid, '_carmel3_generated', 1);
+    update_post_meta($pid, '_carmel_keyword', $kw);
+    return $pid;
+}
+
+/* ===== 通知（Slack / LINE） ===== */
+
+// 記事のプレビュー素材を作る
+function carmel3_post_preview($post_id) {
+    $title = get_the_title($post_id);
+    $ex    = get_the_excerpt($post_id);
+    if (trim($ex) === '') { $ex = wp_trim_words(wp_strip_all_tags(get_post_field('post_content', $post_id)), 60, '…'); }
+    $status = get_post_status($post_id);
+    $link = ($status === 'publish') ? get_permalink($post_id) : get_edit_post_link($post_id, 'raw');
+    $img = '';
+    $tid = get_post_thumbnail_id($post_id);
+    if ($tid) { $img = wp_get_attachment_image_url($tid, 'large') ?: ''; }
+    $ptlabel = '';
+    $obj = get_post_type_object(get_post_type($post_id));
+    if ($obj) { $ptlabel = $obj->labels->singular_name ?: $obj->label; }
+    return array('title' => $title, 'excerpt' => $ex, 'link' => $link, 'image' => $img, 'status' => $status, 'type' => $ptlabel);
+}
+
+function carmel3_notify_slack($s, $text) {
+    $url = trim((string)$s['slack_webhook']);
+    if ($url === '') return 'Slack未設定';
+    $r = wp_remote_post($url, array(
+        'headers' => array('Content-Type' => 'application/json'),
+        'body'    => wp_json_encode(array('text' => $text), JSON_UNESCAPED_UNICODE),
+        'timeout' => 20,
+    ));
+    if (is_wp_error($r)) return 'Slack失敗(' . $r->get_error_message() . ')';
+    $code = (int)wp_remote_retrieve_response_code($r);
+    return ($code >= 200 && $code < 300) ? 'Slack送信OK' : ('Slack失敗(HTTP' . $code . ')');
+}
+
+function carmel3_notify_line($s, $text, $image_url = '') {
+    $token = trim((string)$s['line_token']);
+    $to    = trim((string)$s['line_to']);
+    if ($token === '' || $to === '') return 'LINE未設定';
+
+    $messages = array();
+    if ($image_url !== '' && strpos($image_url, 'https://') === 0) {
+        $messages[] = array('type' => 'image', 'originalContentUrl' => $image_url, 'previewImageUrl' => $image_url);
+    }
+    $messages[] = array('type' => 'text', 'text' => mb_substr($text, 0, 4900));
+
+    $r = wp_remote_post('https://api.line.me/v2/bot/message/push', array(
+        'headers' => array(
+            'Content-Type'  => 'application/json',
+            'Authorization' => 'Bearer ' . $token,
+        ),
+        'body'    => wp_json_encode(array('to' => $to, 'messages' => $messages), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        'timeout' => 20,
+    ));
+    if (is_wp_error($r)) return 'LINE失敗(' . $r->get_error_message() . ')';
+    $code = (int)wp_remote_retrieve_response_code($r);
+    if ($code >= 200 && $code < 300) return 'LINE送信OK';
+    return 'LINE失敗(HTTP' . $code . ': ' . wp_remote_retrieve_body($r) . ')';
+}
+
+// 新しい記事ができたら Slack / LINE に通知（テストアカウント宛のプレビュー）
+function carmel3_notify_new_post($s, $post_id, $extra_note = '') {
+    $p = carmel3_post_preview($post_id);
+    $statusja = ($p['status'] === 'publish') ? '公開' : '下書き';
+    $base = "【カーメル 自動生成】{$p['type']}を{$statusja}で作成\n■ {$p['title']}\n{$p['excerpt']}";
+    if ($extra_note !== '') $base .= "\n" . $extra_note;
+    if (!empty($p['link'])) $base .= "\n" . $p['link'];
+
+    $out = array();
+    if (!empty($s['slack_enabled'])) $out[] = carmel3_notify_slack($s, $base);
+    if (!empty($s['line_enabled']))  $out[] = carmel3_notify_line($s, $base, $p['image']);
+    return implode(' / ', $out);
+}
+
 /* ===== 管理画面メニュー（確実に出すため admin_menu 優先度を明示） ===== */
 
 add_action('admin_menu', 'carmel3_auto_register_menu', 99);
@@ -773,6 +946,34 @@ function carmel3_strip_menu_emoji() {
                 $submenu['carmel-manager'][$k][0] = $strip($item[0]);
             }
         }
+        // 並び替え（分かりやすい順に整理）。指定外は元の順で後ろに付ける
+        $order = array(
+            'carmel3-home',     // かんたんホーム
+            'carmel-manager',   // 記事生成（親と同じスラッグ）
+            'carmel3-auto',     // 自動生成
+            'carmel-sns',       // SNS投稿
+            'carmel-meo',       // （本体側にあれば）
+            'carmel3-meo',      // その他掲載ページ（MEO）
+            'carmel-history',   // 生成履歴
+            'carmel-settings',  // 設定
+        );
+        $rows = $submenu['carmel-manager'];
+        $bucket = array();
+        foreach ($rows as $row) {
+            $slug = isset($row[2]) ? $row[2] : '';
+            $bucket[$slug][] = $row;
+        }
+        $sorted = array();
+        foreach ($order as $slug) {
+            if (!empty($bucket[$slug])) {
+                foreach ($bucket[$slug] as $row) { $sorted[] = $row; }
+                unset($bucket[$slug]);
+            }
+        }
+        foreach ($bucket as $slug => $list) {
+            foreach ($list as $row) { $sorted[] = $row; }
+        }
+        $submenu['carmel-manager'] = array_values($sorted);
     }
 }
 
@@ -1049,12 +1250,51 @@ add_action('admin_post_carmel3_auto_save', function () {
     $bf = isset($_POST['banner_field']) ? sanitize_key($_POST['banner_field']) : '';
     $s['banner_field'] = $bf !== '' ? $bf : 'hero_image';
 
+    // 追加で生成する投稿タイプ（チェックされたものだけ・実在するものだけ）
+    $sel = (isset($_POST['extra_types']) && is_array($_POST['extra_types'])) ? $_POST['extra_types'] : array();
+    $valid = array();
+    $allow = carmel3_selectable_post_types();
+    foreach ($sel as $pt) {
+        $pt = sanitize_key($pt);
+        if (isset($allow[$pt])) $valid[] = $pt;
+    }
+    $s['extra_types'] = array_values(array_unique($valid));
+
+    // 通知設定
+    $non = isset($_POST['notify_on']) ? sanitize_key($_POST['notify_on']) : 'draft';
+    $s['notify_on']     = in_array($non, array('draft', 'publish'), true) ? $non : 'draft';
+    $s['slack_enabled'] = isset($_POST['slack_enabled']) ? 1 : 0;
+    $s['slack_webhook'] = isset($_POST['slack_webhook']) ? esc_url_raw(wp_unslash($_POST['slack_webhook'])) : '';
+    $s['line_enabled']  = isset($_POST['line_enabled']) ? 1 : 0;
+    $s['line_token']    = isset($_POST['line_token']) ? sanitize_text_field(wp_unslash($_POST['line_token'])) : '';
+    $s['line_to']       = isset($_POST['line_to']) ? sanitize_text_field(wp_unslash($_POST['line_to'])) : '';
+
     $s['queue'] = carmel3_auto_parse_queue(isset($_POST['queue']) ? wp_unslash($_POST['queue']) : '');
 
     carmel3_auto_save_settings($s);
     carmel3_auto_reschedule();
 
     wp_safe_redirect(admin_url('admin.php?page=carmel3-auto&saved=1'));
+    exit;
+});
+
+// テスト送信（Slack / LINE）
+add_action('admin_post_carmel3_test_notify', function () {
+    if (!current_user_can('manage_options')) wp_die('権限がありません');
+    check_admin_referer('carmel3_test_notify');
+
+    $s = carmel3_auto_get_settings();
+    $which = isset($_POST['which']) ? sanitize_key($_POST['which']) : '';
+    $msg = '【カーメル】通知テスト送信です。これが届けばOK。';
+    $r = '';
+    if ($which === 'slack') {
+        $r = carmel3_notify_slack($s, $msg);
+    } elseif ($which === 'line') {
+        $r = carmel3_notify_line($s, $msg);
+    }
+    set_transient('carmel3_test_notify_msg', $which . ': ' . $r, 120);
+
+    wp_safe_redirect(admin_url('admin.php?page=carmel3-auto&testnotify=1'));
     exit;
 });
 
@@ -1137,6 +1377,11 @@ function carmel3_auto_settings_page() {
             delete_transient('carmel3_auto_cta_bulk_msg');
             if (is_array($cta_bulk)): ?>
             <div class="notice notice-success"><p>CTA一括チェック完了：<strong><?php echo (int)$cta_bulk['checked']; ?></strong>ページを確認し、<strong><?php echo (int)$cta_bulk['posts']; ?></strong>ページ（<strong><?php echo (int)$cta_bulk['fields']; ?></strong>箇所）を修正しました。</p></div>
+        <?php endif; endif; ?>
+        <?php if (isset($_GET['testnotify'])):
+            $tn = get_transient('carmel3_test_notify_msg'); delete_transient('carmel3_test_notify_msg');
+            if ($tn): ?>
+            <div class="notice notice-info"><p>テスト送信結果：<strong><?php echo esc_html($tn); ?></strong></p></div>
         <?php endif; endif; ?>
         <?php if (!$engine_ok): ?>
             <div class="notice notice-error"><p><strong>注意：</strong>既存プラグイン（CARMEL統合管理 v5.7）が無効か、関数が見つかりません。先に有効化してください。これが無いと自動生成は動きません。</p></div>
@@ -1253,6 +1498,56 @@ function carmel3_auto_settings_page() {
 
             <hr style="margin:16px 0;border:none;border-top:1px solid #eee">
 
+            <p style="margin:0 0 6px"><strong>追加で自動生成する投稿タイプ（A：AIでゼロから生成）</strong><br>
+            <span style="color:#666;font-size:12px">メディア記事は常に生成。ここにチェックした投稿タイプにも、同じテーマで記事をAI生成して保存します（NEWS・加盟店ブログなど）。</span></p>
+            <?php
+            $pts = carmel3_selectable_post_types();
+            $sel_types = (isset($s['extra_types']) && is_array($s['extra_types'])) ? $s['extra_types'] : array();
+            if (empty($pts)): ?>
+                <p style="color:#c2410c;font-size:12px">選べる投稿タイプが見つかりません。</p>
+            <?php else: ?>
+                <div style="display:flex;flex-wrap:wrap;gap:10px 18px;margin:4px 0 0">
+                <?php foreach ($pts as $pt => $label): ?>
+                    <label style="white-space:nowrap"><input type="checkbox" name="extra_types[]" value="<?php echo esc_attr($pt); ?>" <?php checked(in_array($pt, $sel_types, true)); ?>> <?php echo esc_html($label); ?> <span style="color:#999;font-size:11px">(<?php echo esc_html($pt); ?>)</span></label>
+                <?php endforeach; ?>
+                </div>
+                <p style="color:#666;font-size:12px;margin:6px 0 0">※ 「投稿(post)」がNEWS用、「加盟店ブログ」が該当する投稿タイプにチェックしてください。チェックした数だけAPIを使います。</p>
+            <?php endif; ?>
+
+            <hr style="margin:16px 0;border:none;border-top:1px solid #eee">
+
+            <p style="margin:0 0 6px"><strong>通知（Slack ／ LINE）</strong><br>
+            <span style="color:#666;font-size:12px">記事ができたら通知します。LINEはテストアカウント宛に「アイキャッチ＋タイトル＋抜粋＋リンク」を送ります（公開前レビュー用）。</span></p>
+
+            <p><label>通知のタイミング：
+                <select name="notify_on">
+                    <option value="draft" <?php selected($s['notify_on'], 'draft'); ?>>下書きができた時（公開前レビュー・推奨）</option>
+                    <option value="publish" <?php selected($s['notify_on'], 'publish'); ?>>公開した時だけ</option>
+                </select>
+            </label></p>
+
+            <p style="margin:10px 0 4px"><label>
+                <input type="checkbox" name="slack_enabled" value="1" <?php checked(!empty($s['slack_enabled'])); ?>>
+                <strong>Slackに通知する</strong>
+            </label></p>
+            <p style="margin:0"><label>Slack Webhook URL：
+                <input type="text" name="slack_webhook" value="<?php echo esc_attr($s['slack_webhook']); ?>" style="width:480px" placeholder="https://hooks.slack.com/services/XXXX/XXXX/XXXX">
+            </label></p>
+
+            <p style="margin:14px 0 4px"><label>
+                <input type="checkbox" name="line_enabled" value="1" <?php checked(!empty($s['line_enabled'])); ?>>
+                <strong>LINEに通知する（テストアカウント宛）</strong>
+            </label></p>
+            <p style="margin:0">LINEチャネルアクセストークン：
+                <input type="text" name="line_token" value="<?php echo esc_attr($s['line_token']); ?>" style="width:480px" placeholder="Messaging APIのチャネルアクセストークン" autocomplete="off">
+            </p>
+            <p style="margin:6px 0 0">送信先ID（テストアカウントのuserId／groupId）：
+                <input type="text" name="line_to" value="<?php echo esc_attr($s['line_to']); ?>" style="width:300px" placeholder="Uxxxxxxxx... または Cxxxxxxxx...">
+            </p>
+            <p style="color:#666;font-size:12px;margin:6px 0 0">※ LINEは「Messaging API」のチャネルを作り、トークンと、テスト用LINEのuserIdを入れてください。設定を<strong>保存してから</strong>、下の「テスト送信」で確認できます。</p>
+
+            <hr style="margin:16px 0;border:none;border-top:1px solid #eee">
+
             <p><strong>テーマキュー</strong>（1行1テーマ・<code>|</code> 区切り）<br>
                <code>account | category | keyword | prefecture | city | title</code><br>
                <span style="color:#666;font-size:12px">account は <code>main</code> または <code>fc</code>。title は省略可（空ならkeywordを種にモデルが生成）。</span>
@@ -1321,7 +1616,22 @@ function carmel3_auto_settings_page() {
                 <?php wp_nonce_field('carmel3_auto_fix_cta_all'); ?>
                 <button type="submit" class="button">記事のCTAを一括チェック＆修正</button>
             </form>
+
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="margin:0">
+                <input type="hidden" name="action" value="carmel3_test_notify">
+                <input type="hidden" name="which" value="slack">
+                <?php wp_nonce_field('carmel3_test_notify'); ?>
+                <button type="submit" class="button">Slackテスト送信</button>
+            </form>
+
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="margin:0">
+                <input type="hidden" name="action" value="carmel3_test_notify">
+                <input type="hidden" name="which" value="line">
+                <?php wp_nonce_field('carmel3_test_notify'); ?>
+                <button type="submit" class="button">LINEテスト送信</button>
+            </form>
         </div>
+        <p style="color:#666;font-size:12px;margin-top:8px">※ テスト送信は<strong>保存後</strong>の設定で送ります。先に「設定を保存」してから押してください。</p>
 
         <p style="color:#666;font-size:12px;margin-top:18px">
             ※ 「今すぐ1件だけ生成」は WP-Cron を介さずその場で実行します。まずこれで動作確認してください。<br>
