@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 6.8
+ * Version: 6.9
  * Author: CARMEL
  */
 
@@ -54,6 +54,8 @@ function carmel3_auto_get_settings() {
         'line_enabled'  => 0,
         'line_token'    => '',
         'line_to'       => '',
+        // 左メニューのスリム化：隠すトップメニューのスラッグ一覧
+        'hidden_menus' => array(),
         'eyecatch_w'   => 1200,
         'eyecatch_h'   => 630,
         'banner_w'     => 1200,
@@ -930,7 +932,32 @@ function carmel3_auto_register_menu() {
 
 /* ===== 「カーメル管理」メニューの表示名から絵文字だけを消す（本体v5.7のコードは触らず、表示だけ整える） ===== */
 
-add_action('admin_menu', 'carmel3_strip_menu_emoji', 9999);
+add_action('admin_menu', 'carmel3_strip_menu_emoji', 9990);
+// 左メニューの全項目を控えておく（隠す前のスナップショット：ホームのリンク集で使う）
+add_action('admin_menu', 'carmel3_snapshot_menus', 9995);
+// 選ばれたトップメニューを左サイドから隠す（スリム化）
+add_action('admin_menu', 'carmel3_hide_menus', 9999);
+
+function carmel3_snapshot_menus() {
+    global $menu;
+    $GLOBALS['carmel3_all_menus'] = is_array($menu) ? $menu : array();
+}
+
+// 隠してはいけないメニュー（ホームへ戻れるよう常に残す）
+function carmel3_protected_menus() {
+    return array('carmel-manager', 'index.php');
+}
+
+function carmel3_hide_menus() {
+    $s = carmel3_auto_get_settings();
+    $hidden = (isset($s['hidden_menus']) && is_array($s['hidden_menus'])) ? $s['hidden_menus'] : array();
+    if (empty($hidden)) return;
+    $protected = carmel3_protected_menus();
+    foreach ($hidden as $slug) {
+        if (in_array($slug, $protected, true)) continue;
+        remove_menu_page($slug);
+    }
+}
 
 function carmel3_strip_menu_emoji() {
     global $menu, $submenu;
@@ -1018,6 +1045,10 @@ function carmel3_home_page() {
             <p style="margin:0;opacity:.9">迷ったらここから。「記事を作る」「自動で毎日作る」「作った記事を見る」がすぐできます。</p>
         </div>
 
+        <?php if (isset($_GET['menusaved'])): ?>
+            <div class="notice notice-success" style="margin:0 0 16px"><p>左メニューの表示設定を保存しました。サイドバーを確認してください。</p></div>
+        <?php endif; ?>
+
         <!-- 今の状態 -->
         <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:18px">
             <h2 style="margin:0 0 12px;font-size:16px">今の状態</h2>
@@ -1084,10 +1115,10 @@ function carmel3_home_page() {
             <h2 style="margin:0 0 6px;font-size:16px">すべてのメニュー（ここから全部開けます）</h2>
             <p style="margin:0 0 12px;color:#666;font-size:12px">左メニューの項目を自動でまとめています。左がゴチャついても、ここから全機能に移動できます。</p>
             <?php
-            global $menu;
+            $all_menus = isset($GLOBALS['carmel3_all_menus']) && is_array($GLOBALS['carmel3_all_menus']) ? $GLOBALS['carmel3_all_menus'] : $GLOBALS['menu'];
             $links = array();
-            if (is_array($menu)) {
-                foreach ($menu as $m) {
+            if (is_array($all_menus)) {
+                foreach ($all_menus as $m) {
                     if (empty($m[0]) || empty($m[2])) continue;
                     if (strpos($m[2], 'separator') !== false) continue;
                     $raw = $m[0];
@@ -1110,6 +1141,47 @@ function carmel3_home_page() {
                     <a href="<?php echo esc_url($url); ?>" style="text-decoration:none;display:inline-block;background:#f1f5f9;color:#1f2937;border:1px solid #e2e8f0;border-radius:9px;padding:8px 12px;font-size:13px;font-weight:600"><?php echo esc_html($label); ?></a>
                 <?php endforeach; ?>
             </div>
+        </div>
+
+        <!-- 左メニューをスリムに -->
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:18px">
+            <h2 style="margin:0 0 6px;font-size:16px">左メニューをスリムにする</h2>
+            <p style="margin:0 0 12px;color:#666;font-size:12px">チェックした項目を<strong>左サイドメニューから隠します</strong>（上の「すべてのメニュー」からはいつでも開けます）。「カーメル管理」とダッシュボードは安全のため常に表示します。元に戻すのも自由です。</p>
+            <?php
+            $hidden_now = (isset($s['hidden_menus']) && is_array($s['hidden_menus'])) ? $s['hidden_menus'] : array();
+            $protected = function_exists('carmel3_protected_menus') ? carmel3_protected_menus() : array('carmel-manager', 'index.php');
+            $menu_opts = array();
+            if (is_array($all_menus)) {
+                foreach ($all_menus as $m) {
+                    if (empty($m[0]) || empty($m[2])) continue;
+                    if (strpos($m[2], 'separator') !== false) continue;
+                    $slug = $m[2];
+                    if (in_array($slug, $protected, true)) continue;
+                    $raw = preg_replace('/<span[^>]*>.*?<\/span>/u', '', $m[0]);
+                    $lab = trim(wp_strip_all_tags($raw));
+                    if ($lab === '') continue;
+                    $menu_opts[$slug] = $lab;
+                }
+            }
+            ?>
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                <input type="hidden" name="action" value="carmel3_save_menu_visibility">
+                <?php wp_nonce_field('carmel3_save_menu_visibility'); ?>
+                <div style="display:flex;flex-wrap:wrap;gap:8px 16px;max-height:260px;overflow:auto;border:1px solid #eef2f7;border-radius:10px;padding:12px;background:#fafafa">
+                    <?php foreach ($menu_opts as $slug => $lab): ?>
+                        <label style="white-space:nowrap;font-size:13px"><input type="checkbox" name="hidden_menus[]" value="<?php echo esc_attr($slug); ?>" <?php checked(in_array($slug, $hidden_now, true)); ?>> <?php echo esc_html($lab); ?></label>
+                    <?php endforeach; ?>
+                </div>
+                <p style="margin-top:12px;display:flex;gap:10px;align-items:center">
+                    <button type="submit" class="button button-primary">この内容で隠す（保存）</button>
+                </p>
+            </form>
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="margin-top:4px">
+                <input type="hidden" name="action" value="carmel3_save_menu_visibility">
+                <input type="hidden" name="reset" value="1">
+                <?php wp_nonce_field('carmel3_save_menu_visibility'); ?>
+                <button type="submit" class="button">全部表示に戻す</button>
+            </form>
         </div>
 
         <!-- メニューの使い方ガイド -->
@@ -1350,6 +1422,31 @@ add_action('admin_post_carmel3_test_notify', function () {
     set_transient('carmel3_test_notify_msg', $which . ': ' . $r, 120);
 
     wp_safe_redirect(admin_url('admin.php?page=carmel3-auto&testnotify=1'));
+    exit;
+});
+
+// 左メニューのスリム化（隠すメニューの保存）
+add_action('admin_post_carmel3_save_menu_visibility', function () {
+    if (!current_user_can('manage_options')) wp_die('権限がありません');
+    check_admin_referer('carmel3_save_menu_visibility');
+
+    $s = carmel3_auto_get_settings();
+    if (!empty($_POST['reset'])) {
+        $s['hidden_menus'] = array();
+    } else {
+        $protected = function_exists('carmel3_protected_menus') ? carmel3_protected_menus() : array('carmel-manager', 'index.php');
+        $in = (isset($_POST['hidden_menus']) && is_array($_POST['hidden_menus'])) ? $_POST['hidden_menus'] : array();
+        $clean = array();
+        foreach ($in as $slug) {
+            $slug = sanitize_text_field(wp_unslash($slug));
+            if ($slug === '' || in_array($slug, $protected, true)) continue;
+            $clean[] = $slug;
+        }
+        $s['hidden_menus'] = array_values(array_unique($clean));
+    }
+    carmel3_auto_save_settings($s);
+
+    wp_safe_redirect(admin_url('admin.php?page=carmel3-home&menusaved=1'));
     exit;
 });
 
