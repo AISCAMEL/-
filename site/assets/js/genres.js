@@ -51,11 +51,12 @@
   ];
 
   // 各サブに既定値（url/status/cat）を付与し、フラット配列も作る
+  // 専用LPは tools/gen-genre.js が /genre/<slug>/ に一括生成（全ジャンル公開済み）
   var LIST = [];
   GROUPS.forEach(function (g) {
     g.items.forEach(function (it) {
-      if (it.url == null) it.url = '#';
-      if (it.status == null) it.status = 'coming';
+      if (it.url == null) it.url = '/genre/' + it.slug + '/';
+      if (it.status == null) it.status = 'live';
       it.cat = g.cat;
       LIST.push(it);
     });

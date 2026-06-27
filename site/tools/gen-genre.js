@@ -1,7 +1,10 @@
 /* ============================================================
-   BUYMO 買取ジャンル ハブページ ジェネレーター
-   genres.js（唯一のデータソース）を require → site/genre/index.html を静的生成
+   BUYMO 買取ジャンル ジェネレーター
+   genres.js（唯一のデータソース）を require →
+     - site/genre/index.html        … ジャンルハブ
+     - site/genre/<slug>/index.html … 各ジャンル専用LP（全件）
    実行: node tools/gen-genre.js  （site/ で）
+   ※ sitemap.xml は gen-area.js が genres.js を読んで genre URL も収録
    ============================================================ */
 'use strict';
 const fs = require('fs');
@@ -13,9 +16,112 @@ const GENRES = GENRE_DATA.list;
 
 const SITE_URL = ''; // 公開ドメイン確定後に設定すると canonical が絶対URLに
 const ROOT = path.resolve(__dirname, '..');
-const rel = '../'; // /genre/ から見たアセット相対
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const jstr = s => String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 
+/* ---- ジャンル別の固有コピー（無い場合はカテゴリ既定にフォールバック） ---- */
+// points: 「こんな車・ケースでも買取」/ faq: [質問, 回答]
+const COPY = {
+  haisha: {
+    points: ['動かない・エンジンがかからない車も0円以上で買取', '長年放置した車・車検切れの車もそのままでOK', '解体・廃車手続き（永久抹消/一時抹消）も無料で代行', '還付金（自動車税・自賠責・重量税）もしっかりご案内'],
+    faq: [
+      ['価値が無さそうな廃車でも値段が付きますか？', '部品取り・素材リサイクル・輸出など複数の出口を持つため、他社で0円や引取り費用を提示された車でもプラス査定になるケースが多くあります。'],
+      ['廃車の手続きは自分でやる必要がありますか？', 'いいえ。永久抹消・一時抹消などの登録手続きはすべて無料で代行します。お客様にご用意いただくのは基本的に書類のみです。'],
+      ['レッカーが必要な不動車でも引き取れますか？', 'はい。自走できない車もレッカー・積載車で無料引取りに伺います。'],
+      ['還付金は受け取れますか？', '抹消時期により自動車税・自賠責・重量税の還付が発生します。受け取り方法もあわせてご案内します。'],
+    ],
+  },
+  kyusha: {
+    points: ['不動・エンジン不調の旧車も希少価値で評価', '絶版車・名車・旧車會系まで専門知識で査定', '長期不動・レストアベースも歓迎', '相続・ガレージ整理でのまとめ売却もご相談'],
+    faq: [
+      ['動かない旧車でも買い取ってもらえますか？', 'はい。旧車は希少価値が高く、不動車・レストアベースでも国内外の愛好家・専門業者へ流通できるため高価買取が可能です。'],
+      ['年式が非常に古くても査定できますか？', '昭和の名車・絶版車も対応します。むしろ年式が古く希少なほど価値が上がる車種も多くあります。'],
+      ['純正部品が欠品していても大丈夫ですか？', '問題ありません。現状のまま査定します。社外パーツや予備部品があれば加点要素になることもあります。'],
+      ['価値の分かる人に査定してほしいのですが？', '旧車・絶版車の相場に精通したスタッフが対応します。適正価値を正しく評価します。'],
+    ],
+  },
+  hiace: {
+    points: ['商用・キャンパー・パーツ需要で世界的に人気', '過走行（20万km超）でも値段が付きやすい', 'カスタム・架装・乗用/貨物いずれも高評価', '事故歴・修復歴ありでもまずはご相談を'],
+    faq: [
+      ['ハイエースはなぜ高く売れるのですか？', '国内外で商用・福祉・キャンピング需要が非常に高く、海外輸出ルートも強いため、過走行や年式が古くても高値が付きやすい車種です。'],
+      ['走行距離が多くても買い取れますか？', 'はい。20万km・30万kmクラスでもハイエースは需要があり、しっかり査定します。'],
+      ['カスタムしてあると不利になりますか？', 'ベッドキット・架装・カスタムは需要を見て加点評価できる場合があります。現状のままで大丈夫です。'],
+      ['ディーゼル・ガソリン両方対応していますか？', 'はい。スーパーGL・DX・ワゴン・コミューター等、グレード・エンジン問わず査定します。'],
+    ],
+  },
+  landcruiser: {
+    points: ['ランクル・プラド・70/80/100/200系まで高価買取', '海外輸出需要が強く年式不問で評価', '過走行・ディーゼルも歓迎', '修復歴ありでも専門ルートで買取'],
+    faq: [
+      ['古いランクルでも高く売れますか？', 'はい。ランドクルーザーは耐久性と海外人気から、年式が古い70/80系でも非常に高い需要があります。'],
+      ['走行距離が多くても大丈夫ですか？', '問題ありません。輸出需要が中心のため、過走行車でも高価買取が可能です。'],
+      ['プラドやランクル300も対象ですか？', 'はい。プラド・300系・200系・シグナスなど全モデル対応します。'],
+      ['ディーゼル車も買い取れますか？', 'ディーゼルは特に海外需要が高く、歓迎します。'],
+    ],
+  },
+  keitora: {
+    points: ['農業・建設で需要安定、過走行でも買取', 'ダンプ・パネルバン等の架装車もOK', '4WD・MTは特に人気で高評価', '車検切れ・現状渡しもご相談ください'],
+    faq: [
+      ['過走行の軽トラでも値段が付きますか？', 'はい。軽トラックは農業・建設・配送で実用需要が高く、走行距離が多くても買取可能です。'],
+      ['ダンプや幌・パネルなど架装があっても良いですか？', '架装は用途需要につながるため、むしろ評価対象になる場合があります。'],
+      ['4WDやMTは有利ですか？', '4WD・MTは需要が高く、査定でプラスに働きやすいです。'],
+      ['車検が切れていても買い取れますか？', '問題ありません。現状のまま査定・引取りに対応します。'],
+    ],
+  },
+  import: {
+    points: ['ベンツ・BMW・アウディ・VW など欧州車を専門査定', '故障・警告灯点灯・記録簿なしもご相談', '右/左ハンドル・並行輸入車も対応', 'ローン残債ありでも買取・精算サポート'],
+    faq: [
+      ['故障している輸入車でも買い取れますか？', 'はい。専門の整備・部品ルートを持つため、故障車・警告灯点灯車・不動の輸入車も買取可能です。'],
+      ['年式の古い外車でも査定できますか？', '対応します。モデルによっては旧型ほど価値が上がるものもあり、適正に評価します。'],
+      ['並行輸入車や逆輸入車も対象ですか？', 'はい。正規・並行を問わず査定します。記録簿が無くても大丈夫です。'],
+      ['維持費が高くて手放したいのですが？', '車検前・故障前の早めのご相談ほど高く売れる傾向があります。お気軽にどうぞ。'],
+    ],
+  },
+  wheel: {
+    points: ['社外・純正アルミホイールを単体でも買取', 'BBS・RAYS・WORK 等のブランドホイールを高評価', 'タイヤ付き・ホイールセットもまとめて査定', '1本のみ・ガリ傷ありでもまずはご相談'],
+    faq: [
+      ['ホイールだけでも買い取ってもらえますか？', 'はい。車本体が無くてもアルミホイール単体・セットで買取します。'],
+      ['ブランドホイールは高くなりますか？', 'BBS・RAYS（ボルクなど）・WORK・エンケイ等の人気ブランドは中古需要が高く、高価買取の対象です。'],
+      ['ガリ傷や歪みがあっても大丈夫ですか？', '状態を見て査定します。多少の傷でも値段が付くことが多いです。'],
+      ['タイヤが付いたままでも良いですか？', 'はい。タイヤ付き・ホイールセットのまとめ売りも歓迎します。'],
+    ],
+  },
+};
+
+/* カテゴリ別の既定コピー（個別 COPY が無いジャンル用フォールバック） */
+const CAT_DEFAULT = {
+  '状態・お悩みで買取': {
+    points: ['他社で値段が付かなかった車もまずは査定', '不動・故障・修復歴ありでも買取可能', '書類が揃っていなくても取得をサポート', 'ローン残債ありでも精算までご相談OK'],
+  },
+  '人気車種で買取': {
+    points: ['人気車種で高い相場をしっかり反映', '過走行・年式が古くても需要を評価', 'グレード・装備・カラーまで丁寧に査定', '事故歴・修復歴ありでもご相談ください'],
+  },
+  'タイプ・区分で買取': {
+    points: ['同じタイプの最新相場で適正査定', 'グレード・装備・走行距離を細かく評価', '台数が多くても安定した買取価格', '現状渡し・名義変更も無料で代行'],
+  },
+  '旧車・希少車で買取': {
+    points: ['希少価値・人気を踏まえて高く評価', '不動・レストアベースでも歓迎', '純正部品の欠品があっても現状査定', '相続・ガレージ整理のまとめ売却も対応'],
+  },
+  'パーツ・用品買取': {
+    points: ['単体・セットいずれも買取対応', '人気ブランド・社外品も高く評価', '多少の使用感・傷があっても査定', 'まとめ売りで査定アップも'],
+  },
+};
+
+function defaultFaq(g) {
+  return [
+    [`${g.name}は本当に買い取ってもらえますか？`, `はい。${g.desc} 状態や年式を問わず、まずは無料査定でお気軽にご相談ください。`],
+    ['査定や出張に費用はかかりますか？', '査定料・出張費・名義変更などの手続き代行料は一切いただきません。完全無料です。'],
+    ['必要な書類は何ですか？', '車検証・印鑑（普通車は実印＋印鑑証明）・自賠責保険証などが基本です。揃っていない場合も取得をサポートします。'],
+    ['入金はいつになりますか？', 'ご契約と必要書類の確認後、最短即日〜数営業日でご指定口座へお振込みします。'],
+  ];
+}
+
+function copyFor(g) {
+  const o = COPY[g.slug] || {};
+  const cat = CAT_DEFAULT[g.cat] || CAT_DEFAULT['状態・お悩みで買取'];
+  return { points: o.points || cat.points, faq: o.faq || defaultFaq(g) };
+}
+
+/* ---- ハブ用カード ---- */
 function card(g) {
   const soon = g.status === 'coming' || !g.url || g.url === '#';
   const badge = soon ? '<span class="genre-card-soon">準備中</span>' : '<span class="genre-card-go">買取ページへ ›</span>';
@@ -33,11 +139,143 @@ function groupsHtml() {
   ).join('\n      ');
 }
 
+/* ---- 各ジャンル専用LP ---- */
+function genrePage(g) {
+  const rel = '../../';
+  const cp = copyFor(g);
+  const canonical = SITE_URL ? `${SITE_URL}/genre/${g.slug}/` : './';
+  const bcHome = SITE_URL ? `${SITE_URL}/` : '../../';
+  const bcGenre = SITE_URL ? `${SITE_URL}/genre/` : '../';
+  const title = `${g.name}ならBUYMO｜高価買取・無料査定・最短即日入金`;
+  const desc = `${g.name}はBUYMOにおまかせ。${g.desc} 手数料無料・無料出張査定・最短即日入金で1円でも高く買い取ります。`;
+
+  const points = cp.points.map(t => `<li class="point-item"><span class="point-check" aria-hidden="true">✓</span>${esc(t)}</li>`).join('');
+  const accordion = cp.faq.map(([q, a]) =>
+    `<div class="acc-item"><button class="acc-q" aria-expanded="false">${esc(q)}<span class="acc-toggle" aria-hidden="true">▼</span></button><div class="acc-a"><p>${esc(a)}</p></div></div>`).join('\n          ');
+  const faqLd = cp.faq.map(([q, a]) => `{"@type":"Question","name":"${jstr(q)}","acceptedAnswer":{"@type":"Answer","text":"${jstr(a)}"}}`).join(',');
+  // 同カテゴリの関連ジャンル（内部リンク）
+  const group = GROUPS.find(x => x.cat === g.cat);
+  const siblings = group.items.filter(x => x.slug !== g.slug).slice(0, 6)
+    .map(x => `<li><a href="../${x.slug}/">${esc(x.icon)} ${esc(x.name)}</a></li>`).join('');
+
+  return `<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>${esc(title)}</title>
+<meta name="description" content="${esc(desc)}" />
+<meta name="theme-color" content="#FF6B35" />
+<link rel="canonical" href="${esc(canonical)}" />
+<link rel="icon" type="image/svg+xml" href="${rel}assets/img/buymo-favicon.svg" />
+<link rel="apple-touch-icon" href="${rel}assets/img/buymo-favicon-180.png" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="BUYMO｜車買取" />
+<meta property="og:title" content="${esc(title)}" />
+<meta property="og:description" content="${esc(desc)}" />
+<meta property="og:image" content="${rel}assets/img/buymo-ogp.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" />
+<link rel="stylesheet" href="${rel}assets/css/buymo.css" />
+<link rel="stylesheet" href="${rel}assets/css/buymo-area.css" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"AutoDealer","name":"BUYMO（合同会社アイズ） ${jstr(g.name)}","description":"${jstr(g.desc)}","url":"${esc(canonical)}","telephone":"+81-50-1722-3365","email":"info@aisjaltd.com","address":{"@type":"PostalAddress","addressCountry":"JP","addressRegion":"福島県","addressLocality":"いわき市","streetAddress":"四倉町細谷字大町1番"},"openingHours":"Mo-Fr 08:00-17:00"}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"ホーム","item":"${bcHome}"},{"@type":"ListItem","position":2,"name":"買取ジャンル","item":"${bcGenre}"},{"@type":"ListItem","position":3,"name":"${jstr(g.name)}","item":"${esc(canonical)}"}]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[${faqLd}]}
+</script>
+</head>
+<body>
+${header(rel, 'genre')}
+<main>
+  <section class="page-hero area-hero" aria-labelledby="page-title">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="パンくずリスト"><a href="${rel}buymo.html#top">ホーム</a><span aria-hidden="true">›</span><a href="${rel}genre/">買取ジャンル</a><span aria-hidden="true">›</span><span>${esc(g.name)}</span></nav>
+      <p class="hero-lead">${esc(g.icon)} ${esc(g.cat)}</p>
+      <h1 id="page-title">${esc(g.name)}は<span class="hl">BUYMO</span></h1>
+      <p class="page-lead">${esc(g.desc)} 手数料0円・無料出張査定・最短即日入金で、あなたの車を1円でも高く買取します。</p>
+      <div class="area-cta">
+        <a href="${rel}buymo-contact.html?genre=${encodeURIComponent(g.name)}" class="btn btn-primary btn-lg">無料査定を依頼</a>
+        <a href="tel:05017223365" class="btn btn-tel">📞 電話で相談</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="area-intro" aria-labelledby="intro-title">
+    <div class="container">
+      <h2 id="intro-title" class="section-title">${esc(g.name)}の特徴</h2>
+      <p class="lead-text">BUYMOは${esc(g.cat)}に強い車買取サービスです。${esc(g.desc)} 独自の販売・輸出・部品ルートで中間コストを抑え、他社で値段が付かなかった車も含めて適正に評価します。査定はすべて無料、ご自宅まで出張いたします。</p>
+    </div>
+  </section>
+
+  <section class="genre-points" aria-labelledby="points-title">
+    <div class="container">
+      <h2 id="points-title" class="section-title">こんな${esc(g.name).replace('買取','')}でも買取できます</h2>
+      <ul class="point-list">${points}</ul>
+    </div>
+  </section>
+
+  <section class="reasons" aria-labelledby="reasons-title">
+    <div class="container">
+      <h2 id="reasons-title" class="section-title">${esc(g.name)}でBUYMOが選ばれる理由</h2>
+      <div class="grid grid-3 reason-grid">
+        <article class="card reason-card"><div class="card-ico" aria-hidden="true">💰</div><h3>高価買取</h3><p>独自ルートで無駄を省き、${esc(g.name).replace('買取','')}を相場より高く査定します。</p></article>
+        <article class="card reason-card"><div class="card-ico" aria-hidden="true">🚗</div><h3>出張査定無料</h3><p>ご指定の場所まで無料で出張。来店不要・全国対応です。</p></article>
+        <article class="card reason-card"><div class="card-ico" aria-hidden="true">⚡</div><h3>即日対応可能</h3><p>お急ぎでも最短即日で査定から入金まで対応します。</p></article>
+        <article class="card reason-card"><div class="card-ico" aria-hidden="true">🆓</div><h3>手数料無料</h3><p>査定料・出張費・名義変更などの手続き代行料は一切無料。</p></article>
+        <article class="card reason-card"><div class="card-ico" aria-hidden="true">🚧</div><h3>どんな状態でもOK</h3><p>事故・不動・過走行など、他社で断られた車もご相談ください。</p></article>
+        <article class="card reason-card"><div class="card-ico" aria-hidden="true">💳</div><h3>契約後すぐ入金</h3><p>ご契約後スピーディにお振込み。お待たせしません。</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="faq" aria-labelledby="faq-title">
+    <div class="container faq-inner">
+      <div class="faq-main">
+        <h2 id="faq-title" class="section-title">${esc(g.name)} よくある質問</h2>
+        <div class="accordion">
+          ${accordion}
+        </div>
+      </div>
+      <div class="faq-mascot" aria-hidden="true">🐮👉</div>
+    </div>
+  </section>
+
+  <section class="area-related" aria-labelledby="related-title">
+    <div class="container">
+      <h2 id="related-title" class="section-title">${esc(g.cat)}の他のジャンル</h2>
+      <ul class="related-links">${siblings}</ul>
+      <p class="center"><a href="${rel}genre/" class="btn btn-primary">買取ジャンル一覧を見る</a></p>
+    </div>
+  </section>
+
+  <section class="form-section" aria-labelledby="cta-title">
+    <div class="container area-bottom-cta">
+      <h2 id="cta-title">${esc(g.name)}ならBUYMOへ</h2>
+      <p>無料査定はかんたん入力。最短即日でご連絡します。</p>
+      <div class="area-cta">
+        <a href="${rel}buymo-contact.html?genre=${encodeURIComponent(g.name)}" class="btn btn-light btn-lg">無料査定を依頼</a>
+        <a href="tel:05017223365" class="btn btn-tel-light">📞 0120-123-456</a>
+      </div>
+    </div>
+  </section>
+</main>
+${footer(rel)}
+</body>
+</html>`;
+}
+
+/* ---- ハブページ /genre/ ---- */
 const canonical = SITE_URL ? `${SITE_URL}/genre/` : './';
 const title = '買取ジャンル一覧｜廃車・事故車・不動車もBUYMO';
 const desc = '廃車・事故車・不動車・水没車・過走行車・軽自動車・トラック・輸入車・EVまで。状態や種類を問わず車を高価買取するBUYMOのジャンル別買取一覧。手数料無料・無料出張査定・最短即日入金。';
+const rel = '../';
 
-const html = `<!DOCTYPE html>
+const hubHtml = `<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8" />
@@ -70,7 +308,7 @@ ${header(rel, 'genre')}
   <section class="genres-section" aria-label="買取ジャンル一覧">
     <div class="container">
       ${groupsHtml()}
-      <p class="area-note center">「準備中」のジャンルもお電話・フォームから今すぐご相談いただけます。</p>
+      <p class="area-note center">各ジャンルの専門ページから今すぐ無料査定をご依頼いただけます。</p>
     </div>
   </section>
 
@@ -90,6 +328,14 @@ ${footer(rel)}
 </html>
 `;
 
+/* ---- 実行 ---- */
 fs.mkdirSync(path.join(ROOT, 'genre'), { recursive: true });
-fs.writeFileSync(path.join(ROOT, 'genre', 'index.html'), html);
-console.log('generated genre hub (/genre/index.html) with', GROUPS.length, 'groups /', GENRES.length, 'genres');
+fs.writeFileSync(path.join(ROOT, 'genre', 'index.html'), hubHtml);
+let n = 0;
+GENRES.forEach(g => {
+  const dir = path.join(ROOT, 'genre', g.slug);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'index.html'), genrePage(g));
+  n++;
+});
+console.log(`generated genre hub + ${n} genre LPs (${GROUPS.length} groups / ${GENRES.length} genres)`);

@@ -10,6 +10,7 @@ const path = require('path');
 
 const SITE_URL = ''; // 公開ドメイン確定後にここを 'https://example.com' に設定すると canonical/sitemap が絶対URLになる
 const ROOT = path.resolve(__dirname, '..'); // site/
+const GENRES = require('../assets/js/genres').list; // sitemap に各ジャンルLPも収録
 
 /* ---- 47都道府県データ（地方・主要都市） ---- */
 const PREFS = [
@@ -281,6 +282,7 @@ function sitemap() {
     `${base}/buymo-contact.html`,
     `${base}/buymo-partner.html`,
     `${base}/genre/`,
+    ...GENRES.map(g => `${base}/genre/${g.slug}/`),
     `${base}/area/`,
     ...PREFS.map(p => `${base}/area/${p.slug}/`),
   ];
