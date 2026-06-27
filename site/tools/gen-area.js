@@ -8,7 +8,9 @@
 const fs = require('fs');
 const path = require('path');
 
-const SITE_URL = ''; // 公開ドメイン確定後にここを 'https://example.com' に設定すると canonical/sitemap が絶対URLになる
+// 公開ドメイン：環境変数 SITE_URL で指定（例 SITE_URL=https://buymo.jp node tools/gen-area.js）。
+// 設定すると canonical / sitemap / robots が絶対URLになる。未設定なら相対のまま。
+const SITE_URL = (process.env.SITE_URL || '').replace(/\/+$/, '');
 const ROOT = path.resolve(__dirname, '..'); // site/
 const GENRES = require('../assets/js/genres').list; // sitemap に各ジャンルLPも収録
 const CROSS = require('./_cross'); // ジャンル×エリア 掛け合わせLP（sitemap収録用）
@@ -308,6 +310,12 @@ function sitemap() {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemap.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
 }
 
+/* ---- robots.txt（SITE_URL 設定時は Sitemap を絶対URLに） ---- */
+function robots() {
+  const sitemapUrl = SITE_URL ? `${SITE_URL}/sitemap.xml` : '/sitemap.xml';
+  return `User-agent: *\nAllow: /\n\n# Sitemap（SITE_URL 設定で絶対URLに自動更新）\nSitemap: ${sitemapUrl}\n`;
+}
+
 /* ---- 実行 ---- */
 let n = 0;
 PREFS.forEach((p, i) => {
@@ -318,4 +326,5 @@ PREFS.forEach((p, i) => {
 });
 fs.writeFileSync(path.join(ROOT, 'area', 'index.html'), hubPage());
 fs.writeFileSync(path.join(ROOT, 'sitemap.xml'), sitemap());
-console.log(`generated ${n} prefecture pages + hub + sitemap.xml`);
+fs.writeFileSync(path.join(ROOT, 'robots.txt'), robots());
+console.log(`generated ${n} prefecture pages + hub + sitemap.xml + robots.txt${SITE_URL ? ' (SITE_URL=' + SITE_URL + ')' : ''}`);

@@ -15,7 +15,7 @@ const GROUPS = GENRE_DATA.groups;
 const GENRES = GENRE_DATA.list;
 const CROSS = require('./_cross');
 
-const SITE_URL = ''; // 公開ドメイン確定後に設定すると canonical が絶対URLに
+const SITE_URL = (process.env.SITE_URL || '').replace(/\/+$/, ''); // 環境変数 SITE_URL で絶対URL化（未設定は相対）
 const ROOT = path.resolve(__dirname, '..');
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const jstr = s => String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"');

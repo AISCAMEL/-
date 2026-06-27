@@ -61,6 +61,14 @@
   <url><loc>/genre/hiace/osaka/</loc><changefreq>weekly</changefreq></url>
   <url><loc>/genre/hiace/fukuoka/</loc><changefreq>weekly</changefreq></url>
   <url><loc>/genre/hiace/okinawa/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>/genre/landcruiser/hokkaido/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>/genre/landcruiser/fukushima/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>/genre/landcruiser/tokyo/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>/genre/landcruiser/kanagawa/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>/genre/landcruiser/aichi/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>/genre/landcruiser/osaka/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>/genre/landcruiser/fukuoka/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>/genre/landcruiser/okinawa/</loc><changefreq>weekly</changefreq></url>
   <url><loc>/genre/keitora/hokkaido/</loc><changefreq>weekly</changefreq></url>
   <url><loc>/genre/keitora/fukushima/</loc><changefreq>weekly</changefreq></url>
   <url><loc>/genre/keitora/tokyo/</loc><changefreq>weekly</changefreq></url>
@@ -69,6 +77,14 @@
   <url><loc>/genre/keitora/osaka/</loc><changefreq>weekly</changefreq></url>
   <url><loc>/genre/keitora/fukuoka/</loc><changefreq>weekly</changefreq></url>
   <url><loc>/genre/keitora/okinawa/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>/genre/truck/hokkaido/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>/genre/truck/fukushima/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>/genre/truck/tokyo/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>/genre/truck/kanagawa/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>/genre/truck/aichi/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>/genre/truck/osaka/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>/genre/truck/fukuoka/</loc><changefreq>weekly</changefreq></url>
+  <url><loc>/genre/truck/okinawa/</loc><changefreq>weekly</changefreq></url>
   <url><loc>/genre/wheel/hokkaido/</loc><changefreq>weekly</changefreq></url>
   <url><loc>/genre/wheel/fukushima/</loc><changefreq>weekly</changefreq></url>
   <url><loc>/genre/wheel/tokyo/</loc><changefreq>weekly</changefreq></url>

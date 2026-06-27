@@ -1,5 +1,5 @@
 User-agent: *
 Allow: /
 
-# Sitemap（公開ドメイン確定後、絶対URLに更新してください）
+# Sitemap（SITE_URL 設定で絶対URLに自動更新）
 Sitemap: /sitemap.xml

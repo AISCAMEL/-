@@ -8,7 +8,7 @@
 'use strict';
 
 // 掛け合わせ対象の商用上位ジャンル（slug は genres.js と一致）
-const CROSS_GENRES = ['haisha', 'jiko', 'fudou', 'hiace', 'keitora', 'wheel'];
+const CROSS_GENRES = ['haisha', 'jiko', 'fudou', 'hiace', 'landcruiser', 'keitora', 'truck', 'wheel'];
 
 // 掛け合わせ対象の主要都市（市区町村つき）
 const CROSS_PREFS = [
