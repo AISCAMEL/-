@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 6.7
+ * Version: 6.8
  * Author: CARMEL
  */
 
@@ -1076,6 +1076,39 @@ function carmel3_home_page() {
                     <div style="font-size:18px;font-weight:800">設定（APIキー）</div>
                     <div style="font-size:12px;opacity:.9;margin-top:4px">OpenRouterキー・ブランド設定</div>
                 </a>
+            </div>
+        </div>
+
+        <!-- すべてのメニュー（左メニューをここに集約） -->
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:18px">
+            <h2 style="margin:0 0 6px;font-size:16px">すべてのメニュー（ここから全部開けます）</h2>
+            <p style="margin:0 0 12px;color:#666;font-size:12px">左メニューの項目を自動でまとめています。左がゴチャついても、ここから全機能に移動できます。</p>
+            <?php
+            global $menu;
+            $links = array();
+            if (is_array($menu)) {
+                foreach ($menu as $m) {
+                    if (empty($m[0]) || empty($m[2])) continue;
+                    if (strpos($m[2], 'separator') !== false) continue;
+                    $raw = $m[0];
+                    // 更新バッジ等の <span> を除去してからタグ除去
+                    $raw = preg_replace('/<span[^>]*>.*?<\/span>/u', '', $raw);
+                    $label = trim(wp_strip_all_tags($raw));
+                    if ($label === '') continue;
+                    $slug = $m[2];
+                    if (strpos($slug, '.php') !== false || strpos($slug, '?') !== false) {
+                        $url = admin_url($slug);
+                    } else {
+                        $url = admin_url('admin.php?page=' . $slug);
+                    }
+                    $links[$url] = $label; // URL重複は1つに
+                }
+            }
+            ?>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+                <?php foreach ($links as $url => $label): ?>
+                    <a href="<?php echo esc_url($url); ?>" style="text-decoration:none;display:inline-block;background:#f1f5f9;color:#1f2937;border:1px solid #e2e8f0;border-radius:9px;padding:8px 12px;font-size:13px;font-weight:600"><?php echo esc_html($label); ?></a>
+                <?php endforeach; ?>
             </div>
         </div>
 
