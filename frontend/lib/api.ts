@@ -90,6 +90,18 @@ export const api = {
   bulkEmail: (subject: string, body: string, category?: string) => request<any>('/api/contacts/bulk-email', { method: 'POST', body: JSON.stringify({ subject, body, category }) }),
   aiDraft: (body: any) => request<any>('/api/ai/draft', { method: 'POST', body: JSON.stringify(body) }),
 
+  // 予約（査定・来店）＋Googleカレンダー連携
+  calendarStatus: () => request<any>('/api/calendar/status'),
+  saveCalendarSettings: (body: any) => request<any>('/api/calendar/settings', { method: 'PUT', body: JSON.stringify(body) }),
+  appointments: (from?: string, to?: string) => {
+    const p = new URLSearchParams(); if (from) p.set('from', from); if (to) p.set('to', to);
+    const s = p.toString(); return request<any[]>(`/api/appointments${s ? `?${s}` : ''}`);
+  },
+  appointmentSlots: (date: string, duration?: number) =>
+    request<{ date: string; slots: { start: string; end: string }[] }>(`/api/appointments/slots?date=${date}${duration ? `&duration=${duration}` : ''}`),
+  createAppointment: (body: any) => request<any>('/api/appointments', { method: 'POST', body: JSON.stringify(body) }),
+  setAppointmentStatus: (id: string, status: string) => request<any>(`/api/appointments/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+
   industryTemplates: () => request<any[]>('/api/industry-templates'),
   applyTemplate: (key: string, opts: any = {}) => request<any>(`/api/industry-templates/${key}/apply`, { method: 'POST', body: JSON.stringify(opts) }),
 

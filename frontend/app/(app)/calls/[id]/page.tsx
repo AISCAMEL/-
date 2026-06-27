@@ -81,6 +81,7 @@ export default function CallDetailPage() {
           )}
           <button onClick={openFaq} className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">FAQに追加</button>
           <button onClick={addToContacts} className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">連絡先に追加</button>
+          <Link href="/appointments" className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">予約を取る</Link>
           <Link href={`/calls/${id}/print`} className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">印刷 / PDF</Link>
           <button onClick={resummarize} className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">要約を再生成</button>
           <button onClick={renotify} className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">通知を再送</button>

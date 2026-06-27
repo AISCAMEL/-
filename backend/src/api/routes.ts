@@ -12,6 +12,7 @@ import { INDUSTRY_TEMPLATES, getTemplate } from '../templates/industry.js';
 import * as contacts from '../outbound/contacts.js';
 import { chatText } from '../ai/llm.js';
 import { sendEmail } from '../notify/email.js';
+import * as calendar from '../calendar/index.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -444,6 +445,61 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     const r = await sendEmail(c.email, subject, text);
     if (r.ok) await contacts.logActivity(p.tenantId, c.id, 'email_sent', subject);
     return { ok: r.ok, destination: c.email, error: r.error };
+  });
+
+  // ---- 予約（査定・来店など）。Googleカレンダーと突合し重複を防ぐ ----
+  app.get('/api/calendar/status', { preHandler: authenticate }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    return calendar.calendarStatus(p.tenantId);
+  });
+  // Googleカレンダー連携の設定（calendar_id / refresh_token / 所要時間）
+  app.put('/api/calendar/settings', { preHandler: manageOutbound }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const b = (req.body ?? {}) as any;
+    const patch: Record<string, unknown> = {};
+    if ('google_calendar_id' in b) patch.google_calendar_id = String(b.google_calendar_id ?? '');
+    if ('google_refresh_token' in b) patch.google_refresh_token = String(b.google_refresh_token ?? '');
+    if ('appointment_duration_min' in b) patch.appointment_duration_min = Number(b.appointment_duration_min) || 45;
+    await q.updateSettings(p.tenantId, patch);
+    return calendar.calendarStatus(p.tenantId);
+  });
+  // 指定日の空き枠（内部予約＋Google予定を除外）
+  app.get('/api/appointments/slots', { preHandler: authenticate }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const { date, duration } = req.query as Record<string, string>;
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return reply.code(400).send({ error: 'date(YYYY-MM-DD)が必要です' });
+    const slots = await calendar.findSlots(p.tenantId, date, duration ? Number(duration) : undefined);
+    return { date, slots };
+  });
+  // 予約一覧（?from=&to= ISO、既定は今日以降30日）
+  app.get('/api/appointments', { preHandler: authenticate }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const { from, to } = req.query as Record<string, string>;
+    return calendar.listAppointments(p.tenantId, from, to, false);
+  });
+  // 予約を取る（重複時は409）
+  app.post('/api/appointments', { preHandler: manageOutbound }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const b = (req.body ?? {}) as any;
+    if (!b.start_at || !b.end_at) return reply.code(400).send({ error: '開始・終了時刻が必要です' });
+    const r = await calendar.book(p.tenantId, b);
+    if (!r.ok) return reply.code(r.conflict ? 409 : 400).send({ error: r.error, conflict: r.conflict });
+    return r;
+  });
+  // 予約のステータス変更（confirmed/cancelled/done）
+  app.patch('/api/appointments/:id', { preHandler: manageOutbound }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const { status } = (req.body ?? {}) as { status?: string };
+    if (!status) return reply.code(400).send({ error: 'status required' });
+    const row = await calendar.changeStatus(p.tenantId, (req.params as any).id, status);
+    if (!row) return reply.code(404).send({ error: 'not found' });
+    return row;
   });
 
   // AIで営業メール/トーク文面を作成（会社データは作らない。文面作成のみ）

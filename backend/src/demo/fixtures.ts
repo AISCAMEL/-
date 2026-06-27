@@ -63,6 +63,9 @@ export const demoSettings = {
   notify_on_callback: true,
   notify_on_transfer: true,
   fallback_message: '申し訳ありません。担当者より折り返しご連絡いたします。',
+  google_calendar_id: '',
+  google_refresh_token: '',
+  appointment_duration_min: 45,
 };
 
 export const demoPhoneNumbers = [
@@ -199,6 +202,21 @@ export const demoContacts: DemoContact[] = [
   { id: 'ct-1', tenant_id: TENANT, name: '田中太郎', company: '田中商店', phone_number: '+819012340001', email: 'tanaka@example.com', category: '見込み客', note: '展示会で名刺交換。予約システムに関心。', tags: ['ホット'], status: 'in_progress', created_at: iso(-60 * 24 * 3) },
   { id: 'ct-2', tenant_id: TENANT, name: '佐藤花子', company: '佐藤クリニック', phone_number: '+819012340002', email: 'sato@example.com', category: '既存顧客', note: '毎月利用。アップセル候補。', tags: ['VIP'], status: 'won', created_at: iso(-60 * 24 * 10) },
   { id: 'ct-3', tenant_id: TENANT, name: '鈴木一郎', company: '鈴木工務店', phone_number: '+819012340003', email: null, category: '休眠', note: '半年連絡なし。再アプローチ。', tags: [], status: 'active', created_at: iso(-60 * 24 * 30) },
+];
+
+export interface DemoAppointment {
+  id: string; tenant_id: string; contact_id: string | null; call_id: string | null;
+  type: string; title: string | null; customer_name: string | null; phone_number: string | null;
+  start_at: string; end_at: string; status: string; source: string;
+  google_event_id: string | null; note: string | null; created_at: string;
+}
+// 当日の指定時刻(JST想定)を ISO で返すデモ用ヘルパー。
+function todayAt(hour: number, min = 0): string {
+  const d = new Date(); d.setHours(hour, min, 0, 0); return d.toISOString();
+}
+export const demoAppointments: DemoAppointment[] = [
+  { id: 'ap-1', tenant_id: TENANT, contact_id: 'ct-1', call_id: null, type: '査定', title: '田中商店 出張査定', customer_name: '田中太郎', phone_number: '+819012340001', start_at: todayAt(11, 0), end_at: todayAt(11, 45), status: 'confirmed', source: 'ai_outbound', google_event_id: null, note: '車種：プリウス／年式2019', created_at: iso(-60 * 24) },
+  { id: 'ap-2', tenant_id: TENANT, contact_id: null, call_id: 'call-1002', type: '来店', title: '佐藤様 来店相談', customer_name: '佐藤花子', phone_number: '+819033334444', start_at: todayAt(14, 30), end_at: todayAt(15, 0), status: 'tentative', source: 'ai_inbound', google_event_id: null, note: null, created_at: iso(-100) },
 ];
 
 export interface DemoContactActivity {

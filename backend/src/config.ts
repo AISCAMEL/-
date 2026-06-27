@@ -31,6 +31,13 @@ export const config = {
     from: process.env.MAIL_FROM ?? 'AIオペレーター24 <noreply@ai-operator24.com>',
   },
 
+  // Googleカレンダー連携。テナントごとの refresh_token と組み合わせて使う。
+  // 未設定時はカレンダー連携オフ（内部予約のみで重複判定）。docs/google-calendar-setup.md 参照。
+  google: {
+    clientId: process.env.GOOGLE_CLIENT_ID ?? '',
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
+  },
+
   // 決済（Square）。docs/square-billing.md 参照。未設定時は課金機能オフ。
   square: {
     env: process.env.SQUARE_ENV ?? 'sandbox',

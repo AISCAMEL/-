@@ -595,3 +595,38 @@ drop policy if exists tenant_isolation on contact_activities;
 create policy tenant_isolation on contact_activities
   using (is_super_admin() or tenant_id = current_tenant_id())
   with check (is_super_admin() or tenant_id = current_tenant_id());
+
+-- =============================================================
+-- appointments  (査定・来店などの予約。Googleカレンダーと突合し重複を防ぐ)
+-- =============================================================
+create table if not exists appointments (
+  id              uuid primary key default gen_random_uuid(),
+  tenant_id       uuid not null references tenants(id) on delete cascade,
+  contact_id      uuid references contacts(id) on delete set null,
+  call_id         uuid references calls(id) on delete set null,
+  type            text not null default '査定',        -- 査定 / 来店 / 内見 / 施術 等
+  title           text,
+  customer_name   text,
+  phone_number    text,
+  start_at        timestamptz not null,
+  end_at          timestamptz not null,
+  status          text not null default 'confirmed',   -- tentative / confirmed / cancelled / done
+  source          text not null default 'manual',      -- ai_inbound / ai_outbound / manual
+  google_event_id text,
+  note            text,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
+);
+create index if not exists idx_appointments_tenant_time on appointments(tenant_id, start_at);
+create trigger trg_appointments_updated before update on appointments
+  for each row execute function set_updated_at();
+alter table appointments enable row level security;
+drop policy if exists tenant_isolation on appointments;
+create policy tenant_isolation on appointments
+  using (is_super_admin() or tenant_id = current_tenant_id())
+  with check (is_super_admin() or tenant_id = current_tenant_id());
+
+-- Googleカレンダー連携（テナント設定）。未設定なら内部予約のみで重複判定。
+alter table tenant_settings add column if not exists google_calendar_id text;
+alter table tenant_settings add column if not exists google_refresh_token text;
+alter table tenant_settings add column if not exists appointment_duration_min integer not null default 45;

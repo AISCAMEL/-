@@ -356,6 +356,7 @@ const SETTING_FIELDS = [
   'business_hours', 'holiday_settings', 'greeting_message', 'ai_tone', 'default_language',
   'recording_enabled', 'human_transfer_enabled', 'transfer_phone_number', 'notification_email',
   'slack_webhook_url', 'notify_on_call_end', 'notify_on_callback', 'notify_on_transfer', 'fallback_message',
+  'google_calendar_id', 'google_refresh_token', 'appointment_duration_min',
 ] as const;
 
 export async function updateSettings(tenantId: string, patch: Record<string, unknown>) {
