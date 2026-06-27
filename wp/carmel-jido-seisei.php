@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 7.2
+ * Version: 7.3
  * Author: CARMEL
  */
 
@@ -1196,6 +1196,33 @@ function carmel3_home_page() {
             </div>
         </div>
 
+        <!-- 毎日いっしょに作る媒体（自動化の入口をわかりやすく） -->
+        <?php
+        $auto_extra = (isset($s['extra_types']) && is_array($s['extra_types'])) ? $s['extra_types'] : array();
+        $auto_on = !empty($s['enabled']);
+        $news_on = in_array('news', $auto_extra, true) || in_array('post', $auto_extra, true);
+        $blog_on = in_array('shop_blog', $auto_extra, true);
+        $chip = function ($label, $on) {
+            $c = $on ? '#16a34a' : '#9ca3af';
+            $t = $on ? 'ON' : 'OFF';
+            return '<span style="display:inline-block;margin:2px 6px 2px 0;padding:4px 12px;border-radius:999px;background:' . $c . ';color:#fff;font-weight:700;font-size:12px">' . esc_html($label) . '：' . $t . '</span>';
+        };
+        ?>
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:18px">
+            <h2 style="margin:0 0 6px;font-size:16px">毎日いっしょに作る媒体（自動化）</h2>
+            <p style="margin:0 0 10px;color:#666;font-size:13px">毎日の自動生成で「ニュース」「加盟店ブログ」も<strong>メディア記事と一緒に</strong>作るかどうかの設定です。下のボタンから設定できます。</p>
+            <div style="margin-bottom:12px">
+                <?php
+                echo $chip('毎日自動生成', $auto_on);
+                echo $chip('メディア記事', true);
+                echo $chip('ニュース', $news_on);
+                echo $chip('加盟店ブログ', $blog_on);
+                ?>
+            </div>
+            <a href="<?php echo esc_url($url_auto . '#media'); ?>" style="text-decoration:none;display:inline-block;background:#0f766e;color:#fff;font-weight:800;border-radius:10px;padding:12px 18px">ニュース・加盟店ブログの自動化を設定する →</a>
+            <p style="margin:10px 0 0;color:#888;font-size:12px">設定の流れ：①このボタンを押す → ②作りたい媒体に<strong>チェック</strong>＋書き方を入力 → ③「設定を保存」 → ④上部の「自動生成を有効」をON＋頻度＝毎日。テストは「今すぐ1件だけ生成」。</p>
+        </div>
+
         <!-- すべてのメニュー（左メニューをここに集約） -->
         <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:18px">
             <h2 style="margin:0 0 6px;font-size:16px">すべてのメニュー（ここから全部開けます）</h2>
@@ -1828,6 +1855,16 @@ function carmel3_auto_settings_page() {
             $remaining_count = carmel3_auto_remaining_count($s);
             ?>
             <p style="margin:6px 0 0"><strong>進捗：</strong>生成済み <strong><?php echo (int)$done_count; ?></strong> 件 ／ 残り <strong><?php echo (int)$remaining_count; ?></strong> 件（同じテーマは二度作りません）</p>
+            <?php
+            $auto_extra = (isset($s['extra_types']) && is_array($s['extra_types'])) ? $s['extra_types'] : array();
+            $auto_media_labels = array('メディア記事（常に作成）');
+            foreach ($auto_extra as $ept) {
+                $eo = get_post_type_object($ept);
+                $auto_media_labels[] = ($eo && !empty($eo->labels->singular_name)) ? $eo->labels->singular_name : $ept;
+            }
+            ?>
+            <p style="margin:6px 0 0"><strong>自動化する媒体：</strong><?php echo esc_html(implode(' ／ ', $auto_media_labels)); ?>
+                <a href="#media" style="margin-left:6px;font-size:12px">▼ 媒体を追加・変更</a></p>
             <p style="margin:6px 0 0;color:#555">最終実行: <?php echo esc_html($s['last_run'] ?: '—'); ?> ／ <?php echo esc_html($s['last_msg'] ?: '—'); ?></p>
         </div>
 
@@ -1849,6 +1886,42 @@ function carmel3_auto_settings_page() {
                 <input type="checkbox" name="publish" value="1" <?php checked(!empty($s['publish'])); ?>>
                 生成後すぐ公開する（チェックなしは「下書き」で保存・推奨）
             </label></p>
+
+            <div id="media" style="border:2px solid #0f766e;border-radius:12px;padding:14px 16px;margin:16px 0;background:#f0fdfa;scroll-margin-top:40px">
+                <p style="margin:0 0 4px;font-size:15px;font-weight:800;color:#0f766e">★ 自動化する媒体（ニュース・加盟店ブログもここで一緒に自動化）</p>
+                <p style="margin:0 0 10px;color:#444;font-size:13px"><strong>メディア記事は常に自動生成</strong>します。さらに毎日いっしょに作りたい媒体に<strong>チェック</strong>を入れてください。チェックした媒体は、メディア記事と<strong>同じテーマ</strong>でAIが書き分けて自動生成・自動投稿します。</p>
+                <?php
+                $pts = carmel3_selectable_post_types();
+                $sel_types  = (isset($s['extra_types']) && is_array($s['extra_types'])) ? $s['extra_types'] : array();
+                $type_prompts = (isset($s['type_prompts']) && is_array($s['type_prompts'])) ? $s['type_prompts'] : array();
+                // ニュース・加盟店ブログを先頭に並べる
+                $pref = array('news', 'shop_blog', 'post');
+                uksort($pts, function ($a, $b) use ($pref) {
+                    $ia = array_search($a, $pref, true); $ib = array_search($b, $pref, true);
+                    $ia = ($ia === false) ? 99 : $ia; $ib = ($ib === false) ? 99 : $ib;
+                    return $ia <=> $ib;
+                });
+                if (empty($pts)): ?>
+                    <p style="color:#c2410c;font-size:12px">選べる投稿タイプが見つかりません。</p>
+                <?php else: ?>
+                    <p style="color:#666;font-size:12px;margin:0 0 8px">各媒体の<strong>「書き方（AI指示）」</strong>欄に、文字数・トーン・構成などを書くと、その通りに書き分けます（空欄なら標準）。</p>
+                    <div style="display:flex;flex-direction:column;gap:10px">
+                    <?php foreach ($pts as $pt => $label):
+                        $cur_prompt = isset($type_prompts[$pt]) ? $type_prompts[$pt] : '';
+                        $is_pref = in_array($pt, array('news', 'shop_blog', 'post'), true);
+                        $ph = '例: ' . (($pt === 'post' || $pt === 'news')
+                            ? 'お知らせ/NEWS。300〜500字、告知調、結論を先に、最後に来店・問い合わせ導線。'
+                            : '加盟店(FC)オーナー向け。1000〜1300字、ビジネス視点で収益・運営メリットを具体的に。');
+                    ?>
+                        <div style="border:1px solid <?php echo $is_pref ? '#0f766e' : '#e5e7eb'; ?>;border-radius:10px;padding:10px 12px;background:#fff">
+                            <label style="font-weight:700"><input type="checkbox" name="extra_types[]" value="<?php echo esc_attr($pt); ?>" <?php checked(in_array($pt, $sel_types, true)); ?>> <?php echo esc_html($label); ?> <span style="color:#999;font-size:11px;font-weight:400">(<?php echo esc_html($pt); ?>)</span><?php if ($is_pref): ?> <span style="background:#0f766e;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:4px">おすすめ</span><?php endif; ?></label>
+                            <textarea name="type_prompt[<?php echo esc_attr($pt); ?>]" placeholder="<?php echo esc_attr($ph); ?>" style="width:100%;min-height:64px;margin-top:8px;border:1px solid #d1d5db;border-radius:8px;padding:8px;font-size:13px"><?php echo esc_textarea($cur_prompt); ?></textarea>
+                        </div>
+                    <?php endforeach; ?>
+                    </div>
+                    <p style="color:#666;font-size:12px;margin:8px 0 0">※ チェックした媒体の数だけAIを使います（その分の料金がかかります）。</p>
+                <?php endif; ?>
+            </div>
 
             <hr style="margin:16px 0;border:none;border-top:1px solid #eee">
 
@@ -1924,34 +1997,6 @@ function carmel3_auto_settings_page() {
                 <span style="color:#c2410c;font-size:12px">本体v5.7のGoogle投稿関数が見つからないため、この機能は使えません。CARMEL統合管理 v5.7が有効か確認してください。</span>
             <?php endif; ?>
             </p>
-
-            <hr style="margin:16px 0;border:none;border-top:1px solid #eee">
-
-            <p style="margin:0 0 6px"><strong>追加で自動生成する投稿タイプ（A：AIでゼロから生成）</strong><br>
-            <span style="color:#666;font-size:12px">メディア記事は常に生成。ここにチェックした投稿タイプにも、同じテーマで記事をAI生成して保存します（NEWS・加盟店ブログなど）。</span></p>
-            <?php
-            $pts = carmel3_selectable_post_types();
-            $sel_types  = (isset($s['extra_types']) && is_array($s['extra_types'])) ? $s['extra_types'] : array();
-            $type_prompts = (isset($s['type_prompts']) && is_array($s['type_prompts'])) ? $s['type_prompts'] : array();
-            if (empty($pts)): ?>
-                <p style="color:#c2410c;font-size:12px">選べる投稿タイプが見つかりません。</p>
-            <?php else: ?>
-                <p style="color:#666;font-size:12px;margin:6px 0 8px">チェックした投稿タイプに生成します。各タイプの<strong>「書き方（AI指示）」</strong>に、文字数・トーン・構成などを書くと、その通りに書き分けます（空欄なら標準）。</p>
-                <div style="display:flex;flex-direction:column;gap:10px">
-                <?php foreach ($pts as $pt => $label):
-                    $cur_prompt = isset($type_prompts[$pt]) ? $type_prompts[$pt] : '';
-                    $ph = '例: ' . ($pt === 'post'
-                        ? 'お知らせ/NEWS。300〜500字、告知調、結論を先に、最後に来店・問い合わせ導線。'
-                        : '加盟店(FC)オーナー向け。1000〜1300字、ビジネス視点で収益・運営メリットを具体的に。');
-                ?>
-                    <div style="border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;background:#fafafa">
-                        <label style="font-weight:700"><input type="checkbox" name="extra_types[]" value="<?php echo esc_attr($pt); ?>" <?php checked(in_array($pt, $sel_types, true)); ?>> <?php echo esc_html($label); ?> <span style="color:#999;font-size:11px;font-weight:400">(<?php echo esc_html($pt); ?>)</span></label>
-                        <textarea name="type_prompt[<?php echo esc_attr($pt); ?>]" placeholder="<?php echo esc_attr($ph); ?>" style="width:100%;min-height:64px;margin-top:8px;border:1px solid #d1d5db;border-radius:8px;padding:8px;font-size:13px"><?php echo esc_textarea($cur_prompt); ?></textarea>
-                    </div>
-                <?php endforeach; ?>
-                </div>
-                <p style="color:#666;font-size:12px;margin:6px 0 0">※ 「投稿(post)」がNEWS用、「加盟店ブログ」が該当する投稿タイプ。チェックした数だけAPIを使います。</p>
-            <?php endif; ?>
 
             <hr style="margin:16px 0;border:none;border-top:1px solid #eee">
 
