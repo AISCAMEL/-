@@ -85,6 +85,15 @@ class Carmel_LINE_Bot {
 		return home_url( '/' . ltrim( apply_filters( 'carmel_inventory_page_slug', 'inventory' ), '/' ) );
 	}
 
+	/** 会員ページ（マイページ）URL。LIFFログインページがあればそちらを優先。 */
+	private function member_url() {
+		$u = get_option( 'carmel_member_page_url', '' );
+		if ( $u ) {
+			return $u;
+		}
+		return home_url( '/' . ltrim( apply_filters( 'carmel_mypage_slug', 'mypage' ), '/' ) );
+	}
+
 	private function ai_endpoint() {
 		return (string) get_option( 'carmel_line_ai_endpoint', '' );
 	}
@@ -578,6 +587,7 @@ class Carmel_LINE_Bot {
 		return array(
 			array( 'uri', '在庫を見る', $this->inventory_url() ),
 			array( 'uri', '審査申込', $this->form_url() ),
+			array( 'uri', '会員ページ', $this->member_url() ),
 			array( 'postback', 'チャットで相談', self::START_DATA ),
 		);
 	}
