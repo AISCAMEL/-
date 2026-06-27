@@ -622,7 +622,9 @@ AI自動応答：LINE Webhook → ボット(GAS/LLM)でFAQ応答・必要時にL
 
 - **一覧（`?store` なし）**：公開加盟店のディレクトリ（店舗名・住所・公開在庫数・リンク）。**エリア／取扱種別で絞り込み**（ACF `store_area`/`store_services`・エリアは `carmel_line_regions` と共通）
 - **店舗詳細（`?store=ID`）**：店舗名・住所・電話・営業時間・紹介文・**地図**＋**実績**（公開在庫/成約/取扱案件）＋**スタッフ紹介**（自店の owner/staff・`carmel_store_show_staff` で制御）＋**その店の公開在庫カード**＋「この店舗の在庫をもっと見る」（`/inventory?store_id=ID`）＋**レビュー**（★評価・承認制／ハニーポット＋nonce）＋問い合わせ導線
-- 在庫一覧は `?store_id=ID` で**店舗絞り込み**（チップ表示＋他フィルタと併用保持）。在庫詳細の「取扱店」は店舗ページへリンク
+- 在庫一覧は `?store_id=ID` で**店舗絞り込み**（チップ表示＋他フィルタと併用保持）。在庫詳細の「取扱店」は店舗ページへリンク、**この店舗の他の在庫**セクションを表示
+- **本部レビュー承認**：`[carmel_hq_reviews]`（`/hq`）で承認待ちレビューを**フロントで承認/却下**（wp-admin不要・`carmel_manage_stores`）
+- **お気に入り店舗**（`Carmel_Store_Follow`）：店舗ページでフォロー（`carmel_followed_stores`）。フォロー店舗が在庫を公開すると**新着通知**（`store_new_stock`・プロライン→メール）
 - 一般公開（未ログイン可）。**原価・オーナーID・会費等の内部情報は出さない**
 - **SEO**：店舗詳細に `schema.org/AutoDealer` の JSON-LD ＋ OGP
 - 在庫詳細の「取扱店：◯◯」は店舗ページへリンク。店舗の電話/営業時間は ACF（`store_tel`/`store_hours`）で設定
@@ -651,7 +653,7 @@ AI自動応答：LINE Webhook → ボット(GAS/LLM)でFAQ応答・必要時にL
    - `/inventory` → `[carmel_inventory]`（カーメル在庫ページ・公開／ログイン分け）
    - `/stores` → `[carmel_store_profile]`（公開・加盟店ページ：一覧／`?store=ID` で店舗詳細）
    - `/community` → `[carmel_community]`（組み込みコミュニティ掲示板）
-   - `/hq` → `[carmel_hq_dashboard]` `[carmel_hq_screening]` `[carmel_hq_board]` `[carmel_hq_contracts]` `[carmel_hq_reports]` `[carmel_hq_stores]` `[carmel_hq_commissions]` `[carmel_hq_content]`
+   - `/hq` → `[carmel_hq_dashboard]` `[carmel_hq_screening]` `[carmel_hq_board]` `[carmel_hq_contracts]` `[carmel_hq_reports]` `[carmel_hq_stores]` `[carmel_hq_commissions]` `[carmel_hq_content]` `[carmel_hq_reviews]`
    - 申込ページ → `[carmel_application_form]`／加盟店募集ページ → `[carmel_franchise_form]`
    - 任意ページ → `[carmel_learning]`
 4. **連携キーを設定**（`wp-config.php` 定数 or `wp_options`）：

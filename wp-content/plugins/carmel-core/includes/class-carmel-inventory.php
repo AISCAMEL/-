@@ -1021,11 +1021,59 @@ window.carmelInitMap=function(){
 		echo '</div>'; // .carmel-detail-body
 		echo '</div>'; // .carmel-detail
 
+		// この店舗の他の在庫。
+		echo $this->store_stock_block( $vid, $store_id, $scope ); // phpcs:ignore WordPress.Security.EscapeOutput
+
 		// 類似在庫レコメンド。
 		echo $this->similar_block( $vid, $scope ); // phpcs:ignore WordPress.Security.EscapeOutput
 
 		echo '</div>'; // .carmel-inv
 		return ob_get_clean();
+	}
+
+	/**
+	 * 同一店舗の他の公開在庫（現在の車両を除外・最大4台）。
+	 *
+	 * @param int    $vid
+	 * @param int    $store_id
+	 * @param string $scope
+	 * @return string
+	 */
+	private function store_stock_block( $vid, $store_id, $scope ) {
+		if ( ! $store_id ) {
+			return '';
+		}
+		$cars = get_posts(
+			array(
+				'post_type'      => 'carmel_vehicle',
+				'post_status'    => 'publish',
+				'posts_per_page' => 4,
+				'post__not_in'   => array( (int) $vid ),
+				'orderby'        => 'date',
+				'order'          => 'DESC',
+				'meta_query'     => array(
+					'relation' => 'AND',
+					array( 'key' => 'store_id', 'value' => (int) $store_id ),
+					array( 'key' => 'published', 'value' => array( '1', 'yes', 'true' ), 'compare' => 'IN' ),
+					array( 'key' => 'vehicle_status', 'value' => self::sellable_statuses(), 'compare' => 'IN' ),
+				),
+			)
+		);
+		if ( empty( $cars ) ) {
+			return '';
+		}
+		$sname = get_post_meta( $store_id, 'store_name', true );
+		$head  = $sname ? esc_html( $sname ) . ' の他の在庫' : 'この店舗の他の在庫';
+		$more  = '';
+		if ( class_exists( 'Carmel_Store_Profile' ) ) {
+			$more = ' <a class="carmel-storestock-more" href="' . esc_url( Carmel_Store_Profile::url( $store_id ) ) . '">店舗ページ →</a>';
+		}
+		$out = '<div class="carmel-similar"><h3>🏬 ' . $head . $more . '</h3><div class="carmel-car-grid">';
+		foreach ( $cars as $car ) {
+			$out .= $this->car_card( $car, $scope, 'public' );
+		}
+		$out .= '</div></div>';
+		return $out;
 	}
 
 	/**
