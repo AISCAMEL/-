@@ -21,6 +21,11 @@
   .nf-links{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
   .nf-links a{font-weight:700;}
   .nf-links .btn{width:auto;padding:0 26px;height:52px;}
+  .nf-nav{margin-top:26px;}
+  .nf-nav p{font-size:13px;color:#999;margin-bottom:10px;}
+  .nf-nav ul{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;list-style:none;padding:0;}
+  .nf-nav a{display:inline-block;background:#fff;border:1px solid #f0d9c4;border-radius:30px;padding:8px 18px;font-size:14px;color:var(--navy);box-shadow:0 2px 8px rgba(0,0,0,.06);transition:background .2s,color .2s;}
+  .nf-nav a:hover{background:var(--orange);border-color:var(--orange);color:#fff;}
 </style>
 </head>
 <body>
@@ -34,6 +39,16 @@
       <a href="/buymo.html" class="btn btn-primary">トップへ戻る</a>
       <a href="/buymo-contact.html" class="btn btn-tel" style="border:2px solid var(--orange);color:var(--orange);height:52px;display:inline-flex;align-items:center;padding:0 24px;border-radius:30px;">無料査定・お問い合わせ</a>
     </div>
+    <nav class="nf-nav" aria-label="主要ページ">
+      <p>よく見られているページ</p>
+      <ul>
+        <li><a href="/genre/">買取ジャンル一覧</a></li>
+        <li><a href="/area/">対応エリア一覧</a></li>
+        <li><a href="/genre/haisha/">廃車買取</a></li>
+        <li><a href="/genre/hiace/">ハイエース買取</a></li>
+        <li><a href="/buymo.html#faq">よくある質問</a></li>
+      </ul>
+    </nav>
   </div>
 </div>
 </body>
