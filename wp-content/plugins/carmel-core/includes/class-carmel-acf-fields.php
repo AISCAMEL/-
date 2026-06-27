@@ -161,7 +161,9 @@ class Carmel_ACF_Fields {
 	private function register_store() {
 		$this->group( 'store', '加盟店情報', 'carmel_store', array(
 			$this->f( 'store', 'store_name', '店舗名' ),
-			$this->f( 'store', 'store_address', '店舗住所（陸送元）' ),
+			$this->f( 'store', 'store_address', '店舗住所（陸送元・公開ページ地図）' ),
+			$this->f( 'store', 'store_tel', '電話番号（公開ページ）' ),
+			$this->f( 'store', 'store_hours', '営業時間（公開ページ）' ),
 			$this->f( 'store', 'owner_user_id', 'オーナーのユーザーID', 'number' ),
 			$this->f( 'store', 'square_location_id', 'SquareロケーションID' ),
 			$this->f( 'store', 'notion_url', 'Notion 学習URL', 'url' ),

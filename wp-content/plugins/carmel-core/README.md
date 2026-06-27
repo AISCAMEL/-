@@ -616,6 +616,16 @@ AI自動応答：LINE Webhook → ボット(GAS/LLM)でFAQ応答・必要時にL
 
 > LINE Developers 側で Webhook URL に上記エンドポイントを登録し、応答メッセージ（自動応答）をオフ、Webhookをオンにする。チャネルアクセストークン＝返信、チャネルシークレット＝署名検証に使用。
 
+## 公開 加盟店（店舗）ページ（実装済み）
+
+`Carmel_Store_Profile`。ショートコード **`[carmel_store_profile]`**（公開ページ `/stores` 想定）。
+
+- **一覧（`?store` なし）**：公開加盟店のディレクトリ（店舗名・住所・公開在庫数・リンク）
+- **店舗詳細（`?store=ID`）**：店舗名・住所・電話・営業時間・紹介文（本文）・**地図**（Embed/リンク）＋**その店の公開在庫カード**＋「この店舗の在庫をもっと見る」（`/inventory?store_id=ID`）＋問い合わせ導線
+- 一般公開（未ログイン可）。**原価・オーナーID・会費等の内部情報は出さない**
+- **SEO**：店舗詳細に `schema.org/AutoDealer` の JSON-LD ＋ OGP
+- 在庫詳細の「取扱店：◯◯」は店舗ページへリンク。店舗の電話/営業時間は ACF（`store_tel`/`store_hours`）で設定
+
 ## 会員ページ誘導・反響管理（実装済み）
 
 - **会員ページCTAの常設**：在庫詳細（ログイン顧客）と在庫問い合わせ完了に「会員ページへ」導線。リンク先は `carmel_member_page_url`（LIFF会員ログイン）優先、無ければ `/mypage`
@@ -638,6 +648,7 @@ AI自動応答：LINE Webhook → ボット(GAS/LLM)でFAQ応答・必要時にL
    - `/store-content` → `[carmel_store_content]`（スタートガイド・お知らせ・マニュアル・FAQ）
    - `/store-inventory` → `[carmel_store_inventory]`（自店在庫管理＋在庫共有）
    - `/inventory` → `[carmel_inventory]`（カーメル在庫ページ・公開／ログイン分け）
+   - `/stores` → `[carmel_store_profile]`（公開・加盟店ページ：一覧／`?store=ID` で店舗詳細）
    - `/community` → `[carmel_community]`（組み込みコミュニティ掲示板）
    - `/hq` → `[carmel_hq_dashboard]` `[carmel_hq_screening]` `[carmel_hq_board]` `[carmel_hq_contracts]` `[carmel_hq_reports]` `[carmel_hq_stores]` `[carmel_hq_commissions]` `[carmel_hq_content]`
    - 申込ページ → `[carmel_application_form]`／加盟店募集ページ → `[carmel_franchise_form]`

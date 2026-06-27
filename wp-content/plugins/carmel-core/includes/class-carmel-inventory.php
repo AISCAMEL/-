@@ -976,7 +976,10 @@ window.carmelInitMap=function(){
 		if ( $store_id && in_array( $scope, array( 'store', 'hq', 'customer' ), true ) ) {
 			$sname = get_post_meta( $store_id, 'store_name', true );
 			if ( $sname ) {
-				echo '<div class="carmel-car-store">取扱店：' . esc_html( $sname ) . '</div>';
+				$slink = class_exists( 'Carmel_Store_Profile' ) ? Carmel_Store_Profile::url( $store_id ) : '';
+				echo '<div class="carmel-car-store">取扱店：'
+					. ( $slink ? '<a href="' . esc_url( $slink ) . '">' . esc_html( $sname ) . '</a>' : esc_html( $sname ) )
+					. '</div>';
 			}
 		}
 
@@ -1186,6 +1189,7 @@ window.carmelInitMap=function(){
 			'maker'     => isset( $_GET['maker'] ) ? sanitize_text_field( wp_unslash( $_GET['maker'] ) ) : '',
 			'q'         => isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : '',
 			'price_max' => isset( $_GET['price_max'] ) ? (int) $_GET['price_max'] : 0,
+			'store_id'  => isset( $_GET['store_id'] ) ? (int) $_GET['store_id'] : 0,
 		);
 	}
 
