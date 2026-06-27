@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 6.4
+ * Version: 6.5
  * Author: CARMEL
  */
 
@@ -741,6 +741,38 @@ function carmel3_auto_register_menu() {
         add_menu_page('かんたんホーム', 'かんたんホーム', 'manage_options', 'carmel3-home', 'carmel3_home_page', 'dashicons-admin-home', 3);
         add_menu_page('CARMEL 自動生成', 'CARMEL自動生成', 'manage_options', 'carmel3-auto', 'carmel3_auto_settings_page', 'dashicons-update', 4);
         add_menu_page('その他掲載ページ（MEO対策）', 'その他掲載ページ(MEO)', 'manage_options', 'carmel3-meo', 'carmel3_meo_page', 'dashicons-location-alt', 5);
+    }
+}
+
+/* ===== 「カーメル管理」メニューの表示名から絵文字だけを消す（本体v5.7のコードは触らず、表示だけ整える） ===== */
+
+add_action('admin_menu', 'carmel3_strip_menu_emoji', 9999);
+
+function carmel3_strip_menu_emoji() {
+    global $menu, $submenu;
+
+    $strip = function ($label) {
+        if (!is_string($label)) return $label;
+        // 絵文字・記号・矢印・異体字セレクタ等を除去（日本語・英数字は残す）
+        $label = preg_replace('/[\x{1F000}-\x{1FAFF}\x{2600}-\x{27BF}\x{2B00}-\x{2BFF}\x{2190}-\x{21FF}\x{2300}-\x{23FF}\x{2B50}\x{FE0F}\x{200D}]/u', '', $label);
+        return trim($label);
+    };
+
+    // 親メニュー「カーメル管理」のラベル
+    if (is_array($menu)) {
+        foreach ($menu as $k => $item) {
+            if (isset($item[2]) && $item[2] === 'carmel-manager' && isset($item[0])) {
+                $menu[$k][0] = $strip($item[0]);
+            }
+        }
+    }
+    // 「カーメル管理」配下のサブメニューのラベル
+    if (isset($submenu['carmel-manager']) && is_array($submenu['carmel-manager'])) {
+        foreach ($submenu['carmel-manager'] as $k => $item) {
+            if (isset($item[0])) {
+                $submenu['carmel-manager'][$k][0] = $strip($item[0]);
+            }
+        }
     }
 }
 
