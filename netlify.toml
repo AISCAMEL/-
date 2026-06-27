@@ -1,0 +1,18 @@
+# Netlify デプロイ設定（静的サイト）
+# 公開ディレクトリは site/。ビルド工程は不要（静的）。
+# ページ生成を更新する場合は手元で `node tools/gen-area.js && node tools/gen-genre.js` 後にコミット。
+
+[build]
+  publish = "site"
+  command = ""
+
+# 404 は site/404.html が自動的に使われます。
+# セキュリティ／キャッシュヘッダーは site/_headers を参照（Netlify・Cloudflare Pages 共通）。
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
