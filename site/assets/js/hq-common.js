@@ -63,6 +63,16 @@ window.HQ = (function () {
   function getStores() { return readLS(SKEY, seedStores); }
   function saveStores(arr) { try { localStorage.setItem(SKEY, JSON.stringify(arr)); } catch (e) {} }
 
+  /* 本部→加盟店 お知らせ */
+  var NKEY = 'buymo_notices';
+  function seedNotices() {
+    return [{ id: 'N-1001', t: '年末年始の査定受付について', b: '12/30〜1/3は出張査定をお休みします。オンライン受付は通常どおりです。', lv: 'info', date: '2026/06/20' }];
+  }
+  function getNotices() { return readLS(NKEY, seedNotices); }
+  function saveNotices(a) { try { localStorage.setItem(NKEY, JSON.stringify(a)); } catch (e) {} }
+  function addNotice(n) { var a = getNotices(); a.unshift(n); saveNotices(a); if (ENDPOINT) fetch(ENDPOINT, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ type: 'notice', token: authToken(), id: n.id, title: n.t, body: n.b, level: n.lv }) }).catch(function () {}); }
+  function deleteNotice(id) { saveNotices(getNotices().filter(function (n) { return n.id !== id; })); }
+
   function yen(n) { return '¥' + (Number(n) || 0).toLocaleString('en-US'); }
   function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function stageIdx(s) { var i = STAGES.indexOf(s); return i < 0 ? 0 : i; }
@@ -81,6 +91,7 @@ window.HQ = (function () {
       ['board', '案件ボード', 'hq.html?role=hq'],
       ['leads', 'リード', 'hq-leads.html'],
       ['stores', '加盟店', 'hq-stores.html'],
+      ['notices', 'お知らせ', 'hq-notices.html'],
       ['report', '営業レポート', 'report.html']
     ];
     el.innerHTML = items.map(function (it) {
@@ -92,6 +103,7 @@ window.HQ = (function () {
     ENDPOINT: ENDPOINT, STAGES: STAGES, WON: WON,
     loadCases: loadCases, getCasesLS: getCasesLS, saveCases: saveCases, upsertCase: upsertCase,
     getStores: getStores, saveStores: saveStores, note: note,
+    getNotices: getNotices, addNotice: addNotice, deleteNotice: deleteNotice,
     yen: yen, esc: esc, stageIdx: stageIdx, nav: nav
   };
 })();

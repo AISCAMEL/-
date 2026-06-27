@@ -91,6 +91,28 @@ function handleNote_(d) {
   return { ok: true };
 }
 
+/* 本部→加盟店 お知らせ（doPost type:"notice" / doGet action=notices） */
+function handleNotice_(d) {
+  if (!d.title) return { ok: false, error: "title required" };
+  var ss = openBook_();
+  var sh = ss.getSheetByName("お知らせ") || ensureSheet_(ss, "お知らせ", ["日時", "ID", "タイトル", "本文", "重要度"]);
+  sh.appendRow([new Date(), d.id || ("N-" + nextSeq_(sh, 1000)), d.title, d.body || "", d.level || "info"]);
+  notifyStaff_("📢 お知らせ投稿：" + d.title + "\n" + (d.body || ""));
+  return { ok: true };
+}
+function getNoticesJson_() {
+  var out = [];
+  try {
+    var sh = openBook_().getSheetByName("お知らせ");
+    if (!sh) return out;
+    var v = sh.getDataRange().getValues();
+    for (var r = v.length - 1; r >= 1; r--) {
+      out.push({ id: v[r][1], t: v[r][2], b: v[r][3], lv: v[r][4], date: Utilities.formatDate(new Date(v[r][0]), "Asia/Tokyo", "yyyy/MM/dd") });
+    }
+  } catch (e) { Logger.log("getNoticesJson_: " + e); }
+  return out;
+}
+
 /* 案件一覧を返す（doGet action=cases）。assignee 指定で担当の案件のみ。 */
 function getCasesJson_(assignee) {
   var out = [];
