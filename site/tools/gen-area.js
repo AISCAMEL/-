@@ -11,6 +11,7 @@ const path = require('path');
 const SITE_URL = ''; // 公開ドメイン確定後にここを 'https://example.com' に設定すると canonical/sitemap が絶対URLになる
 const ROOT = path.resolve(__dirname, '..'); // site/
 const GENRES = require('../assets/js/genres').list; // sitemap に各ジャンルLPも収録
+const CROSS = require('./_cross'); // ジャンル×エリア 掛け合わせLP（sitemap収録用）
 // 都道府県ページ→人気ジャンルLP の相互リンク（トピッククラスタ）
 const POPULAR_GENRE_SLUGS = ['haisha', 'jiko', 'fudou', 'hiace', 'landcruiser', 'keitora', 'kei', 'wheel'];
 
@@ -298,6 +299,7 @@ function sitemap() {
     `${base}/buymo-partner.html`,
     `${base}/genre/`,
     ...GENRES.map(g => `${base}/genre/${g.slug}/`),
+    ...CROSS.pairs(GENRES).map(({ genre, pref }) => `${base}/genre/${genre.slug}/${pref.slug}/`),
     `${base}/area/`,
     ...PREFS.map(p => `${base}/area/${p.slug}/`),
   ];

@@ -13,6 +13,7 @@ const { header, footer } = require('./_layout');
 const GENRE_DATA = require('../assets/js/genres');
 const GROUPS = GENRE_DATA.groups;
 const GENRES = GENRE_DATA.list;
+const CROSS = require('./_cross');
 
 const SITE_URL = ''; // 公開ドメイン確定後に設定すると canonical が絶対URLに
 const ROOT = path.resolve(__dirname, '..');
@@ -197,8 +198,11 @@ function genrePage(g) {
   // 買取価格の目安（イメージ）
   const results = examplesFor(g).map(([car, note, price]) =>
     `<article class="card result-card"><div class="result-img" aria-hidden="true">${g.icon}</div><h3>${esc(car)}</h3><p class="result-year">${esc(note)}</p><p class="result-price">${esc(price)}</p></article>`).join('');
-  // 主要エリアへの内部リンク
-  const areaLinks = MAJOR_AREAS.map(([nm, sl]) => `<li><a href="${rel}area/${sl}/">${esc(nm)}の車買取</a></li>`).join('');
+  // 主要エリアへの内部リンク（掛け合わせLPがあるジャンルは専用ページへ）
+  const isCross = CROSS.CROSS_GENRES.indexOf(g.slug) !== -1;
+  const areaLinks = isCross
+    ? CROSS.CROSS_PREFS.map(p => `<li><a href="${p.slug}/">${esc(p.name)}の${esc(g.name)}</a></li>`).join('')
+    : MAJOR_AREAS.map(([nm, sl]) => `<li><a href="${rel}area/${sl}/">${esc(nm)}の車買取</a></li>`).join('');
 
   return `<!DOCTYPE html>
 <html lang="ja">
@@ -332,6 +336,151 @@ ${footer(rel)}
 </html>`;
 }
 
+/* ---- ジャンル×エリア 掛け合わせLP /genre/<slug>/<prefSlug>/ ---- */
+function crossPage(g, p) {
+  const rel = '../../../';
+  const cp = copyFor(g);
+  const nm = g.name.replace('買取', '');
+  const cityText = p.cities.slice(0, 3).join('・');
+  const canonical = SITE_URL ? `${SITE_URL}/genre/${g.slug}/${p.slug}/` : './';
+  const bcHome = SITE_URL ? `${SITE_URL}/` : rel;
+  const bcGenre = SITE_URL ? `${SITE_URL}/genre/` : '../../';
+  const bcSelf = SITE_URL ? `${SITE_URL}/genre/${g.slug}/` : '../';
+  const title = `${p.name}の${g.name}ならBUYMO｜${p.name}全域・高価買取・無料出張査定`;
+  const desc = `${p.name}で${g.name}をお考えならBUYMO。${cityText}など${p.name}全域へ無料出張査定。${g.desc} 手数料無料・最短即日入金で高価買取します。`;
+
+  const points = cp.points.map(t => `<li class="point-item"><span class="point-check" aria-hidden="true">✓</span>${esc(t)}</li>`).join('');
+  const cityChips = p.cities.map(c => `<li>${esc(c)}</li>`).join('');
+  // FAQ：地域文言1問＋ジャンルFAQ3問の合成
+  const faq = [
+    [`${p.name}のどこまで出張査定に来てくれますか？`, `${cityText}など${p.name}全域に無料出張いたします。郊外・周辺地域も対応可能です。${nm}のご相談もお気軽にどうぞ。`],
+  ].concat(cp.faq.slice(0, 3));
+  const accordion = faq.map(([q, a]) =>
+    `<div class="acc-item"><button class="acc-q" aria-expanded="false">${esc(q)}<span class="acc-toggle" aria-hidden="true">▼</span></button><div class="acc-a"><p>${esc(a)}</p></div></div>`).join('\n          ');
+  const faqLd = faq.map(([q, a]) => `{"@type":"Question","name":"${jstr(q)}","acceptedAnswer":{"@type":"Answer","text":"${jstr(a)}"}}`).join(',');
+  // 同ジャンルの他エリア（相互リンク）
+  const otherAreas = CROSS.CROSS_PREFS.filter(x => x.slug !== p.slug).slice(0, 6)
+    .map(x => `<li><a href="../${x.slug}/">${esc(x.name)}の${esc(g.name)}</a></li>`).join('');
+
+  return `<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>${esc(title)}</title>
+<meta name="description" content="${esc(desc)}" />
+<meta name="theme-color" content="#FF6B35" />
+<link rel="canonical" href="${esc(canonical)}" />
+<link rel="icon" type="image/svg+xml" href="${rel}assets/img/buymo-favicon.svg" />
+<link rel="apple-touch-icon" href="${rel}assets/img/buymo-favicon-180.png" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="BUYMO｜車買取" />
+<meta property="og:title" content="${esc(title)}" />
+<meta property="og:description" content="${esc(desc)}" />
+<meta property="og:image" content="${rel}assets/img/buymo-ogp.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" />
+<link rel="stylesheet" href="${rel}assets/css/buymo.css" />
+<link rel="stylesheet" href="${rel}assets/css/buymo-area.css" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"AutoDealer","name":"BUYMO（合同会社アイズ） ${jstr(p.name)}の${jstr(g.name)}","description":"${jstr(p.name)}の${jstr(g.name)}。${jstr(g.desc)}","url":"${esc(canonical)}","telephone":"+81-50-1722-3365","email":"info@aisjaltd.com","areaServed":{"@type":"State","name":"${jstr(p.name)}"},"address":{"@type":"PostalAddress","addressCountry":"JP","addressRegion":"福島県","addressLocality":"いわき市","streetAddress":"四倉町細谷字大町1番"},"openingHours":"Mo-Fr 08:00-17:00"}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"ホーム","item":"${bcHome}"},{"@type":"ListItem","position":2,"name":"買取ジャンル","item":"${bcGenre}"},{"@type":"ListItem","position":3,"name":"${jstr(g.name)}","item":"${bcSelf}"},{"@type":"ListItem","position":4,"name":"${jstr(p.name)}","item":"${esc(canonical)}"}]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[${faqLd}]}
+</script>
+</head>
+<body>
+${header(rel, 'genre')}
+<main>
+  <section class="page-hero area-hero" aria-labelledby="page-title">
+    <div class="container">
+      <nav class="breadcrumb" aria-label="パンくずリスト"><a href="${rel}buymo.html#top">ホーム</a><span aria-hidden="true">›</span><a href="${rel}genre/">買取ジャンル</a><span aria-hidden="true">›</span><a href="../">${esc(g.name)}</a><span aria-hidden="true">›</span><span>${esc(p.name)}</span></nav>
+      <p class="hero-lead">${esc(p.region)}・${esc(p.name)}の${esc(g.name)}</p>
+      <h1 id="page-title">${esc(p.name)}の${esc(g.name)}は<span class="hl">BUYMO</span></h1>
+      <p class="page-lead">${esc(cityText)}をはじめ${esc(p.name)}全域に無料出張査定。${esc(g.desc)} 手数料0円・最短即日入金で、${esc(nm)}を1円でも高く買取します。</p>
+      <div class="area-cta">
+        <a href="${rel}buymo-contact.html?genre=${encodeURIComponent(g.name)}&pref=${encodeURIComponent(p.name)}" class="btn btn-primary btn-lg">無料査定を依頼</a>
+        <a href="tel:05017223365" class="btn btn-tel">📞 電話で相談</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="area-intro" aria-labelledby="intro-title">
+    <div class="container">
+      <h2 id="intro-title" class="section-title">${esc(p.name)}の${esc(g.name)}はBUYMOへ</h2>
+      <p class="lead-text">BUYMOは${esc(p.region)}・${esc(p.name)}で${esc(g.name)}に対応しています。${esc(g.desc)} ${esc(p.cities[0])}・${esc(p.cities[1])}など${esc(p.name)}全域へご自宅まで無料出張。独自の販売・輸出・部品ルートで中間コストを抑え、他社で値段が付かなかった車も適正に評価します。</p>
+    </div>
+  </section>
+
+  <section class="genre-points" aria-labelledby="points-title">
+    <div class="container">
+      <h2 id="points-title" class="section-title">${esc(p.name)}でこんな${esc(nm)}でも買取できます</h2>
+      <ul class="point-list">${points}</ul>
+    </div>
+  </section>
+
+  <section class="area-cities" aria-labelledby="cities-title">
+    <div class="container">
+      <h2 id="cities-title" class="section-title">${esc(p.name)}の主な対応エリア</h2>
+      <ul class="city-chips">${cityChips}</ul>
+      <p class="area-note">上記以外の${esc(p.name)}内の地域も対応可能です。記載のない市区町村もお問い合わせください。</p>
+    </div>
+  </section>
+
+  <section class="reasons" aria-labelledby="reasons-title">
+    <div class="container">
+      <h2 id="reasons-title" class="section-title">${esc(p.name)}の${esc(g.name)}でBUYMOが選ばれる理由</h2>
+      <div class="grid grid-3 reason-grid">
+        <article class="card reason-card"><div class="card-ico" aria-hidden="true">💰</div><h3>高価買取</h3><p>独自ルートで無駄を省き、${esc(p.name)}でも${esc(nm)}を相場より高く査定します。</p></article>
+        <article class="card reason-card"><div class="card-ico" aria-hidden="true">🚗</div><h3>出張査定無料</h3><p>${esc(p.name)}全域、ご指定の場所まで無料で出張。来店不要です。</p></article>
+        <article class="card reason-card"><div class="card-ico" aria-hidden="true">⚡</div><h3>即日対応可能</h3><p>お急ぎでも最短即日で査定から入金まで対応します。</p></article>
+        <article class="card reason-card"><div class="card-ico" aria-hidden="true">🆓</div><h3>手数料無料</h3><p>査定料・出張費・名義変更などの手続き代行料は一切無料。</p></article>
+        <article class="card reason-card"><div class="card-ico" aria-hidden="true">🚧</div><h3>どんな状態でもOK</h3><p>事故・不動・過走行など、他社で断られた車もご相談ください。</p></article>
+        <article class="card reason-card"><div class="card-ico" aria-hidden="true">💳</div><h3>契約後すぐ入金</h3><p>ご契約後スピーディにお振込み。お待たせしません。</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="faq" aria-labelledby="faq-title">
+    <div class="container faq-inner">
+      <div class="faq-main">
+        <h2 id="faq-title" class="section-title">${esc(p.name)}の${esc(g.name)} よくある質問</h2>
+        <div class="accordion">
+          ${accordion}
+        </div>
+      </div>
+      <div class="faq-mascot" aria-hidden="true">🐮👉</div>
+    </div>
+  </section>
+
+  <section class="area-related" aria-labelledby="related-title">
+    <div class="container">
+      <h2 id="related-title" class="section-title">他のエリアの${esc(g.name)}</h2>
+      <ul class="related-links">${otherAreas}</ul>
+      <p class="center"><a href="../" class="btn btn-primary">${esc(g.name)}トップへ</a></p>
+    </div>
+  </section>
+
+  <section class="form-section" aria-labelledby="cta-title">
+    <div class="container area-bottom-cta">
+      <h2 id="cta-title">${esc(p.name)}で${esc(nm)}を売るならBUYMOへ</h2>
+      <p>無料査定はかんたん入力。最短即日でご連絡します。</p>
+      <div class="area-cta">
+        <a href="${rel}buymo-contact.html?genre=${encodeURIComponent(g.name)}&pref=${encodeURIComponent(p.name)}" class="btn btn-light btn-lg">無料査定を依頼</a>
+        <a href="tel:05017223365" class="btn btn-tel-light">📞 0120-123-456</a>
+      </div>
+    </div>
+  </section>
+</main>
+${footer(rel)}
+</body>
+</html>`;
+}
+
 /* ---- ハブページ /genre/ ---- */
 const canonical = SITE_URL ? `${SITE_URL}/genre/` : './';
 const title = '買取ジャンル一覧｜廃車・事故車・不動車もBUYMO';
@@ -401,4 +550,11 @@ GENRES.forEach(g => {
   fs.writeFileSync(path.join(dir, 'index.html'), genrePage(g));
   n++;
 });
-console.log(`generated genre hub + ${n} genre LPs (${GROUPS.length} groups / ${GENRES.length} genres)`);
+let x = 0;
+CROSS.pairs(GENRES).forEach(({ genre, pref }) => {
+  const dir = path.join(ROOT, 'genre', genre.slug, pref.slug);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'index.html'), crossPage(genre, pref));
+  x++;
+});
+console.log(`generated genre hub + ${n} genre LPs + ${x} genre×area LPs (${GROUPS.length} groups / ${GENRES.length} genres)`);
