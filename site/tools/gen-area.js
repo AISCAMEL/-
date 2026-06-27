@@ -110,13 +110,13 @@ function prefPage(p, i) {
 <meta name="description" content="${esc(desc)}" />
 <meta name="theme-color" content="#FF6B35" />
 <link rel="canonical" href="${esc(canonical)}" />
-<link rel="icon" type="image/svg+xml" href="${rel}assets/img/favicon.svg" />
-<link rel="apple-touch-icon" href="${rel}assets/img/favicon-180.png" />
+<link rel="icon" type="image/svg+xml" href="${rel}assets/img/buymo-favicon.svg" />
+<link rel="apple-touch-icon" href="${rel}assets/img/buymo-favicon-180.png" />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="BUYMO｜車買取" />
 <meta property="og:title" content="${esc(title)}" />
 <meta property="og:description" content="${esc(desc)}" />
-<meta property="og:image" content="${rel}assets/img/ogp.png" />
+<meta property="og:image" content="${rel}assets/img/buymo-ogp.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" />
@@ -242,7 +242,7 @@ function hubPage() {
 <meta name="description" content="${esc(desc)}" />
 <meta name="theme-color" content="#FF6B35" />
 <link rel="canonical" href="${esc(canonical)}" />
-<link rel="icon" type="image/svg+xml" href="${rel}assets/img/favicon.svg" />
+<link rel="icon" type="image/svg+xml" href="${rel}assets/img/buymo-favicon.svg" />
 <meta property="og:type" content="website" />
 <meta property="og:title" content="${esc(title)}" />
 <meta property="og:description" content="${esc(desc)}" />

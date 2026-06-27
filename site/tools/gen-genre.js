@@ -38,7 +38,7 @@ const html = `<!DOCTYPE html>
 <meta name="description" content="${esc(desc)}" />
 <meta name="theme-color" content="#FF6B35" />
 <link rel="canonical" href="${esc(canonical)}" />
-<link rel="icon" type="image/svg+xml" href="${rel}assets/img/favicon.svg" />
+<link rel="icon" type="image/svg+xml" href="${rel}assets/img/buymo-favicon.svg" />
 <meta property="og:type" content="website" />
 <meta property="og:title" content="${esc(title)}" />
 <meta property="og:description" content="${esc(desc)}" />
