@@ -286,7 +286,9 @@ img{max-width:100%;display:block;}
 /* ============ ジャンル別買取（カード） ============ */
 .genres-section{background:#fff;padding:80px 0;}
 .genres-lead{text-align:center;color:#555;font-size:16px;margin:-24px auto 36px;max-width:760px;}
-.genre-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:32px;}
+.genre-cards,.genre-cards-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+.genre-group-block{margin-bottom:34px;}
+.genre-cat-title{font-size:19px;font-weight:900;color:var(--navy);border-left:6px solid var(--orange);padding-left:14px;margin-bottom:16px;}
 .genre-card{display:flex;flex-direction:column;align-items:flex-start;background:var(--cream);border:1px solid #f0e2cf;border-radius:var(--radius);padding:26px;box-shadow:var(--shadow);transition:transform .3s,box-shadow .3s;height:100%;}
 a.genre-card:hover{transform:translateY(-8px);box-shadow:var(--shadow-hover);}
 .genre-card.disabled{opacity:.75;}
@@ -296,11 +298,11 @@ a.genre-card:hover{transform:translateY(-8px);box-shadow:var(--shadow-hover);}
 .genre-card-go{display:inline-block;margin-top:14px;color:var(--orange);font-weight:700;font-size:14px;}
 .genre-card-soon{display:inline-block;margin-top:14px;background:#e0e0e0;color:#777;font-size:12px;font-weight:700;border-radius:6px;padding:3px 10px;}
 
-@media (max-width:991px){.genre-cards{grid-template-columns:repeat(2,1fr);}}
+@media (max-width:991px){.genre-cards,.genre-cards-grid{grid-template-columns:repeat(2,1fr);}}
 @media (max-width:767px){
   .genres-section{padding:48px 0;}
   .genres-lead{margin-top:-12px;}
-  .genre-cards{grid-template-columns:1fr;}
+  .genre-cards,.genre-cards-grid{grid-template-columns:1fr;}
 }
 
 /* ============ お客様の声 ============ */
@@ -440,7 +442,9 @@ a.genre-card:hover{transform:translateY(-8px);box-shadow:var(--shadow-hover);}
 /* ジャンル別買取（フッター上部バンド） */
 .footer-genres{background:#152a63;padding:28px 0;border-bottom:1px solid rgba(255,255,255,.12);}
 .footer-genres h3{font-size:16px;font-weight:700;color:var(--yellow);margin-bottom:14px;}
-.genre-list{display:flex;flex-wrap:wrap;gap:10px;}
+.genre-list{display:flex;flex-direction:column;gap:10px;}
+.genre-group{display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
+.genre-cat{color:var(--yellow);font-weight:900;font-size:12px;min-width:150px;}
 .genre-link{display:inline-block;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:30px;padding:8px 16px;font-size:13px;font-weight:700;color:#fff;transition:background .2s,transform .2s;}
 a.genre-link:hover{background:var(--orange);border-color:var(--orange);transform:translateY(-2px);}
 .genre-link.disabled{opacity:.55;cursor:default;}

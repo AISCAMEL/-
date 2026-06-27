@@ -7,22 +7,30 @@
 const fs = require('fs');
 const path = require('path');
 const { header, footer } = require('./_layout');
-const GENRES = require('../assets/js/genres');
+const GENRE_DATA = require('../assets/js/genres');
+const GROUPS = GENRE_DATA.groups;
+const GENRES = GENRE_DATA.list;
 
 const SITE_URL = ''; // 公開ドメイン確定後に設定すると canonical が絶対URLに
 const ROOT = path.resolve(__dirname, '..');
 const rel = '../'; // /genre/ から見たアセット相対
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-function cards() {
-  return GENRES.map(g => {
-    const soon = g.status === 'coming' || !g.url || g.url === '#';
-    const badge = soon ? '<span class="genre-card-soon">準備中</span>' : '<span class="genre-card-go">買取ページへ ›</span>';
-    const inner = `<div class="genre-card-ico" aria-hidden="true">${g.icon}</div><h3>${esc(g.name)}</h3><p>${esc(g.desc)}</p>${badge}`;
-    return soon
-      ? `<li><div class="genre-card disabled">${inner}</div></li>`
-      : `<li><a class="genre-card" href="${esc(g.url)}">${inner}</a></li>`;
-  }).join('\n        ');
+function card(g) {
+  const soon = g.status === 'coming' || !g.url || g.url === '#';
+  const badge = soon ? '<span class="genre-card-soon">準備中</span>' : '<span class="genre-card-go">買取ページへ ›</span>';
+  const inner = `<div class="genre-card-ico" aria-hidden="true">${g.icon}</div><h3>${esc(g.name)}</h3><p>${esc(g.desc)}</p>${badge}`;
+  return soon
+    ? `<li><div class="genre-card disabled">${inner}</div></li>`
+    : `<li><a class="genre-card" href="${esc(g.url)}">${inner}</a></li>`;
+}
+function groupsHtml() {
+  return GROUPS.map(g =>
+    `<div class="genre-group-block">
+        <h3 class="genre-cat-title">${esc(g.icon)} ${esc(g.cat)}</h3>
+        <ul class="genre-cards-grid">${g.items.map(card).join('')}</ul>
+      </div>`
+  ).join('\n      ');
 }
 
 const canonical = SITE_URL ? `${SITE_URL}/genre/` : './';
@@ -61,9 +69,7 @@ ${header(rel, 'genre')}
 
   <section class="genres-section" aria-label="買取ジャンル一覧">
     <div class="container">
-      <ul id="genre-cards" class="genre-cards">
-        ${cards()}
-      </ul>
+      ${groupsHtml()}
       <p class="area-note center">「準備中」のジャンルもお電話・フォームから今すぐご相談いただけます。</p>
     </div>
   </section>
@@ -86,4 +92,4 @@ ${footer(rel)}
 
 fs.mkdirSync(path.join(ROOT, 'genre'), { recursive: true });
 fs.writeFileSync(path.join(ROOT, 'genre', 'index.html'), html);
-console.log('generated genre hub (/genre/index.html) with', GENRES.length, 'genres');
+console.log('generated genre hub (/genre/index.html) with', GROUPS.length, 'groups /', GENRES.length, 'genres');
