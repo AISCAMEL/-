@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル 電話番号修正
  * Description: 店舗ごとに正しい電話番号を入力し、その店舗の全車両のtelを一括で正しい番号へ統一（旧番号を上書き）します。店舗投稿のtelも更新可。プレビュー付き。
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: CARMEL
  *
  * 使い方：wp-content/plugins/ にアップロード →「プラグイン」で有効化
@@ -14,10 +14,13 @@ if ( ! class_exists( 'Carmel_Phone_Fix' ) ) {
 
 class Carmel_Phone_Fix {
 
-	/* 既知の初期値（編集可） */
+	/* 正しい番号を最初から設定（千葉・山梨は空＝触らない） */
 	private function defaults() {
 		return array(
 			'fukushima' => '050-1793-5554',
+			'odawara'   => '0465-20-4286',
+			'chiba'     => '', // そのまま（触らない）
+			'yamanashi' => '', // そのまま（触らない）
 		);
 	}
 
@@ -68,9 +71,11 @@ class Carmel_Phone_Fix {
 		foreach ( $map as $slug => $sid ) {
 			if ( isset( $_POST['cpf_num'][ $slug ] ) ) {
 				$out[ $slug ] = sanitize_text_field( wp_unslash( $_POST['cpf_num'][ $slug ] ) );
+			} elseif ( array_key_exists( $slug, $def ) ) {
+				// 設定済みの正番号を採用（千葉・山梨は '' = 触らない）
+				$out[ $slug ] = (string) $def[ $slug ];
 			} else {
 				$cur = get_post_meta( (int) $sid, 'tel', true );
-				if ( $this->blank( $cur ) && isset( $def[ $slug ] ) ) { $cur = $def[ $slug ]; }
 				$out[ $slug ] = is_string( $cur ) ? trim( $cur ) : '';
 			}
 		}
