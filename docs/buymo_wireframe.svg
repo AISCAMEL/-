@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 1020" width="1440" height="1020" font-family="'Noto Sans JP',sans-serif">
+  <rect width="1440" height="1020" fill="#FFFFFF"/>
+  <text x="40" y="46" font-size="26" font-weight="900" fill="#333">BUYMO 現状仕様 ワイヤー（俯瞰図）</text>
+  <text x="40" y="72" font-size="14" fill="#888">公開（集客）→ 申込 → GASバックエンド → 会員/業務/加盟店。チャットボット・計測・自動化は横断。</text>
+
+  <!-- defs -->
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#FF6B35"/></marker>
+    <style>
+      .panel{fill:#fafafa;stroke:#cfcfcf;stroke-width:1.5;rx:12;}
+      .ph{font-size:15px;font-weight:900;fill:#1E3A8A;}
+      .box{fill:#fff;stroke:#bdbdbd;stroke-width:1.2;}
+      .bt{font-size:13px;fill:#444;}
+      .bs{font-size:11px;fill:#999;}
+      .tag{font-size:11px;font-weight:700;fill:#FF6B35;}
+      .flow{stroke:#FF6B35;stroke-width:2.5;fill:none;}
+    </style>
+  </defs>
+
+  <!-- ① 公開サイト（集客） -->
+  <rect class="panel" x="40" y="92" width="1360" height="206" rx="12"/>
+  <text class="ph" x="58" y="118">① 公開サイト（集客 / SEO）</text>
+  <!-- boxes -->
+  <g>
+    <rect class="box" x="58" y="132" width="210" height="150" rx="8"/>
+    <text class="bt" x="70" y="156" font-weight="700">トップLP buymo.html</text>
+    <text class="bs" x="70" y="178">ヒーロー / 4大特長</text>
+    <text class="bs" x="70" y="196">査定シミュレーター</text>
+    <text class="bs" x="70" y="214">他社比較 / 追従CTA</text>
+    <text class="bs" x="70" y="232">FAQ(構造化) / 会員誘導</text>
+    <text class="tag" x="70" y="262">査定フォーム ▶</text>
+
+    <rect class="box" x="284" y="132" width="200" height="150" rx="8"/>
+    <text class="bt" x="296" y="156" font-weight="700">ジャンル /genre/</text>
+    <text class="bs" x="296" y="178">ハブ＋9ジャンル</text>
+    <text class="bs" x="296" y="196">廃車/事故/不動/水没</text>
+    <text class="bs" x="296" y="214">過走行/軽/トラック</text>
+    <text class="bs" x="296" y="232">輸入/EV</text>
+
+    <rect class="box" x="500" y="132" width="200" height="150" rx="8"/>
+    <text class="bt" x="512" y="156" font-weight="700">エリア /area/</text>
+    <text class="bs" x="512" y="178">ハブ＋47都道府県</text>
+    <text class="bs" x="512" y="196">市区町村KW</text>
+    <text class="bs" x="512" y="214">JSON-LD/相互リンク</text>
+
+    <rect class="box" x="716" y="132" width="200" height="150" rx="8"/>
+    <text class="bt" x="728" y="156" font-weight="700">お問い合わせ</text>
+    <text class="bs" x="728" y="178">buymo-contact</text>
+    <text class="bs" x="728" y="196">査定フォーム＋同意</text>
+    <text class="tag" x="728" y="262">フォーム ▶</text>
+
+    <rect class="box" x="932" y="132" width="220" height="150" rx="8"/>
+    <text class="bt" x="944" y="156" font-weight="700">パートナー募集</text>
+    <text class="bs" x="944" y="178">buymo-partner</text>
+    <text class="bs" x="944" y="196">応募フォーム</text>
+
+    <rect class="box" x="1168" y="132" width="216" height="150" rx="8"/>
+    <text class="bt" x="1180" y="156" font-weight="700">会社/法務</text>
+    <text class="bs" x="1180" y="178">特商法・古物商</text>
+    <text class="bs" x="1180" y="196">プライバシー</text>
+    <text class="bs" x="1180" y="214">404 / sitemap</text>
+  </g>
+
+  <!-- ② バックエンド GAS -->
+  <rect class="panel" x="40" y="338" width="1360" height="150" rx="12" fill="#FFF6F1" stroke="#FFD0B8"/>
+  <text class="ph" x="58" y="364" fill="#FF6B35">② バックエンド（GAS ＋ スプレッドシート）</text>
+  <g>
+    <rect class="box" x="58" y="378" width="250" height="92" rx="8"/>
+    <text class="bt" x="70" y="402" font-weight="700">フォーム受付</text>
+    <text class="bs" x="70" y="422">type:buymo / contact</text>
+    <text class="bs" x="70" y="440">記録＋通知＋案件生成</text>
+
+    <rect class="box" x="324" y="378" width="230" height="92" rx="8"/>
+    <text class="bt" x="336" y="402" font-weight="700">通知</text>
+    <text class="bs" x="336" y="422">Slack / LINE</text>
+    <text class="bs" x="336" y="440">スタッフ宛</text>
+
+    <rect class="box" x="570" y="378" width="250" height="92" rx="8"/>
+    <text class="bt" x="582" y="402" font-weight="700">ステップメール</text>
+    <text class="bs" x="582" y="422">Day0/1/3/7 自動配信</text>
+    <text class="bs" x="582" y="440">会員ページ誘導</text>
+
+    <rect class="box" x="836" y="378" width="250" height="92" rx="8"/>
+    <text class="bt" x="848" y="402" font-weight="700">認証</text>
+    <text class="bs" x="848" y="422">ハッシュ＋トークン</text>
+    <text class="bs" x="848" y="440">セッション/書込保護</text>
+
+    <rect class="box" x="1102" y="378" width="282" height="92" rx="8"/>
+    <text class="bt" x="1114" y="402" font-weight="700">シート（DB）</text>
+    <text class="bs" x="1114" y="422">案件ボード/対応履歴/お知らせ</text>
+    <text class="bs" x="1114" y="440">会員/セッション/ステップ</text>
+  </g>
+
+  <!-- ③ 会員 -->
+  <rect class="panel" x="40" y="528" width="320" height="200" rx="12"/>
+  <text class="ph" x="58" y="554">③ 会員（お客様）</text>
+  <rect class="box" x="58" y="568" width="284" height="142" rx="8"/>
+  <text class="bt" x="70" y="592" font-weight="700">会員マイページ member.html</text>
+  <text class="bs" x="70" y="616">メールでログイン</text>
+  <text class="bs" x="70" y="636">査定/買取の進捗ステッパー</text>
+  <text class="bs" x="70" y="656">提示金額の確認</text>
+  <text class="tag" x="70" y="690">◀ 案件ボードと連動</text>
+
+  <!-- ④ 本部 -->
+  <rect class="panel" x="376" y="528" width="600" height="200" rx="12"/>
+  <text class="ph" x="394" y="554">④ 本部（業務システム・要ログイン）</text>
+  <g>
+    <rect class="box" x="394" y="568" width="178" height="62" rx="8"/><text class="bt" x="406" y="592">ダッシュボード</text><text class="bs" x="406" y="612">KPI/アラート</text>
+    <rect class="box" x="584" y="568" width="178" height="62" rx="8"/><text class="bt" x="596" y="592">案件ボード(看板)</text><text class="bs" x="596" y="612">D&amp;D/対応履歴</text>
+    <rect class="box" x="774" y="568" width="184" height="62" rx="8"/><text class="bt" x="786" y="592">リード一覧</text><text class="bs" x="786" y="612">検索/担当割当</text>
+    <rect class="box" x="394" y="642" width="178" height="62" rx="8"/><text class="bt" x="406" y="666">加盟店管理</text><text class="bs" x="406" y="686">実績/状況</text>
+    <rect class="box" x="584" y="642" width="178" height="62" rx="8"/><text class="bt" x="596" y="666">営業レポート</text><text class="bs" x="596" y="686">成約率/売上</text>
+    <rect class="box" x="774" y="642" width="184" height="62" rx="8"/><text class="bt" x="786" y="666">お知らせ管理</text><text class="bs" x="786" y="686">本部→加盟店</text>
+  </g>
+
+  <!-- ⑤ 加盟店 -->
+  <rect class="panel" x="992" y="528" width="408" height="200" rx="12"/>
+  <text class="ph" x="1010" y="554">⑤ 加盟店（要ログイン）</text>
+  <g>
+    <rect class="box" x="1010" y="568" width="180" height="62" rx="8"/><text class="bt" x="1022" y="592">アカデミー</text><text class="bs" x="1022" y="612">動画+テキスト/進捗</text>
+    <rect class="box" x="1202" y="568" width="180" height="62" rx="8"/><text class="bt" x="1214" y="592">修了テスト/修了証</text><text class="bs" x="1214" y="612">合格→認定</text>
+    <rect class="box" x="1010" y="642" width="180" height="62" rx="8"/><text class="bt" x="1022" y="666">スクリプト集</text><text class="bs" x="1022" y="686">話法/コピー</text>
+    <rect class="box" x="1202" y="642" width="180" height="62" rx="8"/><text class="bt" x="1214" y="666">コミュニティ</text><text class="bs" x="1214" y="686">加盟店Q&amp;A</text>
+  </g>
+
+  <!-- ⑥ 横断 -->
+  <rect class="panel" x="40" y="758" width="1360" height="92" rx="12" fill="#F4F7FF" stroke="#C7D6F5"/>
+  <text class="ph" x="58" y="784">⑥ 横断機能</text>
+  <rect class="box" x="58" y="796" width="300" height="42" rx="8"/><text class="bt" x="70" y="822">チャットボット（ユーザー/加盟店 切替・任意でAI）</text>
+  <rect class="box" x="374" y="796" width="240" height="42" rx="8"/><text class="bt" x="386" y="822">計測 GA4（generate_lead 他）</text>
+  <rect class="box" x="630" y="796" width="300" height="42" rx="8"/><text class="bt" x="642" y="822">SEO（sitemap/robots/構造化/OGP）</text>
+  <rect class="box" x="946" y="796" width="438" height="42" rx="8"/><text class="bt" x="958" y="822">QA（リンクチェック / 実機スモーク / CI）</text>
+
+  <!-- flows -->
+  <path class="flow" d="M163 282 L163 378" marker-end="url(#arrow)"/>
+  <path class="flow" d="M816 282 L760 378" marker-end="url(#arrow)"/>
+  <path class="flow" d="M200 470 L200 568" marker-end="url(#arrow)"/>
+  <path class="flow" d="M700 470 L680 568" marker-end="url(#arrow)"/>
+  <path class="flow" d="M980 470 L1100 568" marker-end="url(#arrow)"/>
+  <text x="210" y="512" class="bs" fill="#FF6B35">案件→進捗</text>
+  <text x="690" y="512" class="bs" fill="#FF6B35">案件管理</text>
+
+  <text x="40" y="892" font-size="12" fill="#aaa">※ 本部/加盟店/会員ページは noindex・ログイン制御。公開前に ドメイン/GAS ENDPOINT/GA4/電話/実写真 を設定。</text>
+</svg>
