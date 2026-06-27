@@ -38,6 +38,31 @@
     } catch (e) { /* noop */ }
   }
 
+  /* ---- ジャンル/エリアLPからの来訪を可視化（?genre= / ?pref=） ---- */
+  var ctxEl = document.getElementById('formContext');
+  if (ctxEl) {
+    try {
+      var sp = new URLSearchParams(window.location.search);
+      var gGenre = sp.get('genre');
+      var gPref = sp.get('pref');
+      if (gGenre || gPref) {
+        var parts = [];
+        if (gPref) parts.push(gPref);
+        if (gGenre) parts.push(gGenre);
+        ctxEl.innerHTML = '📋 <strong>' + parts.join('／') + '</strong> についてのお問い合わせとして承ります。';
+        ctxEl.hidden = false;
+        // 種別が未選択なら「無料査定の申し込み」を初期選択
+        var typeSel = document.getElementById('f-type');
+        if (typeSel && !typeSel.value) typeSel.value = '無料査定の申し込み';
+        // お問い合わせ内容に書き出しを補助（空のときのみ）
+        var msg = document.getElementById('f-message');
+        if (msg && !msg.value && gGenre) {
+          msg.value = '「' + gGenre + '」について査定を希望します。\n（年式・走行距離・状態などをご記入ください）\n';
+        }
+      }
+    } catch (e) { /* noop */ }
+  }
+
   /* ---- 1. ハンバーガーメニュー ---- */
   var hb = document.getElementById('hamburger');
   var gnav = document.getElementById('gnav');
