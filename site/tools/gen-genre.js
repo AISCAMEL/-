@@ -500,6 +500,7 @@ const hubHtml = `<!DOCTYPE html>
 <meta property="og:type" content="website" />
 <meta property="og:title" content="${esc(title)}" />
 <meta property="og:description" content="${esc(desc)}" />
+<meta property="og:image" content="${rel}assets/img/buymo-ogp.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" />

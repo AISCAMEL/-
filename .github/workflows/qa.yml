@@ -17,3 +17,6 @@ jobs:
       - name: Run link/asset checker
         working-directory: site
         run: node tools/check-links.js
+      - name: Run SEO / structured-data / consistency checker
+        working-directory: site
+        run: node tools/seo-check.js
