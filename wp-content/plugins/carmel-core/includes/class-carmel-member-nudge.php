@@ -71,6 +71,12 @@ class Carmel_Member_Nudge {
 			$url  = isset( $vars['url'] ) ? $vars['url'] : self::member_url();
 			$message['subject'] = '会員ページのご案内';
 			$message['body']    = $name . " 様\nこの度はご納車おめでとうございます。\n車検・保険・各種お手続きやアフターサポートは会員ページからご確認いただけます。\n" . $url;
+		} elseif ( in_array( $event_type, array( 'inspection_notice', 'insurance_notice', 'maintenance_notice' ), true ) ) {
+			// 車検・保険・点検の案内に会員ページURLを付加（ご予約・確認導線）。
+			$body = isset( $message['body'] ) ? (string) $message['body'] : '';
+			if ( false === strpos( $body, self::member_url() ) ) {
+				$message['body'] = rtrim( $body ) . "\n会員ページ：" . self::member_url();
+			}
 		}
 		return $message;
 	}

@@ -17,8 +17,9 @@ class Carmel_Store_Leads {
 	/** @var Carmel_Store_Leads|null */
 	private static $instance = null;
 
-	const STATUS_ACTION = 'carmel_lead_status';
-	const NONCE         = 'carmel_lead_nonce';
+	const STATUS_ACTION  = 'carmel_lead_status';
+	const CONVERT_ACTION = 'carmel_lead_convert';
+	const NONCE          = 'carmel_lead_nonce';
 
 	public static function instance() {
 		if ( null === self::$instance ) {
@@ -30,6 +31,17 @@ class Carmel_Store_Leads {
 	public function register_hooks() {
 		add_action( 'carmel_store_dashboard_top', array( $this, 'render_panel' ), 7 );
 		add_action( 'admin_post_' . self::STATUS_ACTION, array( $this, 'handle_status' ) );
+		add_action( 'admin_post_' . self::CONVERT_ACTION, array( $this, 'handle_convert' ) );
+
+		// 未対応SLAエスカレーション（日次cron）＋通知ルーティング。
+		add_action( 'carmel_daily_cron_done', array( $this, 'escalate_overdue' ) );
+		add_filter( 'carmel_routing_table', array( $this, 'add_routing' ) );
+		add_filter( 'carmel_notification_message', array( $this, 'add_message' ), 10, 3 );
+	}
+
+	/** 未対応とみなすSLA時間（既定24h）。 */
+	public static function sla_hours() {
+		return (int) apply_filters( 'carmel_lead_sla_hours', (int) get_option( 'carmel_lead_sla_hours', 24 ) );
 	}
 
 	/** 対応状況 => ラベル。 */
@@ -119,7 +131,8 @@ class Carmel_Store_Leads {
 			echo '<td>' . esc_html( $area ? $area : '—' ) . '</td>';
 			echo '<td class="carmel-lead-msg" title="' . esc_attr( $msg ) . '">' . esc_html( mb_strimwidth( $msg, 0, 40, '…' ) ) . '</td>';
 			echo '<td><span class="carmel-lead-st">' . esc_html( isset( $lbl[ $st ] ) ? $lbl[ $st ] : $st ) . '</span></td>';
-			echo '<td>' . $this->toggle_button( $l->ID, $st ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput
+			echo '<td class="carmel-lead-ops">' . $this->toggle_button( $l->ID, $st ) // phpcs:ignore WordPress.Security.EscapeOutput
+				. $this->convert_cell( $l->ID ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput
 			echo '</tr>';
 		}
 		echo '</tbody></table></div>';
@@ -135,6 +148,155 @@ class Carmel_Store_Leads {
 			. '<input type="hidden" name="to" value="' . esc_attr( $next ) . '">'
 			. '<input type="hidden" name="' . esc_attr( self::NONCE ) . '" value="' . esc_attr( $nonce ) . '">'
 			. '<button type="submit" class="carmel-btn carmel-btn-ghost">→ ' . esc_html( $lbl[ $next ] ) . '</button></form>';
+	}
+
+	/** 商談化ボタン or 既存商談リンク。 */
+	private function convert_cell( $lead_id ) {
+		$deal_id = (int) get_post_meta( $lead_id, 'deal_id', true );
+		if ( $deal_id ) {
+			$url = home_url( '/' . ltrim( apply_filters( 'carmel_store_page_slug', 'store' ), '/' ) );
+			return ' <a class="carmel-lead-deal" href="' . esc_url( $url ) . '">商談 #' . $deal_id . '</a>';
+		}
+		$nonce = wp_create_nonce( self::CONVERT_ACTION . '_' . $lead_id );
+		return ' <form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:inline;margin:0">'
+			. '<input type="hidden" name="action" value="' . esc_attr( self::CONVERT_ACTION ) . '">'
+			. '<input type="hidden" name="lead_id" value="' . (int) $lead_id . '">'
+			. '<input type="hidden" name="' . esc_attr( self::NONCE ) . '" value="' . esc_attr( $nonce ) . '">'
+			. '<button type="submit" class="carmel-btn carmel-btn-green" title="案件として起票">商談化</button></form>';
+	}
+
+	/* --------------------------------------------------------------------- *
+	 * 商談化（リード → 案件）
+	 * --------------------------------------------------------------------- */
+
+	public function handle_convert() {
+		if ( ! $this->can_access() ) {
+			wp_die( esc_html__( '権限がありません。', 'carmel-core' ), '', array( 'response' => 403 ) );
+		}
+		$lead_id  = isset( $_POST['lead_id'] ) ? (int) $_POST['lead_id'] : 0;
+		$redirect = wp_get_referer() ? wp_get_referer() : home_url( '/store' );
+
+		if ( ! wp_verify_nonce( isset( $_POST[ self::NONCE ] ) ? sanitize_text_field( wp_unslash( $_POST[ self::NONCE ] ) ) : '', self::CONVERT_ACTION . '_' . $lead_id ) ) {
+			wp_die( esc_html__( '不正なリクエストです。', 'carmel-core' ), '', array( 'response' => 400 ) );
+		}
+		if ( 'carmel_support' !== get_post_type( $lead_id ) ) {
+			wp_die( esc_html__( '対象が不正です。', 'carmel-core' ), '', array( 'response' => 400 ) );
+		}
+
+		$lead_store = (int) get_post_meta( $lead_id, 'store_id', true );
+		$my         = $this->current_store_id();
+		$is_hq      = current_user_can( 'carmel_manage_stores' );
+		if ( ! $is_hq && ( ! $my || $lead_store !== $my ) ) {
+			wp_die( esc_html__( '他店の反響は操作できません。', 'carmel-core' ), '', array( 'response' => 403 ) );
+		}
+
+		// 既に商談化済みなら再利用。
+		$existing = (int) get_post_meta( $lead_id, 'deal_id', true );
+		if ( $existing ) {
+			wp_safe_redirect( add_query_arg( 'carmel_lead', 'converted', $redirect ) );
+			exit;
+		}
+
+		$store_id   = $lead_store ? $lead_store : $my;
+		$name       = (string) get_post_meta( $lead_id, 'applicant_name', true );
+		$phone      = (string) get_post_meta( $lead_id, 'applicant_phone', true );
+		$message    = (string) get_post_meta( $lead_id, 'message', true );
+		$vehicle_id = (int) get_post_meta( $lead_id, 'vehicle_id', true );
+		$customer   = (int) get_post_meta( $lead_id, 'customer_id', true );
+
+		$deal_id = wp_insert_post(
+			array(
+				'post_type'   => 'carmel_deal',
+				'post_status' => 'publish',
+				'post_title'  => '反響商談：' . ( $name ? $name : '#' . $lead_id ),
+				'meta_input'  => array(
+					'deal_type'        => 'loan',
+					'store_id'         => (int) $store_id,
+					'vehicle_id'       => $vehicle_id,
+					'customer_id'      => $customer,
+					'lead_intent'      => 'inquiry',
+					'is_lead'          => 1,
+					'created_via'      => 'lead_convert',
+					'applicant_name'   => $name ? $name : '（反響・お客様未確定）',
+					'applicant_phone'  => $phone,
+					'application_note' => '反響（' . get_post_meta( $lead_id, 'support_type', true ) . '）からの商談化：' . $message,
+				),
+			)
+		);
+		if ( is_wp_error( $deal_id ) || ! $deal_id ) {
+			wp_safe_redirect( add_query_arg( 'carmel_lead', 'err', $redirect ) );
+			exit;
+		}
+
+		// 担当店マッチング状態へ（在庫連動・履歴・通知が発火）。
+		Carmel_Deal_Status::change( (int) $deal_id, 'matched', array( 'system' => true, 'note' => '反響から商談化' ) );
+
+		update_post_meta( $lead_id, 'deal_id', (int) $deal_id );
+		update_post_meta( $lead_id, 'lead_status', 'working' );
+		do_action( 'carmel_lead_converted', $lead_id, (int) $deal_id );
+
+		wp_safe_redirect( add_query_arg( 'carmel_lead', 'converted', $redirect ) );
+		exit;
+	}
+
+	/* --------------------------------------------------------------------- *
+	 * 未対応SLAエスカレーション
+	 * --------------------------------------------------------------------- */
+
+	/** 一定時間（SLA）未対応の反響を本部＋担当店へエスカレーション（1回のみ）。 */
+	public function escalate_overdue() {
+		$threshold = gmdate( 'Y-m-d H:i:s', time() - self::sla_hours() * HOUR_IN_SECONDS );
+		$leads = get_posts(
+			array(
+				'post_type'      => 'carmel_support',
+				'post_status'    => 'publish',
+				'posts_per_page' => 100,
+				'date_query'     => array( array( 'column' => 'post_date_gmt', 'before' => $threshold ) ),
+				'meta_query'     => array(
+					'relation' => 'AND',
+					array( 'key' => 'support_type', 'value' => array( 'line_inquiry', 'inventory_inquiry' ), 'compare' => 'IN' ),
+					array( 'key' => '_escalated', 'compare' => 'NOT EXISTS' ),
+				),
+			)
+		);
+
+		foreach ( $leads as $l ) {
+			$st = get_post_meta( $l->ID, 'lead_status', true ) ?: 'new';
+			if ( 'done' === $st ) {
+				continue;
+			}
+			$store_id = (int) get_post_meta( $l->ID, 'store_id', true );
+			$ctx = array(
+				'event_id' => 'lead_sla:' . $l->ID,
+				'vars'     => array(
+					'name'  => get_post_meta( $l->ID, 'applicant_name', true ),
+					'hours' => self::sla_hours(),
+				),
+			);
+			if ( $store_id ) {
+				$ctx['store_id'] = $store_id;
+			}
+			Carmel_Notifier::notify( 'lead_sla_breach', $ctx );
+			update_post_meta( $l->ID, '_escalated', 1 );
+		}
+	}
+
+	public function add_routing( $table ) {
+		$table['lead_sla_breach'] = array(
+			array( 'audience' => 'store', 'channel' => 'lineworks', 'fallback' => 'mail' ),
+			array( 'audience' => 'hq', 'channel' => 'lineworks', 'fallback' => 'mail' ),
+		);
+		return $table;
+	}
+
+	public function add_message( $message, $event_type, $context ) {
+		if ( 'lead_sla_breach' === $event_type ) {
+			$vars = isset( $context['vars'] ) ? (array) $context['vars'] : array();
+			$message['subject'] = '【要対応】未対応の反響があります';
+			$message['body']    = ( isset( $vars['hours'] ) ? $vars['hours'] : 24 ) . '時間以上 未対応の反響があります（'
+				. ( isset( $vars['name'] ) ? $vars['name'] : 'お客様' ) . '）。/store の反響一覧からご対応ください。';
+		}
+		return $message;
 	}
 
 	/* --------------------------------------------------------------------- *
@@ -171,10 +333,15 @@ class Carmel_Store_Leads {
 
 	private function banner() {
 		$msg = isset( $_GET['carmel_lead'] ) ? sanitize_key( $_GET['carmel_lead'] ) : '';
-		if ( 'ok' !== $msg ) {
+		$map = array(
+			'ok'        => array( 'success', '反響の対応状況を更新しました。' ),
+			'converted' => array( 'success', '反響を商談化しました。案件一覧に表示されます。' ),
+			'err'       => array( 'error', '処理できませんでした。' ),
+		);
+		if ( ! isset( $map[ $msg ] ) ) {
 			return '';
 		}
-		return '<div class="carmel-banner carmel-banner-success">反響の対応状況を更新しました。</div>';
+		return '<div class="carmel-banner carmel-banner-' . esc_attr( $map[ $msg ][0] ) . '">' . esc_html( $map[ $msg ][1] ) . '</div>';
 	}
 
 	private function styles() {
@@ -190,8 +357,13 @@ class Carmel_Store_Leads {
 .carmel-lead-done td{color:#999}
 .carmel-lead-st{font-weight:bold}
 .carmel-btn-ghost{display:inline-block;background:#eef2fb;color:#2e86de;border:0;border-radius:.3em;padding:.3em .7em;cursor:pointer;font-size:.82em;text-decoration:none}
+.carmel-btn-green{display:inline-block;background:#16a085;color:#fff;border:0;border-radius:.3em;padding:.3em .7em;cursor:pointer;font-size:.82em;text-decoration:none}
+.carmel-lead-ops{white-space:nowrap}
+.carmel-lead-ops form{display:inline-block}
+.carmel-lead-deal{display:inline-block;margin-left:.3em;color:#6b4fbb;text-decoration:none;font-size:.82em}
 .carmel-banner{padding:.7em 1em;border-radius:.4em;margin:1em 0}
 .carmel-banner-success{background:#e8f8f3;color:#0e6e58;border:1px solid #16a085}
+.carmel-banner-error{background:#fdecea;color:#a5281b;border:1px solid #c0392b}
 </style>';
 	}
 }
