@@ -42,6 +42,16 @@ npm run dev
 - `/password/reset` パスワード再設定
 - `/me` マイページ（未ログインは `/login` に飛ぶ＝権限ゲート確認）
 
+## PWA（スマホアプリ化）
+本番ビルドでは PWA として動作し、スマホの「ホーム画面に追加」でアプリのように使えます。
+- マニフェスト：`src/app/manifest.ts`（/manifest.webmanifest として配信）
+- アイコン：`public/icon-192.png` `public/icon-512.png` `public/apple-touch-icon.png`
+- サービスワーカー：`public/sw.js`（本番のみ登録。静的アセットを軽くキャッシュ）
+- 確認方法：`npm run build && npm run start` → スマホ実機/Chromeで開く
+  → iOS は「共有 → ホーム画面に追加」、Android Chrome は「アプリをインストール」
+- ※ サービスワーカー登録は本番(production)のみ。`npm run dev` では無効です。
+- ※ 将来ネイティブアプリにする場合も、この Web をそのまま中身として再利用できます。
+
 ## 実装メモ
 - 権限は UI + API + RLS の三重化：
   - 入口：`src/proxy.ts`（Next.js 16 の middleware 後継）
