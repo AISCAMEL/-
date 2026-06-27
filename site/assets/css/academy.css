@@ -47,6 +47,42 @@
 .cv-complete{margin-top:20px;width:100%;height:50px;border:none;border-radius:10px;background:var(--orange);color:#fff;font-weight:900;font-size:15px;cursor:pointer;}
 .cv-complete.is-done{background:#22a34a;}
 
+/* 修了バッジ・クイズCTA */
+.ac-badge{margin-left:8px;background:#E3F7E8;color:#15803d;font-size:11px;font-weight:900;border-radius:30px;padding:2px 8px;vertical-align:middle;}
+.cv-quiz{margin-top:14px;background:#FFF8EC;border:1px solid #FFE2B8;border-radius:10px;padding:14px;font-weight:700;font-size:14px;text-align:center;}
+.cv-quiz a{color:var(--orange);}
+.cv-quiz-btn{display:inline-block;background:var(--orange);color:#fff !important;font-weight:900;border-radius:30px;padding:10px 20px;margin-top:8px;text-decoration:none;}
+
+/* クイズ */
+.quiz-form{max-width:720px;}
+.quiz-q{background:#fff;border-radius:12px;box-shadow:var(--shadow);padding:18px 20px;margin-bottom:14px;}
+.quiz-qt{font-weight:700;font-size:15px;margin-bottom:10px;}
+.quiz-opt{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #eee;border-radius:8px;margin-bottom:8px;cursor:pointer;font-size:14px;}
+.quiz-opt:hover{background:#f7f8fb;}
+.quiz-submit{width:100%;height:50px;border:none;border-radius:10px;background:var(--orange);color:#fff;font-weight:900;font-size:15px;cursor:pointer;}
+.quiz-result{margin-top:16px;border-radius:12px;padding:18px;text-align:center;font-weight:900;font-size:16px;}
+.quiz-result.pass{background:#E3F7E8;color:#15803d;}
+.quiz-result.fail{background:#FDECEC;color:#c0392b;}
+.quiz-retry{display:block;margin:10px auto 0;border:1px solid #c0392b;color:#c0392b;background:#fff;border-radius:30px;padding:8px 18px;font-weight:700;cursor:pointer;}
+
+/* 修了証 */
+.cert{max-width:720px;margin:10px auto 0;background:#fff;border:3px solid var(--navy);border-radius:16px;padding:40px;text-align:center;
+  background-image:radial-gradient(circle at 12% 12%, #FFF3E9 0, transparent 40%),radial-gradient(circle at 88% 88%, #eef2ff 0, transparent 40%);}
+.cert-mark{font-weight:900;color:var(--orange);letter-spacing:.1em;}
+.cert-title{font-size:34px;font-weight:900;color:var(--navy);letter-spacing:.3em;margin:10px 0 18px;}
+.cert-lead{color:#555;font-size:14px;}
+.cert-name{font-size:28px;font-weight:900;border-bottom:2px solid var(--orange);display:inline-block;padding:6px 24px;margin:16px 0;}
+.cert-course{font-size:17px;font-weight:700;margin-bottom:18px;}
+.cert-row{display:flex;justify-content:space-between;max-width:520px;margin:6px auto;font-size:13px;color:#555;}
+.cert-actions{text-align:center;margin-top:20px;}
+.cert-back{margin-left:14px;font-weight:700;color:var(--navy);}
+.cert-none{text-align:center;color:#666;padding:40px 0;}
+@media print{
+  .no-print,.portal-header,.cert-actions{display:none !important;}
+  .portal-main{background:#fff;padding:0;}
+  .cert{border-color:#1E3A8A;}
+}
+
 /* スクリプト集 */
 .sc-group{margin-bottom:24px;}
 .sc-group h2{font-size:16px;font-weight:900;color:var(--navy);margin-bottom:12px;}

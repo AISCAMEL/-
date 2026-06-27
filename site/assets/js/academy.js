@@ -36,6 +36,42 @@ window.Academy = (function () {
     ]}
   ];
 
+  var QKEY = 'buymo_academy_passed';
+  var PASS = 80; // 合格ライン(%)
+  var QUIZ = {
+    basic: [
+      { q: 'BUYMOの基本ビジネスモデルは？', c: ['在庫を多数抱えて販売', '在庫を持たない買取・即時売却', '製造して販売'], a: 1 },
+      { q: '車の買取（古物取引）に必須の許可は？', c: ['宅地建物取引業', '古物商許可', '建設業許可'], a: 1 },
+      { q: '日々の案件の進捗管理に使うのは？', c: ['看板ボード', '給与計算表', '在庫一覧'], a: 0 }
+    ],
+    appraisal: [
+      { q: '相場の把握に使えるのは？', c: ['星占い', '査定シミュレーター/オークション実績', '天気予報'], a: 1 },
+      { q: '不動車・事故車の価値の考え方は？', c: ['必ず価値ゼロ', '部品・素材として価値がある', '常に廃棄のみ'], a: 1 },
+      { q: '高査定につながりやすいのは？', c: ['人気の装備・カラー', '色あせ', '大きな損傷'], a: 0 }
+    ],
+    auction: [
+      { q: '出品票で大切な姿勢は？', c: ['良い点だけ書く', '減点も正直に記載する', '空欄で出す'], a: 1 },
+      { q: '出品の流れの最後は？', c: ['落札', '申込', '査定'], a: 0 },
+      { q: '落札後に必要な手配は？', c: ['特になし', '陸送・名義変更の手配', '再出品のみ'], a: 1 }
+    ],
+    sales: [
+      { q: '「他社の方が高い」への対応は？', c: ['すぐ諦める', '手数料無料など“総額”で比較訴求', '値引きだけで対抗'], a: 1 },
+      { q: '金額提示で大切なのは？', c: ['根拠を伝える', '黙って渡す', '曖昧にする'], a: 0 },
+      { q: '契約時に必要な書類は？', c: ['住民票のみ', '車検証・自賠責・本人確認・印鑑', '不要'], a: 1 }
+    ],
+    system: [
+      { q: '新規リードはどこで確認する？', c: ['リード一覧', '給与明細', '在庫表'], a: 0 },
+      { q: 'ステージ変更はどこに反映される？', c: ['どこにも反映されない', '会員マイページにも反映', '印刷物のみ'], a: 1 },
+      { q: '対応メモの記録先は？', c: ['記録しない', '案件詳細パネルの対応履歴', '口頭のみ'], a: 1 }
+    ]
+  };
+  function getPassed() { try { return JSON.parse(localStorage.getItem(QKEY)) || {}; } catch (e) { return {}; } }
+  function setPassed(p) { try { localStorage.setItem(QKEY, JSON.stringify(p)); } catch (e) {} }
+  function isPassed(id) { return !!getPassed()[id]; }
+  function certNo(id, date) { return 'BUYMO-' + String(id).toUpperCase() + '-' + String(date).replace(/\//g, ''); }
+  function todayStr() { var d = new Date(); function p(n) { return ('0' + n).slice(-2); } return d.getFullYear() + '/' + p(d.getMonth() + 1) + '/' + p(d.getDate()); }
+  function learnerName() { try { var s = window.AUTH && AUTH.get && AUTH.get(); return (s && s.name) ? s.name : '受講者'; } catch (e) { return '受講者'; } }
+
   function getProgress() { try { return JSON.parse(localStorage.getItem(PKEY)) || {}; } catch (e) { return {}; } }
   function setProgress(p) { try { localStorage.setItem(PKEY, JSON.stringify(p)); } catch (e) {} }
   function done(courseId) { var p = getProgress(); return (p[courseId] || []); }
@@ -64,9 +100,10 @@ window.Academy = (function () {
     var ob = document.getElementById('overallBar'); if (ob) ob.style.width = overall() + '%';
     grid.innerHTML = COURSES.map(function (c) {
       var p = pct(c.id);
+      var badge = isPassed(c.id) ? '<span class="ac-badge">🏅 修了</span>' : '';
       return '<a class="ac-card" href="partner-course.html?id=' + c.id + '">' +
         '<div class="ac-ico">' + c.icon + '</div>' +
-        '<h3>' + esc(c.title) + '</h3><p>' + esc(c.desc) + '</p>' +
+        '<h3>' + esc(c.title) + badge + '</h3><p>' + esc(c.desc) + '</p>' +
         '<div class="ac-bar"><span style="width:' + p + '%"></span></div>' +
         '<div class="ac-meta">' + done(c.id).length + '/' + c.lessons.length + ' レッスン完了（' + p + '%）</div>' +
       '</a>';
@@ -98,6 +135,15 @@ window.Academy = (function () {
       btn.textContent = isDone(c.id, cur) ? '完了済み（取り消す）' : 'このレッスンを完了にする';
       btn.classList.toggle('is-done', isDone(c.id, cur));
       document.getElementById('cvProg').textContent = done(c.id).length + '/' + c.lessons.length + '（' + pct(c.id) + '%）';
+      var qz = document.getElementById('cvQuiz');
+      if (qz) {
+        if (pct(c.id) === 100) {
+          qz.hidden = false;
+          qz.innerHTML = isPassed(c.id)
+            ? '🏅 このコースは修了済みです。<a href="partner-cert.html?id=' + c.id + '">修了証を表示</a>'
+            : '全レッスン完了！<a class="cv-quiz-btn" href="partner-quiz.html?id=' + c.id + '">修了テストを受ける ›</a>';
+        } else { qz.hidden = true; }
+      }
     }
     document.getElementById('cvList').addEventListener('click', function (e) {
       var li = e.target.closest('li'); if (!li) return; cur = Number(li.getAttribute('data-i')); draw();
@@ -110,5 +156,72 @@ window.Academy = (function () {
     draw();
   }
 
-  return { COURSES: COURSES, renderHub: renderHub, renderCourse: renderCourse, overall: overall };
+  /* 修了テスト */
+  function renderQuiz() {
+    var root = document.getElementById('quizRoot'); if (!root) return;
+    var id; try { id = new URLSearchParams(location.search).get('id'); } catch (e) { id = null; }
+    var c = byId(id); var qs = QUIZ[id];
+    if (!c || !qs) { root.innerHTML = '<p>コースが見つかりません。<a href="partner-academy.html">一覧へ</a></p>'; return; }
+    function paint() {
+      root.innerHTML =
+        '<h1>修了テスト：' + esc(c.title) + '</h1>' +
+        '<p class="portal-sub">全' + qs.length + '問・合格ライン' + PASS + '%。' + (isPassed(id) ? '（修了済み）' : '') + '</p>' +
+        '<form id="quizForm" class="quiz-form">' +
+          qs.map(function (q, i) {
+            return '<div class="quiz-q"><p class="quiz-qt">Q' + (i + 1) + '. ' + esc(q.q) + '</p>' +
+              q.c.map(function (ch, j) {
+                return '<label class="quiz-opt"><input type="radio" name="q' + i + '" value="' + j + '"> ' + esc(ch) + '</label>';
+              }).join('') + '</div>';
+          }).join('') +
+          '<button type="submit" class="quiz-submit">採点する</button>' +
+          '<div class="quiz-result" id="quizResult" hidden></div>' +
+        '</form>';
+      document.getElementById('quizForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var correct = 0;
+        qs.forEach(function (q, i) {
+          var sel = document.querySelector('input[name="q' + i + '"]:checked');
+          if (sel && Number(sel.value) === q.a) correct++;
+        });
+        var score = Math.round(correct / qs.length * 100);
+        var res = document.getElementById('quizResult'); res.hidden = false;
+        if (score >= PASS) {
+          var date = todayStr();
+          var p = getPassed(); p[id] = { score: score, date: date, no: certNo(id, date) }; setPassed(p);
+          res.className = 'quiz-result pass';
+          res.innerHTML = '🎉 合格！（' + score + '点）<br><a class="cv-quiz-btn" href="partner-cert.html?id=' + id + '">修了証を表示する ›</a>';
+        } else {
+          res.className = 'quiz-result fail';
+          res.innerHTML = '不合格（' + score + '点）。もう一度挑戦しましょう。<button type="button" class="quiz-retry" id="quizRetry">やり直す</button>';
+          document.getElementById('quizRetry').addEventListener('click', paint);
+        }
+        res.scrollIntoView && res.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    }
+    paint();
+  }
+
+  /* 修了証 */
+  function renderCert() {
+    var root = document.getElementById('certRoot'); if (!root) return;
+    var id; try { id = new URLSearchParams(location.search).get('id'); } catch (e) { id = null; }
+    var c = byId(id); var rec = getPassed()[id];
+    if (!c || !rec) {
+      root.innerHTML = '<p class="cert-none">このコースはまだ修了していません。<br><a href="partner-quiz.html?id=' + (id || '') + '">修了テストを受ける</a></p>';
+      return;
+    }
+    root.innerHTML =
+      '<div class="cert">' +
+        '<div class="cert-mark">🐮 BUYMO ACADEMY</div>' +
+        '<div class="cert-title">修了証</div>' +
+        '<p class="cert-lead">下記の者は所定の研修課程を修了したことを証します。</p>' +
+        '<p class="cert-name">' + esc(learnerName()) + ' 殿</p>' +
+        '<p class="cert-course">コース：' + esc(c.title) + '</p>' +
+        '<div class="cert-row"><span>スコア：' + rec.score + '点</span><span>修了日：' + esc(rec.date) + '</span></div>' +
+        '<div class="cert-row"><span>認定番号：' + esc(rec.no) + '</span><span>発行：合同会社アイズ（BUYMO）</span></div>' +
+      '</div>' +
+      '<div class="cert-actions"><button class="btn btn-primary" onclick="window.print()">印刷／PDF保存</button> <a class="cert-back" href="partner-academy.html">アカデミーへ戻る</a></div>';
+  }
+
+  return { COURSES: COURSES, renderHub: renderHub, renderCourse: renderCourse, renderQuiz: renderQuiz, renderCert: renderCert, overall: overall, isPassed: isPassed };
 })();

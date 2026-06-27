@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>受講｜BUYMO 加盟店アカデミー</title>
+<title>修了証｜BUYMO 加盟店アカデミー</title>
 <meta name="robots" content="noindex,nofollow" />
 <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -15,40 +15,18 @@
 </head>
 <body>
 <script src="assets/js/auth.js"></script><script>AUTH.guard("staff");</script>
-<header class="portal-header">
+<header class="portal-header no-print">
   <div class="container">
     <a href="partner-academy.html" class="logo"><span aria-hidden="true">🐮</span> BUYMO</a>
     <span class="portal-title">アカデミー</span>
-    <nav class="portal-nav">
-      <a href="partner-academy.html">← コース一覧</a>
-      <a href="partner-scripts.html">スクリプト</a>
-      <a href="partner-community.html">コミュニティ</a>
-    </nav>
+    <nav class="portal-nav"><a href="partner-academy.html">← コース一覧</a></nav>
     <a href="portal-login.html" class="portal-logout">ログアウト</a>
   </div>
 </header>
-
 <main class="portal-main">
-  <div class="container" id="courseRoot">
-    <h1 id="cvTitle">コース</h1>
-    <div class="cv-layout">
-      <aside class="cv-side">
-        <p class="cv-prog-label">進捗：<span id="cvProg">0/0</span></p>
-        <ol class="cv-list" id="cvList"></ol>
-      </aside>
-      <section class="cv-main">
-        <h2 id="cvLessonTitle"></h2>
-        <div id="cvBody"></div>
-        <button class="cv-complete" id="cvComplete">このレッスンを完了にする</button>
-        <div class="cv-quiz" id="cvQuiz" hidden></div>
-      </section>
-    </div>
-  </div>
+  <div class="container" id="certRoot"></div>
 </main>
-
 <script src="assets/js/academy.js"></script>
-<script>Academy.renderCourse();</script>
-<script>window.BUYMO_BOT_MODE='partner';</script>
-<script src="assets/js/chatbot.js" defer></script>
+<script>Academy.renderCert();</script>
 </body>
 </html>
