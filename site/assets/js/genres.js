@@ -73,14 +73,6 @@
       ? '<span class="genre-link disabled" aria-disabled="true">' + label + '</span>'
       : '<a class="genre-link" href="' + g.url + '">' + label + '</a>';
   }
-  function card(g) {
-    var soon = soonOf(g);
-    var badge = soon ? '<span class="genre-card-soon">準備中</span>' : '<span class="genre-card-go">買取ページへ ›</span>';
-    var inner = '<div class="genre-card-ico" aria-hidden="true">' + g.icon + '</div><h3>' + g.name + '</h3><p>' + g.desc + '</p>' + badge;
-    return soon ? '<li><div class="genre-card disabled">' + inner + '</div></li>'
-                : '<li><a class="genre-card" href="' + g.url + '">' + inner + '</a></li>';
-  }
-
   function renderFooter() {
     var el = document.getElementById('genre-nav');
     if (!el) return;
@@ -90,12 +82,22 @@
     }).join('');
   }
 
+  // LP中段はコンパクト表示：5大分類タイル＋サブジャンルを小タグで一覧
+  // （全25ジャンルのカード一覧はフッターとハブ /genre/ に集約）
+  function tag(g) {
+    var soon = soonOf(g);
+    var label = g.name + (soon ? '<span class="soon">準備中</span>' : '');
+    return soon
+      ? '<span class="genre-tag disabled" aria-disabled="true">' + label + '</span>'
+      : '<a class="genre-tag" href="' + g.url + '">' + label + '</a>';
+  }
   function renderCards() {
     var el = document.getElementById('genre-cards');
     if (!el) return;
+    el.className = 'genre-compact';
     el.innerHTML = GROUPS.map(function (g) {
-      return '<div class="genre-group-block"><h3 class="genre-cat-title">' + g.icon + ' ' + g.cat + '</h3>' +
-        '<ul class="genre-cards-grid">' + g.items.map(card).join('') + '</ul></div>';
+      return '<div class="genre-tile"><h3 class="genre-tile-title">' + g.icon + ' ' + g.cat + '</h3>' +
+        '<div class="genre-tile-list">' + g.items.map(tag).join('') + '</div></div>';
     }).join('');
   }
 
