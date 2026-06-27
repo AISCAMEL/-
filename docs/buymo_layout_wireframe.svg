@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1660 1200" width="1660" height="1200" font-family="'Noto Sans JP',sans-serif">
+  <rect width="1660" height="1200" fill="#F3F4F6"/>
+  <text x="40" y="44" font-size="24" font-weight="900" fill="#333">BUYMO レイアウトワイヤー（主要画面）</text>
+  <text x="40" y="68" font-size="13" fill="#888">低精細レイアウト図。グレー＝セクション枠、橙＝CTA/重要要素。実装はこの構成に沿っています。</text>
+
+  <defs>
+    <style>
+      .win{fill:#fff;stroke:#cfcfcf;stroke-width:1.5;}
+      .bar{fill:#eceff3;}
+      .blk{fill:#eaecef;stroke:#dadde2;stroke-width:1;}
+      .blk2{fill:#f4f6f8;stroke:#e2e5ea;stroke-width:1;}
+      .cta{fill:#FFE3D2;stroke:#FF6B35;stroke-width:1.2;}
+      .nav{fill:#1E3A8A;}
+      .t{font-size:12px;fill:#555;}
+      .tb{font-size:13px;font-weight:700;fill:#333;}
+      .tw{font-size:12px;fill:#fff;}
+      .cap{font-size:14px;font-weight:900;fill:#1E3A8A;}
+      .ctaT{font-size:12px;font-weight:700;fill:#FF6B35;}
+      .mut{font-size:10px;fill:#9aa;}
+    </style>
+  </defs>
+
+  <!-- ===================== ① トップLP（モバイル想定の縦長） ===================== -->
+  <text class="cap" x="40" y="100">① トップLP（buymo.html）</text>
+  <rect class="win" x="40" y="112" width="380" height="1040" rx="14"/>
+  <!-- header -->
+  <rect class="bar" x="40" y="112" width="380" height="40" rx="14"/>
+  <text class="tb" x="58" y="138">🐮 BUYMO</text><text class="t" x="250" y="138">ナビ ☰ / ☎</text>
+  <!-- sections -->
+  <g>
+    <rect class="blk" x="56" y="166" width="348" height="92" rx="6"/>
+    <text class="tb" x="68" y="190">ヒーロー：高価買取コピー</text><text class="t" x="68" y="210">＼最短30秒／</text>
+    <rect class="cta" x="68" y="220" width="150" height="26" rx="13"/><text class="ctaT" x="86" y="238">無料査定はこちら</text>
+    <rect class="blk2" x="300" y="178" width="92" height="68" rx="6"/><text class="mut" x="316" y="216">車/🐮画像</text>
+
+    <rect class="nav" x="56" y="266" width="348" height="40" rx="6"/><text class="tw" x="120" y="291">数字バンド 0円/即日/47</text>
+
+    <rect class="blk" x="56" y="314" width="348" height="86" rx="6"/><text class="tb" x="68" y="338">査定シミュレーター</text><text class="t" x="68" y="360">クラス/年式/距離/状態→概算</text><rect class="cta" x="68" y="368" width="130" height="22" rx="11"/><text class="ctaT" x="84" y="384">概算をみる</text>
+
+    <rect class="blk" x="56" y="408" width="348" height="60" rx="6"/><text class="tb" x="68" y="432">4大特長（カード×4）</text><rect class="blk2" x="68" y="440" width="74" height="20"/><rect class="blk2" x="150" y="440" width="74" height="20"/><rect class="blk2" x="232" y="440" width="74" height="20"/><rect class="blk2" x="314" y="440" width="78" height="20"/>
+
+    <rect class="blk" x="56" y="476" width="348" height="44" rx="6"/><text class="tb" x="68" y="503">お取引の流れ（4ステップ）</text>
+    <rect class="blk" x="56" y="528" width="348" height="44" rx="6"/><text class="tb" x="68" y="555">買取対象車（5種）</text>
+    <rect class="blk" x="56" y="580" width="348" height="40" rx="6"/><text class="tb" x="68" y="605">0円保証バナー</text>
+    <rect class="blk" x="56" y="628" width="348" height="56" rx="6"/><text class="tb" x="68" y="652">選ばれる理由（カード×6）</text>
+    <rect class="blk" x="56" y="692" width="348" height="56" rx="6"/><text class="tb" x="68" y="716">ジャンル別買取（カード）</text>
+    <rect class="blk" x="56" y="756" width="348" height="50" rx="6"/><text class="tb" x="68" y="785">他社比較表</text>
+    <rect class="blk" x="56" y="814" width="348" height="44" rx="6"/><text class="tb" x="68" y="841">お客様の声（※イメージ）</text>
+    <rect class="blk" x="56" y="866" width="348" height="44" rx="6"/><text class="tb" x="68" y="893">買取実績（※イメージ）</text>
+    <rect class="blk" x="56" y="918" width="348" height="44" rx="6"/><text class="tb" x="68" y="945">FAQ（アコーディオン）</text>
+
+    <rect class="cta" x="56" y="970" width="348" height="70" rx="6"/><text class="tb" x="68" y="994">査定フォーム（同意チェック）</text><rect class="nav" x="68" y="1004" width="324" height="26" rx="13" fill="#FF6B35"/><text class="tw" x="180" y="1022">査定を依頼</text>
+
+    <rect class="blk" x="56" y="1048" width="348" height="34" rx="6"/><text class="t" x="68" y="1070">サービスエリア / 会社情報 / 信頼バッジ</text>
+    <rect class="nav" x="56" y="1090" width="348" height="46" rx="6"/><text class="tw" x="120" y="1118">会員CTA＋フッター（紺）</text>
+  </g>
+  <text class="ctaT" x="350" y="1150">＋追従CTA・🤖ボット(右下)</text>
+
+  <!-- ===================== ② 本部ダッシュボード ===================== -->
+  <text class="cap" x="460" y="100">② 本部ダッシュボード（hq-dashboard）</text>
+  <rect class="win" x="460" y="112" width="560" height="430" rx="12"/>
+  <rect class="nav" x="460" y="112" width="560" height="40" rx="12"/><text class="tw" x="478" y="138">🐮 BUYMO 本部 ｜ ダッシュ/ボード/リード/加盟店/お知らせ/レポート</text>
+  <rect class="blk" x="478" y="170" width="120" height="60" rx="6"/><text class="t" x="490" y="194">案件総数</text><text class="tb" x="490" y="216">— 件</text>
+  <rect class="blk" x="610" y="170" width="120" height="60" rx="6"/><text class="t" x="622" y="194">新規未対応</text>
+  <rect class="blk" x="742" y="170" width="120" height="60" rx="6"/><text class="t" x="754" y="194">商談中</text>
+  <rect class="cta" x="874" y="170" width="128" height="60" rx="6"/><text class="ctaT" x="886" y="194">確定売上</text>
+  <rect class="blk" x="478" y="244" width="320" height="150" rx="6"/><text class="tb" x="490" y="268">対応アラート（⚠ 新規/入金待ち）</text><rect class="cta" x="490" y="280" width="296" height="26" rx="6"/><rect class="blk2" x="490" y="312" width="296" height="26" rx="6"/>
+  <rect class="blk" x="810" y="244" width="192" height="150" rx="6"/><text class="tb" x="822" y="268">クイックリンク</text><rect class="blk2" x="822" y="280" width="168" height="20"/><rect class="blk2" x="822" y="306" width="168" height="20"/><rect class="blk2" x="822" y="332" width="168" height="20"/>
+  <rect class="blk" x="478" y="408" width="524" height="118" rx="6"/><text class="tb" x="490" y="432">最近の案件（テーブル）</text>
+  <line x1="490" y1="446" x2="990" y2="446" stroke="#dadde2"/><line x1="490" y1="470" x2="990" y2="470" stroke="#eee"/><line x1="490" y1="494" x2="990" y2="494" stroke="#eee"/>
+
+  <!-- ===================== ③ 案件ボード（看板） ===================== -->
+  <text class="cap" x="1060" y="100">③ 案件ボード（hq.html・看板）</text>
+  <rect class="win" x="1060" y="112" width="560" height="430" rx="12"/>
+  <rect class="nav" x="1060" y="112" width="560" height="40" rx="12"/><text class="tw" x="1078" y="138">🐮 BUYMO 本部 ｜ 業務ボード</text>
+  <rect class="blk" x="1078" y="170" width="110" height="44" rx="6"/><rect class="blk" x="1198" y="170" width="110" height="44" rx="6"/><rect class="cta" x="1318" y="170" width="120" height="44" rx="6"/><text class="ctaT" x="1330" y="196">想定売上</text><rect class="blk" x="1448" y="170" width="156" height="44" rx="6"/>
+  <rect class="blk2" x="1078" y="226" width="526" height="34" rx="6"/><text class="t" x="1090" y="248">＋ 新規案件（名前/連絡先/担当）</text>
+  <!-- kanban columns -->
+  <g>
+    <rect class="blk" x="1078" y="272" width="120" height="254" rx="6"/><text class="tb" x="1088" y="292">新規受付</text><rect class="cta" x="1086" y="300" width="104" height="40" rx="5"/><rect class="blk2" x="1086" y="346" width="104" height="40" rx="5"/>
+    <rect class="blk" x="1206" y="272" width="120" height="254" rx="6"/><text class="tb" x="1216" y="292">査定中</text><rect class="blk2" x="1214" y="300" width="104" height="40" rx="5"/>
+    <rect class="blk" x="1334" y="272" width="120" height="254" rx="6"/><text class="tb" x="1344" y="292">商談中</text><rect class="blk2" x="1342" y="300" width="104" height="40" rx="5"/>
+    <rect class="blk" x="1462" y="272" width="142" height="254" rx="6"/><text class="tb" x="1472" y="292">契約→完了…</text><rect class="blk2" x="1470" y="300" width="124" height="40" rx="5"/>
+  </g>
+  <text class="mut" x="1078" y="540">カード=案件／ドラッグで移動・クリックで詳細＋対応履歴</text>
+
+  <!-- ===================== ④ 会員マイページ ===================== -->
+  <text class="cap" x="460" y="588">④ 会員マイページ（member.html）</text>
+  <rect class="win" x="460" y="600" width="560" height="320" rx="12"/>
+  <rect class="nav" x="460" y="600" width="560" height="40" rx="12"/><text class="tw" x="478" y="626">🐮 BUYMO 会員マイページ</text>
+  <text class="tb" x="478" y="672">山田様 ／ 登録メール</text>
+  <rect class="blk" x="478" y="688" width="524" height="200" rx="6"/>
+  <text class="tb" x="492" y="712">案件カード（CS-xxxx・ジャンル・ステージ）</text>
+  <!-- stepper -->
+  <circle cx="520" cy="760" r="9" fill="#22a34a"/><circle cx="620" cy="760" r="9" fill="#22a34a"/><circle cx="720" cy="760" r="10" fill="#FF6B35"/><circle cx="820" cy="760" r="9" fill="#cfcfcf"/><circle cx="920" cy="760" r="9" fill="#cfcfcf"/>
+  <line x1="520" y1="760" x2="920" y2="760" stroke="#dcdcdc" stroke-width="2" stroke-dasharray="2 4"/>
+  <text class="mut" x="500" y="784">新規受付</text><text class="mut" x="600" y="784">査定中</text><text class="ctaT" x="700" y="784">商談中</text><text class="mut" x="804" y="784">契約</text><text class="mut" x="900" y="784">完了</text>
+  <text class="tb" x="492" y="828">提示金額：¥ —</text>
+  <rect class="cta" x="492" y="844" width="180" height="28" rx="14"/><text class="ctaT" x="506" y="863">別の車も査定を依頼</text>
+
+  <!-- ===================== ⑤ 加盟店アカデミー ===================== -->
+  <text class="cap" x="1060" y="588">⑤ 加盟店アカデミー（partner-academy）</text>
+  <rect class="win" x="1060" y="600" width="560" height="320" rx="12"/>
+  <rect class="nav" x="1060" y="600" width="560" height="40" rx="12"/><text class="tw" x="1078" y="626">🐮 BUYMO 加盟店 ｜ ボード/アカデミー/スクリプト/コミュニティ</text>
+  <rect class="cta" x="1078" y="656" width="526" height="30" rx="6"/><text class="ctaT" x="1090" y="676">📢 本部からのお知らせバナー</text>
+  <rect class="blk2" x="1078" y="694" width="526" height="34" rx="6"/><text class="t" x="1090" y="716">全体の学習進捗 ▓▓▓░░ 60%</text>
+  <g>
+    <rect class="blk" x="1078" y="738" width="166" height="78" rx="6"/><text class="tb" x="1090" y="762">基礎</text><text class="mut" x="1090" y="800">▓▓░ 進捗</text>
+    <rect class="blk" x="1252" y="738" width="166" height="78" rx="6"/><text class="tb" x="1264" y="762">査定スキル</text>
+    <rect class="blk" x="1426" y="738" width="178" height="78" rx="6"/><text class="tb" x="1438" y="762">出品マニュアル</text>
+    <rect class="blk" x="1078" y="824" width="166" height="72" rx="6"/><text class="tb" x="1090" y="848">接客</text>
+    <rect class="blk" x="1252" y="824" width="166" height="72" rx="6"/><text class="tb" x="1264" y="848">システム操作</text>
+    <rect class="cta" x="1426" y="824" width="178" height="72" rx="6"/><text class="ctaT" x="1438" y="852">修了テスト</text><text class="ctaT" x="1438" y="876">→ 修了証🏅</text>
+  </g>
+
+  <text class="mut" x="460" y="960">※ 受講画面：左=レッスン一覧／右=動画枠＋テキスト＋「完了にする」。スクリプト集・コミュニティ・ログイン画面も同系レイアウト。</text>
+</svg>
