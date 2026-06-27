@@ -60,7 +60,8 @@ function footer(rel) {
 <button class="to-top" id="toTop" aria-label="トップに戻る" hidden>▲</button>
 <script src="${rel}assets/js/analytics.js" defer></script>
 <script src="${rel}assets/js/genres.js" defer></script>
-<script src="${rel}assets/js/buymo.js" defer></script>`;
+<script src="${rel}assets/js/buymo.js" defer></script>
+<script src="${rel}assets/js/simulator-buy.js" defer></script>`;
 }
 
 module.exports = { header, footer };

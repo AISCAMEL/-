@@ -159,6 +159,52 @@ function examplesFor(g) {
 /* ---- ジャンル→主要エリア 相互リンク（トピッククラスタ） ---- */
 const MAJOR_AREAS = [['北海道', 'hokkaido'], ['福島県', 'fukushima'], ['東京都', 'tokyo'], ['神奈川県', 'kanagawa'], ['愛知県', 'aichi'], ['大阪府', 'osaka'], ['福岡県', 'fukuoka'], ['沖縄県', 'okinawa']];
 
+/* ---- ジャンル別の査定シミュレーター初期選択（cls=車種クラス / cond=状態） ----
+   パーツ・用品カテゴリ（wheel/tire/parts）は車両査定の対象外のため非表示 */
+const SIM_PRESET = {
+  haisha:   { cond: '不動車・廃車予定' },
+  jiko:     { cond: '修復歴・事故車' },
+  fudou:    { cond: '不動車・廃車予定' },
+  suibotsu: { cond: '修復歴・事故車' },
+  kyusha:   { cond: '修復歴・事故車' },
+  hiace:    { cls: 'トラック・商用車' },
+  keitora:  { cls: 'トラック・商用車' },
+  truck:    { cls: 'トラック・商用車' },
+  landcruiser: { cls: 'SUV' },
+  jimny:    { cls: 'SUV' },
+  suv:      { cls: 'SUV' },
+  alphard:  { cls: 'ミニバン' },
+  minivan:  { cls: 'ミニバン' },
+  prius:    { cls: 'コンパクト' },
+  sedan:    { cls: 'セダン' },
+  kei:      { cls: '軽自動車' },
+  import:   { cls: '輸入車・高級車' },
+  luxury:   { cls: '輸入車・高級車' },
+};
+function simBlock(g, rel, prefName) {
+  if (g.cat === 'パーツ・用品買取') return ''; // 車両査定シミュは部品ジャンルでは出さない
+  const ps = SIM_PRESET[g.slug] || {};
+  const data = [
+    'data-buymo-sim',
+    `data-genre="${esc(g.name)}"`,
+    `data-base="${rel}buymo-contact.html"`,
+    ps.cls ? `data-cls="${esc(ps.cls)}"` : '',
+    ps.cond ? `data-cond="${esc(ps.cond)}"` : '',
+    prefName ? `data-pref="${esc(prefName)}"` : '',
+  ].filter(Boolean).join(' ');
+  const heading = prefName ? `${esc(prefName)}での${esc(g.name)}をかんたん査定` : `${esc(g.name)}をかんたん査定`;
+  return `
+  <section class="sim-section" id="sim" aria-labelledby="sim-title">
+    <div class="container">
+      <div class="eyebrow-wrap"><span class="eyebrow">SIMULATION</span></div>
+      <h2 id="sim-title" class="section-title">${heading}</h2>
+      <p class="sim-lead">車種クラス・年式・走行距離・状態を選ぶだけ。今のおおよその買取額が30秒で分かります。</p>
+      <div ${data}></div>
+    </div>
+  </section>
+`;
+}
+
 /* ---- ハブ用カード ---- */
 function card(g) {
   const soon = g.status === 'coming' || !g.url || g.url === '#';
@@ -290,7 +336,7 @@ ${header(rel, 'genre')}
       <div class="grid grid-3 result-grid">${results}</div>
     </div>
   </section>
-
+${simBlock(g, rel)}
   <section class="faq" aria-labelledby="faq-title">
     <div class="container faq-inner">
       <div class="faq-main">
@@ -444,7 +490,7 @@ ${header(rel, 'genre')}
       </div>
     </div>
   </section>
-
+${simBlock(g, rel, p.name)}
   <section class="faq" aria-labelledby="faq-title">
     <div class="container faq-inner">
       <div class="faq-main">

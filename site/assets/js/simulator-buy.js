@@ -50,9 +50,11 @@ window.BuymoSim = (function () {
 
   function opt(v, label) { return '<option value="' + v + '">' + (label || v) + '</option>'; }
 
-  function init(rootId) {
-    var root = document.getElementById(rootId);
+  // opts（任意）: { cls, cond, genreName, prefName } でジャンル/エリアLP向けに初期選択・CV連携
+  function init(rootId, opts) {
+    var root = typeof rootId === 'string' ? document.getElementById(rootId) : rootId;
     if (!root) return;
+    opts = opts || {};
     var now = new Date().getFullYear();
     var years = ''; for (var y = now; y >= now - 30; y--) years += opt(y, y + '年');
     var classes = ''; for (var c in CLASS_BASE) classes += opt(c);
@@ -72,25 +74,47 @@ window.BuymoSim = (function () {
           '<p class="bsim-cap">概算の買取目安</p>' +
           '<p class="bsim-range"><span id="bsMin"></span> 〜 <span id="bsMax"></span></p>' +
           '<p class="bsim-note">※ AIによる概算の目安です。実際の金額は車両状態により異なります。正確な金額は無料査定で。</p>' +
-          '<a class="bsim-cta" id="bsCta" href="buymo-contact.html">この内容で無料査定を依頼 ›</a>' +
+          '<a class="bsim-cta" id="bsCta" href="' + (opts.base || 'buymo-contact.html') + '">この内容で無料査定を依頼 ›</a>' +
         '</div>' +
       '</div>';
 
-    document.getElementById('bsCalc').addEventListener('click', function () {
-      var cls = document.getElementById('bsCls').value;
-      var year = document.getElementById('bsYear').value;
-      var km = MILEAGE[Number(document.getElementById('bsMile').value)][1];
-      var condKey = document.getElementById('bsCond').value;
+    // 各select要素（このシミュレーター内に限定して取得）
+    var $ = function (id) { return root.querySelector('#' + id); };
+    // ジャンル/エリアLPからの初期選択
+    if (opts.cls && CLASS_BASE[opts.cls]) $('bsCls').value = opts.cls;
+    if (opts.cond && CONDITION[opts.cond]) $('bsCond').value = opts.cond;
+    var contactBase = opts.base || 'buymo-contact.html';
+
+    $('bsCalc').addEventListener('click', function () {
+      var cls = $('bsCls').value;
+      var year = $('bsYear').value;
+      var km = MILEAGE[Number($('bsMile').value)][1];
+      var condKey = $('bsCond').value;
       var r = estimate(cls, year, km, CONDITION[condKey] || 1);
-      document.getElementById('bsMin').textContent = yen(r.min);
-      document.getElementById('bsMax').textContent = yen(r.max);
-      var q = '?genre=' + encodeURIComponent(cls) + '&est=' + encodeURIComponent(yen(r.min) + '〜' + yen(r.max));
-      document.getElementById('bsCta').href = 'buymo-contact.html' + q;
-      if (window.BuymoGA) BuymoGA.track('simulate', { car_class: cls, min: r.min, max: r.max });
-      var res = document.getElementById('bsResult');
+      $('bsMin').textContent = yen(r.min);
+      $('bsMax').textContent = yen(r.max);
+      // ジャンルLPならジャンル名、無ければ車種クラスを引き継ぐ。エリアLPなら都道府県も。
+      var q = '?genre=' + encodeURIComponent(opts.genreName || cls) +
+        (opts.prefName ? '&pref=' + encodeURIComponent(opts.prefName) : '') +
+        '&est=' + encodeURIComponent(yen(r.min) + '〜' + yen(r.max));
+      $('bsCta').href = contactBase + q;
+      if (window.BuymoGA) BuymoGA.track('simulate', { car_class: cls, genre: opts.genreName || '', min: r.min, max: r.max });
+      var res = $('bsResult');
       res.hidden = false;
       if (res.scrollIntoView) res.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
+  }
+
+  // data-buymo-sim 属性を持つ要素を自動初期化（静的なジャンル/エリアLP用）
+  function autoInit() {
+    var els = document.querySelectorAll('[data-buymo-sim]');
+    Array.prototype.forEach.call(els, function (el) {
+      init(el, { cls: el.getAttribute('data-cls') || '', cond: el.getAttribute('data-cond') || '', genreName: el.getAttribute('data-genre') || '', prefName: el.getAttribute('data-pref') || '', base: el.getAttribute('data-base') || '' });
+    });
+  }
+  if (typeof document !== 'undefined') {
+    if (document.readyState !== 'loading') autoInit();
+    else document.addEventListener('DOMContentLoaded', autoInit);
   }
 
   return { init: init, estimate: estimate };
