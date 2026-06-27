@@ -422,6 +422,9 @@ a.genre-tag:hover{background:var(--orange);border-color:var(--orange);color:#fff
 .legend-dot.on{background:var(--orange);}
 .legend-dot.off{background:#ccc;}
 .area-note{color:#666;font-size:14px;}
+.area-chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:760px;margin:20px auto 24px;}
+.area-chips a{display:inline-block;background:#fff;border:1px solid #f0d9c4;border-radius:30px;padding:9px 18px;font-weight:700;font-size:14px;color:var(--navy);box-shadow:var(--shadow);transition:background .2s,color .2s,border-color .2s,transform .2s;}
+.area-chips a:hover{background:var(--orange);border-color:var(--orange);color:#fff;transform:translateY(-2px);}
 
 /* ============ 会社情報 ============ */
 .company{background:var(--cream);padding:80px 0;position:relative;}
