@@ -621,7 +621,7 @@ AI自動応答：LINE Webhook → ボット(GAS/LLM)でFAQ応答・必要時にL
 - **会員ページCTAの常設**：在庫詳細（ログイン顧客）と在庫問い合わせ完了に「会員ページへ」導線。リンク先は `carmel_member_page_url`（LIFF会員ログイン）優先、無ければ `/mypage`
 - **再訪ログイン導線**（`Carmel_Member_Nudge`）：節目（納車完了 `delivered`/`lease_delivered`）にお客様へ **`mypage_invite`** 通知（プロライン→メール）。文面に会員ページURL（ワンタップLIFF or /mypage）。節目は `carmel_member_nudge_statuses` で調整可
 - **反響の担当店表示**（`Carmel_Store_Leads`）：`/store` ダッシュボード上部に **LINE反響＋在庫問い合わせ**の一覧（自店割当のみ／本部は全件）。氏名・連絡先・エリア・内容・対応状況（新規→対応中→完了トグル）。`carmel_support`（`line_inquiry`/`inventory_inquiry`）を集約
-  - **商談化ボタン**：リード → `carmel_deal`（`matched`・店舗割当・`is_lead`・スコア無し）をワンクリック起票し、リードに `deal_id` 紐付け（既存商談はリンク表示）
+  - **商談化（顧客確定）**：リード → `carmel_deal`（`matched`・店舗割当・`is_lead`・スコア無し）を起票。**氏名・メール・電話を入力するとその場で顧客アカウントを発行**し、**LINE ID（`line_user_id`）を紐付け**て通知・会員ページを有効化（新規は設定リンクをメール）。メール空欄なら「顧客未確定」で起票。リードに `deal_id` 紐付け（既存商談はリンク表示）
   - **未対応SLAエスカレーション**：日次cronで **SLA時間**（`carmel_lead_sla_hours`・既定24h）超の未対応反響を本部＋担当店へ通知（`lead_sla_breach`・1回のみ）
 - **車検・保険・点検通知に会員ページURL付加**：`inspection_notice`/`insurance_notice`/`maintenance_notice` の文面に会員ページリンクを自動付加（`Carmel_Member_Nudge`）
 

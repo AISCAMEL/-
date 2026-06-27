@@ -150,19 +150,29 @@ class Carmel_Store_Leads {
 			. '<button type="submit" class="carmel-btn carmel-btn-ghost">→ ' . esc_html( $lbl[ $next ] ) . '</button></form>';
 	}
 
-	/** 商談化ボタン or 既存商談リンク。 */
+	/** 商談化（顧客確定）フォーム or 既存商談リンク。 */
 	private function convert_cell( $lead_id ) {
 		$deal_id = (int) get_post_meta( $lead_id, 'deal_id', true );
 		if ( $deal_id ) {
 			$url = home_url( '/' . ltrim( apply_filters( 'carmel_store_page_slug', 'store' ), '/' ) );
 			return ' <a class="carmel-lead-deal" href="' . esc_url( $url ) . '">商談 #' . $deal_id . '</a>';
 		}
+		$name  = (string) get_post_meta( $lead_id, 'applicant_name', true );
+		$phone = (string) get_post_meta( $lead_id, 'applicant_phone', true );
 		$nonce = wp_create_nonce( self::CONVERT_ACTION . '_' . $lead_id );
-		return ' <form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:inline;margin:0">'
+
+		$out  = ' <details class="carmel-lead-conv"><summary>商談化</summary>';
+		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="carmel-lead-conv-form">'
 			. '<input type="hidden" name="action" value="' . esc_attr( self::CONVERT_ACTION ) . '">'
 			. '<input type="hidden" name="lead_id" value="' . (int) $lead_id . '">'
 			. '<input type="hidden" name="' . esc_attr( self::NONCE ) . '" value="' . esc_attr( $nonce ) . '">'
-			. '<button type="submit" class="carmel-btn carmel-btn-green" title="案件として起票">商談化</button></form>';
+			. '<input type="text" name="cust_name" value="' . esc_attr( $name ) . '" placeholder="氏名">'
+			. '<input type="email" name="cust_email" placeholder="メール（任意・入れると会員発行）">'
+			. '<input type="text" name="cust_phone" value="' . esc_attr( $phone ) . '" placeholder="電話">'
+			. '<button type="submit" class="carmel-btn carmel-btn-green">案件を起票</button>'
+			. '<p class="carmel-lead-conv-note">メールを入れると顧客アカウントを発行し、LINEと紐付けて通知・会員ページが有効になります。空欄なら「顧客未確定」で起票します。</p>'
+			. '</form></details>';
+		return $out;
 	}
 
 	/* --------------------------------------------------------------------- *
@@ -198,11 +208,29 @@ class Carmel_Store_Leads {
 		}
 
 		$store_id   = $lead_store ? $lead_store : $my;
-		$name       = (string) get_post_meta( $lead_id, 'applicant_name', true );
-		$phone      = (string) get_post_meta( $lead_id, 'applicant_phone', true );
 		$message    = (string) get_post_meta( $lead_id, 'message', true );
 		$vehicle_id = (int) get_post_meta( $lead_id, 'vehicle_id', true );
+		$line_uid   = (string) get_post_meta( $lead_id, 'line_user_id', true );
 		$customer   = (int) get_post_meta( $lead_id, 'customer_id', true );
+
+		// フォーム入力（リード値を上書き可）。
+		$name  = isset( $_POST['cust_name'] ) ? sanitize_text_field( wp_unslash( $_POST['cust_name'] ) ) : (string) get_post_meta( $lead_id, 'applicant_name', true );
+		$email = isset( $_POST['cust_email'] ) ? sanitize_email( wp_unslash( $_POST['cust_email'] ) ) : '';
+		$phone = isset( $_POST['cust_phone'] ) ? sanitize_text_field( wp_unslash( $_POST['cust_phone'] ) ) : (string) get_post_meta( $lead_id, 'applicant_phone', true );
+
+		// メールがあれば顧客を発行/再利用し、LINE IDを紐付け（顧客確定）。
+		if ( ! $customer && $email && is_email( $email ) && class_exists( 'Carmel_Application_Intake' ) ) {
+			$acct = Carmel_Application_Intake::provision_user( $name ? $name : $email, $email, 'customer' );
+			if ( ! is_wp_error( $acct ) ) {
+				$customer = (int) $acct['user_id'];
+				if ( $line_uid && '' === (string) get_user_meta( $customer, 'line_user_id', true ) ) {
+					update_user_meta( $customer, 'line_user_id', $line_uid );
+				}
+				if ( ! empty( $acct['created'] ) && ! empty( $acct['set_password_url'] ) ) {
+					wp_mail( $email, 'カーメル：会員ページのご案内', "お手続きを開始しました。会員ページのログイン設定はこちら：\n" . $acct['set_password_url'] );
+				}
+			}
+		}
 
 		$deal_id = wp_insert_post(
 			array(
@@ -218,6 +246,7 @@ class Carmel_Store_Leads {
 					'is_lead'          => 1,
 					'created_via'      => 'lead_convert',
 					'applicant_name'   => $name ? $name : '（反響・お客様未確定）',
+					'applicant_email'  => $email,
 					'applicant_phone'  => $phone,
 					'application_note' => '反響（' . get_post_meta( $lead_id, 'support_type', true ) . '）からの商談化：' . $message,
 				),
@@ -361,6 +390,11 @@ class Carmel_Store_Leads {
 .carmel-lead-ops{white-space:nowrap}
 .carmel-lead-ops form{display:inline-block}
 .carmel-lead-deal{display:inline-block;margin-left:.3em;color:#6b4fbb;text-decoration:none;font-size:.82em}
+.carmel-lead-conv{display:inline-block;margin-left:.3em}
+.carmel-lead-conv summary{cursor:pointer;color:#16a085;font-size:.82em;display:inline}
+.carmel-lead-conv-form{display:flex;flex-direction:column;gap:.3em;margin-top:.4em;min-width:200px}
+.carmel-lead-conv-form input{border:1px solid #ccc;border-radius:.3em;padding:.35em}
+.carmel-lead-conv-note{font-size:.74em;color:#888;margin:.2em 0 0}
 .carmel-banner{padding:.7em 1em;border-radius:.4em;margin:1em 0}
 .carmel-banner-success{background:#e8f8f3;color:#0e6e58;border:1px solid #16a085}
 .carmel-banner-error{background:#fdecea;color:#a5281b;border:1px solid #c0392b}
