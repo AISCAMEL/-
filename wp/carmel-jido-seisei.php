@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 7.0
+ * Version: 7.1
  * Author: CARMEL
  */
 
@@ -58,6 +58,8 @@ function carmel3_auto_get_settings() {
         'hidden_menus' => array(),
         // カーメル管理の中に移設するトップメニューのスラッグ一覧（移設＝中に入れて元は隠す）
         'moved_menus'  => array(),
+        // 加盟店ブログ・NEWS を自動でカーメル管理に移設する（おすすめ・既定ON）
+        'tidy_default' => 1,
         'eyecatch_w'   => 1200,
         'eyecatch_h'   => 630,
         'banner_w'     => 1200,
@@ -952,12 +954,26 @@ function carmel3_protected_menus() {
     return array('carmel-manager', 'index.php');
 }
 
+// 「おすすめ移設」で既定でカーメル管理に入れるトップメニュー（加盟店ブログ・NEWS）
+function carmel3_default_moved_menus() {
+    return array('edit.php?post_type=shop_blog', 'edit.php?post_type=news');
+}
+
+// 実際に移設するスラッグ一覧（手動で選んだ分＋おすすめ移設ONなら既定分）
+function carmel3_effective_moved_menus($s) {
+    $moved = (isset($s['moved_menus']) && is_array($s['moved_menus'])) ? $s['moved_menus'] : array();
+    if (!empty($s['tidy_default'])) {
+        $moved = array_merge($moved, carmel3_default_moved_menus());
+    }
+    return array_values(array_unique($moved));
+}
+
 // 移設：選ばれたトップメニューを「カーメル管理」の中にサブメニューとして追加
 function carmel3_relocate_menus() {
     global $menu, $admin_page_hooks;
     if (!isset($admin_page_hooks['carmel-manager'])) return; // 親が無ければ何もしない
     $s = carmel3_auto_get_settings();
-    $moved = (isset($s['moved_menus']) && is_array($s['moved_menus'])) ? $s['moved_menus'] : array();
+    $moved = carmel3_effective_moved_menus($s);
     if (empty($moved)) return;
     $protected = carmel3_protected_menus();
 
@@ -981,7 +997,7 @@ function carmel3_relocate_menus() {
 function carmel3_hide_menus() {
     $s = carmel3_auto_get_settings();
     $hidden = (isset($s['hidden_menus']) && is_array($s['hidden_menus'])) ? $s['hidden_menus'] : array();
-    $moved  = (isset($s['moved_menus'])  && is_array($s['moved_menus']))  ? $s['moved_menus']  : array();
+    $moved  = carmel3_effective_moved_menus($s);
     $targets = array_unique(array_merge($hidden, $moved)); // 隠す＋移設元は元の場所から消す
     if (empty($targets)) return;
     $protected = carmel3_protected_menus();
@@ -1204,6 +1220,10 @@ function carmel3_home_page() {
             <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                 <input type="hidden" name="action" value="carmel3_save_menu_visibility">
                 <?php wp_nonce_field('carmel3_save_menu_visibility'); ?>
+                <label style="display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:10px 12px;border:1px solid #cfe9d6;border-radius:10px;background:#f0fdf4;font-size:13px;font-weight:600">
+                    <input type="checkbox" name="tidy_default" value="1" <?php checked(!empty($s['tidy_default'])); ?>>
+                    加盟店ブログ・NEWS を自動で「カーメル管理」の中に移設して、元のトップメニューは隠す（おすすめ・既定ON）
+                </label>
                 <div style="max-height:300px;overflow:auto;border:1px solid #eef2f7;border-radius:10px;background:#fafafa">
                     <table style="width:100%;border-collapse:collapse;font-size:13px">
                         <thead>
@@ -1484,7 +1504,9 @@ add_action('admin_post_carmel3_save_menu_visibility', function () {
     if (!empty($_POST['reset'])) {
         $s['hidden_menus'] = array();
         $s['moved_menus']  = array();
+        $s['tidy_default'] = 0; // 「全部もとに戻す」はおすすめ移設もOFFにする
     } else {
+        $s['tidy_default'] = !empty($_POST['tidy_default']) ? 1 : 0;
         $protected = function_exists('carmel3_protected_menus') ? carmel3_protected_menus() : array('carmel-manager', 'index.php');
         $clean = function ($key) use ($protected) {
             $in = (isset($_POST[$key]) && is_array($_POST[$key])) ? $_POST[$key] : array();
