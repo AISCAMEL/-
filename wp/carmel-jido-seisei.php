@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 7.3
+ * Version: 7.4
  * Author: CARMEL
  */
 
@@ -429,6 +429,60 @@ function carmel3_img_generate_openrouter($prompt, $model) {
     return array('bytes' => $bytes, 'mime' => $mime);
 }
 
+// 画像に文字を一切描かせないための強い指示（日本語の文字化け防止）。すべての画像プロンプト末尾に付ける。
+function carmel3_img_no_text_suffix() {
+    return ' . Photorealistic editorial photograph, natural soft lighting, sharp focus, realistic depth of field, professional color grading, clean modern composition.'
+        . ' ABSOLUTELY NO TEXT in the image: no words, no letters, no numbers, no Japanese characters (kanji, hiragana, katakana),'
+        . ' no captions, no labels, no signboards, no posters, no brochures with writing, no brand logos, no license plate numbers,'
+        . ' no phone or screen text, no watermark, no UI. The image must contain no writing of any kind anywhere.';
+}
+
+// 日本語が混ざっているか判定
+function carmel3_img_has_japanese($str) {
+    return (bool) preg_match('/[\x{3040}-\x{30FF}\x{4E00}-\x{9FFF}\x{FF66}-\x{FF9D}]/u', (string)$str);
+}
+
+// 日本語の文脈（タイトルや見出し）から「英語のシーン説明（文字なし）」を作る。
+// AIが使えない/失敗時は $fallback をそのまま使う（英語の汎用シーン）。
+function carmel3_img_scene_from_ja($ja_context, $fallback) {
+    $ja_context = trim((string) $ja_context);
+    if ($ja_context === '') return $fallback;
+    if (!function_exists('carmel_call_openrouter_chat')) return $fallback;
+
+    $sys = 'You turn a Japanese article topic into ONE short English scene description for a realistic editorial PHOTO '
+         . 'set at a Japanese used-car dealership / auto-finance context. '
+         . 'Describe only people, setting, objects, mood (max 22 words). '
+         . 'Never describe any text, words, letters, signs or logos that should appear in the photo. '
+         . 'Output ONLY the scene phrase in English, no quotes, no explanation.';
+    $res = carmel_call_openrouter_chat(array(
+        array('role' => 'system', 'content' => $sys),
+        array('role' => 'user',   'content' => 'Japanese topic: ' . $ja_context),
+    ), '', 0.6, 40);
+
+    if (is_array($res) && empty($res['error']) && !empty($res['content'])) {
+        $r = trim(preg_replace('/\s+/', ' ', (string)$res['content']));
+        $r = trim($r, " \t\n\r\0\x0B\"'。．");
+        // 日本語が残っていたら採用しない（文字化け防止）
+        if ($r !== '' && !carmel3_img_has_japanese($r) && mb_strlen($r) <= 240) {
+            return $r;
+        }
+    }
+    return $fallback;
+}
+
+// 記事の「基本シーン（英語・文字なし）」を作って投稿に保存し、以後は使い回す
+function carmel3_img_base_scene($post_id, $s) {
+    $cached = (string) get_post_meta($post_id, '_carmel3_img_scene_en', true);
+    if ($cached !== '') return $cached;
+
+    $fallback = 'a professional Japanese auto dealership scene, a friendly female advisor and a customer, '
+              . 'a clean modern showroom with a parked car, bright and trustworthy mood';
+    $title = trim((string) get_the_title($post_id));
+    $scene = carmel3_img_scene_from_ja($title, $fallback);
+    update_post_meta($post_id, '_carmel3_img_scene_en', $scene);
+    return $scene;
+}
+
 function carmel3_img_sideload($post_id, $bytes, $mime, $base, $target_w = 0, $target_h = 0) {
     $ext = carmel3_img_mime_ext($mime);
     $filename = sanitize_file_name($base . '-' . wp_generate_password(6, false, false) . '.' . $ext);
@@ -478,15 +532,14 @@ function carmel3_img_attach_to_post($post_id) {
     $bw = !empty($s['banner_w'])   ? (int)$s['banner_w']   : 1200;
     $bh = !empty($s['banner_h'])   ? (int)$s['banner_h']   : 400;
 
-    $base_prompt = (string) get_post_meta($post_id, '_carmel_main_image_prompt', true);
-    if ($base_prompt === '') {
-        $base_prompt = 'Professional Japanese automotive finance article visual, '
-            . get_the_title($post_id) . ', clean, trustworthy, high quality';
-    }
+    // 文字化け防止のため、日本語タイトルではなく「英語のシーン説明」で生成する
+    $scene = carmel3_img_base_scene($post_id, $s);
+    $base_prompt = 'Professional automotive editorial visual. Scene: ' . $scene;
+    $no_text = carmel3_img_no_text_suffix();
 
     $out = array();
 
-    $p1  = $base_prompt . ' , 16:9 horizontal composition, high quality, photographic, no text, no watermark';
+    $p1  = $base_prompt . ' . 16:9 horizontal composition, the main subject centered' . $no_text;
     $img = carmel3_img_generate_openrouter($p1, $model);
     if (is_wp_error($img)) {
         $out[] = 'アイキャッチ失敗(' . $img->get_error_message() . ')';
@@ -500,7 +553,7 @@ function carmel3_img_attach_to_post($post_id) {
         }
     }
 
-    $p2   = $base_prompt . ' , ultra-wide website hero banner, generous empty space on one side for headline text, no text, no watermark';
+    $p2   = $base_prompt . ' . Ultra-wide website hero banner, the subject placed to one side leaving generous empty background space on the other side (for a headline to be added later by the website, NOT drawn in the image)' . $no_text;
     $img2 = carmel3_img_generate_openrouter($p2, $model);
     if (is_wp_error($img2)) {
         $out[] = 'バナー失敗(' . $img2->get_error_message() . ')';
@@ -638,11 +691,7 @@ function carmel3_auto_build_section_jobs($post_id, $s) {
     $w = !empty($s['sec_w']) ? (int)$s['sec_w'] : 1200;
     $h = !empty($s['sec_h']) ? (int)$s['sec_h'] : 675;
 
-    $base_prompt = (string) get_post_meta($post_id, '_carmel_main_image_prompt', true);
-    if ($base_prompt === '') {
-        $base_prompt = 'Professional Japanese automotive finance article visual, '
-            . get_the_title($post_id) . ', clean, trustworthy, high quality';
-    }
+    $no_text = carmel3_img_no_text_suffix();
 
     $fields = array(
         1 => array(CARMEL3_F_SEC1_IMG, 'section_1_image'),
@@ -650,14 +699,28 @@ function carmel3_auto_build_section_jobs($post_id, $s) {
         3 => array(CARMEL3_F_SEC3_IMG, 'section_3_image'),
     );
 
+    // セクションごとに「画の方向性」を変えて、3枚が似ないようにする（被写体・構図・距離を分ける）
+    $angles = array(
+        1 => 'medium shot, a friendly Japanese sales advisor and a customer talking at a clean consultation desk, documents and a tablet on the desk, warm welcoming mood',
+        2 => 'close-up product shot, a well-maintained used car on a bright modern showroom floor, glossy body, low angle, no people',
+        3 => 'wide shot, a happy Japanese family or customer receiving car keys near a car, handshake, sunny dealership entrance, hopeful mood',
+    );
+    $fallback_base = 'a professional Japanese auto dealership, clean modern interior, bright and trustworthy mood';
+
     $jobs = array();
     foreach ($fields as $n => $f) {
         $existing = carmel3_auto_get_acf_value($post_id, $f[0], $f[1]);
         if (trim($existing) !== '' && $existing !== '0') continue; // すでに画像あり飛ばす
         $heading = carmel3_auto_section_has_content($post_id, $n);
         if ($heading === '') continue; // 中身の無いセクションは作らない
-        $prompt = $base_prompt . ' , section illustration about: ' . $heading
-            . ' , 16:9 horizontal composition, photographic, no text, no watermark';
+
+        // 見出し（日本語）→ 英語シーンに変換（文字化け防止）。失敗時はセクション固定の構図のみ。
+        $heading_scene = carmel3_img_scene_from_ja($heading, '');
+        $angle = isset($angles[$n]) ? $angles[$n] : $fallback_base;
+        $scene = ($heading_scene !== '') ? ($angle . '; theme: ' . $heading_scene) : $angle;
+
+        $prompt = 'Professional automotive editorial photo for an article section. Scene: ' . $scene
+            . ' . 16:9 horizontal composition' . $no_text;
         $jobs[] = array(
             'name'   => $f[1],
             'key'    => $f[0],
