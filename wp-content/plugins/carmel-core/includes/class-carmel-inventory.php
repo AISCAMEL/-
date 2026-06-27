@@ -851,6 +851,9 @@ window.carmelInitMap=function(){
 		$fav_mode = ! empty( $_GET['fav'] ) && is_user_logged_in();
 		$filters  = $this->read_filters();
 		$cars     = $fav_mode ? $this->query_favorites() : $this->query_public( $filters );
+		if ( ! $fav_mode && ! empty( $filters['sort'] ) ) {
+			$cars = $this->sort_cars( $cars, $filters['sort'] );
+		}
 
 		ob_start();
 		echo $this->styles(); // phpcs:ignore WordPress.Security.EscapeOutput
@@ -905,6 +908,9 @@ window.carmelInitMap=function(){
 			return ob_get_clean();
 		}
 
+		if ( ! $fav_mode ) {
+			echo $this->recent_strip(); // phpcs:ignore WordPress.Security.EscapeOutput
+		}
 		echo $this->map_block( $cars ); // phpcs:ignore WordPress.Security.EscapeOutput
 
 		echo '<div class="carmel-car-grid">';
@@ -930,6 +936,9 @@ window.carmelInitMap=function(){
 		if ( ! $published && ! $is_staff ) {
 			return '<p class="carmel-notice">この車両は現在ご覧いただけません。</p>';
 		}
+
+		// 閲覧数（人気順）＋最近見た車（会員）。
+		$this->record_view( $vid, $scope );
 
 		$g = function ( $k ) use ( $vid ) {
 			return get_post_meta( $vid, $k, true );
@@ -1023,6 +1032,9 @@ window.carmelInitMap=function(){
 
 		// この店舗の他の在庫。
 		echo $this->store_stock_block( $vid, $store_id, $scope ); // phpcs:ignore WordPress.Security.EscapeOutput
+
+		// 最近見た車。
+		echo $this->recent_strip( $vid ); // phpcs:ignore WordPress.Security.EscapeOutput
 
 		// 類似在庫レコメンド。
 		echo $this->similar_block( $vid, $scope ); // phpcs:ignore WordPress.Security.EscapeOutput
@@ -1189,6 +1201,71 @@ window.carmelInitMap=function(){
 		return $out;
 	}
 
+	/** 閲覧数の加算＋会員の閲覧履歴記録。 */
+	private function record_view( $vid, $scope ) {
+		// 人気順用カウント（スタッフ/本部の閲覧は除外）。
+		if ( in_array( $scope, array( 'guest', 'customer' ), true ) ) {
+			$v = (int) get_post_meta( $vid, '_carmel_views', true );
+			update_post_meta( $vid, '_carmel_views', $v + 1 );
+		}
+		// 最近見た車（ログイン会員）。
+		if ( 'customer' === $scope ) {
+			$uid = get_current_user_id();
+			$r   = get_user_meta( $uid, 'carmel_recent_vehicles', true );
+			$r   = is_array( $r ) ? array_map( 'intval', $r ) : array();
+			$r   = array_values( array_diff( $r, array( (int) $vid ) ) );
+			array_unshift( $r, (int) $vid );
+			update_user_meta( $uid, 'carmel_recent_vehicles', array_slice( $r, 0, 12 ) );
+		}
+	}
+
+	/** 最近見た車のストリップ（ログイン会員・公開中のみ）。 */
+	private function recent_strip( $exclude = 0 ) {
+		if ( ! is_user_logged_in() ) {
+			return '';
+		}
+		$ids = get_user_meta( get_current_user_id(), 'carmel_recent_vehicles', true );
+		if ( ! is_array( $ids ) || empty( $ids ) ) {
+			return '';
+		}
+		$ids = array_values( array_diff( array_map( 'intval', $ids ), array( (int) $exclude ) ) );
+		if ( empty( $ids ) ) {
+			return '';
+		}
+		$cars = get_posts(
+			array(
+				'post_type'      => 'carmel_vehicle',
+				'post_status'    => 'publish',
+				'post__in'       => array_slice( $ids, 0, 8 ),
+				'orderby'        => 'post__in',
+				'posts_per_page' => 8,
+				'meta_query'     => array(
+					array( 'key' => 'published', 'value' => array( '1', 'yes', 'true' ), 'compare' => 'IN' ),
+				),
+			)
+		);
+		if ( empty( $cars ) ) {
+			return '';
+		}
+		$out = '<div class="carmel-recent"><h3>最近見た車</h3><div class="carmel-recent-row">';
+		foreach ( $cars as $car ) {
+			$maker = get_post_meta( $car->ID, 'maker', true );
+			$model = get_post_meta( $car->ID, 'model', true );
+			$title = trim( $maker . ' ' . $model );
+			$title = '' !== $title ? $title : get_the_title( $car );
+			$price = (float) get_post_meta( $car->ID, 'price', true );
+			$url   = add_query_arg( 'vehicle', (int) $car->ID, remove_query_arg( array( 'maker', 'q', 'price_max', 'sort' ) ) );
+			$thumb = has_post_thumbnail( $car->ID )
+				? get_the_post_thumbnail( $car->ID, 'thumbnail', array( 'class' => 'carmel-recent-img' ) )
+				: '<div class="carmel-recent-noimg">—</div>';
+			$out  .= '<a class="carmel-recent-card" href="' . esc_url( $url ) . '">' . $thumb
+				. '<div class="carmel-recent-name">' . esc_html( mb_strimwidth( $title, 0, 24, '…' ) ) . '</div>'
+				. '<div class="carmel-recent-price">¥' . esc_html( number_format( $price ) ) . '</div></a>';
+		}
+		$out .= '</div></div>';
+		return $out;
+	}
+
 	/** 会員ページURL（LIFF会員ログイン優先・無ければマイページ）。 */
 	private function member_url() {
 		$u = get_option( 'carmel_member_page_url', '' );
@@ -1251,6 +1328,7 @@ window.carmelInitMap=function(){
 			'q'         => isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : '',
 			'price_max' => isset( $_GET['price_max'] ) ? (int) $_GET['price_max'] : 0,
 			'store_id'  => isset( $_GET['store_id'] ) ? (int) $_GET['store_id'] : 0,
+			'sort'      => isset( $_GET['sort'] ) ? sanitize_key( $_GET['sort'] ) : '',
 		);
 	}
 
@@ -1271,9 +1349,32 @@ window.carmelInitMap=function(){
 			$out .= '<option value="' . $p . '"' . selected( $filters['price_max'], $p, false ) . '>¥' . number_format( $p ) . '以下</option>';
 		}
 		$out .= '</select>';
+		$sorts = array( '' => '新着順', 'price_asc' => '価格が安い順', 'price_desc' => '価格が高い順', 'popular' => '人気順' );
+		$cur   = isset( $filters['sort'] ) ? $filters['sort'] : '';
+		$out  .= '<select name="sort">';
+		foreach ( $sorts as $k => $label ) {
+			$out .= '<option value="' . esc_attr( $k ) . '"' . selected( $cur, $k, false ) . '>' . esc_html( $label ) . '</option>';
+		}
+		$out .= '</select>';
 		$out .= '<button type="submit" class="carmel-btn carmel-btn-purple">絞り込む</button>';
 		$out .= '</form>';
 		return $out;
+	}
+
+	/** 取得済み在庫を並び替え（価格/人気）。 */
+	private function sort_cars( array $cars, $sort ) {
+		if ( 'price_asc' === $sort || 'price_desc' === $sort ) {
+			usort( $cars, function ( $a, $b ) use ( $sort ) {
+				$pa = (float) get_post_meta( $a->ID, 'price', true );
+				$pb = (float) get_post_meta( $b->ID, 'price', true );
+				return ( 'price_asc' === $sort ) ? ( $pa <=> $pb ) : ( $pb <=> $pa );
+			} );
+		} elseif ( 'popular' === $sort ) {
+			usort( $cars, function ( $a, $b ) {
+				return (int) get_post_meta( $b->ID, '_carmel_views', true ) <=> (int) get_post_meta( $a->ID, '_carmel_views', true );
+			} );
+		}
+		return $cars;
 	}
 
 	/** 在庫に登録されているメーカー一覧（重複除去）。 */
@@ -2152,6 +2253,14 @@ window.carmelInitMap=function(){
 .carmel-inv-login{background:#f1ecfb;border:1px solid #ddd2f5;border-radius:.5em;padding:.6em 1em;margin:.6em 0}
 .carmel-inv-storechip{background:#eef2fb;border:1px solid #cdd9f0;border-radius:.5em;padding:.5em 1em;margin:.6em 0;font-size:.92em}
 .carmel-inv-storechip a{color:#2e86de;text-decoration:none;margin-left:.6em}
+.carmel-recent{margin:1em 0}
+.carmel-recent h3{margin:.2em 0 .5em;font-size:1em}
+.carmel-recent-row{display:flex;gap:.7em;overflow-x:auto;padding-bottom:.3em}
+.carmel-recent-card{flex:0 0 auto;width:120px;border:1px solid #e7e2ef;border-radius:8px;overflow:hidden;background:#fff;text-decoration:none;color:#1a1a2e}
+.carmel-recent-img{width:120px;height:80px;object-fit:cover;display:block}
+.carmel-recent-noimg{width:120px;height:80px;display:flex;align-items:center;justify-content:center;background:#f4f6fb;color:#aab}
+.carmel-recent-name{padding:.3em .5em 0;font-size:.78em;font-weight:600}
+.carmel-recent-price{padding:0 .5em .4em;color:#6b4fbb;font-size:.82em;font-weight:bold}
 .carmel-inv-hint{color:#7a7488;font-size:.88em}
 .carmel-inv-filter{display:flex;gap:.5em;flex-wrap:wrap;margin:.8em 0}
 .carmel-inv-filter input,.carmel-inv-filter select{border:1px solid #ccc;border-radius:.3em;padding:.45em}

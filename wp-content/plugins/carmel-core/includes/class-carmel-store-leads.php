@@ -79,7 +79,7 @@ class Carmel_Store_Leads {
 
 		$meta = array(
 			'relation' => 'AND',
-			array( 'key' => 'support_type', 'value' => array( 'line_inquiry', 'inventory_inquiry' ), 'compare' => 'IN' ),
+			array( 'key' => 'support_type', 'value' => array( 'line_inquiry', 'inventory_inquiry', 'store_inquiry' ), 'compare' => 'IN' ),
 		);
 		// 加盟店は自店割当のみ（本部は全件）。
 		if ( ! $is_hq ) {
@@ -125,7 +125,8 @@ class Carmel_Store_Leads {
 
 			echo '<tr class="carmel-lead-' . esc_attr( $st ) . '">';
 			echo '<td>' . esc_html( get_the_date( 'n/j H:i', $l->ID ) ) . '</td>';
-			echo '<td>' . esc_html( 'line_inquiry' === $type ? 'LINE' : '在庫問合せ' ) . '</td>';
+			$tlabel = array( 'line_inquiry' => 'LINE', 'inventory_inquiry' => '在庫問合せ', 'store_inquiry' => '店舗問合せ' );
+			echo '<td>' . esc_html( isset( $tlabel[ $type ] ) ? $tlabel[ $type ] : $type ) . '</td>';
 			echo '<td>' . esc_html( $name ? $name : '—' ) . '</td>';
 			echo '<td>' . esc_html( $phone ? $phone : '—' ) . '</td>';
 			echo '<td>' . esc_html( $area ? $area : '—' ) . '</td>';
@@ -283,7 +284,7 @@ class Carmel_Store_Leads {
 				'date_query'     => array( array( 'column' => 'post_date_gmt', 'before' => $threshold ) ),
 				'meta_query'     => array(
 					'relation' => 'AND',
-					array( 'key' => 'support_type', 'value' => array( 'line_inquiry', 'inventory_inquiry' ), 'compare' => 'IN' ),
+					array( 'key' => 'support_type', 'value' => array( 'line_inquiry', 'inventory_inquiry', 'store_inquiry' ), 'compare' => 'IN' ),
 					array( 'key' => '_escalated', 'compare' => 'NOT EXISTS' ),
 				),
 			)

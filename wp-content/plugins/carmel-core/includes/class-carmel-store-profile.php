@@ -21,6 +21,7 @@ class Carmel_Store_Profile {
 	const HQ_SHORTCODE   = 'carmel_hq_reviews';
 	const REVIEW_ACTION  = 'carmel_store_review';
 	const MOD_ACTION     = 'carmel_review_moderate';
+	const INQUIRY_ACTION = 'carmel_store_inquiry';
 	const COMMENT_TYPE   = 'carmel_review';
 
 	public static function instance() {
@@ -37,6 +38,30 @@ class Carmel_Store_Profile {
 		add_action( 'admin_post_' . self::REVIEW_ACTION, array( $this, 'handle_review' ) );
 		add_action( 'admin_post_nopriv_' . self::REVIEW_ACTION, array( $this, 'handle_review' ) );
 		add_action( 'admin_post_' . self::MOD_ACTION, array( $this, 'handle_moderate' ) );
+		add_action( 'admin_post_' . self::INQUIRY_ACTION, array( $this, 'handle_inquiry' ) );
+		add_action( 'admin_post_nopriv_' . self::INQUIRY_ACTION, array( $this, 'handle_inquiry' ) );
+		add_filter( 'carmel_routing_table', array( $this, 'add_routing' ) );
+		add_filter( 'carmel_notification_message', array( $this, 'add_message' ), 10, 3 );
+	}
+
+	public function add_routing( $table ) {
+		$table['store_inquiry'] = array(
+			array( 'audience' => 'store', 'channel' => 'lineworks', 'fallback' => 'mail' ),
+			array( 'audience' => 'hq', 'channel' => 'lineworks', 'fallback' => 'mail' ),
+		);
+		return $table;
+	}
+
+	public function add_message( $message, $event_type, $context ) {
+		if ( 'store_inquiry' === $event_type ) {
+			$vars = isset( $context['vars'] ) ? (array) $context['vars'] : array();
+			$message['subject'] = '店舗ページからお問い合わせ';
+			$message['body']    = "店舗ページからお問い合わせがありました。\n氏名："
+				. ( isset( $vars['name'] ) ? $vars['name'] : '' )
+				. "\n電話：" . ( isset( $vars['phone'] ) ? $vars['phone'] : '' )
+				. "\n内容：" . ( isset( $vars['message'] ) ? $vars['message'] : '' );
+		}
+		return $message;
 	}
 
 	/* --------------------------------------------------------------------- *
@@ -378,15 +403,90 @@ window.carmelInitStoreMap=function(){
 			echo '<p><a class="carmel-btn carmel-btn-purple" href="' . esc_url( add_query_arg( 'store_id', (int) $store_id, $this->inventory_url() ) ) . '">この店舗の在庫をもっと見る →</a></p>';
 		}
 
-		// 問い合わせ導線。
-		$apply = home_url( '/' . ltrim( apply_filters( 'carmel_apply_page_slug', 'apply' ), '/' ) );
-		echo '<div class="carmel-sp-cta"><a class="carmel-btn carmel-btn-blue" href="' . esc_url( $apply ) . '">この店舗に相談・お問い合わせ</a></div>';
+		// 問い合わせフォーム（この店舗宛・反響起票）。
+		echo $this->inquiry_form( $store_id ); // phpcs:ignore WordPress.Security.EscapeOutput
 
 		// レビュー。
 		echo $this->reviews_section( $store_id ); // phpcs:ignore WordPress.Security.EscapeOutput
 
 		echo '</div>';
 		return ob_get_clean();
+	}
+
+	/* --------------------------------------------------------------------- *
+	 * この店舗への問い合わせ
+	 * --------------------------------------------------------------------- */
+
+	private function inquiry_form( $store_id ) {
+		$nonce = wp_create_nonce( self::INQUIRY_ACTION . '_' . $store_id );
+		$name  = is_user_logged_in() ? wp_get_current_user()->display_name : '';
+		$msg   = isset( $_GET['carmel_si'] ) ? sanitize_key( $_GET['carmel_si'] ) : '';
+		$banner = '';
+		if ( 'ok' === $msg ) {
+			$banner = '<div class="carmel-sp-revbanner">お問い合わせを受け付けました。担当店舗よりご連絡します。</div>';
+		} elseif ( 'err' === $msg ) {
+			$banner = '<div class="carmel-sp-revbanner err">お名前と内容をご入力ください。</div>';
+		}
+
+		$out  = '<h3>この店舗に問い合わせる</h3>' . $banner;
+		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="carmel-sp-inq">'
+			. '<input type="hidden" name="action" value="' . esc_attr( self::INQUIRY_ACTION ) . '">'
+			. '<input type="hidden" name="store_id" value="' . (int) $store_id . '">'
+			. '<input type="hidden" name="carmel_si_nonce" value="' . esc_attr( $nonce ) . '">'
+			. '<input type="text" name="carmel_hp" value="" style="display:none" tabindex="-1" autocomplete="off">'
+			. '<label>お名前 <input type="text" name="si_name" value="' . esc_attr( $name ) . '" required></label>'
+			. '<label>電話番号 <input type="text" name="si_phone" placeholder="任意"></label>'
+			. '<label>お問い合わせ内容 <textarea name="si_message" rows="3" placeholder="ご希望の車種・予算・ご質問など" required></textarea></label>'
+			. '<button type="submit" class="carmel-btn carmel-btn-blue">送信する</button>'
+			. '</form>';
+		return $out;
+	}
+
+	public function handle_inquiry() {
+		$store_id = isset( $_POST['store_id'] ) ? (int) $_POST['store_id'] : 0;
+		if ( ! wp_verify_nonce( isset( $_POST['carmel_si_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['carmel_si_nonce'] ) ) : '', self::INQUIRY_ACTION . '_' . $store_id ) ) {
+			wp_die( esc_html__( '不正なリクエストです。', 'carmel-core' ), '', array( 'response' => 400 ) );
+		}
+		$name    = isset( $_POST['si_name'] ) ? sanitize_text_field( wp_unslash( $_POST['si_name'] ) ) : '';
+		$phone   = isset( $_POST['si_phone'] ) ? sanitize_text_field( wp_unslash( $_POST['si_phone'] ) ) : '';
+		$message = isset( $_POST['si_message'] ) ? sanitize_textarea_field( wp_unslash( $_POST['si_message'] ) ) : '';
+		if ( ! empty( $_POST['carmel_hp'] ) || 'carmel_store' !== get_post_type( $store_id ) || '' === $name || '' === $message ) {
+			wp_safe_redirect( add_query_arg( 'carmel_si', 'err', self::url( $store_id ) ) );
+			exit;
+		}
+
+		$uid  = get_current_user_id();
+		$line = $uid ? (string) get_user_meta( $uid, 'line_user_id', true ) : '';
+
+		$post_id = wp_insert_post(
+			array(
+				'post_type'   => 'carmel_support',
+				'post_status' => 'publish',
+				'post_title'  => '店舗問い合わせ：' . $name,
+				'meta_input'  => array(
+					'support_type'    => 'store_inquiry',
+					'store_id'        => (int) $store_id,
+					'applicant_name'  => $name,
+					'applicant_phone' => $phone,
+					'customer_id'     => (int) $uid,
+					'line_user_id'    => $line,
+					'message'         => $message,
+					'created_at'      => current_time( 'mysql' ),
+				),
+			)
+		);
+
+		Carmel_Notifier::notify(
+			'store_inquiry',
+			array(
+				'event_id' => 'store_inquiry:' . ( is_wp_error( $post_id ) ? md5( $store_id . microtime() ) : (int) $post_id ),
+				'store_id' => (int) $store_id,
+				'vars'     => array( 'name' => $name, 'phone' => $phone, 'message' => $message ),
+			)
+		);
+		do_action( 'carmel_store_inquiry_created', is_wp_error( $post_id ) ? 0 : (int) $post_id, $store_id );
+		wp_safe_redirect( add_query_arg( 'carmel_si', 'ok', self::url( $store_id ) ) );
+		exit;
 	}
 
 	/* --------------------------------------------------------------------- *
@@ -772,6 +872,9 @@ window.carmelInitStoreMap=function(){
 .carmel-sp-car-name{padding:.5em .6em 0;font-size:.88em;font-weight:600}
 .carmel-sp-car-price{padding:0 .6em .6em;color:#6b4fbb;font-weight:bold}
 .carmel-sp-cta{margin:1.4em 0}
+.carmel-sp-inq{max-width:480px}
+.carmel-sp-inq label{display:block;font-size:.85em;color:#555;margin:.4em 0}
+.carmel-sp-inq input[type=text],.carmel-sp-inq textarea{width:100%;border:1px solid #ccc;border-radius:.3em;padding:.45em;margin-top:.2em}
 .carmel-btn{display:inline-block;border:0;border-radius:.3em;padding:.6em 1.2em;color:#fff;text-decoration:none;cursor:pointer}
 .carmel-btn-purple{background:#6b4fbb}.carmel-btn-blue{background:#2e86de}.carmel-btn-red{background:#c0392b}.carmel-btn-ghost{background:#eef2fb;color:#2e86de}
 .carmel-sp-head{display:flex;align-items:center;justify-content:space-between;gap:1em;flex-wrap:wrap}
