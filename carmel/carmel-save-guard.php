@@ -1,18 +1,18 @@
 <?php
 /**
  * Plugin Name: カーメル 保存データ保護
- * Description: 在庫の保存時に「前は入っていたのに一気に空になった」データを自動で元に戻します。古い車を編集画面で開いて更新したときの一括消失（タイトル・走行距離・年式・装備・本文など）を根本から防止。タイトルが空なら車データから自動補完。これ1つで「保存したら消える」を解消します。※「タイトル保護」を入れている場合は無効化してこちらに一本化してください。
- * Version: 1.0.0
+ * Description: 在庫の保存時に、基本情報（年式/走行距離/排気量/色/メーカー等）や見積もり項目が「空で上書き」されるのを防ぎます。古い車を編集画面で開いて更新したときの消失を根本から防止。タイトル・本文も空化を防ぎます。ACFの保存が完全に終わった後に復元するので確実に効きます。
+ * Version: 1.1.0
  * Author: CARMEL
  *
  * 使い方：wp-content/plugins/ にアップロード →「プラグイン」で有効化するだけ。
- *         無効化すれば元の挙動に戻ります。
+ *         「タイトル保護」を入れている場合は無効化してこちらに一本化してください。
  *
- * 仕組み：
- *   - 保存の最初(優先度1)で、その車の現在の全データを記録（スナップショット）
- *   - 保存の最後(優先度9999)で、「前は値があったのに今は空」になった項目を検出
- *   - 大量に空になった＝事故的な一括消失 と判断し、自動で元に戻す
- *   - 1〜2項目だけの変更（意図的な編集）はそのまま通す
+ * 仕組み（v1.1 改良）：
+ *   - 保存の最初(save_post_portfolio 優先度1)で、保護対象項目の現在値を記録
+ *   - ACF等すべての保存が終わった後(save_post 優先度99999)で、
+ *     「前は値があったのに空になった保護項目」を1つでも検出したら元に戻す
+ *   - 装備チェックなど（保護対象外）はそのまま通すので、通常の編集は邪魔しない
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
@@ -20,19 +20,34 @@ if ( ! class_exists( 'Carmel_Save_Guard' ) ) {
 
 class Carmel_Save_Guard {
 
-	/** @var array post_id => 保存前スナップショット */
+	/** @var array post_id => 保存前スナップショット（保護対象キーのみ） */
 	private static $snap = array();
 
-	/* 大量消失と判断する閾値 */
-	const MIN_FIELDS = 4;     // 元々これ以上の項目が埋まっていて
-	const RATIO      = 0.6;   // その6割以上が空になったら「事故」とみなす
-
 	public function __construct() {
-		// タイトル・本文の空化を保存直前に防ぐ（既存フィルタ 999 の後）
 		add_filter( 'wp_insert_post_data', array( $this, 'protect_title_content' ), 1000, 2 );
-		// メタ（入力項目）の一括消失を保存の前後で監視して復元
+		// スナップショットは最速で（カスタム保存やACFが書き込む前）
 		add_action( 'save_post_portfolio', array( $this, 'snapshot' ), 1, 1 );
-		add_action( 'save_post_portfolio', array( $this, 'restore' ), 9999, 1 );
+		// 復元は最遅で（ACFの save_post:10 等が終わった後）。save_post 全体の最後に実行。
+		add_action( 'save_post', array( $this, 'restore' ), 99999, 1 );
+	}
+
+	/* 空で上書きされたら困る「中身」のキー一覧（装備チェックは含めない＝通常編集を邪魔しない） */
+	private function protected_keys() {
+		return array(
+			// 基本情報
+			'marker', 'maker', 'type', 'name', 'car_model', 'shashu',
+			'year', 'nenshiki', 'mileage', 'soukou', 'soukou_kyori', 'kyori',
+			'displacement', 'haikiryou', 'haiki', 'mission', 'mt', 'kudou', 'drive',
+			'handle', 'color', 'body_color', 'iro', 'fuel_type', 'fuel', 'nenryou',
+			'shaken', 'inspection', 'recicle', 'recycle',
+			// 状態・保証・追加情報
+			'repair_history', 'exterior_cond', 'interior_cond',
+			'seibi', 'kanreichi', 'joutai', 'hoshou', 'hosho', 'warranty', 'shuufuku',
+			// 店舗・連絡先
+			'shop', 'tel', 'phone', 'denwa', 'line_link', 'line-link', 'contact-link', 'contact_link',
+			// 見積もり・価格
+			'price', 'total', 'est_total', 'est_honntai', 'est_atamakin', 'est_nenritsu',
+		);
 	}
 
 	private function skip( $post_id ) {
@@ -53,11 +68,9 @@ class Carmel_Save_Guard {
 		if ( empty( $data['post_type'] ) || 'portfolio' !== $data['post_type'] ) { return $data; }
 		$status = isset( $data['post_status'] ) ? $data['post_status'] : '';
 		if ( in_array( $status, array( 'auto-draft', 'trash' ), true ) ) { return $data; }
-
 		$pid = ! empty( $postarr['ID'] ) ? (int) $postarr['ID'] : 0;
 		if ( ! $pid ) { return $data; }
 
-		// タイトル：空なら車データから組み立て → 無理なら従来タイトル維持
 		if ( isset( $data['post_title'] ) && '' === trim( (string) $data['post_title'] ) ) {
 			$built = $this->build_title( $pid );
 			if ( '' === $built ) {
@@ -66,17 +79,13 @@ class Carmel_Save_Guard {
 			}
 			if ( '' !== $built ) { $data['post_title'] = $built; }
 		}
-
-		// 本文：空なら従来本文を維持（古い手入力の説明文を守る）
 		if ( isset( $data['post_content'] ) && '' === trim( (string) $data['post_content'] ) ) {
 			$prev = get_post_field( 'post_content', $pid );
 			if ( is_string( $prev ) && '' !== trim( $prev ) ) { $data['post_content'] = $prev; }
 		}
-
 		return $data;
 	}
 
-	/* 車データからタイトル組み立て（メーカー 車種 年式 走行）。接頭語なし。 */
 	private function build_title( $pid ) {
 		$get = function ( $keys ) use ( $pid ) {
 			if ( function_exists( 'carmel_detail_get_any' ) ) { return (string) carmel_detail_get_any( $pid, (array) $keys ); }
@@ -103,47 +112,38 @@ class Carmel_Save_Guard {
 		return trim( preg_replace( '/\s+/', ' ', implode( ' ', $parts ) ) );
 	}
 
-	/* ---------- メタ（入力項目）の一括消失保護 ---------- */
+	/* ---------- メタ（基本情報など）の空上書き保護 ---------- */
 	public function snapshot( $post_id ) {
 		if ( $this->skip( $post_id ) ) { return; }
-		self::$snap[ $post_id ] = get_post_meta( $post_id ); // 保存前の全メタ
+		$keys = $this->protected_keys();
+		$snap = array();
+		foreach ( $keys as $k ) {
+			$v = get_post_meta( $post_id, $k, true );
+			if ( ! $this->is_blank( $v ) ) { $snap[ $k ] = $v; } // 元々値がある項目だけ記録
+		}
+		if ( $snap ) { self::$snap[ $post_id ] = $snap; }
 	}
 
 	public function restore( $post_id ) {
+		// save_post（全post_type）で動くので portfolio 限定＆スナップショット必須
+		if ( 'portfolio' !== get_post_type( $post_id ) ) { return; }
 		if ( $this->skip( $post_id ) ) { return; }
 		if ( empty( self::$snap[ $post_id ] ) ) { return; }
-		$snap = self::$snap[ $post_id ];
 
-		$before_filled = array(); // 元々値があった項目
-		$now_blanked   = array(); // 今は空になった項目 => 元の値
-		foreach ( $snap as $key => $vals ) {
-			if ( '' === $key || '_' === substr( $key, 0, 1 ) ) { continue; } // 内部項目は対象外
-			$before = isset( $vals[0] ) ? $vals[0] : '';
-			if ( $this->is_blank( $before ) ) { continue; }
-			$before_filled[] = $key;
+		$restored = 0;
+		foreach ( self::$snap[ $post_id ] as $key => $before ) {
 			$now = get_post_meta( $post_id, $key, true );
 			if ( $this->is_blank( $now ) ) {
-				$now_blanked[ $key ] = ( count( (array) $vals ) > 1 ) ? $vals : $before;
+				// 前は値があったのに今は空 → 空で上書きされた → 元に戻す
+				if ( function_exists( 'update_field' ) ) { update_field( $key, $before, $post_id ); }
+				update_post_meta( $post_id, $key, $before );
+				$restored++;
 			}
 		}
+		unset( self::$snap[ $post_id ] );
 
-		$nf = count( $before_filled );
-		$nb = count( $now_blanked );
-		if ( $nf < self::MIN_FIELDS ) { return; }                 // 元の項目が少なすぎる→判断しない
-		if ( $nb < (int) ceil( $nf * self::RATIO ) ) { return; }  // 一部だけの変更→意図的とみなし通す
-
-		// 事故的な一括消失 → 元に戻す
-		foreach ( $now_blanked as $key => $orig ) {
-			if ( is_array( $orig ) ) {
-				delete_post_meta( $post_id, $key );
-				foreach ( $orig as $v ) { add_post_meta( $post_id, $key, $v ); }
-			} else {
-				update_post_meta( $post_id, $key, $orig );
-			}
-		}
-		// 記録（任意・デバッグ用）
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( sprintf( '[carmel-save-guard] post %d: restored %d/%d wiped fields', $post_id, $nb, $nf ) );
+		if ( $restored && defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			error_log( sprintf( '[carmel-save-guard] post %d: restored %d emptied field(s)', $post_id, $restored ) );
 		}
 	}
 }
