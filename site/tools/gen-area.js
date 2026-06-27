@@ -11,6 +11,8 @@ const path = require('path');
 const SITE_URL = ''; // 公開ドメイン確定後にここを 'https://example.com' に設定すると canonical/sitemap が絶対URLになる
 const ROOT = path.resolve(__dirname, '..'); // site/
 const GENRES = require('../assets/js/genres').list; // sitemap に各ジャンルLPも収録
+// 都道府県ページ→人気ジャンルLP の相互リンク（トピッククラスタ）
+const POPULAR_GENRE_SLUGS = ['haisha', 'jiko', 'fudou', 'hiace', 'landcruiser', 'keitora', 'kei', 'wheel'];
 
 /* ---- 47都道府県データ（地方・主要都市） ---- */
 const PREFS = [
@@ -96,6 +98,10 @@ function prefPage(p, i) {
   // 同地方の他県（内部リンク）
   const siblings = PREFS.filter(q => q.region === p.region && q.slug !== p.slug).slice(0, 6)
     .map(q => `<li><a href="../${q.slug}/">${esc(q.name)}の車買取</a></li>`).join('');
+  // 人気ジャンルLPへの内部リンク
+  const genreLinks = POPULAR_GENRE_SLUGS
+    .map(s => GENRES.find(g => g.slug === s)).filter(Boolean)
+    .map(g => `<li><a href="${rel}genre/${g.slug}/">${esc(g.icon)} ${esc(g.name)}</a></li>`).join('');
   const canonical = SITE_URL ? `${SITE_URL}/area/${p.slug}/` : `./`; // 自己参照（/area/<slug>/ から相対）
   const bcHome = SITE_URL ? `${SITE_URL}/` : `../../`;
   const bcArea = SITE_URL ? `${SITE_URL}/area/` : `../`;
@@ -203,6 +209,15 @@ ${header(rel, 'area')}
       <h2 id="related-title" class="section-title">${esc(p.region)}の対応エリア</h2>
       <ul class="related-links">${siblings}</ul>
       <p class="center"><a href="${rel}area/" class="btn btn-primary">全国の対応エリアを見る</a></p>
+    </div>
+  </section>
+
+  <section class="results" aria-labelledby="genre-title">
+    <div class="container">
+      <h2 id="genre-title" class="section-title">${esc(p.name)}で人気の買取ジャンル</h2>
+      <p class="area-note center">廃車・事故車から人気車種・パーツまで、${esc(p.name)}でも状態を問わず高価買取します。</p>
+      <ul class="related-links">${genreLinks}</ul>
+      <p class="center"><a href="${rel}genre/" class="btn btn-primary">買取ジャンル一覧を見る</a></p>
     </div>
   </section>
 

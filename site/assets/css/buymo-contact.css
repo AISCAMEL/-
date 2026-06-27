@@ -55,3 +55,16 @@
   .contact-cards{padding:40px 0;}
   .access{padding:48px 0;}
 }
+
+/* ---- 送信完了（サンクス）ページ ---- */
+.thanks-hero{text-align:center;}
+.thanks-icon{font-size:72px;line-height:1;margin-bottom:8px;animation:thanksPop .5s ease;}
+@keyframes thanksPop{0%{transform:scale(.4);opacity:0;}70%{transform:scale(1.12);}100%{transform:scale(1);opacity:1;}}
+.thanks-hero h1 strong,.thanks-hero #thanksLead strong{color:var(--orange);}
+.thanks-steps-section{padding:56px 0;background:#fff;}
+.thanks-steps{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:18px;}
+.thanks-steps li{display:flex;align-items:flex-start;gap:18px;background:var(--cream);border:1px solid #f0e2cf;border-radius:14px;padding:20px 24px;}
+.thanks-steps .step-no{flex:none;width:40px;height:40px;border-radius:50%;background:var(--orange);color:#fff;font-size:20px;font-weight:900;display:flex;align-items:center;justify-content:center;}
+.thanks-steps h3{font-size:17px;font-weight:900;color:var(--navy);margin-bottom:4px;}
+.thanks-steps p{font-size:14px;color:#555;}
+@media (max-width:767px){.thanks-steps li{padding:16px;gap:14px;}}

@@ -315,6 +315,11 @@ a.genre-tag:hover{background:var(--orange);border-color:var(--orange);color:#fff
 .point-check{flex:none;width:26px;height:26px;border-radius:50%;background:var(--orange);color:#fff;font-size:15px;font-weight:900;display:flex;align-items:center;justify-content:center;}
 @media (max-width:767px){.point-list{grid-template-columns:1fr;}}
 
+/* ジャンルLP：画像差し替え可能なヒーロー帯（assets/img/genre/<slug>.jpg を置くと自動表示） */
+.genre-photo{height:240px;background-color:var(--cream);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;}
+.genre-photo-emoji{font-size:96px;line-height:1;filter:drop-shadow(0 6px 14px rgba(0,0,0,.25));}
+@media (max-width:767px){.genre-photo{height:170px;}.genre-photo-emoji{font-size:68px;}}
+
 /* お問い合わせフォーム：ジャンル/エリア来訪の文脈バナー */
 .form-context{display:block;background:#FFF3EA;border:1px solid #f3d3ba;border-left:5px solid var(--orange);border-radius:10px;padding:12px 16px;margin:0 0 18px;font-size:14px;color:var(--navy);}
 .form-context strong{color:var(--orange);font-weight:900;}

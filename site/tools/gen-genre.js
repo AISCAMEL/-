@@ -121,6 +121,43 @@ function copyFor(g) {
   return { points: o.points || cat.points, faq: o.faq || defaultFaq(g) };
 }
 
+/* ---- 買取価格の目安（イメージ）：[車種/内容, 状態, 価格] ---- */
+const EXAMPLES = {
+  haisha:      [['ダイハツ タント', '10年・不動', '¥35,000'], ['日産 セレナ', '事故・走行不可', '¥80,000'], ['トヨタ ヴィッツ', '車検切れ・過走行', '¥45,000']],
+  jiko:        [['マツダ アクセラ', '前部損傷・自走可', '¥420,000'], ['ホンダ フィット', '修復歴あり', '¥260,000'], ['スバル インプレッサ', '側面損傷', '¥510,000']],
+  fudou:       [['トヨタ ヴォクシー', 'エンジン不動', '¥180,000'], ['日産 ノート', 'ミッション故障', '¥120,000'], ['ホンダ ステップワゴン', '電装不良', '¥150,000']],
+  suibotsu:    [['トヨタ アクア', '床上浸水', '¥90,000'], ['スズキ ハスラー', '冠水・現状', '¥70,000'], ['日産 デイズ', '被災車両', '¥55,000']],
+  kasoukou:    [['トヨタ プリウス', '22万km', '¥280,000'], ['ホンダ オデッセイ', '18万km', '¥210,000'], ['日産 エクストレイル', '25万km', '¥330,000']],
+  loan:        [['トヨタ ハリアー', '残債あり・良好', '¥2,300,000'], ['日産 セレナ', '残債精算込み', '¥1,250,000'], ['ホンダ ヴェゼル', 'ローン中', '¥1,480,000']],
+  hiace:       [['ハイエース バン S-GL', '15万km', '¥1,750,000'], ['ハイエース ワゴン', '25万km・ディーゼル', '¥1,380,000'], ['ハイエース コミューター', '事業用', '¥2,100,000']],
+  landcruiser: [['ランクル 70', '旧型・過走行', '¥3,200,000'], ['ランクル プラド', 'ディーゼル', '¥2,650,000'], ['ランクル 200', '修復歴あり', '¥3,900,000']],
+  alphard:     [['アルファード S', '上級グレード', '¥3,100,000'], ['アルファード G', '7年落ち', '¥2,250,000'], ['ヴェルファイア', '過走行', '¥1,780,000']],
+  prius:       [['プリウス S', '2019年式', '¥1,500,000'], ['プリウス A', '低走行', '¥1,820,000'], ['プリウスPHV', '充電対応', '¥2,050,000']],
+  jimny:       [['ジムニー XC', '現行・人気色', '¥1,950,000'], ['ジムニー シエラ', '低走行', '¥2,180,000'], ['ジムニー（旧型）', '過走行', '¥680,000']],
+  keitora:     [['スズキ キャリイ', '4WD・MT', '¥520,000'], ['ダイハツ ハイゼット', '農用・過走行', '¥380,000'], ['ホンダ アクティ', 'ダンプ架装', '¥450,000']],
+  kei:         [['ホンダ N-BOX', '2020年式', '¥1,050,000'], ['スズキ スペーシア', '2019年式', '¥740,000'], ['ダイハツ タント', '2016年式', '¥520,000']],
+  suv:         [['トヨタ ハリアー', '2018年式', '¥2,350,000'], ['マツダ CX-5', '2019年式', '¥1,820,000'], ['日産 エクストレイル', '2018年式', '¥1,560,000']],
+  minivan:     [['日産 セレナ', '2018年式', '¥1,420,000'], ['トヨタ ヴォクシー', '2019年式', '¥1,680,000'], ['ホンダ ステップワゴン', '2018年式', '¥1,520,000']],
+  sedan:       [['トヨタ クラウン', '2018年式', '¥2,150,000'], ['ホンダ アコード', '2019年式', '¥1,640,000'], ['日産 スカイライン', '2017年式', '¥1,380,000']],
+  truck:       [['いすゞ エルフ', '2t・平ボディ', '¥1,850,000'], ['日野 デュトロ', '冷蔵', '¥2,100,000'], ['三菱 キャンター', 'ダンプ', '¥1,680,000']],
+  import:      [['BMW 3シリーズ', '2018年式', '¥2,100,000'], ['メルセデス Cクラス', '2017年式', '¥2,450,000'], ['アウディ A4', '故障・現状', '¥980,000']],
+  luxury:      [['レクサス RX', '2019年式', '¥4,200,000'], ['ポルシェ カイエン', '2017年式', '¥5,800,000'], ['メルセデス Eクラス', '2018年式', '¥3,100,000']],
+  ev:          [['日産 リーフ', '2019年式', '¥1,250,000'], ['テスラ モデル3', '2020年式', '¥3,900,000'], ['三菱 アウトランダーPHEV', '2018年式', '¥1,680,000']],
+  kyusha:      [['トヨタ スプリンタートレノ', '旧車・要レストア', '¥1,800,000'], ['日産 スカイラインGT-R', '希少', '¥6,500,000'], ['ホンダ シビック（EF）', '不動', '¥850,000']],
+  zeppan:      [['マツダ RX-7', 'ネオクラ', '¥2,800,000'], ['日産 シルビア S15', '絶版', '¥2,400,000'], ['トヨタ MR2', '旧型', '¥1,200,000']],
+  wheel:       [['BBS 18インチ 4本', '社外・美品', '¥120,000'], ['RAYS ボルクTE37', '人気モデル', '¥180,000'], ['純正アルミ＋タイヤ', 'セット', '¥45,000']],
+  tire:        [['スタッドレス 4本', '8分山', '¥40,000'], ['夏タイヤ ホイール付', 'セット', '¥55,000'], ['新品タイヤ', '未使用', '¥70,000']],
+  parts:       [['純正ナビ', '動作確認済', '¥35,000'], ['社外エアロ一式', '美品', '¥80,000'], ['マフラー（社外）', '人気銘柄', '¥45,000']],
+};
+function examplesFor(g) {
+  if (EXAMPLES[g.slug]) return EXAMPLES[g.slug];
+  const n = g.name.replace('買取', '');
+  return [[n + '（人気タイプ）', '良好・低走行', '高価買取'], [n + '（標準）', '一般的な状態', '適正査定'], [n + '（難あり）', '過走行・現状', '買取可']];
+}
+
+/* ---- ジャンル→主要エリア 相互リンク（トピッククラスタ） ---- */
+const MAJOR_AREAS = [['北海道', 'hokkaido'], ['福島県', 'fukushima'], ['東京都', 'tokyo'], ['神奈川県', 'kanagawa'], ['愛知県', 'aichi'], ['大阪府', 'osaka'], ['福岡県', 'fukuoka'], ['沖縄県', 'okinawa']];
+
 /* ---- ハブ用カード ---- */
 function card(g) {
   const soon = g.status === 'coming' || !g.url || g.url === '#';
@@ -157,6 +194,11 @@ function genrePage(g) {
   const group = GROUPS.find(x => x.cat === g.cat);
   const siblings = group.items.filter(x => x.slug !== g.slug).slice(0, 6)
     .map(x => `<li><a href="../${x.slug}/">${esc(x.icon)} ${esc(x.name)}</a></li>`).join('');
+  // 買取価格の目安（イメージ）
+  const results = examplesFor(g).map(([car, note, price]) =>
+    `<article class="card result-card"><div class="result-img" aria-hidden="true">${g.icon}</div><h3>${esc(car)}</h3><p class="result-year">${esc(note)}</p><p class="result-price">${esc(price)}</p></article>`).join('');
+  // 主要エリアへの内部リンク
+  const areaLinks = MAJOR_AREAS.map(([nm, sl]) => `<li><a href="${rel}area/${sl}/">${esc(nm)}の車買取</a></li>`).join('');
 
   return `<!DOCTYPE html>
 <html lang="ja">
@@ -205,6 +247,10 @@ ${header(rel, 'genre')}
     </div>
   </section>
 
+  <section class="genre-photo" aria-hidden="true" style="background-image:linear-gradient(135deg,rgba(30,58,138,.20),rgba(255,107,53,.30)),url('${rel}assets/img/genre/${g.slug}.jpg');">
+    <span class="genre-photo-emoji">${g.icon}</span>
+  </section>
+
   <section class="area-intro" aria-labelledby="intro-title">
     <div class="container">
       <h2 id="intro-title" class="section-title">${esc(g.name)}の特徴</h2>
@@ -233,6 +279,14 @@ ${header(rel, 'genre')}
     </div>
   </section>
 
+  <section class="results" aria-labelledby="results-title">
+    <div class="container">
+      <h2 id="results-title" class="section-title">${esc(g.name)}の買取価格の目安</h2>
+      <p class="area-note center">※ 掲載の金額は買取イメージです。車種・年式・状態・時期により変動します。正確な金額は無料査定でご確認ください。</p>
+      <div class="grid grid-3 result-grid">${results}</div>
+    </div>
+  </section>
+
   <section class="faq" aria-labelledby="faq-title">
     <div class="container faq-inner">
       <div class="faq-main">
@@ -250,6 +304,15 @@ ${header(rel, 'genre')}
       <h2 id="related-title" class="section-title">${esc(g.cat)}の他のジャンル</h2>
       <ul class="related-links">${siblings}</ul>
       <p class="center"><a href="${rel}genre/" class="btn btn-primary">買取ジャンル一覧を見る</a></p>
+    </div>
+  </section>
+
+  <section class="results" aria-labelledby="area-title">
+    <div class="container">
+      <h2 id="area-title" class="section-title">${esc(g.name)}の対応エリア</h2>
+      <p class="area-note center">全国47都道府県に対応。お住まいの地域へ無料出張査定に伺います。</p>
+      <ul class="related-links">${areaLinks}</ul>
+      <p class="center"><a href="${rel}area/" class="btn btn-primary">全国の対応エリアを見る</a></p>
     </div>
   </section>
 
