@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 6.6
+ * Version: 6.7
  * Author: CARMEL
  */
 
@@ -45,6 +45,8 @@ function carmel3_auto_get_settings() {
         'gmb_post'     => 0,
         // 追加で自動生成する投稿タイプ（メディア記事は常に本体エンジンで生成。ここは“追加分”）
         'extra_types'  => array(),
+        // 投稿タイプごとの「書き方（AI指示プロンプト）」 array(post_type => 指示文)
+        'type_prompts' => array(),
         // 通知（Slack / LINE）
         'notify_on'     => 'draft',   // draft=下書きができた時 / publish=公開した時
         'slack_enabled' => 0,
@@ -788,13 +790,22 @@ function carmel3_gen_post($post_type, $item, $s) {
     $obj = get_post_type_object($post_type);
     $type_label = ($obj && !empty($obj->labels->singular_name)) ? $obj->labels->singular_name : $post_type;
 
+    // 投稿タイプごとの「書き方（AI指示）」
+    $instruction = '';
+    if (isset($s['type_prompts'][$post_type]) && trim((string)$s['type_prompts'][$post_type]) !== '') {
+        $instruction = trim((string)$s['type_prompts'][$post_type]);
+    }
+
     $system = 'あなたは中古車販売店カーメルの日本語編集者です。自然な日本語で、JSONのみ返してください。中国語は禁止。';
     $user = "次の条件で「{$type_label}」向けの記事をJSONで作成してください。\n"
         . "【テーマ/タイトル案】{$title}\n"
         . "【キーワード】{$kw}\n"
-        . "【対象地域】{$area}\n\n"
-        . "JSONキー:\n{\n  \"title\": \"\",\n  \"excerpt\": \"100〜140文字\",\n  \"content_html\": \"<h2>..</h2><p>..</p> 形式で1000文字以上\"\n}\n"
-        . "注意: 自然な日本語 / HTMLで本文 / 誇大表現は避ける。";
+        . "【対象地域】{$area}\n";
+    if ($instruction !== '') {
+        $user .= "【この媒体の書き方（最優先で従う）】\n{$instruction}\n";
+    }
+    $user .= "\nJSONキー:\n{\n  \"title\": \"\",\n  \"excerpt\": \"100〜140文字\",\n  \"content_html\": \"<h2>..</h2><p>..</p> 形式\"\n}\n"
+        . "注意: 自然な日本語 / 本文はHTML / 誇大表現は避ける / 上の『書き方』があれば最優先で従う。";
 
     $res = carmel_call_openrouter_chat(array(
         array('role' => 'system', 'content' => $system),
@@ -1260,6 +1271,17 @@ add_action('admin_post_carmel3_auto_save', function () {
     }
     $s['extra_types'] = array_values(array_unique($valid));
 
+    // 投稿タイプごとの書き方（AI指示プロンプト）
+    $tp_in = (isset($_POST['type_prompt']) && is_array($_POST['type_prompt'])) ? $_POST['type_prompt'] : array();
+    $tp = array();
+    foreach ($allow as $pt => $label) {
+        if (isset($tp_in[$pt])) {
+            $v = sanitize_textarea_field(wp_unslash($tp_in[$pt]));
+            if (trim($v) !== '') $tp[$pt] = $v;
+        }
+    }
+    $s['type_prompts'] = $tp;
+
     // 通知設定
     $non = isset($_POST['notify_on']) ? sanitize_key($_POST['notify_on']) : 'draft';
     $s['notify_on']     = in_array($non, array('draft', 'publish'), true) ? $non : 'draft';
@@ -1502,16 +1524,26 @@ function carmel3_auto_settings_page() {
             <span style="color:#666;font-size:12px">メディア記事は常に生成。ここにチェックした投稿タイプにも、同じテーマで記事をAI生成して保存します（NEWS・加盟店ブログなど）。</span></p>
             <?php
             $pts = carmel3_selectable_post_types();
-            $sel_types = (isset($s['extra_types']) && is_array($s['extra_types'])) ? $s['extra_types'] : array();
+            $sel_types  = (isset($s['extra_types']) && is_array($s['extra_types'])) ? $s['extra_types'] : array();
+            $type_prompts = (isset($s['type_prompts']) && is_array($s['type_prompts'])) ? $s['type_prompts'] : array();
             if (empty($pts)): ?>
                 <p style="color:#c2410c;font-size:12px">選べる投稿タイプが見つかりません。</p>
             <?php else: ?>
-                <div style="display:flex;flex-wrap:wrap;gap:10px 18px;margin:4px 0 0">
-                <?php foreach ($pts as $pt => $label): ?>
-                    <label style="white-space:nowrap"><input type="checkbox" name="extra_types[]" value="<?php echo esc_attr($pt); ?>" <?php checked(in_array($pt, $sel_types, true)); ?>> <?php echo esc_html($label); ?> <span style="color:#999;font-size:11px">(<?php echo esc_html($pt); ?>)</span></label>
+                <p style="color:#666;font-size:12px;margin:6px 0 8px">チェックした投稿タイプに生成します。各タイプの<strong>「書き方（AI指示）」</strong>に、文字数・トーン・構成などを書くと、その通りに書き分けます（空欄なら標準）。</p>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                <?php foreach ($pts as $pt => $label):
+                    $cur_prompt = isset($type_prompts[$pt]) ? $type_prompts[$pt] : '';
+                    $ph = '例: ' . ($pt === 'post'
+                        ? 'お知らせ/NEWS。300〜500字、告知調、結論を先に、最後に来店・問い合わせ導線。'
+                        : '加盟店(FC)オーナー向け。1000〜1300字、ビジネス視点で収益・運営メリットを具体的に。');
+                ?>
+                    <div style="border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;background:#fafafa">
+                        <label style="font-weight:700"><input type="checkbox" name="extra_types[]" value="<?php echo esc_attr($pt); ?>" <?php checked(in_array($pt, $sel_types, true)); ?>> <?php echo esc_html($label); ?> <span style="color:#999;font-size:11px;font-weight:400">(<?php echo esc_html($pt); ?>)</span></label>
+                        <textarea name="type_prompt[<?php echo esc_attr($pt); ?>]" placeholder="<?php echo esc_attr($ph); ?>" style="width:100%;min-height:64px;margin-top:8px;border:1px solid #d1d5db;border-radius:8px;padding:8px;font-size:13px"><?php echo esc_textarea($cur_prompt); ?></textarea>
+                    </div>
                 <?php endforeach; ?>
                 </div>
-                <p style="color:#666;font-size:12px;margin:6px 0 0">※ 「投稿(post)」がNEWS用、「加盟店ブログ」が該当する投稿タイプにチェックしてください。チェックした数だけAPIを使います。</p>
+                <p style="color:#666;font-size:12px;margin:6px 0 0">※ 「投稿(post)」がNEWS用、「加盟店ブログ」が該当する投稿タイプ。チェックした数だけAPIを使います。</p>
             <?php endif; ?>
 
             <hr style="margin:16px 0;border:none;border-top:1px solid #eee">
