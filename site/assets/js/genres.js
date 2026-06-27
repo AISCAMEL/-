@@ -35,7 +35,8 @@
       { name: 'ミニバン買取',        slug: 'minivan',icon: '🚐', desc: 'ファミリー需要のミニバンを高評価。' },
       { name: 'セダン買取',          slug: 'sedan',  icon: '🚘', desc: '定番セダンも安定買取。' },
       { name: 'トラック・商用車買取', slug: 'truck',  icon: '🚚', desc: 'トラック・バン・商用車、法人まとめ売却も。' },
-      { name: '高級車・輸入車買取',   slug: 'import', icon: '🏎️', desc: 'ブランド価値を正しく評価。輸入車専門査定。' },
+      { name: '輸入車買取',          slug: 'import', icon: '🚗', desc: 'ベンツ・BMW・アウディなど外車を専門ルートで高価買取。' },
+      { name: '高級車買取',          slug: 'luxury', icon: '🏎️', desc: 'ブランド価値を正しく評価。高級車・スポーツカーも。' },
       { name: 'EV・ハイブリッド買取', slug: 'ev',     icon: '🔋', desc: 'バッテリー状態も加味して適正査定。' }
     ]},
     { cat: '旧車・希少車で買取', icon: '🏁', items: [
