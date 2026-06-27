@@ -993,9 +993,10 @@ window.carmelInitMap=function(){
 		// SNSシェア。
 		echo $this->share_buttons( $vid, $title ); // phpcs:ignore WordPress.Security.EscapeOutput
 
-		// お客様向け：この車両への問い合わせフォーム。
+		// お客様向け：この車両への問い合わせフォーム＋会員ページ導線。
 		if ( 'customer' === $scope ) {
 			echo $this->customer_inquiry_form( $vid ); // phpcs:ignore WordPress.Security.EscapeOutput
+			echo '<p class="carmel-member-cta"><a href="' . esc_url( $this->member_url() ) . '">🅼 会員ページでお手続き状況を確認する →</a></p>';
 		}
 
 		// 取扱店の地図。
@@ -1122,6 +1123,12 @@ window.carmelInitMap=function(){
 		}
 		$out .= '</div>';
 		return $out;
+	}
+
+	/** 会員ページURL（LIFF会員ログイン優先・無ければマイページ）。 */
+	private function member_url() {
+		$u = get_option( 'carmel_member_page_url', '' );
+		return $u ? $u : home_url( '/' . ltrim( apply_filters( 'carmel_mypage_slug', 'mypage' ), '/' ) );
 	}
 
 	/** Google Maps APIキー。 */
@@ -2063,6 +2070,10 @@ window.carmelInitMap=function(){
 			$url  = home_url( '/' . ltrim( apply_filters( 'carmel_store_page_slug', 'store' ), '/' ) );
 			$extra = ' <a href="' . esc_url( $url ) . '">起票した商談 #' . $deal . ' を見る</a>';
 		}
+		// 問い合わせ完了 → 会員ページ導線。
+		if ( 'cust_ok' === $key && is_user_logged_in() ) {
+			$extra = ' <a href="' . esc_url( $this->member_url() ) . '">会員ページで状況を確認する →</a>';
+		}
 		return '<div class="carmel-banner carmel-banner-' . esc_attr( $map[ $key ][0] ) . '">' . esc_html( $map[ $key ][1] ) . $extra . '</div>';
 	}
 
@@ -2139,6 +2150,8 @@ window.carmelInitMap=function(){
 .carmel-inq-form{margin-top:1.2em;border-top:1px dashed #e7e2ef;padding-top:1em}
 .carmel-inq-form h3{margin:.2em 0 .5em}
 .carmel-inq-form textarea{width:100%;border:1px solid #ccc;border-radius:.3em;padding:.5em;margin-bottom:.5em}
+.carmel-member-cta{margin:.8em 0}
+.carmel-member-cta a{display:inline-block;background:#f1ecfb;border:1px solid #ddd2f5;color:#5b2a86;border-radius:.4em;padding:.5em 1em;text-decoration:none;font-weight:600}
 .carmel-share{display:flex;align-items:center;gap:.4em;flex-wrap:wrap;margin:1em 0}
 .carmel-share-label{font-size:.85em;color:#7a7488}
 .carmel-share-btn{border:0;cursor:pointer;text-decoration:none;color:#fff;border-radius:.3em;padding:.35em .8em;font-size:.82em}

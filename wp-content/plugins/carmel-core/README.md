@@ -616,6 +616,12 @@ AI自動応答：LINE Webhook → ボット(GAS/LLM)でFAQ応答・必要時にL
 
 > LINE Developers 側で Webhook URL に上記エンドポイントを登録し、応答メッセージ（自動応答）をオフ、Webhookをオンにする。チャネルアクセストークン＝返信、チャネルシークレット＝署名検証に使用。
 
+## 会員ページ誘導・反響管理（実装済み）
+
+- **会員ページCTAの常設**：在庫詳細（ログイン顧客）と在庫問い合わせ完了に「会員ページへ」導線。リンク先は `carmel_member_page_url`（LIFF会員ログイン）優先、無ければ `/mypage`
+- **再訪ログイン導線**（`Carmel_Member_Nudge`）：節目（納車完了 `delivered`/`lease_delivered`）にお客様へ **`mypage_invite`** 通知（プロライン→メール）。文面に会員ページURL（ワンタップLIFF or /mypage）。節目は `carmel_member_nudge_statuses` で調整可
+- **反響の担当店表示**（`Carmel_Store_Leads`）：`/store` ダッシュボード上部に **LINE反響＋在庫問い合わせ**の一覧（自店割当のみ／本部は全件）。氏名・連絡先・エリア・内容・対応状況（新規→対応中→完了トグル）。`carmel_support`（`line_inquiry`/`inventory_inquiry`）を集約
+
 ## セットアップ手順
 
 1. **前提プラグイン**：ACF Pro（フィールド表示）、WooCommerce＋Square for WooCommerce（決済）、任意で Contact Form 7 / Gravity Forms、bbPress、WooCommerce Subscriptions（会費サブスク時）

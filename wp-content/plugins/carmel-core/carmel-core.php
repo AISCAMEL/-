@@ -36,6 +36,8 @@ require_once CARMEL_CORE_DIR . 'includes/class-carmel-mypage.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-store.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-store-content.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-hq-content.php';
+require_once CARMEL_CORE_DIR . 'includes/class-carmel-store-leads.php';
+require_once CARMEL_CORE_DIR . 'includes/class-carmel-member-nudge.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-content-seeder.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-cron.php';
 require_once CARMEL_CORE_DIR . 'includes/class-carmel-gas-client.php';
@@ -82,6 +84,8 @@ function carmel_core_init() {
 	Carmel_Store::instance()->register_hooks();
 	Carmel_Store_Content::instance()->register_hooks();
 	Carmel_HQ_Content::instance()->register_hooks();
+	Carmel_Store_Leads::instance()->register_hooks();
+	Carmel_Member_Nudge::instance()->register_hooks();
 	Carmel_Cron::instance()->register_hooks();
 	Carmel_GAS_Client::instance()->register_hooks();
 	Carmel_Transport::instance()->register_hooks();
