@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 7.1
+ * Version: 7.2
  * Author: CARMEL
  */
 
@@ -1081,6 +1081,23 @@ function carmel3_home_page() {
     $url_sns   = admin_url('admin.php?page=carmel-sns');            // 本体：SNS投稿
     $url_set   = admin_url('admin.php?page=carmel-settings');       // 本体：設定（APIキー）
     $url_posts = admin_url('edit.php?post_type=media_article');     // 作った記事一覧
+    $url_meo   = admin_url('admin.php?page=carmel3-meo');           // MEO（その他掲載ページ）
+
+    // ニュース・加盟店ブログ（存在すれば先頭に大ボタンを出す）
+    $quick_posts = array();
+    foreach (array('news' => 'NEWS（ニュース）', 'shop_blog' => '加盟店ブログ') as $pt => $lbl) {
+        if (!post_type_exists($pt)) continue;
+        $obj = get_post_type_object($pt);
+        $name = ($obj && !empty($obj->labels->name)) ? $obj->labels->name : $lbl;
+        $c = wp_count_posts($pt);
+        $quick_posts[$pt] = array(
+            'label' => $name,
+            'list'  => admin_url('edit.php?post_type=' . $pt),
+            'new'   => admin_url('post-new.php?post_type=' . $pt),
+            'draft' => isset($c->draft) ? (int)$c->draft : 0,
+            'pub'   => isset($c->publish) ? (int)$c->publish : 0,
+        );
+    }
 
     $badge = function ($ok, $on = 'ON', $off = 'OFF') {
         $c = $ok ? '#16a34a' : '#9ca3af';
@@ -1134,6 +1151,23 @@ function carmel3_home_page() {
         <!-- やりたいこと（大ボタン） -->
         <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:18px">
             <h2 style="margin:0 0 12px;font-size:16px">やりたいことを選ぶ</h2>
+            <?php if (!empty($quick_posts)): ?>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:12px">
+                <?php
+                $qcolors = array('news' => '#0ea5e9', 'shop_blog' => '#db2777');
+                foreach ($quick_posts as $pt => $q):
+                    $bg = isset($qcolors[$pt]) ? $qcolors[$pt] : '#0f766e';
+                ?>
+                <div style="display:flex;flex-direction:column;background:<?php echo $bg; ?>;color:#fff;border-radius:12px;padding:14px 16px">
+                    <a href="<?php echo esc_url($q['list']); ?>" style="text-decoration:none;color:#fff">
+                        <div style="font-size:18px;font-weight:800"><?php echo esc_html($q['label']); ?>を見る</div>
+                        <div style="font-size:12px;opacity:.92;margin-top:4px">下書き <?php echo $q['draft']; ?> ／ 公開 <?php echo $q['pub']; ?>　一覧・編集はこちら</div>
+                    </a>
+                    <a href="<?php echo esc_url($q['new']); ?>" style="margin-top:10px;align-self:flex-start;text-decoration:none;background:rgba(255,255,255,.22);color:#fff;font-weight:700;font-size:12px;padding:6px 12px;border-radius:999px">＋ 新規作成</a>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
                 <a href="<?php echo esc_url($url_gen); ?>" style="text-decoration:none;display:block;background:#5b3df5;color:#fff;border-radius:12px;padding:16px">
                     <div style="font-size:18px;font-weight:800">今すぐ1記事つくる</div>
@@ -1150,6 +1184,10 @@ function carmel3_home_page() {
                 <a href="<?php echo esc_url($url_sns); ?>" style="text-decoration:none;display:block;background:#b45309;color:#fff;border-radius:12px;padding:16px">
                     <div style="font-size:18px;font-weight:800">SNS投稿</div>
                     <div style="font-size:12px;opacity:.9;margin-top:4px">記事をSNS用の文章にして投稿</div>
+                </a>
+                <a href="<?php echo esc_url($url_meo); ?>" style="text-decoration:none;display:block;background:#047857;color:#fff;border-radius:12px;padding:16px">
+                    <div style="font-size:18px;font-weight:800">掲載・MEO対策</div>
+                    <div style="font-size:12px;opacity:.9;margin-top:4px">Googleビジネス・Yahoo!プレイス等の管理</div>
                 </a>
                 <a href="<?php echo esc_url($url_set); ?>" style="text-decoration:none;display:block;background:#374151;color:#fff;border-radius:12px;padding:16px">
                     <div style="font-size:18px;font-weight:800">設定（APIキー）</div>
@@ -1298,20 +1336,57 @@ function carmel3_meo_get_data() {
     return is_array($d) ? $d : array();
 }
 
+// 店舗の基本情報（NAP）。全サイトで統一するための“正”データ。
+function carmel3_meo_get_nap() {
+    $defaults = array(
+        'name' => '', 'zip' => '', 'address' => '', 'tel' => '',
+        'hours' => '', 'closed' => '', 'url' => '', 'parking' => '', 'pay' => '',
+    );
+    $d = get_option('carmel3_meo_nap', array());
+    if (!is_array($d)) $d = array();
+    return wp_parse_args($d, $defaults);
+}
+
+// MEOで使う状況の選択肢
+function carmel3_meo_statuses() {
+    return array('未対応', '申請中', '登録済み', '要更新');
+}
+
 add_action('admin_post_carmel3_meo_save', function () {
     if (!current_user_can('manage_options')) wp_die('権限がありません');
     check_admin_referer('carmel3_meo_save');
 
+    // 店舗基本情報（NAP）
+    $nap_in = (isset($_POST['nap']) && is_array($_POST['nap'])) ? $_POST['nap'] : array();
+    $nap = array();
+    foreach (array('name','zip','address','tel','hours','closed','parking','pay') as $k) {
+        $nap[$k] = isset($nap_in[$k]) ? sanitize_text_field(wp_unslash($nap_in[$k])) : '';
+    }
+    $nap['url'] = isset($nap_in['url']) ? esc_url_raw(wp_unslash($nap_in['url'])) : '';
+    update_option('carmel3_meo_nap', $nap);
+
+    // 各サイトの管理項目
     $statuses = (isset($_POST['status']) && is_array($_POST['status'])) ? $_POST['status'] : array();
     $memos    = (isset($_POST['memo'])   && is_array($_POST['memo']))   ? $_POST['memo']   : array();
+    $owners   = (isset($_POST['owner'])  && is_array($_POST['owner']))  ? $_POST['owner']  : array();
+    $lurls    = (isset($_POST['lurl'])   && is_array($_POST['lurl']))   ? $_POST['lurl']   : array();
+    $updated  = (isset($_POST['updated'])&& is_array($_POST['updated']))? $_POST['updated']: array();
+    $valid_st = carmel3_meo_statuses();
 
     $data = array();
     foreach (carmel3_meo_sites() as $site) {
         $id = $site['id'];
         $st = isset($statuses[$id]) ? sanitize_text_field(wp_unslash($statuses[$id])) : '未対応';
-        if (!in_array($st, array('未対応', '登録済み', '要更新'), true)) $st = '未対応';
-        $mm = isset($memos[$id]) ? sanitize_text_field(wp_unslash($memos[$id])) : '';
-        $data[$id] = array('status' => $st, 'memo' => $mm);
+        if (!in_array($st, $valid_st, true)) $st = '未対応';
+        $up = isset($updated[$id]) ? sanitize_text_field(wp_unslash($updated[$id])) : '';
+        if ($up !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $up)) $up = '';
+        $data[$id] = array(
+            'status'  => $st,
+            'memo'    => isset($memos[$id])  ? sanitize_text_field(wp_unslash($memos[$id]))  : '',
+            'owner'   => isset($owners[$id]) ? sanitize_text_field(wp_unslash($owners[$id])) : '',
+            'lurl'    => isset($lurls[$id])  ? esc_url_raw(wp_unslash($lurls[$id]))          : '',
+            'updated' => $up,
+        );
     }
     update_option('carmel3_meo_listings', $data);
 
@@ -1322,81 +1397,206 @@ add_action('admin_post_carmel3_meo_save', function () {
 function carmel3_meo_page() {
     $sites = carmel3_meo_sites();
     $data  = carmel3_meo_get_data();
+    $nap   = carmel3_meo_get_nap();
+    $statuses = carmel3_meo_statuses();
+    $now = (int) current_time('timestamp');
 
-    $done = 0;
-    foreach ($sites as $st) {
-        if (isset($data[$st['id']]['status']) && $data[$st['id']]['status'] === '登録済み') $done++;
+    // 集計
+    $count = array('未対応'=>0, '申請中'=>0, '登録済み'=>0, '要更新'=>0);
+    $todo = array();   // 次のアクション
+    foreach ($sites as $site) {
+        $id = $site['id'];
+        $st = isset($data[$id]['status']) ? $data[$id]['status'] : '未対応';
+        if (!isset($count[$st])) $st = '未対応';
+        $count[$st]++;
+        $important = (strpos($site['cat'], '最重要') !== false);
+        if ($st === '未対応') {
+            $todo[] = array('p'=>$important?0:2, 'site'=>$site, 'msg'=>'未登録です。アカウントを作成して店舗情報を登録', 'url'=>$site['url']);
+        } elseif ($st === '申請中') {
+            $todo[] = array('p'=>$important?0:3, 'site'=>$site, 'msg'=>'申請中。承認状況を確認し、公開まで進める', 'url'=>$site['url']);
+        } elseif ($st === '要更新') {
+            $todo[] = array('p'=>1, 'site'=>$site, 'msg'=>'情報が古い可能性。最新のNAP・写真に更新', 'url'=>$site['url']);
+        } elseif ($st === '登録済み') {
+            $up = isset($data[$id]['updated']) ? $data[$id]['updated'] : '';
+            $ts = $up !== '' ? strtotime($up . ' 00:00:00') : 0;
+            if ($ts && ($now - $ts) > 60 * DAY_IN_SECONDS) {
+                $days = floor(($now - $ts) / DAY_IN_SECONDS);
+                $todo[] = array('p'=>4, 'site'=>$site, 'msg'=>'最終更新から' . $days . '日。写真追加・投稿で鮮度UP', 'url'=>($data[$id]['lurl'] !== '' ? $data[$id]['lurl'] : $site['url']));
+            }
+        }
     }
+    usort($todo, function($a, $b){ return $a['p'] <=> $b['p']; });
+    $done = $count['登録済み'];
     $total = count($sites);
-    $statuses = array('未対応', '登録済み', '要更新');
+
+    // NAPのコピー用：1行テキスト
+    $nap_copy = trim(($nap['name'] ? $nap['name'] . "\n" : '')
+        . ($nap['zip'] ? '〒' . $nap['zip'] . ' ' : '') . ($nap['address'] ? $nap['address'] . "\n" : '')
+        . ($nap['tel'] ? 'TEL ' . $nap['tel'] . "\n" : '')
+        . ($nap['hours'] ? '営業 ' . $nap['hours'] . "\n" : '')
+        . ($nap['closed'] ? '定休 ' . $nap['closed'] . "\n" : '')
+        . ($nap['url'] ? $nap['url'] : ''));
+
+    $nap_fields = array(
+        'name'    => array('店名', '例: カーメル 大阪店'),
+        'zip'     => array('郵便番号', '例: 530-0001'),
+        'address' => array('住所', '例: 大阪府大阪市北区…'),
+        'tel'     => array('電話番号', '例: 06-1234-5678'),
+        'hours'   => array('営業時間', '例: 10:00〜19:00'),
+        'closed'  => array('定休日', '例: 水曜'),
+        'url'     => array('サイトURL', 'https://carmelonline.jp/'),
+        'parking' => array('駐車場', '例: あり（10台）'),
+        'pay'     => array('支払い方法', '例: 現金/カード/ローン'),
+    );
+
+    $badge_st = function($st){
+        $c = array('未対応'=>'#9ca3af', '申請中'=>'#d97706', '登録済み'=>'#16a34a', '要更新'=>'#dc2626');
+        $col = isset($c[$st]) ? $c[$st] : '#9ca3af';
+        return '<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:'.$col.';color:#fff;font-size:11px;font-weight:700">'.esc_html($st).'</span>';
+    };
     ?>
     <div style="max-width:1100px;margin:20px auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
         <div style="background:linear-gradient(135deg,#1a1a2e,#0f3460);color:#fff;padding:24px;border-radius:16px;margin-bottom:18px">
-            <h1 style="margin:0 0 6px;font-size:24px">その他掲載ページ（MEO対策）</h1>
-            <p style="margin:0;opacity:.9">Googleマップなど「地図検索」で見つけてもらうための掲載先リストです。各サイトに同じ店舗情報（店名・住所・電話・営業時間・写真）を登録・統一すると効果が出ます。</p>
+            <h1 style="margin:0 0 6px;font-size:24px">掲載・MEO対策（その他掲載ページ）</h1>
+            <p style="margin:0;opacity:.9">Googleマップなどで見つけてもらうための「掲載先の司令塔」。店舗情報を1か所で管理し、各サイトに同じ内容を登録・統一すると効果が出ます。</p>
         </div>
 
         <?php if (isset($_GET['saved'])): ?>
-            <div class="notice notice-success"><p>掲載状況を保存しました。</p></div>
+            <div class="notice notice-success"><p>保存しました。</p></div>
         <?php endif; ?>
 
+        <!-- 進捗ダッシュボード -->
         <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;margin-bottom:16px">
-            <strong>登録の進捗：</strong> <?php echo (int)$done; ?> / <?php echo (int)$total; ?> サイト 登録済み
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:12px">
+                <div style="background:#f0fdf4;border-radius:10px;padding:12px;text-align:center"><div style="font-size:12px;color:#666">登録済み</div><div style="font-size:22px;font-weight:800;color:#16a34a"><?php echo (int)$count['登録済み']; ?></div></div>
+                <div style="background:#fef2f2;border-radius:10px;padding:12px;text-align:center"><div style="font-size:12px;color:#666">要更新</div><div style="font-size:22px;font-weight:800;color:#dc2626"><?php echo (int)$count['要更新']; ?></div></div>
+                <div style="background:#fffbeb;border-radius:10px;padding:12px;text-align:center"><div style="font-size:12px;color:#666">申請中</div><div style="font-size:22px;font-weight:800;color:#d97706"><?php echo (int)$count['申請中']; ?></div></div>
+                <div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center"><div style="font-size:12px;color:#666">未対応</div><div style="font-size:22px;font-weight:800;color:#6b7280"><?php echo (int)$count['未対応']; ?></div></div>
+            </div>
+            <strong>登録の進捗：</strong> <?php echo (int)$done; ?> / <?php echo (int)$total; ?> サイト
             <div style="height:10px;background:#eef2f7;border-radius:999px;margin-top:8px;overflow:hidden">
                 <div style="height:10px;width:<?php echo $total ? round($done / $total * 100) : 0; ?>%;background:#16a34a"></div>
             </div>
-            <p style="margin:10px 0 0;color:#666;font-size:12px">※ このページは「掲載先の管理メモ」です。各サイトへの実際の登録は「管理画面へ」ボタンから各サイトで行います。</p>
         </div>
 
-        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:8px 16px 16px">
+        <!-- 次のアクション（自動でやることを提案） -->
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;margin-bottom:16px">
+            <h2 style="margin:0 0 10px;font-size:15px">次にやること（優先順）</h2>
+            <?php if (empty($todo)): ?>
+                <p style="margin:0;color:#16a34a;font-weight:700">すべて対応済みです。定期的に写真・投稿を追加して鮮度を保ちましょう。</p>
+            <?php else: ?>
+                <ol style="margin:0;padding-left:20px;line-height:1.5">
+                    <?php foreach (array_slice($todo, 0, 8) as $t): ?>
+                        <li style="margin:0 0 8px">
+                            <strong><?php echo esc_html($t['site']['name']); ?></strong>
+                            <?php if (strpos($t['site']['cat'], '最重要') !== false): ?><span style="background:#dc2626;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:4px">最重要</span><?php endif; ?>
+                            <span style="color:#444">… <?php echo esc_html($t['msg']); ?></span>
+                            <a href="<?php echo esc_url($t['url']); ?>" target="_blank" rel="noopener" style="margin-left:6px;font-size:12px">開く ↗</a>
+                        </li>
+                    <?php endforeach; ?>
+                </ol>
+                <?php if (count($todo) > 8): ?><p style="margin:8px 0 0;color:#888;font-size:12px">ほか <?php echo count($todo) - 8; ?> 件</p><?php endif; ?>
+            <?php endif; ?>
+        </div>
+
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
             <input type="hidden" name="action" value="carmel3_meo_save">
             <?php wp_nonce_field('carmel3_meo_save'); ?>
-            <table style="width:100%;border-collapse:collapse;font-size:14px">
-                <thead>
-                    <tr style="text-align:left;border-bottom:2px solid #e5e7eb">
-                        <th style="padding:10px 6px">掲載先</th>
-                        <th style="padding:10px 6px">種類</th>
-                        <th style="padding:10px 6px">用途</th>
-                        <th style="padding:10px 6px;width:110px">状況</th>
-                        <th style="padding:10px 6px;width:200px">メモ</th>
-                        <th style="padding:10px 6px;width:110px">リンク</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <?php foreach ($sites as $site):
-                    $id = $site['id'];
-                    $cur = isset($data[$id]['status']) ? $data[$id]['status'] : '未対応';
-                    $memo = isset($data[$id]['memo']) ? $data[$id]['memo'] : '';
-                ?>
-                    <tr style="border-bottom:1px solid #f0f0f0">
-                        <td style="padding:10px 6px;font-weight:700"><?php echo esc_html($site['name']); ?></td>
-                        <td style="padding:10px 6px;color:#555"><?php echo esc_html($site['cat']); ?></td>
-                        <td style="padding:10px 6px;color:#444"><?php echo esc_html($site['use']); ?></td>
-                        <td style="padding:10px 6px">
-                            <select name="status[<?php echo esc_attr($id); ?>]" style="width:100%">
-                                <?php foreach ($statuses as $opt): ?>
-                                    <option value="<?php echo esc_attr($opt); ?>" <?php selected($cur, $opt); ?>><?php echo esc_html($opt); ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </td>
-                        <td style="padding:10px 6px">
-                            <input type="text" name="memo[<?php echo esc_attr($id); ?>]" value="<?php echo esc_attr($memo); ?>" placeholder="例: ID/担当/更新日" style="width:100%">
-                        </td>
-                        <td style="padding:10px 6px">
-                            <a href="<?php echo esc_url($site['url']); ?>" target="_blank" rel="noopener" class="button button-small">管理画面へ</a>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
-            <p style="margin-top:14px"><button type="submit" class="button button-primary">掲載状況を保存</button></p>
+
+            <!-- 店舗の基本情報（NAP）：全サイトで統一する“正” -->
+            <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;margin-bottom:16px">
+                <h2 style="margin:0 0 4px;font-size:15px">店舗の基本情報（NAP）— ここを“正”として全サイトに統一</h2>
+                <p style="margin:0 0 12px;color:#666;font-size:12px">店名・住所・電話番号は<strong>一字一句そろえる</strong>のがMEOの基本。ここに入れておけば、各サイト登録時に「コピー」して貼るだけ。</p>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+                    <?php foreach ($nap_fields as $k => $f): ?>
+                        <div>
+                            <label style="display:block;font-size:12px;color:#555;font-weight:700;margin-bottom:3px"><?php echo esc_html($f[0]); ?></label>
+                            <div style="display:flex;gap:6px">
+                                <input type="<?php echo $k==='url'?'url':'text'; ?>" name="nap[<?php echo esc_attr($k); ?>]" value="<?php echo esc_attr($nap[$k]); ?>" placeholder="<?php echo esc_attr($f[1]); ?>" style="flex:1;border:1px solid #d1d5db;border-radius:8px;padding:7px 9px" data-copy>
+                                <button type="button" class="button button-small" onclick="(function(b){var i=b.previousElementSibling;i.select();navigator.clipboard&&navigator.clipboard.writeText(i.value);b.textContent='済';setTimeout(function(){b.textContent='コピー';},1200);})(this)">コピー</button>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php if ($nap_copy !== ''): ?>
+                <div style="margin-top:12px">
+                    <label style="display:block;font-size:12px;color:#555;font-weight:700;margin-bottom:3px">まとめてコピー（登録フォームに一括貼り付け用）</label>
+                    <textarea id="carmel3-nap-all" readonly style="width:100%;min-height:90px;border:1px solid #d1d5db;border-radius:8px;padding:8px;font-size:13px;background:#fafafa"><?php echo esc_textarea($nap_copy); ?></textarea>
+                    <button type="button" class="button button-small" style="margin-top:6px" onclick="(function(b){var t=document.getElementById('carmel3-nap-all');t.select();navigator.clipboard&&navigator.clipboard.writeText(t.value);b.textContent='コピーしました';setTimeout(function(){b.textContent='まとめてコピー';},1500);})(this)">まとめてコピー</button>
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- 各サイトの管理表 -->
+            <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:8px 16px 16px;margin-bottom:16px">
+                <h2 style="margin:10px 0 4px;font-size:15px">掲載先サイトの管理</h2>
+                <p style="margin:0 0 8px;color:#666;font-size:12px">各サイトの「状況・自店ページURL・担当・最終更新日・メモ」を記録。<strong>最終更新日</strong>を入れておくと、上の「次にやること」が古いサイトを自動でお知らせします。</p>
+                <div style="overflow-x:auto">
+                <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:860px">
+                    <thead>
+                        <tr style="text-align:left;border-bottom:2px solid #e5e7eb">
+                            <th style="padding:8px 6px;min-width:160px">掲載先</th>
+                            <th style="padding:8px 6px;width:100px">状況</th>
+                            <th style="padding:8px 6px;min-width:170px">自店ページURL</th>
+                            <th style="padding:8px 6px;width:100px">担当</th>
+                            <th style="padding:8px 6px;width:130px">最終更新日</th>
+                            <th style="padding:8px 6px;min-width:140px">メモ</th>
+                            <th style="padding:8px 6px;width:150px">リンク</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($sites as $site):
+                        $id = $site['id'];
+                        $cur  = isset($data[$id]['status'])  ? $data[$id]['status']  : '未対応';
+                        $memo = isset($data[$id]['memo'])    ? $data[$id]['memo']    : '';
+                        $own  = isset($data[$id]['owner'])   ? $data[$id]['owner']   : '';
+                        $lurl = isset($data[$id]['lurl'])    ? $data[$id]['lurl']    : '';
+                        $up   = isset($data[$id]['updated']) ? $data[$id]['updated'] : '';
+                        $imp  = (strpos($site['cat'], '最重要') !== false);
+                    ?>
+                        <tr style="border-bottom:1px solid #f0f0f0;<?php echo $imp?'background:#fffdf5':''; ?>">
+                            <td style="padding:8px 6px">
+                                <div style="font-weight:700"><?php echo esc_html($site['name']); ?> <?php echo $badge_st($cur); ?></div>
+                                <div style="color:#888;font-size:11px"><?php echo esc_html($site['cat']); ?> ／ <?php echo esc_html($site['use']); ?></div>
+                            </td>
+                            <td style="padding:8px 6px">
+                                <select name="status[<?php echo esc_attr($id); ?>]" style="width:100%">
+                                    <?php foreach ($statuses as $opt): ?>
+                                        <option value="<?php echo esc_attr($opt); ?>" <?php selected($cur, $opt); ?>><?php echo esc_html($opt); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </td>
+                            <td style="padding:8px 6px">
+                                <input type="url" name="lurl[<?php echo esc_attr($id); ?>]" value="<?php echo esc_attr($lurl); ?>" placeholder="自店の掲載ページURL" style="width:100%">
+                            </td>
+                            <td style="padding:8px 6px">
+                                <input type="text" name="owner[<?php echo esc_attr($id); ?>]" value="<?php echo esc_attr($own); ?>" placeholder="担当者" style="width:100%">
+                            </td>
+                            <td style="padding:8px 6px">
+                                <input type="date" name="updated[<?php echo esc_attr($id); ?>]" value="<?php echo esc_attr($up); ?>" style="width:100%">
+                            </td>
+                            <td style="padding:8px 6px">
+                                <input type="text" name="memo[<?php echo esc_attr($id); ?>]" value="<?php echo esc_attr($memo); ?>" placeholder="ID/補足など" style="width:100%">
+                            </td>
+                            <td style="padding:8px 6px;white-space:nowrap">
+                                <a href="<?php echo esc_url($site['url']); ?>" target="_blank" rel="noopener" class="button button-small">管理画面</a>
+                                <?php if ($lurl !== ''): ?><a href="<?php echo esc_url($lurl); ?>" target="_blank" rel="noopener" class="button button-small">自店</a><?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+                </div>
+            </div>
+
+            <p style="margin:0 0 18px"><button type="submit" class="button button-primary button-hero">この内容で保存</button></p>
         </form>
 
-        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px;margin-top:16px">
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px">
             <h2 style="margin:0 0 8px;font-size:15px">MEO対策のコツ（かんたん）</h2>
             <ul style="margin:0 0 0 18px;line-height:1.9;color:#444">
-                <li><strong>店舗情報（NAP）を全サイトで統一</strong>：店名・住所・電話番号を一字一句そろえる。</li>
-                <li><strong>写真を多く・新しく</strong>：店舗外観、在庫車、スタッフ。Googleは更新を評価。</li>
+                <li><strong>店舗情報（NAP）を全サイトで統一</strong>：上の基本情報を“正”にして、各サイトへ「コピー」して貼る。</li>
+                <li><strong>写真を多く・新しく</strong>：店舗外観、在庫車、スタッフ。Googleは更新を評価。最終更新日を記録して鮮度を管理。</li>
                 <li><strong>クチコミを集めて返信</strong>：来店客にお願い→届いたら必ず返信。</li>
                 <li><strong>Google投稿をこまめに</strong>：自動生成記事をGoogleビジネスにも投稿（自動生成のGoogle投稿機能）。</li>
             </ul>
