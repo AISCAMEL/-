@@ -157,3 +157,8 @@
   .kpi-row{grid-template-columns:repeat(2,1fr);}
   .cp-fields{grid-template-columns:1fr;}
 }
+
+/* 営業レポート：見出し＋CSV出力ボタン */
+.report-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.report-head h1{margin:0;}
+.btn-csv{width:auto;height:44px;padding:0 22px;display:inline-flex;align-items:center;}

@@ -10,6 +10,7 @@
   var STAGES = ['新規受付', '査定中', '商談中', '契約', '入金待ち', '完了'];
   var WON = ['契約', '入金待ち', '完了'];
   var KEY = 'buymo_cases';
+  var DATA = []; // 集計対象の案件（CSV出力に再利用）
 
   function seed() {
     return [
@@ -56,6 +57,7 @@
   }
 
   function build(list) {
+    DATA = list || [];
     var total = list.length;
     var won = list.filter(function (c) { return WON.indexOf(c.stage) >= 0; });
     var done = list.filter(function (c) { return c.stage === '完了'; });
@@ -89,6 +91,24 @@
       .sort(function (a, b) { return b.value - a.value; });
     bars('byGenre', genreRows, Math.max.apply(null, genreRows.map(function (r) { return r.value; })), function (r) { return r.value + '件'; });
   }
+
+  /* ---- CSV出力（案件一覧を表計算ソフト用に書き出し） ---- */
+  function csvCell(v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }
+  function exportCsv() {
+    var rows = [['案件ID', 'ジャンル', '担当（加盟店）', 'ステージ', '金額(円)']];
+    DATA.forEach(function (c) { rows.push([c.id, c.genre, c.assignee, c.stage, (Number(c.amount) || 0)]); });
+    var csv = '﻿' + rows.map(function (r) { return r.map(csvCell).join(','); }).join('\r\n'); // BOM付きでExcelの文字化け回避
+    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var d = new Date(); function p(n) { return ('0' + n).slice(-2); }
+    var a = document.createElement('a');
+    a.href = url; a.download = 'buymo-cases-' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    if (window.BuymoGA) BuymoGA.track('export_csv', { rows: DATA.length });
+  }
+  var csvBtn = document.getElementById('btnCsv');
+  if (csvBtn) csvBtn.addEventListener('click', exportCsv);
 
   load();
 })();
