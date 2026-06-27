@@ -7,6 +7,7 @@
 (function () {
   'use strict';
   var MODE = (window.BUYMO_BOT_MODE === 'partner') ? 'partner' : 'user';
+  var BOT_ENDPOINT = ''; // GAS /exec を設定すると AI 応答（OpenRouter）。空ならルールベース。
 
   var KB = {
     user: {
@@ -88,10 +89,26 @@
     root.querySelectorAll('.cbot-mode button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-mode') === m); });
     log.innerHTML = ''; add('bot', KB[m].greet); renderChips();
   }
+  function aiAnswer(text, cb) {
+    if (!BOT_ENDPOINT) { cb(null); return; }
+    var name = '__bot' + Date.now();
+    var done = false;
+    window[name] = function (d) { done = true; cb(d && d.answer ? d.answer : null); try { delete window[name]; } catch (e) {} };
+    var s = document.createElement('script');
+    s.src = BOT_ENDPOINT + '?action=bot&mode=' + MODE + '&q=' + encodeURIComponent(text) + '&callback=' + name;
+    s.onerror = function () { if (!done) cb(null); };
+    document.body.appendChild(s);
+    setTimeout(function () { if (!done) { done = true; cb(null); } }, 12000); // タイムアウト→ルールへ
+  }
   function send(text) {
     text = (text || '').trim(); if (!text) return;
     add('user', text);
-    setTimeout(function () { add('bot', respond(text)); }, 250);
+    if (BOT_ENDPOINT) {
+      var typing = el('div', 'cbot-msg bot', '…'); log.appendChild(typing); log.scrollTop = log.scrollHeight;
+      aiAnswer(text, function (a) { typing.remove(); add('bot', a || respond(text)); });
+    } else {
+      setTimeout(function () { add('bot', respond(text)); }, 250);
+    }
   }
 
   root.querySelector('.cbot-launch').addEventListener('click', function () { panel.hidden = false; this.style.display = 'none'; if (!log.children.length) setMode(MODE); });

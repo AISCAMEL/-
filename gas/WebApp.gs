@@ -33,6 +33,13 @@ function doGet(e) {
       : "受け付けました。";
     return ContentService.createTextOutput(m).setMimeType(ContentService.MimeType.TEXT);
   }
+  // チャットボット応答（JSONP）
+  if (e && e.parameter && e.parameter.action === "bot") {
+    var ans = (typeof botAnswer_ === "function") ? botAnswer_(e.parameter.mode, e.parameter.q) : "";
+    var abody = JSON.stringify({ answer: ans }), acb = e.parameter.callback;
+    if (acb) return ContentService.createTextOutput(acb + "(" + abody + ")").setMimeType(ContentService.MimeType.JAVASCRIPT);
+    return ContentService.createTextOutput(abody).setMimeType(ContentService.MimeType.JSON);
+  }
   // お知らせ一覧（JSONP）
   if (e && e.parameter && e.parameter.action === "notices") {
     var ns = (typeof getNoticesJson_ === "function") ? getNoticesJson_() : [];
