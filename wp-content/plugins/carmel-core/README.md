@@ -530,6 +530,15 @@ LINE公式アカウントのリッチメニュー「審査フォーム」→ **L
 ```
 LIFF ID は属性 / `CARMEL_LIFF_ID` 定数 / `carmel_liff_id` オプションのいずれか。フォームには `line_user_id` の hidden 項目を1つ用意（無ければJSが自動挿入）。
 
+### LIFF ワンタップ会員ログイン `[carmel_liff_login]`
+
+LINEから**会員ページ（マイページ）へワンタップ**で入れる。会員ページ用LIFFのエンドポイントに `[carmel_liff_login]` を置くと、LINEの **IDトークンをサーバーで LINE 検証**（`https://api.line.me/oauth2/v2.1/verify`・aud=チャネルID）し、`line_user_id` が一致する**会員を自動ログイン**して `/mypage` へ。未会員（line_user_id 一致なし）は申込/審査ページへ自動誘導。
+
+- 安全策：IDトークンは LINE 側で署名・iss・aud・exp を検証（なりすまし不可）。自動ログインは**顧客ロールのみ**（管理者/本部/加盟店は対象外＝特権昇格防止・`carmel_liff_login_allowed` で調整可）。検証済みメール一致時のみ既存顧客に `line_user_id` を後付け紐付け。
+- 設定：`carmel_liff_id`（LIFF ID）、`carmel_liff_channel_id`（LIFFが紐づく**LINEログインチャネルID**＝検証の client_id）。LIFFスコープは **openid 必須**（IDトークン取得）、email紐付けを使うなら `email` も付与。
+- 動線：LINEボット/リッチメニューの「会員ページ」リンクを **この会員ページLIFFのURL**（`carmel_member_page_url`）に向ける → タップで検証ログイン → `/mypage`。
+- REST：`POST /wp-json/carmel/v1/liff-login`（body: `id_token`）→ `{ ok, redirect }`。`carmel_liff_logged_in` アクション発火。
+
 ### 各フォームプラグインの繋ぎ方
 
 - **CF7**：`carmel_cf7_field_map` でフィールド名を対応づけ（`line-user-id`/`intent` 既定対応）。フォーム別 intent は `carmel_cf7_intent` フィルタ。
