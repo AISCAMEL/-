@@ -592,7 +592,15 @@ AI自動応答：LINE Webhook → ボット(GAS/LLM)でFAQ応答・必要時にL
   3. `carmel_line_ai_endpoint`（GAS/LLM）設定時 → メッセージを委譲し `{"reply": "..."}` を返信（**AI自動応答**）
   4. 未設定なら**組み込みFAQ**（営業時間/場所/見積/保証/納車・`carmel_line_faqs` で編集可）
   5. いずれも無ければ既定の案内＋メニュー
-- **会話型ヒアリング**：クイックリプライ「チャットで相談」→ 氏名→電話→内容 を対話で聞き取り、**`carmel_support`（`support_type=line_inquiry`・`line_user_id`）として反響起票**＋本部へ `line_lead` 通知（状態は transient で保持・「キャンセル」で中止）
+- **会話型ヒアリング**：クイックリプライ「チャットで相談」→ 氏名→電話→**エリア選択**→内容 を対話で聞き取り、**`carmel_support`（`support_type=line_inquiry`・`line_user_id`・`area`・`store_id`）として反響起票**。状態は transient 保持・「キャンセル」で中止
+- **在庫カード（Flex Message）**：「在庫見たい」やヒアリング完了時に、**画像＋車名＋価格＋「詳細を見る」ボタン**のカルーセルで在庫を提示（担当店の在庫を優先）
+- **エリアで担当加盟店へ自動ルーティング**：選択エリア → `carmel_area_store_map`（option/filter・`エリア=>store_id`）で**担当店を割当**し、反響を**本部＋担当店へ通知**（`line_lead`）。例：
+  ```php
+  add_filter( 'carmel_area_store_map', fn() => array(
+      '関東' => 12, '近畿' => 18, '九州・沖縄' => 25, // エリア => 加盟店(carmel_store)のID
+  ) );
+  ```
+  エリア候補は `carmel_line_regions` フィルタで編集可
 - **follow（友だち追加）**：ウェルカム＋導線。`carmel_line_message` / `carmel_line_follow` / `carmel_line_postback` / `carmel_line_lead_created` アクションで拡張可
 - 設定：`carmel_line_form_url`（審査フォームのLIFF URL）、`carmel_line_ai_endpoint`（任意のAI応答先・GAS雛形は `docs/line-ai-endpoint.gs`）
 - **実機テスト手順**：`docs/LINE_LIFF_セットアップとテスト.md`
