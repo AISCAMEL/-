@@ -54,6 +54,7 @@ class Carmel_Inventory {
 	public function register_hooks() {
 		add_shortcode( self::PUBLIC_SHORTCODE, array( $this, 'render_public' ) );
 		add_shortcode( self::STORE_SHORTCODE, array( $this, 'render_store' ) );
+		add_shortcode( 'carmel_recent_vehicles', array( $this, 'render_recent_shortcode' ) );
 		add_action( 'admin_post_' . self::PUBLISH_ACTION, array( $this, 'handle_publish' ) );
 		add_action( 'admin_post_' . self::INQUIRY_ACTION, array( $this, 'handle_inquiry' ) );
 		add_action( 'admin_post_' . self::IMPORT_ACTION, array( $this, 'handle_import' ) );
@@ -212,7 +213,8 @@ class Carmel_Inventory {
 		$args = array(
 			'post_type'      => 'carmel_vehicle',
 			'post_status'    => 'publish',
-			'posts_per_page' => 60,
+			// 並び替え（価格/人気）はPHP側で行うため、対象を一括取得（上限はフィルタ可）。
+			'posts_per_page' => (int) apply_filters( 'carmel_inventory_scan_cap', 300 ),
 			'orderby'        => 'date',
 			'order'          => 'DESC',
 			'meta_query'     => $meta,
@@ -851,8 +853,19 @@ window.carmelInitMap=function(){
 		$fav_mode = ! empty( $_GET['fav'] ) && is_user_logged_in();
 		$filters  = $this->read_filters();
 		$cars     = $fav_mode ? $this->query_favorites() : $this->query_public( $filters );
-		if ( ! $fav_mode && ! empty( $filters['sort'] ) ) {
-			$cars = $this->sort_cars( $cars, $filters['sort'] );
+
+		// 並び替え＋ページネーション（お気に入りは対象外）。
+		$total = count( $cars );
+		$pages = 1;
+		$paged = 1;
+		if ( ! $fav_mode ) {
+			if ( ! empty( $filters['sort'] ) ) {
+				$cars = $this->sort_cars( $cars, $filters['sort'] );
+			}
+			$per   = max( 1, (int) apply_filters( 'carmel_inventory_per_page', 12 ) );
+			$pages = max( 1, (int) ceil( $total / $per ) );
+			$paged = isset( $_GET['paged'] ) ? max( 1, min( $pages, (int) $_GET['paged'] ) ) : 1;
+			$cars  = array_slice( $cars, ( $paged - 1 ) * $per, $per );
 		}
 
 		ob_start();
@@ -918,9 +931,43 @@ window.carmelInitMap=function(){
 			echo $this->car_card( $car, $scope, 'public' ); // phpcs:ignore WordPress.Security.EscapeOutput
 		}
 		echo '</div>';
+		if ( ! $fav_mode ) {
+			echo $this->pagination( $paged, $pages, $total ); // phpcs:ignore WordPress.Security.EscapeOutput
+		}
 		echo $this->compare_bar(); // phpcs:ignore WordPress.Security.EscapeOutput
 		echo '</div>';
 		return ob_get_clean();
+	}
+
+	/** ページネーション（現在のクエリを保持）。 */
+	private function pagination( $paged, $pages, $total ) {
+		if ( $pages <= 1 ) {
+			return '';
+		}
+		$base = remove_query_arg( 'paged' );
+		$link = function ( $p, $label, $cur = false ) use ( $base ) {
+			if ( $cur ) {
+				return '<span class="carmel-pg-cur">' . esc_html( $label ) . '</span>';
+			}
+			$url = ( $p <= 1 ) ? $base : add_query_arg( 'paged', (int) $p, $base );
+			return '<a href="' . esc_url( $url ) . '">' . esc_html( $label ) . '</a>';
+		};
+		$out = '<div class="carmel-pg"><span class="carmel-pg-total">全' . (int) $total . '台</span>';
+		if ( $paged > 1 ) {
+			$out .= $link( $paged - 1, '‹ 前へ' );
+		}
+		// ページ番号（最大7つ、現在を中心に）。
+		$start = max( 1, $paged - 3 );
+		$end   = min( $pages, $start + 6 );
+		$start = max( 1, $end - 6 );
+		for ( $p = $start; $p <= $end; $p++ ) {
+			$out .= $link( $p, (string) $p, $p === $paged );
+		}
+		if ( $paged < $pages ) {
+			$out .= $link( $paged + 1, '次へ ›' );
+		}
+		$out .= '</div>';
+		return $out;
 	}
 
 	/**
@@ -994,6 +1041,9 @@ window.carmelInitMap=function(){
 			echo '<tr><th>' . esc_html( $k ) . '</th><td>' . esc_html( $v ) . '</td></tr>';
 		}
 		echo '</table>';
+
+		// ローン月々 概算ウィジェット。
+		echo $this->loan_widget( (float) $g( 'price' ) ); // phpcs:ignore WordPress.Security.EscapeOutput
 
 		if ( $store_id && in_array( $scope, array( 'store', 'hq', 'customer' ), true ) ) {
 			$sname = get_post_meta( $store_id, 'store_name', true );
@@ -1201,6 +1251,18 @@ window.carmelInitMap=function(){
 		return $out;
 	}
 
+	/** マイページ等に置く「最近見た車」単体ショートコード。 */
+	public function render_recent_shortcode() {
+		if ( ! is_user_logged_in() ) {
+			return '';
+		}
+		$strip = $this->recent_strip();
+		if ( '' === $strip ) {
+			return '';
+		}
+		return $this->styles() . '<div class="carmel-inv">' . $strip . '</div>';
+	}
+
 	/** 閲覧数の加算＋会員の閲覧履歴記録。 */
 	private function record_view( $vid, $scope ) {
 		// 人気順用カウント（スタッフ/本部の閲覧は除外）。
@@ -1270,6 +1332,56 @@ window.carmelInitMap=function(){
 	private function member_url() {
 		$u = get_option( 'carmel_member_page_url', '' );
 		return $u ? $u : home_url( '/' . ltrim( apply_filters( 'carmel_mypage_slug', 'mypage' ), '/' ) );
+	}
+
+	/**
+	 * ローン月々の概算ウィジェット（元利均等・JSライブ計算）。
+	 *
+	 * @param float $price 車両価格
+	 * @return string
+	 */
+	private function loan_widget( $price ) {
+		if ( $price <= 0 ) {
+			return '';
+		}
+		$d      = class_exists( 'Carmel_Sales_Support' ) ? Carmel_Sales_Support::finance_defaults() : array( 'loan_rate' => 8.9, 'loan_months' => 60 );
+		$rate   = isset( $d['loan_rate'] ) ? $d['loan_rate'] : 8.9;
+		$months = isset( $d['loan_months'] ) ? (int) $d['loan_months'] : 60;
+		$apply  = home_url( '/' . ltrim( apply_filters( 'carmel_apply_page_slug', 'apply' ), '/' ) );
+
+		ob_start();
+		?>
+<div class="carmel-loanw" data-price="<?php echo esc_attr( (int) $price ); ?>">
+	<h3>🧮 ローン月々の概算</h3>
+	<div class="carmel-loanw-row">
+		<label>頭金 <input type="number" class="lw-down" value="0" min="0" step="10000"></label>
+		<label>回数 <input type="number" class="lw-months" value="<?php echo (int) $months; ?>" min="1" step="1"></label>
+		<label>実質年率(%) <input type="number" class="lw-rate" value="<?php echo esc_attr( $rate ); ?>" min="0" step="0.1"></label>
+	</div>
+	<div class="carmel-loanw-out">月々 <strong class="lw-monthly">¥0</strong> <span class="lw-times"></span></div>
+	<p class="carmel-loanw-note">概算です。分割手数料を含む目安で、最終条件は信販会社の審査により決定します。</p>
+	<a class="carmel-btn carmel-btn-purple" href="<?php echo esc_url( $apply ); ?>">この条件で審査・相談する</a>
+</div>
+<script>
+(function(){
+	var w=document.currentScript.previousElementSibling;
+	if(!w||!w.classList.contains('carmel-loanw'))return;
+	var price=parseFloat(w.getAttribute('data-price'))||0;
+	function yen(n){return '¥'+(Math.round(n)).toLocaleString('ja-JP');}
+	function calc(){
+		var down=parseFloat(w.querySelector('.lw-down').value)||0;
+		var m=parseInt(w.querySelector('.lw-months').value)||1;
+		var r=(parseFloat(w.querySelector('.lw-rate').value)||0)/100/12;
+		var p=Math.max(0,price-down),mo;
+		if(r<=0){mo=Math.round(p/m);}else{var k=Math.pow(1+r,m);mo=Math.round(p*r*k/(k-1));}
+		w.querySelector('.lw-monthly').textContent=yen(mo);
+		w.querySelector('.lw-times').textContent='× '+m+'回';
+	}
+	w.addEventListener('input',calc);calc();
+})();
+</script>
+		<?php
+		return ob_get_clean();
 	}
 
 	/** Google Maps APIキー。 */
@@ -2261,6 +2373,10 @@ window.carmelInitMap=function(){
 .carmel-recent-noimg{width:120px;height:80px;display:flex;align-items:center;justify-content:center;background:#f4f6fb;color:#aab}
 .carmel-recent-name{padding:.3em .5em 0;font-size:.78em;font-weight:600}
 .carmel-recent-price{padding:0 .5em .4em;color:#6b4fbb;font-size:.82em;font-weight:bold}
+.carmel-pg{display:flex;gap:.3em;align-items:center;flex-wrap:wrap;margin:1.2em 0;justify-content:center}
+.carmel-pg a,.carmel-pg-cur{display:inline-block;padding:.35em .7em;border:1px solid #ddd2f5;border-radius:.3em;text-decoration:none;color:#6b4fbb;font-size:.9em}
+.carmel-pg-cur{background:#6b4fbb;color:#fff;border-color:#6b4fbb}
+.carmel-pg-total{margin-right:.6em;color:#888;font-size:.85em}
 .carmel-inv-hint{color:#7a7488;font-size:.88em}
 .carmel-inv-filter{display:flex;gap:.5em;flex-wrap:wrap;margin:.8em 0}
 .carmel-inv-filter input,.carmel-inv-filter select{border:1px solid #ccc;border-radius:.3em;padding:.45em}
@@ -2331,6 +2447,14 @@ window.carmelInitMap=function(){
 .carmel-inq-form textarea{width:100%;border:1px solid #ccc;border-radius:.3em;padding:.5em;margin-bottom:.5em}
 .carmel-member-cta{margin:.8em 0}
 .carmel-member-cta a{display:inline-block;background:#f1ecfb;border:1px solid #ddd2f5;color:#5b2a86;border-radius:.4em;padding:.5em 1em;text-decoration:none;font-weight:600}
+.carmel-loanw{border:1px solid #ddd2f5;border-radius:10px;padding:.8em 1em;margin:1em 0;background:#faf9fc}
+.carmel-loanw h3{margin:.1em 0 .5em;font-size:1em}
+.carmel-loanw-row{display:flex;gap:.6em;flex-wrap:wrap}
+.carmel-loanw-row label{display:flex;flex-direction:column;font-size:.78em;color:#555;gap:.2em}
+.carmel-loanw-row input{border:1px solid #ccc;border-radius:.3em;padding:.4em;max-width:100px}
+.carmel-loanw-out{font-size:1.15em;margin:.6em 0}
+.carmel-loanw-out strong{color:#6b4fbb;font-size:1.3em}
+.carmel-loanw-note{font-size:.76em;color:#888;margin:.2em 0 .6em}
 .carmel-share{display:flex;align-items:center;gap:.4em;flex-wrap:wrap;margin:1em 0}
 .carmel-share-label{font-size:.85em;color:#7a7488}
 .carmel-share-btn{border:0;cursor:pointer;text-decoration:none;color:#fff;border-radius:.3em;padding:.35em .8em;font-size:.82em}
