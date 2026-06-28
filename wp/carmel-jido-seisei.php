@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 7.4
+ * Version: 7.5
  * Author: CARMEL
  */
 
@@ -835,14 +835,41 @@ function carmel3_auto_post_to_gmb($post_id, $account = 'main') {
 
 /* ===== 追加投稿タイプ（NEWS・加盟店ブログ等）をAIでゼロから生成 ===== */
 
-// 選べる投稿タイプ（メディア記事と添付などを除く）
+// 選べる投稿タイプ（記事になるものだけ。テーマ/プラグインの内部用は除外）
 function carmel3_selectable_post_types() {
     $out = array();
     $types = get_post_types(array('show_ui' => true), 'objects');
-    $skip = array('attachment', 'media_article', 'wp_block', 'wp_template', 'wp_template_part', 'wp_navigation');
+
+    // 記事ではない（システム/ビルダー）投稿タイプ：完全一致で除外
+    $skip = array(
+        'attachment', 'media_article', 'revision', 'nav_menu_item',
+        'wp_block', 'wp_template', 'wp_template_part', 'wp_navigation', 'wp_global_styles',
+        'wp_font_family', 'wp_font_face', 'custom_css', 'customize_changeset', 'oembed_cache',
+        'user_request', 'acf-field-group', 'acf-field', 'acf-post-type', 'acf-taxonomy', 'acf-ui-options-page',
+        'product', 'product_variation', 'shop_order', 'shop_coupon',
+    );
+    // スラッグにこれらの語を含むものは除外（ページビルダー/テンプレ/設定系）
+    $deny = array('template', 'widget', 'font', 'color', 'structured', 'taxonom', 'field',
+        'collection', 'cart', 'grid', 'dynamic', 'library', 'block', 'pattern', 'global',
+        'style', 'setting', 'option', 'menu', 'reusable');
+
+    // 記事系は必ず表示（存在すれば）
+    $always = array('post', 'news', 'shop_blog');
+
     foreach ($types as $pt) {
-        if (in_array($pt->name, $skip, true)) continue;
-        $out[$pt->name] = $pt->labels->singular_name ? $pt->labels->singular_name : $pt->label;
+        $name = $pt->name;
+        if (in_array($name, $skip, true)) continue;
+
+        $keep = in_array($name, $always, true);
+        if (!$keep) {
+            $hay = strtolower($name);
+            $blocked = false;
+            foreach ($deny as $d) { if (strpos($hay, $d) !== false) { $blocked = true; break; } }
+            // 「公開される」かつ「本文エディタを持つ」非ビルトインの投稿タイプ＝記事になり得る
+            $keep = !$blocked && !empty($pt->public) && post_type_supports($name, 'editor') && empty($pt->_builtin);
+        }
+        if (!$keep) continue;
+        $out[$name] = $pt->labels->singular_name ? $pt->labels->singular_name : $pt->label;
     }
     return $out;
 }
@@ -1952,7 +1979,8 @@ function carmel3_auto_settings_page() {
 
             <div id="media" style="border:2px solid #0f766e;border-radius:12px;padding:14px 16px;margin:16px 0;background:#f0fdfa;scroll-margin-top:40px">
                 <p style="margin:0 0 4px;font-size:15px;font-weight:800;color:#0f766e">★ 自動化する媒体（ニュース・加盟店ブログもここで一緒に自動化）</p>
-                <p style="margin:0 0 10px;color:#444;font-size:13px"><strong>メディア記事は常に自動生成</strong>します。さらに毎日いっしょに作りたい媒体に<strong>チェック</strong>を入れてください。チェックした媒体は、メディア記事と<strong>同じテーマ</strong>でAIが書き分けて自動生成・自動投稿します。</p>
+                <p style="margin:0 0 8px;color:#444;font-size:13px"><strong>メディア記事は常に自動生成</strong>します。さらに毎日いっしょに作りたい媒体に<strong>チェック</strong>を入れてください。チェックした媒体は、メディア記事と<strong>同じテーマ</strong>でAIが書き分けて自動生成・自動投稿します。</p>
+                <p style="margin:0 0 10px;padding:8px 10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;color:#9a3412;font-size:13px;font-weight:700">まずは「ニュース」と「加盟店ブログ」の2つだけチェックすればOK。書き方欄は空でも作れます（こだわりがあれば書いてください）。残りの項目は触らなくて大丈夫です。</p>
                 <?php
                 $pts = carmel3_selectable_post_types();
                 $sel_types  = (isset($s['extra_types']) && is_array($s['extra_types'])) ? $s['extra_types'] : array();
