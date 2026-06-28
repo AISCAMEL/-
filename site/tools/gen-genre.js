@@ -453,6 +453,8 @@ ${header(rel, 'genre')}
     </div>
   </section>
 
+  <section class="genre-photo" aria-hidden="true" style="background-image:url('${rel}assets/img/genre/${g.slug}.jpg'),url('${rel}assets/img/genre/${g.slug}.svg');"></section>
+
   <section class="area-intro" aria-labelledby="intro-title">
     <div class="container">
       <h2 id="intro-title" class="section-title">${esc(p.name)}の${esc(g.name)}はBUYMOへ</h2>
