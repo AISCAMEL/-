@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 7.7
+ * Version: 7.8
  * Author: CARMEL
  */
 
@@ -44,6 +44,7 @@ function carmel3_auto_get_settings() {
         'enabled'      => 0,
         'frequency'    => 'carmel_weekly',
         'run_time'     => '09:00',   // 自動生成を実行する時刻（サイトのタイムゾーン）
+        'max_tokens_cap' => 12000,   // OpenRouterへの max_tokens 上限（0=制限しない／残高節約・エラー回避）
         'publish'      => 0,
         'gen_images'   => 0,
         'gen_section_images' => 1,
@@ -139,6 +140,28 @@ add_filter('cron_schedules', function ($schedules) {
 add_action(CARMEL3_AUTO_HOOK, 'carmel3_auto_run');
 // 「今すぐ1件だけ生成」の裏側実行（同じ処理を呼ぶ）
 add_action(CARMEL3_AUTO_RUNHOOK, 'carmel3_auto_run');
+
+/* ===== OpenRouterへの max_tokens を送信時に上限制限（残高不足エラー回避・本体は無改変） =====
+   本体v5.7が大きすぎる max_tokens（例: 65536）を送ると残高不足で失敗するため、
+   WordPressの通信フィルターで「送信直前」に上限を下げる。クレジットを足さずに通せる。 */
+add_filter('http_request_args', function ($args, $url) {
+    if (strpos((string)$url, 'openrouter.ai') === false) return $args;
+    if (empty($args['body']) || !is_string($args['body'])) return $args;
+
+    $s = carmel3_auto_get_settings();
+    $cap = isset($s['max_tokens_cap']) ? (int)$s['max_tokens_cap'] : 0;
+    if ($cap <= 0) return $args; // 0なら制限しない
+
+    $body = json_decode($args['body'], true);
+    if (!is_array($body)) return $args;
+
+    // すでに max_tokens があって、上限より大きい時だけ下げる（画像生成など未指定のものは触らない）
+    if (isset($body['max_tokens']) && (int)$body['max_tokens'] > $cap) {
+        $body['max_tokens'] = $cap;
+        $args['body'] = wp_json_encode($body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+    return $args;
+}, 99, 2);
 // 本文セクション画像を裏側で1枚ずつ処理するワーカー
 add_action(CARMEL3_AUTO_IMGHOOK, 'carmel3_auto_process_one_image');
 
@@ -1843,6 +1866,12 @@ add_action('admin_post_carmel3_auto_save', function () {
     $rt = isset($_POST['run_time']) ? trim((string) wp_unslash($_POST['run_time'])) : '09:00';
     $s['run_time'] = preg_match('/^(\d{1,2}):(\d{2})$/', $rt) ? $rt : '09:00';
 
+    // max_tokens 上限（0=制限なし。0〜65536の範囲）
+    if (isset($_POST['max_tokens_cap'])) {
+        $mtc = (int) $_POST['max_tokens_cap'];
+        $s['max_tokens_cap'] = max(0, min(65536, $mtc));
+    }
+
     $im = isset($_POST['image_model']) ? sanitize_text_field(wp_unslash($_POST['image_model'])) : '';
     $s['image_model'] = $im !== '' ? $im : CARMEL3_IMG_DEFAULT_MODEL;
 
@@ -2171,6 +2200,17 @@ function carmel3_auto_settings_page() {
                 次回実行予定：<strong><?php echo $next_t ? esc_html(get_date_from_gmt(gmdate('Y-m-d H:i:s', $next_t), 'Y-m-d H:i')) : '未スケジュール（有効にして保存）'; ?></strong>
                 <br>※ WP-Cronはサイトにアクセスがあった時に動くため、指定時刻ちょうどから数分〜遅れる場合があります（確実にするにはサーバーの本物cron推奨）。
             </p>
+
+            <div style="border:1px solid #fed7aa;background:#fff7ed;border-radius:10px;padding:12px 14px;margin:6px 0 14px">
+                <p style="margin:0 0 6px;font-weight:700;color:#9a3412">AIの最大トークン数（残高不足エラーを防ぐ）</p>
+                <label>1回の生成で使う上限：
+                    <input type="number" name="max_tokens_cap" value="<?php echo esc_attr(isset($s['max_tokens_cap']) ? (int)$s['max_tokens_cap'] : 12000); ?>" min="0" max="65536" step="1000" style="width:120px"> トークン
+                </label>
+                <p style="margin:6px 0 0;color:#7c2d12;font-size:12px">
+                    本体が大きすぎる値（例:65536）を要求して「残高不足」で失敗するのを防ぎます。<strong>クレジットを足さずに今の残高で通せます</strong>。
+                    記事1本には <strong>12000</strong> で十分（足りなければ16000程度に。<strong>0</strong>で制限なし）。値を小さくするほど安く・速くなります。
+                </p>
+            </div>
 
             <p><label>
                 <input type="checkbox" name="publish" value="1" <?php checked(!empty($s['publish'])); ?>>
