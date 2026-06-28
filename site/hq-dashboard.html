@@ -56,7 +56,7 @@
       <h2>最近の案件</h2>
       <div class="hq-table-wrap">
         <table class="hq-table">
-          <thead><tr><th>案件ID</th><th>お名前</th><th>ジャンル</th><th>担当</th><th>ステージ</th><th>金額</th></tr></thead>
+          <thead><tr><th>案件ID</th><th>受付日</th><th>お名前</th><th>ジャンル</th><th>担当</th><th>ステージ</th><th>金額</th></tr></thead>
           <tbody id="recentRows"></tbody>
         </table>
       </div>
@@ -87,9 +87,13 @@
       return '<a class="alert ' + a.lv + '" href="' + a.href + '"><span class="alert-ico">' + (a.lv === 'warn' ? '⚠️' : 'ℹ️') + '</span>' + HQ.esc(a.t) + '</a>';
     }).join('') : '<p class="alert-none">対応が必要なアラートはありません。</p>';
 
-    // 最近の案件（先頭8件）
-    document.getElementById('recentRows').innerHTML = list.slice(0, 8).map(function (c) {
-      return '<tr><td>' + HQ.esc(c.id) + '</td><td>' + HQ.esc(c.name) + '</td><td>' + HQ.esc(c.genre) + '</td><td>' + HQ.esc(c.assignee || '—') +
+    // 最近の案件（受付日の新しい順で先頭8件）
+    var recent = list.slice().sort(function (a, b) {
+      var da = a.date || '', db = b.date || '';
+      return da > db ? -1 : da < db ? 1 : 0;
+    }).slice(0, 8);
+    document.getElementById('recentRows').innerHTML = recent.map(function (c) {
+      return '<tr><td>' + HQ.esc(c.id) + '</td><td class="td-sub">' + HQ.esc(c.date || '—') + '</td><td>' + HQ.esc(c.name) + '</td><td>' + HQ.esc(c.genre) + '</td><td>' + HQ.esc(c.assignee || '—') +
         '</td><td><span class="stage-pill s' + HQ.stageIdx(c.stage) + '">' + HQ.esc(c.stage) + '</span></td><td>' + (c.amount ? HQ.yen(c.amount) : '—') + '</td></tr>';
     }).join('');
   });
