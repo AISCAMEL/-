@@ -82,6 +82,15 @@
     var pay = cnt('入金待ち'); if (pay) al.push({ lv: 'info', t: '入金待ちが ' + pay + ' 件。入金確認をお願いします。', href: 'hq-leads.html?stage=' + encodeURIComponent('入金待ち') });
     var unassigned = list.filter(function (c) { return !c.assignee; }).length;
     if (unassigned) al.push({ lv: 'warn', t: '担当未割り当てが ' + unassigned + ' 件あります。', href: 'hq-leads.html' });
+    // 滞留：受付から5日以上たっても未完了（初期〜商談ステージ）
+    var STALE_DAYS = 5;
+    function daysSince(d) { if (!d) return 0; var t = new Date(String(d).replace(/\//g, '-') + 'T00:00:00'); if (isNaN(t)) return 0; return Math.floor((new Date() - t) / 86400000); }
+    var earlyStages = ['新規受付', '査定中', '商談中'];
+    var stale = list.filter(function (c) { return earlyStages.indexOf(c.stage) >= 0 && daysSince(c.date) >= STALE_DAYS; });
+    if (stale.length) {
+      var oldest = stale.reduce(function (a, b) { return daysSince(a.date) >= daysSince(b.date) ? a : b; });
+      al.push({ lv: 'warn', t: '対応が滞っている案件が ' + stale.length + ' 件（受付から' + STALE_DAYS + '日以上・未完了。最長 ' + daysSince(oldest.date) + '日：' + oldest.id + '）。', href: 'hq-leads.html' });
+    }
     var ae = document.getElementById('alerts');
     ae.innerHTML = al.length ? al.map(function (a) {
       return '<a class="alert ' + a.lv + '" href="' + a.href + '"><span class="alert-ico">' + (a.lv === 'warn' ? '⚠️' : 'ℹ️') + '</span>' + HQ.esc(a.t) + '</a>';
