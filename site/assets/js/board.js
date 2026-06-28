@@ -15,6 +15,10 @@
   var rEl = document.getElementById('roleLabel'); if (rEl) rEl.textContent = roleLabel + (who ? '／' + who : '');
 
   function visible() { return (role === 'partner' && who) ? cases.filter(function (c) { return c.assignee === who; }) : cases; }
+  // 滞留判定（受付から5日以上・未完了の初期〜商談ステージ）
+  var STALE_DAYS = 5, EARLY = ['新規受付', '査定中', '商談中'];
+  function daysSince(d) { if (!d) return 0; var t = new Date(String(d).replace(/\//g, '-') + 'T00:00:00'); if (isNaN(t)) return 0; return Math.floor((new Date() - t) / 86400000); }
+  function isStale(c) { return EARLY.indexOf(c.stage) >= 0 && daysSince(c.date) >= STALE_DAYS; }
   function findCase(id) { for (var i = 0; i < cases.length; i++) if (cases[i].id === id) return cases[i]; return null; }
   function nowStr() { var d = new Date(); function p(n) { return ('0' + n).slice(-2); } return d.getFullYear() + '/' + p(d.getMonth() + 1) + '/' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()); }
   function addHistory(c, m) { c.history = c.history || []; c.history.unshift({ t: nowStr(), m: m }); }
@@ -32,10 +36,11 @@
       var body = document.createElement('div'); body.className = 'kb-col-body';
       items.forEach(function (c) {
         var card = document.createElement('div');
-        card.className = 'kb-card'; card.draggable = true; card.dataset.id = c.id;
+        card.className = 'kb-card' + (isStale(c) ? ' stale' : ''); card.draggable = true; card.dataset.id = c.id;
         var hist = (c.history && c.history.length) ? '<span class="kb-hist">📝' + c.history.length + '</span>' : '';
+        var staleTag = isStale(c) ? '<span class="kb-stale">滞留' + daysSince(c.date) + '日</span>' : '';
         card.innerHTML = '<div class="kb-card-top"><span class="kb-id">' + c.id + '</span>' +
-          (c.genre ? '<span class="kb-tag">' + HQ.esc(c.genre) + '</span>' : '') + hist + '</div>' +
+          (c.genre ? '<span class="kb-tag">' + HQ.esc(c.genre) + '</span>' : '') + staleTag + hist + '</div>' +
           '<div class="kb-name">' + HQ.esc(c.name || '') + '</div>' +
           '<div class="kb-meta">' + (c.date ? '<span class="kb-date">📅' + HQ.esc(c.date) + '</span>' : '') + HQ.esc(c.assignee || '担当未定') + (c.amount ? '・' + HQ.yen(c.amount) : '') + '</div>' +
           (c.memo ? '<div class="kb-memo">' + HQ.esc(c.memo) + '</div>' : '');
