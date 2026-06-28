@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 8.2
+ * Version: 8.3
  * Author: CARMEL
  */
 
@@ -28,6 +28,10 @@ if (!defined('CARMEL3_AUTO_RUNHOOK')) {
 // 進捗（ただいま生成中…）を保存するオプション名
 if (!defined('CARMEL3_PROGRESS_OPTION')) {
     define('CARMEL3_PROGRESS_OPTION', 'carmel3_auto_progress');
+}
+// 記事の「作り直し」を裏側で実行するフック
+if (!defined('CARMEL3_REGEN_HOOK')) {
+    define('CARMEL3_REGEN_HOOK', 'carmel3_regen_single');
 }
 // 本文セクション画像 ACF フィールドキー（編集ページのHTMLから確認した値）
 if (!defined('CARMEL3_F_SEC1_IMG')) { define('CARMEL3_F_SEC1_IMG', 'field_69ffb5a4d372b'); } // section_1_image
@@ -142,6 +146,8 @@ add_filter('cron_schedules', function ($schedules) {
 add_action(CARMEL3_AUTO_HOOK, 'carmel3_auto_run');
 // 「今すぐ1件だけ生成」の裏側実行（同じ処理を呼ぶ）
 add_action(CARMEL3_AUTO_RUNHOOK, 'carmel3_auto_run');
+// 記事の「作り直し」の裏側実行
+add_action(CARMEL3_REGEN_HOOK, 'carmel3_regenerate_post', 10, 1);
 
 /* ===== OpenRouterへの max_tokens を送信時に上限制限（残高不足エラー回避・本体は無改変） =====
    本体v5.7が大きすぎる max_tokens（例: 65536）を送ると残高不足で失敗するため、
@@ -358,6 +364,8 @@ function carmel3_auto_run() {
 
     $done[] = $picked_key;
     $s['done'] = $done;
+
+    if ($post_id) { update_post_meta($post_id, '_carmel3_item', $item); } // 作り直し用にテーマを保存
 
     carmel3_progress_set('本文を保存しました。仕上げ中…', 45, 'running', array('post_id' => $post_id, 'title' => $title));
 
@@ -1267,8 +1275,9 @@ function carmel3_stores_page() {
 }
 
 // アイキャッチ画像を1枚生成して設定（ニュース・加盟店ブログ用。文字なし）
-function carmel3_img_set_featured($post_id, $s) {
-    if (get_post_thumbnail_id($post_id)) return '既存画像あり';
+function carmel3_img_set_featured($post_id, $s, $force = false) {
+    if (!$force && get_post_thumbnail_id($post_id)) return '既存画像あり';
+    if ($force) { delete_post_meta($post_id, '_carmel3_img_scene_en'); } // 作り直しは新しい構図で
     if (!function_exists('carmel3_img_generate_openrouter')) return '画像機能なし';
     $model = (isset($s['image_model']) && $s['image_model'] !== '') ? $s['image_model'] : CARMEL3_IMG_DEFAULT_MODEL;
     $ew = !empty($s['eyecatch_w']) ? (int)$s['eyecatch_w'] : 1200;
@@ -1345,7 +1354,7 @@ function carmel3_ai_slug_meta($title, $kw) {
     return $out;
 }
 
-function carmel3_gen_post($post_type, $item, $s) {
+function carmel3_gen_post($post_type, $item, $s, $existing_id = 0) {
     if (!function_exists('carmel_call_openrouter_chat')) {
         return new WP_Error('no_engine', '本体のAI関数(carmel_call_openrouter_chat)が見つかりません');
     }
@@ -1416,29 +1425,44 @@ function carmel3_gen_post($post_type, $item, $s) {
         $post_name = carmel3_make_slug($ai_slug, $t, $kw);
     }
 
-    $insert = array(
-        'post_type'    => $post_type,
-        'post_status'  => $status,
-        'post_title'   => $t,
-        'post_content' => $html,
-        'post_excerpt' => $ex,
-    );
-    if ($post_name !== '') $insert['post_name'] = $post_name;
+    if ($existing_id) {
+        // 作り直し：同じ記事を更新（公開状態は維持）
+        $update = array(
+            'ID'           => $existing_id,
+            'post_title'   => $t,
+            'post_content' => $html,
+            'post_excerpt' => $ex,
+        );
+        $r = wp_update_post($update, true);
+        if (is_wp_error($r)) return $r;
+        $pid = $existing_id;
+        if ($post_name !== '') carmel3_apply_slug($pid, $post_name);
+    } else {
+        $insert = array(
+            'post_type'    => $post_type,
+            'post_status'  => $status,
+            'post_title'   => $t,
+            'post_content' => $html,
+            'post_excerpt' => $ex,
+        );
+        if ($post_name !== '') $insert['post_name'] = $post_name;
 
-    $pid = wp_insert_post($insert, true);
-    if (is_wp_error($pid)) return $pid;
+        $pid = wp_insert_post($insert, true);
+        if (is_wp_error($pid)) return $pid;
+    }
 
     update_post_meta($pid, '_carmel3_generated', 1);
     update_post_meta($pid, '_carmel_keyword', $kw);
+    update_post_meta($pid, '_carmel3_item', $item); // 作り直し用にテーマを保存
 
     // メタディスクリプション自動書き込み（無ければ抜粋で代用）
     if (!empty($s['auto_slug_meta'])) {
         carmel3_write_meta_description($pid, $ai_meta !== '' ? $ai_meta : $ex);
     }
 
-    // アイキャッチ画像（「画像も自動生成」がONのとき）
+    // アイキャッチ画像（「画像も自動生成」がONのとき）。作り直し時は作り直す。
     if (!empty($s['gen_images'])) {
-        carmel3_img_set_featured($pid, $s);
+        carmel3_img_set_featured($pid, $s, (bool)$existing_id);
     }
 
     return $pid;
@@ -2366,6 +2390,180 @@ add_action('admin_post_carmel3_save_menu_visibility', function () {
 
     wp_safe_redirect(admin_url('admin.php?page=carmel3-home&menusaved=1'));
     exit;
+});
+
+/* ===== 記事の作り直し（本文＋画像を作り直す） ===== */
+
+// この投稿タイプは作り直し対応（メディア記事＝本体、その他＝アドオン生成）
+function carmel3_regen_supported($post_type) {
+    if ($post_type === 'media_article') return true;
+    $sel = carmel3_selectable_post_types();
+    return isset($sel[$post_type]);
+}
+
+// 記事を作り直す（同じ記事を更新。本文も画像も新しく作る）
+function carmel3_regenerate_post($post_id) {
+    @set_time_limit(300);
+    $post_id = intval($post_id);
+    $post = get_post($post_id);
+    if (!$post) return false;
+    $s = carmel3_auto_get_settings();
+
+    // テーマ（作成時に保存）を復元。無ければ記事から最低限を組み立て
+    $item = get_post_meta($post_id, '_carmel3_item', true);
+    if (!is_array($item)) {
+        $kw = (string) get_post_meta($post_id, '_carmel_keyword', true);
+        if ($kw === '') $kw = get_the_title($post_id);
+        $item = array('account'=>'main','category'=>'','keyword'=>$kw,'prefecture'=>'','city'=>'','title'=>get_the_title($post_id));
+    }
+    $item = wp_parse_args($item, array('account'=>'main','category'=>'','keyword'=>'','prefecture'=>'','city'=>'','title'=>''));
+
+    $pt = $post->post_type;
+    delete_post_meta($post_id, '_carmel3_img_scene_en'); // 画像も新しい構図で
+    carmel3_progress_set('記事を作り直しています…（本文）', 20, 'running', array('post_id'=>$post_id,'title'=>get_the_title($post_id)));
+
+    if ($pt === 'media_article') {
+        if (!function_exists('carmel_generate_article_api')) {
+            carmel3_progress_set('エラー: 本体プラグイン(v5.7)が必要です', 100, 'error');
+            return false;
+        }
+        $title = $item['title'] !== '' ? $item['title'] : $item['keyword'];
+        $req = new WP_REST_Request('POST', '/carmel/v1/generate');
+        $req->set_header('Content-Type', 'application/json');
+        $req->set_body(wp_json_encode(array(
+            'title'=>$title, 'category'=>$item['category'], 'account'=>$item['account']!==''?$item['account']:'main',
+            'prefecture'=>$item['prefecture'], 'city'=>$item['city'], 'keyword'=>$item['keyword'],
+        ), JSON_UNESCAPED_UNICODE));
+        $res = carmel_generate_article_api($req);
+        $data = ($res instanceof WP_REST_Response) ? $res->get_data() : array();
+        if (empty($data['success'])) {
+            $msg = isset($data['message']) ? $data['message'] : '不明なエラー';
+            carmel3_progress_set('エラー: 作り直しに失敗（' . $msg . '）', 100, 'error');
+            carmel3_loglist_add('作り直し失敗 post#' . $post_id . ' / ' . $msg, false);
+            return false;
+        }
+        $tmp = intval($data['post_id']);
+        $tmpPost = get_post($tmp);
+        if ($tmpPost) {
+            // 本文・タイトル・抜粋を移植（同じ記事＝URLそのまま）
+            wp_update_post(array('ID'=>$post_id,'post_title'=>$tmpPost->post_title,'post_content'=>$tmpPost->post_content,'post_excerpt'=>$tmpPost->post_excerpt));
+            // メタ（ACF等）を移植
+            $skip = array('_edit_lock','_edit_last','_carmel3_item','_carmel3_generated');
+            $metas = get_post_meta($tmp);
+            if (is_array($metas)) {
+                foreach ($metas as $k=>$vs) {
+                    if (in_array($k, $skip, true)) continue;
+                    delete_post_meta($post_id, $k);
+                    foreach ((array)$vs as $v) { add_post_meta($post_id, $k, maybe_unserialize($v)); }
+                }
+            }
+            $thumb = get_post_thumbnail_id($tmp);
+            if ($thumb) set_post_thumbnail($post_id, $thumb);
+            wp_delete_post($tmp, true); // 一時記事は完全削除
+        }
+        update_post_meta($post_id, '_carmel3_item', $item);
+        // 仕上げ：CTA／画像（作り直し）／slug・meta／店舗
+        if (!empty($s['fix_cta'])) carmel3_auto_fix_cta($post_id, $s);
+        carmel3_progress_set('画像を作り直しています…（1〜2分）', 60, 'running', array('post_id'=>$post_id));
+        if (!empty($s['gen_images'])) {
+            carmel3_img_attach_to_post($post_id); // アイキャッチ＋バナー作り直し
+            if (!empty($s['gen_section_images'])) {
+                // セクション画像も作り直す：既存を空にしてジョブを再構築
+                foreach (array(CARMEL3_F_SEC1_IMG=>'section_1_image', CARMEL3_F_SEC2_IMG=>'section_2_image', CARMEL3_F_SEC3_IMG=>'section_3_image') as $key=>$name) {
+                    carmel3_auto_set_image_field($post_id, $key, $name, '');
+                }
+                $jobs = carmel3_auto_build_section_jobs($post_id, $s);
+                if (!empty($jobs)) {
+                    update_post_meta($post_id, '_carmel_pending_img_jobs', $jobs);
+                    if (!wp_next_scheduled(CARMEL3_AUTO_IMGHOOK, array($post_id))) wp_schedule_single_event(time()+10, CARMEL3_AUTO_IMGHOOK, array($post_id));
+                    if (function_exists('spawn_cron')) spawn_cron();
+                }
+            }
+        }
+        if (!empty($s['auto_slug_meta'])) {
+            $sm = carmel3_ai_slug_meta(get_the_title($post_id) ?: $title, $item['keyword']);
+            $slug = carmel3_make_slug($sm['slug'], get_the_title($post_id) ?: $title, $item['keyword']);
+            if ($slug !== '') carmel3_apply_slug($post_id, $slug);
+            carmel3_write_meta_description($post_id, $sm['meta'] !== '' ? $sm['meta'] : get_the_excerpt($post_id));
+        }
+        $store = carmel3_pick_store($item);
+        $body = (string) get_post_field('post_content', $post_id);
+        $new  = carmel3_strip_store_footer($body);
+        if (is_array($store)) {
+            $new = carmel3_replace_placeholders($new, $store);
+            if (strpos($new, 'carmel-store-card') === false) $new .= "\n" . carmel3_store_card_html($store);
+        }
+        if ($new !== $body) wp_update_post(array('ID'=>$post_id,'post_content'=>$new));
+
+    } else {
+        // ニュース・加盟店ブログ等：その場で作り直し（本文＋アイキャッチ）
+        $r = carmel3_gen_post($pt, $item, $s, $post_id);
+        if (is_wp_error($r)) {
+            carmel3_progress_set('エラー: 作り直しに失敗（' . $r->get_error_message() . '）', 100, 'error');
+            carmel3_loglist_add('作り直し失敗 post#' . $post_id . ' / ' . $r->get_error_message(), false);
+            return false;
+        }
+    }
+
+    carmel3_progress_set('作り直し完了：「' . get_the_title($post_id) . '」', 100, 'done', array('post_id'=>$post_id,'title'=>get_the_title($post_id)));
+    carmel3_loglist_add('作り直し成功 post#' . $post_id . '（' . get_the_title($post_id) . '）', true);
+    return true;
+}
+
+// 作り直しボタンの実行（裏側で実行して画面を固まらせない）
+add_action('admin_post_carmel3_regen', function () {
+    if (!current_user_can('manage_options')) wp_die('権限がありません');
+    $post_id = isset($_GET['post']) ? intval($_GET['post']) : 0;
+    check_admin_referer('carmel3_regen_' . $post_id);
+    if (!$post_id || !get_post($post_id)) wp_die('記事が見つかりません');
+
+    carmel3_progress_set('作り直しを開始しました。準備中…', 3, 'running', array('post_id'=>$post_id));
+    if (!wp_next_scheduled(CARMEL3_REGEN_HOOK, array($post_id))) {
+        wp_schedule_single_event(time(), CARMEL3_REGEN_HOOK, array($post_id));
+    }
+    if (function_exists('spawn_cron')) spawn_cron();
+
+    $back = wp_get_referer();
+    if (!$back) $back = admin_url('edit.php?post_type=' . get_post_type($post_id));
+    $back = add_query_arg('carmel3_regen', '1', $back);
+    wp_safe_redirect($back);
+    exit;
+});
+
+// 作り直しURL（ノンス付き）
+function carmel3_regen_url($post_id) {
+    return wp_nonce_url(admin_url('admin-post.php?action=carmel3_regen&post=' . intval($post_id)), 'carmel3_regen_' . intval($post_id));
+}
+
+// 投稿一覧に「作り直す」行アクションを追加
+add_filter('post_row_actions', 'carmel3_regen_row_action', 10, 2);
+add_filter('page_row_actions', 'carmel3_regen_row_action', 10, 2);
+function carmel3_regen_row_action($actions, $post) {
+    if (current_user_can('manage_options') && carmel3_regen_supported($post->post_type)) {
+        $actions['carmel3_regen'] = '<a href="' . esc_url(carmel3_regen_url($post->ID)) . '" style="color:#0f766e;font-weight:600" onclick="return confirm(\'この記事を作り直します（本文も画像も作り直します）。よろしいですか？\');">カーメル：作り直す</a>';
+    }
+    return $actions;
+}
+
+// 編集画面に「作り直す」メタボックス
+add_action('add_meta_boxes', function () {
+    foreach (array_keys(carmel3_selectable_post_types()) as $pt) {
+        add_meta_box('carmel3_regen_box', 'カーメル：作り直し', 'carmel3_regen_metabox', $pt, 'side', 'high');
+    }
+    add_meta_box('carmel3_regen_box', 'カーメル：作り直し', 'carmel3_regen_metabox', 'media_article', 'side', 'high');
+});
+function carmel3_regen_metabox($post) {
+    if (!carmel3_regen_supported($post->post_type)) { echo '<p>この投稿タイプは未対応です。</p>'; return; }
+    echo '<p style="margin:0 0 10px;color:#555;font-size:12px">内容を確認して気に入らない場合、AIで<strong>本文も画像も作り直し</strong>ます（同じURLのまま）。</p>';
+    echo '<a href="' . esc_url(carmel3_regen_url($post->ID)) . '" class="button button-primary" style="width:100%;text-align:center" onclick="return confirm(\'本文も画像も作り直します。よろしいですか？\');">この記事を作り直す</a>';
+    echo '<p style="margin:10px 0 0;color:#888;font-size:11px">裏側で実行します（画像ありは1〜3分）。完了後にこの画面を再読み込みしてください。</p>';
+}
+
+// 作り直し開始の通知
+add_action('admin_notices', function () {
+    if (isset($_GET['carmel3_regen'])) {
+        echo '<div class="notice notice-success is-dismissible"><p>記事の作り直しを開始しました。本文と画像が新しく作られます（画像ありは1〜3分）。完了後にページを再読み込みしてください。</p></div>';
+    }
 });
 
 add_action('admin_post_carmel3_auto_run_now', function () {
