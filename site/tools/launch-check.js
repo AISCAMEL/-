@@ -56,11 +56,15 @@ lines.push('— 任意：チャットボットAI —');
 const bot = varVal('assets/js/chatbot.js', 'BOT_ENDPOINT');
 lines.push('  ' + mark(!!(bot && bot.trim())) + ' chatbot.js BOT_ENDPOINT' + (bot && bot.trim() ? '' : '  ← 未設定（ルールベースで動作）'));
 
-// 任意：ジャンルのヒーロー画像
-lines.push('— 任意：ジャンルのヒーロー画像（assets/img/genre/<slug>.jpg）—');
-let imgN = 0;
-GENRES.forEach(function (g) { if (fs.existsSync(path.join(ROOT, 'assets/img/genre/' + g.slug + '.jpg'))) imgN++; });
-lines.push('  ' + mark(imgN === GENRES.length) + ' ' + imgN + ' / ' + GENRES.length + ' 配置済み（未配置はグラデ＋アイコン表示）');
+// 任意：ジャンルのヒーロー画像（SVGバナーは生成済み。実写真jpgを置くと上書き）
+lines.push('— 任意：ジャンルのヒーロー画像 —');
+let svgN = 0, jpgN = 0;
+GENRES.forEach(function (g) {
+  if (fs.existsSync(path.join(ROOT, 'assets/img/genre/' + g.slug + '.svg'))) svgN++;
+  if (fs.existsSync(path.join(ROOT, 'assets/img/genre/' + g.slug + '.jpg'))) jpgN++;
+});
+lines.push('  ' + mark(svgN === GENRES.length) + ' ブランドSVGバナー ' + svgN + ' / ' + GENRES.length + ' 配置済み（node tools/gen-genre-art.js で再生成）');
+lines.push('  ' + mark(jpgN === GENRES.length) + ' 実写真(jpg) ' + jpgN + ' / ' + GENRES.length + '（assets/img/genre/<slug>.jpg を置くとSVGを上書き／任意）');
 
 // 情報：電話番号（表示↔実番号）
 lines.push('— 情報：電話番号 —');

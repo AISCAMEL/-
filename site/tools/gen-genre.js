@@ -297,9 +297,7 @@ ${header(rel, 'genre')}
     </div>
   </section>
 
-  <section class="genre-photo" aria-hidden="true" style="background-image:linear-gradient(135deg,rgba(30,58,138,.20),rgba(255,107,53,.30)),url('${rel}assets/img/genre/${g.slug}.jpg');">
-    <span class="genre-photo-emoji">${g.icon}</span>
-  </section>
+  <section class="genre-photo" aria-hidden="true" style="background-image:url('${rel}assets/img/genre/${g.slug}.jpg'),url('${rel}assets/img/genre/${g.slug}.svg');"></section>
 
   <section class="area-intro" aria-labelledby="intro-title">
     <div class="container">
