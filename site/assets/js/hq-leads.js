@@ -90,9 +90,9 @@
   function csvCell(v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }
   function exportCsv() {
     var list = filtered();
-    var rows = [['案件ID', '受付日', 'お名前', '電話', 'メール', 'ジャンル', '担当', 'ステージ', '金額(円)']];
+    var rows = [['案件ID', '受付日', '経過日数', '滞留', 'お名前', '電話', 'メール', 'ジャンル', '担当', 'ステージ', '金額(円)']];
     list.forEach(function (c) {
-      rows.push([c.id, c.date || '', c.name || '', c.tel || '', c.email || '', c.genre || '', c.assignee || '', c.stage || '', (Number(c.amount) || 0)]);
+      rows.push([c.id, c.date || '', daysSince(c.date), (isStale(c) ? '滞留' : ''), c.name || '', c.tel || '', c.email || '', c.genre || '', c.assignee || '', c.stage || '', (Number(c.amount) || 0)]);
     });
     var csv = '﻿' + rows.map(function (r) { return r.map(csvCell).join(','); }).join('\r\n'); // BOM付きでExcel文字化け回避
     var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
