@@ -14,20 +14,28 @@ const EXE = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 
 const PUBLIC = [
   ['buymo.html', '#buymoSim'],
+  ['buymo.html', '.area-chips a'],          // トップ→都道府県LPの内部リンク
   ['buymo-contact.html', '#quoteForm'],
+  ['buymo-thanks.html', '.thanks-steps'],   // 送信完了ページ
   ['buymo-partner.html', '#quoteForm'],
-  ['genre/index.html', '.ac-card, #genre-cards, .genre-cards, .target-card'],
+  ['genre/index.html', '.genre-group-block, .genre-card, .genre-cards-grid'],
+  ['genre/haisha/index.html', '.genre-points'],     // ジャンル専用LP
+  ['genre/haisha/index.html', '[data-buymo-sim]'],  // ジャンルLPの査定シミュ
+  ['genre/hiace/tokyo/index.html', '.city-chips'],  // ジャンル×エリア掛け合わせLP
   ['area/index.html', '.pref-grid'],
   ['area/tokyo/index.html', '.city-chips'],
   ['tokushoho.html', '.legal'],
   ['member.html', '#memberLogin'],
+  ['404.html', '.nf-nav a'],                // 404の回遊リンク
 ];
 const HQ = [
   ['hq-dashboard.html', '#kTotal'],
   ['hq.html?role=hq', '#board'],
   ['hq-leads.html', '#rows'],
+  ['hq-leads.html', '#btnCsv'],             // リードCSV出力ボタン
   ['hq-stores.html', '#storeGrid'],
   ['report.html', '#funnel'],
+  ['report.html', '#btnCsv'],               // レポートCSV出力ボタン
   ['hq-notices.html', '#noticeList'],
 ];
 const PARTNER = [
