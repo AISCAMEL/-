@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 7.8
+ * Version: 7.9
  * Author: CARMEL
  */
 
@@ -146,19 +146,37 @@ add_action(CARMEL3_AUTO_RUNHOOK, 'carmel3_auto_run');
    WordPressの通信フィルターで「送信直前」に上限を下げる。クレジットを足さずに通せる。 */
 add_filter('http_request_args', function ($args, $url) {
     if (strpos((string)$url, 'openrouter.ai') === false) return $args;
-    if (empty($args['body']) || !is_string($args['body'])) return $args;
+    if (empty($args['body'])) return $args;
 
     $s = carmel3_auto_get_settings();
     $cap = isset($s['max_tokens_cap']) ? (int)$s['max_tokens_cap'] : 0;
     if ($cap <= 0) return $args; // 0なら制限しない
 
-    $body = json_decode($args['body'], true);
-    if (!is_array($body)) return $args;
+    $is_chat = (strpos((string)$url, '/chat/completions') !== false) || (strpos((string)$url, '/completions') !== false);
 
-    // すでに max_tokens があって、上限より大きい時だけ下げる（画像生成など未指定のものは触らない）
-    if (isset($body['max_tokens']) && (int)$body['max_tokens'] > $cap) {
-        $body['max_tokens'] = $cap;
-        $args['body'] = wp_json_encode($body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    // ボディが配列の場合
+    if (is_array($args['body'])) {
+        if (isset($args['body']['max_tokens']) && (int)$args['body']['max_tokens'] > $cap) {
+            $args['body']['max_tokens'] = $cap;
+        } elseif ($is_chat && !isset($args['body']['max_tokens'])) {
+            $args['body']['max_tokens'] = $cap;
+        }
+        return $args;
+    }
+
+    // ボディがJSON文字列の場合
+    if (is_string($args['body'])) {
+        $body = json_decode($args['body'], true);
+        if (!is_array($body)) return $args;
+        $touched = false;
+        if (isset($body['max_tokens']) && (int)$body['max_tokens'] > $cap) {
+            $body['max_tokens'] = $cap; $touched = true;
+        } elseif ($is_chat && !isset($body['max_tokens'])) {
+            $body['max_tokens'] = $cap; $touched = true;
+        }
+        if ($touched) {
+            $args['body'] = wp_json_encode($body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
     }
     return $args;
 }, 99, 2);
@@ -1984,6 +2002,77 @@ add_action('admin_post_carmel3_auto_run_now', function () {
     exit;
 });
 
+// 配列を再帰的にたどり、max_tokens（大きすぎる値）を上限まで下げる。戻り値: 変更件数
+function carmel3_lower_max_tokens_deep(&$data, $cap) {
+    $count = 0;
+    if (!is_array($data)) return 0;
+    foreach ($data as $k => &$v) {
+        if (is_array($v)) {
+            $count += carmel3_lower_max_tokens_deep($v, $cap);
+        } else {
+            $kl = is_string($k) ? strtolower($k) : '';
+            if (($kl === 'max_tokens' || $kl === 'maxtokens' || $kl === 'max_output_tokens' || $kl === 'max_completion_tokens')
+                && is_numeric($v) && (int)$v > $cap) {
+                $v = $cap;
+                $count++;
+            }
+        }
+    }
+    unset($v);
+    return $count;
+}
+
+// 本体が保存している max_tokens を安全値まで下げる（クレジット不要・本体コードは無改変）
+add_action('admin_post_carmel3_fix_tokens', function () {
+    if (!current_user_can('manage_options')) wp_die('権限がありません');
+    check_admin_referer('carmel3_fix_tokens');
+
+    $s = carmel3_auto_get_settings();
+    $cap = isset($s['max_tokens_cap']) && (int)$s['max_tokens_cap'] > 0 ? (int)$s['max_tokens_cap'] : 12000;
+
+    global $wpdb;
+    $like = '%' . $wpdb->esc_like('max_tokens') . '%';
+    $rows = $wpdb->get_results(
+        $wpdb->prepare("SELECT option_name, option_value FROM {$wpdb->options} WHERE option_value LIKE %s LIMIT 100", $like)
+    );
+
+    $changed = array();
+    foreach ((array)$rows as $r) {
+        $name = $r->option_name;
+        if (strpos($name, '_transient') !== false) continue; // 一時データは触らない
+        $raw  = $r->option_value;
+
+        // 1) シリアライズされた配列
+        $val = maybe_unserialize($raw);
+        if (is_array($val)) {
+            $tmp = $val;
+            $n = carmel3_lower_max_tokens_deep($tmp, $cap);
+            if ($n > 0) { update_option($name, $tmp); $changed[] = $name . '（' . $n . '箇所）'; }
+            continue;
+        }
+        // 2) JSON文字列
+        if (is_string($raw)) {
+            $j = json_decode($raw, true);
+            if (is_array($j)) {
+                $tmp = $j;
+                $n = carmel3_lower_max_tokens_deep($tmp, $cap);
+                if ($n > 0) {
+                    update_option($name, wp_json_encode($tmp, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+                    $changed[] = $name . '（' . $n . '箇所・JSON）';
+                }
+            }
+        }
+    }
+
+    $msg = !empty($changed)
+        ? ('本体設定の最大トークンを ' . $cap . ' に下げました：' . implode('、', $changed) . '。もう一度「今すぐ1件だけ生成」をお試しください。')
+        : ('対象の設定が見つかりませんでした。本体がモデルの上限に合わせて自動で65536を決めている可能性があります。その場合は「設定」でモデルを無料モデル（例 deepseek/deepseek-chat-v3-0324:free）に変更してください。');
+    set_transient('carmel3_fix_tokens_msg', $msg, 120);
+
+    wp_safe_redirect(admin_url('admin.php?page=carmel3-auto&fixtokens=1'));
+    exit;
+});
+
 add_action('admin_post_carmel3_auto_reset_done', function () {
     if (!current_user_can('manage_options')) wp_die('権限がありません');
     check_admin_referer('carmel3_auto_reset_done');
@@ -2127,6 +2216,11 @@ function carmel3_auto_settings_page() {
         <?php if (isset($_GET['started'])): ?>
             <div class="notice notice-success"><p>生成を開始しました。下の<strong>「生成の進捗」</strong>バーで状況が自動更新されます（画像ありは1〜3分かかります）。</p></div>
         <?php endif; ?>
+        <?php if (isset($_GET['fixtokens'])):
+            $ft = get_transient('carmel3_fix_tokens_msg'); delete_transient('carmel3_fix_tokens_msg');
+            if ($ft): ?>
+            <div class="notice notice-info"><p><?php echo esc_html($ft); ?></p></div>
+        <?php endif; endif; ?>
         <?php if (isset($_GET['reset'])): ?>
             <div class="notice notice-success"><p>生成済み記録をリセットしました。テーマキューを最初からもう一度生成できます。</p></div>
         <?php endif; ?>
@@ -2209,6 +2303,12 @@ function carmel3_auto_settings_page() {
                 <p style="margin:6px 0 0;color:#7c2d12;font-size:12px">
                     本体が大きすぎる値（例:65536）を要求して「残高不足」で失敗するのを防ぎます。<strong>クレジットを足さずに今の残高で通せます</strong>。
                     記事1本には <strong>12000</strong> で十分（足りなければ16000程度に。<strong>0</strong>で制限なし）。値を小さくするほど安く・速くなります。
+                </p>
+                <p style="margin:10px 0 0;color:#7c2d12;font-size:12px">
+                    それでも「You requested up to 65536 tokens」が消えない場合 → 本体側に保存された大きな値が原因です。下のボタンで自動修正できます（本体のコードは変更しません）。
+                </p>
+                <p style="margin:8px 0 0">
+                    <a href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=carmel3_fix_tokens'), 'carmel3_fix_tokens')); ?>" class="button button-secondary">残高不足エラーを自動修正（本体の最大トークンを下げる）</a>
                 </p>
             </div>
 
