@@ -111,6 +111,9 @@ class Carmel_Store {
 			. '<input type="text" name="next_action" value="' . esc_attr( $action ) . '" placeholder="例）見積送付・来店フォロー">'
 			. '<input type="date" name="next_due" value="' . esc_attr( $due ) . '">'
 			. '<button type="submit" class="carmel-btn carmel-btn-green">保存</button></form></details>';
+		if ( class_exists( 'Carmel_Deal_Timeline' ) ) {
+			$out .= ' <a class="carmel-tl-link" href="' . esc_url( Carmel_Deal_Timeline::url( $deal_id ) ) . '">履歴</a>';
+		}
 		return $out;
 	}
 
