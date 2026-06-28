@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 8.1
+ * Version: 8.2
  * Author: CARMEL
  */
 
@@ -370,13 +370,16 @@ function carmel3_auto_run() {
         carmel3_write_meta_description($post_id, $meta_src);
     }
 
-    // 店舗情報の差し込み（メディア記事）：伏字を実店舗に置換し、末尾に店舗カードを追加
+    // 店舗情報の差し込み（メディア記事）：架空フッター除去→伏字置換→正確な店舗カード追加
     $store = carmel3_pick_store($item);
-    if (is_array($store) && $post_id) {
+    if ($post_id) {
         $body = (string) get_post_field('post_content', $post_id);
-        $new  = carmel3_replace_placeholders($body, $store);
-        if (strpos($new, 'carmel-store-card') === false) {
-            $new .= "\n" . carmel3_store_card_html($store);
+        $new  = carmel3_strip_store_footer($body);
+        if (is_array($store)) {
+            $new = carmel3_replace_placeholders($new, $store);
+            if (strpos($new, 'carmel-store-card') === false) {
+                $new .= "\n" . carmel3_store_card_html($store);
+            }
         }
         if ($new !== $body) {
             wp_update_post(array('ID' => $post_id, 'post_content' => $new));
@@ -1091,8 +1094,20 @@ function carmel3_store_prompt_block($store) {
     if (!empty($store['closed']))  $lines[] = '定休日: ' . $store['closed'];
     if (!empty($store['staff_name'])) $lines[] = '担当者: ' . $store['staff_name'];
     if (empty($lines)) return '';
-    return "【この記事で使う実在の店舗情報（必ずこの値を使う）】\n" . implode("\n", $lines)
-        . "\n※「〇〇店」「○○県」「○○市」「XXX-XXXX」「0120-XXX-XXX」などの伏字・プレースホルダーは絶対に使わないこと。上の実在情報をそのまま使うこと。";
+    return "【この記事で使う実在の店舗情報】\n" . implode("\n", $lines)
+        . "\n■店舗の扱い（厳守）：\n"
+        . "・店舗名は上の値だけを使う。『本店』『支店』『○○店』など勝手に付け足さない。\n"
+        . "・住所・電話番号・営業時間・定休日・ウェブサイトURLなどの店舗情報は本文に書かない（正確な情報はシステムが記事末尾に自動で添付します）。\n"
+        . "・店舗の署名・連絡先・フッター（例：『——／中古車販売 ○○／住所：…／電話：…』）も書かない。\n"
+        . "・伏字（〇〇県・XXX-XXXX・0120-XXX-XXX 等）や、実在しない住所・電話・URLの創作は禁止。";
+}
+
+// 店舗未登録のときにAIへ渡す指示（架空の店舗情報を書かせない）
+function carmel3_no_store_prompt_block() {
+    return "■店舗情報について（厳守）：\n"
+        . "・実在しない店舗名・住所・電話番号・ウェブサイトURLを創作しないこと（『カーメル本店』『東京都…1-2-3』『03-1234-5678』『example-carmel.com』のような架空情報は禁止）。\n"
+        . "・記事末尾の店舗署名・住所・電話・ウェブサイト・フッターは書かないこと。\n"
+        . "・地域名はテーマで指定された都道府県・市までにとどめ、番地や電話番号は書かない。";
 }
 
 // 記事末尾に差し込む「店舗情報＋担当者アイコン」カードのHTML
@@ -1122,6 +1137,16 @@ function carmel3_store_card_html($store) {
     if ($closed !== '') $h .= '<tr><th style="text-align:left;padding:4px 8px;color:#555">定休日</th><td style="padding:4px 8px">' . esc_html($closed) . '</td></tr>';
     $h .= '</table></div>';
     return $h;
+}
+
+// AIが勝手に書いた「店舗署名・住所・電話・URLのフッター」を本文から除去
+function carmel3_strip_store_footer($html) {
+    if ($html === '') return $html;
+    // <p>内に「住所」と「電話」（または ウェブサイト/URL）が両方ある段落＝店舗フッターとみなして削除
+    $html = preg_replace('/<p>(?=[^<]*(?:住所|所在地))(?=[^<]*(?:電話|TEL|ウェブサイト|ウェブ|URL)).*?<\/p>/isu', '', $html);
+    // 区切り線だけの段落（——/—/--- のみ）も掃除
+    $html = preg_replace('/<p>\s*(?:&#8212;|—|―|--+|‐+)\s*<\/p>/u', '', $html);
+    return $html;
 }
 
 // 本文中の伏字プレースホルダーを実在の店舗情報に置換（メディア記事の保険）
@@ -1345,11 +1370,14 @@ function carmel3_gen_post($post_type, $item, $s) {
     if ($instruction !== '') {
         $user .= "【この媒体の書き方（最優先で従う）】\n{$instruction}\n";
     }
-    // 店舗情報をランダムに1つ選んで差し込む（伏字防止）
+    // 店舗情報をランダムに1つ選んで差し込む（伏字・架空情報の防止）
     $store = carmel3_pick_store($item);
     $store_block = carmel3_store_prompt_block($store);
     if ($store_block !== '') {
         $user .= "\n" . $store_block . "\n";
+    } else {
+        // 店舗未登録：架空の店舗情報を書かせない
+        $user .= "\n" . carmel3_no_store_prompt_block() . "\n";
     }
     $user .= "\nJSONキー:\n{\n  \"title\": \"\",\n  \"excerpt\": \"100〜140文字\",\n  \"content_html\": \"<h2>..</h2><p>..</p> 形式\",\n  \"slug\": \"英語・小文字・ハイフン区切り・5〜7語・記号や日本語なし\",\n  \"meta_description\": \"日本語110〜140文字・検索結果に出る説明\"\n}\n"
         . "注意: 自然な日本語 / 本文はHTML / 誇大表現は避ける / slugは必ず英語 / 伏字（〇〇店・XXX等）は禁止 / 上の『書き方』があれば最優先で従う。";
@@ -1369,7 +1397,9 @@ function carmel3_gen_post($post_type, $item, $s) {
     $t  = sanitize_text_field(isset($json['title']) && $json['title'] !== '' ? $json['title'] : $title);
     $ex = sanitize_textarea_field(isset($json['excerpt']) ? $json['excerpt'] : '');
     $html = wp_kses_post(isset($json['content_html']) ? $json['content_html'] : '');
-    // 万一伏字が残っていたら実店舗名等に置換し、末尾に店舗カードを付ける
+    // AIが書いた架空の店舗フッターは常に除去
+    $html = carmel3_strip_store_footer($html);
+    // 店舗登録があれば、伏字を実店舗名に置換し、末尾に正確な店舗カードを付ける
     if (is_array($store)) {
         $html = carmel3_replace_placeholders($html, $store);
         $html .= "\n" . carmel3_store_card_html($store);
