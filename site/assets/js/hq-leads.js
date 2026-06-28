@@ -68,5 +68,26 @@
     document.getElementById(id).addEventListener('change', render);
   });
 
+  /* ---- CSV出力（現在の絞り込み結果を書き出し） ---- */
+  function csvCell(v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }
+  function exportCsv() {
+    var list = filtered();
+    var rows = [['案件ID', 'お名前', '電話', 'メール', 'ジャンル', '担当', 'ステージ', '金額(円)']];
+    list.forEach(function (c) {
+      rows.push([c.id, c.name || '', c.tel || '', c.email || '', c.genre || '', c.assignee || '', c.stage || '', (Number(c.amount) || 0)]);
+    });
+    var csv = '﻿' + rows.map(function (r) { return r.map(csvCell).join(','); }).join('\r\n'); // BOM付きでExcel文字化け回避
+    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var d = new Date(); function p(n) { return ('0' + n).slice(-2); }
+    var a = document.createElement('a');
+    a.href = url; a.download = 'buymo-leads-' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    if (window.BuymoGA) BuymoGA.track('export_csv', { kind: 'leads', rows: list.length });
+  }
+  var csvBtn = document.getElementById('btnCsv');
+  if (csvBtn) csvBtn.addEventListener('click', exportCsv);
+
   HQ.loadCases(function (list) { all = list; render(); });
 })();
