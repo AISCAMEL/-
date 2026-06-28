@@ -5,6 +5,11 @@
   var all = [];
   var stores = HQ.getStores();
 
+  // 滞留判定（受付から5日以上・未完了の初期〜商談ステージ）
+  var STALE_DAYS = 5, EARLY = ['新規受付', '査定中', '商談中'];
+  function daysSince(d) { if (!d) return 0; var t = new Date(String(d).replace(/\//g, '-') + 'T00:00:00'); if (isNaN(t)) return 0; return Math.floor((new Date() - t) / 86400000); }
+  function isStale(c) { return EARLY.indexOf(c.stage) >= 0 && daysSince(c.date) >= STALE_DAYS; }
+
   // フィルタUIの選択肢
   var fStage = document.getElementById('fStage');
   HQ.STAGES.forEach(function (s) { var o = document.createElement('option'); o.value = s; o.textContent = s; fStage.appendChild(o); });
@@ -53,7 +58,7 @@
     document.getElementById('rows').innerHTML = list.map(function (c) {
       return '<tr data-id="' + HQ.esc(c.id) + '">' +
         '<td>' + HQ.esc(c.id) + '</td>' +
-        '<td class="td-sub">' + HQ.esc(c.date || '—') + '</td>' +
+        '<td class="td-sub">' + HQ.esc(c.date || '—') + (isStale(c) ? ' <span class="lead-stale">滞留' + daysSince(c.date) + '日</span>' : '') + '</td>' +
         '<td>' + HQ.esc(c.name) + '</td>' +
         '<td>' + HQ.esc(c.tel || '') + '<br><span class="td-sub">' + HQ.esc(c.email || '') + '</span></td>' +
         '<td>' + HQ.esc(c.genre || '') + '</td>' +
