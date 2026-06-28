@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 8.0
+ * Version: 8.1
  * Author: CARMEL
  */
 
@@ -46,6 +46,7 @@ function carmel3_auto_get_settings() {
         'run_time'     => '09:00',   // 自動生成を実行する時刻（サイトのタイムゾーン）
         'max_tokens_cap' => 12000,   // OpenRouterへの max_tokens 上限（0=制限しない／残高節約・エラー回避）
         'auto_slug_meta' => 1,       // スラッグ（英語URL）とメタディスクリプションを自動生成
+        'text_model'   => '',        // 文章生成モデルの上書き（空=本体まかせ。無料モデル指定で残高不足回避）
         'publish'      => 0,
         'gen_images'   => 0,
         'gen_section_images' => 1,
@@ -151,31 +152,41 @@ add_filter('http_request_args', function ($args, $url) {
 
     $s = carmel3_auto_get_settings();
     $cap = isset($s['max_tokens_cap']) ? (int)$s['max_tokens_cap'] : 0;
-    if ($cap <= 0) return $args; // 0なら制限しない
+    $text_model = isset($s['text_model']) ? trim((string)$s['text_model']) : '';
+    if ($cap <= 0 && $text_model === '') return $args; // 何もしない
 
     $is_chat = (strpos((string)$url, '/chat/completions') !== false) || (strpos((string)$url, '/completions') !== false);
 
-    // ボディが配列の場合
-    if (is_array($args['body'])) {
-        if (isset($args['body']['max_tokens']) && (int)$args['body']['max_tokens'] > $cap) {
-            $args['body']['max_tokens'] = $cap;
-        } elseif ($is_chat && !isset($args['body']['max_tokens'])) {
-            $args['body']['max_tokens'] = $cap;
+    $apply = function ($body) use ($cap, $text_model, $is_chat) {
+        if (!is_array($body)) return $body;
+        // 画像生成リクエスト（modalitiesにimage）はモデルを変えない・max_tokensも触らない
+        $is_image = isset($body['modalities']) && is_array($body['modalities']) && in_array('image', $body['modalities'], true);
+        if ($is_image) return $body;
+
+        if ($cap > 0) {
+            if (isset($body['max_tokens']) && (int)$body['max_tokens'] > $cap) {
+                $body['max_tokens'] = $cap;
+            } elseif ($is_chat && !isset($body['max_tokens'])) {
+                $body['max_tokens'] = $cap;
+            }
         }
+        // テキスト生成モデルの上書き（無料モデル等。残高不足回避）
+        if ($text_model !== '' && $is_chat && isset($body['messages'])) {
+            $body['model'] = $text_model;
+        }
+        return $body;
+    };
+
+    if (is_array($args['body'])) {
+        $args['body'] = $apply($args['body']);
         return $args;
     }
-
-    // ボディがJSON文字列の場合
     if (is_string($args['body'])) {
         $body = json_decode($args['body'], true);
         if (!is_array($body)) return $args;
-        $touched = false;
-        if (isset($body['max_tokens']) && (int)$body['max_tokens'] > $cap) {
-            $body['max_tokens'] = $cap; $touched = true;
-        } elseif ($is_chat && !isset($body['max_tokens'])) {
-            $body['max_tokens'] = $cap; $touched = true;
-        }
-        if ($touched) {
+        $before = $body;
+        $body = $apply($body);
+        if ($body !== $before) {
             $args['body'] = wp_json_encode($body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         }
     }
@@ -357,6 +368,19 @@ function carmel3_auto_run() {
         if ($slug !== '') carmel3_apply_slug($post_id, $slug);
         $meta_src = $sm['meta'] !== '' ? $sm['meta'] : get_the_excerpt($post_id);
         carmel3_write_meta_description($post_id, $meta_src);
+    }
+
+    // 店舗情報の差し込み（メディア記事）：伏字を実店舗に置換し、末尾に店舗カードを追加
+    $store = carmel3_pick_store($item);
+    if (is_array($store) && $post_id) {
+        $body = (string) get_post_field('post_content', $post_id);
+        $new  = carmel3_replace_placeholders($body, $store);
+        if (strpos($new, 'carmel-store-card') === false) {
+            $new .= "\n" . carmel3_store_card_html($store);
+        }
+        if ($new !== $body) {
+            wp_update_post(array('ID' => $post_id, 'post_content' => $new));
+        }
     }
 
     // CTAボタンのURLが壊れていれば /contact/ に自動修正
@@ -1019,6 +1043,204 @@ function carmel3_selectable_post_types() {
 }
 
 // 1つの投稿タイプに、テーマから記事をAI生成して保存
+/* ===== 店舗・担当者（記事にランダム差し込み） ===== */
+
+function carmel3_stores_get() {
+    $d = get_option('carmel3_stores', array());
+    if (!is_array($d)) return array();
+    // 名前のある店舗だけ
+    $out = array();
+    foreach ($d as $st) {
+        if (is_array($st) && !empty($st['name'])) $out[] = $st;
+    }
+    return $out;
+}
+
+// 記事に差し込む店舗を1つ選ぶ（地域が一致すれば優先、なければランダム）
+function carmel3_pick_store($item = null) {
+    $stores = carmel3_stores_get();
+    if (empty($stores)) return null;
+
+    if (is_array($item)) {
+        $pref = isset($item['prefecture']) ? trim($item['prefecture']) : '';
+        $city = isset($item['city']) ? trim($item['city']) : '';
+        if ($pref !== '' || $city !== '') {
+            $matched = array();
+            foreach ($stores as $st) {
+                $sp = isset($st['pref']) ? $st['pref'] : '';
+                $sc = isset($st['city']) ? $st['city'] : '';
+                if (($pref !== '' && $sp === $pref) || ($city !== '' && $sc === $city)) {
+                    $matched[] = $st;
+                }
+            }
+            if (!empty($matched)) $stores = $matched;
+        }
+    }
+    return $stores[ array_rand($stores) ];
+}
+
+// AIに渡す「実在の店舗情報を使え／伏字禁止」の指示テキスト
+function carmel3_store_prompt_block($store) {
+    if (!is_array($store)) return '';
+    $lines = array();
+    if (!empty($store['name']))    $lines[] = '店舗名: ' . $store['name'];
+    $addr = trim((isset($store['zip']) && $store['zip'] !== '' ? '〒' . $store['zip'] . ' ' : '') . (isset($store['address']) ? $store['address'] : ''));
+    if ($addr !== '')              $lines[] = '住所: ' . $addr;
+    if (!empty($store['tel']))     $lines[] = '電話: ' . $store['tel'];
+    if (!empty($store['hours']))   $lines[] = '営業時間: ' . $store['hours'];
+    if (!empty($store['closed']))  $lines[] = '定休日: ' . $store['closed'];
+    if (!empty($store['staff_name'])) $lines[] = '担当者: ' . $store['staff_name'];
+    if (empty($lines)) return '';
+    return "【この記事で使う実在の店舗情報（必ずこの値を使う）】\n" . implode("\n", $lines)
+        . "\n※「〇〇店」「○○県」「○○市」「XXX-XXXX」「0120-XXX-XXX」などの伏字・プレースホルダーは絶対に使わないこと。上の実在情報をそのまま使うこと。";
+}
+
+// 記事末尾に差し込む「店舗情報＋担当者アイコン」カードのHTML
+function carmel3_store_card_html($store) {
+    if (!is_array($store) || empty($store['name'])) return '';
+    $name  = esc_html($store['name']);
+    $addr  = trim((isset($store['zip']) && $store['zip'] !== '' ? '〒' . $store['zip'] . ' ' : '') . (isset($store['address']) ? $store['address'] : ''));
+    $tel   = isset($store['tel']) ? $store['tel'] : '';
+    $hours = isset($store['hours']) ? $store['hours'] : '';
+    $closed= isset($store['closed']) ? $store['closed'] : '';
+    $sname = isset($store['staff_name']) ? $store['staff_name'] : '';
+    $icon  = isset($store['staff_icon']) ? trim($store['staff_icon']) : '';
+
+    $h  = '<div class="carmel-store-card" style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin:24px 0;background:#fafafa">';
+    $h .= '<div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">';
+    if ($icon !== '') {
+        $h .= '<img src="' . esc_url($icon) . '" alt="' . esc_attr($sname) . '" width="64" height="64" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.15)">';
+    }
+    $h .= '<div>';
+    if ($sname !== '') $h .= '<div style="font-size:13px;color:#666">担当：' . esc_html($sname) . '</div>';
+    $h .= '<div style="font-size:18px;font-weight:700">' . $name . '</div>';
+    $h .= '</div></div>';
+    $h .= '<table style="width:100%;border-collapse:collapse;font-size:14px">';
+    if ($addr !== '')   $h .= '<tr><th style="text-align:left;width:90px;padding:4px 8px;color:#555">住所</th><td style="padding:4px 8px">' . esc_html($addr) . '</td></tr>';
+    if ($tel !== '')    $h .= '<tr><th style="text-align:left;padding:4px 8px;color:#555">電話</th><td style="padding:4px 8px"><a href="tel:' . esc_attr(preg_replace('/[^0-9+]/', '', $tel)) . '">' . esc_html($tel) . '</a></td></tr>';
+    if ($hours !== '')  $h .= '<tr><th style="text-align:left;padding:4px 8px;color:#555">営業時間</th><td style="padding:4px 8px">' . esc_html($hours) . '</td></tr>';
+    if ($closed !== '') $h .= '<tr><th style="text-align:left;padding:4px 8px;color:#555">定休日</th><td style="padding:4px 8px">' . esc_html($closed) . '</td></tr>';
+    $h .= '</table></div>';
+    return $h;
+}
+
+// 本文中の伏字プレースホルダーを実在の店舗情報に置換（メディア記事の保険）
+function carmel3_replace_placeholders($html, $store) {
+    if (!is_array($store) || $html === '') return $html;
+    $name = isset($store['name']) ? $store['name'] : '';
+    $addr = trim((isset($store['zip']) && $store['zip'] !== '' ? '〒' . $store['zip'] . ' ' : '') . (isset($store['address']) ? $store['address'] : ''));
+    $tel  = isset($store['tel']) ? $store['tel'] : '';
+
+    $map = array();
+    if ($name !== '') {
+        // 「カーメル〇〇店 / カーメル○○店 / カーメル◯◯店」→ 実店舗名
+        $html = preg_replace('/カーメル[〇○◯\x{25CB}\x{3007}]+店/u', $name, $html);
+    }
+    if ($tel !== '') {
+        $html = preg_replace('/0120[-‐－]?X{2,}[-‐－]?X{2,}/u', $tel, $html);
+        $html = preg_replace('/0\d{1,3}[-‐－]X{2,}[-‐－]X{2,}/u', $tel, $html);
+    }
+    if ($addr !== '') {
+        $html = preg_replace('/〒?X{3}[-‐－]?X{4}\s*[〇○◯]*[県都道府].*?\d?[-‐－]?\d?[-‐－]?\d?/u', $addr, $html, 1);
+    }
+    return $html;
+}
+
+add_action('admin_post_carmel3_stores_save', function () {
+    if (!current_user_can('manage_options')) wp_die('権限がありません');
+    check_admin_referer('carmel3_stores_save');
+
+    $in = (isset($_POST['store']) && is_array($_POST['store'])) ? $_POST['store'] : array();
+    $out = array();
+    foreach ($in as $row) {
+        if (!is_array($row)) continue;
+        $name = isset($row['name']) ? sanitize_text_field(wp_unslash($row['name'])) : '';
+        if ($name === '') continue; // 名前が無い行は捨てる
+        $out[] = array(
+            'name'       => $name,
+            'zip'        => isset($row['zip']) ? sanitize_text_field(wp_unslash($row['zip'])) : '',
+            'address'    => isset($row['address']) ? sanitize_text_field(wp_unslash($row['address'])) : '',
+            'tel'        => isset($row['tel']) ? sanitize_text_field(wp_unslash($row['tel'])) : '',
+            'hours'      => isset($row['hours']) ? sanitize_text_field(wp_unslash($row['hours'])) : '',
+            'closed'     => isset($row['closed']) ? sanitize_text_field(wp_unslash($row['closed'])) : '',
+            'pref'       => isset($row['pref']) ? sanitize_text_field(wp_unslash($row['pref'])) : '',
+            'city'       => isset($row['city']) ? sanitize_text_field(wp_unslash($row['city'])) : '',
+            'staff_name' => isset($row['staff_name']) ? sanitize_text_field(wp_unslash($row['staff_name'])) : '',
+            'staff_icon' => isset($row['staff_icon']) ? esc_url_raw(wp_unslash($row['staff_icon'])) : '',
+        );
+    }
+    update_option('carmel3_stores', $out);
+    wp_safe_redirect(admin_url('admin.php?page=carmel3-stores&saved=1'));
+    exit;
+});
+
+function carmel3_stores_page() {
+    $stores = carmel3_stores_get();
+    // 入力枠は「既存＋空き2行」
+    $rows = $stores;
+    $rows[] = array(); $rows[] = array();
+    $g = function ($r, $k) { return isset($r[$k]) ? $r[$k] : ''; };
+    ?>
+    <div style="max-width:1000px;margin:20px auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+        <div style="background:linear-gradient(135deg,#1a1a2e,#0f3460);color:#fff;padding:24px;border-radius:16px;margin-bottom:18px">
+            <h1 style="margin:0 0 6px;font-size:24px">店舗・担当者（記事に差し込み）</h1>
+            <p style="margin:0;opacity:.9">ここに登録した店舗から<strong>記事ごとに1つをランダムで選び</strong>、本文の店舗名・住所・電話に使います。担当者アイコンも記事末尾に表示します（「カーメル〇〇店」などの伏字を防ぎます）。</p>
+        </div>
+
+        <?php if (isset($_GET['saved'])): ?>
+            <div class="notice notice-success"><p>店舗情報を保存しました。</p></div>
+        <?php endif; ?>
+
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+            <input type="hidden" name="action" value="carmel3_stores_save">
+            <?php wp_nonce_field('carmel3_stores_save'); ?>
+
+            <?php foreach ($rows as $i => $r): ?>
+                <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:14px 16px;margin-bottom:12px">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">
+                        <label style="font-size:12px;color:#555;font-weight:700">店舗名（必須）<br>
+                            <input type="text" name="store[<?php echo $i; ?>][name]" value="<?php echo esc_attr($g($r,'name')); ?>" placeholder="例: カーメル 大阪本店" style="width:100%;padding:7px"></label>
+                        <label style="font-size:12px;color:#555;font-weight:700">電話<br>
+                            <input type="text" name="store[<?php echo $i; ?>][tel]" value="<?php echo esc_attr($g($r,'tel')); ?>" placeholder="例: 06-1234-5678" style="width:100%;padding:7px"></label>
+                        <label style="font-size:12px;color:#555;font-weight:700">郵便番号<br>
+                            <input type="text" name="store[<?php echo $i; ?>][zip]" value="<?php echo esc_attr($g($r,'zip')); ?>" placeholder="例: 530-0001" style="width:100%;padding:7px"></label>
+                        <label style="font-size:12px;color:#555;font-weight:700">住所<br>
+                            <input type="text" name="store[<?php echo $i; ?>][address]" value="<?php echo esc_attr($g($r,'address')); ?>" placeholder="例: 大阪府大阪市北区…" style="width:100%;padding:7px"></label>
+                        <label style="font-size:12px;color:#555;font-weight:700">営業時間<br>
+                            <input type="text" name="store[<?php echo $i; ?>][hours]" value="<?php echo esc_attr($g($r,'hours')); ?>" placeholder="例: 10:00〜19:00" style="width:100%;padding:7px"></label>
+                        <label style="font-size:12px;color:#555;font-weight:700">定休日<br>
+                            <input type="text" name="store[<?php echo $i; ?>][closed]" value="<?php echo esc_attr($g($r,'closed')); ?>" placeholder="例: 水曜" style="width:100%;padding:7px"></label>
+                        <label style="font-size:12px;color:#555;font-weight:700">都道府県（地域一致に使用）<br>
+                            <input type="text" name="store[<?php echo $i; ?>][pref]" value="<?php echo esc_attr($g($r,'pref')); ?>" placeholder="例: 大阪府" style="width:100%;padding:7px"></label>
+                        <label style="font-size:12px;color:#555;font-weight:700">市区町村<br>
+                            <input type="text" name="store[<?php echo $i; ?>][city]" value="<?php echo esc_attr($g($r,'city')); ?>" placeholder="例: 大阪市" style="width:100%;padding:7px"></label>
+                        <label style="font-size:12px;color:#555;font-weight:700">担当者名<br>
+                            <input type="text" name="store[<?php echo $i; ?>][staff_name]" value="<?php echo esc_attr($g($r,'staff_name')); ?>" placeholder="例: 山田 太郎" style="width:100%;padding:7px"></label>
+                        <label style="font-size:12px;color:#555;font-weight:700">担当者アイコンURL<br>
+                            <input type="url" name="store[<?php echo $i; ?>][staff_icon]" value="<?php echo esc_attr($g($r,'staff_icon')); ?>" placeholder="メディアにアップしてURLを貼る" style="width:100%;padding:7px"></label>
+                    </div>
+                    <?php if ($g($r,'staff_icon') !== ''): ?>
+                        <div style="margin-top:8px"><img src="<?php echo esc_url($g($r,'staff_icon')); ?>" width="48" height="48" style="border-radius:50%;object-fit:cover"></div>
+                    <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
+
+            <p style="color:#666;font-size:12px">※ 行を増やしたい時は、空き枠を埋めて保存すると、次回さらに空き枠が増えます。店舗名が空の行は保存されません。</p>
+            <p><button type="submit" class="button button-primary button-hero">店舗情報を保存</button></p>
+        </form>
+
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-top:8px">
+            <h2 style="margin:0 0 8px;font-size:15px">担当者アイコンの入れ方</h2>
+            <ol style="margin:0 0 0 18px;line-height:1.9;color:#444;font-size:14px">
+                <li>左メニュー「メディア」→「新規追加」で担当者の写真／似顔絵をアップロード</li>
+                <li>その画像の「ファイルのURL」をコピー</li>
+                <li>上の「担当者アイコンURL」に貼り付けて保存</li>
+            </ol>
+        </div>
+    </div>
+    <?php
+}
+
 // アイキャッチ画像を1枚生成して設定（ニュース・加盟店ブログ用。文字なし）
 function carmel3_img_set_featured($post_id, $s) {
     if (get_post_thumbnail_id($post_id)) return '既存画像あり';
@@ -1083,10 +1305,11 @@ function carmel3_ai_slug_meta($title, $kw) {
         . "(2)日本語のメタディスクリプション（110〜140文字・検索結果に出る説明・誇大表現なし）を作成。\n"
         . "タイトル: {$title}\nキーワード: {$kw}\n"
         . "JSON: {\"slug\":\"\",\"meta_description\":\"\"}";
+    $tm = function_exists('carmel3_auto_get_settings') ? (string)(carmel3_auto_get_settings()['text_model'] ?? '') : '';
     $res = carmel_call_openrouter_chat(array(
         array('role' => 'system', 'content' => $sys),
         array('role' => 'user',   'content' => $usr),
-    ), '', 0.5, 40);
+    ), $tm, 0.5, 40);
     if (!empty($res['error'])) return $out;
     $content = isset($res['content']) ? (string)$res['content'] : '';
     $json = function_exists('carmel_extract_json_from_text') ? carmel_extract_json_from_text($content) : json_decode(trim($content), true);
@@ -1122,13 +1345,20 @@ function carmel3_gen_post($post_type, $item, $s) {
     if ($instruction !== '') {
         $user .= "【この媒体の書き方（最優先で従う）】\n{$instruction}\n";
     }
+    // 店舗情報をランダムに1つ選んで差し込む（伏字防止）
+    $store = carmel3_pick_store($item);
+    $store_block = carmel3_store_prompt_block($store);
+    if ($store_block !== '') {
+        $user .= "\n" . $store_block . "\n";
+    }
     $user .= "\nJSONキー:\n{\n  \"title\": \"\",\n  \"excerpt\": \"100〜140文字\",\n  \"content_html\": \"<h2>..</h2><p>..</p> 形式\",\n  \"slug\": \"英語・小文字・ハイフン区切り・5〜7語・記号や日本語なし\",\n  \"meta_description\": \"日本語110〜140文字・検索結果に出る説明\"\n}\n"
-        . "注意: 自然な日本語 / 本文はHTML / 誇大表現は避ける / slugは必ず英語 / 上の『書き方』があれば最優先で従う。";
+        . "注意: 自然な日本語 / 本文はHTML / 誇大表現は避ける / slugは必ず英語 / 伏字（〇〇店・XXX等）は禁止 / 上の『書き方』があれば最優先で従う。";
 
+    $text_model = isset($s['text_model']) ? trim((string)$s['text_model']) : '';
     $res = carmel_call_openrouter_chat(array(
         array('role' => 'system', 'content' => $system),
         array('role' => 'user',   'content' => $user),
-    ), '', 0.7, 90);
+    ), $text_model, 0.7, 90);
 
     if (!empty($res['error'])) return new WP_Error('api', $res['error']);
 
@@ -1139,6 +1369,11 @@ function carmel3_gen_post($post_type, $item, $s) {
     $t  = sanitize_text_field(isset($json['title']) && $json['title'] !== '' ? $json['title'] : $title);
     $ex = sanitize_textarea_field(isset($json['excerpt']) ? $json['excerpt'] : '');
     $html = wp_kses_post(isset($json['content_html']) ? $json['content_html'] : '');
+    // 万一伏字が残っていたら実店舗名等に置換し、末尾に店舗カードを付ける
+    if (is_array($store)) {
+        $html = carmel3_replace_placeholders($html, $store);
+        $html .= "\n" . carmel3_store_card_html($store);
+    }
     $ai_slug = isset($json['slug']) ? (string)$json['slug'] : '';
     $ai_meta = isset($json['meta_description']) ? (string)$json['meta_description'] : '';
     if (function_exists('carmel_normalize_ja_text')) { $t = carmel_normalize_ja_text($t); }
@@ -1260,12 +1495,14 @@ function carmel3_auto_register_menu() {
         // 「カーメル管理」の中にサブメニューとして入れる
         add_submenu_page($parent, 'かんたんホーム', 'かんたんホーム', 'manage_options', 'carmel3-home', 'carmel3_home_page');
         add_submenu_page($parent, 'CARMEL 自動生成', '自動生成', 'manage_options', 'carmel3-auto', 'carmel3_auto_settings_page');
+        add_submenu_page($parent, '店舗・担当者（記事に差し込み）', '店舗・担当者', 'manage_options', 'carmel3-stores', 'carmel3_stores_page');
         add_submenu_page($parent, 'その他掲載ページ（MEO対策）', 'その他掲載ページ（MEO対策）', 'manage_options', 'carmel3-meo', 'carmel3_meo_page');
     } else {
         // 親が見つからない場合は従来どおりトップに出す（消えない保険）
         add_menu_page('かんたんホーム', 'かんたんホーム', 'manage_options', 'carmel3-home', 'carmel3_home_page', 'dashicons-admin-home', 3);
         add_menu_page('CARMEL 自動生成', 'CARMEL自動生成', 'manage_options', 'carmel3-auto', 'carmel3_auto_settings_page', 'dashicons-update', 4);
-        add_menu_page('その他掲載ページ（MEO対策）', 'その他掲載ページ(MEO)', 'manage_options', 'carmel3-meo', 'carmel3_meo_page', 'dashicons-location-alt', 5);
+        add_menu_page('店舗・担当者', '店舗・担当者', 'manage_options', 'carmel3-stores', 'carmel3_stores_page', 'dashicons-store', 5);
+        add_menu_page('その他掲載ページ（MEO対策）', 'その他掲載ページ(MEO)', 'manage_options', 'carmel3-meo', 'carmel3_meo_page', 'dashicons-location-alt', 6);
     }
 }
 
@@ -2002,6 +2239,7 @@ add_action('admin_post_carmel3_auto_save', function () {
     }
 
     $s['auto_slug_meta'] = isset($_POST['auto_slug_meta']) ? 1 : 0;
+    $s['text_model'] = isset($_POST['text_model']) ? sanitize_text_field(wp_unslash($_POST['text_model'])) : '';
 
     $im = isset($_POST['image_model']) ? sanitize_text_field(wp_unslash($_POST['image_model'])) : '';
     $s['image_model'] = $im !== '' ? $im : CARMEL3_IMG_DEFAULT_MODEL;
@@ -2422,6 +2660,16 @@ function carmel3_auto_settings_page() {
                 </p>
                 <p style="margin:8px 0 0">
                     <a href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=carmel3_fix_tokens'), 'carmel3_fix_tokens')); ?>" class="button button-secondary">残高不足エラーを自動修正（本体の最大トークンを下げる）</a>
+                </p>
+                <hr style="margin:12px 0;border:none;border-top:1px dashed #fed7aa">
+                <p style="margin:0 0 4px;font-weight:700;color:#9a3412">文章モデルの上書き（残高がほぼ無い時は無料モデルに）</p>
+                <label style="font-size:13px">モデルID（空欄＝本体まかせ）：
+                    <input type="text" name="text_model" value="<?php echo esc_attr(isset($s['text_model']) ? $s['text_model'] : ''); ?>" style="width:340px" placeholder="例: deepseek/deepseek-chat-v3-0324:free">
+                </label>
+                <p style="margin:6px 0 0;color:#7c2d12;font-size:12px">
+                    残高がほぼ0でも、<strong>料金$0の無料モデル</strong>を指定すれば生成できます（文章のみ。画像は別）。おすすめ：<br>
+                    <code>deepseek/deepseek-chat-v3-0324:free</code> ／ <code>google/gemini-2.0-flash-exp:free</code> ／ <code>meta-llama/llama-3.3-70b-instruct:free</code><br>
+                    ※ 無料モデルの利用には <a href="https://openrouter.ai/settings/privacy" target="_blank" rel="noopener">OpenRouterのプライバシー設定</a> で許可が必要な場合があります。空欄に戻すと元のモデルに戻ります。
                 </p>
             </div>
 
