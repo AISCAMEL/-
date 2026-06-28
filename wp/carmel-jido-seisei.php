@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 7.6
+ * Version: 7.7
  * Author: CARMEL
  */
 
@@ -20,6 +20,14 @@ if (!defined('CARMEL3_IMG_DEFAULT_MODEL')) {
 // 本文セクション画像を「裏側で1枚ずつ」生成するためのフック
 if (!defined('CARMEL3_AUTO_IMGHOOK')) {
     define('CARMEL3_AUTO_IMGHOOK', 'carmel3_auto_img_worker');
+}
+// 「今すぐ1件だけ生成」を裏側で実行するためのフック（画面を固まらせない）
+if (!defined('CARMEL3_AUTO_RUNHOOK')) {
+    define('CARMEL3_AUTO_RUNHOOK', 'carmel3_auto_run_single');
+}
+// 進捗（ただいま生成中…）を保存するオプション名
+if (!defined('CARMEL3_PROGRESS_OPTION')) {
+    define('CARMEL3_PROGRESS_OPTION', 'carmel3_auto_progress');
 }
 // 本文セクション画像 ACF フィールドキー（編集ページのHTMLから確認した値）
 if (!defined('CARMEL3_F_SEC1_IMG')) { define('CARMEL3_F_SEC1_IMG', 'field_69ffb5a4d372b'); } // section_1_image
@@ -129,6 +137,8 @@ add_filter('cron_schedules', function ($schedules) {
 });
 
 add_action(CARMEL3_AUTO_HOOK, 'carmel3_auto_run');
+// 「今すぐ1件だけ生成」の裏側実行（同じ処理を呼ぶ）
+add_action(CARMEL3_AUTO_RUNHOOK, 'carmel3_auto_run');
 // 本文セクション画像を裏側で1枚ずつ処理するワーカー
 add_action(CARMEL3_AUTO_IMGHOOK, 'carmel3_auto_process_one_image');
 
@@ -175,17 +185,62 @@ add_action('init', function () {
 
 /* ===== 自動生成の本体 ===== */
 
+/* ===== 進捗（ただいま生成中…）の記録・取得 ===== */
+
+function carmel3_progress_set($step, $pct, $state = 'running', $extra = array()) {
+    $p = array_merge(array(
+        'state'   => $state,            // running / done / error / idle
+        'step'    => (string) $step,
+        'pct'     => max(0, min(100, (int) $pct)),
+        'time'    => current_time('mysql'),
+        'ts'      => time(),
+        'post_id' => 0,
+        'title'   => '',
+    ), $extra);
+    update_option(CARMEL3_PROGRESS_OPTION, $p, false);
+}
+
+function carmel3_progress_get() {
+    $p = get_option(CARMEL3_PROGRESS_OPTION, array());
+    return is_array($p) ? $p : array();
+}
+
+// 直近の実行ログ（成功/失敗）を最大12件、新しい順で保持
+function carmel3_loglist_add($message, $ok = true) {
+    $list = get_option('carmel3_auto_loglist', array());
+    if (!is_array($list)) $list = array();
+    array_unshift($list, array('time' => current_time('mysql'), 'ok' => $ok ? 1 : 0, 'msg' => (string) $message));
+    $list = array_slice($list, 0, 12);
+    update_option('carmel3_auto_loglist', $list, false);
+}
+
+function carmel3_loglist_get() {
+    $list = get_option('carmel3_auto_loglist', array());
+    return is_array($list) ? $list : array();
+}
+
+// 進捗をJSONで返す（画面のポーリング用）
+add_action('wp_ajax_carmel3_auto_progress', function () {
+    if (!current_user_can('manage_options')) wp_send_json_error(array('msg' => 'no permission'), 403);
+    wp_send_json_success(carmel3_progress_get());
+});
+
 function carmel3_auto_run() {
     @set_time_limit(300);
     $s = carmel3_auto_get_settings();
+    carmel3_progress_set('準備をしています…', 4, 'running');
 
     if (!function_exists('carmel_generate_article_api')) {
         carmel3_auto_log($s, '失敗: 既存プラグイン(carmel_generate_article_api)が見つかりません。CARMEL統合管理v5.7が有効か確認してください。');
+        carmel3_progress_set('エラー: 本体プラグイン(v5.7)が見つかりません', 100, 'error');
+        carmel3_loglist_add('本体プラグイン(v5.7)が見つかりません', false);
         return false;
     }
     $queue = array_values((array)$s['queue']);
     if (empty($queue)) {
         carmel3_auto_log($s, '失敗: テーマキューが空です');
+        carmel3_progress_set('エラー: テーマキューが空です（テーマを追加してください）', 100, 'error');
+        carmel3_loglist_add('テーマキューが空です', false);
         return false;
     }
 
@@ -204,6 +259,8 @@ function carmel3_auto_run() {
 
     if ($item === null) {
         carmel3_auto_log($s, '完了: テーマキューの全テーマを生成済みです（新しいテーマを追加してください）');
+        carmel3_progress_set('完了: すべてのテーマを生成済みです（新しいテーマを追加してください）', 100, 'done');
+        carmel3_loglist_add('すべてのテーマを生成済み（新しいテーマを追加してください）', true);
         $s['enabled'] = 0;
         carmel3_auto_save_settings($s);
         $existing = wp_next_scheduled(CARMEL3_AUTO_HOOK);
@@ -216,8 +273,11 @@ function carmel3_auto_run() {
     $title = $item['title'] !== '' ? $item['title'] : $item['keyword'];
     if ($title === '') {
         carmel3_auto_log($s, "スキップ: テーマはタイトルもキーワードも空");
+        carmel3_progress_set('スキップ: テーマが空でした', 100, 'error');
         return false;
     }
+
+    carmel3_progress_set('記事の文章をAIが作成中…（30〜60秒）', 20, 'running', array('title' => $title));
 
     $req = new WP_REST_Request('POST', '/carmel/v1/generate');
     $req->set_header('Content-Type', 'application/json');
@@ -236,6 +296,8 @@ function carmel3_auto_run() {
     if (empty($data['success'])) {
         $msg = isset($data['message']) ? $data['message'] : '不明なエラー';
         carmel3_auto_log($s, "失敗: {$title} / {$msg}");
+        carmel3_progress_set('エラー: 文章の生成に失敗（' . $msg . '）', 100, 'error', array('title' => $title));
+        carmel3_loglist_add("失敗: {$title} / {$msg}", false);
         return false;
     }
 
@@ -243,6 +305,8 @@ function carmel3_auto_run() {
 
     $done[] = $picked_key;
     $s['done'] = $done;
+
+    carmel3_progress_set('本文を保存しました。仕上げ中…', 45, 'running', array('post_id' => $post_id, 'title' => $title));
 
     // CTAボタンのURLが壊れていれば /contact/ に自動修正
     $cta_msg = '';
@@ -253,6 +317,7 @@ function carmel3_auto_run() {
 
     $img_msg = '';
     if (!empty($s['gen_images']) && $post_id) {
+        carmel3_progress_set('アイキャッチ・バナー画像を生成中…（1〜2分）', 60, 'running', array('post_id' => $post_id, 'title' => $title));
         // アイキャッチ＋トップバナーは即時に（従来どおり）
         $img_msg = ' | 画像: ' . carmel3_img_attach_to_post($post_id);
 
@@ -286,6 +351,9 @@ function carmel3_auto_run() {
     $extra_types = (isset($s['extra_types']) && is_array($s['extra_types'])) ? $s['extra_types'] : array();
     foreach ($extra_types as $pt) {
         if ($pt === 'media_article' || !post_type_exists($pt)) continue;
+        $pobj = get_post_type_object($pt);
+        $plbl = $pobj ? ($pobj->labels->singular_name ?: $pt) : $pt;
+        carmel3_progress_set($plbl . 'をAIが作成中…', 80, 'running', array('post_id' => $post_id, 'title' => $title));
         $epid = carmel3_gen_post($pt, $item, $s);
         if (is_wp_error($epid)) {
             $extra_msg .= ' | ' . $pt . '失敗(' . $epid->get_error_message() . ')';
@@ -311,6 +379,7 @@ function carmel3_auto_run() {
     $notify_msg = '';
     $notify_now = (isset($s['notify_on']) && $s['notify_on'] === 'publish') ? !empty($s['publish']) : true;
     if ($notify_now && (!empty($s['slack_enabled']) || !empty($s['line_enabled']))) {
+        carmel3_progress_set('通知を送信中…', 92, 'running', array('post_id' => $post_id, 'title' => $title));
         $extra_note = !empty($extra_titles) ? ('同時作成: ' . implode('、', $extra_titles)) : '';
         $r = carmel3_notify_new_post($s, $post_id, $extra_note);
         if ($r !== '') $notify_msg = ' | 通知: ' . $r;
@@ -319,6 +388,8 @@ function carmel3_auto_run() {
     $remaining = carmel3_auto_remaining_count($s);
     $status_label = !empty($s['publish']) ? '公開' : '下書き';
     carmel3_auto_log($s, "成功: {$title}（{$status_label}） post#{$post_id}{$cta_msg}{$img_msg}{$gmb_msg}{$extra_msg}{$notify_msg} | 残り{$remaining}件");
+    carmel3_progress_set("完了：「{$title}」を{$status_label}で作成しました（残り{$remaining}件）", 100, 'done', array('post_id' => $post_id, 'title' => $title));
+    carmel3_loglist_add("成功: {$title}（{$status_label}） post#{$post_id}{$cta_msg}{$img_msg}{$extra_msg} | 残り{$remaining}件", true);
     return $post_id;
 }
 
@@ -1873,9 +1944,14 @@ add_action('admin_post_carmel3_auto_run_now', function () {
     if (!current_user_can('manage_options')) wp_die('権限がありません');
     check_admin_referer('carmel3_auto_run_now');
 
-    carmel3_auto_run();
+    // 画面を固まらせないよう、裏側で実行。進捗は下のバーに出る
+    carmel3_progress_set('生成を開始しました。準備中…', 3, 'running');
+    if (!wp_next_scheduled(CARMEL3_AUTO_RUNHOOK)) {
+        wp_schedule_single_event(time(), CARMEL3_AUTO_RUNHOOK);
+    }
+    if (function_exists('spawn_cron')) { spawn_cron(); }
 
-    wp_safe_redirect(admin_url('admin.php?page=carmel3-auto&ran=1'));
+    wp_safe_redirect(admin_url('admin.php?page=carmel3-auto&started=1#carmel3-prog'));
     exit;
 });
 
@@ -1918,6 +1994,88 @@ add_action('admin_post_carmel3_auto_process_image', function () {
     exit;
 });
 
+// 進捗パネル（ただいま生成中…）＋最近のログ。自動で更新（ポーリング）する。
+function carmel3_render_progress_panel() {
+    $p = carmel3_progress_get();
+    $state = isset($p['state']) ? $p['state'] : 'idle';
+    $step  = isset($p['step'])  ? $p['step']  : '待機中';
+    $pct   = isset($p['pct'])   ? (int)$p['pct'] : 0;
+    $when  = isset($p['time'])  ? $p['time']  : '';
+    $ajax  = admin_url('admin-ajax.php');
+    $list  = carmel3_loglist_get();
+    ?>
+    <div id="carmel3-prog" style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:16px;scroll-margin-top:40px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+            <h2 style="margin:0;font-size:16px">生成の進捗</h2>
+            <span id="carmel3-prog-badge" style="font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:#9ca3af;color:#fff">—</span>
+        </div>
+        <p id="carmel3-prog-step" style="margin:10px 0 6px;font-size:15px;font-weight:700;color:#111"><?php echo esc_html($step); ?></p>
+        <div style="height:14px;background:#eef2f7;border-radius:999px;overflow:hidden">
+            <div id="carmel3-prog-bar" style="height:14px;width:<?php echo (int)$pct; ?>%;background:#0f766e;transition:width .4s"></div>
+        </div>
+        <p id="carmel3-prog-meta" style="margin:8px 0 0;color:#777;font-size:12px"><?php echo $when ? '更新: ' . esc_html($when) : ''; ?></p>
+        <p style="margin:8px 0 0;color:#999;font-size:12px">※ この画面は自動で更新されます。画像ありは完了まで1〜3分かかります。</p>
+
+        <?php if (!empty($list)): ?>
+        <details style="margin-top:14px">
+            <summary style="cursor:pointer;font-weight:700;font-size:13px">最近の実行ログ（<?php echo count($list); ?>件）</summary>
+            <ul style="margin:8px 0 0;padding-left:18px;line-height:1.6;font-size:12px;color:#444">
+                <?php foreach ($list as $row):
+                    $ok = !empty($row['ok']); ?>
+                    <li style="margin:0 0 4px">
+                        <span style="color:<?php echo $ok ? '#16a34a' : '#dc2626'; ?>;font-weight:700"><?php echo $ok ? '成功' : '失敗'; ?></span>
+                        <span style="color:#888"><?php echo esc_html(isset($row['time']) ? $row['time'] : ''); ?></span>
+                        — <?php echo esc_html(isset($row['msg']) ? $row['msg'] : ''); ?>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        </details>
+        <?php endif; ?>
+    </div>
+    <script>
+    (function(){
+        var ajax = <?php echo wp_json_encode($ajax); ?>;
+        var bar = document.getElementById('carmel3-prog-bar');
+        var stepEl = document.getElementById('carmel3-prog-step');
+        var metaEl = document.getElementById('carmel3-prog-meta');
+        var badge = document.getElementById('carmel3-prog-badge');
+        var idle = 0;
+        function paint(d){
+            if(!d) return;
+            var pct = parseInt(d.pct||0,10);
+            bar.style.width = pct + '%';
+            if(d.step) stepEl.textContent = d.step;
+            if(d.time) metaEl.textContent = '更新: ' + d.time;
+            var st = d.state || 'idle';
+            var map = {running:['生成中…','#0ea5e9'], done:['完了','#16a34a'], error:['エラー','#dc2626'], idle:['待機中','#9ca3af']};
+            var m = map[st] || map.idle;
+            badge.textContent = m[0]; badge.style.background = m[1];
+            bar.style.background = (st==='error') ? '#dc2626' : (st==='done' ? '#16a34a' : '#0f766e');
+        }
+        function tick(){
+            fetch(ajax + '?action=carmel3_auto_progress', {credentials:'same-origin'})
+              .then(function(r){return r.json();})
+              .then(function(j){
+                  if(j && j.success){
+                      paint(j.data);
+                      var st = (j.data && j.data.state) || 'idle';
+                      if(st==='running'){ idle=0; }
+                      else { idle++; }
+                      // 完了/エラー後はしばらくしたらポーリング間隔を落とす
+                      if(st==='done' || st==='error'){
+                          if(idle>3){ return; } // 止める
+                      }
+                  }
+              })
+              .catch(function(){});
+        }
+        tick();
+        setInterval(tick, 3000);
+    })();
+    </script>
+    <?php
+}
+
 function carmel3_auto_settings_page() {
     $s = carmel3_auto_get_settings();
     $categories = function_exists('carmel_get_categories') ? carmel_get_categories() : array();
@@ -1936,6 +2094,9 @@ function carmel3_auto_settings_page() {
         <?php endif; ?>
         <?php if (isset($_GET['ran'])): ?>
             <div class="notice notice-info"><p>テスト実行しました。下の「最終実行」を確認してください。</p></div>
+        <?php endif; ?>
+        <?php if (isset($_GET['started'])): ?>
+            <div class="notice notice-success"><p>生成を開始しました。下の<strong>「生成の進捗」</strong>バーで状況が自動更新されます（画像ありは1〜3分かかります）。</p></div>
         <?php endif; ?>
         <?php if (isset($_GET['reset'])): ?>
             <div class="notice notice-success"><p>生成済み記録をリセットしました。テーマキューを最初からもう一度生成できます。</p></div>
@@ -1957,6 +2118,8 @@ function carmel3_auto_settings_page() {
         <?php if (!$engine_ok): ?>
             <div class="notice notice-error"><p><strong>注意：</strong>既存プラグイン（CARMEL統合管理 v5.7）が無効か、関数が見つかりません。先に有効化してください。これが無いと自動生成は動きません。</p></div>
         <?php endif; ?>
+
+        <?php carmel3_render_progress_panel(); ?>
 
         <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:16px">
             <p style="margin:0 0 6px"><strong>ステータス</strong></p>
