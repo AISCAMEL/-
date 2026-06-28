@@ -73,6 +73,17 @@ class Carmel_Application_Form {
 			'message'   => isset( $_POST['carmel_message'] ) ? sanitize_textarea_field( wp_unslash( $_POST['carmel_message'] ) ) : '',
 		);
 
+		// 事前審査/在庫からの引き継ぎ（希望条件）。案件メタへ extra_ として保存。
+		if ( ! empty( $_POST['carmel_extra'] ) && is_array( $_POST['carmel_extra'] ) ) {
+			$extra = array();
+			foreach ( wp_unslash( $_POST['carmel_extra'] ) as $k => $v ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+				$extra[ sanitize_key( $k ) ] = sanitize_text_field( $v );
+			}
+			if ( $extra ) {
+				$data['extra'] = $extra;
+			}
+		}
+
 		$thanks = isset( $_POST['carmel_thanks'] ) ? esc_url_raw( wp_unslash( $_POST['carmel_thanks'] ) ) : '';
 
 		$result = Carmel_Application_Intake::process( $data );
@@ -138,6 +149,9 @@ class Carmel_Application_Form {
 				. '</select></label>';
 		}
 
+		// 事前審査/在庫からの引き継ぎ（GET）→ hidden で intake へ、希望条件を表示。
+		echo $this->prefill_block(); // phpcs:ignore WordPress.Security.EscapeOutput
+
 		echo '<label class="carmel-f">お名前<span class="req">*</span><input type="text" name="carmel_name" required></label>';
 		echo '<label class="carmel-f">メールアドレス<span class="req">*</span><input type="email" name="carmel_email" required></label>';
 		echo '<label class="carmel-f">電話番号<input type="tel" name="carmel_phone"></label>';
@@ -149,6 +163,42 @@ class Carmel_Application_Form {
 		echo '</form>';
 
 		return ob_get_clean();
+	}
+
+	/** 事前審査/在庫詳細からの希望条件（GET）を hidden＋表示。 */
+	private function prefill_block() {
+		$price   = isset( $_GET['price'] ) ? (int) $_GET['price'] : 0;
+		$down    = isset( $_GET['down'] ) ? (int) $_GET['down'] : 0;
+		$months  = isset( $_GET['months'] ) ? (int) $_GET['months'] : 0;
+		$vehicle = isset( $_GET['vehicle'] ) ? (int) $_GET['vehicle'] : 0;
+		if ( ! $price && ! $down && ! $months && ! $vehicle ) {
+			return '';
+		}
+		$out  = '';
+		$rows = array();
+		if ( $vehicle && 'carmel_vehicle' === get_post_type( $vehicle ) ) {
+			$out .= '<input type="hidden" name="carmel_extra[vehicle_id]" value="' . (int) $vehicle . '">';
+			$car  = trim( get_post_meta( $vehicle, 'maker', true ) . ' ' . get_post_meta( $vehicle, 'model', true ) );
+			if ( $car ) {
+				$rows[] = '車両：' . esc_html( $car );
+			}
+		}
+		if ( $price ) {
+			$out .= '<input type="hidden" name="carmel_extra[loan_price]" value="' . (int) $price . '">';
+			$rows[] = '車両価格：¥' . number_format( $price );
+		}
+		if ( $down ) {
+			$out .= '<input type="hidden" name="carmel_extra[loan_down]" value="' . (int) $down . '">';
+			$rows[] = '頭金：¥' . number_format( $down );
+		}
+		if ( $months ) {
+			$out .= '<input type="hidden" name="carmel_extra[loan_months]" value="' . (int) $months . '">';
+			$rows[] = '回数：' . (int) $months . '回';
+		}
+		if ( $rows ) {
+			$out .= '<div class="carmel-appform-prefill"><strong>ご希望条件</strong>　' . implode( '／', $rows ) . '</div>';
+		}
+		return $out;
 	}
 
 	private function banner() {
@@ -177,6 +227,7 @@ class Carmel_Application_Form {
 .carmel-appform-banner{max-width:520px;padding:.8em 1em;border-radius:.4em;margin-bottom:1em}
 .carmel-appform-success{background:#e8f8f3;color:#0e6e58;border:1px solid #16a085}
 .carmel-appform-error{background:#fdecea;color:#a5281b;border:1px solid #c0392b}
+.carmel-appform-prefill{background:#f1ecfb;border:1px solid #ddd2f5;border-radius:.4em;padding:.6em .8em;font-size:.88em;color:#46414f}
 </style>';
 	}
 }

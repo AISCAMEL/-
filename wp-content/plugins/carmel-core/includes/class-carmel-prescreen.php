@@ -83,7 +83,7 @@ class Carmel_Prescreen {
 		<div class="carmel-ps-line">月々のお支払い目安：<strong class="ps-monthly">¥0</strong> <span class="ps-times"></span></div>
 	</div>
 	<p class="carmel-ps-note">※ 目安です。最終的な可否・金利・条件は信販会社の審査により決定します。借入可能額は年収・雇用形態からの簡易試算で、実際の与信枠とは異なります。</p>
-	<a class="carmel-ps-btn" href="<?php echo esc_url( $apply ); ?>">この内容で審査を申し込む</a>
+	<a class="carmel-ps-btn" data-apply="<?php echo esc_url( $apply ); ?>" href="<?php echo esc_url( $apply ); ?>">この内容で審査を申し込む</a>
 </div>
 <script>
 (function(){
@@ -113,6 +113,10 @@ class Carmel_Prescreen {
 		else if(ratio<=0.35){cls+='carmel-ps-ok';txt='○ 標準的なご利用範囲の目安です';}
 		else{cls+='carmel-ps-mid';txt='△ ややご負担が大きめ。頭金・回数の調整をおすすめします';}
 		j.className=cls;j.textContent=txt;
+		// 申込CTAに希望条件を引き継ぐ。
+		var btn=w.querySelector('.carmel-ps-btn');
+		if(btn){var base=btn.getAttribute('data-apply')||'';var sep=base.indexOf('?')>=0?'&':'?';
+			btn.href=base+sep+'price='+Math.round(price)+'&down='+Math.round(down)+'&months='+months;}
 	}
 	w.addEventListener('input',calc);w.addEventListener('change',calc);calc();
 })();

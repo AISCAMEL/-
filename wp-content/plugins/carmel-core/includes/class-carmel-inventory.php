@@ -80,6 +80,51 @@ class Carmel_Inventory {
 
 		// 在庫詳細のSEO（構造化データ＋OGP）。
 		add_action( 'wp_head', array( $this, 'seo_head' ) );
+
+		// 値下げ検知（価格メタ更新の直前に旧価格を記録）。
+		add_filter( 'update_post_metadata', array( $this, 'track_price_change' ), 10, 5 );
+	}
+
+	/**
+	 * 価格更新の直前に呼ばれ、値下げなら旧価格を price_prev に記録する。
+	 *
+	 * @param mixed  $check
+	 * @param int    $post_id
+	 * @param string $key
+	 * @param mixed  $value
+	 * @param mixed  $prev
+	 * @return mixed  $check（null のまま＝通常処理を続行）
+	 */
+	public function track_price_change( $check, $post_id, $key, $value, $prev ) {
+		if ( 'price' !== $key || 'carmel_vehicle' !== get_post_type( $post_id ) ) {
+			return $check;
+		}
+		$old = (float) get_post_meta( $post_id, 'price', true );
+		$new = (float) $value;
+		if ( $old > 0 && $new > 0 && $new < $old ) {
+			update_post_meta( $post_id, 'price_prev', $old );
+			update_post_meta( $post_id, 'price_drop_at', current_time( 'mysql' ) );
+		} elseif ( $old > 0 && $new > $old ) {
+			delete_post_meta( $post_id, 'price_prev' );
+			delete_post_meta( $post_id, 'price_drop_at' );
+		}
+		return $check;
+	}
+
+	/** 在庫の新着/値下げバッジ（カード/詳細共通）。 */
+	private function badges( $car ) {
+		$out      = '';
+		$new_days = (int) apply_filters( 'carmel_inventory_new_days', 7 );
+		$age      = ( time() - (int) get_post_time( 'U', true, $car ) ) / DAY_IN_SECONDS;
+		if ( $age >= 0 && $age <= $new_days ) {
+			$out .= '<span class="carmel-badge-new">NEW</span>';
+		}
+		$prev = (float) get_post_meta( $car->ID, 'price_prev', true );
+		$cur  = (float) get_post_meta( $car->ID, 'price', true );
+		if ( $prev > 0 && $cur > 0 && $cur < $prev ) {
+			$out .= '<span class="carmel-badge-drop">値下げ</span>';
+		}
+		return $out;
 	}
 
 	/**
@@ -791,6 +836,7 @@ window.carmelInitMap=function(){
 		$rows = array(
 			'画像'     => 'thumb',
 			'価格'     => 'price',
+			'月々目安' => 'monthly',
 			'メーカー' => 'maker',
 			'車種'     => 'model',
 			'グレード' => 'grade',
@@ -823,6 +869,9 @@ window.carmelInitMap=function(){
 					: '<div class="carmel-car-noimg" style="height:90px">NO IMAGE</div>';
 			case 'price':
 				return '<strong style="color:#6b4fbb">¥' . esc_html( number_format( (float) get_post_meta( $car->ID, 'price', true ) ) ) . '</strong>';
+			case 'monthly':
+				$p = (float) get_post_meta( $car->ID, 'price', true );
+				return $p > 0 ? '月々 ¥' . esc_html( number_format( $this->monthly_estimate( $p ) ) ) . '〜' : '—';
 			case 'mileage':
 				$m = get_post_meta( $car->ID, 'mileage', true );
 				return '' !== (string) $m ? esc_html( number_format( (float) $m ) ) . 'km' : '—';
@@ -1052,7 +1101,7 @@ window.carmelInitMap=function(){
 		echo '</table>';
 
 		// ローン月々 概算ウィジェット。
-		echo $this->loan_widget( (float) $g( 'price' ) ); // phpcs:ignore WordPress.Security.EscapeOutput
+		echo $this->loan_widget( (float) $g( 'price' ), (int) $vid ); // phpcs:ignore WordPress.Security.EscapeOutput
 
 		if ( $store_id && in_array( $scope, array( 'store', 'hq', 'customer' ), true ) ) {
 			$sname = get_post_meta( $store_id, 'store_name', true );
@@ -1365,18 +1414,18 @@ window.carmelInitMap=function(){
 	 * @param float $price 車両価格
 	 * @return string
 	 */
-	private function loan_widget( $price ) {
+	private function loan_widget( $price, $vid = 0 ) {
 		if ( $price <= 0 ) {
 			return '';
 		}
 		$d      = class_exists( 'Carmel_Sales_Support' ) ? Carmel_Sales_Support::finance_defaults() : array( 'loan_rate' => 8.9, 'loan_months' => 60 );
 		$rate   = isset( $d['loan_rate'] ) ? $d['loan_rate'] : 8.9;
 		$months = isset( $d['loan_months'] ) ? (int) $d['loan_months'] : 60;
-		$apply  = home_url( '/' . ltrim( apply_filters( 'carmel_apply_page_slug', 'apply' ), '/' ) );
+		$apply  = add_query_arg( 'vehicle', (int) $vid, home_url( '/' . ltrim( apply_filters( 'carmel_apply_page_slug', 'apply' ), '/' ) ) );
 
 		ob_start();
 		?>
-<div class="carmel-loanw" data-price="<?php echo esc_attr( (int) $price ); ?>">
+<div class="carmel-loanw" data-price="<?php echo esc_attr( (int) $price ); ?>" data-apply="<?php echo esc_url( $apply ); ?>">
 	<h3>🧮 ローン月々の概算</h3>
 	<div class="carmel-loanw-row">
 		<label>頭金 <input type="number" class="lw-down" value="0" min="0" step="10000"></label>
@@ -1401,6 +1450,9 @@ window.carmelInitMap=function(){
 		if(r<=0){mo=Math.round(p/m);}else{var k=Math.pow(1+r,m);mo=Math.round(p*r*k/(k-1));}
 		w.querySelector('.lw-monthly').textContent=yen(mo);
 		w.querySelector('.lw-times').textContent='× '+m+'回';
+		var btn=w.querySelector('a.carmel-btn');
+		if(btn){var base=w.getAttribute('data-apply')||'';var sep=base.indexOf('?')>=0?'&':'?';
+			btn.href=base+sep+'price='+Math.round(price)+'&down='+Math.round(down)+'&months='+m;}
 	}
 	w.addEventListener('input',calc);calc();
 })();
@@ -1636,6 +1688,10 @@ window.carmelInitMap=function(){
 		$out  = '<article class="carmel-car-card">';
 		$out .= '<div class="carmel-car-thumb">' . $thumb . '<span class="carmel-car-badge">' . esc_html( $status ? $status : '販売中' ) . '</span>';
 		if ( 'public' === $context ) {
+			$badges = $this->badges( $car );
+			if ( $badges ) {
+				$out .= '<div class="carmel-car-badges">' . $badges . '</div>';
+			}
 			$out .= $this->favorite_button( $car->ID );
 		}
 		$out .= '</div>';
@@ -1662,7 +1718,9 @@ window.carmelInitMap=function(){
 		if ( $specs ) {
 			$out .= '<div class="carmel-car-specs">' . implode( '｜', $specs ) . '</div>';
 		}
-		$out .= '<div class="carmel-car-price">¥' . esc_html( number_format( (float) $price ) ) . '<small>（税込）</small></div>';
+		$prev = (float) get_post_meta( $car->ID, 'price_prev', true );
+		$old  = ( 'public' === $context && $prev > (float) $price ) ? '<span class="carmel-car-oldprice">¥' . esc_html( number_format( $prev ) ) . '</span>' : '';
+		$out .= '<div class="carmel-car-price">' . $old . '¥' . esc_html( number_format( (float) $price ) ) . '<small>（税込）</small></div>';
 		if ( 'public' === $context && (float) $price > 0 ) {
 			$mo = $this->monthly_estimate( (float) $price );
 			if ( $mo > 0 ) {
@@ -2446,6 +2504,10 @@ window.carmelInitMap=function(){
 .carmel-car-price{font-size:1.25em;font-weight:bold;color:#6b4fbb;margin-top:.2em}
 .carmel-car-price small{font-size:.55em;color:#888;font-weight:normal}
 .carmel-car-monthly{font-size:.8em;color:#16a085;font-weight:600}
+.carmel-car-oldprice{text-decoration:line-through;color:#aaa;font-size:.6em;margin-right:.4em}
+.carmel-car-badges{position:absolute;top:.4em;left:.4em;display:flex;gap:.3em}
+.carmel-badge-new{background:#16a085;color:#fff;border-radius:.3em;padding:.1em .5em;font-size:.72em;font-weight:bold}
+.carmel-badge-drop{background:#c0392b;color:#fff;border-radius:.3em;padding:.1em .5em;font-size:.72em;font-weight:bold}
 .carmel-car-cost{font-size:.8em;color:#a5281b}
 .carmel-car-store{font-size:.8em;color:#666}
 .carmel-car-actions{margin-top:auto;padding-top:.5em;display:flex;gap:.4em;flex-wrap:wrap}
