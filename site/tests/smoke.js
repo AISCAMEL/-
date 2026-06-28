@@ -48,6 +48,19 @@ const PARTNER = [
   ['partner-community.html', '#cmList'],
 ];
 
+// モバイル横スクロール（はみ出し）回帰チェック対象。role=ログイン要否。
+const MOBILE = [
+  ['buymo.html', null],
+  ['genre/index.html', null],
+  ['genre/haisha/index.html', null],
+  ['genre/hiace/tokyo/index.html', null],
+  ['area/tokyo/index.html', null],
+  ['buymo-contact.html', null],
+  ['report.html', 'hq'],
+  ['hq-leads.html', 'hq'],
+  ['partner-academy.html', 'partner'],
+];
+
 (async () => {
   const browser = await chromium.launch({ executablePath: fs.existsSync(EXE) ? EXE : undefined });
   const results = [];
@@ -83,6 +96,26 @@ const PARTNER = [
   const pt = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   await pt.addInitScript(() => { try { localStorage.setItem('buymo_session', JSON.stringify({ token: 't', role: 'partner', name: 'いわき店', email: 'x@x', exp: 4102444800000 })); localStorage.setItem('buymo_role', 'partner'); } catch (e) {} });
   await run(pt, PARTNER); await pt.close();
+
+  // モバイル(375px)横はみ出し検査
+  async function runMobile(list) {
+    for (const [url, role] of list) {
+      const ctx = await browser.newContext({ viewport: { width: 375, height: 812 }, isMobile: true });
+      if (role) await ctx.addInitScript(r => { try { localStorage.setItem('buymo_session', JSON.stringify({ token: 't', role: r, name: 'デモ', email: 'x@x', exp: 4102444800000 })); } catch (e) {} }, role);
+      const pg = await ctx.newPage();
+      let ok = false, detail = '';
+      try {
+        await pg.goto(BASE + '/' + url, { waitUntil: 'domcontentloaded', timeout: 15000 });
+        await pg.waitForTimeout(300);
+        const m = await pg.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
+        ok = m.sw <= m.cw + 1;
+        detail = 'sw=' + m.sw + '/cw=' + m.cw + (ok ? '' : ' ⚠ 横はみ出し');
+      } catch (e) { detail = 'EXCEPTION ' + String(e).slice(0, 60); }
+      results.push(['[mobile] ' + url, ok, detail]);
+      await ctx.close();
+    }
+  }
+  await runMobile(MOBILE);
 
   await browser.close();
 
