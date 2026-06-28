@@ -29,6 +29,7 @@ class Carmel_Store_Leads {
 	}
 
 	public function register_hooks() {
+		add_action( 'carmel_store_dashboard_top', array( $this, 'render_today_tasks' ), 6 );
 		add_action( 'carmel_store_dashboard_top', array( $this, 'render_panel' ), 7 );
 		add_action( 'admin_post_' . self::STATUS_ACTION, array( $this, 'handle_status' ) );
 		add_action( 'admin_post_' . self::CONVERT_ACTION, array( $this, 'handle_convert' ) );
@@ -69,6 +70,61 @@ class Carmel_Store_Leads {
 	/* --------------------------------------------------------------------- *
 	 * 表示
 	 * --------------------------------------------------------------------- */
+
+	/** 今日のやること（次アクション期日が到来/超過の案件）。 */
+	public function render_today_tasks() {
+		if ( ! $this->can_access() ) {
+			return;
+		}
+		$is_hq    = current_user_can( 'carmel_manage_stores' );
+		$store_id = $this->current_store_id();
+		$today    = current_time( 'Y-m-d' );
+
+		$meta = array(
+			'relation' => 'AND',
+			array( 'key' => 'next_action_due', 'value' => $today, 'compare' => '<=', 'type' => 'DATE' ),
+			array( 'key' => 'next_action_due', 'value' => '', 'compare' => '!=' ),
+		);
+		if ( ! $is_hq ) {
+			if ( ! $store_id ) {
+				return;
+			}
+			$meta[] = array( 'key' => 'store_id', 'value' => $store_id );
+		}
+		$deals = get_posts(
+			array(
+				'post_type'      => 'carmel_deal',
+				'post_status'    => 'publish',
+				'posts_per_page' => 30,
+				'meta_key'       => 'next_action_due',
+				'orderby'        => 'meta_value',
+				'order'          => 'ASC',
+				'meta_query'     => $meta,
+			)
+		);
+		// クローズ・否決等は除外。
+		$excluded = array( 'closed', 'bb_closed', 'lease_closed', 'rejected', 'bb_declined' );
+		$deals = array_filter( $deals, function ( $d ) use ( $excluded ) {
+			return ! in_array( get_post_meta( $d->ID, 'deal_status', true ), $excluded, true );
+		} );
+		if ( empty( $deals ) ) {
+			return;
+		}
+
+		echo '<div class="carmel-todo"><h3>📋 今日のやること（' . (int) count( $deals ) . '）</h3><ul>';
+		$store_url = home_url( '/' . ltrim( apply_filters( 'carmel_store_page_slug', 'store' ), '/' ) );
+		foreach ( $deals as $d ) {
+			$due     = (string) get_post_meta( $d->ID, 'next_action_due', true );
+			$act     = (string) get_post_meta( $d->ID, 'next_action', true );
+			$name    = (string) get_post_meta( $d->ID, 'applicant_name', true );
+			$overdue = ( strtotime( $due ) < strtotime( $today ) );
+			echo '<li class="' . ( $overdue ? 'carmel-todo-over' : '' ) . '">#' . (int) $d->ID . ' ' . esc_html( $name )
+				. ' — <strong>' . esc_html( $act ? $act : '次アクション' ) . '</strong>'
+				. '（' . esc_html( $overdue ? $due . '・期日超過' : ( $due === $today ? '本日' : $due ) ) . '）</li>';
+		}
+		echo '</ul><p class="carmel-todo-note">案件の「次アクション」で期日を設定すると、ここと期日通知に反映されます。</p></div>';
+		echo '<style>.carmel-todo{border:1px solid #f3d9b8;background:#fff7ed;border-radius:10px;padding:.7em 1em;margin:.6em 0;font-size:14px}.carmel-todo h3{margin:.1em 0 .4em;font-size:1em}.carmel-todo ul{margin:.2em 0;padding-left:1.3em}.carmel-todo li{padding:.15em 0}.carmel-todo-over{color:#c0392b;font-weight:bold}.carmel-todo-note{font-size:.78em;color:#888;margin:.3em 0 0}</style>';
+	}
 
 	public function render_panel() {
 		if ( ! $this->can_access() ) {
