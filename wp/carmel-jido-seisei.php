@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 7.5
+ * Version: 7.6
  * Author: CARMEL
  */
 
@@ -35,6 +35,7 @@ function carmel3_auto_get_settings() {
     $defaults = array(
         'enabled'      => 0,
         'frequency'    => 'carmel_weekly',
+        'run_time'     => '09:00',   // 自動生成を実行する時刻（サイトのタイムゾーン）
         'publish'      => 0,
         'gen_images'   => 0,
         'gen_section_images' => 1,
@@ -131,6 +132,26 @@ add_action(CARMEL3_AUTO_HOOK, 'carmel3_auto_run');
 // 本文セクション画像を裏側で1枚ずつ処理するワーカー
 add_action(CARMEL3_AUTO_IMGHOOK, 'carmel3_auto_process_one_image');
 
+// 指定時刻（HH:MM・サイトのタイムゾーン）の「次の実行時刻」をUNIXタイムで返す
+function carmel3_next_run_ts($time_str) {
+    if (!preg_match('/^(\d{1,2}):(\d{2})$/', trim((string)$time_str), $m)) {
+        $h = 9; $i = 0;
+    } else {
+        $h = max(0, min(23, (int)$m[1]));
+        $i = max(0, min(59, (int)$m[2]));
+    }
+    $tz  = function_exists('wp_timezone') ? wp_timezone() : new DateTimeZone(date_default_timezone_get());
+    try {
+        $now = new DateTime('now', $tz);
+        $run = new DateTime('now', $tz);
+        $run->setTime($h, $i, 0);
+        if ($run <= $now) { $run->modify('+1 day'); }
+        return $run->getTimestamp();
+    } catch (Exception $e) {
+        return time() + 60;
+    }
+}
+
 function carmel3_auto_reschedule() {
     $s = carmel3_auto_get_settings();
     $existing = wp_next_scheduled(CARMEL3_AUTO_HOOK);
@@ -140,7 +161,8 @@ function carmel3_auto_reschedule() {
     if (!empty($s['enabled'])) {
         $recur = in_array($s['frequency'], array('daily', 'carmel_weekly', 'carmel_twiceweekly'), true)
             ? $s['frequency'] : 'carmel_weekly';
-        wp_schedule_event(time() + 60, $recur, CARMEL3_AUTO_HOOK);
+        $first = carmel3_next_run_ts(isset($s['run_time']) ? $s['run_time'] : '09:00');
+        wp_schedule_event($first, $recur, CARMEL3_AUTO_HOOK);
     }
 }
 
@@ -1747,6 +1769,9 @@ add_action('admin_post_carmel3_auto_save', function () {
     $freq = isset($_POST['frequency']) ? sanitize_key($_POST['frequency']) : 'carmel_weekly';
     $s['frequency'] = in_array($freq, array('daily', 'carmel_weekly', 'carmel_twiceweekly'), true) ? $freq : 'carmel_weekly';
 
+    $rt = isset($_POST['run_time']) ? trim((string) wp_unslash($_POST['run_time'])) : '09:00';
+    $s['run_time'] = preg_match('/^(\d{1,2}):(\d{2})$/', $rt) ? $rt : '09:00';
+
     $im = isset($_POST['image_model']) ? sanitize_text_field(wp_unslash($_POST['image_model'])) : '';
     $s['image_model'] = $im !== '' ? $im : CARMEL3_IMG_DEFAULT_MODEL;
 
@@ -1964,13 +1989,25 @@ function carmel3_auto_settings_page() {
 
             <p><label><input type="checkbox" name="enabled" value="1" <?php checked(!empty($s['enabled'])); ?>> 自動生成を有効にする（定期実行）</label></p>
 
-            <p><label>頻度：
-                <select name="frequency">
-                    <option value="daily" <?php selected($s['frequency'], 'daily'); ?>>毎日</option>
-                    <option value="carmel_twiceweekly" <?php selected($s['frequency'], 'carmel_twiceweekly'); ?>>週2回</option>
-                    <option value="carmel_weekly" <?php selected($s['frequency'], 'carmel_weekly'); ?>>毎週</option>
-                </select>
-            </label></p>
+            <p style="display:flex;flex-wrap:wrap;gap:18px;align-items:center">
+                <label>頻度：
+                    <select name="frequency">
+                        <option value="daily" <?php selected($s['frequency'], 'daily'); ?>>毎日</option>
+                        <option value="carmel_twiceweekly" <?php selected($s['frequency'], 'carmel_twiceweekly'); ?>>週2回</option>
+                        <option value="carmel_weekly" <?php selected($s['frequency'], 'carmel_weekly'); ?>>毎週</option>
+                    </select>
+                </label>
+                <label><strong>投稿時間（時刻）：</strong>
+                    <input type="time" name="run_time" value="<?php echo esc_attr(isset($s['run_time']) ? $s['run_time'] : '09:00'); ?>" style="padding:4px 6px">
+                </label>
+            </p>
+            <p style="margin:-6px 0 8px;color:#666;font-size:12px">
+                指定した時刻に毎日（または週2回・毎週）自動生成します。タイムゾーンは <strong><?php echo esc_html(wp_timezone_string()); ?></strong>。
+                現在時刻 <strong><?php echo esc_html(date_i18n('Y-m-d H:i')); ?></strong>。
+                <?php $next_t = wp_next_scheduled(CARMEL3_AUTO_HOOK); ?>
+                次回実行予定：<strong><?php echo $next_t ? esc_html(get_date_from_gmt(gmdate('Y-m-d H:i:s', $next_t), 'Y-m-d H:i')) : '未スケジュール（有効にして保存）'; ?></strong>
+                <br>※ WP-Cronはサイトにアクセスがあった時に動くため、指定時刻ちょうどから数分〜遅れる場合があります（確実にするにはサーバーの本物cron推奨）。
+            </p>
 
             <p><label>
                 <input type="checkbox" name="publish" value="1" <?php checked(!empty($s['publish'])); ?>>
