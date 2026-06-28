@@ -32,13 +32,19 @@
       <input type="search" id="fSearch" placeholder="🔍 名前・ID・電話で検索" />
       <select id="fStage"><option value="">ステージ：すべて</option></select>
       <select id="fStore"><option value="">担当：すべて</option></select>
+      <select id="fSort">
+        <option value="date_desc">並び替え：新着順</option>
+        <option value="date_asc">受付日が古い順</option>
+        <option value="amount_desc">金額が高い順</option>
+        <option value="amount_asc">金額が低い順</option>
+      </select>
       <span class="filter-count" id="fCount"></span>
       <button id="btnCsv" class="btn btn-primary btn-csv" type="button">⬇ CSV出力</button>
     </div>
 
     <div class="hq-table-wrap">
       <table class="hq-table">
-        <thead><tr><th>案件ID</th><th>お名前</th><th>連絡先</th><th>ジャンル</th><th>担当（加盟店）</th><th>ステージ</th><th>金額</th></tr></thead>
+        <thead><tr><th>案件ID</th><th>受付日</th><th>お名前</th><th>連絡先</th><th>ジャンル</th><th>担当（加盟店）</th><th>ステージ</th><th>金額</th></tr></thead>
         <tbody id="rows"></tbody>
       </table>
     </div>

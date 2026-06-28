@@ -13,12 +13,12 @@ window.HQ = (function () {
 
   function seedCases() {
     return [
-      { id: 'CS-7001', name: '佐藤 様', tel: '090-1111-2222', email: 'sato@example.com', genre: '廃車', assignee: 'いわき店', stage: '新規受付', amount: 0, memo: '不動車・引取希望' },
-      { id: 'CS-7002', name: '田中 様', tel: '080-2222-3333', email: 'tanaka@example.com', genre: '事故車', assignee: 'いわき店', stage: '査定中', amount: 120000, memo: '前方損傷' },
-      { id: 'CS-7003', name: '鈴木 様', tel: '070-3333-4444', email: 'suzuki@example.com', genre: 'SUV', assignee: '郡山店', stage: '商談中', amount: 1820000, memo: '他社相見積中' },
-      { id: 'CS-7004', name: '山田 様', tel: '090-4444-5555', email: 'yamada@example.com', genre: '軽', assignee: 'いわき店', stage: '契約', amount: 740000, memo: '' },
-      { id: 'CS-7005', name: '高橋 様', tel: '080-5555-6666', email: 'takahashi@example.com', genre: 'EV', assignee: '郡山店', stage: '入金待ち', amount: 1180000, memo: '書類待ち' },
-      { id: 'CS-7006', name: '伊藤 様', tel: '070-6666-7777', email: 'ito@example.com', genre: 'セダン', assignee: 'いわき店', stage: '完了', amount: 1500000, memo: '' }
+      { id: 'CS-7001', date: '2026/06/27', name: '佐藤 様', tel: '090-1111-2222', email: 'sato@example.com', genre: '廃車', assignee: 'いわき店', stage: '新規受付', amount: 0, memo: '不動車・引取希望' },
+      { id: 'CS-7002', date: '2026/06/26', name: '田中 様', tel: '080-2222-3333', email: 'tanaka@example.com', genre: '事故車', assignee: 'いわき店', stage: '査定中', amount: 120000, memo: '前方損傷' },
+      { id: 'CS-7003', date: '2026/06/25', name: '鈴木 様', tel: '070-3333-4444', email: 'suzuki@example.com', genre: 'SUV', assignee: '郡山店', stage: '商談中', amount: 1820000, memo: '他社相見積中' },
+      { id: 'CS-7004', date: '2026/06/23', name: '山田 様', tel: '090-4444-5555', email: 'yamada@example.com', genre: '軽', assignee: 'いわき店', stage: '契約', amount: 740000, memo: '' },
+      { id: 'CS-7005', date: '2026/06/21', name: '高橋 様', tel: '080-5555-6666', email: 'takahashi@example.com', genre: 'EV', assignee: '郡山店', stage: '入金待ち', amount: 1180000, memo: '書類待ち' },
+      { id: 'CS-7006', date: '2026/06/18', name: '伊藤 様', tel: '070-6666-7777', email: 'ito@example.com', genre: 'セダン', assignee: 'いわき店', stage: '完了', amount: 1500000, memo: '' }
     ];
   }
   function seedStores() {

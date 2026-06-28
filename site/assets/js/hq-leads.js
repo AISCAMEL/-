@@ -25,7 +25,7 @@
   function filtered() {
     var q = (document.getElementById('fSearch').value || '').trim().toLowerCase();
     var st = fStage.value, asg = fStore.value;
-    return all.filter(function (c) {
+    var list = all.filter(function (c) {
       if (st && c.stage !== st) return false;
       if (asg && c.assignee !== asg) return false;
       if (q) {
@@ -34,6 +34,17 @@
       }
       return true;
     });
+    var sortEl = document.getElementById('fSort');
+    var sort = sortEl ? sortEl.value : 'date_desc';
+    var num = function (v) { return Number(v) || 0; };
+    var dt = function (c) { return c.date || ''; };
+    list.sort(function (a, b) {
+      if (sort === 'amount_desc') return num(b.amount) - num(a.amount);
+      if (sort === 'amount_asc') return num(a.amount) - num(b.amount);
+      if (sort === 'date_asc') return dt(a) < dt(b) ? -1 : dt(a) > dt(b) ? 1 : 0;
+      return dt(a) > dt(b) ? -1 : dt(a) < dt(b) ? 1 : 0; // date_desc（既定）
+    });
+    return list;
   }
 
   function render() {
@@ -42,6 +53,7 @@
     document.getElementById('rows').innerHTML = list.map(function (c) {
       return '<tr data-id="' + HQ.esc(c.id) + '">' +
         '<td>' + HQ.esc(c.id) + '</td>' +
+        '<td class="td-sub">' + HQ.esc(c.date || '—') + '</td>' +
         '<td>' + HQ.esc(c.name) + '</td>' +
         '<td>' + HQ.esc(c.tel || '') + '<br><span class="td-sub">' + HQ.esc(c.email || '') + '</span></td>' +
         '<td>' + HQ.esc(c.genre || '') + '</td>' +
@@ -63,18 +75,19 @@
     render();
   });
 
-  ['fSearch', 'fStage', 'fStore'].forEach(function (id) {
-    document.getElementById(id).addEventListener('input', render);
-    document.getElementById(id).addEventListener('change', render);
+  ['fSearch', 'fStage', 'fStore', 'fSort'].forEach(function (id) {
+    var el = document.getElementById(id); if (!el) return;
+    el.addEventListener('input', render);
+    el.addEventListener('change', render);
   });
 
   /* ---- CSV出力（現在の絞り込み結果を書き出し） ---- */
   function csvCell(v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }
   function exportCsv() {
     var list = filtered();
-    var rows = [['案件ID', 'お名前', '電話', 'メール', 'ジャンル', '担当', 'ステージ', '金額(円)']];
+    var rows = [['案件ID', '受付日', 'お名前', '電話', 'メール', 'ジャンル', '担当', 'ステージ', '金額(円)']];
     list.forEach(function (c) {
-      rows.push([c.id, c.name || '', c.tel || '', c.email || '', c.genre || '', c.assignee || '', c.stage || '', (Number(c.amount) || 0)]);
+      rows.push([c.id, c.date || '', c.name || '', c.tel || '', c.email || '', c.genre || '', c.assignee || '', c.stage || '', (Number(c.amount) || 0)]);
     });
     var csv = '﻿' + rows.map(function (r) { return r.map(csvCell).join(','); }).join('\r\n'); // BOM付きでExcel文字化け回避
     var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
