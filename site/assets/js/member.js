@@ -29,8 +29,17 @@
   }
 
   function demoCases() {
-    return [{ id: 'CS-7002', genre: '事故車', stage: '商談中', amount: 120000 }];
+    return [{ id: 'CS-7002', date: '2026/06/26', genre: '事故車', stage: '商談中', amount: 120000 }];
   }
+  // ステージ別「次のステップ」案内（顧客の安心のため）
+  var NEXT = {
+    '新規受付': '担当より査定日程のご連絡をします。',
+    '査定中': '査定結果（買取金額）をご提示します。',
+    '商談中': '金額にご納得いただけたらご契約へ進みます。',
+    '契約': '名義変更などの手続きを無料で進めます。',
+    '入金待ち': 'ご指定の口座へお振込みします（最短即日）。',
+    '完了': 'お取引は完了しました。ありがとうございました。'
+  };
   function loadCases(email) {
     if (ENDPOINT) {
       window.__mycase = function (d) { renderCases(d && d.length ? d : []); };
@@ -56,9 +65,11 @@
       return '<div class="mp-case">' +
         '<div class="mp-case-head"><span class="mp-id">' + c.id + '</span>' +
           (c.genre ? '<span class="mp-tag">' + c.genre + '</span>' : '') +
+          (c.date ? '<span class="mp-date">📅 受付 ' + c.date + '</span>' : '') +
           '<span class="mp-stage">' + c.stage + '</span></div>' +
         '<ol class="mp-stepper">' + steps + '</ol>' +
         (c.amount ? '<p class="mp-amount">提示金額：<strong>' + yen(c.amount) + '</strong></p>' : '<p class="mp-amount">査定金額は確定後に表示されます。</p>') +
+        (NEXT[c.stage] ? '<p class="mp-next">次のステップ：<b>' + NEXT[c.stage] + '</b></p>' : '') +
         '</div>';
     }).join('');
   }
