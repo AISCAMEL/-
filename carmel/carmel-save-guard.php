@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: カーメル 保存データ保護
- * Description: 在庫の保存時に、基本情報（年式/走行距離/排気量/色/メーカー等）や見積もり項目が「空で上書き」されるのを防ぎます。古い車を編集画面で開いて更新したときの消失を根本から防止。タイトル・本文も空化を防ぎます。ACFの保存が完全に終わった後に復元するので確実に効きます。
- * Version: 1.1.0
+ * Description: 在庫の保存時に、基本情報（年式/走行距離/排気量/色/メーカー等）や見積もり項目が「空で上書き」されるのを防ぎます。古い車を編集画面で開いて更新したときの消失を根本から防止。タイトルは空化に加え「信用回復ローン＋番号だけ」の劣化も検知して元に戻します。本文の空化も防止。ACFの保存が完全に終わった後に復元するので確実に効きます。
+ * Version: 1.2.0
  * Author: CARMEL
  *
  * 使い方：wp-content/plugins/ にアップロード →「プラグイン」で有効化するだけ。
@@ -71,19 +71,41 @@ class Carmel_Save_Guard {
 		$pid = ! empty( $postarr['ID'] ) ? (int) $postarr['ID'] : 0;
 		if ( ! $pid ) { return $data; }
 
-		if ( isset( $data['post_title'] ) && '' === trim( (string) $data['post_title'] ) ) {
-			$built = $this->build_title( $pid );
-			if ( '' === $built ) {
+		// 空 または「信用回復ローン＋番号だけ」の劣化タイトルを検知して守る
+		if ( isset( $data['post_title'] ) ) {
+			$incoming = trim( (string) $data['post_title'] );
+			if ( '' === $incoming || $this->is_degraded_title( $incoming ) ) {
 				$prev = get_post_field( 'post_title', $pid );
-				if ( is_string( $prev ) && '' !== trim( $prev ) ) { $built = trim( $prev ); }
+				$prev = is_string( $prev ) ? trim( $prev ) : '';
+				if ( '' !== $prev && ! $this->is_degraded_title( $prev ) ) {
+					// 保存前の良いタイトルを維持
+					$data['post_title'] = $prev;
+				} else {
+					// 良い既存タイトルが無ければ車データから作り直す
+					$built = $this->build_title( $pid );
+					if ( '' !== $built ) { $data['post_title'] = $built; }
+					elseif ( '' !== $prev ) { $data['post_title'] = $prev; }
+				}
 			}
-			if ( '' !== $built ) { $data['post_title'] = $built; }
 		}
 		if ( isset( $data['post_content'] ) && '' === trim( (string) $data['post_content'] ) ) {
 			$prev = get_post_field( 'post_content', $pid );
 			if ( is_string( $prev ) && '' !== trim( $prev ) ) { $data['post_content'] = $prev; }
 		}
 		return $data;
+	}
+
+	/* 「車情報の無い劣化タイトル」か判定。
+	   例：'信用回復ローン' / '信用回復ローン CM-0002' / 'CM-0002' / '低与信ローン' → true */
+	private function is_degraded_title( $t ) {
+		$t = trim( (string) $t );
+		if ( '' === $t ) { return true; }
+		// 先頭の接頭語（信用回復ローン/低与信ローン/低与信）を除去
+		$r = preg_replace( '/^[\s　]*(信用回復ローン|低与信ローン|低与信)[\s　]*/u', '', $t );
+		$r = trim( (string) $r );
+		if ( '' === $r ) { return true; }                                  // 接頭語だけ
+		if ( preg_match( '/^[A-Za-z]{1,6}[-_]?\d{1,8}$/u', $r ) ) { return true; } // 管理番号だけ(CM-0002 等)
+		return false;
 	}
 
 	private function build_title( $pid ) {
