@@ -207,6 +207,11 @@ class Carmel_ACF_Fields {
 			$this->f( 'vehicle', 'store_id', '保有加盟店', 'post_object', array( 'post_type' => array( 'carmel_store' ), 'return_format' => 'id', 'ui' => 1 ) ),
 			$this->f( 'vehicle', 'maker', 'メーカー' ),
 			$this->f( 'vehicle', 'model', '車種' ),
+			$this->f( 'vehicle', 'body_type', 'ボディタイプ', 'select', array(
+				'choices'    => array( '軽自動車' => '軽自動車', 'コンパクト' => 'コンパクト', 'セダン' => 'セダン', 'SUV' => 'SUV', 'ミニバン' => 'ミニバン', 'ワゴン' => 'ワゴン', 'ステーションワゴン' => 'ステーションワゴン', 'クーペ' => 'クーペ', 'その他' => 'その他' ),
+				'allow_null' => 1,
+				'ui'         => 1,
+			) ),
 			$this->f( 'vehicle', 'grade', 'グレード' ),
 			$this->f( 'vehicle', 'year', '年式', 'number' ),
 			$this->f( 'vehicle', 'mileage', '走行距離(km)', 'number' ),

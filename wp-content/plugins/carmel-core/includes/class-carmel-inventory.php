@@ -209,6 +209,15 @@ class Carmel_Inventory {
 		if ( ! empty( $filters['store_id'] ) ) {
 			$meta[] = array( 'key' => 'store_id', 'value' => (int) $filters['store_id'] );
 		}
+		if ( ! empty( $filters['body'] ) ) {
+			$meta[] = array( 'key' => 'body_type', 'value' => $filters['body'] );
+		}
+		if ( ! empty( $filters['year_min'] ) ) {
+			$meta[] = array( 'key' => 'year', 'value' => (int) $filters['year_min'], 'type' => 'NUMERIC', 'compare' => '>=' );
+		}
+		if ( ! empty( $filters['mileage_max'] ) ) {
+			$meta[] = array( 'key' => 'mileage', 'value' => (int) $filters['mileage_max'], 'type' => 'NUMERIC', 'compare' => '<=' );
+		}
 
 		$args = array(
 			'post_type'      => 'carmel_vehicle',
@@ -1334,6 +1343,22 @@ window.carmelInitMap=function(){
 		return $u ? $u : home_url( '/' . ltrim( apply_filters( 'carmel_mypage_slug', 'mypage' ), '/' ) );
 	}
 
+	/** 月々概算（頭金0・既定年率/回数の元利均等）。 */
+	private function monthly_estimate( $price ) {
+		$d      = class_exists( 'Carmel_Sales_Support' ) ? Carmel_Sales_Support::finance_defaults() : array( 'loan_rate' => 8.9, 'loan_months' => 60 );
+		$rate   = isset( $d['loan_rate'] ) ? (float) $d['loan_rate'] : 8.9;
+		$months = isset( $d['loan_months'] ) ? (int) $d['loan_months'] : 60;
+		if ( class_exists( 'Carmel_Sales_Support' ) ) {
+			return Carmel_Sales_Support::monthly_payment( $price, $months, $rate );
+		}
+		$r = $rate / 100 / 12;
+		if ( $r <= 0 ) {
+			return (int) round( $price / max( 1, $months ) );
+		}
+		$k = pow( 1 + $r, $months );
+		return (int) round( $price * $r * $k / ( $k - 1 ) );
+	}
+
 	/**
 	 * ローン月々の概算ウィジェット（元利均等・JSライブ計算）。
 	 *
@@ -1441,6 +1466,9 @@ window.carmelInitMap=function(){
 			'price_max' => isset( $_GET['price_max'] ) ? (int) $_GET['price_max'] : 0,
 			'store_id'  => isset( $_GET['store_id'] ) ? (int) $_GET['store_id'] : 0,
 			'sort'      => isset( $_GET['sort'] ) ? sanitize_key( $_GET['sort'] ) : '',
+			'body'      => isset( $_GET['body'] ) ? sanitize_text_field( wp_unslash( $_GET['body'] ) ) : '',
+			'year_min'  => isset( $_GET['year_min'] ) ? (int) $_GET['year_min'] : 0,
+			'mileage_max' => isset( $_GET['mileage_max'] ) ? (int) $_GET['mileage_max'] : 0,
 		);
 	}
 
@@ -1459,6 +1487,25 @@ window.carmelInitMap=function(){
 		$out .= '<select name="price_max"><option value="">価格上限</option>';
 		foreach ( array( 500000, 1000000, 1500000, 2000000, 3000000, 5000000 ) as $p ) {
 			$out .= '<option value="' . $p . '"' . selected( $filters['price_max'], $p, false ) . '>¥' . number_format( $p ) . '以下</option>';
+		}
+		$out .= '</select>';
+		// ボディタイプ。
+		$bodies = array( '軽自動車', 'コンパクト', 'セダン', 'SUV', 'ミニバン', 'ワゴン', 'ステーションワゴン', 'クーペ', 'その他' );
+		$out  .= '<select name="body"><option value="">ボディタイプ</option>';
+		foreach ( $bodies as $b ) {
+			$out .= '<option value="' . esc_attr( $b ) . '"' . selected( $filters['body'], $b, false ) . '>' . esc_html( $b ) . '</option>';
+		}
+		$out .= '</select>';
+		// 年式（以降）。
+		$out .= '<select name="year_min"><option value="">年式</option>';
+		foreach ( array( 2024, 2022, 2020, 2018, 2015, 2010 ) as $y ) {
+			$out .= '<option value="' . $y . '"' . selected( $filters['year_min'], $y, false ) . '>' . $y . '年以降</option>';
+		}
+		$out .= '</select>';
+		// 走行距離（以下）。
+		$out .= '<select name="mileage_max"><option value="">走行距離</option>';
+		foreach ( array( 30000 => '3万km', 50000 => '5万km', 80000 => '8万km', 100000 => '10万km', 150000 => '15万km' ) as $km => $label ) {
+			$out .= '<option value="' . (int) $km . '"' . selected( $filters['mileage_max'], $km, false ) . '>' . esc_html( $label ) . '以下</option>';
 		}
 		$out .= '</select>';
 		$sorts = array( '' => '新着順', 'price_asc' => '価格が安い順', 'price_desc' => '価格が高い順', 'popular' => '人気順' );
@@ -1616,6 +1663,12 @@ window.carmelInitMap=function(){
 			$out .= '<div class="carmel-car-specs">' . implode( '｜', $specs ) . '</div>';
 		}
 		$out .= '<div class="carmel-car-price">¥' . esc_html( number_format( (float) $price ) ) . '<small>（税込）</small></div>';
+		if ( 'public' === $context && (float) $price > 0 ) {
+			$mo = $this->monthly_estimate( (float) $price );
+			if ( $mo > 0 ) {
+				$out .= '<div class="carmel-car-monthly">月々 ¥' . esc_html( number_format( $mo ) ) . '〜</div>';
+			}
+		}
 
 		// 原価は「本部」または「自店在庫」のみ。
 		if ( 'hq' === $scope || ( 'own' === $context && 'store' === $scope ) ) {
@@ -2392,6 +2445,7 @@ window.carmelInitMap=function(){
 .carmel-car-specs{font-size:.82em;color:#555}
 .carmel-car-price{font-size:1.25em;font-weight:bold;color:#6b4fbb;margin-top:.2em}
 .carmel-car-price small{font-size:.55em;color:#888;font-weight:normal}
+.carmel-car-monthly{font-size:.8em;color:#16a085;font-weight:600}
 .carmel-car-cost{font-size:.8em;color:#a5281b}
 .carmel-car-store{font-size:.8em;color:#666}
 .carmel-car-actions{margin-top:auto;padding-top:.5em;display:flex;gap:.4em;flex-wrap:wrap}
