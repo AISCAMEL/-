@@ -34,6 +34,7 @@ const HQ = [
   ['hq-leads.html', '#rows'],
   ['hq-leads.html', '#btnCsv'],             // リードCSV出力ボタン
   ['hq-stores.html', '#storeGrid'],
+  ['hq-stores.html', '#btnCsv'],            // 加盟店CSV出力ボタン
   ['report.html', '#funnel'],
   ['report.html', '#btnCsv'],               // レポートCSV出力ボタン
   ['hq-notices.html', '#noticeList'],

@@ -44,5 +44,26 @@
     HQ.saveStores(stores); e.target.reset(); render();
   });
 
+  /* ---- CSV出力（加盟店一覧＋実績） ---- */
+  function csvCell(v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }
+  function exportCsv() {
+    var rows = [['店名', 'エリア', '連絡先', '状況', '案件数', '進行中', '確定売上(円)']];
+    stores.forEach(function (s) {
+      var st = statsFor(s.name);
+      rows.push([s.name || '', s.area || '', s.tel || '', s.status || '', st.total, st.active, st.sales]);
+    });
+    var csv = '﻿' + rows.map(function (r) { return r.map(csvCell).join(','); }).join('\r\n'); // BOM付きでExcel文字化け回避
+    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var d = new Date(); function p(n) { return ('0' + n).slice(-2); }
+    var a = document.createElement('a');
+    a.href = url; a.download = 'buymo-stores-' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    if (window.BuymoGA) BuymoGA.track('export_csv', { kind: 'stores', rows: stores.length });
+  }
+  var csvBtn = document.getElementById('btnCsv');
+  if (csvBtn) csvBtn.addEventListener('click', exportCsv);
+
   HQ.loadCases(function (list) { cases = list; render(); });
 })();
