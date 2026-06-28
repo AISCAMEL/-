@@ -25,8 +25,47 @@ class Carmel_Deal_Followup {
 	public function register_hooks() {
 		add_action( 'carmel_deal_status_changed', array( $this, 'on_status_changed' ), 10, 3 );
 		add_action( 'carmel_daily_cron_done', array( $this, 'check_stale' ) );
+		add_action( 'carmel_daily_cron_done', array( $this, 'check_next_actions' ) );
 		add_filter( 'carmel_routing_table', array( $this, 'add_routing' ) );
 		add_filter( 'carmel_notification_message', array( $this, 'add_message' ), 10, 3 );
+	}
+
+	/** 日次：次アクション期日が到来/超過した案件を担当店＋本部へ通知。 */
+	public function check_next_actions() {
+		$today = current_time( 'Y-m-d' );
+		$deals = get_posts(
+			array(
+				'post_type'      => 'carmel_deal',
+				'post_status'    => 'publish',
+				'posts_per_page' => 200,
+				'meta_query'     => array(
+					'relation' => 'AND',
+					array( 'key' => 'next_action_due', 'value' => $today, 'compare' => '<=', 'type' => 'DATE' ),
+					array( 'key' => 'next_action_due', 'value' => '', 'compare' => '!=' ),
+					array( 'key' => '_next_alerted', 'compare' => 'NOT EXISTS' ),
+				),
+			)
+		);
+		foreach ( $deals as $deal ) {
+			if ( in_array( get_post_meta( $deal->ID, 'deal_status', true ), self::excluded_statuses(), true ) ) {
+				continue;
+			}
+			$store_id = (int) get_post_meta( $deal->ID, 'store_id', true );
+			$ctx = array(
+				'event_id' => 'deal_action_due:' . $deal->ID . ':' . get_post_meta( $deal->ID, 'next_action_due', true ),
+				'deal_id'  => (int) $deal->ID,
+				'vars'     => array(
+					'name'   => get_post_meta( $deal->ID, 'applicant_name', true ),
+					'action' => get_post_meta( $deal->ID, 'next_action', true ),
+					'due'    => get_post_meta( $deal->ID, 'next_action_due', true ),
+				),
+			);
+			if ( $store_id ) {
+				$ctx['store_id'] = $store_id;
+			}
+			Carmel_Notifier::notify( 'deal_action_due', $ctx );
+			update_post_meta( $deal->ID, '_next_alerted', 1 );
+		}
 	}
 
 	/** 停滞とみなす日数（既定7）。 */
@@ -98,6 +137,9 @@ class Carmel_Deal_Followup {
 			array( 'audience' => 'store', 'channel' => 'lineworks', 'fallback' => 'mail' ),
 			array( 'audience' => 'hq', 'channel' => 'lineworks', 'fallback' => null ),
 		);
+		$table['deal_action_due'] = array(
+			array( 'audience' => 'store', 'channel' => 'lineworks', 'fallback' => 'mail' ),
+		);
 		return $table;
 	}
 
@@ -108,6 +150,12 @@ class Carmel_Deal_Followup {
 			$message['subject'] = '【フォロー漏れ注意】動きのない商談があります';
 			$message['body']    = '案件 #' . $did . '（' . ( isset( $vars['name'] ) ? $vars['name'] : '' ) . '）が '
 				. ( isset( $vars['days'] ) ? $vars['days'] : '' ) . '日間 動いていません。ご対応をご確認ください。';
+		} elseif ( 'deal_action_due' === $event_type ) {
+			$vars = isset( $context['vars'] ) ? (array) $context['vars'] : array();
+			$did  = isset( $context['deal_id'] ) ? (int) $context['deal_id'] : 0;
+			$message['subject'] = '【期日】次アクションの予定';
+			$message['body']    = '案件 #' . $did . '（' . ( isset( $vars['name'] ) ? $vars['name'] : '' ) . '）の次アクション「'
+				. ( isset( $vars['action'] ) ? $vars['action'] : '' ) . '」が期日（' . ( isset( $vars['due'] ) ? $vars['due'] : '' ) . '）です。';
 		}
 		return $message;
 	}

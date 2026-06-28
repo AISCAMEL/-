@@ -181,6 +181,9 @@ class Carmel_Reports {
 		// 在庫・問い合わせKPI。
 		echo $this->inventory_section( $store_id ); // phpcs:ignore WordPress.Security.EscapeOutput
 
+		// 反響→商談→成約 ファネル。
+		echo $this->funnel_section( $store_id ); // phpcs:ignore WordPress.Security.EscapeOutput
+
 		// Per-store comparison (HQ only).
 		if ( $is_hq ) {
 			echo '<h3>加盟店別 案件数</h3>';
@@ -313,6 +316,62 @@ class Carmel_Reports {
 		return $out;
 	}
 
+	/**
+	 * 反響 → 商談化 → 成約 のファネル。
+	 *
+	 * @param int $store_id 0=全店。
+	 * @return string
+	 */
+	private function funnel_section( $store_id ) {
+		$mq = array(
+			'relation' => 'AND',
+			array( 'key' => 'support_type', 'value' => array( 'line_inquiry', 'inventory_inquiry', 'store_inquiry' ), 'compare' => 'IN' ),
+		);
+		if ( $store_id ) {
+			$mq[] = array( 'key' => 'store_id', 'value' => $store_id );
+		}
+		$leads = get_posts(
+			array(
+				'post_type'      => 'carmel_support',
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'meta_query'     => $mq,
+			)
+		);
+		$lead_count = count( $leads );
+		$converted  = 0;
+		$won        = 0;
+		foreach ( $leads as $lid ) {
+			$deal = (int) get_post_meta( $lid, 'deal_id', true );
+			if ( ! $deal ) {
+				continue;
+			}
+			$converted++;
+			if ( in_array( get_post_meta( $deal, 'deal_status', true ), self::WON, true ) ) {
+				$won++;
+			}
+		}
+		$cv_rate = $lead_count ? round( $converted / $lead_count * 100, 1 ) : 0;
+		$wn_rate = $converted ? round( $won / $converted * 100, 1 ) : 0;
+
+		$out  = '<h3>反響 → 商談 → 成約 ファネル</h3>';
+		$out .= '<div class="carmel-funnel">';
+		$out .= $this->funnel_step( '反響受付', $lead_count, '' );
+		$out .= '<span class="carmel-funnel-arrow">→ ' . esc_html( $cv_rate ) . '%</span>';
+		$out .= $this->funnel_step( '商談化', $converted, '' );
+		$out .= '<span class="carmel-funnel-arrow">→ ' . esc_html( $wn_rate ) . '%</span>';
+		$out .= $this->funnel_step( '成約', $won, '' );
+		$out .= '</div>';
+		$out .= '<p class="carmel-funnel-note">反響（LINE/在庫/店舗問い合わせ）からの商談化率・成約率。商談化＝反響から起票された案件、成約＝その案件が成約以降ステータス。</p>';
+		return $out;
+	}
+
+	private function funnel_step( $label, $value, $extra ) {
+		return '<div class="carmel-funnel-step"><div class="carmel-funnel-num">' . esc_html( number_format( (int) $value ) ) . '</div>'
+			. '<div class="carmel-funnel-lbl">' . esc_html( $label ) . '</div></div>';
+	}
+
 	private function kpi( $label, $value ) {
 		return '<div class="carmel-kpi"><div class="carmel-kpi-val">' . esc_html( $value ) . '</div>'
 			. '<div class="carmel-kpi-label">' . esc_html( $label ) . '</div></div>';
@@ -332,6 +391,12 @@ class Carmel_Reports {
 .carmel-csv{margin-top:1.5em}
 .carmel-btn{border:0;border-radius:.3em;padding:.5em 1em;color:#fff;cursor:pointer}
 .carmel-btn-grey{background:#34495e}
+.carmel-funnel{display:flex;align-items:center;gap:.6em;flex-wrap:wrap;margin:.6em 0}
+.carmel-funnel-step{border:1px solid #e0e3ea;border-radius:.6em;padding:.8em 1.2em;text-align:center;background:#fff;min-width:90px}
+.carmel-funnel-num{font-size:1.5em;font-weight:bold;color:#6b4fbb}
+.carmel-funnel-lbl{font-size:.8em;color:#666}
+.carmel-funnel-arrow{color:#16a085;font-weight:bold;font-size:.9em}
+.carmel-funnel-note{font-size:.8em;color:#888}
 .carmel-notice{padding:1em;background:#fdecea;border:1px solid #c0392b;border-radius:.4em}
 </style>';
 	}

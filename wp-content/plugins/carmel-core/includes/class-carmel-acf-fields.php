@@ -148,6 +148,9 @@ class Carmel_ACF_Fields {
 			$this->f( 'deal', 'warranty_scope', '保証範囲' ),
 			$this->f( 'deal', 'warranty_fee', '保証料', 'number' ),
 			$this->f( 'deal', 'warranty_start', '保証開始日', 'date_picker', array( 'display_format' => 'Y-m-d', 'return_format' => 'Y-m-d' ) ),
+			// 次アクション（フォロー管理）。
+			$this->f( 'deal', 'next_action', '次アクション' ),
+			$this->f( 'deal', 'next_action_due', '次アクション期日', 'date_picker', array( 'display_format' => 'Y-m-d', 'return_format' => 'Y-m-d' ) ),
 			// 在庫共有の売上配分（手数料）。Carmel_Commission が利用。
 			$this->f( 'deal', 'source_store_id', '在庫保有店（他店在庫の販売時）', 'post_object', array( 'post_type' => array( 'carmel_store' ), 'return_format' => 'id', 'ui' => 1, 'allow_null' => 1 ) ),
 			$this->f( 'deal', 'commission_rate', '手数料率(%)', 'number' ),

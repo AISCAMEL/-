@@ -29,6 +29,7 @@ class Carmel_Inventory {
 	const TEMPLATE_ACTION  = 'carmel_inv_template';
 	const CINQUIRY_ACTION  = 'carmel_inv_cust_inquiry';
 	const FAV_ACTION       = 'carmel_inv_fav';
+	const WAITLIST_ACTION  = 'carmel_inv_waitlist';
 	const SAVE_SEARCH      = 'carmel_inv_save_search';
 	const DEL_SEARCH       = 'carmel_inv_del_search';
 	const EXPORT_ACTION    = 'carmel_inv_export';
@@ -76,6 +77,9 @@ class Carmel_Inventory {
 		add_action( 'admin_post_' . self::TEMPLATE_ACTION, array( $this, 'handle_template' ) );
 		add_action( 'admin_post_' . self::CINQUIRY_ACTION, array( $this, 'handle_customer_inquiry' ) );
 		add_action( 'admin_post_' . self::FAV_ACTION, array( $this, 'handle_favorite' ) );
+		add_action( 'admin_post_' . self::WAITLIST_ACTION, array( $this, 'handle_waitlist' ) );
+		// 入庫予定→販売中 の状態変化で入荷通知。
+		add_filter( 'update_post_metadata', array( $this, 'track_status_arrival' ), 10, 5 );
 		add_action( 'admin_post_' . self::SAVE_SEARCH, array( $this, 'handle_save_search' ) );
 		add_action( 'admin_post_' . self::DEL_SEARCH, array( $this, 'handle_delete_search' ) );
 		add_action( 'admin_post_' . self::EXPORT_ACTION, array( $this, 'handle_export' ) );
@@ -186,6 +190,92 @@ class Carmel_Inventory {
 				)
 			);
 		}
+	}
+
+	/* --------------------------------------------------------------------- *
+	 * 入荷通知（近日入荷の入荷待ち登録）
+	 * --------------------------------------------------------------------- */
+
+	private function on_waitlist( $vehicle_id ) {
+		if ( ! is_user_logged_in() ) {
+			return false;
+		}
+		$w = get_post_meta( $vehicle_id, '_arrival_waitlist', true );
+		return is_array( $w ) && in_array( get_current_user_id(), array_map( 'intval', $w ), true );
+	}
+
+	/** 「入荷したら通知」ボタン。 */
+	private function waitlist_button( $vehicle_id ) {
+		if ( ! is_user_logged_in() ) {
+			return '<a class="carmel-btn carmel-btn-ghost" href="' . esc_url( home_url( '/login' ) ) . '">🔔 ログインして入荷通知</a>';
+		}
+		$on    = $this->on_waitlist( $vehicle_id );
+		$nonce = wp_create_nonce( self::WAITLIST_ACTION . '_' . $vehicle_id );
+		$label = $on ? '🔔 通知登録済み' : '🔔 入荷したら通知';
+		$cls   = $on ? 'carmel-btn-ghost' : 'carmel-btn-green';
+		return '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="margin:0">'
+			. '<input type="hidden" name="action" value="' . esc_attr( self::WAITLIST_ACTION ) . '">'
+			. '<input type="hidden" name="vehicle_id" value="' . (int) $vehicle_id . '">'
+			. '<input type="hidden" name="' . esc_attr( self::NONCE ) . '" value="' . esc_attr( $nonce ) . '">'
+			. '<button type="submit" class="carmel-btn ' . $cls . '">' . esc_html( $label ) . '</button></form>';
+	}
+
+	public function handle_waitlist() {
+		$vehicle_id = isset( $_POST['vehicle_id'] ) ? (int) $_POST['vehicle_id'] : 0;
+		$redirect   = wp_get_referer() ? wp_get_referer() : home_url( '/inventory' );
+		if ( ! wp_verify_nonce( isset( $_POST[ self::NONCE ] ) ? sanitize_text_field( wp_unslash( $_POST[ self::NONCE ] ) ) : '', self::WAITLIST_ACTION . '_' . $vehicle_id ) ) {
+			wp_die( esc_html__( '不正なリクエストです。', 'carmel-core' ), '', array( 'response' => 400 ) );
+		}
+		if ( ! is_user_logged_in() || 'carmel_vehicle' !== get_post_type( $vehicle_id ) ) {
+			wp_die( esc_html__( 'ログインが必要です。', 'carmel-core' ), '', array( 'response' => 403 ) );
+		}
+		$uid = get_current_user_id();
+		$w   = get_post_meta( $vehicle_id, '_arrival_waitlist', true );
+		$w   = is_array( $w ) ? array_map( 'intval', $w ) : array();
+		if ( in_array( $uid, $w, true ) ) {
+			$w = array_values( array_diff( $w, array( $uid ) ) );
+		} else {
+			$w[] = $uid;
+		}
+		update_post_meta( $vehicle_id, '_arrival_waitlist', $w );
+		wp_safe_redirect( $redirect );
+		exit;
+	}
+
+	/** 入庫予定→販売可能 への変化を検知し、入荷待ち登録者へ通知。 */
+	public function track_status_arrival( $check, $post_id, $key, $value, $prev ) {
+		if ( 'vehicle_status' !== $key || 'carmel_vehicle' !== get_post_type( $post_id ) ) {
+			return $check;
+		}
+		$old = (string) get_post_meta( $post_id, 'vehicle_status', true );
+		$new = (string) $value;
+		$was_coming = ! in_array( $old, self::sellable_statuses(), true );
+		$now_sell   = in_array( $new, self::sellable_statuses(), true );
+		if ( $was_coming && $now_sell ) {
+			$this->notify_arrival( (int) $post_id );
+		}
+		return $check;
+	}
+
+	private function notify_arrival( $vehicle_id ) {
+		$w = get_post_meta( $vehicle_id, '_arrival_waitlist', true );
+		if ( ! is_array( $w ) || empty( $w ) ) {
+			return;
+		}
+		$car = trim( get_post_meta( $vehicle_id, 'maker', true ) . ' ' . get_post_meta( $vehicle_id, 'model', true ) );
+		$car = $car ? $car : get_the_title( $vehicle_id );
+		$url = add_query_arg( 'vehicle', (int) $vehicle_id, home_url( '/' . ltrim( apply_filters( 'carmel_inventory_page_slug', 'inventory' ), '/' ) ) );
+		foreach ( array_unique( array_map( 'intval', $w ) ) as $uid ) {
+			Carmel_Notifier::notify(
+				'inventory_arrived',
+				array(
+					'event_id'     => 'inventory_arrived:' . $vehicle_id . ':' . $uid,
+					'recipient_id' => (int) $uid,
+					'vars'         => array( 'car' => $car, 'url' => $url ),
+				)
+			);
+		}
+		delete_post_meta( $vehicle_id, '_arrival_waitlist' ); // 一度通知したらクリア。
 	}
 
 	/** 在庫の新着/値下げバッジ（カード/詳細共通）。 */
@@ -1805,20 +1895,21 @@ window.carmelInitMap=function(){
 			? get_the_post_thumbnail( $car->ID, 'medium', array( 'class' => 'carmel-car-img' ) )
 			: '<div class="carmel-car-noimg">NO IMAGE</div>';
 
-		$sold = in_array( (string) $status, self::sold_statuses(), true );
+		$sold   = in_array( (string) $status, self::sold_statuses(), true );
+		$coming = in_array( (string) $status, self::coming_statuses(), true );
 		$out  = '<article class="carmel-car-card' . ( $sold ? ' carmel-car-sold' : '' ) . '">';
 		$out .= '<div class="carmel-car-thumb">' . $thumb . '<span class="carmel-car-badge">' . esc_html( $status ? $status : '販売中' ) . '</span>';
 		if ( $sold ) {
 			$out .= '<span class="carmel-sold-ribbon">SOLD</span>';
+		} elseif ( $coming ) {
+			$out .= '<span class="carmel-coming-ribbon">近日入荷</span>';
 		}
-		if ( 'public' === $context ) {
+		if ( 'public' === $context && ! $sold && ! $coming ) {
 			$badges = $this->badges( $car );
-			if ( $badges && ! $sold ) {
+			if ( $badges ) {
 				$out .= '<div class="carmel-car-badges">' . $badges . '</div>';
 			}
-			if ( ! $sold ) {
-				$out .= $this->favorite_button( $car->ID );
-			}
+			$out .= $this->favorite_button( $car->ID );
 		}
 		$out .= '</div>';
 		$out .= '<div class="carmel-car-info">';
@@ -1871,6 +1962,8 @@ window.carmelInitMap=function(){
 
 		if ( $sold && 'public' === $context ) {
 			$out .= '<div class="carmel-car-actions"><span class="carmel-sold-note">販売終了</span></div>';
+		} elseif ( $coming && 'public' === $context ) {
+			$out .= '<div class="carmel-car-actions">' . $this->waitlist_button( $car->ID ) . '</div>';
 		} else {
 			$out .= $this->card_actions( $car, $scope, $context, $store_id ); // phpcs:ignore WordPress.Security.EscapeOutput
 		}
@@ -2540,6 +2633,10 @@ window.carmelInitMap=function(){
 		$table['price_drop'] = array(
 			array( 'audience' => 'customer', 'channel' => 'proline', 'fallback' => 'mail' ),
 		);
+		// 入荷通知（入荷待ち登録者へ）。
+		$table['inventory_arrived'] = array(
+			array( 'audience' => 'customer', 'channel' => 'proline', 'fallback' => 'mail' ),
+		);
 		return $table;
 	}
 
@@ -2566,6 +2663,10 @@ window.carmelInitMap=function(){
 			$message['subject'] = 'お気に入りのお車が値下げ';
 			$message['body']    = ( isset( $vars['car'] ) ? $vars['car'] : 'お車' ) . " が値下げされました。\n¥"
 				. ( isset( $vars['old'] ) ? $vars['old'] : '' ) . ' → ¥' . ( isset( $vars['new'] ) ? $vars['new'] : '' ) . "\n"
+				. ( isset( $vars['url'] ) ? $vars['url'] : '' );
+		} elseif ( 'inventory_arrived' === $event_type ) {
+			$message['subject'] = '入荷のお知らせ';
+			$message['body']    = ( isset( $vars['car'] ) ? $vars['car'] : 'お車' ) . " が入荷しました（販売開始）。\n"
 				. ( isset( $vars['url'] ) ? $vars['url'] : '' );
 		}
 		return $message;
@@ -2650,6 +2751,7 @@ window.carmelInitMap=function(){
 .carmel-car-sold .carmel-car-thumb{filter:grayscale(.7);opacity:.85}
 .carmel-sold-ribbon{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-12deg);background:rgba(192,57,43,.92);color:#fff;font-weight:bold;font-size:1.1em;letter-spacing:.1em;padding:.15em .8em;border-radius:.3em}
 .carmel-sold-note{color:#c0392b;font-weight:bold;font-size:.85em}
+.carmel-coming-ribbon{position:absolute;top:.5em;left:.5em;background:#16a085;color:#fff;font-weight:bold;font-size:.72em;padding:.1em .6em;border-radius:.3em}
 .carmel-soldtoggle{margin:.2em 0 .6em}
 .carmel-soldtoggle a{color:#888;text-decoration:none;font-size:.85em}
 .carmel-coming{margin:1em 0;border:1px dashed #16a085;border-radius:10px;padding:.7em 1em;background:#f1fbf8}
