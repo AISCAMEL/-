@@ -330,15 +330,20 @@ class Carmel_Reports {
 		if ( $store_id ) {
 			$mq[] = array( 'key' => 'store_id', 'value' => $store_id );
 		}
-		$leads = get_posts(
-			array(
-				'post_type'      => 'carmel_support',
-				'post_status'    => 'publish',
-				'posts_per_page' => -1,
-				'fields'         => 'ids',
-				'meta_query'     => $mq,
-			)
+		$args = array(
+			'post_type'      => 'carmel_support',
+			'post_status'    => 'publish',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+			'meta_query'     => $mq,
 		);
+		$range = $this->period_range();
+		if ( $range ) {
+			$args['date_query'] = array(
+				array( 'column' => 'post_date', 'after' => $range[0] . ' 00:00:00', 'before' => $range[1] . ' 23:59:59', 'inclusive' => true ),
+			);
+		}
+		$leads = get_posts( $args );
 		$lead_count = count( $leads );
 		$converted  = 0;
 		$won        = 0;
@@ -356,6 +361,7 @@ class Carmel_Reports {
 		$wn_rate = $converted ? round( $won / $converted * 100, 1 ) : 0;
 
 		$out  = '<h3>反響 → 商談 → 成約 ファネル</h3>';
+		$out .= $this->period_selector();
 		$out .= '<div class="carmel-funnel">';
 		$out .= $this->funnel_step( '反響受付', $lead_count, '' );
 		$out .= '<span class="carmel-funnel-arrow">→ ' . esc_html( $cv_rate ) . '%</span>';
@@ -364,6 +370,56 @@ class Carmel_Reports {
 		$out .= $this->funnel_step( '成約', $won, '' );
 		$out .= '</div>';
 		$out .= '<p class="carmel-funnel-note">反響（LINE/在庫/店舗問い合わせ）からの商談化率・成約率。商談化＝反響から起票された案件、成約＝その案件が成約以降ステータス。</p>';
+		return $out;
+	}
+
+	/** 期間レンジ [from,to]（Y-m-d）。全期間は null。 */
+	private function period_range() {
+		$p = isset( $_GET['fperiod'] ) ? sanitize_key( $_GET['fperiod'] ) : '';
+		$today = current_time( 'Y-m-d' );
+		if ( 'this_month' === $p ) {
+			return array( date_i18n( 'Y-m-01' ), $today );
+		}
+		if ( 'last_month' === $p ) {
+			$first = date_i18n( 'Y-m-01' );
+			$lm_end = gmdate( 'Y-m-d', strtotime( $first . ' -1 day' ) );
+			$lm_first = gmdate( 'Y-m-01', strtotime( $lm_end ) );
+			return array( $lm_first, $lm_end );
+		}
+		if ( 'custom' === $p ) {
+			$from = isset( $_GET['ffrom'] ) ? sanitize_text_field( wp_unslash( $_GET['ffrom'] ) ) : '';
+			$to   = isset( $_GET['fto'] ) ? sanitize_text_field( wp_unslash( $_GET['fto'] ) ) : '';
+			if ( $from && $to ) {
+				return array( $from, $to );
+			}
+		}
+		return null;
+	}
+
+	/** 期間切替UI。 */
+	private function period_selector() {
+		$cur  = isset( $_GET['fperiod'] ) ? sanitize_key( $_GET['fperiod'] ) : '';
+		$base = remove_query_arg( array( 'fperiod', 'ffrom', 'fto' ) );
+		$tabs = array( '' => '全期間', 'this_month' => '今月', 'last_month' => '先月' );
+		$out  = '<div class="carmel-funnel-period">';
+		foreach ( $tabs as $k => $label ) {
+			$url = ( '' === $k ) ? $base : add_query_arg( 'fperiod', $k, $base );
+			$out .= '<a class="' . ( $cur === $k ? 'on' : '' ) . '" href="' . esc_url( $url ) . '">' . esc_html( $label ) . '</a>';
+		}
+		// 任意期間。
+		$from = isset( $_GET['ffrom'] ) ? sanitize_text_field( wp_unslash( $_GET['ffrom'] ) ) : '';
+		$to   = isset( $_GET['fto'] ) ? sanitize_text_field( wp_unslash( $_GET['fto'] ) ) : '';
+		$out .= '<form method="get" class="carmel-funnel-custom" style="display:inline-flex;gap:.3em;align-items:center">';
+		foreach ( $_GET as $k => $v ) { // phpcs:ignore WordPress.Security.NonceVerification
+			if ( in_array( $k, array( 'fperiod', 'ffrom', 'fto' ), true ) ) {
+				continue;
+			}
+			$out .= '<input type="hidden" name="' . esc_attr( $k ) . '" value="' . esc_attr( is_array( $v ) ? '' : wp_unslash( $v ) ) . '">';
+		}
+		$out .= '<input type="hidden" name="fperiod" value="custom">';
+		$out .= '<input type="date" name="ffrom" value="' . esc_attr( $from ) . '">〜<input type="date" name="fto" value="' . esc_attr( $to ) . '">';
+		$out .= '<button type="submit" class="carmel-btn carmel-btn-grey" style="padding:.3em .7em">表示</button></form>';
+		$out .= '</div>';
 		return $out;
 	}
 
@@ -397,6 +453,9 @@ class Carmel_Reports {
 .carmel-funnel-lbl{font-size:.8em;color:#666}
 .carmel-funnel-arrow{color:#16a085;font-weight:bold;font-size:.9em}
 .carmel-funnel-note{font-size:.8em;color:#888}
+.carmel-funnel-period{display:flex;gap:.4em;align-items:center;flex-wrap:wrap;margin:.4em 0}
+.carmel-funnel-period a{font-size:.85em;text-decoration:none;color:#6b4fbb;border:1px solid #ddd2f5;border-radius:1em;padding:.2em .9em}
+.carmel-funnel-period a.on{background:#6b4fbb;color:#fff;border-color:#6b4fbb}
 .carmel-notice{padding:1em;background:#fdecea;border:1px solid #c0392b;border-radius:.4em}
 </style>';
 	}
