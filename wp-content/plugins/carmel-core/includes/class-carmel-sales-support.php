@@ -342,9 +342,13 @@ class Carmel_Sales_Support {
 			$name       = get_post_meta( $deal->ID, 'applicant_name', true );
 			$label      = '#' . $deal->ID . ' ' . ( $name ? $name : $deal->post_title );
 			$vehicle_id = (int) get_post_meta( $deal->ID, 'vehicle_id', true );
-			$price      = $vehicle_id ? (float) get_post_meta( $vehicle_id, 'price', true ) : 0;
-			$nonce      = wp_create_nonce( $action . '_' . $deal->ID );
-			$out       .= '<option value="' . (int) $deal->ID . '" data-nonce="' . esc_attr( $nonce ) . '" data-price="' . esc_attr( $price ) . '">' . esc_html( $label ) . '</option>';
+			// 申込時の希望条件（extra_loan_*）があれば優先、無ければ車両価格。
+			$ep    = (float) get_post_meta( $deal->ID, 'extra_loan_price', true );
+			$price = $ep > 0 ? $ep : ( $vehicle_id ? (float) get_post_meta( $vehicle_id, 'price', true ) : 0 );
+			$down  = (float) get_post_meta( $deal->ID, 'extra_loan_down', true );
+			$mon   = (int) get_post_meta( $deal->ID, 'extra_loan_months', true );
+			$nonce = wp_create_nonce( $action . '_' . $deal->ID );
+			$out  .= '<option value="' . (int) $deal->ID . '" data-nonce="' . esc_attr( $nonce ) . '" data-price="' . esc_attr( $price ) . '" data-down="' . esc_attr( $down ) . '" data-months="' . esc_attr( $mon ) . '">' . esc_html( $label ) . '</option>';
 		}
 		$out .= '</select>';
 		return $out;
@@ -485,8 +489,13 @@ class Carmel_Sales_Support {
 			var price=parseFloat(opt.getAttribute('data-price'))||0;
 			if(price>0){
 				var p=form.querySelector('.carmel-fin-price')||form.querySelector('.carmel-lease-price');
-				if(p&&(!p.value||p.value==='0'))p.value=price;
+				if(p)p.value=price;
 			}
+			// 申込時の希望（頭金・回数）を反映（ローンカード）。
+			var down=parseFloat(opt.getAttribute('data-down'))||0;
+			var mon=parseInt(opt.getAttribute('data-months'))||0;
+			var dEl=form.querySelector('.carmel-fin-down');if(dEl&&down>0)dEl.value=down;
+			var mEl=form.querySelector('.carmel-fin-months');if(mEl&&mon>0)mEl.value=mon;
 			recalc();
 		}
 		function recalc(){

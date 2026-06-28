@@ -51,6 +51,16 @@ class Carmel_Inventory {
 		return apply_filters( 'carmel_inventory_sellable_statuses', array( '販売中', '商談中' ) );
 	}
 
+	/** 売約済として表示する在庫ステータス。 */
+	public static function sold_statuses() {
+		return apply_filters( 'carmel_inventory_sold_statuses', array( '売約済', '納車済' ) );
+	}
+
+	/** その車両が売約済か。 */
+	private function is_sold( $vehicle_id ) {
+		return in_array( (string) get_post_meta( $vehicle_id, 'vehicle_status', true ), self::sold_statuses(), true );
+	}
+
 	public function register_hooks() {
 		add_shortcode( self::PUBLIC_SHORTCODE, array( $this, 'render_public' ) );
 		add_shortcode( self::STORE_SHORTCODE, array( $this, 'render_store' ) );
@@ -104,11 +114,41 @@ class Carmel_Inventory {
 		if ( $old > 0 && $new > 0 && $new < $old ) {
 			update_post_meta( $post_id, 'price_prev', $old );
 			update_post_meta( $post_id, 'price_drop_at', current_time( 'mysql' ) );
+			$this->notify_price_drop( (int) $post_id, $old, $new );
 		} elseif ( $old > 0 && $new > $old ) {
 			delete_post_meta( $post_id, 'price_prev' );
 			delete_post_meta( $post_id, 'price_drop_at' );
 		}
 		return $check;
+	}
+
+	/** 値下げ時、その車両をお気に入り登録している会員へ通知。 */
+	private function notify_price_drop( $vehicle_id, $old, $new ) {
+		if ( ! in_array( (string) get_post_meta( $vehicle_id, 'vehicle_status', true ) ?: '販売中', self::sellable_statuses(), true ) ) {
+			return; // 売約済等は通知しない。
+		}
+		$users = get_users( array( 'meta_key' => 'carmel_favorites', 'fields' => 'ID', 'number' => 2000 ) );
+		if ( empty( $users ) ) {
+			return;
+		}
+		$car = trim( get_post_meta( $vehicle_id, 'maker', true ) . ' ' . get_post_meta( $vehicle_id, 'model', true ) );
+		$car = $car ? $car : get_the_title( $vehicle_id );
+		$url = add_query_arg( 'vehicle', (int) $vehicle_id, home_url( '/' . ltrim( apply_filters( 'carmel_inventory_page_slug', 'inventory' ), '/' ) ) );
+
+		foreach ( $users as $uid ) {
+			$f = get_user_meta( $uid, 'carmel_favorites', true );
+			if ( ! is_array( $f ) || ! in_array( (int) $vehicle_id, array_map( 'intval', $f ), true ) ) {
+				continue;
+			}
+			Carmel_Notifier::notify(
+				'price_drop',
+				array(
+					'event_id'     => 'price_drop:' . $vehicle_id . ':' . $uid . ':' . gmdate( 'Ymd' ),
+					'recipient_id' => (int) $uid,
+					'vars'         => array( 'car' => $car, 'old' => number_format( $old ), 'new' => number_format( $new ), 'url' => $url ),
+				)
+			);
+		}
 	}
 
 	/** 在庫の新着/値下げバッジ（カード/詳細共通）。 */
@@ -240,10 +280,14 @@ class Carmel_Inventory {
 	 * @return WP_Post[]
 	 */
 	private function query_public( array $filters = array() ) {
+		$statuses = self::sellable_statuses();
+		if ( ! empty( $filters['show_sold'] ) ) {
+			$statuses = array_merge( $statuses, self::sold_statuses() );
+		}
 		$meta = array(
 			'relation' => 'AND',
 			array( 'key' => 'published', 'value' => array( '1', 'yes', 'true' ), 'compare' => 'IN' ),
-			array( 'key' => 'vehicle_status', 'value' => self::sellable_statuses(), 'compare' => 'IN' ),
+			array( 'key' => 'vehicle_status', 'value' => $statuses, 'compare' => 'IN' ),
 		);
 		if ( ! empty( $filters['maker'] ) ) {
 			$meta[] = array( 'key' => 'maker', 'value' => $filters['maker'] );
@@ -971,6 +1015,12 @@ window.carmelInitMap=function(){
 
 		if ( ! $fav_mode ) {
 			echo $this->filter_bar( $filters ); // phpcs:ignore WordPress.Security.EscapeOutput
+			// 売約済の表示切替。
+			if ( empty( $filters['show_sold'] ) ) {
+				echo '<p class="carmel-soldtoggle"><a href="' . esc_url( add_query_arg( 'show_sold', 1 ) ) . '">売約済も表示する</a></p>';
+			} else {
+				echo '<p class="carmel-soldtoggle"><a href="' . esc_url( remove_query_arg( 'show_sold' ) ) . '">販売中のみ表示</a></p>';
+			}
 			echo $this->saved_search_block( $filters ); // phpcs:ignore WordPress.Security.EscapeOutput
 		}
 
@@ -1521,6 +1571,7 @@ window.carmelInitMap=function(){
 			'body'      => isset( $_GET['body'] ) ? sanitize_text_field( wp_unslash( $_GET['body'] ) ) : '',
 			'year_min'  => isset( $_GET['year_min'] ) ? (int) $_GET['year_min'] : 0,
 			'mileage_max' => isset( $_GET['mileage_max'] ) ? (int) $_GET['mileage_max'] : 0,
+			'show_sold' => ! empty( $_GET['show_sold'] ) ? 1 : 0,
 		);
 	}
 
@@ -1685,14 +1736,20 @@ window.carmelInitMap=function(){
 			? get_the_post_thumbnail( $car->ID, 'medium', array( 'class' => 'carmel-car-img' ) )
 			: '<div class="carmel-car-noimg">NO IMAGE</div>';
 
-		$out  = '<article class="carmel-car-card">';
+		$sold = in_array( (string) $status, self::sold_statuses(), true );
+		$out  = '<article class="carmel-car-card' . ( $sold ? ' carmel-car-sold' : '' ) . '">';
 		$out .= '<div class="carmel-car-thumb">' . $thumb . '<span class="carmel-car-badge">' . esc_html( $status ? $status : '販売中' ) . '</span>';
+		if ( $sold ) {
+			$out .= '<span class="carmel-sold-ribbon">SOLD</span>';
+		}
 		if ( 'public' === $context ) {
 			$badges = $this->badges( $car );
-			if ( $badges ) {
+			if ( $badges && ! $sold ) {
 				$out .= '<div class="carmel-car-badges">' . $badges . '</div>';
 			}
-			$out .= $this->favorite_button( $car->ID );
+			if ( ! $sold ) {
+				$out .= $this->favorite_button( $car->ID );
+			}
 		}
 		$out .= '</div>';
 		$out .= '<div class="carmel-car-info">';
@@ -1743,7 +1800,11 @@ window.carmelInitMap=function(){
 			}
 		}
 
-		$out .= $this->card_actions( $car, $scope, $context, $store_id ); // phpcs:ignore WordPress.Security.EscapeOutput
+		if ( $sold && 'public' === $context ) {
+			$out .= '<div class="carmel-car-actions"><span class="carmel-sold-note">販売終了</span></div>';
+		} else {
+			$out .= $this->card_actions( $car, $scope, $context, $store_id ); // phpcs:ignore WordPress.Security.EscapeOutput
+		}
 		$out .= '</div></article>';
 		return $out;
 	}
@@ -2406,6 +2467,10 @@ window.carmelInitMap=function(){
 		$table['inventory_new_arrival'] = array(
 			array( 'audience' => 'customer', 'channel' => 'proline', 'fallback' => 'mail' ),
 		);
+		// お気に入り車の値下げ（recipient_id で本人へ）。
+		$table['price_drop'] = array(
+			array( 'audience' => 'customer', 'channel' => 'proline', 'fallback' => 'mail' ),
+		);
 		return $table;
 	}
 
@@ -2428,6 +2493,11 @@ window.carmelInitMap=function(){
 			$url  = isset( $vars['url'] ) ? $vars['url'] : '';
 			$message['subject'] = '【カーメル】新着在庫のお知らせ';
 			$message['body']    = "保存条件「" . $cond . "」に合う新着が " . $cnt . " 台入荷しました。\n" . $url;
+		} elseif ( 'price_drop' === $event_type ) {
+			$message['subject'] = 'お気に入りのお車が値下げ';
+			$message['body']    = ( isset( $vars['car'] ) ? $vars['car'] : 'お車' ) . " が値下げされました。\n¥"
+				. ( isset( $vars['old'] ) ? $vars['old'] : '' ) . ' → ¥' . ( isset( $vars['new'] ) ? $vars['new'] : '' ) . "\n"
+				. ( isset( $vars['url'] ) ? $vars['url'] : '' );
 		}
 		return $message;
 	}
@@ -2508,6 +2578,11 @@ window.carmelInitMap=function(){
 .carmel-car-badges{position:absolute;top:.4em;left:.4em;display:flex;gap:.3em}
 .carmel-badge-new{background:#16a085;color:#fff;border-radius:.3em;padding:.1em .5em;font-size:.72em;font-weight:bold}
 .carmel-badge-drop{background:#c0392b;color:#fff;border-radius:.3em;padding:.1em .5em;font-size:.72em;font-weight:bold}
+.carmel-car-sold .carmel-car-thumb{filter:grayscale(.7);opacity:.85}
+.carmel-sold-ribbon{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-12deg);background:rgba(192,57,43,.92);color:#fff;font-weight:bold;font-size:1.1em;letter-spacing:.1em;padding:.15em .8em;border-radius:.3em}
+.carmel-sold-note{color:#c0392b;font-weight:bold;font-size:.85em}
+.carmel-soldtoggle{margin:.2em 0 .6em}
+.carmel-soldtoggle a{color:#888;text-decoration:none;font-size:.85em}
 .carmel-car-cost{font-size:.8em;color:#a5281b}
 .carmel-car-store{font-size:.8em;color:#666}
 .carmel-car-actions{margin-top:auto;padding-top:.5em;display:flex;gap:.4em;flex-wrap:wrap}
