@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 7.9
+ * Version: 8.0
  * Author: CARMEL
  */
 
@@ -45,6 +45,7 @@ function carmel3_auto_get_settings() {
         'frequency'    => 'carmel_weekly',
         'run_time'     => '09:00',   // 自動生成を実行する時刻（サイトのタイムゾーン）
         'max_tokens_cap' => 12000,   // OpenRouterへの max_tokens 上限（0=制限しない／残高節約・エラー回避）
+        'auto_slug_meta' => 1,       // スラッグ（英語URL）とメタディスクリプションを自動生成
         'publish'      => 0,
         'gen_images'   => 0,
         'gen_section_images' => 1,
@@ -348,6 +349,15 @@ function carmel3_auto_run() {
     $s['done'] = $done;
 
     carmel3_progress_set('本文を保存しました。仕上げ中…', 45, 'running', array('post_id' => $post_id, 'title' => $title));
+
+    // スラッグ（英語URL）とメタディスクリプションの自動生成（メディア記事）
+    if (!empty($s['auto_slug_meta']) && $post_id) {
+        $sm = carmel3_ai_slug_meta(get_the_title($post_id) ?: $title, $item['keyword']);
+        $slug = carmel3_make_slug($sm['slug'], get_the_title($post_id) ?: $title, $item['keyword']);
+        if ($slug !== '') carmel3_apply_slug($post_id, $slug);
+        $meta_src = $sm['meta'] !== '' ? $sm['meta'] : get_the_excerpt($post_id);
+        carmel3_write_meta_description($post_id, $meta_src);
+    }
 
     // CTAボタンのURLが壊れていれば /contact/ に自動修正
     $cta_msg = '';
@@ -1009,6 +1019,84 @@ function carmel3_selectable_post_types() {
 }
 
 // 1つの投稿タイプに、テーマから記事をAI生成して保存
+// アイキャッチ画像を1枚生成して設定（ニュース・加盟店ブログ用。文字なし）
+function carmel3_img_set_featured($post_id, $s) {
+    if (get_post_thumbnail_id($post_id)) return '既存画像あり';
+    if (!function_exists('carmel3_img_generate_openrouter')) return '画像機能なし';
+    $model = (isset($s['image_model']) && $s['image_model'] !== '') ? $s['image_model'] : CARMEL3_IMG_DEFAULT_MODEL;
+    $ew = !empty($s['eyecatch_w']) ? (int)$s['eyecatch_w'] : 1200;
+    $eh = !empty($s['eyecatch_h']) ? (int)$s['eyecatch_h'] : 630;
+    $scene = carmel3_img_base_scene($post_id, $s);
+    $p = 'Professional automotive editorial visual. Scene: ' . $scene
+        . ' . 16:9 horizontal composition, the main subject centered' . carmel3_img_no_text_suffix();
+    $img = carmel3_img_generate_openrouter($p, $model);
+    if (is_wp_error($img)) return '画像失敗(' . $img->get_error_message() . ')';
+    $a = carmel3_img_sideload($post_id, $img['bytes'], $img['mime'], 'eyecatch-' . $post_id, $ew, $eh);
+    if (is_wp_error($a)) return '画像保存失敗';
+    set_post_thumbnail($post_id, $a);
+    return 'アイキャッチOK#' . $a;
+}
+
+// メタディスクリプションを主要SEOプラグインのフィールドに書き込む（どれが有効でも拾えるように）
+function carmel3_write_meta_description($post_id, $desc) {
+    $desc = trim(wp_strip_all_tags((string)$desc));
+    if ($desc === '') return;
+    $desc = mb_substr($desc, 0, 160);
+    update_post_meta($post_id, '_yoast_wpseo_metadesc', $desc); // Yoast SEO
+    update_post_meta($post_id, 'rank_math_description', $desc);  // Rank Math
+    update_post_meta($post_id, '_aioseo_description', $desc);    // All in One SEO（メタ側）
+    update_post_meta($post_id, '_genesis_description', $desc);   // Genesis系
+    update_post_meta($post_id, '_carmel3_meta_description', $desc);
+}
+
+// 英語スラッグを整形。日本語等で空になる場合はキーワード→最終的に carmel-xxxx
+function carmel3_make_slug($candidate, $fallback_title, $kw = '') {
+    $try = function ($x) {
+        $x = sanitize_title(remove_accents((string)$x));
+        if ($x === '' || strpos($x, '%') !== false || !preg_match('/[a-z0-9]/', $x)) return '';
+        // 長すぎるスラッグは詰める（語単位で最大60字程度）
+        if (strlen($x) > 60) $x = substr($x, 0, 60);
+        return trim($x, '-');
+    };
+    foreach (array($candidate, $kw, $fallback_title) as $src) {
+        $s = $try($src);
+        if ($s !== '') return $s;
+    }
+    return 'carmel-' . substr(md5($fallback_title . microtime()), 0, 8);
+}
+
+// 投稿のスラッグを安全に更新（重複は自動回避）
+function carmel3_apply_slug($post_id, $slug) {
+    if ($slug === '') return;
+    $post = get_post($post_id);
+    if (!$post) return;
+    $unique = wp_unique_post_slug($slug, $post_id, $post->post_status, $post->post_type, $post->post_parent);
+    wp_update_post(array('ID' => $post_id, 'post_name' => $unique));
+}
+
+// メディア記事用：タイトルから英語スラッグと日本語メタ説明をAIで作る
+function carmel3_ai_slug_meta($title, $kw) {
+    $out = array('slug' => '', 'meta' => '');
+    if (!function_exists('carmel_call_openrouter_chat')) return $out;
+    $sys = 'あなたはSEO編集者です。JSONのみ返答。';
+    $usr = "次の日本語記事に対して、(1)英語のURLスラッグ（小文字・ハイフン区切り・5〜7語・記号や日本語なし）、"
+        . "(2)日本語のメタディスクリプション（110〜140文字・検索結果に出る説明・誇大表現なし）を作成。\n"
+        . "タイトル: {$title}\nキーワード: {$kw}\n"
+        . "JSON: {\"slug\":\"\",\"meta_description\":\"\"}";
+    $res = carmel_call_openrouter_chat(array(
+        array('role' => 'system', 'content' => $sys),
+        array('role' => 'user',   'content' => $usr),
+    ), '', 0.5, 40);
+    if (!empty($res['error'])) return $out;
+    $content = isset($res['content']) ? (string)$res['content'] : '';
+    $json = function_exists('carmel_extract_json_from_text') ? carmel_extract_json_from_text($content) : json_decode(trim($content), true);
+    if (is_array($json)) {
+        $out['slug'] = isset($json['slug']) ? (string)$json['slug'] : '';
+        $out['meta'] = isset($json['meta_description']) ? (string)$json['meta_description'] : '';
+    }
+    return $out;
+}
+
 function carmel3_gen_post($post_type, $item, $s) {
     if (!function_exists('carmel_call_openrouter_chat')) {
         return new WP_Error('no_engine', '本体のAI関数(carmel_call_openrouter_chat)が見つかりません');
@@ -1034,8 +1122,8 @@ function carmel3_gen_post($post_type, $item, $s) {
     if ($instruction !== '') {
         $user .= "【この媒体の書き方（最優先で従う）】\n{$instruction}\n";
     }
-    $user .= "\nJSONキー:\n{\n  \"title\": \"\",\n  \"excerpt\": \"100〜140文字\",\n  \"content_html\": \"<h2>..</h2><p>..</p> 形式\"\n}\n"
-        . "注意: 自然な日本語 / 本文はHTML / 誇大表現は避ける / 上の『書き方』があれば最優先で従う。";
+    $user .= "\nJSONキー:\n{\n  \"title\": \"\",\n  \"excerpt\": \"100〜140文字\",\n  \"content_html\": \"<h2>..</h2><p>..</p> 形式\",\n  \"slug\": \"英語・小文字・ハイフン区切り・5〜7語・記号や日本語なし\",\n  \"meta_description\": \"日本語110〜140文字・検索結果に出る説明\"\n}\n"
+        . "注意: 自然な日本語 / 本文はHTML / 誇大表現は避ける / slugは必ず英語 / 上の『書き方』があれば最優先で従う。";
 
     $res = carmel_call_openrouter_chat(array(
         array('role' => 'system', 'content' => $system),
@@ -1051,20 +1139,43 @@ function carmel3_gen_post($post_type, $item, $s) {
     $t  = sanitize_text_field(isset($json['title']) && $json['title'] !== '' ? $json['title'] : $title);
     $ex = sanitize_textarea_field(isset($json['excerpt']) ? $json['excerpt'] : '');
     $html = wp_kses_post(isset($json['content_html']) ? $json['content_html'] : '');
+    $ai_slug = isset($json['slug']) ? (string)$json['slug'] : '';
+    $ai_meta = isset($json['meta_description']) ? (string)$json['meta_description'] : '';
     if (function_exists('carmel_normalize_ja_text')) { $t = carmel_normalize_ja_text($t); }
 
     $status = !empty($s['publish']) ? 'publish' : 'draft';
-    $pid = wp_insert_post(array(
+
+    // スラッグ自動変換（英語URL）
+    $post_name = '';
+    if (!empty($s['auto_slug_meta'])) {
+        $post_name = carmel3_make_slug($ai_slug, $t, $kw);
+    }
+
+    $insert = array(
         'post_type'    => $post_type,
         'post_status'  => $status,
         'post_title'   => $t,
         'post_content' => $html,
         'post_excerpt' => $ex,
-    ), true);
+    );
+    if ($post_name !== '') $insert['post_name'] = $post_name;
+
+    $pid = wp_insert_post($insert, true);
     if (is_wp_error($pid)) return $pid;
 
     update_post_meta($pid, '_carmel3_generated', 1);
     update_post_meta($pid, '_carmel_keyword', $kw);
+
+    // メタディスクリプション自動書き込み（無ければ抜粋で代用）
+    if (!empty($s['auto_slug_meta'])) {
+        carmel3_write_meta_description($pid, $ai_meta !== '' ? $ai_meta : $ex);
+    }
+
+    // アイキャッチ画像（「画像も自動生成」がONのとき）
+    if (!empty($s['gen_images'])) {
+        carmel3_img_set_featured($pid, $s);
+    }
+
     return $pid;
 }
 
@@ -1890,6 +2001,8 @@ add_action('admin_post_carmel3_auto_save', function () {
         $s['max_tokens_cap'] = max(0, min(65536, $mtc));
     }
 
+    $s['auto_slug_meta'] = isset($_POST['auto_slug_meta']) ? 1 : 0;
+
     $im = isset($_POST['image_model']) ? sanitize_text_field(wp_unslash($_POST['image_model'])) : '';
     $s['image_model'] = $im !== '' ? $im : CARMEL3_IMG_DEFAULT_MODEL;
 
@@ -2359,7 +2472,8 @@ function carmel3_auto_settings_page() {
             <p><label>
                 <input type="checkbox" name="gen_images" value="1" <?php checked(!empty($s['gen_images'])); ?>>
                 <strong>画像も自動生成する（アイキャッチ＋トップバナーの2枚）</strong>
-            </label></p>
+            </label><br>
+            <span style="color:#666;font-size:12px">ONにすると、<strong>ニュース・加盟店ブログにもアイキャッチ画像</strong>を1枚ずつ自動で付けます（文字なしの写真）。</span></p>
 
             <p><label>画像モデル（OpenRouter）：
                 <input type="text" name="image_model" value="<?php echo esc_attr($s['image_model']); ?>" style="width:340px" placeholder="<?php echo esc_attr(CARMEL3_IMG_DEFAULT_MODEL); ?>">
@@ -2400,6 +2514,14 @@ function carmel3_auto_settings_page() {
                 高さ <input type="number" name="sec_h" value="<?php echo esc_attr($s['sec_h']); ?>" style="width:90px" min="200"> px
                 <span style="color:#666;font-size:12px">（推奨 1200×675）</span>
             </p>
+
+            <hr style="margin:16px 0;border:none;border-top:1px solid #eee">
+
+            <p><label>
+                <input type="checkbox" name="auto_slug_meta" value="1" <?php checked(!empty($s['auto_slug_meta'])); ?>>
+                <strong>スラッグ（英語URL）とメタディスクリプションを自動で作る（SEO対策）</strong>
+            </label><br>
+            <span style="color:#666;font-size:12px">日本語タイトルを<strong>英語のURLスラッグ</strong>に自動変換し、<strong>検索結果に出る説明文（メタディスクリプション）</strong>もAIが作成します。Yoast / Rank Math / All in One SEO のどれでも反映されるよう書き込みます。ニュース・加盟店ブログ・メディア記事すべてに適用。</span></p>
 
             <hr style="margin:16px 0;border:none;border-top:1px solid #eee">
 
