@@ -56,6 +56,11 @@ class Carmel_Inventory {
 		return apply_filters( 'carmel_inventory_sold_statuses', array( '売約済', '納車済' ) );
 	}
 
+	/** 近日入荷（入庫予定）の在庫ステータス。 */
+	public static function coming_statuses() {
+		return apply_filters( 'carmel_inventory_coming_statuses', array( '入庫予定' ) );
+	}
+
 	/** その車両が売約済か。 */
 	private function is_sold( $vehicle_id ) {
 		return in_array( (string) get_post_meta( $vehicle_id, 'vehicle_status', true ), self::sold_statuses(), true );
@@ -122,24 +127,56 @@ class Carmel_Inventory {
 		return $check;
 	}
 
-	/** 値下げ時、その車両をお気に入り登録している会員へ通知。 */
+	/**
+	 * 値下げ時、関心のある会員へ通知。対象＝
+	 *   お気に入り登録者 ∪ 取扱店フォロワー ∪ 保存検索が一致するユーザー。
+	 * 重複は1人1通に集約。
+	 */
 	private function notify_price_drop( $vehicle_id, $old, $new ) {
 		if ( ! in_array( (string) get_post_meta( $vehicle_id, 'vehicle_status', true ) ?: '販売中', self::sellable_statuses(), true ) ) {
 			return; // 売約済等は通知しない。
 		}
-		$users = get_users( array( 'meta_key' => 'carmel_favorites', 'fields' => 'ID', 'number' => 2000 ) );
-		if ( empty( $users ) ) {
+		$store_id = (int) get_post_meta( $vehicle_id, 'store_id', true );
+		$targets  = array();
+
+		// 1) お気に入り登録者。
+		foreach ( get_users( array( 'meta_key' => 'carmel_favorites', 'fields' => 'ID', 'number' => 2000 ) ) as $uid ) {
+			$f = get_user_meta( $uid, 'carmel_favorites', true );
+			if ( is_array( $f ) && in_array( (int) $vehicle_id, array_map( 'intval', $f ), true ) ) {
+				$targets[ (int) $uid ] = true;
+			}
+		}
+		// 2) 取扱店フォロワー。
+		if ( $store_id ) {
+			foreach ( get_users( array( 'meta_key' => 'carmel_followed_stores', 'fields' => 'ID', 'number' => 2000 ) ) as $uid ) {
+				$f = get_user_meta( $uid, 'carmel_followed_stores', true );
+				if ( is_array( $f ) && in_array( $store_id, array_map( 'intval', $f ), true ) ) {
+					$targets[ (int) $uid ] = true;
+				}
+			}
+		}
+		// 3) 保存検索が一致するユーザー（値下げ後の価格で再判定）。
+		foreach ( get_users( array( 'meta_key' => 'carmel_saved_searches', 'fields' => 'ID', 'number' => 2000 ) ) as $uid ) {
+			$list = get_user_meta( $uid, 'carmel_saved_searches', true );
+			if ( ! is_array( $list ) ) {
+				continue;
+			}
+			foreach ( $list as $f ) {
+				if ( $this->vehicle_matches( $vehicle_id, $f ) ) {
+					$targets[ (int) $uid ] = true;
+					break;
+				}
+			}
+		}
+
+		if ( empty( $targets ) ) {
 			return;
 		}
 		$car = trim( get_post_meta( $vehicle_id, 'maker', true ) . ' ' . get_post_meta( $vehicle_id, 'model', true ) );
 		$car = $car ? $car : get_the_title( $vehicle_id );
 		$url = add_query_arg( 'vehicle', (int) $vehicle_id, home_url( '/' . ltrim( apply_filters( 'carmel_inventory_page_slug', 'inventory' ), '/' ) ) );
 
-		foreach ( $users as $uid ) {
-			$f = get_user_meta( $uid, 'carmel_favorites', true );
-			if ( ! is_array( $f ) || ! in_array( (int) $vehicle_id, array_map( 'intval', $f ), true ) ) {
-				continue;
-			}
+		foreach ( array_keys( $targets ) as $uid ) {
 			Carmel_Notifier::notify(
 				'price_drop',
 				array(
@@ -1030,6 +1067,7 @@ window.carmelInitMap=function(){
 		}
 
 		if ( ! $fav_mode ) {
+			echo $this->coming_block( $filters ); // phpcs:ignore WordPress.Security.EscapeOutput
 			echo $this->recent_strip(); // phpcs:ignore WordPress.Security.EscapeOutput
 		}
 		echo $this->map_block( $cars ); // phpcs:ignore WordPress.Security.EscapeOutput
@@ -1356,6 +1394,37 @@ window.carmelInitMap=function(){
 			$out .= '</div>';
 		}
 		$out .= '</div>';
+		return $out;
+	}
+
+	/** 近日入荷（入庫予定）の在庫を上部に表示。 */
+	private function coming_block( array $filters ) {
+		$meta = array(
+			'relation' => 'AND',
+			array( 'key' => 'published', 'value' => array( '1', 'yes', 'true' ), 'compare' => 'IN' ),
+			array( 'key' => 'vehicle_status', 'value' => self::coming_statuses(), 'compare' => 'IN' ),
+		);
+		if ( ! empty( $filters['store_id'] ) ) {
+			$meta[] = array( 'key' => 'store_id', 'value' => (int) $filters['store_id'] );
+		}
+		$cars = get_posts(
+			array(
+				'post_type'      => 'carmel_vehicle',
+				'post_status'    => 'publish',
+				'posts_per_page' => 8,
+				'orderby'        => 'date',
+				'order'          => 'DESC',
+				'meta_query'     => $meta,
+			)
+		);
+		if ( empty( $cars ) ) {
+			return '';
+		}
+		$out = '<div class="carmel-coming"><h3>🆕 近日入荷</h3><div class="carmel-car-grid">';
+		foreach ( $cars as $car ) {
+			$out .= $this->car_card( $car, 'guest', 'public' );
+		}
+		$out .= '</div></div>';
 		return $out;
 	}
 
@@ -2583,6 +2652,8 @@ window.carmelInitMap=function(){
 .carmel-sold-note{color:#c0392b;font-weight:bold;font-size:.85em}
 .carmel-soldtoggle{margin:.2em 0 .6em}
 .carmel-soldtoggle a{color:#888;text-decoration:none;font-size:.85em}
+.carmel-coming{margin:1em 0;border:1px dashed #16a085;border-radius:10px;padding:.7em 1em;background:#f1fbf8}
+.carmel-coming h3{margin:.2em 0 .5em;font-size:1em;color:#0e6e58}
 .carmel-car-cost{font-size:.8em;color:#a5281b}
 .carmel-car-store{font-size:.8em;color:#666}
 .carmel-car-actions{margin-top:auto;padding-top:.5em;display:flex;gap:.4em;flex-wrap:wrap}

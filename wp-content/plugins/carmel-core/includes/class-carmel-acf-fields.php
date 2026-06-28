@@ -221,7 +221,7 @@ class Carmel_ACF_Fields {
 			$this->f( 'vehicle', 'price', '販売価格', 'number' ),
 			$this->f( 'vehicle', 'cost', '仕入原価', 'number' ),
 			$this->f( 'vehicle', 'vehicle_status', '在庫ステータス', 'select', array(
-				'choices' => array( '販売中' => '販売中', '商談中' => '商談中', '売約済' => '売約済', '納車済' => '納車済', '抹消' => '抹消' ),
+				'choices' => array( '入庫予定' => '入庫予定（近日入荷）', '販売中' => '販売中', '商談中' => '商談中', '売約済' => '売約済', '納車済' => '納車済', '抹消' => '抹消' ),
 				'ui'      => 1,
 			) ),
 			$this->f( 'vehicle', 'location_address', '現車所在地' ),
