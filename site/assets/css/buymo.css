@@ -576,3 +576,11 @@ a.genre-link:hover{background:var(--orange);border-color:var(--orange);transform
   .reveal{opacity:1;transform:none;transition:none;}
   .carousel-track{transition:none;}
 }
+
+/* ============ 印刷時：追従UI・チャット・装飾を隠す ============ */
+@media print {
+  .cbot, .to-top, .sticky-cta, .cbot-panel { display: none !important; }
+  body { background: #fff; }
+  .site-header { position: static; box-shadow: none; }
+  a { text-decoration: none; color: inherit; }
+}
