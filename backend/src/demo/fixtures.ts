@@ -39,13 +39,35 @@ function iso(offsetMin: number): string {
   return new Date(Date.now() + offsetMin * 60_000).toISOString();
 }
 
+function daysFromNow(n: number): string {
+  return new Date(Date.now() + n * 86400_000).toISOString().slice(0, 10); // YYYY-MM-DD
+}
+
 export const demoTenant = {
   id: TENANT,
   company_name: 'デモ美容室 AISALON',
   industry: '美容室',
   plan: 'business',
   status: 'trial',
+  trial_ends_at: daysFromNow(5),       // 5日後にトライアル終了（アラート対象）
+  contract_started_at: null as string | null,
+  payment_status: 'none',
+  created_at: new Date(Date.now() - 86400_000 * 12).toISOString(),
 };
+
+// 運営ダッシュボードを実感できるよう複数テナントを用意（デモ）。
+export interface DemoTenantRow {
+  id: string; company_name: string; industry: string; plan: string; status: string;
+  trial_ends_at: string | null; contract_started_at: string | null; payment_status: string; created_at: string;
+}
+export const demoTenants: DemoTenantRow[] = [
+  { ...demoTenant } as DemoTenantRow,
+  { id: 'tn-2', company_name: '山田自動車販売', industry: '中古車販売', plan: 'pro', status: 'active', trial_ends_at: null, contract_started_at: daysFromNow(-180), payment_status: 'paid', created_at: new Date(Date.now() - 86400_000 * 200).toISOString() },
+  { id: 'tn-3', company_name: '佐藤クリニック', industry: 'クリニック', plan: 'business', status: 'active', trial_ends_at: null, contract_started_at: daysFromNow(-90), payment_status: 'paid', created_at: new Date(Date.now() - 86400_000 * 100).toISOString() },
+  { id: 'tn-4', company_name: '鈴木整体院', industry: '整体・接骨院', plan: 'starter', status: 'active', trial_ends_at: null, contract_started_at: daysFromNow(-45), payment_status: 'overdue', created_at: new Date(Date.now() - 86400_000 * 60).toISOString() },
+  { id: 'tn-5', company_name: '田中不動産', industry: '不動産', plan: 'business', status: 'trial', trial_ends_at: daysFromNow(2), contract_started_at: null, payment_status: 'none', created_at: new Date(Date.now() - 86400_000 * 12).toISOString() },
+  { id: 'tn-6', company_name: '海鮮居酒屋 大漁丸', industry: '飲食店', plan: 'starter', status: 'inactive', trial_ends_at: null, contract_started_at: daysFromNow(-30), payment_status: 'paid', created_at: new Date(Date.now() - 86400_000 * 40).toISOString() },
+];
 
 export const demoSettings = {
   tenant_id: TENANT,

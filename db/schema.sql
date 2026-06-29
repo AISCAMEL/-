@@ -630,3 +630,8 @@ create policy tenant_isolation on appointments
 alter table tenant_settings add column if not exists google_calendar_id text;
 alter table tenant_settings add column if not exists google_refresh_token text;
 alter table tenant_settings add column if not exists appointment_duration_min integer not null default 45;
+
+-- 運営の契約・請求管理用フィールド（テナント台帳）。
+alter table tenants add column if not exists trial_ends_at date;          -- トライアル終了日
+alter table tenants add column if not exists contract_started_at date;    -- 契約開始日
+alter table tenants add column if not exists payment_status text not null default 'none'; -- none/paid/overdue

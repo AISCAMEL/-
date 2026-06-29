@@ -3,7 +3,7 @@
 import { dbEnabled, query } from './index.js';
 import { summarizeCall } from '../ai/summarize.js';
 import {
-  demoCalls, demoFaqs, demoSettings, demoPhoneNumbers, demoTenant, demoUsers, demoNotifications, demoCallerRules, newId,
+  demoCalls, demoFaqs, demoSettings, demoPhoneNumbers, demoTenant, demoTenants, demoUsers, demoNotifications, demoCallerRules, newId,
   type DemoCall, type DemoFaq, type DemoUser,
 } from '../demo/fixtures.js';
 import type { CallSummary, TenantContext } from '../types.js';
@@ -557,12 +557,26 @@ export async function getUsageSummary(tenantId: string, month?: string) {
 export async function getAdminUsageSummary(month?: string) {
   const { from, to, key } = monthRange(month);
   if (!dbEnabled) {
-    const t = await getUsageSummary(demoTenant.id, month);
-    return {
-      month: key,
-      tenants: [{ tenant_id: demoTenant.id, company_name: demoTenant.company_name, ...t }],
-      totals: { calls: t.calls, billable_minutes: t.billable_minutes, cost_jpy: t.cost.total_jpy, revenue_jpy: t.revenue_jpy, margin_jpy: t.margin_jpy },
-    };
+    // デモ：先頭テナントは実通話から、その他はプランから利用量を合成して横断集計を作る。
+    const synthMin: Record<string, number> = { starter: 70, business: 320, pro: 1100, enterprise: 800 };
+    const tenants = demoTenants.map((dt, i) => {
+      if (dt.id === demoTenant.id) {
+        const t0 = buildSummary(dt.plan, demoCalls.length, demoCalls.reduce((s, c) => s + billableMinutes(c.duration_sec), 0), 0, key);
+        return { tenant_id: dt.id, company_name: dt.company_name, ...t0 };
+      }
+      const min = synthMin[dt.plan] ?? 100;
+      const t = buildSummary(dt.plan, Math.round(min / 4), min, Math.round(min * 0.1), key);
+      return { tenant_id: dt.id, company_name: dt.company_name, ...t };
+    });
+    const totals = tenants.reduce(
+      (acc, t) => ({
+        calls: acc.calls + t.calls, billable_minutes: acc.billable_minutes + t.billable_minutes,
+        cost_jpy: round2(acc.cost_jpy + t.cost.total_jpy), revenue_jpy: acc.revenue_jpy + t.revenue_jpy,
+        margin_jpy: round2(acc.margin_jpy + t.margin_jpy),
+      }),
+      { calls: 0, billable_minutes: 0, cost_jpy: 0, revenue_jpy: 0, margin_jpy: 0 },
+    );
+    return { month: key, tenants, totals };
   }
   const rows = await query<any>(
     `select t.id as tenant_id, t.company_name, t.plan,
@@ -796,8 +810,8 @@ export function callsToCsv(items: any[]): string {
 
 // ---------------- Super Admin ----------------
 export async function listTenants() {
-  if (!dbEnabled) return [demoTenant];
-  return query<any>(`select id, company_name, industry, plan, status, created_at from tenants order by created_at desc`);
+  if (!dbEnabled) return demoTenants;
+  return query<any>(`select id, company_name, industry, plan, status, trial_ends_at, contract_started_at, payment_status, created_at from tenants order by created_at desc`);
 }
 
 export async function createTenant(input: { company_name: string; industry?: string; plan?: string }) {
@@ -813,11 +827,12 @@ export async function getTenantDetail(tenantId: string) {
   const usage = await getUsageSummary(tenantId).catch(() => null);
   if (!dbEnabled) {
     const isDemo = tenantId === demoTenant.id;
+    const base = demoTenants.find((t) => t.id === tenantId) ?? demoTenant;
     return {
       tenant: {
-        ...demoTenant,
+        ...base,
         billing_email: 'owner@example.com', phone: '+815000000000',
-        address: '東京都〇〇区サンプル1-2-3', memo: '', created_at: new Date(Date.now() - 86400_000 * 30).toISOString(),
+        address: '東京都〇〇区サンプル1-2-3', memo: '',
       },
       settings: demoSettings,
       phone_numbers: demoPhoneNumbers.filter((p) => isDemo || p.tenant_id === tenantId),
@@ -833,7 +848,7 @@ export async function getTenantDetail(tenantId: string) {
   return { tenant, settings: settings ?? null, phone_numbers, user_count: uc?.n ?? 0, usage };
 }
 
-const TENANT_FIELDS = ['company_name', 'industry', 'plan', 'status', 'billing_email', 'phone', 'address', 'memo'] as const;
+const TENANT_FIELDS = ['company_name', 'industry', 'plan', 'status', 'billing_email', 'phone', 'address', 'memo', 'trial_ends_at', 'contract_started_at', 'payment_status'] as const;
 const PLAN_VALUES = ['starter', 'business', 'pro', 'enterprise'];
 const STATUS_VALUES = ['active', 'inactive', 'suspended', 'trial', 'closed'];
 
@@ -841,10 +856,9 @@ export async function updateTenant(tenantId: string, patch: Record<string, unkno
   if (patch.plan && !PLAN_VALUES.includes(String(patch.plan))) return { error: 'invalid plan' as const };
   if (patch.status && !STATUS_VALUES.includes(String(patch.status))) return { error: 'invalid status' as const };
   if (!dbEnabled) {
-    if (tenantId === demoTenant.id) {
-      for (const k of TENANT_FIELDS) if (k in patch) (demoTenant as any)[k] = patch[k];
-    }
-    return { tenant: { ...demoTenant } };
+    const t = demoTenants.find((x) => x.id === tenantId) ?? (tenantId === demoTenant.id ? demoTenant : null);
+    if (t) { for (const k of TENANT_FIELDS) if (k in patch) (t as any)[k] = patch[k]; }
+    return { tenant: { ...(t ?? demoTenant) } };
   }
   const cols = TENANT_FIELDS.filter((k) => k in patch);
   if (cols.length === 0) {

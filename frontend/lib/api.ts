@@ -113,6 +113,7 @@ export const api = {
   runCampaign: (id: string) => request<any>(`/api/campaigns/${id}/run`, { method: 'POST' }),
 
   overview: () => request<any>('/api/admin/overview'),
+  revenue: (month?: string) => request<any>(`/api/admin/revenue${month ? `?month=${month}` : ''}`),
   tenant: (id: string) => request<any>(`/api/admin/tenants/${id}`),
   updateTenant: (id: string, body: any) => request<any>(`/api/admin/tenants/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   leads: (qs = '') => request<any[]>(`/api/admin/leads${qs}`),
@@ -207,6 +208,15 @@ export function downloadUsageCsv(month?: string): Promise<void> {
 export function downloadCallsCsv(qs = ''): Promise<void> {
   return downloadCsv(`/api/calls/export${qs}`, 'calls.csv');
 }
+
+/** 運営：テナント別売上CSV。 */
+export function downloadRevenueCsv(month?: string): Promise<void> {
+  return downloadCsv(`/api/admin/revenue/export${month ? `?month=${month}` : ''}`, `revenue_${month ?? 'current'}.csv`);
+}
+
+export const PLAN_LABEL: Record<string, string> = { starter: 'Starter', business: 'Business', pro: 'Pro', enterprise: 'Enterprise' };
+export const TENANT_STATUS_LABEL: Record<string, string> = { active: '稼働', trial: '試用', inactive: '休止', suspended: '停止', closed: '解約' };
+export const PAYMENT_STATUS_LABEL: Record<string, string> = { none: '—', paid: '入金済', overdue: '滞納' };
 
 export function yen(n?: number | null): string {
   if (n === null || n === undefined) return '—';

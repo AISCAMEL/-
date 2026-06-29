@@ -4,6 +4,7 @@ import { requireSuperAdmin } from '../auth/jwt.js';
 import { sendEmail } from '../notify/email.js';
 import * as leads from './repo.js';
 import { listTenants, getAdminUsageSummary } from '../db/queries.js';
+import { committedMrr, renewalAlerts } from '../admin/revenue.js';
 import { rateLimit } from '../util/ratelimit.js';
 import { salesChatReply, type ChatTurn } from './chat.js';
 
@@ -77,19 +78,24 @@ export async function registerLeadRoutes(app: FastifyInstance): Promise<void> {
 
   // --- 運営ダッシュボード（経営KPI） ---
   app.get('/api/admin/overview', { preHandler: requireSuperAdmin }, async () => {
-    const [tenants, usage, leadStats, meetings, recentLeads] = await Promise.all([
+    const [tenants, usage, leadStats, meetings, recentLeads, mrr, alerts] = await Promise.all([
       listTenants(),
       getAdminUsageSummary(),
       leads.getLeadStats(),
       leads.getUpcomingMeetings(5),
       leads.getRecentLeads(6),
+      committedMrr(),
+      renewalAlerts(14),
     ]);
     const byTenantStatus: Record<string, number> = {};
     for (const t of tenants) byTenantStatus[t.status] = (byTenantStatus[t.status] ?? 0) + 1;
     const wonLost = leadStats.won + leadStats.lost;
     return {
       tenants: { total: tenants.length, active: byTenantStatus['active'] ?? 0, trial: byTenantStatus['trial'] ?? 0, by_status: byTenantStatus },
-      mrr_jpy: usage.totals.revenue_jpy,             // 当月の見込み売上をMRR目安に
+      mrr_jpy: usage.totals.revenue_jpy,             // 当月の見込み売上（利用ベース）
+      committed_mrr_jpy: mrr.committed_mrr_jpy,       // 確定MRR（稼働テナントの月額合計）
+      arr_jpy: mrr.arr_jpy,
+      mrr_by_plan: mrr.by_plan,
       cost_jpy: usage.totals.cost_jpy,
       margin_jpy: usage.totals.margin_jpy,
       calls_this_month: usage.totals.calls,
@@ -97,8 +103,32 @@ export async function registerLeadRoutes(app: FastifyInstance): Promise<void> {
       conversion_rate: wonLost > 0 ? Math.round((leadStats.won / wonLost) * 1000) / 10 : 0,
       upcoming_meetings: meetings,
       recent_leads: recentLeads,
+      alerts,
       month: usage.month,
     };
+  });
+
+  // 売上レポート（確定MRR＋プラン別＋テナント別の当月利用売上）
+  app.get('/api/admin/revenue', { preHandler: requireSuperAdmin }, async (req) => {
+    const { month } = req.query as Record<string, string>;
+    const [mrr, usage] = await Promise.all([committedMrr(), getAdminUsageSummary(month)]);
+    return { mrr, usage };
+  });
+
+  // テナント別 売上明細CSV
+  app.get('/api/admin/revenue/export', { preHandler: requireSuperAdmin }, async (req, reply) => {
+    const { month } = req.query as Record<string, string>;
+    const usage = await getAdminUsageSummary(month);
+    const header = ['会社名', 'プラン', '通話数', '課金対象分', '原価(円)', '売上(円)', '粗利(円)'];
+    const rows = usage.tenants.map((t: any) => [
+      t.company_name, t.plan ?? '', t.calls, t.billable_minutes,
+      Math.round(t.cost?.total_jpy ?? 0), Math.round(t.revenue_jpy ?? 0), Math.round(t.margin_jpy ?? 0),
+    ]);
+    const esc = (v: unknown) => { const s = String(v ?? ''); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+    const csv = [header, ...rows].map((r) => r.map(esc).join(',')).join('\r\n');
+    reply.header('Content-Type', 'text/csv; charset=utf-8');
+    reply.header('Content-Disposition', `attachment; filename="revenue_${usage.month}.csv"`);
+    return '﻿' + csv; // BOM付きでExcelの文字化け回避
   });
 
   // --- 運営（受信箱） ---

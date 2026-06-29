@@ -41,6 +41,8 @@ export default function TenantDetailPage() {
       await api.updateTenant(id, {
         company_name: form.company_name, industry: form.industry, plan: form.plan, status: form.status,
         billing_email: form.billing_email, phone: form.phone, address: form.address, memo: form.memo,
+        trial_ends_at: form.trial_ends_at || null, contract_started_at: form.contract_started_at || null,
+        payment_status: form.payment_status || 'none',
       });
       setMsg('保存しました。');
       load();
@@ -98,6 +100,22 @@ export default function TenantDetailPage() {
             </div>
             <Field label="請求先メール" value={form.billing_email ?? ''} onChange={(v) => set('billing_email', v)} />
             <Field label="電話番号" value={form.phone ?? ''} onChange={(v) => set('phone', v)} />
+            <div>
+              <label className="block text-sm font-medium text-gray-700">トライアル終了日</label>
+              <input type="date" value={(form.trial_ends_at ?? '').slice(0, 10)} onChange={(e) => set('trial_ends_at', e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-2 text-sm" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">契約開始日</label>
+              <input type="date" value={(form.contract_started_at ?? '').slice(0, 10)} onChange={(e) => set('contract_started_at', e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-2 text-sm" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">入金ステータス</label>
+              <select value={form.payment_status ?? 'none'} onChange={(e) => set('payment_status', e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-2 text-sm">
+                <option value="none">未請求 / —</option>
+                <option value="paid">入金済</option>
+                <option value="overdue">滞納</option>
+              </select>
+            </div>
             <div className="sm:col-span-2">
               <Field label="住所" value={form.address ?? ''} onChange={(v) => set('address', v)} />
             </div>
@@ -120,6 +138,9 @@ export default function TenantDetailPage() {
               <Row label="ユーザー数" value={`${d.user_count}名`} />
               <Row label="電話番号" value={`${d.phone_numbers.length}件`} />
               <Row label="登録日" value={formatDateTime(d.tenant.created_at)} />
+              {d.tenant.trial_ends_at && <Row label="試用終了日" value={String(d.tenant.trial_ends_at).slice(0, 10)} />}
+              {d.tenant.contract_started_at && <Row label="契約開始日" value={String(d.tenant.contract_started_at).slice(0, 10)} />}
+              <Row label="入金状況" value={d.tenant.payment_status === 'overdue' ? '滞納' : d.tenant.payment_status === 'paid' ? '入金済' : '—'} />
             </dl>
           </Card>
           <Card>

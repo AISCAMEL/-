@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { api, yen, LEAD_STATUS_LABEL, LEAD_CATEGORY_LABEL } from '@/lib/api';
+import { api, yen, LEAD_STATUS_LABEL, LEAD_CATEGORY_LABEL, PLAN_LABEL, downloadRevenueCsv } from '@/lib/api';
 import { Card, PageTitle, formatDateTime } from '@/components/ui';
 
 export default function OverviewPage() {
@@ -16,15 +16,70 @@ export default function OverviewPage() {
 
   return (
     <div>
-      <PageTitle title="運営ダッシュボード" sub={`${d.month} の事業状況（AIオペレーター24 運営）`} />
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <PageTitle title="運営ダッシュボード" sub={`${d.month} の事業状況（AIオペレーター24 運営）`} />
+        <button onClick={() => downloadRevenueCsv()} className="h-10 rounded-lg border px-4 text-sm text-gray-600 hover:bg-gray-50">売上CSV出力</button>
+      </div>
+
+      {/* 契約アラート */}
+      {d.alerts?.total > 0 && (
+        <Card className="mb-6 border-amber-300 bg-amber-50">
+          <h2 className="mb-2 text-sm font-semibold text-amber-800">⚠️ 要対応の契約アラート（{d.alerts.total}件）</h2>
+          <div className="space-y-1 text-sm">
+            {d.alerts.trial_expired?.map((t: any) => (
+              <div key={t.id} className="flex items-center justify-between">
+                <span><span className="rounded bg-red-100 px-1.5 py-0.5 text-xs text-red-700">試用期限切れ</span> {t.company_name}（{Math.abs(t.days)}日経過）</span>
+                <Link href={`/admin/tenants/${t.id}`} className="text-xs text-brand hover:underline">対応 →</Link>
+              </div>
+            ))}
+            {d.alerts.trial_ending?.map((t: any) => (
+              <div key={t.id} className="flex items-center justify-between">
+                <span><span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-800">試用終了まで{t.days}日</span> {t.company_name}</span>
+                <Link href={`/admin/tenants/${t.id}`} className="text-xs text-brand hover:underline">対応 →</Link>
+              </div>
+            ))}
+            {d.alerts.overdue?.map((t: any) => (
+              <div key={t.id} className="flex items-center justify-between">
+                <span><span className="rounded bg-red-100 px-1.5 py-0.5 text-xs text-red-700">入金滞納</span> {t.company_name}</span>
+                <Link href={`/admin/tenants/${t.id}`} className="text-xs text-brand hover:underline">対応 →</Link>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* 売上・テナント KPI */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Kpi label="MRR（当月見込み）" value={yen(d.mrr_jpy)} accent />
-        <Kpi label="粗利（当月）" value={yen(d.margin_jpy)} sub={`原価 ${yen(d.cost_jpy)}`} />
+        <Kpi label="確定MRR（月額合計）" value={yen(d.committed_mrr_jpy)} sub={`ARR ${yen(d.arr_jpy)}`} accent />
+        <Kpi label="当月見込み売上（利用込）" value={yen(d.mrr_jpy)} sub={`粗利 ${yen(d.margin_jpy)}`} />
         <Kpi label="契約テナント" value={`${d.tenants.total}社`} sub={`稼働${d.tenants.active} / 試用${d.tenants.trial}`} />
         <Kpi label="当月通話数" value={`${d.calls_this_month}件`} />
       </div>
+
+      {/* プラン別MRR内訳 */}
+      <Card className="mt-4">
+        <h2 className="mb-3 text-sm font-semibold text-gray-500">プラン別 確定MRR内訳</h2>
+        {(() => {
+          const plans = Object.entries(d.mrr_by_plan ?? {}) as [string, any][];
+          const max = Math.max(1, ...plans.map(([, v]) => v.mrr_jpy));
+          const active = plans.filter(([, v]) => v.count > 0);
+          if (active.length === 0) return <p className="text-sm text-gray-400">稼働中の契約がありません。</p>;
+          return (
+            <div className="space-y-2">
+              {active.map(([k, v]) => (
+                <div key={k} className="flex items-center gap-2 text-sm">
+                  <span className="w-24 shrink-0 text-gray-600">{PLAN_LABEL[k] ?? k}</span>
+                  <div className="h-4 flex-1 overflow-hidden rounded bg-gray-100">
+                    <div className="h-full rounded bg-brand" style={{ width: `${(v.mrr_jpy / max) * 100}%` }} />
+                  </div>
+                  <span className="w-12 text-right text-gray-500">{v.count}社</span>
+                  <span className="w-24 text-right font-medium">{yen(v.mrr_jpy)}</span>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+      </Card>
 
       {/* リード KPI */}
       <h2 className="mb-3 mt-8 text-lg font-semibold">問い合わせ・商談</h2>
