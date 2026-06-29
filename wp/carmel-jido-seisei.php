@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 8.4
+ * Version: 8.5
  * Author: CARMEL
  */
 
@@ -2507,6 +2507,27 @@ function carmel3_regen_supported($post_type) {
     return isset($sel[$post_type]);
 }
 
+// 記事ごとの「作り直し」状態を記録／取得
+function carmel3_set_regen_status($post_id, $state, $msg = '') {
+    update_post_meta($post_id, '_carmel3_regen', array(
+        'state' => $state,            // queued / running / done / error
+        'msg'   => (string) $msg,
+        'time'  => current_time('mysql'),
+        'ts'    => time(),
+    ));
+}
+function carmel3_get_regen_status($post_id) {
+    $d = get_post_meta($post_id, '_carmel3_regen', true);
+    return is_array($d) ? $d : array();
+}
+
+// 作り直し状態をJSONで返す（メタボックスの自動更新用）
+add_action('wp_ajax_carmel3_regen_status', function () {
+    if (!current_user_can('manage_options')) wp_send_json_error(array(), 403);
+    $post_id = isset($_GET['post']) ? intval($_GET['post']) : 0;
+    wp_send_json_success(carmel3_get_regen_status($post_id));
+});
+
 // 記事を作り直す（同じ記事を更新。本文も画像も新しく作る）
 function carmel3_regenerate_post($post_id) {
     @set_time_limit(300);
@@ -2526,11 +2547,13 @@ function carmel3_regenerate_post($post_id) {
 
     $pt = $post->post_type;
     delete_post_meta($post_id, '_carmel3_img_scene_en'); // 画像も新しい構図で
+    carmel3_set_regen_status($post_id, 'running', '本文を作成中…');
     carmel3_progress_set('記事を作り直しています…（本文）', 20, 'running', array('post_id'=>$post_id,'title'=>get_the_title($post_id)));
 
     if ($pt === 'media_article') {
         if (!function_exists('carmel_generate_article_api')) {
             carmel3_progress_set('エラー: 本体プラグイン(v5.7)が必要です', 100, 'error');
+            carmel3_set_regen_status($post_id, 'error', '本体プラグイン(v5.7)が必要です');
             return false;
         }
         $title = $item['title'] !== '' ? $item['title'] : $item['keyword'];
@@ -2545,6 +2568,7 @@ function carmel3_regenerate_post($post_id) {
         if (empty($data['success'])) {
             $msg = isset($data['message']) ? $data['message'] : '不明なエラー';
             carmel3_progress_set('エラー: 作り直しに失敗（' . $msg . '）', 100, 'error');
+            carmel3_set_regen_status($post_id, 'error', $msg);
             carmel3_loglist_add('作り直し失敗 post#' . $post_id . ' / ' . $msg, false);
             return false;
         }
@@ -2570,6 +2594,7 @@ function carmel3_regenerate_post($post_id) {
         update_post_meta($post_id, '_carmel3_item', $item);
         // 仕上げ：CTA／画像（作り直し）／slug・meta／店舗
         if (!empty($s['fix_cta'])) carmel3_auto_fix_cta($post_id, $s);
+        carmel3_set_regen_status($post_id, 'running', '画像を作り直し中…');
         carmel3_progress_set('画像を作り直しています…（1〜2分）', 60, 'running', array('post_id'=>$post_id));
         if (!empty($s['gen_images'])) {
             carmel3_img_attach_to_post($post_id); // アイキャッチ＋バナー作り直し
@@ -2606,12 +2631,14 @@ function carmel3_regenerate_post($post_id) {
         $r = carmel3_gen_post($pt, $item, $s, $post_id);
         if (is_wp_error($r)) {
             carmel3_progress_set('エラー: 作り直しに失敗（' . $r->get_error_message() . '）', 100, 'error');
+            carmel3_set_regen_status($post_id, 'error', $r->get_error_message());
             carmel3_loglist_add('作り直し失敗 post#' . $post_id . ' / ' . $r->get_error_message(), false);
             return false;
         }
     }
 
     carmel3_progress_set('作り直し完了：「' . get_the_title($post_id) . '」', 100, 'done', array('post_id'=>$post_id,'title'=>get_the_title($post_id)));
+    carmel3_set_regen_status($post_id, 'done', '作り直しが完了しました');
     carmel3_loglist_add('作り直し成功 post#' . $post_id . '（' . get_the_title($post_id) . '）', true);
     return true;
 }
@@ -2624,6 +2651,7 @@ add_action('admin_post_carmel3_regen', function () {
     if (!$post_id || !get_post($post_id)) wp_die('記事が見つかりません');
 
     carmel3_progress_set('作り直しを開始しました。準備中…', 3, 'running', array('post_id'=>$post_id));
+    carmel3_set_regen_status($post_id, 'queued', '作り直しの順番待ち…');
     if (!wp_next_scheduled(CARMEL3_REGEN_HOOK, array($post_id))) {
         wp_schedule_single_event(time(), CARMEL3_REGEN_HOOK, array($post_id));
     }
@@ -2640,6 +2668,19 @@ add_action('admin_post_carmel3_regen', function () {
 function carmel3_regen_url($post_id) {
     return wp_nonce_url(admin_url('admin-post.php?action=carmel3_regen&post=' . intval($post_id)), 'carmel3_regen_' . intval($post_id));
 }
+
+// 投稿一覧のタイトル横に作り直し状態を表示
+add_filter('display_post_states', function ($states, $post) {
+    if (!current_user_can('manage_options')) return $states;
+    $st = carmel3_get_regen_status($post->ID);
+    $state = isset($st['state']) ? $st['state'] : '';
+    if ($state === 'running' || $state === 'queued') {
+        $states['carmel3_regen'] = '<span style="color:#1d4ed8;font-weight:700">⟳ 作り直し中…</span>';
+    } elseif ($state === 'error') {
+        $states['carmel3_regen'] = '<span style="color:#b91c1c;font-weight:700">作り直し失敗</span>';
+    }
+    return $states;
+}, 10, 2);
 
 // 投稿一覧に「作り直す」行アクションを追加
 add_filter('post_row_actions', 'carmel3_regen_row_action', 10, 2);
@@ -2660,9 +2701,60 @@ add_action('add_meta_boxes', function () {
 });
 function carmel3_regen_metabox($post) {
     if (!carmel3_regen_supported($post->post_type)) { echo '<p>この投稿タイプは未対応です。</p>'; return; }
-    echo '<p style="margin:0 0 10px;color:#555;font-size:12px">内容を確認して気に入らない場合、AIで<strong>本文も画像も作り直し</strong>ます（同じURLのまま）。</p>';
-    echo '<a href="' . esc_url(carmel3_regen_url($post->ID)) . '" class="button button-primary" style="width:100%;text-align:center" onclick="return confirm(\'本文も画像も作り直します。よろしいですか？\');">この記事を作り直す</a>';
-    echo '<p style="margin:10px 0 0;color:#888;font-size:11px">裏側で実行します（画像ありは1〜3分）。完了後にこの画面を再読み込みしてください。</p>';
+    $st = carmel3_get_regen_status($post->ID);
+    $state = isset($st['state']) ? $st['state'] : '';
+    $msg   = isset($st['msg']) ? $st['msg'] : '';
+    $ajax  = admin_url('admin-ajax.php');
+    ?>
+    <p style="margin:0 0 10px;color:#555;font-size:12px">内容を確認して気に入らない場合、AIで<strong>本文も画像も作り直し</strong>ます（同じURLのまま）。</p>
+    <a href="<?php echo esc_url(carmel3_regen_url($post->ID)); ?>" class="button button-primary" style="width:100%;text-align:center;box-sizing:border-box" onclick="return confirm('本文も画像も作り直します。よろしいですか？');">この記事を作り直す</a>
+
+    <div id="carmel3-regen-status" data-state="<?php echo esc_attr($state); ?>" style="margin-top:10px;<?php echo ($state === 'running' || $state === 'queued') ? '' : 'display:none'; ?>">
+        <div style="display:flex;align-items:center;gap:8px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 10px">
+            <span class="spinner is-active" style="float:none;margin:0"></span>
+            <span id="carmel3-regen-text" style="font-size:12px;font-weight:700;color:#1d4ed8"><?php echo esc_html($msg !== '' ? $msg : '作り直し中…'); ?></span>
+        </div>
+    </div>
+    <div id="carmel3-regen-done" style="margin-top:10px;<?php echo ($state === 'done') ? '' : 'display:none'; ?>">
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 10px;font-size:12px;color:#166534;font-weight:700">作り直しが完了しました。</div>
+        <button type="button" class="button" style="width:100%;margin-top:6px" onclick="location.reload()">この画面を再読み込み</button>
+    </div>
+    <div id="carmel3-regen-error" style="margin-top:10px;<?php echo ($state === 'error') ? '' : 'display:none'; ?>">
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 10px;font-size:12px;color:#b91c1c;font-weight:700">作り直しに失敗：<span id="carmel3-regen-emsg"><?php echo esc_html($msg); ?></span></div>
+    </div>
+    <p style="margin:10px 0 0;color:#888;font-size:11px">裏側で実行します（画像ありは1〜3分）。状態はこの欄に自動表示されます。</p>
+
+    <script>
+    (function(){
+        var ajax = <?php echo wp_json_encode($ajax); ?>;
+        var postId = <?php echo (int) $post->ID; ?>;
+        var box = document.getElementById('carmel3-regen-status');
+        var run = document.getElementById('carmel3-regen-status');
+        var doneEl = document.getElementById('carmel3-regen-done');
+        var errEl = document.getElementById('carmel3-regen-error');
+        var txt = document.getElementById('carmel3-regen-text');
+        var emsg = document.getElementById('carmel3-regen-emsg');
+        function tick(){
+            fetch(ajax + '?action=carmel3_regen_status&post=' + postId, {credentials:'same-origin'})
+              .then(function(r){return r.json();})
+              .then(function(j){
+                  if(!j || !j.success || !j.data) return;
+                  var st = j.data.state || '';
+                  if(st === 'running' || st === 'queued'){
+                      run.style.display=''; doneEl.style.display='none'; errEl.style.display='none';
+                      if(j.data.msg) txt.textContent = j.data.msg;
+                  } else if(st === 'done'){
+                      run.style.display='none'; errEl.style.display='none'; doneEl.style.display='';
+                  } else if(st === 'error'){
+                      run.style.display='none'; doneEl.style.display='none'; errEl.style.display='';
+                      if(emsg && j.data.msg) emsg.textContent = j.data.msg;
+                  }
+              }).catch(function(){});
+        }
+        setInterval(tick, 4000);
+    })();
+    </script>
+    <?php
 }
 
 // 作り直し開始の通知
