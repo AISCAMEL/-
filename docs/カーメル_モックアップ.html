@@ -106,6 +106,19 @@ table.t th{background:#f4f6fb}
 .richmenu div{background:#0a3;color:#fff;text-align:center;padding:1.2em .3em;font-size:.75em}
 .note{font-size:.8em;color:#888}
 .legend{font-size:.78em;color:#888;margin-top:.4em}
+/* timeline */
+.tl{max-width:560px;position:relative;list-style:none;padding:0;margin:.6em 0}
+.tl:before{content:"";position:absolute;left:13px;top:.4em;bottom:.4em;width:2px;background:var(--line)}
+.tl li{display:flex;gap:.7em;position:relative;padding:.5em 0}
+.tl .ic{flex:0 0 auto;width:28px;height:28px;border-radius:50%;background:#fff;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:.85em;z-index:1}
+.tl li.memo .ic{border-color:var(--brand)}
+.tl .bd{background:#fff;border:1px solid var(--line);border-radius:10px;padding:.5em .8em;flex:1}
+.tl li.memo .bd{background:#faf9fc}
+.tl .wh{font-size:.78em;color:#9298a5}
+.tl .by{font-size:.78em;color:#888}
+.tl .nt{color:#7a7488;font-size:.9em}
+.memoform{display:flex;flex-direction:column;gap:.4em;max-width:560px;margin:.4em 0 1em}
+.memoform textarea{border:1px solid #ccc;border-radius:.4em;padding:.5em}
 </style></head>
 <body>
 <header class="top">
@@ -119,6 +132,7 @@ table.t th{background:#f4f6fb}
   <a href="#profile">④ 公開・店舗ページ</a>
   <a href="#report">⑤ レポート</a>
   <a href="#line">⑥ LINE導線</a>
+  <a href="#timeline">⑦ 商談タイムライン</a>
 </nav>
 <div class="wrap">
 
@@ -270,6 +284,22 @@ table.t th{background:#f4f6fb}
     </div>
   </div>
   <p class="note" style="text-align:center">※ 通知は現状プロライン、設定変更で LINE公式 Messaging API push へ段階移行（フォールバック＝メール）</p>
+</section>
+
+<!-- ⑦ 商談タイムライン -->
+<section id="timeline">
+  <h2>⑦ 商談タイムライン（/deal?deal=ID）</h2>
+  <p class="desc">[carmel_deal_timeline]：起票・ステータス変更（実行者/システム/メモ）・対応メモを時系列表示。閲覧＝本部/担当店/本人、メモ追加＝本部・担当店。/store の案件行「履歴」から</p>
+  <h3 style="margin:.1em 0">商談タイムライン　#1042　山田太郎</h3>
+  <form class="memoform"><textarea rows="2" placeholder="対応メモを追加（来店日・電話内容・次回約束など）"></textarea><button class="btn b-pp" style="align-self:flex-start">メモを追加</button></form>
+  <ul class="tl">
+    <li class="memo"><span class="ic">📝</span><div class="bd"><div class="wh">2026-06-28 15:10</div><div>本日来店。CX-5と比較検討中。週末に再来店予定。見積を先に送付。</div><div class="by">山本（店長）</div></div></li>
+    <li><span class="ic">📦</span><div class="bd"><div class="wh">2026-06-27 10:02</div><div>ステータス変更：加盟店マッチング → <strong>書類準備中</strong></div><div class="by">鈴木</div></div></li>
+    <li><span class="ic">📦</span><div class="bd"><div class="wh">2026-06-25 18:30</div><div>ステータス変更：審査OK → <strong>加盟店マッチング</strong><br><span class="nt">エリア（関東）で港南カーメルに割当</span></div><div class="by">システム</div></div></li>
+    <li><span class="ic">📦</span><div class="bd"><div class="wh">2026-06-25 14:12</div><div>ステータス変更：信販審査中 → <strong>審査OK</strong></div><div class="by">本部 田中</div></div></li>
+    <li><span class="ic">📦</span><div class="bd"><div class="wh">2026-06-24 09:40</div><div>ステータス変更：仮申込 → <strong>AIスコア済</strong><br><span class="nt">AIスコア 72 / ランクB</span></div><div class="by">システム</div></div></li>
+    <li><span class="ic">🟢</span><div class="bd"><div class="wh">2026-06-24 09:35</div><div>商談を起票（申込フォーム）</div></div></li>
+  </ul>
 </section>
 
 </div>
