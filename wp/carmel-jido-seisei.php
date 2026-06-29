@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 8.3
+ * Version: 8.4
  * Author: CARMEL
  */
 
@@ -54,6 +54,8 @@ function carmel3_auto_get_settings() {
         'publish'      => 0,
         'gen_images'   => 0,
         'gen_section_images' => 1,
+        'eyecatch_copy'      => 0,                    // アイキャッチに訴求コピーを重ねる
+        'eyecatch_copy_text' => '自社ローンOK｜全国対応', // 訴求コピー（｜で改行）
         'fix_cta'      => 1,
         'contact_url'  => '',
         'image_model'  => CARMEL3_IMG_DEFAULT_MODEL,
@@ -608,9 +610,13 @@ function carmel3_img_generate_openrouter($prompt, $model) {
     return array('bytes' => $bytes, 'mime' => $mime);
 }
 
-// 画像に文字を一切描かせないための強い指示（日本語の文字化け防止）。すべての画像プロンプト末尾に付ける。
+// 画像に文字を一切描かせず、登場人物は必ず日本人にするための強い指示。すべての画像プロンプト末尾に付ける。
 function carmel3_img_no_text_suffix() {
-    return ' . Photorealistic editorial photograph, natural soft lighting, sharp focus, realistic depth of field, professional color grading, clean modern composition.'
+    return ' . High-end photorealistic editorial photograph, shot on a full-frame camera, 50mm lens, natural soft lighting,'
+        . ' sharp focus, realistic depth of field, professional color grading, clean modern Japanese composition, magazine quality.'
+        . ' PEOPLE: if any person appears, they MUST be Japanese (East Asian, Japanese ethnicity), with natural Japanese features,'
+        . ' wearing neat Japanese business attire, in a Japan setting. ABSOLUTELY NO foreigners, no Western/Caucasian/Black/South-Asian people,'
+        . ' no non-Japanese faces. The setting is unmistakably Japan.'
         . ' ABSOLUTELY NO TEXT in the image: no words, no letters, no numbers, no Japanese characters (kanji, hiragana, katakana),'
         . ' no captions, no labels, no signboards, no posters, no brochures with writing, no brand logos, no license plate numbers,'
         . ' no phone or screen text, no watermark, no UI. The image must contain no writing of any kind anywhere.';
@@ -629,7 +635,8 @@ function carmel3_img_scene_from_ja($ja_context, $fallback) {
     if (!function_exists('carmel_call_openrouter_chat')) return $fallback;
 
     $sys = 'You turn a Japanese article topic into ONE short English scene description for a realistic editorial PHOTO '
-         . 'set at a Japanese used-car dealership / auto-finance context. '
+         . 'set at a Japanese used-car dealership / auto-finance context in Japan. '
+         . 'Any people described MUST be Japanese (never foreigners). '
          . 'Describe only people, setting, objects, mood (max 22 words). '
          . 'Never describe any text, words, letters, signs or logos that should appear in the photo. '
          . 'Output ONLY the scene phrase in English, no quotes, no explanation.';
@@ -654,7 +661,7 @@ function carmel3_img_base_scene($post_id, $s) {
     $cached = (string) get_post_meta($post_id, '_carmel3_img_scene_en', true);
     if ($cached !== '') return $cached;
 
-    $fallback = 'a professional Japanese auto dealership scene, a friendly female advisor and a customer, '
+    $fallback = 'a professional Japanese auto dealership scene in Japan, a friendly Japanese female advisor and a Japanese customer, '
               . 'a clean modern showroom with a parked car, bright and trustworthy mood';
     $title = trim((string) get_the_title($post_id));
     $scene = carmel3_img_scene_from_ja($title, $fallback);
@@ -701,6 +708,94 @@ function carmel3_img_sideload($post_id, $bytes, $mime, $base, $target_w = 0, $ta
     return $attach_id;
 }
 
+/* ===== アイキャッチに訴求コピーを重ねる（日本語フォントをサーバー側で描画＝文字化けしない） ===== */
+
+// 日本語TTFフォントを用意（無ければダウンロードしてuploadsに保存）
+function carmel3_get_jp_font() {
+    $dir = wp_upload_dir();
+    if (!empty($dir['error'])) return '';
+    $base = trailingslashit($dir['basedir']) . 'carmel3-fonts/';
+    $path = $base . 'jp.ttf';
+    if (file_exists($path) && filesize($path) > 50000) return $path;
+    wp_mkdir_p($base);
+    $urls = array(
+        'https://raw.githubusercontent.com/google/fonts/main/ofl/kosugimaru/KosugiMaru-Regular.ttf',
+        'https://raw.githubusercontent.com/google/fonts/main/ofl/kosugi/Kosugi-Regular.ttf',
+    );
+    foreach ($urls as $u) {
+        $r = wp_remote_get($u, array('timeout' => 30));
+        if (is_wp_error($r)) continue;
+        if ((int) wp_remote_retrieve_response_code($r) !== 200) continue;
+        $body = (string) wp_remote_retrieve_body($r);
+        if (strlen($body) > 50000) { @file_put_contents($path, $body); if (file_exists($path)) return $path; }
+    }
+    return '';
+}
+
+function carmel3_eyecatch_copy_ready($s) {
+    return !empty($s['eyecatch_copy'])
+        && function_exists('imagettftext')
+        && function_exists('imagecreatetruecolor');
+}
+
+// 添付画像の下部に帯＋訴求コピーを焼き込む
+function carmel3_eyecatch_overlay($attach_id, $text) {
+    $text = trim((string) $text);
+    if ($text === '' || !function_exists('imagettftext')) return false;
+    $font = carmel3_get_jp_font();
+    if ($font === '') return false;
+    $file = get_attached_file($attach_id);
+    if (!$file || !file_exists($file)) return false;
+    $info = @getimagesize($file);
+    if (!$info) return false;
+    $mime = $info['mime'];
+    if ($mime === 'image/png')       $img = @imagecreatefrompng($file);
+    elseif ($mime === 'image/jpeg')  $img = @imagecreatefromjpeg($file);
+    elseif ($mime === 'image/webp' && function_exists('imagecreatefromwebp')) $img = @imagecreatefromwebp($file);
+    else return false;
+    if (!$img) return false;
+
+    $W = imagesx($img); $H = imagesy($img);
+    // ｜ / | で改行（最大2行）
+    $lines = preg_split('/\s*[｜|\/\n]\s*/u', $text);
+    $lines = array_values(array_filter(array_map('trim', $lines), 'strlen'));
+    if (empty($lines)) { imagedestroy($img); return false; }
+    if (count($lines) > 2) $lines = array_slice($lines, 0, 2);
+
+    $fontsize = max(20, (int) round($W * 0.060));
+    $lineh    = (int) round($fontsize * 1.5);
+    $bandh    = $lineh * count($lines) + (int) round($fontsize * 0.9);
+    $y0       = $H - $bandh;
+
+    $band   = imagecolorallocatealpha($img, 11, 18, 32, 30);   // 濃紺・半透明
+    imagefilledrectangle($img, 0, $y0, $W, $H, $band);
+    $accent = imagecolorallocate($img, 244, 121, 32);          // 左オレンジバー
+    imagefilledrectangle($img, 0, $y0, max(4, (int) round($W * 0.014)), $H, $accent);
+
+    $white  = imagecolorallocate($img, 255, 255, 255);
+    $shadow = imagecolorallocatealpha($img, 0, 0, 0, 70);
+    $ty = $y0 + (int) round($fontsize * 1.15);
+    foreach ($lines as $ln) {
+        $bbox = imagettfbbox($fontsize, 0, $font, $ln);
+        $tw = abs($bbox[2] - $bbox[0]);
+        $tx = (int) round(($W - $tw) / 2);
+        if ($tx < (int) round($W * 0.035)) $tx = (int) round($W * 0.035);
+        imagettftext($img, $fontsize, 0, $tx + 2, $ty + 2, $shadow, $font, $ln);
+        imagettftext($img, $fontsize, 0, $tx, $ty, $white, $font, $ln);
+        $ty += $lineh;
+    }
+
+    if ($mime === 'image/png')       imagepng($img, $file);
+    elseif ($mime === 'image/webp' && function_exists('imagewebp')) imagewebp($img, $file);
+    else imagejpeg($img, $file, 90);
+    imagedestroy($img);
+
+    if (function_exists('wp_generate_attachment_metadata') && function_exists('wp_update_attachment_metadata')) {
+        wp_update_attachment_metadata($attach_id, wp_generate_attachment_metadata($attach_id, $file));
+    }
+    return true;
+}
+
 function carmel3_img_attach_to_post($post_id) {
     $s = carmel3_auto_get_settings();
     $model        = $s['image_model'] !== '' ? $s['image_model'] : CARMEL3_IMG_DEFAULT_MODEL;
@@ -728,6 +823,10 @@ function carmel3_img_attach_to_post($post_id) {
             $out[] = 'アイキャッチ保存失敗(' . $a->get_error_message() . ')';
         } else {
             set_post_thumbnail($post_id, $a);
+            // 訴求コピーを焼き込む（ONかつサーバー対応時）
+            if (carmel3_eyecatch_copy_ready($s)) {
+                carmel3_eyecatch_overlay($a, $s['eyecatch_copy_text']);
+            }
             $out[] = "アイキャッチOK#{$a}({$ew}x{$eh})";
         }
     }
@@ -880,11 +979,11 @@ function carmel3_auto_build_section_jobs($post_id, $s) {
 
     // セクションごとに「画の方向性」を変えて、3枚が似ないようにする（被写体・構図・距離を分ける）
     $angles = array(
-        1 => 'medium shot, a friendly Japanese sales advisor and a customer talking at a clean consultation desk, documents and a tablet on the desk, warm welcoming mood',
-        2 => 'close-up product shot, a well-maintained used car on a bright modern showroom floor, glossy body, low angle, no people',
-        3 => 'wide shot, a happy Japanese family or customer receiving car keys near a car, handshake, sunny dealership entrance, hopeful mood',
+        1 => 'medium shot, a friendly Japanese sales advisor and a Japanese customer (both Japanese) talking at a clean consultation desk, documents and a tablet on the desk, warm welcoming mood',
+        2 => 'close-up product shot, a well-maintained used car on a bright modern showroom floor in Japan, glossy body, low angle, no people',
+        3 => 'wide shot, a happy Japanese family or Japanese customer receiving car keys near a car, handshake, sunny Japanese dealership entrance, hopeful mood',
     );
-    $fallback_base = 'a professional Japanese auto dealership, clean modern interior, bright and trustworthy mood';
+    $fallback_base = 'a professional Japanese auto dealership in Japan, clean modern interior, bright and trustworthy mood';
 
     $jobs = array();
     foreach ($fields as $n => $f) {
@@ -1290,6 +1389,9 @@ function carmel3_img_set_featured($post_id, $s, $force = false) {
     $a = carmel3_img_sideload($post_id, $img['bytes'], $img['mime'], 'eyecatch-' . $post_id, $ew, $eh);
     if (is_wp_error($a)) return '画像保存失敗';
     set_post_thumbnail($post_id, $a);
+    if (carmel3_eyecatch_copy_ready($s)) {
+        carmel3_eyecatch_overlay($a, $s['eyecatch_copy_text']);
+    }
     return 'アイキャッチOK#' . $a;
 }
 
@@ -2267,6 +2369,10 @@ add_action('admin_post_carmel3_auto_save', function () {
     $s['publish']    = isset($_POST['publish']) ? 1 : 0;
     $s['gen_images'] = isset($_POST['gen_images']) ? 1 : 0;
     $s['gen_section_images'] = isset($_POST['gen_section_images']) ? 1 : 0;
+    $s['eyecatch_copy'] = isset($_POST['eyecatch_copy']) ? 1 : 0;
+    if (isset($_POST['eyecatch_copy_text'])) {
+        $s['eyecatch_copy_text'] = sanitize_text_field(wp_unslash($_POST['eyecatch_copy_text']));
+    }
     $s['fix_cta']    = isset($_POST['fix_cta']) ? 1 : 0;
     $s['gmb_post']   = isset($_POST['gmb_post']) ? 1 : 0;
 
@@ -2949,7 +3055,23 @@ function carmel3_auto_settings_page() {
                 <input type="checkbox" name="gen_images" value="1" <?php checked(!empty($s['gen_images'])); ?>>
                 <strong>画像も自動生成する（アイキャッチ＋トップバナーの2枚）</strong>
             </label><br>
-            <span style="color:#666;font-size:12px">ONにすると、<strong>ニュース・加盟店ブログにもアイキャッチ画像</strong>を1枚ずつ自動で付けます（文字なしの写真）。</span></p>
+            <span style="color:#666;font-size:12px">ONにすると、<strong>ニュース・加盟店ブログにもアイキャッチ画像</strong>を1枚ずつ自動で付けます（写真は<strong>日本人のみ</strong>・外国人は登場しません）。</span></p>
+
+            <div style="border:1px solid #cfe9d6;background:#f0fdf4;border-radius:10px;padding:12px 14px;margin:6px 0 12px">
+                <p style="margin:0"><label>
+                    <input type="checkbox" name="eyecatch_copy" value="1" <?php checked(!empty($s['eyecatch_copy'])); ?>>
+                    <strong>アイキャッチに訴求コピーを入れる</strong>
+                </label></p>
+                <p style="margin:8px 0 0">訴求コピー（<code>｜</code>で改行・最大2行）：
+                    <input type="text" name="eyecatch_copy_text" value="<?php echo esc_attr(isset($s['eyecatch_copy_text']) ? $s['eyecatch_copy_text'] : ''); ?>" style="width:360px" placeholder="例: 自社ローンOK｜全国対応">
+                </p>
+                <p style="margin:6px 0 0;color:#555;font-size:12px">画像の下に帯＋日本語コピーを<strong>サーバー側でくっきり描画</strong>します（文字化けしません）。<br>
+                <?php if (function_exists('imagettftext')): ?>
+                    <span style="color:#16a34a">この環境は対応OK（GD/FreeType利用可）。</span>
+                <?php else: ?>
+                    <span style="color:#c2410c">※ この環境はサーバーのGD/FreeTypeが無いため描画できません。サーバー会社にGD(freetype)有効化を依頼してください。</span>
+                <?php endif; ?></p>
+            </div>
 
             <p><label>画像モデル（OpenRouter）：
                 <input type="text" name="image_model" value="<?php echo esc_attr($s['image_model']); ?>" style="width:340px" placeholder="<?php echo esc_attr(CARMEL3_IMG_DEFAULT_MODEL); ?>">
