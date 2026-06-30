@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 8.5
+ * Version: 8.6
  * Author: CARMEL
  */
 
@@ -32,6 +32,10 @@ if (!defined('CARMEL3_PROGRESS_OPTION')) {
 // 記事の「作り直し」を裏側で実行するフック
 if (!defined('CARMEL3_REGEN_HOOK')) {
     define('CARMEL3_REGEN_HOOK', 'carmel3_regen_single');
+}
+// ニュース作成ウィザードの裏側実行フック
+if (!defined('CARMEL3_NEWS_HOOK')) {
+    define('CARMEL3_NEWS_HOOK', 'carmel3_news_generate_single');
 }
 // 本文セクション画像 ACF フィールドキー（編集ページのHTMLから確認した値）
 if (!defined('CARMEL3_F_SEC1_IMG')) { define('CARMEL3_F_SEC1_IMG', 'field_69ffb5a4d372b'); } // section_1_image
@@ -150,6 +154,8 @@ add_action(CARMEL3_AUTO_HOOK, 'carmel3_auto_run');
 add_action(CARMEL3_AUTO_RUNHOOK, 'carmel3_auto_run');
 // 記事の「作り直し」の裏側実行
 add_action(CARMEL3_REGEN_HOOK, 'carmel3_regenerate_post', 10, 1);
+// 「ニュースを作る」ウィザードの裏側実行
+add_action(CARMEL3_NEWS_HOOK, 'carmel3_news_generate', 10, 1);
 
 /* ===== OpenRouterへの max_tokens を送信時に上限制限（残高不足エラー回避・本体は無改変） =====
    本体v5.7が大きすぎる max_tokens（例: 65536）を送ると残高不足で失敗するため、
@@ -1481,6 +1487,11 @@ function carmel3_gen_post($post_type, $item, $s, $existing_id = 0) {
     if ($instruction !== '') {
         $user .= "【この媒体の書き方（最優先で従う）】\n{$instruction}\n";
     }
+    // 記事ごとの具体指示（ニュース作成ウィザード等）。日付や条件を正確に反映させる。
+    $brief = isset($item['brief']) ? trim((string)$item['brief']) : '';
+    if ($brief !== '') {
+        $user .= "【この記事の具体的な指示（最優先で正確に反映。事実・日付は改変しない）】\n{$brief}\n";
+    }
     // 店舗情報をランダムに1つ選んで差し込む（伏字・架空情報の防止）
     $store = carmel3_pick_store($item);
     $store_block = carmel3_store_prompt_block($store);
@@ -1651,14 +1662,16 @@ function carmel3_auto_register_menu() {
         // 「カーメル管理」の中にサブメニューとして入れる
         add_submenu_page($parent, 'かんたんホーム', 'かんたんホーム', 'manage_options', 'carmel3-home', 'carmel3_home_page');
         add_submenu_page($parent, 'CARMEL 自動生成', '自動生成', 'manage_options', 'carmel3-auto', 'carmel3_auto_settings_page');
+        add_submenu_page($parent, 'ニュースを作る（指示して生成）', 'ニュースを作る', 'manage_options', 'carmel3-news', 'carmel3_news_page');
         add_submenu_page($parent, '店舗・担当者（記事に差し込み）', '店舗・担当者', 'manage_options', 'carmel3-stores', 'carmel3_stores_page');
         add_submenu_page($parent, 'その他掲載ページ（MEO対策）', 'その他掲載ページ（MEO対策）', 'manage_options', 'carmel3-meo', 'carmel3_meo_page');
     } else {
         // 親が見つからない場合は従来どおりトップに出す（消えない保険）
         add_menu_page('かんたんホーム', 'かんたんホーム', 'manage_options', 'carmel3-home', 'carmel3_home_page', 'dashicons-admin-home', 3);
         add_menu_page('CARMEL 自動生成', 'CARMEL自動生成', 'manage_options', 'carmel3-auto', 'carmel3_auto_settings_page', 'dashicons-update', 4);
-        add_menu_page('店舗・担当者', '店舗・担当者', 'manage_options', 'carmel3-stores', 'carmel3_stores_page', 'dashicons-store', 5);
-        add_menu_page('その他掲載ページ（MEO対策）', 'その他掲載ページ(MEO)', 'manage_options', 'carmel3-meo', 'carmel3_meo_page', 'dashicons-location-alt', 6);
+        add_menu_page('ニュースを作る（指示して生成）', 'ニュースを作る', 'manage_options', 'carmel3-news', 'carmel3_news_page', 'dashicons-megaphone', 5);
+        add_menu_page('店舗・担当者', '店舗・担当者', 'manage_options', 'carmel3-stores', 'carmel3_stores_page', 'dashicons-store', 6);
+        add_menu_page('その他掲載ページ（MEO対策）', 'その他掲載ページ(MEO)', 'manage_options', 'carmel3-meo', 'carmel3_meo_page', 'dashicons-location-alt', 7);
     }
 }
 
@@ -1810,6 +1823,7 @@ function carmel3_home_page() {
     $url_set   = admin_url('admin.php?page=carmel-settings');       // 本体：設定（APIキー）
     $url_posts = admin_url('edit.php?post_type=media_article');     // 作った記事一覧
     $url_meo   = admin_url('admin.php?page=carmel3-meo');           // MEO（その他掲載ページ）
+    $url_news  = admin_url('admin.php?page=carmel3-news');          // ニュースを作る（指示して生成）
 
     // ニュース・加盟店ブログ（存在すれば先頭に大ボタンを出す）
     $quick_posts = array();
@@ -1879,6 +1893,10 @@ function carmel3_home_page() {
         <!-- やりたいこと（大ボタン） -->
         <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:18px">
             <h2 style="margin:0 0 12px;font-size:16px">やりたいことを選ぶ</h2>
+            <a href="<?php echo esc_url($url_news); ?>" style="text-decoration:none;display:block;background:linear-gradient(135deg,#0ea5e9,#0369a1);color:#fff;border-radius:12px;padding:16px;margin-bottom:12px">
+                <div style="font-size:18px;font-weight:800">📰 ニュースを作る（指示して生成）</div>
+                <div style="font-size:12px;opacity:.95;margin-top:4px">「今月の定休日」「キャンペーン」などを指示するだけ。定休日は日付を自動計算します。</div>
+            </a>
             <?php if (!empty($quick_posts)): ?>
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:12px">
                 <?php
@@ -2778,6 +2796,395 @@ add_action('admin_post_carmel3_auto_run_now', function () {
     wp_safe_redirect(admin_url('admin.php?page=carmel3-auto&started=1#carmel3-prog'));
     exit;
 });
+
+/* =====================================================================
+   ニュースを作る（指示して生成）ウィザード
+   - 定休日：対象月＋曜日を選ぶと、PHPが実際の日付を計算してAIに渡す
+   - キャンペーン：問診（名前・期間・特典・対象・注意）でAIに渡す
+   - お知らせ・自由：自由文の指示でそのまま生成
+   いずれも $item['brief'] に正確な事実を入れて carmel3_gen_post に渡す。
+   ===================================================================== */
+
+// ニュースの保存先（newsが無ければ通常の投稿）
+function carmel3_news_post_type() {
+    return post_type_exists('news') ? 'news' : 'post';
+}
+
+// 曜日番号(0=日〜6=土) → 日本語
+function carmel3_weekday_ja($w) {
+    $names = array('日', '月', '火', '水', '木', '金', '土');
+    $w = (int)$w;
+    return isset($names[$w]) ? $names[$w] : '';
+}
+
+// 指定した年月で、指定曜日（複数可）・指定週（第N週・空なら毎週）に当たる日付一覧を返す
+// 戻り値: array of array('day'=>int,'w'=>int,'nth'=>int,'label'=>'6/3(水)')
+function carmel3_dates_for_weekdays($year, $month, $weekdays, $nths = array()) {
+    $year  = (int)$year;
+    $month = (int)$month;
+    $weekdays = array_map('intval', (array)$weekdays);
+    $nths     = array_map('intval', (array)$nths);
+    $out = array();
+    if ($year < 2000 || $month < 1 || $month > 12 || empty($weekdays)) return $out;
+
+    $days_in_month = (int)date('t', mktime(0, 0, 0, $month, 1, $year));
+    for ($d = 1; $d <= $days_in_month; $d++) {
+        $w = (int)date('w', mktime(0, 0, 0, $month, $d, $year)); // 0=日
+        if (!in_array($w, $weekdays, true)) continue;
+        $nth = (int)floor(($d - 1) / 7) + 1; // その月の第何回目の曜日か
+        if (!empty($nths) && !in_array($nth, $nths, true)) continue;
+        $out[] = array(
+            'day'   => $d,
+            'w'     => $w,
+            'nth'   => $nth,
+            'label' => $month . '/' . $d . '(' . carmel3_weekday_ja($w) . ')',
+        );
+    }
+    return $out;
+}
+
+// 「6/15, 6/16」「6月15日」等のゆるい入力を ['6/15','6/16'] に整える（表示用）
+function carmel3_parse_free_dates($text, $month_hint = 0) {
+    $text = trim((string)$text);
+    if ($text === '') return array();
+    $parts = preg_split('/[、,\s]+/u', $text);
+    $out = array();
+    foreach ($parts as $p) {
+        $p = trim($p);
+        if ($p === '') continue;
+        // 「6月15日」→「6/15」
+        if (preg_match('/(\d{1,2})月(\d{1,2})日?/u', $p, $m)) {
+            $out[] = $m[1] . '/' . $m[2];
+        } elseif (preg_match('/^(\d{1,2})\/(\d{1,2})$/', $p, $m)) {
+            $out[] = $m[1] . '/' . $m[2];
+        } elseif (preg_match('/^\d{1,2}$/', $p) && $month_hint) {
+            $out[] = $month_hint . '/' . $p;
+        } else {
+            $out[] = $p; // そのまま
+        }
+    }
+    return $out;
+}
+
+// ウィザード本体の生成（裏側で実行）
+function carmel3_news_generate($item) {
+    $s = carmel3_auto_get_settings();
+    carmel3_progress_set('ニュース記事をAIが作成中…（30〜60秒）', 20, 'running', array('title' => isset($item['title']) ? $item['title'] : 'ニュース'));
+
+    if (!function_exists('carmel_call_openrouter_chat')) {
+        carmel3_progress_set('エラー: 本体プラグイン(v5.7)のAI関数が見つかりません', 100, 'error');
+        carmel3_loglist_add('ニュース生成失敗：本体AI関数なし', false);
+        return;
+    }
+
+    $pt = carmel3_news_post_type();
+    $pid = carmel3_gen_post($pt, $item, $s);
+
+    if (is_wp_error($pid)) {
+        $msg = $pid->get_error_message();
+        carmel3_progress_set('エラー: ニュース生成に失敗（' . $msg . '）', 100, 'error');
+        carmel3_loglist_add('ニュース生成失敗 / ' . $msg, false);
+        return;
+    }
+
+    $status_label = (get_post_status($pid) === 'publish') ? '公開' : '下書き';
+
+    // 通知（自動生成と同じ設定を使う）
+    if (!empty($s['slack_enabled']) || !empty($s['line_enabled'])) {
+        carmel3_progress_set('通知を送信中…', 92, 'running', array('post_id' => $pid));
+        carmel3_notify_new_post($s, $pid, '（ニュース作成ウィザードより）');
+    }
+
+    $title = get_the_title($pid);
+    carmel3_progress_set("完了：「{$title}」を{$status_label}で作成しました", 100, 'done', array('post_id' => $pid, 'title' => $title));
+    carmel3_loglist_add("ニュース生成 成功：{$title}（{$status_label}） post#{$pid}", true);
+}
+
+// 入力からニュース記事を作成（フォーム送信先）
+add_action('admin_post_carmel3_news_create', function () {
+    if (!current_user_can('manage_options')) wp_die('権限がありません');
+    check_admin_referer('carmel3_news_create');
+
+    $kind = isset($_POST['news_kind']) ? sanitize_key($_POST['news_kind']) : 'oshirase';
+
+    // 空の項目もキーは必ず用意（gen_post内のNotice回避）
+    $item = array(
+        'account'    => 'main',
+        'category'   => '',
+        'keyword'    => '',
+        'prefecture' => '',
+        'city'       => '',
+        'title'      => '',
+        'brief'      => '',
+        '_n'         => uniqid('news', true), // 同一イベントの重複スケジュール回避
+    );
+
+    if ($kind === 'teikyubi') {
+        // 対象月（YYYY-MM）
+        $ym = isset($_POST['target_month']) ? sanitize_text_field(wp_unslash($_POST['target_month'])) : '';
+        if (!preg_match('/^(\d{4})-(\d{1,2})$/', $ym, $m)) {
+            set_transient('carmel3_news_msg', '対象月が正しくありません。', 60);
+            wp_safe_redirect(admin_url('admin.php?page=carmel3-news&err=1'));
+            exit;
+        }
+        $year  = (int)$m[1];
+        $month = (int)$m[2];
+
+        $weekdays = (isset($_POST['weekdays']) && is_array($_POST['weekdays'])) ? array_map('intval', $_POST['weekdays']) : array();
+        $nths     = (isset($_POST['nths']) && is_array($_POST['nths'])) ? array_map('intval', $_POST['nths']) : array();
+        $extra_in = isset($_POST['extra_closed']) ? sanitize_text_field(wp_unslash($_POST['extra_closed'])) : '';
+        $note     = isset($_POST['news_note']) ? sanitize_textarea_field(wp_unslash($_POST['news_note'])) : '';
+
+        $dates = carmel3_dates_for_weekdays($year, $month, $weekdays, $nths);
+        if (empty($dates) && $extra_in === '') {
+            set_transient('carmel3_news_msg', '曜日を1つ以上選ぶか、臨時休業日を入力してください。', 60);
+            wp_safe_redirect(admin_url('admin.php?page=carmel3-news&err=1'));
+            exit;
+        }
+
+        $wd_labels = array();
+        foreach ($weekdays as $w) { $wd_labels[] = carmel3_weekday_ja($w) . '曜'; }
+        $nth_label = '';
+        if (!empty($nths)) {
+            $tmp = array();
+            foreach ($nths as $n) { $tmp[] = '第' . $n; }
+            $nth_label = implode('・', $tmp) . 'の';
+        }
+        $regular_label = ($nth_label !== '' ? $nth_label : '毎週') . implode('・', $wd_labels);
+
+        $date_labels = array();
+        foreach ($dates as $d) { $date_labels[] = $d['label']; }
+        $extra_dates = carmel3_parse_free_dates($extra_in, $month);
+
+        $brief  = "対象月：{$year}年{$month}月\n";
+        if (!empty($date_labels)) {
+            $brief .= "定休日（{$regular_label}）：" . implode('、', $date_labels) . "\n";
+        }
+        if (!empty($extra_dates)) {
+            $brief .= "臨時休業日：" . implode('、', $extra_dates) . "\n";
+        }
+        if ($note !== '') $brief .= "補足：{$note}\n";
+        $brief .= "上記が{$year}年{$month}月の休業日です。お客様に営業日・休業日が一目で分かるように、" .
+                  "リスト（<ul><li>）で休業日を明記してください。日付は絶対に改変・追加しないこと。" .
+                  "来店前の確認やお問い合わせを促す一文も添えてください。";
+
+        $item['title']    = "{$year}年{$month}月の定休日・営業日のお知らせ";
+        $item['keyword']  = '定休日 営業日 ' . $year . '年' . $month . '月';
+        $item['category'] = 'news';
+        $item['brief']    = $brief;
+
+    } elseif ($kind === 'campaign') {
+        $name   = isset($_POST['camp_name']) ? sanitize_text_field(wp_unslash($_POST['camp_name'])) : '';
+        $start  = isset($_POST['camp_start']) ? sanitize_text_field(wp_unslash($_POST['camp_start'])) : '';
+        $end    = isset($_POST['camp_end']) ? sanitize_text_field(wp_unslash($_POST['camp_end'])) : '';
+        $benefit= isset($_POST['camp_benefit']) ? sanitize_textarea_field(wp_unslash($_POST['camp_benefit'])) : '';
+        $target = isset($_POST['camp_target']) ? sanitize_text_field(wp_unslash($_POST['camp_target'])) : '';
+        $notes  = isset($_POST['camp_notes']) ? sanitize_textarea_field(wp_unslash($_POST['camp_notes'])) : '';
+
+        if ($name === '' && $benefit === '') {
+            set_transient('carmel3_news_msg', 'キャンペーン名か特典・内容のどちらかは入力してください。', 60);
+            wp_safe_redirect(admin_url('admin.php?page=carmel3-news&err=1'));
+            exit;
+        }
+
+        $period = '';
+        if ($start !== '' || $end !== '') {
+            $period = ($start !== '' ? $start : '—') . ' 〜 ' . ($end !== '' ? $end : '—');
+        }
+
+        $brief  = "種類：キャンペーン告知\n";
+        if ($name !== '')    $brief .= "キャンペーン名：{$name}\n";
+        if ($period !== '')  $brief .= "期間：{$period}\n";
+        if ($benefit !== '') $brief .= "特典・内容：{$benefit}\n";
+        if ($target !== '')  $brief .= "対象：{$target}\n";
+        if ($notes !== '')   $brief .= "注意事項：{$notes}\n";
+        $brief .= "上記の内容に基づき、来店・問い合わせを促すキャンペーン告知記事を作成してください。" .
+                  "期間・特典・対象・注意事項は正確に記載し、勝手に値引き率や条件を作らないこと。" .
+                  "期間や注意事項は分かりやすく明記してください。";
+
+        $item['title']    = ($name !== '' ? $name : 'キャンペーン') . 'のお知らせ';
+        $item['keyword']  = ($name !== '' ? $name : 'キャンペーン') . ' 中古車';
+        $item['category'] = 'campaign';
+        $item['brief']    = $brief;
+
+    } else { // oshirase / 自由入力
+        $title   = isset($_POST['free_title']) ? sanitize_text_field(wp_unslash($_POST['free_title'])) : '';
+        $content = isset($_POST['free_content']) ? sanitize_textarea_field(wp_unslash($_POST['free_content'])) : '';
+
+        if ($content === '') {
+            set_transient('carmel3_news_msg', '記事の内容・要点を入力してください。', 60);
+            wp_safe_redirect(admin_url('admin.php?page=carmel3-news&err=1'));
+            exit;
+        }
+
+        $brief  = "種類：お知らせ\n";
+        $brief .= "指示・要点：\n{$content}\n";
+        $brief .= "上記の指示に正確に従ってお知らせ記事を作成してください。事実関係を勝手に追加・改変しないこと。";
+
+        if ($title === '') {
+            // 内容の先頭をタイトルに
+            $title = wp_trim_words(wp_strip_all_tags($content), 18, '');
+            if ($title === '') $title = 'お知らせ';
+        }
+        $item['title']    = $title;
+        $item['keyword']  = $title;
+        $item['category'] = 'news';
+        $item['brief']    = $brief;
+    }
+
+    // 裏側で生成（画面を固まらせない）。進捗は下のバーに出る
+    carmel3_progress_set('ニュース生成を開始しました。準備中…', 3, 'running');
+    wp_schedule_single_event(time(), CARMEL3_NEWS_HOOK, array($item));
+    if (function_exists('spawn_cron')) { spawn_cron(); }
+
+    wp_safe_redirect(admin_url('admin.php?page=carmel3-news&started=1#carmel3-prog'));
+    exit;
+});
+
+// ウィザード画面
+function carmel3_news_page() {
+    $s = carmel3_auto_get_settings();
+    $pt = carmel3_news_post_type();
+    $pt_label = ($obj = get_post_type_object($pt)) ? ($obj->labels->singular_name ?: $obj->label) : $pt;
+    // 対象月の初期値（今月）
+    $this_month = date('Y-m', current_time('timestamp'));
+    $err_msg = get_transient('carmel3_news_msg');
+    if ($err_msg) delete_transient('carmel3_news_msg');
+    $img_on  = !empty($s['gen_images']);
+    $pub_on  = !empty($s['publish']);
+    ?>
+    <div style="max-width:1000px;margin:20px auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+        <div style="background:linear-gradient(135deg,#1a1a2e,#0f3460);color:#fff;padding:24px;border-radius:16px;margin-bottom:18px">
+            <h1 style="margin:0 0 6px;font-size:24px">ニュースを作る（指示して生成）</h1>
+            <p style="margin:0;opacity:.92">「今日はどんなニュース記事を作りますか？」——下から種類を選んで指示するだけ。<br>
+            例：<strong>今月の定休日</strong>を選ぶと、AIではなく<strong>システムが実際の休業日を計算</strong>して記事にします。キャンペーンは<strong>問診（質問に答える）</strong>で作れます。</p>
+        </div>
+
+        <?php if (isset($_GET['started'])): ?>
+            <div class="notice notice-success is-dismissible"><p>ニュース記事の生成を開始しました。下の「生成の進捗」に状況が出ます（画像ありは1〜3分）。完了後に <strong><?php echo esc_html($pt_label); ?></strong> 一覧（<?php echo esc_html($pub_on ? '公開' : '下書き'); ?>）に入ります。</p></div>
+        <?php endif; ?>
+        <?php if (isset($_GET['err']) && $err_msg): ?>
+            <div class="notice notice-error is-dismissible"><p><?php echo esc_html($err_msg); ?></p></div>
+        <?php endif; ?>
+
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#92400e">
+            保存先：<strong><?php echo esc_html($pt_label); ?></strong>（<?php echo esc_html($pt); ?>） ／ 保存形式：<strong><?php echo esc_html($pub_on ? '公開' : '下書き'); ?></strong> ／ 画像：<strong><?php echo $img_on ? '自動で入れる' : '入れない'; ?></strong>
+            <span style="color:#b45309">※ この設定は「自動生成」ページと共通です。</span>
+        </div>
+
+        <?php carmel3_render_progress_panel(); ?>
+
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" id="carmel3-news-form">
+            <input type="hidden" name="action" value="carmel3_news_create">
+            <?php wp_nonce_field('carmel3_news_create'); ?>
+
+            <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:16px">
+                <h2 style="margin:0 0 12px;font-size:16px">① どんなニュースを作りますか？</h2>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px">
+                    <label class="carmel3-kind" style="border:2px solid #0f766e;border-radius:10px;padding:12px;cursor:pointer;display:block">
+                        <input type="radio" name="news_kind" value="teikyubi" checked> <strong>定休日・営業日のお知らせ</strong>
+                        <span style="display:block;color:#666;font-size:12px;margin-top:4px">月と曜日を選ぶと休業日を自動計算</span>
+                    </label>
+                    <label class="carmel3-kind" style="border:2px solid #e5e7eb;border-radius:10px;padding:12px;cursor:pointer;display:block">
+                        <input type="radio" name="news_kind" value="campaign"> <strong>キャンペーン告知</strong>
+                        <span style="display:block;color:#666;font-size:12px;margin-top:4px">問診（質問）に答えて作成</span>
+                    </label>
+                    <label class="carmel3-kind" style="border:2px solid #e5e7eb;border-radius:10px;padding:12px;cursor:pointer;display:block">
+                        <input type="radio" name="news_kind" value="oshirase"> <strong>お知らせ・自由入力</strong>
+                        <span style="display:block;color:#666;font-size:12px;margin-top:4px">自由に指示して作成</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- 定休日 -->
+            <div class="carmel3-panel" data-kind="teikyubi" style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:16px">
+                <h2 style="margin:0 0 12px;font-size:16px">② 定休日の指示</h2>
+                <p style="margin:0 0 10px;color:#555;font-size:13px">対象の月と「定休の曜日」を選んでください。実際の日付（例：6/3・6/10…）は<strong>システムが自動計算</strong>してAIに渡すので、日付ミスが起きません。</p>
+                <label style="font-weight:700;font-size:13px;display:block;margin-bottom:6px">対象月</label>
+                <input type="month" name="target_month" value="<?php echo esc_attr($this_month); ?>" style="padding:7px;font-size:14px">
+
+                <div style="margin-top:14px;font-weight:700;font-size:13px">定休の曜日（複数可）</div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">
+                    <?php $wd = array('日','月','火','水','木','金','土'); foreach ($wd as $i => $name): ?>
+                        <label style="border:1px solid #cbd5e1;border-radius:8px;padding:6px 12px;cursor:pointer">
+                            <input type="checkbox" name="weekdays[]" value="<?php echo $i; ?>" <?php checked($i === 3); // 水曜を初期ON ?>> <?php echo esc_html($name); ?>
+                        </label>
+                    <?php endforeach; ?>
+                </div>
+
+                <div style="margin-top:14px;font-weight:700;font-size:13px">第何週だけ？（任意・未選択なら毎週）</div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">
+                    <?php for ($n = 1; $n <= 5; $n++): ?>
+                        <label style="border:1px solid #cbd5e1;border-radius:8px;padding:6px 12px;cursor:pointer">
+                            <input type="checkbox" name="nths[]" value="<?php echo $n; ?>"> 第<?php echo $n; ?>
+                        </label>
+                    <?php endfor; ?>
+                </div>
+
+                <label style="display:block;margin-top:14px;font-weight:700;font-size:13px">臨時休業日（任意）</label>
+                <input type="text" name="extra_closed" placeholder="例: 6/15, 6/16（年末年始・棚卸など）" style="width:100%;max-width:420px;padding:7px">
+
+                <label style="display:block;margin-top:14px;font-weight:700;font-size:13px">補足（任意）</label>
+                <textarea name="news_note" rows="2" placeholder="例: 祝日は通常営業します／GW期間は時間短縮 など" style="width:100%;padding:8px"></textarea>
+            </div>
+
+            <!-- キャンペーン -->
+            <div class="carmel3-panel" data-kind="campaign" style="display:none;background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:16px">
+                <h2 style="margin:0 0 12px;font-size:16px">② キャンペーンの問診</h2>
+                <p style="margin:0 0 12px;color:#555;font-size:13px">分かる範囲で答えてください。空欄でもOK（書いた内容だけ正確に使います）。</p>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
+                    <label style="font-size:13px;font-weight:700">キャンペーン名<br>
+                        <input type="text" name="camp_name" placeholder="例: 夏のボーナス応援フェア" style="width:100%;padding:7px;font-weight:400"></label>
+                    <label style="font-size:13px;font-weight:700">対象（誰向け）<br>
+                        <input type="text" name="camp_target" placeholder="例: ご来店の全てのお客様" style="width:100%;padding:7px;font-weight:400"></label>
+                    <label style="font-size:13px;font-weight:700">開始日<br>
+                        <input type="date" name="camp_start" style="width:100%;padding:7px;font-weight:400"></label>
+                    <label style="font-size:13px;font-weight:700">終了日<br>
+                        <input type="date" name="camp_end" style="width:100%;padding:7px;font-weight:400"></label>
+                </div>
+                <label style="display:block;margin-top:12px;font-size:13px;font-weight:700">特典・内容<br>
+                    <textarea name="camp_benefit" rows="3" placeholder="例: ご成約で5万円分のガソリン券プレゼント／登録費用サービス など" style="width:100%;padding:8px;font-weight:400"></textarea></label>
+                <label style="display:block;margin-top:12px;font-size:13px;font-weight:700">注意事項<br>
+                    <textarea name="camp_notes" rows="2" placeholder="例: 他キャンペーンとの併用不可／在庫がなくなり次第終了 など" style="width:100%;padding:8px;font-weight:400"></textarea></label>
+            </div>
+
+            <!-- お知らせ・自由 -->
+            <div class="carmel3-panel" data-kind="oshirase" style="display:none;background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:16px">
+                <h2 style="margin:0 0 12px;font-size:16px">② お知らせ・自由入力</h2>
+                <label style="display:block;font-size:13px;font-weight:700">タイトル（任意・空なら自動）<br>
+                    <input type="text" name="free_title" placeholder="例: 大型連休の営業についてのお知らせ" style="width:100%;padding:7px;font-weight:400"></label>
+                <label style="display:block;margin-top:12px;font-size:13px;font-weight:700">記事の内容・要点（指示）<br>
+                    <textarea name="free_content" rows="5" placeholder="例: 新しく〇〇店がオープンしました。場所は△△、オープン日は□□。記念フェアも実施。" style="width:100%;padding:8px;font-weight:400"></textarea></label>
+                <p style="margin:10px 0 0;color:#888;font-size:12px">※ 書いた事実だけを使います。AIが勝手に日付や住所を作ることはありません。</p>
+            </div>
+
+            <div style="text-align:center;margin:6px 0 30px">
+                <button type="submit" class="button button-primary button-hero" style="padding:0 40px">この内容でニュースを作る</button>
+                <p style="margin:10px 0 0;color:#888;font-size:12px">裏側で生成します。上の「生成の進捗」で状況が分かります。</p>
+            </div>
+        </form>
+    </div>
+
+    <script>
+    (function(){
+        var radios = document.querySelectorAll('input[name="news_kind"]');
+        var panels = document.querySelectorAll('.carmel3-panel');
+        var cards  = document.querySelectorAll('.carmel3-kind');
+        function sync(){
+            var val = 'teikyubi';
+            radios.forEach(function(r){ if (r.checked) val = r.value; });
+            panels.forEach(function(p){ p.style.display = (p.getAttribute('data-kind') === val) ? '' : 'none'; });
+            cards.forEach(function(c){
+                var r = c.querySelector('input');
+                c.style.borderColor = (r && r.checked) ? '#0f766e' : '#e5e7eb';
+            });
+        }
+        radios.forEach(function(r){ r.addEventListener('change', sync); });
+        sync();
+    })();
+    </script>
+    <?php
+}
 
 // 配列を再帰的にたどり、max_tokens（大きすぎる値）を上限まで下げる。戻り値: 変更件数
 function carmel3_lower_max_tokens_deep(&$data, $cap) {
