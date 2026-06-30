@@ -18,7 +18,7 @@ function header(rel, active) {
   <div class="container header-inner">
     <a href="${rel}buymo.html#top" class="logo" aria-label="BUYMO ホーム"><span class="logo-mark" aria-hidden="true">🐮</span><span class="logo-text">BUYMO</span></a>
     <nav class="gnav" id="gnav" aria-label="メインナビゲーション"><ul>${nav}</ul></nav>
-    <a href="tel:05017223365" class="header-tel" aria-label="電話で問い合わせ 0120-123-456"><span class="tel-ico" aria-hidden="true">📞</span>0120-123-456</a>
+    <a href="tel:05017223365" class="header-tel" aria-label="電話で問い合わせ 050-1722-3365"><span class="tel-ico" aria-hidden="true">📞</span>050-1722-3365</a>
     <button class="hamburger" id="hamburger" aria-label="メニューを開く" aria-expanded="false" aria-controls="gnav"><span></span><span></span><span></span></button>
   </div>
 </header>`;

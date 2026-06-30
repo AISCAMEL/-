@@ -540,8 +540,8 @@ a.genre-link:hover{background:var(--orange);border-color:var(--orange);transform
   .form-mascot{display:none;}
 }
 @media (max-width:767px){
-  .header-inner{gap:12px;}
-  .header-tel{font-size:18px;}
+  .header-inner{gap:8px;}
+  .header-tel{font-size:15px;}
   .gnav{
     position:fixed;top:84px;right:0;left:0;background:#fff;flex-direction:column;
     box-shadow:0 8px 16px rgba(0,0,0,.15);max-height:0;overflow:hidden;transition:max-height .4s ease;margin-left:0;

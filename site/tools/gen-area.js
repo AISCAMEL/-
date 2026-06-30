@@ -230,7 +230,7 @@ ${header(rel, 'area')}
       <p>無料査定はかんたん入力。最短即日でご連絡します。</p>
       <div class="area-cta">
         <a href="${rel}buymo-contact.html?pref=${encodeURIComponent(p.name)}" class="btn btn-light btn-lg">無料査定を依頼</a>
-        <a href="tel:05017223365" class="btn btn-tel-light">📞 0120-123-456</a>
+        <a href="tel:05017223365" class="btn btn-tel-light">📞 050-1722-3365</a>
       </div>
     </div>
   </section>
