@@ -29,10 +29,31 @@
   </div>
 </header>
 
+<style>
+  .sc-search{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
+  .sc-search input{flex:1;min-width:180px;height:44px;border:1px solid #ddd;border-radius:8px;padding:0 14px;font-size:15px;font-family:inherit;}
+  .sc-search input:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,107,53,.15);}
+  .sc-cats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px;}
+  .sc-cats button{background:#fff;border:1px solid #ddd;border-radius:20px;padding:5px 14px;font-size:13px;font-weight:700;cursor:pointer;color:#555;transition:all .15s;}
+  .sc-cats button.active{background:var(--orange);border-color:var(--orange);color:#fff;}
+  .sc-group{margin-bottom:28px;}
+  .sc-group h2{font-size:17px;font-weight:900;color:var(--navy);margin-bottom:12px;border-left:5px solid var(--orange);padding-left:12px;}
+  .sc-card{background:#fff;border-radius:12px;box-shadow:var(--shadow);padding:18px 20px;margin-bottom:10px;}
+  .sc-card-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .sc-card-head strong{flex:1;font-size:14px;color:var(--navy);}
+  .sc-copy{background:none;border:1px solid var(--orange);color:var(--orange);border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .15s;}
+  .sc-copy:hover{background:var(--orange);color:#fff;}
+  .sc-card p{font-size:14px;color:#444;line-height:1.75;background:#FAFAFA;border-radius:8px;padding:12px 14px;border-left:3px solid #f0d9c4;}
+  .sc-empty{text-align:center;color:#aaa;padding:40px;font-size:14px;}
+</style>
 <main class="portal-main">
   <div class="container">
     <h1>トークスクリプト集</h1>
     <p class="portal-sub">場面別の話法。ボタンでコピーして、現場でそのまま使えます。</p>
+    <div class="sc-search">
+      <input type="search" id="scSearch" placeholder="キーワードで絞り込み（例：廃車、ローン…）" />
+    </div>
+    <div class="sc-cats" id="scCats"></div>
     <div id="scriptGroups"></div>
   </div>
 </main>
@@ -53,7 +74,9 @@
     { cat: '🚗 査定・提示', items: [
       { t: '現車確認の声かけ', s: '本日はお時間ありがとうございます。お車を一通り拝見しますね。気になる箇所や、これまでの修理・装備があれば教えてください。プラス評価につながることもあります。' },
       { t: '金額提示', s: '拝見しました。状態を踏まえ、買取金額は◯◯円をご提示します。この価格は装備・人気・相場を評価した金額です。ご不明点があればご説明します。' },
-      { t: '書類が揃わない場合', s: 'お手元に書類が揃っていなくても大丈夫です。再発行が必要な書類はこちらで取得をサポートします。まずは進められますのでご安心ください。' }
+      { t: '書類が揃わない場合', s: 'お手元に書類が揃っていなくても大丈夫です。再発行が必要な書類はこちらで取得をサポートします。まずは進められますのでご安心ください。' },
+      { t: 'ローン残債がある場合', s: 'ローンが残っていても、買取金額でそのまま精算できる場合がございます。まず残債の金額と買取金額を比べてみましょう。買取額が残債を上回れば手元にお金が残ります。下回る場合も差額の対応方法をご一緒に検討します。' },
+      { t: '複数台まとめ査定', s: '複数台まとめてのご相談もお気軽にどうぞ。一度に出張査定できますのでご都合がよく、台数によりさらに良い条件でお出しできることもあります。' }
     ]},
     { cat: '🏷️ ジャンル別ひとこと', items: [
       { t: '廃車・不動車', s: '動かないお車・廃車予定のお車も、部品や素材・輸出で価値が付きます。引取・抹消手続きは無料、自動車税などの還付が受けられる場合もあります。処分される前にぜひご相談を。' },
@@ -78,11 +101,44 @@
     ]}
   ];
   function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-  document.getElementById('scriptGroups').innerHTML = SCRIPTS.map(function(g){
-    return '<section class="sc-group"><h2>'+esc(g.cat)+'</h2>'+g.items.map(function(it){
-      return '<div class="sc-card"><div class="sc-card-head"><strong>'+esc(it.t)+'</strong><button class="sc-copy" data-s="'+esc(it.s)+'">コピー</button></div><p>'+esc(it.s)+'</p></div>';
-    }).join('')+'</section>';
-  }).join('');
+  var activecat='', searchq='';
+
+  // カテゴリフィルターボタン生成
+  var catWrap = document.getElementById('scCats');
+  var allBtn = document.createElement('button');
+  allBtn.textContent = 'すべて'; allBtn.className = 'active';
+  allBtn.addEventListener('click', function(){ activecat=''; allBtn.className='active'; document.querySelectorAll('.sc-cats button[data-cat]').forEach(function(b){b.className='';}); render(); });
+  catWrap.appendChild(allBtn);
+  SCRIPTS.forEach(function(g){
+    var b=document.createElement('button'); b.textContent=g.cat; b.setAttribute('data-cat', g.cat);
+    b.addEventListener('click', function(){
+      activecat = activecat===g.cat ? '' : g.cat;
+      allBtn.className = activecat ? '' : 'active';
+      document.querySelectorAll('.sc-cats button[data-cat]').forEach(function(x){x.className = x.getAttribute('data-cat')===activecat ? 'active' : '';});
+      render();
+    });
+    catWrap.appendChild(b);
+  });
+
+  function render(){
+    var q = searchq.toLowerCase();
+    var groups = SCRIPTS.filter(function(g){ return !activecat || g.cat===activecat; }).map(function(g){
+      var items = g.items.filter(function(it){
+        return !q || it.t.toLowerCase().indexOf(q)>=0 || it.s.toLowerCase().indexOf(q)>=0;
+      });
+      return items.length ? {cat:g.cat, items:items} : null;
+    }).filter(Boolean);
+    if(!groups.length){ document.getElementById('scriptGroups').innerHTML='<p class="sc-empty">一致するスクリプトはありません。</p>'; return; }
+    document.getElementById('scriptGroups').innerHTML = groups.map(function(g){
+      return '<section class="sc-group"><h2>'+esc(g.cat)+'</h2>'+g.items.map(function(it){
+        return '<div class="sc-card"><div class="sc-card-head"><strong>'+esc(it.t)+'</strong><button class="sc-copy" data-s="'+esc(it.s)+'">コピー</button></div><p>'+esc(it.s)+'</p></div>';
+      }).join('')+'</section>';
+    }).join('');
+  }
+  render();
+
+  document.getElementById('scSearch').addEventListener('input', function(){ searchq=this.value.trim(); render(); });
+
   document.getElementById('scriptGroups').addEventListener('click', function(e){
     var b=e.target.closest('.sc-copy'); if(!b)return;
     var txt=b.getAttribute('data-s');
