@@ -7,16 +7,16 @@
 
 function header(rel, active) {
   const nav = [
-    ['ホーム', rel + 'buymo.html#top', false],
-    ['サービス内容', rel + 'buymo.html#features', false],
+    ['ホーム', rel + 'index.html#top', false],
+    ['サービス内容', rel + 'index.html#features', false],
     ['買取ジャンル', rel + 'genre/', active === 'genre'],
     ['エリア一覧', rel + 'area/', active === 'area'],
-    ['よくある質問', rel + 'buymo.html#faq', false],
+    ['よくある質問', rel + 'index.html#faq', false],
     ['お問い合わせ', rel + 'buymo-contact.html', false],
   ].map(([t, h, a]) => `<li><a href="${h}"${a ? ' aria-current="page"' : ''}>${t}</a></li>`).join('');
   return `<header class="site-header" id="top">
   <div class="container header-inner">
-    <a href="${rel}buymo.html#top" class="logo" aria-label="BUYMO ホーム"><span class="logo-mark" aria-hidden="true">🐮</span><span class="logo-text">BUYMO</span></a>
+    <a href="${rel}index.html#top" class="logo" aria-label="BUYMO ホーム"><span class="logo-mark" aria-hidden="true">🐮</span><span class="logo-text">BUYMO</span></a>
     <nav class="gnav" id="gnav" aria-label="メインナビゲーション"><ul>${nav}</ul></nav>
     <a href="tel:05017842929" class="header-tel" aria-label="電話で問い合わせ 050-1784-2929"><span class="tel-ico" aria-hidden="true">📞</span>050-1784-2929</a>
     <button class="hamburger" id="hamburger" aria-label="メニューを開く" aria-expanded="false" aria-controls="gnav"><span></span><span></span><span></span></button>
@@ -34,13 +34,13 @@ function footer(rel) {
   </nav>
   <div class="container grid grid-3 footer-grid">
     <div class="footer-col">
-      <a href="${rel}buymo.html#top" class="logo logo-light"><span class="logo-mark" aria-hidden="true">🐮</span><span class="logo-text">BUYMO</span></a>
+      <a href="${rel}index.html#top" class="logo logo-light"><span class="logo-mark" aria-hidden="true">🐮</span><span class="logo-text">BUYMO</span></a>
       <p class="footer-company">合同会社アイズ</p>
       <p>〒979-0201<br>福島県いわき市四倉町細谷字大町1番</p>
       <p>📞 050-1784-2929</p><p>✉️ info@aisjaltd.com</p>
     </div>
     <nav class="footer-col" aria-label="サイトマップ"><h3>サイトマップ</h3><ul class="footer-links">
-      <li><a href="${rel}buymo.html#company">会社概要</a></li>
+      <li><a href="${rel}index.html#company">会社概要</a></li>
       <li><a href="${rel}privacy.html">プライバシーポリシー</a></li>
       <li><a href="${rel}tokushoho.html">特定商取引法・古物商表記</a></li>
       <li><a href="${rel}genre/">買取ジャンル一覧</a></li>

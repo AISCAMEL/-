@@ -286,7 +286,7 @@ ${header(rel, 'genre')}
 <main>
   <section class="page-hero area-hero" aria-labelledby="page-title">
     <div class="container">
-      <nav class="breadcrumb" aria-label="パンくずリスト"><a href="${rel}buymo.html#top">ホーム</a><span aria-hidden="true">›</span><a href="${rel}genre/">買取ジャンル</a><span aria-hidden="true">›</span><span>${esc(g.name)}</span></nav>
+      <nav class="breadcrumb" aria-label="パンくずリスト"><a href="${rel}index.html#top">ホーム</a><span aria-hidden="true">›</span><a href="${rel}genre/">買取ジャンル</a><span aria-hidden="true">›</span><span>${esc(g.name)}</span></nav>
       <p class="hero-lead">${esc(g.icon)} ${esc(g.cat)}</p>
       <h1 id="page-title">${esc(g.name)}は<span class="hl">BUYMO</span></h1>
       <p class="page-lead">${esc(g.desc)} 手数料0円・無料出張査定・最短即日入金で、あなたの車を1円でも高く買取します。</p>
@@ -442,7 +442,7 @@ ${header(rel, 'genre')}
 <main>
   <section class="page-hero area-hero" aria-labelledby="page-title">
     <div class="container">
-      <nav class="breadcrumb" aria-label="パンくずリスト"><a href="${rel}buymo.html#top">ホーム</a><span aria-hidden="true">›</span><a href="${rel}genre/">買取ジャンル</a><span aria-hidden="true">›</span><a href="../">${esc(g.name)}</a><span aria-hidden="true">›</span><span>${esc(p.name)}</span></nav>
+      <nav class="breadcrumb" aria-label="パンくずリスト"><a href="${rel}index.html#top">ホーム</a><span aria-hidden="true">›</span><a href="${rel}genre/">買取ジャンル</a><span aria-hidden="true">›</span><a href="../">${esc(g.name)}</a><span aria-hidden="true">›</span><span>${esc(p.name)}</span></nav>
       <p class="hero-lead">${esc(p.region)}・${esc(p.name)}の${esc(g.name)}</p>
       <h1 id="page-title">${esc(p.name)}の${esc(g.name)}は<span class="hl">BUYMO</span></h1>
       <p class="page-lead">${esc(cityText)}をはじめ${esc(p.name)}全域に無料出張査定。${esc(g.desc)} 手数料0円・最短即日入金で、${esc(nm)}を1円でも高く買取します。</p>
@@ -558,7 +558,7 @@ ${header(rel, 'genre')}
 <main>
   <section class="page-hero area-hero" aria-labelledby="page-title">
     <div class="container">
-      <nav class="breadcrumb" aria-label="パンくずリスト"><a href="${rel}buymo.html#top">ホーム</a><span aria-hidden="true">›</span><span>買取ジャンル</span></nav>
+      <nav class="breadcrumb" aria-label="パンくずリスト"><a href="${rel}index.html#top">ホーム</a><span aria-hidden="true">›</span><span>買取ジャンル</span></nav>
       <h1 id="page-title">あらゆる車を、<span class="hl">ジャンル別</span>に高価買取</h1>
       <p class="page-lead">廃車・事故車・不動車から軽自動車・トラック・輸入車・EVまで。状態や種類を問わず、専門の査定で1円でも高く買い取ります。気になるジャンルをお選びください。</p>
     </div>

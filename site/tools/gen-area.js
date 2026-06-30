@@ -144,7 +144,7 @@ ${header(rel, 'area')}
 <main>
   <section class="page-hero area-hero" aria-labelledby="page-title">
     <div class="container">
-      <nav class="breadcrumb" aria-label="パンくずリスト"><a href="${rel}buymo.html#top">ホーム</a><span aria-hidden="true">›</span><a href="${rel}area/">対応エリア</a><span aria-hidden="true">›</span><span>${esc(p.name)}</span></nav>
+      <nav class="breadcrumb" aria-label="パンくずリスト"><a href="${rel}index.html#top">ホーム</a><span aria-hidden="true">›</span><a href="${rel}area/">対応エリア</a><span aria-hidden="true">›</span><span>${esc(p.name)}</span></nav>
       <p class="hero-lead">${esc(p.region)}・${esc(p.name)}の車買取</p>
       <h1 id="page-title">${esc(p.name)}の車買取・査定は<span class="hl">BUYMO</span></h1>
       <p class="page-lead">${esc(cityText)}をはじめ${esc(p.name)}全域に無料出張査定。事故車・不動車・古い車もOK。手数料0円・最短即日入金で、あなたの愛車を1円でも高く買取します。</p>
@@ -277,7 +277,7 @@ ${header(rel, 'area')}
 <main>
   <section class="page-hero area-hero" aria-labelledby="page-title">
     <div class="container">
-      <nav class="breadcrumb" aria-label="パンくずリスト"><a href="${rel}buymo.html#top">ホーム</a><span aria-hidden="true">›</span><span>対応エリア</span></nav>
+      <nav class="breadcrumb" aria-label="パンくずリスト"><a href="${rel}index.html#top">ホーム</a><span aria-hidden="true">›</span><span>対応エリア</span></nav>
       <h1 id="page-title">全国47都道府県の<span class="hl">車買取</span>対応エリア</h1>
       <p class="page-lead">北海道から沖縄まで、BUYMOは全国対応。お住まいの都道府県をお選びください。各エリアへ無料で出張査定に伺います。</p>
     </div>
@@ -297,7 +297,7 @@ ${footer(rel)}
 function sitemap() {
   const base = SITE_URL || '';
   const urls = [
-    `${base}/buymo.html`,
+    `${base}/`,
     `${base}/buymo-contact.html`,
     `${base}/buymo-partner.html`,
     `${base}/genre/`,
