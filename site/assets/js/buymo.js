@@ -329,7 +329,7 @@
         var q = payload.genre ? ('?genre=' + encodeURIComponent(payload.genre)) : '';
         window.location.href = 'buymo-thanks.html' + q;
       }).catch(function () {
-        note.textContent = '送信に失敗しました。お手数ですが 0120-123-456 へお電話ください。';
+        note.textContent = '送信に失敗しました。お手数ですが 050-1722-3365 へお電話ください。';
         note.className = 'form-note ng';
       }).then(function () {
         if (submitBtn) { submitBtn.disabled = false; }
