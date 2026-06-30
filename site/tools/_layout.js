@@ -18,7 +18,7 @@ function header(rel, active) {
   <div class="container header-inner">
     <a href="${rel}buymo.html#top" class="logo" aria-label="BUYMO ホーム"><span class="logo-mark" aria-hidden="true">🐮</span><span class="logo-text">BUYMO</span></a>
     <nav class="gnav" id="gnav" aria-label="メインナビゲーション"><ul>${nav}</ul></nav>
-    <a href="tel:05017223365" class="header-tel" aria-label="電話で問い合わせ 050-1722-3365"><span class="tel-ico" aria-hidden="true">📞</span>050-1722-3365</a>
+    <a href="tel:05017842929" class="header-tel" aria-label="電話で問い合わせ 050-1784-2929"><span class="tel-ico" aria-hidden="true">📞</span>050-1784-2929</a>
     <button class="hamburger" id="hamburger" aria-label="メニューを開く" aria-expanded="false" aria-controls="gnav"><span></span><span></span><span></span></button>
   </div>
 </header>`;
@@ -37,7 +37,7 @@ function footer(rel) {
       <a href="${rel}buymo.html#top" class="logo logo-light"><span class="logo-mark" aria-hidden="true">🐮</span><span class="logo-text">BUYMO</span></a>
       <p class="footer-company">合同会社アイズ</p>
       <p>〒979-0201<br>福島県いわき市四倉町細谷字大町1番</p>
-      <p>📞 050-1722-3365</p><p>✉️ info@aisjaltd.com</p>
+      <p>📞 050-1784-2929</p><p>✉️ info@aisjaltd.com</p>
     </div>
     <nav class="footer-col" aria-label="サイトマップ"><h3>サイトマップ</h3><ul class="footer-links">
       <li><a href="${rel}buymo.html#company">会社概要</a></li>
