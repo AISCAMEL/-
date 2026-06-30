@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 8.6
+ * Version: 8.7
  * Author: CARMEL
  */
 
@@ -60,6 +60,9 @@ function carmel3_auto_get_settings() {
         'gen_section_images' => 1,
         'eyecatch_copy'      => 0,                    // アイキャッチに訴求コピーを重ねる
         'eyecatch_copy_text' => '自社ローンOK｜全国対応', // 訴求コピー（｜で改行）
+        'img_style'    => 'standard',  // 画像のスタイル（プリセット）
+        'img_extra'    => '',          // 画像の追加指示（日本語OK・雰囲気/被写体/色/小物など）
+        'img_avoid'    => '',          // 画像で避けたいもの（任意）
         'fix_cta'      => 1,
         'contact_url'  => '',
         'image_model'  => CARMEL3_IMG_DEFAULT_MODEL,
@@ -633,6 +636,108 @@ function carmel3_img_has_japanese($str) {
     return (bool) preg_match('/[\x{3040}-\x{30FF}\x{4E00}-\x{9FFF}\x{FF66}-\x{FF9D}]/u', (string)$str);
 }
 
+/* ===== 画像の深い指示（スタイル・追加指示・避けたいもの）を英語のアートディレクションに変換 ===== */
+
+// 画像スタイルの選択肢（表示名）
+function carmel3_img_style_choices() {
+    return array(
+        'standard'  => '標準（編集写真・自然光）',
+        'bright'    => '明るく爽やか（清潔感・パステル）',
+        'premium'   => '高級・上質（重厚・洗練）',
+        'warm'      => '親しみ・あたたかい（暖色・家庭的）',
+        'cinematic' => 'シネマティック（映画風・印象的な光）',
+        'minimal'   => 'シンプル・余白多め（ミニマル）',
+        'pop'       => 'ポップ・明朗（広告チラシ風・くっきり）',
+    );
+}
+
+// スタイル → 英語のスタイル句
+function carmel3_img_style_suffix($style) {
+    switch ($style) {
+        case 'bright':    return 'bright airy natural daylight, fresh clean uplifting atmosphere, soft pastel tones, high key lighting';
+        case 'premium':   return 'luxurious high-end premium look, refined elegant lighting, deep rich tones, sophisticated upscale mood, glossy surfaces';
+        case 'warm':      return 'warm friendly inviting atmosphere, soft golden warm lighting, cozy approachable family-friendly feeling';
+        case 'cinematic': return 'cinematic dramatic lighting, shallow depth of field, filmic color grading, moody atmospheric tones, strong rim light';
+        case 'minimal':   return 'minimalist clean simple composition, generous negative space, muted neutral tones, calm and modern';
+        case 'pop':       return 'bright punchy advertising look, vivid saturated colors, crisp high contrast, cheerful energetic flyer-style mood';
+        case 'standard':
+        default:          return '';
+    }
+}
+
+// 日本語のアートディレクション指示を、英語の簡潔な描写句に変換（結果はキャッシュして無駄な通信を避ける）
+function carmel3_img_translate_directive($ja) {
+    $ja = trim((string)$ja);
+    if ($ja === '') return '';
+    if (!carmel3_img_has_japanese($ja)) return $ja; // 既に英語ならそのまま
+    $cache = get_option('carmel3_img_dir_cache', array());
+    if (!is_array($cache)) $cache = array();
+    $key = md5($ja);
+    if (isset($cache[$key]) && $cache[$key] !== '') return $cache[$key];
+    if (!function_exists('carmel_call_openrouter_chat')) return '';
+
+    $sys = 'Translate the following Japanese photo art-direction note into ONE concise English descriptive phrase for a photo image generator. '
+         . 'Keep only style, mood, subject, colors, props, composition, lighting. '
+         . 'Any people MUST remain Japanese. '
+         . 'Do NOT mention any text, words, letters, signs or logos that should appear in the image. '
+         . 'Output ONLY the English phrase, max 45 words, no quotes, no explanation.';
+    $res = carmel_call_openrouter_chat(array(
+        array('role' => 'system', 'content' => $sys),
+        array('role' => 'user',   'content' => $ja),
+    ), '', 0.5, 40);
+
+    $en = '';
+    if (is_array($res) && empty($res['error']) && !empty($res['content'])) {
+        $en = trim(preg_replace('/\s+/', ' ', (string)$res['content']));
+        $en = trim($en, " \t\n\r\0\x0B\"'。．");
+        if ($en !== '' && carmel3_img_has_japanese($en)) $en = '';
+        if (mb_strlen($en) > 300) $en = '';
+    }
+    if ($en !== '') {
+        $cache[$key] = $en;
+        if (count($cache) > 200) $cache = array_slice($cache, -200, null, true); // 肥大化防止
+        update_option('carmel3_img_dir_cache', $cache, false);
+    }
+    return $en;
+}
+
+// すべての画像プロンプトに足す「深い指示」をまとめて返す（スタイル＋追加指示＋避けたいもの）
+// $post_id があれば、その記事だけの追加指示（_carmel3_img_extra）も合成する
+function carmel3_img_directives($s, $post_id = 0) {
+    $parts = array();
+
+    $style = isset($s['img_style']) ? (string)$s['img_style'] : 'standard';
+    $style_en = carmel3_img_style_suffix($style);
+    if ($style_en !== '') $parts[] = $style_en;
+
+    $extra = isset($s['img_extra']) ? trim((string)$s['img_extra']) : '';
+    if ($post_id) {
+        $pe = (string) get_post_meta($post_id, '_carmel3_img_extra', true);
+        if (trim($pe) !== '') $extra = trim($extra . "\n" . $pe);
+    }
+    if ($extra !== '') {
+        $en = carmel3_img_translate_directive($extra);
+        if ($en !== '') $parts[] = $en;
+    }
+
+    $out = '';
+    if (!empty($parts)) {
+        $out .= ' . Art direction: ' . implode('; ', $parts) . '.';
+    }
+
+    $avoid = isset($s['img_avoid']) ? trim((string)$s['img_avoid']) : '';
+    if ($post_id) {
+        $pa = (string) get_post_meta($post_id, '_carmel3_img_avoid', true);
+        if (trim($pa) !== '') $avoid = trim($avoid . "\n" . $pa);
+    }
+    if ($avoid !== '') {
+        $aen = carmel3_img_translate_directive($avoid);
+        if ($aen !== '') $out .= ' Avoid showing: ' . $aen . '.';
+    }
+
+    return $out;
+}
+
 // 日本語の文脈（タイトルや見出し）から「英語のシーン説明（文字なし）」を作る。
 // AIが使えない/失敗時は $fallback をそのまま使う（英語の汎用シーン）。
 function carmel3_img_scene_from_ja($ja_context, $fallback) {
@@ -814,7 +919,7 @@ function carmel3_img_attach_to_post($post_id) {
 
     // 文字化け防止のため、日本語タイトルではなく「英語のシーン説明」で生成する
     $scene = carmel3_img_base_scene($post_id, $s);
-    $base_prompt = 'Professional automotive editorial visual. Scene: ' . $scene;
+    $base_prompt = 'Professional automotive editorial visual. Scene: ' . $scene . carmel3_img_directives($s, $post_id);
     $no_text = carmel3_img_no_text_suffix();
 
     $out = array();
@@ -1004,6 +1109,7 @@ function carmel3_auto_build_section_jobs($post_id, $s) {
         $scene = ($heading_scene !== '') ? ($angle . '; theme: ' . $heading_scene) : $angle;
 
         $prompt = 'Professional automotive editorial photo for an article section. Scene: ' . $scene
+            . carmel3_img_directives($s, $post_id)
             . ' . 16:9 horizontal composition' . $no_text;
         $jobs[] = array(
             'name'   => $f[1],
@@ -1388,7 +1494,7 @@ function carmel3_img_set_featured($post_id, $s, $force = false) {
     $ew = !empty($s['eyecatch_w']) ? (int)$s['eyecatch_w'] : 1200;
     $eh = !empty($s['eyecatch_h']) ? (int)$s['eyecatch_h'] : 630;
     $scene = carmel3_img_base_scene($post_id, $s);
-    $p = 'Professional automotive editorial visual. Scene: ' . $scene
+    $p = 'Professional automotive editorial visual. Scene: ' . $scene . carmel3_img_directives($s, $post_id)
         . ' . 16:9 horizontal composition, the main subject centered' . carmel3_img_no_text_suffix();
     $img = carmel3_img_generate_openrouter($p, $model);
     if (is_wp_error($img)) return '画像失敗(' . $img->get_error_message() . ')';
@@ -1567,6 +1673,10 @@ function carmel3_gen_post($post_type, $item, $s, $existing_id = 0) {
     update_post_meta($pid, '_carmel3_generated', 1);
     update_post_meta($pid, '_carmel_keyword', $kw);
     update_post_meta($pid, '_carmel3_item', $item); // 作り直し用にテーマを保存
+    // この記事だけの画像指示（ニュースウィザード等から）。画像生成時に合成される。
+    if (isset($item['img_extra']) && trim((string)$item['img_extra']) !== '') {
+        update_post_meta($pid, '_carmel3_img_extra', trim((string)$item['img_extra']));
+    }
 
     // メタディスクリプション自動書き込み（無ければ抜粋で代用）
     if (!empty($s['auto_slug_meta'])) {
@@ -2391,6 +2501,12 @@ add_action('admin_post_carmel3_auto_save', function () {
     if (isset($_POST['eyecatch_copy_text'])) {
         $s['eyecatch_copy_text'] = sanitize_text_field(wp_unslash($_POST['eyecatch_copy_text']));
     }
+    // 画像の深い指示（スタイル・追加指示・避けたいもの）
+    $style_in = isset($_POST['img_style']) ? sanitize_key($_POST['img_style']) : 'standard';
+    $style_choices = carmel3_img_style_choices();
+    $s['img_style'] = isset($style_choices[$style_in]) ? $style_in : 'standard';
+    $s['img_extra'] = isset($_POST['img_extra']) ? sanitize_textarea_field(wp_unslash($_POST['img_extra'])) : '';
+    $s['img_avoid'] = isset($_POST['img_avoid']) ? sanitize_text_field(wp_unslash($_POST['img_avoid'])) : '';
     $s['fix_cta']    = isset($_POST['fix_cta']) ? 1 : 0;
     $s['gmb_post']   = isset($_POST['gmb_post']) ? 1 : 0;
 
@@ -2916,6 +3032,7 @@ add_action('admin_post_carmel3_news_create', function () {
         'city'       => '',
         'title'      => '',
         'brief'      => '',
+        'img_extra'  => isset($_POST['news_img_extra']) ? sanitize_textarea_field(wp_unslash($_POST['news_img_extra'])) : '',
         '_n'         => uniqid('news', true), // 同一イベントの重複スケジュール回避
     );
 
@@ -3158,9 +3275,17 @@ function carmel3_news_page() {
                 <p style="margin:10px 0 0;color:#888;font-size:12px">※ 書いた事実だけを使います。AIが勝手に日付や住所を作ることはありません。</p>
             </div>
 
+            <?php if ($img_on): ?>
+            <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:16px">
+                <h2 style="margin:0 0 8px;font-size:16px">③ この記事の画像イメージ（任意）</h2>
+                <p style="margin:0 0 8px;color:#555;font-size:13px">この記事だけの画像の指示です（日本語OK）。空なら「自動生成」設定の画像スタイル・追加指示をそのまま使います。</p>
+                <textarea name="news_img_extra" rows="2" style="width:100%;padding:8px" placeholder="例：カレンダーや時計をイメージした明るい店内。女性スタッフが案内する様子。夏らしい爽やかな色合い。"></textarea>
+            </div>
+            <?php endif; ?>
+
             <div style="text-align:center;margin:6px 0 30px">
                 <button type="submit" class="button button-primary button-hero" style="padding:0 40px">この内容でニュースを作る</button>
-                <p style="margin:10px 0 0;color:#888;font-size:12px">裏側で生成します。上の「生成の進捗」で状況が分かります。</p>
+                <p style="margin:10px 0 0;color:#888;font-size:12px">裏側で生成します。上の「生成の進捗」で状況が分かります。<?php if (!$img_on): ?><br>※ 画像を付けるには「自動生成」設定で「画像も自動生成する」をONにしてください。<?php endif; ?></p>
             </div>
         </form>
     </div>
@@ -3570,6 +3695,28 @@ function carmel3_auto_settings_page() {
                 <?php else: ?>
                     <span style="color:#c2410c">※ この環境はサーバーのGD/FreeTypeが無いため描画できません。サーバー会社にGD(freetype)有効化を依頼してください。</span>
                 <?php endif; ?></p>
+            </div>
+
+            <div style="border:1px solid #c7d2fe;background:#eef2ff;border-radius:10px;padding:14px 16px;margin:6px 0 14px">
+                <p style="margin:0 0 8px;font-weight:800;color:#3730a3">🎨 画像の深い指示（“ありきたり”を卒業）</p>
+                <p style="margin:0 0 10px;color:#444;font-size:12px">下を埋めるほど、毎回の写真の<strong>雰囲気・被写体・色・小物</strong>が思いどおりに近づきます。日本語でOK（システムが英語に翻訳して画像AIへ渡します。写真は<strong>日本人のみ・文字なし</strong>は常に維持）。</p>
+
+                <p style="margin:0 0 6px"><label><strong>画像スタイル</strong>：
+                    <select name="img_style" style="padding:5px;min-width:280px">
+                        <?php $cur_style = isset($s['img_style']) ? $s['img_style'] : 'standard';
+                        foreach (carmel3_img_style_choices() as $k => $lbl): ?>
+                            <option value="<?php echo esc_attr($k); ?>" <?php selected($cur_style, $k); ?>><?php echo esc_html($lbl); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </label></p>
+
+                <p style="margin:10px 0 4px"><label style="font-weight:700">画像の追加指示（どんな写真にしたいか）</label></p>
+                <textarea name="img_extra" rows="3" style="width:100%;padding:8px" placeholder="例：30代の女性スタッフが笑顔で接客。白を基調にした清潔感のある店内。観葉植物を置く。SUVや軽自動車を中心に。夕方の暖かい光。家族連れのお客様。"><?php echo esc_textarea(isset($s['img_extra']) ? $s['img_extra'] : ''); ?></textarea>
+                <p style="margin:4px 0 0;color:#666;font-size:12px">被写体（誰・どんな車）／場所・内装／色・光／小物・季節 などを具体的に書くほど効果的です。</p>
+
+                <p style="margin:12px 0 4px"><label style="font-weight:700">画像で避けたいもの（任意）</label></p>
+                <input type="text" name="img_avoid" value="<?php echo esc_attr(isset($s['img_avoid']) ? $s['img_avoid'] : ''); ?>" style="width:100%;padding:7px" placeholder="例：暗い雰囲気、派手すぎる色、高級外車、雑然とした背景 など">
+                <p style="margin:8px 0 0;color:#888;font-size:11px">※ この指示はアイキャッチ・バナー・本文の各セクション画像すべてに反映されます。記事ごとに変えたい場合は「ニュースを作る」画面の画像欄からも指定できます。</p>
             </div>
 
             <p><label>画像モデル（OpenRouter）：
