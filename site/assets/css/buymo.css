@@ -230,10 +230,13 @@ img{max-width:100%;display:block;}
 
 /* ============ 買取対象車 ============ */
 .targets{background:#fff;padding:80px 0;}
-.target-card{text-align:center;padding:18px;}
+.target-card{text-align:center;padding:18px;transition:transform .25s ease,box-shadow .25s ease;}
+.target-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-hover);}
+.target-card:hover .target-img{transform:scale(1.08);}
 .target-img{
   font-size:64px;border-radius:10px;padding:24px 0;margin-bottom:12px;
   background:linear-gradient(135deg,#eef3ff,#e6f7ff);
+  transition:transform .25s ease;
 }
 .target-img.accident{background:linear-gradient(135deg,#fff0e6,#ffe6e6);}
 .target-img.old{background:linear-gradient(135deg,#f0f0f0,#e9e4da);}
@@ -289,13 +292,15 @@ img{max-width:100%;display:block;}
 .genre-cards,.genre-cards-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
 .genre-group-block{margin-bottom:34px;}
 .genre-cat-title{font-size:19px;font-weight:900;color:var(--navy);border-left:6px solid var(--orange);padding-left:14px;margin-bottom:16px;}
-.genre-card{display:flex;flex-direction:column;align-items:flex-start;background:var(--cream);border:1px solid #f0e2cf;border-radius:var(--radius);padding:26px;box-shadow:var(--shadow);transition:transform .3s,box-shadow .3s;height:100%;}
-a.genre-card:hover{transform:translateY(-8px);box-shadow:var(--shadow-hover);}
+.genre-card{display:flex;flex-direction:column;align-items:flex-start;background:var(--cream);border:1px solid #f0e2cf;border-left:4px solid transparent;border-radius:var(--radius);padding:26px;box-shadow:var(--shadow);transition:transform .25s ease,box-shadow .25s ease,border-left-color .25s ease;height:100%;}
+a.genre-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-hover);border-left-color:var(--orange);}
+a.genre-card:hover .genre-card-ico{transform:scale(1.18);}
+a.genre-card:hover .genre-card-go{gap:8px;}
 .genre-card.disabled{opacity:.75;}
-.genre-card-ico{font-size:40px;line-height:1;margin-bottom:10px;}
+.genre-card-ico{font-size:40px;line-height:1;margin-bottom:10px;transition:transform .25s ease;display:inline-block;}
 .genre-card h3{font-size:19px;font-weight:700;margin-bottom:8px;}
 .genre-card p{font-size:14px;color:#666;flex:1;}
-.genre-card-go{display:inline-block;margin-top:14px;color:var(--orange);font-weight:700;font-size:14px;}
+.genre-card-go{display:inline-flex;align-items:center;gap:4px;margin-top:14px;color:var(--orange);font-weight:700;font-size:14px;transition:gap .2s ease;}
 .genre-card-soon{display:inline-block;margin-top:14px;background:#e0e0e0;color:#777;font-size:12px;font-weight:700;border-radius:6px;padding:3px 10px;}
 
 /* LP中段コンパクト表示：5大分類タイル＋サブジャンルタグ */
@@ -335,7 +340,8 @@ a.genre-tag:hover{background:var(--orange);border-color:var(--orange);color:#fff
 .voices{background:var(--cream);padding:80px 0;}
 .carousel{overflow:hidden;}
 .carousel-track{display:flex;transition:transform .5s ease;}
-.voice-card{flex:0 0 calc((100% - 60px)/3);margin-right:30px;}
+.voice-card{flex:0 0 calc((100% - 60px)/3);margin-right:30px;border-bottom:3px solid transparent;transition:transform .25s ease,box-shadow .25s ease,border-bottom-color .25s ease;}
+.voice-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-hover);border-bottom-color:var(--orange);}
 .voice-head{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
 .avatar{width:60px;height:60px;border-radius:50%;background:#fff;border:2px solid var(--orange);display:flex;align-items:center;justify-content:center;font-size:32px;flex:0 0 auto;}
 .avatar-img{width:60px;height:60px;border-radius:50%;object-fit:cover;border:2px solid var(--orange);flex:0 0 auto;}
@@ -349,8 +355,10 @@ a.genre-tag:hover{background:var(--orange);border-color:var(--orange);color:#fff
 
 /* ============ 買取実績 ============ */
 .results{background:#fff;padding:80px 0;}
-.result-card{text-align:center;padding:18px;}
-.result-img{font-size:56px;background:linear-gradient(135deg,#eef3ff,#f5f5f5);border-radius:10px;padding:18px 0;margin-bottom:10px;}
+.result-card{text-align:center;padding:18px;transition:transform .25s ease,box-shadow .25s ease;}
+.result-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-hover);}
+.result-card:hover .result-img{background:linear-gradient(135deg,#ffe9d9,#fff0e4);}
+.result-img{font-size:56px;background:linear-gradient(135deg,#eef3ff,#f5f5f5);border-radius:10px;padding:18px 0;margin-bottom:10px;transition:background .25s ease;}
 .result-photo{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;margin-bottom:10px;}
 .result-card h3{font-size:18px;font-weight:700;}
 .result-year{font-size:14px;color:#888;}
@@ -426,7 +434,7 @@ a.genre-tag:hover{background:var(--orange);border-color:var(--orange);color:#fff
 .area-note{color:#666;font-size:14px;}
 .area-chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:760px;margin:20px auto 24px;}
 .area-chips a{display:inline-block;background:#fff;border:1px solid #f0d9c4;border-radius:30px;padding:9px 18px;font-weight:700;font-size:14px;color:var(--navy);box-shadow:var(--shadow);transition:background .2s,color .2s,border-color .2s,transform .2s;}
-.area-chips a:hover{background:var(--orange);border-color:var(--orange);color:#fff;transform:translateY(-2px);}
+.area-chips a:hover,.area-chips a:focus-visible{background:var(--orange);border-color:var(--orange);color:#fff;transform:translateY(-2px);outline:2px solid var(--orange);outline-offset:2px;}
 @media (max-width:767px){
   .area-map{padding:22px 24px;}
   .map-emoji.big{font-size:128px;}
