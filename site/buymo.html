@@ -291,30 +291,9 @@
     <div class="container">
       <div class="eyebrow-wrap"><span class="eyebrow">VOICE</span></div>
       <h2 id="voices-title" class="section-title">お客様の声</h2>
-      <p class="section-note">※ 掲載の声はイメージです。実際のお客様の声に差し替えてご利用ください。</p>
+      <p class="section-note" id="voicesNote">※ 掲載の声はイメージです。実際のお客様の声に差し替えてご利用ください（buymo-data.js を編集）。</p>
       <div class="carousel" id="voiceCarousel">
-        <div class="carousel-track" id="voiceTrack">
-          <article class="card voice-card">
-            <div class="voice-head"><span class="avatar" aria-hidden="true">🧑</span><div><p class="voice-name">佐藤さん</p><p class="voice-meta">40代／東京都</p></div></div>
-            <p class="stars" aria-label="5段階評価で5">★★★★★</p>
-            <p class="voice-body">他社より3万円も高い査定でびっくり。出張査定も丁寧で、手続きも全部おまかせできて本当に楽でした。</p>
-          </article>
-          <article class="card voice-card">
-            <div class="voice-head"><span class="avatar" aria-hidden="true">👩</span><div><p class="voice-name">山田さん</p><p class="voice-meta">30代／大阪府</p></div></div>
-            <p class="stars" aria-label="5段階評価で5">★★★★★</p>
-            <p class="voice-body">動かなくなった古い車を引き取ってもらえて助かりました。値段がつかないと思っていたので嬉しい誤算でした。</p>
-          </article>
-          <article class="card voice-card">
-            <div class="voice-head"><span class="avatar" aria-hidden="true">🧔</span><div><p class="voice-name">田中さん</p><p class="voice-meta">50代／福島県</p></div></div>
-            <p class="stars" aria-label="5段階評価で5">★★★★★</p>
-            <p class="voice-body">申込みから入金までが早くて驚きました。電話の対応も親切で、安心しておまかせできました。</p>
-          </article>
-          <article class="card voice-card">
-            <div class="voice-head"><span class="avatar" aria-hidden="true">👨</span><div><p class="voice-name">鈴木さん</p><p class="voice-meta">20代／宮城県</p></div></div>
-            <p class="stars" aria-label="5段階評価で5">★★★★★</p>
-            <p class="voice-body">事故車で諦めていましたが、しっかり値段をつけてくれました。手数料も無料で、説明も分かりやすかったです。</p>
-          </article>
-        </div>
+        <div class="carousel-track" id="voiceTrack"></div>
       </div>
       <div class="carousel-dots" id="voiceDots" role="tablist" aria-label="お客様の声の切り替え"></div>
     </div>
@@ -324,17 +303,8 @@
   <section class="results" aria-labelledby="results-title">
     <div class="container">
       <h2 id="results-title" class="section-title">買取実績</h2>
-      <p class="section-note">※ 掲載の実績は買取イメージです。実際の買取実績に差し替えてご利用ください。</p>
-      <div class="grid grid-4 result-grid">
-        <article class="card result-card reveal"><div class="result-img" aria-hidden="true">🚘</div><h3>トヨタ プリウス</h3><p class="result-year">2018年式</p><p class="result-price">¥1,500,000</p><p class="result-area">📍東京都</p></article>
-        <article class="card result-card reveal"><div class="result-img" aria-hidden="true">🚙</div><h3>マツダ CX-5</h3><p class="result-year">2019年式</p><p class="result-price">¥1,820,000</p><p class="result-area">📍大阪府</p></article>
-        <article class="card result-card reveal"><div class="result-img" aria-hidden="true">🚗</div><h3>ホンダ フィット</h3><p class="result-year">2017年式</p><p class="result-price">¥780,000</p><p class="result-area">📍福島県</p></article>
-        <article class="card result-card reveal"><div class="result-img" aria-hidden="true">🚕</div><h3>日産 ノート</h3><p class="result-year">2020年式</p><p class="result-price">¥960,000</p><p class="result-area">📍宮城県</p></article>
-        <article class="card result-card reveal"><div class="result-img" aria-hidden="true">🚐</div><h3>スズキ スペーシア</h3><p class="result-year">2019年式</p><p class="result-price">¥740,000</p><p class="result-area">📍埼玉県</p></article>
-        <article class="card result-card reveal"><div class="result-img" aria-hidden="true">🚙</div><h3>トヨタ ハリアー</h3><p class="result-year">2018年式</p><p class="result-price">¥2,350,000</p><p class="result-area">📍神奈川県</p></article>
-        <article class="card result-card reveal"><div class="result-img" aria-hidden="true">🚗</div><h3>ダイハツ タント</h3><p class="result-year">2016年式</p><p class="result-price">¥520,000</p><p class="result-area">📍栃木県</p></article>
-        <article class="card result-card reveal"><div class="result-img" aria-hidden="true">🚘</div><h3>スバル レヴォーグ</h3><p class="result-year">2019年式</p><p class="result-price">¥1,680,000</p><p class="result-area">📍千葉県</p></article>
-      </div>
+      <p class="section-note" id="resultsNote">※ 掲載の実績は買取イメージです。実際の買取実績に差し替えてご利用ください（buymo-data.js を編集）。</p>
+      <div class="grid grid-4 result-grid" id="resultGrid"></div>
     </div>
   </section>
 
@@ -626,6 +596,7 @@
 <script src="assets/js/genres.js" defer></script>
 <script src="assets/js/simulator-buy.js" defer></script>
 <script>document.addEventListener('DOMContentLoaded',function(){if(window.BuymoSim)BuymoSim.init('buymoSim');});</script>
+<script src="assets/js/buymo-data.js" defer></script>
 <script src="assets/js/buymo.js" defer></script>
 <link rel="stylesheet" href="assets/css/academy.css" />
 <script>window.BUYMO_BOT_MODE='user';</script>

@@ -115,10 +115,65 @@
         if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
       });
     }, { threshold: 0.12 });
+    window._buymoIO = io;
     reveals.forEach(function (el) { io.observe(el); });
   } else {
     reveals.forEach(function (el) { el.classList.add('in'); });
   }
+
+  /* ---- 4.5 buymo-data.js からお客様の声・買取実績を描画 ---- */
+  (function () {
+    function avatarHtml(src, name) {
+      if (!src) return '';
+      if (src.indexOf('/') !== -1 || src.indexOf('http') === 0) {
+        return '<img src="' + src + '" alt="' + name + '" class="avatar-img" width="48" height="48">';
+      }
+      return '<span class="avatar" aria-hidden="true">' + src + '</span>';
+    }
+    function yen(n) { return '¥' + (n || 0).toLocaleString('en-US'); }
+    function stars(n) { return '★'.repeat(Math.max(1, Math.min(5, n || 5))); }
+
+    var voices = window.BUYMO_VOICES;
+    var voiceTrack = document.getElementById('voiceTrack');
+    var voicesNote = document.getElementById('voicesNote');
+    if (voiceTrack && voices && voices.length) {
+      var hasDemo = voices.some(function (v) { return v._demo; });
+      if (voicesNote) voicesNote.hidden = !hasDemo;
+      voiceTrack.innerHTML = voices.map(function (v) {
+        return '<article class="card voice-card">' +
+          '<div class="voice-head">' + avatarHtml(v.avatar, v.name) + '<div><p class="voice-name">' + v.name + '</p><p class="voice-meta">' + v.meta + '</p></div></div>' +
+          '<p class="stars" aria-label="5段階評価で' + (v.stars || 5) + '">' + stars(v.stars) + '</p>' +
+          '<p class="voice-body">' + v.body + '</p>' +
+          '</article>';
+      }).join('');
+    }
+
+    var results = window.BUYMO_RESULTS;
+    var resultGrid = document.getElementById('resultGrid');
+    var resultsNote = document.getElementById('resultsNote');
+    if (resultGrid && results && results.length) {
+      var hasDemoR = results.some(function (r) { return r._demo; });
+      if (resultsNote) resultsNote.hidden = !hasDemoR;
+      resultGrid.innerHTML = results.map(function (r) {
+        var isImg = r.icon && (r.icon.indexOf('/') !== -1 || r.icon.indexOf('http') === 0);
+        var iconHtml = isImg
+          ? '<img src="' + r.icon + '" alt="' + r.name + '" class="result-photo">'
+          : '<div class="result-img" aria-hidden="true">' + r.icon + '</div>';
+        return '<article class="card result-card reveal">' +
+          iconHtml +
+          '<h3>' + r.name + '</h3>' +
+          '<p class="result-year">' + r.year + '</p>' +
+          '<p class="result-price">' + yen(r.price) + '</p>' +
+          '<p class="result-area">📍' + r.area + '</p>' +
+          '</article>';
+      }).join('');
+      // 動的追加した .reveal 要素も Intersection Observer に登録する
+      resultGrid.querySelectorAll('.reveal').forEach(function (el) {
+        if (window._buymoIO) window._buymoIO.observe(el);
+        else el.classList.add('in');
+      });
+    }
+  })();
 
   /* ---- 5. お客様の声カルーセル ---- */
   var track = document.getElementById('voiceTrack');
