@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 8.7
+ * Version: 8.8
  * Author: CARMEL
  */
 
@@ -72,6 +72,8 @@ function carmel3_auto_get_settings() {
         'extra_types'  => array(),
         // 投稿タイプごとの「書き方（AI指示プロンプト）」 array(post_type => 指示文)
         'type_prompts' => array(),
+        // 加盟店ブログを店舗ごとに分ける生成方法: rotate=毎回1店舗ずつ / all=毎回全店舗 / random=毎回ランダム1店舗
+        'blog_per_store_mode' => 'rotate',
         // 通知（Slack / LINE）
         'notify_on'     => 'draft',   // draft=下書きができた時 / publish=公開した時
         'slack_enabled' => 0,
@@ -450,18 +452,33 @@ function carmel3_auto_run() {
         if ($pt === 'media_article' || !post_type_exists($pt)) continue;
         $pobj = get_post_type_object($pt);
         $plbl = $pobj ? ($pobj->labels->singular_name ?: $pt) : $pt;
-        carmel3_progress_set($plbl . 'をAIが作成中…', 80, 'running', array('post_id' => $post_id, 'title' => $title));
-        $epid = carmel3_gen_post($pt, $item, $s);
-        if (is_wp_error($epid)) {
-            $extra_msg .= ' | ' . $pt . '失敗(' . $epid->get_error_message() . ')';
+
+        // 加盟店ブログは「店舗ごと」に分けて生成（店舗別タクソノミーに割り当て）
+        // 店舗を指定して作るぶんのリストを用意（他タイプは店舗指定なしの1本）
+        if ($pt === 'shop_blog') {
+            $targets = carmel3_blog_store_targets($s);
         } else {
-            $obj = get_post_type_object($pt);
-            $lbl = $obj ? ($obj->labels->singular_name ?: $pt) : $pt;
-            $extra_titles[] = $lbl . '#' . $epid;
-            $extra_msg .= ' | ' . $lbl . 'OK#' . $epid;
-            // 追加記事も通知（テスト宛プレビュー）
-            $note = '（メディア記事「' . $title . '」と同テーマ）';
-            carmel3_notify_new_post($s, $epid, $note);
+            $targets = array(null);
+        }
+
+        foreach ($targets as $target_store) {
+            $bitem = $item;
+            $store_label = '';
+            if (is_array($target_store)) {
+                $bitem['store'] = $target_store; // この店舗ぶんとして生成
+                $store_label = '【' . $target_store['name'] . '】';
+            }
+            carmel3_progress_set($plbl . $store_label . 'をAIが作成中…', 80, 'running', array('post_id' => $post_id, 'title' => $title));
+            $epid = carmel3_gen_post($pt, $bitem, $s);
+            if (is_wp_error($epid)) {
+                $extra_msg .= ' | ' . $pt . $store_label . '失敗(' . $epid->get_error_message() . ')';
+            } else {
+                $extra_titles[] = $plbl . $store_label . '#' . $epid;
+                $extra_msg .= ' | ' . $plbl . $store_label . 'OK#' . $epid;
+                // 追加記事も通知（テスト宛プレビュー）
+                $note = '（メディア記事「' . $title . '」と同テーマ' . ($store_label !== '' ? ' / ' . $target_store['name'] . 'ぶん' : '') . '）';
+                carmel3_notify_new_post($s, $epid, $note);
+            }
         }
     }
 
@@ -1278,6 +1295,127 @@ function carmel3_stores_get() {
     return $out;
 }
 
+/* ===== 店舗ごとの分類（タクソノミー「店舗」）。加盟店ブログを店舗別に分ける ===== */
+
+// 店舗を識別する安定キー（保存済みidがあれば使い、無ければ店名から作る）
+function carmel3_store_key($store) {
+    if (!is_array($store)) return '';
+    if (!empty($store['id'])) return sanitize_title($store['id']);
+    $name = isset($store['name']) ? $store['name'] : '';
+    if ($name === '') return '';
+    $slug = sanitize_title(remove_accents($name));
+    if ($slug === '' || !preg_match('/[a-z0-9]/', $slug)) {
+        $slug = 'st-' . substr(md5($name), 0, 8);
+    }
+    return $slug;
+}
+
+// 店舗別タクソノミーを登録（加盟店ブログに付ける。一覧に絞り込み列も出る）
+add_action('init', 'carmel3_register_store_taxonomy', 20);
+function carmel3_register_store_taxonomy() {
+    $objects = array();
+    foreach (array('shop_blog') as $pt) {
+        if (post_type_exists($pt)) $objects[] = $pt;
+    }
+    if (empty($objects)) $objects = array('shop_blog'); // 後から登録されても紐づくよう指定
+
+    register_taxonomy('carmel_store', $objects, array(
+        'labels' => array(
+            'name'          => '店舗',
+            'singular_name' => '店舗',
+            'menu_name'     => '店舗で分ける',
+            'all_items'     => 'すべての店舗',
+            'edit_item'     => '店舗を編集',
+            'add_new_item'  => '店舗を追加',
+            'search_items'  => '店舗を検索',
+        ),
+        'hierarchical'      => true,   // カテゴリー型＝一覧に絞り込みドロップダウンが自動で出る
+        'public'            => true,
+        'show_admin_column' => true,   // 投稿一覧に「店舗」列を表示
+        'show_in_rest'      => true,
+        'rewrite'           => array('slug' => 'store'),
+    ));
+    // shop_blog が後から登録された場合の保険
+    foreach ($objects as $pt) {
+        register_taxonomy_for_object_type('carmel_store', $pt);
+    }
+}
+
+// 既存店舗を一度だけタクソノミーへ同期（このバージョンで初回のみ実行）
+add_action('admin_init', function () {
+    if (get_option('carmel3_store_terms_synced') === 'v1') return;
+    carmel3_sync_store_terms();
+    update_option('carmel3_store_terms_synced', 'v1', false);
+    flush_rewrite_rules(false);
+});
+
+// 登録済み店舗をタクソノミー用語（term）に同期。戻り値: array(store_key => term_id)
+function carmel3_sync_store_terms() {
+    $map = array();
+    if (!taxonomy_exists('carmel_store')) return $map;
+    foreach (carmel3_stores_get() as $store) {
+        $key  = carmel3_store_key($store);
+        $name = isset($store['name']) ? $store['name'] : '';
+        if ($key === '' || $name === '') continue;
+        $term = get_term_by('slug', $key, 'carmel_store');
+        if ($term && !is_wp_error($term)) {
+            if ($term->name !== $name) {
+                wp_update_term($term->term_id, 'carmel_store', array('name' => $name));
+            }
+            $map[$key] = (int) $term->term_id;
+        } else {
+            $res = wp_insert_term($name, 'carmel_store', array('slug' => $key));
+            if (!is_wp_error($res) && isset($res['term_id'])) {
+                $map[$key] = (int) $res['term_id'];
+            }
+        }
+    }
+    return $map;
+}
+
+// 記事を店舗termに割り当て（その投稿タイプが店舗タクソノミー対応のときだけ）
+function carmel3_assign_store_term($post_id, $store) {
+    if (!is_array($store) || empty($store['name'])) return;
+    if (!taxonomy_exists('carmel_store')) return;
+    $pt = get_post_type($post_id);
+    if (!is_object_in_taxonomy($pt, 'carmel_store')) return;
+
+    $key  = carmel3_store_key($store);
+    $name = $store['name'];
+    if ($key === '') return;
+    $term = get_term_by('slug', $key, 'carmel_store');
+    if (!$term || is_wp_error($term)) {
+        $res = wp_insert_term($name, 'carmel_store', array('slug' => $key));
+        if (is_wp_error($res)) return;
+        $term_id = (int) $res['term_id'];
+    } else {
+        $term_id = (int) $term->term_id;
+    }
+    wp_set_object_terms($post_id, array($term_id), 'carmel_store', false);
+    update_post_meta($post_id, '_carmel3_store_id', $key);
+}
+
+// 加盟店ブログ生成で「どの店舗ぶんを作るか」を決める。戻り値: 店舗配列の配列（空店舗時は array(null)）
+function carmel3_blog_store_targets($s) {
+    $stores = carmel3_stores_get();
+    if (empty($stores)) return array(null); // 店舗未登録なら従来どおり1本（店舗なし）
+
+    $mode = isset($s['blog_per_store_mode']) ? $s['blog_per_store_mode'] : 'rotate';
+
+    if ($mode === 'all') {
+        return $stores; // 毎回すべての店舗ぶん作る
+    }
+    if ($mode === 'random') {
+        return array($stores[ array_rand($stores) ]); // 従来：毎回ランダム1店舗
+    }
+
+    // 既定 rotate：毎回1店舗ずつ順番に（店舗ごとに均等にたまる）
+    $cursor = (int) get_option('carmel3_blog_store_cursor', 0);
+    $idx = $cursor % count($stores);
+    update_option('carmel3_blog_store_cursor', $cursor + 1, false);
+    return array($stores[$idx]);
+}
+
 // 記事に差し込む店舗を1つ選ぶ（地域が一致すれば優先、なければランダム）
 function carmel3_pick_store($item = null) {
     $stores = carmel3_stores_get();
@@ -1396,11 +1534,18 @@ add_action('admin_post_carmel3_stores_save', function () {
 
     $in = (isset($_POST['store']) && is_array($_POST['store'])) ? $_POST['store'] : array();
     $out = array();
+    $used_ids = array();
     foreach ($in as $row) {
         if (!is_array($row)) continue;
         $name = isset($row['name']) ? sanitize_text_field(wp_unslash($row['name'])) : '';
         if ($name === '') continue; // 名前が無い行は捨てる
+        // 店舗の安定ID（既存があれば維持。無ければ店名から生成）。店舗別ブログの分類キーになる。
+        $id = isset($row['id']) ? sanitize_title(wp_unslash($row['id'])) : '';
+        if ($id === '') $id = carmel3_store_key(array('name' => $name));
+        if ($id === '' || isset($used_ids[$id])) $id = $id . '-' . substr(md5($name . count($out)), 0, 4);
+        $used_ids[$id] = true;
         $out[] = array(
+            'id'         => $id,
             'name'       => $name,
             'zip'        => isset($row['zip']) ? sanitize_text_field(wp_unslash($row['zip'])) : '',
             'address'    => isset($row['address']) ? sanitize_text_field(wp_unslash($row['address'])) : '',
@@ -1414,6 +1559,10 @@ add_action('admin_post_carmel3_stores_save', function () {
         );
     }
     update_option('carmel3_stores', $out);
+    // 店舗別タクソノミーの用語を同期し、店舗アーカイブURLを有効化
+    carmel3_register_store_taxonomy();
+    carmel3_sync_store_terms();
+    flush_rewrite_rules(false);
     wp_safe_redirect(admin_url('admin.php?page=carmel3-stores&saved=1'));
     exit;
 });
@@ -1427,12 +1576,37 @@ function carmel3_stores_page() {
     ?>
     <div style="max-width:1000px;margin:20px auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
         <div style="background:linear-gradient(135deg,#1a1a2e,#0f3460);color:#fff;padding:24px;border-radius:16px;margin-bottom:18px">
-            <h1 style="margin:0 0 6px;font-size:24px">店舗・担当者（記事に差し込み）</h1>
-            <p style="margin:0;opacity:.9">ここに登録した店舗から<strong>記事ごとに1つをランダムで選び</strong>、本文の店舗名・住所・電話に使います。担当者アイコンも記事末尾に表示します（「カーメル〇〇店」などの伏字を防ぎます）。</p>
+            <h1 style="margin:0 0 6px;font-size:24px">店舗・担当者（記事に差し込み／店舗別に分類）</h1>
+            <p style="margin:0;opacity:.9">ここに登録した店舗の情報を記事に差し込みます（店舗名・住所・電話・担当者アイコン）。<br>
+            <strong>加盟店ブログは店舗ごとに分けて作成・分類</strong>します。各記事は投稿一覧の「店舗」列・絞り込みで店舗別に確認できます（「カーメル〇〇店」などの伏字も防ぎます）。</p>
         </div>
 
         <?php if (isset($_GET['saved'])): ?>
-            <div class="notice notice-success"><p>店舗情報を保存しました。</p></div>
+            <div class="notice notice-success"><p>店舗情報を保存しました。店舗別の分類も更新しました。</p></div>
+        <?php endif; ?>
+
+        <?php
+        // 店舗別の加盟店ブログ件数（分かれていることが見えるように）
+        if (!empty($stores) && post_type_exists('shop_blog') && taxonomy_exists('carmel_store')):
+            $blog_list = admin_url('edit.php?post_type=shop_blog');
+        ?>
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:16px">
+            <h2 style="margin:0 0 10px;font-size:15px">店舗別の加盟店ブログ（記事数）</h2>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+                <?php foreach ($stores as $st):
+                    $key = carmel3_store_key($st);
+                    $term = $key !== '' ? get_term_by('slug', $key, 'carmel_store') : false;
+                    $cnt = ($term && !is_wp_error($term)) ? (int)$term->count : 0;
+                    $url = ($term && !is_wp_error($term)) ? add_query_arg('carmel_store', $term->slug, $blog_list) : $blog_list;
+                ?>
+                    <a href="<?php echo esc_url($url); ?>" style="text-decoration:none;display:inline-flex;align-items:center;gap:8px;border:1px solid #fbcfe8;background:#fdf2f8;color:#9d174d;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:700">
+                        <?php echo esc_html($st['name']); ?>
+                        <span style="background:#db2777;color:#fff;border-radius:999px;padding:1px 8px;font-size:12px"><?php echo $cnt; ?>記事</span>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+            <p style="margin:10px 0 0;color:#888;font-size:12px">クリックすると、その店舗の加盟店ブログだけを一覧表示します。自動生成の「店舗ごとに分ける」設定は<a href="<?php echo esc_url(admin_url('admin.php?page=carmel3-auto#media')); ?>">自動生成ページ</a>で変更できます。</p>
+        </div>
         <?php endif; ?>
 
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
@@ -1441,6 +1615,7 @@ function carmel3_stores_page() {
 
             <?php foreach ($rows as $i => $r): ?>
                 <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:14px 16px;margin-bottom:12px">
+                    <input type="hidden" name="store[<?php echo $i; ?>][id]" value="<?php echo esc_attr($g($r,'id')); ?>">
                     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">
                         <label style="font-size:12px;color:#555;font-weight:700">店舗名（必須）<br>
                             <input type="text" name="store[<?php echo $i; ?>][name]" value="<?php echo esc_attr($g($r,'name')); ?>" placeholder="例: カーメル 大阪本店" style="width:100%;padding:7px"></label>
@@ -1598,8 +1773,8 @@ function carmel3_gen_post($post_type, $item, $s, $existing_id = 0) {
     if ($brief !== '') {
         $user .= "【この記事の具体的な指示（最優先で正確に反映。事実・日付は改変しない）】\n{$brief}\n";
     }
-    // 店舗情報をランダムに1つ選んで差し込む（伏字・架空情報の防止）
-    $store = carmel3_pick_store($item);
+    // 店舗情報を差し込む（呼び出し側が指定した店舗があれば優先＝店舗別ブログ用）
+    $store = (isset($item['store']) && is_array($item['store'])) ? $item['store'] : carmel3_pick_store($item);
     $store_block = carmel3_store_prompt_block($store);
     if ($store_block !== '') {
         $user .= "\n" . $store_block . "\n";
@@ -1673,6 +1848,10 @@ function carmel3_gen_post($post_type, $item, $s, $existing_id = 0) {
     update_post_meta($pid, '_carmel3_generated', 1);
     update_post_meta($pid, '_carmel_keyword', $kw);
     update_post_meta($pid, '_carmel3_item', $item); // 作り直し用にテーマを保存
+    // 店舗別に分類（加盟店ブログなど店舗タクソノミー対応の投稿タイプのみ）
+    if (is_array($store)) {
+        carmel3_assign_store_term($pid, $store);
+    }
     // この記事だけの画像指示（ニュースウィザード等から）。画像生成時に合成される。
     if (isset($item['img_extra']) && trim((string)$item['img_extra']) !== '') {
         update_post_meta($pid, '_carmel3_img_extra', trim((string)$item['img_extra']));
@@ -2561,6 +2740,10 @@ add_action('admin_post_carmel3_auto_save', function () {
         }
     }
     $s['type_prompts'] = $tp;
+
+    // 加盟店ブログを店舗ごとに分ける生成方法
+    $bmode = isset($_POST['blog_per_store_mode']) ? sanitize_key($_POST['blog_per_store_mode']) : 'rotate';
+    $s['blog_per_store_mode'] = in_array($bmode, array('rotate', 'all', 'random'), true) ? $bmode : 'rotate';
 
     // 通知設定
     $non = isset($_POST['notify_on']) ? sanitize_key($_POST['notify_on']) : 'draft';
@@ -3671,6 +3854,23 @@ function carmel3_auto_settings_page() {
                     </div>
                     <p style="color:#666;font-size:12px;margin:8px 0 0">※ チェックした媒体の数だけAIを使います（その分の料金がかかります）。</p>
                 <?php endif; ?>
+
+                <?php
+                $store_count = count(carmel3_stores_get());
+                $bmode = isset($s['blog_per_store_mode']) ? $s['blog_per_store_mode'] : 'rotate';
+                ?>
+                <div style="border:1px dashed #db2777;border-radius:10px;padding:12px 14px;margin-top:12px;background:#fff">
+                    <p style="margin:0 0 6px;font-weight:800;color:#9d174d">🏬 加盟店ブログを「店舗ごと」に分ける</p>
+                    <p style="margin:0 0 8px;color:#444;font-size:13px">加盟店ブログは店舗別に作成し、<strong>投稿一覧の「店舗」列・絞り込み</strong>で店舗ごとに確認できます。登録店舗：<strong><?php echo (int)$store_count; ?>店</strong>（<a href="<?php echo esc_url(admin_url('admin.php?page=carmel3-stores')); ?>">店舗・担当者で編集</a>）</p>
+                    <label style="font-size:13px;font-weight:700">作り方：
+                        <select name="blog_per_store_mode" style="padding:5px;min-width:300px;font-weight:400">
+                            <option value="rotate" <?php selected($bmode, 'rotate'); ?>>毎回1店舗ずつ順番に（店舗ごとに均等にたまる・おすすめ）</option>
+                            <option value="all" <?php selected($bmode, 'all'); ?>>毎回すべての店舗ぶん作る（店舗数×料金がかかります）</option>
+                            <option value="random" <?php selected($bmode, 'random'); ?>>毎回ランダムで1店舗（従来どおり）</option>
+                        </select>
+                    </label>
+                    <p style="margin:8px 0 0;color:#888;font-size:12px"><?php if ($store_count === 0): ?><span style="color:#c2410c">※ まだ店舗が未登録です。店舗を登録すると店舗別に分かれます（未登録時は店舗なしで1本作成）。</span><?php else: ?>「毎回1店舗ずつ」なら、実行のたびに次の店舗へ進み、<?php echo (int)$store_count; ?>回で一巡します。<?php endif; ?></p>
+                </div>
             </div>
 
             <hr style="margin:16px 0;border:none;border-top:1px solid #eee">
