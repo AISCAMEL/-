@@ -2,7 +2,7 @@
 /**
  * Plugin Name: カーメル 店舗一括割当
  * Description: 店舗未設定の在庫へ、4店舗をランダム均等（または指定店舗）に一括割当します。連絡先（電話/LINE/問い合わせ）も割当店舗に合わせて空欄補完。プレビュー付き・空欄優先。
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: CARMEL
  *
  * 使い方：wp-content/plugins/ にアップロード →「プラグイン」で有効化
@@ -13,6 +13,9 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 if ( ! class_exists( 'Carmel_Shop_Assign' ) ) {
 
 class Carmel_Shop_Assign {
+
+	/* shop フィールドの候補キー（どのキーに店舗が入っているか不明な場合に参照） */
+	private $shop_keys = array( 'shop', 'shop_id', 'mise', 'store', 'tenpo' );
 
 	public function __construct() {
 		add_action( 'admin_menu', array( $this, 'menu' ) );
@@ -30,11 +33,28 @@ class Carmel_Shop_Assign {
 		);
 	}
 
-	private function blank( $v ) { return ( null === $v || '' === $v || false === $v ); }
+	private function blank( $v ) { return ( null === $v || '' === (string) $v || false === $v ); }
 
-	/* slug => shop投稿ID */
+	/* slug => shop投稿ID を返す。carmel_shop_post_map が無ければ shop 投稿から自動構築 */
 	private function shop_map() {
-		return function_exists( 'carmel_shop_post_map' ) ? (array) carmel_shop_post_map() : array();
+		if ( function_exists( 'carmel_shop_post_map' ) ) {
+			$m = (array) carmel_shop_post_map();
+			if ( ! empty( $m ) ) { return $m; }
+		}
+		// フォールバック：'shop' カスタム投稿タイプを直接取得
+		$shops = get_posts( array(
+			'post_type'      => 'shop',
+			'post_status'    => 'publish',
+			'posts_per_page' => 20,
+			'fields'         => 'ids',
+			'suppress_filters' => true,
+		) );
+		$out = array();
+		foreach ( $shops as $sid ) {
+			$slug = get_post_field( 'post_name', $sid );
+			if ( $slug ) { $out[ $slug ] = $sid; }
+		}
+		return $out;
 	}
 
 	/* shop投稿から連絡先を取得 */
@@ -56,15 +76,15 @@ class Carmel_Shop_Assign {
 
 	private function save( $pid, $key, $val ) {
 		if ( function_exists( 'update_field' ) ) { update_field( $key, $val, $pid ); }
-		else { update_post_meta( $pid, $key, $val ); }
+		update_post_meta( $pid, $key, $val );
 	}
 
 	private function all_ids() {
 		return get_posts( array(
-			'post_type'      => 'portfolio',
-			'post_status'    => array( 'publish', 'draft', 'private', 'pending' ),
-			'posts_per_page' => -1,
-			'fields'         => 'ids',
+			'post_type'        => 'portfolio',
+			'post_status'      => array( 'publish', 'draft', 'private', 'pending' ),
+			'posts_per_page'   => -1,
+			'fields'           => 'ids',
 			'suppress_filters' => true,
 		) );
 	}
@@ -87,7 +107,6 @@ class Carmel_Shop_Assign {
 			foreach ( $targets as $pid ) { $plan[ $pid ] = $fixed; }
 			return $plan;
 		}
-		// ランダム均等：シャッフルしてラウンドロビン
 		$t = $targets;
 		shuffle( $t );
 		$n = count( $slugs );
@@ -98,15 +117,39 @@ class Carmel_Shop_Assign {
 		return $plan;
 	}
 
+	/* 診断：全在庫の shop 設定状況を集計 */
+	private function diagnose_shop( $all_ids, $map ) {
+		$slugs_set    = array(); // slug => 件数
+		$empty_count  = 0;
+		$other_count  = 0;       // 想定外の値が入っている件数
+		$sample_other = array(); // 想定外の値サンプル
+
+		foreach ( $all_ids as $pid ) {
+			$v = get_post_meta( $pid, 'shop', true );
+			if ( $this->blank( $v ) ) {
+				$empty_count++;
+			} elseif ( isset( $map[ $v ] ) ) {
+				$slugs_set[ $v ] = isset( $slugs_set[ $v ] ) ? $slugs_set[ $v ] + 1 : 1;
+			} else {
+				$other_count++;
+				if ( count( $sample_other ) < 5 ) {
+					$sample_other[] = array( 'pid' => $pid, 'val' => $v );
+				}
+			}
+		}
+		return compact( 'slugs_set', 'empty_count', 'other_count', 'sample_other' );
+	}
+
 	public function render() {
 		if ( ! current_user_can( 'manage_options' ) ) { return; }
 		$map   = $this->shop_map();
 		$slugs = array_keys( $map );
 
-		$scope    = isset( $_POST['csa_scope'] ) ? sanitize_key( $_POST['csa_scope'] ) : 'empty';
-		$mode     = isset( $_POST['csa_mode'] ) ? sanitize_key( $_POST['csa_mode'] ) : 'random';
-		$fixed    = isset( $_POST['csa_fixed'] ) ? sanitize_key( $_POST['csa_fixed'] ) : '';
-		$sync     = isset( $_POST['csa_sync'] ) ? 1 : ( isset( $_POST['csa_apply'] ) || isset( $_POST['csa_preview'] ) ? 0 : 1 );
+		$scope = isset( $_POST['csa_scope'] ) ? sanitize_key( $_POST['csa_scope'] ) : 'empty';
+		$mode  = isset( $_POST['csa_mode'] )  ? sanitize_key( $_POST['csa_mode'] )  : 'random';
+		$fixed = isset( $_POST['csa_fixed'] ) ? sanitize_key( $_POST['csa_fixed'] ) : '';
+		$sync  = isset( $_POST['csa_sync'] )  ? 1 : 0;
+		if ( ! isset( $_POST['csa_apply'] ) && ! isset( $_POST['csa_preview'] ) ) { $sync = 1; }
 
 		$did = false; $applied = 0;
 		if ( isset( $_POST['csa_apply'] ) && check_admin_referer( 'csa_apply' ) ) {
@@ -114,21 +157,69 @@ class Carmel_Shop_Assign {
 			$did = true;
 		}
 
+		$all_ids = $this->all_ids();
 		$targets = $this->target_ids( $scope );
 		$plan    = $this->plan( $targets, $mode, $fixed, $slugs );
 		$dist    = array();
 		foreach ( $plan as $slug ) { $dist[ $slug ] = isset( $dist[ $slug ] ) ? $dist[ $slug ] + 1 : 1; }
+		$diag    = $this->diagnose_shop( $all_ids, $map );
 		?>
 		<div class="wrap">
 			<h1>店舗一括割当</h1>
-			<p>店舗未設定の在庫へ、店舗を一括で割り当てます。<strong>既存の店舗は触りません（空欄優先）。</strong>実行前に UpdraftPlus でバックアップ推奨。</p>
+			<p>店舗未設定の在庫へ店舗を一括で割り当てます。<strong>既存の店舗は触りません（空欄優先）。</strong>実行前に UpdraftPlus でバックアップ推奨。</p>
 
-			<?php if ( empty( $map ) ) : ?>
-				<div class="notice notice-error"><p>店舗マップ（carmel_shop_post_map）が見つかりません。本体プラグインが有効か確認してください。</p></div>
-				</div><?php return; endif; ?>
+			<?php if ( $did ) : ?>
+				<div class="notice notice-success"><p><strong><?php echo (int) $applied; ?> 台</strong>に店舗を割り当てました。</p></div>
+			<?php endif; ?>
 
-			<?php if ( $did ) : ?><div class="notice notice-success"><p><?php echo (int) $applied; ?> 台に店舗を割り当てました。</p></div><?php endif; ?>
+			<!-- 現状診断 -->
+			<div style="margin:12px 0;padding:14px;background:#f9f9f9;border:1px solid #ccd0d4;border-radius:6px;max-width:800px;">
+				<h2 style="margin-top:0;">現在の shop フィールド設定状況（全<?php echo count( $all_ids ); ?>台）</h2>
+				<table style="border-collapse:collapse;font-size:14px;line-height:2.2;">
+					<tr>
+						<td style="padding-right:20px;">🔲 <strong>未設定（補完対象）</strong></td>
+						<td><strong style="font-size:20px;color:#1f6feb;"><?php echo (int) $diag['empty_count']; ?></strong> 台</td>
+					</tr>
+					<?php foreach ( $map as $slug => $sid ) : $c = isset( $diag['slugs_set'][ $slug ] ) ? $diag['slugs_set'][ $slug ] : 0; ?>
+					<tr>
+						<td>✅ <?php echo esc_html( get_the_title( $sid ) ?: $slug ); ?>（<?php echo esc_html( $slug ); ?>）</td>
+						<td><strong><?php echo (int) $c; ?></strong> 台</td>
+					</tr>
+					<?php endforeach; ?>
+					<?php if ( $diag['other_count'] > 0 ) : ?>
+					<tr>
+						<td>⚠️ 想定外の値（マップ外のslug）</td>
+						<td><strong style="color:#a30000;"><?php echo (int) $diag['other_count']; ?></strong> 台</td>
+					</tr>
+					<?php endif; ?>
+				</table>
 
+				<?php if ( ! empty( $diag['sample_other'] ) ) : ?>
+					<details style="margin-top:8px;">
+						<summary style="cursor:pointer;color:#1f6feb;font-size:13px;">▶ 想定外の値サンプル（マップに存在しないslugが入っている車両）</summary>
+						<ul style="font-size:13px;">
+						<?php foreach ( $diag['sample_other'] as $s ) : ?>
+							<li>#<?php echo (int) $s['pid']; ?> <?php echo esc_html( get_the_title( $s['pid'] ) ); ?> → shop = <code><?php echo esc_html( $s['val'] ); ?></code></li>
+						<?php endforeach; ?>
+						</ul>
+					</details>
+				<?php endif; ?>
+
+				<?php if ( empty( $map ) ) : ?>
+					<div class="notice notice-warning" style="margin-top:8px;"><p>
+						<strong>店舗マップが取得できません。</strong><br>
+						carmel_shop_post_map() 関数が存在しない、または空を返しています。<br>
+						「shop」投稿タイプからの自動取得も試みましたが取得できませんでした。<br>
+						本体プラグインが有効化されているか、shop 投稿が存在するか確認してください。
+					</p></div>
+				<?php elseif ( 0 === $diag['empty_count'] && 0 === $diag['other_count'] ) : ?>
+					<p style="color:#3a7a1e;"><strong>✅ 全台に店舗が設定済みです（補完対象なし）。</strong></p>
+					<p style="font-size:13px;color:#555;">再割当したい場合は「全在庫」を選択してください。</p>
+				<?php endif; ?>
+			</div>
+
+			<?php if ( ! empty( $map ) ) : ?>
+			<!-- 操作フォーム -->
 			<form method="post" style="margin:16px 0;padding:14px;border:1px solid #ccd0d4;background:#fff;border-radius:6px;max-width:680px;">
 				<table class="form-table">
 					<tr><th>対象</th><td>
@@ -151,33 +242,41 @@ class Carmel_Shop_Assign {
 				<p><button class="button" name="csa_preview" value="1">プレビューを更新</button></p>
 
 				<h2>割当プレビュー</h2>
-				<p style="font-size:14px;">対象：<strong style="font-size:18px;color:#1f6feb;"><?php echo count( $targets ); ?></strong> 台</p>
+				<p style="font-size:14px;">対象：<strong style="font-size:20px;color:#1f6feb;"><?php echo count( $targets ); ?></strong> 台</p>
 				<p style="font-size:13px;line-height:2;">
 				<?php foreach ( $map as $slug => $sid ) : $c = isset( $dist[ $slug ] ) ? $dist[ $slug ] : 0; ?>
-					<span style="display:inline-block;background:#f3f6fb;border:1px solid #cfd8e3;border-radius:14px;padding:3px 12px;margin:2px;"><?php echo esc_html( get_the_title( $sid ) ?: $slug ); ?>：<strong><?php echo (int) $c; ?></strong> 台</span>
+					<span style="display:inline-block;background:#f3f6fb;border:1px solid #cfd8e3;border-radius:14px;padding:3px 12px;margin:2px;">
+						<?php echo esc_html( get_the_title( $sid ) ?: $slug ); ?>：<strong><?php echo (int) $c; ?></strong> 台
+					</span>
 				<?php endforeach; ?>
 				</p>
 
 				<?php if ( count( $targets ) > 0 && ( 'random' === $mode || ( 'fixed' === $mode && $fixed ) ) ) : ?>
 					<?php wp_nonce_field( 'csa_apply' ); ?>
-					<p><button class="button button-primary button-hero" name="csa_apply" value="1"
-						onclick="return confirm('<?php echo count( $targets ); ?> 台に店舗を割り当てます。よろしいですか？');">
-						今すぐ <?php echo count( $targets ); ?> 台に割り当てる</button></p>
+					<p>
+						<button class="button button-primary button-hero" name="csa_apply" value="1"
+							onclick="return confirm('<?php echo count( $targets ); ?> 台に店舗を割り当てます。よろしいですか？');">
+							今すぐ <?php echo count( $targets ); ?> 台に割り当てる
+						</button>
+					</p>
 					<p style="color:#666;font-size:12px;">※ ランダムは実行ボタンを押した瞬間に再抽選されます（上のプレビューは件数の目安）。</p>
 				<?php elseif ( 'fixed' === $mode && ! $fixed ) : ?>
 					<p><em>指定店舗を選んでください。</em></p>
+				<?php elseif ( 0 === count( $targets ) ) : ?>
+					<p><em>補完対象はありません。「全在庫」に切り替えると再割当できます。</em></p>
 				<?php endif; ?>
 			</form>
+			<?php endif; ?>
 		</div>
 		<?php
 	}
 
 	private function run( $scope, $mode, $fixed, $slugs, $sync ) {
-		$map     = $this->shop_map();
-		$targets = $this->target_ids( $scope );
-		$plan    = $this->plan( $targets, $mode, $fixed, $slugs );
-		$contact_cache = array();
-		$applied = 0;
+		$map            = $this->shop_map();
+		$targets        = $this->target_ids( $scope );
+		$plan           = $this->plan( $targets, $mode, $fixed, $slugs );
+		$contact_cache  = array();
+		$applied        = 0;
 		foreach ( $plan as $pid => $slug ) {
 			if ( ! $slug ) { continue; }
 			$this->save( $pid, 'shop', $slug );
