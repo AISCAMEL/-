@@ -1,3 +1,4 @@
+import { pathToFileURL } from "node:url";
 import Fastify from "fastify";
 import { z } from "zod";
 import {
@@ -203,8 +204,10 @@ export function buildServer() {
   return app;
 }
 
-// エントリポイント
-const isMain = process.argv[1] && import.meta.url.endsWith(process.argv[1].split("/").pop() ?? "");
+// エントリポイント（Windows/Mac/Linux どこでも動く判定）
+const isMain = process.argv[1]
+  ? import.meta.url === pathToFileURL(process.argv[1]).href
+  : false;
 if (isMain) {
   const app = buildServer();
   const cfg = loadConfig();

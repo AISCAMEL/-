@@ -1,4 +1,4 @@
-const HUB = process.env.HUB_API_URL ?? "http://localhost:3001";
+const HUB = process.env.HUB_API_URL ?? "http://127.0.0.1:3001";
 
 /** Hub API の /connectors をプロキシ（各コネクタの mock|live を表示用に取得）。 */
 export async function GET() {
