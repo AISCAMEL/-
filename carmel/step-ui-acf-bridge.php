@@ -121,7 +121,8 @@ function carmel_step_ui_acf_bridge() {
 			return el ? ( el.value || '' ).trim() : '';
 		}
 
-		/* テキスト/セレクト系 ACF へ値をセット（空は ACF 側も空に揃える） */
+		/* テキスト/セレクト系 ACF へ値をセット
+		   ★ 空値で既存の ACF 値を上書きしない（古い車の直接入力を保護） */
 		function setAcf( fieldName, value ) {
 			var $field = $( '.acf-field[data-name="' + fieldName + '"]' );
 			if ( ! $field.length ) { return; }
@@ -129,6 +130,8 @@ function carmel_step_ui_acf_bridge() {
 			var $input = $field.find( 'input[type="text"], input[type="number"], input[type="url"], textarea' ).first();
 			if ( $input.length ) {
 				if ( $input.val() === value ) { return; }
+				// STEP UI が空 かつ ACF に既存値あり → 上書きしない
+				if ( '' === value && '' !== ( $input.val() || '' ).trim() ) { return; }
 				$input.val( value ).trigger( 'input' ).trigger( 'change' );
 				return;
 			}
@@ -136,6 +139,7 @@ function carmel_step_ui_acf_bridge() {
 			var $select = $field.find( 'select' ).first();
 			if ( $select.length ) {
 				if ( $select.val() === value ) { return; }
+				if ( '' === value && '' !== ( $select.val() || '' ).trim() ) { return; }
 				$select.val( value ).trigger( 'change' );
 				if ( $select.hasClass( 'select2-hidden-accessible' ) ) {
 					$select.trigger( 'change.select2' );
@@ -233,6 +237,40 @@ function carmel_step_ui_acf_bridge() {
 			} );
 		}
 
+		/* ★ ACF の現在値を STEP UI 基本情報入力欄へ逆反映
+		   （既存車両でSTEP UIが空になっていても、ACF値を読んでSTEPに入れておく。
+		     これで syncBasic が正しい値を拾い、空で上書きしなくなる） */
+		function prefillBasicFromAcf() {
+			Object.keys( BASIC_MAP ).forEach( function ( id ) {
+				var el = document.getElementById( id );
+				if ( ! el ) { return; }
+				// STEP UI 側にすでに値があればスキップ
+				if ( '' !== ( el.value || '' ).trim() ) { return; }
+				var fieldName = BASIC_MAP[ id ];
+				var $field = $( '.acf-field[data-name="' + fieldName + '"]' );
+				if ( ! $field.length ) { return; }
+				var $input = $field.find( 'input[type="text"], input[type="number"], input[type="url"], textarea' ).first();
+				if ( $input.length && '' !== ( $input.val() || '' ).trim() ) {
+					el.value = $input.val();
+					return;
+				}
+				var $select = $field.find( 'select' ).first();
+				if ( $select.length && '' !== ( $select.val() || '' ).trim() ) {
+					el.value = $select.val();
+				}
+			} );
+			// type（型式）も同様に逆反映
+			var elModel = document.getElementById( 'cs_car_model' );
+			var elGrade = document.getElementById( 'cs_grade' );
+			if ( elModel && '' === ( elModel.value || '' ).trim() ) {
+				var $typeField = $( '.acf-field[data-name="type"]' );
+				if ( $typeField.length ) {
+					var typeVal = ( $typeField.find( 'input[type="text"]' ).first().val() || '' ).trim();
+					if ( '' !== typeVal ) { elModel.value = typeVal; }
+				}
+			}
+		}
+
 		/* ------------------------------------------------------------------ */
 		/* 初期化・イベント                                                    */
 		/* ------------------------------------------------------------------ */
@@ -245,6 +283,10 @@ function carmel_step_ui_acf_bridge() {
 
 			// 既存装備を STEP2 に戻す
 			prefillEquipFromAcf();
+
+			// ★ 既存の基本情報（メーカー/年式/色/走行等）を ACF → STEP UI へ逆反映
+			// （古い車両で STEP UI が空でも ACF の値を拾ってセット）
+			prefillBasicFromAcf();
 
 			// STEP1 → STEP2 ボタン（管理番号の注意喚起つき）
 			document.addEventListener( 'click', function ( e ) {
