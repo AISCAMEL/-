@@ -67,8 +67,8 @@ class Carmel_Stock_Audit {
 			if ( '' === $this->get_any( $pid, $keys ) ) { $errors[] = $label . '未入力'; }
 		}
 
-		// 価格
-		$price = $this->num( $this->get_any( $pid, array( 'price' ) ) );
+		// 価格（複数キーを検索して古い車両の価格キーにも対応）
+		$price = $this->num( $this->get_any( $pid, array( 'price', 'est_honntai', 'honntai', 'hontai', 'kakaku', 'honbai', 'price_main' ) ) );
 		$total = $this->num( $this->get_any( $pid, array( 'est_total' ) ) );
 		if ( $price <= 0 && $total <= 0 ) { $errors[] = '価格なし'; }
 
@@ -116,12 +116,33 @@ class Carmel_Stock_Audit {
 		) );
 	}
 
+	/* エラー種別 → 対処方法ヒントと関連ツールリンク */
+	private function hints() {
+		$base = 'edit.php?post_type=portfolio&page=';
+		return array(
+			'ボディカラー未入力' => array( '編集画面のカラーフィールドに色を入力してください。',    '' ),
+			'メーカー未入力'     => array( '編集画面のメーカーを入力してください。',                '' ),
+			'年式未入力'         => array( '年式フィールドを入力してください（例：2020年）。',      '' ),
+			'走行距離未入力'     => array( '走行距離フィールドを入力してください（例：40,000km）。', '' ),
+			'車検未入力'         => array( '車検フィールドを入力してください。',                    '' ),
+			'価格なし'           => array( 'price フィールドに本体価格を入力してください。車両データ確認で実際のキーを確認できます。', admin_url( $base . 'carmel-car-inspect' ) ),
+			'店舗未設定'         => array( '「店舗一括割当」で一括設定できます。',                  admin_url( $base . 'carmel-shop-assign' ) ),
+			'電話番号なし'       => array( '店舗の電話番号を設定するか、「店舗一括割当」で連絡先補完を使ってください。', admin_url( $base . 'carmel-shop-assign' ) ),
+			'画像なし'           => array( 'アイキャッチまたはギャラリーに画像を登録してください。', '' ),
+			'タイトル空'         => array( '「タイトル一括修正」で自動補完できます。',              admin_url( $base . 'carmel-title-bulk' ) ),
+			'シミュ未設定(年率)' => array( '「月々シミュ補完」で一括補完できます（年率9.8%・頭金0）。', admin_url( $base . 'carmel-monthly-backfill' ) ),
+			'月々表示なし'       => array( '「月々シミュ補完」で月々支払いを自動計算して補完できます。', admin_url( $base . 'carmel-monthly-backfill' ) ),
+			'年式に「〜」混入'   => array( '「〜修正（年式）」で一括修正できます。',               admin_url( $base . 'carmel-tilde-fix' ) ),
+		);
+	}
+
 	public function render() {
 		if ( ! current_user_can( 'manage_options' ) ) { return; }
-		$filter = isset( $_GET['cmb_filter'] ) ? sanitize_key( $_GET['cmb_filter'] ) : 'issues';
+		$filter        = isset( $_GET['cmb_filter'] ) ? sanitize_key( $_GET['cmb_filter'] ) : 'issues';
+		$reason_filter = isset( $_GET['cmb_reason'] ) ? sanitize_text_field( wp_unslash( $_GET['cmb_reason'] ) ) : '';
 
 		$ids = $this->all_ids();
-		$rows = array();
+		$all_rows = array();
 		$n_err = 0; $n_warn = 0; $n_ok = 0;
 		$reason_count = array();
 
@@ -133,56 +154,119 @@ class Carmel_Stock_Audit {
 			foreach ( array_merge( $c['errors'], $c['warns'] ) as $r ) {
 				$reason_count[ $r ] = isset( $reason_count[ $r ] ) ? $reason_count[ $r ] + 1 : 1;
 			}
-			$show = ( 'all' === $filter ) || ( 'errors' === $filter && $has_e ) || ( 'issues' === $filter && ( $has_e || $has_w ) );
-			if ( $show ) { $rows[] = array( 'pid' => $pid, 'c' => $c, 'e' => $has_e, 'w' => $has_w ); }
+			$all_rows[] = array( 'pid' => $pid, 'c' => $c, 'e' => $has_e, 'w' => $has_w );
 		}
 		arsort( $reason_count );
+
+		// フィルタ適用
+		$rows = array();
+		foreach ( $all_rows as $row ) {
+			$has_e = $row['e']; $has_w = $row['w'];
+			$all_reasons = array_merge( $row['c']['errors'], $row['c']['warns'] );
+			if ( $reason_filter && ! in_array( $reason_filter, $all_reasons, true ) ) { continue; }
+			$show = ( 'all' === $filter ) || ( 'errors' === $filter && $has_e ) || ( 'issues' === $filter && ( $has_e || $has_w ) );
+			if ( $show ) { $rows[] = $row; }
+		}
+
 		$base_url = admin_url( 'edit.php?post_type=portfolio&page=carmel-stock-audit' );
+		$hints    = $this->hints();
 		?>
 		<div class="wrap">
 			<h1>在庫 ページ診断</h1>
 			<p>全在庫を診断（<strong>読み取り専用・データは変更しません</strong>）。判定は実ページの表示解決（複数キー＋ACF）に合わせています。</p>
 
+			<!-- サマリカード -->
 			<div style="display:flex;gap:14px;flex-wrap:wrap;margin:14px 0;">
-				<div style="background:#fff;border:1px solid #f0c4bf;border-left:4px solid #d63638;padding:10px 16px;border-radius:6px;"><div style="font-size:12px;color:#666;">エラー（要修正）</div><div style="font-size:24px;font-weight:800;color:#d63638;"><?php echo (int) $n_err; ?> 台</div></div>
-				<div style="background:#fff;border:1px solid #f0e0a0;border-left:4px solid #dba617;padding:10px 16px;border-radius:6px;"><div style="font-size:12px;color:#666;">警告（改善推奨）</div><div style="font-size:24px;font-weight:800;color:#dba617;"><?php echo (int) $n_warn; ?> 台</div></div>
-				<div style="background:#fff;border:1px solid #b6e0b6;border-left:4px solid #46b450;padding:10px 16px;border-radius:6px;"><div style="font-size:12px;color:#666;">問題なし</div><div style="font-size:24px;font-weight:800;color:#46b450;"><?php echo (int) $n_ok; ?> 台</div></div>
+				<div style="background:#fff;border:1px solid #f0c4bf;border-left:4px solid #d63638;padding:10px 18px;border-radius:6px;">
+					<div style="font-size:12px;color:#666;">エラー（要修正）</div>
+					<div style="font-size:28px;font-weight:800;color:#d63638;"><?php echo (int) $n_err; ?> 台</div>
+				</div>
+				<div style="background:#fff;border:1px solid #f0e0a0;border-left:4px solid #dba617;padding:10px 18px;border-radius:6px;">
+					<div style="font-size:12px;color:#666;">警告（改善推奨）</div>
+					<div style="font-size:28px;font-weight:800;color:#dba617;"><?php echo (int) $n_warn; ?> 台</div>
+				</div>
+				<div style="background:#fff;border:1px solid #b6e0b6;border-left:4px solid #46b450;padding:10px 18px;border-radius:6px;">
+					<div style="font-size:12px;color:#666;">問題なし</div>
+					<div style="font-size:28px;font-weight:800;color:#46b450;"><?php echo (int) $n_ok; ?> 台</div>
+				</div>
 			</div>
 
-			<p>表示：
-				<a class="button <?php echo 'errors' === $filter ? 'button-primary' : ''; ?>" href="<?php echo esc_url( $base_url . '&cmb_filter=errors' ); ?>">エラーのみ</a>
-				<a class="button <?php echo 'issues' === $filter ? 'button-primary' : ''; ?>" href="<?php echo esc_url( $base_url . '&cmb_filter=issues' ); ?>">エラー＋警告</a>
-				<a class="button <?php echo 'all' === $filter ? 'button-primary' : ''; ?>" href="<?php echo esc_url( $base_url . '&cmb_filter=all' ); ?>">全件</a>
+			<!-- 表示切替 -->
+			<p>
+				<a class="button <?php echo 'errors' === $filter ? 'button-primary' : ''; ?>" href="<?php echo esc_url( add_query_arg( array( 'cmb_filter' => 'errors', 'cmb_reason' => $reason_filter ), $base_url ) ); ?>">エラーのみ</a>
+				<a class="button <?php echo 'issues' === $filter ? 'button-primary' : ''; ?>" href="<?php echo esc_url( add_query_arg( array( 'cmb_filter' => 'issues', 'cmb_reason' => $reason_filter ), $base_url ) ); ?>">エラー＋警告</a>
+				<a class="button <?php echo 'all' === $filter ? 'button-primary' : ''; ?>"   href="<?php echo esc_url( add_query_arg( array( 'cmb_filter' => 'all',    'cmb_reason' => $reason_filter ), $base_url ) ); ?>">全件</a>
+				<?php if ( $reason_filter ) : ?>
+					<a class="button" href="<?php echo esc_url( add_query_arg( array( 'cmb_filter' => $filter, 'cmb_reason' => '' ), $base_url ) ); ?>" style="color:#a30000;">✕ 絞り込み解除：<?php echo esc_html( $reason_filter ); ?></a>
+				<?php endif; ?>
 			</p>
 
+			<!-- 問題の内訳（クリックで絞り込み） -->
 			<?php if ( ! empty( $reason_count ) ) : ?>
-				<h2>問題の内訳（多い順）</h2>
-				<p style="font-size:13px;line-height:2;">
-				<?php foreach ( $reason_count as $r => $cnt ) : ?>
-					<span style="display:inline-block;background:#f3f6fb;border:1px solid #cfd8e3;border-radius:14px;padding:3px 12px;margin:2px;"><?php echo esc_html( $r ); ?>：<strong><?php echo (int) $cnt; ?></strong></span>
+				<h2 style="margin-bottom:6px;">問題の内訳（クリックで絞り込み）</h2>
+				<p style="font-size:13px;line-height:2.2;">
+				<?php foreach ( $reason_count as $r => $cnt ) :
+					$active = ( $r === $reason_filter );
+					$url    = esc_url( add_query_arg( array( 'cmb_filter' => $filter, 'cmb_reason' => $r ), $base_url ) );
+					$hint   = isset( $hints[ $r ] ) ? $hints[ $r ] : null;
+					$has_tool = $hint && '' !== $hint[1];
+				?>
+					<a href="<?php echo $url; ?>" style="display:inline-block;text-decoration:none;border-radius:14px;padding:3px 12px;margin:2px;font-size:13px;
+						<?php echo $active ? 'background:#1f6feb;color:#fff;border:1px solid #1f6feb;' : 'background:#f3f6fb;color:#444;border:1px solid #cfd8e3;'; ?>">
+						<?php echo esc_html( $r ); ?>：<strong><?php echo (int) $cnt; ?></strong>
+						<?php echo $has_tool ? ' 🔧' : ''; ?>
+					</a>
 				<?php endforeach; ?>
 				</p>
+
+				<!-- 対処ヒント（絞り込み中のみ表示） -->
+				<?php if ( $reason_filter && isset( $hints[ $reason_filter ] ) ) :
+					$h = $hints[ $reason_filter ];
+				?>
+					<div style="background:#eef4ff;border:1px solid #b8d4ff;border-radius:6px;padding:12px 16px;max-width:820px;margin-bottom:16px;">
+						<strong>「<?php echo esc_html( $reason_filter ); ?>」の対処方法：</strong>
+						<?php echo esc_html( $h[0] ); ?>
+						<?php if ( '' !== $h[1] ) : ?>
+							<a class="button button-small" href="<?php echo esc_url( $h[1] ); ?>" style="margin-left:10px;">関連ツールを開く →</a>
+						<?php endif; ?>
+					</div>
+				<?php endif; ?>
 			<?php endif; ?>
 
-			<h2>該当車両（<?php echo count( $rows ); ?> 台）</h2>
+			<!-- 車両リスト -->
+			<h2>該当車両（<?php echo count( $rows ); ?> 台<?php echo $reason_filter ? '：' . esc_html( $reason_filter ) . 'のみ' : ''; ?>）</h2>
 			<table class="widefat striped" style="max-width:1100px;">
-				<thead><tr><th style="width:80px;">状態</th><th>車両</th><th>問題</th><th style="width:70px;">操作</th></tr></thead>
+				<thead><tr><th style="width:70px;">状態</th><th>車両</th><th>問題</th><th style="width:90px;">操作</th></tr></thead>
 				<tbody>
 				<?php if ( empty( $rows ) ) : ?><tr><td colspan="4"><em>該当なし。</em></td></tr><?php endif; ?>
 				<?php foreach ( $rows as $row ) :
 					$pid = $row['pid'];
-					$badge = $row['e'] ? '<span style="background:#d63638;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">エラー</span>'
-						: ( $row['w'] ? '<span style="background:#dba617;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">警告</span>'
-						: '<span style="background:#46b450;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">OK</span>' );
+					$badge = $row['e']
+						? '<span style="background:#d63638;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">エラー</span>'
+						: ( $row['w']
+							? '<span style="background:#dba617;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">警告</span>'
+							: '<span style="background:#46b450;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">OK</span>' );
 					$tags = '';
-					foreach ( $row['c']['errors'] as $r ) { $tags .= '<span style="display:inline-block;background:#fdeaea;color:#a30000;border-radius:10px;padding:1px 9px;margin:2px;font-size:12px;">' . esc_html( $r ) . '</span>'; }
-					foreach ( $row['c']['warns'] as $r )  { $tags .= '<span style="display:inline-block;background:#fbf6e3;color:#8a6d00;border-radius:10px;padding:1px 9px;margin:2px;font-size:12px;">' . esc_html( $r ) . '</span>'; }
+					foreach ( $row['c']['errors'] as $r ) {
+						$url_r = esc_url( add_query_arg( array( 'cmb_filter' => $filter, 'cmb_reason' => $r ), $base_url ) );
+						$active_r = ( $r === $reason_filter ) ? 'font-weight:700;' : '';
+						$tags .= '<a href="' . $url_r . '" style="display:inline-block;background:#fdeaea;color:#a30000;border-radius:10px;padding:1px 9px;margin:2px;font-size:12px;text-decoration:none;' . $active_r . '">' . esc_html( $r ) . '</a>';
+					}
+					foreach ( $row['c']['warns'] as $r ) {
+						$url_r = esc_url( add_query_arg( array( 'cmb_filter' => $filter, 'cmb_reason' => $r ), $base_url ) );
+						$tags .= '<a href="' . $url_r . '" style="display:inline-block;background:#fbf6e3;color:#8a6d00;border-radius:10px;padding:1px 9px;margin:2px;font-size:12px;text-decoration:none;">' . esc_html( $r ) . '</a>';
+					}
 				?>
 					<tr>
 						<td><?php echo $badge; ?></td>
-						<td><a href="<?php echo esc_url( get_permalink( $pid ) ); ?>" target="_blank"><?php echo esc_html( get_the_title( $pid ) ?: '(無題 #' . $pid . ')' ); ?></a></td>
-						<td><?php echo $tags ? $tags : '<span style="color:#46b450;">問題なし</span>'; ?></td>
-						<td><a class="button button-small" href="<?php echo esc_url( get_edit_post_link( $pid ) ); ?>">編集</a></td>
+						<td style="font-size:13px;">
+							<a href="<?php echo esc_url( get_edit_post_link( $pid ) ); ?>"><?php echo esc_html( get_the_title( $pid ) ?: '(無題 #' . $pid . ')' ); ?></a>
+						</td>
+						<td><?php echo $tags ?: '<span style="color:#46b450;">問題なし</span>'; ?></td>
+						<td>
+							<a class="button button-small" href="<?php echo esc_url( get_edit_post_link( $pid ) ); ?>">編集</a>
+							<a class="button button-small" href="<?php echo esc_url( admin_url( 'edit.php?post_type=portfolio&page=carmel-car-inspect&car=' . $pid ) ); ?>">確認</a>
+						</td>
 					</tr>
 				<?php endforeach; ?>
 				</tbody>
