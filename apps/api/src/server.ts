@@ -1,5 +1,10 @@
-import { pathToFileURL } from "node:url";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { config as loadDotenv } from "dotenv";
 import Fastify from "fastify";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+loadDotenv({ path: resolve(__dirname, "../../../.env") });
 import { z } from "zod";
 import {
   connectorModes,
