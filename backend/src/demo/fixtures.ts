@@ -241,6 +241,14 @@ export const demoAppointments: DemoAppointment[] = [
   { id: 'ap-2', tenant_id: TENANT, contact_id: null, call_id: 'call-1002', type: '来店', title: '佐藤様 来店相談', customer_name: '佐藤花子', phone_number: '+819033334444', start_at: todayAt(14, 30), end_at: todayAt(15, 0), status: 'tentative', source: 'ai_inbound', google_event_id: null, note: null, created_at: iso(-100) },
 ];
 
+export interface DemoExpense { id: string; label: string; category: string; monthly_jpy: number; created_at: string; }
+export const demoExpenses: DemoExpense[] = [
+  { id: 'ex-1', label: '人件費（運営1名）', category: 'personnel', monthly_jpy: 300000, created_at: iso(-1000) },
+  { id: 'ex-2', label: 'サーバー・インフラ（Render/Supabase等）', category: 'infra', monthly_jpy: 15000, created_at: iso(-1000) },
+  { id: 'ex-3', label: 'ツール・SaaS（各種）', category: 'tools', monthly_jpy: 20000, created_at: iso(-1000) },
+  { id: 'ex-4', label: '広告・マーケティング', category: 'marketing', monthly_jpy: 50000, created_at: iso(-1000) },
+];
+
 export interface DemoContactActivity {
   id: string; tenant_id: string; contact_id: string; type: string;
   detail: string | null; created_at: string;

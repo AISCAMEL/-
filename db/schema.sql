@@ -635,3 +635,18 @@ alter table tenant_settings add column if not exists appointment_duration_min in
 alter table tenants add column if not exists trial_ends_at date;          -- トライアル終了日
 alter table tenants add column if not exists contract_started_at date;    -- 契約開始日
 alter table tenants add column if not exists payment_status text not null default 'none'; -- none/paid/overdue
+
+-- =============================================================
+-- operator_expenses  (運営の固定経費。P&Lの販管費に使う。super_admin専用)
+-- =============================================================
+create table if not exists operator_expenses (
+  id          uuid primary key default gen_random_uuid(),
+  label       text not null,
+  category    text not null default 'other',   -- personnel/infra/tools/marketing/other
+  monthly_jpy numeric(12,0) not null default 0,
+  created_at  timestamptz not null default now()
+);
+alter table operator_expenses enable row level security;
+drop policy if exists operator_only on operator_expenses;
+create policy operator_only on operator_expenses
+  using (is_super_admin()) with check (is_super_admin());

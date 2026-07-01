@@ -5,6 +5,7 @@ import { sendEmail } from '../notify/email.js';
 import * as leads from './repo.js';
 import { listTenants, getAdminUsageSummary } from '../db/queries.js';
 import { committedMrr, renewalAlerts } from '../admin/revenue.js';
+import { computePnl, listExpenses, createExpense, deleteExpense } from '../admin/pnl.js';
 import { rateLimit } from '../util/ratelimit.js';
 import { salesChatReply, type ChatTurn } from './chat.js';
 
@@ -106,6 +107,24 @@ export async function registerLeadRoutes(app: FastifyInstance): Promise<void> {
       alerts,
       month: usage.month,
     };
+  });
+
+  // 損益計算書（P&L）：売上−原価=粗利−販管費=営業利益
+  app.get('/api/admin/pnl', { preHandler: requireSuperAdmin }, async (req) => {
+    const { month } = req.query as Record<string, string>;
+    return computePnl(month);
+  });
+  // 固定経費（販管費）の管理
+  app.get('/api/admin/expenses', { preHandler: requireSuperAdmin }, async () => listExpenses());
+  app.post('/api/admin/expenses', { preHandler: requireSuperAdmin }, async (req, reply) => {
+    const b = (req.body ?? {}) as any;
+    if (!b.label || b.monthly_jpy === undefined) return reply.code(400).send({ error: '費目と月額を入力してください' });
+    return createExpense({ label: String(b.label), category: b.category, monthly_jpy: Number(b.monthly_jpy) });
+  });
+  app.delete('/api/admin/expenses/:id', { preHandler: requireSuperAdmin }, async (req, reply) => {
+    const ok = await deleteExpense((req.params as any).id);
+    if (!ok) return reply.code(404).send({ error: 'not found' });
+    return { ok: true };
   });
 
   // 売上レポート（確定MRR＋プラン別＋テナント別の当月利用売上）

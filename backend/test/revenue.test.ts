@@ -54,3 +54,29 @@ test('テナント台帳: trial_ends_at と payment_status を更新できる', 
   assert.equal(upd.statusCode, 200);
   assert.equal(upd.json().payment_status, 'paid');
 });
+
+import { computePnl } from '../src/admin/pnl.js';
+
+test('computePnl: 売上−原価=粗利、粗利−販管費=営業利益 が整合', async () => {
+  const p = await computePnl();
+  assert.equal(p.revenue.total, p.revenue.base + p.revenue.overage);
+  assert.equal(p.gross_profit, p.revenue.total - p.cogs.total);
+  assert.equal(p.operating_profit, p.gross_profit - p.opex.total);
+  assert.equal(p.cogs.total, Math.round(p.cogs.ai + p.cogs.transfer));
+});
+
+test('P&L API: 経費を追加すると営業利益が減る', async () => {
+  const before = (await computePnl()).operating_profit;
+  const add = await app.inject({ method: 'POST', url: '/api/admin/expenses',
+    headers: { 'content-type': 'application/json', ...sa }, payload: { label: 'テスト経費', category: 'other', monthly_jpy: 100000 } });
+  assert.equal(add.statusCode, 200);
+  const after = (await computePnl()).operating_profit;
+  assert.equal(after, before - 100000);
+  // 後片付け
+  await app.inject({ method: 'DELETE', url: `/api/admin/expenses/${add.json().id}`, headers: sa });
+});
+
+test('P&L: 経費APIは super_admin のみ（owner=403）', async () => {
+  assert.equal((await app.inject({ url: '/api/admin/pnl' })).statusCode, 403);
+  assert.equal((await app.inject({ url: '/api/admin/expenses' })).statusCode, 403);
+});

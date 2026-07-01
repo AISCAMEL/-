@@ -114,6 +114,10 @@ export const api = {
 
   overview: () => request<any>('/api/admin/overview'),
   revenue: (month?: string) => request<any>(`/api/admin/revenue${month ? `?month=${month}` : ''}`),
+  pnl: (month?: string) => request<any>(`/api/admin/pnl${month ? `?month=${month}` : ''}`),
+  expenses: () => request<any[]>('/api/admin/expenses'),
+  createExpense: (body: any) => request<any>('/api/admin/expenses', { method: 'POST', body: JSON.stringify(body) }),
+  deleteExpense: (id: string) => request<any>(`/api/admin/expenses/${id}`, { method: 'DELETE' }),
   tenant: (id: string) => request<any>(`/api/admin/tenants/${id}`),
   updateTenant: (id: string, body: any) => request<any>(`/api/admin/tenants/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   leads: (qs = '') => request<any[]>(`/api/admin/leads${qs}`),

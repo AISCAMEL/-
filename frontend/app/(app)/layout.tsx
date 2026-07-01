@@ -26,6 +26,7 @@ const tenantNav = [
 // 運営者（自社・super_admin）向けナビ
 const operatorNav = [
   { href: '/overview', label: '運営ダッシュボード', icon: '📈' },
+  { href: '/pnl', label: '損益計算書', icon: '🧮' },
   { href: '/leads', label: '問い合わせ管理', icon: '📥' },
   { href: '/usage', label: '利用・売上', icon: '💰' },
   { href: '/admin', label: 'テナント管理', icon: '🏢' },
