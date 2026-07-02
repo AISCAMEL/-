@@ -144,6 +144,81 @@
 .modal-actions { display: flex; gap: 10px; }
 .modal-actions .btn { flex: 1; }
 
+/* Loan simulator in modal */
+.loan-sim {
+  margin: 24px 0 20px; padding: 24px; border-radius: 14px;
+  background: linear-gradient(135deg, #f0f4fa 0%, #e8eef8 100%);
+  border: 1px solid #d0dbed;
+}
+.loan-sim h3 {
+  font-size: 16px; font-weight: 800; margin: 0 0 16px; color: var(--navy);
+  display: flex; align-items: center; gap: 8px;
+}
+.loan-sim .loan-params {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;
+}
+.loan-sim .loan-field label {
+  display: block; font-size: 12px; font-weight: 700; color: #5a6f8c; margin-bottom: 4px;
+}
+.loan-sim .loan-field input,
+.loan-sim .loan-field select {
+  width: 100%; padding: 9px 12px; border-radius: 10px; border: 1px solid #c5d3e8;
+  font-size: 14px; font-family: var(--font); background: #fff; color: var(--ink);
+}
+.loan-sim .loan-slider-wrap {
+  margin-bottom: 18px;
+}
+.loan-sim .loan-slider-wrap label {
+  display: flex; justify-content: space-between; font-size: 12px; font-weight: 700;
+  color: #5a6f8c; margin-bottom: 6px;
+}
+.loan-sim .loan-slider-wrap label span { color: var(--navy); font-size: 14px; }
+.loan-sim input[type="range"] {
+  -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px;
+  background: #c5d3e8; outline: none; cursor: pointer;
+}
+.loan-sim input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--navy); border: 3px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.2);
+  cursor: pointer;
+}
+.loan-sim input[type="range"]::-moz-range-thumb {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--navy); border: 3px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,.2);
+  cursor: pointer;
+}
+.loan-presets {
+  display: flex; gap: 6px; margin-bottom: 16px;
+}
+.loan-presets button {
+  flex: 1; padding: 8px; border: 1px solid #c5d3e8; border-radius: 8px;
+  background: #fff; font-size: 13px; font-weight: 700; color: #5a6f8c;
+  cursor: pointer; transition: all .15s; font-family: var(--font);
+}
+.loan-presets button:hover { border-color: var(--navy); color: var(--navy); }
+.loan-presets button.active {
+  background: var(--navy); color: #fff; border-color: var(--navy);
+}
+.loan-result {
+  background: var(--white); border-radius: 12px; padding: 18px; text-align: center;
+  border: 2px solid var(--navy);
+}
+.loan-result .lr-label { font-size: 13px; color: #5a6f8c; margin-bottom: 4px; }
+.loan-result .lr-monthly {
+  font-size: 32px; font-weight: 900; color: var(--navy);
+}
+.loan-result .lr-monthly small { font-size: 16px; font-weight: 600; }
+.loan-result .lr-detail {
+  display: flex; justify-content: center; gap: 20px; margin-top: 10px;
+  font-size: 12px; color: #5a6f8c;
+}
+.loan-result .lr-detail b { color: var(--ink); }
+
+/* Monthly payment on cards */
+.car-body .car-monthly {
+  font-size: 13px; color: #2a64c4; margin-top: 4px; font-weight: 600;
+}
+
 /* Empty state */
 .inv-empty {
   text-align: center; padding: 60px 20px; color: var(--muted);
@@ -170,6 +245,9 @@
   .inv-grid { grid-template-columns: 1fr; }
   .modal-body { padding: 20px; }
   .detail-specs { grid-template-columns: 1fr; }
+  .loan-sim .loan-params { grid-template-columns: 1fr; }
+  .loan-sim { padding: 16px; }
+  .loan-result .lr-monthly { font-size: 26px; }
 }
 </style>
 </head>
@@ -395,6 +473,11 @@
 
   function yen(n) { return "¥" + Math.round(n).toLocaleString("ja-JP"); }
   function manyen(n) { return Math.round(n / 10000) + "万円"; }
+  function calcMonthly(principal, rate, months) {
+    if (rate === 0) return Math.round(principal / months);
+    var r = rate / 100 / 12;
+    return Math.round(principal * r / (1 - Math.pow(1 + r, -months)));
+  }
 
   var yearMinSel = document.getElementById("fYearMin");
   var yearMaxSel = document.getElementById("fYearMax");
@@ -492,6 +575,7 @@
         '</div>' +
         '<div class="car-price">' + manyen(c.price) + ' <small>（税込）</small></div>' +
         '<div class="car-total">乗り出し目安 ' + manyen(c.price * 1.12) + '〜</div>' +
+        '<div class="car-monthly">月々 ' + yen(calcMonthly(c.price, 3.9, 60)) + '〜（60回/3.9%）</div>' +
         '<div class="car-actions">' +
           '<button class="btn btn-gold btn-sm" onclick="event.stopPropagation();location.href=\'login.html\'">オーダーする</button>' +
           '<button class="btn btn-navy btn-sm" onclick="event.stopPropagation();showDetail(' + c.id + ')">詳細を見る</button>' +
@@ -541,13 +625,77 @@
         '<div class="ds-row"><span class="ds-k">車検</span><span class="ds-v">' + c.inspection + '</span></div>' +
       '</div>' +
       '<div class="detail-desc">' + c.desc + '</div>' +
+      '<div class="loan-sim" id="loanSim" data-price="' + c.price + '">' +
+        '<h3>💰 ローンシミュレーション</h3>' +
+        '<div class="loan-params">' +
+          '<div class="loan-field"><label>頭金</label><input type="number" id="loanDown" value="0" min="0" step="10000" /></div>' +
+          '<div class="loan-field"><label>金利（年率 %）</label><input type="number" id="loanRate" value="3.9" min="0" max="15" step="0.1" /></div>' +
+        '</div>' +
+        '<div class="loan-slider-wrap">' +
+          '<label>支払い回数 <span id="loanTermLabel">60回（5年）</span></label>' +
+          '<input type="range" id="loanTerm" min="12" max="120" step="12" value="60" />' +
+        '</div>' +
+        '<div class="loan-presets">' +
+          '<button data-term="36">36回</button>' +
+          '<button data-term="60" class="active">60回</button>' +
+          '<button data-term="84">84回</button>' +
+          '<button data-term="120">120回</button>' +
+        '</div>' +
+        '<div class="loan-result">' +
+          '<div class="lr-label">月々のお支払い目安</div>' +
+          '<div class="lr-monthly" id="loanMonthly">¥0 <small>/月</small></div>' +
+          '<div class="lr-detail">' +
+            '<span>借入額 <b id="loanPrincipal">—</b></span>' +
+            '<span>総支払額 <b id="loanTotal">—</b></span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
       '<div class="modal-actions">' +
         '<a class="btn btn-gold" href="login.html">この車両をオーダーする</a>' +
         '<a class="btn btn-navy" href="index.html#simulator">総額シミュレーション</a>' +
       '</div>';
     document.getElementById("modalOverlay").classList.add("open");
     document.body.style.overflow = "hidden";
+    initLoanSim(c.price);
   };
+
+  function initLoanSim(price) {
+    var down = document.getElementById("loanDown");
+    var rate = document.getElementById("loanRate");
+    var term = document.getElementById("loanTerm");
+    var termLabel = document.getElementById("loanTermLabel");
+    var presets = document.querySelectorAll(".loan-presets button");
+
+    function updateLoan() {
+      var d = Number(down.value) || 0;
+      var r = Number(rate.value) || 0;
+      var t = Number(term.value) || 60;
+      var principal = Math.max(0, price - d);
+      var monthly = calcMonthly(principal, r, t);
+      var total = monthly * t;
+      var years = Math.floor(t / 12);
+      var rem = t % 12;
+      var termStr = t + "回（" + years + "年" + (rem ? rem + "ヶ月" : "") + "）";
+      termLabel.textContent = termStr;
+      document.getElementById("loanMonthly").innerHTML = yen(monthly) + ' <small>/月</small>';
+      document.getElementById("loanPrincipal").textContent = manyen(principal);
+      document.getElementById("loanTotal").textContent = manyen(total);
+      for (var i = 0; i < presets.length; i++) {
+        presets[i].classList.toggle("active", Number(presets[i].getAttribute("data-term")) === t);
+      }
+    }
+
+    down.addEventListener("input", updateLoan);
+    rate.addEventListener("input", updateLoan);
+    term.addEventListener("input", updateLoan);
+    for (var i = 0; i < presets.length; i++) {
+      presets[i].addEventListener("click", function () {
+        term.value = this.getAttribute("data-term");
+        updateLoan();
+      });
+    }
+    updateLoan();
+  }
 
   document.getElementById("modalClose").addEventListener("click", closeModal);
   document.getElementById("modalOverlay").addEventListener("click", function (e) {
