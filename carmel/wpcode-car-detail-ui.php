@@ -79,8 +79,14 @@ add_action( 'wp_footer', function () {
 					'if(el.children.length>2){return;}' .
 					'var t=el.textContent.trim();' .
 					'if(t.length<2||t.length>35){return;}' .
+					/* 不要ワードを除外 */
+					'if(t.indexOf("なし")!==-1){return;}' .
+					'if(t.indexOf("保証内容")!==-1){return;}' .
+					'if(t.indexOf("保証サービス")!==-1){return;}' .
+					/* 保証と点検が両方含まれる＝親要素の合体テキスト → スキップ */
+					'if(t.indexOf("保証")!==-1&&(t.indexOf("点検")!==-1||t.indexOf("車検整備")!==-1)){return;}' .
 					'var ico="";' .
-					'if(t.indexOf("保証")!==-1){ico=shield;}' .
+					'if(t.indexOf("保証付き")!==-1){ico=shield;}' .
 					'else if(t.indexOf("点検")!==-1||t.indexOf("車検整備")!==-1){ico=check;}' .
 					'if(!ico||done.indexOf(t)!==-1){return;}' .
 					'done.push(t);' .
