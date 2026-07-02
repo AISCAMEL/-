@@ -1,1493 +1,1120 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>オートローン審査申込｜AUC-AGENT</title>
-<meta name="description" content="AUC-AGENT オートローン審査申込フォーム。最短即日回答・来店不要・秘密厳守。合同会社アイズが運営するカーオークション代行サービス。" />
-<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png" />
-<link rel="apple-touch-icon" href="assets/img/favicon-180.png" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>かんたんWEB審査 | カーメル</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --primary:#1a2744;--accent:#2563eb;--success:#059669;--warning:#d97706;--error:#dc2626;
-  --bg:#f8fafc;--card:#ffffff;--border:#e2e8f0;--input-border:#d1d5db;
-  --text:#1e293b;--muted:#64748b;--line:#06C755;
+  --navy:#1a2744;
+  --navy-light:#243352;
+  --blue:#2563eb;
+  --blue-hover:#1d4ed8;
+  --blue-light:#dbeafe;
+  --blue-50:#eff6ff;
+  --green:#16a34a;
+  --green-bg:#f0fdf4;
+  --green-border:#bbf7d0;
+  --red:#dc2626;
+  --orange:#ea580c;
+  --orange-bg:#fff7ed;
+  --orange-border:#fed7aa;
+  --gray-50:#f8fafc;
+  --gray-100:#f1f5f9;
+  --gray-200:#e2e8f0;
+  --gray-300:#cbd5e1;
+  --gray-400:#94a3b8;
+  --gray-500:#64748b;
+  --gray-600:#475569;
+  --gray-700:#334155;
+  --gray-800:#1e293b;
+  --gray-900:#0f172a;
+  --white:#ffffff;
+  --radius:10px;
+  --radius-lg:14px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1);
+  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1);
+  --transition:all .2s ease;
 }
-html{scroll-behavior:smooth}
-body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;font-size:15px;min-height:100vh}
-a{color:var(--accent);text-decoration:none}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:15px;-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(--gray-100);line-height:1.7;min-height:100vh;}
 
 /* ===== HEADER ===== */
-.app-header{background:var(--primary);color:#fff;padding:20px 0;text-align:center}
-.app-header h1{font-size:22px;font-weight:700;letter-spacing:.04em;margin-bottom:8px}
-.trust-badges{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
-.trust-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:4px 14px;font-size:12px;font-weight:500}
-.trust-badge::before{content:'✓';color:#34d399;font-weight:700}
+.caf-header{background:var(--navy);color:var(--white);text-align:center;padding:28px 16px 22px;position:relative;}
+.caf-header h1{font-size:1.55rem;font-weight:800;letter-spacing:.03em;margin-bottom:6px;}
+.caf-header h1 span{color:#60a5fa;font-size:.85em;}
+.caf-header-sub{font-size:.82rem;color:#94a3b8;font-weight:500;line-height:1.6;}
 
-/* ===== STEP INDICATOR ===== */
-.step-indicator-wrap{background:#fff;border-bottom:1px solid var(--border);padding:16px 0 12px;position:sticky;top:0;z-index:100}
-.step-indicator-inner{max-width:960px;margin:0 auto;padding:0 16px}
-.progress-text{text-align:center;font-size:13px;color:var(--muted);margin-bottom:10px;font-weight:500}
-.progress-text span{color:var(--accent);font-weight:700}
-.step-indicator{display:flex;align-items:center;overflow-x:auto;gap:0;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-.step-indicator::-webkit-scrollbar{display:none}
-.step-item{display:flex;align-items:center;flex-shrink:0}
-.step-circle{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid #cbd5e1;color:#94a3b8;background:#fff;transition:all .3s;cursor:pointer;position:relative}
-.step-circle:hover{border-color:var(--accent);color:var(--accent)}
-.step-item.completed .step-circle{background:var(--primary);border-color:var(--primary);color:#fff}
-.step-item.completed .step-circle::after{content:'';display:none}
-.step-item.current .step-circle{border-color:var(--accent);color:var(--accent);background:#eff6ff;box-shadow:0 0 0 4px rgba(37,99,235,.15)}
-.step-line{width:12px;height:2px;background:#cbd5e1;flex-shrink:0}
-.step-item.completed+.step-item .step-line,
-.step-item.completed .step-line{background:var(--primary)}
+/* Trust badges */
+.caf-trust{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:14px;}
+.caf-trust span{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:5px 14px;font-size:.75rem;font-weight:700;color:#e0e7ff;white-space:nowrap;}
+.caf-trust span::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:#34d399;flex-shrink:0;}
 
-/* ===== MAIN CONTAINER ===== */
-.main-container{max-width:720px;margin:0 auto;padding:24px 16px 120px}
+/* ===== STEP INDICATOR (sticky) ===== */
+.caf-step-bar{position:sticky;top:0;z-index:100;background:var(--white);border-bottom:1px solid var(--gray-200);padding:12px 16px;box-shadow:var(--shadow);}
+.caf-step-dots{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:6px;}
+.caf-step-dots .dot{width:10px;height:10px;border-radius:50%;background:var(--gray-300);transition:var(--transition);flex-shrink:0;cursor:pointer;}
+.caf-step-dots .dot.active{background:var(--blue);transform:scale(1.25);box-shadow:0 0 0 3px rgba(37,99,235,.2);}
+.caf-step-dots .dot.done{background:var(--green);}
+.caf-step-dots .dot-line{width:12px;height:2px;background:var(--gray-200);flex-shrink:0;}
+.caf-step-dots .dot-line.done{background:var(--green);}
+.caf-step-info{text-align:center;}
+.caf-step-info .step-num{font-size:.8rem;font-weight:700;color:var(--blue);}
+.caf-step-info .step-label{font-size:.78rem;color:var(--gray-500);font-weight:500;margin-left:6px;}
 
-/* ===== STEP CARD ===== */
-.step-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:32px 28px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 12px rgba(0,0,0,.03)}
-.step-title{font-size:20px;font-weight:700;color:var(--primary);margin-bottom:4px}
-.step-subtitle{font-size:13px;color:var(--muted);margin-bottom:24px}
-.step-content{display:none}
-.step-content.active{display:block}
+/* ===== PROGRESS BAR ===== */
+.caf-progress{background:var(--gray-200);border-radius:20px;height:8px;margin:0 16px;overflow:hidden;position:relative;flex:1;}
+.caf-progress-bar{height:100%;background:linear-gradient(90deg,var(--blue),#3b82f6);border-radius:20px;width:0;transition:width .4s ease;}
+.caf-progress-wrap{padding:8px 16px 0;display:flex;align-items:center;gap:10px;}
+.caf-progress-txt{font-size:.75rem;font-weight:700;color:var(--blue);white-space:nowrap;}
 
-/* ===== SECTION HEADERS ===== */
-.section-head{border-left:4px solid var(--accent);padding-left:12px;font-size:16px;font-weight:700;color:var(--primary);margin:28px 0 16px}
-.section-head:first-child{margin-top:0}
+/* ===== FORM CONTAINER ===== */
+.caf-wrap{max-width:720px;margin:0 auto;padding:0 12px 100px;}
+.caf{font-size:.93rem;}
+
+/* ===== STEP PAGE (card style) ===== */
+.step-page{background:var(--white);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);padding:24px 20px 28px;margin-top:16px;animation:fadeIn .3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* H3 Step titles */
+.caf h3{font-size:1.1rem;font-weight:800;color:var(--navy);margin:0 0 18px;padding-bottom:12px;border-bottom:2px solid var(--blue);display:flex;align-items:baseline;gap:6px;line-height:1.5;}
+.caf h3 small{font-size:.72rem;font-weight:500;color:var(--gray-500);display:block;margin-top:2px;}
+
+/* H4 Sub-section titles */
+.caf h4{font-size:.92rem;font-weight:700;color:var(--navy-light);margin:16px 0 10px;padding:8px 12px;background:var(--blue-50);border-left:3px solid var(--blue);border-radius:0 var(--radius) var(--radius) 0;}
 
 /* ===== FORM FIELDS ===== */
-.field{margin-bottom:20px}
-.field-row{display:flex;gap:12px}
-.field-row .field{flex:1}
-.field-label{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px}
-.req{display:inline-block;background:var(--error);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:3px;line-height:1.6}
-.field-note{font-size:12px;color:var(--muted);margin-top:4px}
-
-input[type=text],input[type=tel],input[type=email],input[type=number],input[type=date],select,textarea{
-  width:100%;height:48px;padding:0 14px;border:1px solid var(--input-border);border-radius:8px;
-  font-family:inherit;font-size:15px;color:var(--text);background:#fff;transition:border-color .2s,box-shadow .2s;
-  appearance:none;-webkit-appearance:none;
+.caf p{margin:0 0 16px;font-size:.85rem;font-weight:600;color:var(--gray-700);line-height:1.5;}
+.caf select,.caf input[type=text],.caf input[type=tel],.caf input[type=email],.caf input[type=date],.caf input[type=url],.caf textarea{
+  display:block;width:100%;margin-top:6px;padding:11px 14px;font-size:.9rem;font-family:inherit;
+  border:1.5px solid var(--gray-300);border-radius:var(--radius);background:var(--white);color:var(--gray-800);
+  transition:var(--transition);appearance:none;-webkit-appearance:none;
 }
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
-input::placeholder,textarea::placeholder{color:#94a3b8}
-textarea{height:100px;padding:12px 14px;resize:vertical}
-select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b'%3E%3Cpath d='M6 8.5L1 3.5h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
-input[type=date]{padding-right:8px}
+.caf select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;cursor:pointer;
+}
+.caf select:focus,.caf input:focus,.caf textarea:focus{
+  outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.15);
+}
+.caf textarea{min-height:80px;resize:vertical;}
+.caf input::placeholder,.caf textarea::placeholder{color:var(--gray-400);font-weight:400;}
 
-/* ===== RADIO / CHECKBOX PILLS ===== */
-.pill-group{display:flex;flex-wrap:wrap;gap:8px}
-.pill-option{position:relative}
-.pill-option input{position:absolute;opacity:0;width:0;height:0}
-.pill-label{display:inline-flex;align-items:center;justify-content:center;padding:10px 18px;border:1.5px solid var(--input-border);border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;user-select:none;min-height:44px;text-align:center}
-.pill-label:hover{border-color:var(--accent);background:#f0f5ff}
-.pill-option input:checked+.pill-label{border-color:var(--accent);background:#eff6ff;color:var(--accent);font-weight:600}
+/* Half-width grid */
+.caf-half{display:grid;grid-template-columns:1fr 1fr;gap:0 16px;}
+@media(max-width:600px){.caf-half{grid-template-columns:1fr;}}
+
+/* ===== CHECKBOX / LABEL ===== */
+.caf .li{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;margin:4px 4px 4px 0;border:1.5px solid var(--gray-300);border-radius:var(--radius);cursor:pointer;font-size:.82rem;font-weight:500;transition:var(--transition);background:var(--white);user-select:none;}
+.caf .li:hover{border-color:var(--blue);background:var(--blue-50);}
+.caf .li.is-checked{border-color:var(--blue);background:var(--blue-light);color:var(--blue);font-weight:700;}
+.caf .li input[type=checkbox]{width:16px;height:16px;accent-color:var(--blue);cursor:pointer;}
+
+/* Consent checkboxes */
+.caf-agree{margin-top:24px;padding-top:20px;border-top:2px solid var(--gray-200);}
+.caf-check{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;margin:8px 0;border:1.5px solid var(--gray-200);border-radius:var(--radius);cursor:pointer;font-size:.8rem;font-weight:500;transition:var(--transition);line-height:1.6;background:var(--white);}
+.caf-check:hover{border-color:var(--blue);background:var(--blue-50);}
+.caf-check.is-checked{border-color:var(--blue);background:var(--blue-light);}
+.caf-check input[type=checkbox]{width:18px;height:18px;margin-top:2px;accent-color:var(--blue);flex-shrink:0;cursor:pointer;}
+.caf-check a{color:var(--blue);font-weight:600;}
+.caf-presubmit{text-align:center;font-size:.82rem;color:var(--gray-500);margin:16px 0 8px;font-weight:500;}
+
+/* Submit button */
+.caf .submit{
+  display:block;width:100%;padding:16px;font-size:1.05rem;font-weight:800;font-family:inherit;
+  background:linear-gradient(135deg,var(--blue),#1d4ed8);color:var(--white);
+  border:none;border-radius:var(--radius-lg);cursor:pointer;transition:var(--transition);
+  box-shadow:0 4px 14px rgba(37,99,235,.3);letter-spacing:.04em;
+}
+.caf .submit:hover{background:linear-gradient(135deg,#1d4ed8,#1e40af);box-shadow:0 6px 20px rgba(37,99,235,.4);transform:translateY(-1px);}
+.caf .submit:disabled{opacity:.5;cursor:not-allowed;transform:none;}
 
 /* ===== CONDITIONAL PANELS ===== */
-.conditional-panel{background:#f1f5f9;border-radius:8px;padding:20px;margin-top:12px;display:none}
-.conditional-panel.visible{display:block}
+.hide{display:none!important;}
+.caf-cond,.caf-cond2{margin:12px 0;padding:16px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius-lg);}
+.caf-cond2{background:var(--white);border-color:var(--gray-200);}
 
-/* ===== WARNING NOTE ===== */
-.warning-note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px 16px;font-size:13px;color:#92400e;margin-bottom:20px;line-height:1.6}
-.warning-note::before{content:'⚠ ';font-size:15px}
+/* ===== HINTS / WARNINGS ===== */
+.caf-hint{font-size:.78rem;color:var(--gray-500);padding:8px 12px;background:var(--gray-50);border-radius:var(--radius);border-left:3px solid var(--gray-300);margin:8px 0 16px;font-weight:500;line-height:1.7;}
+.caf-warn-soft{font-size:.8rem;color:var(--orange);padding:12px 14px;background:var(--orange-bg);border:1px solid var(--orange-border);border-radius:var(--radius);margin:10px 0;line-height:1.7;font-weight:500;}
 
 /* ===== FILE UPLOAD ===== */
-.file-upload{border:2px dashed var(--input-border);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;position:relative}
-.file-upload:hover{border-color:var(--accent);background:#f8faff}
-.file-upload input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.file-upload-icon{font-size:28px;color:var(--muted);margin-bottom:6px}
-.file-upload-text{font-size:13px;color:var(--muted)}
-.file-preview{margin-top:8px;font-size:13px;color:var(--accent);font-weight:500;word-break:break-all}
-.file-preview img{max-width:120px;max-height:80px;border-radius:4px;margin-top:6px;display:block}
+.caf-up-lead{font-size:.82rem;color:var(--gray-600);line-height:1.7;margin:12px 0 8px;font-weight:500;}
+.caf-up-note{font-size:.78rem;color:var(--gray-600);padding:10px 14px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius);margin:8px 0 12px;line-height:1.7;font-weight:500;}
+.caf-up-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin:12px 0 16px;}
+.caf-up{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  padding:20px 16px;border:2px dashed var(--gray-300);border-radius:var(--radius-lg);
+  cursor:pointer;transition:var(--transition);background:var(--white);min-height:120px;
+}
+.caf-up:hover{border-color:var(--blue);background:var(--blue-50);}
+.caf-up.has-file{border-color:var(--green);border-style:solid;background:var(--green-bg);}
+.caf-up-ttl{font-size:.82rem;font-weight:700;color:var(--navy);margin-bottom:4px;display:block;}
+.caf-up-sub{font-size:.7rem;color:var(--gray-500);margin-bottom:8px;display:block;}
+.caf-up-btn{
+  display:inline-block;padding:6px 16px;font-size:.78rem;font-weight:700;
+  background:var(--blue);color:var(--white);border-radius:6px;transition:var(--transition);
+}
+.caf-up:hover .caf-up-btn{background:var(--blue-hover);}
+.caf-up-name{font-size:.72rem;color:var(--green);font-weight:600;margin-top:6px;display:block;}
 
-/* ===== CHECKBOX FIELD ===== */
-.check-field{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px}
-.check-field input[type=checkbox]{width:20px;height:20px;margin-top:2px;accent-color:var(--accent);flex-shrink:0;cursor:pointer}
-.check-field label{font-size:14px;cursor:pointer;line-height:1.6}
+/* Upload preview */
+.caf-up-prev{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;justify-content:center;}
+.caf-up-item{position:relative;display:inline-block;}
+.caf-up-item img{width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--gray-200);cursor:pointer;}
+.caf-up-pdf{display:flex;flex-direction:column;align-items:center;justify-content:center;width:60px;height:60px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:6px;cursor:pointer;font-size:.7rem;color:var(--gray-600);}
+.caf-up-del{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--red);color:var(--white);border:none;font-size:.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;}
 
-/* ===== ZIP BUTTON ===== */
-.zip-row{display:flex;gap:8px;align-items:flex-start}
-.zip-row input{flex:1}
-.btn-zip{height:48px;padding:0 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity .2s}
-.btn-zip:hover{opacity:.85}
+/* Zoom overlay */
+.caf-up-zoom{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;}
+.caf-up-zoom img{max-width:92vw;max-height:80vh;object-fit:contain;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,.4);}
+.caf-up-zoom-x{position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.15);color:var(--white);border:none;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.caf-up-zoom-tip{color:rgba(255,255,255,.7);font-size:.75rem;margin-top:12px;text-align:center;}
 
-/* ===== BOTTOM NAV ===== */
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);padding:14px 16px;z-index:100;box-shadow:0 -2px 8px rgba(0,0,0,.06)}
-.bottom-nav-inner{max-width:720px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:12px}
-.btn{height:48px;padding:0 28px;border-radius:8px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;justify-content:center;border:none;gap:6px}
-.btn-primary{background:var(--accent);color:#fff}
-.btn-primary:hover{background:#1d4ed8}
-.btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--input-border)}
-.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
-.btn-submit{background:var(--success);color:#fff}
-.btn-submit:hover{background:#047857}
-.btn:disabled{opacity:.5;cursor:not-allowed}
+/* ===== NUM HINT ===== */
+.caf-num-hint{font-size:.75rem;color:var(--gray-400);font-weight:600;display:none;margin-top:4px;}
+.caf-num-hint.is-show{display:inline-block;color:var(--blue);background:var(--blue-50);padding:2px 8px;border-radius:4px;}
 
-/* ===== LINE BUTTON ===== */
-.line-float{position:fixed;bottom:80px;left:16px;z-index:99;background:var(--line);color:#fff;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(6,199,85,.35);cursor:pointer;transition:transform .2s;text-decoration:none;border:none}
-.line-float:hover{transform:scale(1.08)}
-.line-float svg{width:28px;height:28px;fill:#fff}
+/* ===== AGE ===== */
+.caf-age{font-size:.8rem;font-weight:700;color:var(--gray-400);display:none;margin-top:4px;}
+.caf-age.is-show{display:inline-block;color:var(--green);background:var(--green-bg);padding:2px 10px;border-radius:4px;}
+.caf-age.is-error{color:var(--red);background:#fef2f2;}
 
-/* ===== SUCCESS ===== */
-.success-screen{display:none;text-align:center;padding:48px 24px}
-.success-screen.active{display:block}
-.success-icon{font-size:64px;margin-bottom:16px}
-.success-title{font-size:22px;font-weight:700;color:var(--primary);margin-bottom:8px}
-.success-text{font-size:14px;color:var(--muted);line-height:1.8}
+/* ===== EMAIL MSG ===== */
+.email-msg{font-size:.78rem;font-weight:600;margin-top:4px;display:inline-block;}
 
-/* ===== VALIDATION ===== */
-.field-error input,.field-error select,.field-error textarea{border-color:var(--error)!important}
-.error-msg{font-size:12px;color:var(--error);margin-top:4px;display:none}
-.field-error .error-msg{display:block}
+/* ===== OTHER (auto-generated text input) ===== */
+.caf-other{margin:-8px 0 16px;}
 
-/* ===== HONEYPOT ===== */
-.hp-wrap{position:absolute;left:-9999px;opacity:0;height:0;overflow:hidden}
+/* ===== STEP HEAD (paginator header) ===== */
+.step-head{display:none;}
+
+/* ===== STEP NAV (bottom buttons) ===== */
+.step-nav{
+  display:flex;justify-content:space-between;gap:12px;margin-top:24px;padding-top:20px;border-top:1px solid var(--gray-200);
+}
+.sbtn{
+  padding:12px 28px;font-size:.9rem;font-weight:700;font-family:inherit;border:none;border-radius:var(--radius);
+  cursor:pointer;transition:var(--transition);flex:1;max-width:200px;
+}
+.sbtn-prev{background:var(--gray-100);color:var(--gray-600);border:1.5px solid var(--gray-300);}
+.sbtn-prev:hover{background:var(--gray-200);color:var(--gray-800);}
+.sbtn-next{background:var(--blue);color:var(--white);box-shadow:0 2px 8px rgba(37,99,235,.25);}
+.sbtn-next:hover{background:var(--blue-hover);box-shadow:0 4px 12px rgba(37,99,235,.35);}
+
+/* ===== LINE FLOATING BUTTON ===== */
+.caf-line-float{
+  position:fixed;bottom:24px;right:20px;z-index:90;
+  width:56px;height:56px;border-radius:50%;
+  background:#06c755;color:var(--white);border:none;cursor:pointer;
+  box-shadow:0 4px 14px rgba(6,199,85,.4);
+  display:flex;align-items:center;justify-content:center;
+  transition:var(--transition);text-decoration:none;
+}
+.caf-line-float:hover{transform:scale(1.08);box-shadow:0 6px 20px rgba(6,199,85,.5);}
+.caf-line-float svg{width:28px;height:28px;}
+
+/* ===== LEAD TEXT ===== */
+.caf-lead{font-size:.82rem;color:var(--gray-500);line-height:1.7;margin-bottom:12px;font-weight:500;}
 
 /* ===== RESPONSIVE ===== */
-@media(max-width:768px){
-  .step-card{padding:24px 18px}
-  .field-row{flex-direction:column;gap:0}
-  .btn{width:100%;padding:0 16px}
-  .bottom-nav-inner{flex-direction:column;gap:8px}
-  .bottom-nav-inner .btn-ghost{order:2}
-  .bottom-nav-inner .btn-primary,.bottom-nav-inner .btn-submit{order:1}
-  .step-circle{width:28px;height:28px;font-size:11px}
-  .step-line{width:8px}
-  .pill-label{padding:8px 14px;font-size:13px;min-height:42px}
-  .app-header h1{font-size:18px}
-  .line-float{width:48px;height:48px;bottom:76px;left:12px}
-  .line-float svg{width:24px;height:24px}
+@media(max-width:480px){
+  html{font-size:14px;}
+  .caf-header{padding:20px 14px 18px;}
+  .caf-header h1{font-size:1.3rem;}
+  .step-page{padding:18px 14px 22px;}
+  .caf-up-grid{grid-template-columns:1fr;}
+  .caf-trust{gap:6px;}
+  .caf-trust span{padding:4px 10px;font-size:.7rem;}
+  .caf-step-dots .dot{width:8px;height:8px;}
+  .caf-step-dots .dot-line{width:6px;}
 }
+
+/* ===== HONEYPOT ===== */
+.caf-hp-field{position:absolute;left:-9999px;width:1px;height:1px;opacity:0;}
 </style>
 </head>
 <body>
 
 <!-- HEADER -->
-<header class="app-header">
-  <h1>オートローン審査申込</h1>
-  <div class="trust-badges">
-    <span class="trust-badge">最短即日回答</span>
-    <span class="trust-badge">来店不要</span>
-    <span class="trust-badge">秘密厳守</span>
-  </div>
+<header class="caf-header">
+  <h1>かんたん<span>WEB</span>審査</h1>
+  <p class="caf-header-sub">選ぶだけでカンタン（入力 約3分）<br>わかる範囲でお進みください</p>
+  <div class="caf-trust"><span>秘密厳守</span><span>無料</span><span>しつこい営業なし</span><span>過去に断られた方もOK</span></div>
 </header>
 
 <!-- STEP INDICATOR -->
-<div class="step-indicator-wrap">
-  <div class="step-indicator-inner">
-    <div class="progress-text">入力の進捗：<span id="progress-pct">0%</span>（ステップ <span id="progress-current">1</span> / 14）</div>
-    <div class="step-indicator" id="step-indicator"></div>
-  </div>
-</div>
-
-<!-- MAIN -->
-<main class="main-container">
-<form id="loan-form" action="#" method="post" novalidate>
-
-<!-- Honeypot -->
-<div class="hp-wrap"><input type="text" name="website" id="hp-field" tabindex="-1" autocomplete="off"></div>
-
-<!-- ==================== STEP 1 ==================== -->
-<div class="step-content" data-step="1">
-<h2 class="step-title">STEP 1　ご希望のお車</h2>
-<p class="step-subtitle">購入を検討されている車両の情報をご入力ください。</p>
-
-<div class="field">
-  <div class="field-label">車両の状態 <span class="req">必須</span></div>
-  <div class="pill-group">
-    <label class="pill-option"><input type="radio" name="car_condition" value="新車" required><span class="pill-label">新車</span></label>
-    <label class="pill-option"><input type="radio" name="car_condition" value="中古車"><span class="pill-label">中古車</span></label>
-    <label class="pill-option"><input type="radio" name="car_condition" value="新古車（未使用車）"><span class="pill-label">新古車（未使用車）</span></label>
-  </div>
-</div>
-
-<div class="field">
-  <div class="field-label">メーカー <span class="req">必須</span></div>
-  <select name="maker" id="maker" required><option value="">選択してください</option></select>
-</div>
-
-<div class="field">
-  <div class="field-label">車種 <span class="req">必須</span></div>
-  <select name="model" id="model" required><option value="">先にメーカーを選択してください</option></select>
-</div>
-
-<div class="field">
-  <div class="field-label">年式</div>
-  <select name="year" id="year"><option value="">選択してください</option></select>
-</div>
-
-<div class="field">
-  <div class="field-label">グレード</div>
-  <input type="text" name="grade" placeholder="例: G Zパッケージ">
-</div>
-
-<div class="field">
-  <div class="field-label">希望の色</div>
-  <input type="text" name="color" placeholder="例: パールホワイト">
-</div>
-
-<div class="field">
-  <div class="field-label">車両本体価格（税込） <span class="req">必須</span></div>
-  <input type="text" name="car_price" id="car-price" placeholder="例: 3,000,000" inputmode="numeric" required>
-  <div class="field-note">半角数字で入力してください（円）</div>
-</div>
-
-<div class="field">
-  <div class="field-label">オプション・付属品の金額</div>
-  <input type="text" name="option_price" id="option-price" placeholder="例: 300,000" inputmode="numeric">
-</div>
-
-<div class="field">
-  <div class="field-label">備考・ご希望</div>
-  <textarea name="remarks_car" placeholder="ご希望やご質問があればご記入ください"></textarea>
-</div>
-</div>
-
-<!-- ==================== STEP 2 ==================== -->
-<div class="step-content" data-step="2">
-<h2 class="step-title">STEP 2　申込のきっかけ・ご状況</h2>
-<p class="step-subtitle">お申込みの背景をお聞かせください。</p>
-
-<div class="field">
-  <div class="field-label">お申込みのきっかけ</div>
-  <div class="pill-group">
-    <label class="pill-option"><input type="checkbox" name="kikkake" value="ディーラーの紹介"><span class="pill-label">ディーラーの紹介</span></label>
-    <label class="pill-option"><input type="checkbox" name="kikkake" value="ネット広告"><span class="pill-label">ネット広告</span></label>
-    <label class="pill-option"><input type="checkbox" name="kikkake" value="知人の紹介"><span class="pill-label">知人の紹介</span></label>
-    <label class="pill-option"><input type="checkbox" name="kikkake" value="SNS"><span class="pill-label">SNS</span></label>
-    <label class="pill-option"><input type="checkbox" name="kikkake" value="比較サイト"><span class="pill-label">比較サイト</span></label>
-    <label class="pill-option"><input type="checkbox" name="kikkake" value="その他" data-toggle="grp-kikkake-other"><span class="pill-label">その他</span></label>
-  </div>
-  <div class="conditional-panel" id="grp-kikkake-other">
-    <div class="field" style="margin-bottom:0">
-      <div class="field-label">その他の内容</div>
-      <input type="text" name="kikkake_other" placeholder="具体的にご記入ください">
-    </div>
-  </div>
-</div>
-
-<div class="field">
-  <div class="field-label">現在のお車の有無 <span class="req">必須</span></div>
-  <div class="pill-group">
-    <label class="pill-option"><input type="radio" name="current_car_status" value="あり（乗り換え）" required><span class="pill-label">あり（乗り換え）</span></label>
-    <label class="pill-option"><input type="radio" name="current_car_status" value="あり（増車）"><span class="pill-label">あり（増車）</span></label>
-    <label class="pill-option"><input type="radio" name="current_car_status" value="なし（新規）"><span class="pill-label">なし（新規）</span></label>
-  </div>
-</div>
-
-<div class="field">
-  <div class="field-label">お車の使用目的</div>
-  <div class="pill-group">
-    <label class="pill-option"><input type="checkbox" name="usage" value="通勤・通学"><span class="pill-label">通勤・通学</span></label>
-    <label class="pill-option"><input type="checkbox" name="usage" value="レジャー・旅行"><span class="pill-label">レジャー・旅行</span></label>
-    <label class="pill-option"><input type="checkbox" name="usage" value="業務用"><span class="pill-label">業務用</span></label>
-    <label class="pill-option"><input type="checkbox" name="usage" value="送迎"><span class="pill-label">送迎</span></label>
-    <label class="pill-option"><input type="checkbox" name="usage" value="その他"><span class="pill-label">その他</span></label>
-  </div>
-</div>
-
-<div class="field">
-  <div class="field-label">ご希望の納車時期</div>
-  <select name="delivery_timing">
-    <option value="">選択してください</option>
-    <option>できるだけ早く</option><option>1ヶ月以内</option><option>2〜3ヶ月以内</option><option>半年以内</option><option>特に急がない</option>
-  </select>
-</div>
-
-<div class="field">
-  <div class="field-label">他社でのローン申込状況</div>
-  <div class="pill-group">
-    <label class="pill-option"><input type="radio" name="other_loan" value="他社への申込はしていない"><span class="pill-label">他社への申込はしていない</span></label>
-    <label class="pill-option"><input type="radio" name="other_loan" value="他社にも申込中"><span class="pill-label">他社にも申込中</span></label>
-    <label class="pill-option"><input type="radio" name="other_loan" value="他社で否決された"><span class="pill-label">他社で否決された</span></label>
-  </div>
-</div>
-</div>
-
-<!-- ==================== STEP 3 ==================== -->
-<div class="step-content" data-step="3">
-<h2 class="step-title">STEP 3　ご本人情報</h2>
-<p class="step-subtitle">お申込者ご本人の基本情報をご入力ください。</p>
-
-<div class="field-row">
-  <div class="field">
-    <div class="field-label">姓（漢字） <span class="req">必須</span></div>
-    <input type="text" name="last_name" required placeholder="例: 山田">
-  </div>
-  <div class="field">
-    <div class="field-label">名（漢字） <span class="req">必須</span></div>
-    <input type="text" name="first_name" required placeholder="例: 太郎">
-  </div>
-</div>
-
-<div class="field-row">
-  <div class="field">
-    <div class="field-label">姓（フリガナ） <span class="req">必須</span></div>
-    <input type="text" name="last_name_kana" required placeholder="例: ヤマダ" pattern="[ァ-ヶー　 ]*">
-  </div>
-  <div class="field">
-    <div class="field-label">名（フリガナ） <span class="req">必須</span></div>
-    <input type="text" name="first_name_kana" required placeholder="例: タロウ" pattern="[ァ-ヶー　 ]*">
-  </div>
-</div>
-
-<div class="field-row">
-  <div class="field">
-    <div class="field-label">生年月日 <span class="req">必須</span></div>
-    <input type="date" name="birthday" id="birthday" required>
-    <div class="field-note" id="age-display"></div>
-  </div>
-  <div class="field">
-    <div class="field-label">性別 <span class="req">必須</span></div>
-    <div class="pill-group">
-      <label class="pill-option"><input type="radio" name="gender" value="男性" required><span class="pill-label">男性</span></label>
-      <label class="pill-option"><input type="radio" name="gender" value="女性"><span class="pill-label">女性</span></label>
-    </div>
-  </div>
-</div>
-
-<div class="field">
-  <div class="field-label">携帯電話番号 <span class="req">必須</span></div>
-  <input type="tel" name="mobile" required placeholder="例: 090-1234-5678">
-</div>
-
-<div class="field">
-  <div class="field-label">自宅電話番号</div>
-  <input type="tel" name="home_phone" placeholder="例: 0246-12-3456">
-</div>
-
-<div class="field">
-  <div class="field-label">メールアドレス <span class="req">必須</span></div>
-  <input type="email" name="email" id="email" required placeholder="例: example@mail.com">
-</div>
-
-<div class="field">
-  <div class="field-label">メールアドレス（確認） <span class="req">必須</span></div>
-  <input type="email" name="email_confirm" id="email-confirm" required placeholder="もう一度入力してください">
-  <div class="error-msg" id="email-match-error">メールアドレスが一致しません。</div>
-</div>
-</div>
-
-<!-- ==================== STEP 4 ==================== -->
-<div class="step-content" data-step="4">
-<h2 class="step-title">STEP 4　現住所</h2>
-<p class="step-subtitle">現在お住まいの住所をご入力ください。</p>
-
-<div class="field">
-  <div class="field-label">郵便番号 <span class="req">必須</span></div>
-  <div class="zip-row">
-    <input type="text" name="zip" id="zip" required placeholder="例: 9700101" maxlength="8" inputmode="numeric">
-    <button type="button" class="btn-zip" id="btn-zip">住所検索</button>
-  </div>
-</div>
-
-<div class="field">
-  <div class="field-label">都道府県 <span class="req">必須</span></div>
-  <select name="prefecture" id="prefecture" required>
-    <option value="">選択してください</option>
-    <option>北海道</option><option>青森県</option><option>岩手県</option><option>宮城県</option><option>秋田県</option><option>山形県</option><option>福島県</option>
-    <option>茨城県</option><option>栃木県</option><option>群馬県</option><option>埼玉県</option><option>千葉県</option><option>東京都</option><option>神奈川県</option>
-    <option>新潟県</option><option>富山県</option><option>石川県</option><option>福井県</option><option>山梨県</option><option>長野県</option>
-    <option>岐阜県</option><option>静岡県</option><option>愛知県</option><option>三重県</option>
-    <option>滋賀県</option><option>京都府</option><option>大阪府</option><option>兵庫県</option><option>奈良県</option><option>和歌山県</option>
-    <option>鳥取県</option><option>島根県</option><option>岡山県</option><option>広島県</option><option>山口県</option>
-    <option>徳島県</option><option>香川県</option><option>愛媛県</option><option>高知県</option>
-    <option>福岡県</option><option>佐賀県</option><option>長崎県</option><option>熊本県</option><option>大分県</option><option>宮崎県</option><option>鹿児島県</option><option>沖縄県</option>
-  </select>
-</div>
-
-<div class="field">
-  <div class="field-label">市区町村 <span class="req">必須</span></div>
-  <input type="text" name="city" id="city" required placeholder="例: いわき市平">
-</div>
-
-<div class="field">
-  <div class="field-label">番地 <span class="req">必須</span></div>
-  <input type="text" name="address" required placeholder="例: 1-2-3">
-</div>
-
-<div class="field">
-  <div class="field-label">建物名・部屋番号</div>
-  <input type="text" name="building" placeholder="例: ○○マンション 101号室">
-</div>
-
-<div class="field">
-  <div class="field-label">居住形態 <span class="req">必須</span></div>
-  <div class="pill-group">
-    <label class="pill-option"><input type="radio" name="residence_type" value="持家（自己所有）" required data-toggle-rent="false"><span class="pill-label">持家（自己所有）</span></label>
-    <label class="pill-option"><input type="radio" name="residence_type" value="持家（家族所有）" data-toggle-rent="false"><span class="pill-label">持家（家族所有）</span></label>
-    <label class="pill-option"><input type="radio" name="residence_type" value="賃貸マンション" data-toggle-rent="true"><span class="pill-label">賃貸マンション</span></label>
-    <label class="pill-option"><input type="radio" name="residence_type" value="賃貸アパート" data-toggle-rent="true"><span class="pill-label">賃貸アパート</span></label>
-    <label class="pill-option"><input type="radio" name="residence_type" value="社宅・寮" data-toggle-rent="true"><span class="pill-label">社宅・寮</span></label>
-    <label class="pill-option"><input type="radio" name="residence_type" value="公営住宅" data-toggle-rent="true"><span class="pill-label">公営住宅</span></label>
-    <label class="pill-option"><input type="radio" name="residence_type" value="その他" data-toggle-rent="true"><span class="pill-label">その他</span></label>
-  </div>
-</div>
-
-<div class="field">
-  <div class="field-label">居住年数 <span class="req">必須</span></div>
-  <select name="residence_years" required>
-    <option value="">選択してください</option>
-    <option>1年未満</option><option>1年</option><option>2年</option><option>3年</option><option>4年</option><option>5年</option><option>6〜9年</option><option>10年以上</option>
-  </select>
-</div>
-
-<div class="conditional-panel" id="grp-rent">
-  <div class="field" style="margin-bottom:0">
-    <div class="field-label">月額家賃・住宅ローン（円）</div>
-    <input type="text" name="rent" placeholder="例: 80,000" inputmode="numeric">
-  </div>
-</div>
-</div>
-
-<!-- ==================== STEP 5 ==================== -->
-<div class="step-content" data-step="5">
-<h2 class="step-title">STEP 5　ご家族・生計</h2>
-<p class="step-subtitle">ご家族構成と生計の状況をお聞かせください。</p>
-
-<div class="field">
-  <div class="field-label">配偶者の有無 <span class="req">必須</span></div>
-  <div class="pill-group">
-    <label class="pill-option"><input type="radio" name="spouse" value="あり" required><span class="pill-label">あり</span></label>
-    <label class="pill-option"><input type="radio" name="spouse" value="なし"><span class="pill-label">なし</span></label>
-  </div>
-</div>
-
-<div class="field">
-  <div class="field-label">扶養家族数（配偶者含む）</div>
-  <select name="dependents">
-    <option value="">選択してください</option>
-    <option>0人</option><option>1人</option><option>2人</option><option>3人</option><option>4人</option><option>5人以上</option>
-  </select>
-</div>
-
-<div class="field">
-  <div class="field-label">同居家族数</div>
-  <select name="household_size">
-    <option value="">選択してください</option>
-    <option>1人（本人のみ）</option><option>2人</option><option>3人</option><option>4人</option><option>5人</option><option>6人以上</option>
-  </select>
-</div>
-
-<div class="field">
-  <div class="field-label">世帯主との関係</div>
-  <select name="householder_relation" id="householder-relation">
-    <option value="">選択してください</option>
-    <option>本人</option><option>配偶者</option><option>子</option><option>父母</option><option>その他</option>
-  </select>
-</div>
-
-<div class="conditional-panel" id="grp-household-income">
-  <div class="field" style="margin-bottom:0">
-    <div class="field-label">生計を共にする方の年収（万円）</div>
-    <input type="number" name="household_income" placeholder="例: 500" inputmode="numeric">
-  </div>
-</div>
-</div>
-
-<!-- ==================== STEP 6 ==================== -->
-<div class="step-content" data-step="6">
-<h2 class="step-title">STEP 6　ご収入</h2>
-<p class="step-subtitle">ご本人の収入に関する情報をご入力ください。</p>
-
-<div class="field">
-  <div class="field-label">税込年収（万円） <span class="req">必須</span></div>
-  <input type="number" name="annual_income" required placeholder="例: 450" inputmode="numeric">
-</div>
-
-<div class="field">
-  <div class="field-label">収入形態 <span class="req">必須</span></div>
-  <div class="pill-group">
-    <label class="pill-option"><input type="radio" name="income_type" value="給与所得" required><span class="pill-label">給与所得</span></label>
-    <label class="pill-option"><input type="radio" name="income_type" value="事業所得"><span class="pill-label">事業所得</span></label>
-    <label class="pill-option"><input type="radio" name="income_type" value="年金"><span class="pill-label">年金</span></label>
-    <label class="pill-option"><input type="radio" name="income_type" value="不動産所得"><span class="pill-label">不動産所得</span></label>
-    <label class="pill-option"><input type="radio" name="income_type" value="その他"><span class="pill-label">その他</span></label>
-  </div>
-</div>
-
-<div class="field">
-  <div class="field-label">副収入の有無</div>
-  <div class="pill-group">
-    <label class="pill-option"><input type="radio" name="sub_income" value="なし" data-toggle="grp-sub-income" data-toggle-val="あり"><span class="pill-label">なし</span></label>
-    <label class="pill-option"><input type="radio" name="sub_income" value="あり" data-toggle="grp-sub-income" data-toggle-val="あり"><span class="pill-label">あり</span></label>
-  </div>
-</div>
-
-<div class="conditional-panel" id="grp-sub-income">
-  <div class="field" style="margin-bottom:0">
-    <div class="field-label">副収入の内容と金額（万円/年）</div>
-    <input type="text" name="sub_income_detail" placeholder="例: 不動産収入 年100万円">
-  </div>
-</div>
-</div>
-
-<!-- ==================== STEP 7 ==================== -->
-<div class="step-content" data-step="7">
-<h2 class="step-title">STEP 7　お勤め先・就労形態</h2>
-<p class="step-subtitle">雇用形態とお勤め先の情報をご入力ください。</p>
-
-<div class="field">
-  <div class="field-label">雇用形態 <span class="req">必須</span></div>
-  <div class="pill-group">
-    <label class="pill-option"><input type="radio" name="employment_type" value="正社員" required><span class="pill-label">正社員</span></label>
-    <label class="pill-option"><input type="radio" name="employment_type" value="契約社員"><span class="pill-label">契約社員</span></label>
-    <label class="pill-option"><input type="radio" name="employment_type" value="派遣社員"><span class="pill-label">派遣社員</span></label>
-    <label class="pill-option"><input type="radio" name="employment_type" value="パート・アルバイト"><span class="pill-label">パート・アルバイト</span></label>
-    <label class="pill-option"><input type="radio" name="employment_type" value="自営業・個人事業主"><span class="pill-label">自営業・個人事業主</span></label>
-    <label class="pill-option"><input type="radio" name="employment_type" value="会社役員"><span class="pill-label">会社役員</span></label>
-    <label class="pill-option"><input type="radio" name="employment_type" value="公務員"><span class="pill-label">公務員</span></label>
-    <label class="pill-option"><input type="radio" name="employment_type" value="年金受給者"><span class="pill-label">年金受給者</span></label>
-    <label class="pill-option"><input type="radio" name="employment_type" value="学生"><span class="pill-label">学生</span></label>
-    <label class="pill-option"><input type="radio" name="employment_type" value="主婦・主夫"><span class="pill-label">主婦・主夫</span></label>
-    <label class="pill-option"><input type="radio" name="employment_type" value="その他"><span class="pill-label">その他</span></label>
-  </div>
-</div>
-
-<div class="conditional-panel" id="grp-employment">
-  <h3 class="section-head">お勤め先の情報</h3>
-
-  <div class="field">
-    <div class="field-label">勤務先名</div>
-    <input type="text" name="company_name" placeholder="例: 株式会社○○">
-  </div>
-
-  <div class="field">
-    <div class="field-label">勤務先電話番号</div>
-    <input type="tel" name="company_phone" placeholder="例: 03-1234-5678">
-  </div>
-
-  <div class="field">
-    <div class="field-label">勤務先郵便番号</div>
-    <input type="text" name="company_zip" placeholder="例: 1000001" maxlength="8" inputmode="numeric">
-  </div>
-
-  <div class="field">
-    <div class="field-label">勤務先住所</div>
-    <input type="text" name="company_address" placeholder="例: 東京都千代田区○○1-2-3">
-  </div>
-
-  <div class="field">
-    <div class="field-label">業種</div>
-    <select name="industry">
-      <option value="">選択してください</option>
-      <option>製造業</option><option>建設業</option><option>卸売・小売業</option><option>運輸業</option><option>情報通信業</option><option>金融・保険業</option><option>不動産業</option><option>サービス業</option><option>医療・福祉</option><option>教育</option><option>公務</option><option>農林水産業</option><option>その他</option>
-    </select>
-  </div>
-
-  <div class="field">
-    <div class="field-label">職種</div>
-    <select name="occupation">
-      <option value="">選択してください</option>
-      <option>事務</option><option>営業</option><option>技術・エンジニア</option><option>製造・工場</option><option>運転・配送</option><option>販売・サービス</option><option>医療・介護</option><option>教育・保育</option><option>管理職</option><option>その他</option>
-    </select>
-  </div>
-
-  <div class="field">
-    <div class="field-label">勤続年数</div>
-    <select name="years_employed">
-      <option value="">選択してください</option>
-      <option>1年未満</option><option>1年</option><option>2年</option><option>3年</option><option>5年</option><option>7年</option><option>10年</option><option>15年</option><option>20年以上</option>
-    </select>
-  </div>
-
-  <div class="field">
-    <div class="field-label">従業員数</div>
-    <select name="company_size">
-      <option value="">選択してください</option>
-      <option>〜5人</option><option>6〜20人</option><option>21〜50人</option><option>51〜100人</option><option>101〜300人</option><option>301〜1000人</option><option>1001人以上</option>
-    </select>
-  </div>
-</div>
-
-<div class="conditional-panel" id="grp-self-employed">
-  <h3 class="section-head">事業の情報</h3>
-
-  <div class="field">
-    <div class="field-label">屋号・会社名</div>
-    <input type="text" name="business_name" placeholder="例: ○○商店">
-  </div>
-
-  <div class="field">
-    <div class="field-label">事業内容</div>
-    <input type="text" name="business_detail" placeholder="例: 建設業">
-  </div>
-
-  <div class="field" style="margin-bottom:0">
-    <div class="field-label">事業年数</div>
-    <select name="business_years">
-      <option value="">選択してください</option>
-      <option>1年未満</option><option>1〜3年</option><option>3〜5年</option><option>5〜10年</option><option>10年以上</option>
-    </select>
-  </div>
-</div>
-</div>
-
-<!-- ==================== STEP 8 ==================== -->
-<div class="step-content" data-step="8">
-<h2 class="step-title">STEP 8　現在のお車</h2>
-<p class="step-subtitle">現在お乗りの車両について教えてください。</p>
-
-<div class="field">
-  <div class="field-label">現在お乗りの車 <span class="req">必須</span></div>
-  <div class="pill-group">
-    <label class="pill-option"><input type="radio" name="has_current_car" value="あり" required><span class="pill-label">あり</span></label>
-    <label class="pill-option"><input type="radio" name="has_current_car" value="なし"><span class="pill-label">なし</span></label>
-  </div>
-</div>
-
-<div class="conditional-panel" id="grp-current-car">
-  <div class="field">
-    <div class="field-label">メーカー</div>
-    <input type="text" name="current_maker" placeholder="例: トヨタ">
-  </div>
-  <div class="field">
-    <div class="field-label">車種名</div>
-    <input type="text" name="current_model" placeholder="例: プリウス">
-  </div>
-  <div class="field">
-    <div class="field-label">年式</div>
-    <select name="current_year" id="current-year"><option value="">選択してください</option></select>
-  </div>
-  <div class="field">
-    <div class="field-label">走行距離（km）</div>
-    <input type="number" name="current_mileage" placeholder="例: 50000" inputmode="numeric">
-  </div>
-  <div class="field">
-    <div class="field-label">残債の有無</div>
-    <div class="pill-group">
-      <label class="pill-option"><input type="radio" name="has_remaining_debt" value="なし"><span class="pill-label">なし</span></label>
-      <label class="pill-option"><input type="radio" name="has_remaining_debt" value="あり"><span class="pill-label">あり</span></label>
-    </div>
-  </div>
-  <div class="conditional-panel" id="grp-remaining-debt">
-    <div class="field" style="margin-bottom:0">
-      <div class="field-label">残債金額（万円）</div>
-      <input type="number" name="remaining_debt" placeholder="例: 120" inputmode="numeric">
-    </div>
-  </div>
-  <div class="field" style="margin-top:16px">
-    <div class="field-label">下取り・売却の希望</div>
-    <div class="pill-group">
-      <label class="pill-option"><input type="radio" name="trade_in" value="下取りに出したい"><span class="pill-label">下取りに出したい</span></label>
-      <label class="pill-option"><input type="radio" name="trade_in" value="自分で売却する"><span class="pill-label">自分で売却する</span></label>
-      <label class="pill-option"><input type="radio" name="trade_in" value="まだ決めていない"><span class="pill-label">まだ決めていない</span></label>
-      <label class="pill-option"><input type="radio" name="trade_in" value="該当なし"><span class="pill-label">該当なし</span></label>
-    </div>
-  </div>
-</div>
-</div>
-
-<!-- ==================== STEP 9 ==================== -->
-<div class="step-content" data-step="9">
-<h2 class="step-title">STEP 9　お支払いのご希望</h2>
-<p class="step-subtitle">ご希望のお支払い条件をご入力ください。</p>
-
-<div class="field">
-  <div class="field-label">希望する借入金額（万円） <span class="req">必須</span></div>
-  <input type="number" name="loan_amount" required placeholder="例: 250" inputmode="numeric">
-</div>
-
-<div class="field">
-  <div class="field-label">ボーナス払い</div>
-  <div class="pill-group">
-    <label class="pill-option"><input type="radio" name="bonus_pay" value="なし"><span class="pill-label">なし</span></label>
-    <label class="pill-option"><input type="radio" name="bonus_pay" value="あり"><span class="pill-label">あり</span></label>
-  </div>
-</div>
-
-<div class="conditional-panel" id="grp-bonus">
-  <div class="field" style="margin-bottom:0">
-    <div class="field-label">ボーナス払い金額（万円/回）</div>
-    <input type="number" name="bonus_amount" placeholder="例: 10" inputmode="numeric">
-  </div>
-</div>
-
-<div class="field">
-  <div class="field-label">希望する返済期間 <span class="req">必須</span></div>
-  <select name="loan_term" required>
-    <option value="">選択してください</option>
-    <option>12回（1年）</option><option>24回（2年）</option><option>36回（3年）</option><option>48回（4年）</option><option>60回（5年）</option><option>72回（6年）</option><option>84回（7年）</option>
-  </select>
-</div>
-
-<div class="field">
-  <div class="field-label">頭金の有無</div>
-  <div class="pill-group">
-    <label class="pill-option"><input type="radio" name="has_downpayment" value="なし"><span class="pill-label">なし</span></label>
-    <label class="pill-option"><input type="radio" name="has_downpayment" value="あり"><span class="pill-label">あり</span></label>
-  </div>
-</div>
-
-<div class="conditional-panel" id="grp-downpayment">
-  <div class="field" style="margin-bottom:0">
-    <div class="field-label">頭金の金額（万円）</div>
-    <input type="number" name="downpayment" placeholder="例: 50" inputmode="numeric">
-  </div>
-</div>
-
-<div class="field">
-  <div class="field-label">月々のお支払い希望額（万円）</div>
-  <input type="number" name="monthly_payment" placeholder="例: 3" inputmode="numeric">
-  <div class="field-note">ご参考としてお聞かせください（任意）</div>
-</div>
-</div>
-
-<!-- ==================== STEP 10 ==================== -->
-<div class="step-content" data-step="10">
-<h2 class="step-title">STEP 10　与信・お借入の状況</h2>
-<p class="step-subtitle">現在のお借入状況をご入力ください。</p>
-
-<div class="field">
-  <div class="field-label">現在のお借入件数 <span class="req">必須</span></div>
-  <select name="borrowing_count" id="borrowing-count" required>
-    <option value="">選択してください</option>
-    <option>0件</option><option>1件</option><option>2件</option><option>3件</option><option>4件</option><option>5件以上</option>
-  </select>
-</div>
-
-<div class="conditional-panel" id="grp-borrowing">
-  <div class="field">
-    <div class="field-label">住宅ローン残高（万円）</div>
-    <input type="number" name="mortgage_balance" placeholder="例: 2000" inputmode="numeric">
-  </div>
-  <div class="field">
-    <div class="field-label">カードローン残高（万円）</div>
-    <input type="number" name="card_loan_balance" placeholder="例: 50" inputmode="numeric">
-  </div>
-  <div class="field">
-    <div class="field-label">ショッピングローン残高（万円）</div>
-    <input type="number" name="shopping_loan_balance" placeholder="例: 30" inputmode="numeric">
-  </div>
-  <div class="field">
-    <div class="field-label">自動車ローン残高（万円）</div>
-    <input type="number" name="auto_loan_balance" placeholder="例: 100" inputmode="numeric">
-  </div>
-  <div class="field">
-    <div class="field-label">その他借入残高（万円）</div>
-    <input type="number" name="other_loan_balance" placeholder="例: 0" inputmode="numeric">
-  </div>
-  <div class="field" style="margin-bottom:0">
-    <div class="field-label">月々の返済総額（万円）</div>
-    <input type="number" name="monthly_repayment_total" placeholder="例: 8" inputmode="numeric">
-  </div>
-</div>
-
-<div class="field">
-  <div class="field-label">過去の延滞・遅延</div>
-  <div class="pill-group">
-    <label class="pill-option"><input type="radio" name="delinquency" value="一度もない"><span class="pill-label">一度もない</span></label>
-    <label class="pill-option"><input type="radio" name="delinquency" value="過去にあるが現在はない"><span class="pill-label">過去にあるが現在はない</span></label>
-    <label class="pill-option"><input type="radio" name="delinquency" value="現在もある"><span class="pill-label">現在もある</span></label>
-  </div>
-</div>
-</div>
-
-<!-- ==================== STEP 11 ==================== -->
-<div class="step-content" data-step="11">
-<h2 class="step-title">STEP 11　信用情報の状況</h2>
-<p class="step-subtitle">信用情報に関する状況をお聞かせください。</p>
-
-<div class="warning-note">正確にご回答ください。虚偽の申告は審査否決の原因となります。</div>
-
-<div class="field">
-  <div class="field-label">過去5年以内の債務整理</div>
-  <div class="pill-group">
-    <label class="pill-option"><input type="radio" name="debt_restructuring" value="なし"><span class="pill-label">なし</span></label>
-    <label class="pill-option"><input type="radio" name="debt_restructuring" value="任意整理"><span class="pill-label">任意整理</span></label>
-    <label class="pill-option"><input type="radio" name="debt_restructuring" value="個人再生"><span class="pill-label">個人再生</span></label>
-    <label class="pill-option"><input type="radio" name="debt_restructuring" value="自己破産"><span class="pill-label">自己破産</span></label>
-  </div>
-</div>
-
-<div class="field">
-  <div class="field-label">過去5年以内の強制解約</div>
-  <div class="pill-group">
-    <label class="pill-option"><input type="radio" name="forced_cancellation" value="なし"><span class="pill-label">なし</span></label>
-    <label class="pill-option"><input type="radio" name="forced_cancellation" value="あり"><span class="pill-label">あり</span></label>
-  </div>
-</div>
-
-<div class="field">
-  <div class="field-label">現在の滞納</div>
-  <div class="pill-group">
-    <label class="pill-option"><input type="radio" name="current_arrears" value="なし"><span class="pill-label">なし</span></label>
-    <label class="pill-option"><input type="radio" name="current_arrears" value="あり"><span class="pill-label">あり</span></label>
-  </div>
-</div>
-
-<div class="field">
-  <div class="field-label">他社での否決歴（直近6ヶ月）</div>
-  <div class="pill-group">
-    <label class="pill-option"><input type="radio" name="rejection_history" value="なし"><span class="pill-label">なし</span></label>
-    <label class="pill-option"><input type="radio" name="rejection_history" value="1社"><span class="pill-label">1社</span></label>
-    <label class="pill-option"><input type="radio" name="rejection_history" value="2社以上"><span class="pill-label">2社以上</span></label>
-  </div>
-</div>
-
-<div class="field">
-  <div class="field-label">CICの開示経験</div>
-  <div class="pill-group">
-    <label class="pill-option"><input type="radio" name="cic_disclosure" value="なし"><span class="pill-label">なし</span></label>
-    <label class="pill-option"><input type="radio" name="cic_disclosure" value="あり"><span class="pill-label">あり</span></label>
-  </div>
-</div>
-
-<div class="conditional-panel" id="grp-cic">
-  <div class="field" style="margin-bottom:0">
-    <div class="field-label">CIC開示結果</div>
-    <input type="text" name="cic_result" placeholder="開示結果の概要をご記入ください">
-  </div>
-</div>
-</div>
-
-<!-- ==================== STEP 12 ==================== -->
-<div class="step-content" data-step="12">
-<h2 class="step-title">STEP 12　保証人・緊急連絡先</h2>
-<p class="step-subtitle">緊急連絡先と保証人に関する情報をご入力ください。</p>
-
-<h3 class="section-head">緊急連絡先</h3>
-
-<div class="field">
-  <div class="field-label">氏名 <span class="req">必須</span></div>
-  <input type="text" name="emergency_name" required placeholder="例: 山田 花子">
-</div>
-
-<div class="field">
-  <div class="field-label">フリガナ <span class="req">必須</span></div>
-  <input type="text" name="emergency_kana" required placeholder="例: ヤマダ ハナコ">
-</div>
-
-<div class="field">
-  <div class="field-label">続柄 <span class="req">必須</span></div>
-  <select name="emergency_relation" required>
-    <option value="">選択してください</option>
-    <option>配偶者</option><option>父</option><option>母</option><option>兄弟姉妹</option><option>子</option><option>その他親族</option><option>知人</option>
-  </select>
-</div>
-
-<div class="field">
-  <div class="field-label">電話番号 <span class="req">必須</span></div>
-  <input type="tel" name="emergency_phone" required placeholder="例: 090-1234-5678">
-</div>
-
-<div class="field" style="margin-top:28px">
-  <div class="field-label">連帯保証人の準備</div>
-  <div class="pill-group">
-    <label class="pill-option"><input type="radio" name="guarantor_status" value="不要（本人のみ）"><span class="pill-label">不要（本人のみ）</span></label>
-    <label class="pill-option"><input type="radio" name="guarantor_status" value="準備できる"><span class="pill-label">準備できる</span></label>
-    <label class="pill-option"><input type="radio" name="guarantor_status" value="相談したい"><span class="pill-label">相談したい</span></label>
-  </div>
-</div>
-
-<div class="conditional-panel" id="grp-guarantor">
-  <h3 class="section-head">連帯保証人の情報</h3>
-  <div class="field">
-    <div class="field-label">氏名</div>
-    <input type="text" name="guarantor_name" placeholder="例: 山田 一郎">
-  </div>
-  <div class="field">
-    <div class="field-label">フリガナ</div>
-    <input type="text" name="guarantor_kana" placeholder="例: ヤマダ イチロウ">
-  </div>
-  <div class="field">
-    <div class="field-label">生年月日</div>
-    <input type="date" name="guarantor_birthday">
-  </div>
-  <div class="field">
-    <div class="field-label">続柄</div>
-    <select name="guarantor_relation">
-      <option value="">選択してください</option>
-      <option>配偶者</option><option>父</option><option>母</option><option>兄弟姉妹</option><option>子</option><option>その他親族</option><option>知人</option>
-    </select>
-  </div>
-  <div class="field">
-    <div class="field-label">電話番号</div>
-    <input type="tel" name="guarantor_phone" placeholder="例: 090-1234-5678">
-  </div>
-  <div class="field">
-    <div class="field-label">年収（万円）</div>
-    <input type="number" name="guarantor_income" placeholder="例: 400" inputmode="numeric">
-  </div>
-  <div class="field" style="margin-bottom:0">
-    <div class="field-label">勤務先名</div>
-    <input type="text" name="guarantor_company" placeholder="例: 株式会社○○">
-  </div>
-</div>
-</div>
-
-<!-- ==================== STEP 13 ==================== -->
-<div class="step-content" data-step="13">
-<h2 class="step-title">STEP 13　保管場所・お車の使用者・納車先</h2>
-<p class="step-subtitle">車庫・使用者・納車に関する情報をご入力ください。</p>
-
-<h3 class="section-head">車庫・保管場所</h3>
-
-<div class="field">
-  <div class="field-label">保管場所 <span class="req">必須</span></div>
-  <div class="pill-group">
-    <label class="pill-option"><input type="radio" name="parking" value="自宅" required><span class="pill-label">自宅</span></label>
-    <label class="pill-option"><input type="radio" name="parking" value="月極駐車場"><span class="pill-label">月極駐車場</span></label>
-    <label class="pill-option"><input type="radio" name="parking" value="実家"><span class="pill-label">実家</span></label>
-    <label class="pill-option"><input type="radio" name="parking" value="その他"><span class="pill-label">その他</span></label>
-  </div>
-</div>
-
-<div class="conditional-panel" id="grp-parking-address">
-  <div class="field" style="margin-bottom:0">
-    <div class="field-label">保管場所の住所</div>
-    <input type="text" name="parking_address" placeholder="保管場所の住所をご記入ください">
-  </div>
-</div>
-
-<div class="field">
-  <div class="field-label">車庫証明の取得</div>
-  <div class="pill-group">
-    <label class="pill-option"><input type="radio" name="garage_cert" value="自分で取得する"><span class="pill-label">自分で取得する</span></label>
-    <label class="pill-option"><input type="radio" name="garage_cert" value="代行を依頼したい（+¥12,000）"><span class="pill-label">代行を依頼したい（+&yen;12,000）</span></label>
-  </div>
-</div>
-
-<h3 class="section-head">お車の使用者</h3>
-
-<div class="field">
-  <div class="field-label">使用者</div>
-  <div class="pill-group">
-    <label class="pill-option"><input type="radio" name="car_user" value="申込者本人"><span class="pill-label">申込者本人</span></label>
-    <label class="pill-option"><input type="radio" name="car_user" value="配偶者"><span class="pill-label">配偶者</span></label>
-    <label class="pill-option"><input type="radio" name="car_user" value="家族"><span class="pill-label">家族</span></label>
-    <label class="pill-option"><input type="radio" name="car_user" value="その他"><span class="pill-label">その他</span></label>
-  </div>
-</div>
-
-<div class="conditional-panel" id="grp-user-name">
-  <div class="field">
-    <div class="field-label">使用者氏名</div>
-    <input type="text" name="car_user_name" placeholder="使用者のお名前をご記入ください">
-  </div>
-  <div class="field" style="margin-bottom:0" id="grp-user-relation">
-    <div class="field-label">使用者との関係</div>
-    <input type="text" name="car_user_relation" placeholder="例: 妻、息子など">
-  </div>
-</div>
-
-<h3 class="section-head">納車先</h3>
-
-<div class="field">
-  <div class="field-label">納車方法</div>
-  <div class="pill-group">
-    <label class="pill-option"><input type="radio" name="delivery_method" value="自宅へ納車"><span class="pill-label">自宅へ納車</span></label>
-    <label class="pill-option"><input type="radio" name="delivery_method" value="販売店で受け取り"><span class="pill-label">販売店で受け取り</span></label>
-    <label class="pill-option"><input type="radio" name="delivery_method" value="その他の場所"><span class="pill-label">その他の場所</span></label>
-  </div>
-</div>
-
-<div class="conditional-panel" id="grp-delivery-address">
-  <div class="field" style="margin-bottom:0">
-    <div class="field-label">納車先住所</div>
-    <input type="text" name="delivery_address" placeholder="納車先の住所をご記入ください">
-  </div>
-</div>
-
-<div class="field">
-  <div class="field-label">希望日時</div>
-  <input type="text" name="delivery_date" placeholder="例: 2026年8月上旬の土日希望">
-</div>
-</div>
-
-<!-- ==================== STEP 14 ==================== -->
-<div class="step-content" data-step="14">
-<h2 class="step-title">STEP 14　本人確認・必要書類</h2>
-<p class="step-subtitle">本人確認書類のアップロードと最終確認を行います。</p>
-
-<div class="field">
-  <div class="field-label">本人確認書類 <span class="req">必須</span></div>
-  <div class="pill-group">
-    <label class="pill-option"><input type="checkbox" name="id_docs" value="運転免許証"><span class="pill-label">運転免許証</span></label>
-    <label class="pill-option"><input type="checkbox" name="id_docs" value="マイナンバーカード"><span class="pill-label">マイナンバーカード</span></label>
-    <label class="pill-option"><input type="checkbox" name="id_docs" value="パスポート"><span class="pill-label">パスポート</span></label>
-    <label class="pill-option"><input type="checkbox" name="id_docs" value="健康保険証"><span class="pill-label">健康保険証</span></label>
-    <label class="pill-option"><input type="checkbox" name="id_docs" value="住民票"><span class="pill-label">住民票</span></label>
-  </div>
-</div>
-
-<div class="field">
-  <div class="field-label">運転免許証（表面）</div>
-  <div class="file-upload" id="file-license-front">
-    <div class="file-upload-icon">&#128196;</div>
-    <div class="file-upload-text">タップしてファイルを選択<br>（JPG / PNG / PDF）</div>
-    <input type="file" name="license_front" accept="image/*,.pdf">
-    <div class="file-preview"></div>
-  </div>
-</div>
-
-<div class="field">
-  <div class="field-label">運転免許証（裏面）</div>
-  <div class="file-upload" id="file-license-back">
-    <div class="file-upload-icon">&#128196;</div>
-    <div class="file-upload-text">タップしてファイルを選択<br>（JPG / PNG / PDF）</div>
-    <input type="file" name="license_back" accept="image/*,.pdf">
-    <div class="file-preview"></div>
-  </div>
-</div>
-
-<div class="field">
-  <div class="field-label">収入証明書類</div>
-  <div class="file-upload" id="file-income">
-    <div class="file-upload-icon">&#128196;</div>
-    <div class="file-upload-text">タップしてファイルを選択<br>（JPG / PNG / PDF）</div>
-    <input type="file" name="income_doc" accept="image/*,.pdf">
-    <div class="file-preview"></div>
-  </div>
-</div>
-
-<div class="field">
-  <div class="field-label">その他書類</div>
-  <div class="file-upload" id="file-other">
-    <div class="file-upload-icon">&#128196;</div>
-    <div class="file-upload-text">タップしてファイルを選択<br>（JPG / PNG / PDF）</div>
-    <input type="file" name="other_doc" accept="image/*,.pdf">
-    <div class="file-preview"></div>
-  </div>
-</div>
-
-<div style="margin-top:28px">
-  <div class="check-field">
-    <input type="checkbox" name="agree_privacy" id="agree-privacy" required>
-    <label for="agree-privacy"><a href="privacy.html" target="_blank">個人情報の取り扱いについて</a>に同意する <span class="req">必須</span></label>
-  </div>
-  <div class="check-field">
-    <input type="checkbox" name="agree_truth" id="agree-truth" required>
-    <label for="agree-truth">申込内容に虚偽がないことを確認する <span class="req">必須</span></label>
-  </div>
-</div>
-</div>
-
-<!-- SUCCESS SCREEN -->
-<div class="success-screen" id="success-screen">
-  <div class="success-icon">&#10004;&#65039;</div>
-  <h2 class="success-title">お申込みが完了しました</h2>
-  <p class="success-text">
-    審査申込を受け付けました。<br>
-    ご入力いただいたメールアドレスに確認メールをお送りします。<br><br>
-    審査結果は最短即日〜3営業日以内にご連絡いたします。<br>
-    ご不明点がございましたらLINEまたはお電話にてお気軽にお問い合わせください。
-  </p>
+<div class="caf-step-bar" id="caf-step-bar">
+  <div class="caf-step-dots" id="caf-step-dots"></div>
+  <div class="caf-step-info"><span class="step-num" id="step-num-label">STEP 1 / 14</span><span class="step-label" id="step-name-label"></span></div>
+  <div class="caf-progress-wrap">
+    <div class="caf-progress"><div class="caf-progress-bar" id="pbar"></div></div>
+    <span class="caf-progress-txt" id="ptxt">入力 0%</span>
+  </div>
+</div>
+
+<!-- FORM -->
+<div class="caf-wrap">
+<form class="caf" id="caf-form" novalidate enctype="multipart/form-data">
+<input type="text" name="hp" id="caf-hp" autocomplete="off" tabindex="-1" aria-hidden="true" class="caf-hp-field">
+
+<h3>STEP1 ご希望のお車</h3>
+<p>ご希望のお車は決まっていますか？ (必須)<br><select id="car-decided"><option>選択してください</option><option>決まっている</option><option>だいたい決まっている</option><option>まだ決まっていない</option></select></p>
+<div class="caf-half">
+<p>ご予算（車両価格）<br><select><option>選択してください</option><option>〜30万円</option><option>〜50万円</option><option>〜70万円</option><option>〜100万円</option><option>〜130万円</option><option>〜150万円</option><option>〜180万円</option><option>〜200万円</option><option>〜250万円</option><option>250万円以上</option><option>相談したい</option></select></p>
+<p>ご希望の納車時期<br><select><option>選択してください</option><option>できるだけ早く</option><option>1ヶ月以内</option><option>2〜3ヶ月以内</option><option>未定・相談</option></select></p>
+</div>
+<div class="caf-cond hide" id="grp-undecided"><h4>ご希望のイメージ</h4>
+<div class="caf-half">
+<p>ボディタイプ<br><select><option>選択してください</option><option>軽自動車</option><option>コンパクト</option><option>ミニバン</option><option>SUV</option><option>セダン</option><option>軽トラ・商用</option><option>こだわらない</option></select></p>
+<p>タイプ<br><select><option>選択してください</option><option>中古車</option><option>新車</option><option>未使用車</option><option>事業用</option></select></p>
+</div></div>
+<div class="caf-cond hide" id="grp-cardetail"><h4>ご希望車の詳細</h4>
+<div class="caf-half">
+<p>メーカー<br><select id="car-maker"><option>選択してください</option><optgroup label="国産"><option>トヨタ</option><option>日産</option><option>ホンダ</option><option>スズキ</option><option>ダイハツ</option><option>マツダ</option><option>スバル</option><option>三菱</option><option>レクサス</option></optgroup><optgroup label="輸入車（外車）"><option>メルセデス・ベンツ</option><option>BMW</option><option>アウディ</option><option>フォルクスワーゲン</option><option>MINI</option><option>ボルボ</option><option>プジョー</option><option>その他輸入車</option></optgroup><option>こだわらない</option></select></p>
+<p>ご希望車種<br><select id="car-model"><option>選択してください</option><option>← メーカーを先に選んでください</option></select></p>
+<p>グレードの希望<br><input type="text" placeholder="例：G／ハイブリッド"></p>
+<p>ご希望カラー<br><select><option>選択してください</option><option>ホワイト</option><option>パールホワイト</option><option>ブラック</option><option>ダークグレー・ガンメタ</option><option>シルバー</option><option>グレー</option><option>レッド</option><option>ワインレッド</option><option>ブルー</option><option>ライトブルー</option><option>ネイビー</option><option>グリーン</option><option>イエロー</option><option>オレンジ</option><option>ブラウン</option><option>ベージュ</option><option>ゴールド</option><option>パープル</option><option>ピンク</option><option>ツートン</option><option>その他</option><option>こだわらない</option></select></p>
+<p>年式の希望<br><select><option>選択してください</option><option>こだわらない</option><option>1年以内（ほぼ新車）</option><option>3年以内</option><option>5年以内</option><option>7年以内</option><option>10年以内</option><option>13年以内</option><option>15年以内</option><option>古くてもOK</option></select></p>
+<p>走行距離の希望<br><select><option>選択してください</option><option>こだわらない</option><option>1万km以内</option><option>3万km以内</option><option>5万km以内</option><option>7万km以内</option><option>10万km以内</option><option>13万km以内</option><option>距離問わず</option></select></p>
+</div></div>
+<p>ご希望の装備（複数選択可）<br>
+<label class="li"><input type="checkbox"> ナビ</label><label class="li"><input type="checkbox"> バックカメラ</label><label class="li"><input type="checkbox"> 両側スライド</label><label class="li"><input type="checkbox"> スマートキー</label><label class="li"><input type="checkbox"> ETC</label><label class="li"><input type="checkbox"> ドラレコ</label><label class="li"><input type="checkbox"> 4WD</label><label class="li"><input type="checkbox"> 禁煙車</label><label class="li"><input type="checkbox"> こだわらない</label></p>
+<p>ご利用用途 (必須)<br><select id="usage-type"><option>選択してください</option><option>自家用</option><option>事業用（業務用）</option></select></p>
+<div class="caf-cond hide" id="grp-business"><h4>事業用（業務用）の詳細</h4>
+<p>業務の用途 (必須)<br><select id="biz-purpose"><option>選択してください</option><option>軽貨物配送</option><option>旅客運送</option><option>営業車・社用車</option><option>建設・作業</option><option>その他</option></select></p>
+<div class="caf-cond2 hide" id="grp-keikamotsu"><h4>軽貨物配送の方</h4>
+<p>「事業用自動車等連絡書」はお持ちですか？ (必須)<br><select id="keikamotsu-doc"><option>選択してください</option><option>あり</option><option>なし</option></select></p>
+<p class="caf-up-note hide" id="grp-keikamotsu-ng">恐れ入りますが、軽貨物でのご利用の場合、<b>事業用自動車等連絡書</b>がない方は審査をお受けできません。運輸支局等で発行のうえ、改めてお申し込みください。</p>
+<div class="caf-up-grid hide" id="up-keikamotsu">
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">事業用自動車等連絡書</span><span class="caf-up-sub">運輸支局の発行・全体が鮮明に</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+</div>
+</div>
+</div>
+
+<h3>STEP2 申込のきっかけ・ご状況</h3>
+<div class="caf-half">
+<p>何を見てお申し込み？<br><select><option>選択してください</option><option>ホームページ</option><option>チラシ</option><option>SNS</option><option>友人・知人の紹介</option><option>その他</option></select></p>
+<p>現在のご事情<br><select><option>選択してください</option><option>車が必要だが審査が不安</option><option>他社で断られた</option><option>買い替え</option><option>初めての購入</option><option>リース満了</option><option>事故・故障で急ぎ</option><option>その他</option></select></p>
+<p>今いちばん不安なこと<br><select><option>選択してください</option><option>審査に通るか</option><option>月々の支払い</option><option>頭金が用意できない</option><option>過去の延滞・債務整理</option><option>手続きが複雑そう</option><option>特にない</option></select></p>
+<p>カーメルに期待すること<br><select><option>選択してください</option><option>親身な対応</option><option>審査の柔軟さ</option><option>スピード</option><option>車種の提案</option><option>その他</option></select></p>
+</div>
+<p>ご自由にご相談（任意）<br><textarea placeholder="ご状況を具体的に書くほど、合うプランをご提案しやすくなります。"></textarea></p>
+
+<h3>STEP3 ご本人情報</h3>
+<div class="caf-half">
+<p>お名前 (必須)<br><input type="text" placeholder="山田 太郎"></p>
+<p>フリガナ (必須)<br><input type="text" placeholder="ヤマダ タロウ"></p>
+<p>生年月日 (必須)<br><input type="date" id="birthday"><span class="caf-age" id="birthday-age"></span></p>
+<p>性別 (必須)<br><select><option>選択してください</option><option>男性</option><option>女性</option></select></p>
+<p>婚姻状況 (必須)<br><select id="marital"><option>選択してください</option><option>未婚</option><option>既婚</option><option>離婚</option><option>その他</option></select></p>
+<div class="caf-cond hide" id="grp-name-change" style="grid-column:1/-1;"><h4>氏名の確認</h4>
+<p>運転免許証の氏名は、現在のお名前と同じですか？ (必須)<br><select id="name-match"><option>選択してください</option><option>同じ</option><option>異なる（旧姓のまま等）</option></select></p>
+<div class="caf-warn-soft hide" id="grp-name-doc">
+離婚等で氏名が変わり、免許証が旧姓のままの場合は、<b>戸籍謄本（または抄本）</b>または<b>旧姓・新姓が併記された住民票</b>が必要です。書類は後半の「<b>本人確認・必要書類</b>」でご提出いただきます。
+</div>
+</div>
+<p>国籍 (必須)<br><select id="nationality"><option>選択してください</option><option>日本</option><option>外国籍</option></select></p>
+<div class="caf-cond hide" id="grp-foreign" style="grid-column:1/-1;"><h4>外国籍の方</h4>
+<div class="caf-half">
+<p>国籍（国名）<br><input type="text" placeholder="例：ベトナム／ブラジル など"></p>
+<p>在留資格 (必須)<br><select><option>選択してください</option><option>永住者</option><option>特別永住者</option><option>定住者</option><option>日本人の配偶者等</option><option>永住者の配偶者等</option><option>技術・人文知識・国際業務</option><option>特定技能1号</option><option>特定技能2号</option><option>技能実習</option><option>留学</option><option>家族滞在</option><option>その他</option></select></p>
+<p>在留期限 (必須)<br><input type="date"></p>
+<p>日本での通算居住年数<br><select><option>選択してください</option><option>1年未満</option><option>1〜3年</option><option>3〜5年</option><option>5〜10年</option><option>10年以上</option></select></p>
+<p>通称名（任意）<br><input type="text"></p>
+</div></div>
+<p>運転免許証 (必須)<br><select id="driver-license"><option>選択してください</option><option>あり（普通）</option><option>あり（その他）</option><option>取得中</option><option>なし</option></select></p>
+<div class="caf-cond hide" id="grp-license-soon" style="grid-column:1/-1;"><h4>免許 取得中の方</h4>
+<p>免許の取得予定の時期<br><select><option>選択してください</option><option>1ヶ月以内</option><option>2〜3ヶ月以内</option><option>半年以内</option><option>未定</option></select></p>
+</div>
+<p>携帯電話 (必須)<br><input type="tel" placeholder="09012345678"></p>
+<p>自宅電話（任意）<br><input type="tel"></p>
+<p>メールアドレス (必須)<br><input type="email" id="email-main" placeholder="sample@example.com"></p>
+<p>メールアドレス（確認用） (必須)<br><input type="email" id="email-confirm" placeholder="確認のためもう一度入力"><span class="email-msg" id="email-msg"></span></p>
+<p>ご希望の連絡方法 (必須)<br><select><option>選択してください</option><option>電話</option><option>メール</option><option>LINE</option><option>どれでも可</option></select></p>
+<p>ご連絡可能な時間 (必須)<br><select><option>選択してください</option><option>9-12時</option><option>12-15時</option><option>15-18時</option><option>18-21時</option><option>終日可</option></select></p>
+</div>
+
+<h3>STEP4 現住所</h3>
+<div class="caf-half">
+<p>郵便番号 (必須)<br><input type="text" inputmode="numeric" maxlength="7" class="zipcode" placeholder="1234567（入力で住所自動入力）"></p>
+<p>居住形態 (必須)<br><select><option>選択してください</option><option>持家（本人名義）</option><option>持家（家族名義）</option><option>賃貸アパート</option><option>賃貸マンション</option><option>賃貸戸建</option><option>社宅・寮</option><option>公営住宅</option><option>親と同居</option><option>その他</option></select></p>
+</div>
+<p>ご住所（自動入力） (必須)<br><input type="text" class="address to-hankaku" placeholder="都道府県・市区町村・番地"></p>
+<p>建物名・部屋番号（任意）<br><input type="text" class="to-hankaku" placeholder="〇〇マンション 101号室"></p>
+<p>住所（フリガナ） (必須)<br><input type="text" class="address-kana" placeholder="市区町村までは自動／以降はご記入ください"></p>
+<p class="caf-hint hide" id="addr-kana-hint">番地・建物名を入力されました。<b>その部分のフリガナ</b>も、上の住所フリガナ欄に続けてご記入ください。</p>
+<div class="caf-half">
+<p>世帯主との続柄 (必須)<br><select><option>選択してください</option><option>本人</option><option>配偶者</option><option>親</option><option>子</option><option>その他</option></select></p>
+<p>家賃・住宅ローン（月） (必須)<br><select><option>選択してください</option><option>なし</option><option>〜2万円</option><option>〜3万円</option><option>〜4万円</option><option>〜5万円</option><option>〜6万円</option><option>〜7万円</option><option>〜8万円</option><option>〜10万円</option><option>〜12万円</option><option>12万円以上</option></select></p>
+<p>居住年数 (必須)<br><select><option>選択してください</option><option>1年未満</option><option>1年</option><option>2年</option><option>3年</option><option>4年</option><option>5年</option><option>6年</option><option>7年</option><option>8年</option><option>9年</option><option>10年</option><option>11〜15年</option><option>16〜20年</option><option>21〜25年</option><option>26〜30年</option><option>31〜40年</option><option>41〜50年</option><option>50年以上</option></select></p>
+<p>居住月数 (必須)<br><select><option>選択してください</option><option>0ヶ月</option><option>1ヶ月</option><option>2ヶ月</option><option>3ヶ月</option><option>4ヶ月</option><option>5ヶ月</option><option>6ヶ月</option><option>7ヶ月</option><option>8ヶ月</option><option>9ヶ月</option><option>10ヶ月</option><option>11ヶ月</option></select></p>
+</div>
+
+<h3>STEP5 ご家族・生計</h3>
+<div class="caf-half">
+<p id="row-spouse">配偶者 (必須)<br><select id="has-spouse"><option>選択してください</option><option>有</option><option>無</option></select></p>
+<p>扶養家族の人数 (必須)<br><select><option>選択してください</option><option>0人</option><option>1人</option><option>2人</option><option>3人</option><option>4人</option><option>5人</option><option>6人以上</option></select></p>
+<p id="row-kids">お子様の有無 (必須)<br><select id="has-kids"><option>選択してください</option><option>いる</option><option>いない</option></select></p>
+<p>同一生計人数（本人含む） (必須)<br><select><option>選択してください</option><option>1人</option><option>2人</option><option>3人</option><option>4人</option><option>5人</option><option>6人以上</option></select></p>
+<p>主たる生計者 (必須)<br><select id="main-earner"><option>選択してください</option><option>本人</option><option>配偶者</option><option>親</option><option>子</option><option>その他</option></select></p>
+<p>生計者との居住実態 (必須)<br><select><option>選択してください</option><option>同居</option><option>別居</option></select></p>
+</div>
+<div class="caf-cond hide" id="grp-kids">
+<p>お子様の人数<br><select id="kids-count"><option>選択してください</option><option>1人</option><option>2人</option><option>3人</option><option>4人</option><option>5人以上</option></select></p>
+<div class="caf-half">
+<p class="hide" id="kid-age-1">お子様①の年齢層<br><select><option>選択してください</option><option>未就学</option><option>小学生</option><option>中学生</option><option>高校生</option><option>18歳以上</option></select></p>
+<p class="hide" id="kid-age-2">お子様②の年齢層<br><select><option>選択してください</option><option>未就学</option><option>小学生</option><option>中学生</option><option>高校生</option><option>18歳以上</option></select></p>
+<p class="hide" id="kid-age-3">お子様③の年齢層<br><select><option>選択してください</option><option>未就学</option><option>小学生</option><option>中学生</option><option>高校生</option><option>18歳以上</option></select></p>
+<p class="hide" id="kid-age-4">お子様④の年齢層<br><select><option>選択してください</option><option>未就学</option><option>小学生</option><option>中学生</option><option>高校生</option><option>18歳以上</option></select></p>
+<p class="hide" id="kid-age-5">お子様⑤以降の年齢層（代表）<br><select><option>選択してください</option><option>未就学</option><option>小学生</option><option>中学生</option><option>高校生</option><option>18歳以上</option></select></p>
+</div></div>
+<p>同居人数（本人を含む） (必須)<br><select id="cohabit-count"><option>選択してください</option><option>1人（一人暮らし）</option><option>2人</option><option>3人</option><option>4人</option><option>5人</option><option>6人</option><option>7人以上</option></select></p>
+<div class="caf-cond hide" id="grp-cohabit">
+<p>同居している方（複数選択可）<br>
+<label class="li"><input type="checkbox"> 配偶者</label><label class="li"><input type="checkbox"> お子様</label><label class="li"><input type="checkbox"> 親</label><label class="li"><input type="checkbox"> 兄弟姉妹</label><label class="li"><input type="checkbox"> 祖父母</label><label class="li"><input type="checkbox"> その他</label></p>
+</div>
+<div class="caf-cond hide" id="grp-spouse"><h4>配偶者の情報</h4>
+<div class="caf-half">
+<p>配偶者の就労<br><select><option>選択してください</option><option>就労中（正社員）</option><option>就労中（パート等）</option><option>無職</option></select></p>
+<p>配偶者の氏名（任意）<br><input type="text"></p>
+<p>配偶者のフリガナ（任意）<br><input type="text"></p>
+<p>配偶者の勤務先（任意）<br><input type="text"></p>
+<p>配偶者の年収<br><select><option>選択してください</option><option>収入なし</option><option>100万未満</option><option>100〜150万</option><option>150〜200万</option><option>200〜250万</option><option>250〜300万</option><option>300〜400万</option><option>400〜500万</option><option>500〜700万</option><option>700万以上</option></select></p>
+<p>配偶者の他社借入<br><select><option>選択してください</option><option>なし</option><option>〜50万</option><option>〜100万</option><option>100万以上</option></select></p>
+</div></div>
+
+<h3>STEP6 ご収入</h3>
+<div class="caf-half">
+<p>年収（額面・円） (必須)<br><input type="text" inputmode="numeric" class="num-only" placeholder="例：3000000"><span class="caf-num-hint" data-unit="万円・概算"></span></p>
+<p>月収（手取り目安・円） (必須)<br><input type="text" inputmode="numeric" class="num-only" placeholder="例：200000"><span class="caf-num-hint" data-unit="万円・概算"></span></p>
+<p>給与形態 (必須)<br><select><option>選択してください</option><option>月給</option><option>日給</option><option>時給</option><option>歩合</option><option>その他</option></select></p>
+<p>賞与（ボーナス） (必須)<br><select><option>選択してください</option><option>あり（年2回）</option><option>あり（年1回）</option><option>なし</option></select></p>
+<p>その他の収入（任意）<br><select id="other-income"><option>選択してください</option><option>なし</option><option>不動産収入</option><option>老齢年金</option><option>障害年金</option><option>遺族年金</option><option>副業</option><option>その他</option></select></p>
+</div>
+<div class="caf-cond hide" id="grp-other-income"><h4>その他の収入について</h4>
+<div class="caf-half">
+<p>収入の内容<br><input type="text" placeholder="例：駐車場収入／〇〇の副業 など"></p>
+<p>月額の目安<br><select><option>選択してください</option><option>〜1万円</option><option>〜3万円</option><option>〜5万円</option><option>〜10万円</option><option>10万円以上</option></select></p>
+</div></div>
+
+<h3>STEP7 お勤め先・就労形態</h3>
+<p>就労形態 (必須)<br><select id="employment-type"><option>選択してください</option><option>正社員</option><option>契約社員</option><option>派遣社員</option><option>パート・アルバイト</option><option>会社役員・経営者</option><option>自営業・個人事業主</option><option>年金受給</option><option>その他</option></select></p>
+<div id="grp-employer" class="hide">
+<div class="caf-half">
+<p>会社名・屋号 (必須)<br><input type="text"></p>
+<p>会社名（フリガナ） (必須)<br><input type="text"></p>
+<p>部署・役職（任意）<br><input type="text"></p>
+<p>業種 (必須)<br><select><option>選択してください</option><option>製造</option><option>建設</option><option>運輸</option><option>小売・卸</option><option>飲食・サービス</option><option>医療・福祉</option><option>IT・通信</option><option>金融</option><option>公務</option><option>その他</option></select></p>
+<p>会社の電話番号 (必須)<br><input type="tel" placeholder="0312345678"></p>
+<p>勤続・営業年数 (必須)<br><select><option>選択してください</option><option>1年未満</option><option>1年</option><option>2年</option><option>3年</option><option>4年</option><option>5年</option><option>6年</option><option>7年</option><option>8年</option><option>9年</option><option>10年</option><option>11〜15年</option><option>16〜20年</option><option>20年以上</option></select></p>
+<p>勤続月数 (必須)<br><select><option>選択してください</option><option>0ヶ月</option><option>1ヶ月</option><option>2ヶ月</option><option>3ヶ月</option><option>4ヶ月</option><option>5ヶ月</option><option>6ヶ月</option><option>7ヶ月</option><option>8ヶ月</option><option>9ヶ月</option><option>10ヶ月</option><option>11ヶ月</option></select></p>
+<p>健康保険の種類 (必須)<br><select><option>選択してください</option><option>社会保険</option><option>国民健康保険</option><option>組合健保</option><option>共済</option><option>その他</option></select></p>
+<p>職種 (必須)<br><select><option>選択してください</option><option>事務</option><option>営業</option><option>企画・管理</option><option>技術・専門職</option><option>医療・福祉</option><option>IT・エンジニア</option><option>製造・現場</option><option>建設・作業</option><option>運転・配送</option><option>販売・接客</option><option>公務員</option><option>経営・役員</option><option>その他</option></select></p>
+<p>給料日 (任意)<br><select><option>選択してください</option><option>月末</option><option>5日</option><option>10日</option><option>15日</option><option>20日</option><option>25日</option><option>その他</option></select></p>
+<p>社員数 (任意)<br><select><option>選択してください</option><option>1〜5名</option><option>6〜10名</option><option>11〜30名</option><option>31〜50名</option><option>51〜100名</option><option>101〜300名</option><option>301〜1000名</option><option>1000名以上</option></select></p>
+<p>勤務形態・勤務時間 (任意)<br><select><option>選択してください</option><option>日勤（固定）</option><option>夜勤</option><option>交代制</option><option>シフト制</option><option>フレックス</option><option>その他</option></select></p>
+<p>休日 (任意)<br><select><option>選択してください</option><option>土日祝休み</option><option>完全週休2日</option><option>週休2日</option><option>シフト制</option><option>平日休み</option><option>不定休</option><option>その他</option></select></p>
+</div>
+<p>会社の郵便番号 (必須)<br><input type="text" inputmode="numeric" maxlength="7" class="company-zipcode" placeholder="1234567"></p>
+<p>会社の所在地（任意・郵便番号で自動入力）<br><input type="text" class="company-address to-hankaku" placeholder="郵便番号を入れると自動で入ります"></p>
+<p>会社の所在地（フリガナ・自動）<br><input type="text" class="company-address-kana" placeholder="市区町村までは自動／以降はご記入"></p>
+<p>会社の建物名・階・号室（任意）<br><input type="text" class="to-hankaku" placeholder="〇〇ビル 5F／〇〇マンション 302 など"></p>
+<p>会社概要・ホームページURL（任意）<br><input type="url" placeholder="https://example.co.jp"></p>
+</div>
+<div class="caf-cond hide" id="grp-dispatch"><h4>派遣社員の方</h4>
+<div class="caf-half">
+<p>派遣元（登録派遣会社）名 (必須)<br><input type="text"></p>
+<p>派遣元の電話番号 (必須)<br><input type="tel" placeholder="0312345678"></p>
+<p>雇用形態 (必須)<br><select><option>選択してください</option><option>無期雇用派遣</option><option>有期雇用派遣（登録型）</option><option>紹介予定派遣</option></select></p>
+<p>派遣元での就業期間 (必須)<br><select><option>選択してください</option><option>6ヶ月未満</option><option>6ヶ月〜1年</option><option>1〜2年</option><option>2〜3年</option><option>3〜5年</option><option>5年以上</option></select></p>
+<p>現在の派遣先名（任意）<br><input type="text"></p>
+<p>派遣先の所在地（任意）<br><input type="text"></p>
+<p>現在の派遣先での就業開始（任意）<br><input type="date"></p>
+<p>契約期間・更新 (必須)<br><select><option>選択してください</option><option>無期</option><option>有期（更新あり）</option><option>有期（更新なし）</option></select></p>
+<p>社会保険（派遣元）の加入 (必須)<br><select><option>選択してください</option><option>加入している</option><option>未加入</option></select></p>
+</div></div>
+<div class="caf-cond hide" id="grp-self"><h4>自営業・個人事業主の方</h4>
+<div class="caf-half">
+<p>屋号・事業所名 (必須)<br><input type="text"></p>
+<p>業種 (必須)<br><select><option>選択してください</option><option>建設</option><option>製造</option><option>運輸</option><option>小売・卸</option><option>飲食・サービス</option><option>医療・福祉</option><option>IT・通信</option><option>農林水産</option><option>不動産</option><option>その他</option></select></p>
+<p>事業形態 (必須)<br><select><option>選択してください</option><option>法人</option><option>個人事業主</option></select></p>
+<p>開業からの年数 (必須)<br><select><option>選択してください</option><option>1年未満</option><option>1〜3年</option><option>3〜5年</option><option>5〜10年</option><option>10年以上</option></select></p>
+<p>直近の事業所得 (必須)<br><select><option>選択してください</option><option>100万未満</option><option>100〜200万</option><option>200〜300万</option><option>300〜400万</option><option>400〜500万</option><option>500〜700万</option><option>700〜1000万</option><option>1000万以上</option></select></p>
+<p>確定申告 (必須)<br><select><option>選択してください</option><option>あり</option><option>なし</option></select></p>
+<p>事業所の電話番号 (必須)<br><input type="tel" placeholder="0312345678"></p>
+</div>
+<p>事業所の郵便番号 (必須)<br><input type="text" inputmode="numeric" maxlength="7" class="biz-zipcode" placeholder="1234567"></p>
+<p>事業所の所在地（郵便番号で自動入力） (必須)<br><input type="text" class="biz-address to-hankaku" placeholder="郵便番号を入れると自動で入ります"></p>
+<p>事業所の所在地（フリガナ・自動） (必須)<br><input type="text" class="biz-address-kana" placeholder="市区町村までは自動／以降はご記入"></p>
+<p>事業所の建物名・階・号室（任意）<br><input type="text" class="to-hankaku" placeholder="〇〇ビル 2F／自宅兼事務所 など"></p>
+</div>
+<div class="caf-cond hide" id="grp-parttime"><h4>パート・アルバイトの方</h4>
+<div class="caf-half">
+<p>週の勤務日数<br><select><option>選択してください</option><option>1〜2日</option><option>3〜4日</option><option>5日以上</option></select></p>
+<p>1日の勤務時間<br><select><option>選択してください</option><option>4時間未満</option><option>4〜6時間</option><option>6〜8時間</option><option>8時間以上</option></select></p>
+</div></div>
+<div class="caf-cond hide" id="grp-pension"><h4>年金受給の方</h4>
+<p>年金以外に就労していますか？ (必須)<br><select id="pension-work"><option>選択してください</option><option>年金のみ（就労なし）</option><option>就労もしている</option></select></p>
+<div class="caf-half">
+<p>年金の種別<br><select><option>選択してください</option><option>老齢年金</option><option>障害年金</option><option>遺族年金</option><option>その他</option></select></p>
+<p>年金以外の収入<br><select><option>選択してください</option><option>あり</option><option>なし</option></select></p>
+</div></div>
+<div class="caf-cond hide" id="grp-other"><h4>その他の就労形態の方</h4>
+<p>就労状況の詳細 (必須)<br><textarea placeholder="現在の収入状況を具体的に"></textarea></p></div>
+<div class="caf-cond hide" id="grp-officer"><h4>会社役員・経営者の方</h4>
+<div class="caf-half">
+<p>役職 (必須)<br><select><option>選択してください</option><option>代表取締役</option><option>取締役</option><option>監査役</option><option>執行役員</option><option>その他役員</option></select></p>
+<p>役員報酬（年額）<br><select><option>選択してください</option><option>200万未満</option><option>200〜400万</option><option>400〜600万</option><option>600〜800万</option><option>800〜1000万</option><option>1000〜1500万</option><option>1500万以上</option></select></p>
+<p>在任年数 (必須)<br><select><option>選択してください</option><option>1年未満</option><option>1〜3年</option><option>3〜5年</option><option>5〜10年</option><option>10年以上</option></select></p>
+<p>決算書・議事録の提出<br><select><option>選択してください</option><option>提出できる</option><option>後日提出</option><option>難しい</option></select></p>
+</div></div>
+
+<h3>STEP8 現在のお車</h3>
+<p>今回のご購入は (必須)<br><select id="purchase-kind"><option>選択してください</option><option>初めての車（今は持っていない）</option><option>乗り替え（今の車を手放す）</option><option>増車（今の車も残す）</option></select></p>
+<div class="caf-cond hide" id="grp-fleet">
+<p>現在 何台所有していますか (必須)<br><select><option>選択してください</option><option>1台</option><option>2台</option><option>3台</option><option>4台以上</option></select></p>
+<p class="caf-hint">増車のお申し込みのため、今お乗りの車の詳細情報の入力は不要です。</p>
+</div>
+<div class="caf-cond hide" id="grp-currentcar">
+<div class="caf-half">
+<p>メーカー<br><select id="cur-maker"><option>選択してください</option><optgroup label="国産"><option>トヨタ</option><option>日産</option><option>ホンダ</option><option>スズキ</option><option>ダイハツ</option><option>マツダ</option><option>スバル</option><option>三菱</option><option>レクサス</option></optgroup><optgroup label="輸入車（外車）"><option>メルセデス・ベンツ</option><option>BMW</option><option>アウディ</option><option>フォルクスワーゲン</option><option>MINI</option><option>ボルボ</option><option>プジョー</option><option>その他輸入車</option></optgroup></select></p>
+<p>車種名<br><select id="cur-model"><option>選択してください</option><option>← メーカーを先に選んでください</option></select></p>
+<p>初年度登録<br><input type="date"></p>
+<p>走行距離<br><select><option>選択してください</option><option>1万km未満</option><option>1〜3万km</option><option>3〜5万km</option><option>5〜7万km</option><option>7〜10万km</option><option>10〜13万km</option><option>13〜15万km</option><option>15万km以上</option></select></p>
+<p>車検満了日<br><input type="date"></p>
+<p>現在のローン残債<br><select><option>選択してください</option><option>なし</option><option>〜20万円</option><option>〜50万円</option><option>〜80万円</option><option>〜100万円</option><option>〜150万円</option><option>150万円以上</option></select></p>
+</div>
+<p>下取りのご希望<br><select id="trade-in"><option>選択してください</option><option>下取りあり</option><option>下取りなし</option><option>検討中</option></select></p>
+<div class="caf-cond2 hide" id="grp-tradein"><h4>下取り車の情報</h4>
+<p>修復歴<br><select><option>選択してください</option><option>なし</option><option>あり</option><option>不明</option></select></p>
+<p>車検証の画像（任意）<br><input type="file"></p></div>
+</div>
+
+<h3>STEP9 お支払いのご希望</h3>
+<div class="caf-half">
+<p>頭金 (必須)<br><select><option>選択してください</option><option>なし</option><option>〜5万円</option><option>〜10万円</option><option>〜20万円</option><option>〜30万円</option><option>〜50万円</option><option>〜70万円</option><option>〜100万円</option><option>〜150万円</option><option>150万円以上</option><option>相談したい</option></select></p>
+<p>月々のご希望 (必須)<br><select><option>選択してください</option><option>1万円未満</option><option>1〜1.5万円</option><option>1.5〜2万円</option><option>2〜2.5万円</option><option>2.5〜3万円</option><option>3〜3.5万円</option><option>3.5〜4万円</option><option>4〜4.5万円</option><option>4.5〜5万円</option><option>5〜6万円</option><option>6〜7万円</option><option>7〜8万円</option><option>8〜9万円</option><option>9〜10万円</option><option>10万円以上</option></select></p>
+<p>希望支払い回数 (必須)<br><select><option>選択してください</option><option>36回(3年)</option><option>48回(4年)</option><option>60回(5年)</option><option>72回(6年)</option><option>84回(7年)</option><option>96回(8年)</option><option>108回(9年)</option><option>120回(10年)</option></select></p>
+<p>支払いイメージ (必須)<br><select id="payment-type"><option>選択してください</option><option>均等払い</option><option>ボーナス併用</option></select></p>
+<p>口座引落の準備 (必須)<br><select><option>選択してください</option><option>準備できている</option><option>これから</option></select></p>
+</div>
+<div class="caf-cond hide" id="grp-bonus">
+<div class="caf-half">
+<p>ボーナス時の加算額<br><select><option>選択してください</option><option>〜2万円</option><option>〜3万円</option><option>〜5万円</option><option>〜7万円</option><option>〜10万円</option><option>〜15万円</option><option>15万円以上</option></select></p>
+<p>ボーナス支給月①<br><select><option>選択してください</option><option>1月</option><option>2月</option><option>3月</option><option>4月</option><option>5月</option><option>6月</option><option>7月</option><option>8月</option><option>9月</option><option>10月</option><option>11月</option><option>12月</option></select></p>
+<p>ボーナス支給月②（年2回の方）<br><select><option>なし</option><option>1月</option><option>2月</option><option>3月</option><option>4月</option><option>5月</option><option>6月</option><option>7月</option><option>8月</option><option>9月</option><option>10月</option><option>11月</option><option>12月</option></select></p>
+</div></div>
+
+<h3>STEP10 与信・お借入の状況</h3>
+<div class="caf-half">
+<p>審査のお申込みは何社目？ (必須)<br><select id="audit-count"><option>選択してください</option><option>1社目（初めて）</option><option>2社目</option><option>3社目</option><option>4社目以上</option></select></p>
+<p>他社お借入の件数 (必須)<br><select><option>選択してください</option><option>なし</option><option>1社</option><option>2社</option><option>3社</option><option>4社以上</option></select></p>
+<p>他社お借入の総額<br><select><option>選択してください</option><option>なし</option><option>〜30万円</option><option>〜50万円</option><option>〜80万円</option><option>〜100万円</option><option>〜150万円</option><option>〜200万円</option><option>〜250万円</option><option>〜300万円</option><option>〜400万円</option><option>400万円以上</option><option>わからない</option></select></p>
+<p>他社の月々返済額（任意）<br><select><option>選択してください</option><option>なし</option><option>〜1万円</option><option>〜2万円</option><option>〜3万円</option><option>〜4万円</option><option>〜5万円</option><option>〜7万円</option><option>7万円以上</option></select></p>
+<p>クレジットカード利用<br><select><option>選択してください</option><option>あり</option><option>なし</option></select></p>
+<p>任意保険 (必須)<br><select id="insurance"><option>選択してください</option><option>加入中</option><option>中断中</option><option>未加入</option><option>解約済み</option></select></p>
+<div class="caf-cond hide" id="grp-insurance" style="grid-column:1/-1;"><h4>加入中の任意保険</h4>
+<p>保険会社名<br><select><option>選択してください</option><option>東京海上日動</option><option>損保ジャパン</option><option>三井住友海上</option><option>あいおいニッセイ同和</option><option>ソニー損保</option><option>アクサダイレクト</option><option>チューリッヒ</option><option>イーデザイン損保</option><option>SBI損保</option><option>セゾン自動車火災（おとなの自動車保険）</option><option>JA共済</option><option>全労済（こくみん共済）</option><option>その他</option></select></p>
+</div>
+</div>
+<div class="caf-cond hide" id="grp-auditnames">
+<p>直近の審査はいつ頃ですか？ (必須)<br><select><option>選択してください</option><option>1ヶ月以内</option><option>1〜3ヶ月前</option><option>3〜6ヶ月前</option><option>6ヶ月〜1年前</option><option>1年以上前</option><option>わからない</option></select></p>
+<p>これまでに申し込んだ審査会社名（任意・分かる範囲で）<br><textarea placeholder="例：〇〇オート、△△ファイナンス…"></textarea></p>
+</div>
+
+<h3>STEP11 信用情報の状況<small>正直にご入力ください。今の状況を重視します</small></h3>
+<div class="caf-half">
+<p>債務整理の経験 (必須)<br><select id="debt-arrange"><option>選択してください</option><option>なし</option><option>あり</option><option>答えたくない</option></select></p>
+<p>自己破産の経験 (必須)<br><select id="bankruptcy"><option>選択してください</option><option>なし</option><option>あり</option><option>答えたくない</option></select></p>
+</div>
+<div class="caf-cond hide" id="grp-debt"><h4>債務整理について</h4>
+<div class="caf-half">
+<p>経過年数<br><select><option>選択してください</option><option>1年未満</option><option>1〜3年</option><option>3〜5年</option><option>5〜7年</option><option>7年以上</option></select></p>
+<p>経過月数<br><select><option>選択してください</option><option>0</option><option>1〜3</option><option>4〜6</option><option>7〜11</option></select></p>
+</div></div>
+<div class="caf-cond hide" id="grp-bankruptcy"><h4>自己破産について</h4>
+<div class="caf-half">
+<p>免責の状況<br><select><option>選択してください</option><option>免責済み</option><option>手続き中</option><option>その他</option></select></p>
+<p>経過年数<br><select><option>選択してください</option><option>1年未満</option><option>1〜3年</option><option>3〜5年</option><option>5〜7年</option><option>7年以上</option></select></p>
+<p>経過月数<br><select><option>選択してください</option><option>0</option><option>1〜3</option><option>4〜6</option><option>7〜11</option></select></p>
+</div></div>
+<div class="caf-half">
+<p>携帯料金の滞納 (必須)<br><select><option>選択してください</option><option>なし</option><option>あり（解消済み）</option><option>あり（延滞中）</option></select></p>
+<p>家賃・税金・公共料金の滞納 (必須)<br><select><option>選択してください</option><option>なし</option><option>あり（解消済み）</option><option>あり（延滞中）</option></select></p>
+<p>他社ローン・クレジットの延滞 (必須)<br><select><option>選択してください</option><option>なし</option><option>あり（解消済み）</option><option>あり（延滞中）</option></select></p>
+</div>
+
+<h3>STEP12 保証人・緊急連絡先</h3>
+<p>保証人 (必須)<br><select id="has-guarantor"><option>選択してください</option><option>はい</option><option>いいえ</option></select></p>
+<div class="caf-cond hide" id="grp-guarantor"><h4>保証人の情報（任意）</h4>
+<div class="caf-half">
+<p>お名前<br><input type="text"></p>
+<p>フリガナ<br><input type="text"></p>
+<p>続柄<br><input type="text"></p>
+<p>連絡先<br><input type="tel"></p>
+<p>勤務先（任意）<br><input type="text"></p>
+<p>年収（任意）<br><select><option>選択してください</option><option>200万未満</option><option>200〜300万</option><option>300〜400万</option><option>400〜500万</option><option>500〜700万</option><option>700万以上</option></select></p>
+</div></div>
+<p class="caf-hint">※緊急連絡先は<b>保証人ではありません</b>。ご本人と連絡が取れない場合のご連絡先で、<b>お支払いの義務は一切発生しません</b>。安心してご記入ください。</p>
+<div class="caf-cond2"><h4>緊急連絡先① （任意）</h4>
+<div class="caf-half">
+<p>お名前<br><input type="text"></p>
+<p>フリガナ<br><input type="text"></p>
+<p>続柄<br><select><option>選択してください</option><option>父</option><option>母</option><option>配偶者</option><option>子</option><option>兄弟姉妹</option><option>祖父母</option><option>親戚</option><option>知人・友人</option><option>その他</option></select></p>
+<p>電話番号<br><input type="tel" placeholder="携帯または自宅"></p>
+<p>同居・別居<br><select><option>選択してください</option><option>同居</option><option>別居（近隣）</option><option>別居（遠方）</option></select></p>
+<p>連絡可能な時間帯<br><select><option>選択してください</option><option>日中（9-17時）</option><option>夕方以降</option><option>終日可</option></select></p>
+</div></div>
+<div class="caf-cond2"><h4>緊急連絡先② （任意）</h4>
+<div class="caf-half">
+<p>お名前<br><input type="text"></p>
+<p>フリガナ<br><input type="text"></p>
+<p>続柄<br><select><option>選択してください</option><option>父</option><option>母</option><option>配偶者</option><option>子</option><option>兄弟姉妹</option><option>祖父母</option><option>親戚</option><option>知人・友人</option><option>その他</option></select></p>
+<p>電話番号<br><input type="tel" placeholder="携帯または自宅"></p>
+<p>同居・別居<br><select><option>選択してください</option><option>同居</option><option>別居（近隣）</option><option>別居（遠方）</option></select></p>
+<p>連絡可能な時間帯<br><select><option>選択してください</option><option>日中（9-17時）</option><option>夕方以降</option><option>終日可</option></select></p>
+</div></div>
+
+<h3>STEP13 保管場所・お車の使用者・納車先</h3>
+<p>お車の保管場所 (必須)<br><select id="parking-type"><option>選択してください</option><option>自宅の敷地内（車庫・駐車スペース）</option><option>月極駐車場を契約</option><option>これから探す・未定</option><option>その他</option></select></p>
+<div class="caf-cond hide" id="grp-parking"><h4>駐車場の情報</h4>
+<div class="caf-half">
+<p>月極駐車場の月額<br><select><option>選択してください</option><option>〜5,000円</option><option>5,000〜10,000円</option><option>10,000〜15,000円</option><option>15,000〜20,000円</option><option>20,000円以上</option></select></p>
+<p>自宅からの距離<br><select><option>選択してください</option><option>自宅に隣接</option><option>徒歩1分以内</option><option>徒歩5分以内</option><option>徒歩10分以内</option><option>それ以上</option></select></p>
+</div>
+<p>駐車場の住所（任意・自宅と異なる場合）<br><input type="text" class="to-hankaku" placeholder="〇〇県〇〇市…"></p>
+</div>
+<p>車庫証明（保管場所使用承諾書）の取得 (必須)<br><select><option>選択してください</option><option>自分で取得できる</option><option>取得を相談したい</option><option>不要な地域（軽自動車の届出地域など）</option><option>わからない</option></select></p>
+
+<p>お車の主な使用者 (必須)<br><select id="car-user"><option>選択してください</option><option>申込者ご本人</option><option>配偶者</option><option>同居のご家族</option><option>別居のご家族</option><option>その他</option></select></p>
+<div class="caf-cond hide" id="grp-car-user"><h4>使用者の情報</h4>
+<div class="caf-half">
+<p>使用者のお名前<br><input type="text"></p>
+<p>使用者のフリガナ<br><input type="text"></p>
+<p>続柄<br><input type="text" placeholder="例：長男・友人 など"></p>
+<p>使用者の連絡先（任意）<br><input type="tel"></p>
+</div></div>
+
+<p>納車先 (必須)<br><select id="delivery-place"><option>選択してください</option><option>自宅（現住所と同じ）</option><option>勤務先</option><option>上記以外の住所</option><option>来店して引き取り</option></select></p>
+<div class="caf-cond hide" id="grp-delivery"><h4>納車先のご住所</h4>
+<p>郵便番号<br><input type="text" inputmode="numeric" maxlength="7" class="delivery-zipcode" placeholder="1234567"></p>
+<p>住所（郵便番号で自動入力）<br><input type="text" class="delivery-address to-hankaku" placeholder="郵便番号を入れると自動で入ります"></p>
+<p>建物名・部屋番号など（任意）<br><input type="text" class="to-hankaku"></p>
+</div>
+
+<h3>STEP14 本人確認・必要書類<small>スマホ撮影OK／PDF・画像対応</small></h3>
+<p class="caf-up-lead">ご提出は<b>運転免許証のみ必須</b>です。その他の書類（収入証明・住民票・在留カード・確定申告・法人関係など）は<b>審査の進行に合わせて後日ご提出でOK</b>。今お持ちの方は任意で添付してください。</p>
+
+<p>お申込み区分 (必須)<br><select id="app-type"><option>選択してください</option><option>個人</option><option>個人事業主</option><option>法人</option></select></p>
+
+<div class="caf-cond hide" id="grp-corp-type"><h4>法人のお申込み形態</h4>
+<p>お申込み形態 (必須)<br><select id="corp-type"><option>選択してください</option><option>法人契約（法人名義）</option><option>法人だが個人で申込（個人保証）</option></select></p>
+</div>
+
+<p>申込住所は運転免許証と同じですか？ (必須)<br><select id="addr-match"><option>選択してください</option><option>同じ</option><option>異なる</option></select></p>
+<div class="caf-warn-soft hide" id="grp-addr-diff">
+住所が免許証と異なる場合は、<b>住民票（発行3ヶ月以内）</b>または<b>住所書き換え後のマイナンバーカード</b>をご提出ください。<br>※すぐにご用意できない場合は<b>後日のご提出</b>でもお申込みを進められます。
+<div class="caf-up-grid">
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">住民票</span><span class="caf-up-sub">発行3ヶ月以内</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">マイナンバーカード</span><span class="caf-up-sub">住所書き換え後</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+</div>
+</div>
+
+<h4 style="color:var(--orange);margin:18px 0 6px;">運転免許証（必須）</h4>
+<p class="caf-up-note">運転免許証は<b>表面・裏面の両方</b>を<b>四隅まで鮮明に</b>撮影してください。<b>ぼやけ・見切れ・反射</b>があるものは受付できません。</p>
+<div class="caf-up-grid">
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">運転免許証（表）必須</span><span class="caf-up-sub">全体が鮮明に</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">運転免許証（裏）必須</span><span class="caf-up-sub">裏面の記載も</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+</div>
+<p class="caf-up-note" style="color:var(--green);background:var(--green-bg);border-color:var(--green-border);">↑ <b>必須はこの運転免許証だけ</b>です。これ以降の書類は<b>後日のご提出でも審査を進められます</b>（今お持ちの方は任意で添付ください）。</p>
+
+<div class="caf-cond hide" id="grp-doc-foreign"><h4>外国籍の方の追加書類</h4>
+<p class="caf-up-note">在留カードの<b>表面・裏面の両方</b>を、四隅まで鮮明にご提出ください。</p>
+<div class="caf-up-grid">
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">在留カード（表）</span><span class="caf-up-sub">全体が鮮明に</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">在留カード（裏）</span><span class="caf-up-sub">裏面の記載も</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+</div></div>
+
+<div class="caf-cond hide" id="grp-doc-name"><h4>氏名変更（旧姓）の方の書類</h4>
+<p class="caf-up-note">免許証が旧姓のままの場合は、戸籍謄本（抄本）または旧姓・新姓が併記された住民票をご提出ください。</p>
+<div class="caf-up-grid">
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">戸籍謄本・抄本 または 住民票</span><span class="caf-up-sub">旧姓・新姓が分かるもの</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+</div></div>
+
+<div id="grp-payslip-section">
+<p>給与明細の形式 (必須)<br><select id="payslip-type"><option>選択してください</option><option>紙の明細</option><option>電子明細（Web給与）</option><option>手渡し（用紙なし）</option></select></p>
+<p class="caf-up-note">給与明細には次の項目が必要です：<b>会社名／お名前／支給年月／基本給／総支給額／控除内容／差引支給額</b>。会社名が記載されたものをご提出ください（個人の方は<b>直近1ヶ月分</b>）。</p>
+<div class="caf-warn-soft hide" id="grp-payslip-e">電子明細（PDF）に<b>会社名の記載がない</b>場合は、<b>会社名が表示されたログイン画面のスクリーンショット</b>もあわせてご提出ください。</div>
+<div class="caf-warn-soft hide" id="grp-payslip-cash">用紙の明細がない（手渡し）場合は、収入を確認できる書類として、<b>雇用契約書</b>・<b>源泉徴収票</b>・<b>給与振込が分かる通帳のコピー</b>などをご提出ください。</div>
+<div class="caf-up-grid">
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">給与明細（会社名入り）</span><span class="caf-up-sub">個人＝直近1ヶ月分</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+<label class="caf-up hide" id="up-payslip-login"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">ログイン画面のスクショ</span><span class="caf-up-sub">会社名が見える画面</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+</div>
+<div class="caf-up-grid hide" id="up-cash-grid">
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">雇用契約書</span><span class="caf-up-sub">会社名・氏名が分かるもの</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">源泉徴収票</span><span class="caf-up-sub">直近分（任意）</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">通帳のコピー</span><span class="caf-up-sub">給与振込が分かる箇所</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+</div>
+</div>
+
+<div class="caf-cond hide" id="grp-doc-sole"><h4>個人事業主の方の必要書類</h4>
+<p class="caf-up-note">個人事業主の方は<b>給与明細は不要</b>です。代わりに下記の書類（ローン審査で求められるもの）をご提出ください。</p>
+<div class="caf-up-grid">
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">確定申告書</span><span class="caf-up-sub">直近2期分が望ましい</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">開業届の控え</span><span class="caf-up-sub">任意</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">納税証明書 または 所得（課税）証明書</span><span class="caf-up-sub">直近分</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+</div></div>
+
+<div class="caf-cond hide" id="grp-doc-corp"><h4>法人契約の方の追加書類</h4>
+<div class="caf-up-grid">
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">登記簿謄本</span><span class="caf-up-sub">履歴事項全部証明書</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">直近の決算書</span><span class="caf-up-sub">任意</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+</div></div>
+
+<div class="caf-cond hide" id="grp-doc-corp-personal"><h4>個人保証でのお申込みの追加書類</h4>
+<p class="caf-up-lead">個人保証がつくため、下記をご提出ください。</p>
+<div class="caf-up-grid">
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">確定申告書</span><span class="caf-up-sub">直近分</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">役員報酬の明細</span><span class="caf-up-sub">直近分・会社名入り</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+</div></div>
+
+<p class="caf-up-lead">そのほか（任意）</p>
+<div class="caf-up-grid">
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">健康保険証 または マイナンバー</span><span class="caf-up-sub">本人確認の補助（どちらか・任意）</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">その他の書類</span><span class="caf-up-sub">任意</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+</div>
+
+<p>免許証以外の書類について (任意)<br><select><option>選択してください</option><option>免許証のみ添付した（他は後日提出）</option><option>一部の書類も添付した</option><option>用意できる書類はすべて添付した</option></select></p>
+<p class="caf-up-note" style="color:var(--gray-500);background:var(--gray-100);border-color:var(--gray-200);">PDF・画像（JPG/PNG）に対応。1つの書類が複数枚にわたる場合は、続けて複数選択して添付できます。</p>
+
+<div class="caf-agree">
+<label class="caf-check"><input type="checkbox"><span><a href="https://carmelonline.jp/?page_id=507" target="_blank" rel="noopener">プライバシーポリシー</a>に同意のうえ送信します（必須）</span></label>
+<label class="caf-check"><input type="checkbox"><span>本審査にあたり、<b>個人信用情報機関（CIC・JICC等）への照会・登録・利用</b>に同意します（必須）</span></label>
+<label class="caf-check"><input type="checkbox"><span>私および関係者は<b>暴力団等の反社会的勢力ではなく、今後も一切関係しない</b>ことを表明・確約します（必須）</span></label>
+<label class="caf-check"><input type="checkbox"><span>提携信販・ローン会社へ、審査に必要な範囲で<b>入力情報を提供すること</b>に同意します（必須）</span></label>
+<p class="caf-presubmit">ご入力いただいた内容をもとに、担当が個別にご案内します。</p>
+<button type="submit" class="submit">この内容で審査を申し込む</button>
+</div>
+
+<div id="caf-done" class="hide" style="text-align:center;background:var(--green-bg);border:1.5px solid var(--green-border);border-radius:var(--radius-lg);padding:24px;margin-top:18px;">
+<p style="font-size:18px;font-weight:900;color:var(--green);margin:0 0 8px;">お申し込みを受け付けました</p>
+<p style="font-size:13.5px;color:var(--gray-700);font-weight:700;margin:0;line-height:1.8;">担当より個別にご連絡いたします。審査結果はマイページからご確認いただけます。<br>※追加の書類は後日のご提出でも問題ありません。</p>
 </div>
 
 </form>
-</main>
-
-<!-- BOTTOM NAV -->
-<div class="bottom-nav" id="bottom-nav">
-  <div class="bottom-nav-inner">
-    <button type="button" class="btn btn-ghost" id="btn-back" style="display:none">&larr; 戻る</button>
-    <button type="button" class="btn btn-primary" id="btn-next">次へ進む &rarr;</button>
-  </div>
 </div>
 
-<!-- LINE FLOAT -->
-<a href="https://lin.ee/" target="_blank" rel="noopener" class="line-float" title="LINEで相談する">
-  <svg viewBox="0 0 24 24"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .348-.281.63-.63.63h-2.021v1.318h2.021c.349 0 .63.283.63.63 0 .349-.281.631-.63.631h-2.652a.628.628 0 01-.63-.631V8.108c0-.348.282-.63.63-.63h2.652c.349 0 .63.282.63.63 0 .349-.281.631-.63.631h-2.021v1.124h2.021zm-4.712 3.21a.627.627 0 01-.63.63.624.624 0 01-.518-.27l-2.2-2.994v2.634a.63.63 0 01-1.26 0V8.108a.628.628 0 01.63-.63c.2 0 .386.097.504.27l2.213 3.008V8.108a.63.63 0 011.26 0v4.965h.001zm-6.092.63a.63.63 0 01-.63-.63V8.108a.63.63 0 011.26 0v4.965a.63.63 0 01-.63.63zm-2.51 0H3.399a.631.631 0 01-.63-.63V8.108c0-.348.282-.63.63-.63.349 0 .63.282.63.63v4.334h1.622c.348 0 .63.283.63.631a.63.63 0 01-.63.63zM12 2C6.477 2 2 5.918 2 10.691c0 4.284 3.654 7.87 8.574 8.56.334.072.789.22.904.506.103.26.067.665.033.927l-.146.878c-.045.26-.207 1.021.893.557 1.1-.464 5.928-3.49 8.088-5.978h.001C22.217 14.166 22 12.518 22 10.691 22 5.918 17.523 2 12 2z"/></svg>
+<!-- LINE floating button -->
+<a class="caf-line-float" href="https://line.me/R/" target="_blank" rel="noopener" title="LINEで相談">
+<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.271.173-.508.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
 </a>
 
+<!-- ===== MAIN JAVASCRIPT ===== -->
 <script>
-(function(){
-'use strict';
+function tg(id,s){var e=document.getElementById(id);if(e)e.classList.toggle('hide',!s);}
+document.getElementById('car-decided').addEventListener('change',function(){var v=this.value;tg('grp-cardetail',v==='決まっている'||v==='だいたい決まっている');tg('grp-undecided',v==='まだ決まっていない');});
 
-/* ===== CARS DATA ===== */
-const CARS = {
-'トヨタ':['ヤリス','ヤリスクロス','カローラ','カローラクロス','カローラツーリング','プリウス','アクア','シエンタ','ノア','ヴォクシー','アルファード','ヴェルファイア','ハリアー','RAV4','ランドクルーザー','クラウン','GR86','スープラ','ハイエース','ライズ'],
-'ホンダ':['フィット','ヴェゼル','フリード','ステップワゴン','N-BOX','N-WGN','N-ONE','シビック','ZR-V','WR-V','CR-V'],
-'日産':['ノート','セレナ','エクストレイル','ルークス','デイズ','キックス','フェアレディZ','リーフ','アリア','サクラ'],
-'マツダ':['MAZDA2','MAZDA3','CX-3','CX-5','CX-8','CX-30','CX-60','ロードスター','MX-30'],
-'スバル':['インプレッサ','フォレスター','レヴォーグ','クロストレック','レガシィアウトバック','BRZ','WRX S4'],
-'三菱':['デリカD:5','アウトランダー','エクリプスクロス','eKクロス','eKワゴン','トライトン'],
-'スズキ':['スイフト','ハスラー','ジムニー','ジムニーシエラ','スペーシア','アルト','ソリオ','クロスビー','エスクード','フロンクス'],
-'ダイハツ':['タント','ムーヴキャンバス','ロッキー','タフト','ミラトコット','キャスト','ウェイク','アトレー','コペン'],
-'レクサス':['NX','RX','UX','IS','ES','LS','LC','LBX','RZ','LM'],
-'BMW':['1シリーズ','2シリーズ','3シリーズ','4シリーズ','5シリーズ','X1','X3','X5','iX','i4'],
-'メルセデス・ベンツ':['Aクラス','Bクラス','Cクラス','Eクラス','Sクラス','GLA','GLB','GLC','GLE','EQA','EQB'],
-'アウディ':['A3','A4','A5','A6','Q3','Q5','Q7','e-tron','Q4 e-tron'],
-'フォルクスワーゲン':['ゴルフ','ポロ','T-Cross','T-Roc','ティグアン','ID.4','パサート'],
-'ボルボ':['XC40','XC60','XC90','V60','S60','C40','EX30','EX90'],
-'その他':['その他（備考にご記入ください）']
+/* メーカー→車種 連動 */
+var CARS={
+'トヨタ':['アクア','ヤリス','ヴィッツ','カローラ','カローラフィールダー','カローラクロス','プリウス','プリウスα','アルファード','ヴェルファイア','ノア','ヴォクシー','エスクァイア','シエンタ','ルーミー','タンク','パッソ','ポルテ','スペイド','ハリアー','RAV4','C-HR','ライズ','ランドクルーザー','ランドクルーザープラド','ハイエース','レジアスエース','クラウン','マークX','カムリ','エスティマ','ウィッシュ','アイシス','ラクティス','bB','ヤリスクロス','その他'],
+'日産':['ノート','ノートオーラ','マーチ','リーフ','セレナ','エルグランド','デイズ','デイズルークス','ルークス','エクストレイル','ジューク','キックス','キューブ','モコ','ティーダ','ウイングロード','スカイライン','フーガ','ティアナ','シルフィ','ラフェスタ','NV350キャラバン','AD','その他'],
+'ホンダ':['フィット','フリード','フリードスパイク','ヴェゼル','ステップワゴン','N-BOX','N-WGN','N-ONE','N-VAN','シャトル','グレイス','ジェイド','オデッセイ','CR-V','ストリーム','インサイト','シビック','アコード','ライフ','ゼスト','バモス','その他'],
+'スズキ':['ワゴンR','ワゴンRスマイル','スペーシア','ハスラー','アルト','アルトラパン','スイフト','ソリオ','ジムニー','ジムニーシエラ','エブリイ','エブリイワゴン','クロスビー','イグニス','パレット','MRワゴン','Kei','その他'],
+'ダイハツ':['タント','ムーヴ','ムーヴキャンバス','ミラ','ミライース','ミラトコット','ウェイク','キャスト','タフト','ロッキー','トール','ブーン','コペン','ハイゼット','アトレー','その他'],
+'マツダ':['デミオ','マツダ2','アクセラ','マツダ3','アテンザ','マツダ6','CX-3','CX-30','CX-5','CX-8','ロードスター','プレマシー','ビアンテ','フレア','キャロル','スクラム','その他'],
+'スバル':['インプレッサ','フォレスター','レガシィ','レガシィアウトバック','XV','レヴォーグ','ステラ','プレオ','サンバー','ディアスワゴン','BRZ','その他'],
+'三菱':['eKワゴン','eKスペース','eKクロス','デリカD:5','デリカD:2','アウトランダー','RVR','パジェロ','ミラージュ','タウンボックス','その他'],
+'レクサス':['IS','ES','RX','NX','UX','CT','LS','GS','RC','LX','その他'],
+'メルセデス・ベンツ':['Aクラス','Bクラス','Cクラス','Eクラス','CLA','GLA','GLB','GLC','その他'],
+'BMW':['1シリーズ','2シリーズ','3シリーズ','4シリーズ','5シリーズ','X1','X2','X3','その他'],
+'アウディ':['A1','A3','A4','A5','Q2','Q3','Q5','その他'],
+'フォルクスワーゲン':['up!','ポロ','ゴルフ','ゴルフトゥーラン','パサート','ティグアン','Tクロス','その他'],
+'MINI':['MINI 3ドア','MINI 5ドア','クロスオーバー','クラブマン','その他'],
+'ボルボ':['V40','V60','V90','XC40','XC60','XC90','その他'],
+'プジョー':['208','308','2008','3008','5008','その他'],
+'その他輸入車':['車種を直接ご記入ください'],
+'こだわらない':['こだわらない']
 };
+var IMPORT=['メルセデス・ベンツ','BMW','アウディ','フォルクスワーゲン','MINI','ボルボ','プジョー','その他輸入車'];
+var mk=document.getElementById('car-maker'),md=document.getElementById('car-model');
+function fillModels(){if(!md)return;var m=mk.value;md.innerHTML='';var first=document.createElement('option');first.textContent='選択してください';md.appendChild(first);var list=CARS[m];if(!list){var o=document.createElement('option');o.textContent='← メーカーを先に選んでください';md.appendChild(o);return;}list.forEach(function(n){var o=document.createElement('option');o.textContent=n;md.appendChild(o);});}
+mk.addEventListener('change',fillModels);
+var cmk=document.getElementById('cur-maker'),cmd=document.getElementById('cur-model');
+function fillCur(){if(!cmd)return;var m=cmk.value;cmd.innerHTML='';var f=document.createElement('option');f.textContent='選択してください';cmd.appendChild(f);var list=CARS[m];if(!list){var o=document.createElement('option');o.textContent='← メーカーを先に選んでください';cmd.appendChild(o);return;}list.forEach(function(n){var o=document.createElement('option');o.textContent=n;cmd.appendChild(o);});}
+if(cmk)cmk.addEventListener('change',fillCur);
 
-const TOTAL_STEPS = 14;
-let currentStep = 1;
-
-/* ===== DOM REFS ===== */
-const form = document.getElementById('loan-form');
-const stepContents = document.querySelectorAll('.step-content');
-const indicator = document.getElementById('step-indicator');
-const btnBack = document.getElementById('btn-back');
-const btnNext = document.getElementById('btn-next');
-const bottomNav = document.getElementById('bottom-nav');
-const progressPct = document.getElementById('progress-pct');
-const progressCurrent = document.getElementById('progress-current');
-
-/* ===== BUILD STEP INDICATOR ===== */
-(function buildIndicator(){
-  for(let i=1;i<=TOTAL_STEPS;i++){
-    if(i>1){const ln=document.createElement('div');ln.className='step-line';indicator.appendChild(ln);}
-    const item=document.createElement('div');
-    item.className='step-item'+(i===1?' current':'');
-    item.dataset.step=i;
-    const circle=document.createElement('div');
-    circle.className='step-circle';
-    circle.textContent=i;
-    circle.addEventListener('click',()=>{if(i<currentStep)goToStep(i);});
-    item.appendChild(circle);
-    indicator.appendChild(item);
-  }
-})();
-
-/* ===== POPULATE SELECTS ===== */
-(function(){
-  // Maker
-  const makerSel=document.getElementById('maker');
-  Object.keys(CARS).forEach(m=>{const o=document.createElement('option');o.value=m;o.textContent=m;makerSel.appendChild(o);});
-
-  // Year selects
-  const yearSel=document.getElementById('year');
-  const curYearSel=document.getElementById('current-year');
-  for(let y=2026;y>=2015;y--){const o=document.createElement('option');o.value=y;o.textContent=y+'年';yearSel.appendChild(o);}
-  for(let y=2026;y>=2000;y--){const o=document.createElement('option');o.value=y;o.textContent=y+'年';curYearSel.appendChild(o);}
-})();
-
-/* ===== MAKER -> MODEL ===== */
-document.getElementById('maker').addEventListener('change',function(){
-  const modelSel=document.getElementById('model');
-  modelSel.innerHTML='<option value="">選択してください</option>';
-  const models=CARS[this.value];
-  if(models)models.forEach(m=>{const o=document.createElement('option');o.value=m;o.textContent=m;modelSel.appendChild(o);});
-});
-
-/* ===== YEN FORMATTING ===== */
-['car-price','option-price'].forEach(id=>{
-  const el=document.getElementById(id);
-  if(!el)return;
-  el.addEventListener('input',function(){
-    let v=this.value.replace(/[^0-9]/g,'');
-    if(v)this.value=Number(v).toLocaleString();
-    else this.value='';
+/* 進捗バー（入力済みの割合） */
+function updateProgress(){
+  var cs=document.querySelectorAll('.caf select,.caf input[type=text],.caf input[type=tel],.caf input[type=email],.caf input[type=date],.caf input[type=url]');
+  var total=0,done=0;
+  cs.forEach(function(c){
+    if(c.closest('.hide'))return;
+    var _p=c.closest('p'); if(!(_p&&/必須/.test(_p.textContent||'')))return;
+    total++;
+    var v=(c.value||'').trim();
+    if(c.tagName==='SELECT'){if(v&&v!=='選択してください'&&v.charAt(0)!=='←')done++;}
+    else{if(v)done++;}
   });
+  var pct=total?Math.round(done/total*100):0;
+  var b=document.getElementById('pbar');if(b)b.style.width=pct+'%';
+  var t=document.getElementById('ptxt');if(t)t.textContent='入力 '+pct+'%';
+}
+var em=document.getElementById('email-main'),ec=document.getElementById('email-confirm'),emsg=document.getElementById('email-msg');
+function checkEmail(){if(!ec.value){emsg.textContent='';return;}if(em.value===ec.value){emsg.textContent='一致しています';emsg.style.color='#16a34a';}else{emsg.textContent='メールアドレスが一致しません';emsg.style.color='#dc2626';}}
+if(em&&ec){em.addEventListener('input',checkEmail);ec.addEventListener('input',checkEmail);}
+
+var _wrap=document.querySelector('.caf');
+_wrap.addEventListener('input',updateProgress);
+_wrap.addEventListener('change',updateProgress);
+updateProgress();
+var et=document.getElementById('employment-type');
+et.addEventListener('change',function(){var v=this.value;tg('grp-dispatch',v==='派遣社員');tg('grp-self',v==='自営業・個人事業主');tg('grp-parttime',v==='パート・アルバイト');tg('grp-pension',v==='年金受給');tg('grp-other',v==='その他');tg('grp-officer',v==='会社役員・経営者');updateEmployer();});
+function updateEmployer(){var v=document.getElementById('employment-type').value;var pw=document.getElementById('pension-work');var pwv=pw?pw.value:'';var emp=['正社員','契約社員','派遣社員','パート・アルバイト','会社役員・経営者','その他'].indexOf(v)!==-1;var show=emp||(v==='年金受給'&&pwv==='就労もしている');var e=document.getElementById('grp-employer');if(e)e.classList.toggle('hide',!show);}
+var _pw=document.getElementById('pension-work');if(_pw)_pw.addEventListener('change',updateEmployer);
+function spouseCheck(){var mar=document.getElementById('marital').value;var me=document.getElementById('main-earner').value;var hs=document.getElementById('has-spouse');var hsv=hs?hs.value:'';var single=(mar==='未婚');tg('row-spouse',!single);tg('row-kids',!single);tg('grp-spouse',!single&&(mar==='既婚'||me==='配偶者'||hsv==='有'));tg('grp-name-change',mar==='既婚'||mar==='離婚');if(single)tg('grp-kids',false);}
+var _nm=document.getElementById('name-match');if(_nm)_nm.addEventListener('change',function(){var d=this.value.indexOf('異なる')===0;tg('grp-name-doc',d);tg('grp-doc-name',d);});
+var _hk=document.getElementById('has-kids');if(_hk)_hk.addEventListener('change',function(){tg('grp-kids',this.value==='いる');});
+var _kc=document.getElementById('kids-count');if(_kc)_kc.addEventListener('change',function(){var n=parseInt(this.value,10)||0;for(var i=1;i<=5;i++){tg('kid-age-'+i,i<=n);}});
+var _cc=document.getElementById('cohabit-count');if(_cc)_cc.addEventListener('change',function(){var v=this.value;tg('grp-cohabit',v!==''&&v!=='選択してください'&&v!=='1人（一人暮らし）');});
+document.getElementById('marital').addEventListener('change',spouseCheck);
+document.getElementById('main-earner').addEventListener('change',spouseCheck);
+if(document.getElementById('has-spouse'))document.getElementById('has-spouse').addEventListener('change',spouseCheck);
+var _pkd=document.getElementById('purchase-kind');if(_pkd)_pkd.addEventListener('change',function(){var v=this.value,trade=(v==='乗り替え（今の車を手放す）'),fleet=(v==='増車（今の車も残す）');tg('grp-currentcar',trade);tg('grp-fleet',fleet);if(!trade)tg('grp-tradein',false);});
+
+/* 数字のみ入力（全角→半角・数字以外を除去）＋万円換算の確認表示 */
+document.querySelectorAll('.caf .num-only').forEach(function(el){
+  var hint=el.parentNode.querySelector('.caf-num-hint');
+  function norm(){
+    var v=el.value.replace(/[０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-65248);}).replace(/[^0-9]/g,'');
+    if(v!==el.value)el.value=v;
+    if(hint){var n=parseInt(v,10);if(v&&!isNaN(n)){hint.textContent='= 約 '+(Math.round(n/10000*10)/10)+' 万円';hint.classList.add('is-show');}else{hint.classList.remove('is-show');}}
+  }
+  el.addEventListener('input',norm); el.addEventListener('blur',norm);
+});
+document.getElementById('trade-in').addEventListener('change',function(){tg('grp-tradein',this.value==='下取りあり');});
+document.getElementById('payment-type').addEventListener('change',function(){tg('grp-bonus',this.value==='ボーナス併用');});
+document.getElementById('has-guarantor').addEventListener('change',function(){tg('grp-guarantor',this.value==='はい');});
+document.getElementById('audit-count').addEventListener('change',function(){tg('grp-auditnames',this.value!=='1社目（初めて）'&&this.value!=='選択してください');});
+document.getElementById('debt-arrange').addEventListener('change',function(){tg('grp-debt',this.value==='あり');});
+document.getElementById('bankruptcy').addEventListener('change',function(){tg('grp-bankruptcy',this.value==='あり');});
+var _at=document.getElementById('app-type');if(_at)_at.addEventListener('change',function(){var v=this.value;tg('grp-doc-sole',v==='個人事業主');tg('grp-corp-type',v==='法人');var ps=document.getElementById('grp-payslip-section');if(ps)ps.classList.toggle('hide',v==='個人事業主'||v==='法人');if(v!=='法人'){tg('grp-doc-corp',false);tg('grp-doc-corp-personal',false);}});
+var _ct=document.getElementById('corp-type');if(_ct)_ct.addEventListener('change',function(){tg('grp-doc-corp',this.value==='法人契約（法人名義）');tg('grp-doc-corp-personal',this.value==='法人だが個人で申込（個人保証）');});
+var _am=document.getElementById('addr-match');if(_am)_am.addEventListener('change',function(){tg('grp-addr-diff',this.value==='異なる');});
+var _pt=document.getElementById('payslip-type');if(_pt)_pt.addEventListener('change',function(){var v=this.value,e=(v==='電子明細（Web給与）'),c=(v==='手渡し（用紙なし）');tg('grp-payslip-e',e);var l=document.getElementById('up-payslip-login');if(l)l.classList.toggle('hide',!e);tg('grp-payslip-cash',c);var cg=document.getElementById('up-cash-grid');if(cg)cg.classList.toggle('hide',!c);});
+var _ut=document.getElementById('usage-type');if(_ut)_ut.addEventListener('change',function(){tg('grp-business',this.value==='事業用（業務用）');});
+var _bp=document.getElementById('biz-purpose');if(_bp)_bp.addEventListener('change',function(){tg('grp-keikamotsu',this.value==='軽貨物配送');});
+var _kd=document.getElementById('keikamotsu-doc');if(_kd)_kd.addEventListener('change',function(){tg('grp-keikamotsu-ng',this.value==='なし');tg('up-keikamotsu',this.value==='あり');});
+var _oi=document.getElementById('other-income');if(_oi)_oi.addEventListener('change',function(){var v=this.value;tg('grp-other-income',v!==''&&v!=='選択してください'&&v!=='なし');});
+var _dl=document.getElementById('driver-license');if(_dl)_dl.addEventListener('change',function(){tg('grp-license-soon',this.value==='取得中');});
+var _ins=document.getElementById('insurance');if(_ins)_ins.addEventListener('change',function(){tg('grp-insurance',this.value==='加入中');});
+var _pk=document.getElementById('parking-type');if(_pk)_pk.addEventListener('change',function(){var v=this.value;tg('grp-parking',v==='月極駐車場を契約'||v==='その他');});
+var _cu=document.getElementById('car-user');if(_cu)_cu.addEventListener('change',function(){var v=this.value;tg('grp-car-user',v!==''&&v!=='選択してください'&&v!=='申込者ご本人');});
+var _dp=document.getElementById('delivery-place');if(_dp)_dp.addEventListener('change',function(){tg('grp-delivery',this.value==='上記以外の住所');});
+var _na=document.getElementById('nationality');if(_na)_na.addEventListener('change',function(){var f=this.value==='外国籍';tg('grp-foreign',f);tg('grp-doc-foreign',f);});
+
+/* 生年月日→年齢を自動表示 */
+(function(){
+  var bd=document.getElementById('birthday'),out=document.getElementById('birthday-age');
+  if(!bd||!out) return;
+  function calc(){
+    var v=bd.value; out.className='caf-age';
+    if(!v){return;}
+    var d=new Date(v); if(isNaN(d.getTime())){return;}
+    var t=new Date(),age=t.getFullYear()-d.getFullYear();
+    var m=t.getMonth()-d.getMonth();
+    if(m<0||(m===0&&t.getDate()<d.getDate())) age--;
+    if(age<0||age>120||d>t){out.textContent='生年月日をご確認ください';out.className='caf-age is-show is-error';return;}
+    out.textContent='満 '+age+' 歳';out.className='caf-age is-show';
+  }
+  bd.addEventListener('change',calc); bd.addEventListener('input',calc);
+})();
+
+/* 「その他」を選んだら記入欄を自動表示（全セレクト共通） */
+document.querySelectorAll('.caf select').forEach(function(sel){
+  if(sel.id) return;
+  var hasOther=Array.prototype.some.call(sel.options,function(o){return o.value==='その他';});
+  if(!hasOther) return;
+  var p=sel.closest('p'); if(!p) return;
+  var wrap=document.createElement('p');
+  wrap.className='caf-other hide';
+  wrap.innerHTML='<input type="text" placeholder="「その他」の内容をご記入ください">';
+  p.insertAdjacentElement('afterend',wrap);
+  sel.addEventListener('change',function(){ wrap.classList.toggle('hide',sel.value!=='その他'); });
 });
 
-/* ===== ZIP LOOKUP ===== */
-document.getElementById('btn-zip').addEventListener('click',function(){
-  const zip=document.getElementById('zip').value.replace(/[^0-9]/g,'');
-  if(zip.length!==7){alert('郵便番号は7桁の半角数字で入力してください。');return;}
-  const cb='zipCallback'+Date.now();
-  window[cb]=function(data){
-    if(data.results){
-      const r=data.results[0];
-      document.getElementById('prefecture').value=r.address1;
-      document.getElementById('city').value=r.address2+r.address3;
-    }else{alert('住所が見つかりませんでした。');}
-    delete window[cb];
-    document.body.removeChild(s);
+/* 郵便番号→住所 自動入力（JSONPでCORS回避） */
+function carmelZip(zip,target,kanaTarget){
+  if(!target) return;
+  zip=(zip||'').replace(/[０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-65248);}).replace(/[^0-9]/g,'');
+  if(zip.length!==7) return;
+  var cb='czcb'+Date.now();
+  var s=document.createElement('script');
+  window[cb]=function(d){
+    if(d&&d.results&&d.results[0]){var r=d.results[0];target.value=r.address1+r.address2+r.address3; target.dataset.auto=target.value; if(kanaTarget&&r.kana1) kanaTarget.value=(r.kana1||'')+(r.kana2||'')+(r.kana3||'');}
+    delete window[cb]; if(s.parentNode) s.parentNode.removeChild(s);
   };
-  const s=document.createElement('script');
   s.src='https://zipcloud.ibsnet.co.jp/api/search?zipcode='+zip+'&callback='+cb;
   document.body.appendChild(s);
-});
-
-/* ===== AGE CALCULATION ===== */
-document.getElementById('birthday').addEventListener('change',function(){
-  const bd=new Date(this.value);
-  const today=new Date();
-  let age=today.getFullYear()-bd.getFullYear();
-  const m=today.getMonth()-bd.getMonth();
-  if(m<0||(m===0&&today.getDate()<bd.getDate()))age--;
-  document.getElementById('age-display').textContent=age>0?age+'歳':'';
-});
-
-/* ===== EMAIL MATCH ===== */
-document.getElementById('email-confirm').addEventListener('input',function(){
-  const email=document.getElementById('email').value;
-  const errEl=document.getElementById('email-match-error');
-  if(this.value&&this.value!==email){errEl.style.display='block';this.parentElement.classList.add('field-error');}
-  else{errEl.style.display='none';this.parentElement.classList.remove('field-error');}
-});
-
-/* ===== FILE UPLOAD PREVIEW ===== */
-document.querySelectorAll('.file-upload input[type=file]').forEach(input=>{
-  input.addEventListener('change',function(){
-    const preview=this.parentElement.querySelector('.file-preview');
-    if(!this.files.length){preview.innerHTML='';return;}
-    const file=this.files[0];
-    let html=file.name;
-    if(file.type.startsWith('image/')){
-      const reader=new FileReader();
-      reader.onload=e=>{preview.innerHTML=html+'<br><img src="'+e.target.result+'" alt="preview">';};
-      reader.readAsDataURL(file);
-    }else{preview.innerHTML=html;}
-  });
-});
-
-/* ===== CONDITIONAL SHOW/HIDE ===== */
-function setupConditionals(){
-  // きっかけ その他
-  document.querySelectorAll('[data-toggle="grp-kikkake-other"]').forEach(cb=>{
-    cb.addEventListener('change',()=>{
-      document.getElementById('grp-kikkake-other').classList.toggle('visible',cb.checked);
-    });
-  });
-
-  // 居住形態 -> 家賃
-  document.querySelectorAll('[name="residence_type"]').forEach(r=>{
-    r.addEventListener('change',()=>{
-      const show=r.dataset.toggleRent==='true';
-      document.getElementById('grp-rent').classList.toggle('visible',show);
-    });
-  });
-
-  // 世帯主 -> 世帯年収
-  document.getElementById('householder-relation').addEventListener('change',function(){
-    document.getElementById('grp-household-income').classList.toggle('visible',this.value&&this.value!=='本人');
-  });
-
-  // 副収入
-  document.querySelectorAll('[name="sub_income"]').forEach(r=>{
-    r.addEventListener('change',()=>{
-      const v=document.querySelector('[name="sub_income"]:checked');
-      document.getElementById('grp-sub-income').classList.toggle('visible',v&&v.value==='あり');
-    });
-  });
-
-  // 雇用形態 -> お勤め先 / 自営業
-  const employedTypes=['正社員','契約社員','派遣社員','パート・アルバイト','会社役員','公務員'];
-  const selfTypes=['自営業・個人事業主'];
-  document.querySelectorAll('[name="employment_type"]').forEach(r=>{
-    r.addEventListener('change',()=>{
-      const v=r.value;
-      document.getElementById('grp-employment').classList.toggle('visible',employedTypes.includes(v));
-      document.getElementById('grp-self-employed').classList.toggle('visible',selfTypes.includes(v));
-    });
-  });
-
-  // 現在の車 あり/なし
-  document.querySelectorAll('[name="has_current_car"]').forEach(r=>{
-    r.addEventListener('change',()=>{
-      document.getElementById('grp-current-car').classList.toggle('visible',r.value==='あり'&&r.checked);
-    });
-  });
-
-  // 残債
-  document.querySelectorAll('[name="has_remaining_debt"]').forEach(r=>{
-    r.addEventListener('change',()=>{
-      document.getElementById('grp-remaining-debt').classList.toggle('visible',r.value==='あり'&&r.checked);
-    });
-  });
-
-  // ボーナス払い
-  document.querySelectorAll('[name="bonus_pay"]').forEach(r=>{
-    r.addEventListener('change',()=>{
-      document.getElementById('grp-bonus').classList.toggle('visible',r.value==='あり'&&r.checked);
-    });
-  });
-
-  // 頭金
-  document.querySelectorAll('[name="has_downpayment"]').forEach(r=>{
-    r.addEventListener('change',()=>{
-      document.getElementById('grp-downpayment').classList.toggle('visible',r.value==='あり'&&r.checked);
-    });
-  });
-
-  // 借入件数
-  document.getElementById('borrowing-count').addEventListener('change',function(){
-    document.getElementById('grp-borrowing').classList.toggle('visible',this.value&&this.value!=='0件');
-  });
-
-  // CIC
-  document.querySelectorAll('[name="cic_disclosure"]').forEach(r=>{
-    r.addEventListener('change',()=>{
-      document.getElementById('grp-cic').classList.toggle('visible',r.value==='あり'&&r.checked);
-    });
-  });
-
-  // 保証人
-  document.querySelectorAll('[name="guarantor_status"]').forEach(r=>{
-    r.addEventListener('change',()=>{
-      const v=document.querySelector('[name="guarantor_status"]:checked');
-      document.getElementById('grp-guarantor').classList.toggle('visible',v&&v.value==='準備できる');
-    });
-  });
-
-  // 保管場所
-  document.querySelectorAll('[name="parking"]').forEach(r=>{
-    r.addEventListener('change',()=>{
-      const v=document.querySelector('[name="parking"]:checked');
-      document.getElementById('grp-parking-address').classList.toggle('visible',v&&v.value!=='自宅');
-    });
-  });
-
-  // 車の使用者
-  document.querySelectorAll('[name="car_user"]').forEach(r=>{
-    r.addEventListener('change',()=>{
-      const v=document.querySelector('[name="car_user"]:checked');
-      document.getElementById('grp-user-name').classList.toggle('visible',v&&v.value!=='申込者本人');
-    });
-  });
-
-  // 納車方法
-  document.querySelectorAll('[name="delivery_method"]').forEach(r=>{
-    r.addEventListener('change',()=>{
-      const v=document.querySelector('[name="delivery_method"]:checked');
-      document.getElementById('grp-delivery-address').classList.toggle('visible',v&&v.value==='その他の場所');
-    });
+}
+function bindZip(zipSel,addrSel,kanaSel){
+  var z=document.querySelector(zipSel),a=document.querySelector(addrSel),k=kanaSel?document.querySelector(kanaSel):null;
+  if(!z||!a) return;
+  z.addEventListener('input',function(){ carmelZip(z.value,a,k); });
+  z.addEventListener('compositionend',function(){ carmelZip(z.value,a,k); });
+  z.addEventListener('blur',function(){
+    z.value=z.value.replace(/[０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-65248);}).replace(/[^0-9]/g,'');
+    carmelZip(z.value,a,k);
   });
 }
-setupConditionals();
+bindZip('.zipcode','.address','.address-kana');
+bindZip('.company-zipcode','.company-address','.company-address-kana');
+bindZip('.delivery-zipcode','.delivery-address');
+bindZip('.biz-zipcode','.biz-address','.biz-address-kana');
 
-/* ===== STEP VALIDATION ===== */
-function validateStep(step){
-  const content=document.querySelector('.step-content[data-step="'+step+'"]');
-  if(!content)return true;
-  let valid=true;
+/* 全角英数→半角小文字（番地・建物など） */
+document.querySelectorAll('.caf .to-hankaku').forEach(function(el){
+  el.addEventListener('blur',function(){
+    el.value=el.value
+      .replace(/[Ａ-Ｚａ-ｚ０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-65248);})
+      .replace(/－/g,'-')
+      .replace(/[A-Z]/g,function(c){return c.toLowerCase();});
+  });
+});
 
-  // Clear previous errors
-  content.querySelectorAll('.field-error').forEach(f=>f.classList.remove('field-error'));
+/* フリガナ欄：ひらがな→カタカナ／半角カナ→全角に統一 */
+document.querySelectorAll('.caf p').forEach(function(p){
+  if(p.textContent.indexOf('フリガナ')===-1) return;
+  var inp=p.querySelector('input');
+  if(!inp) return;
+  inp.addEventListener('blur',function(){
+    var v=inp.value; if(!v) return;
+    var nv=v.normalize('NFKC').replace(/[ぁ-ん]/g,function(c){return String.fromCharCode(c.charCodeAt(0)+96);});
+    if(nv!==v) inp.value=nv;
+  });
+});
 
-  // Required inputs/selects/textareas
-  content.querySelectorAll('[required]').forEach(el=>{
-    // Skip if inside a hidden conditional panel
-    const panel=el.closest('.conditional-panel');
-    if(panel&&!panel.classList.contains('visible'))return;
+/* 住所フリガナは郵便番号で出せる範囲（市区町村まで）。番地・建物以降はユーザー記入。 */
+(function(){
+  var addr=document.querySelector('.address'),hint=document.getElementById('addr-kana-hint');
+  if(!addr||!hint) return;
+  var chk=function(){var base=addr.dataset.auto||''; hint.classList.toggle('hide', !(addr.value && addr.value!==base));};
+  addr.addEventListener('input',chk); addr.addEventListener('blur',chk);
+})();
 
-    if(el.type==='radio'){
-      const name=el.name;
-      const checked=content.querySelector('[name="'+name+'"]:checked');
-      if(!checked){
-        el.closest('.field').classList.add('field-error');
-        valid=false;
+/* チェックの選択状態を見える化 */
+document.querySelectorAll('.caf .li, .caf .caf-check').forEach(function(lbl){
+  var cb=lbl.querySelector('input[type=checkbox]');
+  if(!cb) return;
+  var sync=function(){lbl.classList.toggle('is-checked',cb.checked);};
+  cb.addEventListener('change',sync); sync();
+});
+
+/* 添付プレビュー：画像は拡大表示、データはそのまま開く */
+function cafZoom(f){
+  var url=URL.createObjectURL(f);
+  var ov=document.createElement('div');ov.className='caf-up-zoom';
+  var im=document.createElement('img');im.className='skip-lazy no-lazy';im.setAttribute('loading','eager');im.setAttribute('decoding','sync');im.setAttribute('data-skip-lazy','');im.style.filter='none';im.style.webkitFilter='none';im.src=url;im.addEventListener('click',function(e){e.stopPropagation();});
+  var x=document.createElement('button');x.type='button';x.className='caf-up-zoom-x';x.textContent='×';
+  var tip=document.createElement('div');tip.className='caf-up-zoom-tip';tip.textContent='鮮明さ・四隅の見切れ・反射をご確認ください（背景か×で閉じる）';
+  ov.appendChild(im);ov.appendChild(x);ov.appendChild(tip);
+  function close(){URL.revokeObjectURL(url);if(ov.parentNode)ov.parentNode.removeChild(ov);document.removeEventListener('keydown',esc);}
+  function esc(e){if(e.key==='Escape')close();}
+  ov.addEventListener('click',close);x.addEventListener('click',close);document.addEventListener('keydown',esc);
+  document.body.appendChild(ov);
+}
+function cafOpenData(f){var url=URL.createObjectURL(f);window.open(url,'_blank');setTimeout(function(){URL.revokeObjectURL(url);},60000);}
+
+/* 書類アップロード：選択ファイル名を表示 */
+document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
+  var store=new DataTransfer();
+  var urls=[];
+  var lbl=inp.closest('.caf-up'),nm=lbl.querySelector('.caf-up-name'),btn=lbl.querySelector('.caf-up-btn');
+  function render(){
+    urls.forEach(function(u){URL.revokeObjectURL(u);}); urls=[];
+    var prev=lbl.querySelector('.caf-up-prev');
+    if(!prev){prev=document.createElement('div');prev.className='caf-up-prev';lbl.appendChild(prev);}
+    prev.innerHTML='';
+    Array.prototype.forEach.call(store.files,function(f,idx){
+      var item=document.createElement('span');item.className='caf-up-item';
+      if(f.type.indexOf('image/')===0){
+        var u=URL.createObjectURL(f);urls.push(u);
+        var img=document.createElement('img');
+        img.className='skip-lazy no-lazy';
+        img.setAttribute('loading','eager');img.setAttribute('decoding','sync');
+        img.setAttribute('data-skip-lazy','');img.setAttribute('data-no-lazy','1');img.setAttribute('data-lazy-src','');
+        img.src=u;img.title='タップで拡大して確認';
+        img.style.filter='none';img.style.webkitFilter='none';img.style.imageRendering='auto';
+        img.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();cafZoom(f);});
+        item.appendChild(img);
+      }else{
+        var ext=(f.name.split('.').pop()||'DATA').toUpperCase();if(ext.length>4)ext='DATA';
+        var p=document.createElement('span');p.className='caf-up-pdf';p.title='タップで開いて確認';
+        p.innerHTML='<b>'+ext+'</b><span style="font-size:10px;font-weight:700;">タップで開く</span>';
+        p.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();cafOpenData(f);});
+        item.appendChild(p);
       }
-    }else if(!el.value.trim()){
-      el.closest('.field').classList.add('field-error');
-      valid=false;
-    }
-  });
-
-  // Email match (step 3)
-  if(step===3){
-    const e1=document.getElementById('email').value;
-    const e2=document.getElementById('email-confirm').value;
-    if(e1&&e2&&e1!==e2){
-      document.getElementById('email-confirm').closest('.field').classList.add('field-error');
-      document.getElementById('email-match-error').style.display='block';
-      valid=false;
-    }
+      var del=document.createElement('button');del.type='button';del.className='caf-up-del';del.textContent='×';
+      del.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();var dt=new DataTransfer();Array.prototype.forEach.call(store.files,function(ff,i){if(i!==idx)dt.items.add(ff);});store=dt;inp.files=store.files;render();});
+      item.appendChild(del);prev.appendChild(item);
+    });
+    if(store.files.length){nm.textContent=store.files.length+'件 添付中（タップで確認できます）';lbl.classList.add('has-file');if(btn)btn.textContent='続けて追加';}
+    else{nm.textContent='';lbl.classList.remove('has-file');if(btn)btn.textContent='ファイルを選択';}
   }
-
-  // Step 14 checkboxes
-  if(step===14){
-    if(!document.getElementById('agree-privacy').checked||!document.getElementById('agree-truth').checked){
-      valid=false;
-      if(!document.getElementById('agree-privacy').checked)document.getElementById('agree-privacy').closest('.check-field').style.color='var(--error)';
-      if(!document.getElementById('agree-truth').checked)document.getElementById('agree-truth').closest('.check-field').style.color='var(--error)';
-    }
-    // At least one id doc
-    const idChecked=content.querySelectorAll('[name="id_docs"]:checked');
-    if(!idChecked.length){
-      content.querySelector('[name="id_docs"]').closest('.field').classList.add('field-error');
-      valid=false;
-    }
-  }
-
-  if(!valid){
-    const firstErr=content.querySelector('.field-error');
-    if(firstErr)firstErr.scrollIntoView({behavior:'smooth',block:'center'});
-  }
-  return valid;
-}
-
-/* ===== NAVIGATION ===== */
-function goToStep(step){
-  if(step<1||step>TOTAL_STEPS)return;
-  currentStep=step;
-
-  // Show/hide step contents
-  stepContents.forEach(sc=>{
-    sc.classList.toggle('active',parseInt(sc.dataset.step)===step);
-  });
-
-  // Update indicator
-  indicator.querySelectorAll('.step-item').forEach(item=>{
-    const s=parseInt(item.dataset.step);
-    item.classList.remove('current','completed');
-    if(s<step)item.classList.add('completed');
-    else if(s===step)item.classList.add('current');
-  });
-
-  // Scroll indicator to show current
-  const curCircle=indicator.querySelector('.step-item.current');
-  if(curCircle)curCircle.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
-
-  // Update buttons
-  btnBack.style.display=step===1?'none':'';
-  if(step===TOTAL_STEPS){
-    btnNext.textContent='申込内容を送信する';
-    btnNext.className='btn btn-submit';
-  }else{
-    btnNext.innerHTML='次へ進む &rarr;';
-    btnNext.className='btn btn-primary';
-  }
-
-  // Progress
-  const pct=Math.round(((step-1)/(TOTAL_STEPS-1))*100);
-  progressPct.textContent=pct+'%';
-  progressCurrent.textContent=step;
-
-  // Scroll to top
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-
-btnNext.addEventListener('click',function(){
-  if(currentStep===TOTAL_STEPS){
-    // Final submit
-    if(!validateStep(currentStep))return;
-
-    // Honeypot check
-    if(document.getElementById('hp-field').value){console.warn('Bot detected');return;}
-
-    // Collect data
-    const fd=new FormData(form);
-    const data={};
-    for(const[key,val]of fd.entries()){
-      if(key==='website')continue;
-      if(data[key]){
-        if(Array.isArray(data[key]))data[key].push(val);
-        else data[key]=[data[key],val];
-      }else{data[key]=val;}
-    }
-    console.log('=== オートローン審査申込データ ===',data);
-
-    // Show success
-    stepContents.forEach(sc=>sc.classList.remove('active'));
-    document.getElementById('success-screen').classList.add('active');
-    bottomNav.style.display='none';
-    document.querySelector('.step-indicator-wrap').style.display='none';
-    window.scrollTo({top:0,behavior:'smooth'});
-    return;
-  }
-
-  if(!validateStep(currentStep))return;
-  goToStep(currentStep+1);
+  inp.addEventListener('change',function(){Array.prototype.forEach.call(inp.files,function(f){store.items.add(f);});inp.files=store.files;render();});
 });
 
-btnBack.addEventListener('click',function(){
-  goToStep(currentStep-1);
-});
+/* ===== 送信（有効化）===== */
+(function(){
+  var form=document.getElementById('caf-form');
+  if(!form) return;
+  var btn=form.querySelector('.submit');
 
-/* ===== INIT ===== */
-goToStep(1);
+  function visible(el){ return !el.closest('.hide'); }
+  function leadLabel(p){
+    var t='';
+    for(var i=0;i<p.childNodes.length;i++){var n=p.childNodes[i];if(n.nodeName==='BR')break;if(n.nodeType===3)t+=n.textContent;else if(n.nodeType===1&&['B','A','SMALL'].indexOf(n.tagName)>=0)t+=n.textContent;}
+    return t.replace(/[\s　]+/g,' ').replace(/[（(]\s*(必須|任意)\s*[）)]/g,'').replace(/[（(].*?自動.*?[）)]/g,'').trim();
+  }
+  function sectionOf(el){ var c=el; while(c){ var s=c.previousElementSibling; while(s){ if(s.tagName==='H3')return s.textContent.replace(/\s+/g,' ').trim(); s=s.previousElementSibling;} c=c.parentElement;} return ''; }
 
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    var errs=[], firstBad=null;
+    form.querySelectorAll('input,select,textarea').forEach(function(el){
+      if(['file','checkbox','radio','hidden'].indexOf(el.type)>=0) return;
+      if(!visible(el)) return;
+      var p=el.closest('p'); if(!p) return;
+      if(/必須/.test(p.textContent) && !String(el.value).trim()){ errs.push(leadLabel(p)+'は必須です'); if(!firstBad)firstBad=el; }
+    });
+    var consent=form.querySelectorAll('.caf-check input[type=checkbox]');
+    if(!Array.prototype.every.call(consent,function(c){return c.checked;})){ errs.push('同意項目すべてにチェックが必要です'); if(!firstBad)firstBad=form.querySelector('.caf-check'); }
+    var lic=[]; form.querySelectorAll('.caf-up').forEach(function(l){var t=l.querySelector('.caf-up-ttl'); if(t&&/運転免許証（[表裏]）/.test(t.textContent)){var f=l.querySelector('input[type=file]'); lic.push(!!(f&&f.files&&f.files.length));}});
+    if(lic.length && lic.some(function(x){return !x;})){ errs.push('運転免許証（表・裏）の添付は必須です'); if(!firstBad)firstBad=form.querySelector('.caf-up'); }
+
+    if(errs.length){
+      alert('以下をご確認ください：\n・'+errs.slice(0,10).join('\n・')+(errs.length>10?'\n・ ほか':''));
+      if(firstBad&&firstBad.scrollIntoView)firstBad.scrollIntoView({behavior:'smooth',block:'center'});
+      return;
+    }
+    if(typeof window.CARMEL_SHINSA==='undefined'){ alert('プレビュー環境のため送信は行いません（本番ページでは送信されます）。'); return; }
+
+    var fd=new FormData();
+    fd.append('action','carmel_shinsa_submit');
+    fd.append('_nonce',window.CARMEL_SHINSA.nonce);
+    var hp=form.querySelector('[name=hp]'); if(hp)fd.append('hp',hp.value);
+    form.querySelectorAll('input,select,textarea').forEach(function(el){
+      if(['file','checkbox','radio','hidden'].indexOf(el.type)>=0) return;
+      if(!visible(el)) return;
+      var v=String(el.value).trim(); if(!v) return;
+      var p=el.closest('p'); if(!p) return;
+      var sec=sectionOf(el), key=(sec?sec+' / ':'')+leadLabel(p);
+      fd.append('field[]', key+'：'+v);
+    });
+    form.querySelectorAll('p').forEach(function(p){
+      if(!p.querySelector('.li input[type=checkbox]')||!visible(p)) return;
+      var picked=[]; p.querySelectorAll('.li').forEach(function(l){var c=l.querySelector('input');if(c&&c.checked)picked.push(l.textContent.trim());});
+      if(picked.length) fd.append('field[]', leadLabel(p)+'：'+picked.join('、'));
+    });
+    fd.append('field[]','同意：プライバシー／信用情報照会／反社表明／情報提供 すべて同意');
+    form.querySelectorAll('.caf-up input[type=file]').forEach(function(f,idx){
+      if(!f.files||!f.files.length) return;
+      var ttl=(f.closest('.caf-up').querySelector('.caf-up-ttl')||{}).textContent||('書類'+idx);
+      fd.append('file_labels[]', ttl);
+      Array.prototype.forEach.call(f.files,function(file){ fd.append('upload_'+idx+'[]', file, file.name); });
+    });
+
+    btn.disabled=true; var old=btn.textContent; btn.textContent='送信中…';
+    fetch(window.CARMEL_SHINSA.ajax,{method:'POST',body:fd,credentials:'same-origin'})
+      .then(function(r){return r.json();})
+      .then(function(res){
+        if(res&&res.success){ var d=document.getElementById('caf-done'); if(d){d.classList.remove('hide');d.scrollIntoView({behavior:'smooth',block:'center'});} form.querySelectorAll('input,select,textarea,button').forEach(function(el){el.disabled=true;}); }
+        else { alert((res&&res.data&&res.data.message)||'送信に失敗しました。時間をおいて再度お試しください。'); btn.disabled=false; btn.textContent=old; }
+      })
+      .catch(function(){ alert('通信エラーが発生しました。電波の良い場所で再度お試しください。'); btn.disabled=false; btn.textContent=old; });
+  });
+})();
+</script>
+
+<!-- ===== STEP PAGINATOR ===== -->
+<script>
+/* 段階式ページネーター：既存の STEP 見出し(h3)を区切りに1ステップずつ表示 */
+(function(){
+  function init(){
+    var form=document.querySelector('.caf'); if(!form) return;
+    var kids=Array.prototype.slice.call(form.children);
+    var firstIdx=-1; for(var i=0;i<kids.length;i++){ if(kids[i].tagName==='H3'){firstIdx=i;break;} }
+    if(firstIdx<0) return;
+    var pages=[],cur=null;
+    for(var j=firstIdx;j<kids.length;j++){
+      var n=kids[j];
+      if(n.tagName==='H3'){ cur={title:(n.textContent||'').replace(/\s+/g,' ').trim(),nodes:[n]}; pages.push(cur); }
+      else if(cur){ cur.nodes.push(n); }
+    }
+    var total=pages.length; if(!total) return;
+    var anchor=kids[firstIdx];
+
+    /* Build step dots */
+    var dotsContainer=document.getElementById('caf-step-dots');
+    if(dotsContainer){
+      for(var di=0;di<total;di++){
+        if(di>0){var line=document.createElement('span');line.className='dot-line';dotsContainer.appendChild(line);}
+        var dot=document.createElement('span');dot.className='dot';dot.dataset.step=di;dot.title='STEP '+(di+1);
+        dot.addEventListener('click',(function(idx){return function(){go(idx);};})(di));
+        dotsContainer.appendChild(dot);
+      }
+    }
+
+    var head=document.createElement('div'); head.className='step-head';
+    head.innerHTML='<div class="step-meta">STEP <b id="sp-cur">1</b> / '+total+'</div><div class="step-title" id="sp-title"></div>';
+    form.insertBefore(head,anchor);
+    var pageEls=[];
+    pages.forEach(function(pg,idx){
+      var d=document.createElement('div'); d.className='step-page';
+      pg.nodes.forEach(function(n){ d.appendChild(n); });
+      var nav=document.createElement('div'); nav.className='step-nav';
+      if(idx>0){ var pv=document.createElement('button'); pv.type='button'; pv.className='sbtn sbtn-prev'; pv.textContent='← 戻る'; pv.addEventListener('click',function(){go(idx-1);}); nav.appendChild(pv); }
+      if(idx<total-1){ var nx=document.createElement('button'); nx.type='button'; nx.className='sbtn sbtn-next'; nx.textContent='次へ進む →'; nx.addEventListener('click',function(){go(idx+1);}); nav.appendChild(nx); }
+      d.appendChild(nav);
+      form.appendChild(d); pageEls.push(d);
+    });
+
+    function go(i){
+      if(i<0||i>=total) return;
+      pageEls.forEach(function(el,k){ el.style.display=(k===i)?'':'none'; });
+      var c=document.getElementById('sp-cur'); if(c)c.textContent=(i+1);
+      var t=document.getElementById('sp-title'); if(t)t.textContent=pages[i].title;
+
+      /* Update step indicator */
+      var numLabel=document.getElementById('step-num-label');
+      if(numLabel) numLabel.textContent='STEP '+(i+1)+' / '+total;
+      var nameLabel=document.getElementById('step-name-label');
+      if(nameLabel) nameLabel.textContent=pages[i].title.replace(/^STEP\d+\s*/,'');
+
+      /* Update dots */
+      if(dotsContainer){
+        var dots=dotsContainer.querySelectorAll('.dot');
+        var lines=dotsContainer.querySelectorAll('.dot-line');
+        dots.forEach(function(dot,k){
+          dot.classList.toggle('active',k===i);
+          dot.classList.toggle('done',k<i);
+        });
+        lines.forEach(function(line,k){
+          line.classList.toggle('done',k<i);
+        });
+      }
+
+      if(typeof updateProgress==='function'){ try{updateProgress();}catch(e){} }
+      try{ document.querySelector('.caf-step-bar').scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){}
+    }
+    go(0);
+  }
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',init); } else { setTimeout(init,0); }
 })();
 </script>
 </body>
