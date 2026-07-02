@@ -1,0 +1,46 @@
+<!-- =====================================================================
+  かんたんWEB審査フォーム ／ ページ直接表示 埋め込み（iframe方式）
+
+  ■ これは何？
+   審査フォームを「ページを開いたらそのまま表示」する置き方です。
+   フォーム本体は shinsa.html の1ファイルにまとまっており、この
+   埋め込みは iframe でそれを呼び出すだけ。テーマのCSSと干渉せず、
+   ID重複などの事故も起きません。
+
+  ■ 使い方（WordPress）
+   1. 審査フォームを置きたい固定ページを編集
+   2. 「+」→「カスタムHTML」ブロックを追加
+   3. この中身を丸ごと貼り付け
+   4. 下の DATA-SRC のURLを、shinsa.html を設置した場所のURLに変更
+      （例：https://carmelonline.jp/form/shinsa.html）
+   5. 公開
+
+  ■ 高さは自動調整
+   shinsa.html が親へ高さを通知するので、ステップ切替や条件分岐で
+   フォームの高さが変わっても iframe が自動で伸縮します。
+===================================================================== -->
+<div id="carmel-shinsa-embed" style="max-width:960px;margin:0 auto;">
+  <iframe
+    id="carmel-shinsa-frame"
+    data-src="https://carmelonline.jp/form/shinsa.html"
+    title="かんたんWEB審査フォーム"
+    loading="lazy"
+    scrolling="no"
+    style="width:100%;border:0;display:block;height:1400px;overflow:hidden;background:#f1f5f9;"
+  ></iframe>
+</div>
+<script>
+(function(){
+  var frame=document.getElementById('carmel-shinsa-frame');
+  if(!frame) return;
+  /* data-src を src に反映（コピペ後にURLだけ書き換えれば動く） */
+  if(frame.getAttribute('data-src')) frame.src=frame.getAttribute('data-src');
+  /* 子（shinsa.html）から届く高さ通知を受けて iframe を伸縮 */
+  window.addEventListener('message',function(e){
+    var d=e.data;
+    if(d && typeof d.carmelShinsaHeight==='number' && d.carmelShinsaHeight>200){
+      frame.style.height=d.carmelShinsaHeight+'px';
+    }
+  });
+})();
+</script>

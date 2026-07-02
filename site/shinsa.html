@@ -1110,11 +1110,32 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
       }
 
       if(typeof updateProgress==='function'){ try{updateProgress();}catch(e){} }
-      try{ document.querySelector('.caf-step-bar').scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){}
+      /* 初回ロード時はスクロールしない（ヘッダーを見せる／iframe埋め込みでも先頭から表示）。ユーザー操作での切替時のみ追従。 */
+      if(!initial){ try{ document.querySelector('.caf-step-bar').scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){} }
     }
+    var initial=true;
     go(0);
+    initial=false;
   }
   if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',init); } else { setTimeout(init,0); }
+})();
+</script>
+<script>
+/* iframe埋め込み用：親ウィンドウへ自身の高さを通知（直接埋め込み時の自動リサイズ） */
+(function(){
+  if(window.parent===window) return; /* iframe内でなければ何もしない */
+  var last=0;
+  function report(){
+    var h=Math.max(
+      document.body.scrollHeight, document.documentElement.scrollHeight,
+      document.body.offsetHeight, document.documentElement.offsetHeight
+    );
+    if(h && h!==last){ last=h; try{ window.parent.postMessage({carmelShinsaHeight:h}, '*'); }catch(e){} }
+  }
+  window.addEventListener('load',report);
+  window.addEventListener('resize',report);
+  if(window.ResizeObserver){ try{ new ResizeObserver(report).observe(document.body); }catch(e){} }
+  setInterval(report,600); /* ステップ切替や条件分岐の表示変化にも追従 */
 })();
 </script>
 </body>

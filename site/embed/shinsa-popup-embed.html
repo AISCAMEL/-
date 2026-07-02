@@ -1,0 +1,117 @@
+<!-- =====================================================================
+  かんたんWEB審査フォーム ／ ボタン→ポップアップ表示 埋め込み
+
+  ■ これは何？
+   ページにはボタンだけを置き、押すとフォームが画面の上に
+   ポンと重なって開く（モーダル／ポップアップ）置き方です。
+   トップページやLPなど、いろんなページから同じフォームを
+   呼び出したいときに便利です。
+
+  ■ 使い方（WordPress）
+   1. ボタンを置きたい固定ページ／LPを編集
+   2. 「+」→「カスタムHTML」ブロックを追加
+   3. この中身を丸ごと貼り付け
+   4. 下の DATA-SRC のURLを、shinsa.html を設置した場所のURLに変更
+      （例：https://carmelonline.jp/form/shinsa.html）
+   5. 必要ならボタンの文言（かんたんWEB審査を始める）を変更
+   6. 公開
+
+  ■ スタイルはすべて #carmel-shinsa-pop 配下にスコープ済み。
+     テーマや他のプラグインと干渉しません。
+===================================================================== -->
+<div id="carmel-shinsa-pop">
+  <style>
+    #carmel-shinsa-pop{--navy:#1a2744;--accent:#2563eb;font-family:'Noto Sans JP','Hiragino Kaku Gothic ProN',Meiryo,sans-serif;text-align:center;}
+    #carmel-shinsa-pop .csp-open{
+      display:inline-flex;align-items:center;justify-content:center;gap:8px;
+      min-width:280px;min-height:60px;padding:0 28px;border:0;cursor:pointer;
+      border-radius:999px;background:linear-gradient(135deg,#2563eb,#1d4ed8);
+      color:#fff;font-size:17px;font-weight:800;letter-spacing:.02em;
+      box-shadow:0 10px 24px rgba(37,99,235,.32);transition:transform .15s,box-shadow .15s;
+    }
+    #carmel-shinsa-pop .csp-open:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(37,99,235,.4);}
+    #carmel-shinsa-pop .csp-open::before{content:'📝';font-size:20px;}
+    #carmel-shinsa-pop .csp-note{margin:10px 0 0;font-size:12px;color:#64748b;}
+
+    /* オーバーレイ */
+    .csp-overlay{
+      position:fixed;inset:0;z-index:99999;display:none;
+      background:rgba(15,23,42,.72);backdrop-filter:blur(2px);
+      padding:24px 12px;overflow:auto;
+    }
+    .csp-overlay.open{display:flex;align-items:flex-start;justify-content:center;}
+    .csp-modal{
+      position:relative;width:100%;max-width:860px;margin:auto;
+      background:#f1f5f9;border-radius:16px;overflow:hidden;
+      box-shadow:0 30px 80px rgba(0,0,0,.45);
+      animation:cspUp .28s cubic-bezier(.2,.9,.3,1);
+    }
+    @keyframes cspUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:none;}}
+    .csp-bar{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:12px 16px;background:#1a2744;color:#fff;
+    }
+    .csp-bar b{font-size:15px;font-weight:700;letter-spacing:.03em;}
+    .csp-close{
+      border:0;background:rgba(255,255,255,.15);color:#fff;cursor:pointer;
+      width:36px;height:36px;border-radius:50%;font-size:20px;line-height:1;
+      transition:background .15s;
+    }
+    .csp-close:hover{background:rgba(255,255,255,.3);}
+    .csp-modal iframe{
+      width:100%;border:0;display:block;
+      height:78vh;background:#f1f5f9;
+    }
+    @media(max-width:600px){
+      #carmel-shinsa-pop .csp-open{width:100%;min-width:0;font-size:15px;}
+      .csp-overlay{padding:0;}
+      .csp-modal{max-width:100%;height:100%;border-radius:0;margin:0;display:flex;flex-direction:column;}
+      .csp-modal iframe{height:100%;flex:1;}
+    }
+  </style>
+
+  <!-- ボタン -->
+  <button type="button" class="csp-open" id="csp-open-btn">かんたんWEB審査を始める</button>
+  <p class="csp-note">最短即日回答／来店不要／秘密厳守</p>
+
+  <!-- ポップアップ本体 -->
+  <div class="csp-overlay" id="csp-overlay" role="dialog" aria-modal="true" aria-label="かんたんWEB審査フォーム">
+    <div class="csp-modal">
+      <div class="csp-bar">
+        <b>かんたんWEB審査</b>
+        <button type="button" class="csp-close" id="csp-close-btn" aria-label="閉じる">×</button>
+      </div>
+      <iframe
+        id="csp-frame"
+        data-src="https://carmelonline.jp/form/shinsa.html"
+        title="かんたんWEB審査フォーム"
+        loading="lazy"
+      ></iframe>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var root=document.getElementById('carmel-shinsa-pop');
+  if(!root) return;
+  var openBtn=root.querySelector('#csp-open-btn');
+  var closeBtn=root.querySelector('#csp-close-btn');
+  var overlay=root.querySelector('#csp-overlay');
+  var frame=root.querySelector('#csp-frame');
+  var loaded=false;
+
+  function open(){
+    if(!loaded){ frame.src=frame.getAttribute('data-src'); loaded=true; } /* 初回クリックで読み込み */
+    overlay.classList.add('open');
+    document.body.style.overflow='hidden'; /* 背景スクロール固定 */
+  }
+  function close(){
+    overlay.classList.remove('open');
+    document.body.style.overflow='';
+  }
+  openBtn.addEventListener('click',open);
+  closeBtn.addEventListener('click',close);
+  overlay.addEventListener('click',function(e){ if(e.target===overlay) close(); }); /* 背景クリックで閉じる */
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape' && overlay.classList.contains('open')) close(); });
+})();
+</script>
