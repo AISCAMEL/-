@@ -30,11 +30,12 @@ if ( ! function_exists( 'carmelx_cta_bar' ) ) {
 		echo '<div class="carmel-cta-bar">';
 		if ( '' !== $tel ) {
 			$teln = preg_replace( '/[^0-9+]/', '', $tel );
-			echo '<a class="carmel-cta-bar__btn carmel-cta-bar__tel" href="tel:' . esc_attr( $teln ) . '"><span class="carmel-cta-bar__ico">📞</span><span>電話で問い合わせ</span></a>';
+			echo '<a class="carmel-cta-bar__btn carmel-cta-bar__tel" href="tel:' . esc_attr( $teln ) . '"><span class="carmel-cta-bar__ico">📞</span><span>電話</span></a>';
 		}
 		if ( '' !== $line ) {
-			echo '<a class="carmel-cta-bar__btn carmel-cta-bar__line" href="' . esc_url( $line ) . '" target="_blank" rel="noopener"><span class="carmel-cta-bar__ico">💬</span><span>LINEで相談</span></a>';
+			echo '<a class="carmel-cta-bar__btn carmel-cta-bar__line" href="' . esc_url( $line ) . '" target="_blank" rel="noopener"><span class="carmel-cta-bar__ico">💬</span><span>LINE相談</span></a>';
 		}
+		echo '<a class="carmel-cta-bar__btn carmel-cta-bar__shinsa" href="https://carmelonline.jp/?p=7348" target="_blank" rel="noopener"><span class="carmel-cta-bar__ico">📋</span><span>審査申込（無料）</span></a>';
 		echo '</div>';
 	}
 	add_action( 'wp_footer', 'carmelx_cta_bar' );
@@ -46,9 +47,10 @@ if ( ! function_exists( 'carmelx_cta_bar' ) ) {
 		.carmel-cta-bar__btn:active{filter:brightness(.95);}
 		.carmel-cta-bar__tel{background:#f5a623;}
 		.carmel-cta-bar__line{background:#06c755;}
+		.carmel-cta-bar__shinsa{background:#e8500a;}
 		.carmel-cta-bar__ico{font-size:18px;}
 		@media(min-width:783px){.carmel-cta-bar{display:none;}}
-		@media(max-width:782px){body.single-portfolio{padding-bottom:58px !important;}}
+		@media(max-width:782px){body.single-portfolio{padding-bottom:64px !important;}}
 		</style>';
 	} );
 }
