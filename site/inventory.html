@@ -124,11 +124,39 @@
   background: rgba(255,255,255,.9); cursor: pointer; font-size: 18px;
   display: grid; place-items: center;
 }
+/* Gallery */
+.modal-gallery { position: relative; }
 .modal-img {
   width: 100%; aspect-ratio: 16/9; background: var(--line);
   display: grid; place-items: center; font-size: 72px; color: var(--muted);
-  border-radius: 18px 18px 0 0;
+  border-radius: 18px 18px 0 0; position: relative; overflow: hidden;
 }
+.gallery-label {
+  position: absolute; bottom: 12px; left: 12px; padding: 4px 12px;
+  background: rgba(14,27,51,.7); color: #fff; border-radius: 8px;
+  font-size: 12px; font-weight: 700; backdrop-filter: blur(4px);
+}
+.gallery-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 36px; height: 36px; border-radius: 50%; border: none;
+  background: rgba(255,255,255,.85); cursor: pointer; font-size: 16px;
+  display: grid; place-items: center; backdrop-filter: blur(4px);
+  transition: all .15s; z-index: 1;
+}
+.gallery-nav:hover { background: #fff; transform: translateY(-50%) scale(1.1); }
+.gallery-nav.prev { left: 12px; }
+.gallery-nav.next { right: 12px; }
+.gallery-thumbs {
+  display: flex; gap: 6px; padding: 8px 12px; background: var(--bg);
+  overflow-x: auto;
+}
+.gallery-thumb {
+  width: 72px; height: 48px; border-radius: 8px; border: 2px solid transparent;
+  background: var(--line); display: grid; place-items: center; font-size: 22px;
+  cursor: pointer; flex-shrink: 0; transition: all .15s; color: var(--muted);
+}
+.gallery-thumb.active { border-color: var(--gold); background: #fff; }
+.gallery-thumb:hover { border-color: var(--navy); }
 .modal-body { padding: 28px; }
 .modal-body .car-maker { font-size: 13px; color: var(--gold); font-weight: 700; letter-spacing: .06em; }
 .modal-body h2 { font-size: 24px; margin: 4px 0 16px; font-weight: 900; }
@@ -274,6 +302,44 @@
 }
 .staff-contact .btn { font-size: 13px; padding: 10px 18px; }
 
+/* Similar cars */
+.similar-section { margin: 28px 0 0; }
+.similar-section h3 {
+  font-size: 16px; font-weight: 800; margin: 0 0 14px; color: var(--navy);
+  display: flex; align-items: center; gap: 8px;
+}
+.similar-scroll {
+  display: flex; gap: 14px; overflow-x: auto; padding-bottom: 8px;
+}
+.similar-card {
+  flex-shrink: 0; width: 200px; background: var(--bg); border: 1px solid var(--line);
+  border-radius: 12px; overflow: hidden; cursor: pointer; transition: all .15s;
+}
+.similar-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.similar-card .sc-img {
+  width: 100%; aspect-ratio: 16/10; background: var(--line);
+  display: grid; place-items: center; font-size: 32px; color: var(--muted);
+}
+.similar-card .sc-body { padding: 10px 12px; }
+.similar-card .sc-name { font-size: 13px; font-weight: 700; margin-bottom: 4px; line-height: 1.3; }
+.similar-card .sc-price { font-size: 15px; font-weight: 900; color: var(--navy); }
+
+/* Pagination */
+.inv-pager {
+  display: flex; justify-content: center; align-items: center; gap: 6px;
+  margin-top: 32px; padding-bottom: 20px;
+}
+.inv-pager button {
+  min-width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--white); cursor: pointer; font-size: 14px; font-weight: 700;
+  color: var(--muted); font-family: var(--font); transition: all .15s;
+  display: grid; place-items: center;
+}
+.inv-pager button:hover { border-color: var(--navy); color: var(--navy); }
+.inv-pager button.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+.inv-pager button:disabled { opacity: .4; cursor: default; }
+.inv-pager .pager-info { font-size: 13px; color: var(--muted); margin: 0 8px; }
+
 /* Empty state */
 .inv-empty {
   text-align: center; padding: 60px 20px; color: var(--muted);
@@ -308,6 +374,9 @@
   .staff-section { flex-direction: column; text-align: center; }
   .staff-contact { width: 100%; }
   .staff-contact .btn { flex: 1; }
+  .similar-card { width: 160px; }
+  .gallery-thumbs { padding: 6px 8px; }
+  .gallery-thumb { width: 56px; height: 38px; font-size: 18px; }
 }
 </style>
 </head>
@@ -452,6 +521,8 @@
         <div class="ico">🔍</div>
         <p>条件に一致する車両が見つかりませんでした。<br />条件を変更して再検索してください。</p>
       </div>
+
+      <div class="inv-pager" id="pager"></div>
     </main>
   </div>
 </div>
@@ -460,7 +531,7 @@
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal" id="modalContent">
     <button class="modal-close" id="modalClose">✕</button>
-    <div class="modal-img" id="modalImg"></div>
+    <div class="modal-gallery" id="modalGallery"></div>
     <div class="modal-body" id="modalBody"></div>
   </div>
 </div>
@@ -500,6 +571,18 @@
     "軽自動車": "🚗", "コンパクト": "🚙", "セダン": "🚘", "ミニバン": "🚐",
     "SUV": "🚙", "ワゴン": "🚗", "クーペ": "🏎️", "輸入車": "🚘"
   };
+
+  var GALLERY_VIEWS = [
+    { label: "フロント", icon: "🚗" },
+    { label: "サイド", icon: "🚙" },
+    { label: "リア", icon: "🔙" },
+    { label: "インテリア", icon: "🪑" },
+    { label: "メーター", icon: "🎛️" },
+    { label: "エンジン", icon: "⚙️" },
+  ];
+
+  var PER_PAGE = 12;
+  var currentPage = 1;
 
   var EQUIP_DEFS = [
     { key: "navi", icon: "📱", label: "ナビ" },
@@ -615,17 +698,26 @@
   }
 
   function renderGrid() {
-    var cars = sortCars(filterCars());
+    var allCars = sortCars(filterCars());
     var grid = document.getElementById("carGrid");
     var empty = document.getElementById("emptyState");
-    document.getElementById("resultCount").textContent = cars.length;
+    var pager = document.getElementById("pager");
+    document.getElementById("resultCount").textContent = allCars.length;
 
-    if (!cars.length) {
+    if (!allCars.length) {
       grid.innerHTML = "";
+      pager.innerHTML = "";
       empty.style.display = "block";
       return;
     }
     empty.style.display = "none";
+
+    var totalPages = Math.ceil(allCars.length / PER_PAGE);
+    if (currentPage > totalPages) currentPage = totalPages;
+    var start = (currentPage - 1) * PER_PAGE;
+    var cars = allCars.slice(start, start + PER_PAGE);
+
+    renderPager(totalPages, allCars.length);
     var favs = getFavs();
 
     grid.innerHTML = cars.map(function (c) {
@@ -660,6 +752,28 @@
         '</div></div>';
     }).join("");
   }
+
+  function renderPager(totalPages, totalCount) {
+    var pager = document.getElementById("pager");
+    if (totalPages <= 1) { pager.innerHTML = ""; return; }
+    var html = '<button class="pg-prev" ' + (currentPage <= 1 ? 'disabled' : '') + '>&lt;</button>';
+    for (var p = 1; p <= totalPages; p++) {
+      html += '<button class="' + (p === currentPage ? 'active' : '') + '" data-page="' + p + '">' + p + '</button>';
+    }
+    html += '<button class="pg-next" ' + (currentPage >= totalPages ? 'disabled' : '') + '>&gt;</button>';
+    html += '<span class="pager-info">' + totalCount + '台中 ' + ((currentPage - 1) * PER_PAGE + 1) + '〜' + Math.min(currentPage * PER_PAGE, totalCount) + '台</span>';
+    pager.innerHTML = html;
+  }
+
+  document.getElementById("pager").addEventListener("click", function (e) {
+    var btn = e.target.closest("button");
+    if (!btn || btn.disabled) return;
+    if (btn.classList.contains("pg-prev")) currentPage--;
+    else if (btn.classList.contains("pg-next")) currentPage++;
+    else if (btn.getAttribute("data-page")) currentPage = Number(btn.getAttribute("data-page"));
+    renderGrid();
+    document.querySelector(".inv-toolbar").scrollIntoView({ behavior: "smooth" });
+  });
 
   // Fav toggle
   document.getElementById("carGrid").addEventListener("click", function (e) {
@@ -711,12 +825,77 @@
       '</div></div>';
   }
 
+  var galleryIdx = 0;
+  function renderGallery(c, emoji) {
+    galleryIdx = 0;
+    var gallery = document.getElementById("modalGallery");
+    var mainIcons = GALLERY_VIEWS.map(function (v) { return v.icon; });
+    mainIcons[0] = emoji;
+
+    function updateMain() {
+      var view = GALLERY_VIEWS[galleryIdx];
+      gallery.querySelector(".modal-img").innerHTML =
+        '<span style="font-size:96px;">' + mainIcons[galleryIdx] + '</span>' +
+        '<span class="gallery-label">' + view.label + ' (' + (galleryIdx + 1) + '/' + GALLERY_VIEWS.length + ')</span>';
+      var thumbs = gallery.querySelectorAll(".gallery-thumb");
+      for (var i = 0; i < thumbs.length; i++) {
+        thumbs[i].classList.toggle("active", i === galleryIdx);
+      }
+    }
+
+    gallery.innerHTML =
+      '<div class="modal-img"></div>' +
+      '<button class="gallery-nav prev">&lt;</button>' +
+      '<button class="gallery-nav next">&gt;</button>' +
+      '<div class="gallery-thumbs">' +
+      GALLERY_VIEWS.map(function (v, i) {
+        return '<div class="gallery-thumb' + (i === 0 ? ' active' : '') + '" data-idx="' + i + '">' + (i === 0 ? emoji : v.icon) + '</div>';
+      }).join("") +
+      '</div>';
+
+    updateMain();
+
+    gallery.querySelector(".prev").addEventListener("click", function () {
+      galleryIdx = (galleryIdx - 1 + GALLERY_VIEWS.length) % GALLERY_VIEWS.length;
+      updateMain();
+    });
+    gallery.querySelector(".next").addEventListener("click", function () {
+      galleryIdx = (galleryIdx + 1) % GALLERY_VIEWS.length;
+      updateMain();
+    });
+    gallery.querySelector(".gallery-thumbs").addEventListener("click", function (e) {
+      var th = e.target.closest(".gallery-thumb");
+      if (!th) return;
+      galleryIdx = Number(th.getAttribute("data-idx"));
+      updateMain();
+    });
+  }
+
+  function renderSimilar(c) {
+    var similar = CARS.filter(function (o) {
+      return o.id !== c.id && (o.body === c.body || o.maker === c.maker);
+    }).slice(0, 5);
+    if (!similar.length) return '';
+    var html = '<div class="similar-section"><h3>🚘 似ている車両</h3><div class="similar-scroll">';
+    similar.forEach(function (s) {
+      var em = EMOJI_MAP[s.body] || "🚗";
+      html += '<div class="similar-card" onclick="showDetail(' + s.id + ')">' +
+        '<div class="sc-img">' + em + '</div>' +
+        '<div class="sc-body">' +
+          '<div class="sc-name">' + s.maker + ' ' + s.name.split(' ')[0] + '</div>' +
+          '<div class="sc-price">' + manyen(s.price) + '</div>' +
+        '</div></div>';
+    });
+    html += '</div></div>';
+    return html;
+  }
+
   // Detail modal
   window.showDetail = function (id) {
     var c = CARS.find(function (x) { return x.id === id; });
     if (!c) return;
     var emoji = EMOJI_MAP[c.body] || "🚗";
-    document.getElementById("modalImg").innerHTML = '<span style="font-size:96px;">' + emoji + '</span>';
+    renderGallery(c, emoji);
     document.getElementById("modalBody").innerHTML =
       '<div class="car-maker">' + c.maker + '</div>' +
       '<h2>' + c.name + '</h2>' +
@@ -775,7 +954,8 @@
           '<a class="btn btn-gold btn-sm" href="tel:050-1722-3365">電話する</a>' +
           '<a class="btn btn-navy btn-sm" href="login.html">問い合わせ</a>' +
         '</div>' +
-      '</div>';
+      '</div>' +
+      renderSimilar(c);
     document.getElementById("modalOverlay").classList.add("open");
     document.body.style.overflow = "hidden";
     initLoanSim(c.price);
@@ -844,10 +1024,11 @@
   });
 
   // Filters
+  function resetPageAndRender() { currentPage = 1; renderGrid(); }
   var filterEls = document.querySelectorAll("#fKeyword,#fMaker,#fBody,#fPriceMin,#fPriceMax,#fYearMin,#fYearMax,#fMileage,#fNew,#fHot,#sortBy");
   for (var i = 0; i < filterEls.length; i++) {
-    filterEls[i].addEventListener("change", renderGrid);
-    filterEls[i].addEventListener("input", renderGrid);
+    filterEls[i].addEventListener("change", resetPageAndRender);
+    filterEls[i].addEventListener("input", resetPageAndRender);
   }
 
   document.getElementById("filterReset").addEventListener("click", function () {
@@ -862,6 +1043,7 @@
     document.getElementById("fNew").checked = false;
     document.getElementById("fHot").checked = false;
     document.getElementById("sortBy").value = "new";
+    currentPage = 1;
     renderGrid();
   });
 
