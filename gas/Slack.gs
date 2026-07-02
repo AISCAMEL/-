@@ -8,6 +8,7 @@
  * 【Slackからの回答】チャンネルで次のスラッシュコマンドを実行：
  *   /相場回答 QT-4000 1200000        … 相場見積りに金額を回答（マイページに反映）
  *   /相場回答 QT-4000 1200000 コメント … 任意でコメント
+ *   /領収書 OD-2041                   … 領収書PDFを発行しURLを返す
  * GASのウェブアプリURLを Slack App の「Slash Commands」の Request URL に設定してください。
  */
 
@@ -37,6 +38,7 @@ function isSlackCommand_(e) {
  *   /相場回答 QT-4000 1200000 [コメント]   … 相場見積りに回答→マイページ反映＋メール
  *   /進捗 OD-2041 落札成立                  … 注文/出品のステータス更新
  *   /ローン LN-5001 承認                     … ローン審査ステータス更新
+ *   /領収書 OD-2041                          … 領収書PDF発行→ダウンロードURL
  * 返り値はSlackに表示するテキスト（ephemeral）。
  */
 function handleSlackCommand_(e) {
@@ -73,7 +75,14 @@ function handleSlackCommand_(e) {
     return slackText_(ul.ok ? "✅ ローン更新：" + id + " → " + lstatus : "⚠️ " + ul.error);
   }
 
-  return slackText_("対応コマンド： `/相場回答` `/進捗` `/ローン`");
+  if (cmd === "領収書" || cmd === "receipt") {
+    if (!/^(OD|SL)-/.test(id)) return slackText_("使い方： `/領収書 OD-2041`（OD-/SL-）");
+    var rc = issueReceipt_(id);
+    if (!rc.ok) return slackText_("⚠️ " + rc.error);
+    return slackText_("✅ 領収書を発行しました（" + id + "）\nPDF：" + rc.url);
+  }
+
+  return slackText_("対応コマンド： `/相場回答` `/進捗` `/ローン` `/領収書`");
 }
 
 /* シート群からID一致行を探し、ステータス列(3列目)を更新 → 顧客通知 */

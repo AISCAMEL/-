@@ -47,6 +47,8 @@ function doPost(e) {
       case "contact":  result = handleContact_(data);  break;
       case "quote":    result = handleQuote_(data);    break;
       case "referral": result = handleReferral_(data); break;
+      case "contract": result = handleContract_(data); break;
+      case "chat":     result = handleChat_(data);     break;
       default:         result = { ok: false, error: "unknown type" };
     }
     return json_(result);
@@ -393,6 +395,24 @@ function handleContact_(d) {
   sh.appendRow([new Date(), d.name || "", d.email || "", d.phone || "", d.message || "", "未対応"]);
   notifyStaff_("✉️ お問い合わせ\nお名前：" + (d.name || "-") + "\n内容：" + (d.message || "-"));
   return { ok: true };
+}
+
+/* ---------- 契約書PDF生成 ---------- */
+function handleContract_(d) {
+  var cfg = getConfig();
+  var orderId = d.orderId || d.id || "CT-" + Utilities.formatDate(new Date(), "Asia/Tokyo", "yyyyMMddHHmmss");
+
+  var pdfUrl = "";
+  try { pdfUrl = makeContractPdf_(orderId, d); } catch (e) { return { ok: false, error: "PDF生成失敗:" + e }; }
+
+  notifyStaff_(
+    "📄 契約書PDF生成 " + orderId + "\n" +
+    "お名前：" + (d.name || "-") + "\n" +
+    "車両：" + (d.car || "-") + "\n" +
+    "PDF：" + (pdfUrl || "-")
+  );
+
+  return { ok: true, id: orderId, pdf: pdfUrl };
 }
 
 /* ---------- 相場見積り（買取/仕入れ）受付 ---------- */

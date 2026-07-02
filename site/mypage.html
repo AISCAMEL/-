@@ -314,6 +314,18 @@
               <div class="line"><span>月々のお支払い（目安）</span><span id="lMonthly" style="font-weight:800;">¥0</span></div>
               <div class="line"><span>支払総額／うち利息</span><span id="lTotal">—</span></div>
               <div class="grand"><span class="lbl">AI一次判定（目安）</span><span class="val" id="lGrade" style="font-size:22px;">—</span></div>
+              <div id="loanViz" style="margin-top:16px;">
+                <div class="line"><span>ボーナス加算（年2回）</span>
+                  <select id="lBonus" style="width:auto;padding:4px 8px;font-size:13px;">
+                    <option value="0" selected>なし</option>
+                    <option value="50000">¥50,000</option>
+                    <option value="100000">¥100,000</option>
+                    <option value="150000">¥150,000</option>
+                    <option value="200000">¥200,000</option>
+                  </select>
+                </div>
+                <div id="loanSchedule" style="margin-top:12px;"></div>
+              </div>
             </div>
 
             <button class="btn btn-gold btn-block mt-30" type="submit">この内容でローンを仮申込する</button>
@@ -575,18 +587,105 @@
     return s >= 80 ? "A（即日審査へ）" : s >= 60 ? "B（翌営業日）" : s >= 40 ? "C（要確認）" : "D（要相談）";
   }
   function renderLoan() {
-    var amt = document.getElementById("lAmt").value;
-    var term = document.getElementById("lTerm").value;
-    var rate = document.getElementById("lRate").value;
+    var amt = Number(document.getElementById("lAmt").value);
+    var term = Number(document.getElementById("lTerm").value);
+    var rate = Number(document.getElementById("lRate").value);
+    var bonus = Number(document.getElementById("lBonus").value);
     var r = AucSim.loanMonthly(amt, rate, term);
     document.getElementById("lAmtOut").textContent = AucSim.yen(amt);
-    document.getElementById("lMonthly").textContent = AucSim.yen(r.monthly) + " /月";
+
+    // Bonus recalculation
+    if (bonus > 0 && term > 0) {
+      var years = Math.ceil(term / 12);
+      var bonusMonths = 0;
+      for (var mi = 1; mi <= term; mi++) {
+        var calMonth = ((mi - 1) % 12) + 1;
+        if (calMonth === 7 || calMonth === 12) bonusMonths++;
+      }
+      var totalBonusPart = bonus * bonusMonths;
+      var remainPrincipal = amt - totalBonusPart;
+      if (remainPrincipal < 0) remainPrincipal = 0;
+      var normalMonths = term - bonusMonths;
+      var rr = rate / 100 / 12;
+      // Recalculate: total interest stays similar, but payments are redistributed
+      var totalInterest = r.total - amt;
+      var adjustedTotal = amt + totalInterest;
+      var regularPayment = normalMonths > 0 ? Math.round((adjustedTotal - bonus * bonusMonths) / normalMonths) : 0;
+      var bonusPayment = regularPayment + bonus;
+      document.getElementById("lMonthly").innerHTML = AucSim.yen(regularPayment) + " /月"
+        + '<span style="font-size:12px;color:var(--gold);display:block;">ボーナス月: ' + AucSim.yen(bonusPayment) + '（7月・12月）</span>';
+    } else {
+      document.getElementById("lMonthly").textContent = AucSim.yen(r.monthly) + " /月";
+    }
+
     document.getElementById("lTotal").textContent = AucSim.yen(r.total) + "（利息 " + AucSim.yen(r.interest) + "）";
     document.getElementById("lGrade").textContent = loanGrade();
+
+    // Render bar chart (principal vs interest per year)
+    var schedEl = document.getElementById("loanSchedule");
+    if (term > 0 && amt > 0) {
+      var rMonth = rate / 100 / 12;
+      var years = Math.ceil(term / 12);
+      var yearData = [];
+      var balance = amt;
+      var maxPayment = 0;
+      for (var y = 0; y < years; y++) {
+        var yPrincipal = 0;
+        var yInterest = 0;
+        var startMonth = y * 12 + 1;
+        var endMonth = Math.min((y + 1) * 12, term);
+        for (var mo = startMonth; mo <= endMonth; mo++) {
+          var intPart = rMonth > 0 ? Math.round(balance * rMonth) : 0;
+          var prinPart = r.monthly - intPart;
+          if (prinPart > balance) prinPart = balance;
+          yInterest += intPart;
+          yPrincipal += prinPart;
+          balance = Math.max(0, balance - prinPart);
+        }
+        yearData.push({ principal: yPrincipal, interest: yInterest });
+        if (yPrincipal + yInterest > maxPayment) maxPayment = yPrincipal + yInterest;
+      }
+
+      var html = '<div class="loan-bar-legend"><span class="leg-principal">元金</span><span class="leg-interest">利息</span></div>';
+      html += '<div class="loan-bar-chart">';
+      for (var yi = 0; yi < yearData.length; yi++) {
+        var d = yearData[yi];
+        var totalH = maxPayment > 0 ? ((d.principal + d.interest) / maxPayment * 100) : 0;
+        var intH = (d.principal + d.interest) > 0 ? (d.interest / (d.principal + d.interest) * totalH) : 0;
+        var prinH = totalH - intH;
+        html += '<div class="loan-bar" title="' + (yi + 1) + '年目: 元金' + yen(d.principal) + ' 利息' + yen(d.interest) + '">'
+          + '<div class="interest" style="height:' + intH + '%"></div>'
+          + '<div class="principal" style="height:' + prinH + '%"></div>'
+          + '</div>';
+      }
+      html += '</div>';
+      html += '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);">'
+        + '<span>1年目</span><span>' + years + '年目</span></div>';
+
+      // Total breakdown stacked bar
+      var totalPrin = amt;
+      var totalInt = r.interest;
+      var prinPct = r.total > 0 ? (totalPrin / r.total * 100) : 100;
+      var intPct = 100 - prinPct;
+      html += '<div style="margin-top:12px;font-size:12px;color:var(--muted);">総額内訳</div>';
+      html += '<div style="display:flex;height:18px;border-radius:4px;overflow:hidden;margin-top:4px;">'
+        + '<div style="width:' + prinPct + '%;background:var(--gold);" title="元金 ' + yen(totalPrin) + '"></div>'
+        + '<div style="width:' + intPct + '%;background:var(--muted);opacity:0.5;" title="利息 ' + yen(totalInt) + '"></div>'
+        + '</div>';
+      html += '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:2px;">'
+        + '<span>元金 ' + yen(totalPrin) + '（' + Math.round(prinPct) + '%）</span>'
+        + '<span>利息 ' + yen(totalInt) + '（' + Math.round(intPct) + '%）</span></div>';
+
+      schedEl.innerHTML = html;
+    } else {
+      schedEl.innerHTML = "";
+    }
+
     return r;
   }
   document.getElementById("loanForm").addEventListener("input", renderLoan);
   document.getElementById("loanForm").addEventListener("change", renderLoan);
+  document.getElementById("lBonus").addEventListener("change", renderLoan);
   document.getElementById("loanForm").addEventListener("submit", function (e) {
     e.preventDefault();
     renderLoan();
@@ -736,5 +835,6 @@
   renderCoupons();
   syncQuoteAnswers();
 </script>
+<script src="assets/js/chatbot.js"></script>
 </body>
 </html>

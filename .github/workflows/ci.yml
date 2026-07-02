@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install test dependencies
+        run: cd site/tests && npm install
+
+      - name: Run tests
+        run: cd site/tests && node verify.js
+
+      - name: Validate HTML files
+        run: |
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
+          const dir = 'site';
+          const files = fs.readdirSync(dir).filter(f => f.endsWith('.html'));
+          let errors = 0;
+          for (const f of files) {
+            const html = fs.readFileSync(path.join(dir, f), 'utf8');
+            if (!/<html[\s>]/i.test(html) && !/<head[\s>]/i.test(html)) {
+              console.error('WARN: ' + f + ' may not be a complete HTML document');
+            }
+            const opens = (html.match(/<[a-z][a-z0-9]*[\s>]/gi) || []).length;
+            if (opens === 0) {
+              console.error('ERROR: ' + f + ' has no HTML tags');
+              errors++;
+            } else {
+              console.log('OK: ' + f + ' (' + opens + ' tags)');
+            }
+          }
+          if (errors) process.exit(1);
+          "
+
+      - name: Validate JS syntax
+        run: |
+          for f in site/assets/js/*.js; do
+            node -c "$f" || exit 1
+          done
