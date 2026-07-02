@@ -37,6 +37,85 @@
   --ease-bounce: cubic-bezier(.34, 1.56, .64, 1);
 }
 
+/* ========== Dark Mode ========== */
+[data-theme="dark"] {
+  --ink: #e0e6ef;
+  --muted: #8a95a8;
+  --line: #2a3548;
+  --bg: #0c1220;
+  --white: #141e30;
+  --green-light: #122b1f;
+  --blue-light: #121e33;
+  --purple-light: #1a1530;
+  --gold-light: #2a2418;
+  --shadow: 0 4px 20px rgba(0, 0, 0, .25);
+  --shadow-md: 0 8px 30px rgba(0, 0, 0, .35);
+  --shadow-lg: 0 20px 50px rgba(0, 0, 0, .45);
+  --shadow-gold: 0 8px 24px rgba(201,161,74,.2);
+}
+[data-theme="dark"] body { color: var(--ink); }
+[data-theme="dark"] .card,
+[data-theme="dark"] .step,
+[data-theme="dark"] .price,
+[data-theme="dark"] .panel,
+[data-theme="dark"] .stat,
+[data-theme="dark"] .qa,
+[data-theme="dark"] .rank-card,
+[data-theme="dark"] .coupon-card,
+[data-theme="dark"] .mp-side,
+[data-theme="dark"] .fee-table,
+[data-theme="dark"] .company-table { background: var(--white); border-color: var(--line); }
+[data-theme="dark"] .fee-row:hover,
+[data-theme="dark"] .qa summary:hover { background: rgba(255,255,255,.03); }
+[data-theme="dark"] .result { background: #1a2640; color: var(--ink); }
+[data-theme="dark"] .result .line { border-color: var(--line); }
+[data-theme="dark"] .auth-wrap { background: radial-gradient(ellipse 600px 400px at 30% 20%, rgba(201,161,74,.04), transparent), var(--bg); }
+[data-theme="dark"] .auth-card { background: var(--white); }
+[data-theme="dark"] .auth-card .field input,
+[data-theme="dark"] .auth-card .field select { background: #0c1220; color: var(--ink); border-color: var(--line); }
+[data-theme="dark"] .btn-google { background: var(--white); color: var(--ink); border-color: var(--line); }
+[data-theme="dark"] .tabs { background: var(--bg); }
+[data-theme="dark"] .tabs button { color: var(--muted); }
+[data-theme="dark"] .tabs button.active { background: var(--white); color: var(--ink); }
+[data-theme="dark"] .contact-form input,
+[data-theme="dark"] .contact-form textarea { background: var(--white); color: var(--ink); border-color: var(--line); }
+[data-theme="dark"] .company-table th { background: #1a2640; }
+[data-theme="dark"] .st-bid { background: #2a2418; color: #e0bd6a; }
+[data-theme="dark"] .st-won { background: var(--green-light); color: #5fe0a8; }
+[data-theme="dark"] .st-ship { background: var(--blue-light); color: #6aa8f0; }
+[data-theme="dark"] .st-done { background: #1a2030; color: var(--muted); }
+[data-theme="dark"] .alert-ok { background: var(--green-light); color: #5fe0a8; border-color: #1a3a28; }
+[data-theme="dark"] .alert-info { background: var(--blue-light); color: #6aa8f0; border-color: #1a2a44; }
+[data-theme="dark"] .savings { background: var(--green-light); color: #5fe0a8; border-color: #1a3a28; }
+[data-theme="dark"] .gallery-card .save-badge { background: var(--green-light); color: #5fe0a8; }
+[data-theme="dark"] .filter-btn { background: var(--white); color: var(--ink); border-color: var(--line); }
+[data-theme="dark"] .filter-btn.active { background: var(--navy-2); color: #fff; border-color: var(--navy-2); }
+[data-theme="dark"] .rank-perk,
+[data-theme="dark"] .referral-stat { background: var(--bg); }
+[data-theme="dark"] .referral-code-box { background: var(--bg); border-color: var(--line); }
+[data-theme="dark"] .referral-code-box .code { color: var(--gold-2); }
+[data-theme="dark"] .referral-code-box .btn-copy { background: var(--white); color: var(--ink); border-color: var(--line); }
+[data-theme="dark"] .price li { color: var(--ink); border-color: var(--line); }
+[data-theme="dark"] .fee-row.feat { background: #1e1e14; }
+[data-theme="dark"] .order { border-color: var(--line); }
+[data-theme="dark"] .panel-head { border-color: var(--line); }
+[data-theme="dark"] .mp-side .me { border-color: var(--line); }
+[data-theme="dark"] .mp-nav a.active,
+[data-theme="dark"] .mp-nav a:hover { background: var(--bg); }
+[data-theme="dark"] .divider::before,
+[data-theme="dark"] .divider::after { background: var(--line); }
+[data-theme="dark"] .progress { background: var(--line); }
+[data-theme="dark"] .rank-progress-bar { background: var(--line); }
+
+/* Dark mode toggle button */
+.theme-toggle {
+  background: none; border: none; cursor: pointer;
+  font-size: 18px; line-height: 1; padding: 6px 8px;
+  border-radius: 8px; color: #c8d0e0;
+  transition: all .2s var(--ease);
+}
+.theme-toggle:hover { background: rgba(255,255,255,.1); color: #fff; }
+
 * { box-sizing: border-box; margin: 0; }
 
 html { scroll-behavior: smooth; }
