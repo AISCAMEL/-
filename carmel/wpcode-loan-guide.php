@@ -167,8 +167,8 @@ if ( ! function_exists( 'carmelx_loan_guide_shortcode' ) ) {
 		/* 3パターン */
 		.carmel-lg__t{font-size:12px;font-weight:700;color:#1c7a3a;margin-bottom:6px;}
 		.carmel-lg__rows{display:flex;flex-wrap:wrap;gap:6px 8px;}
-		.carmel-lg__row{display:inline-flex;align-items:baseline;gap:4px;background:#fff;border:1px solid #e1efe6;border-radius:7px;padding:5px 10px;font-size:13px;color:#333;}
-		.carmel-lg__row b{color:#2cac44;font-weight:800;margin-right:2px;}
+		.carmel-lg__row{display:inline-flex;align-items:baseline;gap:4px;background:#fff;border:1px solid #e1efe6;border-radius:7px;padding:5px 10px;font-size:13px;color:#333;white-space:nowrap;}
+		.carmel-lg__row b{color:#2cac44;font-weight:800;margin-right:2px;white-space:nowrap;}
 		.carmel-lg__note{margin-top:6px;font-size:11px;color:#8a8f96;}
 		/* シミュレーション */
 		.carmel-lg__sim{margin-top:14px;padding-top:12px;border-top:1px solid #d8eddf;}
@@ -196,7 +196,9 @@ if ( ! function_exists( 'carmelx_loan_guide_shortcode' ) ) {
 		.carmel-lg__cta-sub{width:100%;margin:4px 0 0;font-size:11px;color:#8a8f96;text-align:center;}
 		@media(max-width:480px){
 			.carmel-lg{padding:12px 12px;}
-			.carmel-lg__sim-amount b{font-size:24px;}
+			.carmel-lg__sim-result{flex-direction:column;align-items:flex-start;gap:4px;}
+			.carmel-lg__sim-amount{text-align:left;}
+			.carmel-lg__sim-amount b{font-size:20px;}
 			.carmel-lg__sim-badge span{font-size:19px;}
 		}
 		</style>';
