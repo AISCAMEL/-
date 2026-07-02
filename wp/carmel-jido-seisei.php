@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 9.2
+ * Version: 9.3
  * Author: CARMEL
  */
 
@@ -3327,24 +3327,41 @@ function carmel3_slack_list_channels($token) {
     $token = trim((string)$token);
     if ($token === '') return array('ok' => false, 'error' => 'no_token', 'channels' => array());
 
-    // まず公開＋非公開で試し、権限不足なら公開のみで再取得
-    $r = carmel3_slack_api($token, 'conversations.list', array(
-        'types'            => 'public_channel,private_channel',
-        'exclude_archived' => 'true',
-        'limit'            => 200,
-    ), true);
-    if (empty($r['ok']) && isset($r['error']) && $r['error'] === 'missing_scope') {
-        $r = carmel3_slack_api($token, 'conversations.list', array(
-            'types'            => 'public_channel',
-            'exclude_archived' => 'true',
-            'limit'            => 200,
-        ), true);
+    // 指定メソッドを全ページ取得（多いワークスペースでも漏らさない）
+    $collect = function ($method, $types) use ($token) {
+        $all = array(); $cursor = ''; $pages = 0;
+        do {
+            $params = array('types' => $types, 'exclude_archived' => 'true', 'limit' => 200);
+            if ($cursor !== '') $params['cursor'] = $cursor;
+            $r = carmel3_slack_api($token, $method, $params, true);
+            if (empty($r['ok'])) return array('err' => isset($r['error']) ? $r['error'] : 'error', 'all' => $all);
+            foreach ((array)$r['channels'] as $c) { if (isset($c['id'])) $all[$c['id']] = $c; }
+            $cursor = isset($r['response_metadata']['next_cursor']) ? $r['response_metadata']['next_cursor'] : '';
+            $pages++;
+        } while ($cursor !== '' && $pages < 15);
+        return array('err' => '', 'all' => $all);
+    };
+
+    // ワークスペース全チャンネル（公開＋非公開）。権限不足なら公開のみ。
+    $res = $collect('conversations.list', 'public_channel,private_channel');
+    if ($res['err'] === 'missing_scope') {
+        $res = $collect('conversations.list', 'public_channel');
     }
-    if (empty($r['ok'])) return array('ok' => false, 'error' => isset($r['error']) ? $r['error'] : 'error', 'channels' => array());
+    $merged = $res['all'];
+
+    // Botが参加中のチャンネル（非公開含む）も合流（招待済みは確実に出す）
+    $mine = $collect('users.conversations', 'public_channel,private_channel');
+    if ($mine['err'] === 'missing_scope') {
+        $mine = $collect('users.conversations', 'public_channel');
+    }
+    foreach ($mine['all'] as $id => $c) { $merged[$id] = $c; }
+
+    if (empty($merged)) {
+        return array('ok' => false, 'error' => $res['err'] !== '' ? $res['err'] : 'error', 'channels' => array());
+    }
 
     $out = array();
-    foreach ((array)$r['channels'] as $c) {
-        if (!isset($c['id'])) continue;
+    foreach ($merged as $c) {
         $out[] = array(
             'id'         => $c['id'],
             'name'       => isset($c['name']) ? $c['name'] : $c['id'],
@@ -3864,7 +3881,9 @@ function carmel3_slack_page() {
                                 <option value="<?php echo esc_attr($cur_ch); ?>" selected><?php echo esc_html($cur_ch . '（現在の設定）'); ?></option>
                             <?php endif; ?>
                         </select>
-                        <p style="margin:4px 0 0;color:#888;font-size:12px">一覧から選ぶだけでOK（IDを探す必要はありません）。「Bot未参加」のチャンネルは、Slackでそのチャンネルを開き <code>/invite @カーメル</code> で招待してください。一覧に出ないときは下の「接続テスト」後に再読み込みを。</p>
+                        <p style="margin:4px 0 0;color:#888;font-size:12px">一覧から選ぶだけでOK（IDを探す必要はありません）。「Bot未参加」のチャンネルは、Slackでそのチャンネルを開き <code>/invite @カーメル</code> で招待してください。<br>
+                        <strong>使いたいチャンネルが出てこない場合</strong>：①まずSlackでそのチャンネルを開き <code>/invite @カーメル</code> でBotを招待 → ②このページを再読み込み。<br>
+                        🔒<strong>非公開チャンネル</strong>を使う場合は、Slackアプリ設定でスコープ <code>groups:read</code> と <code>groups:history</code> も追加して再インストールが必要です。</p>
                         <?php
                     } else {
                         $err = isset($chres['error']) ? $chres['error'] : '取得失敗';
