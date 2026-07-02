@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 9.0
+ * Version: 9.1
  * Author: CARMEL
  */
 
@@ -3322,6 +3322,40 @@ function carmel3_slack_auth_test($token) {
     return carmel3_slack_api($token, 'auth.test', array());
 }
 
+// チャンネル一覧を取得（設定画面のプルダウン用）。戻り値: array of array('id','name','is_member','is_private')
+function carmel3_slack_list_channels($token) {
+    $token = trim((string)$token);
+    if ($token === '') return array('ok' => false, 'error' => 'no_token', 'channels' => array());
+
+    // まず公開＋非公開で試し、権限不足なら公開のみで再取得
+    $r = carmel3_slack_api($token, 'conversations.list', array(
+        'types'            => 'public_channel,private_channel',
+        'exclude_archived' => 'true',
+        'limit'            => 200,
+    ), true);
+    if (empty($r['ok']) && isset($r['error']) && $r['error'] === 'missing_scope') {
+        $r = carmel3_slack_api($token, 'conversations.list', array(
+            'types'            => 'public_channel',
+            'exclude_archived' => 'true',
+            'limit'            => 200,
+        ), true);
+    }
+    if (empty($r['ok'])) return array('ok' => false, 'error' => isset($r['error']) ? $r['error'] : 'error', 'channels' => array());
+
+    $out = array();
+    foreach ((array)$r['channels'] as $c) {
+        if (!isset($c['id'])) continue;
+        $out[] = array(
+            'id'         => $c['id'],
+            'name'       => isset($c['name']) ? $c['name'] : $c['id'],
+            'is_member'  => !empty($c['is_member']),
+            'is_private' => !empty($c['is_private']),
+        );
+    }
+    usort($out, function ($a, $b) { return strcmp($a['name'], $b['name']); });
+    return array('ok' => true, 'channels' => $out);
+}
+
 // AIに案をN件作らせる（$kind: 'news' か 'blog'）。戻り値: array of array('title','keyword','brief','type')
 function carmel3_slack_generate_proposals($s, $count, $kind = 'news') {
     if (!function_exists('carmel_call_openrouter_chat')) return array();
@@ -3784,9 +3818,44 @@ function carmel3_slack_page() {
                 <input type="text" name="slack_bot_token" value="<?php echo esc_attr($token_disp); ?>" style="width:100%;padding:8px" placeholder="xoxb-...">
                 <p style="margin:4px 0 0;color:#888;font-size:12px">Slackアプリの「OAuth &amp; Permissions」で取得。ここに貼るだけ（チャットには貼らないでください）。</p>
 
-                <p style="margin:14px 0 4px;font-weight:700">チャンネルID（Cから始まる）</p>
-                <input type="text" name="slack_channel_id" value="<?php echo esc_attr($s['slack_channel_id']); ?>" style="width:320px;padding:8px" placeholder="例: C0123ABCDEF">
-                <p style="margin:4px 0 0;color:#888;font-size:12px">投稿・読み取りをするチャンネル。チャンネル名右クリック→「リンクをコピー」の末尾がIDです。<strong>Botをそのチャンネルに招待</strong>してください（/invite @アプリ名）。</p>
+                <p style="margin:14px 0 4px;font-weight:700">投稿するチャンネル</p>
+                <?php
+                $cur_ch = trim((string)$s['slack_channel_id']);
+                if ($has_token) {
+                    $chres = carmel3_slack_list_channels($s['slack_bot_token']);
+                    if (!empty($chres['ok']) && !empty($chres['channels'])) {
+                        // プルダウンで選ぶだけ（IDを探す必要なし）
+                        $found_cur = false;
+                        ?>
+                        <select name="slack_channel_id" style="min-width:320px;padding:8px">
+                            <option value="">— チャンネルを選んでください —</option>
+                            <?php foreach ($chres['channels'] as $c):
+                                if ($c['id'] === $cur_ch) $found_cur = true;
+                                $mark = $c['is_member'] ? '' : '（Bot未参加：要招待）';
+                                $lock = $c['is_private'] ? '🔒' : '#';
+                            ?>
+                                <option value="<?php echo esc_attr($c['id']); ?>" <?php selected($cur_ch, $c['id']); ?>><?php echo esc_html($lock . $c['name'] . $mark); ?></option>
+                            <?php endforeach; ?>
+                            <?php if ($cur_ch !== '' && !$found_cur): ?>
+                                <option value="<?php echo esc_attr($cur_ch); ?>" selected><?php echo esc_html($cur_ch . '（現在の設定）'); ?></option>
+                            <?php endif; ?>
+                        </select>
+                        <p style="margin:4px 0 0;color:#888;font-size:12px">一覧から選ぶだけでOK（IDを探す必要はありません）。「Bot未参加」のチャンネルは、Slackでそのチャンネルを開き <code>/invite @カーメル</code> で招待してください。一覧に出ないときは下の「接続テスト」後に再読み込みを。</p>
+                        <?php
+                    } else {
+                        $err = isset($chres['error']) ? $chres['error'] : '取得失敗';
+                        ?>
+                        <input type="text" name="slack_channel_id" value="<?php echo esc_attr($cur_ch); ?>" style="width:320px;padding:8px" placeholder="例: C0123ABCDEF">
+                        <p style="margin:4px 0 0;color:#b45309;font-size:12px">チャンネル一覧を自動取得できませんでした（<?php echo esc_html($err); ?>）。スコープ <code>channels:read</code> を追加して再インストールすると、ここが「選ぶだけ」になります。それまでは手入力でもOK。</p>
+                        <?php
+                    }
+                } else {
+                    ?>
+                    <input type="text" name="slack_channel_id" value="<?php echo esc_attr($cur_ch); ?>" style="width:320px;padding:8px" placeholder="先にトークンを保存すると一覧から選べます" disabled>
+                    <p style="margin:4px 0 0;color:#888;font-size:12px">先に上のBotトークンを入力して「設定を保存」すると、ここが<strong>チャンネルを選ぶプルダウン</strong>になります。</p>
+                    <?php
+                }
+                ?>
 
                 <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:14px">
                     <label style="font-weight:700">提案を送る時刻<br>
