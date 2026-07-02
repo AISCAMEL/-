@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 9.1
+ * Version: 9.2
  * Author: CARMEL
  */
 
@@ -3356,6 +3356,28 @@ function carmel3_slack_list_channels($token) {
     return array('ok' => true, 'channels' => $out);
 }
 
+// 入力がチャンネル名なら名前からIDを自動解決。ID/空/解決不能はそのまま返す
+function carmel3_slack_resolve_channel($token, $input) {
+    $input = trim((string)$input);
+    if ($input === '') return '';
+    // すでにID形式（C/G/D で始まる英大文字＋数字）ならそのまま
+    if (preg_match('/^[CGD][A-Z0-9]{6,}$/', $input)) return $input;
+
+    // 「#ニュース提案」「＃ニュース提案」→ 名前で照合
+    $name = ltrim($input, "#＃ 　");
+    $name = trim($name);
+    if ($name === '') return $input;
+
+    $chres = carmel3_slack_list_channels($token);
+    if (!empty($chres['ok']) && !empty($chres['channels'])) {
+        foreach ($chres['channels'] as $c) {
+            if (mb_strtolower($c['name']) === mb_strtolower($name)) return $c['id'];
+        }
+    }
+    // 見つからなければ入力そのまま（後で手直しできるように）
+    return $input;
+}
+
 // AIに案をN件作らせる（$kind: 'news' か 'blog'）。戻り値: array of array('title','keyword','brief','type')
 function carmel3_slack_generate_proposals($s, $count, $kind = 'news') {
     if (!function_exists('carmel_call_openrouter_chat')) return array();
@@ -3731,7 +3753,9 @@ add_action('admin_post_carmel3_slack_save', function () {
         if ($tok !== '' && strpos($tok, '●') === false) $s['slack_bot_token'] = sanitize_text_field($tok);
         if ($tok === '') $s['slack_bot_token'] = '';
     }
-    $s['slack_channel_id'] = isset($_POST['slack_channel_id']) ? sanitize_text_field(wp_unslash($_POST['slack_channel_id'])) : '';
+    $ch_in = isset($_POST['slack_channel_id']) ? sanitize_text_field(wp_unslash($_POST['slack_channel_id'])) : '';
+    // ID（Cxxxx等）でなく「チャンネル名」で入力された場合は、名前からIDを自動で調べる
+    $s['slack_channel_id'] = carmel3_slack_resolve_channel($s['slack_bot_token'], $ch_in);
     $pt = isset($_POST['slack_propose_time']) ? trim((string) wp_unslash($_POST['slack_propose_time'])) : '08:00';
     $s['slack_propose_time'] = preg_match('/^\d{1,2}:\d{2}$/', $pt) ? $pt : '08:00';
     $s['slack_propose_count'] = isset($_POST['slack_propose_count']) ? max(1, min(5, (int)$_POST['slack_propose_count'])) : 3;
@@ -3845,8 +3869,8 @@ function carmel3_slack_page() {
                     } else {
                         $err = isset($chres['error']) ? $chres['error'] : '取得失敗';
                         ?>
-                        <input type="text" name="slack_channel_id" value="<?php echo esc_attr($cur_ch); ?>" style="width:320px;padding:8px" placeholder="例: C0123ABCDEF">
-                        <p style="margin:4px 0 0;color:#b45309;font-size:12px">チャンネル一覧を自動取得できませんでした（<?php echo esc_html($err); ?>）。スコープ <code>channels:read</code> を追加して再インストールすると、ここが「選ぶだけ」になります。それまでは手入力でもOK。</p>
+                        <input type="text" name="slack_channel_id" value="<?php echo esc_attr($cur_ch); ?>" style="width:320px;padding:8px" placeholder="チャンネル名でOK（例: ニュース提案）">
+                        <p style="margin:4px 0 0;color:#b45309;font-size:12px">チャンネル一覧を自動取得できませんでした（<?php echo esc_html($err); ?>）。<strong>チャンネル名をそのまま入力</strong>すればOK（例：<code>ニュース提案</code> や <code>#カーメルfc</code>）。保存時に自動でIDへ変換します。スコープ <code>channels:read</code> を追加して再インストールすると「選ぶだけ」になります。</p>
                         <?php
                     }
                 } else {
