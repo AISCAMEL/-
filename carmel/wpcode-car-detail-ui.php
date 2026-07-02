@@ -76,9 +76,9 @@ add_action( 'wp_footer', function () {
 				'if(!slots){return;}' .
 				'var done=[];' .
 				'document.querySelectorAll("body.single-portfolio *").forEach(function(el){' .
-					'if(el.children.length>0){return;}' .
+					'if(el.children.length>2){return;}' .
 					'var t=el.textContent.trim();' .
-					'if(t.length<2||t.length>30){return;}' .
+					'if(t.length<2||t.length>35){return;}' .
 					'var ico="";' .
 					'if(t.indexOf("保証")!==-1){ico=shield;}' .
 					'else if(t.indexOf("点検")!==-1||t.indexOf("車検整備")!==-1){ico=check;}' .
@@ -89,11 +89,11 @@ add_action( 'wp_footer', function () {
 					'badge.innerHTML=ico+" "+t;' .
 					'slots.appendChild(badge);' .
 					'var p=el;' .
-					'for(var i=0;i<5;i++){' .
+					'for(var i=0;i<6;i++){' .
 						'if(!p.parentElement||p.parentElement===document.body){break;}' .
 						'p=p.parentElement;' .
 						'var cn=typeof p.className==="string"?p.className:"";' .
-						'if(p.tagName==="LI"||cn.indexOf("tag")!==-1||cn.indexOf("feature")!==-1){' .
+						'if(p.tagName==="LI"||cn.indexOf("tag")!==-1||cn.indexOf("feature")!==-1||cn.indexOf("attr")!==-1){' .
 							'p.style.setProperty("display","none","important");break;' .
 						'}' .
 					'}' .
