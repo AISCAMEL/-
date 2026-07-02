@@ -3763,6 +3763,7 @@ function carmel_plan_monthly( $principal, $nenritsu, $count ) {
 
 add_shortcode( 'carmel_plan', 'carmel_plan_shortcode' );
 function carmel_plan_shortcode( $atts ) {
+	return ''; // 購入プランブロック非表示（月々金額を出さない）
 	$atts = shortcode_atts( array( 'id' => 0, 'counts' => '12,24,36,48,60,72,84' ), $atts, 'carmel_plan' );
 	$pid  = $atts['id'] ? (int) $atts['id'] : get_the_ID();
 	if ( ! $pid ) { return ''; }
