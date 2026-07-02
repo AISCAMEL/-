@@ -157,6 +157,12 @@ class Carmel_Save_Guard {
 			$now = get_post_meta( $post_id, $key, true );
 			if ( $this->is_blank( $now ) ) {
 				// 前は値があったのに今は空 → 空で上書きされた → 元に戻す
+				// ただし年式に〜が混入している場合は〜を除去してから復元
+				if ( in_array( $key, array( 'year', 'nenshiki' ), true ) && is_string( $before )
+					&& preg_match( '/[\x{301C}\x{FF5E}\x{2053}\x{223C}]/u', $before ) ) {
+					$before = trim( preg_replace( '/[\x{301C}\x{FF5E}\x{2053}\x{223C}]/u', '', $before ) );
+					if ( $this->is_blank( $before ) ) { continue; } // 〜だけだったら復元しない
+				}
 				if ( function_exists( 'update_field' ) ) { update_field( $key, $before, $post_id ); }
 				update_post_meta( $post_id, $key, $before );
 				$restored++;
@@ -171,5 +177,25 @@ class Carmel_Save_Guard {
 }
 
 new Carmel_Save_Guard();
+
+/* 年式フィールドに残った〜を保存のたびに自動除去（save_guard の復元後に動く優先度） */
+add_action( 'save_post_portfolio', function ( $post_id ) {
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) { return; }
+	if ( wp_is_post_revision( $post_id ) ) { return; }
+	foreach ( array( 'year', 'nenshiki' ) as $key ) {
+		$v = get_post_meta( $post_id, $key, true );
+		if ( ! is_string( $v ) || ! preg_match( '/[\x{301C}\x{FF5E}\x{2053}\x{223C}]/u', $v ) ) { continue; }
+		// 〜の後ろに西暦があれば残す。なければ〜だけ除去
+		if ( preg_match( '/(19\d{2}|20\d{2})/', $v, $m ) ) {
+			$clean = $m[1] . '年';
+		} else {
+			$clean = trim( preg_replace( '/[\x{301C}\x{FF5E}\x{2053}\x{223C}]/u', '', $v ) );
+		}
+		if ( '' !== $clean && $clean !== $v ) {
+			update_post_meta( $post_id, $key, $clean );
+			if ( function_exists( 'update_field' ) ) { update_field( $key, $clean, $post_id ); }
+		}
+	}
+}, 100000 );
 
 }
