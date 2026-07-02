@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>在庫一覧｜AUC-AGENT オークション代行</title>
+<meta name="description" content="AUC-AGENT 在庫一覧。オークション出品中・入荷予定の車両をリアルタイムで確認。気になる車両はそのままオーダーできます。" />
+<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png" />
+<link rel="apple-touch-icon" href="assets/img/favicon-180.png" />
+<link rel="stylesheet" href="assets/css/style.css" />
+<style>
+/* ---- Inventory Page ---- */
+.inv-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px; margin-bottom: 24px;
+}
+.inv-count { font-size: 14px; color: var(--muted); }
+.inv-count b { color: var(--ink); font-size: 18px; }
+.inv-views { display: flex; gap: 6px; }
+.inv-views button {
+  width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--white); cursor: pointer; font-size: 16px; color: var(--muted);
+  display: grid; place-items: center; transition: all .15s;
+}
+.inv-views button.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+.inv-sort select {
+  padding: 9px 14px; border-radius: 10px; border: 1px solid var(--line);
+  font-size: 14px; font-family: var(--font); background: var(--white); color: var(--ink);
+}
+
+/* Filter sidebar */
+.inv-layout { display: grid; grid-template-columns: 260px 1fr; gap: 26px; padding: 30px 0 70px; }
+.inv-filter { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; height: fit-content; box-shadow: var(--shadow); }
+.inv-filter h3 { font-size: 15px; margin: 0 0 16px; display: flex; align-items: center; gap: 8px; }
+.inv-filter .f-group { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.inv-filter .f-group:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.inv-filter .f-group label.f-label { display: block; font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+.inv-filter select, .inv-filter input[type="number"] {
+  width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line);
+  font-size: 14px; font-family: var(--font); background: var(--white); color: var(--ink);
+}
+.inv-filter .range-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 6px; align-items: center; }
+.inv-filter .range-row span { text-align: center; font-size: 12px; color: var(--muted); }
+.inv-filter .f-checks label {
+  display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 13.5px; cursor: pointer;
+}
+.inv-filter .f-checks input { width: 16px; height: 16px; accent-color: var(--gold); }
+.inv-filter .f-reset {
+  display: block; width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--bg); color: var(--muted); font-size: 13px; font-weight: 700;
+  cursor: pointer; text-align: center; margin-top: 16px; transition: all .15s;
+}
+.inv-filter .f-reset:hover { background: var(--line); color: var(--ink); }
+
+/* Car grid */
+.inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+.inv-grid.list-view { grid-template-columns: 1fr; }
+
+.car-card {
+  background: var(--white); border: 1px solid var(--line); border-radius: var(--radius);
+  overflow: hidden; box-shadow: var(--shadow); transition: transform .15s, box-shadow .2s;
+  cursor: pointer; position: relative;
+}
+.car-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+.car-card .car-img {
+  width: 100%; aspect-ratio: 16/10; background: var(--line);
+  display: grid; place-items: center; font-size: 48px; color: var(--muted);
+  position: relative; overflow: hidden;
+}
+.car-card .car-img .car-emoji { font-size: 56px; }
+.car-card .car-badge {
+  position: absolute; top: 10px; left: 10px;
+  padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 800;
+}
+.car-badge.new { background: var(--gold); color: var(--navy); }
+.car-badge.hot { background: #d44b4b; color: #fff; }
+.car-badge.soon { background: #2a64c4; color: #fff; }
+.car-fav {
+  position: absolute; top: 10px; right: 10px; width: 34px; height: 34px;
+  border-radius: 50%; background: rgba(255,255,255,.85); border: none;
+  cursor: pointer; font-size: 16px; display: grid; place-items: center;
+  transition: all .15s; backdrop-filter: blur(4px);
+}
+.car-fav:hover { background: #fff; transform: scale(1.1); }
+.car-fav.liked { color: #d44b4b; }
+.car-body { padding: 16px; }
+.car-body .car-maker { font-size: 12px; color: var(--gold); font-weight: 700; letter-spacing: .06em; margin-bottom: 2px; }
+.car-body .car-name { font-size: 16px; font-weight: 800; margin-bottom: 8px; line-height: 1.3; }
+.car-body .car-specs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.car-body .car-specs span {
+  display: inline-block; padding: 3px 9px; border-radius: 6px;
+  background: var(--bg); font-size: 12px; color: var(--muted); font-weight: 600;
+}
+.car-body .car-price { font-size: 22px; font-weight: 900; color: var(--navy); }
+.car-body .car-price small { font-size: 13px; font-weight: 500; color: var(--muted); }
+.car-body .car-total { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.car-body .car-actions { display: flex; gap: 8px; margin-top: 14px; }
+.car-body .car-actions .btn { padding: 10px 16px; font-size: 13px; flex: 1; }
+
+/* List view overrides */
+.list-view .car-card { display: grid; grid-template-columns: 240px 1fr; }
+.list-view .car-card .car-img { aspect-ratio: auto; height: 100%; min-height: 160px; }
+.list-view .car-body { display: flex; flex-direction: column; justify-content: center; }
+
+/* Detail modal */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 100; background: rgba(14,27,51,.6);
+  display: none; place-items: center; backdrop-filter: blur(4px);
+  padding: 20px; overflow-y: auto;
+}
+.modal-overlay.open { display: grid; }
+.modal {
+  background: var(--white); border-radius: 18px; box-shadow: var(--shadow-lg);
+  width: 100%; max-width: 720px; max-height: 90vh; overflow-y: auto;
+  position: relative; animation: modalIn .25s ease;
+}
+@keyframes modalIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+.modal-close {
+  position: absolute; top: 14px; right: 14px; z-index: 2;
+  width: 36px; height: 36px; border-radius: 50%; border: none;
+  background: rgba(255,255,255,.9); cursor: pointer; font-size: 18px;
+  display: grid; place-items: center;
+}
+.modal-img {
+  width: 100%; aspect-ratio: 16/9; background: var(--line);
+  display: grid; place-items: center; font-size: 72px; color: var(--muted);
+  border-radius: 18px 18px 0 0;
+}
+.modal-body { padding: 28px; }
+.modal-body .car-maker { font-size: 13px; color: var(--gold); font-weight: 700; letter-spacing: .06em; }
+.modal-body h2 { font-size: 24px; margin: 4px 0 16px; font-weight: 900; }
+.modal-body .detail-price { font-size: 30px; font-weight: 900; color: var(--navy); margin-bottom: 4px; }
+.modal-body .detail-price small { font-size: 14px; color: var(--muted); font-weight: 500; }
+.modal-body .detail-total { font-size: 14px; color: var(--muted); margin-bottom: 20px; }
+.detail-specs { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-bottom: 20px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.detail-specs .ds-row { display: flex; justify-content: space-between; padding: 11px 16px; border-bottom: 1px solid var(--line); font-size: 14px; }
+.detail-specs .ds-row:nth-last-child(-n+2) { border-bottom: none; }
+.detail-specs .ds-row .ds-k { color: var(--muted); }
+.detail-specs .ds-row .ds-v { font-weight: 700; }
+.detail-desc { font-size: 14px; color: var(--ink); line-height: 1.8; margin-bottom: 20px; padding: 16px; background: var(--bg); border-radius: 12px; }
+.modal-actions { display: flex; gap: 10px; }
+.modal-actions .btn { flex: 1; }
+
+/* Empty state */
+.inv-empty {
+  text-align: center; padding: 60px 20px; color: var(--muted);
+}
+.inv-empty .ico { font-size: 48px; margin-bottom: 12px; }
+.inv-empty p { font-size: 15px; margin: 0; }
+
+/* Search */
+.inv-search {
+  display: flex; gap: 10px; margin-bottom: 0;
+}
+.inv-search input {
+  flex: 1; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--line);
+  font-size: 14px; font-family: var(--font); background: var(--white); color: var(--ink);
+}
+
+@media (max-width: 920px) {
+  .inv-layout { grid-template-columns: 1fr; }
+  .inv-filter { order: -1; }
+  .list-view .car-card { grid-template-columns: 1fr; }
+  .list-view .car-card .car-img { min-height: 180px; }
+}
+@media (max-width: 520px) {
+  .inv-grid { grid-template-columns: 1fr; }
+  .modal-body { padding: 20px; }
+  .detail-specs { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <span class="logo">A</span>
+      <span>AUC-AGENT<small>CAR AUCTION AGENT</small></span>
+    </a>
+    <nav class="nav">
+      <a class="nav-link" href="index.html">購入代行</a>
+      <a class="nav-link" href="sell.html">出品代行</a>
+      <a class="nav-link" href="inventory.html" style="color:#fff;font-weight:700;">在庫一覧</a>
+      <a class="nav-link" href="shipping.html">陸送シミュ</a>
+      <a class="nav-link" href="mypage.html">マイページ</a>
+      <a class="btn btn-gold btn-sm" href="login.html">無料会員登録</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-head">
+  <div class="wrap">
+    <h1>在庫一覧</h1>
+    <p>オークション出品中・入荷予定の車両をリアルタイムで確認。気になる車両はそのままオーダーできます。</p>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="inv-layout">
+    <!-- Filter sidebar -->
+    <aside class="inv-filter">
+      <h3>🔍 条件で絞り込み</h3>
+
+      <div class="f-group">
+        <label class="f-label">フリーワード</label>
+        <input type="text" id="fKeyword" placeholder="車種・メーカー・キーワード" />
+      </div>
+
+      <div class="f-group">
+        <label class="f-label">メーカー</label>
+        <select id="fMaker">
+          <option value="">すべて</option>
+          <option>トヨタ</option>
+          <option>ホンダ</option>
+          <option>日産</option>
+          <option>マツダ</option>
+          <option>スバル</option>
+          <option>スズキ</option>
+          <option>ダイハツ</option>
+          <option>三菱</option>
+          <option>レクサス</option>
+          <option>BMW</option>
+          <option>メルセデス・ベンツ</option>
+          <option>フォルクスワーゲン</option>
+        </select>
+      </div>
+
+      <div class="f-group">
+        <label class="f-label">ボディタイプ</label>
+        <select id="fBody">
+          <option value="">すべて</option>
+          <option value="軽自動車">軽自動車</option>
+          <option value="コンパクト">コンパクト</option>
+          <option value="セダン">セダン</option>
+          <option value="ミニバン">ミニバン</option>
+          <option value="SUV">SUV</option>
+          <option value="ワゴン">ワゴン</option>
+          <option value="クーペ">クーペ</option>
+          <option value="輸入車">輸入車</option>
+        </select>
+      </div>
+
+      <div class="f-group">
+        <label class="f-label">価格帯（万円）</label>
+        <div class="range-row">
+          <input type="number" id="fPriceMin" placeholder="下限" min="0" step="10" />
+          <span>〜</span>
+          <input type="number" id="fPriceMax" placeholder="上限" min="0" step="10" />
+        </div>
+      </div>
+
+      <div class="f-group">
+        <label class="f-label">年式</label>
+        <div class="range-row">
+          <select id="fYearMin"><option value="">下限</option></select>
+          <span>〜</span>
+          <select id="fYearMax"><option value="">上限</option></select>
+        </div>
+      </div>
+
+      <div class="f-group">
+        <label class="f-label">走行距離</label>
+        <select id="fMileage">
+          <option value="">すべて</option>
+          <option value="10000">1万km以下</option>
+          <option value="30000">3万km以下</option>
+          <option value="50000">5万km以下</option>
+          <option value="80000">8万km以下</option>
+          <option value="100000">10万km以下</option>
+        </select>
+      </div>
+
+      <div class="f-group">
+        <label class="f-label">状態</label>
+        <div class="f-checks">
+          <label><input type="checkbox" id="fNew" /> NEW（新着）のみ</label>
+          <label><input type="checkbox" id="fHot" /> 人気車両のみ</label>
+        </div>
+      </div>
+
+      <button class="f-reset" id="filterReset">条件をリセット</button>
+    </aside>
+
+    <!-- Main content -->
+    <main>
+      <div class="inv-toolbar">
+        <div class="inv-count"><b id="resultCount">0</b> 台の在庫</div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div class="inv-sort">
+            <select id="sortBy">
+              <option value="new">新着順</option>
+              <option value="priceAsc">価格が安い順</option>
+              <option value="priceDesc">価格が高い順</option>
+              <option value="yearDesc">年式が新しい順</option>
+              <option value="mileAsc">走行距離が少ない順</option>
+            </select>
+          </div>
+          <div class="inv-views">
+            <button id="viewGrid" class="active" title="グリッド表示">⊞</button>
+            <button id="viewList" title="リスト表示">☰</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="inv-grid" id="carGrid">
+        <!-- JS renders -->
+      </div>
+
+      <div class="inv-empty" id="emptyState" style="display:none;">
+        <div class="ico">🔍</div>
+        <p>条件に一致する車両が見つかりませんでした。<br />条件を変更して再検索してください。</p>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Detail modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalContent">
+    <button class="modal-close" id="modalClose">✕</button>
+    <div class="modal-img" id="modalImg"></div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <h4>AUC-AGENT（合同会社アイズ）</h4>
+        <p style="font-size:13px;margin:0;">〒979-0204 福島県いわき市四倉町細谷字大町1番<br />TEL: 050-1722-3365（平日 8:00〜17:00）<br />古物商許可 第25121A010859号（福島県公安委員会）</p>
+      </div>
+      <div>
+        <h4>サービス</h4>
+        <a href="index.html">購入代行（落札）</a>
+        <a href="sell.html">出品代行（売却）</a>
+        <a href="inventory.html">在庫一覧</a>
+        <a href="shipping.html">陸送シミュレーション</a>
+        <a href="mypage.html">マイページ</a>
+      </div>
+      <div>
+        <h4>ご利用ガイド</h4>
+        <a href="manual.html">出品マニュアル</a>
+        <a href="login.html">会員登録・ログイン</a>
+        <a href="privacy.html">プライバシーポリシー</a>
+      </div>
+    </div>
+    <div class="copy">© 2026 合同会社アイズ（AUC-AGENT）. いわき市／福島拠点. 全国対応.</div>
+  </div>
+</footer>
+
+<script src="assets/js/simulator.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var EMOJI_MAP = {
+    "軽自動車": "🚗", "コンパクト": "🚙", "セダン": "🚘", "ミニバン": "🚐",
+    "SUV": "🚙", "ワゴン": "🚗", "クーペ": "🏎️", "輸入車": "🚘"
+  };
+
+  var CARS = [
+    { id: 1, maker: "トヨタ", name: "アルファード 2.5 S Cパッケージ", year: 2022, mileage: 28000, price: 3980000, body: "ミニバン", color: "パールホワイト", engine: "2.5L", mission: "CVT", drive: "FF", inspection: "2027-03", grade: "S Cパッケージ", badge: "hot", desc: "ワンオーナー・禁煙車。純正10インチナビ、ツインムーンルーフ、デジタルインナーミラー装備。内外装ともに非常に綺麗な状態です。" },
+    { id: 2, maker: "ホンダ", name: "N-BOX カスタム L ターボ", year: 2023, mileage: 12000, price: 1680000, body: "軽自動車", color: "プレミアムグラマラスブロンズ", engine: "0.66L ターボ", mission: "CVT", drive: "FF", inspection: "2028-05", grade: "L ターボ", badge: "new", desc: "2023年モデル・走行1.2万km。Honda SENSING全機能搭載、LEDヘッドライト、電動パーキングブレーキ。" },
+    { id: 3, maker: "トヨタ", name: "ヤリスクロス Z ハイブリッド", year: 2021, mileage: 35000, price: 2480000, body: "SUV", color: "ブラック", engine: "1.5L HV", mission: "e-CVT", drive: "4WD", inspection: "2026-11", grade: "Z", badge: "hot", desc: "最上級Zグレード。パノラミックビューモニター、合皮+ファブリックシート、アダプティブハイビーム。AWD仕様で冬道も安心。" },
+    { id: 4, maker: "日産", name: "セレナ e-POWER ハイウェイスターV", year: 2023, mileage: 18000, price: 3280000, body: "ミニバン", color: "ダイヤモンドブラック", engine: "1.4L e-POWER", mission: "—", drive: "FF", inspection: "2028-03", grade: "ハイウェイスターV", badge: "new", desc: "新型C28型。ProPILOT 2.0搭載、ハンズフリーオートスライドドア両側、アラウンドビューモニター。" },
+    { id: 5, maker: "マツダ", name: "CX-5 XD エクスクルーシブモード", year: 2021, mileage: 42000, price: 2680000, body: "SUV", color: "ソウルレッドクリスタルメタリック", engine: "2.2L ディーゼル", mission: "6AT", drive: "4WD", inspection: "2026-09", grade: "XD エクスクルーシブモード", badge: "", desc: "最上級グレード。ナッパレザーシート、BOSE、360°ビューモニター、ワイヤレス充電。ディーゼルターボ×4WDで走破性抜群。" },
+    { id: 6, maker: "スズキ", name: "ジムニー XC", year: 2022, mileage: 21000, price: 1980000, body: "軽自動車", color: "キネティックイエロー", engine: "0.66L ターボ", mission: "5MT", drive: "4WD", inspection: "2027-07", grade: "XC", badge: "hot", desc: "納車待ち人気車種。5速MT・4WD。スズキセーフティサポート、LEDヘッドライト、クルーズコントロール装備。" },
+    { id: 7, maker: "トヨタ", name: "ハリアー Z レザーパッケージ", year: 2022, mileage: 31000, price: 3580000, body: "SUV", color: "プレシャスブラックパール", engine: "2.0L", mission: "CVT", drive: "FF", inspection: "2027-01", grade: "Z レザーパッケージ", badge: "", desc: "本革シート、JBLサウンド、調光パノラマルーフ、12.3インチナビ。80系ハリアーの最上級グレード。" },
+    { id: 8, maker: "ホンダ", name: "フィット e:HEV リュクス", year: 2022, mileage: 25000, price: 1980000, body: "コンパクト", color: "プラチナホワイトパール", engine: "1.5L HV", mission: "e-CVT", drive: "FF", inspection: "2027-04", grade: "リュクス", badge: "", desc: "本革シート仕様。Honda SENSING、マルチビューカメラ、Boseサウンドシステム。燃費と質感を両立。" },
+    { id: 9, maker: "BMW", name: "3シリーズ 320i Mスポーツ", year: 2021, mileage: 38000, price: 3880000, body: "輸入車", color: "アルピンホワイト", engine: "2.0L ターボ", mission: "8AT", drive: "FR", inspection: "2026-12", grade: "Mスポーツ", badge: "", desc: "G20型Mスポーツ。iDrive 7.0、アクティブクルーズコントロール、レーンチェンジアシスト。正規ディーラー整備記録あり。" },
+    { id: 10, maker: "ダイハツ", name: "タント カスタム RS", year: 2023, mileage: 8000, price: 1780000, body: "軽自動車", color: "レーザーブルークリスタルシャイン", engine: "0.66L ターボ", mission: "CVT", drive: "FF", inspection: "2028-08", grade: "RS", badge: "new", desc: "走行0.8万km・ほぼ新車。ミラクルオープンドア、電動パーキング、全車速追従ACC。ターボで走りも快適。" },
+    { id: 11, maker: "トヨタ", name: "プリウス Z HEV", year: 2023, mileage: 15000, price: 3380000, body: "セダン", color: "アッシュ", engine: "2.0L HV", mission: "e-CVT", drive: "FF", inspection: "2028-01", grade: "Z", badge: "hot", desc: "新型60系プリウス。19インチアルミ、12.3インチナビ、パノラミックビューモニター。圧倒的な燃費性能とデザイン。" },
+    { id: 12, maker: "スバル", name: "フォレスター アドバンス", year: 2022, mileage: 34000, price: 2580000, body: "SUV", color: "クリスタルホワイトパール", engine: "2.0L e-BOXER", mission: "CVT", drive: "AWD", inspection: "2027-06", grade: "アドバンス", badge: "", desc: "e-BOXER搭載。アイサイトX、ドライバーモニタリングシステム、本革シート。シンメトリカルAWDで雪道も安心。" },
+    { id: 13, maker: "日産", name: "ノート e-POWER X", year: 2022, mileage: 22000, price: 1880000, body: "コンパクト", color: "オーロラフレアブルーパール", engine: "1.2L e-POWER", mission: "—", drive: "FF", inspection: "2027-09", grade: "X", badge: "", desc: "第2世代e-POWER。プロパイロット、アラウンドビューモニター、インテリジェントルームミラー搭載。" },
+    { id: 14, maker: "三菱", name: "デリカD:5 P", year: 2021, mileage: 45000, price: 3180000, body: "ミニバン", color: "ウォームホワイトパール", engine: "2.2L ディーゼル", mission: "8AT", drive: "4WD", inspection: "2026-10", grade: "P", badge: "", desc: "唯一無二のオールラウンダー。本革シート、ロックフォードサウンド、7人乗り。ディーゼル×4WDでアウトドアに最適。" },
+    { id: 15, maker: "メルセデス・ベンツ", name: "Cクラス C200 アバンギャルド", year: 2022, mileage: 27000, price: 4280000, body: "輸入車", color: "オブシディアンブラック", engine: "1.5L ターボ+ISG", mission: "9AT", drive: "FR", inspection: "2027-02", grade: "アバンギャルド", badge: "soon", desc: "W206型。MBUX第2世代、ARナビゲーション、デジタルライト。入荷予定車両 — 事前オーダー受付中。" },
+    { id: 16, maker: "トヨタ", name: "ランドクルーザー250 VX", year: 2024, mileage: 5000, price: 6980000, body: "SUV", color: "アバンギャルドブロンズメタリック", engine: "2.8L ディーゼル", mission: "8AT", drive: "4WD", inspection: "2029-04", grade: "VX", badge: "hot", desc: "新型250系。マルチテレインセレクト、e-KDSS、指紋認証。走行5,000kmの極上車両。プレミア価格でのご案内です。" },
+  ];
+
+  var FAV_KEY = "auc_favs";
+  function getFavs() { try { return JSON.parse(localStorage.getItem(FAV_KEY)) || []; } catch (e) { return []; } }
+  function setFavs(arr) { localStorage.setItem(FAV_KEY, JSON.stringify(arr)); }
+  function toggleFav(id) {
+    var f = getFavs();
+    var i = f.indexOf(id);
+    if (i >= 0) f.splice(i, 1); else f.push(id);
+    setFavs(f);
+    return f.indexOf(id) >= 0;
+  }
+
+  function yen(n) { return "¥" + Math.round(n).toLocaleString("ja-JP"); }
+  function manyen(n) { return Math.round(n / 10000) + "万円"; }
+
+  var yearMinSel = document.getElementById("fYearMin");
+  var yearMaxSel = document.getElementById("fYearMax");
+  for (var y = 2025; y >= 2010; y--) {
+    var o1 = document.createElement("option"); o1.value = y; o1.textContent = y + "年";
+    var o2 = o1.cloneNode(true);
+    yearMinSel.appendChild(o1);
+    yearMaxSel.appendChild(o2);
+  }
+
+  function getFilters() {
+    return {
+      keyword: document.getElementById("fKeyword").value.trim(),
+      maker: document.getElementById("fMaker").value,
+      body: document.getElementById("fBody").value,
+      priceMin: Number(document.getElementById("fPriceMin").value) || 0,
+      priceMax: Number(document.getElementById("fPriceMax").value) || Infinity,
+      yearMin: Number(document.getElementById("fYearMin").value) || 0,
+      yearMax: Number(document.getElementById("fYearMax").value) || 9999,
+      mileage: Number(document.getElementById("fMileage").value) || Infinity,
+      onlyNew: document.getElementById("fNew").checked,
+      onlyHot: document.getElementById("fHot").checked,
+    };
+  }
+
+  function filterCars() {
+    var f = getFilters();
+    return CARS.filter(function (c) {
+      if (f.keyword && (c.maker + c.name + c.body + c.color + c.desc).indexOf(f.keyword) < 0) return false;
+      if (f.maker && c.maker !== f.maker) return false;
+      if (f.body && c.body !== f.body) return false;
+      if (f.priceMin && c.price < f.priceMin * 10000) return false;
+      if (f.priceMax < Infinity && c.price > f.priceMax * 10000) return false;
+      if (f.yearMin && c.year < f.yearMin) return false;
+      if (f.yearMax < 9999 && c.year > f.yearMax) return false;
+      if (f.mileage < Infinity && c.mileage > f.mileage) return false;
+      if (f.onlyNew && c.badge !== "new") return false;
+      if (f.onlyHot && c.badge !== "hot") return false;
+      return true;
+    });
+  }
+
+  function sortCars(arr) {
+    var key = document.getElementById("sortBy").value;
+    var sorted = arr.slice();
+    switch (key) {
+      case "priceAsc":  sorted.sort(function (a, b) { return a.price - b.price; }); break;
+      case "priceDesc": sorted.sort(function (a, b) { return b.price - a.price; }); break;
+      case "yearDesc":  sorted.sort(function (a, b) { return b.year - a.year; }); break;
+      case "mileAsc":   sorted.sort(function (a, b) { return a.mileage - b.mileage; }); break;
+      default:
+        sorted.sort(function (a, b) {
+          var w = { "new": 3, "hot": 2, "soon": 1 };
+          return (w[b.badge] || 0) - (w[a.badge] || 0) || b.id - a.id;
+        });
+    }
+    return sorted;
+  }
+
+  function renderGrid() {
+    var cars = sortCars(filterCars());
+    var grid = document.getElementById("carGrid");
+    var empty = document.getElementById("emptyState");
+    document.getElementById("resultCount").textContent = cars.length;
+
+    if (!cars.length) {
+      grid.innerHTML = "";
+      empty.style.display = "block";
+      return;
+    }
+    empty.style.display = "none";
+    var favs = getFavs();
+
+    grid.innerHTML = cars.map(function (c) {
+      var emoji = EMOJI_MAP[c.body] || "🚗";
+      var badgeHTML = "";
+      if (c.badge === "new") badgeHTML = '<span class="car-badge new">NEW</span>';
+      else if (c.badge === "hot") badgeHTML = '<span class="car-badge hot">人気</span>';
+      else if (c.badge === "soon") badgeHTML = '<span class="car-badge soon">入荷予定</span>';
+      var liked = favs.indexOf(c.id) >= 0;
+
+      return '<div class="car-card" data-id="' + c.id + '">' +
+        '<div class="car-img"><span class="car-emoji">' + emoji + '</span>' +
+        badgeHTML +
+        '<button class="car-fav' + (liked ? ' liked' : '') + '" data-fav="' + c.id + '">' + (liked ? '♥' : '♡') + '</button>' +
+        '</div>' +
+        '<div class="car-body">' +
+        '<div class="car-maker">' + c.maker + '</div>' +
+        '<div class="car-name">' + c.name + '</div>' +
+        '<div class="car-specs">' +
+          '<span>' + c.year + '年</span>' +
+          '<span>' + (c.mileage / 10000).toFixed(1) + '万km</span>' +
+          '<span>' + c.engine + '</span>' +
+          '<span>' + c.color + '</span>' +
+        '</div>' +
+        '<div class="car-price">' + manyen(c.price) + ' <small>（税込）</small></div>' +
+        '<div class="car-total">乗り出し目安 ' + manyen(c.price * 1.12) + '〜</div>' +
+        '<div class="car-actions">' +
+          '<button class="btn btn-gold btn-sm" onclick="event.stopPropagation();location.href=\'login.html\'">オーダーする</button>' +
+          '<button class="btn btn-navy btn-sm" onclick="event.stopPropagation();showDetail(' + c.id + ')">詳細を見る</button>' +
+        '</div>' +
+        '</div></div>';
+    }).join("");
+  }
+
+  // Fav toggle
+  document.getElementById("carGrid").addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-fav]");
+    if (!btn) return;
+    e.stopPropagation();
+    var id = Number(btn.getAttribute("data-fav"));
+    var liked = toggleFav(id);
+    btn.className = "car-fav" + (liked ? " liked" : "");
+    btn.textContent = liked ? "♥" : "♡";
+  });
+
+  // Card click -> detail
+  document.getElementById("carGrid").addEventListener("click", function (e) {
+    var card = e.target.closest(".car-card");
+    if (!card || e.target.closest(".car-actions") || e.target.closest(".car-fav")) return;
+    var id = Number(card.getAttribute("data-id"));
+    showDetail(id);
+  });
+
+  // Detail modal
+  window.showDetail = function (id) {
+    var c = CARS.find(function (x) { return x.id === id; });
+    if (!c) return;
+    var emoji = EMOJI_MAP[c.body] || "🚗";
+    document.getElementById("modalImg").innerHTML = '<span style="font-size:96px;">' + emoji + '</span>';
+    document.getElementById("modalBody").innerHTML =
+      '<div class="car-maker">' + c.maker + '</div>' +
+      '<h2>' + c.name + '</h2>' +
+      '<div class="detail-price">' + manyen(c.price) + ' <small>（税込）</small></div>' +
+      '<div class="detail-total">乗り出し目安 ' + manyen(c.price * 1.12) + '〜（代行手数料・陸送・諸費用込み）</div>' +
+      '<div class="detail-specs">' +
+        '<div class="ds-row"><span class="ds-k">年式</span><span class="ds-v">' + c.year + '年</span></div>' +
+        '<div class="ds-row"><span class="ds-k">走行距離</span><span class="ds-v">' + (c.mileage / 10000).toFixed(1) + '万km</span></div>' +
+        '<div class="ds-row"><span class="ds-k">エンジン</span><span class="ds-v">' + c.engine + '</span></div>' +
+        '<div class="ds-row"><span class="ds-k">ミッション</span><span class="ds-v">' + c.mission + '</span></div>' +
+        '<div class="ds-row"><span class="ds-k">駆動</span><span class="ds-v">' + c.drive + '</span></div>' +
+        '<div class="ds-row"><span class="ds-k">ボディ</span><span class="ds-v">' + c.body + '</span></div>' +
+        '<div class="ds-row"><span class="ds-k">カラー</span><span class="ds-v">' + c.color + '</span></div>' +
+        '<div class="ds-row"><span class="ds-k">車検</span><span class="ds-v">' + c.inspection + '</span></div>' +
+      '</div>' +
+      '<div class="detail-desc">' + c.desc + '</div>' +
+      '<div class="modal-actions">' +
+        '<a class="btn btn-gold" href="login.html">この車両をオーダーする</a>' +
+        '<a class="btn btn-navy" href="index.html#simulator">総額シミュレーション</a>' +
+      '</div>';
+    document.getElementById("modalOverlay").classList.add("open");
+    document.body.style.overflow = "hidden";
+  };
+
+  document.getElementById("modalClose").addEventListener("click", closeModal);
+  document.getElementById("modalOverlay").addEventListener("click", function (e) {
+    if (e.target === this) closeModal();
+  });
+  function closeModal() {
+    document.getElementById("modalOverlay").classList.remove("open");
+    document.body.style.overflow = "";
+  }
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") closeModal();
+  });
+
+  // View toggle
+  document.getElementById("viewGrid").addEventListener("click", function () {
+    document.getElementById("carGrid").classList.remove("list-view");
+    this.classList.add("active");
+    document.getElementById("viewList").classList.remove("active");
+  });
+  document.getElementById("viewList").addEventListener("click", function () {
+    document.getElementById("carGrid").classList.add("list-view");
+    this.classList.add("active");
+    document.getElementById("viewGrid").classList.remove("active");
+  });
+
+  // Filters
+  var filterEls = document.querySelectorAll("#fKeyword,#fMaker,#fBody,#fPriceMin,#fPriceMax,#fYearMin,#fYearMax,#fMileage,#fNew,#fHot,#sortBy");
+  for (var i = 0; i < filterEls.length; i++) {
+    filterEls[i].addEventListener("change", renderGrid);
+    filterEls[i].addEventListener("input", renderGrid);
+  }
+
+  document.getElementById("filterReset").addEventListener("click", function () {
+    document.getElementById("fKeyword").value = "";
+    document.getElementById("fMaker").value = "";
+    document.getElementById("fBody").value = "";
+    document.getElementById("fPriceMin").value = "";
+    document.getElementById("fPriceMax").value = "";
+    document.getElementById("fYearMin").value = "";
+    document.getElementById("fYearMax").value = "";
+    document.getElementById("fMileage").value = "";
+    document.getElementById("fNew").checked = false;
+    document.getElementById("fHot").checked = false;
+    document.getElementById("sortBy").value = "new";
+    renderGrid();
+  });
+
+  renderGrid();
+})();
+</script>
+</body>
+</html>
