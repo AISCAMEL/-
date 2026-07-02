@@ -219,6 +219,7 @@
       <a class="nav-link" href="gallery.html" style="color:#fff;border-bottom:2px solid var(--gold-2);padding-bottom:2px;">落札実績</a>
       <a class="nav-link" href="shipping.html">陸送シミュ</a>
       <a class="nav-link" href="mypage.html">マイページ</a>
+      <button class="theme-toggle" id="themeToggle" aria-label="ダークモード切替" title="ダークモード切替">🌙</button>
       <a class="btn btn-gold btn-sm" href="login.html">無料会員登録</a>
     </nav>
   </div>
@@ -502,6 +503,24 @@
 </footer>
 
 <script>
+// ダークモード
+(function () {
+  var saved = localStorage.getItem('auc_theme');
+  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var theme = saved || (prefersDark ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', theme);
+  var btn = document.getElementById('themeToggle');
+  if (btn) {
+    btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+    btn.addEventListener('click', function () {
+      var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('auc_theme', next);
+      btn.textContent = next === 'dark' ? '☀️' : '🌙';
+    });
+  }
+})();
+
 (function () {
   // ===== Category filter =====
   var buttons = document.querySelectorAll('.filter-btn');

@@ -81,6 +81,7 @@
       <a class="nav-link" href="/sell">出品代行</a>
       <a class="nav-link" href="/shipping">陸送シミュ</a>
       <a class="nav-link" href="/mypage">マイページ</a>
+      <button class="theme-toggle" id="themeToggle" aria-label="ダークモード切替" title="ダークモード切替">🌙</button>
       <a class="btn btn-gold btn-sm" href="/login">無料会員登録</a>
     </nav>
   </div>
@@ -131,5 +132,24 @@
   </div>
 </footer>
 
+<script>
+// ダークモード
+(function () {
+  var saved = localStorage.getItem('auc_theme');
+  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var theme = saved || (prefersDark ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', theme);
+  var btn = document.getElementById('themeToggle');
+  if (btn) {
+    btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+    btn.addEventListener('click', function () {
+      var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('auc_theme', next);
+      btn.textContent = next === 'dark' ? '☀️' : '🌙';
+    });
+  }
+})();
+</script>
 </body>
 </html>
