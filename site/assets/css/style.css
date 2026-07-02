@@ -809,6 +809,122 @@ section { padding: 80px 0; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ========== Membership Rank ========== */
+.rank-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 16px; border-radius: 999px;
+  font-size: 12px; font-weight: 800; letter-spacing: .04em;
+}
+.rank-bronze { background: linear-gradient(135deg, #e8d5c0, #c4a07a); color: #5c3d1e; }
+.rank-silver { background: linear-gradient(135deg, #e8ecf0, #b8c4d0); color: #3a4a5c; }
+.rank-gold   { background: linear-gradient(135deg, var(--gold-2), var(--gold)); color: var(--navy); }
+
+.rank-card {
+  background: var(--white); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 24px;
+  box-shadow: var(--shadow); margin-bottom: 24px;
+}
+.rank-card .rank-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.rank-card .rank-header h3 { margin: 0; font-size: 17px; font-weight: 800; }
+.rank-progress-bar {
+  height: 8px; background: var(--line); border-radius: 999px;
+  overflow: hidden; margin: 12px 0 8px;
+}
+.rank-progress-bar i {
+  display: block; height: 100%; border-radius: 999px;
+  transition: width .6s var(--ease);
+}
+.rank-progress-bar .bronze-fill { background: linear-gradient(90deg, #c4a07a, #e8d5c0); }
+.rank-progress-bar .silver-fill { background: linear-gradient(90deg, #b8c4d0, #dde3ea); }
+.rank-progress-bar .gold-fill   { background: linear-gradient(90deg, var(--gold), var(--gold-2)); }
+.rank-next-info {
+  font-size: 12.5px; color: var(--muted); display: flex;
+  justify-content: space-between;
+}
+.rank-perks {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  margin-top: 16px;
+}
+.rank-perk {
+  text-align: center; padding: 14px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--bg); font-size: 12.5px;
+}
+.rank-perk .perk-icon { font-size: 22px; margin-bottom: 4px; }
+.rank-perk .perk-label { font-weight: 700; color: var(--ink); }
+.rank-perk .perk-value { color: var(--gold); font-weight: 800; margin-top: 2px; }
+
+/* ========== Referral / Coupon ========== */
+.coupon-card {
+  background: var(--white); border: 2px dashed var(--gold);
+  border-radius: var(--radius); padding: 24px;
+  box-shadow: var(--shadow); margin-bottom: 24px;
+  position: relative; overflow: hidden;
+}
+.coupon-card::before {
+  content: ''; position: absolute; top: 0; right: 0;
+  width: 100px; height: 100px;
+  background: radial-gradient(circle at top right, rgba(201,161,74,.08), transparent 70%);
+}
+.coupon-card .coupon-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.coupon-card .coupon-header h3 { margin: 0; font-size: 17px; font-weight: 800; }
+.referral-code-box {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg); border: 1px solid var(--line);
+  border-radius: var(--radius-sm); padding: 12px 16px;
+  margin-bottom: 16px;
+}
+.referral-code-box .code {
+  flex: 1; font-family: 'Courier New', monospace;
+  font-size: 20px; font-weight: 900; letter-spacing: .12em;
+  color: var(--navy);
+}
+.referral-code-box .btn-copy {
+  padding: 8px 16px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--white); color: var(--ink);
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  font-family: var(--font);
+  transition: all .2s var(--ease);
+}
+.referral-code-box .btn-copy:hover {
+  border-color: var(--gold); color: var(--gold);
+}
+.referral-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  margin-top: 16px;
+}
+.referral-stat {
+  text-align: center; padding: 14px 8px;
+  border-radius: var(--radius-sm); background: var(--bg);
+}
+.referral-stat .rs-val {
+  font-size: 24px; font-weight: 900; color: var(--navy);
+}
+.referral-stat .rs-lbl {
+  font-size: 12px; color: var(--muted); font-weight: 600; margin-top: 2px;
+}
+.coupon-list { margin-top: 16px; }
+.coupon-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0; border-bottom: 1px solid var(--line);
+}
+.coupon-item:last-child { border-bottom: none; }
+.coupon-item .ci-name { font-weight: 700; font-size: 14px; }
+.coupon-item .ci-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.coupon-item .ci-value {
+  font-weight: 900; font-size: 16px; color: var(--green);
+  white-space: nowrap;
+}
+.coupon-item .ci-used {
+  font-size: 12px; color: var(--muted); text-decoration: line-through;
+}
+
 /* ========== Utilities ========== */
 .center { text-align: center; }
 .mt-30 { margin-top: 30px; }
@@ -834,6 +950,7 @@ section { padding: 80px 0; }
   .menu-toggle { display: block; }
   .price.feat { transform: none; }
   .price.feat:hover { transform: translateY(-4px); }
+  .rank-perks, .referral-stats { grid-template-columns: repeat(3, 1fr); }
   .site-footer .cols { grid-template-columns: 1fr; }
   .contact-grid { grid-template-columns: 1fr; }
   .company-table th { width: 120px; }
@@ -853,6 +970,7 @@ section { padding: 80px 0; }
   .flow { grid-template-columns: 1fr; }
   .stat-row { grid-template-columns: 1fr; }
   .row-2 { grid-template-columns: 1fr; }
+  .rank-perks, .referral-stats { grid-template-columns: 1fr; }
   .hero h1 { font-size: 25px; }
   .hero .wrap { padding: 44px 16px 54px; }
   section { padding: 50px 0; }

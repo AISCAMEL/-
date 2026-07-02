@@ -365,6 +365,73 @@
     },
 
     /**
+     * 会員ランクデータを取得
+     */
+    getRankData: function () {
+      if (!_enabled) return Promise.resolve(fail('Firebase は無効です'));
+      var uid = getUid();
+      if (!uid) return Promise.resolve(fail('ログインしていません'));
+      return _db.collection('members').doc(uid).get()
+        .then(function (doc) {
+          if (!doc.exists) return ok({ rank: 'bronze', completedOrders: 0, referralCode: '', totalReferrals: 0 });
+          var d = doc.data();
+          return ok({
+            rank: d.rank || 'bronze',
+            completedOrders: d.completedOrders || 0,
+            referralCode: d.referralCode || '',
+            totalReferrals: d.totalReferrals || 0,
+            referredBy: d.referredBy || null
+          });
+        })
+        .catch(function (e) { return fail(e); });
+    },
+
+    /**
+     * 会員ランクデータを更新
+     */
+    updateRankData: function (data) {
+      if (!_enabled) return Promise.resolve(fail('Firebase は無効です'));
+      var uid = getUid();
+      if (!uid) return Promise.resolve(fail('ログインしていません'));
+      return _db.collection('members').doc(uid).update(data)
+        .then(function () { return ok(); })
+        .catch(function (e) { return fail(e); });
+    },
+
+    /**
+     * クーポンを追加
+     */
+    addCoupon: function (couponData) {
+      if (!_enabled) return Promise.resolve(fail('Firebase は無効です'));
+      var uid = getUid();
+      if (!uid) return Promise.resolve(fail('ログインしていません'));
+      var record = Object.assign({}, couponData, { createdAt: new Date().toISOString() });
+      return _db.collection('members').doc(uid)
+        .collection('coupons').add(record)
+        .then(function (docRef) { return ok({ id: docRef.id }); })
+        .catch(function (e) { return fail(e); });
+    },
+
+    /**
+     * クーポン一覧を取得
+     */
+    getCoupons: function () {
+      if (!_enabled) return Promise.resolve(fail('Firebase は無効です'));
+      var uid = getUid();
+      if (!uid) return Promise.resolve(fail('ログインしていません'));
+      return _db.collection('members').doc(uid)
+        .collection('coupons').orderBy('createdAt', 'desc').get()
+        .then(function (snapshot) {
+          var coupons = [];
+          snapshot.forEach(function (doc) {
+            coupons.push(Object.assign({ id: doc.id }, doc.data()));
+          });
+          return ok(coupons);
+        })
+        .catch(function (e) { return fail(e); });
+    },
+
+    /**
      * 現在のユーザーの全見積もりを取得
      * @returns {Promise<{ok: boolean, data?: any, error?: string}>}
      */

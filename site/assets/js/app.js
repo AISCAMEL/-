@@ -70,6 +70,52 @@
     ]);
   }
 
+  var RANK_KEY = "auc_rank";
+  var COUPON_KEY = "auc_coupons";
+  var REFERRAL_KEY = "auc_referrals";
+
+  var RANKS = {
+    bronze: { name: "ブロンズ", min: 0, discount: 0, next: "silver", nextMin: 3, icon: "🥉" },
+    silver: { name: "シルバー", min: 3, discount: 5000, next: "gold", nextMin: 7, icon: "🥈" },
+    gold:   { name: "ゴールド", min: 7, discount: 15000, next: null, nextMin: null, icon: "🥇" }
+  };
+
+  function generateReferralCode() {
+    var chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    var code = "AUC-";
+    for (var i = 0; i < 6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+    return code;
+  }
+
+  function calcRank(completedOrders) {
+    if (completedOrders >= 7) return "gold";
+    if (completedOrders >= 3) return "silver";
+    return "bronze";
+  }
+
+  function ensureRankData() {
+    var data = read(RANK_KEY, null);
+    if (!data) {
+      data = {
+        rank: "bronze",
+        completedOrders: 0,
+        referralCode: generateReferralCode(),
+        totalReferrals: 0,
+        referredBy: null
+      };
+      write(RANK_KEY, data);
+    }
+    if (!data.referralCode) {
+      data.referralCode = generateReferralCode();
+      write(RANK_KEY, data);
+    }
+    return data;
+  }
+
+  function ensureCoupons() {
+    return read(COUPON_KEY, []);
+  }
+
   window.AucConfig = { endpoint: ENDPOINT, send: sendToBackend };
 
   window.AucAuth = {
@@ -127,6 +173,85 @@
       ));
       return q;
     },
+    // 会員ランク・紹介クーポン
+    getRankData: function () {
+      return ensureRankData();
+    },
+    getRankInfo: function () {
+      var data = ensureRankData();
+      var orders = read(ORDER_KEY, []);
+      var completed = orders.filter(function (o) { return o.status === "done" || o.status === "sold"; }).length;
+      data.completedOrders = completed;
+      data.rank = calcRank(completed);
+      write(RANK_KEY, data);
+      var info = RANKS[data.rank];
+      var nextInfo = info.next ? RANKS[info.next] : null;
+      return {
+        rank: data.rank,
+        name: info.name,
+        icon: info.icon,
+        discount: info.discount,
+        completedOrders: completed,
+        nextRank: nextInfo ? nextInfo.name : null,
+        nextMin: info.nextMin,
+        progress: nextInfo ? Math.min(100, Math.round((completed / info.nextMin) * 100)) : 100,
+        referralCode: data.referralCode,
+        totalReferrals: data.totalReferrals
+      };
+    },
+    getReferralCode: function () {
+      return ensureRankData().referralCode;
+    },
+    applyReferralCode: function (code) {
+      var data = ensureRankData();
+      if (data.referredBy) return { ok: false, error: "既に紹介コードが適用されています" };
+      if (code === data.referralCode) return { ok: false, error: "自分の紹介コードは使用できません" };
+      data.referredBy = code;
+      write(RANK_KEY, data);
+      var coupons = ensureCoupons();
+      coupons.unshift({
+        id: "CP-" + (9000 + coupons.length),
+        name: "紹介特典クーポン",
+        desc: "紹介コード「" + code + "」適用",
+        value: 5000,
+        type: "discount",
+        used: false,
+        date: new Date().toISOString().slice(0, 10)
+      });
+      write(COUPON_KEY, coupons);
+      sendToBackend({ type: "referral", code: code, email: (read(USER_KEY, {}) || {}).email });
+      return { ok: true, coupon: coupons[0] };
+    },
+    addReferral: function () {
+      var data = ensureRankData();
+      data.totalReferrals = (data.totalReferrals || 0) + 1;
+      write(RANK_KEY, data);
+      var coupons = ensureCoupons();
+      coupons.unshift({
+        id: "CP-" + (9000 + coupons.length),
+        name: "紹介ありがとうクーポン",
+        desc: "お友達紹介の特典（" + data.totalReferrals + "人目）",
+        value: 3000,
+        type: "discount",
+        used: false,
+        date: new Date().toISOString().slice(0, 10)
+      });
+      write(COUPON_KEY, coupons);
+    },
+    getCoupons: function () {
+      return ensureCoupons();
+    },
+    useCoupon: function (couponId) {
+      var coupons = ensureCoupons();
+      var found = false;
+      coupons.forEach(function (c) {
+        if (c.id === couponId && !c.used) { c.used = true; found = true; }
+      });
+      if (found) write(COUPON_KEY, coupons);
+      return found;
+    },
+    RANKS: RANKS,
+
     // バックエンド（スタッフ/Slack回答）の相場額をローカルの依頼に反映
     applyQuoteAnswers: function (answers) {
       if (!answers || !answers.length) return false;

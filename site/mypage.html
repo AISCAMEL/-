@@ -45,8 +45,11 @@
           <div class="rk" id="mePlan">スタンダード会員</div>
         </div>
       </div>
+      <div id="sideRankBadge" style="margin-bottom:14px;"></div>
       <nav class="mp-nav">
         <a href="#dash" class="active">📊 ダッシュボード</a>
+        <a href="#rankSection">🏅 会員ランク</a>
+        <a href="#couponSection">🎟️ クーポン・紹介</a>
         <a href="#orders">📦 注文・出品状況</a>
         <a href="#newOrder">➕ 購入オーダー</a>
         <a href="#newSell">🏷️ 出品申込</a>
@@ -108,6 +111,40 @@
         <div class="stat"><div class="k">進行中の注文</div><div class="v" id="stActive">1</div></div>
         <div class="stat"><div class="k">累計ご成約</div><div class="v" id="stDone">1</div></div>
         <div class="stat"><div class="k">累計おトク額（目安）</div><div class="v" id="stSave">¥0</div></div>
+      </div>
+
+      <!-- 会員ランク -->
+      <div class="rank-card" id="rankSection">
+        <div class="rank-header">
+          <h3>🏅 会員ランク</h3>
+          <span class="rank-badge" id="rankBadge">ブロンズ</span>
+        </div>
+        <div id="rankBody">
+          <div class="rank-progress-bar"><i id="rankProgressBar" class="bronze-fill" style="width:0%"></i></div>
+          <div class="rank-next-info">
+            <span id="rankCurrent">0件 成約</span>
+            <span id="rankNext">次のランクまで あと3件</span>
+          </div>
+          <div class="rank-perks" id="rankPerks"></div>
+        </div>
+      </div>
+
+      <!-- 紹介クーポン -->
+      <div class="coupon-card" id="couponSection">
+        <div class="coupon-header">
+          <h3>🎟️ 紹介プログラム・クーポン</h3>
+        </div>
+        <p style="font-size:14px;color:var(--muted);margin:0 0 16px;">お友達を紹介すると<strong>双方に割引クーポン</strong>をプレゼント。紹介コードを共有してください。</p>
+        <div class="referral-code-box">
+          <span class="code" id="referralCode">---</span>
+          <button class="btn-copy" id="copyReferralBtn" type="button">コピー</button>
+        </div>
+        <div class="referral-stats">
+          <div class="referral-stat"><div class="rs-val" id="refCount">0</div><div class="rs-lbl">紹介人数</div></div>
+          <div class="referral-stat"><div class="rs-val" id="couponCount">0</div><div class="rs-lbl">保有クーポン</div></div>
+          <div class="referral-stat"><div class="rs-val" id="couponTotal">¥0</div><div class="rs-lbl">割引合計</div></div>
+        </div>
+        <div class="coupon-list" id="couponList"></div>
       </div>
 
       <!-- Orders -->
@@ -594,11 +631,90 @@
     document.body.appendChild(s);
   }
 
+  // --- 会員ランク表示 ---
+  function renderRank() {
+    var info = AucAuth.getRankInfo();
+    var badge = document.getElementById("rankBadge");
+    badge.textContent = info.icon + " " + info.name;
+    badge.className = "rank-badge rank-" + info.rank;
+
+    var bar = document.getElementById("rankProgressBar");
+    bar.style.width = info.progress + "%";
+    bar.className = info.rank + "-fill";
+
+    document.getElementById("rankCurrent").textContent = info.completedOrders + "件 成約";
+    document.getElementById("rankNext").textContent = info.nextRank
+      ? "次のランク（" + info.nextRank + "）まで あと" + (info.nextMin - info.completedOrders) + "件"
+      : "最高ランク達成！";
+
+    var perksData = [
+      { icon: "💰", label: "手数料割引", value: info.discount > 0 ? "¥" + info.discount.toLocaleString("ja-JP") : "—" },
+      { icon: "⚡", label: "優先対応", value: info.rank === "gold" ? "最優先" : info.rank === "silver" ? "優先" : "通常" },
+      { icon: "🎁", label: "紹介特典", value: info.rank === "gold" ? "¥5,000" : info.rank === "silver" ? "¥4,000" : "¥3,000" }
+    ];
+    document.getElementById("rankPerks").innerHTML = perksData.map(function (p) {
+      return '<div class="rank-perk"><div class="perk-icon">' + p.icon + '</div>'
+        + '<div class="perk-label">' + p.label + '</div>'
+        + '<div class="perk-value">' + p.value + '</div></div>';
+    }).join("");
+
+    // サイドバーのランクバッジ
+    document.getElementById("sideRankBadge").innerHTML =
+      '<span class="rank-badge rank-' + info.rank + '" style="width:100%;justify-content:center;">'
+      + info.icon + " " + info.name + '会員</span>';
+
+    document.getElementById("mePlan").textContent = info.name + " 会員";
+  }
+
+  // --- 紹介コード・クーポン表示 ---
+  function renderCoupons() {
+    var info = AucAuth.getRankInfo();
+    var coupons = AucAuth.getCoupons();
+    var activeCoupons = coupons.filter(function (c) { return !c.used; });
+    var totalDiscount = activeCoupons.reduce(function (s, c) { return s + c.value; }, 0);
+
+    document.getElementById("referralCode").textContent = info.referralCode;
+    document.getElementById("refCount").textContent = info.totalReferrals;
+    document.getElementById("couponCount").textContent = activeCoupons.length;
+    document.getElementById("couponTotal").textContent = "¥" + totalDiscount.toLocaleString("ja-JP");
+
+    var listEl = document.getElementById("couponList");
+    if (!coupons.length) {
+      listEl.innerHTML = '<p style="color:var(--muted);font-size:13px;margin:0;">クーポンはまだありません。お友達を紹介して特典を獲得しましょう。</p>';
+    } else {
+      listEl.innerHTML = coupons.map(function (c) {
+        return '<div class="coupon-item"><div>'
+          + '<div class="ci-name">' + c.name + '</div>'
+          + '<div class="ci-desc">' + c.desc + ' ／ ' + c.date + '</div></div>'
+          + '<div class="' + (c.used ? 'ci-used' : 'ci-value') + '">'
+          + (c.used ? "使用済み" : "-¥" + c.value.toLocaleString("ja-JP")) + '</div></div>';
+      }).join("");
+    }
+  }
+
+  // 紹介コードコピー
+  document.getElementById("copyReferralBtn").addEventListener("click", function () {
+    var code = document.getElementById("referralCode").textContent;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(code);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = code; document.body.appendChild(ta);
+      ta.select(); document.execCommand("copy");
+      document.body.removeChild(ta);
+    }
+    this.textContent = "コピー済み！";
+    var btn = this;
+    setTimeout(function () { btn.textContent = "コピー"; }, 2000);
+  });
+
   renderOrders();
   renderQuote();
   renderSell();
   renderLoan();
   renderQuoteList();
+  renderRank();
+  renderCoupons();
   syncQuoteAnswers();
 </script>
 </body>

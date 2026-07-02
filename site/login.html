@@ -92,6 +92,10 @@
           </select>
         </div>
       </div>
+      <div class="field">
+        <label>紹介コード（お持ちの方）</label>
+        <input type="text" id="regReferral" placeholder="例）AUC-XXXXXX" style="text-transform:uppercase;" />
+      </div>
       <div id="regError" class="alert" style="display:none;background:#fdeaea;color:#d44b4b;border:1px solid #f5c6c6;"></div>
       <button class="btn btn-gold btn-block" type="submit">無料で登録してマイページへ</button>
       <p class="switch">すでに会員の方は <a href="#" id="goLogin">ログイン</a></p>
@@ -169,9 +173,18 @@
       return;
     }
 
+    var referralCode = (document.getElementById("regReferral").value || "").trim().toUpperCase();
+
+    function applyReferralAfterReg() {
+      if (referralCode && referralCode.indexOf("AUC-") === 0) {
+        AucAuth.applyReferralCode(referralCode);
+      }
+    }
+
     if (useFirebase) {
       AucFirebase.register(name, email, pass, plan).then(function (res) {
         if (res.ok) {
+          applyReferralAfterReg();
           location.href = "mypage.html";
         } else {
           var msg = res.error;
@@ -183,6 +196,7 @@
       });
     } else {
       AucAuth.register({ name: name, email: email, plan: plan });
+      applyReferralAfterReg();
       location.href = "mypage.html";
     }
   });
