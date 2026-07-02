@@ -28,7 +28,12 @@ add_action( 'wp_footer', function () {
 			'document.querySelectorAll("*").forEach(function(el){' .
 				'var t=el.textContent.trim();' .
 				'if(t==="このクルマに関するお問い合わせ"){' .
-					'var w=el.closest("section")||el.closest("[class*=\'contact\']")||el.closest("[class*=\'inquiry\']")||el.parentElement;' .
+					'var w=el.parentElement;' .
+					'while(w&&w.tagName!=="BODY"&&w.tagName!=="MAIN"&&w.tagName!=="ARTICLE"){' .
+						'var bw=parseFloat(window.getComputedStyle(w).borderTopWidth)||0;' .
+						'if(bw>1){break;}' .
+						'w=w.parentElement;' .
+					'}' .
 					'if(w&&w.tagName!=="BODY"&&w.tagName!=="MAIN"&&w.tagName!=="ARTICLE"){' .
 						'w.style.setProperty("display","none","important");' .
 					'}' .
@@ -57,5 +62,7 @@ add_action( 'wp_head', function () {
 	echo '<style>' .
 		'.carmel-lg{margin:10px 0 6px !important;}' .
 		'.wp-block-group:empty,.elementor-widget-container:empty{display:none !important;}' .
+		/* 空の購入プラン枠（vc_custom_carmelplan）を直接非表示 */
+		'.vc_custom_carmelplan{display:none !important;}' .
 	'</style>';
 } );
