@@ -105,71 +105,71 @@
         <label class="lab">陸送エリア（納車先・都道府県）</label>
         <select id="as-region">
           <optgroup label="東北">
-            <option value="35000">福島県</option>
-            <option value="38000">宮城県</option>
-            <option value="38000">山形県</option>
-            <option value="42000">岩手県</option>
-            <option value="44000">秋田県</option>
-            <option value="48000">青森県</option>
+            <option value="55000">福島県</option>
+            <option value="58000">宮城県</option>
+            <option value="58000">山形県</option>
+            <option value="62000">岩手県</option>
+            <option value="64000">秋田県</option>
+            <option value="68000">青森県</option>
           </optgroup>
           <optgroup label="関東">
-            <option value="36000">茨城県</option>
-            <option value="36000">栃木県</option>
-            <option value="38000">群馬県</option>
-            <option value="38000">埼玉県</option>
-            <option value="38000">千葉県</option>
-            <option value="38000" selected>東京都</option>
-            <option value="40000">神奈川県</option>
+            <option value="56000">茨城県</option>
+            <option value="56000">栃木県</option>
+            <option value="58000">群馬県</option>
+            <option value="58000">埼玉県</option>
+            <option value="58000">千葉県</option>
+            <option value="58000" selected>東京都</option>
+            <option value="60000">神奈川県</option>
           </optgroup>
           <optgroup label="甲信越">
-            <option value="40000">新潟県</option>
-            <option value="42000">山梨県</option>
-            <option value="44000">長野県</option>
+            <option value="60000">新潟県</option>
+            <option value="62000">山梨県</option>
+            <option value="64000">長野県</option>
           </optgroup>
           <optgroup label="北陸">
-            <option value="48000">富山県</option>
-            <option value="50000">石川県</option>
-            <option value="52000">福井県</option>
+            <option value="68000">富山県</option>
+            <option value="70000">石川県</option>
+            <option value="72000">福井県</option>
           </optgroup>
           <optgroup label="東海">
-            <option value="42000">静岡県</option>
-            <option value="46000">愛知県</option>
-            <option value="48000">岐阜県</option>
-            <option value="50000">三重県</option>
+            <option value="62000">静岡県</option>
+            <option value="66000">愛知県</option>
+            <option value="68000">岐阜県</option>
+            <option value="70000">三重県</option>
           </optgroup>
           <optgroup label="近畿">
-            <option value="50000">滋賀県</option>
-            <option value="52000">京都府</option>
-            <option value="52000">大阪府</option>
-            <option value="54000">兵庫県</option>
-            <option value="54000">奈良県</option>
-            <option value="58000">和歌山県</option>
+            <option value="70000">滋賀県</option>
+            <option value="72000">京都府</option>
+            <option value="72000">大阪府</option>
+            <option value="74000">兵庫県</option>
+            <option value="74000">奈良県</option>
+            <option value="78000">和歌山県</option>
           </optgroup>
           <optgroup label="中国">
-            <option value="58000">岡山県</option>
-            <option value="60000">鳥取県</option>
-            <option value="62000">広島県</option>
-            <option value="64000">島根県</option>
-            <option value="68000">山口県</option>
+            <option value="78000">岡山県</option>
+            <option value="80000">鳥取県</option>
+            <option value="82000">広島県</option>
+            <option value="84000">島根県</option>
+            <option value="88000">山口県</option>
           </optgroup>
           <optgroup label="四国">
-            <option value="62000">香川県</option>
-            <option value="62000">徳島県</option>
-            <option value="66000">愛媛県</option>
-            <option value="66000">高知県</option>
+            <option value="82000">香川県</option>
+            <option value="82000">徳島県</option>
+            <option value="86000">愛媛県</option>
+            <option value="86000">高知県</option>
           </optgroup>
           <optgroup label="九州">
-            <option value="72000">福岡県</option>
-            <option value="74000">佐賀県</option>
-            <option value="74000">大分県</option>
-            <option value="76000">熊本県</option>
-            <option value="78000">長崎県</option>
-            <option value="80000">宮崎県</option>
-            <option value="82000">鹿児島県</option>
+            <option value="92000">福岡県</option>
+            <option value="94000">佐賀県</option>
+            <option value="94000">大分県</option>
+            <option value="96000">熊本県</option>
+            <option value="98000">長崎県</option>
+            <option value="100000">宮崎県</option>
+            <option value="102000">鹿児島県</option>
           </optgroup>
           <optgroup label="北海道・沖縄">
-            <option value="80000">北海道</option>
-            <option value="110000">沖縄県</option>
+            <option value="100000">北海道</option>
+            <option value="130000">沖縄県</option>
           </optgroup>
         </select>
       </div>
@@ -207,7 +207,7 @@
     // ===== 料金設定（ここを編集すれば料金が変わります）=====
     var FEE_TIERS=[{max:500000,fee:39800},{max:1000000,fee:49800},{max:1500000,fee:59800},{max:2000000,fee:69800},{max:3000000,fee:79800}];
     var FEE_RATE_OVER=0.03; // 300万円超は落札価格の3%
-    var CLASS={kei:{surcharge:0,recycle:12000,m:0.18},compact:{surcharge:0,recycle:18000,m:0.20},sedan:{surcharge:0,recycle:22000,m:0.22},suv:{surcharge:5000,recycle:26000,m:0.23},import:{surcharge:20000,recycle:35000,m:0.25}};
+    var CLASS={kei:{surcharge:0,recycle:12000,m:0.18,ship:10000},compact:{surcharge:0,recycle:18000,m:0.20,ship:15000},sedan:{surcharge:0,recycle:22000,m:0.22,ship:20000},suv:{surcharge:5000,recycle:26000,m:0.23,ship:25000},import:{surcharge:20000,recycle:35000,m:0.25,ship:30000}};
     var AUC=11000, OPT={reg:25000,garage:12000,inspect:35000,warranty:28000};
     var BOUNDS=[0,50,100,150,200,300];
     function yen(n){return "¥"+Math.round(n).toLocaleString("ja-JP")}
@@ -218,7 +218,7 @@
     function render(){
       var bid=+$("as-bid").value;
       var c=CLASS[R.querySelector('input[name=as-cls]:checked').value];
-      var region=+$("as-region").value;
+      var region=+$("as-region").value+c.ship;
       var opt=($("as-reg").checked?OPT.reg:0)+($("as-garage").checked?OPT.garage:0)+($("as-inspect").checked?OPT.inspect:0)+($("as-warranty").checked?OPT.warranty:0);
       var fee=feeByBid(bid)+c.surcharge;
       var total=bid+fee+AUC+c.recycle+region+opt;
