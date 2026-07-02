@@ -114,7 +114,6 @@ if ( ! function_exists( 'carmelx_loan_guide_shortcode' ) ) {
 			<?php endif; ?>
 			<p class="carmel-lg__cta-sub">最短即日審査・秘密厳守・在籍確認なし</p>
 		</div>
-		</div>
 		<script>
 		(function(){
 			var uid  = <?php echo wp_json_encode( $uid ); ?>;
