@@ -35,15 +35,17 @@ add_action( 'wp_footer', function () {
 				'}' .
 			'});' .
 
-			/* 空の枠を非表示：ボーダーがあるか問わず空要素を隠す */
-			'document.querySelectorAll(' .
-				'"body.single-portfolio *"' .
-			').forEach(function(el){' .
-				'if(el.textContent.trim()!==""||el.querySelector("img,video,iframe,svg,canvas,input,select,textarea,button,a")){return;}' .
+			/* 空の枠（黒枠など）を非表示 */
+			'document.querySelectorAll("body.single-portfolio *").forEach(function(el){' .
+				'var skip=["BODY","MAIN","ARTICLE","HEADER","FOOTER","SECTION","NAV","SCRIPT","STYLE","NOSCRIPT","TABLE","TR","TD","TH"];' .
+				'if(skip.indexOf(el.tagName)!==-1){return;}' .
+				'var txt=el.textContent.replace(/[ ​\s]+/g,"");' .
+				'if(txt!==""){return;}' .
+				'if(el.querySelector("img,video,iframe,svg,canvas,input,select,textarea")){return;}' .
 				'var s=window.getComputedStyle(el);' .
-				'var hasVis=parseInt(s.width)>10&&parseInt(s.height)>10&&s.display!=="none"&&s.visibility!=="hidden";' .
-				'var hasBorder=s.borderTopStyle!=="none"||s.outlineStyle!=="none"||s.boxShadow!=="none";' .
-				'if(hasVis&&hasBorder){el.style.setProperty("display","none","important");}' .
+				'if(s.display==="none"||s.visibility==="hidden"){return;}' .
+				'var bw=parseFloat(s.borderTopWidth)||0;' .
+				'if(el.offsetWidth>10&&el.offsetHeight>0&&bw>0){el.style.setProperty("display","none","important");}' .
 			'});' .
 
 		'});' .
