@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 8.8
+ * Version: 8.9
  * Author: CARMEL
  */
 
@@ -36,6 +36,14 @@ if (!defined('CARMEL3_REGEN_HOOK')) {
 // ニュース作成ウィザードの裏側実行フック
 if (!defined('CARMEL3_NEWS_HOOK')) {
     define('CARMEL3_NEWS_HOOK', 'carmel3_news_generate_single');
+}
+// Slackニュース連携（提案＋返信で投稿）の定期チェックフック
+if (!defined('CARMEL3_SLACK_POLL_HOOK')) {
+    define('CARMEL3_SLACK_POLL_HOOK', 'carmel3_slack_poll_tick');
+}
+// Slack連携の状態を保存するオプション名
+if (!defined('CARMEL3_SLACK_STATE')) {
+    define('CARMEL3_SLACK_STATE', 'carmel3_slack_state');
 }
 // 本文セクション画像 ACF フィールドキー（編集ページのHTMLから確認した値）
 if (!defined('CARMEL3_F_SEC1_IMG')) { define('CARMEL3_F_SEC1_IMG', 'field_69ffb5a4d372b'); } // section_1_image
@@ -81,6 +89,12 @@ function carmel3_auto_get_settings() {
         'line_enabled'  => 0,
         'line_token'    => '',
         'line_to'       => '',
+        // Slackニュース連携（Botトークン方式・双方向）
+        'slack_news_enabled' => 0,       // ON=毎朝ニュース案を提案し、返信で生成
+        'slack_bot_token'    => '',       // xoxb- で始まるBotトークン
+        'slack_channel_id'   => '',       // 投稿・読み取り対象チャンネルID（Cxxxx）
+        'slack_propose_time' => '08:00',  // 提案を送る時刻（サイトのタイムゾーン）
+        'slack_propose_count'=> 3,        // 提案するニュース案の数
         // 左メニューのスリム化：隠すトップメニューのスラッグ一覧
         'hidden_menus' => array(),
         // カーメル管理の中に移設するトップメニューのスラッグ一覧（移設＝中に入れて元は隠す）
@@ -151,6 +165,9 @@ add_filter('cron_schedules', function ($schedules) {
     if (!isset($schedules['carmel_twiceweekly'])) {
         $schedules['carmel_twiceweekly'] = array('interval' => (int)(3.5 * DAY_IN_SECONDS), 'display' => 'CARMEL 週2回');
     }
+    if (!isset($schedules['carmel3_5min'])) {
+        $schedules['carmel3_5min'] = array('interval' => 300, 'display' => 'CARMEL 5分ごと');
+    }
     return $schedules;
 });
 
@@ -161,6 +178,8 @@ add_action(CARMEL3_AUTO_RUNHOOK, 'carmel3_auto_run');
 add_action(CARMEL3_REGEN_HOOK, 'carmel3_regenerate_post', 10, 1);
 // 「ニュースを作る」ウィザードの裏側実行
 add_action(CARMEL3_NEWS_HOOK, 'carmel3_news_generate', 10, 1);
+// Slackニュース連携：5分ごとに提案送信＆返信チェック
+add_action(CARMEL3_SLACK_POLL_HOOK, 'carmel3_slack_poll_tick');
 
 /* ===== OpenRouterへの max_tokens を送信時に上限制限（残高不足エラー回避・本体は無改変） =====
    本体v5.7が大きすぎる max_tokens（例: 65536）を送ると残高不足で失敗するため、
@@ -253,7 +272,20 @@ add_action('init', function () {
     if (!empty($s['enabled']) && !wp_next_scheduled(CARMEL3_AUTO_HOOK)) {
         carmel3_auto_reschedule();
     }
+    carmel3_slack_reschedule($s);
 });
+
+// Slackニュース連携の定期チェックを、ON/OFFに合わせて予約・解除する
+function carmel3_slack_reschedule($s = null) {
+    if ($s === null) $s = carmel3_auto_get_settings();
+    $on = !empty($s['slack_news_enabled']) && trim((string)$s['slack_bot_token']) !== '' && trim((string)$s['slack_channel_id']) !== '';
+    $scheduled = wp_next_scheduled(CARMEL3_SLACK_POLL_HOOK);
+    if ($on && !$scheduled) {
+        wp_schedule_event(time() + 60, 'carmel3_5min', CARMEL3_SLACK_POLL_HOOK);
+    } elseif (!$on && $scheduled) {
+        wp_unschedule_event($scheduled, CARMEL3_SLACK_POLL_HOOK);
+    }
+}
 
 /* ===== 自動生成の本体 ===== */
 
@@ -1952,6 +1984,7 @@ function carmel3_auto_register_menu() {
         add_submenu_page($parent, 'かんたんホーム', 'かんたんホーム', 'manage_options', 'carmel3-home', 'carmel3_home_page');
         add_submenu_page($parent, 'CARMEL 自動生成', '自動生成', 'manage_options', 'carmel3-auto', 'carmel3_auto_settings_page');
         add_submenu_page($parent, 'ニュースを作る（指示して生成）', 'ニュースを作る', 'manage_options', 'carmel3-news', 'carmel3_news_page');
+        add_submenu_page($parent, 'Slackでニュース提案・投稿', 'Slack連携', 'manage_options', 'carmel3-slack', 'carmel3_slack_page');
         add_submenu_page($parent, '店舗・担当者（記事に差し込み）', '店舗・担当者', 'manage_options', 'carmel3-stores', 'carmel3_stores_page');
         add_submenu_page($parent, 'その他掲載ページ（MEO対策）', 'その他掲載ページ（MEO対策）', 'manage_options', 'carmel3-meo', 'carmel3_meo_page');
     } else {
@@ -1959,8 +1992,9 @@ function carmel3_auto_register_menu() {
         add_menu_page('かんたんホーム', 'かんたんホーム', 'manage_options', 'carmel3-home', 'carmel3_home_page', 'dashicons-admin-home', 3);
         add_menu_page('CARMEL 自動生成', 'CARMEL自動生成', 'manage_options', 'carmel3-auto', 'carmel3_auto_settings_page', 'dashicons-update', 4);
         add_menu_page('ニュースを作る（指示して生成）', 'ニュースを作る', 'manage_options', 'carmel3-news', 'carmel3_news_page', 'dashicons-megaphone', 5);
-        add_menu_page('店舗・担当者', '店舗・担当者', 'manage_options', 'carmel3-stores', 'carmel3_stores_page', 'dashicons-store', 6);
-        add_menu_page('その他掲載ページ（MEO対策）', 'その他掲載ページ(MEO)', 'manage_options', 'carmel3-meo', 'carmel3_meo_page', 'dashicons-location-alt', 7);
+        add_menu_page('Slackでニュース提案・投稿', 'Slack連携', 'manage_options', 'carmel3-slack', 'carmel3_slack_page', 'dashicons-format-chat', 6);
+        add_menu_page('店舗・担当者', '店舗・担当者', 'manage_options', 'carmel3-stores', 'carmel3_stores_page', 'dashicons-store', 7);
+        add_menu_page('その他掲載ページ（MEO対策）', 'その他掲載ページ(MEO)', 'manage_options', 'carmel3-meo', 'carmel3_meo_page', 'dashicons-location-alt', 8);
     }
 }
 
@@ -2113,6 +2147,7 @@ function carmel3_home_page() {
     $url_posts = admin_url('edit.php?post_type=media_article');     // 作った記事一覧
     $url_meo   = admin_url('admin.php?page=carmel3-meo');           // MEO（その他掲載ページ）
     $url_news  = admin_url('admin.php?page=carmel3-news');          // ニュースを作る（指示して生成）
+    $url_slack = admin_url('admin.php?page=carmel3-slack');         // Slack連携
 
     // ニュース・加盟店ブログ（存在すれば先頭に大ボタンを出す）
     $quick_posts = array();
@@ -2185,6 +2220,10 @@ function carmel3_home_page() {
             <a href="<?php echo esc_url($url_news); ?>" style="text-decoration:none;display:block;background:linear-gradient(135deg,#0ea5e9,#0369a1);color:#fff;border-radius:12px;padding:16px;margin-bottom:12px">
                 <div style="font-size:18px;font-weight:800">📰 ニュースを作る（指示して生成）</div>
                 <div style="font-size:12px;opacity:.95;margin-top:4px">「今月の定休日」「キャンペーン」などを指示するだけ。定休日は日付を自動計算します。</div>
+            </a>
+            <a href="<?php echo esc_url($url_slack); ?>" style="text-decoration:none;display:block;background:linear-gradient(135deg,#6d28d9,#4a154b);color:#fff;border-radius:12px;padding:16px;margin-bottom:12px">
+                <div style="font-size:18px;font-weight:800">💬 Slackでニュース提案・投稿</div>
+                <div style="font-size:12px;opacity:.95;margin-top:4px">毎朝AIが「本日のニュース案」を提案。Slackで番号を返信すると記事を自動生成します。</div>
             </a>
             <?php if (!empty($quick_posts)): ?>
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:12px">
@@ -3195,8 +3234,424 @@ function carmel3_news_generate($item) {
     }
 
     $title = get_the_title($pid);
+
+    // Slack連携から来た依頼なら、同じチャンネルに完成報告を返す（Botトークン）
+    if (!empty($item['_slack_channel']) && trim((string)$s['slack_bot_token']) !== '') {
+        $link = ($status_label === '公開') ? get_permalink($pid) : get_edit_post_link($pid, 'raw');
+        carmel3_slack_post_message(
+            $s['slack_bot_token'],
+            $item['_slack_channel'],
+            "✅ 「{$title}」を{$status_label}で作成しました。\n{$link}",
+            isset($item['_slack_thread']) ? $item['_slack_thread'] : ''
+        );
+    }
+
     carmel3_progress_set("完了：「{$title}」を{$status_label}で作成しました", 100, 'done', array('post_id' => $pid, 'title' => $title));
     carmel3_loglist_add("ニュース生成 成功：{$title}（{$status_label}） post#{$pid}", true);
+}
+
+/* =====================================================================
+   Slackニュース連携（Botトークン方式・双方向）
+   - 毎朝、AIが「本日のニュース案」を提案してSlackへ投稿
+   - あなたが「1」「1,3」「1 定休日を強調して」などと返信
+   - 5分ごとにWordPressがSlackを読み、指示どおりに記事を生成（下書き）
+   外部公開URL・署名シークレット不要。conversations.history で読み取る。
+   必要な権限(スコープ): chat:write / channels:history / channels:read
+   （プライベートCHは groups:history / groups:read）
+   ===================================================================== */
+
+// Slack Web API 呼び出し（Botトークン）
+function carmel3_slack_api($token, $method, $params = array(), $use_get = false) {
+    $token = trim((string)$token);
+    if ($token === '') return array('ok' => false, 'error' => 'no_token');
+    $url = 'https://slack.com/api/' . $method;
+    $args = array(
+        'headers' => array('Authorization' => 'Bearer ' . $token),
+        'timeout' => 25,
+    );
+    if ($use_get) {
+        $url = add_query_arg($params, $url); // add_query_arg が値をエンコードする
+        $r = wp_remote_get($url, $args);
+    } else {
+        $args['headers']['Content-Type'] = 'application/json; charset=utf-8';
+        $args['body'] = wp_json_encode($params, JSON_UNESCAPED_UNICODE);
+        $r = wp_remote_post($url, $args);
+    }
+    if (is_wp_error($r)) return array('ok' => false, 'error' => $r->get_error_message());
+    $body = json_decode((string)wp_remote_retrieve_body($r), true);
+    return is_array($body) ? $body : array('ok' => false, 'error' => 'bad_response');
+}
+
+// メッセージ投稿（thread_ts があればスレッド返信）
+function carmel3_slack_post_message($token, $channel, $text, $thread_ts = '') {
+    $params = array('channel' => $channel, 'text' => $text);
+    if ($thread_ts !== '') $params['thread_ts'] = $thread_ts;
+    return carmel3_slack_api($token, 'chat.postMessage', $params);
+}
+
+// 接続テスト（auth.test）
+function carmel3_slack_auth_test($token) {
+    return carmel3_slack_api($token, 'auth.test', array());
+}
+
+// AIに「本日のニュース案」をN件作らせる。戻り値: array of array('title','keyword','brief')
+function carmel3_slack_generate_proposals($s, $count) {
+    if (!function_exists('carmel_call_openrouter_chat')) return array();
+    $count = max(1, min(5, (int)$count));
+    $today = date('Y年n月j日', current_time('timestamp'));
+    $wday  = array('日','月','火','水','木','金','土')[(int)date('w', current_time('timestamp'))];
+
+    $sys = 'あなたは中古車販売店カーメル（合同会社アイズ）の広報担当です。日本語で、JSONのみ返します。';
+    $user = "本日は{$today}（{$wday}曜）です。中古車販売店が今日〜今週に出すと良い『ニュース記事の案』を{$count}件、提案してください。\n"
+        . "季節・時期・行事・車の需要（車検/ボーナス/連休/決算/新生活など）を踏まえ、実行しやすく具体的なものを。\n"
+        . "各案は次のJSON配列で返す（他の文章は書かない）:\n"
+        . "[{\"title\":\"記事タイトル案\",\"keyword\":\"主要キーワード\",\"brief\":\"何をどう書くか・訴求点を1〜2文で\"}]\n"
+        . "注意: 事実を勝手に断定しない（金額・日付は例示にとどめる）。タイトルは具体的で読みたくなるもの。";
+
+    $res = carmel_call_openrouter_chat(array(
+        array('role' => 'system', 'content' => $sys),
+        array('role' => 'user',   'content' => $user),
+    ), isset($s['text_model']) ? $s['text_model'] : '', 0.8, 60);
+
+    if (empty($res['content'])) return array();
+    $json = function_exists('carmel_extract_json_from_text') ? carmel_extract_json_from_text($res['content']) : json_decode(trim($res['content']), true);
+    if (!is_array($json)) return array();
+    // {items:[...]} 形式にも対応
+    if (isset($json['items']) && is_array($json['items'])) $json = $json['items'];
+
+    $out = array();
+    foreach ($json as $row) {
+        if (!is_array($row)) continue;
+        $t = isset($row['title']) ? sanitize_text_field($row['title']) : '';
+        if ($t === '') continue;
+        $out[] = array(
+            'title'   => $t,
+            'keyword' => isset($row['keyword']) ? sanitize_text_field($row['keyword']) : $t,
+            'brief'   => isset($row['brief']) ? sanitize_textarea_field($row['brief']) : '',
+        );
+        if (count($out) >= $count) break;
+    }
+    return $out;
+}
+
+// 提案をSlackへ投稿し、状態を保存する
+function carmel3_slack_do_propose($s) {
+    $token   = trim((string)$s['slack_bot_token']);
+    $channel = trim((string)$s['slack_channel_id']);
+    if ($token === '' || $channel === '') return array('ok' => false, 'error' => '未設定');
+
+    $count = isset($s['slack_propose_count']) ? (int)$s['slack_propose_count'] : 3;
+    $proposals = carmel3_slack_generate_proposals($s, $count);
+    if (empty($proposals)) {
+        carmel3_slack_post_message($token, $channel, '⚠️ 本日のニュース案の生成に失敗しました（AIの残高やモデル設定をご確認ください）。');
+        return array('ok' => false, 'error' => '案の生成失敗');
+    }
+
+    $today = date('n月j日', current_time('timestamp'));
+    $lines = array("☀️ *本日のニュース案*（{$today}）— 作りたい番号を返信してください");
+    foreach ($proposals as $i => $p) {
+        $n = $i + 1;
+        $brief = $p['brief'] !== '' ? ("\n     ↳ " . $p['brief']) : '';
+        $lines[] = "*{$n}.* {$p['title']}{$brief}";
+    }
+    $lines[] = "";
+    $lines[] = "返信例：`1` ／ 複数は `1,3` ／ 指示付きは `1 定休日を強調して` ／ 自由指定は `ニュース: 今月の定休日`";
+    $text = implode("\n", $lines);
+
+    $r = carmel3_slack_post_message($token, $channel, $text);
+    if (empty($r['ok'])) return array('ok' => false, 'error' => isset($r['error']) ? $r['error'] : 'post_failed');
+
+    $ts = isset($r['ts']) ? $r['ts'] : '';
+    $state = array(
+        'date'         => date('Y-m-d', current_time('timestamp')),
+        'proposal_ts'  => $ts,
+        'proposals'    => $proposals,
+        'handled_ts'   => array(),   // 処理済みの返信ts
+    );
+    update_option(CARMEL3_SLACK_STATE, $state, false);
+    return array('ok' => true, 'ts' => $ts, 'count' => count($proposals));
+}
+
+// 返信テキストを解析して「どの案を・どんな追加指示で」作るかを返す
+// 戻り値: array of array('title','keyword','brief','img_extra')
+function carmel3_slack_parse_reply($text, $proposals) {
+    $text = trim((string)$text);
+    if ($text === '') return array();
+    $items = array();
+
+    // 自由指定：「ニュース: 〜」「記事: 〜」
+    if (preg_match('/^(?:ニュース|記事|news)\s*[:：]\s*(.+)$/isu', $text, $m)) {
+        $body = trim($m[1]);
+        if ($body !== '') {
+            $items[] = array(
+                'title'   => wp_trim_words(wp_strip_all_tags($body), 20, ''),
+                'keyword' => wp_trim_words(wp_strip_all_tags($body), 8, ''),
+                'brief'   => "種類：お知らせ\n指示・要点：\n{$body}\n上記の指示に正確に従うこと。事実を勝手に追加・改変しない。",
+                'img_extra' => '',
+            );
+        }
+        return $items;
+    }
+
+    // 番号指定：先頭付近の数字を拾う（1 / 1,3 / 1と3 / 1番）＋残りを追加指示に
+    if (preg_match('/^[\s>＞]*((?:\d+\s*(?:[,、と＝&・]\s*)?)+)/u', $text, $m)) {
+        $nums_raw = $m[1];
+        $rest = trim(mb_substr($text, mb_strlen($m[0])));
+        $rest = preg_replace('/^(?:番|で|を|お願いします?|作成|作って|投稿)+/u', '', trim($rest));
+        $rest = trim($rest);
+
+        preg_match_all('/\d+/', $nums_raw, $nm);
+        $seen = array();
+        foreach ($nm[0] as $numstr) {
+            $n = (int)$numstr;
+            if ($n < 1 || $n > count($proposals) || isset($seen[$n])) continue;
+            $seen[$n] = true;
+            $p = $proposals[$n - 1];
+            $brief = $p['brief'];
+            if ($rest !== '') $brief = trim($brief . "\n【追加の指示】" . $rest);
+            $items[] = array(
+                'title'   => $p['title'],
+                'keyword' => $p['keyword'] !== '' ? $p['keyword'] : $p['title'],
+                'brief'   => $brief,
+                'img_extra' => '',
+            );
+        }
+    }
+    return $items;
+}
+
+// 1件のニュース依頼を裏側生成へ投入
+function carmel3_slack_enqueue_item($src, $channel, $thread_ts) {
+    $item = array(
+        'account'    => 'main',
+        'category'   => 'news',
+        'keyword'    => isset($src['keyword']) ? $src['keyword'] : '',
+        'prefecture' => '',
+        'city'       => '',
+        'title'      => isset($src['title']) ? $src['title'] : '',
+        'brief'      => isset($src['brief']) ? $src['brief'] : '',
+        'img_extra'  => isset($src['img_extra']) ? $src['img_extra'] : '',
+        '_slack_channel' => $channel,
+        '_slack_thread'  => $thread_ts,
+        '_n'         => uniqid('slk', true),
+    );
+    wp_schedule_single_event(time() + 1, CARMEL3_NEWS_HOOK, array($item));
+    if (function_exists('spawn_cron')) spawn_cron();
+}
+
+// 5分ごと：提案が未送信なら送り、返信があれば処理する
+function carmel3_slack_poll_tick() {
+    $s = carmel3_auto_get_settings();
+    if (empty($s['slack_news_enabled'])) return;
+    $token   = trim((string)$s['slack_bot_token']);
+    $channel = trim((string)$s['slack_channel_id']);
+    if ($token === '' || $channel === '') return;
+
+    $state = get_option(CARMEL3_SLACK_STATE, array());
+    if (!is_array($state)) $state = array();
+    $today = date('Y-m-d', current_time('timestamp'));
+
+    // 本日まだ提案していない & 提案時刻を過ぎている → 提案を送る
+    $propose_time = isset($s['slack_propose_time']) ? $s['slack_propose_time'] : '08:00';
+    $due = false;
+    if (preg_match('/^(\d{1,2}):(\d{2})$/', $propose_time, $mm)) {
+        $now_min = (int)date('G', current_time('timestamp')) * 60 + (int)date('i', current_time('timestamp'));
+        $due_min = (int)$mm[1] * 60 + (int)$mm[2];
+        $due = ($now_min >= $due_min);
+    }
+    if ((empty($state['date']) || $state['date'] !== $today) && $due) {
+        carmel3_slack_do_propose($s);
+        return; // 提案直後はこのtickを終了（返信は次回tickから）
+    }
+
+    // 返信チェック：提案tsより後の人間メッセージを読む
+    if (empty($state['proposal_ts']) || empty($state['proposals'])) return;
+    $hist = carmel3_slack_api($token, 'conversations.history', array(
+        'channel' => $channel,
+        'oldest'  => $state['proposal_ts'],
+        'limit'   => 50,
+    ), true);
+    if (empty($hist['ok']) || empty($hist['messages']) || !is_array($hist['messages'])) return;
+
+    $handled = isset($state['handled_ts']) && is_array($state['handled_ts']) ? $state['handled_ts'] : array();
+    $handled_map = array_fill_keys($handled, true);
+    $did = false;
+
+    // 古い順に処理
+    $messages = array_reverse($hist['messages']);
+    foreach ($messages as $msg) {
+        if (!is_array($msg)) continue;
+        $ts = isset($msg['ts']) ? $msg['ts'] : '';
+        if ($ts === '' || $ts === $state['proposal_ts']) continue;
+        if (isset($handled_map[$ts])) continue;
+        // Bot自身/システムの投稿は無視（人間の返信だけ処理）
+        if (!empty($msg['bot_id']) || !empty($msg['subtype'])) { $handled[] = $ts; $handled_map[$ts] = true; continue; }
+        $txt = isset($msg['text']) ? $msg['text'] : '';
+
+        $items = carmel3_slack_parse_reply($txt, $state['proposals']);
+        // 処理済みとして記録（無効な返信も再解析しない）
+        $handled[] = $ts; $handled_map[$ts] = true;
+
+        if (empty($items)) continue;
+
+        $titles = array();
+        foreach ($items as $src) {
+            carmel3_slack_enqueue_item($src, $channel, $ts);
+            $titles[] = '「' . $src['title'] . '」';
+        }
+        $did = true;
+        carmel3_slack_post_message($token, $channel,
+            '🛠 ' . implode('、', $titles) . ' を作成します。数分お待ちください（完成したらこのチャンネルにお知らせします）。',
+            $ts
+        );
+    }
+
+    $state['handled_ts'] = array_slice($handled, -200);
+    update_option(CARMEL3_SLACK_STATE, $state, false);
+    if ($did) { /* 生成はcronで進行 */ }
+}
+
+/* ===== Slack連携：設定画面・保存・テスト ===== */
+
+// 設定保存
+add_action('admin_post_carmel3_slack_save', function () {
+    if (!current_user_can('manage_options')) wp_die('権限がありません');
+    check_admin_referer('carmel3_slack_save');
+
+    $s = carmel3_auto_get_settings();
+    $s['slack_news_enabled'] = isset($_POST['slack_news_enabled']) ? 1 : 0;
+    if (isset($_POST['slack_bot_token'])) {
+        $tok = trim((string) wp_unslash($_POST['slack_bot_token']));
+        // 伏字(●●●)のまま保存されたら既存値を維持
+        if ($tok !== '' && strpos($tok, '●') === false) $s['slack_bot_token'] = sanitize_text_field($tok);
+        if ($tok === '') $s['slack_bot_token'] = '';
+    }
+    $s['slack_channel_id'] = isset($_POST['slack_channel_id']) ? sanitize_text_field(wp_unslash($_POST['slack_channel_id'])) : '';
+    $pt = isset($_POST['slack_propose_time']) ? trim((string) wp_unslash($_POST['slack_propose_time'])) : '08:00';
+    $s['slack_propose_time'] = preg_match('/^\d{1,2}:\d{2}$/', $pt) ? $pt : '08:00';
+    $s['slack_propose_count'] = isset($_POST['slack_propose_count']) ? max(1, min(5, (int)$_POST['slack_propose_count'])) : 3;
+
+    carmel3_auto_save_settings($s);
+    carmel3_slack_reschedule($s);
+    wp_safe_redirect(admin_url('admin.php?page=carmel3-slack&saved=1'));
+    exit;
+});
+
+// 接続テスト
+add_action('admin_post_carmel3_slack_test', function () {
+    if (!current_user_can('manage_options')) wp_die('権限がありません');
+    check_admin_referer('carmel3_slack_test');
+    $s = carmel3_auto_get_settings();
+    $r = carmel3_slack_auth_test($s['slack_bot_token']);
+    if (!empty($r['ok'])) {
+        $msg = '接続OK（ワークスペース: ' . (isset($r['team']) ? $r['team'] : '?') . ' / Bot: ' . (isset($r['user']) ? $r['user'] : '?') . '）';
+        // ついでにチャンネルへテスト投稿
+        $post = carmel3_slack_post_message($s['slack_bot_token'], $s['slack_channel_id'], '✅ カーメル連携テスト：このメッセージが見えていればOKです。');
+        if (empty($post['ok'])) $msg .= ' ／ ただしチャンネル投稿に失敗（' . (isset($post['error']) ? $post['error'] : '?') . '）。Botをチャンネルに招待し、channel_idが正しいかご確認ください。';
+        else $msg .= ' ／ チャンネル投稿も成功しました。';
+    } else {
+        $msg = '接続失敗（' . (isset($r['error']) ? $r['error'] : '?') . '）。Botトークン(xoxb-)をご確認ください。';
+    }
+    set_transient('carmel3_slack_msg', $msg, 120);
+    wp_safe_redirect(admin_url('admin.php?page=carmel3-slack&tested=1'));
+    exit;
+});
+
+// いますぐ提案を送る
+add_action('admin_post_carmel3_slack_propose_now', function () {
+    if (!current_user_can('manage_options')) wp_die('権限がありません');
+    check_admin_referer('carmel3_slack_propose_now');
+    $s = carmel3_auto_get_settings();
+    $r = carmel3_slack_do_propose($s);
+    $msg = !empty($r['ok'])
+        ? ('本日のニュース案（' . (int)$r['count'] . '件）をSlackへ送りました。Slackで番号を返信してください。')
+        : ('提案の送信に失敗（' . (isset($r['error']) ? $r['error'] : '?') . '）。');
+    set_transient('carmel3_slack_msg', $msg, 120);
+    wp_safe_redirect(admin_url('admin.php?page=carmel3-slack&proposed=1'));
+    exit;
+});
+
+function carmel3_slack_page() {
+    $s = carmel3_auto_get_settings();
+    $has_token = trim((string)$s['slack_bot_token']) !== '';
+    $token_disp = $has_token ? '●●●●●●●●（設定済み・変更する場合のみ入力）' : '';
+    $enabled = !empty($s['slack_news_enabled']);
+    $engine_ok = function_exists('carmel_call_openrouter_chat');
+    $flash = get_transient('carmel3_slack_msg');
+    if ($flash) delete_transient('carmel3_slack_msg');
+    $next = wp_next_scheduled(CARMEL3_SLACK_POLL_HOOK);
+    ?>
+    <div style="max-width:900px;margin:20px auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+        <div style="background:linear-gradient(135deg,#3d1f6e,#4a154b);color:#fff;padding:24px;border-radius:16px;margin-bottom:18px">
+            <h1 style="margin:0 0 6px;font-size:24px">Slackでニュース提案・投稿（双方向）</h1>
+            <p style="margin:0;opacity:.92">毎朝AIが「本日のニュース案」をSlackへ提案。あなたが<strong>番号を返信</strong>すると、その内容でWordPressが記事を自動生成（下書き）します。返信例：<code>1</code>／<code>1,3</code>／<code>1 定休日を強調して</code>。</p>
+        </div>
+
+        <?php if ($flash): ?><div class="notice notice-info is-dismissible"><p><?php echo esc_html($flash); ?></p></div><?php endif; ?>
+        <?php if (isset($_GET['saved'])): ?><div class="notice notice-success is-dismissible"><p>設定を保存しました。</p></div><?php endif; ?>
+
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:16px">
+            <h2 style="margin:0 0 10px;font-size:16px">現在の状態</h2>
+            <p style="margin:0 0 4px">連携：<strong style="color:<?php echo $enabled ? '#16a34a' : '#9ca3af'; ?>"><?php echo $enabled ? 'ON（稼働中）' : 'OFF'; ?></strong>
+             ／ Botトークン：<strong style="color:<?php echo $has_token ? '#16a34a' : '#b91c1c'; ?>"><?php echo $has_token ? '設定済み' : '未設定'; ?></strong>
+             ／ AIエンジン：<strong style="color:<?php echo $engine_ok ? '#16a34a' : '#b91c1c'; ?>"><?php echo $engine_ok ? '接続OK' : '未接続'; ?></strong></p>
+            <?php if ($enabled): ?><p style="margin:4px 0 0;color:#666;font-size:12px">次回の自動チェック：<?php echo $next ? esc_html(get_date_from_gmt(gmdate('Y-m-d H:i:s', $next), 'n月j日 H:i')) : '—'; ?>（5分ごと）</p><?php endif; ?>
+        </div>
+
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+            <input type="hidden" name="action" value="carmel3_slack_save">
+            <?php wp_nonce_field('carmel3_slack_save'); ?>
+            <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:16px">
+                <h2 style="margin:0 0 12px;font-size:16px">設定</h2>
+
+                <p><label style="font-weight:700"><input type="checkbox" name="slack_news_enabled" value="1" <?php checked($enabled); ?>> Slackニュース連携を有効にする</label></p>
+
+                <p style="margin:12px 0 4px;font-weight:700">Botトークン（xoxb-…）</p>
+                <input type="text" name="slack_bot_token" value="<?php echo esc_attr($token_disp); ?>" style="width:100%;padding:8px" placeholder="xoxb-...">
+                <p style="margin:4px 0 0;color:#888;font-size:12px">Slackアプリの「OAuth &amp; Permissions」で取得。ここに貼るだけ（チャットには貼らないでください）。</p>
+
+                <p style="margin:14px 0 4px;font-weight:700">チャンネルID（Cから始まる）</p>
+                <input type="text" name="slack_channel_id" value="<?php echo esc_attr($s['slack_channel_id']); ?>" style="width:320px;padding:8px" placeholder="例: C0123ABCDEF">
+                <p style="margin:4px 0 0;color:#888;font-size:12px">投稿・読み取りをするチャンネル。チャンネル名右クリック→「リンクをコピー」の末尾がIDです。<strong>Botをそのチャンネルに招待</strong>してください（/invite @アプリ名）。</p>
+
+                <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:14px">
+                    <label style="font-weight:700">提案を送る時刻<br>
+                        <input type="time" name="slack_propose_time" value="<?php echo esc_attr($s['slack_propose_time']); ?>" style="padding:6px;font-weight:400"></label>
+                    <label style="font-weight:700">提案する案の数<br>
+                        <input type="number" name="slack_propose_count" value="<?php echo esc_attr($s['slack_propose_count']); ?>" min="1" max="5" style="width:80px;padding:6px;font-weight:400"></label>
+                </div>
+
+                <p style="margin:16px 0 0"><button type="submit" class="button button-primary button-hero">設定を保存</button></p>
+            </div>
+        </form>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                <input type="hidden" name="action" value="carmel3_slack_test">
+                <?php wp_nonce_field('carmel3_slack_test'); ?>
+                <button type="submit" class="button">① 接続テスト（チャンネルへテスト投稿）</button>
+            </form>
+            <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                <input type="hidden" name="action" value="carmel3_slack_propose_now">
+                <?php wp_nonce_field('carmel3_slack_propose_now'); ?>
+                <button type="submit" class="button button-secondary">② いますぐ本日のニュース案を送る</button>
+            </form>
+        </div>
+
+        <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:14px;padding:18px">
+            <h2 style="margin:0 0 10px;font-size:15px">はじめての設定（5分）</h2>
+            <ol style="margin:0 0 0 18px;line-height:1.9;color:#333;font-size:14px">
+                <li><a href="https://api.slack.com/apps" target="_blank" rel="noopener">api.slack.com/apps</a> →「Create New App」→「From scratch」。名前は「カーメル」等、ワークスペースを選択。</li>
+                <li>左メニュー「OAuth &amp; Permissions」→「Scopes」→ <strong>Bot Token Scopes</strong> に次を追加：<br>
+                    <code>chat:write</code>, <code>channels:history</code>, <code>channels:read</code>（プライベートCHなら <code>groups:history</code>, <code>groups:read</code> も）</li>
+                <li>同ページ上部「Install to Workspace」→ 許可。表示される <strong>Bot User OAuth Token（xoxb-…）</strong> をコピーして上の欄に貼る。</li>
+                <li>Slackで対象チャンネルを開き、<code>/invite @カーメル</code> でBotを招待。チャンネルIDを上の欄に入れる。</li>
+                <li>上で「有効にする」にチェック＆保存 → 「① 接続テスト」→「② いますぐ送る」で動作確認。</li>
+            </ol>
+            <p style="margin:10px 0 0;color:#666;font-size:12px">※ 記事は既定で<strong>下書き</strong>保存です（公開設定は「自動生成」ページと共通）。画像を付ける場合も「自動生成」ページの画像設定に従います。返信への反応は最大5分程度かかります。</p>
+        </div>
+    </div>
+    <?php
 }
 
 // 入力からニュース記事を作成（フォーム送信先）
