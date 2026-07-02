@@ -57,6 +57,18 @@ if ( ! function_exists( 'carmelx_loan_guide_shortcode' ) ) {
 		$slider_counts = array_values( $counts );
 		$default_count = $slider_counts[ floor( count( $slider_counts ) / 2 ) ] ?? 60;
 
+		// 審査申込・LINE（店舗ACFから取得）
+		$line_url  = '';
+		$shinsa_url = 'https://carmelonline.jp/?p=7348';
+		$shop_slug = get_post_meta( $pid, 'shop', true );
+		if ( $shop_slug ) {
+			$shop_posts = get_posts( array( 'post_type' => 'shop', 'name' => $shop_slug, 'posts_per_page' => 1, 'suppress_filters' => true ) );
+			if ( $shop_posts ) {
+				$sid      = $shop_posts[0]->ID;
+				$line_url = get_post_meta( $sid, 'line_link', true ) ?: get_post_meta( $sid, 'line-link', true );
+			}
+		}
+
 		$uid = 'clg-' . (int) $pid;
 
 		ob_start();
@@ -88,6 +100,20 @@ if ( ! function_exists( 'carmelx_loan_guide_shortcode' ) ) {
 					<span class="carmel-lg__sim-lab">120回</span>
 				</div>
 			</div>
+		</div>
+
+		<!-- 審査申込 CTA -->
+		<div class="carmel-lg__cta">
+			<a href="<?php echo esc_url( $shinsa_url ); ?>" target="_blank" rel="noopener" class="carmel-lg__btn carmel-lg__btn--shinsa">
+				かんたん審査申込（無料）
+			</a>
+			<?php if ( $line_url ) : ?>
+			<a href="<?php echo esc_url( $line_url ); ?>" target="_blank" rel="noopener" class="carmel-lg__btn carmel-lg__btn--line">
+				LINE で相談
+			</a>
+			<?php endif; ?>
+			<p class="carmel-lg__cta-sub">最短即日審査・秘密厳守・在籍確認なし</p>
+		</div>
 		</div>
 		<script>
 		(function(){
@@ -166,6 +192,13 @@ if ( ! function_exists( 'carmelx_loan_guide_shortcode' ) ) {
 		.carmel-lg__sim-lab{font-size:11px;color:#8a8f96;}
 		.carmel-lg__sim-result{font-size:14px;font-weight:700;color:#333;text-align:center;}
 		.carmel-lg__sim-result b{font-size:20px;color:#2cac44;font-weight:900;}
+		/* CTA */
+		.carmel-lg__cta{margin-top:14px;padding-top:12px;border-top:1px solid #d8eddf;display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+		.carmel-lg__btn{display:inline-block;font-size:14px;font-weight:800;text-decoration:none;padding:11px 0;border-radius:8px;text-align:center;flex:1 1 140px;cursor:pointer;transition:opacity .15s;}
+		.carmel-lg__btn:hover{opacity:.88;}
+		.carmel-lg__btn--shinsa{background:#e8500a;color:#fff!important;}
+		.carmel-lg__btn--line{background:#06c755;color:#fff!important;}
+		.carmel-lg__cta-sub{width:100%;margin:4px 0 0;font-size:11px;color:#8a8f96;text-align:center;}
 		</style>';
 	} );
 }
