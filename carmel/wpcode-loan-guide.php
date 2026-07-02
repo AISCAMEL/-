@@ -80,6 +80,9 @@ if ( ! function_exists( 'carmelx_loan_guide_shortcode' ) ) {
 			<div class="carmel-lg__rows"><?php echo $rows; ?></div>
 			<div class="carmel-lg__note">※<?php echo esc_html( $note ); ?>の目安です</div>
 
+			<!-- 保証・点検バッジ（JS で注入） -->
+			<div class="carmel-lg__warranty-slots"></div>
+
 			<!-- シミュレーションスライダー -->
 			<div class="carmel-lg__sim">
 				<div class="carmel-lg__sim-title">返済回数シミュレーション</div>
@@ -170,15 +173,19 @@ if ( ! function_exists( 'carmelx_loan_guide_shortcode' ) ) {
 		.carmel-lg__row{display:flex;align-items:center;background:#fff;border:1px solid #e1efe6;border-radius:7px;padding:7px 12px;font-size:13px;color:#333;white-space:nowrap;box-sizing:border-box;}
 		.carmel-lg__row b{color:#2cac44;font-weight:800;min-width:3.2em;flex-shrink:0;}
 		.carmel-lg__note{margin-top:6px;font-size:11px;color:#8a8f96;}
+		/* 保証・点検バッジ */
+		.carmel-lg__warranty-slots{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0 0;}
+		.carmel-lg__warranty-badge{display:inline-flex;align-items:center;gap:5px;background:#e8f5ee;border:1px solid #a8d5bc;border-radius:20px;padding:5px 11px;font-size:12px;color:#1c7a3a;font-weight:700;white-space:nowrap;}
+		.carmel-lg__warranty-badge svg{flex-shrink:0;}
 		/* シミュレーション */
 		.carmel-lg__sim{margin-top:14px;padding-top:12px;border-top:1px solid #d8eddf;}
 		.carmel-lg__sim-title{font-size:12px;font-weight:700;color:#1c7a3a;margin-bottom:10px;letter-spacing:.03em;}
 		.carmel-lg__sim-result{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
-		.carmel-lg__sim-badge{display:inline-flex;align-items:center;background:#2cac44;color:#fff;font-size:13px;font-weight:800;border-radius:20px;padding:4px 12px;white-space:nowrap;line-height:1.4;}
-		.carmel-lg__sim-badge span{font-size:22px;font-weight:900;margin-right:2px;line-height:1;}
-		.carmel-lg__sim-amount{font-size:15px;font-weight:700;color:#333;text-align:right;white-space:nowrap;}
-		.carmel-lg__sim-amount b{font-size:28px;font-weight:900;color:#2cac44;line-height:1;}
-		.carmel-lg__sim-en{font-size:14px;font-weight:700;color:#555;margin-left:1px;}
+		.carmel-lg__sim-badge{display:inline-flex;align-items:center;background:#2cac44;color:#fff;font-size:13px;font-weight:800;border-radius:20px;padding:6px 16px;white-space:nowrap;line-height:1.4;}
+		.carmel-lg__sim-badge span{font-size:26px;font-weight:900;margin-right:2px;line-height:1;}
+		.carmel-lg__sim-amount{font-size:16px;font-weight:700;color:#333;text-align:right;white-space:nowrap;}
+		.carmel-lg__sim-amount b{font-size:36px;font-weight:900;color:#2cac44;line-height:1;}
+		.carmel-lg__sim-en{font-size:16px;font-weight:700;color:#555;margin-left:1px;}
 		/* スライダー */
 		.carmel-lg__slider-wrap{display:flex;align-items:center;gap:8px;}
 		.carmel-lg__sim-lab{font-size:11px;color:#8a8f96;white-space:nowrap;flex-shrink:0;}

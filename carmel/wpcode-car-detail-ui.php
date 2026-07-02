@@ -68,6 +68,38 @@ add_action( 'wp_footer', function () {
 				'if(el.offsetWidth>10&&el.offsetHeight>0&&bw>0){el.style.setProperty("display","none","important");}' .
 			'});' .
 
+			/* 保証・点検タグをSVGアイコンバッジ化してローン概算ボックス内に移動 */
+			'(function(){' .
+				'var shield=\'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#2cac44"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 14l-4-4 1.41-1.41L11 12.17l6.59-6.58L19 7l-8 8z"/></svg>\';' .
+				'var check=\'<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#2cac44"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>\';' .
+				'var slots=document.querySelector(".carmel-lg__warranty-slots");' .
+				'if(!slots){return;}' .
+				'var done=[];' .
+				'document.querySelectorAll("body.single-portfolio *").forEach(function(el){' .
+					'if(el.children.length>0){return;}' .
+					'var t=el.textContent.trim();' .
+					'if(t.length<2||t.length>30){return;}' .
+					'var ico="";' .
+					'if(t.indexOf("保証")!==-1){ico=shield;}' .
+					'else if(t.indexOf("点検")!==-1||t.indexOf("車検整備")!==-1){ico=check;}' .
+					'if(!ico||done.indexOf(t)!==-1){return;}' .
+					'done.push(t);' .
+					'var badge=document.createElement("span");' .
+					'badge.className="carmel-lg__warranty-badge";' .
+					'badge.innerHTML=ico+" "+t;' .
+					'slots.appendChild(badge);' .
+					'var p=el;' .
+					'for(var i=0;i<5;i++){' .
+						'if(!p.parentElement||p.parentElement===document.body){break;}' .
+						'p=p.parentElement;' .
+						'var cn=typeof p.className==="string"?p.className:"";' .
+						'if(p.tagName==="LI"||cn.indexOf("tag")!==-1||cn.indexOf("feature")!==-1){' .
+							'p.style.setProperty("display","none","important");break;' .
+						'}' .
+					'}' .
+				'});' .
+			'})();' .
+
 		'});' .
 	'</script>';
 } );
