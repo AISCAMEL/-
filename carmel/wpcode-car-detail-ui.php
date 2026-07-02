@@ -35,9 +35,18 @@ add_action( 'wp_footer', function () {
 				'}' .
 			'});' .
 
-			/* 空の枠（タイトル下の白いボックス等）を非表示 */
-			'document.querySelectorAll(".entry-content > *").forEach(function(el){' .
-				'if(el.textContent.trim()===""){' .
+			/* 空の枠を非表示（entry-content 直下 + よく使われるブロック） */
+			'document.querySelectorAll(' .
+				'".entry-content *,' .
+				'.wp-block-group,' .
+				'.wp-block-spacer,' .
+				'.elementor-widget-container,' .
+				'[class*=\"wp-block-\"]"' .
+			').forEach(function(el){' .
+				'if(' .
+					'el.textContent.trim()===""&&' .
+					'!el.querySelector("img,video,iframe,svg,canvas,input,select,textarea")' .
+				'){' .
 					'el.style.setProperty("display","none","important");' .
 				'}' .
 			'});' .
