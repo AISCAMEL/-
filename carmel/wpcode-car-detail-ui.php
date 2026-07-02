@@ -40,6 +40,21 @@ add_action( 'wp_footer', function () {
 				'}' .
 			'});' .
 
+			/* 「あなたに合うクルマの売買をサポートします」バナーを非表示 */
+			'document.querySelectorAll("*").forEach(function(el){' .
+				'if(el.textContent.trim().indexOf("売買をサポートします")===-1){return;}' .
+				'if(el.children.length>2){return;}' .
+				'var w=el.parentElement;' .
+				'while(w&&w.tagName!=="BODY"&&w.tagName!=="MAIN"&&w.tagName!=="ARTICLE"){' .
+					'var tag=w.tagName;var cls=typeof w.className==="string"?w.className:"";' .
+					'if(tag==="SECTION"||cls.indexOf("elementor-section")!==-1||cls.indexOf("wp-block")!==-1){break;}' .
+					'w=w.parentElement;' .
+				'}' .
+				'if(w&&w.tagName!=="BODY"&&w.tagName!=="MAIN"&&w.tagName!=="ARTICLE"){' .
+					'w.style.setProperty("display","none","important");' .
+				'}' .
+			'});' .
+
 			/* 空の枠（黒枠など）を非表示 */
 			'document.querySelectorAll("body.single-portfolio *").forEach(function(el){' .
 				'var skip=["BODY","MAIN","ARTICLE","HEADER","FOOTER","SECTION","NAV","SCRIPT","STYLE","NOSCRIPT","TABLE","TR","TD","TH"];' .
