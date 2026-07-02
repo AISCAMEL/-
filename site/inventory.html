@@ -11,6 +11,8 @@
 <link rel="stylesheet" href="assets/css/style.css" />
 <style>
 /* ---- Inventory Page ---- */
+.inv-wide { max-width: 1440px; }
+
 .inv-toolbar {
   display: flex; align-items: center; justify-content: space-between;
   flex-wrap: wrap; gap: 12px; margin-bottom: 24px;
@@ -30,7 +32,7 @@
 }
 
 /* Filter sidebar */
-.inv-layout { display: grid; grid-template-columns: 260px 1fr; gap: 26px; padding: 30px 0 70px; }
+.inv-layout { display: grid; grid-template-columns: 280px 1fr; gap: 30px; padding: 30px 0 70px; }
 .inv-filter { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; height: fit-content; box-shadow: var(--shadow); }
 .inv-filter h3 { font-size: 15px; margin: 0 0 16px; display: flex; align-items: center; gap: 8px; }
 .inv-filter .f-group { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
@@ -54,7 +56,7 @@
 .inv-filter .f-reset:hover { background: var(--line); color: var(--ink); }
 
 /* Car grid */
-.inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+.inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 22px; }
 .inv-grid.list-view { grid-template-columns: 1fr; }
 
 .car-card {
@@ -99,7 +101,7 @@
 .car-body .car-actions .btn { padding: 10px 16px; font-size: 13px; flex: 1; }
 
 /* List view overrides */
-.list-view .car-card { display: grid; grid-template-columns: 240px 1fr; }
+.list-view .car-card { display: grid; grid-template-columns: 320px 1fr; }
 .list-view .car-card .car-img { aspect-ratio: auto; height: 100%; min-height: 160px; }
 .list-view .car-body { display: flex; flex-direction: column; justify-content: center; }
 
@@ -112,7 +114,7 @@
 .modal-overlay.open { display: grid; }
 .modal {
   background: var(--white); border-radius: 18px; box-shadow: var(--shadow-lg);
-  width: 100%; max-width: 720px; max-height: 90vh; overflow-y: auto;
+  width: 100%; max-width: 900px; max-height: 90vh; overflow-y: auto;
   position: relative; animation: modalIn .25s ease;
 }
 @keyframes modalIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
@@ -197,7 +199,7 @@
   </div>
 </div>
 
-<div class="wrap">
+<div class="wrap inv-wide">
   <div class="inv-layout">
     <!-- Filter sidebar -->
     <aside class="inv-filter">
