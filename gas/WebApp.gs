@@ -46,6 +46,7 @@ function doPost(e) {
       case "register": result = handleRegister_(data); break;
       case "contact":  result = handleContact_(data);  break;
       case "quote":    result = handleQuote_(data);    break;
+      case "referral": result = handleReferral_(data); break;
       default:         result = { ok: false, error: "unknown type" };
     }
     return json_(result);
@@ -317,10 +318,70 @@ function handleRegister_(d) {
   var sh = ss.getSheetByName(cfg.SHEET_MEMBERS) || ensureSheet_(ss, cfg.SHEET_MEMBERS, []);
 
   var id = "M-" + nextSeq_(sh, 1000);
-  sh.appendRow([new Date(), id, d.name || "", d.email || "", d.plan || "", d.source || "LP"]);
+  var referralCode = d.referralCode || ("AUC-" + id.replace("M-", ""));
+  sh.appendRow([
+    new Date(), id, d.name || "", d.email || "", d.plan || "", d.source || "LP",
+    "bronze", 0, referralCode, d.referredBy || "", 0, d.lineUid || ""
+  ]);
 
   notifyStaff_("👤 新規会員登録 " + id + "\nお名前：" + (d.name || "-") + "\nメール：" + (d.email || "-") + "\n希望プラン：" + (d.plan || "-"));
-  return { ok: true, id: id };
+
+  if (d.email) {
+    notifyCustomer_(d.email, d.name,
+      "ご登録ありがとうございます",
+      (d.name || "お客様") + " 様\n\n" +
+      "AUC-AGENTへのご登録ありがとうございます。\n" +
+      "あなたの紹介コード：" + referralCode + "\n" +
+      "お友達にご紹介いただくと、双方にクーポンが発行されます。\n\n" +
+      "マイページからオーダー・出品・相場見積りをご利用いただけます。\n\n" +
+      "合同会社アイズ（AUC-AGENT）\ninfo@aisjaltd.com"
+    );
+  }
+  return { ok: true, id: id, referralCode: referralCode };
+}
+
+/* ---------- 紹介コード適用 ---------- */
+function handleReferral_(d) {
+  var cfg = getConfig();
+  var ss = openBook_();
+  var sh = ss.getSheetByName(cfg.SHEET_MEMBERS);
+  if (!sh) return { ok: false, error: "会員マスタが未作成" };
+
+  var code = String(d.code || "").toUpperCase();
+  var referrerEmail = d.email || "";
+  if (!code || code.indexOf("AUC-") !== 0) return { ok: false, error: "無効な紹介コード" };
+
+  var values = sh.getDataRange().getValues();
+  var referrerRow = -1, referrerName = "", referrerMail = "";
+  for (var r = 1; r < values.length; r++) {
+    if (String(values[r][8]) === code) {
+      referrerRow = r + 1;
+      referrerName = values[r][2];
+      referrerMail = values[r][3];
+      break;
+    }
+  }
+  if (referrerRow < 0) return { ok: false, error: "紹介コードが見つかりません" };
+
+  var currentReferrals = Number(values[referrerRow - 1][10]) || 0;
+  sh.getRange(referrerRow, 11).setValue(currentReferrals + 1);
+
+  var refSh = ss.getSheetByName("紹介管理");
+  if (refSh) {
+    refSh.appendRow([
+      new Date(), "M-" + (referrerRow - 1), referrerMail,
+      "", referrerEmail, code, "¥3,000", "¥5,000", "適用済み"
+    ]);
+  }
+
+  notifyStaff_(
+    "🤝 紹介コード適用\n" +
+    "紹介者：" + referrerName + "（" + referrerMail + "）\n" +
+    "新会員：" + (referrerEmail || "-") + "\n" +
+    "コード：" + code + "\n" +
+    "→ 双方にクーポン発行済み"
+  );
+  return { ok: true };
 }
 
 /* ---------- お問い合わせ ---------- */

@@ -34,7 +34,8 @@ function setupAll() {
   ]);
 
   ensureSheet_(ss, cfg.SHEET_MEMBERS, [
-    "登録日時", "会員ID", "お名前", "メール", "希望プラン", "流入元"
+    "登録日時", "会員ID", "お名前", "メール", "希望プラン", "流入元",
+    "ランク", "完了件数", "紹介コード", "紹介元コード", "紹介人数", "LINE_UID"
   ]);
 
   ensureSheet_(ss, cfg.SHEET_CONTACTS, [
@@ -44,6 +45,11 @@ function setupAll() {
   ensureSheet_(ss, cfg.SHEET_QUOTES, [
     "受付日時", "見積番号", "種別(買取/仕入れ)", "お名前", "メール", "連絡方法",
     "車両情報", "回答相場額", "回答状況"
+  ]);
+
+  ensureSheet_(ss, "紹介管理", [
+    "日時", "紹介元会員ID", "紹介元メール", "紹介先会員ID", "紹介先メール",
+    "紹介コード", "紹介元クーポン", "紹介先クーポン", "ステータス"
   ]);
 
   SpreadsheetApp.flush();

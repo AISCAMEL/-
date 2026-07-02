@@ -76,7 +76,7 @@ function handleSlackCommand_(e) {
   return slackText_("対応コマンド： `/相場回答` `/進捗` `/ローン`");
 }
 
-/* シート群からID一致行を探し、ステータス列(3列目)を更新 */
+/* シート群からID一致行を探し、ステータス列(3列目)を更新 → 顧客通知 */
 function updateRowStatus_(sheetNames, id, status, by) {
   var ss = openBook_();
   for (var i = 0; i < sheetNames.length; i++) {
@@ -86,11 +86,65 @@ function updateRowStatus_(sheetNames, id, status, by) {
     for (var r = 1; r < v.length; r++) {
       if (String(v[r][1]) === id) {
         sh.getRange(r + 1, 3).setValue(status + (by ? "（" + by + "）" : ""));
+        var email = v[r][4], name = v[r][3];
+        if (typeof notifyOrderStatusChange_ === "function") {
+          notifyOrderStatusChange_(id, status, email, name);
+        }
+        if (status === "納車完了" || status === "入金完了") {
+          updateMemberRank_(email);
+        }
         return { ok: true };
       }
     }
   }
   return { ok: false, error: id + " が見つかりません" };
+}
+
+/**
+ * 完了件数を再集計してランクを自動昇格する
+ */
+function updateMemberRank_(email) {
+  if (!email) return;
+  var cfg = getConfig();
+  var ss = openBook_();
+
+  var completed = 0;
+  var sheets = [cfg.SHEET_ORDERS, cfg.SHEET_SELL];
+  var doneStatuses = ["納車完了", "入金完了", "成約"];
+  sheets.forEach(function (name) {
+    var sh = ss.getSheetByName(name);
+    if (!sh) return;
+    var v = sh.getDataRange().getValues();
+    for (var r = 1; r < v.length; r++) {
+      if (String(v[r][4]).toLowerCase() === String(email).toLowerCase()) {
+        var st = String(v[r][2]).replace(/（.*）/, "");
+        if (doneStatuses.indexOf(st) >= 0) completed++;
+      }
+    }
+  });
+
+  var rank = completed >= 7 ? "gold" : completed >= 3 ? "silver" : "bronze";
+  var msh = ss.getSheetByName(cfg.SHEET_MEMBERS);
+  if (!msh) return;
+  var mv = msh.getDataRange().getValues();
+  for (var r = 1; r < mv.length; r++) {
+    if (String(mv[r][3]).toLowerCase() === String(email).toLowerCase()) {
+      var oldRank = mv[r][6];
+      msh.getRange(r + 1, 7).setValue(rank);
+      msh.getRange(r + 1, 8).setValue(completed);
+      if (oldRank !== rank) {
+        var rankNames = { bronze: "ブロンズ", silver: "シルバー", gold: "ゴールド" };
+        notifyCustomer_(email, mv[r][2],
+          "ランク昇格のお知らせ",
+          (mv[r][2] || "お客様") + " 様\n\n" +
+          "おめでとうございます！会員ランクが「" + (rankNames[rank] || rank) + "」に昇格しました。\n" +
+          "今後のお取引で割引特典をご利用いただけます。\n\n" +
+          "合同会社アイズ（AUC-AGENT）\ninfo@aisjaltd.com"
+        );
+      }
+      break;
+    }
+  }
 }
 
 /**

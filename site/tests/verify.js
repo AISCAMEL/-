@@ -25,7 +25,6 @@ function load(file, { storage } = {}) {
   const vc = new VirtualConsole();
   let pageError = null;
   vc.on("jsdomError", e => {
-    // ナビゲーション未実装は想定内（未ログイン時のlocation遷移）
     if (!/Not implemented:.*navigation/.test(e.message)) pageError = e.message;
   });
   const dom = new JSDOM(html, {
@@ -36,6 +35,15 @@ function load(file, { storage } = {}) {
       if (storage) for (const k in storage) win.localStorage.setItem(k, storage[k]);
       win.fetch = () => Promise.resolve({ ok: true });
       win.HTMLElement.prototype.scrollIntoView = () => {};
+      win.matchMedia = (q) => ({
+        matches: q.indexOf("dark") >= 0 ? false : false,
+        media: q,
+        addListener: () => {},
+        removeListener: () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        dispatchEvent: () => false
+      });
     }
   });
   return { win: dom.window, doc: dom.window.document, getError: () => pageError };
@@ -123,6 +131,98 @@ function fire(win, el, type) { el.dispatchEvent(new win.Event(type, { bubbles: t
   {
     const { win } = load("mypage.html");
     ok("未ログイン判定", !win.AucAuth.current());
+  }
+
+  console.log("会員ランク制度");
+  {
+    const { win } = load("login.html");
+    win.AucAuth.register({ name: "ランクテスト", email: "rank@test.com", plan: "スタンダード" });
+    const info = win.AucAuth.getRankInfo();
+    ok("初期ランクはブロンズ", info.rank === "bronze");
+    ok("ランク名が正しい", info.name === "ブロンズ");
+    ok("初期割引は0", info.discount === 0);
+    ok("完了件数がサンプル注文(done)の数と一致", info.completedOrders === 1);
+    ok("次ランクはシルバー", info.nextRank === "シルバー");
+    ok("紹介コードが生成されている", info.referralCode && info.referralCode.indexOf("AUC-") === 0);
+    ok("紹介コードが6文字+プレフィックス", info.referralCode.length === 10);
+  }
+
+  console.log("会員ランク昇格ロジック");
+  {
+    const storage = {
+      auc_user: JSON.stringify({ name: "昇格テスト", email: "r@t.com", plan: "スタンダード", since: "2026-01-01" }),
+      auc_orders: JSON.stringify([
+        { id: "OD-1", kind: "buy", car: "A", status: "done", total: 100, progress: 100, date: "2026-01-01", memo: "" },
+        { id: "OD-2", kind: "buy", car: "B", status: "done", total: 100, progress: 100, date: "2026-01-02", memo: "" },
+        { id: "OD-3", kind: "buy", car: "C", status: "done", total: 100, progress: 100, date: "2026-01-03", memo: "" }
+      ]),
+      auc_rank: JSON.stringify({ rank: "bronze", completedOrders: 0, referralCode: "AUC-TEST01", totalReferrals: 0 })
+    };
+    const { win } = load("login.html", { storage });
+    const info = win.AucAuth.getRankInfo();
+    ok("3件完了でシルバー昇格", info.rank === "silver");
+    ok("シルバー割引¥5,000", info.discount === 5000);
+    ok("次ランクはゴールド", info.nextRank === "ゴールド");
+  }
+
+  console.log("紹介クーポン機能");
+  {
+    const { win } = load("login.html");
+    win.AucAuth.register({ name: "紹介テスト", email: "ref@test.com", plan: "スタンダード" });
+    const code = win.AucAuth.getReferralCode();
+    ok("紹介コード取得", code && code.indexOf("AUC-") === 0);
+
+    const selfResult = win.AucAuth.applyReferralCode(code);
+    ok("自分のコードは使用不可", selfResult.ok === false);
+
+    const result = win.AucAuth.applyReferralCode("AUC-FRIEND");
+    ok("他人のコード適用成功", result.ok === true);
+    ok("クーポンが発行される", result.coupon && result.coupon.value === 5000);
+
+    const coupons = win.AucAuth.getCoupons();
+    ok("クーポンが一覧に存在", coupons.length >= 1);
+    ok("クーポンID形式(CP-)", coupons[0].id.indexOf("CP-") === 0);
+
+    const dupResult = win.AucAuth.applyReferralCode("AUC-OTHER");
+    ok("2回目の紹介コード適用は不可", dupResult.ok === false);
+
+    const used = win.AucAuth.useCoupon(coupons[0].id);
+    ok("クーポン使用成功", used === true);
+    ok("使用済みクーポン再使用不可", win.AucAuth.useCoupon(coupons[0].id) === false);
+  }
+
+  console.log("RANKS定数");
+  {
+    const { win } = load("login.html");
+    ok("RANKS.bronze存在", !!win.AucAuth.RANKS.bronze);
+    ok("RANKS.silver.min=3", win.AucAuth.RANKS.silver.min === 3);
+    ok("RANKS.gold.min=7", win.AucAuth.RANKS.gold.min === 7);
+    ok("RANKS.gold.next=null", win.AucAuth.RANKS.gold.next === null);
+  }
+
+  console.log("ダークモード");
+  {
+    const { win, doc, getError } = load("index.html");
+    const html = doc.documentElement;
+    ok("デフォルトテーマが設定される", html.getAttribute("data-theme") === "light" || html.getAttribute("data-theme") === "dark");
+    const btn = doc.getElementById("themeToggle");
+    ok("テーマトグルボタン存在", !!btn);
+    if (btn) {
+      const before = html.getAttribute("data-theme");
+      fire(win, btn, "click");
+      const after = html.getAttribute("data-theme");
+      ok("トグルでテーマ切替", before !== after);
+      ok("切替後のテーマが有効値", after === "light" || after === "dark");
+    }
+    ok("ページエラーなし", !getError(), getError());
+  }
+
+  console.log("ダークモード（localStorage保存）");
+  {
+    const { win, doc } = load("index.html", { storage: { auc_theme: "dark" } });
+    ok("保存済みダークテーマが適用", doc.documentElement.getAttribute("data-theme") === "dark");
+    const btn = doc.getElementById("themeToggle");
+    ok("ダークモード時のアイコン=☀️", btn && btn.textContent.trim() === "☀️");
   }
 
   console.log("\n==== 結果: " + pass + " passed, " + fail + " failed ====");

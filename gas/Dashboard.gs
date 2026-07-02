@@ -33,6 +33,13 @@ function getStats() {
   var totalSells = monthSells.length;
   var doneSells = monthSells.filter(function (r) { return r["ステータス"] === "成約"; }).length;
 
+  var rankCounts = { bronze: 0, silver: 0, gold: 0 };
+  members.forEach(function (m) {
+    var r = String(m["ランク"] || "bronze").toLowerCase();
+    if (rankCounts[r] !== undefined) rankCounts[r]++;
+  });
+  var totalReferrals = members.reduce(function (sum, m) { return sum + (Number(m["紹介人数"]) || 0); }, 0);
+
   return {
     period: thisMonth,
     newMembers: monthMembers.length,
@@ -42,7 +49,9 @@ function getStats() {
     quotes: filterByMonth_(quotes, thisMonth).length,
     allMembers: members.length,
     allOrders: orders.length,
-    allSells: sells.length
+    allSells: sells.length,
+    ranks: rankCounts,
+    totalReferrals: totalReferrals
   };
 }
 
@@ -60,7 +69,9 @@ function sendWeeklyReport() {
     "💳 ローン申込: " + stats.loans + "件\n" +
     "📈 相場見積り: " + stats.quotes + "件\n" +
     "━━━━━━━━━━━━━━━━━━━━\n" +
-    "累計: 購入 " + stats.allOrders + "件 ／ 出品 " + stats.allSells + "件";
+    "累計: 購入 " + stats.allOrders + "件 ／ 出品 " + stats.allSells + "件\n" +
+    "🏅 ランク: 🥉" + stats.ranks.bronze + " 🥈" + stats.ranks.silver + " 🥇" + stats.ranks.gold + "\n" +
+    "🤝 紹介累計: " + stats.totalReferrals + "件";
 
   notifyStaff_(text);
 }
@@ -83,7 +94,7 @@ function readSheet_(ss, sheetName) {
 
 function filterByMonth_(rows, yearMonth) {
   return rows.filter(function (r) {
-    var d = r["受付日"] || r["登録日"] || r["申込日"] || "";
+    var d = r["受付日時"] || r["登録日時"] || r["受付日"] || r["登録日"] || r["申込日"] || "";
     if (d instanceof Date) {
       d = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
     }
