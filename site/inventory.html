@@ -219,6 +219,61 @@
   font-size: 13px; color: #2a64c4; margin-top: 4px; font-weight: 600;
 }
 
+/* Equipment grid */
+.equip-section { margin: 20px 0; }
+.equip-section h3 {
+  font-size: 16px; font-weight: 800; margin: 0 0 14px; color: var(--navy);
+  display: flex; align-items: center; gap: 8px;
+}
+.equip-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px;
+}
+.equip-item {
+  display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+  background: var(--bg); border-radius: 10px; font-size: 13px; color: var(--ink);
+}
+.equip-item .eq-icon { font-size: 18px; flex-shrink: 0; }
+.equip-item.eq-off { color: var(--muted); opacity: .45; }
+.equip-item.eq-off .eq-label { text-decoration: line-through; }
+
+/* Condition table */
+.condition-table { margin: 20px 0; }
+.condition-table h3 {
+  font-size: 16px; font-weight: 800; margin: 0 0 14px; color: var(--navy);
+  display: flex; align-items: center; gap: 8px;
+}
+.cond-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0;
+  border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
+}
+.cond-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 11px 16px; border-bottom: 1px solid var(--line); font-size: 14px;
+}
+.cond-row:last-child { border-bottom: none; }
+.cond-k { color: var(--muted); }
+.cond-v { font-weight: 700; }
+.cond-v .star { color: var(--gold); letter-spacing: 2px; }
+
+/* Staff contact */
+.staff-section {
+  margin: 24px 0 0; padding: 20px 24px; border-radius: 14px;
+  background: var(--bg); border: 1px solid var(--line);
+  display: flex; align-items: center; gap: 20px;
+}
+.staff-avatar {
+  width: 64px; height: 64px; border-radius: 50%; background: var(--navy);
+  color: #fff; display: grid; place-items: center; font-size: 28px; flex-shrink: 0;
+}
+.staff-info { flex: 1; }
+.staff-info .staff-role { font-size: 12px; color: var(--gold); font-weight: 700; letter-spacing: .06em; }
+.staff-info .staff-name { font-size: 16px; font-weight: 800; margin: 2px 0 4px; }
+.staff-info .staff-msg { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.staff-contact {
+  display: flex; gap: 8px; flex-shrink: 0;
+}
+.staff-contact .btn { font-size: 13px; padding: 10px 18px; }
+
 /* Empty state */
 .inv-empty {
   text-align: center; padding: 60px 20px; color: var(--muted);
@@ -248,6 +303,11 @@
   .loan-sim .loan-params { grid-template-columns: 1fr; }
   .loan-sim { padding: 16px; }
   .loan-result .lr-monthly { font-size: 26px; }
+  .equip-grid { grid-template-columns: 1fr 1fr; }
+  .cond-grid { grid-template-columns: 1fr; }
+  .staff-section { flex-direction: column; text-align: center; }
+  .staff-contact { width: 100%; }
+  .staff-contact .btn { flex: 1; }
 }
 </style>
 </head>
@@ -441,23 +501,40 @@
     "SUV": "🚙", "ワゴン": "🚗", "クーペ": "🏎️", "輸入車": "🚘"
   };
 
+  var EQUIP_DEFS = [
+    { key: "navi", icon: "📱", label: "ナビ" },
+    { key: "bkCam", icon: "📷", label: "バックカメラ" },
+    { key: "around", icon: "🔄", label: "全周囲カメラ" },
+    { key: "etc", icon: "🛣️", label: "ETC" },
+    { key: "cruise", icon: "🚀", label: "クルコン" },
+    { key: "safety", icon: "🛡️", label: "衝突軽減" },
+    { key: "leather", icon: "💺", label: "本革シート" },
+    { key: "sheat", icon: "♨️", label: "シートヒーター" },
+    { key: "sunroof", icon: "☀️", label: "サンルーフ" },
+    { key: "led", icon: "💡", label: "LEDライト" },
+    { key: "keyless", icon: "🔑", label: "スマートキー" },
+    { key: "pSlide", icon: "🚪", label: "電動スライドドア" },
+    { key: "pSeat", icon: "⚡", label: "パワーシート" },
+    { key: "audio", icon: "🔊", label: "プレミアム音響" },
+  ];
+
   var CARS = [
-    { id: 1, maker: "トヨタ", name: "アルファード 2.5 S Cパッケージ", year: 2022, mileage: 28000, price: 3980000, body: "ミニバン", color: "パールホワイト", engine: "2.5L", mission: "CVT", drive: "FF", inspection: "2027-03", grade: "S Cパッケージ", badge: "hot", desc: "ワンオーナー・禁煙車。純正10インチナビ、ツインムーンルーフ、デジタルインナーミラー装備。内外装ともに非常に綺麗な状態です。" },
-    { id: 2, maker: "ホンダ", name: "N-BOX カスタム L ターボ", year: 2023, mileage: 12000, price: 1680000, body: "軽自動車", color: "プレミアムグラマラスブロンズ", engine: "0.66L ターボ", mission: "CVT", drive: "FF", inspection: "2028-05", grade: "L ターボ", badge: "new", desc: "2023年モデル・走行1.2万km。Honda SENSING全機能搭載、LEDヘッドライト、電動パーキングブレーキ。" },
-    { id: 3, maker: "トヨタ", name: "ヤリスクロス Z ハイブリッド", year: 2021, mileage: 35000, price: 2480000, body: "SUV", color: "ブラック", engine: "1.5L HV", mission: "e-CVT", drive: "4WD", inspection: "2026-11", grade: "Z", badge: "hot", desc: "最上級Zグレード。パノラミックビューモニター、合皮+ファブリックシート、アダプティブハイビーム。AWD仕様で冬道も安心。" },
-    { id: 4, maker: "日産", name: "セレナ e-POWER ハイウェイスターV", year: 2023, mileage: 18000, price: 3280000, body: "ミニバン", color: "ダイヤモンドブラック", engine: "1.4L e-POWER", mission: "—", drive: "FF", inspection: "2028-03", grade: "ハイウェイスターV", badge: "new", desc: "新型C28型。ProPILOT 2.0搭載、ハンズフリーオートスライドドア両側、アラウンドビューモニター。" },
-    { id: 5, maker: "マツダ", name: "CX-5 XD エクスクルーシブモード", year: 2021, mileage: 42000, price: 2680000, body: "SUV", color: "ソウルレッドクリスタルメタリック", engine: "2.2L ディーゼル", mission: "6AT", drive: "4WD", inspection: "2026-09", grade: "XD エクスクルーシブモード", badge: "", desc: "最上級グレード。ナッパレザーシート、BOSE、360°ビューモニター、ワイヤレス充電。ディーゼルターボ×4WDで走破性抜群。" },
-    { id: 6, maker: "スズキ", name: "ジムニー XC", year: 2022, mileage: 21000, price: 1980000, body: "軽自動車", color: "キネティックイエロー", engine: "0.66L ターボ", mission: "5MT", drive: "4WD", inspection: "2027-07", grade: "XC", badge: "hot", desc: "納車待ち人気車種。5速MT・4WD。スズキセーフティサポート、LEDヘッドライト、クルーズコントロール装備。" },
-    { id: 7, maker: "トヨタ", name: "ハリアー Z レザーパッケージ", year: 2022, mileage: 31000, price: 3580000, body: "SUV", color: "プレシャスブラックパール", engine: "2.0L", mission: "CVT", drive: "FF", inspection: "2027-01", grade: "Z レザーパッケージ", badge: "", desc: "本革シート、JBLサウンド、調光パノラマルーフ、12.3インチナビ。80系ハリアーの最上級グレード。" },
-    { id: 8, maker: "ホンダ", name: "フィット e:HEV リュクス", year: 2022, mileage: 25000, price: 1980000, body: "コンパクト", color: "プラチナホワイトパール", engine: "1.5L HV", mission: "e-CVT", drive: "FF", inspection: "2027-04", grade: "リュクス", badge: "", desc: "本革シート仕様。Honda SENSING、マルチビューカメラ、Boseサウンドシステム。燃費と質感を両立。" },
-    { id: 9, maker: "BMW", name: "3シリーズ 320i Mスポーツ", year: 2021, mileage: 38000, price: 3880000, body: "輸入車", color: "アルピンホワイト", engine: "2.0L ターボ", mission: "8AT", drive: "FR", inspection: "2026-12", grade: "Mスポーツ", badge: "", desc: "G20型Mスポーツ。iDrive 7.0、アクティブクルーズコントロール、レーンチェンジアシスト。正規ディーラー整備記録あり。" },
-    { id: 10, maker: "ダイハツ", name: "タント カスタム RS", year: 2023, mileage: 8000, price: 1780000, body: "軽自動車", color: "レーザーブルークリスタルシャイン", engine: "0.66L ターボ", mission: "CVT", drive: "FF", inspection: "2028-08", grade: "RS", badge: "new", desc: "走行0.8万km・ほぼ新車。ミラクルオープンドア、電動パーキング、全車速追従ACC。ターボで走りも快適。" },
-    { id: 11, maker: "トヨタ", name: "プリウス Z HEV", year: 2023, mileage: 15000, price: 3380000, body: "セダン", color: "アッシュ", engine: "2.0L HV", mission: "e-CVT", drive: "FF", inspection: "2028-01", grade: "Z", badge: "hot", desc: "新型60系プリウス。19インチアルミ、12.3インチナビ、パノラミックビューモニター。圧倒的な燃費性能とデザイン。" },
-    { id: 12, maker: "スバル", name: "フォレスター アドバンス", year: 2022, mileage: 34000, price: 2580000, body: "SUV", color: "クリスタルホワイトパール", engine: "2.0L e-BOXER", mission: "CVT", drive: "AWD", inspection: "2027-06", grade: "アドバンス", badge: "", desc: "e-BOXER搭載。アイサイトX、ドライバーモニタリングシステム、本革シート。シンメトリカルAWDで雪道も安心。" },
-    { id: 13, maker: "日産", name: "ノート e-POWER X", year: 2022, mileage: 22000, price: 1880000, body: "コンパクト", color: "オーロラフレアブルーパール", engine: "1.2L e-POWER", mission: "—", drive: "FF", inspection: "2027-09", grade: "X", badge: "", desc: "第2世代e-POWER。プロパイロット、アラウンドビューモニター、インテリジェントルームミラー搭載。" },
-    { id: 14, maker: "三菱", name: "デリカD:5 P", year: 2021, mileage: 45000, price: 3180000, body: "ミニバン", color: "ウォームホワイトパール", engine: "2.2L ディーゼル", mission: "8AT", drive: "4WD", inspection: "2026-10", grade: "P", badge: "", desc: "唯一無二のオールラウンダー。本革シート、ロックフォードサウンド、7人乗り。ディーゼル×4WDでアウトドアに最適。" },
-    { id: 15, maker: "メルセデス・ベンツ", name: "Cクラス C200 アバンギャルド", year: 2022, mileage: 27000, price: 4280000, body: "輸入車", color: "オブシディアンブラック", engine: "1.5L ターボ+ISG", mission: "9AT", drive: "FR", inspection: "2027-02", grade: "アバンギャルド", badge: "soon", desc: "W206型。MBUX第2世代、ARナビゲーション、デジタルライト。入荷予定車両 — 事前オーダー受付中。" },
-    { id: 16, maker: "トヨタ", name: "ランドクルーザー250 VX", year: 2024, mileage: 5000, price: 6980000, body: "SUV", color: "アバンギャルドブロンズメタリック", engine: "2.8L ディーゼル", mission: "8AT", drive: "4WD", inspection: "2029-04", grade: "VX", badge: "hot", desc: "新型250系。マルチテレインセレクト、e-KDSS、指紋認証。走行5,000kmの極上車両。プレミア価格でのご案内です。" },
+    { id: 1, maker: "トヨタ", name: "アルファード 2.5 S Cパッケージ", year: 2022, mileage: 28000, price: 3980000, body: "ミニバン", color: "パールホワイト", engine: "2.5L", mission: "CVT", drive: "FF", inspection: "2027-03", grade: "S Cパッケージ", badge: "hot", desc: "ワンオーナー・禁煙車。純正10インチナビ、ツインムーンルーフ、デジタルインナーミラー装備。内外装ともに非常に綺麗な状態です。", equip: ["navi","bkCam","around","etc","cruise","safety","sheat","sunroof","led","keyless","pSlide","pSeat","audio"], cond: { exterior: 4, interior: 5, mech: 5, history: "ワンオーナー", smoke: "禁煙車", record: "あり" } },
+    { id: 2, maker: "ホンダ", name: "N-BOX カスタム L ターボ", year: 2023, mileage: 12000, price: 1680000, body: "軽自動車", color: "プレミアムグラマラスブロンズ", engine: "0.66L ターボ", mission: "CVT", drive: "FF", inspection: "2028-05", grade: "L ターボ", badge: "new", desc: "2023年モデル・走行1.2万km。Honda SENSING全機能搭載、LEDヘッドライト、電動パーキングブレーキ。", equip: ["navi","bkCam","etc","cruise","safety","led","keyless"], cond: { exterior: 5, interior: 5, mech: 5, history: "ワンオーナー", smoke: "禁煙車", record: "あり" } },
+    { id: 3, maker: "トヨタ", name: "ヤリスクロス Z ハイブリッド", year: 2021, mileage: 35000, price: 2480000, body: "SUV", color: "ブラック", engine: "1.5L HV", mission: "e-CVT", drive: "4WD", inspection: "2026-11", grade: "Z", badge: "hot", desc: "最上級Zグレード。パノラミックビューモニター、合皮+ファブリックシート、アダプティブハイビーム。AWD仕様で冬道も安心。", equip: ["navi","bkCam","around","etc","cruise","safety","led","keyless","sheat"], cond: { exterior: 4, interior: 4, mech: 5, history: "ワンオーナー", smoke: "禁煙車", record: "あり" } },
+    { id: 4, maker: "日産", name: "セレナ e-POWER ハイウェイスターV", year: 2023, mileage: 18000, price: 3280000, body: "ミニバン", color: "ダイヤモンドブラック", engine: "1.4L e-POWER", mission: "—", drive: "FF", inspection: "2028-03", grade: "ハイウェイスターV", badge: "new", desc: "新型C28型。ProPILOT 2.0搭載、ハンズフリーオートスライドドア両側、アラウンドビューモニター。", equip: ["navi","bkCam","around","etc","cruise","safety","led","keyless","pSlide","pSeat"], cond: { exterior: 5, interior: 5, mech: 5, history: "ワンオーナー", smoke: "禁煙車", record: "あり" } },
+    { id: 5, maker: "マツダ", name: "CX-5 XD エクスクルーシブモード", year: 2021, mileage: 42000, price: 2680000, body: "SUV", color: "ソウルレッドクリスタルメタリック", engine: "2.2L ディーゼル", mission: "6AT", drive: "4WD", inspection: "2026-09", grade: "XD エクスクルーシブモード", badge: "", desc: "最上級グレード。ナッパレザーシート、BOSE、360°ビューモニター、ワイヤレス充電。ディーゼルターボ×4WDで走破性抜群。", equip: ["navi","bkCam","around","etc","cruise","safety","leather","sheat","led","keyless","pSeat","audio"], cond: { exterior: 4, interior: 4, mech: 5, history: "複数オーナー", smoke: "禁煙車", record: "あり" } },
+    { id: 6, maker: "スズキ", name: "ジムニー XC", year: 2022, mileage: 21000, price: 1980000, body: "軽自動車", color: "キネティックイエロー", engine: "0.66L ターボ", mission: "5MT", drive: "4WD", inspection: "2027-07", grade: "XC", badge: "hot", desc: "納車待ち人気車種。5速MT・4WD。スズキセーフティサポート、LEDヘッドライト、クルーズコントロール装備。", equip: ["navi","bkCam","etc","cruise","safety","led","keyless"], cond: { exterior: 4, interior: 4, mech: 5, history: "ワンオーナー", smoke: "—", record: "あり" } },
+    { id: 7, maker: "トヨタ", name: "ハリアー Z レザーパッケージ", year: 2022, mileage: 31000, price: 3580000, body: "SUV", color: "プレシャスブラックパール", engine: "2.0L", mission: "CVT", drive: "FF", inspection: "2027-01", grade: "Z レザーパッケージ", badge: "", desc: "本革シート、JBLサウンド、調光パノラマルーフ、12.3インチナビ。80系ハリアーの最上級グレード。", equip: ["navi","bkCam","around","etc","cruise","safety","leather","sheat","sunroof","led","keyless","pSeat","audio"], cond: { exterior: 5, interior: 5, mech: 5, history: "ワンオーナー", smoke: "禁煙車", record: "あり" } },
+    { id: 8, maker: "ホンダ", name: "フィット e:HEV リュクス", year: 2022, mileage: 25000, price: 1980000, body: "コンパクト", color: "プラチナホワイトパール", engine: "1.5L HV", mission: "e-CVT", drive: "FF", inspection: "2027-04", grade: "リュクス", badge: "", desc: "本革シート仕様。Honda SENSING、マルチビューカメラ、Boseサウンドシステム。燃費と質感を両立。", equip: ["navi","bkCam","etc","cruise","safety","leather","led","keyless","audio"], cond: { exterior: 4, interior: 5, mech: 5, history: "ワンオーナー", smoke: "禁煙車", record: "あり" } },
+    { id: 9, maker: "BMW", name: "3シリーズ 320i Mスポーツ", year: 2021, mileage: 38000, price: 3880000, body: "輸入車", color: "アルピンホワイト", engine: "2.0L ターボ", mission: "8AT", drive: "FR", inspection: "2026-12", grade: "Mスポーツ", badge: "", desc: "G20型Mスポーツ。iDrive 7.0、アクティブクルーズコントロール、レーンチェンジアシスト。正規ディーラー整備記録あり。", equip: ["navi","bkCam","around","etc","cruise","safety","leather","sheat","led","keyless","pSeat","audio"], cond: { exterior: 4, interior: 4, mech: 5, history: "複数オーナー", smoke: "禁煙車", record: "あり" } },
+    { id: 10, maker: "ダイハツ", name: "タント カスタム RS", year: 2023, mileage: 8000, price: 1780000, body: "軽自動車", color: "レーザーブルークリスタルシャイン", engine: "0.66L ターボ", mission: "CVT", drive: "FF", inspection: "2028-08", grade: "RS", badge: "new", desc: "走行0.8万km・ほぼ新車。ミラクルオープンドア、電動パーキング、全車速追従ACC。ターボで走りも快適。", equip: ["navi","bkCam","etc","cruise","safety","led","keyless","pSlide"], cond: { exterior: 5, interior: 5, mech: 5, history: "ワンオーナー", smoke: "禁煙車", record: "あり" } },
+    { id: 11, maker: "トヨタ", name: "プリウス Z HEV", year: 2023, mileage: 15000, price: 3380000, body: "セダン", color: "アッシュ", engine: "2.0L HV", mission: "e-CVT", drive: "FF", inspection: "2028-01", grade: "Z", badge: "hot", desc: "新型60系プリウス。19インチアルミ、12.3インチナビ、パノラミックビューモニター。圧倒的な燃費性能とデザイン。", equip: ["navi","bkCam","around","etc","cruise","safety","sheat","led","keyless","pSeat"], cond: { exterior: 5, interior: 5, mech: 5, history: "ワンオーナー", smoke: "禁煙車", record: "あり" } },
+    { id: 12, maker: "スバル", name: "フォレスター アドバンス", year: 2022, mileage: 34000, price: 2580000, body: "SUV", color: "クリスタルホワイトパール", engine: "2.0L e-BOXER", mission: "CVT", drive: "AWD", inspection: "2027-06", grade: "アドバンス", badge: "", desc: "e-BOXER搭載。アイサイトX、ドライバーモニタリングシステム、本革シート。シンメトリカルAWDで雪道も安心。", equip: ["navi","bkCam","around","etc","cruise","safety","leather","sheat","led","keyless","pSeat"], cond: { exterior: 4, interior: 4, mech: 5, history: "ワンオーナー", smoke: "禁煙車", record: "あり" } },
+    { id: 13, maker: "日産", name: "ノート e-POWER X", year: 2022, mileage: 22000, price: 1880000, body: "コンパクト", color: "オーロラフレアブルーパール", engine: "1.2L e-POWER", mission: "—", drive: "FF", inspection: "2027-09", grade: "X", badge: "", desc: "第2世代e-POWER。プロパイロット、アラウンドビューモニター、インテリジェントルームミラー搭載。", equip: ["navi","bkCam","around","etc","cruise","safety","led","keyless"], cond: { exterior: 4, interior: 5, mech: 5, history: "ワンオーナー", smoke: "禁煙車", record: "あり" } },
+    { id: 14, maker: "三菱", name: "デリカD:5 P", year: 2021, mileage: 45000, price: 3180000, body: "ミニバン", color: "ウォームホワイトパール", engine: "2.2L ディーゼル", mission: "8AT", drive: "4WD", inspection: "2026-10", grade: "P", badge: "", desc: "唯一無二のオールラウンダー。本革シート、ロックフォードサウンド、7人乗り。ディーゼル×4WDでアウトドアに最適。", equip: ["navi","bkCam","around","etc","cruise","safety","leather","sheat","led","keyless","pSlide","audio"], cond: { exterior: 3, interior: 4, mech: 5, history: "複数オーナー", smoke: "—", record: "あり" } },
+    { id: 15, maker: "メルセデス・ベンツ", name: "Cクラス C200 アバンギャルド", year: 2022, mileage: 27000, price: 4280000, body: "輸入車", color: "オブシディアンブラック", engine: "1.5L ターボ+ISG", mission: "9AT", drive: "FR", inspection: "2027-02", grade: "アバンギャルド", badge: "soon", desc: "W206型。MBUX第2世代、ARナビゲーション、デジタルライト。入荷予定車両 — 事前オーダー受付中。", equip: ["navi","bkCam","around","etc","cruise","safety","leather","sheat","led","keyless","pSeat","audio"], cond: { exterior: 5, interior: 5, mech: 5, history: "ワンオーナー", smoke: "禁煙車", record: "あり" } },
+    { id: 16, maker: "トヨタ", name: "ランドクルーザー250 VX", year: 2024, mileage: 5000, price: 6980000, body: "SUV", color: "アバンギャルドブロンズメタリック", engine: "2.8L ディーゼル", mission: "8AT", drive: "4WD", inspection: "2029-04", grade: "VX", badge: "hot", desc: "新型250系。マルチテレインセレクト、e-KDSS、指紋認証。走行5,000kmの極上車両。プレミア価格でのご案内です。", equip: ["navi","bkCam","around","etc","cruise","safety","leather","sheat","led","keyless","pSeat","audio"], cond: { exterior: 5, interior: 5, mech: 5, history: "ワンオーナー", smoke: "禁煙車", record: "あり" } },
   ];
 
   var FAV_KEY = "auc_favs";
@@ -603,6 +680,37 @@
     showDetail(id);
   });
 
+  function renderEquip(c) {
+    var html = '<div class="equip-section"><h3>🔧 装備一覧</h3><div class="equip-grid">';
+    EQUIP_DEFS.forEach(function (eq) {
+      var has = c.equip && c.equip.indexOf(eq.key) >= 0;
+      html += '<div class="equip-item' + (has ? '' : ' eq-off') + '">' +
+        '<span class="eq-icon">' + eq.icon + '</span>' +
+        '<span class="eq-label">' + eq.label + '</span></div>';
+    });
+    html += '</div></div>';
+    return html;
+  }
+
+  function stars(n) {
+    var s = '';
+    for (var i = 0; i < 5; i++) s += i < n ? '★' : '☆';
+    return '<span class="star">' + s + '</span>';
+  }
+
+  function renderCondition(c) {
+    if (!c.cond) return '';
+    var d = c.cond;
+    return '<div class="condition-table"><h3>📋 車両状態</h3><div class="cond-grid">' +
+      '<div class="cond-row"><span class="cond-k">外装</span><span class="cond-v">' + stars(d.exterior) + '</span></div>' +
+      '<div class="cond-row"><span class="cond-k">内装</span><span class="cond-v">' + stars(d.interior) + '</span></div>' +
+      '<div class="cond-row"><span class="cond-k">機関</span><span class="cond-v">' + stars(d.mech) + '</span></div>' +
+      '<div class="cond-row"><span class="cond-k">所有歴</span><span class="cond-v">' + d.history + '</span></div>' +
+      '<div class="cond-row"><span class="cond-k">喫煙</span><span class="cond-v">' + d.smoke + '</span></div>' +
+      '<div class="cond-row"><span class="cond-k">整備記録</span><span class="cond-v">' + d.record + '</span></div>' +
+      '</div></div>';
+  }
+
   // Detail modal
   window.showDetail = function (id) {
     var c = CARS.find(function (x) { return x.id === id; });
@@ -625,6 +733,8 @@
         '<div class="ds-row"><span class="ds-k">車検</span><span class="ds-v">' + c.inspection + '</span></div>' +
       '</div>' +
       '<div class="detail-desc">' + c.desc + '</div>' +
+      renderEquip(c) +
+      renderCondition(c) +
       '<div class="loan-sim" id="loanSim" data-price="' + c.price + '">' +
         '<h3>💰 ローンシミュレーション</h3>' +
         '<div class="loan-params">' +
@@ -653,6 +763,18 @@
       '<div class="modal-actions">' +
         '<a class="btn btn-gold" href="login.html">この車両をオーダーする</a>' +
         '<a class="btn btn-navy" href="index.html#simulator">総額シミュレーション</a>' +
+      '</div>' +
+      '<div class="staff-section">' +
+        '<div class="staff-avatar">S</div>' +
+        '<div class="staff-info">' +
+          '<div class="staff-role">SALES STAFF</div>' +
+          '<div class="staff-name">佐藤 太郎</div>' +
+          '<div class="staff-msg">この車両について気になる点がございましたらお気軽にお問い合わせください。試乗・実車確認も承ります。</div>' +
+        '</div>' +
+        '<div class="staff-contact">' +
+          '<a class="btn btn-gold btn-sm" href="tel:050-1722-3365">電話する</a>' +
+          '<a class="btn btn-navy btn-sm" href="login.html">問い合わせ</a>' +
+        '</div>' +
       '</div>';
     document.getElementById("modalOverlay").classList.add("open");
     document.body.style.overflow = "hidden";
