@@ -20,6 +20,7 @@
     </a>
     <nav class="nav">
       <a class="nav-link" href="index.html#simulator">料金シミュレーション</a>
+      <a class="nav-link" href="gallery.html">落札実績</a>
       <a class="nav-link" href="index.html">サービス</a>
       <a class="btn btn-ghost btn-sm" href="#" id="logoutBtn">ログアウト</a>
     </nav>
@@ -291,22 +292,49 @@
   </div>
 </footer>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="assets/js/firebase-config.js"></script>
 <script src="assets/js/simulator.js"></script>
 <script src="assets/js/app.js"></script>
 <script>
+  // --- Firebase 初期化 ---
+  var useFirebase = AucFirebase.init();
+
   // --- 未ログインならログインページへ ---
   var user = AucAuth.current();
-  if (!user) { location.href = "login.html"; }
+  if (!user && !useFirebase) { location.href = "login.html"; }
+
+  // Firebase モードでは auth 状態を監視
+  if (useFirebase) {
+    AucFirebase.onAuthChange(function (fbUser) {
+      if (!fbUser) { location.href = "login.html"; return; }
+      AucFirebase.getProfile().then(function (res) {
+        if (res.ok && res.data) {
+          user = res.data;
+          updateUI(user);
+        }
+      });
+    });
+  }
+
+  function updateUI(u) {
+    document.getElementById("hello").textContent = "こんにちは、" + (u.name || "ゲスト") + " さん";
+    document.getElementById("planLine").textContent = (u.plan || "スタンダード") + " 会員 ／ 登録日 " + (u.since || "—").slice(0, 10);
+    document.getElementById("meName").textContent = u.name || "ゲスト会員";
+    document.getElementById("mePlan").textContent = (u.plan || "スタンダード") + " 会員";
+    document.getElementById("avatar").textContent = (u.name || "G").charAt(0);
+  }
 
   // --- ヘッダー/サイドバーにユーザー情報を反映 ---
-  document.getElementById("hello").textContent = "こんにちは、" + user.name + " さん";
-  document.getElementById("planLine").textContent = user.plan + " 会員 ／ 登録日 " + user.since;
-  document.getElementById("meName").textContent = user.name;
-  document.getElementById("mePlan").textContent = user.plan + " 会員";
-  document.getElementById("avatar").textContent = (user.name || "G").charAt(0);
+  if (user) { updateUI(user); }
 
   document.getElementById("logoutBtn").onclick = function (e) {
-    e.preventDefault(); AucAuth.logout(); location.href = "index.html";
+    e.preventDefault();
+    if (useFirebase) { AucFirebase.logout(); }
+    AucAuth.logout();
+    location.href = "index.html";
   };
 
   // --- ステータス表示の対応表（購入＋出品） ---

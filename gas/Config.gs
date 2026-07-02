@@ -23,9 +23,13 @@ function getConfig() {
     //    グループに送る場合は groupId を1つだけ入れてもOK。
     LINE_STAFF_IDS: "",
 
-    // ③ OpenRouter（AIで申込内容を要約・優先度づけ）任意
+    // ③ AI（申込内容を要約・優先度づけ）任意 — どちらか片方でOK
+    //    Anthropic Claude API（推奨・高精度）
+    ANTHROPIC_API_KEY: "",
+    ANTHROPIC_MODEL: "claude-haiku-4-5-20251001",
+    //    OpenRouter（複数モデルに対応）
     OPENROUTER_API_KEY: "",
-    OPENROUTER_MODEL: "deepseek/deepseek-chat", // 無料〜安価モデル。例: google/gemini-flash-1.5
+    OPENROUTER_MODEL: "deepseek/deepseek-chat",
 
     // ③-2 Slack（スタッフ通知＋Slackから相場回答）任意
     SLACK_WEBHOOK_URL: "",   // Incoming Webhook のURL（通知先）

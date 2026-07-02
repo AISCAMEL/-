@@ -81,9 +81,11 @@
     <nav class="nav">
       <a class="nav-link" href="index.html">購入代行</a>
       <a class="nav-link" href="sell.html">出品代行</a>
+      <a class="nav-link" href="gallery.html">落札実績</a>
       <a class="nav-link" href="shipping.html">陸送シミュ</a>
       <a class="nav-link" href="#simulator">料金シミュ</a>
       <a class="nav-link" href="mypage.html">マイページ</a>
+      <button class="menu-toggle" id="menuToggle" aria-label="メニュー">☰</button>
       <a class="btn btn-gold btn-sm" href="login.html">無料会員登録</a>
     </nav>
   </div>
@@ -483,6 +485,7 @@
         <a href="sell.html">出品代行（売却）</a>
         <a href="shipping.html">陸送シミュレーション</a>
         <a href="#simulator">料金シミュレーション</a>
+        <a href="gallery.html">落札実績ギャラリー</a>
         <a href="manual.html">出品マニュアル</a>
       </div>
       <div>
@@ -498,9 +501,38 @@
   </div>
 </footer>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="assets/js/firebase-config.js"></script>
 <script src="assets/js/simulator.js"></script>
 <script src="assets/js/app.js"></script>
 <script>
+  // Firebase 初期化
+  AucFirebase.init();
+
+  // ヘッダー スクロール効果
+  var header = document.querySelector('.site-header');
+  if (header) {
+    window.addEventListener('scroll', function () {
+      header.classList.toggle('scrolled', window.scrollY > 10);
+    });
+  }
+
+  // モバイルメニュー
+  var menuToggle = document.getElementById('menuToggle');
+  if (menuToggle) {
+    menuToggle.addEventListener('click', function () {
+      var nav = this.closest('.nav') || this.parentElement;
+      var links = nav.querySelectorAll('.nav-link');
+      var isOpen = links[0] && getComputedStyle(links[0]).display !== 'none';
+      links.forEach(function (a) {
+        a.style.display = isOpen ? '' : 'block';
+      });
+      this.textContent = isOpen ? '☰' : '✕';
+    });
+  }
+
   // LINE友だち追加URL（設定してください）
   var LINE_ADD_URL = ""; // 例: "https://lin.ee/xxxxxxx"
   var lineBtn = document.getElementById("lineBtn");

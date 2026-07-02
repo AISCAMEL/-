@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ページが見つかりません｜AUC-AGENT</title>
+<meta name="robots" content="noindex" />
+<link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicon-32.png" />
+<link rel="apple-touch-icon" href="/assets/img/favicon-180.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet" href="/assets/css/style.css" />
+<style>
+  .error-page {
+    min-height: calc(100vh - 64px - 120px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+  }
+  .error-inner {
+    max-width: 520px;
+  }
+  .error-code {
+    font-size: 120px;
+    font-weight: 900;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--gold-2), var(--gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 12px;
+  }
+  .error-inner h1 {
+    font-size: 28px;
+    margin: 0 0 14px;
+    color: var(--navy);
+  }
+  .error-inner p {
+    color: var(--muted);
+    font-size: 15px;
+    margin: 0 0 32px;
+    line-height: 1.8;
+  }
+  .error-links {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+    margin-top: 28px;
+  }
+  .error-links a {
+    font-size: 14px;
+    color: var(--navy);
+    font-weight: 700;
+    padding: 6px 0;
+    border-bottom: 1px dashed var(--line);
+    transition: color .2s;
+  }
+  .error-links a:hover {
+    color: var(--gold);
+  }
+  @media (max-width: 520px) {
+    .error-code { font-size: 80px; }
+    .error-inner h1 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="/">
+      <span class="logo">A</span>
+      <span>AUC-AGENT<small>CAR AUCTION AGENT</small></span>
+    </a>
+    <nav class="nav">
+      <a class="nav-link" href="/">購入代行</a>
+      <a class="nav-link" href="/sell">出品代行</a>
+      <a class="nav-link" href="/shipping">陸送シミュ</a>
+      <a class="nav-link" href="/mypage">マイページ</a>
+      <a class="btn btn-gold btn-sm" href="/login">無料会員登録</a>
+    </nav>
+  </div>
+</header>
+
+<!-- 404 Content -->
+<main class="error-page">
+  <div class="error-inner">
+    <div class="error-code">404</div>
+    <h1>ページが見つかりません</h1>
+    <p>お探しのページは移動または削除された可能性があります。<br />URLをご確認のうえ、以下のリンクからお進みください。</p>
+    <a class="btn btn-gold" href="/">トップページへ戻る</a>
+    <div class="error-links">
+      <a href="/">購入代行（トップ）</a>
+      <a href="/sell">出品代行（売却）</a>
+      <a href="/shipping">陸送シミュレーション</a>
+      <a href="/login">会員登録 / ログイン</a>
+      <a href="/mypage">マイページ</a>
+    </div>
+  </div>
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <a class="brand" href="/" style="color:#fff;margin-bottom:12px;">
+          <span class="logo">A</span><span>AUC-AGENT</span>
+        </a>
+        <p style="max-width:340px;">全国のオートオークションから、あなたの一台をプロが代行落札。相場価格で、安心・かんたんにマイカーを。</p>
+      </div>
+      <div>
+        <h4>サービス</h4>
+        <a href="/">購入代行</a>
+        <a href="/sell">出品代行（売却）</a>
+        <a href="/shipping">陸送シミュレーション</a>
+        <a href="/manual">出品マニュアル</a>
+      </div>
+      <div>
+        <h4>会員・お問い合わせ</h4>
+        <a href="/login">会員登録 / ログイン</a>
+        <a href="/mypage">マイページ</a>
+        <a href="/privacy">プライバシーポリシー</a>
+      </div>
+    </div>
+    <div class="copy">&copy; 2026 合同会社アイズ（AUC-AGENT）. いわき市／福島拠点.</div>
+  </div>
+</footer>
+
+</body>
+</html>
