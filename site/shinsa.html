@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>オートローン審査申込｜AUC-AGENT</title>
+<meta name="description" content="AUC-AGENT オートローン審査申込フォーム。最短即日回答・来店不要・秘密厳守。合同会社アイズが運営するカーオークション代行サービス。" />
+<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png" />
+<link rel="apple-touch-icon" href="assets/img/favicon-180.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#1a2744;--accent:#2563eb;--success:#059669;--warning:#d97706;--error:#dc2626;
+  --bg:#f8fafc;--card:#ffffff;--border:#e2e8f0;--input-border:#d1d5db;
+  --text:#1e293b;--muted:#64748b;--line:#06C755;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;font-size:15px;min-height:100vh}
+a{color:var(--accent);text-decoration:none}
+
+/* ===== HEADER ===== */
+.app-header{background:var(--primary);color:#fff;padding:20px 0;text-align:center}
+.app-header h1{font-size:22px;font-weight:700;letter-spacing:.04em;margin-bottom:8px}
+.trust-badges{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+.trust-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:4px 14px;font-size:12px;font-weight:500}
+.trust-badge::before{content:'✓';color:#34d399;font-weight:700}
+
+/* ===== STEP INDICATOR ===== */
+.step-indicator-wrap{background:#fff;border-bottom:1px solid var(--border);padding:16px 0 12px;position:sticky;top:0;z-index:100}
+.step-indicator-inner{max-width:960px;margin:0 auto;padding:0 16px}
+.progress-text{text-align:center;font-size:13px;color:var(--muted);margin-bottom:10px;font-weight:500}
+.progress-text span{color:var(--accent);font-weight:700}
+.step-indicator{display:flex;align-items:center;overflow-x:auto;gap:0;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.step-indicator::-webkit-scrollbar{display:none}
+.step-item{display:flex;align-items:center;flex-shrink:0}
+.step-circle{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid #cbd5e1;color:#94a3b8;background:#fff;transition:all .3s;cursor:pointer;position:relative}
+.step-circle:hover{border-color:var(--accent);color:var(--accent)}
+.step-item.completed .step-circle{background:var(--primary);border-color:var(--primary);color:#fff}
+.step-item.completed .step-circle::after{content:'';display:none}
+.step-item.current .step-circle{border-color:var(--accent);color:var(--accent);background:#eff6ff;box-shadow:0 0 0 4px rgba(37,99,235,.15)}
+.step-line{width:12px;height:2px;background:#cbd5e1;flex-shrink:0}
+.step-item.completed+.step-item .step-line,
+.step-item.completed .step-line{background:var(--primary)}
+
+/* ===== MAIN CONTAINER ===== */
+.main-container{max-width:720px;margin:0 auto;padding:24px 16px 120px}
+
+/* ===== STEP CARD ===== */
+.step-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:32px 28px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 12px rgba(0,0,0,.03)}
+.step-title{font-size:20px;font-weight:700;color:var(--primary);margin-bottom:4px}
+.step-subtitle{font-size:13px;color:var(--muted);margin-bottom:24px}
+.step-content{display:none}
+.step-content.active{display:block}
+
+/* ===== SECTION HEADERS ===== */
+.section-head{border-left:4px solid var(--accent);padding-left:12px;font-size:16px;font-weight:700;color:var(--primary);margin:28px 0 16px}
+.section-head:first-child{margin-top:0}
+
+/* ===== FORM FIELDS ===== */
+.field{margin-bottom:20px}
+.field-row{display:flex;gap:12px}
+.field-row .field{flex:1}
+.field-label{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px}
+.req{display:inline-block;background:var(--error);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:3px;line-height:1.6}
+.field-note{font-size:12px;color:var(--muted);margin-top:4px}
+
+input[type=text],input[type=tel],input[type=email],input[type=number],input[type=date],select,textarea{
+  width:100%;height:48px;padding:0 14px;border:1px solid var(--input-border);border-radius:8px;
+  font-family:inherit;font-size:15px;color:var(--text);background:#fff;transition:border-color .2s,box-shadow .2s;
+  appearance:none;-webkit-appearance:none;
+}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+input::placeholder,textarea::placeholder{color:#94a3b8}
+textarea{height:100px;padding:12px 14px;resize:vertical}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b'%3E%3Cpath d='M6 8.5L1 3.5h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+input[type=date]{padding-right:8px}
+
+/* ===== RADIO / CHECKBOX PILLS ===== */
+.pill-group{display:flex;flex-wrap:wrap;gap:8px}
+.pill-option{position:relative}
+.pill-option input{position:absolute;opacity:0;width:0;height:0}
+.pill-label{display:inline-flex;align-items:center;justify-content:center;padding:10px 18px;border:1.5px solid var(--input-border);border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;user-select:none;min-height:44px;text-align:center}
+.pill-label:hover{border-color:var(--accent);background:#f0f5ff}
+.pill-option input:checked+.pill-label{border-color:var(--accent);background:#eff6ff;color:var(--accent);font-weight:600}
+
+/* ===== CONDITIONAL PANELS ===== */
+.conditional-panel{background:#f1f5f9;border-radius:8px;padding:20px;margin-top:12px;display:none}
+.conditional-panel.visible{display:block}
+
+/* ===== WARNING NOTE ===== */
+.warning-note{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px 16px;font-size:13px;color:#92400e;margin-bottom:20px;line-height:1.6}
+.warning-note::before{content:'⚠ ';font-size:15px}
+
+/* ===== FILE UPLOAD ===== */
+.file-upload{border:2px dashed var(--input-border);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;position:relative}
+.file-upload:hover{border-color:var(--accent);background:#f8faff}
+.file-upload input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.file-upload-icon{font-size:28px;color:var(--muted);margin-bottom:6px}
+.file-upload-text{font-size:13px;color:var(--muted)}
+.file-preview{margin-top:8px;font-size:13px;color:var(--accent);font-weight:500;word-break:break-all}
+.file-preview img{max-width:120px;max-height:80px;border-radius:4px;margin-top:6px;display:block}
+
+/* ===== CHECKBOX FIELD ===== */
+.check-field{display:flex;align-items:flex-start;gap:10px;margin-bottom:14px}
+.check-field input[type=checkbox]{width:20px;height:20px;margin-top:2px;accent-color:var(--accent);flex-shrink:0;cursor:pointer}
+.check-field label{font-size:14px;cursor:pointer;line-height:1.6}
+
+/* ===== ZIP BUTTON ===== */
+.zip-row{display:flex;gap:8px;align-items:flex-start}
+.zip-row input{flex:1}
+.btn-zip{height:48px;padding:0 16px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity .2s}
+.btn-zip:hover{opacity:.85}
+
+/* ===== BOTTOM NAV ===== */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);padding:14px 16px;z-index:100;box-shadow:0 -2px 8px rgba(0,0,0,.06)}
+.bottom-nav-inner{max-width:720px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.btn{height:48px;padding:0 28px;border-radius:8px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;justify-content:center;border:none;gap:6px}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#1d4ed8}
+.btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--input-border)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-submit{background:var(--success);color:#fff}
+.btn-submit:hover{background:#047857}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ===== LINE BUTTON ===== */
+.line-float{position:fixed;bottom:80px;left:16px;z-index:99;background:var(--line);color:#fff;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(6,199,85,.35);cursor:pointer;transition:transform .2s;text-decoration:none;border:none}
+.line-float:hover{transform:scale(1.08)}
+.line-float svg{width:28px;height:28px;fill:#fff}
+
+/* ===== SUCCESS ===== */
+.success-screen{display:none;text-align:center;padding:48px 24px}
+.success-screen.active{display:block}
+.success-icon{font-size:64px;margin-bottom:16px}
+.success-title{font-size:22px;font-weight:700;color:var(--primary);margin-bottom:8px}
+.success-text{font-size:14px;color:var(--muted);line-height:1.8}
+
+/* ===== VALIDATION ===== */
+.field-error input,.field-error select,.field-error textarea{border-color:var(--error)!important}
+.error-msg{font-size:12px;color:var(--error);margin-top:4px;display:none}
+.field-error .error-msg{display:block}
+
+/* ===== HONEYPOT ===== */
+.hp-wrap{position:absolute;left:-9999px;opacity:0;height:0;overflow:hidden}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+  .step-card{padding:24px 18px}
+  .field-row{flex-direction:column;gap:0}
+  .btn{width:100%;padding:0 16px}
+  .bottom-nav-inner{flex-direction:column;gap:8px}
+  .bottom-nav-inner .btn-ghost{order:2}
+  .bottom-nav-inner .btn-primary,.bottom-nav-inner .btn-submit{order:1}
+  .step-circle{width:28px;height:28px;font-size:11px}
+  .step-line{width:8px}
+  .pill-label{padding:8px 14px;font-size:13px;min-height:42px}
+  .app-header h1{font-size:18px}
+  .line-float{width:48px;height:48px;bottom:76px;left:12px}
+  .line-float svg{width:24px;height:24px}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="app-header">
+  <h1>オートローン審査申込</h1>
+  <div class="trust-badges">
+    <span class="trust-badge">最短即日回答</span>
+    <span class="trust-badge">来店不要</span>
+    <span class="trust-badge">秘密厳守</span>
+  </div>
+</header>
+
+<!-- STEP INDICATOR -->
+<div class="step-indicator-wrap">
+  <div class="step-indicator-inner">
+    <div class="progress-text">入力の進捗：<span id="progress-pct">0%</span>（ステップ <span id="progress-current">1</span> / 14）</div>
+    <div class="step-indicator" id="step-indicator"></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main class="main-container">
+<form id="loan-form" action="#" method="post" novalidate>
+
+<!-- Honeypot -->
+<div class="hp-wrap"><input type="text" name="website" id="hp-field" tabindex="-1" autocomplete="off"></div>
+
+<!-- ==================== STEP 1 ==================== -->
+<div class="step-content" data-step="1">
+<h2 class="step-title">STEP 1　ご希望のお車</h2>
+<p class="step-subtitle">購入を検討されている車両の情報をご入力ください。</p>
+
+<div class="field">
+  <div class="field-label">車両の状態 <span class="req">必須</span></div>
+  <div class="pill-group">
+    <label class="pill-option"><input type="radio" name="car_condition" value="新車" required><span class="pill-label">新車</span></label>
+    <label class="pill-option"><input type="radio" name="car_condition" value="中古車"><span class="pill-label">中古車</span></label>
+    <label class="pill-option"><input type="radio" name="car_condition" value="新古車（未使用車）"><span class="pill-label">新古車（未使用車）</span></label>
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-label">メーカー <span class="req">必須</span></div>
+  <select name="maker" id="maker" required><option value="">選択してください</option></select>
+</div>
+
+<div class="field">
+  <div class="field-label">車種 <span class="req">必須</span></div>
+  <select name="model" id="model" required><option value="">先にメーカーを選択してください</option></select>
+</div>
+
+<div class="field">
+  <div class="field-label">年式</div>
+  <select name="year" id="year"><option value="">選択してください</option></select>
+</div>
+
+<div class="field">
+  <div class="field-label">グレード</div>
+  <input type="text" name="grade" placeholder="例: G Zパッケージ">
+</div>
+
+<div class="field">
+  <div class="field-label">希望の色</div>
+  <input type="text" name="color" placeholder="例: パールホワイト">
+</div>
+
+<div class="field">
+  <div class="field-label">車両本体価格（税込） <span class="req">必須</span></div>
+  <input type="text" name="car_price" id="car-price" placeholder="例: 3,000,000" inputmode="numeric" required>
+  <div class="field-note">半角数字で入力してください（円）</div>
+</div>
+
+<div class="field">
+  <div class="field-label">オプション・付属品の金額</div>
+  <input type="text" name="option_price" id="option-price" placeholder="例: 300,000" inputmode="numeric">
+</div>
+
+<div class="field">
+  <div class="field-label">備考・ご希望</div>
+  <textarea name="remarks_car" placeholder="ご希望やご質問があればご記入ください"></textarea>
+</div>
+</div>
+
+<!-- ==================== STEP 2 ==================== -->
+<div class="step-content" data-step="2">
+<h2 class="step-title">STEP 2　申込のきっかけ・ご状況</h2>
+<p class="step-subtitle">お申込みの背景をお聞かせください。</p>
+
+<div class="field">
+  <div class="field-label">お申込みのきっかけ</div>
+  <div class="pill-group">
+    <label class="pill-option"><input type="checkbox" name="kikkake" value="ディーラーの紹介"><span class="pill-label">ディーラーの紹介</span></label>
+    <label class="pill-option"><input type="checkbox" name="kikkake" value="ネット広告"><span class="pill-label">ネット広告</span></label>
+    <label class="pill-option"><input type="checkbox" name="kikkake" value="知人の紹介"><span class="pill-label">知人の紹介</span></label>
+    <label class="pill-option"><input type="checkbox" name="kikkake" value="SNS"><span class="pill-label">SNS</span></label>
+    <label class="pill-option"><input type="checkbox" name="kikkake" value="比較サイト"><span class="pill-label">比較サイト</span></label>
+    <label class="pill-option"><input type="checkbox" name="kikkake" value="その他" data-toggle="grp-kikkake-other"><span class="pill-label">その他</span></label>
+  </div>
+  <div class="conditional-panel" id="grp-kikkake-other">
+    <div class="field" style="margin-bottom:0">
+      <div class="field-label">その他の内容</div>
+      <input type="text" name="kikkake_other" placeholder="具体的にご記入ください">
+    </div>
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-label">現在のお車の有無 <span class="req">必須</span></div>
+  <div class="pill-group">
+    <label class="pill-option"><input type="radio" name="current_car_status" value="あり（乗り換え）" required><span class="pill-label">あり（乗り換え）</span></label>
+    <label class="pill-option"><input type="radio" name="current_car_status" value="あり（増車）"><span class="pill-label">あり（増車）</span></label>
+    <label class="pill-option"><input type="radio" name="current_car_status" value="なし（新規）"><span class="pill-label">なし（新規）</span></label>
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-label">お車の使用目的</div>
+  <div class="pill-group">
+    <label class="pill-option"><input type="checkbox" name="usage" value="通勤・通学"><span class="pill-label">通勤・通学</span></label>
+    <label class="pill-option"><input type="checkbox" name="usage" value="レジャー・旅行"><span class="pill-label">レジャー・旅行</span></label>
+    <label class="pill-option"><input type="checkbox" name="usage" value="業務用"><span class="pill-label">業務用</span></label>
+    <label class="pill-option"><input type="checkbox" name="usage" value="送迎"><span class="pill-label">送迎</span></label>
+    <label class="pill-option"><input type="checkbox" name="usage" value="その他"><span class="pill-label">その他</span></label>
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-label">ご希望の納車時期</div>
+  <select name="delivery_timing">
+    <option value="">選択してください</option>
+    <option>できるだけ早く</option><option>1ヶ月以内</option><option>2〜3ヶ月以内</option><option>半年以内</option><option>特に急がない</option>
+  </select>
+</div>
+
+<div class="field">
+  <div class="field-label">他社でのローン申込状況</div>
+  <div class="pill-group">
+    <label class="pill-option"><input type="radio" name="other_loan" value="他社への申込はしていない"><span class="pill-label">他社への申込はしていない</span></label>
+    <label class="pill-option"><input type="radio" name="other_loan" value="他社にも申込中"><span class="pill-label">他社にも申込中</span></label>
+    <label class="pill-option"><input type="radio" name="other_loan" value="他社で否決された"><span class="pill-label">他社で否決された</span></label>
+  </div>
+</div>
+</div>
+
+<!-- ==================== STEP 3 ==================== -->
+<div class="step-content" data-step="3">
+<h2 class="step-title">STEP 3　ご本人情報</h2>
+<p class="step-subtitle">お申込者ご本人の基本情報をご入力ください。</p>
+
+<div class="field-row">
+  <div class="field">
+    <div class="field-label">姓（漢字） <span class="req">必須</span></div>
+    <input type="text" name="last_name" required placeholder="例: 山田">
+  </div>
+  <div class="field">
+    <div class="field-label">名（漢字） <span class="req">必須</span></div>
+    <input type="text" name="first_name" required placeholder="例: 太郎">
+  </div>
+</div>
+
+<div class="field-row">
+  <div class="field">
+    <div class="field-label">姓（フリガナ） <span class="req">必須</span></div>
+    <input type="text" name="last_name_kana" required placeholder="例: ヤマダ" pattern="[ァ-ヶー　 ]*">
+  </div>
+  <div class="field">
+    <div class="field-label">名（フリガナ） <span class="req">必須</span></div>
+    <input type="text" name="first_name_kana" required placeholder="例: タロウ" pattern="[ァ-ヶー　 ]*">
+  </div>
+</div>
+
+<div class="field-row">
+  <div class="field">
+    <div class="field-label">生年月日 <span class="req">必須</span></div>
+    <input type="date" name="birthday" id="birthday" required>
+    <div class="field-note" id="age-display"></div>
+  </div>
+  <div class="field">
+    <div class="field-label">性別 <span class="req">必須</span></div>
+    <div class="pill-group">
+      <label class="pill-option"><input type="radio" name="gender" value="男性" required><span class="pill-label">男性</span></label>
+      <label class="pill-option"><input type="radio" name="gender" value="女性"><span class="pill-label">女性</span></label>
+    </div>
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-label">携帯電話番号 <span class="req">必須</span></div>
+  <input type="tel" name="mobile" required placeholder="例: 090-1234-5678">
+</div>
+
+<div class="field">
+  <div class="field-label">自宅電話番号</div>
+  <input type="tel" name="home_phone" placeholder="例: 0246-12-3456">
+</div>
+
+<div class="field">
+  <div class="field-label">メールアドレス <span class="req">必須</span></div>
+  <input type="email" name="email" id="email" required placeholder="例: example@mail.com">
+</div>
+
+<div class="field">
+  <div class="field-label">メールアドレス（確認） <span class="req">必須</span></div>
+  <input type="email" name="email_confirm" id="email-confirm" required placeholder="もう一度入力してください">
+  <div class="error-msg" id="email-match-error">メールアドレスが一致しません。</div>
+</div>
+</div>
+
+<!-- ==================== STEP 4 ==================== -->
+<div class="step-content" data-step="4">
+<h2 class="step-title">STEP 4　現住所</h2>
+<p class="step-subtitle">現在お住まいの住所をご入力ください。</p>
+
+<div class="field">
+  <div class="field-label">郵便番号 <span class="req">必須</span></div>
+  <div class="zip-row">
+    <input type="text" name="zip" id="zip" required placeholder="例: 9700101" maxlength="8" inputmode="numeric">
+    <button type="button" class="btn-zip" id="btn-zip">住所検索</button>
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-label">都道府県 <span class="req">必須</span></div>
+  <select name="prefecture" id="prefecture" required>
+    <option value="">選択してください</option>
+    <option>北海道</option><option>青森県</option><option>岩手県</option><option>宮城県</option><option>秋田県</option><option>山形県</option><option>福島県</option>
+    <option>茨城県</option><option>栃木県</option><option>群馬県</option><option>埼玉県</option><option>千葉県</option><option>東京都</option><option>神奈川県</option>
+    <option>新潟県</option><option>富山県</option><option>石川県</option><option>福井県</option><option>山梨県</option><option>長野県</option>
+    <option>岐阜県</option><option>静岡県</option><option>愛知県</option><option>三重県</option>
+    <option>滋賀県</option><option>京都府</option><option>大阪府</option><option>兵庫県</option><option>奈良県</option><option>和歌山県</option>
+    <option>鳥取県</option><option>島根県</option><option>岡山県</option><option>広島県</option><option>山口県</option>
+    <option>徳島県</option><option>香川県</option><option>愛媛県</option><option>高知県</option>
+    <option>福岡県</option><option>佐賀県</option><option>長崎県</option><option>熊本県</option><option>大分県</option><option>宮崎県</option><option>鹿児島県</option><option>沖縄県</option>
+  </select>
+</div>
+
+<div class="field">
+  <div class="field-label">市区町村 <span class="req">必須</span></div>
+  <input type="text" name="city" id="city" required placeholder="例: いわき市平">
+</div>
+
+<div class="field">
+  <div class="field-label">番地 <span class="req">必須</span></div>
+  <input type="text" name="address" required placeholder="例: 1-2-3">
+</div>
+
+<div class="field">
+  <div class="field-label">建物名・部屋番号</div>
+  <input type="text" name="building" placeholder="例: ○○マンション 101号室">
+</div>
+
+<div class="field">
+  <div class="field-label">居住形態 <span class="req">必須</span></div>
+  <div class="pill-group">
+    <label class="pill-option"><input type="radio" name="residence_type" value="持家（自己所有）" required data-toggle-rent="false"><span class="pill-label">持家（自己所有）</span></label>
+    <label class="pill-option"><input type="radio" name="residence_type" value="持家（家族所有）" data-toggle-rent="false"><span class="pill-label">持家（家族所有）</span></label>
+    <label class="pill-option"><input type="radio" name="residence_type" value="賃貸マンション" data-toggle-rent="true"><span class="pill-label">賃貸マンション</span></label>
+    <label class="pill-option"><input type="radio" name="residence_type" value="賃貸アパート" data-toggle-rent="true"><span class="pill-label">賃貸アパート</span></label>
+    <label class="pill-option"><input type="radio" name="residence_type" value="社宅・寮" data-toggle-rent="true"><span class="pill-label">社宅・寮</span></label>
+    <label class="pill-option"><input type="radio" name="residence_type" value="公営住宅" data-toggle-rent="true"><span class="pill-label">公営住宅</span></label>
+    <label class="pill-option"><input type="radio" name="residence_type" value="その他" data-toggle-rent="true"><span class="pill-label">その他</span></label>
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-label">居住年数 <span class="req">必須</span></div>
+  <select name="residence_years" required>
+    <option value="">選択してください</option>
+    <option>1年未満</option><option>1年</option><option>2年</option><option>3年</option><option>4年</option><option>5年</option><option>6〜9年</option><option>10年以上</option>
+  </select>
+</div>
+
+<div class="conditional-panel" id="grp-rent">
+  <div class="field" style="margin-bottom:0">
+    <div class="field-label">月額家賃・住宅ローン（円）</div>
+    <input type="text" name="rent" placeholder="例: 80,000" inputmode="numeric">
+  </div>
+</div>
+</div>
+
+<!-- ==================== STEP 5 ==================== -->
+<div class="step-content" data-step="5">
+<h2 class="step-title">STEP 5　ご家族・生計</h2>
+<p class="step-subtitle">ご家族構成と生計の状況をお聞かせください。</p>
+
+<div class="field">
+  <div class="field-label">配偶者の有無 <span class="req">必須</span></div>
+  <div class="pill-group">
+    <label class="pill-option"><input type="radio" name="spouse" value="あり" required><span class="pill-label">あり</span></label>
+    <label class="pill-option"><input type="radio" name="spouse" value="なし"><span class="pill-label">なし</span></label>
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-label">扶養家族数（配偶者含む）</div>
+  <select name="dependents">
+    <option value="">選択してください</option>
+    <option>0人</option><option>1人</option><option>2人</option><option>3人</option><option>4人</option><option>5人以上</option>
+  </select>
+</div>
+
+<div class="field">
+  <div class="field-label">同居家族数</div>
+  <select name="household_size">
+    <option value="">選択してください</option>
+    <option>1人（本人のみ）</option><option>2人</option><option>3人</option><option>4人</option><option>5人</option><option>6人以上</option>
+  </select>
+</div>
+
+<div class="field">
+  <div class="field-label">世帯主との関係</div>
+  <select name="householder_relation" id="householder-relation">
+    <option value="">選択してください</option>
+    <option>本人</option><option>配偶者</option><option>子</option><option>父母</option><option>その他</option>
+  </select>
+</div>
+
+<div class="conditional-panel" id="grp-household-income">
+  <div class="field" style="margin-bottom:0">
+    <div class="field-label">生計を共にする方の年収（万円）</div>
+    <input type="number" name="household_income" placeholder="例: 500" inputmode="numeric">
+  </div>
+</div>
+</div>
+
+<!-- ==================== STEP 6 ==================== -->
+<div class="step-content" data-step="6">
+<h2 class="step-title">STEP 6　ご収入</h2>
+<p class="step-subtitle">ご本人の収入に関する情報をご入力ください。</p>
+
+<div class="field">
+  <div class="field-label">税込年収（万円） <span class="req">必須</span></div>
+  <input type="number" name="annual_income" required placeholder="例: 450" inputmode="numeric">
+</div>
+
+<div class="field">
+  <div class="field-label">収入形態 <span class="req">必須</span></div>
+  <div class="pill-group">
+    <label class="pill-option"><input type="radio" name="income_type" value="給与所得" required><span class="pill-label">給与所得</span></label>
+    <label class="pill-option"><input type="radio" name="income_type" value="事業所得"><span class="pill-label">事業所得</span></label>
+    <label class="pill-option"><input type="radio" name="income_type" value="年金"><span class="pill-label">年金</span></label>
+    <label class="pill-option"><input type="radio" name="income_type" value="不動産所得"><span class="pill-label">不動産所得</span></label>
+    <label class="pill-option"><input type="radio" name="income_type" value="その他"><span class="pill-label">その他</span></label>
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-label">副収入の有無</div>
+  <div class="pill-group">
+    <label class="pill-option"><input type="radio" name="sub_income" value="なし" data-toggle="grp-sub-income" data-toggle-val="あり"><span class="pill-label">なし</span></label>
+    <label class="pill-option"><input type="radio" name="sub_income" value="あり" data-toggle="grp-sub-income" data-toggle-val="あり"><span class="pill-label">あり</span></label>
+  </div>
+</div>
+
+<div class="conditional-panel" id="grp-sub-income">
+  <div class="field" style="margin-bottom:0">
+    <div class="field-label">副収入の内容と金額（万円/年）</div>
+    <input type="text" name="sub_income_detail" placeholder="例: 不動産収入 年100万円">
+  </div>
+</div>
+</div>
+
+<!-- ==================== STEP 7 ==================== -->
+<div class="step-content" data-step="7">
+<h2 class="step-title">STEP 7　お勤め先・就労形態</h2>
+<p class="step-subtitle">雇用形態とお勤め先の情報をご入力ください。</p>
+
+<div class="field">
+  <div class="field-label">雇用形態 <span class="req">必須</span></div>
+  <div class="pill-group">
+    <label class="pill-option"><input type="radio" name="employment_type" value="正社員" required><span class="pill-label">正社員</span></label>
+    <label class="pill-option"><input type="radio" name="employment_type" value="契約社員"><span class="pill-label">契約社員</span></label>
+    <label class="pill-option"><input type="radio" name="employment_type" value="派遣社員"><span class="pill-label">派遣社員</span></label>
+    <label class="pill-option"><input type="radio" name="employment_type" value="パート・アルバイト"><span class="pill-label">パート・アルバイト</span></label>
+    <label class="pill-option"><input type="radio" name="employment_type" value="自営業・個人事業主"><span class="pill-label">自営業・個人事業主</span></label>
+    <label class="pill-option"><input type="radio" name="employment_type" value="会社役員"><span class="pill-label">会社役員</span></label>
+    <label class="pill-option"><input type="radio" name="employment_type" value="公務員"><span class="pill-label">公務員</span></label>
+    <label class="pill-option"><input type="radio" name="employment_type" value="年金受給者"><span class="pill-label">年金受給者</span></label>
+    <label class="pill-option"><input type="radio" name="employment_type" value="学生"><span class="pill-label">学生</span></label>
+    <label class="pill-option"><input type="radio" name="employment_type" value="主婦・主夫"><span class="pill-label">主婦・主夫</span></label>
+    <label class="pill-option"><input type="radio" name="employment_type" value="その他"><span class="pill-label">その他</span></label>
+  </div>
+</div>
+
+<div class="conditional-panel" id="grp-employment">
+  <h3 class="section-head">お勤め先の情報</h3>
+
+  <div class="field">
+    <div class="field-label">勤務先名</div>
+    <input type="text" name="company_name" placeholder="例: 株式会社○○">
+  </div>
+
+  <div class="field">
+    <div class="field-label">勤務先電話番号</div>
+    <input type="tel" name="company_phone" placeholder="例: 03-1234-5678">
+  </div>
+
+  <div class="field">
+    <div class="field-label">勤務先郵便番号</div>
+    <input type="text" name="company_zip" placeholder="例: 1000001" maxlength="8" inputmode="numeric">
+  </div>
+
+  <div class="field">
+    <div class="field-label">勤務先住所</div>
+    <input type="text" name="company_address" placeholder="例: 東京都千代田区○○1-2-3">
+  </div>
+
+  <div class="field">
+    <div class="field-label">業種</div>
+    <select name="industry">
+      <option value="">選択してください</option>
+      <option>製造業</option><option>建設業</option><option>卸売・小売業</option><option>運輸業</option><option>情報通信業</option><option>金融・保険業</option><option>不動産業</option><option>サービス業</option><option>医療・福祉</option><option>教育</option><option>公務</option><option>農林水産業</option><option>その他</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <div class="field-label">職種</div>
+    <select name="occupation">
+      <option value="">選択してください</option>
+      <option>事務</option><option>営業</option><option>技術・エンジニア</option><option>製造・工場</option><option>運転・配送</option><option>販売・サービス</option><option>医療・介護</option><option>教育・保育</option><option>管理職</option><option>その他</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <div class="field-label">勤続年数</div>
+    <select name="years_employed">
+      <option value="">選択してください</option>
+      <option>1年未満</option><option>1年</option><option>2年</option><option>3年</option><option>5年</option><option>7年</option><option>10年</option><option>15年</option><option>20年以上</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <div class="field-label">従業員数</div>
+    <select name="company_size">
+      <option value="">選択してください</option>
+      <option>〜5人</option><option>6〜20人</option><option>21〜50人</option><option>51〜100人</option><option>101〜300人</option><option>301〜1000人</option><option>1001人以上</option>
+    </select>
+  </div>
+</div>
+
+<div class="conditional-panel" id="grp-self-employed">
+  <h3 class="section-head">事業の情報</h3>
+
+  <div class="field">
+    <div class="field-label">屋号・会社名</div>
+    <input type="text" name="business_name" placeholder="例: ○○商店">
+  </div>
+
+  <div class="field">
+    <div class="field-label">事業内容</div>
+    <input type="text" name="business_detail" placeholder="例: 建設業">
+  </div>
+
+  <div class="field" style="margin-bottom:0">
+    <div class="field-label">事業年数</div>
+    <select name="business_years">
+      <option value="">選択してください</option>
+      <option>1年未満</option><option>1〜3年</option><option>3〜5年</option><option>5〜10年</option><option>10年以上</option>
+    </select>
+  </div>
+</div>
+</div>
+
+<!-- ==================== STEP 8 ==================== -->
+<div class="step-content" data-step="8">
+<h2 class="step-title">STEP 8　現在のお車</h2>
+<p class="step-subtitle">現在お乗りの車両について教えてください。</p>
+
+<div class="field">
+  <div class="field-label">現在お乗りの車 <span class="req">必須</span></div>
+  <div class="pill-group">
+    <label class="pill-option"><input type="radio" name="has_current_car" value="あり" required><span class="pill-label">あり</span></label>
+    <label class="pill-option"><input type="radio" name="has_current_car" value="なし"><span class="pill-label">なし</span></label>
+  </div>
+</div>
+
+<div class="conditional-panel" id="grp-current-car">
+  <div class="field">
+    <div class="field-label">メーカー</div>
+    <input type="text" name="current_maker" placeholder="例: トヨタ">
+  </div>
+  <div class="field">
+    <div class="field-label">車種名</div>
+    <input type="text" name="current_model" placeholder="例: プリウス">
+  </div>
+  <div class="field">
+    <div class="field-label">年式</div>
+    <select name="current_year" id="current-year"><option value="">選択してください</option></select>
+  </div>
+  <div class="field">
+    <div class="field-label">走行距離（km）</div>
+    <input type="number" name="current_mileage" placeholder="例: 50000" inputmode="numeric">
+  </div>
+  <div class="field">
+    <div class="field-label">残債の有無</div>
+    <div class="pill-group">
+      <label class="pill-option"><input type="radio" name="has_remaining_debt" value="なし"><span class="pill-label">なし</span></label>
+      <label class="pill-option"><input type="radio" name="has_remaining_debt" value="あり"><span class="pill-label">あり</span></label>
+    </div>
+  </div>
+  <div class="conditional-panel" id="grp-remaining-debt">
+    <div class="field" style="margin-bottom:0">
+      <div class="field-label">残債金額（万円）</div>
+      <input type="number" name="remaining_debt" placeholder="例: 120" inputmode="numeric">
+    </div>
+  </div>
+  <div class="field" style="margin-top:16px">
+    <div class="field-label">下取り・売却の希望</div>
+    <div class="pill-group">
+      <label class="pill-option"><input type="radio" name="trade_in" value="下取りに出したい"><span class="pill-label">下取りに出したい</span></label>
+      <label class="pill-option"><input type="radio" name="trade_in" value="自分で売却する"><span class="pill-label">自分で売却する</span></label>
+      <label class="pill-option"><input type="radio" name="trade_in" value="まだ決めていない"><span class="pill-label">まだ決めていない</span></label>
+      <label class="pill-option"><input type="radio" name="trade_in" value="該当なし"><span class="pill-label">該当なし</span></label>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ==================== STEP 9 ==================== -->
+<div class="step-content" data-step="9">
+<h2 class="step-title">STEP 9　お支払いのご希望</h2>
+<p class="step-subtitle">ご希望のお支払い条件をご入力ください。</p>
+
+<div class="field">
+  <div class="field-label">希望する借入金額（万円） <span class="req">必須</span></div>
+  <input type="number" name="loan_amount" required placeholder="例: 250" inputmode="numeric">
+</div>
+
+<div class="field">
+  <div class="field-label">ボーナス払い</div>
+  <div class="pill-group">
+    <label class="pill-option"><input type="radio" name="bonus_pay" value="なし"><span class="pill-label">なし</span></label>
+    <label class="pill-option"><input type="radio" name="bonus_pay" value="あり"><span class="pill-label">あり</span></label>
+  </div>
+</div>
+
+<div class="conditional-panel" id="grp-bonus">
+  <div class="field" style="margin-bottom:0">
+    <div class="field-label">ボーナス払い金額（万円/回）</div>
+    <input type="number" name="bonus_amount" placeholder="例: 10" inputmode="numeric">
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-label">希望する返済期間 <span class="req">必須</span></div>
+  <select name="loan_term" required>
+    <option value="">選択してください</option>
+    <option>12回（1年）</option><option>24回（2年）</option><option>36回（3年）</option><option>48回（4年）</option><option>60回（5年）</option><option>72回（6年）</option><option>84回（7年）</option>
+  </select>
+</div>
+
+<div class="field">
+  <div class="field-label">頭金の有無</div>
+  <div class="pill-group">
+    <label class="pill-option"><input type="radio" name="has_downpayment" value="なし"><span class="pill-label">なし</span></label>
+    <label class="pill-option"><input type="radio" name="has_downpayment" value="あり"><span class="pill-label">あり</span></label>
+  </div>
+</div>
+
+<div class="conditional-panel" id="grp-downpayment">
+  <div class="field" style="margin-bottom:0">
+    <div class="field-label">頭金の金額（万円）</div>
+    <input type="number" name="downpayment" placeholder="例: 50" inputmode="numeric">
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-label">月々のお支払い希望額（万円）</div>
+  <input type="number" name="monthly_payment" placeholder="例: 3" inputmode="numeric">
+  <div class="field-note">ご参考としてお聞かせください（任意）</div>
+</div>
+</div>
+
+<!-- ==================== STEP 10 ==================== -->
+<div class="step-content" data-step="10">
+<h2 class="step-title">STEP 10　与信・お借入の状況</h2>
+<p class="step-subtitle">現在のお借入状況をご入力ください。</p>
+
+<div class="field">
+  <div class="field-label">現在のお借入件数 <span class="req">必須</span></div>
+  <select name="borrowing_count" id="borrowing-count" required>
+    <option value="">選択してください</option>
+    <option>0件</option><option>1件</option><option>2件</option><option>3件</option><option>4件</option><option>5件以上</option>
+  </select>
+</div>
+
+<div class="conditional-panel" id="grp-borrowing">
+  <div class="field">
+    <div class="field-label">住宅ローン残高（万円）</div>
+    <input type="number" name="mortgage_balance" placeholder="例: 2000" inputmode="numeric">
+  </div>
+  <div class="field">
+    <div class="field-label">カードローン残高（万円）</div>
+    <input type="number" name="card_loan_balance" placeholder="例: 50" inputmode="numeric">
+  </div>
+  <div class="field">
+    <div class="field-label">ショッピングローン残高（万円）</div>
+    <input type="number" name="shopping_loan_balance" placeholder="例: 30" inputmode="numeric">
+  </div>
+  <div class="field">
+    <div class="field-label">自動車ローン残高（万円）</div>
+    <input type="number" name="auto_loan_balance" placeholder="例: 100" inputmode="numeric">
+  </div>
+  <div class="field">
+    <div class="field-label">その他借入残高（万円）</div>
+    <input type="number" name="other_loan_balance" placeholder="例: 0" inputmode="numeric">
+  </div>
+  <div class="field" style="margin-bottom:0">
+    <div class="field-label">月々の返済総額（万円）</div>
+    <input type="number" name="monthly_repayment_total" placeholder="例: 8" inputmode="numeric">
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-label">過去の延滞・遅延</div>
+  <div class="pill-group">
+    <label class="pill-option"><input type="radio" name="delinquency" value="一度もない"><span class="pill-label">一度もない</span></label>
+    <label class="pill-option"><input type="radio" name="delinquency" value="過去にあるが現在はない"><span class="pill-label">過去にあるが現在はない</span></label>
+    <label class="pill-option"><input type="radio" name="delinquency" value="現在もある"><span class="pill-label">現在もある</span></label>
+  </div>
+</div>
+</div>
+
+<!-- ==================== STEP 11 ==================== -->
+<div class="step-content" data-step="11">
+<h2 class="step-title">STEP 11　信用情報の状況</h2>
+<p class="step-subtitle">信用情報に関する状況をお聞かせください。</p>
+
+<div class="warning-note">正確にご回答ください。虚偽の申告は審査否決の原因となります。</div>
+
+<div class="field">
+  <div class="field-label">過去5年以内の債務整理</div>
+  <div class="pill-group">
+    <label class="pill-option"><input type="radio" name="debt_restructuring" value="なし"><span class="pill-label">なし</span></label>
+    <label class="pill-option"><input type="radio" name="debt_restructuring" value="任意整理"><span class="pill-label">任意整理</span></label>
+    <label class="pill-option"><input type="radio" name="debt_restructuring" value="個人再生"><span class="pill-label">個人再生</span></label>
+    <label class="pill-option"><input type="radio" name="debt_restructuring" value="自己破産"><span class="pill-label">自己破産</span></label>
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-label">過去5年以内の強制解約</div>
+  <div class="pill-group">
+    <label class="pill-option"><input type="radio" name="forced_cancellation" value="なし"><span class="pill-label">なし</span></label>
+    <label class="pill-option"><input type="radio" name="forced_cancellation" value="あり"><span class="pill-label">あり</span></label>
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-label">現在の滞納</div>
+  <div class="pill-group">
+    <label class="pill-option"><input type="radio" name="current_arrears" value="なし"><span class="pill-label">なし</span></label>
+    <label class="pill-option"><input type="radio" name="current_arrears" value="あり"><span class="pill-label">あり</span></label>
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-label">他社での否決歴（直近6ヶ月）</div>
+  <div class="pill-group">
+    <label class="pill-option"><input type="radio" name="rejection_history" value="なし"><span class="pill-label">なし</span></label>
+    <label class="pill-option"><input type="radio" name="rejection_history" value="1社"><span class="pill-label">1社</span></label>
+    <label class="pill-option"><input type="radio" name="rejection_history" value="2社以上"><span class="pill-label">2社以上</span></label>
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-label">CICの開示経験</div>
+  <div class="pill-group">
+    <label class="pill-option"><input type="radio" name="cic_disclosure" value="なし"><span class="pill-label">なし</span></label>
+    <label class="pill-option"><input type="radio" name="cic_disclosure" value="あり"><span class="pill-label">あり</span></label>
+  </div>
+</div>
+
+<div class="conditional-panel" id="grp-cic">
+  <div class="field" style="margin-bottom:0">
+    <div class="field-label">CIC開示結果</div>
+    <input type="text" name="cic_result" placeholder="開示結果の概要をご記入ください">
+  </div>
+</div>
+</div>
+
+<!-- ==================== STEP 12 ==================== -->
+<div class="step-content" data-step="12">
+<h2 class="step-title">STEP 12　保証人・緊急連絡先</h2>
+<p class="step-subtitle">緊急連絡先と保証人に関する情報をご入力ください。</p>
+
+<h3 class="section-head">緊急連絡先</h3>
+
+<div class="field">
+  <div class="field-label">氏名 <span class="req">必須</span></div>
+  <input type="text" name="emergency_name" required placeholder="例: 山田 花子">
+</div>
+
+<div class="field">
+  <div class="field-label">フリガナ <span class="req">必須</span></div>
+  <input type="text" name="emergency_kana" required placeholder="例: ヤマダ ハナコ">
+</div>
+
+<div class="field">
+  <div class="field-label">続柄 <span class="req">必須</span></div>
+  <select name="emergency_relation" required>
+    <option value="">選択してください</option>
+    <option>配偶者</option><option>父</option><option>母</option><option>兄弟姉妹</option><option>子</option><option>その他親族</option><option>知人</option>
+  </select>
+</div>
+
+<div class="field">
+  <div class="field-label">電話番号 <span class="req">必須</span></div>
+  <input type="tel" name="emergency_phone" required placeholder="例: 090-1234-5678">
+</div>
+
+<div class="field" style="margin-top:28px">
+  <div class="field-label">連帯保証人の準備</div>
+  <div class="pill-group">
+    <label class="pill-option"><input type="radio" name="guarantor_status" value="不要（本人のみ）"><span class="pill-label">不要（本人のみ）</span></label>
+    <label class="pill-option"><input type="radio" name="guarantor_status" value="準備できる"><span class="pill-label">準備できる</span></label>
+    <label class="pill-option"><input type="radio" name="guarantor_status" value="相談したい"><span class="pill-label">相談したい</span></label>
+  </div>
+</div>
+
+<div class="conditional-panel" id="grp-guarantor">
+  <h3 class="section-head">連帯保証人の情報</h3>
+  <div class="field">
+    <div class="field-label">氏名</div>
+    <input type="text" name="guarantor_name" placeholder="例: 山田 一郎">
+  </div>
+  <div class="field">
+    <div class="field-label">フリガナ</div>
+    <input type="text" name="guarantor_kana" placeholder="例: ヤマダ イチロウ">
+  </div>
+  <div class="field">
+    <div class="field-label">生年月日</div>
+    <input type="date" name="guarantor_birthday">
+  </div>
+  <div class="field">
+    <div class="field-label">続柄</div>
+    <select name="guarantor_relation">
+      <option value="">選択してください</option>
+      <option>配偶者</option><option>父</option><option>母</option><option>兄弟姉妹</option><option>子</option><option>その他親族</option><option>知人</option>
+    </select>
+  </div>
+  <div class="field">
+    <div class="field-label">電話番号</div>
+    <input type="tel" name="guarantor_phone" placeholder="例: 090-1234-5678">
+  </div>
+  <div class="field">
+    <div class="field-label">年収（万円）</div>
+    <input type="number" name="guarantor_income" placeholder="例: 400" inputmode="numeric">
+  </div>
+  <div class="field" style="margin-bottom:0">
+    <div class="field-label">勤務先名</div>
+    <input type="text" name="guarantor_company" placeholder="例: 株式会社○○">
+  </div>
+</div>
+</div>
+
+<!-- ==================== STEP 13 ==================== -->
+<div class="step-content" data-step="13">
+<h2 class="step-title">STEP 13　保管場所・お車の使用者・納車先</h2>
+<p class="step-subtitle">車庫・使用者・納車に関する情報をご入力ください。</p>
+
+<h3 class="section-head">車庫・保管場所</h3>
+
+<div class="field">
+  <div class="field-label">保管場所 <span class="req">必須</span></div>
+  <div class="pill-group">
+    <label class="pill-option"><input type="radio" name="parking" value="自宅" required><span class="pill-label">自宅</span></label>
+    <label class="pill-option"><input type="radio" name="parking" value="月極駐車場"><span class="pill-label">月極駐車場</span></label>
+    <label class="pill-option"><input type="radio" name="parking" value="実家"><span class="pill-label">実家</span></label>
+    <label class="pill-option"><input type="radio" name="parking" value="その他"><span class="pill-label">その他</span></label>
+  </div>
+</div>
+
+<div class="conditional-panel" id="grp-parking-address">
+  <div class="field" style="margin-bottom:0">
+    <div class="field-label">保管場所の住所</div>
+    <input type="text" name="parking_address" placeholder="保管場所の住所をご記入ください">
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-label">車庫証明の取得</div>
+  <div class="pill-group">
+    <label class="pill-option"><input type="radio" name="garage_cert" value="自分で取得する"><span class="pill-label">自分で取得する</span></label>
+    <label class="pill-option"><input type="radio" name="garage_cert" value="代行を依頼したい（+¥12,000）"><span class="pill-label">代行を依頼したい（+&yen;12,000）</span></label>
+  </div>
+</div>
+
+<h3 class="section-head">お車の使用者</h3>
+
+<div class="field">
+  <div class="field-label">使用者</div>
+  <div class="pill-group">
+    <label class="pill-option"><input type="radio" name="car_user" value="申込者本人"><span class="pill-label">申込者本人</span></label>
+    <label class="pill-option"><input type="radio" name="car_user" value="配偶者"><span class="pill-label">配偶者</span></label>
+    <label class="pill-option"><input type="radio" name="car_user" value="家族"><span class="pill-label">家族</span></label>
+    <label class="pill-option"><input type="radio" name="car_user" value="その他"><span class="pill-label">その他</span></label>
+  </div>
+</div>
+
+<div class="conditional-panel" id="grp-user-name">
+  <div class="field">
+    <div class="field-label">使用者氏名</div>
+    <input type="text" name="car_user_name" placeholder="使用者のお名前をご記入ください">
+  </div>
+  <div class="field" style="margin-bottom:0" id="grp-user-relation">
+    <div class="field-label">使用者との関係</div>
+    <input type="text" name="car_user_relation" placeholder="例: 妻、息子など">
+  </div>
+</div>
+
+<h3 class="section-head">納車先</h3>
+
+<div class="field">
+  <div class="field-label">納車方法</div>
+  <div class="pill-group">
+    <label class="pill-option"><input type="radio" name="delivery_method" value="自宅へ納車"><span class="pill-label">自宅へ納車</span></label>
+    <label class="pill-option"><input type="radio" name="delivery_method" value="販売店で受け取り"><span class="pill-label">販売店で受け取り</span></label>
+    <label class="pill-option"><input type="radio" name="delivery_method" value="その他の場所"><span class="pill-label">その他の場所</span></label>
+  </div>
+</div>
+
+<div class="conditional-panel" id="grp-delivery-address">
+  <div class="field" style="margin-bottom:0">
+    <div class="field-label">納車先住所</div>
+    <input type="text" name="delivery_address" placeholder="納車先の住所をご記入ください">
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-label">希望日時</div>
+  <input type="text" name="delivery_date" placeholder="例: 2026年8月上旬の土日希望">
+</div>
+</div>
+
+<!-- ==================== STEP 14 ==================== -->
+<div class="step-content" data-step="14">
+<h2 class="step-title">STEP 14　本人確認・必要書類</h2>
+<p class="step-subtitle">本人確認書類のアップロードと最終確認を行います。</p>
+
+<div class="field">
+  <div class="field-label">本人確認書類 <span class="req">必須</span></div>
+  <div class="pill-group">
+    <label class="pill-option"><input type="checkbox" name="id_docs" value="運転免許証"><span class="pill-label">運転免許証</span></label>
+    <label class="pill-option"><input type="checkbox" name="id_docs" value="マイナンバーカード"><span class="pill-label">マイナンバーカード</span></label>
+    <label class="pill-option"><input type="checkbox" name="id_docs" value="パスポート"><span class="pill-label">パスポート</span></label>
+    <label class="pill-option"><input type="checkbox" name="id_docs" value="健康保険証"><span class="pill-label">健康保険証</span></label>
+    <label class="pill-option"><input type="checkbox" name="id_docs" value="住民票"><span class="pill-label">住民票</span></label>
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-label">運転免許証（表面）</div>
+  <div class="file-upload" id="file-license-front">
+    <div class="file-upload-icon">&#128196;</div>
+    <div class="file-upload-text">タップしてファイルを選択<br>（JPG / PNG / PDF）</div>
+    <input type="file" name="license_front" accept="image/*,.pdf">
+    <div class="file-preview"></div>
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-label">運転免許証（裏面）</div>
+  <div class="file-upload" id="file-license-back">
+    <div class="file-upload-icon">&#128196;</div>
+    <div class="file-upload-text">タップしてファイルを選択<br>（JPG / PNG / PDF）</div>
+    <input type="file" name="license_back" accept="image/*,.pdf">
+    <div class="file-preview"></div>
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-label">収入証明書類</div>
+  <div class="file-upload" id="file-income">
+    <div class="file-upload-icon">&#128196;</div>
+    <div class="file-upload-text">タップしてファイルを選択<br>（JPG / PNG / PDF）</div>
+    <input type="file" name="income_doc" accept="image/*,.pdf">
+    <div class="file-preview"></div>
+  </div>
+</div>
+
+<div class="field">
+  <div class="field-label">その他書類</div>
+  <div class="file-upload" id="file-other">
+    <div class="file-upload-icon">&#128196;</div>
+    <div class="file-upload-text">タップしてファイルを選択<br>（JPG / PNG / PDF）</div>
+    <input type="file" name="other_doc" accept="image/*,.pdf">
+    <div class="file-preview"></div>
+  </div>
+</div>
+
+<div style="margin-top:28px">
+  <div class="check-field">
+    <input type="checkbox" name="agree_privacy" id="agree-privacy" required>
+    <label for="agree-privacy"><a href="privacy.html" target="_blank">個人情報の取り扱いについて</a>に同意する <span class="req">必須</span></label>
+  </div>
+  <div class="check-field">
+    <input type="checkbox" name="agree_truth" id="agree-truth" required>
+    <label for="agree-truth">申込内容に虚偽がないことを確認する <span class="req">必須</span></label>
+  </div>
+</div>
+</div>
+
+<!-- SUCCESS SCREEN -->
+<div class="success-screen" id="success-screen">
+  <div class="success-icon">&#10004;&#65039;</div>
+  <h2 class="success-title">お申込みが完了しました</h2>
+  <p class="success-text">
+    審査申込を受け付けました。<br>
+    ご入力いただいたメールアドレスに確認メールをお送りします。<br><br>
+    審査結果は最短即日〜3営業日以内にご連絡いたします。<br>
+    ご不明点がございましたらLINEまたはお電話にてお気軽にお問い合わせください。
+  </p>
+</div>
+
+</form>
+</main>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav" id="bottom-nav">
+  <div class="bottom-nav-inner">
+    <button type="button" class="btn btn-ghost" id="btn-back" style="display:none">&larr; 戻る</button>
+    <button type="button" class="btn btn-primary" id="btn-next">次へ進む &rarr;</button>
+  </div>
+</div>
+
+<!-- LINE FLOAT -->
+<a href="https://lin.ee/" target="_blank" rel="noopener" class="line-float" title="LINEで相談する">
+  <svg viewBox="0 0 24 24"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .348-.281.63-.63.63h-2.021v1.318h2.021c.349 0 .63.283.63.63 0 .349-.281.631-.63.631h-2.652a.628.628 0 01-.63-.631V8.108c0-.348.282-.63.63-.63h2.652c.349 0 .63.282.63.63 0 .349-.281.631-.63.631h-2.021v1.124h2.021zm-4.712 3.21a.627.627 0 01-.63.63.624.624 0 01-.518-.27l-2.2-2.994v2.634a.63.63 0 01-1.26 0V8.108a.628.628 0 01.63-.63c.2 0 .386.097.504.27l2.213 3.008V8.108a.63.63 0 011.26 0v4.965h.001zm-6.092.63a.63.63 0 01-.63-.63V8.108a.63.63 0 011.26 0v4.965a.63.63 0 01-.63.63zm-2.51 0H3.399a.631.631 0 01-.63-.63V8.108c0-.348.282-.63.63-.63.349 0 .63.282.63.63v4.334h1.622c.348 0 .63.283.63.631a.63.63 0 01-.63.63zM12 2C6.477 2 2 5.918 2 10.691c0 4.284 3.654 7.87 8.574 8.56.334.072.789.22.904.506.103.26.067.665.033.927l-.146.878c-.045.26-.207 1.021.893.557 1.1-.464 5.928-3.49 8.088-5.978h.001C22.217 14.166 22 12.518 22 10.691 22 5.918 17.523 2 12 2z"/></svg>
+</a>
+
+<script>
+(function(){
+'use strict';
+
+/* ===== CARS DATA ===== */
+const CARS = {
+'トヨタ':['ヤリス','ヤリスクロス','カローラ','カローラクロス','カローラツーリング','プリウス','アクア','シエンタ','ノア','ヴォクシー','アルファード','ヴェルファイア','ハリアー','RAV4','ランドクルーザー','クラウン','GR86','スープラ','ハイエース','ライズ'],
+'ホンダ':['フィット','ヴェゼル','フリード','ステップワゴン','N-BOX','N-WGN','N-ONE','シビック','ZR-V','WR-V','CR-V'],
+'日産':['ノート','セレナ','エクストレイル','ルークス','デイズ','キックス','フェアレディZ','リーフ','アリア','サクラ'],
+'マツダ':['MAZDA2','MAZDA3','CX-3','CX-5','CX-8','CX-30','CX-60','ロードスター','MX-30'],
+'スバル':['インプレッサ','フォレスター','レヴォーグ','クロストレック','レガシィアウトバック','BRZ','WRX S4'],
+'三菱':['デリカD:5','アウトランダー','エクリプスクロス','eKクロス','eKワゴン','トライトン'],
+'スズキ':['スイフト','ハスラー','ジムニー','ジムニーシエラ','スペーシア','アルト','ソリオ','クロスビー','エスクード','フロンクス'],
+'ダイハツ':['タント','ムーヴキャンバス','ロッキー','タフト','ミラトコット','キャスト','ウェイク','アトレー','コペン'],
+'レクサス':['NX','RX','UX','IS','ES','LS','LC','LBX','RZ','LM'],
+'BMW':['1シリーズ','2シリーズ','3シリーズ','4シリーズ','5シリーズ','X1','X3','X5','iX','i4'],
+'メルセデス・ベンツ':['Aクラス','Bクラス','Cクラス','Eクラス','Sクラス','GLA','GLB','GLC','GLE','EQA','EQB'],
+'アウディ':['A3','A4','A5','A6','Q3','Q5','Q7','e-tron','Q4 e-tron'],
+'フォルクスワーゲン':['ゴルフ','ポロ','T-Cross','T-Roc','ティグアン','ID.4','パサート'],
+'ボルボ':['XC40','XC60','XC90','V60','S60','C40','EX30','EX90'],
+'その他':['その他（備考にご記入ください）']
+};
+
+const TOTAL_STEPS = 14;
+let currentStep = 1;
+
+/* ===== DOM REFS ===== */
+const form = document.getElementById('loan-form');
+const stepContents = document.querySelectorAll('.step-content');
+const indicator = document.getElementById('step-indicator');
+const btnBack = document.getElementById('btn-back');
+const btnNext = document.getElementById('btn-next');
+const bottomNav = document.getElementById('bottom-nav');
+const progressPct = document.getElementById('progress-pct');
+const progressCurrent = document.getElementById('progress-current');
+
+/* ===== BUILD STEP INDICATOR ===== */
+(function buildIndicator(){
+  for(let i=1;i<=TOTAL_STEPS;i++){
+    if(i>1){const ln=document.createElement('div');ln.className='step-line';indicator.appendChild(ln);}
+    const item=document.createElement('div');
+    item.className='step-item'+(i===1?' current':'');
+    item.dataset.step=i;
+    const circle=document.createElement('div');
+    circle.className='step-circle';
+    circle.textContent=i;
+    circle.addEventListener('click',()=>{if(i<currentStep)goToStep(i);});
+    item.appendChild(circle);
+    indicator.appendChild(item);
+  }
+})();
+
+/* ===== POPULATE SELECTS ===== */
+(function(){
+  // Maker
+  const makerSel=document.getElementById('maker');
+  Object.keys(CARS).forEach(m=>{const o=document.createElement('option');o.value=m;o.textContent=m;makerSel.appendChild(o);});
+
+  // Year selects
+  const yearSel=document.getElementById('year');
+  const curYearSel=document.getElementById('current-year');
+  for(let y=2026;y>=2015;y--){const o=document.createElement('option');o.value=y;o.textContent=y+'年';yearSel.appendChild(o);}
+  for(let y=2026;y>=2000;y--){const o=document.createElement('option');o.value=y;o.textContent=y+'年';curYearSel.appendChild(o);}
+})();
+
+/* ===== MAKER -> MODEL ===== */
+document.getElementById('maker').addEventListener('change',function(){
+  const modelSel=document.getElementById('model');
+  modelSel.innerHTML='<option value="">選択してください</option>';
+  const models=CARS[this.value];
+  if(models)models.forEach(m=>{const o=document.createElement('option');o.value=m;o.textContent=m;modelSel.appendChild(o);});
+});
+
+/* ===== YEN FORMATTING ===== */
+['car-price','option-price'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.addEventListener('input',function(){
+    let v=this.value.replace(/[^0-9]/g,'');
+    if(v)this.value=Number(v).toLocaleString();
+    else this.value='';
+  });
+});
+
+/* ===== ZIP LOOKUP ===== */
+document.getElementById('btn-zip').addEventListener('click',function(){
+  const zip=document.getElementById('zip').value.replace(/[^0-9]/g,'');
+  if(zip.length!==7){alert('郵便番号は7桁の半角数字で入力してください。');return;}
+  const cb='zipCallback'+Date.now();
+  window[cb]=function(data){
+    if(data.results){
+      const r=data.results[0];
+      document.getElementById('prefecture').value=r.address1;
+      document.getElementById('city').value=r.address2+r.address3;
+    }else{alert('住所が見つかりませんでした。');}
+    delete window[cb];
+    document.body.removeChild(s);
+  };
+  const s=document.createElement('script');
+  s.src='https://zipcloud.ibsnet.co.jp/api/search?zipcode='+zip+'&callback='+cb;
+  document.body.appendChild(s);
+});
+
+/* ===== AGE CALCULATION ===== */
+document.getElementById('birthday').addEventListener('change',function(){
+  const bd=new Date(this.value);
+  const today=new Date();
+  let age=today.getFullYear()-bd.getFullYear();
+  const m=today.getMonth()-bd.getMonth();
+  if(m<0||(m===0&&today.getDate()<bd.getDate()))age--;
+  document.getElementById('age-display').textContent=age>0?age+'歳':'';
+});
+
+/* ===== EMAIL MATCH ===== */
+document.getElementById('email-confirm').addEventListener('input',function(){
+  const email=document.getElementById('email').value;
+  const errEl=document.getElementById('email-match-error');
+  if(this.value&&this.value!==email){errEl.style.display='block';this.parentElement.classList.add('field-error');}
+  else{errEl.style.display='none';this.parentElement.classList.remove('field-error');}
+});
+
+/* ===== FILE UPLOAD PREVIEW ===== */
+document.querySelectorAll('.file-upload input[type=file]').forEach(input=>{
+  input.addEventListener('change',function(){
+    const preview=this.parentElement.querySelector('.file-preview');
+    if(!this.files.length){preview.innerHTML='';return;}
+    const file=this.files[0];
+    let html=file.name;
+    if(file.type.startsWith('image/')){
+      const reader=new FileReader();
+      reader.onload=e=>{preview.innerHTML=html+'<br><img src="'+e.target.result+'" alt="preview">';};
+      reader.readAsDataURL(file);
+    }else{preview.innerHTML=html;}
+  });
+});
+
+/* ===== CONDITIONAL SHOW/HIDE ===== */
+function setupConditionals(){
+  // きっかけ その他
+  document.querySelectorAll('[data-toggle="grp-kikkake-other"]').forEach(cb=>{
+    cb.addEventListener('change',()=>{
+      document.getElementById('grp-kikkake-other').classList.toggle('visible',cb.checked);
+    });
+  });
+
+  // 居住形態 -> 家賃
+  document.querySelectorAll('[name="residence_type"]').forEach(r=>{
+    r.addEventListener('change',()=>{
+      const show=r.dataset.toggleRent==='true';
+      document.getElementById('grp-rent').classList.toggle('visible',show);
+    });
+  });
+
+  // 世帯主 -> 世帯年収
+  document.getElementById('householder-relation').addEventListener('change',function(){
+    document.getElementById('grp-household-income').classList.toggle('visible',this.value&&this.value!=='本人');
+  });
+
+  // 副収入
+  document.querySelectorAll('[name="sub_income"]').forEach(r=>{
+    r.addEventListener('change',()=>{
+      const v=document.querySelector('[name="sub_income"]:checked');
+      document.getElementById('grp-sub-income').classList.toggle('visible',v&&v.value==='あり');
+    });
+  });
+
+  // 雇用形態 -> お勤め先 / 自営業
+  const employedTypes=['正社員','契約社員','派遣社員','パート・アルバイト','会社役員','公務員'];
+  const selfTypes=['自営業・個人事業主'];
+  document.querySelectorAll('[name="employment_type"]').forEach(r=>{
+    r.addEventListener('change',()=>{
+      const v=r.value;
+      document.getElementById('grp-employment').classList.toggle('visible',employedTypes.includes(v));
+      document.getElementById('grp-self-employed').classList.toggle('visible',selfTypes.includes(v));
+    });
+  });
+
+  // 現在の車 あり/なし
+  document.querySelectorAll('[name="has_current_car"]').forEach(r=>{
+    r.addEventListener('change',()=>{
+      document.getElementById('grp-current-car').classList.toggle('visible',r.value==='あり'&&r.checked);
+    });
+  });
+
+  // 残債
+  document.querySelectorAll('[name="has_remaining_debt"]').forEach(r=>{
+    r.addEventListener('change',()=>{
+      document.getElementById('grp-remaining-debt').classList.toggle('visible',r.value==='あり'&&r.checked);
+    });
+  });
+
+  // ボーナス払い
+  document.querySelectorAll('[name="bonus_pay"]').forEach(r=>{
+    r.addEventListener('change',()=>{
+      document.getElementById('grp-bonus').classList.toggle('visible',r.value==='あり'&&r.checked);
+    });
+  });
+
+  // 頭金
+  document.querySelectorAll('[name="has_downpayment"]').forEach(r=>{
+    r.addEventListener('change',()=>{
+      document.getElementById('grp-downpayment').classList.toggle('visible',r.value==='あり'&&r.checked);
+    });
+  });
+
+  // 借入件数
+  document.getElementById('borrowing-count').addEventListener('change',function(){
+    document.getElementById('grp-borrowing').classList.toggle('visible',this.value&&this.value!=='0件');
+  });
+
+  // CIC
+  document.querySelectorAll('[name="cic_disclosure"]').forEach(r=>{
+    r.addEventListener('change',()=>{
+      document.getElementById('grp-cic').classList.toggle('visible',r.value==='あり'&&r.checked);
+    });
+  });
+
+  // 保証人
+  document.querySelectorAll('[name="guarantor_status"]').forEach(r=>{
+    r.addEventListener('change',()=>{
+      const v=document.querySelector('[name="guarantor_status"]:checked');
+      document.getElementById('grp-guarantor').classList.toggle('visible',v&&v.value==='準備できる');
+    });
+  });
+
+  // 保管場所
+  document.querySelectorAll('[name="parking"]').forEach(r=>{
+    r.addEventListener('change',()=>{
+      const v=document.querySelector('[name="parking"]:checked');
+      document.getElementById('grp-parking-address').classList.toggle('visible',v&&v.value!=='自宅');
+    });
+  });
+
+  // 車の使用者
+  document.querySelectorAll('[name="car_user"]').forEach(r=>{
+    r.addEventListener('change',()=>{
+      const v=document.querySelector('[name="car_user"]:checked');
+      document.getElementById('grp-user-name').classList.toggle('visible',v&&v.value!=='申込者本人');
+    });
+  });
+
+  // 納車方法
+  document.querySelectorAll('[name="delivery_method"]').forEach(r=>{
+    r.addEventListener('change',()=>{
+      const v=document.querySelector('[name="delivery_method"]:checked');
+      document.getElementById('grp-delivery-address').classList.toggle('visible',v&&v.value==='その他の場所');
+    });
+  });
+}
+setupConditionals();
+
+/* ===== STEP VALIDATION ===== */
+function validateStep(step){
+  const content=document.querySelector('.step-content[data-step="'+step+'"]');
+  if(!content)return true;
+  let valid=true;
+
+  // Clear previous errors
+  content.querySelectorAll('.field-error').forEach(f=>f.classList.remove('field-error'));
+
+  // Required inputs/selects/textareas
+  content.querySelectorAll('[required]').forEach(el=>{
+    // Skip if inside a hidden conditional panel
+    const panel=el.closest('.conditional-panel');
+    if(panel&&!panel.classList.contains('visible'))return;
+
+    if(el.type==='radio'){
+      const name=el.name;
+      const checked=content.querySelector('[name="'+name+'"]:checked');
+      if(!checked){
+        el.closest('.field').classList.add('field-error');
+        valid=false;
+      }
+    }else if(!el.value.trim()){
+      el.closest('.field').classList.add('field-error');
+      valid=false;
+    }
+  });
+
+  // Email match (step 3)
+  if(step===3){
+    const e1=document.getElementById('email').value;
+    const e2=document.getElementById('email-confirm').value;
+    if(e1&&e2&&e1!==e2){
+      document.getElementById('email-confirm').closest('.field').classList.add('field-error');
+      document.getElementById('email-match-error').style.display='block';
+      valid=false;
+    }
+  }
+
+  // Step 14 checkboxes
+  if(step===14){
+    if(!document.getElementById('agree-privacy').checked||!document.getElementById('agree-truth').checked){
+      valid=false;
+      if(!document.getElementById('agree-privacy').checked)document.getElementById('agree-privacy').closest('.check-field').style.color='var(--error)';
+      if(!document.getElementById('agree-truth').checked)document.getElementById('agree-truth').closest('.check-field').style.color='var(--error)';
+    }
+    // At least one id doc
+    const idChecked=content.querySelectorAll('[name="id_docs"]:checked');
+    if(!idChecked.length){
+      content.querySelector('[name="id_docs"]').closest('.field').classList.add('field-error');
+      valid=false;
+    }
+  }
+
+  if(!valid){
+    const firstErr=content.querySelector('.field-error');
+    if(firstErr)firstErr.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+  return valid;
+}
+
+/* ===== NAVIGATION ===== */
+function goToStep(step){
+  if(step<1||step>TOTAL_STEPS)return;
+  currentStep=step;
+
+  // Show/hide step contents
+  stepContents.forEach(sc=>{
+    sc.classList.toggle('active',parseInt(sc.dataset.step)===step);
+  });
+
+  // Update indicator
+  indicator.querySelectorAll('.step-item').forEach(item=>{
+    const s=parseInt(item.dataset.step);
+    item.classList.remove('current','completed');
+    if(s<step)item.classList.add('completed');
+    else if(s===step)item.classList.add('current');
+  });
+
+  // Scroll indicator to show current
+  const curCircle=indicator.querySelector('.step-item.current');
+  if(curCircle)curCircle.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+
+  // Update buttons
+  btnBack.style.display=step===1?'none':'';
+  if(step===TOTAL_STEPS){
+    btnNext.textContent='申込内容を送信する';
+    btnNext.className='btn btn-submit';
+  }else{
+    btnNext.innerHTML='次へ進む &rarr;';
+    btnNext.className='btn btn-primary';
+  }
+
+  // Progress
+  const pct=Math.round(((step-1)/(TOTAL_STEPS-1))*100);
+  progressPct.textContent=pct+'%';
+  progressCurrent.textContent=step;
+
+  // Scroll to top
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+btnNext.addEventListener('click',function(){
+  if(currentStep===TOTAL_STEPS){
+    // Final submit
+    if(!validateStep(currentStep))return;
+
+    // Honeypot check
+    if(document.getElementById('hp-field').value){console.warn('Bot detected');return;}
+
+    // Collect data
+    const fd=new FormData(form);
+    const data={};
+    for(const[key,val]of fd.entries()){
+      if(key==='website')continue;
+      if(data[key]){
+        if(Array.isArray(data[key]))data[key].push(val);
+        else data[key]=[data[key],val];
+      }else{data[key]=val;}
+    }
+    console.log('=== オートローン審査申込データ ===',data);
+
+    // Show success
+    stepContents.forEach(sc=>sc.classList.remove('active'));
+    document.getElementById('success-screen').classList.add('active');
+    bottomNav.style.display='none';
+    document.querySelector('.step-indicator-wrap').style.display='none';
+    window.scrollTo({top:0,behavior:'smooth'});
+    return;
+  }
+
+  if(!validateStep(currentStep))return;
+  goToStep(currentStep+1);
+});
+
+btnBack.addEventListener('click',function(){
+  goToStep(currentStep-1);
+});
+
+/* ===== INIT ===== */
+goToStep(1);
+
+})();
+</script>
+</body>
+</html>
