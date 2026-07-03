@@ -241,6 +241,17 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 </head>
 <body>
 
+<!-- =====================================================================
+  ▼▼▼ 送信先の設定（ここだけ書き換えればOK） ▼▼▼
+  GAS中継ハブ（スプレッドシート／Slack／Asana／WordPressへ自動配信）の
+  ウェブアプリURLを下の "" の中に貼り付けてください。
+  例： window.SHINSA_ENDPOINT = "https://script.google.com/macros/s/AKfy.../exec";
+  空のままだと送信されず「プレビュー」表示になります。
+===================================================================== -->
+<script>
+  window.SHINSA_ENDPOINT = "";
+</script>
+
 <!-- HEADER -->
 <header class="caf-header">
   <h1>かんたん<span>WEB</span>審査</h1>
@@ -1002,41 +1013,102 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
       if(firstBad&&firstBad.scrollIntoView)firstBad.scrollIntoView({behavior:'smooth',block:'center'});
       return;
     }
-    if(typeof window.CARMEL_SHINSA==='undefined'){ alert('プレビュー環境のため送信は行いません（本番ページでは送信されます）。'); return; }
+    /* ---- 送信先の決定 ----
+       ・window.SHINSA_ENDPOINT（GAS中継ハブのURL）が設定されていれば、そこへJSON送信
+         → GAS側で スプレッドシート／Slack／Asana／WordPress へ自動配信
+       ・未設定でも window.CARMEL_SHINSA があれば、従来どおりWordPressへ直接送信（ページ内設置時）
+       ・どちらも無ければプレビュー扱い（送信しない） */
+    var GAS = (typeof window.SHINSA_ENDPOINT==='string' && window.SHINSA_ENDPOINT) ? window.SHINSA_ENDPOINT : '';
+    var WP  = (typeof window.CARMEL_SHINSA!=='undefined') ? window.CARMEL_SHINSA : null;
+    if(!GAS && !WP){ alert('プレビュー環境のため送信は行いません（本番では設定済みの送信先に送信されます）。'); return; }
 
-    var fd=new FormData();
-    fd.append('action','carmel_shinsa_submit');
-    fd.append('_nonce',window.CARMEL_SHINSA.nonce);
-    var hp=form.querySelector('[name=hp]'); if(hp)fd.append('hp',hp.value);
+    /* ---- 入力内容を収集 ---- */
+    var fields=[];
     form.querySelectorAll('input,select,textarea').forEach(function(el){
       if(['file','checkbox','radio','hidden'].indexOf(el.type)>=0) return;
       if(!visible(el)) return;
-      var v=String(el.value).trim(); if(!v) return;
+      var v=String(el.value).trim();
+      if(!v || v==='選択してください' || v.charAt(0)==='←') return; /* 未選択のプレースホルダは記録しない */
       var p=el.closest('p'); if(!p) return;
-      var sec=sectionOf(el), key=(sec?sec+' / ':'')+leadLabel(p);
-      fd.append('field[]', key+'：'+v);
+      fields.push({section:sectionOf(el), label:leadLabel(p), value:v});
     });
     form.querySelectorAll('p').forEach(function(p){
       if(!p.querySelector('.li input[type=checkbox]')||!visible(p)) return;
       var picked=[]; p.querySelectorAll('.li').forEach(function(l){var c=l.querySelector('input');if(c&&c.checked)picked.push(l.textContent.trim());});
-      if(picked.length) fd.append('field[]', leadLabel(p)+'：'+picked.join('、'));
+      if(picked.length) fields.push({section:sectionOf(p), label:leadLabel(p), value:picked.join('、')});
     });
-    fd.append('field[]','同意：プライバシー／信用情報照会／反社表明／情報提供 すべて同意');
-    form.querySelectorAll('.caf-up input[type=file]').forEach(function(f,idx){
+
+    /* 主要項目（通知タイトル・台帳キー用） */
+    function pick(re){ for(var i=0;i<fields.length;i++){ if(re.test(fields[i].label)) return fields[i].value; } return ''; }
+    var meta={
+      name: pick(/お名前/),
+      kana: pick(/フリガナ/),
+      phone: pick(/携帯電話/) || pick(/電話/),
+      email: (document.getElementById('email-main')||{}).value || pick(/メールアドレス/),
+      car:  pick(/ご希望車種/) || pick(/メーカー/)
+    };
+
+    /* ---- 添付ファイルを base64 で読む ---- */
+    function readFile(file, label){
+      return new Promise(function(res){
+        var r=new FileReader();
+        r.onload=function(){ var s=String(r.result||''); var b64=s.indexOf(',')>=0?s.slice(s.indexOf(',')+1):s;
+          res({label:label, name:file.name, mime:file.type||'application/octet-stream', size:file.size, dataBase64:b64}); };
+        r.onerror=function(){ res(null); };
+        r.readAsDataURL(file);
+      });
+    }
+    var fileJobs=[];
+    form.querySelectorAll('.caf-up input[type=file]').forEach(function(f){
       if(!f.files||!f.files.length) return;
-      var ttl=(f.closest('.caf-up').querySelector('.caf-up-ttl')||{}).textContent||('書類'+idx);
-      fd.append('file_labels[]', ttl);
-      Array.prototype.forEach.call(f.files,function(file){ fd.append('upload_'+idx+'[]', file, file.name); });
+      var ttl=((f.closest('.caf-up').querySelector('.caf-up-ttl')||{}).textContent||'書類').replace(/\s+/g,' ').trim();
+      Array.prototype.forEach.call(f.files,function(file){ fileJobs.push(readFile(file, ttl)); });
     });
 
     btn.disabled=true; var old=btn.textContent; btn.textContent='送信中…';
-    fetch(window.CARMEL_SHINSA.ajax,{method:'POST',body:fd,credentials:'same-origin'})
-      .then(function(r){return r.json();})
-      .then(function(res){
-        if(res&&res.success){ var d=document.getElementById('caf-done'); if(d){d.classList.remove('hide');d.scrollIntoView({behavior:'smooth',block:'center'});} form.querySelectorAll('input,select,textarea,button').forEach(function(el){el.disabled=true;}); }
-        else { alert((res&&res.data&&res.data.message)||'送信に失敗しました。時間をおいて再度お試しください。'); btn.disabled=false; btn.textContent=old; }
-      })
-      .catch(function(){ alert('通信エラーが発生しました。電波の良い場所で再度お試しください。'); btn.disabled=false; btn.textContent=old; });
+
+    Promise.all(fileJobs).then(function(files){
+      files=files.filter(Boolean);
+      var hp=form.querySelector('[name=hp]');
+
+      /* --- WordPress優先（ページ内設置時） --- */
+      if(WP){
+        var fd=new FormData();
+        fd.append('action','carmel_shinsa_submit');
+        fd.append('_nonce',WP.nonce);
+        if(hp)fd.append('hp',hp.value);
+        fields.forEach(function(f){ fd.append('field[]', (f.section?f.section+' / ':'')+f.label+'：'+f.value); });
+        fd.append('field[]','同意：プライバシー／信用情報照会／反社表明／情報提供 すべて同意');
+        var idx=0;
+        form.querySelectorAll('.caf-up input[type=file]').forEach(function(f){
+          if(!f.files||!f.files.length) return;
+          var ttl=(f.closest('.caf-up').querySelector('.caf-up-ttl')||{}).textContent||('書類'+idx);
+          fd.append('file_labels[]', ttl);
+          Array.prototype.forEach.call(f.files,function(file){ fd.append('upload_'+idx+'[]', file, file.name); });
+          idx++;
+        });
+        return fetch(WP.ajax,{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json();});
+      }
+
+      /* --- GAS中継ハブ（別ファイル設置時：Slack/Asana/シート/WPへ配信） --- */
+      var payload={
+        source:'shinsa.html',
+        submittedAt:new Date().toISOString(),
+        hp: hp?hp.value:'',
+        meta: meta,
+        fields: fields,
+        consent: true,
+        files: files
+      };
+      /* Content-Type: text/plain にしてCORSプリフライトを回避（GASはe.postData.contentsで受け取る） */
+      return fetch(GAS,{ method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(payload) })
+        .then(function(r){return r.json();});
+    })
+    .then(function(res){
+      if(res && (res.success||res.ok)){ var d=document.getElementById('caf-done'); if(d){d.classList.remove('hide');d.scrollIntoView({behavior:'smooth',block:'center'});} form.querySelectorAll('input,select,textarea,button').forEach(function(el){el.disabled=true;}); }
+      else { alert((res&&(res.message||(res.data&&res.data.message)))||'送信に失敗しました。時間をおいて再度お試しください。'); btn.disabled=false; btn.textContent=old; }
+    })
+    .catch(function(){ alert('通信エラーが発生しました。電波の良い場所で再度お試しください。'); btn.disabled=false; btn.textContent=old; });
   });
 })();
 </script>
