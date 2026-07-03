@@ -504,6 +504,116 @@
   .similar-card { width: 160px; }
   .gallery-thumbs { padding: 6px 8px; }
   .gallery-thumb { width: 56px; height: 38px; font-size: 18px; }
+  .stats-banner { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .stats-banner .stat-item { padding: 14px 10px; }
+  .stats-banner .stat-val { font-size: 22px; }
+  .recent-section { margin-top: 20px; }
+  .recent-scroll .recent-card { width: 140px; }
+  .recent-scroll .rc-img { font-size: 24px; }
+  .inquiry-form .inq-fields { grid-template-columns: 1fr; }
+}
+
+/* Stats banner */
+.stats-banner {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+  margin-bottom: 28px;
+}
+.stats-banner .stat-item {
+  background: var(--white); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 18px 16px; text-align: center; box-shadow: var(--shadow);
+}
+.stats-banner .stat-icon { font-size: 24px; margin-bottom: 6px; }
+.stats-banner .stat-val {
+  font-size: 28px; font-weight: 900; color: var(--navy); line-height: 1.2;
+}
+.stats-banner .stat-val small { font-size: 14px; font-weight: 600; }
+.stats-banner .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+/* Recently viewed */
+.recent-section { margin: 24px 0 0; }
+.recent-section h3 {
+  font-size: 15px; font-weight: 800; margin: 0 0 12px; color: var(--navy);
+  display: flex; align-items: center; gap: 8px;
+}
+.recent-scroll {
+  display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px;
+}
+.recent-card {
+  flex-shrink: 0; width: 170px; background: var(--white); border: 1px solid var(--line);
+  border-radius: 10px; overflow: hidden; cursor: pointer; transition: all .15s;
+}
+.recent-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.recent-card .rc-img {
+  width: 100%; aspect-ratio: 16/10; background: var(--line);
+  display: grid; place-items: center; font-size: 28px; color: var(--muted);
+}
+.recent-card .rc-body { padding: 8px 10px; }
+.recent-card .rc-name { font-size: 12px; font-weight: 700; line-height: 1.3; margin-bottom: 3px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recent-card .rc-price { font-size: 14px; font-weight: 900; color: var(--navy); }
+
+/* Inquiry form */
+.inquiry-form {
+  margin: 24px 0 0; padding: 24px; border-radius: 14px;
+  background: linear-gradient(135deg, #faf6ef 0%, #f5efe3 100%);
+  border: 1px solid #e8dcc8;
+}
+.inquiry-form h3 {
+  font-size: 16px; font-weight: 800; margin: 0 0 16px; color: var(--navy);
+  display: flex; align-items: center; gap: 8px;
+}
+.inquiry-form .inq-fields {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;
+}
+.inquiry-form .inq-field label {
+  display: block; font-size: 12px; font-weight: 700; color: #7a6a50; margin-bottom: 4px;
+}
+.inquiry-form .inq-field input,
+.inquiry-form .inq-field select,
+.inquiry-form .inq-field textarea {
+  width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #d4c8b0;
+  font-size: 14px; font-family: var(--font); background: #fff; color: var(--ink);
+  resize: vertical;
+}
+.inquiry-form .inq-full { grid-column: 1 / -1; }
+.inquiry-form .inq-submit {
+  display: block; width: 100%; padding: 14px; border: none; border-radius: 12px;
+  background: var(--gold); color: var(--navy); font-size: 15px; font-weight: 800;
+  cursor: pointer; font-family: var(--font); transition: all .15s;
+}
+.inquiry-form .inq-submit:hover { filter: brightness(1.08); }
+.inquiry-form .inq-note { font-size: 12px; color: #7a6a50; margin-top: 10px; text-align: center; }
+.inquiry-sent {
+  text-align: center; padding: 24px; color: var(--navy);
+}
+.inquiry-sent .is-icon { font-size: 48px; margin-bottom: 8px; }
+.inquiry-sent p { font-size: 15px; font-weight: 700; margin: 0; }
+
+/* Back to top */
+.back-to-top {
+  position: fixed; bottom: 24px; right: 24px; z-index: 85;
+  width: 48px; height: 48px; border-radius: 50%; border: none;
+  background: var(--navy); color: #fff; font-size: 20px;
+  cursor: pointer; display: none; place-items: center;
+  box-shadow: 0 4px 14px rgba(14,27,51,.3); transition: all .2s;
+}
+.back-to-top.visible { display: grid; }
+.back-to-top:hover { transform: scale(1.1); }
+
+/* Print styles */
+@media print {
+  .site-header, .site-footer, .inv-filter, .filter-toggle,
+  .compare-bar, .back-to-top, .inv-pager, .inv-toolbar,
+  .car-fav, .car-compare, .share-row, .staff-contact,
+  .modal-close, .gallery-nav, .gallery-thumbs, .similar-section,
+  .loan-presets, .inquiry-form, .modal-actions { display: none !important; }
+  .modal-overlay { position: static; background: none; backdrop-filter: none; display: block !important; padding: 0; }
+  .modal { max-height: none; overflow: visible; box-shadow: none; border: 1px solid #ccc; }
+  .modal-img { aspect-ratio: 16/9; background: #f0f0f0 !important; }
+  .modal-body { padding: 16px !important; }
+  body { overflow: auto !important; }
+  .inv-layout { display: block !important; }
+  .car-card { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
 }
 </style>
 </head>
@@ -610,6 +720,39 @@
       </div>
 
       <div class="f-group">
+        <label class="f-label">カラー</label>
+        <select id="fColor">
+          <option value="">すべて</option>
+          <option value="ホワイト">ホワイト系</option>
+          <option value="ブラック">ブラック系</option>
+          <option value="シルバー">シルバー/グレー系</option>
+          <option value="レッド">レッド系</option>
+          <option value="ブルー">ブルー系</option>
+          <option value="ブロンズ">ブロンズ/ゴールド系</option>
+        </select>
+      </div>
+
+      <div class="f-group">
+        <label class="f-label">ミッション</label>
+        <select id="fMission">
+          <option value="">すべて</option>
+          <option value="CVT">CVT</option>
+          <option value="AT">AT</option>
+          <option value="MT">MT</option>
+        </select>
+      </div>
+
+      <div class="f-group">
+        <label class="f-label">駆動方式</label>
+        <select id="fDrive">
+          <option value="">すべて</option>
+          <option value="FF">FF</option>
+          <option value="FR">FR</option>
+          <option value="4WD">4WD/AWD</option>
+        </select>
+      </div>
+
+      <div class="f-group">
         <label class="f-label">状態</label>
         <div class="f-checks">
           <label><input type="checkbox" id="fNew" /> NEW（新着）のみ</label>
@@ -622,6 +765,14 @@
 
     <!-- Main content -->
     <main>
+      <!-- Stats banner -->
+      <div class="stats-banner" id="statsBanner">
+        <div class="stat-item"><div class="stat-icon">🚗</div><div class="stat-val" id="statTotal">0<small>台</small></div><div class="stat-label">総在庫数</div></div>
+        <div class="stat-item"><div class="stat-icon">✨</div><div class="stat-val" id="statNew">0<small>台</small></div><div class="stat-label">新着車両</div></div>
+        <div class="stat-item"><div class="stat-icon">💰</div><div class="stat-val" id="statMinPrice">—</div><div class="stat-label">最安価格</div></div>
+        <div class="stat-item"><div class="stat-icon">🔥</div><div class="stat-val" id="statHot">0<small>台</small></div><div class="stat-label">人気車両</div></div>
+      </div>
+
       <div class="inv-toolbar">
         <div style="display:flex;align-items:center;gap:10px;">
           <button class="filter-toggle" id="filterToggle">🔍 絞り込み<span class="filter-badge" id="filterBadge" style="display:none;">0</span></button>
@@ -687,6 +838,9 @@
 
 <!-- Share toast -->
 <div id="shareToast" style="display:none;"></div>
+
+<!-- Back to top -->
+<button class="back-to-top" id="backToTop" title="トップへ戻る">↑</button>
 
 <footer class="site-footer">
   <div class="wrap">
@@ -773,6 +927,15 @@
     { id: 16, maker: "トヨタ", name: "ランドクルーザー250 VX", year: 2024, mileage: 5000, price: 6980000, body: "SUV", color: "アバンギャルドブロンズメタリック", engine: "2.8L ディーゼル", mission: "8AT", drive: "4WD", inspection: "2029-04", grade: "VX", badge: "hot", desc: "新型250系。マルチテレインセレクト、e-KDSS、指紋認証。走行5,000kmの極上車両。プレミア価格でのご案内です。", equip: ["navi","bkCam","around","etc","cruise","safety","leather","sheat","led","keyless","pSeat","audio"], cond: { exterior: 5, interior: 5, mech: 5, history: "ワンオーナー", smoke: "禁煙車", record: "あり" } },
   ];
 
+  var RECENT_KEY = "auc_recent";
+  function getRecent() { try { return JSON.parse(localStorage.getItem(RECENT_KEY)) || []; } catch (e) { return []; } }
+  function addRecent(id) {
+    var r = getRecent().filter(function (x) { return x !== id; });
+    r.unshift(id);
+    if (r.length > 10) r = r.slice(0, 10);
+    localStorage.setItem(RECENT_KEY, JSON.stringify(r));
+  }
+
   var FAV_KEY = "auc_favs";
   function getFavs() { try { return JSON.parse(localStorage.getItem(FAV_KEY)) || []; } catch (e) { return []; } }
   function setFavs(arr) { localStorage.setItem(FAV_KEY, JSON.stringify(arr)); }
@@ -811,6 +974,9 @@
       yearMin: Number(document.getElementById("fYearMin").value) || 0,
       yearMax: Number(document.getElementById("fYearMax").value) || 9999,
       mileage: Number(document.getElementById("fMileage").value) || Infinity,
+      color: document.getElementById("fColor").value,
+      mission: document.getElementById("fMission").value,
+      drive: document.getElementById("fDrive").value,
       onlyNew: document.getElementById("fNew").checked,
       onlyHot: document.getElementById("fHot").checked,
     };
@@ -827,6 +993,17 @@
       if (f.yearMin && c.year < f.yearMin) return false;
       if (f.yearMax < 9999 && c.year > f.yearMax) return false;
       if (f.mileage < Infinity && c.mileage > f.mileage) return false;
+      if (f.color && c.color.indexOf(f.color) < 0) return false;
+      if (f.mission) {
+        if (f.mission === "AT" && c.mission.indexOf("AT") < 0) return false;
+        if (f.mission === "CVT" && c.mission.indexOf("CVT") < 0) return false;
+        if (f.mission === "MT" && c.mission.indexOf("MT") < 0) return false;
+      }
+      if (f.drive) {
+        if (f.drive === "4WD" && c.drive !== "4WD" && c.drive !== "AWD") return false;
+        if (f.drive === "FF" && c.drive !== "FF") return false;
+        if (f.drive === "FR" && c.drive !== "FR") return false;
+      }
       if (f.onlyNew && c.badge !== "new") return false;
       if (f.onlyHot && c.badge !== "hot") return false;
       return true;
@@ -861,11 +1038,46 @@
     if (f.yearMin) count++;
     if (f.yearMax < 9999) count++;
     if (f.mileage < Infinity) count++;
+    if (f.color) count++;
+    if (f.mission) count++;
+    if (f.drive) count++;
     if (f.onlyNew) count++;
     if (f.onlyHot) count++;
     var badge = document.getElementById("filterBadge");
     if (count) { badge.textContent = count; badge.style.display = ""; }
     else { badge.style.display = "none"; }
+  }
+
+  function updateStats() {
+    document.getElementById("statTotal").innerHTML = CARS.length + '<small>台</small>';
+    var newCount = CARS.filter(function (c) { return c.badge === "new"; }).length;
+    document.getElementById("statNew").innerHTML = newCount + '<small>台</small>';
+    var hotCount = CARS.filter(function (c) { return c.badge === "hot"; }).length;
+    document.getElementById("statHot").innerHTML = hotCount + '<small>台</small>';
+    var minPrice = Math.min.apply(null, CARS.map(function (c) { return c.price; }));
+    document.getElementById("statMinPrice").innerHTML = manyen(minPrice) + '<small>〜</small>';
+  }
+
+  function renderRecentSection() {
+    var existing = document.getElementById("recentSection");
+    if (existing) existing.remove();
+    var ids = getRecent();
+    if (!ids.length) return;
+    var cars = ids.map(function (id) { return CARS.find(function (c) { return c.id === id; }); }).filter(Boolean).slice(0, 6);
+    if (!cars.length) return;
+    var html = '<div class="recent-section" id="recentSection"><h3>🕐 最近見た車両</h3><div class="recent-scroll">';
+    cars.forEach(function (c) {
+      var em = EMOJI_MAP[c.body] || "🚗";
+      html += '<div class="recent-card" onclick="showDetail(' + c.id + ')">' +
+        '<div class="rc-img">' + em + '</div>' +
+        '<div class="rc-body">' +
+          '<div class="rc-name">' + c.maker + ' ' + c.name.split(' ')[0] + '</div>' +
+          '<div class="rc-price">' + manyen(c.price) + '</div>' +
+        '</div></div>';
+    });
+    html += '</div></div>';
+    var pager = document.getElementById("pager");
+    pager.insertAdjacentHTML("afterend", html);
   }
 
   function renderGrid() {
@@ -879,6 +1091,7 @@
       grid.innerHTML = "";
       pager.innerHTML = "";
       empty.style.display = "block";
+      renderRecentSection();
       return;
     }
     empty.style.display = "none";
@@ -924,6 +1137,8 @@
         '</div>' +
         '</div></div>';
     }).join("");
+
+    renderRecentSection();
   }
 
   function renderPager(totalPages, totalCount) {
@@ -1063,10 +1278,26 @@
     return html;
   }
 
+  function renderInquiryForm(c) {
+    return '<div class="inquiry-form" id="inquiryForm">' +
+      '<h3>📩 この車両について問い合わせる</h3>' +
+      '<div class="inq-fields">' +
+        '<div class="inq-field"><label>お名前 *</label><input type="text" id="inqName" placeholder="山田 太郎" /></div>' +
+        '<div class="inq-field"><label>電話番号</label><input type="tel" id="inqPhone" placeholder="090-1234-5678" /></div>' +
+        '<div class="inq-field"><label>メールアドレス *</label><input type="email" id="inqEmail" placeholder="example@mail.com" /></div>' +
+        '<div class="inq-field"><label>ご希望の連絡方法</label><select id="inqContact"><option>メール</option><option>電話</option><option>LINE</option></select></div>' +
+        '<div class="inq-field inq-full"><label>お問い合わせ内容</label><textarea id="inqMsg" rows="3" placeholder="実車確認希望、値引き交渉、追加写真の依頼など">' + c.maker + ' ' + c.name + 'について問い合わせ</textarea></div>' +
+      '</div>' +
+      '<button class="inq-submit" id="inqSubmit">問い合わせを送信する</button>' +
+      '<p class="inq-note">※ 通常1営業日以内にご返信いたします</p>' +
+    '</div>';
+  }
+
   // Detail modal
   window.showDetail = function (id) {
     var c = CARS.find(function (x) { return x.id === id; });
     if (!c) return;
+    addRecent(id);
     var emoji = EMOJI_MAP[c.body] || "🚗";
     renderGallery(c, emoji);
     document.getElementById("modalBody").innerHTML =
@@ -1122,6 +1353,7 @@
         '<button class="share-btn x" onclick="shareToX(\'' + c.maker + ' ' + c.name + '\')" title="X">𝕏</button>' +
         '<button class="share-btn copy" onclick="copyCarLink(\'' + c.maker + ' ' + c.name + '\')" title="リンクコピー">🔗</button>' +
       '</div>' +
+      renderInquiryForm(c) +
       '<div class="staff-section">' +
         '<div class="staff-avatar">S</div>' +
         '<div class="staff-info">' +
@@ -1204,7 +1436,7 @@
 
   // Filters
   function resetPageAndRender() { currentPage = 1; renderGrid(); }
-  var filterEls = document.querySelectorAll("#fKeyword,#fMaker,#fBody,#fPriceMin,#fPriceMax,#fYearMin,#fYearMax,#fMileage,#fNew,#fHot,#sortBy");
+  var filterEls = document.querySelectorAll("#fKeyword,#fMaker,#fBody,#fPriceMin,#fPriceMax,#fYearMin,#fYearMax,#fMileage,#fColor,#fMission,#fDrive,#fNew,#fHot,#sortBy");
   for (var i = 0; i < filterEls.length; i++) {
     filterEls[i].addEventListener("change", resetPageAndRender);
     filterEls[i].addEventListener("input", resetPageAndRender);
@@ -1219,6 +1451,9 @@
     document.getElementById("fYearMin").value = "";
     document.getElementById("fYearMax").value = "";
     document.getElementById("fMileage").value = "";
+    document.getElementById("fColor").value = "";
+    document.getElementById("fMission").value = "";
+    document.getElementById("fDrive").value = "";
     document.getElementById("fNew").checked = false;
     document.getElementById("fHot").checked = false;
     document.getElementById("sortBy").value = "new";
@@ -1337,6 +1572,31 @@
     setTimeout(function () { toast.style.display = "none"; }, 2200);
   };
 
+  // Back to top
+  var btt = document.getElementById("backToTop");
+  window.addEventListener("scroll", function () {
+    btt.classList.toggle("visible", window.scrollY > 400);
+  });
+  btt.addEventListener("click", function () {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  // Inquiry form submit (delegated)
+  document.getElementById("modalOverlay").addEventListener("click", function (e) {
+    if (e.target.id !== "inqSubmit") return;
+    e.preventDefault();
+    var name = document.getElementById("inqName").value.trim();
+    var email = document.getElementById("inqEmail").value.trim();
+    if (!name || !email) {
+      alert("お名前とメールアドレスは必須です。");
+      return;
+    }
+    var form = document.getElementById("inquiryForm");
+    form.innerHTML = '<div class="inquiry-sent"><div class="is-icon">✅</div>' +
+      '<p>お問い合わせを受け付けました。<br />1営業日以内にご連絡いたします。</p></div>';
+  });
+
+  updateStats();
   renderGrid();
 })();
 </script>
