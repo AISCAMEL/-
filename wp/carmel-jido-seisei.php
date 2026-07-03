@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 9.4
+ * Version: 9.5
  * Author: CARMEL
  */
 
@@ -3027,6 +3027,78 @@ function carmel3_regen_url($post_id) {
     return wp_nonce_url(admin_url('admin-post.php?action=carmel3_regen&post=' . intval($post_id)), 'carmel3_regen_' . intval($post_id));
 }
 
+/* ===== アイキャッチ画像だけを作り直す（本文はそのまま・画像のみ再生成） ===== */
+
+if (!defined('CARMEL3_EYECATCH_HOOK')) {
+    define('CARMEL3_EYECATCH_HOOK', 'carmel3_eyecatch_single');
+}
+add_action(CARMEL3_EYECATCH_HOOK, 'carmel3_regen_eyecatch', 10, 1);
+
+// アイキャッチだけを新しい構図で作り直す（裏側で実行）
+function carmel3_regen_eyecatch($post_id) {
+    $post_id = intval($post_id);
+    if (!$post_id || !get_post($post_id)) return;
+    @set_time_limit(300);
+
+    $s = carmel3_auto_get_settings();
+    $title = get_the_title($post_id);
+    carmel3_set_regen_status($post_id, 'running', 'アイキャッチを作り直し中…（30〜90秒）');
+    carmel3_progress_set('アイキャッチを作り直し中…（30〜90秒）', 40, 'running', array('post_id' => $post_id, 'title' => $title));
+
+    if (!function_exists('carmel3_img_generate_openrouter')) {
+        carmel3_set_regen_status($post_id, 'error', '画像機能が使えません（本体プラグインをご確認ください）');
+        carmel3_progress_set('エラー: 画像機能が使えません', 100, 'error');
+        carmel3_loglist_add('アイキャッチ作り直し失敗 post#' . $post_id . ' / 画像機能なし', false);
+        return;
+    }
+    if (function_exists('carmel3_img_api_key') && carmel3_img_api_key() === '' && (!function_exists('carmel_openrouter_is_ready') || !carmel_openrouter_is_ready())) {
+        carmel3_set_regen_status($post_id, 'error', 'APIキー未設定のため画像を作れません');
+        carmel3_progress_set('エラー: APIキー未設定', 100, 'error');
+        carmel3_loglist_add('アイキャッチ作り直し失敗 post#' . $post_id . ' / APIキー未設定', false);
+        return;
+    }
+
+    // force=true で構図キャッシュを消し、新しいアイキャッチを生成→サムネイルに設定
+    $r = carmel3_img_set_featured($post_id, $s, true);
+
+    if (is_string($r) && strpos($r, 'OK') !== false) {
+        carmel3_set_regen_status($post_id, 'done', 'アイキャッチを作り直しました');
+        carmel3_progress_set('完了：アイキャッチを作り直しました', 100, 'done', array('post_id' => $post_id, 'title' => $title));
+        carmel3_loglist_add('アイキャッチ作り直し成功 post#' . $post_id . '（' . $title . '）', true);
+    } else {
+        $emsg = is_string($r) ? $r : '不明なエラー';
+        carmel3_set_regen_status($post_id, 'error', 'アイキャッチの作り直しに失敗（' . $emsg . '）');
+        carmel3_progress_set('エラー: アイキャッチの作り直しに失敗（' . $emsg . '）', 100, 'error');
+        carmel3_loglist_add('アイキャッチ作り直し失敗 post#' . $post_id . ' / ' . $emsg, false);
+    }
+}
+
+// アイキャッチ作り直しの実行（裏側でスケジュール）
+add_action('admin_post_carmel3_eyecatch', function () {
+    if (!current_user_can('manage_options')) wp_die('権限がありません');
+    $post_id = isset($_GET['post']) ? intval($_GET['post']) : 0;
+    check_admin_referer('carmel3_eyecatch_' . $post_id);
+    if (!$post_id || !get_post($post_id)) wp_die('記事が見つかりません');
+
+    carmel3_progress_set('アイキャッチの作り直しを開始しました。準備中…', 5, 'running', array('post_id' => $post_id));
+    carmel3_set_regen_status($post_id, 'queued', 'アイキャッチ作り直しの順番待ち…');
+    if (!wp_next_scheduled(CARMEL3_EYECATCH_HOOK, array($post_id))) {
+        wp_schedule_single_event(time(), CARMEL3_EYECATCH_HOOK, array($post_id));
+    }
+    if (function_exists('spawn_cron')) spawn_cron();
+
+    $back = wp_get_referer();
+    if (!$back) $back = admin_url('edit.php?post_type=' . get_post_type($post_id));
+    $back = add_query_arg('carmel3_eyecatch', '1', $back);
+    wp_safe_redirect($back);
+    exit;
+});
+
+// アイキャッチ作り直しURL（ノンス付き）
+function carmel3_eyecatch_url($post_id) {
+    return wp_nonce_url(admin_url('admin-post.php?action=carmel3_eyecatch&post=' . intval($post_id)), 'carmel3_eyecatch_' . intval($post_id));
+}
+
 // 投稿一覧のタイトル横に作り直し状態を表示
 add_filter('display_post_states', function ($states, $post) {
     if (!current_user_can('manage_options')) return $states;
@@ -3046,6 +3118,7 @@ add_filter('page_row_actions', 'carmel3_regen_row_action', 10, 2);
 function carmel3_regen_row_action($actions, $post) {
     if (current_user_can('manage_options') && carmel3_regen_supported($post->post_type)) {
         $actions['carmel3_regen'] = '<a href="' . esc_url(carmel3_regen_url($post->ID)) . '" style="color:#0f766e;font-weight:600" onclick="return confirm(\'この記事を作り直します（本文も画像も作り直します）。よろしいですか？\');">カーメル：作り直す</a>';
+        $actions['carmel3_eyecatch'] = '<a href="' . esc_url(carmel3_eyecatch_url($post->ID)) . '" style="color:#7c3aed;font-weight:600" onclick="return confirm(\'アイキャッチ画像だけを新しく作り直します（本文はそのまま）。よろしいですか？\');">カーメル：アイキャッチだけ作り直す</a>';
     }
     return $actions;
 }
@@ -3066,6 +3139,9 @@ function carmel3_regen_metabox($post) {
     ?>
     <p style="margin:0 0 10px;color:#555;font-size:12px">内容を確認して気に入らない場合、AIで<strong>本文も画像も作り直し</strong>ます（同じURLのまま）。</p>
     <a href="<?php echo esc_url(carmel3_regen_url($post->ID)); ?>" class="button button-primary" style="width:100%;text-align:center;box-sizing:border-box" onclick="return confirm('本文も画像も作り直します。よろしいですか？');">この記事を作り直す</a>
+
+    <p style="margin:12px 0 6px;color:#555;font-size:12px">アイキャッチ画像だけ気に入らない時は、<strong>本文はそのまま画像だけ</strong>作り直せます。</p>
+    <a href="<?php echo esc_url(carmel3_eyecatch_url($post->ID)); ?>" class="button" style="width:100%;text-align:center;box-sizing:border-box;color:#7c3aed;border-color:#7c3aed;font-weight:600" onclick="return confirm('アイキャッチ画像だけを新しく作り直します（本文はそのまま）。よろしいですか？');">アイキャッチだけ作り直す</a>
 
     <div id="carmel3-regen-status" data-state="<?php echo esc_attr($state); ?>" style="margin-top:10px;<?php echo ($state === 'running' || $state === 'queued') ? '' : 'display:none'; ?>">
         <div style="display:flex;align-items:center;gap:8px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 10px">
@@ -3119,6 +3195,9 @@ function carmel3_regen_metabox($post) {
 add_action('admin_notices', function () {
     if (isset($_GET['carmel3_regen'])) {
         echo '<div class="notice notice-success is-dismissible"><p>記事の作り直しを開始しました。本文と画像が新しく作られます（画像ありは1〜3分）。完了後にページを再読み込みしてください。</p></div>';
+    }
+    if (isset($_GET['carmel3_eyecatch'])) {
+        echo '<div class="notice notice-success is-dismissible"><p>アイキャッチ画像の作り直しを開始しました（本文はそのまま／約30〜90秒）。完了後にページを再読み込みしてください。</p></div>';
     }
 });
 
