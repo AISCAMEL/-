@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 9.5
+ * Version: 9.6
  * Author: CARMEL
  */
 
@@ -82,6 +82,8 @@ function carmel3_auto_get_settings() {
         'type_prompts' => array(),
         // 加盟店ブログを店舗ごとに分ける生成方法: rotate=毎回1店舗ずつ / all=毎回全店舗 / random=毎回ランダム1店舗
         'blog_per_store_mode' => 'rotate',
+        // ニュース・お知らせにも店舗情報カードを入れるか（既定=入れない：会社全体のお知らせのため）
+        'news_store_card' => 0,
         // 通知（Slack / LINE）
         'notify_on'     => 'draft',   // draft=下書きができた時 / publish=公開した時
         'slack_enabled' => 0,
@@ -1504,29 +1506,63 @@ function carmel3_no_store_prompt_block() {
 // 記事末尾に差し込む「店舗情報＋担当者アイコン」カードのHTML
 function carmel3_store_card_html($store) {
     if (!is_array($store) || empty($store['name'])) return '';
-    $name  = esc_html($store['name']);
-    $addr  = trim((isset($store['zip']) && $store['zip'] !== '' ? '〒' . $store['zip'] . ' ' : '') . (isset($store['address']) ? $store['address'] : ''));
-    $tel   = isset($store['tel']) ? $store['tel'] : '';
-    $hours = isset($store['hours']) ? $store['hours'] : '';
-    $closed= isset($store['closed']) ? $store['closed'] : '';
-    $sname = isset($store['staff_name']) ? $store['staff_name'] : '';
-    $icon  = isset($store['staff_icon']) ? trim($store['staff_icon']) : '';
 
-    $h  = '<div class="carmel-store-card" style="border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin:24px 0;background:#fafafa">';
-    $h .= '<div style="display:flex;align-items:center;gap:14px;margin-bottom:10px">';
-    if ($icon !== '') {
-        $h .= '<img src="' . esc_url($icon) . '" alt="' . esc_attr($sname) . '" width="64" height="64" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.15)">';
+    $name  = trim((string)$store['name']);
+    $zip   = isset($store['zip'])    ? trim((string)$store['zip'])    : '';
+    $addr  = isset($store['address'])? trim((string)$store['address']): '';
+    $tel   = isset($store['tel'])    ? trim((string)$store['tel'])    : '';
+    $hours = isset($store['hours'])  ? trim((string)$store['hours'])  : '';
+    $closed= isset($store['closed']) ? trim((string)$store['closed']) : '';
+    $sname = isset($store['staff_name']) ? trim((string)$store['staff_name']) : '';
+    $icon  = isset($store['staff_icon']) ? trim((string)$store['staff_icon']) : '';
+
+    // 郵便番号は「正しい形式」の時だけ〒を付ける（崩れたデータの誤表示を防ぐ）
+    $zip_ok = (bool) preg_match('/^\d{3}-?\d{4}$/', $zip);
+    $full_addr = '';
+    if ($addr !== '') {
+        $full_addr = ($zip_ok ? '〒' . $zip . '　' : '') . $addr;
+    } elseif ($zip_ok) {
+        $full_addr = '〒' . $zip;
     }
-    $h .= '<div>';
-    if ($sname !== '') $h .= '<div style="font-size:13px;color:#666">担当：' . esc_html($sname) . '</div>';
-    $h .= '<div style="font-size:18px;font-weight:700">' . $name . '</div>';
+    // 電話は数字が9桁以上ある時だけ表示（崩れた値は出さない）
+    $tel_digits = preg_replace('/[^0-9+]/', '', $tel);
+    $tel_ok = (strlen(preg_replace('/[^0-9]/', '', $tel)) >= 9);
+
+    // 情報行（中身のあるものだけ）
+    $rows = array();
+    if ($full_addr !== '') $rows[] = array('📍', '住所', esc_html($full_addr));
+    if ($tel !== '' && $tel_ok) {
+        $rows[] = array('☎️', '電話', '<a href="tel:' . esc_attr($tel_digits) . '" style="color:#c2410c;text-decoration:none;font-weight:700">' . esc_html($tel) . '</a>');
+    }
+    if ($hours !== '')  $rows[] = array('🕒', '営業時間', esc_html($hours));
+    if ($closed !== '') $rows[] = array('📅', '定休日', esc_html($closed));
+
+    $h  = '<div class="carmel-store-card" style="border:1px solid #eee;border-radius:16px;margin:28px 0;background:#fff;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.05);font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',sans-serif">';
+
+    // ヘッダー（ブランドカラーの帯）
+    $h .= '<div style="background:linear-gradient(135deg,#1a1a2e,#0f3460);color:#fff;padding:16px 18px;display:flex;align-items:center;gap:14px">';
+    if ($icon !== '' && preg_match('#^https?://#', $icon)) {
+        $h .= '<img src="' . esc_url($icon) . '" alt="' . esc_attr($sname) . '" width="60" height="60" style="width:60px;height:60px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.9);flex:none">';
+    }
+    $h .= '<div style="line-height:1.4">';
+    $h .= '<div style="font-size:11px;letter-spacing:.08em;opacity:.85">この記事を担当する店舗</div>';
+    $h .= '<div style="font-size:19px;font-weight:800">' . esc_html($name) . '</div>';
+    if ($sname !== '') $h .= '<div style="font-size:13px;opacity:.9;margin-top:2px">担当：' . esc_html($sname) . '</div>';
     $h .= '</div></div>';
-    $h .= '<table style="width:100%;border-collapse:collapse;font-size:14px">';
-    if ($addr !== '')   $h .= '<tr><th style="text-align:left;width:90px;padding:4px 8px;color:#555">住所</th><td style="padding:4px 8px">' . esc_html($addr) . '</td></tr>';
-    if ($tel !== '')    $h .= '<tr><th style="text-align:left;padding:4px 8px;color:#555">電話</th><td style="padding:4px 8px"><a href="tel:' . esc_attr(preg_replace('/[^0-9+]/', '', $tel)) . '">' . esc_html($tel) . '</a></td></tr>';
-    if ($hours !== '')  $h .= '<tr><th style="text-align:left;padding:4px 8px;color:#555">営業時間</th><td style="padding:4px 8px">' . esc_html($hours) . '</td></tr>';
-    if ($closed !== '') $h .= '<tr><th style="text-align:left;padding:4px 8px;color:#555">定休日</th><td style="padding:4px 8px">' . esc_html($closed) . '</td></tr>';
-    $h .= '</table></div>';
+
+    // 情報テーブル
+    if (!empty($rows)) {
+        $h .= '<div style="padding:14px 18px">';
+        foreach ($rows as $i => $r) {
+            $border = ($i < count($rows) - 1) ? 'border-bottom:1px solid #f1f1f1;' : '';
+            $h .= '<div style="display:flex;gap:10px;padding:9px 0;' . $border . 'font-size:14px;align-items:flex-start">'
+                . '<span style="flex:none;width:74px;color:#888;font-weight:700">' . $r[0] . ' ' . esc_html($r[1]) . '</span>'
+                . '<span style="color:#222;flex:1">' . $r[2] . '</span>'
+                . '</div>';
+        }
+        $h .= '</div>';
+    }
+    $h .= '</div>';
     return $h;
 }
 
@@ -1809,6 +1845,12 @@ function carmel3_gen_post($post_type, $item, $s, $existing_id = 0) {
     }
     // 店舗情報を差し込む（呼び出し側が指定した店舗があれば優先＝店舗別ブログ用）
     $store = (isset($item['store']) && is_array($item['store'])) ? $item['store'] : carmel3_pick_store($item);
+    // ニュース・お知らせ系は既定で店舗カードを付けない（会社全体のお知らせ。ブログとの相違を防ぐ）
+    // 加盟店ブログ(shop_blog)や、店舗を明示指定した場合は常に店舗を使う。
+    $news_like = in_array($post_type, array('news', 'post'), true);
+    if ($news_like && empty($item['store']) && empty($s['news_store_card'])) {
+        $store = null;
+    }
     $store_block = carmel3_store_prompt_block($store);
     if ($store_block !== '') {
         $user .= "\n" . $store_block . "\n";
@@ -2785,6 +2827,7 @@ add_action('admin_post_carmel3_auto_save', function () {
     // 加盟店ブログを店舗ごとに分ける生成方法
     $bmode = isset($_POST['blog_per_store_mode']) ? sanitize_key($_POST['blog_per_store_mode']) : 'rotate';
     $s['blog_per_store_mode'] = in_array($bmode, array('rotate', 'all', 'random'), true) ? $bmode : 'rotate';
+    $s['news_store_card'] = isset($_POST['news_store_card']) ? 1 : 0;
 
     // 通知設定
     $non = isset($_POST['notify_on']) ? sanitize_key($_POST['notify_on']) : 'draft';
@@ -4712,6 +4755,10 @@ function carmel3_auto_settings_page() {
                         </select>
                     </label>
                     <p style="margin:8px 0 0;color:#888;font-size:12px"><?php if ($store_count === 0): ?><span style="color:#c2410c">※ まだ店舗が未登録です。店舗を登録すると店舗別に分かれます（未登録時は店舗なしで1本作成）。</span><?php else: ?>「毎回1店舗ずつ」なら、実行のたびに次の店舗へ進み、<?php echo (int)$store_count; ?>回で一巡します。<?php endif; ?></p>
+
+                    <hr style="margin:12px 0;border:none;border-top:1px solid #fbcfe8">
+                    <label style="font-size:13px;font-weight:700"><input type="checkbox" name="news_store_card" value="1" <?php checked(!empty($s['news_store_card'])); ?>> ニュース・お知らせにも店舗情報カードを入れる</label>
+                    <p style="margin:6px 0 0;color:#888;font-size:12px">既定は<strong>OFF（入れない）</strong>です。ニュースは会社全体のお知らせなので、店舗カードは付けません（加盟店ブログには常に付きます）。特定店舗のニュースにしたい時だけONにしてください。</p>
                 </div>
             </div>
 
