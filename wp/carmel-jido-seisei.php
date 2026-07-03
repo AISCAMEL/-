@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 9.3
+ * Version: 9.4
  * Author: CARMEL
  */
 
@@ -3770,7 +3770,9 @@ add_action('admin_post_carmel3_slack_save', function () {
         if ($tok !== '' && strpos($tok, '●') === false) $s['slack_bot_token'] = sanitize_text_field($tok);
         if ($tok === '') $s['slack_bot_token'] = '';
     }
-    $ch_in = isset($_POST['slack_channel_id']) ? sanitize_text_field(wp_unslash($_POST['slack_channel_id'])) : '';
+    // 直接入力（ID／名前）があれば最優先。無ければプルダウンの値。
+    $manual = isset($_POST['slack_channel_manual']) ? sanitize_text_field(wp_unslash($_POST['slack_channel_manual'])) : '';
+    $ch_in  = ($manual !== '') ? $manual : (isset($_POST['slack_channel_id']) ? sanitize_text_field(wp_unslash($_POST['slack_channel_id'])) : '');
     // ID（Cxxxx等）でなく「チャンネル名」で入力された場合は、名前からIDを自動で調べる
     $s['slack_channel_id'] = carmel3_slack_resolve_channel($s['slack_bot_token'], $ch_in);
     $pt = isset($_POST['slack_propose_time']) ? trim((string) wp_unslash($_POST['slack_propose_time'])) : '08:00';
@@ -3899,6 +3901,12 @@ function carmel3_slack_page() {
                     <?php
                 }
                 ?>
+
+                <div style="margin-top:10px;padding:10px 12px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px">
+                    <label style="font-weight:700;font-size:13px">うまく選べない時は、チャンネルIDを直接入力（最優先で使います）</label><br>
+                    <input type="text" name="slack_channel_manual" value="" style="width:280px;padding:7px;margin-top:6px" placeholder="例: C0B6D0GKU6T">
+                    <p style="margin:6px 0 0;color:#555;font-size:12px">ここに入力があれば、上のプルダウンより<strong>こちらを優先</strong>します。チャンネルIDは Slackでチャンネル名クリック→詳細の一番下「チャンネルID」に出ています（例：<code>C0B6D0GKU6T</code>）。現在の保存値：<code><?php echo esc_html($cur_ch !== '' ? $cur_ch : '未設定'); ?></code></p>
+                </div>
 
                 <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:14px">
                     <label style="font-weight:700">提案を送る時刻<br>
