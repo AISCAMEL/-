@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 9.7
+ * Version: 9.8
  * Author: CARMEL
  */
 
@@ -3519,7 +3519,11 @@ function carmel3_slack_resolve_channel($token, $input) {
 
 // AIに案をN件作らせる（$kind: 'news' か 'blog'）。戻り値: array of array('title','keyword','brief','type')
 function carmel3_slack_generate_proposals($s, $count, $kind = 'news') {
-    if (!function_exists('carmel_call_openrouter_chat')) return array();
+    $GLOBALS['carmel3_slack_gen_err'] = '';
+    if (!function_exists('carmel_call_openrouter_chat')) {
+        $GLOBALS['carmel3_slack_gen_err'] = '本体のAI関数が見つかりません';
+        return array();
+    }
     $count = max(1, min(5, (int)$count));
     $today = date('Y年n月j日', current_time('timestamp'));
     $wdays = array('日','月','火','水','木','金','土');
@@ -3540,9 +3544,16 @@ function carmel3_slack_generate_proposals($s, $count, $kind = 'news') {
     $res = carmel_call_openrouter_chat(array(
         array('role' => 'system', 'content' => $sys),
         array('role' => 'user',   'content' => $user),
-    ), isset($s['text_model']) ? $s['text_model'] : '', 0.8, 60);
+    ), isset($s['text_model']) ? $s['text_model'] : '', 0.8, 90);
 
-    if (empty($res['content'])) return array();
+    if (!empty($res['error'])) {
+        $GLOBALS['carmel3_slack_gen_err'] = 'AI応答エラー: ' . mb_substr((string)$res['error'], 0, 120);
+        return array();
+    }
+    if (empty($res['content'])) {
+        $GLOBALS['carmel3_slack_gen_err'] = 'AIの応答が空でした（モデル/残高/レート制限の可能性）';
+        return array();
+    }
     $json = function_exists('carmel_extract_json_from_text') ? carmel_extract_json_from_text($res['content']) : json_decode(trim($res['content']), true);
     // 抽出失敗時のフォールバック（配列 [ ... ] 直やコードフェンス付きにも対応）
     if (!is_array($json)) {
@@ -3552,8 +3563,14 @@ function carmel3_slack_generate_proposals($s, $count, $kind = 'news') {
         if (!is_array($json) && preg_match('/\[[\s\S]*\]/', $raw, $mm)) {
             $json = json_decode($mm[0], true);
         }
+        if (!is_array($json) && preg_match('/\{[\s\S]*\}/', $raw, $mm2)) {
+            $json = json_decode($mm2[0], true);
+        }
     }
-    if (!is_array($json)) return array();
+    if (!is_array($json)) {
+        $GLOBALS['carmel3_slack_gen_err'] = 'AI応答をJSON解析できず: ' . mb_substr(trim((string)$res['content']), 0, 100);
+        return array();
+    }
     // {items:[...]} 形式
     if (isset($json['items']) && is_array($json['items'])) {
         $json = $json['items'];
@@ -3574,6 +3591,9 @@ function carmel3_slack_generate_proposals($s, $count, $kind = 'news') {
             'type'    => ($kind === 'blog') ? 'blog' : 'news',
         );
         if (count($out) >= $count) break;
+    }
+    if (empty($out)) {
+        $GLOBALS['carmel3_slack_gen_err'] = 'タイトルを取り出せませんでした: ' . mb_substr(trim((string)$res['content']), 0, 100);
     }
     return $out;
 }
@@ -3599,14 +3619,16 @@ function carmel3_slack_do_propose($s) {
         $prev = get_option(CARMEL3_SLACK_STATE, array());
         if (!is_array($prev)) $prev = array();
         $today_ymd = date('Y-m-d', current_time('timestamp'));
+        $reason = isset($GLOBALS['carmel3_slack_gen_err']) && $GLOBALS['carmel3_slack_gen_err'] !== '' ? $GLOBALS['carmel3_slack_gen_err'] : '不明';
+        carmel3_loglist_add('Slack提案 失敗: ' . $reason, false);
         $already = (isset($prev['fail_date']) && $prev['fail_date'] === $today_ymd);
         if (!$already) {
-            carmel3_slack_post_message($token, $channel, '⚠️ 本日の案の生成に失敗しました（AIの残高やモデル設定をご確認ください）。復旧後は WordPress の「Slack連携」→「② いますぐ本日のニュース案を送る」でお試しください。');
+            carmel3_slack_post_message($token, $channel, "⚠️ 本日の案の生成に失敗しました。\n理由：{$reason}\n（復旧後は WordPress の「Slack連携」→「② いますぐ本日のニュース案を送る」でお試しください）");
         }
         $prev['fail_date'] = $today_ymd;
         $prev['date']      = $today_ymd; // 本日はこれ以上自動で提案しない（連投防止）
         update_option(CARMEL3_SLACK_STATE, $prev, false);
-        return array('ok' => false, 'error' => '案の生成失敗');
+        return array('ok' => false, 'error' => $reason);
     }
 
     $today = date('n月j日', current_time('timestamp'));
