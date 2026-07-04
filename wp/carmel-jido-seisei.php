@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 9.6
+ * Version: 9.7
  * Author: CARMEL
  */
 
@@ -3533,8 +3533,8 @@ function carmel3_slack_generate_proposals($s, $count, $kind = 'news') {
     }
     $user = "本日は{$today}（{$wday}曜）です。{$what}提案してください。\n"
         . "季節・時期・行事・車の需要（車検/ボーナス/連休/決算/新生活など）を踏まえ、実行しやすく具体的なものを。\n"
-        . "各案は次のJSON配列で返す（他の文章は書かない）:\n"
-        . "[{\"title\":\"記事タイトル案\",\"keyword\":\"主要キーワード\",\"brief\":\"何をどう書くか・訴求点を1〜2文で\"}]\n"
+        . "次のJSON形式だけで返す（前後に文章やコードブロックを付けない）:\n"
+        . "{\"items\":[{\"title\":\"記事タイトル案\",\"keyword\":\"主要キーワード\",\"brief\":\"何をどう書くか・訴求点を1〜2文で\"}]}\n"
         . "注意: 事実を勝手に断定しない（金額・日付は例示にとどめる）。タイトルは具体的で読みたくなるもの。";
 
     $res = carmel_call_openrouter_chat(array(
@@ -3544,8 +3544,23 @@ function carmel3_slack_generate_proposals($s, $count, $kind = 'news') {
 
     if (empty($res['content'])) return array();
     $json = function_exists('carmel_extract_json_from_text') ? carmel_extract_json_from_text($res['content']) : json_decode(trim($res['content']), true);
+    // 抽出失敗時のフォールバック（配列 [ ... ] 直やコードフェンス付きにも対応）
+    if (!is_array($json)) {
+        $raw = trim((string)$res['content']);
+        $raw = preg_replace('/^```(?:json)?|```$/im', '', $raw);
+        $json = json_decode(trim($raw), true);
+        if (!is_array($json) && preg_match('/\[[\s\S]*\]/', $raw, $mm)) {
+            $json = json_decode($mm[0], true);
+        }
+    }
     if (!is_array($json)) return array();
-    if (isset($json['items']) && is_array($json['items'])) $json = $json['items'];
+    // {items:[...]} 形式
+    if (isset($json['items']) && is_array($json['items'])) {
+        $json = $json['items'];
+    } elseif (isset($json['title'])) {
+        // 単一オブジェクトで返ってきた場合は1件として扱う
+        $json = array($json);
+    }
 
     $out = array();
     foreach ($json as $row) {
@@ -3580,7 +3595,17 @@ function carmel3_slack_do_propose($s) {
     // 通し番号で1つのリストにまとめる（返信の番号指定に使う）
     $proposals = array_merge($news, $blog);
     if (empty($proposals)) {
-        carmel3_slack_post_message($token, $channel, '⚠️ 本日の案の生成に失敗しました（AIの残高やモデル設定をご確認ください）。');
+        // 失敗しても5分ごとに連投しないよう、本日は自動再試行しない＆通知は1回だけ
+        $prev = get_option(CARMEL3_SLACK_STATE, array());
+        if (!is_array($prev)) $prev = array();
+        $today_ymd = date('Y-m-d', current_time('timestamp'));
+        $already = (isset($prev['fail_date']) && $prev['fail_date'] === $today_ymd);
+        if (!$already) {
+            carmel3_slack_post_message($token, $channel, '⚠️ 本日の案の生成に失敗しました（AIの残高やモデル設定をご確認ください）。復旧後は WordPress の「Slack連携」→「② いますぐ本日のニュース案を送る」でお試しください。');
+        }
+        $prev['fail_date'] = $today_ymd;
+        $prev['date']      = $today_ymd; // 本日はこれ以上自動で提案しない（連投防止）
+        update_option(CARMEL3_SLACK_STATE, $prev, false);
         return array('ok' => false, 'error' => '案の生成失敗');
     }
 
