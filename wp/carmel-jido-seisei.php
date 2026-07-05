@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 10.2
+ * Version: 10.3
  * Author: CARMEL
  */
 
@@ -4550,7 +4550,20 @@ function carmel3_repurpose_media_defs() {
         'slack'     => array('label' => 'Slack共有文',         'rule' => '社内共有向け。要点を短く＋一言。絵文字は控えめ。'),
         'news'      => array('label' => 'ニュース記事',        'rule' => '見出し(タイトル)を1行＋本文800〜1200字。事実は改変しない。<h2>や段落で読みやすく。'),
         'blog'      => array('label' => '加盟店ブログ風',      'rule' => '店舗スタッフが書いたブログ風。現場目線・体験談。1000〜1500字。指定された口調を最優先。'),
+        'media'     => array('label' => 'メディア記事（長文・SEO）', 'rule' => '1行目にタイトル、その後に本文1500〜2500字。<h2>見出しを4〜6個・各見出しに2〜4段落。具体例や箇条書きを入れSEOを意識。事実は改変しない。'),
     );
+}
+
+// 記事として保存できる媒体（＝長文の記事系）か
+function carmel3_repurpose_is_article($media_key) {
+    return in_array($media_key, array('news', 'blog', 'media'), true);
+}
+
+// 媒体キー → 保存先の投稿タイプ
+function carmel3_repurpose_post_type_for($media_key) {
+    if ($media_key === 'blog')  return post_type_exists('shop_blog') ? 'shop_blog' : 'post';
+    if ($media_key === 'media') return post_type_exists('media_article') ? 'media_article' : 'post';
+    return carmel3_news_post_type();
 }
 
 // 元ネタ→各媒体の文章をまとめて1回のAI呼び出しで生成
@@ -4666,6 +4679,52 @@ add_action('wp_ajax_carmel3_repurpose_refine', function () {
     wp_send_json_success(array('text' => $r['text']));
 });
 
+// 記事系の出力を「下書き」として保存（AJAX）
+add_action('wp_ajax_carmel3_repurpose_save', function () {
+    if (!current_user_can('manage_options')) wp_send_json_error(array('msg' => '権限がありません'));
+    check_ajax_referer('carmel3_repurpose_ajax', 'nonce');
+    $text = isset($_POST['text']) ? trim((string) wp_unslash($_POST['text'])) : '';
+    $key  = isset($_POST['media']) ? sanitize_key($_POST['media']) : '';
+    if ($text === '' || !carmel3_repurpose_is_article($key)) {
+        wp_send_json_error(array('msg' => '保存できる記事本文がありません'));
+    }
+    $pt = carmel3_repurpose_post_type_for($key);
+
+    // 1行目をタイトル候補に（記号・見出しマークを除去）。長すぎる場合は要約。
+    $lines = preg_split('/\r\n|\r|\n/', $text);
+    $first = '';
+    foreach ($lines as $ln) { $ln = trim($ln); if ($ln !== '') { $first = $ln; break; } }
+    $title = trim(preg_replace('/^[#＃■●・\-\s【】\[\]]+/u', '', wp_strip_all_tags($first)));
+    $body  = $text;
+    // 1行目が短めのタイトルらしければ本文から外す
+    if ($title !== '' && mb_strlen($title) <= 60) {
+        $body = ltrim(mb_substr($text, mb_strlen($first)));
+    } else {
+        $title = wp_trim_words(wp_strip_all_tags($text), 18, '');
+    }
+    if ($title === '') $title = '無題の記事';
+
+    // HTMLタグが含まれていなければ段落化
+    $content = (strip_tags($body) === $body) ? wpautop(esc_html($body)) : wp_kses_post($body);
+
+    $pid = wp_insert_post(array(
+        'post_type'    => $pt,
+        'post_status'  => 'draft',
+        'post_title'   => $title,
+        'post_content' => $content,
+    ), true);
+    if (is_wp_error($pid)) wp_send_json_error(array('msg' => $pid->get_error_message()));
+
+    update_post_meta($pid, '_carmel3_generated', 1);
+    $obj = get_post_type_object($pt);
+    $lbl = $obj ? ($obj->labels->singular_name ?: $pt) : $pt;
+    wp_send_json_success(array(
+        'edit'  => get_edit_post_link($pid, 'raw'),
+        'label' => $lbl,
+        'title' => $title,
+    ));
+});
+
 function carmel3_repurpose_page() {
     $s = carmel3_auto_get_settings();
     $defs = carmel3_repurpose_media_defs();
@@ -4726,6 +4785,9 @@ function carmel3_repurpose_page() {
                         <button type="button" class="button carmel3-rp-copy">コピー</button>
                         <input type="text" class="carmel3-rp-inst" placeholder="添削の指示（例：もっと短く／絵文字増やして）" style="flex:1;min-width:200px;padding:6px">
                         <button type="button" class="button carmel3-rp-refine">AIで添削・調整</button>
+                        <?php if (carmel3_repurpose_is_article($k)): $save_lbl = get_post_type_object(carmel3_repurpose_post_type_for($k)); ?>
+                        <button type="button" class="button button-secondary carmel3-rp-save">📝 <?php echo esc_html(($save_lbl ? ($save_lbl->labels->singular_name ?: '記事') : '記事')); ?>に下書き保存</button>
+                        <?php endif; ?>
                         <span class="carmel3-rp-status" style="font-size:12px;color:#666"></span>
                     </div>
                 </div>
@@ -4774,6 +4836,28 @@ function carmel3_repurpose_page() {
                   })
                   .catch(function(){ status.textContent='通信エラー'; });
             });
+            var saveBtn = box.querySelector('.carmel3-rp-save');
+            if (saveBtn) {
+                saveBtn.addEventListener('click', function(){
+                    var ta = box.querySelector('.carmel3-rp-text');
+                    var status = box.querySelector('.carmel3-rp-status');
+                    var media = box.getAttribute('data-media');
+                    status.textContent = '保存中…';
+                    var body = new URLSearchParams();
+                    body.append('action','carmel3_repurpose_save');
+                    body.append('nonce',nonce);
+                    body.append('media',media);
+                    body.append('text',ta.value);
+                    fetch(ajax,{method:'POST',body:body,credentials:'same-origin'})
+                      .then(function(r){return r.json();})
+                      .then(function(j){
+                          if (j && j.success && j.data && j.data.edit){
+                              status.innerHTML = '✅ '+ (j.data.label||'記事') +'に下書き保存 → <a href="'+j.data.edit+'" target="_blank">編集を開く</a>';
+                          } else { status.textContent = '失敗：' + ((j&&j.data&&j.data.msg)||'不明'); }
+                      })
+                      .catch(function(){ status.textContent='通信エラー'; });
+                });
+            }
         });
     })();
     </script>
