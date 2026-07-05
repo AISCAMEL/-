@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 10.0
+ * Version: 10.1
  * Author: CARMEL
  */
 
@@ -63,6 +63,7 @@ function carmel3_auto_get_settings() {
         'max_tokens_cap' => 12000,   // OpenRouterへの max_tokens 上限（0=制限しない／残高節約・エラー回避）
         'auto_slug_meta' => 1,       // スラッグ（英語URL）とメタディスクリプションを自動生成
         'article_length' => 'standard', // 記事の長さ（short/standard/long）ニュース・加盟店ブログに適用
+        'repurpose_tone' => '',        // 「元ネタから展開」の既定の文体・口調指示
         'text_model'   => '',        // 文章生成モデルの上書き（空=本体まかせ。無料モデル指定で残高不足回避）
         'publish'      => 0,
         'gen_images'   => 0,
@@ -2048,6 +2049,7 @@ function carmel3_auto_register_menu() {
         add_submenu_page($parent, 'かんたんホーム', 'かんたんホーム', 'manage_options', 'carmel3-home', 'carmel3_home_page');
         add_submenu_page($parent, 'CARMEL 自動生成', '自動生成', 'manage_options', 'carmel3-auto', 'carmel3_auto_settings_page');
         add_submenu_page($parent, 'ニュースを作る（指示して生成）', 'ニュースを作る', 'manage_options', 'carmel3-news', 'carmel3_news_page');
+        add_submenu_page($parent, '元ネタから各媒体へ展開', '元ネタから展開', 'manage_options', 'carmel3-repurpose', 'carmel3_repurpose_page');
         add_submenu_page($parent, 'Slackでニュース提案・投稿', 'Slack連携', 'manage_options', 'carmel3-slack', 'carmel3_slack_page');
         add_submenu_page($parent, '店舗・担当者（記事に差し込み）', '店舗・担当者', 'manage_options', 'carmel3-stores', 'carmel3_stores_page');
         add_submenu_page($parent, 'その他掲載ページ（MEO対策）', 'その他掲載ページ（MEO対策）', 'manage_options', 'carmel3-meo', 'carmel3_meo_page');
@@ -2056,9 +2058,10 @@ function carmel3_auto_register_menu() {
         add_menu_page('かんたんホーム', 'かんたんホーム', 'manage_options', 'carmel3-home', 'carmel3_home_page', 'dashicons-admin-home', 3);
         add_menu_page('CARMEL 自動生成', 'CARMEL自動生成', 'manage_options', 'carmel3-auto', 'carmel3_auto_settings_page', 'dashicons-update', 4);
         add_menu_page('ニュースを作る（指示して生成）', 'ニュースを作る', 'manage_options', 'carmel3-news', 'carmel3_news_page', 'dashicons-megaphone', 5);
-        add_menu_page('Slackでニュース提案・投稿', 'Slack連携', 'manage_options', 'carmel3-slack', 'carmel3_slack_page', 'dashicons-format-chat', 6);
-        add_menu_page('店舗・担当者', '店舗・担当者', 'manage_options', 'carmel3-stores', 'carmel3_stores_page', 'dashicons-store', 7);
-        add_menu_page('その他掲載ページ（MEO対策）', 'その他掲載ページ(MEO)', 'manage_options', 'carmel3-meo', 'carmel3_meo_page', 'dashicons-location-alt', 8);
+        add_menu_page('元ネタから各媒体へ展開', '元ネタから展開', 'manage_options', 'carmel3-repurpose', 'carmel3_repurpose_page', 'dashicons-share', 6);
+        add_menu_page('Slackでニュース提案・投稿', 'Slack連携', 'manage_options', 'carmel3-slack', 'carmel3_slack_page', 'dashicons-format-chat', 7);
+        add_menu_page('店舗・担当者', '店舗・担当者', 'manage_options', 'carmel3-stores', 'carmel3_stores_page', 'dashicons-store', 8);
+        add_menu_page('その他掲載ページ（MEO対策）', 'その他掲載ページ(MEO)', 'manage_options', 'carmel3-meo', 'carmel3_meo_page', 'dashicons-location-alt', 9);
     }
 }
 
@@ -4443,6 +4446,252 @@ function carmel3_news_page() {
         }
         radios.forEach(function(r){ r.addEventListener('change', sync); });
         sync();
+    })();
+    </script>
+    <?php
+}
+
+/* =====================================================================
+   元ネタから各媒体へ展開（貼る→各媒体用に変換→AI添削→コピペ運用）
+   媒体：Googleマイビジネス / Instagram / Facebook / X / Slack共有 /
+        ニュース記事 / 加盟店ブログ風。口調は自由指示。
+   ===================================================================== */
+
+// 媒体の定義（キー => 表示名・作り方ルール）
+function carmel3_repurpose_media_defs() {
+    return array(
+        'gmb'       => array('label' => 'Googleマイビジネス', 'rule' => '200〜300字。店舗のお知らせ調で、最後に来店・お問い合わせを促す一文。ハッシュタグは使わない。絵文字は0〜2個まで。'),
+        'instagram' => array('label' => 'Instagram',          'rule' => '親しみやすい口語。読みやすく改行。絵文字を適度に。最後に関連ハッシュタグを5〜10個（例 #中古車 #カーメル）。'),
+        'facebook'  => array('label' => 'Facebook',           'rule' => 'やや丁寧。300〜500字。読みやすい改行。ハッシュタグは0〜3個。'),
+        'x'         => array('label' => 'X（旧Twitter）',      'rule' => '全角140字以内で簡潔に要点のみ。ハッシュタグ1〜2個。'),
+        'slack'     => array('label' => 'Slack共有文',         'rule' => '社内共有向け。要点を短く＋一言。絵文字は控えめ。'),
+        'news'      => array('label' => 'ニュース記事',        'rule' => '見出し(タイトル)を1行＋本文800〜1200字。事実は改変しない。<h2>や段落で読みやすく。'),
+        'blog'      => array('label' => '加盟店ブログ風',      'rule' => '店舗スタッフが書いたブログ風。現場目線・体験談。1000〜1500字。指定された口調を最優先。'),
+    );
+}
+
+// 元ネタ→各媒体の文章をまとめて1回のAI呼び出しで生成
+function carmel3_repurpose_generate($base, $tone, $media) {
+    if (!function_exists('carmel_call_openrouter_chat')) return array('error' => '本体のAI関数が見つかりません');
+    $base = trim((string)$base);
+    if ($base === '') return array('error' => '元ネタが空です');
+    $defs = carmel3_repurpose_media_defs();
+    $media = array_values(array_filter((array)$media, function ($m) use ($defs) { return isset($defs[$m]); }));
+    if (empty($media)) return array('error' => '媒体が選ばれていません');
+
+    $rules = array();
+    foreach ($media as $m) { $rules[] = "・{$m}（{$defs[$m]['label']}）：{$defs[$m]['rule']}"; }
+
+    $sys = 'あなたは中古車販売店カーメル（合同会社アイズ）の広報編集者です。日本語で、JSONのみ返します。';
+    $user = "次の【元ネタ】をもとに、各媒体向けの投稿文を作成してください。\n"
+        . "【元ネタ】\n{$base}\n\n";
+    if (trim($tone) !== '') $user .= "【文体・口調（全媒体で厳守）】\n" . trim($tone) . "\n\n";
+    $user .= "【媒体ごとの作り方】\n" . implode("\n", $rules) . "\n\n"
+        . "重要: 元ネタに無い事実（金額・日付・実績・キャンペーン条件など）を勝手に足さない・断定しない。伏字（〇〇店等）禁止。\n"
+        . "次のJSON形式だけで返す（前後に説明やコードブロックを付けない。選ばれた媒体キーのみ）:\n"
+        . "{\"items\":{" . implode(',', array_map(function ($m) { return "\"{$m}\":\"その媒体用の本文\""; }, $media)) . "}}";
+
+    $settings = carmel3_auto_get_settings();
+    $res = carmel_call_openrouter_chat(array(
+        array('role' => 'system', 'content' => $sys),
+        array('role' => 'user',   'content' => $user),
+    ), isset($settings['text_model']) ? $settings['text_model'] : '', 0.7, 120);
+
+    if (!empty($res['error'])) return array('error' => 'AI応答エラー: ' . mb_substr((string)$res['error'], 0, 140));
+    if (empty($res['content'])) return array('error' => 'AIの応答が空でした（モデル/残高/レート制限をご確認ください）');
+
+    $json = function_exists('carmel_extract_json_from_text') ? carmel_extract_json_from_text($res['content']) : json_decode(trim($res['content']), true);
+    if (!is_array($json)) {
+        $raw = preg_replace('/^```(?:json)?|```$/im', '', trim((string)$res['content']));
+        $json = json_decode(trim($raw), true);
+        if (!is_array($json) && preg_match('/\{[\s\S]*\}/', $raw, $mm)) $json = json_decode($mm[0], true);
+    }
+    if (!is_array($json)) return array('error' => 'AI応答をJSON解析できず: ' . mb_substr(trim((string)$res['content']), 0, 100));
+    $items = (isset($json['items']) && is_array($json['items'])) ? $json['items'] : $json;
+
+    $out = array();
+    foreach ($media as $m) {
+        if (isset($items[$m]) && is_string($items[$m])) $out[$m] = trim($items[$m]);
+    }
+    if (empty($out)) return array('error' => '各媒体の文章を取り出せませんでした');
+    return array('items' => $out);
+}
+
+// 1媒体ぶんをAIで添削・調整
+function carmel3_repurpose_refine($text, $label, $instruction, $tone) {
+    if (!function_exists('carmel_call_openrouter_chat')) return array('error' => '本体のAI関数が見つかりません');
+    $text = trim((string)$text);
+    if ($text === '') return array('error' => 'テキストが空です');
+    $sys = 'あなたは中古車販売店カーメルの広報編集者です。日本語で、整えた本文だけを返します（前置き・後書き・引用符・コードブロックは付けない）。';
+    $user = "次の「{$label}」向けの文章を、より良く整えてください。\n【現在の文章】\n{$text}\n\n";
+    if (trim($tone) !== '')        $user .= "【文体・口調（守る）】\n" . trim($tone) . "\n\n";
+    if (trim($instruction) !== '') $user .= "【追加の指示】\n" . trim($instruction) . "\n\n";
+    $user .= "元ネタに無い事実は足さない。{$label}に適した長さ・体裁を保つ。整えた本文のみを返す。";
+
+    $settings = carmel3_auto_get_settings();
+    $res = carmel_call_openrouter_chat(array(
+        array('role' => 'system', 'content' => $sys),
+        array('role' => 'user',   'content' => $user),
+    ), isset($settings['text_model']) ? $settings['text_model'] : '', 0.7, 90);
+
+    if (!empty($res['error'])) return array('error' => mb_substr((string)$res['error'], 0, 140));
+    $c = trim((string)(isset($res['content']) ? $res['content'] : ''));
+    $c = preg_replace('/^```(?:\w+)?|```$/im', '', $c);
+    $c = trim($c, " \t\n\r\0\x0B\"'");
+    if ($c === '') return array('error' => 'AIの応答が空でした');
+    return array('text' => $c);
+}
+
+// 生成（フォーム送信）
+add_action('admin_post_carmel3_repurpose_run', function () {
+    if (!current_user_can('manage_options')) wp_die('権限がありません');
+    check_admin_referer('carmel3_repurpose_run');
+
+    $base  = isset($_POST['base_text']) ? wp_unslash($_POST['base_text']) : '';
+    $tone  = isset($_POST['tone']) ? sanitize_textarea_field(wp_unslash($_POST['tone'])) : '';
+    $media = (isset($_POST['media']) && is_array($_POST['media'])) ? array_map('sanitize_key', $_POST['media']) : array();
+
+    // 口調の既定を保存（次回のため）
+    $s = carmel3_auto_get_settings();
+    $s['repurpose_tone'] = $tone;
+    carmel3_auto_save_settings($s);
+
+    $r = carmel3_repurpose_generate($base, $tone, $media);
+    set_transient('carmel3_repurpose_' . get_current_user_id(), array(
+        'base'  => (string)$base,
+        'tone'  => $tone,
+        'media' => $media,
+        'result'=> $r,
+    ), 1800);
+
+    wp_safe_redirect(admin_url('admin.php?page=carmel3-repurpose&done=1'));
+    exit;
+});
+
+// 添削（AJAX）
+add_action('wp_ajax_carmel3_repurpose_refine', function () {
+    if (!current_user_can('manage_options')) wp_send_json_error(array('msg' => '権限がありません'));
+    check_ajax_referer('carmel3_repurpose_ajax', 'nonce');
+    $text = isset($_POST['text']) ? wp_unslash($_POST['text']) : '';
+    $key  = isset($_POST['media']) ? sanitize_key($_POST['media']) : '';
+    $inst = isset($_POST['instruction']) ? sanitize_textarea_field(wp_unslash($_POST['instruction'])) : '';
+    $tone = isset($_POST['tone']) ? sanitize_textarea_field(wp_unslash($_POST['tone'])) : '';
+    $defs = carmel3_repurpose_media_defs();
+    $label = isset($defs[$key]) ? $defs[$key]['label'] : '投稿';
+    $r = carmel3_repurpose_refine($text, $label, $inst, $tone);
+    if (!empty($r['error'])) wp_send_json_error(array('msg' => $r['error']));
+    wp_send_json_success(array('text' => $r['text']));
+});
+
+function carmel3_repurpose_page() {
+    $s = carmel3_auto_get_settings();
+    $defs = carmel3_repurpose_media_defs();
+    $store = get_transient('carmel3_repurpose_' . get_current_user_id());
+    $base  = is_array($store) ? (isset($store['base']) ? $store['base'] : '') : '';
+    $tone  = is_array($store) ? (isset($store['tone']) ? $store['tone'] : '') : (isset($s['repurpose_tone']) ? $s['repurpose_tone'] : '');
+    $sel   = is_array($store) && isset($store['media']) ? (array)$store['media'] : array('gmb','instagram','facebook','x','slack');
+    $result= is_array($store) && isset($store['result']) ? $store['result'] : null;
+    $ajax  = admin_url('admin-ajax.php');
+    $nonce = wp_create_nonce('carmel3_repurpose_ajax');
+    ?>
+    <div style="max-width:1000px;margin:20px auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+        <div style="background:linear-gradient(135deg,#0f766e,#134e4a);color:#fff;padding:24px;border-radius:16px;margin-bottom:18px">
+            <h1 style="margin:0 0 6px;font-size:24px">元ネタから各媒体へ展開</h1>
+            <p style="margin:0;opacity:.92">あなたが書いた<strong>元ネタ（一文〜数行）</strong>をAIが読み取り、Googleマイビジネス・Instagram・Facebook・X・Slack などに<strong>合わせて書き分け</strong>ます。出た文章はその場で<strong>AI添削</strong>して、コピーして各媒体に貼るだけ。</p>
+        </div>
+
+        <?php if (isset($_GET['done']) && is_array($result) && !empty($result['error'])): ?>
+            <div class="notice notice-error is-dismissible"><p>生成に失敗：<?php echo esc_html($result['error']); ?></p></div>
+        <?php endif; ?>
+
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+            <input type="hidden" name="action" value="carmel3_repurpose_run">
+            <?php wp_nonce_field('carmel3_repurpose_run'); ?>
+
+            <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:16px">
+                <label style="font-weight:800;font-size:15px">① 元ネタ（これをもとに各媒体へ展開します）</label>
+                <textarea name="base_text" rows="5" style="width:100%;padding:10px;margin-top:8px;font-size:14px" placeholder="例：今週末、決算セール開催。対象車は最大10万円引き。ご来店予約の方にはガソリン券プレゼント。"><?php echo esc_textarea($base); ?></textarea>
+
+                <label style="display:block;margin-top:14px;font-weight:800;font-size:15px">② 文体・口調の指示（自由・任意）</label>
+                <textarea name="tone" rows="3" style="width:100%;padding:10px;margin-top:8px;font-size:14px" placeholder="例：現場スタッフの体験談風。親しみやすく丁寧。専門用語は避ける。絵文字は控えめ。カーメルらしい安心感を出す。"><?php echo esc_textarea($tone); ?></textarea>
+                <p style="margin:4px 0 0;color:#888;font-size:12px">ここに書いた口調は<strong>全媒体に反映</strong>します（「加盟店ブログ風」もここで細かく指定できます）。保存され、次回も引き継ぎます。</p>
+
+                <label style="display:block;margin-top:14px;font-weight:800;font-size:15px">③ 展開する媒体を選ぶ</label>
+                <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px">
+                    <?php foreach ($defs as $k => $d): ?>
+                        <label style="border:1px solid #cbd5e1;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px">
+                            <input type="checkbox" name="media[]" value="<?php echo esc_attr($k); ?>" <?php checked(in_array($k, $sel, true)); ?>> <?php echo esc_html($d['label']); ?>
+                        </label>
+                    <?php endforeach; ?>
+                </div>
+
+                <p style="margin:16px 0 0"><button type="submit" class="button button-primary button-hero">各媒体用に変換する</button>
+                    <span style="color:#888;font-size:12px;margin-left:8px">※ 選んだ媒体ぶんをまとめてAIが作成します（10〜30秒／その分のAIコストがかかります）。</span></p>
+            </div>
+        </form>
+
+        <?php if (is_array($result) && !empty($result['items'])): ?>
+            <h2 style="font-size:17px;margin:18px 0 10px">③ 結果（コピーして各媒体へ／その場でAI添削もできます）</h2>
+            <?php foreach ($result['items'] as $k => $text): $d = isset($defs[$k]) ? $defs[$k] : array('label'=>$k); ?>
+                <div class="carmel3-rp-box" data-media="<?php echo esc_attr($k); ?>" style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:14px 16px;margin-bottom:14px">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">
+                        <strong style="font-size:14px;color:#0f766e"><?php echo esc_html($d['label']); ?></strong>
+                        <span style="font-size:12px;color:#999" class="carmel3-rp-count"></span>
+                    </div>
+                    <textarea class="carmel3-rp-text" rows="6" style="width:100%;padding:10px;font-size:14px"><?php echo esc_textarea($text); ?></textarea>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px">
+                        <button type="button" class="button carmel3-rp-copy">コピー</button>
+                        <input type="text" class="carmel3-rp-inst" placeholder="添削の指示（例：もっと短く／絵文字増やして）" style="flex:1;min-width:200px;padding:6px">
+                        <button type="button" class="button carmel3-rp-refine">AIで添削・調整</button>
+                        <span class="carmel3-rp-status" style="font-size:12px;color:#666"></span>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
+
+    <script>
+    (function(){
+        var ajax = <?php echo wp_json_encode($ajax); ?>;
+        var nonce = <?php echo wp_json_encode($nonce); ?>;
+        var tone = <?php echo wp_json_encode($tone); ?>;
+        function count(box){
+            var t = box.querySelector('.carmel3-rp-text').value;
+            box.querySelector('.carmel3-rp-count').textContent = t.length + '文字';
+        }
+        document.querySelectorAll('.carmel3-rp-box').forEach(function(box){
+            count(box);
+            box.querySelector('.carmel3-rp-text').addEventListener('input', function(){ count(box); });
+            box.querySelector('.carmel3-rp-copy').addEventListener('click', function(){
+                var ta = box.querySelector('.carmel3-rp-text');
+                ta.select(); ta.setSelectionRange(0, 99999);
+                try { document.execCommand('copy'); } catch(e){}
+                if (navigator.clipboard) { navigator.clipboard.writeText(ta.value).catch(function(){}); }
+                this.textContent = 'コピーしました'; var b=this; setTimeout(function(){ b.textContent='コピー'; }, 1500);
+            });
+            box.querySelector('.carmel3-rp-refine').addEventListener('click', function(){
+                var ta = box.querySelector('.carmel3-rp-text');
+                var status = box.querySelector('.carmel3-rp-status');
+                var inst = box.querySelector('.carmel3-rp-inst').value;
+                var media = box.getAttribute('data-media');
+                status.textContent = '添削中…';
+                var body = new URLSearchParams();
+                body.append('action','carmel3_repurpose_refine');
+                body.append('nonce',nonce);
+                body.append('media',media);
+                body.append('text',ta.value);
+                body.append('instruction',inst);
+                body.append('tone',tone);
+                fetch(ajax,{method:'POST',body:body,credentials:'same-origin'})
+                  .then(function(r){return r.json();})
+                  .then(function(j){
+                      if (j && j.success && j.data && j.data.text){ ta.value = j.data.text; count(box); status.textContent='添削しました'; }
+                      else { status.textContent = '失敗：' + ((j&&j.data&&j.data.msg)||'不明'); }
+                      setTimeout(function(){ status.textContent=''; }, 4000);
+                  })
+                  .catch(function(){ status.textContent='通信エラー'; });
+            });
+        });
     })();
     </script>
     <?php
