@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 10.4
+ * Version: 10.5
  * Author: CARMEL
  */
 
@@ -64,6 +64,12 @@ function carmel3_auto_get_settings() {
         'auto_slug_meta' => 1,       // スラッグ（英語URL）とメタディスクリプションを自動生成
         'article_length' => 'standard', // 記事の長さ（short/standard/long）ニュース・加盟店ブログに適用
         'repurpose_tone' => '',        // 「元ネタから展開」の既定の文体・口調指示
+        // Google口コミ AI返信
+        'gr_access_token' => '',       // Googleアクセストークン（GMBと同じ値）
+        'gr_account'      => '',        // accounts/xxxx（GMBと同じ）
+        'gr_location'     => '',        // locations/xxxx（GMBと同じ）
+        'gr_tone'         => '',        // 返信の文体・口調
+        'gr_mode'         => 'approve', // approve=すべて手動確認 / hybrid=高評価は自動 / auto=全自動
         'text_model'   => '',        // 文章生成モデルの上書き（空=本体まかせ。無料モデル指定で残高不足回避）
         'publish'      => 0,
         'gen_images'   => 0,
@@ -2051,6 +2057,7 @@ function carmel3_auto_register_menu() {
         add_submenu_page($parent, 'ニュースを作る（指示して生成）', 'ニュースを作る', 'manage_options', 'carmel3-news', 'carmel3_news_page');
         add_submenu_page($parent, '元ネタから各媒体へ展開', '元ネタから展開', 'manage_options', 'carmel3-repurpose', 'carmel3_repurpose_page');
         add_submenu_page($parent, 'Slackでニュース提案・投稿', 'Slack連携', 'manage_options', 'carmel3-slack', 'carmel3_slack_page');
+        add_submenu_page($parent, 'Google口コミ AI返信', '口コミ返信', 'manage_options', 'carmel3-reviews', 'carmel3_reviews_page');
         add_submenu_page($parent, '店舗・担当者（記事に差し込み）', '店舗・担当者', 'manage_options', 'carmel3-stores', 'carmel3_stores_page');
         add_submenu_page($parent, 'その他掲載ページ（MEO対策）', 'その他掲載ページ（MEO対策）', 'manage_options', 'carmel3-meo', 'carmel3_meo_page');
     } else {
@@ -2060,8 +2067,9 @@ function carmel3_auto_register_menu() {
         add_menu_page('ニュースを作る（指示して生成）', 'ニュースを作る', 'manage_options', 'carmel3-news', 'carmel3_news_page', 'dashicons-megaphone', 5);
         add_menu_page('元ネタから各媒体へ展開', '元ネタから展開', 'manage_options', 'carmel3-repurpose', 'carmel3_repurpose_page', 'dashicons-share', 6);
         add_menu_page('Slackでニュース提案・投稿', 'Slack連携', 'manage_options', 'carmel3-slack', 'carmel3_slack_page', 'dashicons-format-chat', 7);
-        add_menu_page('店舗・担当者', '店舗・担当者', 'manage_options', 'carmel3-stores', 'carmel3_stores_page', 'dashicons-store', 8);
-        add_menu_page('その他掲載ページ（MEO対策）', 'その他掲載ページ(MEO)', 'manage_options', 'carmel3-meo', 'carmel3_meo_page', 'dashicons-location-alt', 9);
+        add_menu_page('Google口コミ AI返信', '口コミ返信', 'manage_options', 'carmel3-reviews', 'carmel3_reviews_page', 'dashicons-star-filled', 8);
+        add_menu_page('店舗・担当者', '店舗・担当者', 'manage_options', 'carmel3-stores', 'carmel3_stores_page', 'dashicons-store', 9);
+        add_menu_page('その他掲載ページ（MEO対策）', 'その他掲載ページ(MEO)', 'manage_options', 'carmel3-meo', 'carmel3_meo_page', 'dashicons-location-alt', 10);
     }
 }
 
@@ -4967,6 +4975,288 @@ function carmel3_repurpose_page() {
                       .catch(function(){ status.textContent='通信エラー'; });
                 });
             }
+        });
+    })();
+    </script>
+    <?php
+}
+
+/* =====================================================================
+   Google口コミ AI返信（取得→AI返信案→確認して投稿）
+   Googleビジネスプロフィール(v4)のreviews APIを使用。
+   認証はGMBと同じ（アクセストークン・アカウントID・ロケーションID）。
+   ※ 口コミAPIはGoogleのAPI利用審査(承認)が必要な場合があります。
+   ===================================================================== */
+
+// accounts/xxx・locations/xxx の接頭辞を外して数値部分だけにする
+function carmel3_gr_num($v) {
+    $v = trim((string)$v);
+    return preg_replace('#^(?:accounts|locations)/#', '', $v);
+}
+
+// 認証情報（口コミ設定→無ければGMB/本体の値を流用）
+function carmel3_gr_creds($s) {
+    $tok = trim((string)$s['gr_access_token']);
+    $acc = carmel3_gr_num($s['gr_account']);
+    $loc = carmel3_gr_num($s['gr_location']);
+    // 未設定なら本体のSNS認証情報(Google)を流用してみる
+    if (($tok === '' || $acc === '' || $loc === '') && function_exists('carmel_get_sns_credentials')) {
+        $all = carmel_get_sns_credentials();
+        $m = isset($all['main']) && is_array($all['main']) ? $all['main'] : array();
+        foreach (array('google_access_token','access_token','google_token') as $k) { if ($tok === '' && !empty($m[$k])) $tok = trim($m[$k]); }
+        foreach (array('google_account_id','account_id','google_account') as $k) { if ($acc === '' && !empty($m[$k])) $acc = carmel3_gr_num($m[$k]); }
+        foreach (array('google_location_id','location_id','google_location') as $k) { if ($loc === '' && !empty($m[$k])) $loc = carmel3_gr_num($m[$k]); }
+    }
+    return array('token' => $tok, 'account' => $acc, 'location' => $loc);
+}
+
+// v4 API呼び出し
+function carmel3_gr_api($token, $method, $path, $body = null) {
+    if (trim((string)$token) === '') return array('error' => 'アクセストークンが未設定です');
+    $url  = 'https://mybusiness.googleapis.com/v4/' . $path;
+    $args = array('method' => $method, 'headers' => array('Authorization' => 'Bearer ' . $token), 'timeout' => 30);
+    if ($body !== null) {
+        $args['headers']['Content-Type'] = 'application/json';
+        $args['body'] = wp_json_encode($body, JSON_UNESCAPED_UNICODE);
+    }
+    $r = wp_remote_request($url, $args);
+    if (is_wp_error($r)) return array('error' => $r->get_error_message());
+    $code = (int) wp_remote_retrieve_response_code($r);
+    $data = json_decode((string) wp_remote_retrieve_body($r), true);
+    if ($code < 200 || $code >= 300) {
+        $msg = isset($data['error']['message']) ? $data['error']['message'] : ('HTTP ' . $code);
+        return array('error' => $msg, 'code' => $code);
+    }
+    return array('data' => is_array($data) ? $data : array());
+}
+
+function carmel3_gr_list_reviews($c) {
+    if ($c['account'] === '' || $c['location'] === '') return array('error' => 'アカウントID／ロケーションIDが未設定です');
+    return carmel3_gr_api($c['token'], 'GET', 'accounts/' . $c['account'] . '/locations/' . $c['location'] . '/reviews?pageSize=30&orderBy=updateTime%20desc');
+}
+
+function carmel3_gr_put_reply($c, $review_id, $comment) {
+    return carmel3_gr_api($c['token'], 'PUT',
+        'accounts/' . $c['account'] . '/locations/' . $c['location'] . '/reviews/' . rawurlencode($review_id) . '/reply',
+        array('comment' => (string)$comment));
+}
+
+// 星の文字列→数値
+function carmel3_gr_stars($rating) {
+    $map = array('ONE' => 1, 'TWO' => 2, 'THREE' => 3, 'FOUR' => 4, 'FIVE' => 5);
+    return isset($map[$rating]) ? $map[$rating] : 0;
+}
+
+// AIで返信案を作成
+function carmel3_gr_draft($stars, $author, $text, $tone) {
+    if (!function_exists('carmel_call_openrouter_chat')) return array('error' => '本体のAI関数が見つかりません');
+    $stars = (int)$stars;
+    $sys = 'あなたは中古車販売店カーメル（合同会社アイズ）の店長です。Googleの口コミへの返信文だけを日本語で返します（前置き・引用符・署名記号は付けない）。';
+    $user = "次のGoogle口コミに、お店として返信してください。\n"
+          . "評価：{$stars}つ星\n投稿者：" . ($author !== '' ? $author : '（匿名）') . "\n"
+          . "口コミ本文：" . ($text !== '' ? $text : '（本文なし・評価のみ）') . "\n\n";
+    if ($stars >= 4) {
+        $user .= "方針：来店・投稿への感謝を具体的に。良かった点に触れ、また利用したいと思える温かい返信。150〜250字。";
+    } elseif ($stars > 0) {
+        $user .= "方針：まず不快な思いへのお詫び。言い訳せず真摯に。改善の姿勢を示し、個別に対応したい旨と連絡先（お電話やご来店でのご相談）を丁寧に案内。150〜300字。挑発的・弁解がましい表現は禁止。";
+    } else {
+        $user .= "方針：投稿への感謝を伝える丁寧な返信。150〜220字。";
+    }
+    if (trim($tone) !== '') $user .= "\n文体・口調：" . trim($tone);
+    $user .= "\n注意：事実を創作しない。過度な宣伝はしない。投稿者名があれば自然に一言添える。返信本文のみを返す。";
+
+    $s = carmel3_auto_get_settings();
+    $res = carmel_call_openrouter_chat(array(
+        array('role' => 'system', 'content' => $sys),
+        array('role' => 'user',   'content' => $user),
+    ), isset($s['text_model']) ? $s['text_model'] : '', 0.7, 90);
+    if (!empty($res['error'])) return array('error' => mb_substr((string)$res['error'], 0, 140));
+    $c = trim((string)(isset($res['content']) ? $res['content'] : ''));
+    $c = preg_replace('/^```(?:\w+)?|```$/im', '', $c);
+    $c = trim($c, " \t\n\r\0\x0B\"'");
+    if ($c === '') return array('error' => 'AIの応答が空でした');
+    return array('text' => $c);
+}
+
+// 設定保存
+add_action('admin_post_carmel3_reviews_save', function () {
+    if (!current_user_can('manage_options')) wp_die('権限がありません');
+    check_admin_referer('carmel3_reviews_save');
+    $s = carmel3_auto_get_settings();
+    if (isset($_POST['gr_access_token'])) {
+        $t = trim((string) wp_unslash($_POST['gr_access_token']));
+        if ($t !== '' && strpos($t, '●') === false) $s['gr_access_token'] = sanitize_text_field($t);
+        if ($t === '') $s['gr_access_token'] = '';
+    }
+    $s['gr_account']  = isset($_POST['gr_account']) ? sanitize_text_field(wp_unslash($_POST['gr_account'])) : '';
+    $s['gr_location'] = isset($_POST['gr_location']) ? sanitize_text_field(wp_unslash($_POST['gr_location'])) : '';
+    $s['gr_tone']     = isset($_POST['gr_tone']) ? sanitize_textarea_field(wp_unslash($_POST['gr_tone'])) : '';
+    $mode = isset($_POST['gr_mode']) ? sanitize_key($_POST['gr_mode']) : 'approve';
+    $s['gr_mode'] = in_array($mode, array('approve','hybrid','auto'), true) ? $mode : 'approve';
+    carmel3_auto_save_settings($s);
+    wp_safe_redirect(admin_url('admin.php?page=carmel3-reviews&saved=1'));
+    exit;
+});
+
+// AI返信案（AJAX）
+add_action('wp_ajax_carmel3_gr_draft', function () {
+    if (!current_user_can('manage_options')) wp_send_json_error(array('msg' => '権限がありません'));
+    check_ajax_referer('carmel3_gr_ajax', 'nonce');
+    $stars  = isset($_POST['stars']) ? (int)$_POST['stars'] : 0;
+    $author = isset($_POST['author']) ? sanitize_text_field(wp_unslash($_POST['author'])) : '';
+    $text   = isset($_POST['text']) ? sanitize_textarea_field(wp_unslash($_POST['text'])) : '';
+    $s = carmel3_auto_get_settings();
+    $r = carmel3_gr_draft($stars, $author, $text, isset($s['gr_tone']) ? $s['gr_tone'] : '');
+    if (!empty($r['error'])) wp_send_json_error(array('msg' => $r['error']));
+    wp_send_json_success(array('text' => $r['text']));
+});
+
+// 返信を投稿（AJAX）
+add_action('wp_ajax_carmel3_gr_reply', function () {
+    if (!current_user_can('manage_options')) wp_send_json_error(array('msg' => '権限がありません'));
+    check_ajax_referer('carmel3_gr_ajax', 'nonce');
+    $rid = isset($_POST['review_id']) ? sanitize_text_field(wp_unslash($_POST['review_id'])) : '';
+    $cmt = isset($_POST['comment']) ? trim((string) wp_unslash($_POST['comment'])) : '';
+    if ($rid === '' || $cmt === '') wp_send_json_error(array('msg' => '返信内容が空です'));
+    $s = carmel3_auto_get_settings();
+    $c = carmel3_gr_creds($s);
+    $r = carmel3_gr_put_reply($c, $rid, $cmt);
+    if (!empty($r['error'])) wp_send_json_error(array('msg' => $r['error']));
+    wp_send_json_success(array('ok' => 1));
+});
+
+function carmel3_reviews_page() {
+    $s = carmel3_auto_get_settings();
+    $c = carmel3_gr_creds($s);
+    $has_token = trim((string)$c['token']) !== '';
+    $ajax  = admin_url('admin-ajax.php');
+    $nonce = wp_create_nonce('carmel3_gr_ajax');
+
+    // 取得実行（ボタンから）
+    $reviews = null; $fetch_err = '';
+    if (isset($_GET['fetch'])) {
+        $res = carmel3_gr_list_reviews($c);
+        if (!empty($res['error'])) $fetch_err = $res['error'];
+        else $reviews = isset($res['data']['reviews']) ? $res['data']['reviews'] : array();
+    }
+    ?>
+    <div style="max-width:1000px;margin:20px auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+        <div style="background:linear-gradient(135deg,#b45309,#7c2d12);color:#fff;padding:24px;border-radius:16px;margin-bottom:18px">
+            <h1 style="margin:0 0 6px;font-size:24px">Google口コミ AI返信</h1>
+            <p style="margin:0;opacity:.92">口コミを取得して、AIが<strong>返信案</strong>を作成します。内容を確認・手直しして<strong>1クリックで投稿</strong>。（低評価は必ず人の目で確認してから投稿するのがおすすめです）</p>
+        </div>
+
+        <?php if (isset($_GET['saved'])): ?><div class="notice notice-success is-dismissible"><p>設定を保存しました。</p></div><?php endif; ?>
+        <?php if ($fetch_err !== ''): ?><div class="notice notice-error is-dismissible"><p>口コミの取得に失敗：<?php echo esc_html($fetch_err); ?><br><span style="font-size:12px">※ トークン切れ（UNAUTHENTICATED）→取り直し／PERMISSION_DENIED・not been used→GoogleのAPI利用申請が必要、の可能性があります。</span></p></div><?php endif; ?>
+
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+            <input type="hidden" name="action" value="carmel3_reviews_save">
+            <?php wp_nonce_field('carmel3_reviews_save'); ?>
+            <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:16px">
+                <h2 style="margin:0 0 10px;font-size:16px">設定</h2>
+                <p style="margin:0 0 10px;color:#666;font-size:13px">認証は<strong>Googleマイビジネス連携と同じ値</strong>です（空欄なら本体のSNS認証情報から自動流用を試みます）。</p>
+                <p style="margin:8px 0 4px;font-weight:700">アクセストークン（xoxb…ではなく ya29… のGoogleトークン）</p>
+                <input type="text" name="gr_access_token" value="<?php echo esc_attr($has_token && trim((string)$s['gr_access_token']) !== '' ? '●●●●●●●●（設定済み・変更時のみ入力）' : ''); ?>" style="width:100%;padding:8px" placeholder="ya29...">
+                <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px">
+                    <label style="font-weight:700;font-size:13px">アカウントID<br>
+                        <input type="text" name="gr_account" value="<?php echo esc_attr($s['gr_account']); ?>" style="width:280px;padding:7px;font-weight:400" placeholder="accounts/106079157175561742619"></label>
+                    <label style="font-weight:700;font-size:13px">ロケーションID<br>
+                        <input type="text" name="gr_location" value="<?php echo esc_attr($s['gr_location']); ?>" style="width:280px;padding:7px;font-weight:400" placeholder="locations/11839986240473951802"></label>
+                </div>
+                <p style="margin:12px 0 4px;font-weight:700">返信の文体・口調（任意）</p>
+                <input type="text" name="gr_tone" value="<?php echo esc_attr($s['gr_tone']); ?>" style="width:100%;padding:7px" placeholder="例：丁寧で温かい。カーメルの安心感が伝わるように。">
+                <p style="margin:12px 0 4px;font-weight:700">返信モード</p>
+                <?php $gm = isset($s['gr_mode']) ? $s['gr_mode'] : 'approve'; ?>
+                <select name="gr_mode" style="padding:5px;min-width:320px">
+                    <option value="approve" <?php selected($gm,'approve'); ?>>すべて手動で確認して投稿（おすすめ）</option>
+                    <option value="hybrid"  <?php selected($gm,'hybrid'); ?>>ハイブリッド（★4〜5は自動／★1〜3は手動）※自動化は次段階</option>
+                    <option value="auto"    <?php selected($gm,'auto'); ?>>全自動 ※自動化は次段階</option>
+                </select>
+                <p style="margin:6px 0 0;color:#888;font-size:12px">現段階は<strong>この画面で確認して投稿</strong>する運用です。定期的な自動返信は、トークン自動更新の実装後に有効化します。</p>
+                <p style="margin:14px 0 0"><button type="submit" class="button button-primary">設定を保存</button></p>
+            </div>
+        </form>
+
+        <p style="margin:0 0 16px">
+            <a href="<?php echo esc_url(admin_url('admin.php?page=carmel3-reviews&fetch=1')); ?>" class="button button-primary button-hero">口コミを取得する</a>
+            <span style="color:#888;font-size:12px;margin-left:8px">※ 取得後、各口コミに「AI返信案を作成」→「この返信を投稿」ができます。</span>
+        </p>
+
+        <?php if (is_array($reviews)): ?>
+            <?php if (empty($reviews)): ?>
+                <div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px">口コミが見つかりませんでした（まだ口コミが無い、または権限をご確認ください）。</div>
+            <?php else: ?>
+                <h2 style="font-size:17px;margin:6px 0 10px">口コミ（<?php echo count($reviews); ?>件）</h2>
+                <?php foreach ($reviews as $rv):
+                    $rid    = isset($rv['reviewId']) ? $rv['reviewId'] : '';
+                    $stars  = carmel3_gr_stars(isset($rv['starRating']) ? $rv['starRating'] : '');
+                    $author = isset($rv['reviewer']['displayName']) ? $rv['reviewer']['displayName'] : '';
+                    $text   = isset($rv['comment']) ? $rv['comment'] : '';
+                    $reply  = isset($rv['reviewReply']['comment']) ? $rv['reviewReply']['comment'] : '';
+                    $star_s = str_repeat('★', max(0,$stars)) . str_repeat('☆', max(0,5-$stars));
+                    $low    = ($stars > 0 && $stars <= 3);
+                ?>
+                    <div class="carmel3-gr" data-rid="<?php echo esc_attr($rid); ?>" data-stars="<?php echo (int)$stars; ?>" data-author="<?php echo esc_attr($author); ?>" data-text="<?php echo esc_attr($text); ?>"
+                         style="background:#fff;border:1px solid <?php echo $low ? '#fecaca' : '#e5e7eb'; ?>;border-radius:12px;padding:14px 16px;margin-bottom:14px">
+                        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
+                            <div><span style="color:#f59e0b;font-size:16px"><?php echo esc_html($star_s); ?></span> <strong style="margin-left:6px"><?php echo esc_html($author !== '' ? $author : '匿名'); ?></strong><?php if ($low): ?> <span style="background:#b91c1c;color:#fff;font-size:11px;padding:1px 8px;border-radius:6px;margin-left:6px">要確認</span><?php endif; ?></div>
+                        </div>
+                        <p style="margin:8px 0;color:#333;font-size:14px;white-space:pre-wrap"><?php echo esc_html($text !== '' ? $text : '（本文なし・評価のみ）'); ?></p>
+
+                        <?php if ($reply !== ''): ?>
+                            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px;font-size:13px;color:#166534;margin-bottom:8px"><strong>返信済み：</strong><br><?php echo nl2br(esc_html($reply)); ?></div>
+                        <?php endif; ?>
+
+                        <textarea class="carmel3-gr-text" rows="4" style="width:100%;padding:9px;font-size:14px" placeholder="ここに返信を書く／「AI返信案を作成」で自動作成"><?php echo esc_textarea($reply); ?></textarea>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px">
+                            <button type="button" class="button carmel3-gr-draft">AI返信案を作成</button>
+                            <button type="button" class="button button-primary carmel3-gr-post"><?php echo $reply !== '' ? '返信を更新して投稿' : 'この返信を投稿'; ?></button>
+                            <span class="carmel3-gr-status" style="font-size:12px;color:#666"></span>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        <?php endif; ?>
+
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 14px;margin-top:8px;font-size:12px;color:#92400e">
+            ⚠️ 口コミAPIはGoogleの<strong>利用審査（承認）</strong>が必要な場合があります。「取得」でエラーが出るときは、そのメッセージをお知らせください。トークンは約1時間で切れるため、切れたら取り直してください（継続運用にはトークン自動更新が必要です）。
+        </div>
+    </div>
+
+    <script>
+    (function(){
+        var ajax = <?php echo wp_json_encode($ajax); ?>;
+        var nonce = <?php echo wp_json_encode($nonce); ?>;
+        document.querySelectorAll('.carmel3-gr').forEach(function(box){
+            var ta = box.querySelector('.carmel3-gr-text');
+            var status = box.querySelector('.carmel3-gr-status');
+            box.querySelector('.carmel3-gr-draft').addEventListener('click', function(){
+                status.textContent = 'AIが返信案を作成中…';
+                var body = new URLSearchParams();
+                body.append('action','carmel3_gr_draft');
+                body.append('nonce',nonce);
+                body.append('stars',box.getAttribute('data-stars'));
+                body.append('author',box.getAttribute('data-author'));
+                body.append('text',box.getAttribute('data-text'));
+                fetch(ajax,{method:'POST',body:body,credentials:'same-origin'}).then(function(r){return r.json();}).then(function(j){
+                    if (j&&j.success&&j.data&&j.data.text){ ta.value=j.data.text; status.textContent='返信案ができました。内容を確認して投稿してください。'; }
+                    else { status.textContent='失敗：'+((j&&j.data&&j.data.msg)||'不明'); }
+                }).catch(function(){ status.textContent='通信エラー'; });
+            });
+            box.querySelector('.carmel3-gr-post').addEventListener('click', function(){
+                if (!ta.value.trim()){ status.textContent='返信が空です'; return; }
+                if (!confirm('この内容でGoogleに返信を投稿します。よろしいですか？')) return;
+                status.textContent='投稿中…';
+                var body = new URLSearchParams();
+                body.append('action','carmel3_gr_reply');
+                body.append('nonce',nonce);
+                body.append('review_id',box.getAttribute('data-rid'));
+                body.append('comment',ta.value);
+                fetch(ajax,{method:'POST',body:body,credentials:'same-origin'}).then(function(r){return r.json();}).then(function(j){
+                    if (j&&j.success){ status.innerHTML='✅ 返信を投稿しました'; }
+                    else { status.textContent='失敗：'+((j&&j.data&&j.data.msg)||'不明'); }
+                }).catch(function(){ status.textContent='通信エラー'; });
+            });
         });
     })();
     </script>
