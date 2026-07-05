@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 9.8
+ * Version: 9.9
  * Author: CARMEL
  */
 
@@ -65,7 +65,7 @@ function carmel3_auto_get_settings() {
         'text_model'   => '',        // 文章生成モデルの上書き（空=本体まかせ。無料モデル指定で残高不足回避）
         'publish'      => 0,
         'gen_images'   => 0,
-        'gen_section_images' => 1,
+        'gen_section_images' => 0,   // 既定OFF＝画像はアイキャッチ＋バナーの2枚のみ（低コスト運用）
         'eyecatch_copy'      => 0,                    // アイキャッチに訴求コピーを重ねる
         'eyecatch_copy_text' => '自社ローンOK｜全国対応', // 訴求コピー（｜で改行）
         'img_style'    => 'standard',  // 画像のスタイル（プリセット）
@@ -1383,6 +1383,15 @@ add_action('admin_init', function () {
     carmel3_sync_store_terms();
     update_option('carmel3_store_terms_synced', 'v1', false);
     flush_rewrite_rules(false);
+});
+
+// コスト削減：画像を「アイキャッチ＋バナーの2枚のみ」に一度だけ切り替える（本文セクション画像をOFF）
+add_action('admin_init', function () {
+    if (get_option('carmel3_2img_only') === 'v1') return;
+    $s = carmel3_auto_get_settings();
+    $s['gen_section_images'] = 0;
+    carmel3_auto_save_settings($s);
+    update_option('carmel3_2img_only', 'v1', false);
 });
 
 // 登録済み店舗をタクソノミー用語（term）に同期。戻り値: array(store_key => term_id)
@@ -4882,11 +4891,13 @@ function carmel3_auto_settings_page() {
             <?php endif; ?>
             </p>
 
-            <p style="margin-top:12px"><label>
-                <input type="checkbox" name="gen_section_images" value="1" <?php checked(!empty($s['gen_section_images'])); ?>>
-                <strong>本文の各セクション画像も生成する（section_1 / 2 / 3）</strong>
-            </label><br>
-            <span style="color:#666;font-size:12px">タイムアウトを避けるため、記事生成のあと<strong>裏側で1枚ずつ順番に</strong>作ります。中身（見出し）のあるセクションだけ、画像が空のときに生成します。</span></p>
+            <div style="border:1px solid #fed7aa;background:#fff7ed;border-radius:10px;padding:12px 14px;margin-top:12px">
+                <label style="font-weight:700"><input type="checkbox" name="gen_section_images" value="1" <?php checked(!empty($s['gen_section_images'])); ?>>
+                本文の各セクション画像も生成する（section_1 / 2 / 3 ＝ 追加で最大3枚）</label><br>
+                <span style="color:#9a3412;font-size:12px">
+                <strong>コスト削減のため、既定はOFF（チェックなし）です。</strong>OFFのときは画像は<strong>アイキャッチ＋トップバナーの2枚のみ</strong>になります。<br>
+                本文中にも画像を入れたい場合だけONにしてください（1記事あたり最大3枚ぶん、画像の生成コストが増えます）。中身（見出し）のあるセクションだけ、画像が空のときに裏側で1枚ずつ生成します。</span>
+            </div>
 
             <p style="margin:6px 0">
                 セクション画像サイズ：
