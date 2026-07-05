@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 10.3
+ * Version: 10.4
  * Author: CARMEL
  */
 
@@ -4639,6 +4639,15 @@ function carmel3_repurpose_refine($text, $label, $instruction, $tone) {
 }
 
 // 生成（フォーム送信）
+// 元ネタストック（保存した元ネタの一覧）取得・保存
+function carmel3_stock_get() {
+    $d = get_option('carmel3_repurpose_stock', array());
+    return is_array($d) ? $d : array();
+}
+function carmel3_stock_set($items) {
+    update_option('carmel3_repurpose_stock', array_values($items), false);
+}
+
 add_action('admin_post_carmel3_repurpose_run', function () {
     if (!current_user_can('manage_options')) wp_die('権限がありません');
     check_admin_referer('carmel3_repurpose_run');
@@ -4652,6 +4661,31 @@ add_action('admin_post_carmel3_repurpose_run', function () {
     $s['repurpose_tone'] = $tone;
     carmel3_auto_save_settings($s);
 
+    // 「元ネタを保存」ボタンが押された場合は、生成せずストックに保存
+    if (!empty($_POST['stock_save'])) {
+        $base_t = trim((string)$base);
+        if ($base_t === '') {
+            set_transient('carmel3_repurpose_msg', '元ネタが空です。', 60);
+            wp_safe_redirect(admin_url('admin.php?page=carmel3-repurpose&stockerr=1'));
+            exit;
+        }
+        $title = isset($_POST['stock_title']) ? sanitize_text_field(wp_unslash($_POST['stock_title'])) : '';
+        if ($title === '') $title = wp_trim_words(wp_strip_all_tags($base_t), 12, '');
+        if ($title === '') $title = '無題の元ネタ';
+        $items = carmel3_stock_get();
+        array_unshift($items, array(
+            'id'    => uniqid('stk', true),
+            'title' => $title,
+            'text'  => $base_t,
+            'tone'  => $tone,
+            'time'  => current_time('mysql'),
+        ));
+        if (count($items) > 100) $items = array_slice($items, 0, 100);
+        carmel3_stock_set($items);
+        wp_safe_redirect(admin_url('admin.php?page=carmel3-repurpose&stocked=1'));
+        exit;
+    }
+
     $r = carmel3_repurpose_generate($base, $tone, $media);
     set_transient('carmel3_repurpose_' . get_current_user_id(), array(
         'base'  => (string)$base,
@@ -4661,6 +4695,18 @@ add_action('admin_post_carmel3_repurpose_run', function () {
     ), 1800);
 
     wp_safe_redirect(admin_url('admin.php?page=carmel3-repurpose&done=1'));
+    exit;
+});
+
+// 元ネタストックの削除
+add_action('admin_post_carmel3_stock_delete', function () {
+    if (!current_user_can('manage_options')) wp_die('権限がありません');
+    check_admin_referer('carmel3_stock_delete');
+    $id = isset($_POST['id']) ? sanitize_text_field(wp_unslash($_POST['id'])) : '';
+    $items = carmel3_stock_get();
+    $items = array_filter($items, function ($it) use ($id) { return !(isset($it['id']) && $it['id'] === $id); });
+    carmel3_stock_set($items);
+    wp_safe_redirect(admin_url('admin.php?page=carmel3-repurpose&unstocked=1'));
     exit;
 });
 
@@ -4733,6 +4779,23 @@ function carmel3_repurpose_page() {
     $tone  = is_array($store) ? (isset($store['tone']) ? $store['tone'] : '') : (isset($s['repurpose_tone']) ? $s['repurpose_tone'] : '');
     $sel   = is_array($store) && isset($store['media']) ? (array)$store['media'] : array('gmb','instagram','facebook','x','slack');
     $result= is_array($store) && isset($store['result']) ? $store['result'] : null;
+
+    // ストックから「使う」で呼び出した場合は、その元ネタを優先で読み込む
+    $stock = carmel3_stock_get();
+    if (isset($_GET['use'])) {
+        $uid = sanitize_text_field(wp_unslash($_GET['use']));
+        foreach ($stock as $it) {
+            if (isset($it['id']) && $it['id'] === $uid) {
+                $base = isset($it['text']) ? $it['text'] : $base;
+                if (!empty($it['tone'])) $tone = $it['tone'];
+                $result = null; // 呼び出し時は前回結果を消してフォームを綺麗に
+                break;
+            }
+        }
+    }
+    $flash = get_transient('carmel3_repurpose_msg');
+    if ($flash) delete_transient('carmel3_repurpose_msg');
+
     $ajax  = admin_url('admin-ajax.php');
     $nonce = wp_create_nonce('carmel3_repurpose_ajax');
     ?>
@@ -4745,6 +4808,10 @@ function carmel3_repurpose_page() {
         <?php if (isset($_GET['done']) && is_array($result) && !empty($result['error'])): ?>
             <div class="notice notice-error is-dismissible"><p>生成に失敗：<?php echo esc_html($result['error']); ?></p></div>
         <?php endif; ?>
+        <?php if (isset($_GET['stocked'])): ?><div class="notice notice-success is-dismissible"><p>元ネタをストックに保存しました。</p></div><?php endif; ?>
+        <?php if (isset($_GET['unstocked'])): ?><div class="notice notice-success is-dismissible"><p>元ネタを削除しました。</p></div><?php endif; ?>
+        <?php if (isset($_GET['use'])): ?><div class="notice notice-info is-dismissible"><p>ストックした元ネタを読み込みました。下のフォームに入っています。</p></div><?php endif; ?>
+        <?php if ($flash): ?><div class="notice notice-error is-dismissible"><p><?php echo esc_html($flash); ?></p></div><?php endif; ?>
 
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
             <input type="hidden" name="action" value="carmel3_repurpose_run">
@@ -4769,8 +4836,50 @@ function carmel3_repurpose_page() {
 
                 <p style="margin:16px 0 0"><button type="submit" class="button button-primary button-hero">各媒体用に変換する</button>
                     <span style="color:#888;font-size:12px;margin-left:8px">※ 選んだ媒体ぶんをまとめてAIが作成します（10〜30秒／その分のAIコストがかかります）。</span></p>
+
+                <div style="margin-top:14px;padding-top:12px;border-top:1px dashed #cbd5e1;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+                    <span style="font-weight:700;font-size:13px">💾 この元ネタを保存：</span>
+                    <input type="text" name="stock_title" placeholder="名前（例：決算セール告知）※空でも自動で付きます" style="flex:1;min-width:240px;padding:6px">
+                    <button type="submit" name="stock_save" value="1" class="button button-secondary">元ネタをストックに保存</button>
+                </div>
+                <p style="margin:6px 0 0;color:#888;font-size:12px">保存した元ネタは下の「元ネタストック」からいつでも呼び出せます（AIは使いません・無料）。</p>
             </div>
         </form>
+
+        <?php // ===== 元ネタストック（保存した元ネタの一覧） ===== ?>
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:16px">
+            <h2 style="margin:0 0 10px;font-size:16px">🗂 元ネタストック（<?php echo count($stock); ?>件）</h2>
+            <?php if (empty($stock)): ?>
+                <p style="margin:0;color:#888;font-size:13px">まだ保存された元ネタはありません。上のフォームで元ネタを書いて「元ネタをストックに保存」を押すと、ここに貯まっていきます。</p>
+            <?php else: ?>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                    <?php foreach ($stock as $it):
+                        $iid = isset($it['id']) ? $it['id'] : '';
+                        $ititle = isset($it['title']) ? $it['title'] : '無題';
+                        $itext = isset($it['text']) ? $it['text'] : '';
+                        $itime = isset($it['time']) ? $it['time'] : '';
+                        $use_url = admin_url('admin.php?page=carmel3-repurpose&use=' . rawurlencode($iid));
+                    ?>
+                        <div style="border:1px solid #eee;border-radius:10px;padding:12px 14px;background:#fafafa">
+                            <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
+                                <strong style="font-size:14px"><?php echo esc_html($ititle); ?></strong>
+                                <span style="color:#aaa;font-size:11px"><?php echo esc_html($itime); ?></span>
+                            </div>
+                            <p style="margin:6px 0 8px;color:#555;font-size:12px;line-height:1.6"><?php echo esc_html(wp_trim_words(wp_strip_all_tags($itext), 40, '…')); ?></p>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                                <a href="<?php echo esc_url($use_url); ?>" class="button button-primary" style="padding:2px 14px">この元ネタを使う</a>
+                                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" onsubmit="return confirm('この元ネタを削除します。よろしいですか？');" style="display:inline">
+                                    <input type="hidden" name="action" value="carmel3_stock_delete">
+                                    <input type="hidden" name="id" value="<?php echo esc_attr($iid); ?>">
+                                    <?php wp_nonce_field('carmel3_stock_delete'); ?>
+                                    <button type="submit" class="button" style="color:#b91c1c">削除</button>
+                                </form>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
 
         <?php if (is_array($result) && !empty($result['items'])): ?>
             <h2 style="font-size:17px;margin:18px 0 10px">③ 結果（コピーして各媒体へ／その場でAI添削もできます）</h2>
