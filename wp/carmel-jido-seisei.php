@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 10.1
+ * Version: 10.2
  * Author: CARMEL
  */
 
@@ -4264,6 +4264,37 @@ add_action('admin_post_carmel3_news_create', function () {
         $item['category'] = 'campaign';
         $item['brief']    = $brief;
 
+    } elseif ($kind === 'fc') { // 加盟店募集（フランチャイズ）向け
+        $ftitle = isset($_POST['fc_title']) ? sanitize_text_field(wp_unslash($_POST['fc_title'])) : '';
+        $appeal = isset($_POST['fc_appeal']) ? sanitize_textarea_field(wp_unslash($_POST['fc_appeal'])) : '';
+        $target = isset($_POST['fc_target']) ? sanitize_text_field(wp_unslash($_POST['fc_target'])) : '';
+        $terms  = isset($_POST['fc_terms']) ? sanitize_textarea_field(wp_unslash($_POST['fc_terms'])) : '';
+        $cta    = isset($_POST['fc_cta']) ? sanitize_text_field(wp_unslash($_POST['fc_cta'])) : '';
+        $tone   = isset($_POST['fc_tone']) ? sanitize_textarea_field(wp_unslash($_POST['fc_tone'])) : '';
+
+        if ($appeal === '' && $ftitle === '') {
+            set_transient('carmel3_news_msg', '訴求ポイントかタイトルのどちらかは入力してください。', 60);
+            wp_safe_redirect(admin_url('admin.php?page=carmel3-news&err=1'));
+            exit;
+        }
+
+        $brief  = "種類：加盟店募集（フランチャイズ）向けの情報発信\n";
+        $brief .= "読者：カーメルへの加盟（フランチャイズ開業）を検討している個人・法人（見込みオーナー）\n";
+        if ($appeal !== '') $brief .= "訴求ポイント（なぜ加盟が良いか）：\n{$appeal}\n";
+        if ($target !== '') $brief .= "対象（どんな人・企業向けか）：{$target}\n";
+        if ($terms  !== '') $brief .= "募集の要点（事実のみ・伝えたい条件）：\n{$terms}\n";
+        if ($cta    !== '') $brief .= "問い合わせ・応募導線：{$cta}\n";
+        if ($tone   !== '') $brief .= "文体・口調：{$tone}\n";
+        $brief .= "上記に基づき、加盟（フランチャイズ）を検討している読者に向けて、"
+                . "中古車販売店カーメルに加盟するメリット・事業性・サポート体制を分かりやすく伝える記事を作成してください。"
+                . "見込みオーナーが『問い合わせ・資料請求したい』と思える構成にし、最後に応募・問い合わせへの導線を明記。"
+                . "初期費用・ロイヤリティ・保証などの数字や条件は、上で与えられた事実だけを使い、勝手に創作・断定しないこと。";
+
+        $item['title']    = ($ftitle !== '' ? $ftitle : 'カーメル加盟店（フランチャイズ）募集のご案内');
+        $item['keyword']  = 'フランチャイズ 加盟店募集 中古車 開業';
+        $item['category'] = 'recruit';
+        $item['brief']    = $brief;
+
     } else { // oshirase / 自由入力
         $title   = isset($_POST['free_title']) ? sanitize_text_field(wp_unslash($_POST['free_title'])) : '';
         $content = isset($_POST['free_content']) ? sanitize_textarea_field(wp_unslash($_POST['free_content'])) : '';
@@ -4287,6 +4318,12 @@ add_action('admin_post_carmel3_news_create', function () {
         $item['keyword']  = $title;
         $item['category'] = 'news';
         $item['brief']    = $brief;
+    }
+
+    // 保存先（投稿タイプ）。選択があれば反映（実在するもののみ）
+    $want_pt = isset($_POST['news_post_type']) ? sanitize_key($_POST['news_post_type']) : '';
+    if ($want_pt !== '' && post_type_exists($want_pt)) {
+        $item['post_type'] = $want_pt;
     }
 
     // 裏側で生成（画面を固まらせない）。進捗は下のバーに出る
@@ -4350,6 +4387,31 @@ function carmel3_news_page() {
                         <input type="radio" name="news_kind" value="oshirase"> <strong>お知らせ・自由入力</strong>
                         <span style="display:block;color:#666;font-size:12px;margin-top:4px">自由に指示して作成</span>
                     </label>
+                    <label class="carmel3-kind" style="border:2px solid #e5e7eb;border-radius:10px;padding:12px;cursor:pointer;display:block">
+                        <input type="radio" name="news_kind" value="fc"> <strong>🏢 加盟店募集（FC）向け</strong>
+                        <span style="display:block;color:#666;font-size:12px;margin-top:4px">フランチャイズ加盟を検討中の人へ発信</span>
+                    </label>
+                </div>
+
+                <div style="margin-top:14px;padding-top:12px;border-top:1px solid #eee">
+                    <label style="font-weight:700;font-size:13px">保存先（どこに作るか）：
+                        <?php
+                        $pt_choices = array();
+                        foreach (array('news','shop_blog','post','media_article') as $cand) {
+                            if (post_type_exists($cand)) {
+                                $o = get_post_type_object($cand);
+                                $pt_choices[$cand] = $o ? ($o->labels->singular_name ?: $cand) : $cand;
+                            }
+                        }
+                        $def_pt = carmel3_news_post_type();
+                        ?>
+                        <select name="news_post_type" style="padding:5px;font-weight:400;min-width:200px">
+                            <?php foreach ($pt_choices as $k => $lbl): ?>
+                                <option value="<?php echo esc_attr($k); ?>" <?php selected($def_pt, $k); ?>><?php echo esc_html($lbl); ?>（<?php echo esc_html($k); ?>）</option>
+                            <?php endforeach; ?>
+                        </select>
+                    </label>
+                    <p style="margin:6px 0 0;color:#888;font-size:12px">加盟店募集は「加盟店ブログ」や「メディア記事」に保存すると相性が良いです。</p>
                 </div>
             </div>
 
@@ -4413,6 +4475,27 @@ function carmel3_news_page() {
                 <label style="display:block;margin-top:12px;font-size:13px;font-weight:700">記事の内容・要点（指示）<br>
                     <textarea name="free_content" rows="5" placeholder="例: 新しく〇〇店がオープンしました。場所は△△、オープン日は□□。記念フェアも実施。" style="width:100%;padding:8px;font-weight:400"></textarea></label>
                 <p style="margin:10px 0 0;color:#888;font-size:12px">※ 書いた事実だけを使います。AIが勝手に日付や住所を作ることはありません。</p>
+            </div>
+
+            <!-- 加盟店募集（FC）向け -->
+            <div class="carmel3-panel" data-kind="fc" style="display:none;background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:16px">
+                <h2 style="margin:0 0 6px;font-size:16px">② 加盟店募集（フランチャイズ）向けの指示</h2>
+                <p style="margin:0 0 12px;color:#555;font-size:13px">カーメルへの<strong>加盟を検討している人・企業</strong>に向けた発信を作ります。分かる範囲でOK（書いた事実だけを使い、条件は創作しません）。</p>
+                <label style="display:block;font-size:13px;font-weight:700">タイトル（任意・空なら自動）<br>
+                    <input type="text" name="fc_title" placeholder="例: 未経験でも始められる中古車FC｜カーメル加盟店募集" style="width:100%;padding:7px;font-weight:400"></label>
+                <label style="display:block;margin-top:12px;font-size:13px;font-weight:700">訴求ポイント（なぜ加盟が良いか）<br>
+                    <textarea name="fc_appeal" rows="4" placeholder="例: ブランド力と集客ノウハウを提供／開業サポートあり／少ない在庫リスク／本部の広告支援／既存事業との相乗効果 など" style="width:100%;padding:8px;font-weight:400"></textarea></label>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:12px">
+                    <label style="font-size:13px;font-weight:700">対象（どんな人・企業向け）<br>
+                        <input type="text" name="fc_target" placeholder="例: 副業・多角化を考える法人／独立開業したい方" style="width:100%;padding:7px;font-weight:400"></label>
+                    <label style="font-size:13px;font-weight:700">問い合わせ・応募導線<br>
+                        <input type="text" name="fc_cta" placeholder="例: 資料請求フォーム／LINEで相談／電話 050-1793-5554" style="width:100%;padding:7px;font-weight:400"></label>
+                </div>
+                <label style="display:block;margin-top:12px;font-size:13px;font-weight:700">募集の要点（事実のみ・任意）<br>
+                    <textarea name="fc_terms" rows="3" placeholder="例: 初期費用◯◯万円／研修あり／全国対応／エリア相談可 など（決まっている事実だけ。空欄でもOK）" style="width:100%;padding:8px;font-weight:400"></textarea></label>
+                <label style="display:block;margin-top:12px;font-size:13px;font-weight:700">文体・口調（任意）<br>
+                    <input type="text" name="fc_tone" placeholder="例: 信頼感のあるビジネス調／熱意が伝わる前向きなトーン" style="width:100%;padding:7px;font-weight:400"></label>
+                <p style="margin:10px 0 0;color:#888;font-size:12px">※ 初期費用・ロイヤリティ・保証などの数字は、上に書いた内容だけを使います（勝手に断定しません）。空欄なら数字には触れずに書きます。</p>
             </div>
 
             <?php if ($img_on): ?>
