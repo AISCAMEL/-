@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 9.9
+ * Version: 10.0
  * Author: CARMEL
  */
 
@@ -62,6 +62,7 @@ function carmel3_auto_get_settings() {
         'run_time'     => '09:00',   // 自動生成を実行する時刻（サイトのタイムゾーン）
         'max_tokens_cap' => 12000,   // OpenRouterへの max_tokens 上限（0=制限しない／残高節約・エラー回避）
         'auto_slug_meta' => 1,       // スラッグ（英語URL）とメタディスクリプションを自動生成
+        'article_length' => 'standard', // 記事の長さ（short/standard/long）ニュース・加盟店ブログに適用
         'text_model'   => '',        // 文章生成モデルの上書き（空=本体まかせ。無料モデル指定で残高不足回避）
         'publish'      => 0,
         'gen_images'   => 0,
@@ -1867,8 +1868,18 @@ function carmel3_gen_post($post_type, $item, $s, $existing_id = 0) {
         // 店舗未登録：架空の店舗情報を書かせない
         $user .= "\n" . carmel3_no_store_prompt_block() . "\n";
     }
-    $user .= "\nJSONキー:\n{\n  \"title\": \"\",\n  \"excerpt\": \"100〜140文字\",\n  \"content_html\": \"<h2>..</h2><p>..</p> 形式\",\n  \"slug\": \"英語・小文字・ハイフン区切り・5〜7語・記号や日本語なし\",\n  \"meta_description\": \"日本語110〜140文字・検索結果に出る説明\"\n}\n"
-        . "注意: 自然な日本語 / 本文はHTML / 誇大表現は避ける / slugは必ず英語 / 伏字（〇〇店・XXX等）は禁止 / 上の『書き方』があれば最優先で従う。";
+    // 記事の長さ指定（文章量が少ない対策）。設定 article_length に応じて文字数・見出し数を指示。
+    $len = isset($s['article_length']) ? $s['article_length'] : 'standard';
+    if ($len === 'short')      { $cmin=800;  $cmax=1200; $hmin=3; $hmax=4; }
+    elseif ($len === 'long')   { $cmin=2500; $cmax=3500; $hmin=5; $hmax=7; }
+    else                       { $cmin=1500; $cmax=2200; $hmin=4; $hmax=5; $len='standard'; }
+    $user .= "\n【文章量（重要・必ず守る）】\n"
+        . "・本文 content_html は日本語で合計 {$cmin}〜{$cmax}文字。短くしないこと。\n"
+        . "・<h2>見出しを {$hmin}〜{$hmax}個作り、各見出しの下に2〜4段落（<p>）を書く。\n"
+        . "・具体例・手順・チェックリスト（<ul><li>）・数字を入れ、読み応えのある内容にする。\n"
+        . "・同じ内容の繰り返しや水増しはせず、テーマに沿って中身を深掘りする。\n";
+    $user .= "\nJSONキー:\n{\n  \"title\": \"\",\n  \"excerpt\": \"120〜160文字\",\n  \"content_html\": \"<h2>..</h2><p>..</p> 形式・上の文章量を必ず満たす\",\n  \"slug\": \"英語・小文字・ハイフン区切り・5〜7語・記号や日本語なし\",\n  \"meta_description\": \"日本語110〜140文字・検索結果に出る説明\"\n}\n"
+        . "注意: 自然な日本語 / 本文はHTML / 誇大表現は避ける / slugは必ず英語 / 伏字（〇〇店・XXX等）は禁止 / 上の『書き方』『文章量』があれば最優先で従う。";
 
     $text_model = isset($s['text_model']) ? trim((string)$s['text_model']) : '';
     $res = carmel_call_openrouter_chat(array(
@@ -2804,6 +2815,8 @@ add_action('admin_post_carmel3_auto_save', function () {
     }
 
     $s['auto_slug_meta'] = isset($_POST['auto_slug_meta']) ? 1 : 0;
+    $al = isset($_POST['article_length']) ? sanitize_key($_POST['article_length']) : 'standard';
+    $s['article_length'] = in_array($al, array('short', 'standard', 'long'), true) ? $al : 'standard';
     $s['text_model'] = isset($_POST['text_model']) ? sanitize_text_field(wp_unslash($_POST['text_model'])) : '';
 
     $im = isset($_POST['image_model']) ? sanitize_text_field(wp_unslash($_POST['image_model'])) : '';
@@ -4907,6 +4920,19 @@ function carmel3_auto_settings_page() {
             </p>
 
             <hr style="margin:16px 0;border:none;border-top:1px solid #eee">
+
+            <div style="border:1px solid #bfdbfe;background:#eff6ff;border-radius:10px;padding:12px 14px;margin-bottom:12px">
+                <?php $al = isset($s['article_length']) ? $s['article_length'] : 'standard'; ?>
+                <label style="font-weight:800;color:#1e40af">記事の長さ（文章量）：
+                    <select name="article_length" style="padding:5px;font-weight:400;min-width:280px">
+                        <option value="short"    <?php selected($al, 'short'); ?>>短め（約800〜1200字・見出し3〜4）</option>
+                        <option value="standard" <?php selected($al, 'standard'); ?>>標準（約1500〜2200字・見出し4〜5）おすすめ</option>
+                        <option value="long"     <?php selected($al, 'long'); ?>>しっかり長め（約2500〜3500字・見出し5〜7）</option>
+                    </select>
+                </label>
+                <p style="margin:6px 0 0;color:#1e40af;font-size:12px">ニュース・加盟店ブログの<strong>文章量</strong>を指定します（見出し数・具体例・箇条書きも増やします）。<strong>長いほどAIのトークン消費＝コストが増えます。</strong><br>
+                ※ メディア記事は本体エンジンで生成されるため、長さは主に「AIの最大トークン数（下の設定）」で決まります。文章量を増やすには、その値を<strong>4000以上</strong>にしておくと途中で切れません。</p>
+            </div>
 
             <p><label>
                 <input type="checkbox" name="auto_slug_meta" value="1" <?php checked(!empty($s['auto_slug_meta'])); ?>>
