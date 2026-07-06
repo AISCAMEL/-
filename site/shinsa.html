@@ -993,6 +993,8 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
     return t.replace(/[\s　]+/g,' ').replace(/[（(]\s*(必須|任意)\s*[）)]/g,'').replace(/[（(].*?自動.*?[）)]/g,'').trim();
   }
   function sectionOf(el){ var c=el; while(c){ var s=c.previousElementSibling; while(s){ if(s.tagName==='H3')return s.textContent.replace(/\s+/g,' ').trim(); s=s.previousElementSibling;} c=c.parentElement;} return ''; }
+  /* 小分類：直近のH4見出し（保証人／配偶者／緊急連絡先①など）。無ければ''。同名項目の重複を区別するために使う */
+  function groupOf(el){ var c=el; while(c){ var s=c.previousElementSibling; while(s){ if(s.tagName==='H3')return ''; if(s.tagName==='H4')return s.textContent.replace(/\s+/g,' ').replace(/（[^）]*）/g,'').replace(/の?情報$/,'').trim(); s=s.previousElementSibling;} c=c.parentElement;} return ''; }
 
   form.addEventListener('submit',function(e){
     e.preventDefault();
@@ -1030,12 +1032,12 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
       var v=String(el.value).trim();
       if(!v || v==='選択してください' || v.charAt(0)==='←') return; /* 未選択のプレースホルダは記録しない */
       var p=el.closest('p'); if(!p) return;
-      fields.push({section:sectionOf(el), label:leadLabel(p), value:v});
+      fields.push({section:sectionOf(el), group:groupOf(el), label:leadLabel(p), value:v});
     });
     form.querySelectorAll('p').forEach(function(p){
       if(!p.querySelector('.li input[type=checkbox]')||!visible(p)) return;
       var picked=[]; p.querySelectorAll('.li').forEach(function(l){var c=l.querySelector('input');if(c&&c.checked)picked.push(l.textContent.trim());});
-      if(picked.length) fields.push({section:sectionOf(p), label:leadLabel(p), value:picked.join('、')});
+      if(picked.length) fields.push({section:sectionOf(p), group:groupOf(p), label:leadLabel(p), value:picked.join('、')});
     });
 
     /* 主要項目（通知タイトル・台帳キー用） */
