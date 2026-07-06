@@ -305,6 +305,17 @@ function TEST_wpIntake() {
   Logger.log('WP申込タブに1行追記しました：' + cfg.WP_SHEET_TAB);
 }
 
+// ドライブ保存だけを単体テスト（承認確認・フォルダ生成の確認用）
+function TEST_driveSave() {
+  var cfg = getWpConfig_();
+  Logger.log('DRIVE_FOLDER_ID = ' + cfg.DRIVE_FOLDER_ID);
+  var rec = buildWpRecord_(cfg, { meta: { name: 'ドライブ確認太郎' }, fields: [] });
+  var files = [{ label: '運転免許証（表）', name: 't.png', mime: 'image/png',
+    dataBase64: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' }];
+  var links = saveWpFiles_(cfg, files, rec);
+  Logger.log('結果: ' + JSON.stringify(links));
+}
+
 // ============================================================
 //  （任意）1つのタブに統合したい場合のヒント
 //  ・上の WP_SHEET_TAB を「申込データ」にすると同じタブに書き込みます。
