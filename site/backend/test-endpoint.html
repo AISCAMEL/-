@@ -65,7 +65,10 @@ btn.addEventListener('click', function(){
       { section:'STEP9 お支払いのご希望', label:'希望支払い回数', value:'60回(5年)' }
     ],
     consent: true,
-    files: []
+    files: [
+      { label:'運転免許証（表）', name:'test-front.png', mime:'image/png', dataBase64:'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' },
+      { label:'運転免許証（裏）', name:'test-back.png', mime:'image/png', dataBase64:'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' }
+    ]
   };
 
   fetch(ENDPOINT, {

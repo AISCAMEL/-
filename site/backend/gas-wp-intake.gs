@@ -202,14 +202,16 @@ function appendByHeader_(sheet, dataObj) {
 // ============================================================
 function saveWpFiles_(cfg, files, rec) {
   if (!files.length || !cfg.DRIVE_FOLDER_ID) return [];
-  var parent = DriveApp.getFolderById(cfg.DRIVE_FOLDER_ID);
-  var folder = parent.createFolder('[WP] ' + rec.stamp.replace(/[\/:]/g, '-') + '　' + (rec.name || '申込者') + '　' + rec.uid);
+  var main = DriveApp.getFolderById(cfg.DRIVE_FOLDER_ID);
+  var userFolder = getOrCreateFolder_(main, rec.name || '名前未設定');            // ① ユーザー名（カテゴリー・同名は再利用）
+  var dateLabel  = rec.stamp.replace(/[\/:]/g, '-');                              // 例：2026-07-06 14-30-00
+  var subFolder  = userFolder.createFolder(dateLabel + '　' + rec.uid);          // ② 申込日時ごと
   var links = [];
   files.forEach(function(f, i) {
     try {
       var bytes = Utilities.base64Decode(f.dataBase64);
       var blob = Utilities.newBlob(bytes, f.mime || 'application/octet-stream', sanitize_(f.name || ('file' + i)));
-      var file = folder.createFile(blob);
+      var file = subFolder.createFile(blob);
       file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
       links.push({ label: f.label || ('書類' + (i + 1)), url: file.getUrl() });
     } catch (err) {
@@ -217,6 +219,13 @@ function saveWpFiles_(cfg, files, rec) {
     }
   });
   return links;
+}
+
+// 同名フォルダがあれば再利用、なければ作成（ユーザー名フォルダをカテゴリーとして使う）
+function getOrCreateFolder_(parent, name) {
+  name = sanitize_(name);
+  var it = parent.getFoldersByName(name);
+  return it.hasNext() ? it.next() : parent.createFolder(name);
 }
 
 // ============================================================
