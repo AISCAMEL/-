@@ -70,7 +70,13 @@ function doPost(e) {
     var rec = buildWpRecord_(cfg, payload);
 
     // 添付（base64）→ Drive保存 → リンク
-    rec.fileLinks = saveWpFiles_(cfg, payload.files || [], rec);
+    // ※画像保存が失敗しても、申込データは必ずスプレッドシートに残すため try で囲む
+    try {
+      rec.fileLinks = saveWpFiles_(cfg, payload.files || [], rec);
+    } catch (fe) {
+      rec.fileLinks = [{ label: '画像保存エラー', url: String(fe) }];
+      notifyWpError_('ファイル保存でエラー（申込は記録します）: ' + fe);
+    }
 
     // ① 同じスプレッドシートの別タブへ、列名ベースで転写（自動列拡張）
     writeWpRowDynamic_(cfg, rec);
