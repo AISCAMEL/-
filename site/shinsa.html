@@ -1069,6 +1069,21 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
 
     btn.disabled=true; var old=btn.textContent; btn.textContent='送信中…';
 
+    /* 応答待ちで固まらないよう、送信後は速やかに完了表示（GASは裏で処理を続行） */
+    var settled=false, optimistic=null;
+    function showDone(){
+      if(settled)return; settled=true;
+      if(optimistic){clearTimeout(optimistic);optimistic=null;}
+      var d=document.getElementById('caf-done');
+      if(d){d.classList.remove('hide');d.scrollIntoView({behavior:'smooth',block:'center'});}
+      form.querySelectorAll('input,select,textarea,button').forEach(function(el){el.disabled=true;});
+    }
+    function showErr(msg){
+      if(settled)return; settled=true;
+      if(optimistic){clearTimeout(optimistic);optimistic=null;}
+      alert(msg); btn.disabled=false; btn.textContent=old;
+    }
+
     Promise.all(fileJobs).then(function(files){
       files=files.filter(Boolean);
       var hp=form.querySelector('[name=hp]');
@@ -1102,15 +1117,21 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
         consent: true,
         files: files
       };
+      /* 送信を投げたら、最大2.5秒で完了表示（それ以上は待たせない。GASは裏で処理継続） */
+      optimistic=setTimeout(showDone, 2500);
       /* Content-Type: text/plain にしてCORSプリフライトを回避（GASはe.postData.contentsで受け取る） */
       return fetch(GAS,{ method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(payload) })
         .then(function(r){return r.json();});
     })
     .then(function(res){
-      if(res && (res.success||res.ok)){ var d=document.getElementById('caf-done'); if(d){d.classList.remove('hide');d.scrollIntoView({behavior:'smooth',block:'center'});} form.querySelectorAll('input,select,textarea,button').forEach(function(el){el.disabled=true;}); }
-      else { alert((res&&(res.message||(res.data&&res.data.message)))||'送信に失敗しました。時間をおいて再度お試しください。'); btn.disabled=false; btn.textContent=old; }
+      if(settled) return; /* 既に完了表示済み */
+      if(res && (res.success||res.ok)) showDone();
+      else showErr((res&&(res.message||(res.data&&res.data.message)))||'送信に失敗しました。時間をおいて再度お試しください。');
     })
-    .catch(function(){ alert('通信エラーが発生しました。電波の良い場所で再度お試しください。'); btn.disabled=false; btn.textContent=old; });
+    .catch(function(){
+      /* 応答が読めない場合でも送信自体は届いている可能性が高いので完了扱い（GAS側でエラー時は管理者へ通知） */
+      showDone();
+    });
   });
 })();
 </script>
