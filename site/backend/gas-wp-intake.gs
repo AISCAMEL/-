@@ -112,10 +112,8 @@ function buildWpRecord_(cfg, payload) {
   // 表示・通知用の本文
   var lines = [], sec = '';
   fields.forEach(function(f) {
-    var secDisp = String(f.section || '').replace(/^STEP\d+\s*/, ''); // 「STEP1 ご希望のお車」→「ご希望のお車」
-    if (secDisp && secDisp !== sec) { sec = secDisp; lines.push('【' + sec + '】'); }
-    var lbl = (f.group ? f.group + '：' : '') + (f.label || '');
-    lines.push('　' + lbl + '：' + (f.value || ''));
+    if (f.section && f.section !== sec) { sec = f.section; lines.push('■ ' + sec); }
+    lines.push('　' + (f.label || '') + '：' + (f.value || ''));
   });
 
   return {
@@ -154,11 +152,11 @@ function writeWpRowDynamic_(cfg, rec) {
   dataObj[WP_META_COLMAP.email] = rec.email;
   dataObj[WP_META_COLMAP.car]   = rec.car;
 
-  // フォームの各項目 → 列名は「項目名」だけ。重複しやすい箇所（保証人・配偶者等）は小分類で区別
+  // フォームの各項目（セクション名でユニーク化して列に）
   rec.fields.forEach(function(f) {
-    var col = (f.group ? f.group + '：' : '') + (f.label || '');
+    var col = (f.section ? f.section + ' / ' : '') + (f.label || '');
     if (!col) return;
-    // 同名列が複数来た場合は改行で連結（想定外の重複対策）
+    // 同名列が複数来た場合は改行で連結
     dataObj[col] = dataObj[col] ? (dataObj[col] + ' / ' + f.value) : f.value;
   });
 
