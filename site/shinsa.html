@@ -1003,7 +1003,10 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
       if(['file','checkbox','radio','hidden'].indexOf(el.type)>=0) return;
       if(!visible(el)) return;
       var p=el.closest('p'); if(!p) return;
-      if(/必須/.test(p.textContent) && !String(el.value).trim()){ errs.push(leadLabel(p)+'は必須です'); if(!firstBad)firstBad=el; }
+      if(!/必須/.test(p.textContent)) return;
+      var v=String(el.value).trim();
+      /* セレクトの「選択してください」「← …」は未選択とみなす */
+      if(!v || v==='選択してください' || v.charAt(0)==='←'){ errs.push(leadLabel(p)+'は必須です'); if(!firstBad)firstBad=el; }
     });
     var consent=form.querySelectorAll('.caf-check input[type=checkbox]');
     if(!Array.prototype.every.call(consent,function(c){return c.checked;})){ errs.push('同意項目すべてにチェックが必要です'); if(!firstBad)firstBad=form.querySelector('.caf-check'); }
@@ -1011,8 +1014,13 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
     if(lic.length && lic.some(function(x){return !x;})){ errs.push('運転免許証（表・裏）の添付は必須です'); if(!firstBad)firstBad=form.querySelector('.caf-up'); }
 
     if(errs.length){
-      alert('以下をご確認ください：\n・'+errs.slice(0,10).join('\n・')+(errs.length>10?'\n・ ほか':''));
-      if(firstBad&&firstBad.scrollIntoView)firstBad.scrollIntoView({behavior:'smooth',block:'center'});
+      alert('未入力の必須項目があります：\n・'+errs.slice(0,10).join('\n・')+(errs.length>10?'\n・ ほか '+(errs.length-10)+'件':'')+'\n\n入力してから、もう一度お進みください。');
+      /* エラー項目のあるステップへ戻し、その項目を目立たせる */
+      if(window.__cafGoToField) window.__cafGoToField(firstBad);
+      setTimeout(function(){
+        if(firstBad&&firstBad.scrollIntoView) firstBad.scrollIntoView({behavior:'smooth',block:'center'});
+        if(firstBad&&firstBad.style){ firstBad.style.outline='2px solid #dc2626'; firstBad.style.outlineOffset='2px'; setTimeout(function(){firstBad.style.outline='';firstBad.style.outlineOffset='';},2800); }
+      },80);
       return;
     }
     /* ---- 送信先の決定 ----
@@ -1208,6 +1216,13 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
       /* 初回ロード時はスクロールしない（ヘッダーを見せる／iframe埋め込みでも先頭から表示）。ユーザー操作での切替時のみ追従。 */
       if(!initial){ try{ document.querySelector('.caf-step-bar').scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){} }
     }
+    /* 送信バリデーション用：指定要素のあるステップへ移動する（外部から呼べるように） */
+    window.__cafGoToField=function(el){
+      if(!el||!el.closest) return;
+      var pg=el.closest('.step-page'); if(!pg) return;
+      var idx=pageEls.indexOf(pg); if(idx>=0) go(idx);
+    };
+
     var initial=true;
     go(0);
     initial=false;
