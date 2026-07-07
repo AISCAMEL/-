@@ -387,6 +387,16 @@ function TEST_wpIntake() {
   Logger.log('WP申込タブに1行追記しました：' + cfg.WP_SHEET_TAB);
 }
 
+// サンクスメールの文面テスト（NOTIFY_EMAIL 宛に見本を送信。SEND_THANKS 設定は無関係に送ります）
+function TEST_thanks() {
+  var cfg = getWpConfig_();
+  var to = cfg.NOTIFY_EMAIL;
+  if (!to) { Logger.log('NOTIFY_EMAIL 未設定'); return; }
+  var rec = { name: 'テスト太郎', email: to };
+  sendApplicantThankYou_(cfg, rec);
+  Logger.log('サンクスメールの見本を送信しました：' + to + '（会員ページURL：' + (cfg.MYPAGE_URL || '未設定') + '）');
+}
+
 // ドライブ保存だけを単体テスト（承認確認・フォルダ生成の確認用）
 function TEST_driveSave() {
   var cfg = getWpConfig_();
