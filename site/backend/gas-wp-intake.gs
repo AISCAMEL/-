@@ -265,17 +265,27 @@ function createWpAsana_(cfg, rec) {
     '【電話】' + rec.phone + '　【メール】' + rec.email + '\n' +
     '【希望車】' + (rec.car || '未定') + '\n\n' + rec.body + '\n\n【添付書類】\n' +
     (rec.fileLinks.length ? rec.fileLinks.map(function(f){ return '・' + f.label + '： ' + f.url; }).join('\n') : '（添付なし）');
-  var payload = { data: {
-    name: '【WP新規】' + (rec.name || '名前未設定') + '　様　' + (rec.car || ''),
-    notes: notes,
-    projects: [cfg.ASANA_PROJECT_ID]
-  }};
-  if (cfg.ASANA_SECTION_ID) payload.data.memberships = [{ project: cfg.ASANA_PROJECT_ID, section: cfg.ASANA_SECTION_ID }];
-  UrlFetchApp.fetch('https://app.asana.com/api/1.0/tasks', {
-    method: 'post',
-    headers: { 'Authorization': 'Bearer ' + cfg.ASANA_TOKEN, 'Content-Type': 'application/json' },
-    payload: JSON.stringify(payload), muteHttpExceptions: true
+  var headers = { 'Authorization': 'Bearer ' + cfg.ASANA_TOKEN, 'Content-Type': 'application/json' };
+  // ① タスク作成（プロジェクトに追加）
+  var res = UrlFetchApp.fetch('https://app.asana.com/api/1.0/tasks', {
+    method: 'post', headers: headers,
+    payload: JSON.stringify({ data: {
+      name: '【WP新規】' + (rec.name || '名前未設定') + '　様　' + (rec.car || ''),
+      notes: notes,
+      projects: [cfg.ASANA_PROJECT_ID]
+    }}),
+    muteHttpExceptions: true
   });
+  var code = res.getResponseCode();
+  // ② 指定の列（セクション＝審査申込 など）へ移動
+  if (cfg.ASANA_SECTION_ID && (code === 200 || code === 201)) {
+    var gid = JSON.parse(res.getContentText()).data.gid;
+    UrlFetchApp.fetch('https://app.asana.com/api/1.0/sections/' + cfg.ASANA_SECTION_ID + '/addTask', {
+      method: 'post', headers: headers,
+      payload: JSON.stringify({ data: { task: gid } }),
+      muteHttpExceptions: true
+    });
+  }
 }
 
 // ============================================================
