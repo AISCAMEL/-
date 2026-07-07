@@ -189,6 +189,12 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 /* ===== EMAIL MSG ===== */
 .email-msg{font-size:.78rem;font-weight:600;margin-top:4px;display:inline-block;}
 
+/* ===== 必須未入力の警告 ===== */
+.caf .caf-field-err{display:block;color:var(--red);font-size:.78rem;font-weight:700;margin-top:5px;}
+.caf .caf-field-err::before{content:'⚠ ';}
+.caf .is-invalid{border-color:var(--red)!important;box-shadow:0 0 0 3px rgba(220,38,38,.12)!important;}
+.caf .step-nav .step-nav-msg{flex-basis:100%;color:var(--red);font-size:.8rem;font-weight:700;margin-top:8px;text-align:center;order:9;}
+
 /* ===== OTHER (auto-generated text input) ===== */
 .caf-other{margin:-8px 0 16px;}
 
@@ -197,7 +203,7 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 
 /* ===== STEP NAV (bottom buttons) ===== */
 .step-nav{
-  display:flex;justify-content:space-between;gap:12px;margin-top:24px;padding-top:20px;border-top:1px solid var(--gray-200);
+  display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;margin-top:24px;padding-top:20px;border-top:1px solid var(--gray-200);
 }
 .sbtn{
   padding:12px 28px;font-size:.9rem;font-weight:700;font-family:inherit;border:none;border-radius:var(--radius);
@@ -1168,7 +1174,7 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
       for(var di=0;di<total;di++){
         if(di>0){var line=document.createElement('span');line.className='dot-line';dotsContainer.appendChild(line);}
         var dot=document.createElement('span');dot.className='dot';dot.dataset.step=di;dot.title='STEP '+(di+1);
-        dot.addEventListener('click',(function(idx){return function(){go(idx);};})(di));
+        dot.addEventListener('click',(function(idx){return function(){ if(idx>curIdx && !validateStep(pageEls[curIdx])) return; go(idx); };})(di));
         dotsContainer.appendChild(dot);
       }
     }
@@ -1182,13 +1188,47 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
       pg.nodes.forEach(function(n){ d.appendChild(n); });
       var nav=document.createElement('div'); nav.className='step-nav';
       if(idx>0){ var pv=document.createElement('button'); pv.type='button'; pv.className='sbtn sbtn-prev'; pv.textContent='← 戻る'; pv.addEventListener('click',function(){go(idx-1);}); nav.appendChild(pv); }
-      if(idx<total-1){ var nx=document.createElement('button'); nx.type='button'; nx.className='sbtn sbtn-next'; nx.textContent='次へ進む →'; nx.addEventListener('click',function(){go(idx+1);}); nav.appendChild(nx); }
+      if(idx<total-1){ var nx=document.createElement('button'); nx.type='button'; nx.className='sbtn sbtn-next'; nx.textContent='次へ進む →'; nx.addEventListener('click',function(){ if(validateStep(d)) go(idx+1); }); nav.appendChild(nx); }
       d.appendChild(nav);
       form.appendChild(d); pageEls.push(d);
     });
 
+    /* ステップ内の必須未入力チェック：未入力があれば赤字警告を出し、falseを返す（進めない） */
+    function stepFieldEmpty(el){ var v=String(el.value||'').trim(); return !v || v==='選択してください' || v.charAt(0)==='←'; }
+    function validateStep(pageEl){
+      if(!pageEl) return true;
+      /* 既存の警告をクリア */
+      pageEl.querySelectorAll('.caf-field-err').forEach(function(x){x.parentNode&&x.parentNode.removeChild(x);});
+      pageEl.querySelectorAll('.is-invalid').forEach(function(x){x.classList.remove('is-invalid');});
+      var navMsg=pageEl.querySelector('.step-nav-msg'); if(navMsg)navMsg.parentNode.removeChild(navMsg);
+      var ok=true, first=null;
+      pageEl.querySelectorAll('input,select,textarea').forEach(function(el){
+        if(['file','checkbox','radio','hidden'].indexOf(el.type)>=0) return;
+        if(el.closest('.hide')) return; /* 条件で非表示の項目は対象外 */
+        var p=el.closest('p'); if(!p||!/必須/.test(p.textContent)) return;
+        if(stepFieldEmpty(el)){
+          ok=false; if(!first)first=el;
+          el.classList.add('is-invalid');
+          var msg=document.createElement('span'); msg.className='caf-field-err'; msg.textContent='入力してください';
+          el.insertAdjacentElement('afterend',msg);
+          (function(el,msg){
+            function clear(){ if(!stepFieldEmpty(el)){ el.classList.remove('is-invalid'); if(msg&&msg.parentNode)msg.parentNode.removeChild(msg); el.removeEventListener('input',clear); el.removeEventListener('change',clear); } }
+            el.addEventListener('input',clear); el.addEventListener('change',clear);
+          })(el,msg);
+        }
+      });
+      if(!ok){
+        var nav=pageEl.querySelector('.step-nav');
+        if(nav){ var nm=document.createElement('div'); nm.className='step-nav-msg'; nm.textContent='未入力の必須項目があります。入力してからお進みください。'; nav.appendChild(nm); }
+        if(first){ first.scrollIntoView({behavior:'smooth',block:'center'}); try{first.focus({preventScroll:true});}catch(e){} }
+      }
+      return ok;
+    }
+
+    var curIdx=0;
     function go(i){
       if(i<0||i>=total) return;
+      curIdx=i;
       pageEls.forEach(function(el,k){ el.style.display=(k===i)?'':'none'; });
       var c=document.getElementById('sp-cur'); if(c)c.textContent=(i+1);
       var t=document.getElementById('sp-title'); if(t)t.textContent=pages[i].title;
