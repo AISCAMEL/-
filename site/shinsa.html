@@ -1275,18 +1275,19 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
 /* iframe埋め込み用：親ウィンドウへ自身の高さを通知（直接埋め込み時の自動リサイズ） */
 (function(){
   if(window.parent===window) return; /* iframe内でなければ何もしない */
+  /* iframe内では min-height:100vh を無効化（高さ測定の無限増殖ループを防ぐ） */
+  try{ document.documentElement.style.minHeight='0'; document.body.style.minHeight='0'; }catch(e){}
   var last=0;
   function report(){
-    var h=Math.max(
-      document.body.scrollHeight, document.documentElement.scrollHeight,
-      document.body.offsetHeight, document.documentElement.offsetHeight
-    );
-    if(h && h!==last){ last=h; try{ window.parent.postMessage({carmelShinsaHeight:h}, '*'); }catch(e){} }
+    /* ビューポート依存の scrollHeight ではなく、実コンテンツの下端で測る */
+    var wrap=document.querySelector('.caf-wrap');
+    var h=wrap ? Math.ceil(wrap.getBoundingClientRect().bottom + (parseFloat(getComputedStyle(document.body).paddingBottom)||0)) : document.body.offsetHeight;
+    if(h && Math.abs(h-last)>2){ last=h; try{ window.parent.postMessage({carmelShinsaHeight:h}, '*'); }catch(e){} }
   }
   window.addEventListener('load',report);
   window.addEventListener('resize',report);
   if(window.ResizeObserver){ try{ new ResizeObserver(report).observe(document.body); }catch(e){} }
-  setInterval(report,600); /* ステップ切替や条件分岐の表示変化にも追従 */
+  setInterval(report,500); /* ステップ切替や条件分岐の表示変化にも追従 */
 })();
 </script>
 </body>
