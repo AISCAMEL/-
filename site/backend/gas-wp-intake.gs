@@ -34,6 +34,12 @@ function getWpConfig_() {
     ASANA_PROJECT_ID:  p['ASANA_PROJECT_ID']  || '',               // 例：カーメルFC 1213728225406661
     ASANA_SECTION_ID:  p['ASANA_SECTION_ID']  || '',
 
+    // 申込者への自動サンクスメール
+    SEND_THANKS: (p['WP_SEND_THANKS'] || 'false') === 'true',      // true で自動返信メールON
+    MYPAGE_URL:  p['MYPAGE_URL'] || '',                            // マイページ/ログインURL（完成後にここへ。空なら本文にリンクを出さない）
+    MAIL_FROM:      p['MAIL_FROM'] || '',                          // 送信元を変えたい場合（Gmailの「送信者アドレスの追加」で登録済みのみ有効）
+    MAIL_FROM_NAME: p['MAIL_FROM_NAME'] || 'カーメル',            // 送信者の表示名
+
     // 配信のオン/オフ（慣れるまで全部オン、不要になったら false）
     SEND_ASANA: (p['WP_SEND_ASANA'] || 'false') === 'true',
     SEND_SLACK: (p['WP_SEND_SLACK'] || 'false') === 'true',
@@ -86,6 +92,9 @@ function doPost(e) {
 
     // ③ 任意：Asanaタスク
     if (cfg.SEND_ASANA && cfg.ASANA_TOKEN && cfg.ASANA_PROJECT_ID) safeRun_(cfg, function(){ createWpAsana_(cfg, rec); });
+
+    // ④ 任意：申込者へ自動サンクスメール
+    if (cfg.SEND_THANKS) safeRun_(cfg, function(){ sendApplicantThankYou_(cfg, rec); });
 
     return jsonOut_({ success: true, uid: rec.uid });
   } catch (err) {
@@ -291,6 +300,32 @@ function createWpAsana_(cfg, rec) {
 // ============================================================
 // ユーティリティ
 // ============================================================
+// ============================================================
+// 任意：申込者への自動サンクスメール（マイページ誘導）
+//   ・MYPAGE_URL が空なら、ログインリンクは出さず「担当より連絡」文面になる
+//   ・完成後に MYPAGE_URL を設定すれば、自動でログイン誘導文に切り替わる
+// ============================================================
+function sendApplicantThankYou_(cfg, rec) {
+  if (!rec.email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(rec.email)) return;
+  var name = rec.name || 'お客様';
+  var resultBlock = cfg.MYPAGE_URL
+    ? '審査結果は、最短即日〜3営業日以内にマイページにてご確認いただけます。\n\n▼ マイページにログイン\n' + cfg.MYPAGE_URL + '\n'
+    : '審査結果は、最短即日〜3営業日以内に、担当より個別にご連絡いたします。\n';
+  var body =
+    name + ' 様\n\n' +
+    'この度は、カーメルの「かんたんWEB審査」にお申し込みいただき、誠にありがとうございます。\n' +
+    'お申し込みを受け付けました。\n\n' +
+    resultBlock + '\n' +
+    'ご不明な点は、LINEまたはお電話でお気軽にお問い合わせください。\n' +
+    '・LINE： https://lin.ee/y4QcSnq\n' +
+    '・電話： 050-1793-5554（受付 10:00〜18:00）\n\n' +
+    '※本メールは送信専用です。ご返信いただいてもお答えできない場合があります。\n' +
+    'カーメル ／ 合同会社アイズ';
+  var options = { name: cfg.MAIL_FROM_NAME || 'カーメル' };
+  if (cfg.MAIL_FROM) options.from = cfg.MAIL_FROM; // Gmailで「送信者アドレスの追加」を済ませた場合のみ
+  GmailApp.sendEmail(rec.email, '【カーメル】WEB審査のお申し込みを受け付けました', body, options);
+}
+
 function jsonOut_(o) {
   return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
 }
