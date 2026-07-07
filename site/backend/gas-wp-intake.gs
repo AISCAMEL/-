@@ -346,7 +346,9 @@ function sendApplicantThankYou_(cfg, rec) {
     '※本メールは送信専用のため、ご返信いただいてもお答えできません。\n' +
     '　お問い合わせは上記のLINE・お電話をご利用ください。\n\n' +
     'カーメル（かんたんWEB審査）\n' +
-    '合同会社アイズ\n' +
+    '　オートローン・車の相談窓口\n' +
+    '　LINE： https://lin.ee/y4QcSnq\n' +
+    '　お電話： 050-1793-5554（受付 10:00〜18:00）\n' +
     '────────────────────';
 
   var options = { name: cfg.MAIL_FROM_NAME || 'カーメル' };
