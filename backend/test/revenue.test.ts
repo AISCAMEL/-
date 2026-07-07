@@ -80,3 +80,31 @@ test('P&L: 経費APIは super_admin のみ（owner=403）', async () => {
   assert.equal((await app.inject({ url: '/api/admin/pnl' })).statusCode, 403);
   assert.equal((await app.inject({ url: '/api/admin/expenses' })).statusCode, 403);
 });
+
+import { computeTrend } from '../src/admin/pnl.js';
+
+test('損益分岐点: 分岐点売上・必要テナント数を返す', async () => {
+  const p = await computePnl();
+  assert.ok(p.break_even);
+  assert.equal(typeof p.break_even.contribution_margin_rate, 'number');
+  if (p.break_even.break_even_revenue !== null) assert.ok(p.break_even.break_even_revenue >= 0);
+  // 黒字なら安全余裕、赤字なら追加必要数
+  if (p.break_even.is_profitable) assert.ok(p.break_even.margin_of_safety_jpy !== null);
+  else assert.ok((p.break_even.additional_tenants_needed ?? 0) >= 0);
+});
+
+test('月次推移: 指定月数ぶんの推定を返す', async () => {
+  const t = await computeTrend(6);
+  assert.equal(t.months.length, 6);
+  for (const m of t.months) {
+    assert.match(m.month, /^\d{4}-\d{2}$/);
+    assert.equal(typeof m.operating_profit_est, 'number');
+  }
+  // 最新月は末尾
+  assert.ok(t.months[5].month >= t.months[0].month);
+});
+
+test('P&L trend API: super_admin限定', async () => {
+  assert.equal((await app.inject({ url: '/api/admin/pnl/trend' })).statusCode, 403);
+  assert.equal((await app.inject({ url: '/api/admin/pnl/trend', headers: sa })).statusCode, 200);
+});

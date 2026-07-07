@@ -5,7 +5,7 @@ import { sendEmail } from '../notify/email.js';
 import * as leads from './repo.js';
 import { listTenants, getAdminUsageSummary } from '../db/queries.js';
 import { committedMrr, renewalAlerts } from '../admin/revenue.js';
-import { computePnl, listExpenses, createExpense, deleteExpense } from '../admin/pnl.js';
+import { computePnl, computeTrend, listExpenses, createExpense, deleteExpense } from '../admin/pnl.js';
 import { rateLimit } from '../util/ratelimit.js';
 import { salesChatReply, type ChatTurn } from './chat.js';
 
@@ -113,6 +113,11 @@ export async function registerLeadRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/admin/pnl', { preHandler: requireSuperAdmin }, async (req) => {
     const { month } = req.query as Record<string, string>;
     return computePnl(month);
+  });
+  // 月次損益の推移（推定）
+  app.get('/api/admin/pnl/trend', { preHandler: requireSuperAdmin }, async (req) => {
+    const { months } = req.query as Record<string, string>;
+    return computeTrend(months ? Number(months) : 6);
   });
   // 固定経費（販管費）の管理
   app.get('/api/admin/expenses', { preHandler: requireSuperAdmin }, async () => listExpenses());
