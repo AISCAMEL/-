@@ -367,6 +367,36 @@ function notifyWpError_(msg) {
 }
 
 // ============================================================
+// 診断：メール送信の内部状態を全部ログに出す（届かない原因の特定用）
+//   実行後、エディタ下部の「実行ログ」を見てください
+// ============================================================
+function TEST_mailDiag() {
+  var cfg = getWpConfig_();
+  var to = cfg.NOTIFY_EMAIL || 'info@aisjaltd.com';
+  Logger.log('=== メール送信 診断 ===');
+  Logger.log('送信先(NOTIFY_EMAIL) : ' + to);
+  try { Logger.log('ActiveUser(操作者)   : ' + Session.getActiveUser().getEmail()); } catch (e) { Logger.log('ActiveUser 取得不可: ' + e); }
+  try { Logger.log('EffectiveUser(送信者): ' + Session.getEffectiveUser().getEmail()); } catch (e) { Logger.log('EffectiveUser 取得不可: ' + e); }
+  try { Logger.log('MailApp 残り送信枠   : ' + MailApp.getRemainingDailyQuota() + ' 通/日'); } catch (e) { Logger.log('残り送信枠 取得不可: ' + e); }
+
+  // ① GmailApp で送信テスト
+  try {
+    GmailApp.sendEmail(to, '【診断①GmailApp】カーメル審査メール送信テスト',
+      'これはGmailAppの送信診断です。このメールが届いていれば、GmailAppでの送信は正常です。');
+    Logger.log('① GmailApp.sendEmail : 例外なし（送信APIは成功）');
+  } catch (e) { Logger.log('① GmailApp.sendEmail エラー: ' + e); }
+
+  // ② MailApp で送信テスト（別経路）
+  try {
+    MailApp.sendEmail(to, '【診断②MailApp】カーメル審査メール送信テスト',
+      'これはMailAppの送信診断です。①が届かず②が届く場合、原因の切り分けになります。');
+    Logger.log('② MailApp.sendEmail : 例外なし（送信APIは成功）');
+  } catch (e) { Logger.log('② MailApp.sendEmail エラー: ' + e); }
+
+  Logger.log('=== 診断おわり。info@aisjaltd.com（受信トレイ＋迷惑メール）を確認してください ===');
+}
+
+// ============================================================
 // テスト：ダミーのWP申込を1件、スプレッドシートへ流す
 // ============================================================
 function TEST_wpIntake() {
