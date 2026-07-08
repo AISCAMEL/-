@@ -40,6 +40,10 @@ function getWpConfig_() {
     MAIL_FROM:      p['MAIL_FROM'] || '',                          // 送信元を変えたい場合（Gmailの「送信者アドレスの追加」で登録済みのみ有効）
     MAIL_FROM_NAME: p['MAIL_FROM_NAME'] || 'カーメル',            // 送信者の表示名
 
+    // 任意：Brevo（外部メール配信）経由で送る。設定するとGmailの配信不達を回避できる
+    BREVO_API_KEY: p['BREVO_API_KEY'] || '',                       // BrevoのAPIキー（設定するとBrevo経由で送信）
+    BREVO_SENDER:  p['BREVO_SENDER']  || '',                       // Brevoで認証済みの差出人アドレス（例：info@aisjaltd.com）
+
     // 配信のオン/オフ（慣れるまで全部オン、不要になったら false）
     SEND_ASANA: (p['WP_SEND_ASANA'] || 'false') === 'true',
     SEND_SLACK: (p['WP_SEND_SLACK'] || 'false') === 'true',
@@ -352,9 +356,45 @@ function sendApplicantThankYou_(cfg, rec) {
     '　お電話： 050-1793-5554（受付 10:00〜18:00）\n' +
     '────────────────────';
 
+  var subject = '【カーメル】WEB審査のお申し込みを受け付けました';
+
+  // Brevo（外部配信）が設定されていればそちら経由で送る＝Gmail配信不達を回避
+  if (cfg.BREVO_API_KEY && cfg.BREVO_SENDER) {
+    sendViaBrevo_(cfg, rec.email, subject, body);
+    return;
+  }
+
   var options = { name: cfg.MAIL_FROM_NAME || 'カーメル' };
   if (cfg.MAIL_FROM) options.from = cfg.MAIL_FROM; // Gmailで「送信者アドレスの追加」を済ませた場合のみ
-  GmailApp.sendEmail(rec.email, '【カーメル】WEB審査のお申し込みを受け付けました', body, options);
+  GmailApp.sendEmail(rec.email, subject, body, options);
+}
+
+// ============================================================
+// Brevo（旧Sendinblue）HTTP API 経由でメール送信
+//   ・GmailApp/MailApp が配信されない環境でも、Brevoの配信基盤で確実に届く
+//   ・BREVO_API_KEY と BREVO_SENDER（認証済み差出人）をプロパティに設定して有効化
+// ============================================================
+function sendViaBrevo_(cfg, to, subject, textBody) {
+  if (!cfg.BREVO_API_KEY) throw new Error('BREVO_API_KEY 未設定');
+  if (!cfg.BREVO_SENDER)  throw new Error('BREVO_SENDER 未設定');
+  var payload = {
+    sender: { name: cfg.MAIL_FROM_NAME || 'カーメル', email: cfg.BREVO_SENDER },
+    to: [{ email: to }],
+    subject: subject,
+    textContent: textBody
+  };
+  var res = UrlFetchApp.fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { 'api-key': cfg.BREVO_API_KEY, 'accept': 'application/json' },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  });
+  var code = res.getResponseCode();
+  if (code < 200 || code >= 300) {
+    throw new Error('Brevo送信失敗 code=' + code + ' body=' + res.getContentText());
+  }
+  return true;
 }
 
 function jsonOut_(o) {
@@ -428,6 +468,20 @@ function TEST_thanks() {
 }
 
 // ドライブ保存だけを単体テスト（承認確認・フォルダ生成の確認用）
+// Brevo送信テスト（NOTIFY_EMAIL 宛に1通。BREVO_API_KEY/BREVO_SENDER 設定後に実行）
+function TEST_brevo() {
+  var cfg = getWpConfig_();
+  var to = cfg.NOTIFY_EMAIL || 'info@aisjaltd.com';
+  Logger.log('BREVO_SENDER = ' + cfg.BREVO_SENDER + ' / APIキー設定 = ' + (cfg.BREVO_API_KEY ? 'あり' : 'なし'));
+  try {
+    sendViaBrevo_(cfg, to, '【Brevoテスト】カーメル審査 返信メール',
+      'これはBrevo経由の送信テストです。このメールが届いていれば、返信メールは今後Brevoで確実に届きます。');
+    Logger.log('Brevo送信OK：' + to + ' の受信トレイ（＋迷惑メール）を確認してください');
+  } catch (e) {
+    Logger.log('Brevo送信エラー：' + e);
+  }
+}
+
 function TEST_driveSave() {
   var cfg = getWpConfig_();
   Logger.log('DRIVE_FOLDER_ID = ' + cfg.DRIVE_FOLDER_ID);
