@@ -380,6 +380,7 @@ function sendViaBrevo_(cfg, to, subject, textBody) {
   var payload = {
     sender: { name: cfg.MAIL_FROM_NAME || 'カーメル', email: cfg.BREVO_SENDER },
     to: [{ email: to }],
+    replyTo: { name: cfg.MAIL_FROM_NAME || 'カーメル', email: cfg.NOTIFY_EMAIL || cfg.BREVO_SENDER },
     subject: subject,
     textContent: textBody
   };
