@@ -1,0 +1,41 @@
+/* =====================================================================
+   LINE → お問い合わせ ポップアップ 見た目（在庫ページ以外の全ページ）
+   設置先: WPCode → CSSコードの追加 / Auto Insert・サイト全体ヘッダー
+   ===================================================================== */
+
+/* ポップアップ本体 */
+.carmel-toi-ov{position:fixed;inset:0;z-index:100000;background:rgba(15,23,42,.6);
+  display:none;align-items:flex-start;justify-content:center;padding:24px 14px;overflow:auto;
+  -webkit-overflow-scrolling:touch;}
+.carmel-toi-ov.is-open{display:flex;}
+.carmel-toi-box{position:relative;background:#fff;width:100%;max-width:760px;margin:auto;
+  border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.35);overflow:hidden;
+  animation:carmelToiIn .25s ease;}
+@keyframes carmelToiIn{from{opacity:0;transform:translateY(12px) scale(.98);}to{opacity:1;transform:none;}}
+.carmel-toi-head{background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;
+  padding:16px 22px;font-weight:800;font-size:17px;font-family:'Noto Sans JP',sans-serif;letter-spacing:.04em;}
+.carmel-toi-x{position:absolute;top:12px;right:14px;width:34px;height:34px;border:none;
+  border-radius:50%;background:rgba(255,255,255,.22);color:#fff;font-size:20px;line-height:1;
+  cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center;}
+.carmel-toi-x:hover{background:rgba(255,255,255,.35);}
+.carmel-toi-frame{display:block;width:100%;height:72vh;border:0;background:#fff;}
+@media(max-width:600px){
+  .carmel-toi-ov{padding:0;}
+  .carmel-toi-box{max-width:100%;min-height:100%;border-radius:0;margin:0;}
+  .carmel-toi-frame{height:calc(100vh - 56px);}
+}
+
+/* 画像だったLINEボタンをテキストに差し替えたときの見た目 */
+a.carmel-toi-textbtn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:8px 18px;border-radius:999px;background:#7c3aed;color:#fff !important;
+  font-weight:800;font-size:14px;text-decoration:none !important;line-height:1.2;white-space:nowrap;}
+a.carmel-toi-textbtn:hover{background:#6d28d9;}
+
+/* ポップアップ内(iframe)：ヘッダー/フッター/CTA/チャット等を隠してフォームだけ表示 */
+.carmel-embedded #site-header,.carmel-embedded header.header,.carmel-embedded #top-bar-wrap,
+.carmel-embedded #footer,.carmel-embedded footer.footer,
+.carmel-embedded .carmel-common-cta,.carmel-embedded #carmel-common-cta,
+.carmel-embedded #carmel-cb-root,.carmel-embedded .carmel-cta-bar,
+.carmel-embedded .post-edit{display:none !important;}
+.carmel-embedded #content-wrap{padding-top:16px !important;margin-top:0 !important;}
+.carmel-embedded body{background:#fff !important;}
