@@ -78,6 +78,12 @@ function apprex_invoice_box( $post ) {
 		),
 		home_url( '/' )
 	);
+	$status = (string) get_post_meta( $post->ID, 'apprex_c_status', true );
+	if ( 'cancelled' === $status ) {
+		echo '<p style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;padding:8px 10px;border-radius:6px;font-size:12px;margin:0 0 10px;">⚠️ この契約は<strong>解約済み</strong>です。自動請求（月次メール・Square自動発行）は送信されません。手動送信のみ可能です。</p>';
+	} elseif ( 'pending' === $status ) {
+		echo '<p style="background:#fffbeb;border:1px solid #fde68a;color:#92400e;padding:8px 10px;border-radius:6px;font-size:12px;margin:0 0 10px;">この契約は<strong>更新待ち</strong>です。自動請求は「契約中」の間のみ送信されます。</p>';
+	}
 	echo '<p>当月分の請求書を表示します（印刷→PDF保存）。</p>';
 	echo '<a href="' . esc_url( $url ) . '" target="_blank" rel="noopener" class="button button-primary" style="width:100%;text-align:center;">請求書PDFを表示</a>';
 
