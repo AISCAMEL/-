@@ -80,12 +80,72 @@ function apprex_invoice_box( $post ) {
 	);
 	echo '<p>当月分の請求書を表示します（印刷→PDF保存）。</p>';
 	echo '<a href="' . esc_url( $url ) . '" target="_blank" rel="noopener" class="button button-primary" style="width:100%;text-align:center;">請求書PDFを表示</a>';
+
+	// PDFを添付してお客様へメール送信。
+	$mail_url = wp_nonce_url(
+		admin_url( 'admin-post.php?action=apprex_invoice_email&contract=' . $post->ID . '&period=' . current_time( 'Y-m' ) ),
+		'apprex_invoice_email'
+	);
+	$cust_email = (string) get_post_meta( $post->ID, 'apprex_c_email', true );
+	echo '<a href="' . esc_url( $mail_url ) . '" class="button" style="width:100%;text-align:center;margin-top:8px;" onclick="return confirm(\'請求書PDFを添付して ' . esc_js( $cust_email ) . ' へメール送信します。よろしいですか？\');">請求書PDFをメール送信</a>';
+
 	if ( ! get_option( 'apprex_inv_bank' ) ) {
 		echo '<p class="description" style="margin-top:8px;color:#b91c1c;">※ <a href="' . esc_url( admin_url( 'options-general.php?page=apprex-invoice' ) ) . '">発行元・振込先</a>を先に設定してください。</p>';
 	} else {
-		echo '<p class="description" style="margin-top:8px;">月額・会社名・支払日を保存しておいてください。</p>';
+		echo '<p class="description" style="margin-top:8px;">月額・会社名・支払日を保存しておいてください。請求書払いの月次メールにはPDFが自動添付されます。</p>';
 	}
 }
+
+/* 請求書PDFを添付して顧客へメール送信（手動）。 */
+add_action( 'admin_post_apprex_invoice_email', function () {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( '権限がありません。' );
+	}
+	check_admin_referer( 'apprex_invoice_email' );
+	$id     = isset( $_GET['contract'] ) ? absint( $_GET['contract'] ) : 0;
+	$period = isset( $_GET['period'] ) ? sanitize_text_field( wp_unslash( $_GET['period'] ) ) : current_time( 'Y-m' );
+	$back   = $id ? admin_url( 'post.php?post=' . $id . '&action=edit' ) : admin_url();
+	if ( ! $id || 'apprex_contract' !== get_post_type( $id ) ) {
+		wp_die( '契約が見つかりません。' );
+	}
+	$email = (string) get_post_meta( $id, 'apprex_c_email', true );
+	if ( ! is_email( $email ) ) {
+		wp_safe_redirect( add_query_arg( 'apprex_inv_mail', 'bademail', $back ) );
+		exit;
+	}
+	$name    = (string) get_post_meta( $id, 'apprex_c_name', true );
+	$pdf     = function_exists( 'apprex_invoice_pdf_path' ) ? apprex_invoice_pdf_path( $id, $period ) : '';
+	$subject = '【APPREX】請求書をお送りいたします';
+	$body    = "{$name} 様\n\nいつもお世話になっております。\n請求書（PDF）を添付にてお送りいたします。ご確認のうえ、お手続きをお願いいたします。\n";
+	if ( ! $pdf ) {
+		$body .= "\n（PDFの生成に失敗したため、担当より改めてお送りします。）\n";
+	}
+	$html = function_exists( 'apprex_render_email' )
+		? apprex_render_email( $subject, $body, array( 'heading' => '請求書の送付' ) )
+		: nl2br( esc_html( $body ) );
+	$att  = $pdf ? array( $pdf ) : array();
+	$ok   = wp_mail( $email, $subject, $html, apprex_mail_headers(), $att );
+	if ( $pdf && file_exists( $pdf ) ) {
+		wp_delete_file( $pdf );
+	}
+	wp_safe_redirect( add_query_arg( 'apprex_inv_mail', $ok ? 'sent' : 'failed', $back ) );
+	exit;
+} );
+
+add_action( 'admin_notices', function () {
+	if ( empty( $_GET['apprex_inv_mail'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return;
+	}
+	$s = sanitize_key( wp_unslash( $_GET['apprex_inv_mail'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$map = array(
+		'sent'     => array( 'success', '請求書PDFをメールで送信しました。' ),
+		'failed'   => array( 'error', '請求書メールの送信に失敗しました。送信設定（SMTP等）をご確認ください。' ),
+		'bademail' => array( 'error', '契約の「メール」が正しくありません。' ),
+	);
+	if ( isset( $map[ $s ] ) ) {
+		printf( '<div class="notice notice-%s is-dismissible"><p>%s</p></div>', esc_attr( $map[ $s ][0] ), esc_html( $map[ $s ][1] ) );
+	}
+} );
 
 /* =========================================================================
  * 表示（印刷可能な請求書HTML）
@@ -244,4 +304,129 @@ td.r,th.r{text-align:right}
 </div>
 </body></html>
 	<?php
+}
+
+/* =========================================================================
+ * 請求書データ（HTML/PDF 共通の計算）
+ * ====================================================================== */
+function apprex_invoice_data( $id, $period ) {
+	$m = function ( $k ) use ( $id ) {
+		return (string) get_post_meta( $id, $k, true );
+	};
+	$monthly  = (int) $m( 'apprex_c_monthly' );
+	$tax_pct  = (int) apprex_inv_opt( 'apprex_inv_tax', 10 );
+	$subtotal = $monthly;
+	$tax      = (int) floor( $subtotal * $tax_pct / 100 );
+	$total    = $subtotal + $tax;
+
+	$ym      = preg_match( '/^\d{4}-\d{2}$/', (string) $period ) ? $period : current_time( 'Y-m' );
+	$ym_ts   = strtotime( $ym . '-01' );
+	$pay_day = (int) $m( 'apprex_c_payment_day' );
+	$due     = function_exists( 'apprex_mf_due_date' ) ? apprex_mf_due_date( $pay_day ? $pay_day : 27 ) : wp_date( 'Y-m-d' );
+
+	return array(
+		'id'             => $id,
+		'ym'             => $ym,
+		'company'        => $m( 'apprex_c_company' ),
+		'name'           => $m( 'apprex_c_name' ),
+		'service'        => trim( $m( 'apprex_c_service' ) . ' ' . $m( 'apprex_c_plan' ) ),
+		'monthly'        => $monthly,
+		'tax_pct'        => $tax_pct,
+		'subtotal'       => $subtotal,
+		'tax'            => $tax,
+		'total'          => $total,
+		'period_label'   => wp_date( 'Y年n月', $ym_ts ),
+		'issue_date'     => wp_date( 'Y年n月j日' ),
+		'due_label'      => wp_date( 'Y年n月j日', strtotime( $due ) ),
+		'inv_no'         => 'INV-' . str_replace( '-', '', $ym ) . '-' . $id,
+		'issuer_company' => apprex_inv_opt( 'apprex_inv_company', '合同会社アイズ' ),
+		'issuer_info'    => apprex_inv_opt( 'apprex_inv_issuer' ),
+		'invoice_no'     => apprex_inv_opt( 'apprex_inv_invoice_no' ),
+		'bank'           => apprex_inv_opt( 'apprex_inv_bank' ),
+		'note'           => apprex_inv_opt( 'apprex_inv_note' ),
+	);
+}
+
+/* =========================================================================
+ * 請求書PDFの生成（TCPDF・日本語対応）。メール添付用にファイルパスを返す。
+ * ====================================================================== */
+function apprex_invoice_pdf_path( $id, $period ) {
+	if ( ! $id || 'apprex_contract' !== get_post_type( $id ) ) {
+		return '';
+	}
+	$lib = APPREX_DIR . '/inc/lib/tcpdf/tcpdf.php';
+	if ( ! is_readable( $lib ) ) {
+		return '';
+	}
+	if ( ! class_exists( 'TCPDF' ) ) {
+		if ( ! defined( 'K_TCPDF_EXTERNAL_CONFIG' ) ) {
+			define( 'K_TCPDF_EXTERNAL_CONFIG', false );
+		}
+		require_once $lib;
+	}
+
+	$d   = apprex_invoice_data( $id, $period );
+	$yen = function ( $n ) {
+		return '¥' . number_format( (int) $n );
+	};
+
+	try {
+		$pdf = new TCPDF( 'P', 'mm', 'A4', true, 'UTF-8', false );
+		$pdf->SetCreator( 'APPREX' );
+		$pdf->SetAuthor( $d['issuer_company'] );
+		$pdf->SetTitle( '請求書 ' . $d['inv_no'] );
+		$pdf->setPrintHeader( false );
+		$pdf->setPrintFooter( false );
+		$pdf->SetMargins( 16, 16, 16 );
+		$pdf->SetAutoPageBreak( true, 16 );
+		$pdf->AddPage();
+		$pdf->SetFont( 'kozminproregular', '', 10 );
+
+		$to       = $d['company'] ? $d['company'] : $d['name'];
+		$to_extra = ( $d['company'] && $d['name'] ) ? '<br/>' . esc_html( $d['name'] ) . ' 様' : '';
+		$issuer   = nl2br( esc_html( $d['issuer_info'] ) );
+		$reg      = $d['invoice_no'] ? '<br/>登録番号：' . esc_html( $d['invoice_no'] ) : '';
+
+		$html  = '<h1 style="text-align:center;font-size:22pt;">請 求 書</h1>';
+		$html .= '<table cellpadding="3" style="width:100%;font-size:9.5pt;"><tr>';
+		$html .= '<td style="width:55%;vertical-align:top;"><span style="font-size:13pt;">' . esc_html( $to ) . ' 御中</span>' . $to_extra
+			. '<br/><br/>下記のとおりご請求申し上げます。</td>';
+		$html .= '<td style="width:45%;vertical-align:top;text-align:right;">請求書番号：' . esc_html( $d['inv_no'] )
+			. '<br/>発行日：' . esc_html( $d['issue_date'] )
+			. '<br/><br/><b>' . esc_html( $d['issuer_company'] ) . '</b><br/>' . $issuer . $reg . '</td>';
+		$html .= '</tr></table><br/>';
+
+		$html .= '<table cellpadding="6" style="width:100%;"><tr>'
+			. '<td style="background-color:#f2f6fc;border:1px solid #d0d7e2;width:55%;"><b>ご請求金額（税込）</b></td>'
+			. '<td style="background-color:#f2f6fc;border:1px solid #d0d7e2;width:45%;text-align:right;font-size:15pt;"><b>' . $yen( $d['total'] ) . '</b></td>'
+			. '</tr></table>';
+		$html .= '<p style="font-size:9.5pt;">お支払期限：<b>' . esc_html( $d['due_label'] ) . '</b></p>';
+
+		$item  = ( $d['service'] ? $d['service'] : 'APPREX' ) . ' 月額利用料（' . $d['period_label'] . '分）';
+		$html .= '<table cellpadding="5" border="1" style="width:100%;font-size:9.5pt;border-collapse:collapse;">';
+		$html .= '<tr style="background-color:#1e3a8a;color:#ffffff;"><th style="width:52%;">品目</th><th style="width:12%;">数量</th><th style="width:18%;">単価</th><th style="width:18%;">金額</th></tr>';
+		$html .= '<tr><td>' . esc_html( $item ) . '</td><td style="text-align:right;">1</td><td style="text-align:right;">' . $yen( $d['monthly'] ) . '</td><td style="text-align:right;">' . $yen( $d['monthly'] ) . '</td></tr>';
+		$html .= '</table><br/>';
+
+		$html .= '<table cellpadding="4" style="width:45%;font-size:9.5pt;" align="right">'
+			. '<tr><td>小計（税抜）</td><td style="text-align:right;">' . $yen( $d['subtotal'] ) . '</td></tr>'
+			. '<tr><td>消費税（' . (int) $d['tax_pct'] . '%）</td><td style="text-align:right;">' . $yen( $d['tax'] ) . '</td></tr>'
+			. '<tr><td><b>合計</b></td><td style="text-align:right;"><b>' . $yen( $d['total'] ) . '</b></td></tr>'
+			. '</table>';
+
+		if ( $d['bank'] ) {
+			$html .= '<br/><table cellpadding="6" style="width:100%;font-size:9.5pt;"><tr><td style="border:1px solid #d0d7e2;"><b>お振込先</b><br/>' . nl2br( esc_html( $d['bank'] ) ) . '</td></tr></table>';
+		}
+		if ( $d['note'] ) {
+			$html .= '<table cellpadding="6" style="width:100%;font-size:9pt;"><tr><td style="border:1px solid #d0d7e2;"><b>備考</b><br/>' . nl2br( esc_html( $d['note'] ) ) . '</td></tr></table>';
+		}
+
+		$pdf->writeHTML( $html, true, false, true, false, '' );
+
+		$file = trailingslashit( get_temp_dir() ) . 'APPREX-invoice-' . $id . '-' . preg_replace( '/[^0-9]/', '', $d['ym'] ) . '.pdf';
+		$pdf->Output( $file, 'F' );
+		return is_readable( $file ) ? $file : '';
+	} catch ( Throwable $e ) {
+		return '';
+	}
 }

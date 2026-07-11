@@ -175,15 +175,30 @@ function apprex_send_payment_notice( $id ) {
 	$day     = (int) get_post_meta( $id, 'apprex_c_payment_day', true );
 	$method  = get_post_meta( $id, 'apprex_c_payment_method', true );
 
+	$attachments = array();
 	if ( 'invoice' === $method ) {
 		$subject = '【APPREX】今月のご請求について';
 		$body    = "{$name} 様\n\n今月分のご利用料金（月額 " . number_format( $monthly ) . "円・税抜）の請求書をお送りいたします。\nお手数ですが毎月{$day}日までにお振込をお願いいたします。\n行き違いでお振込済みの場合はご容赦ください。\n";
+		// 請求書PDFを生成して添付（請求書払いは必ずPDF添付）。
+		if ( function_exists( 'apprex_invoice_pdf_path' ) ) {
+			$pdf = apprex_invoice_pdf_path( $id, current_time( 'Y-m' ) );
+			if ( $pdf ) {
+				$attachments[] = $pdf;
+				$body        .= "\n※ 本メールに請求書（PDF）を添付しております。ご確認ください。\n";
+			}
+		}
 	} else {
 		$subject = '【APPREX】今月のお支払い（自動課金）のご案内';
 		$body    = "{$name} 様\n\n今月分のご利用料金（月額 " . number_format( $monthly ) . "円・税抜）は、ご登録のカードへ毎月{$day}日に Square で自動課金されます。\n明細のご確認をお願いいたします。\n";
 	}
 	$html = apprex_render_email( $subject, $body, array( 'heading' => apprex_email_heading_from_subject( $subject ) ) );
-	wp_mail( $email, $subject, $html, apprex_mail_headers() );
+	wp_mail( $email, $subject, $html, apprex_mail_headers(), $attachments );
+	// 添付した一時PDFを削除。
+	foreach ( $attachments as $f ) {
+		if ( $f && file_exists( $f ) ) {
+			wp_delete_file( $f );
+		}
+	}
 }
 
 /* -------------------------------------------------------------------------
