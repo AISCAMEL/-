@@ -367,6 +367,7 @@ add_action( 'admin_init', function () {
 	register_setting( 'apprex_chat', 'apprex_openrouter_api_key', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 	register_setting( 'apprex_chat', 'apprex_openrouter_model', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 	register_setting( 'apprex_chat', 'apprex_chat_knowledge', array( 'sanitize_callback' => 'sanitize_textarea_field' ) );
+	register_setting( 'apprex_chat', 'apprex_chat_sdr', array( 'sanitize_callback' => 'absint', 'default' => 1 ) );
 } );
 
 /**
@@ -406,6 +407,13 @@ function apprex_chat_settings_page() {
 					<td>
 						<textarea name="apprex_chat_knowledge" rows="10" class="large-text" placeholder="<?php esc_attr_e( '例）よくある質問と回答、キャンペーン情報、対応業種、納期の目安、注意事項 など。ここに書いた内容をチャットボットが最優先で参照して回答します。', 'apprex' ); ?>"><?php echo esc_textarea( get_option( 'apprex_chat_knowledge', '' ) ); ?></textarea>
 						<p class="description"><?php esc_html_e( 'チャットボットに覚えさせたい自社情報・FAQ・ルールを自由に記載してください（WP側で随時更新＝学習）。', 'apprex' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'AI自動アポ獲得モード', 'apprex' ); ?></th>
+					<td>
+						<label><input type="checkbox" name="apprex_chat_sdr" value="1" <?php checked( 1, (int) get_option( 'apprex_chat_sdr', 1 ) ); ?>> <?php esc_html_e( '有効にする（AIが要件をヒアリングし、概算提示→無料相談の予約へ誘導）', 'apprex' ); ?></label>
+						<p class="description"><?php esc_html_e( 'ONにすると、チャットが受け身の回答だけでなく、業種・目的・時期などを自然に質問し、最終的にWebミーティング予約や連絡先の取得（アポ獲得）へ導きます。', 'apprex' ); ?></p>
 					</td>
 				</tr>
 			</table>

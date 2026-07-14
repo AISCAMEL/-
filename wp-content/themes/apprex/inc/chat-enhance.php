@@ -41,6 +41,25 @@ add_action( 'init', function () {
 } );
 
 /* -------------------------------------------------------------------------
+ * AI自動アポ獲得（SDRモード）
+ * ---------------------------------------------------------------------- */
+add_filter( 'apprex_chat_system_prompt', function ( $prompt ) {
+	if ( ! (int) get_option( 'apprex_chat_sdr', 1 ) ) {
+		return $prompt;
+	}
+	$meet = function_exists( 'apprex_meeting_url' ) ? apprex_meeting_url() : '';
+	$est  = home_url( '/estimate/' );
+	$sdr  = "\n\n# 営業アシスタント（アポ獲得）モード\n"
+		. "丁寧で押し付けがましくない営業アシスタントとして、会話の中で次を意識します。\n"
+		. "1. まず相手の状況を把握するため、1〜2問ずつ自然に質問する：①業種・事業内容、②アプリ/HPで実現したいこと・課題、③希望時期や予算感。一度に質問攻めにしない。\n"
+		. "2. 分かった範囲で料金の目安（アプリ開発 月額19,800円〜・初期費用0円、HP制作 月額9,800円〜／マッチング等の個別開発は『内容により個別見積り』）を簡潔に提示する。金額を断定的に約束しない。\n"
+		. "3. 前向きな様子が見えたら、最優先で『無料オンライン相談（Webミーティング）』の予約を提案する" . ( $meet ? "（予約URL：{$meet}）" : '' ) . "。あわせて、要件に合った資料や見積りを送るため、差し支えなければメールアドレス（可能なら電話番号）を伺う。\n"
+		. "4. 具体的・急ぎの相手には、見積りフォーム（{$est}）や無料相談を即案内する。\n"
+		. "5. 相手のペースを尊重し、しつこくしない。1メッセージは短く要点を絞る。\n";
+	return $prompt . $sdr;
+}, 10 );
+
+/* -------------------------------------------------------------------------
  * 応答後のフック：ログ保存＋リード獲得
  * ---------------------------------------------------------------------- */
 
@@ -207,16 +226,25 @@ function apprex_chat_register_lead( $email, $transcript, $session ) {
 		return false;
 	}
 
+	// 会話から電話番号を抽出（あればリード品質・スコアが上がる）。
+	$phone = '';
+	if ( preg_match( '/0\d{1,3}[-\s]?\d{2,4}[-\s]?\d{3,4}/', $transcript, $pm ) ) {
+		$phone = preg_replace( '/\s/', '', $pm[0] );
+	}
+
 	$fields = array(
 		'name'    => 'チャット来訪者',
 		'company' => '',
 		'email'   => $email,
-		'phone'   => '',
+		'phone'   => $phone,
 		'message' => "（チャットからの問い合わせ）\n\n" . $transcript,
 	);
 	update_post_meta( $post_id, 'apprex_type', 'contact' );
 	update_post_meta( $post_id, 'apprex_name', $fields['name'] );
 	update_post_meta( $post_id, 'apprex_email', $email );
+	if ( $phone ) {
+		update_post_meta( $post_id, 'apprex_phone', $phone );
+	}
 	update_post_meta( $post_id, 'apprex_message', $fields['message'] );
 	update_post_meta( $post_id, 'apprex_source', 'chat' );
 
@@ -232,6 +260,8 @@ function apprex_chat_register_lead( $email, $transcript, $session ) {
 	if ( function_exists( 'apprex_slack_notify' ) ) {
 		apprex_slack_notify( ":speech_balloon: チャットから新規リード：{$email} " . admin_url( 'post.php?post=' . $post_id . '&action=edit' ) );
 	}
+	// 共通フック：ホットリード即通知・Meta Conversions API（Lead）などが発火。
+	do_action( 'apprex_inquiry_submitted', $post_id, 'contact', $fields );
 	// GAS（スプレッド/Asana/Slack）へ。
 	if ( function_exists( 'apprex_dispatch_event' ) ) {
 		apprex_dispatch_event(
