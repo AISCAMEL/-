@@ -37,6 +37,125 @@ function apprex_default_autopost_topics() {
 }
 
 /* -------------------------------------------------------------------------
+ * 重複防止・自動301（SEO最適化）
+ * ---------------------------------------------------------------------- */
+
+/** タイトル/トピックを比較用に正規化（空白・記号除去・小文字化）。 */
+function apprex_ai_norm( $s ) {
+	$s = wp_strip_all_tags( (string) $s );
+	$s = mb_strtolower( $s, 'UTF-8' );
+	// 空白・約物・記号を除去（日英）。
+	$s = preg_replace( '/[\s\x{3000}、。・！？!?「」『』（）\(\)\[\]{}\-—…,.:：;；\/\\\\|~〜"\'’”“]+/u', '', $s );
+	return (string) $s;
+}
+
+/** 2つの文字列の類似度（0〜100）。 */
+function apprex_ai_similarity( $a, $b ) {
+	$a = apprex_ai_norm( $a );
+	$b = apprex_ai_norm( $b );
+	if ( '' === $a || '' === $b ) {
+		return 0;
+	}
+	if ( $a === $b ) {
+		return 100;
+	}
+	$pct = 0;
+	similar_text( $a, $b, $pct );
+	return (float) $pct;
+}
+
+/**
+ * 与えられたタイトル/トピックに類似する既存記事のIDを返す（無ければ0）。
+ *
+ * @param string $title     判定対象。
+ * @param int    $exclude   除外する投稿ID。
+ * @param float  $threshold 類似度しきい値（％）。
+ * @return int 類似記事ID（0＝重複なし）。
+ */
+function apprex_ai_find_similar( $title, $exclude = 0, $threshold = 80 ) {
+	$ids = get_posts(
+		array(
+			'post_type'      => 'post',
+			'post_status'    => array( 'publish', 'future', 'draft', 'pending' ),
+			'posts_per_page' => 800,
+			'fields'         => 'ids',
+			'exclude'        => $exclude ? array( (int) $exclude ) : array(),
+			'no_found_rows'  => true,
+		)
+	);
+	$best_id = 0;
+	$best    = 0.0;
+	foreach ( $ids as $id ) {
+		if ( get_post_meta( $id, '_apprex_301_to', true ) ) {
+			continue; // すでに301済みは対象外。
+		}
+		$pct = apprex_ai_similarity( $title, get_the_title( $id ) );
+		if ( $pct > $best ) {
+			$best    = $pct;
+			$best_id = (int) $id;
+		}
+	}
+	return $best >= $threshold ? $best_id : 0;
+}
+
+/**
+ * 公開記事をスキャンし、類似（重複）記事を古い方（正規）へ自動301する。
+ * 新しい重複側に _apprex_301_to（正規記事ID）を付与し、SEO評価を集約。
+ *
+ * @return int 301化した件数。
+ */
+function apprex_ai_dedupe_scan() {
+	$ids = get_posts(
+		array(
+			'post_type'      => 'post',
+			'post_status'    => 'publish',
+			'posts_per_page' => 1000,
+			'fields'         => 'ids',
+			'orderby'        => 'date',
+			'order'          => 'ASC', // 古い順＝先に見た方を正規にする。
+			'no_found_rows'  => true,
+		)
+	);
+	$canon     = array(); // 正規記事のID配列。
+	$redirects = 0;
+	foreach ( $ids as $id ) {
+		if ( get_post_meta( $id, '_apprex_301_to', true ) ) {
+			continue;
+		}
+		$match = 0;
+		foreach ( $canon as $cid ) {
+			if ( apprex_ai_similarity( get_the_title( $id ), get_the_title( $cid ) ) >= 82 ) {
+				$match = $cid;
+				break;
+			}
+		}
+		if ( $match ) {
+			update_post_meta( $id, '_apprex_301_to', $match ); // 新しい重複→古い正規へ301。
+			$redirects++;
+		} else {
+			$canon[] = $id;
+		}
+	}
+	update_option( 'apprex_ai_dedupe_last', array( 'time' => time(), 'redirects' => $redirects ), false );
+	return $redirects;
+}
+
+/* 重複記事は正規記事へ301リダイレクト（SEO評価の集約）。 */
+add_action( 'template_redirect', function () {
+	if ( ! is_singular( 'post' ) ) {
+		return;
+	}
+	$to = (int) get_post_meta( get_queried_object_id(), '_apprex_301_to', true );
+	if ( $to && 'publish' === get_post_status( $to ) ) {
+		$url = get_permalink( $to );
+		if ( $url ) {
+			wp_safe_redirect( $url, 301 );
+			exit;
+		}
+	}
+} );
+
+/* -------------------------------------------------------------------------
  * 記事生成（再利用関数）
  * ---------------------------------------------------------------------- */
 
@@ -53,9 +172,22 @@ function apprex_ai_generate_post( $args ) {
 	$length   = (int) ( $args['length'] ?? 2000 );
 	$publish  = ! empty( $args['publish'] );
 	$gen_img  = ! empty( $args['gen_image'] );
+	$force    = ! empty( $args['force'] );
 
 	if ( '' === $topic ) {
 		return new WP_Error( 'no_topic', 'テーマが空です。' );
+	}
+
+	// 重複防止（生成前）：類似トピックの記事が既にあれば作らない。
+	if ( ! $force ) {
+		$dup = apprex_ai_find_similar( $topic, 0, 80 );
+		if ( $dup ) {
+			return new WP_Error(
+				'duplicate',
+				sprintf( '類似記事が既にあるため生成を中止しました（重複量産の防止）：「%s」', get_the_title( $dup ) ),
+				array( 'post_id' => $dup )
+			);
+		}
 	}
 
 	$system = 'あなたは APPREX（アプリックス／ノーコードアプリ開発・合同会社アイズ）のオウンドメディア編集者です。読者の課題解決に役立つ、SEO/LLMOを意識した日本語ブログ記事を作成します。誇大表現や事実誤認を避け、自然にAPPREXの活用に触れます。「即日公開」は使わず「最短2週間」と表現します。全国の読者に届く一般性のある内容にします。';
@@ -85,6 +217,18 @@ function apprex_ai_generate_post( $args ) {
 	}
 	$title = $title ? $title : $topic;
 
+	// 重複防止（生成後）：出来上がったタイトルが既存と酷似していれば公開しない。
+	if ( ! $force ) {
+		$dup = apprex_ai_find_similar( $title, 0, 82 );
+		if ( $dup ) {
+			return new WP_Error(
+				'duplicate',
+				sprintf( '生成結果が既存記事と酷似していたため中止しました：「%s」', get_the_title( $dup ) ),
+				array( 'post_id' => $dup )
+			);
+		}
+	}
+
 	$post_id = wp_insert_post(
 		array(
 			'post_type'    => 'post',
@@ -98,6 +242,7 @@ function apprex_ai_generate_post( $args ) {
 		return $post_id;
 	}
 	update_post_meta( $post_id, '_apprex_ai_generated', 1 );
+	update_post_meta( $post_id, '_apprex_ai_topic_key', apprex_ai_norm( $topic ) );
 
 	$image_note = '';
 	if ( $gen_img && function_exists( 'apprex_openrouter_image' ) ) {
@@ -179,6 +324,9 @@ function apprex_ai_blog_page() {
 					<td><label><input type="checkbox" name="gen_image" value="1"> <?php esc_html_e( 'AIで自動生成する（Nano Banana 等の画像モデル）', 'apprex' ); ?></label></td></tr>
 				<tr><th><?php esc_html_e( '公開', 'apprex' ); ?></th>
 					<td><label><input type="checkbox" name="publish" value="1"> <?php esc_html_e( '生成後すぐ公開（既定は下書き）', 'apprex' ); ?></label></td></tr>
+				<tr><th><?php esc_html_e( '重複チェック', 'apprex' ); ?></th>
+					<td><label><input type="checkbox" name="force" value="1"> <?php esc_html_e( '類似記事があっても強制生成する（通常はOFF推奨）', 'apprex' ); ?></label>
+					<p class="description"><?php esc_html_e( '既定では、似たテーマの記事が既にある場合は重複量産を防ぐため生成しません。', 'apprex' ); ?></p></td></tr>
 			</table>
 			<?php submit_button( 'AIで記事を生成', 'primary', 'submit', true, apprex_chat_enabled() ? array() : array( 'disabled' => 'disabled' ) ); ?>
 			<p class="description"><?php esc_html_e( '公開前に内容・事実関係を必ずご確認ください。', 'apprex' ); ?></p>
@@ -231,6 +379,20 @@ function apprex_ai_blog_page() {
 		<p class="description"><?php esc_html_e( '自動投稿は「投稿時刻」を基準に1日1回判定され、頻度（毎日/週1/隔週）に達していれば公開します。WordPress標準のcronはアクセス時に動くため、指定時刻ちょうどに出すにはサーバーのcronで wp-cron.php を定期実行する設定（wpXの自動実行など）を推奨します。', 'apprex' ); ?></p>
 
 		<hr>
+		<h2><?php esc_html_e( '重複記事の自動整理（301最適化）', 'apprex' ); ?></h2>
+		<p class="description"><?php esc_html_e( '公開済みの記事をスキャンし、内容が重複・酷似している記事を検出して、古い（正規）記事へ自動で301リダイレクトします。検索評価を1本に集約でき、重複ペナルティを防げます。自動投稿の実行時にも毎回チェックされます。', 'apprex' ); ?></p>
+		<?php $dd = (array) get_option( 'apprex_ai_dedupe_last', array() ); ?>
+		<?php if ( ! empty( $dd['time'] ) ) : ?>
+			<p style="color:#6b7280;"><?php printf( esc_html__( '前回の整理：%1$s ／ 301化した記事 %2$d件', 'apprex' ), esc_html( wp_date( 'Y-m-d H:i', (int) $dd['time'] ) ), (int) ( $dd['redirects'] ?? 0 ) ); ?></p>
+		<?php endif; ?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<input type="hidden" name="action" value="apprex_ai_dedupe">
+			<?php wp_nonce_field( 'apprex_ai_dedupe' ); ?>
+			<?php submit_button( '重複記事をスキャンして301整理', 'secondary', 'submit', false ); ?>
+			<span style="margin-left:8px;color:#9ca3af;"><?php esc_html_e( '※ 重複と判定された新しい記事は、古い記事へ自動転送されます（記事は残ります）。', 'apprex' ); ?></span>
+		</form>
+
+		<hr>
 		<h2><?php esc_html_e( '画像生成テスト（診断）', 'apprex' ); ?></h2>
 		<p class="description"><?php esc_html_e( 'アイキャッチが生成されない場合、ここでテスト実行するとエラー内容（モデル未対応・権限・残高不足など）が表示されます。生成できた画像はメディアに保存されます。', 'apprex' ); ?></p>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
@@ -265,9 +427,15 @@ add_action( 'admin_post_apprex_generate_post', function () {
 			'length'    => $_POST['length'] ?? 2000,
 			'publish'   => ! empty( $_POST['publish'] ),
 			'gen_image' => ! empty( $_POST['gen_image'] ),
+			'force'     => ! empty( $_POST['force'] ),
 		)
 	);
 	if ( is_wp_error( $res ) ) {
+		if ( 'duplicate' === $res->get_error_code() ) {
+			$d    = $res->get_error_data();
+			$link = ( is_array( $d ) && ! empty( $d['post_id'] ) ) ? ' <a href="' . esc_url( get_edit_post_link( $d['post_id'], 'raw' ) ) . '">既存記事を見る</a>' : '';
+			$notify( 'warning', esc_html( $res->get_error_message() ) . $link . '（重複を作らない設定です。どうしても作る場合は「類似があっても強制生成」にチェック）' );
+		}
 		$notify( 'error', '生成に失敗しました：' . esc_html( $res->get_error_message() ) );
 	}
 	$edit = get_edit_post_link( $res['post_id'], 'raw' );
@@ -282,6 +450,23 @@ add_action( 'admin_post_apprex_generate_post', function () {
 			esc_url( $view )
 		)
 	);
+} );
+
+/**
+ * 重複記事スキャン→301整理のハンドラ。
+ */
+add_action( 'admin_post_apprex_ai_dedupe', function () {
+	if ( ! current_user_can( 'edit_posts' ) || ! check_admin_referer( 'apprex_ai_dedupe' ) ) {
+		wp_die( 'forbidden' );
+	}
+	$uid = get_current_user_id();
+	$n   = apprex_ai_dedupe_scan();
+	$msg = $n > 0
+		? sprintf( '重複記事を %d 件、古い記事へ301リダイレクトしました（SEO評価を集約）。', $n )
+		: '重複する記事は見つかりませんでした。';
+	set_transient( 'apprex_ai_blog_notice_' . $uid, array( 'type' => 'success', 'msg' => $msg ), 60 );
+	wp_safe_redirect( admin_url( 'edit.php?page=apprex-ai-blog' ) );
+	exit;
 } );
 
 /**
@@ -405,8 +590,26 @@ function apprex_run_autopost() {
 		return; // まだ時期ではない。
 	}
 
-	$idx   = (int) get_option( 'apprex_autopost_index', 0 ) % count( $topics );
-	$topic = array_values( $topics )[ $idx ];
+	// 重複を作らないよう、既に類似記事があるトピックはスキップして未出のテーマを選ぶ。
+	$vals  = array_values( $topics );
+	$count = count( $vals );
+	$start = (int) get_option( 'apprex_autopost_index', 0 ) % $count;
+	$picked = -1;
+	for ( $k = 0; $k < $count; $k++ ) {
+		$i = ( $start + $k ) % $count;
+		if ( apprex_ai_find_similar( $vals[ $i ], 0, 80 ) ) {
+			continue; // 既に似た記事がある＝重複になるのでスキップ。
+		}
+		$picked = $i;
+		break;
+	}
+	if ( $picked < 0 ) {
+		// 全トピックが既出。重複量産はしない。次回に備えて時刻だけ更新。
+		update_option( 'apprex_autopost_last', time() );
+		apprex_ai_dedupe_scan(); // 念のため既存重複を整理。
+		return;
+	}
+	$topic = $vals[ $picked ];
 
 	$res = apprex_ai_generate_post(
 		array(
@@ -419,6 +622,9 @@ function apprex_run_autopost() {
 	);
 
 	update_option( 'apprex_autopost_last', time() );
-	update_option( 'apprex_autopost_index', $idx + 1 );
+	update_option( 'apprex_autopost_index', $picked + 1 );
+
+	// 公開後、既存の重複があれば自動で301に整理（SEO最適化）。
+	apprex_ai_dedupe_scan();
 	// 公開されると blog.php の transition_post_status が SNS連動 Webhook を送出。
 }
