@@ -13,6 +13,68 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * リード見込み度スコア（0〜100）。種別・電話・法人・記述量・新しさで採点。
+ *
+ * @param string $type     問い合わせ種別。
+ * @param string $phone    電話番号。
+ * @param string $company  会社名。
+ * @param string $message  内容。
+ * @param float  $age_days 受付からの経過日数。
+ * @return int
+ */
+function apprex_lead_score( $type, $phone, $company, $message, $age_days = 0 ) {
+	$weight = array(
+		'estimate' => 50,
+		'meeting'  => 45,
+		'trial'    => 35,
+		'partner'  => 25,
+		'contact'  => 20,
+		'document' => 12,
+	);
+	$score  = isset( $weight[ $type ] ) ? $weight[ $type ] : 15;
+	$score += $phone ? 20 : 0;                                       // 電話番号あり＝本気度。
+	$score += $company ? 10 : 0;                                     // 法人。
+	$score += min( 20, (int) floor( mb_strlen( (string) $message ) / 20 ) * 5 ); // 記述量。
+	$score += $age_days <= 7 ? 15 : ( $age_days <= 30 ? 8 : 0 );     // 新しさ。
+	return (int) min( 100, $score );
+}
+
+/* ホットリード即通知：スコアの高い問い合わせが来たら即Slack通知（反応速度UP）。 */
+add_action( 'apprex_inquiry_submitted', 'apprex_hotlead_notify', 20, 3 );
+function apprex_hotlead_notify( $post_id, $type, $fields ) {
+	if ( ! get_option( 'apprex_hotlead_notify', 1 ) ) {
+		return;
+	}
+	$phone   = isset( $fields['phone'] ) ? $fields['phone'] : '';
+	$company = isset( $fields['company'] ) ? $fields['company'] : '';
+	$message = isset( $fields['message'] ) ? $fields['message'] : '';
+	$score   = apprex_lead_score( $type, $phone, $company, $message, 0 );
+
+	$threshold = (int) get_option( 'apprex_hotlead_threshold', 60 );
+	if ( $score < $threshold ) {
+		return;
+	}
+	if ( ! function_exists( 'apprex_slack_notify' ) ) {
+		return;
+	}
+	$name  = isset( $fields['name'] ) ? $fields['name'] : '';
+	$email = isset( $fields['email'] ) ? $fields['email'] : '';
+	$label = function_exists( 'apprex_type_label' ) ? apprex_type_label( $type ) : $type;
+	$text  = sprintf(
+		":fire: *ホットリード（スコア %d/100）* ｜ %s\n%s%s ／ %s ／ %s\n%s\n%s",
+		$score,
+		$label,
+		$name,
+		$company ? '（' . $company . '）' : '',
+		$email ? $email : 'メール未記入',
+		$phone ? '☎ ' . $phone : '電話なし',
+		$message ? '「' . mb_substr( wp_strip_all_tags( $message ), 0, 80 ) . '」' : '',
+		admin_url( 'post.php?post=' . $post_id . '&action=edit' )
+	);
+	apprex_slack_notify( $text );
+}
+
 /** 年間目標額（既定：1億円）。 */
 function apprex_pipeline_goal() {
 	$g = (int) get_option( 'apprex_goal_annual', 100000000 );
@@ -91,15 +153,6 @@ function apprex_pipeline_hot_leads( $limit = 8 ) {
 			'date_query'     => array( array( 'after' => '60 days ago' ) ),
 		)
 	);
-	// 種別ごとの見込み度の重み。
-	$weight = array(
-		'estimate' => 50,
-		'meeting'  => 45,
-		'trial'    => 35,
-		'partner'  => 25,
-		'contact'  => 20,
-		'document' => 12,
-	);
 	$rows = array();
 	foreach ( $ids as $id ) {
 		$type  = (string) get_post_meta( $id, 'apprex_type', true );
@@ -107,13 +160,8 @@ function apprex_pipeline_hot_leads( $limit = 8 ) {
 		$msg   = (string) get_post_meta( $id, 'apprex_message', true );
 		$comp  = (string) get_post_meta( $id, 'apprex_company', true );
 
-		$score  = isset( $weight[ $type ] ) ? $weight[ $type ] : 15;
-		$score += $phone ? 20 : 0;                       // 電話番号あり＝本気度。
-		$score += $comp ? 10 : 0;                        // 法人。
-		$score += min( 20, (int) floor( mb_strlen( $msg ) / 20 ) * 5 ); // 具体的な記述。
-		// 新しいほど加点（7日以内+15、30日以内+8）。
-		$age = ( current_time( 'timestamp' ) - get_post_time( 'U', true, $id ) ) / DAY_IN_SECONDS;
-		$score += $age <= 7 ? 15 : ( $age <= 30 ? 8 : 0 );
+		$age   = ( current_time( 'timestamp' ) - get_post_time( 'U', true, $id ) ) / DAY_IN_SECONDS;
+		$score = apprex_lead_score( $type, $phone, $comp, $msg, $age );
 
 		$rows[] = array(
 			'id'      => $id,
@@ -142,6 +190,9 @@ add_action( 'admin_post_apprex_pipeline_save', function () {
 	}
 	check_admin_referer( 'apprex_pipeline' );
 	update_option( 'apprex_goal_annual', isset( $_POST['goal_annual'] ) ? absint( $_POST['goal_annual'] ) : 100000000 );
+	update_option( 'apprex_hotlead_notify', empty( $_POST['hotlead_notify'] ) ? 0 : 1 );
+	$th = isset( $_POST['hotlead_threshold'] ) ? absint( $_POST['hotlead_threshold'] ) : 60;
+	update_option( 'apprex_hotlead_threshold', max( 0, min( 100, $th ) ) );
 	wp_safe_redirect( admin_url( 'admin.php?page=apprex-dashboard&goal_saved=1#apprex-pipeline' ) );
 	exit;
 } );
@@ -263,11 +314,17 @@ function apprex_pipeline_render() {
 	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top:16px;">
 		<input type="hidden" name="action" value="apprex_pipeline_save">
 		<?php wp_nonce_field( 'apprex_pipeline' ); ?>
-		<label>年間目標額：¥
+		<p><label>年間目標額：¥
 			<input type="number" name="goal_annual" value="<?php echo esc_attr( apprex_pipeline_goal() ); ?>" min="0" step="1000000" style="width:180px;">
 		</label>
-		<button type="submit" class="button">目標を保存</button>
-		<span style="margin-left:8px;color:#9ca3af;font-size:13px;">既定は 100,000,000（1億円）。</span>
+		<span style="margin-left:8px;color:#9ca3af;font-size:13px;">既定は 100,000,000（1億円）。</span></p>
+		<p><label><input type="checkbox" name="hotlead_notify" value="1" <?php checked( 1, (int) get_option( 'apprex_hotlead_notify', 1 ) ); ?>> <strong>ホットリードを即Slack通知する</strong></label>
+			<span style="margin-left:12px;">通知スコアしきい値：
+				<input type="number" name="hotlead_threshold" value="<?php echo esc_attr( (int) get_option( 'apprex_hotlead_threshold', 60 ) ); ?>" min="0" max="100" style="width:70px;">点以上
+			</span>
+		</p>
+		<p class="description">スコアが基準以上の問い合わせが来た瞬間に、Slackへ即通知します（反応速度＝成約率）。Slack Webhookは「APPREX 連携設定」で設定。見積もり＋電話番号ありなら約70点になります。</p>
+		<button type="submit" class="button button-primary">目標・通知設定を保存</button>
 	</form>
 	<?php
 }
