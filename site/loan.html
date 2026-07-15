@@ -11,137 +11,138 @@
 <style>
   /* =========================================================
      CARMEL（カーメル）オートローン 返済シミュレーター
-     ブランド：キャメル／キャラメルの温かなプレミアム配色
+     ブランド：紫（バイオレット）アクセント × 明るいベース
      ページ内で完結（#carmel 配下にスコープ）
      ========================================================= */
   :root{
-    --cm-espresso:#1b1510;   /* ベース（濃いエスプレッソ） */
-    --cm-espresso2:#241c15;
-    --cm-panel:#2b2118;
-    --cm-camel:#c8a068;      /* キャメル */
-    --cm-camel2:#e0bd86;     /* ライトキャメル */
-    --cm-caramel:#b07a3c;    /* キャラメル */
-    --cm-cream:#f6efe3;      /* クリーム文字 */
-    --cm-cream-dim:#c9bda9;
-    --cm-line:#3c2f22;
-    --cm-ok:#5fbf8a;
+    --cm-bg:#f6f3fd;         /* ベース（明るいラベンダー白） */
+    --cm-bg2:#efeafb;
+    --cm-purple:#7c3aed;     /* メイン紫（バイオレット） */
+    --cm-purple2:#9f67ff;    /* ライト紫 */
+    --cm-deep:#5b21b6;       /* ディープ紫 */
+    --cm-soft:#ede9fe;       /* ソフト紫（面） */
+    --cm-ink:#2c2540;        /* 濃い文字 */
+    --cm-ink-dim:#6b6382;    /* 淡い文字 */
+    --cm-line:#e6e0f5;       /* 罫線 */
+    --cm-card:#ffffff;
+    --cm-ok:#22a06b;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
   #carmel{
     font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic Medium",Meiryo,sans-serif;
-    color:var(--cm-cream);
+    color:var(--cm-ink);
     background:
-      radial-gradient(1100px 520px at 88% -8%, rgba(200,160,104,.20), transparent 60%),
-      radial-gradient(900px 480px at 5% 110%, rgba(176,122,60,.16), transparent 60%),
-      linear-gradient(180deg,var(--cm-espresso),var(--cm-espresso2));
+      radial-gradient(1100px 520px at 88% -8%, rgba(124,58,237,.14), transparent 60%),
+      radial-gradient(900px 480px at 5% 110%, rgba(159,103,255,.14), transparent 60%),
+      linear-gradient(180deg,var(--cm-bg),var(--cm-bg2));
     min-height:100vh;line-height:1.7;-webkit-font-smoothing:antialiased;
   }
   #carmel .wrap{max-width:1140px;margin:0 auto;padding:0 22px}
 
   /* ---- ヘッダー ---- */
   #carmel .top{display:flex;align-items:center;justify-content:space-between;padding:20px 0}
-  #carmel .brand{display:flex;align-items:center;gap:13px;text-decoration:none;color:var(--cm-cream)}
+  #carmel .brand{display:flex;align-items:center;gap:13px;text-decoration:none;color:var(--cm-ink)}
   #carmel .mark{
     width:46px;height:46px;border-radius:13px;display:grid;place-items:center;flex:none;
-    background:linear-gradient(145deg,var(--cm-camel2),var(--cm-caramel));
-    box-shadow:0 8px 22px rgba(176,122,60,.4);
+    background:linear-gradient(145deg,var(--cm-purple2),var(--cm-deep));
+    box-shadow:0 8px 22px rgba(124,58,237,.35);
   }
   #carmel .mark svg{width:28px;height:28px;display:block}
   #carmel .brand .name{font-weight:900;font-size:22px;letter-spacing:.16em;line-height:1}
-  #carmel .brand .sub{display:block;font-size:11px;letter-spacing:.32em;color:var(--cm-camel2);margin-top:5px}
-  #carmel .back{color:var(--cm-cream-dim);text-decoration:none;font-size:13.5px;font-weight:700;
-    border:1px solid var(--cm-line);border-radius:999px;padding:9px 16px;transition:.2s}
-  #carmel .back:hover{border-color:var(--cm-camel);color:var(--cm-cream)}
+  #carmel .brand .sub{display:block;font-size:11px;letter-spacing:.32em;color:var(--cm-purple);margin-top:5px}
+  #carmel .back{color:var(--cm-ink-dim);text-decoration:none;font-size:13.5px;font-weight:700;
+    border:1px solid var(--cm-line);border-radius:999px;padding:9px 16px;background:var(--cm-card);transition:.2s}
+  #carmel .back:hover{border-color:var(--cm-purple);color:var(--cm-purple)}
 
   /* ---- ヒーロー見出し ---- */
   #carmel .head{padding:22px 0 30px;max-width:760px}
-  #carmel .eyebrow{color:var(--cm-camel2);font-weight:800;letter-spacing:.22em;font-size:12.5px}
+  #carmel .eyebrow{color:var(--cm-purple);font-weight:800;letter-spacing:.22em;font-size:12.5px}
   #carmel .head h1{font-size:clamp(28px,5vw,42px);font-weight:900;margin:12px 0 12px;line-height:1.28}
-  #carmel .head h1 .hl{color:var(--cm-camel2)}
-  #carmel .head p{color:var(--cm-cream-dim);margin:0;font-size:15px}
+  #carmel .head h1 .hl{color:var(--cm-purple)}
+  #carmel .head p{color:var(--cm-ink-dim);margin:0;font-size:15px}
 
   /* ---- レイアウト ---- */
   #carmel .grid{display:grid;grid-template-columns:1fr 1.05fr;gap:26px;align-items:start;padding-bottom:56px}
 
   /* ---- コントロール（左） ---- */
-  #carmel .controls{background:linear-gradient(160deg,var(--cm-panel),#211913);
-    border:1px solid var(--cm-line);border-radius:22px;padding:26px}
+  #carmel .controls{background:var(--cm-card);
+    border:1px solid var(--cm-line);border-radius:22px;padding:26px;box-shadow:0 14px 40px rgba(91,33,182,.08)}
   #carmel .ctl{padding:16px 0;border-bottom:1px solid var(--cm-line)}
   #carmel .ctl:first-child{padding-top:2px}
   #carmel .ctl:last-child{border-bottom:none;padding-bottom:2px}
   #carmel .ctl-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
-  #carmel .ctl-top label{font-size:14px;font-weight:800;color:#efe6d6}
-  #carmel .ctl-top .val{font-weight:900;color:var(--cm-camel2);font-size:19px;font-variant-numeric:tabular-nums}
-  #carmel .ctl-top .val small{font-size:12px;color:var(--cm-cream-dim);font-weight:700;margin-left:2px}
+  #carmel .ctl-top label{font-size:14px;font-weight:800;color:var(--cm-ink)}
+  #carmel .ctl-top .val{font-weight:900;color:var(--cm-deep);font-size:19px;font-variant-numeric:tabular-nums}
+  #carmel .ctl-top .val small{font-size:12px;color:var(--cm-ink-dim);font-weight:700;margin-left:2px}
 
   #carmel input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:999px;
-    background:linear-gradient(90deg,var(--cm-camel) var(--fill,40%),#4a3a29 var(--fill,40%));outline:none}
+    background:linear-gradient(90deg,var(--cm-purple) var(--fill,40%),#e3ddf2 var(--fill,40%));outline:none}
   #carmel input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;
-    background:linear-gradient(145deg,#fff,var(--cm-camel2));border:3px solid var(--cm-caramel);
-    box-shadow:0 4px 12px rgba(0,0,0,.4);cursor:pointer;margin-top:-1px}
-  #carmel input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;
-    background:var(--cm-camel2);border:3px solid var(--cm-caramel);cursor:pointer}
-  #carmel .scale{display:flex;justify-content:space-between;font-size:11px;color:#8a7c68;margin-top:7px}
+    background:#fff;border:4px solid var(--cm-purple);
+    box-shadow:0 4px 12px rgba(124,58,237,.35);cursor:pointer;margin-top:-1px}
+  #carmel input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;
+    background:#fff;border:4px solid var(--cm-purple);cursor:pointer}
+  #carmel .scale{display:flex;justify-content:space-between;font-size:11px;color:#9a92ad;margin-top:7px}
 
   /* プリセット・チップ（金利） */
   #carmel .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
-  #carmel .chips button{background:transparent;border:1px solid var(--cm-line);color:var(--cm-cream-dim);
+  #carmel .chips button{background:var(--cm-card);border:1px solid var(--cm-line);color:var(--cm-ink-dim);
     border-radius:999px;padding:7px 13px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;transition:.15s}
-  #carmel .chips button:hover{border-color:var(--cm-camel)}
-  #carmel .chips button.on{background:var(--cm-camel);border-color:var(--cm-camel);color:#2a1e10}
+  #carmel .chips button:hover{border-color:var(--cm-purple);color:var(--cm-purple)}
+  #carmel .chips button.on{background:var(--cm-purple);border-color:var(--cm-purple);color:#fff}
 
-  #carmel .hint{font-size:12px;color:#8a7c68;margin:12px 0 0}
+  #carmel .hint{font-size:12px;color:#9a92ad;margin:12px 0 0}
 
   /* ---- 結果（右） ---- */
-  #carmel .result{background:linear-gradient(180deg,#fdfaf4,#f4ead9);color:#2a2016;
-    border-radius:22px;padding:28px;box-shadow:0 26px 60px rgba(0,0,0,.42)}
-  #carmel .result h2{margin:0 0 2px;font-size:15px;letter-spacing:.04em;color:#6b5a44}
+  #carmel .result{background:linear-gradient(180deg,#ffffff,#f7f3ff);color:var(--cm-ink);
+    border:1px solid var(--cm-line);border-radius:22px;padding:28px;box-shadow:0 26px 60px rgba(91,33,182,.16)}
+  #carmel .result h2{margin:0 0 2px;font-size:15px;letter-spacing:.04em;color:var(--cm-ink-dim)}
   #carmel .payment{margin:8px 0 6px}
   #carmel .payment .amt{font-size:clamp(40px,8vw,60px);font-weight:900;line-height:1;letter-spacing:-.01em;
-    color:#7a4f1e;font-variant-numeric:tabular-nums}
-  #carmel .payment .amt .u{font-size:22px;font-weight:800;color:#a07a48;margin-left:4px}
-  #carmel .payment .cap{font-size:13px;color:#8a755a;font-weight:700;margin-top:4px}
-  #carmel .bonusnote{display:inline-block;margin-top:8px;background:#efe0c8;color:#8a5a1c;
+    color:var(--cm-deep);font-variant-numeric:tabular-nums}
+  #carmel .payment .amt .u{font-size:22px;font-weight:800;color:var(--cm-purple2);margin-left:4px}
+  #carmel .payment .cap{font-size:13px;color:var(--cm-ink-dim);font-weight:700;margin-top:4px}
+  #carmel .bonusnote{display:inline-block;margin-top:8px;background:var(--cm-soft);color:var(--cm-deep);
     border-radius:999px;padding:5px 13px;font-size:12.5px;font-weight:800}
 
   /* 元金 vs 利息 バー */
-  #carmel .bar{height:18px;border-radius:999px;overflow:hidden;display:flex;margin:20px 0 10px;background:#e6d6bd}
-  #carmel .bar .p{background:linear-gradient(90deg,#7a4f1e,#a06a2c)}
-  #carmel .bar .i{background:linear-gradient(90deg,#d7b273,#e6c791)}
-  #carmel .legend{display:flex;gap:18px;font-size:12.5px;color:#6b5a44;font-weight:700}
+  #carmel .bar{height:18px;border-radius:999px;overflow:hidden;display:flex;margin:20px 0 10px;background:#ece7f8}
+  #carmel .bar .p{background:linear-gradient(90deg,var(--cm-deep),var(--cm-purple))}
+  #carmel .bar .i{background:linear-gradient(90deg,#c4b1f5,#d9caff)}
+  #carmel .legend{display:flex;gap:18px;font-size:12.5px;color:var(--cm-ink-dim);font-weight:700}
   #carmel .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:middle}
-  #carmel .legend .dp{background:#7a4f1e}
-  #carmel .legend .di{background:#e0bd86}
+  #carmel .legend .dp{background:var(--cm-purple)}
+  #carmel .legend .di{background:#cdb8f7}
 
-  #carmel .rows{margin:18px 0 4px;border-top:1px solid #e4d5bd;border-bottom:1px solid #e4d5bd}
+  #carmel .rows{margin:18px 0 4px;border-top:1px solid var(--cm-line);border-bottom:1px solid var(--cm-line)}
   #carmel .row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;font-size:14.5px;
-    border-bottom:1px dashed #e8dcc6}
+    border-bottom:1px dashed var(--cm-line)}
   #carmel .row:last-child{border-bottom:none}
-  #carmel .row .k{color:#6b5a44;font-weight:700}
-  #carmel .row .k .t{display:block;font-size:11px;color:#a3906f;font-weight:600}
-  #carmel .row .v{font-weight:900;font-variant-numeric:tabular-nums;color:#3a2c1c}
-  #carmel .row.total .v{font-size:20px;color:#7a4f1e}
+  #carmel .row .k{color:var(--cm-ink-dim);font-weight:700}
+  #carmel .row .k .t{display:block;font-size:11px;color:#a49bbb;font-weight:600}
+  #carmel .row .v{font-weight:900;font-variant-numeric:tabular-nums;color:var(--cm-ink)}
+  #carmel .row.total .v{font-size:20px;color:var(--cm-deep)}
 
   /* 返済計画テーブル */
   #carmel .plan-h{display:flex;align-items:center;gap:10px;margin:22px 0 8px}
-  #carmel .plan-h h3{margin:0;font-size:15px;color:#4a3826}
-  #carmel .plan-h .pill{background:#7a4f1e;color:#fbeed7;font-size:11px;font-weight:800;border-radius:999px;padding:3px 10px}
-  #carmel .plan-wrap{overflow-x:auto;border:1px solid #e4d5bd;border-radius:14px}
+  #carmel .plan-h h3{margin:0;font-size:15px;color:var(--cm-ink)}
+  #carmel .plan-h .pill{background:var(--cm-purple);color:#fff;font-size:11px;font-weight:800;border-radius:999px;padding:3px 10px}
+  #carmel .plan-wrap{overflow-x:auto;border:1px solid var(--cm-line);border-radius:14px}
   #carmel table{width:100%;border-collapse:collapse;font-size:13px}
-  #carmel thead th{background:#efe2cb;color:#5a4632;font-weight:800;font-size:12px;padding:10px 12px;text-align:right;white-space:nowrap}
+  #carmel thead th{background:var(--cm-soft);color:var(--cm-deep);font-weight:800;font-size:12px;padding:10px 12px;text-align:right;white-space:nowrap}
   #carmel thead th:first-child{text-align:center}
-  #carmel tbody td{padding:10px 12px;text-align:right;border-top:1px solid #eaddc6;font-variant-numeric:tabular-nums;white-space:nowrap}
-  #carmel tbody td:first-child{text-align:center;font-weight:800;color:#7a4f1e}
-  #carmel tbody tr:nth-child(even){background:#faf3e6}
+  #carmel tbody td{padding:10px 12px;text-align:right;border-top:1px solid var(--cm-line);font-variant-numeric:tabular-nums;white-space:nowrap}
+  #carmel tbody td:first-child{text-align:center;font-weight:800;color:var(--cm-purple)}
+  #carmel tbody tr:nth-child(even){background:#faf8ff}
   #carmel .cta{display:block;text-align:center;margin-top:22px;padding:16px;border-radius:14px;
-    background:linear-gradient(135deg,var(--cm-camel2),var(--cm-caramel));color:#2a1a0a;
-    font-weight:900;font-size:16px;text-decoration:none;box-shadow:0 12px 26px rgba(176,122,60,.4)}
-  #carmel .cta:hover{filter:brightness(1.04)}
-  #carmel .disc{font-size:11.5px;color:#a3906f;margin:12px 2px 0;line-height:1.6}
+    background:linear-gradient(135deg,var(--cm-purple2),var(--cm-deep));color:#fff;
+    font-weight:900;font-size:16px;text-decoration:none;box-shadow:0 12px 26px rgba(124,58,237,.38)}
+  #carmel .cta:hover{filter:brightness(1.05)}
+  #carmel .disc{font-size:11.5px;color:#a49bbb;margin:12px 2px 0;line-height:1.6}
 
   /* ---- フッター ---- */
-  #carmel .foot{border-top:1px solid var(--cm-line);padding:22px 0;color:#8a7c68;font-size:12.5px;text-align:center}
+  #carmel .foot{border-top:1px solid var(--cm-line);padding:22px 0;color:#9a92ad;font-size:12.5px;text-align:center}
 
   @media(max-width:860px){
     #carmel .grid{grid-template-columns:1fr}
@@ -157,8 +158,8 @@
       <a class="brand" href="index.html">
         <span class="mark" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none">
-            <path d="M3 15c0-.6.4-1 1-1 .3-1.1 1-3.2 1.8-4 .6-.6 1.4-1 2.4-1h5.2c1 0 1.7.4 2.4 1.1L19 12l1.4.5c.9.3 1.6 1 1.6 2v.5c0 .6-.4 1-1 1h-1a2 2 0 01-4 0H9a2 2 0 01-4 0H4c-.6 0-1-.4-1-1z" fill="#3a230e"/>
-            <circle cx="7" cy="16" r="1.5" fill="#fff"/><circle cx="17" cy="16" r="1.5" fill="#fff"/>
+            <path d="M3 15c0-.6.4-1 1-1 .3-1.1 1-3.2 1.8-4 .6-.6 1.4-1 2.4-1h5.2c1 0 1.7.4 2.4 1.1L19 12l1.4.5c.9.3 1.6 1 1.6 2v.5c0 .6-.4 1-1 1h-1a2 2 0 01-4 0H9a2 2 0 01-4 0H4c-.6 0-1-.4-1-1z" fill="#f5f0ff"/>
+            <circle cx="7" cy="16" r="1.5" fill="#5b21b6"/><circle cx="17" cy="16" r="1.5" fill="#5b21b6"/>
           </svg>
         </span>
         <span>
