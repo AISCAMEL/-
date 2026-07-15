@@ -231,6 +231,99 @@
     };
   }
 
+  // 元利均等の1回あたり支払額（端数処理前の実数）
+  function annuity(principal, ratePerPeriod, periods) {
+    if (periods <= 0) return 0;
+    if (ratePerPeriod === 0) return principal / periods;
+    return principal * ratePerPeriod / (1 - Math.pow(1 + ratePerPeriod, -periods));
+  }
+
+  /**
+   * 返済シミュレーション（頭金・ボーナス払い・返済予定表つき）
+   *
+   * 元金を「月払い分」と「ボーナス払い分」に分け、それぞれ元利均等で計算する。
+   * ボーナスは半年ごと（6ヶ月周期）に支払う一般的なオートローンの方式に準拠。
+   *
+   * @param {object} p
+   *   @param {number} p.price     車両価格／総額（円）
+   *   @param {number} p.down      頭金（円）
+   *   @param {number} p.ratePct   実質年率（%）
+   *   @param {number} p.months    支払回数（月）
+   *   @param {number} p.bonus     ボーナス払いに充当する元金（円・任意）
+   * @returns {object} 明細・返済予定表
+   */
+  function loanSimulate(p) {
+    var price = Math.max(0, Number(p.price) || 0);
+    var down = Math.min(price, Math.max(0, Number(p.down) || 0));
+    var months = Math.max(1, Math.round(Number(p.months) || 1));
+    var rate = Math.max(0, Number(p.ratePct) || 0);
+    var rMonthly = rate / 100 / 12;
+    var rBonus = rate / 100 / 2; // 半年（6ヶ月）あたり
+
+    var principal = price - down;            // 借入元金
+    var bonusPrincipal = Math.min(principal, Math.max(0, Number(p.bonus) || 0));
+    var monthlyPrincipal = principal - bonusPrincipal;
+
+    var bonusCount = Math.floor(months / 6); // ボーナス支払い回数
+    if (bonusCount === 0) { monthlyPrincipal = principal; bonusPrincipal = 0; }
+
+    var monthlyPay = Math.round(annuity(monthlyPrincipal, rMonthly, months));
+    var bonusPay = bonusCount > 0 ? Math.round(annuity(bonusPrincipal, rBonus, bonusCount)) : 0;
+
+    var monthlyTotal = monthlyPay * months;
+    var bonusTotal = bonusPay * bonusCount;
+    var totalPay = monthlyTotal + bonusTotal;
+    var interest = totalPay - principal;
+
+    // 年ごとの返済予定表（残高推移）を生成
+    var schedule = [];
+    var balMonthly = monthlyPrincipal;
+    var balBonus = bonusPrincipal;
+    var years = Math.ceil(months / 12);
+    var paidCum = 0;
+    for (var y = 1; y <= years; y++) {
+      var yearPaid = 0;
+      for (var mo = (y - 1) * 12 + 1; mo <= Math.min(y * 12, months); mo++) {
+        // 月払い分の元金充当
+        var iM = balMonthly * rMonthly;
+        var pM = Math.min(balMonthly, monthlyPay - iM);
+        balMonthly = Math.max(0, balMonthly - pM);
+        yearPaid += monthlyPay;
+        // ボーナス月（6の倍数）はボーナス分も充当
+        if (bonusCount > 0 && mo % 6 === 0) {
+          var iB = balBonus * rBonus;
+          var pB = Math.min(balBonus, bonusPay - iB);
+          balBonus = Math.max(0, balBonus - pB);
+          yearPaid += bonusPay;
+        }
+      }
+      paidCum += yearPaid;
+      // 端数処理の累積で最終回にわずかな残差が出るため、完済年は残高0に丸める
+      var bal = (y === years) ? 0 : Math.max(0, Math.round(balMonthly + balBonus));
+      schedule.push({
+        year: y,
+        paid: Math.round(yearPaid),
+        paidCum: Math.round(paidCum),
+        balance: bal
+      });
+    }
+
+    return {
+      price: price,
+      down: down,
+      principal: principal,
+      months: months,
+      ratePct: rate,
+      monthly: monthlyPay,
+      bonus: bonusPay,
+      bonusCount: bonusCount,
+      bonusPrincipal: bonusPrincipal,
+      total: totalPay,
+      interest: interest,
+      schedule: schedule
+    };
+  }
+
   /**
    * 総額計算ロジック（再利用可能）
    * @param {object} p {bid, cls, region, options:{}}
@@ -275,7 +368,7 @@
   window.AucSim = {
     calculate: calculate, feeByBid: feeByBid, yen: yen, man: man,
     CLASS: CLASS, OPTIONS: OPTIONS, CLEAN_BY_CLASS: CLEAN_BY_CLASS, FEE_TIERS: FEE_TIERS,
-    loanMonthly: loanMonthly,
+    loanMonthly: loanMonthly, loanSimulate: loanSimulate,
     AREAS: PREF, PREF: PREF, HOME_PREF: HOME_PREF, estimateShipping: estimateShipping,
     COND: COND, estimateSell: estimateSell,
     SELL_TIERS: SELL_TIERS, sellFeeByPrice: sellFeeByPrice

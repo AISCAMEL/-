@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>返済シミュレーション（オートローン）｜AUC-AGENT</title>
+<meta name="description" content="車両価格・頭金・支払回数・ボーナス払いを入力すると、月々の返済額・総返済額・利息・返済予定表をその場で計算。提携オートローン（オリコ）の資金計画にお役立てください。" />
+<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png" />
+<link rel="apple-touch-icon" href="assets/img/favicon-180.png" />
+<link rel="stylesheet" href="assets/css/style.css" />
+<style>
+  /* 返済予定表（このページ専用スコープ） */
+  .repay-table-wrap { margin-top: 16px; overflow-x: auto; }
+  .repay-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .repay-table th, .repay-table td { padding: 9px 10px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .repay-table th { background: #f3f6fb; color: var(--navy); font-weight: 800; font-size: 12.5px; }
+  .repay-table th:first-child, .repay-table td:first-child { text-align: center; }
+  .repay-table tbody tr:last-child td { border-bottom: none; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <span class="logo">A</span>
+      <span>AUC-AGENT<small>CAR AUCTION AGENT</small></span>
+    </a>
+    <nav class="nav">
+      <a class="nav-link" href="index.html">購入代行</a>
+      <a class="nav-link" href="sell.html">出品代行</a>
+      <a class="nav-link" href="shipping.html">陸送シミュ</a>
+      <a class="nav-link" href="loan.html">返済シミュ</a>
+      <a class="btn btn-gold btn-sm" href="login.html">無料会員登録</a>
+    </nav>
+  </div>
+</header>
+
+<section class="sim" style="min-height:calc(100vh - 64px);">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">REPAYMENT SIMULATION</div>
+      <h2>返済シミュレーション</h2>
+      <p>車両価格・頭金・支払回数を入力すると、<strong>月々の返済額・総返済額・利息・返済予定表</strong>をその場で計算します。提携オートローン（オリコ）を想定した<strong>元利均等・ボーナス併用払い</strong>に対応。</p>
+    </div>
+
+    <div class="sim-grid">
+      <div class="sim-panel">
+        <div class="row-2">
+          <div class="field">
+            <label>車両価格（総額）<span class="v" id="priceOut"></span></label>
+            <input type="number" id="price" min="100000" max="10000000" step="50000" value="1500000" />
+          </div>
+          <div class="field">
+            <label>頭金<span class="v" id="downOut"></span></label>
+            <input type="number" id="down" min="0" max="10000000" step="10000" value="0" />
+          </div>
+        </div>
+
+        <div class="row-2">
+          <div class="field">
+            <label>支払回数</label>
+            <select id="term">
+              <option value="12">12回（1年）</option>
+              <option value="24">24回（2年）</option>
+              <option value="36" selected>36回（3年）</option>
+              <option value="48">48回（4年）</option>
+              <option value="60">60回（5年）</option>
+              <option value="72">72回（6年）</option>
+              <option value="84">84回（7年）</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>実質年率（目安）</label>
+            <select id="rate">
+              <option value="3.9">3.9%</option>
+              <option value="6.9" selected>6.9%</option>
+              <option value="8.9">8.9%</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field" style="margin-bottom:0;">
+          <label>ボーナス払い充当額<span class="v" id="bonusOut"></span></label>
+          <input type="number" id="bonus" min="0" max="10000000" step="10000" value="0" />
+          <p style="font-size:12px;color:#9fb0cc;margin:8px 0 0;">借入元金のうち、半年ごと（6ヶ月周期）のボーナスで返す分。0円なら月払いのみ。</p>
+        </div>
+
+        <p style="font-size:12px;color:#9fb0cc;margin-top:16px;">※ 概算です。実際の金利・審査結果・手数料により変動します。正式なお支払い額は提携信販会社（オリコ）の審査で確定します。</p>
+      </div>
+
+      <div class="result">
+        <h3>返済プラン（概算）</h3>
+        <p class="note">※ 税込・元利均等・参考値です。</p>
+        <div class="line"><span>借入元金 <span class="tag" id="rTermTag"></span></span><span id="rPrincipal">¥0</span></div>
+        <div class="line"><span>ボーナス月の加算 <span class="tag" id="rBonusTag"></span></span><span id="rBonus">¥0</span></div>
+        <div class="line"><span>総返済額</span><span id="rTotal">¥0</span></div>
+        <div class="line muted"><span>うち利息総額</span><span id="rInterest">¥0</span></div>
+        <div class="grand">
+          <span class="lbl">月々のお支払い（目安）</span>
+          <span class="val" id="rMonthly">¥0</span>
+        </div>
+        <div class="savings" style="background:#eef3fb;color:#2a64c4;border-color:#cfe0ff;">
+          頭金を増やす／期間を短くすると利息総額を抑えられます。会員登録後、マイページから<strong>オリコの仮申込</strong>ができます。
+        </div>
+
+        <div class="repay-table-wrap">
+          <table class="repay-table">
+            <thead>
+              <tr><th>年</th><th>年間返済額</th><th>累計返済額</th><th>残高</th></tr>
+            </thead>
+            <tbody id="rSchedule"></tbody>
+          </table>
+        </div>
+
+        <a class="btn btn-navy btn-block mt-30" href="mypage.html#newLoan">この条件でオートローンを仮申込する</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="copy">© 2026 合同会社アイズ（AUC-AGENT）. いわき市／福島拠点. これはデモ用ページです。</div>
+  </div>
+</footer>
+
+<script src="assets/js/simulator.js"></script>
+<script>
+  (function () {
+    var S = window.AucSim;
+    var el = function (id) { return document.getElementById(id); };
+
+    function render() {
+      var r = S.loanSimulate({
+        price: el("price").value,
+        down: el("down").value,
+        ratePct: el("rate").value,
+        months: el("term").value,
+        bonus: el("bonus").value
+      });
+
+      el("priceOut").textContent = S.yen(r.price);
+      el("downOut").textContent = S.yen(r.down);
+      el("bonusOut").textContent = S.yen(r.bonusPrincipal);
+
+      el("rPrincipal").textContent = S.yen(r.principal);
+      el("rTermTag").textContent = r.months + "回・年率" + r.ratePct + "%";
+      el("rBonus").textContent = r.bonus > 0 ? S.yen(r.bonus) : "—";
+      el("rBonusTag").textContent = r.bonusCount > 0 ? "年2回・計" + r.bonusCount + "回" : "なし";
+      el("rTotal").textContent = S.yen(r.total);
+      el("rInterest").textContent = S.yen(r.interest);
+      el("rMonthly").textContent = S.yen(r.monthly);
+
+      var rows = r.schedule.map(function (s) {
+        return "<tr><td>" + s.year + "年目</td><td>" + S.yen(s.paid) +
+          "</td><td>" + S.yen(s.paidCum) + "</td><td>" + S.yen(s.balance) + "</td></tr>";
+      }).join("");
+      el("rSchedule").innerHTML = rows;
+    }
+
+    document.querySelector(".sim").addEventListener("input", render);
+    document.querySelector(".sim").addEventListener("change", render);
+    render();
+  })();
+</script>
+</body>
+</html>

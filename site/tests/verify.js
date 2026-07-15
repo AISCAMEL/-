@@ -79,6 +79,31 @@ function fire(win, el, type) { el.dispatchEvent(new win.Event(type, { bubbles: t
     ok("ページエラーなし", !getError(), getError());
   }
 
+  console.log("loan.html（返済シミュ）");
+  {
+    const { win, doc, getError } = load("loan.html");
+    ok("AucSim.loanSimulate 公開", !!(win.AucSim && win.AucSim.loanSimulate));
+    // 150万円・36回・6.9%・頭金/ボーナスなし → 月々は約46,200円前後
+    doc.getElementById("price").value = "1500000";
+    doc.getElementById("down").value = "0";
+    doc.getElementById("bonus").value = "0";
+    fire(win, doc.getElementById("price"), "input");
+    ok("月々返済額が計算される (#rMonthly)", /¥4[0-9],\d{3}/.test(doc.getElementById("rMonthly").textContent), doc.getElementById("rMonthly").textContent);
+    ok("借入元金=車両価格（頭金0）", doc.getElementById("rPrincipal").textContent === "¥1,500,000", doc.getElementById("rPrincipal").textContent);
+    ok("返済予定表が3年分（36回）", doc.querySelectorAll("#rSchedule tr").length === 3, String(doc.querySelectorAll("#rSchedule tr").length));
+    ok("利息総額が表示", /¥[\d,]+/.test(doc.getElementById("rInterest").textContent));
+    // 頭金を入れると借入元金が下がる
+    doc.getElementById("down").value = "300000"; fire(win, doc.getElementById("down"), "input");
+    ok("頭金で借入元金が減る (#rPrincipal=¥1,200,000)", doc.getElementById("rPrincipal").textContent === "¥1,200,000", doc.getElementById("rPrincipal").textContent);
+    // ボーナス払いを設定するとボーナス加算が表示される
+    doc.getElementById("bonus").value = "300000"; fire(win, doc.getElementById("bonus"), "input");
+    ok("ボーナス月加算が表示 (#rBonus)", /¥[\d,]+/.test(doc.getElementById("rBonus").textContent) && doc.getElementById("rBonus").textContent !== "—", doc.getElementById("rBonus").textContent);
+    // 金利0%相当の検算：総返済額＝借入元金（利息総額0）
+    const z = win.AucSim.loanSimulate({ price: 1200000, down: 0, ratePct: 0, months: 24, bonus: 0 });
+    ok("年率0%なら利息0・月々均等", z.interest === 0 && z.monthly === 50000, "monthly=" + z.monthly + " interest=" + z.interest);
+    ok("ページエラーなし", !getError(), getError());
+  }
+
   console.log("login.html（登録フロー）");
   {
     const { win, getError } = load("login.html");
