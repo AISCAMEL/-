@@ -101,6 +101,16 @@ function fire(win, el, type) { el.dispatchEvent(new win.Event(type, { bubbles: t
     // 金利0%相当の検算：総返済額＝借入元金（利息総額0）
     const z = win.AucSim.loanSimulate({ price: 1200000, down: 0, ratePct: 0, months: 24, bonus: 0 });
     ok("年率0%なら利息0・月々均等", z.interest === 0 && z.monthly === 50000, "monthly=" + z.monthly + " interest=" + z.interest);
+    // 120回（10年）・年率18% に対応：返済計画は10年分、金利が上がると月々も上がる
+    doc.getElementById("down").value = "0"; doc.getElementById("bonus").value = "0";
+    doc.getElementById("term").value = "120";
+    doc.getElementById("rate").value = "18";
+    fire(win, doc.getElementById("rate"), "input");
+    ok("返済計画が120回=10年分", doc.querySelectorAll("#rSchedule tr").length === 10, String(doc.querySelectorAll("#rSchedule tr").length));
+    ok("年率18%まで指定できる (#rateOut)", /18\.0%/.test(doc.getElementById("rateOut").textContent), doc.getElementById("rateOut").textContent);
+    const hi = win.AucSim.loanSimulate({ price: 1500000, down: 0, ratePct: 18, months: 120, bonus: 0 });
+    const lo = win.AucSim.loanSimulate({ price: 1500000, down: 0, ratePct: 3.9, months: 120, bonus: 0 });
+    ok("金利が高いほど月々・利息が増える", hi.monthly > lo.monthly && hi.interest > lo.interest, "hi=" + hi.monthly + " lo=" + lo.monthly);
     ok("ページエラーなし", !getError(), getError());
   }
 

@@ -3,128 +3,269 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>返済シミュレーション（オートローン）｜AUC-AGENT</title>
-<meta name="description" content="車両価格・頭金・支払回数・ボーナス払いを入力すると、月々の返済額・総返済額・利息・返済予定表をその場で計算。提携オートローン（オリコ）の資金計画にお役立てください。" />
+<title>カーメル オートローン返済シミュレーター｜CARMEL</title>
+<meta name="description" content="カーメル オートローンの返済シミュレーター。車両価格・頭金・支払回数（最大120回）・金利（〜18%）・ボーナス払いから、毎月の返済額・総返済額・利息・返済計画をその場で試算できます。" />
 <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
 <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png" />
 <link rel="apple-touch-icon" href="assets/img/favicon-180.png" />
-<link rel="stylesheet" href="assets/css/style.css" />
 <style>
-  /* 返済予定表（このページ専用スコープ） */
-  .repay-table-wrap { margin-top: 16px; overflow-x: auto; }
-  .repay-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-  .repay-table th, .repay-table td { padding: 9px 10px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
-  .repay-table th { background: #f3f6fb; color: var(--navy); font-weight: 800; font-size: 12.5px; }
-  .repay-table th:first-child, .repay-table td:first-child { text-align: center; }
-  .repay-table tbody tr:last-child td { border-bottom: none; }
+  /* =========================================================
+     CARMEL（カーメル）オートローン 返済シミュレーター
+     ブランド：キャメル／キャラメルの温かなプレミアム配色
+     ページ内で完結（#carmel 配下にスコープ）
+     ========================================================= */
+  :root{
+    --cm-espresso:#1b1510;   /* ベース（濃いエスプレッソ） */
+    --cm-espresso2:#241c15;
+    --cm-panel:#2b2118;
+    --cm-camel:#c8a068;      /* キャメル */
+    --cm-camel2:#e0bd86;     /* ライトキャメル */
+    --cm-caramel:#b07a3c;    /* キャラメル */
+    --cm-cream:#f6efe3;      /* クリーム文字 */
+    --cm-cream-dim:#c9bda9;
+    --cm-line:#3c2f22;
+    --cm-ok:#5fbf8a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  #carmel{
+    font-family:"Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic Medium",Meiryo,sans-serif;
+    color:var(--cm-cream);
+    background:
+      radial-gradient(1100px 520px at 88% -8%, rgba(200,160,104,.20), transparent 60%),
+      radial-gradient(900px 480px at 5% 110%, rgba(176,122,60,.16), transparent 60%),
+      linear-gradient(180deg,var(--cm-espresso),var(--cm-espresso2));
+    min-height:100vh;line-height:1.7;-webkit-font-smoothing:antialiased;
+  }
+  #carmel .wrap{max-width:1140px;margin:0 auto;padding:0 22px}
+
+  /* ---- ヘッダー ---- */
+  #carmel .top{display:flex;align-items:center;justify-content:space-between;padding:20px 0}
+  #carmel .brand{display:flex;align-items:center;gap:13px;text-decoration:none;color:var(--cm-cream)}
+  #carmel .mark{
+    width:46px;height:46px;border-radius:13px;display:grid;place-items:center;flex:none;
+    background:linear-gradient(145deg,var(--cm-camel2),var(--cm-caramel));
+    box-shadow:0 8px 22px rgba(176,122,60,.4);
+  }
+  #carmel .mark svg{width:28px;height:28px;display:block}
+  #carmel .brand .name{font-weight:900;font-size:22px;letter-spacing:.16em;line-height:1}
+  #carmel .brand .sub{display:block;font-size:11px;letter-spacing:.32em;color:var(--cm-camel2);margin-top:5px}
+  #carmel .back{color:var(--cm-cream-dim);text-decoration:none;font-size:13.5px;font-weight:700;
+    border:1px solid var(--cm-line);border-radius:999px;padding:9px 16px;transition:.2s}
+  #carmel .back:hover{border-color:var(--cm-camel);color:var(--cm-cream)}
+
+  /* ---- ヒーロー見出し ---- */
+  #carmel .head{padding:22px 0 30px;max-width:760px}
+  #carmel .eyebrow{color:var(--cm-camel2);font-weight:800;letter-spacing:.22em;font-size:12.5px}
+  #carmel .head h1{font-size:clamp(28px,5vw,42px);font-weight:900;margin:12px 0 12px;line-height:1.28}
+  #carmel .head h1 .hl{color:var(--cm-camel2)}
+  #carmel .head p{color:var(--cm-cream-dim);margin:0;font-size:15px}
+
+  /* ---- レイアウト ---- */
+  #carmel .grid{display:grid;grid-template-columns:1fr 1.05fr;gap:26px;align-items:start;padding-bottom:56px}
+
+  /* ---- コントロール（左） ---- */
+  #carmel .controls{background:linear-gradient(160deg,var(--cm-panel),#211913);
+    border:1px solid var(--cm-line);border-radius:22px;padding:26px}
+  #carmel .ctl{padding:16px 0;border-bottom:1px solid var(--cm-line)}
+  #carmel .ctl:first-child{padding-top:2px}
+  #carmel .ctl:last-child{border-bottom:none;padding-bottom:2px}
+  #carmel .ctl-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+  #carmel .ctl-top label{font-size:14px;font-weight:800;color:#efe6d6}
+  #carmel .ctl-top .val{font-weight:900;color:var(--cm-camel2);font-size:19px;font-variant-numeric:tabular-nums}
+  #carmel .ctl-top .val small{font-size:12px;color:var(--cm-cream-dim);font-weight:700;margin-left:2px}
+
+  #carmel input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:999px;
+    background:linear-gradient(90deg,var(--cm-camel) var(--fill,40%),#4a3a29 var(--fill,40%));outline:none}
+  #carmel input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;
+    background:linear-gradient(145deg,#fff,var(--cm-camel2));border:3px solid var(--cm-caramel);
+    box-shadow:0 4px 12px rgba(0,0,0,.4);cursor:pointer;margin-top:-1px}
+  #carmel input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;
+    background:var(--cm-camel2);border:3px solid var(--cm-caramel);cursor:pointer}
+  #carmel .scale{display:flex;justify-content:space-between;font-size:11px;color:#8a7c68;margin-top:7px}
+
+  /* プリセット・チップ（金利） */
+  #carmel .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+  #carmel .chips button{background:transparent;border:1px solid var(--cm-line);color:var(--cm-cream-dim);
+    border-radius:999px;padding:7px 13px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;transition:.15s}
+  #carmel .chips button:hover{border-color:var(--cm-camel)}
+  #carmel .chips button.on{background:var(--cm-camel);border-color:var(--cm-camel);color:#2a1e10}
+
+  #carmel .hint{font-size:12px;color:#8a7c68;margin:12px 0 0}
+
+  /* ---- 結果（右） ---- */
+  #carmel .result{background:linear-gradient(180deg,#fdfaf4,#f4ead9);color:#2a2016;
+    border-radius:22px;padding:28px;box-shadow:0 26px 60px rgba(0,0,0,.42)}
+  #carmel .result h2{margin:0 0 2px;font-size:15px;letter-spacing:.04em;color:#6b5a44}
+  #carmel .payment{margin:8px 0 6px}
+  #carmel .payment .amt{font-size:clamp(40px,8vw,60px);font-weight:900;line-height:1;letter-spacing:-.01em;
+    color:#7a4f1e;font-variant-numeric:tabular-nums}
+  #carmel .payment .amt .u{font-size:22px;font-weight:800;color:#a07a48;margin-left:4px}
+  #carmel .payment .cap{font-size:13px;color:#8a755a;font-weight:700;margin-top:4px}
+  #carmel .bonusnote{display:inline-block;margin-top:8px;background:#efe0c8;color:#8a5a1c;
+    border-radius:999px;padding:5px 13px;font-size:12.5px;font-weight:800}
+
+  /* 元金 vs 利息 バー */
+  #carmel .bar{height:18px;border-radius:999px;overflow:hidden;display:flex;margin:20px 0 10px;background:#e6d6bd}
+  #carmel .bar .p{background:linear-gradient(90deg,#7a4f1e,#a06a2c)}
+  #carmel .bar .i{background:linear-gradient(90deg,#d7b273,#e6c791)}
+  #carmel .legend{display:flex;gap:18px;font-size:12.5px;color:#6b5a44;font-weight:700}
+  #carmel .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:middle}
+  #carmel .legend .dp{background:#7a4f1e}
+  #carmel .legend .di{background:#e0bd86}
+
+  #carmel .rows{margin:18px 0 4px;border-top:1px solid #e4d5bd;border-bottom:1px solid #e4d5bd}
+  #carmel .row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;font-size:14.5px;
+    border-bottom:1px dashed #e8dcc6}
+  #carmel .row:last-child{border-bottom:none}
+  #carmel .row .k{color:#6b5a44;font-weight:700}
+  #carmel .row .k .t{display:block;font-size:11px;color:#a3906f;font-weight:600}
+  #carmel .row .v{font-weight:900;font-variant-numeric:tabular-nums;color:#3a2c1c}
+  #carmel .row.total .v{font-size:20px;color:#7a4f1e}
+
+  /* 返済計画テーブル */
+  #carmel .plan-h{display:flex;align-items:center;gap:10px;margin:22px 0 8px}
+  #carmel .plan-h h3{margin:0;font-size:15px;color:#4a3826}
+  #carmel .plan-h .pill{background:#7a4f1e;color:#fbeed7;font-size:11px;font-weight:800;border-radius:999px;padding:3px 10px}
+  #carmel .plan-wrap{overflow-x:auto;border:1px solid #e4d5bd;border-radius:14px}
+  #carmel table{width:100%;border-collapse:collapse;font-size:13px}
+  #carmel thead th{background:#efe2cb;color:#5a4632;font-weight:800;font-size:12px;padding:10px 12px;text-align:right;white-space:nowrap}
+  #carmel thead th:first-child{text-align:center}
+  #carmel tbody td{padding:10px 12px;text-align:right;border-top:1px solid #eaddc6;font-variant-numeric:tabular-nums;white-space:nowrap}
+  #carmel tbody td:first-child{text-align:center;font-weight:800;color:#7a4f1e}
+  #carmel tbody tr:nth-child(even){background:#faf3e6}
+  #carmel .cta{display:block;text-align:center;margin-top:22px;padding:16px;border-radius:14px;
+    background:linear-gradient(135deg,var(--cm-camel2),var(--cm-caramel));color:#2a1a0a;
+    font-weight:900;font-size:16px;text-decoration:none;box-shadow:0 12px 26px rgba(176,122,60,.4)}
+  #carmel .cta:hover{filter:brightness(1.04)}
+  #carmel .disc{font-size:11.5px;color:#a3906f;margin:12px 2px 0;line-height:1.6}
+
+  /* ---- フッター ---- */
+  #carmel .foot{border-top:1px solid var(--cm-line);padding:22px 0;color:#8a7c68;font-size:12.5px;text-align:center}
+
+  @media(max-width:860px){
+    #carmel .grid{grid-template-columns:1fr}
+    #carmel .brand .sub{letter-spacing:.24em}
+  }
 </style>
 </head>
 <body>
-
-<header class="site-header">
+<div id="carmel">
   <div class="wrap">
-    <a class="brand" href="index.html">
-      <span class="logo">A</span>
-      <span>AUC-AGENT<small>CAR AUCTION AGENT</small></span>
-    </a>
-    <nav class="nav">
-      <a class="nav-link" href="index.html">購入代行</a>
-      <a class="nav-link" href="sell.html">出品代行</a>
-      <a class="nav-link" href="shipping.html">陸送シミュ</a>
-      <a class="nav-link" href="loan.html">返済シミュ</a>
-      <a class="btn btn-gold btn-sm" href="login.html">無料会員登録</a>
-    </nav>
-  </div>
-</header>
 
-<section class="sim" style="min-height:calc(100vh - 64px);">
-  <div class="wrap">
-    <div class="section-head">
-      <div class="eyebrow">REPAYMENT SIMULATION</div>
-      <h2>返済シミュレーション</h2>
-      <p>車両価格・頭金・支払回数を入力すると、<strong>月々の返済額・総返済額・利息・返済予定表</strong>をその場で計算します。提携オートローン（オリコ）を想定した<strong>元利均等・ボーナス併用払い</strong>に対応。</p>
+    <div class="top">
+      <a class="brand" href="index.html">
+        <span class="mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M3 15c0-.6.4-1 1-1 .3-1.1 1-3.2 1.8-4 .6-.6 1.4-1 2.4-1h5.2c1 0 1.7.4 2.4 1.1L19 12l1.4.5c.9.3 1.6 1 1.6 2v.5c0 .6-.4 1-1 1h-1a2 2 0 01-4 0H9a2 2 0 01-4 0H4c-.6 0-1-.4-1-1z" fill="#3a230e"/>
+            <circle cx="7" cy="16" r="1.5" fill="#fff"/><circle cx="17" cy="16" r="1.5" fill="#fff"/>
+          </svg>
+        </span>
+        <span>
+          <span class="name">CARMEL</span>
+          <span class="sub">カーメル オートローン</span>
+        </span>
+      </a>
+      <a class="back" href="index.html">← AUC-AGENT トップへ</a>
     </div>
 
-    <div class="sim-grid">
-      <div class="sim-panel">
-        <div class="row-2">
-          <div class="field">
-            <label>車両価格（総額）<span class="v" id="priceOut"></span></label>
-            <input type="number" id="price" min="100000" max="10000000" step="50000" value="1500000" />
-          </div>
-          <div class="field">
-            <label>頭金<span class="v" id="downOut"></span></label>
-            <input type="number" id="down" min="0" max="10000000" step="10000" value="0" />
+    <div class="head">
+      <div class="eyebrow">REPAYMENT SIMULATOR</div>
+      <h1>毎月いくら？<span class="hl">返済プラン</span>を<br>その場でシミュレーション。</h1>
+      <p>車両価格・頭金・支払回数（最大 <strong>120回／10年</strong>）・金利（〜<strong>18.0%</strong>）を動かすと、毎月の返済額・総返済額・利息、そして年ごとの<strong>返済計画</strong>をリアルタイムに試算します。</p>
+    </div>
+
+    <div class="grid" id="calc">
+
+      <!-- コントロール -->
+      <div class="controls">
+        <div class="ctl">
+          <div class="ctl-top"><label>車両価格（総額）</label><span class="val" id="priceOut">¥1,500,000</span></div>
+          <input type="range" id="price" min="300000" max="10000000" step="10000" value="1500000" />
+          <div class="scale"><span>30万円</span><span>1,000万円</span></div>
+        </div>
+
+        <div class="ctl">
+          <div class="ctl-top"><label>頭金</label><span class="val" id="downOut">¥0</span></div>
+          <input type="range" id="down" min="0" max="5000000" step="10000" value="0" />
+          <div class="scale"><span>0円</span><span>500万円</span></div>
+        </div>
+
+        <div class="ctl">
+          <div class="ctl-top"><label>支払回数</label><span class="val" id="termOut">36<small>回</small></span></div>
+          <input type="range" id="term" min="6" max="120" step="6" value="36" />
+          <div class="scale"><span>6回</span><span>120回（10年）</span></div>
+        </div>
+
+        <div class="ctl">
+          <div class="ctl-top"><label>実質年率</label><span class="val" id="rateOut">6.9<small>%</small></span></div>
+          <input type="range" id="rate" min="1.9" max="18" step="0.1" value="6.9" />
+          <div class="scale"><span>1.9%</span><span>18.0%</span></div>
+          <div class="chips" id="rateChips">
+            <button type="button" data-r="3.9">3.9%</button>
+            <button type="button" data-r="6.9">6.9%</button>
+            <button type="button" data-r="9.9">9.9%</button>
+            <button type="button" data-r="14.9">14.9%</button>
+            <button type="button" data-r="18">18.0%</button>
           </div>
         </div>
 
-        <div class="row-2">
-          <div class="field">
-            <label>支払回数</label>
-            <select id="term">
-              <option value="12">12回（1年）</option>
-              <option value="24">24回（2年）</option>
-              <option value="36" selected>36回（3年）</option>
-              <option value="48">48回（4年）</option>
-              <option value="60">60回（5年）</option>
-              <option value="72">72回（6年）</option>
-              <option value="84">84回（7年）</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>実質年率（目安）</label>
-            <select id="rate">
-              <option value="3.9">3.9%</option>
-              <option value="6.9" selected>6.9%</option>
-              <option value="8.9">8.9%</option>
-            </select>
-          </div>
+        <div class="ctl">
+          <div class="ctl-top"><label>ボーナス払い充当額</label><span class="val" id="bonusOut">¥0</span></div>
+          <input type="range" id="bonus" min="0" max="5000000" step="10000" value="0" />
+          <div class="scale"><span>0円</span><span>500万円</span></div>
+          <p class="hint">借入元金のうち、半年ごと（年2回）のボーナスで返す分。0円なら月払いのみ。</p>
         </div>
-
-        <div class="field" style="margin-bottom:0;">
-          <label>ボーナス払い充当額<span class="v" id="bonusOut"></span></label>
-          <input type="number" id="bonus" min="0" max="10000000" step="10000" value="0" />
-          <p style="font-size:12px;color:#9fb0cc;margin:8px 0 0;">借入元金のうち、半年ごと（6ヶ月周期）のボーナスで返す分。0円なら月払いのみ。</p>
-        </div>
-
-        <p style="font-size:12px;color:#9fb0cc;margin-top:16px;">※ 概算です。実際の金利・審査結果・手数料により変動します。正式なお支払い額は提携信販会社（オリコ）の審査で確定します。</p>
       </div>
 
+      <!-- 結果 -->
       <div class="result">
-        <h3>返済プラン（概算）</h3>
-        <p class="note">※ 税込・元利均等・参考値です。</p>
-        <div class="line"><span>借入元金 <span class="tag" id="rTermTag"></span></span><span id="rPrincipal">¥0</span></div>
-        <div class="line"><span>ボーナス月の加算 <span class="tag" id="rBonusTag"></span></span><span id="rBonus">¥0</span></div>
-        <div class="line"><span>総返済額</span><span id="rTotal">¥0</span></div>
-        <div class="line muted"><span>うち利息総額</span><span id="rInterest">¥0</span></div>
-        <div class="grand">
-          <span class="lbl">月々のお支払い（目安）</span>
-          <span class="val" id="rMonthly">¥0</span>
-        </div>
-        <div class="savings" style="background:#eef3fb;color:#2a64c4;border-color:#cfe0ff;">
-          頭金を増やす／期間を短くすると利息総額を抑えられます。会員登録後、マイページから<strong>オリコの仮申込</strong>ができます。
+        <h2>毎月のお支払い（目安）</h2>
+        <div class="payment">
+          <div class="amt"><span id="rMonthly">¥0</span><span class="u">/月</span></div>
+          <div class="cap"><span id="rTermTag"></span></div>
+          <span class="bonusnote" id="rBonusNote">＋ ボーナス月 <b id="rBonus">¥0</b>（<span id="rBonusTag"></span>）</span>
         </div>
 
-        <div class="repay-table-wrap">
-          <table class="repay-table">
+        <div class="bar" aria-hidden="true">
+          <span class="p" id="barP" style="width:70%"></span>
+          <span class="i" id="barI" style="width:30%"></span>
+        </div>
+        <div class="legend">
+          <span><i class="dp"></i>元金 <b id="legP">¥0</b></span>
+          <span><i class="di"></i>利息 <b id="legI">¥0</b></span>
+        </div>
+
+        <div class="rows">
+          <div class="row"><span class="k">借入元金<span class="t">車両価格 − 頭金</span></span><span class="v" id="rPrincipal">¥0</span></div>
+          <div class="row"><span class="k">うち利息総額</span><span class="v" id="rInterest">¥0</span></div>
+          <div class="row total"><span class="k">総返済額</span><span class="v" id="rTotal">¥0</span></div>
+        </div>
+
+        <div class="plan-h">
+          <h3>返済計画（年ごと）</h3>
+          <span class="pill" id="planYears">3年</span>
+        </div>
+        <div class="plan-wrap">
+          <table>
             <thead>
-              <tr><th>年</th><th>年間返済額</th><th>累計返済額</th><th>残高</th></tr>
+              <tr><th>経過</th><th>年間返済額</th><th>累計返済額</th><th>残高</th></tr>
             </thead>
             <tbody id="rSchedule"></tbody>
           </table>
         </div>
 
-        <a class="btn btn-navy btn-block mt-30" href="mypage.html#newLoan">この条件でオートローンを仮申込する</a>
+        <a class="cta" href="mypage.html#newLoan">この条件でオートローンを仮申込する</a>
+        <p class="disc">※ 元利均等・税込の概算です。実際の金利・お支払い額・審査結果は提携信販会社（オリコ）の審査により確定します。ボーナス払いは半年ごと（年2回）を想定しています。</p>
       </div>
+
     </div>
   </div>
-</section>
 
-<footer class="site-footer">
-  <div class="wrap">
-    <div class="copy">© 2026 合同会社アイズ（AUC-AGENT）. いわき市／福島拠点. これはデモ用ページです。</div>
+  <div class="foot">
+    <div class="wrap">© 2026 合同会社アイズ／CARMEL（カーメル オートローン）. いわき市／福島拠点. これはデモ用ページです。</div>
   </div>
-</footer>
+</div>
 
 <script src="assets/js/simulator.js"></script>
 <script>
@@ -132,7 +273,16 @@
     var S = window.AucSim;
     var el = function (id) { return document.getElementById(id); };
 
+    // レンジの塗りつぶし％を更新（見た目）
+    function fill(input) {
+      var min = +input.min, max = +input.max, v = +input.value;
+      var pct = ((v - min) / (max - min)) * 100;
+      input.style.setProperty("--fill", pct + "%");
+    }
+
     function render() {
+      ["price", "down", "term", "rate", "bonus"].forEach(function (id) { fill(el(id)); });
+
       var r = S.loanSimulate({
         price: el("price").value,
         down: el("down").value,
@@ -143,26 +293,61 @@
 
       el("priceOut").textContent = S.yen(r.price);
       el("downOut").textContent = S.yen(r.down);
+      el("termOut").innerHTML = r.months + '<small>回・約' + Math.round(r.months / 12 * 10) / 10 + '年</small>';
+      el("rateOut").innerHTML = r.ratePct.toFixed(1) + '<small>%</small>';
       el("bonusOut").textContent = S.yen(r.bonusPrincipal);
 
-      el("rPrincipal").textContent = S.yen(r.principal);
-      el("rTermTag").textContent = r.months + "回・年率" + r.ratePct + "%";
-      el("rBonus").textContent = r.bonus > 0 ? S.yen(r.bonus) : "—";
-      el("rBonusTag").textContent = r.bonusCount > 0 ? "年2回・計" + r.bonusCount + "回" : "なし";
-      el("rTotal").textContent = S.yen(r.total);
-      el("rInterest").textContent = S.yen(r.interest);
       el("rMonthly").textContent = S.yen(r.monthly);
+      el("rTermTag").textContent = "借入 " + S.yen(r.principal) + "・" + r.months + "回・年率" + r.ratePct.toFixed(1) + "%";
 
-      var rows = r.schedule.map(function (s) {
+      // ボーナス表示の出し分け
+      var bn = el("rBonusNote");
+      if (r.bonus > 0) {
+        bn.style.display = "inline-block";
+        el("rBonus").textContent = S.yen(r.bonus);
+        el("rBonusTag").textContent = "年2回・計" + r.bonusCount + "回";
+      } else {
+        bn.style.display = "none";
+      }
+
+      el("rPrincipal").textContent = S.yen(r.principal);
+      el("rInterest").textContent = S.yen(r.interest);
+      el("rTotal").textContent = S.yen(r.total);
+
+      // 元金 vs 利息 バー
+      var total = r.total || 1;
+      var pPct = Math.max(4, Math.round(r.principal / total * 100));
+      el("barP").style.width = pPct + "%";
+      el("barI").style.width = (100 - pPct) + "%";
+      el("legP").textContent = S.yen(r.principal);
+      el("legI").textContent = S.yen(r.interest);
+
+      // 返済計画
+      el("planYears").textContent = r.schedule.length + "年";
+      el("rSchedule").innerHTML = r.schedule.map(function (s) {
         return "<tr><td>" + s.year + "年目</td><td>" + S.yen(s.paid) +
           "</td><td>" + S.yen(s.paidCum) + "</td><td>" + S.yen(s.balance) + "</td></tr>";
       }).join("");
-      el("rSchedule").innerHTML = rows;
     }
 
-    document.querySelector(".sim").addEventListener("input", render);
-    document.querySelector(".sim").addEventListener("change", render);
-    render();
+    // 金利プリセット・チップ
+    var chips = el("rateChips");
+    function syncChips() {
+      var v = el("rate").value;
+      chips.querySelectorAll("button").forEach(function (b) {
+        b.classList.toggle("on", b.getAttribute("data-r") === String(+v));
+      });
+    }
+    chips.addEventListener("click", function (e) {
+      var b = e.target.closest("button"); if (!b) return;
+      el("rate").value = b.getAttribute("data-r");
+      render(); syncChips();
+    });
+
+    var calc = el("calc");
+    calc.addEventListener("input", function () { render(); syncChips(); });
+    calc.addEventListener("change", function () { render(); syncChips(); });
+    render(); syncChips();
   })();
 </script>
 </body>
