@@ -111,6 +111,19 @@ function fire(win, el, type) { el.dispatchEvent(new win.Event(type, { bubbles: t
     const hi = win.AucSim.loanSimulate({ price: 1500000, down: 0, ratePct: 18, months: 120, bonus: 0 });
     const lo = win.AucSim.loanSimulate({ price: 1500000, down: 0, ratePct: 3.9, months: 120, bonus: 0 });
     ok("金利が高いほど月々・利息が増える", hi.monthly > lo.monthly && hi.interest > lo.interest, "hi=" + hi.monthly + " lo=" + lo.monthly);
+    // オンライン仮申込：サマリー連動・AI判定・送信
+    ok("申込サマリーに月々が連動 (#sumMonthly)", /¥[\d,]+/.test(doc.getElementById("sumMonthly").textContent), doc.getElementById("sumMonthly").textContent);
+    doc.getElementById("aJob").value = "正社員";
+    doc.getElementById("aIncome").value = "600"; fire(win, doc.getElementById("aIncome"), "input");
+    ok("AI一次判定が表示 (#aGrade)", /[ABCD]（/.test(doc.getElementById("aGrade").textContent), doc.getElementById("aGrade").textContent);
+    // 未入力ではバリデーションで止まる
+    fire(win, doc.getElementById("applyForm"), "submit");
+    ok("氏名/メール未入力は受付しない", /ご入力/.test(doc.getElementById("applyAlert").textContent), doc.getElementById("applyAlert").textContent);
+    // 入力して送信 → 受付完了
+    doc.getElementById("aName").value = "山田太郎";
+    doc.getElementById("aEmail").value = "taro@example.com";
+    fire(win, doc.getElementById("applyForm"), "submit");
+    ok("仮申込で受付完了を表示", /受け付け/.test(doc.getElementById("applyAlert").textContent), doc.getElementById("applyAlert").textContent);
     ok("ページエラーなし", !getError(), getError());
   }
 

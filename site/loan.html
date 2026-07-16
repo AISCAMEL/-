@@ -141,12 +141,51 @@
   #carmel .cta:hover{filter:brightness(1.05)}
   #carmel .disc{font-size:11.5px;color:#a49bbb;margin:12px 2px 0;line-height:1.6}
 
+  /* ---- オンライン仮申込 ---- */
+  #carmel .apply{background:var(--cm-card);border:1px solid var(--cm-line);border-radius:22px;
+    padding:28px;margin:0 0 56px;box-shadow:0 14px 40px rgba(91,33,182,.08)}
+  #carmel .apply-grid{display:grid;grid-template-columns:.85fr 1.15fr;gap:28px;align-items:start}
+  #carmel .apply h2{margin:0 0 6px;font-size:22px;font-weight:900}
+  #carmel .apply h2 .hl{color:var(--cm-purple)}
+  #carmel .apply .lead{color:var(--cm-ink-dim);font-size:14px;margin:0 0 18px}
+  #carmel .sum{background:linear-gradient(160deg,var(--cm-soft),#f4efff);border:1px solid var(--cm-line);
+    border-radius:16px;padding:18px}
+  #carmel .sum .item{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;
+    border-bottom:1px dashed #ddd3f2}
+  #carmel .sum .item:last-child{border-bottom:none}
+  #carmel .sum .item .k{font-size:13px;color:var(--cm-ink-dim);font-weight:700}
+  #carmel .sum .item .v{font-weight:900;color:var(--cm-deep);font-variant-numeric:tabular-nums}
+  #carmel .sum .item .v.big{font-size:22px}
+
+  #carmel .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  #carmel .f{display:flex;flex-direction:column}
+  #carmel .f.full{grid-column:1/-1}
+  #carmel .f label{font-size:13px;font-weight:800;color:var(--cm-ink);margin-bottom:7px}
+  #carmel .f input,#carmel .f select{width:100%;padding:12px 13px;border-radius:11px;border:1px solid var(--cm-line);
+    background:#fbfaff;color:var(--cm-ink);font-size:15px;font-family:inherit}
+  #carmel .f input:focus,#carmel .f select:focus{outline:none;border-color:var(--cm-purple);box-shadow:0 0 0 3px rgba(124,58,237,.14)}
+  #carmel .grade{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:16px 0 4px;
+    padding:14px 16px;background:#faf8ff;border:1px solid var(--cm-line);border-radius:12px}
+  #carmel .grade .lbl{font-size:13px;color:var(--cm-ink-dim);font-weight:700}
+  #carmel .grade .g{font-size:18px;font-weight:900;color:var(--cm-deep)}
+  #carmel .submit{display:block;width:100%;margin-top:16px;padding:16px;border:none;border-radius:14px;cursor:pointer;
+    background:linear-gradient(135deg,var(--cm-purple2),var(--cm-deep));color:#fff;font-weight:900;font-size:16px;
+    font-family:inherit;box-shadow:0 12px 26px rgba(124,58,237,.38);transition:.15s}
+  #carmel .submit:hover{filter:brightness(1.05)}
+  #carmel .alert{margin-top:14px;padding:14px 16px;border-radius:12px;font-size:14px;font-weight:700;display:none}
+  #carmel .alert.info{display:block;background:var(--cm-soft);color:var(--cm-deep);border:1px solid #ddd3f2}
+  #carmel .alert.ok{display:block;background:#e7f7ef;color:#157a4e;border:1px solid #bfe8d3}
+
   /* ---- フッター ---- */
   #carmel .foot{border-top:1px solid var(--cm-line);padding:22px 0;color:#9a92ad;font-size:12.5px;text-align:center}
 
   @media(max-width:860px){
     #carmel .grid{grid-template-columns:1fr}
+    #carmel .apply-grid{grid-template-columns:1fr}
     #carmel .brand .sub{letter-spacing:.24em}
+  }
+  @media(max-width:520px){
+    #carmel .form-grid{grid-template-columns:1fr}
   }
 </style>
 </head>
@@ -256,11 +295,66 @@
           </table>
         </div>
 
-        <a class="cta" href="mypage.html#newLoan">この条件でオートローンを仮申込する</a>
+        <a class="cta" href="#apply">この条件でオートローンを仮申込する</a>
         <p class="disc">※ 元利均等・税込の概算です。実際の金利・お支払い額・審査結果は提携信販会社（オリコ）の審査により確定します。ボーナス払いは半年ごと（年2回）を想定しています。</p>
       </div>
 
     </div>
+
+    <!-- オンライン仮申込 -->
+    <section class="apply" id="apply">
+      <div class="apply-grid">
+        <div>
+          <h2><span class="hl">オンライン</span>仮申込</h2>
+          <p class="lead">シミュレーションした条件のまま、その場で仮申込。事務手数料は無料です。ご登録メール宛に<strong>オリコ クレジット申込書</strong>をお送りします。</p>
+          <div class="sum">
+            <div class="item"><span class="k">月々のお支払い</span><span class="v big" id="sumMonthly">¥0</span></div>
+            <div class="item"><span class="k">ボーナス月の加算</span><span class="v" id="sumBonus">—</span></div>
+            <div class="item"><span class="k">総返済額</span><span class="v" id="sumTotal">¥0</span></div>
+            <div class="item"><span class="k">お借入条件</span><span class="v" id="sumCond" style="font-size:13px;">—</span></div>
+          </div>
+        </div>
+
+        <form id="applyForm" novalidate>
+          <div class="form-grid">
+            <div class="f">
+              <label for="aName">お名前</label>
+              <input type="text" id="aName" placeholder="山田 太郎" autocomplete="name" required />
+            </div>
+            <div class="f">
+              <label for="aTel">電話番号</label>
+              <input type="tel" id="aTel" placeholder="090-1234-5678" autocomplete="tel" />
+            </div>
+            <div class="f full">
+              <label for="aEmail">メールアドレス</label>
+              <input type="email" id="aEmail" placeholder="you@example.com" autocomplete="email" required />
+            </div>
+            <div class="f">
+              <label for="aJob">雇用形態</label>
+              <select id="aJob">
+                <option value="正社員">正社員・公務員</option>
+                <option value="法人">会社役員・法人</option>
+                <option value="個人事業">個人事業主</option>
+                <option value="契約">契約・派遣・パート</option>
+                <option value="その他">その他</option>
+              </select>
+            </div>
+            <div class="f">
+              <label for="aIncome">年収（万円）</label>
+              <input type="number" id="aIncome" min="0" max="9999" step="10" value="400" />
+            </div>
+          </div>
+
+          <div class="grade">
+            <span class="lbl">AI一次判定（目安）</span>
+            <span class="g" id="aGrade">—</span>
+          </div>
+
+          <button type="submit" class="submit">この内容でオートローンを仮申込する</button>
+          <div class="alert info" id="applyAlert">審査ではありません。仮申込後、担当より条件のご案内メールをお送りします。</div>
+        </form>
+      </div>
+    </section>
   </div>
 
   <div class="foot">
@@ -268,11 +362,29 @@
   </div>
 </div>
 
+<script src="assets/js/app.js"></script>
 <script src="assets/js/simulator.js"></script>
 <script>
   (function () {
     var S = window.AucSim;
     var el = function (id) { return document.getElementById(id); };
+    var lastSim = null; // 直近のシミュレーション結果（仮申込送信に使用）
+
+    // 雇用形態・年収・借入額からAI一次判定（マイページと同ロジック）
+    function loanGrade(job, incomeMan, amount) {
+      var income = (Number(incomeMan) || 0) * 10000;
+      var s = 50;
+      if (/正社員|公務員/.test(job)) s += 25;
+      else if (/法人/.test(job)) s += 18;
+      else if (/個人事業/.test(job)) s += 12;
+      else if (/契約/.test(job)) s += 6;
+      if (income > 0 && amount > 0) {
+        var ratio = amount / income;
+        if (ratio < 0.5) s += 20; else if (ratio < 1) s += 12; else if (ratio < 2) s += 4;
+      }
+      s = Math.max(0, Math.min(100, s));
+      return s >= 80 ? "A（即日審査へ）" : s >= 60 ? "B（翌営業日）" : s >= 40 ? "C（要確認）" : "D（要相談）";
+    }
 
     // レンジの塗りつぶし％を更新（見た目）
     function fill(input) {
@@ -329,6 +441,16 @@
         return "<tr><td>" + s.year + "年目</td><td>" + S.yen(s.paid) +
           "</td><td>" + S.yen(s.paidCum) + "</td><td>" + S.yen(s.balance) + "</td></tr>";
       }).join("");
+
+      // 仮申込サマリー（現在の条件を反映）
+      lastSim = r;
+      el("sumMonthly").textContent = S.yen(r.monthly);
+      el("sumBonus").textContent = r.bonus > 0 ? S.yen(r.bonus) + "（年" + r.bonusCount + "回）" : "—";
+      el("sumTotal").textContent = S.yen(r.total);
+      el("sumCond").textContent = "借入 " + S.yen(r.principal) + "・" + r.months + "回・年率" + r.ratePct.toFixed(1) + "%";
+
+      // AI一次判定（借入元金 × 年収・雇用形態）
+      el("aGrade").textContent = loanGrade(el("aJob").value, el("aIncome").value, r.principal);
     }
 
     // 金利プリセット・チップ
@@ -348,6 +470,48 @@
     var calc = el("calc");
     calc.addEventListener("input", function () { render(); syncChips(); });
     calc.addEventListener("change", function () { render(); syncChips(); });
+
+    // 申込フォーム：雇用形態・年収の変更でAI判定を更新
+    var applyForm = el("applyForm");
+    ["aJob", "aIncome"].forEach(function (id) {
+      el(id).addEventListener("input", function () {
+        el("aGrade").textContent = loanGrade(el("aJob").value, el("aIncome").value, lastSim ? lastSim.principal : 0);
+      });
+    });
+
+    // 仮申込の送信（AucConfig 経由でバックエンドへ／未設定でもデモとして完了表示）
+    applyForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var name = el("aName").value.trim();
+      var email = el("aEmail").value.trim();
+      var box = el("applyAlert");
+      if (!name || !email) {
+        box.className = "alert info";
+        box.textContent = "お名前とメールアドレスをご入力ください。";
+        return;
+      }
+      var r = lastSim || S.loanSimulate({
+        price: el("price").value, down: el("down").value,
+        ratePct: el("rate").value, months: el("term").value, bonus: el("bonus").value
+      });
+      var grade = loanGrade(el("aJob").value, el("aIncome").value, r.principal);
+
+      if (window.AucConfig && typeof window.AucConfig.send === "function") {
+        window.AucConfig.send({
+          type: "loan", source: "CARMEL",
+          name: name, email: email, tel: el("aTel").value.trim(),
+          job: el("aJob").value, income: (Number(el("aIncome").value) || 0) * 10000,
+          price: r.price, down: r.down, amount: r.principal,
+          term: r.months, rate: r.ratePct,
+          monthly: r.monthly, bonus: r.bonus, total: r.total, interest: r.interest,
+          grade: grade
+        });
+      }
+
+      box.className = "alert ok";
+      box.textContent = "✓ 仮申込を受け付けました（AI一次判定：" + grade + "）。ご登録メール宛にオリコ クレジット申込書をお送りします。事務手数料は無料です。";
+    });
+
     render(); syncChips();
   })();
 </script>
