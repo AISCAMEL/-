@@ -175,6 +175,10 @@
   #carmel .alert{margin-top:14px;padding:14px 16px;border-radius:12px;font-size:14px;font-weight:700;display:none}
   #carmel .alert.info{display:block;background:var(--cm-soft);color:var(--cm-deep);border:1px solid #ddd3f2}
   #carmel .alert.ok{display:block;background:#e7f7ef;color:#157a4e;border:1px solid #bfe8d3}
+  #carmel .alert .golink{display:inline-flex;align-items:center;gap:6px;margin-top:12px;padding:11px 18px;
+    border-radius:11px;background:linear-gradient(135deg,var(--cm-purple2),var(--cm-deep));color:#fff;
+    text-decoration:none;font-weight:900;font-size:14.5px;box-shadow:0 8px 18px rgba(124,58,237,.32)}
+  #carmel .alert .golink:hover{filter:brightness(1.05)}
 
   /* ---- フッター ---- */
   #carmel .foot{border-top:1px solid var(--cm-line);padding:22px 0;color:#9a92ad;font-size:12.5px;text-align:center}
@@ -351,7 +355,7 @@
           </div>
 
           <button type="submit" class="submit">この内容でオートローンを仮申込する</button>
-          <div class="alert info" id="applyAlert">審査ではありません。仮申込後、担当より条件のご案内メールをお送りします。</div>
+          <div class="alert info" id="applyAlert">仮申込の送信後、<strong>オリコの審査申込ページ</strong>へ進みます。事務手数料は無料です。</div>
         </form>
       </div>
     </section>
@@ -369,6 +373,7 @@
     var S = window.AucSim;
     var el = function (id) { return document.getElementById(id); };
     var lastSim = null; // 直近のシミュレーション結果（仮申込送信に使用）
+    var SHINSA_URL = "https://carmelonline.jp/shinsa-2"; // オリコ 審査申込ページ
 
     // 雇用形態・年収・借入額からAI一次判定（マイページと同ロジック）
     function loanGrade(job, incomeMan, amount) {
@@ -509,7 +514,14 @@
       }
 
       box.className = "alert ok";
-      box.textContent = "✓ 仮申込を受け付けました（AI一次判定：" + grade + "）。ご登録メール宛にオリコ クレジット申込書をお送りします。事務手数料は無料です。";
+      box.innerHTML = "✓ 仮申込を受け付けました（AI一次判定：" + grade +
+        "）。続けて<strong>審査申込ページ</strong>へ進みます…<br>" +
+        '<a class="golink" href="' + SHINSA_URL + '">▶ 審査申込ページを開く</a>';
+
+      // 送信ボタンを無効化し、審査申込ページへ自動遷移（案内リンクからも遷移可）
+      var btn = applyForm.querySelector(".submit");
+      if (btn) { btn.disabled = true; btn.style.opacity = ".6"; btn.textContent = "審査申込ページへ移動します…"; }
+      setTimeout(function () { window.location.href = SHINSA_URL; }, 1600);
     });
 
     render(); syncChips();

@@ -124,6 +124,7 @@ function fire(win, el, type) { el.dispatchEvent(new win.Event(type, { bubbles: t
     doc.getElementById("aEmail").value = "taro@example.com";
     fire(win, doc.getElementById("applyForm"), "submit");
     ok("仮申込で受付完了を表示", /受け付け/.test(doc.getElementById("applyAlert").textContent), doc.getElementById("applyAlert").textContent);
+    ok("審査申込ページへの導線を表示", /carmelonline\.jp\/shinsa-2/.test(doc.getElementById("applyAlert").innerHTML), doc.getElementById("applyAlert").innerHTML.slice(0, 120));
     ok("ページエラーなし", !getError(), getError());
   }
 
