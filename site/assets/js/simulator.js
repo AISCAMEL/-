@@ -324,6 +324,88 @@
     };
   }
 
+  /* =========================================================
+     借入目安診断（いくら借りられる？）
+     年収・雇用形態・勤続年数/月数・他社借入から、返済負担率
+     （DTI）ベースで「借入可能額の目安」と「仮申込金額（仮）」、
+     その金額での月々返済額の目安を算出する。
+     ※ あくまで目安。実際の与信は提携信販会社（オリコ）の審査による。
+     ========================================================= */
+  // 雇用形態別の返済負担率（年間返済 ÷ 年収）の上限目安
+  var DTI_BY_JOB = {
+    "正社員": 0.35, "法人": 0.33, "個人事業": 0.30, "契約": 0.28, "その他": 0.25
+  };
+  // 勤続年数（年）による補正係数
+  function tenureFactor(totalYears) {
+    if (totalYears < 1) return 0.70;
+    if (totalYears < 2) return 0.85;
+    if (totalYears < 3) return 0.95;
+    if (totalYears < 5) return 1.00;
+    return 1.05;
+  }
+
+  /**
+   * 借入可能額の目安を算出
+   * @param {object} p
+   *   @param {number} p.income      年収（万円）
+   *   @param {string} p.job         雇用形態キー（正社員/法人/個人事業/契約/その他）
+   *   @param {number} p.years       勤続年数（年）
+   *   @param {number} p.months      勤続月数（0〜11）
+   *   @param {number} p.otherMonthly 他社借入の月々返済（円）
+   *   @param {number} p.termMonths  希望返済期間（月）
+   *   @param {number} p.ratePct     実質年率（%）
+   */
+  function borrowCapacity(p) {
+    var incomeYen = Math.max(0, Number(p.income) || 0) * 10000;
+    var job = p.job || "正社員";
+    var years = Math.max(0, Number(p.years) || 0);
+    var months = Math.max(0, Math.min(11, Number(p.months) || 0));
+    var otherMonthly = Math.max(0, Number(p.otherMonthly) || 0);
+    var termMonths = Math.max(1, Math.round(Number(p.termMonths) || 60));
+    var rate = Math.max(0, Number(p.ratePct) || 0);
+
+    var dti = DTI_BY_JOB[job] || 0.25;
+    var tYears = years + months / 12;
+    var tf = tenureFactor(tYears);
+
+    var annualCap = incomeYen * dti * tf;               // 年間の返済上限目安
+    var netAnnual = Math.max(0, annualCap - otherMonthly * 12); // 他社返済を控除
+    var monthlyCap = netAnnual / 12;                    // 月々の返済上限目安
+
+    // 月々返済上限から、期間・金利に応じた借入可能元金を逆算（元利均等の現価）
+    var r = rate / 100 / 12;
+    var borrowable = r === 0 ? monthlyCap * termMonths
+      : monthlyCap * (1 - Math.pow(1 + r, -termMonths)) / r;
+
+    var CAP_MAX = 10000000; // 上限（シミュレーターの上限に合わせる）
+    borrowable = Math.min(Math.max(0, borrowable), CAP_MAX);
+
+    // 仮申込金額（仮）＝10万円単位に切り下げ
+    var provisional = Math.floor(borrowable / 100000) * 100000;
+    var conservative = Math.floor(borrowable * 0.8 / 100000) * 100000; // 保守的な下限目安
+
+    // 仮申込金額での月々返済額（元利均等）
+    var monthlyPay = provisional > 0 ? Math.round(annuity(provisional, r, termMonths)) : 0;
+
+    return {
+      income: incomeYen,
+      job: job,
+      tenureYears: tYears,
+      dti: dti,
+      tenureFactor: tf,
+      annualCap: Math.round(annualCap),
+      netAnnual: Math.round(netAnnual),
+      monthlyCap: Math.round(monthlyCap),
+      borrowable: Math.round(borrowable),
+      conservative: conservative,
+      provisional: provisional,
+      monthlyPay: monthlyPay,
+      termMonths: termMonths,
+      ratePct: rate,
+      eligible: incomeYen > 0 && tYears >= 0.5 && provisional > 0
+    };
+  }
+
   /**
    * 総額計算ロジック（再利用可能）
    * @param {object} p {bid, cls, region, options:{}}
@@ -368,7 +450,7 @@
   window.AucSim = {
     calculate: calculate, feeByBid: feeByBid, yen: yen, man: man,
     CLASS: CLASS, OPTIONS: OPTIONS, CLEAN_BY_CLASS: CLEAN_BY_CLASS, FEE_TIERS: FEE_TIERS,
-    loanMonthly: loanMonthly, loanSimulate: loanSimulate,
+    loanMonthly: loanMonthly, loanSimulate: loanSimulate, borrowCapacity: borrowCapacity,
     AREAS: PREF, PREF: PREF, HOME_PREF: HOME_PREF, estimateShipping: estimateShipping,
     COND: COND, estimateSell: estimateSell,
     SELL_TIERS: SELL_TIERS, sellFeeByPrice: sellFeeByPrice

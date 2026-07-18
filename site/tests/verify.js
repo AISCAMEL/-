@@ -116,6 +116,22 @@ function fire(win, el, type) { el.dispatchEvent(new win.Event(type, { bubbles: t
     doc.getElementById("aJob").value = "正社員";
     doc.getElementById("aIncome").value = "600"; fire(win, doc.getElementById("aIncome"), "input");
     ok("AI一次判定が表示 (#aGrade)", /[ABCD]（/.test(doc.getElementById("aGrade").textContent), doc.getElementById("aGrade").textContent);
+    // 借入目安診断（いくら借りられる？）
+    const cap = win.AucSim.borrowCapacity({ income: 600, job: "正社員", years: 5, months: 0, otherMonthly: 0, termMonths: 60, ratePct: 6.9 });
+    ok("借入可能額が算出される", cap.borrowable > 0 && cap.provisional > 0, "b=" + cap.borrowable + " p=" + cap.provisional);
+    ok("仮申込金額は10万円単位・借入可能額以下", cap.provisional % 100000 === 0 && cap.provisional <= cap.borrowable, String(cap.provisional));
+    const capLow = win.AucSim.borrowCapacity({ income: 300, job: "契約", years: 1, months: 0, otherMonthly: 0, termMonths: 60, ratePct: 6.9 });
+    ok("年収・属性が下がると借入可能額も下がる", capLow.borrowable < cap.borrowable, capLow.borrowable + " < " + cap.borrowable);
+    const capDebt = win.AucSim.borrowCapacity({ income: 600, job: "正社員", years: 5, months: 0, otherMonthly: 30000, termMonths: 60, ratePct: 6.9 });
+    ok("他社借入があると借入可能額が減る", capDebt.borrowable < cap.borrowable, capDebt.borrowable + " < " + cap.borrowable);
+    // UI連動：目安表示と「この金額でシミュ」反映（金利を6.9%に戻して算出）
+    doc.getElementById("rate").value = "6.9"; fire(win, doc.getElementById("rate"), "input");
+    doc.getElementById("capIncome").value = "600";
+    doc.getElementById("capYears").value = "5";
+    fire(win, doc.getElementById("capIncome"), "input");
+    ok("目安UIに借入可能額を表示 (#capBorrow)", /¥[\d,]+/.test(doc.getElementById("capBorrow").textContent) && doc.getElementById("capBorrow").textContent !== "¥0", doc.getElementById("capBorrow").textContent);
+    doc.getElementById("capApply").click();
+    ok("『この金額でシミュ』で車両価格へ反映", Number(doc.getElementById("price").value) === cap.provisional, doc.getElementById("price").value + " vs " + cap.provisional);
     // 未入力ではバリデーションで止まる
     fire(win, doc.getElementById("applyForm"), "submit");
     ok("氏名/メール未入力は受付しない", /ご入力/.test(doc.getElementById("applyAlert").textContent), doc.getElementById("applyAlert").textContent);

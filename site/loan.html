@@ -141,6 +141,39 @@
   #carmel .cta:hover{filter:brightness(1.05)}
   #carmel .disc{font-size:11.5px;color:#a49bbb;margin:12px 2px 0;line-height:1.6}
 
+  /* ---- ステップ見出し ---- */
+  #carmel .step{display:inline-flex;align-items:center;gap:8px;margin-bottom:10px}
+  #carmel .step .no{width:26px;height:26px;border-radius:50%;background:var(--cm-purple);color:#fff;
+    font-weight:900;font-size:13px;display:grid;place-items:center}
+  #carmel .step .tx{font-weight:900;font-size:13px;letter-spacing:.08em;color:var(--cm-deep)}
+
+  /* ---- 借入目安診断 ---- */
+  #carmel .cap{background:var(--cm-card);border:1px solid var(--cm-line);border-radius:22px;
+    padding:28px;margin:0 0 26px;box-shadow:0 14px 40px rgba(91,33,182,.08)}
+  #carmel .cap-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+  #carmel .cap h2{margin:0 0 6px;font-size:22px;font-weight:900}
+  #carmel .cap h2 .hl{color:var(--cm-purple)}
+  #carmel .cap .lead{color:var(--cm-ink-dim);font-size:14px;margin:0 0 18px}
+  #carmel .row-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  #carmel .cap-result{background:linear-gradient(160deg,#f2ecff,#efe9ff);border:1px solid var(--cm-line);
+    border-radius:18px;padding:24px;display:flex;flex-direction:column;height:100%}
+  #carmel .cap-hero{text-align:center;padding:6px 0 12px;border-bottom:1px dashed #ddd3f2;margin-bottom:14px}
+  #carmel .cap-hero .lbl{font-size:13px;color:var(--cm-ink-dim);font-weight:800}
+  #carmel .cap-hero .amt{font-size:clamp(34px,6vw,48px);font-weight:900;color:var(--cm-deep);line-height:1.1;
+    font-variant-numeric:tabular-nums;margin-top:4px}
+  #carmel .cap-hero .rng{font-size:12.5px;color:var(--cm-ink-dim);font-weight:700;margin-top:6px}
+  #carmel .cap-item{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0}
+  #carmel .cap-item .k{font-size:13px;color:var(--cm-ink-dim);font-weight:700}
+  #carmel .cap-item .v{font-weight:900;color:var(--cm-ink);font-variant-numeric:tabular-nums}
+  #carmel .cap-item .v.prov{color:var(--cm-deep);font-size:18px}
+  #carmel .cap-note{font-size:11.5px;color:#a49bbb;margin:10px 0 0;line-height:1.6}
+  #carmel .cap-cta{display:block;width:100%;margin-top:16px;padding:15px;border:none;border-radius:13px;cursor:pointer;
+    background:linear-gradient(135deg,var(--cm-purple2),var(--cm-deep));color:#fff;font-weight:900;font-size:15px;
+    font-family:inherit;box-shadow:0 10px 22px rgba(124,58,237,.34);transition:.15s}
+  #carmel .cap-cta:hover{filter:brightness(1.05)}
+  #carmel .cap-warn{margin-top:14px;padding:12px 14px;border-radius:10px;background:#fff5f5;color:#b4433a;
+    border:1px solid #f3d0cc;font-size:13px;font-weight:700;display:none}
+
   /* ---- オンライン仮申込 ---- */
   #carmel .apply{background:var(--cm-card);border:1px solid var(--cm-line);border-radius:22px;
     padding:28px;margin:0 0 56px;box-shadow:0 14px 40px rgba(91,33,182,.08)}
@@ -219,6 +252,81 @@
       <p>車両価格・頭金・支払回数（最大 <strong>120回／10年</strong>）・金利（〜<strong>18.0%</strong>）を動かすと、毎月の返済額・総返済額・利息、そして年ごとの<strong>返済計画</strong>をリアルタイムに試算します。</p>
     </div>
 
+    <!-- STEP1: 借入目安診断 -->
+    <section class="cap" id="capacity">
+      <div class="step"><span class="no">1</span><span class="tx">STEP 1 ─ いくら借りられる？（目安診断）</span></div>
+      <div class="cap-grid">
+        <div>
+          <h2><span class="hl">借入可能額</span>のヒヤリング</h2>
+          <p class="lead">年収・雇用形態・勤続年数・他社お借入から、<strong>お借入できる目安と月々の返済額</strong>を先に確認できます。入力するとその場で<strong>仮申込金額（仮）</strong>を提示します。</p>
+          <div class="row-2">
+            <div class="f">
+              <label for="capIncome">年収（万円）</label>
+              <input type="number" id="capIncome" min="0" max="9999" step="10" value="400" />
+            </div>
+            <div class="f">
+              <label for="capJob">雇用形態</label>
+              <select id="capJob">
+                <option value="正社員">正社員・公務員</option>
+                <option value="法人">会社役員・法人</option>
+                <option value="個人事業">個人事業主</option>
+                <option value="契約">契約・派遣・パート</option>
+                <option value="その他">その他</option>
+              </select>
+            </div>
+          </div>
+          <div class="row-2">
+            <div class="f">
+              <label for="capYears">勤続年数（年）</label>
+              <input type="number" id="capYears" min="0" max="50" step="1" value="3" />
+            </div>
+            <div class="f">
+              <label for="capMonths">勤続（月数）</label>
+              <select id="capMonths">
+                <option value="0">0ヶ月</option><option value="1">1ヶ月</option>
+                <option value="2">2ヶ月</option><option value="3">3ヶ月</option>
+                <option value="4">4ヶ月</option><option value="5">5ヶ月</option>
+                <option value="6">6ヶ月</option><option value="7">7ヶ月</option>
+                <option value="8">8ヶ月</option><option value="9">9ヶ月</option>
+                <option value="10">10ヶ月</option><option value="11">11ヶ月</option>
+              </select>
+            </div>
+          </div>
+          <div class="row-2">
+            <div class="f">
+              <label for="capOther">他社お借入（月々返済・円）</label>
+              <input type="number" id="capOther" min="0" max="500000" step="1000" value="0" />
+            </div>
+            <div class="f">
+              <label for="capTerm">希望返済期間</label>
+              <select id="capTerm">
+                <option value="36">36回（3年）</option>
+                <option value="48">48回（4年）</option>
+                <option value="60" selected>60回（5年）</option>
+                <option value="84">84回（7年）</option>
+                <option value="120">120回（10年）</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="cap-result">
+          <div class="cap-hero">
+            <div class="lbl">お借入できる目安（仮）</div>
+            <div class="amt" id="capBorrow">¥0</div>
+            <div class="rng" id="capRange">目安レンジ —</div>
+          </div>
+          <div class="cap-item"><span class="k">仮申込金額（仮・10万円単位）</span><span class="v prov" id="capProvisional">¥0</span></div>
+          <div class="cap-item"><span class="k">月々の返済目安</span><span class="v" id="capMonthly">¥0</span></div>
+          <div class="cap-item"><span class="k">返済負担率・条件</span><span class="v" id="capCond" style="font-size:12.5px;">—</span></div>
+          <div class="cap-warn" id="capWarn">年収・勤続年数の入力内容では目安を算出できません。ご入力をご確認ください。</div>
+          <p class="cap-note">※ 返済負担率（年間返済額 ÷ 年収）と勤続年数から算出した<strong>目安</strong>です。実際の与信枠・可否は提携信販会社（オリコ）の審査により決まります。</p>
+          <button type="button" class="cap-cta" id="capApply">この金額でシミュレーション →</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="step" style="margin-top:8px;"><span class="no">2</span><span class="tx">STEP 2 ─ 返済シミュレーション</span></div>
     <div class="grid" id="calc">
 
       <!-- コントロール -->
@@ -307,6 +415,7 @@
 
     <!-- オンライン仮申込 -->
     <section class="apply" id="apply">
+      <div class="step"><span class="no">3</span><span class="tx">STEP 3 ─ オンライン仮申込</span></div>
       <div class="apply-grid">
         <div>
           <h2><span class="hl">オンライン</span>仮申込</h2>
@@ -473,8 +582,56 @@
     });
 
     var calc = el("calc");
-    calc.addEventListener("input", function () { render(); syncChips(); });
-    calc.addEventListener("change", function () { render(); syncChips(); });
+    calc.addEventListener("input", function () { render(); syncChips(); renderCapacity(); });
+    calc.addEventListener("change", function () { render(); syncChips(); renderCapacity(); });
+
+    // ===== STEP1: 借入目安診断 =====
+    var capLast = null;
+    function renderCapacity() {
+      var c = S.borrowCapacity({
+        income: el("capIncome").value,
+        job: el("capJob").value,
+        years: el("capYears").value,
+        months: el("capMonths").value,
+        otherMonthly: el("capOther").value,
+        termMonths: el("capTerm").value,
+        ratePct: el("rate").value           // シミュレーターの金利と連動
+      });
+      capLast = c;
+      el("capBorrow").textContent = S.yen(c.borrowable);
+      el("capRange").textContent = "目安レンジ " + S.yen(c.conservative) + " 〜 " + S.yen(c.borrowable);
+      el("capProvisional").textContent = S.yen(c.provisional);
+      el("capMonthly").textContent = S.yen(c.monthlyPay) + " /月";
+      el("capCond").textContent = "返済負担率 " + Math.round(c.dti * 100) + "%・" +
+        c.termMonths + "回・年率" + c.ratePct.toFixed(1) + "%";
+      var warn = el("capWarn");
+      var btn = el("capApply");
+      if (!c.eligible) {
+        warn.style.display = "block";
+        btn.disabled = true; btn.style.opacity = ".5";
+      } else {
+        warn.style.display = "none";
+        btn.disabled = false; btn.style.opacity = "1";
+      }
+    }
+    ["capIncome", "capJob", "capYears", "capMonths", "capOther", "capTerm"].forEach(function (id) {
+      el(id).addEventListener("input", renderCapacity);
+      el(id).addEventListener("change", renderCapacity);
+    });
+
+    // 「この金額でシミュレーション」→ 仮申込金額を車両価格に反映し、条件も引き継ぐ
+    el("capApply").addEventListener("click", function () {
+      if (!capLast || !capLast.eligible) return;
+      el("price").value = capLast.provisional;   // 仮申込金額を車両価格（＝借入額の目安）に
+      el("down").value = 0;
+      el("term").value = capLast.termMonths;
+      // ヒヤリング内容を仮申込フォームにも引き継ぎ
+      el("aIncome").value = el("capIncome").value;
+      el("aJob").value = el("capJob").value;
+      render(); syncChips();
+      var target = el("calc");
+      if (target.scrollIntoView) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
 
     // 申込フォーム：雇用形態・年収の変更でAI判定を更新
     var applyForm = el("applyForm");
@@ -524,7 +681,7 @@
       setTimeout(function () { window.location.href = SHINSA_URL; }, 1600);
     });
 
-    render(); syncChips();
+    render(); syncChips(); renderCapacity();
   })();
 </script>
 </body>
