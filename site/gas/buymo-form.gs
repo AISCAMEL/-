@@ -1,8 +1,9 @@
 // ============================================================
-//  BUYMO バックエンド GAS v4
+//  BUYMO バックエンド GAS v5
 //  ① お問い合わせフォーム受信 → 案件自動生成
 //  ② コラム投稿・取得（type:"column" / doGet）
 //  ③ 案件管理（type:"case" / action=cases）
+//  ④ Slack 通知（新規受付・ステージ変更）
 // ============================================================
 
 // ▼ 設定 ――――――――――――――――――――――――――――――――――――――――
@@ -11,6 +12,9 @@ var COL_SHEET_NAME    = 'コラム';
 var CASE_SHEET_NAME   = '案件';
 var NOTIFY_EMAIL      = 'info@aisjaltd.com';
 var DRIVE_FOLDER_NAME = 'BUYMO査定写真';
+// Slack Incoming Webhook URL（空欄なら通知しない）
+// 取得: api.slack.com/apps → Incoming Webhooks → Add New Webhook to Workspace
+var SLACK_WEBHOOK_URL = '';
 // ▲ 設定 ――――――――――――――――――――――――――――――――――――――――
 
 /* ============================================================
@@ -19,6 +23,74 @@ var DRIVE_FOLDER_NAME = 'BUYMO査定写真';
 function cors(output) {
   return output
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+/* ============================================================
+   Slack 通知ヘルパー
+   ============================================================ */
+function notifySlack(blocks) {
+  if (!SLACK_WEBHOOK_URL) return;
+  try {
+    UrlFetchApp.fetch(SLACK_WEBHOOK_URL, {
+      method:      'post',
+      contentType: 'application/json',
+      payload:     JSON.stringify({ blocks: blocks })
+    });
+  } catch (e) {
+    Logger.log('Slack通知失敗: ' + e.message);
+  }
+}
+
+function slackNewLead(data, caseId, photoCount) {
+  notifySlack([
+    {
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: ':new: *新規お問い合わせが届きました*'
+      }
+    },
+    {
+      type: 'section',
+      fields: [
+        { type: 'mrkdwn', text: '*案件 ID*\n' + caseId },
+        { type: 'mrkdwn', text: '*ジャンル*\n' + (data.genre || '—') },
+        { type: 'mrkdwn', text: '*氏名*\n' + (data.name  || '—') },
+        { type: 'mrkdwn', text: '*電話*\n'  + (data.phone || '—') },
+        { type: 'mrkdwn', text: '*メール*\n' + (data.email  || '—') },
+        { type: 'mrkdwn', text: '*写真*\n'   + (photoCount > 0 ? photoCount + '枚' : 'なし') }
+      ]
+    },
+    {
+      type: 'section',
+      text: { type: 'mrkdwn', text: '*メッセージ*\n' + (data.message ? data.message.slice(0, 200) : '（なし）') }
+    },
+    { type: 'divider' }
+  ]);
+}
+
+function slackStageChange(caseId, name, genre, fromStage, toStage, assignee) {
+  var emoji = { '新規受付':'📥','査定中':'🔍','商談中':'💬','契約':'✍️','入金待ち':'💰','完了':'✅' };
+  notifySlack([
+    {
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: (emoji[toStage] || '📌') + ' *ステージ変更* ' +
+              '`' + (fromStage || '?') + '` → `' + toStage + '`'
+      }
+    },
+    {
+      type: 'section',
+      fields: [
+        { type: 'mrkdwn', text: '*案件 ID*\n' + caseId },
+        { type: 'mrkdwn', text: '*氏名*\n'    + (name     || '—') },
+        { type: 'mrkdwn', text: '*ジャンル*\n'+ (genre    || '—') },
+        { type: 'mrkdwn', text: '*担当*\n'    + (assignee || '未割り当て') }
+      ]
+    },
+    { type: 'divider' }
+  ]);
 }
 
 /* ============================================================
@@ -275,10 +347,16 @@ function handleCase(data) {
   var rows  = sheet.getDataRange().getValues();
   for (var i = 1; i < rows.length; i++) {
     if (rows[i][0] === data.id) {
+      var prevStage = rows[i][7];
       if (data.stage    !== undefined) sheet.getRange(i + 1, 8).setValue(data.stage);
       if (data.assignee !== undefined) sheet.getRange(i + 1, 7).setValue(data.assignee);
       if (data.amount   !== undefined) sheet.getRange(i + 1, 9).setValue(Number(data.amount) || 0);
       if (data.memo     !== undefined) sheet.getRange(i + 1, 10).setValue(data.memo);
+      // ステージが変わったときだけ Slack 通知
+      if (data.stage !== undefined && data.stage !== prevStage) {
+        slackStageChange(data.id, rows[i][2], rows[i][5], prevStage, data.stage,
+                         data.assignee !== undefined ? data.assignee : rows[i][6]);
+      }
       return { status: 'ok', action: 'updated', id: data.id };
     }
   }
@@ -384,6 +462,9 @@ function handleContact(data) {
     amount:   0,
     memo:     data.message || ''
   });
+
+  // Slack 通知
+  slackNewLead(data, caseResult.id, photoUrls.length);
 
   return { status: 'ok', photos: photoUrls.length, caseId: caseResult.id };
 }
