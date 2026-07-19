@@ -1,15 +1,17 @@
 // ============================================================
-//  BUYMO バックエンド GAS v5
+//  BUYMO バックエンド GAS v6
 //  ① お問い合わせフォーム受信 → 案件自動生成
 //  ② コラム投稿・取得（type:"column" / doGet）
 //  ③ 案件管理（type:"case" / action=cases）
 //  ④ Slack 通知（新規受付・ステージ変更）
+//  ⑤ 加盟店申込（type:"join"）
 // ============================================================
 
 // ▼ 設定 ――――――――――――――――――――――――――――――――――――――――
 var SHEET_NAME        = '問い合わせ';
 var COL_SHEET_NAME    = 'コラム';
 var CASE_SHEET_NAME   = '案件';
+var JOIN_SHEET_NAME   = '加盟店申込';
 var NOTIFY_EMAIL      = 'info@aisjaltd.com';
 var DRIVE_FOLDER_NAME = 'BUYMO査定写真';
 // Slack Incoming Webhook URL（空欄なら通知しない）
@@ -129,6 +131,7 @@ function doPost(e) {
     if (data.type === 'column') return cors(ContentService.createTextOutput(JSON.stringify(postColumn(data))));
     if (data.type === 'case')   return cors(ContentService.createTextOutput(JSON.stringify(handleCase(data))));
     if (data.type === 'note')   return cors(ContentService.createTextOutput(JSON.stringify(appendNote(data))));
+    if (data.type === 'join')   return cors(ContentService.createTextOutput(JSON.stringify(handleJoin(data))));
     return cors(ContentService.createTextOutput(JSON.stringify(handleContact(data))));
 
   } catch (err) {
@@ -467,6 +470,85 @@ function handleContact(data) {
   slackNewLead(data, caseResult.id, photoUrls.length);
 
   return { status: 'ok', photos: photoUrls.length, caseId: caseResult.id };
+}
+
+/* ============================================================
+   加盟店申込
+   シート列: [受信日時, 店舗名, 担当者名, メール, 電話, 都道府県, 業種/経験, メッセージ]
+   ============================================================ */
+function getJoinSheet() {
+  var ss    = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(JOIN_SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(JOIN_SHEET_NAME);
+    sheet.appendRow(['受信日時', '店舗名/屋号', '担当者名', 'メール', '電話', '都道府県', '業種/経験', 'メッセージ', '対応状況']);
+    sheet.getRange(1, 1, 1, 9).setFontWeight('bold').setBackground('#0A6B3C').setFontColor('#ffffff');
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+function handleJoin(data) {
+  var ts    = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy-MM-dd HH:mm:ss');
+  var sheet = getJoinSheet();
+
+  sheet.appendRow([
+    ts,
+    data.storeName  || '',
+    data.name       || '',
+    data.email      || '',
+    data.phone      || '',
+    data.prefecture || '',
+    data.experience || '',
+    data.message    || '',
+    '未対応'
+  ]);
+
+  // メール通知
+  var subject = '【BUYMO】加盟店申込：' + (data.storeName || data.name || '（未入力）');
+  var body = [
+    '■ BUYMOに加盟店申込が届きました', '',
+    '受信日時　：' + ts,
+    '店舗名/屋号：' + (data.storeName  || '—'),
+    '担当者名　：' + (data.name        || '—'),
+    'メール　　：' + (data.email       || '—'),
+    '電話番号　：' + (data.phone       || '—'),
+    '都道府県　：' + (data.prefecture  || '—'),
+    '業種/経験　：' + (data.experience || '—'),
+    '', '─── メッセージ ───', data.message || '（内容なし）', '',
+    'スプレッドシート：', SpreadsheetApp.getActiveSpreadsheet().getUrl()
+  ].join('\n');
+  MailApp.sendEmail({ to: NOTIFY_EMAIL, subject: subject, body: body });
+
+  // Slack 通知
+  slackNewJoin(data, ts);
+
+  return { status: 'ok' };
+}
+
+function slackNewJoin(data, ts) {
+  notifySlack([
+    {
+      type: 'section',
+      text: { type: 'mrkdwn', text: ':handshake: *加盟店申込が届きました*' }
+    },
+    {
+      type: 'section',
+      fields: [
+        { type: 'mrkdwn', text: '*店舗名/屋号*\n' + (data.storeName  || '—') },
+        { type: 'mrkdwn', text: '*担当者名*\n'    + (data.name       || '—') },
+        { type: 'mrkdwn', text: '*メール*\n'      + (data.email      || '—') },
+        { type: 'mrkdwn', text: '*電話*\n'        + (data.phone      || '—') },
+        { type: 'mrkdwn', text: '*都道府県*\n'    + (data.prefecture || '—') },
+        { type: 'mrkdwn', text: '*業種/経験*\n'   + (data.experience || '—') }
+      ]
+    },
+    {
+      type: 'section',
+      text: { type: 'mrkdwn', text: '*メッセージ*\n' + (data.message ? data.message.slice(0, 200) : '（なし）') }
+    },
+    { type: 'divider' }
+  ]);
 }
 
 // テスト
