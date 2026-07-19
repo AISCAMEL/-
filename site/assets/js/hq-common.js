@@ -98,6 +98,7 @@ window.HQ = (function () {
       ['leads', 'リード', 'hq-leads.html'],
       ['stores', '加盟店', 'hq-stores.html'],
       ['notices', 'お知らせ', 'hq-notices.html'],
+      ['column', 'コラム', 'hq-column.html'],
       ['report', '営業レポート', 'report.html']
     ];
     el.innerHTML = items.map(function (it) {
