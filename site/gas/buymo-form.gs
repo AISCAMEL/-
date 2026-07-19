@@ -15,16 +15,115 @@ var JOIN_SHEET_NAME   = '加盟店申込';
 var NOTIFY_EMAIL      = 'info@aisjaltd.com';
 var DRIVE_FOLDER_NAME = 'BUYMO査定写真';
 // Slack Incoming Webhook URL（空欄なら通知しない）
-// 取得: api.slack.com/apps → Incoming Webhooks → Add New Webhook to Workspace
 var SLACK_WEBHOOK_URL = '';
+// Anthropic API キー（空欄ならチャットボットAI無効）
+// 取得: console.anthropic.com → API Keys
+var ANTHROPIC_API_KEY = '';
 // ▲ 設定 ――――――――――――――――――――――――――――――――――――――――
 
 /* ============================================================
-   CORS ヘルパー
+   CORS / JSONP ヘルパー
    ============================================================ */
 function cors(output) {
-  return output
-    .setMimeType(ContentService.MimeType.JSON);
+  return output.setMimeType(ContentService.MimeType.JSON);
+}
+function jsonp(cb, obj) {
+  var safe = (cb && /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(cb)) ? cb : 'cb';
+  return ContentService.createTextOutput(safe + '(' + JSON.stringify(obj) + ')')
+    .setMimeType(ContentService.MimeType.JAVASCRIPT);
+}
+
+/* ============================================================
+   チャットボット AI（Anthropic Claude）
+   GET ?action=bot&mode=user|partner&q=MESSAGE&h=HISTORY_JSON&callback=CB
+   ============================================================ */
+var BOT_SYSTEM = {
+  user: [
+    'あなたはBUYMO（出張車買取サービス）のAIアシスタント「BUYMOくん」です。',
+    '訪問者の車売却に関する質問に親切・丁寧・簡潔に答えてください。',
+    '',
+    'BUYMOサービス情報:',
+    '- 全国47都道府県に対応。出張査定・手続き代行・レッカー引取はすべて無料',
+    '- 廃車・事故車・修復歴・不動車・水没車・車検切れも全て買取可能',
+    '- 入金は契約・書類確認後、最短即日〜数営業日で指定口座へ振込',
+    '- 電話: 050-1784-2929（平日8:00〜17:00）',
+    '- 査定フォーム: buymo-contact.html（24時間受付）',
+    '- 人気ジャンル: ハイエース・ランクル・ジムニー・アルファード・EV・廃車・旧車',
+    '',
+    '回答ルール:',
+    '- 日本語で200字以内。箇条書きを使い簡潔に答える',
+    '- 具体的な査定金額は提示せず「無料査定でご確認を」と案内する',
+    '- 個人情報の収集は行わない',
+    '- BUYMOの車買取と無関係な話題は丁寧にお断りして査定の案内に誘導する'
+  ].join('\n'),
+  partner: [
+    'あなたはBUYMO加盟店向けのAIサポートアシスタントです。',
+    '加盟店オーナー・スタッフの業務・システム・査定に関する質問に答えてください。',
+    '',
+    'BUYMOシステム情報:',
+    '- 加盟店ダッシュボード: partner-dashboard.html',
+    '- 案件ボード: hq.html?role=partner',
+    '- アカデミー（動画研修・修了テスト）: partner-academy.html',
+    '- トークスクリプト集: partner-scripts.html',
+    '- コミュニティ（加盟店間情報共有）: partner-community.html',
+    '- 集客・LP・Web広告は本部が一括管理。加盟店はリード対応に専念でOK',
+    '',
+    '回答ルール:',
+    '- 日本語で300字以内。具体的なページ名・操作手順を示す',
+    '- 個別の報酬・費用条件は「本部にご確認ください」と案内',
+    '- 重大トラブル・クレームは本部へのエスカレーションを促す'
+  ].join('\n')
+};
+
+function handleBot(p) {
+  var q    = (p.q    || '').toString().slice(0, 500);
+  var mode = (p.mode === 'partner') ? 'partner' : 'user';
+  if (!q) return { answer: 'ご質問内容が空です。' };
+
+  // 会話履歴（最大6メッセージ）
+  var messages = [];
+  try {
+    var h = JSON.parse(p.h || '[]');
+    if (Array.isArray(h)) {
+      messages = h.slice(-6).filter(function (m) {
+        return m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string';
+      });
+    }
+  } catch (e) {}
+  messages.push({ role: 'user', content: q });
+
+  var answer = callClaude(messages, BOT_SYSTEM[mode]);
+  return { answer: answer };
+}
+
+function callClaude(messages, system) {
+  if (!ANTHROPIC_API_KEY) return null;
+  try {
+    var resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+      method: 'post',
+      headers: {
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json'
+      },
+      payload: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 400,
+        system: system,
+        messages: messages
+      }),
+      muteHttpExceptions: true
+    });
+    if (resp.getResponseCode() !== 200) {
+      Logger.log('Anthropic error ' + resp.getResponseCode() + ': ' + resp.getContentText().slice(0, 300));
+      return null;
+    }
+    var d = JSON.parse(resp.getContentText());
+    return (d.content && d.content[0]) ? d.content[0].text : null;
+  } catch (e) {
+    Logger.log('callClaude: ' + e.message);
+    return null;
+  }
 }
 
 /* ============================================================
@@ -111,6 +210,7 @@ function doGet(e) {
     if (action === 'get')   return cors(ContentService.createTextOutput(JSON.stringify(getColumnById(p.id))));
     if (action === 'check') return cors(ContentService.createTextOutput(JSON.stringify(checkDuplicate(p.title, p.body || ''))));
     if (action === 'cases') return cors(ContentService.createTextOutput(JSON.stringify(getCases())));
+    if (action === 'bot')   return jsonp(p.callback, handleBot(p));
     return cors(ContentService.createTextOutput(JSON.stringify({ error: 'unknown action' })));
   } catch (err) {
     return cors(ContentService.createTextOutput(JSON.stringify({ error: err.message })));
