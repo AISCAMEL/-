@@ -1,12 +1,14 @@
 // ============================================================
-//  BUYMO バックエンド GAS v3
-//  ① お問い合わせフォーム受信（type:"buymo"）
+//  BUYMO バックエンド GAS v4
+//  ① お問い合わせフォーム受信 → 案件自動生成
 //  ② コラム投稿・取得（type:"column" / doGet）
+//  ③ 案件管理（type:"case" / action=cases）
 // ============================================================
 
 // ▼ 設定 ――――――――――――――――――――――――――――――――――――――――
 var SHEET_NAME        = '問い合わせ';
 var COL_SHEET_NAME    = 'コラム';
+var CASE_SHEET_NAME   = '案件';
 var NOTIFY_EMAIL      = 'info@aisjaltd.com';
 var DRIVE_FOLDER_NAME = 'BUYMO査定写真';
 // ▲ 設定 ――――――――――――――――――――――――――――――――――――――――
@@ -20,10 +22,11 @@ function cors(output) {
 }
 
 /* ============================================================
-   doGet — コラム一覧 / 単件取得
-   ?action=list[&cat=XX&page=1&limit=12]
-   ?action=get&id=XX
-   ?action=check&title=XX   (重複チェック)
+   doGet
+   ?action=list[&cat=XX&page=1&limit=12]  コラム一覧
+   ?action=get&id=XX                      コラム単件
+   ?action=check&title=XX                 重複チェック
+   ?action=cases                          案件一覧
    ============================================================ */
 function doGet(e) {
   var p      = e && e.parameter ? e.parameter : {};
@@ -33,6 +36,7 @@ function doGet(e) {
     if (action === 'list')  return cors(ContentService.createTextOutput(JSON.stringify(getColumnList(p))));
     if (action === 'get')   return cors(ContentService.createTextOutput(JSON.stringify(getColumnById(p.id))));
     if (action === 'check') return cors(ContentService.createTextOutput(JSON.stringify(checkDuplicate(p.title, p.body || ''))));
+    if (action === 'cases') return cors(ContentService.createTextOutput(JSON.stringify(getCases())));
     return cors(ContentService.createTextOutput(JSON.stringify({ error: 'unknown action' })));
   } catch (err) {
     return cors(ContentService.createTextOutput(JSON.stringify({ error: err.message })));
@@ -40,13 +44,19 @@ function doGet(e) {
 }
 
 /* ============================================================
-   doPost — フォーム受信 / コラム投稿
+   doPost
+   type:"column"  コラム投稿
+   type:"case"    案件作成・更新
+   type:"note"    案件メモ追記
+   default        お問い合わせフォーム
    ============================================================ */
 function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
 
     if (data.type === 'column') return cors(ContentService.createTextOutput(JSON.stringify(postColumn(data))));
+    if (data.type === 'case')   return cors(ContentService.createTextOutput(JSON.stringify(handleCase(data))));
+    if (data.type === 'note')   return cors(ContentService.createTextOutput(JSON.stringify(appendNote(data))));
     return cors(ContentService.createTextOutput(JSON.stringify(handleContact(data))));
 
   } catch (err) {
@@ -208,6 +218,96 @@ function getColumnById(id) {
 }
 
 /* ============================================================
+   案件管理： ユーティリティ
+   シート列: [案件ID, 受付日時, 氏名, 電話, メール, ジャンル, 担当, ステージ, 金額, メモ, 流入元]
+   ============================================================ */
+function getCaseSheet() {
+  var ss    = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(CASE_SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(CASE_SHEET_NAME);
+    sheet.appendRow(['案件ID', '受付日時', '氏名', '電話', 'メール', 'ジャンル', '担当', 'ステージ', '金額', 'メモ', '流入元']);
+    sheet.getRange(1, 1, 1, 11).setFontWeight('bold').setBackground('#0A6B3C').setFontColor('#ffffff');
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+function nextCaseId() {
+  var sheet = getCaseSheet();
+  var last  = sheet.getLastRow();
+  return 'CS-' + String(7000 + Math.max(last, 1)).slice(-4);
+}
+
+/* ============================================================
+   案件管理： 一覧取得
+   ============================================================ */
+function getCases() {
+  var sheet = getCaseSheet();
+  var rows  = sheet.getDataRange().getValues();
+  var cases = [];
+  for (var i = 1; i < rows.length; i++) {
+    var r = rows[i];
+    if (!r[0]) continue;
+    cases.push({
+      id:       r[0],
+      date:     r[1] ? Utilities.formatDate(new Date(r[1]), 'Asia/Tokyo', 'yyyy/MM/dd') : '',
+      name:     r[2],
+      tel:      r[3],
+      email:    r[4],
+      genre:    r[5],
+      assignee: r[6],
+      stage:    r[7],
+      amount:   r[8] || 0,
+      memo:     r[9] || '',
+      source:   r[10] || ''
+    });
+  }
+  cases.sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+  return cases;
+}
+
+/* ============================================================
+   案件管理： 作成・更新（upsert）
+   ============================================================ */
+function handleCase(data) {
+  var sheet = getCaseSheet();
+  var rows  = sheet.getDataRange().getValues();
+  for (var i = 1; i < rows.length; i++) {
+    if (rows[i][0] === data.id) {
+      if (data.stage    !== undefined) sheet.getRange(i + 1, 8).setValue(data.stage);
+      if (data.assignee !== undefined) sheet.getRange(i + 1, 7).setValue(data.assignee);
+      if (data.amount   !== undefined) sheet.getRange(i + 1, 9).setValue(Number(data.amount) || 0);
+      if (data.memo     !== undefined) sheet.getRange(i + 1, 10).setValue(data.memo);
+      return { status: 'ok', action: 'updated', id: data.id };
+    }
+  }
+  var ts = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy-MM-dd HH:mm:ss');
+  var id = data.id || nextCaseId();
+  sheet.appendRow([id, ts, data.name || '', data.phone || data.tel || '', data.email || '',
+                   data.genre || '', data.assignee || '', data.stage || '新規受付',
+                   Number(data.amount) || 0, data.memo || '', data.source || '']);
+  return { status: 'ok', action: 'created', id: id };
+}
+
+/* ============================================================
+   案件管理： メモ追記
+   ============================================================ */
+function appendNote(data) {
+  var sheet = getCaseSheet();
+  var rows  = sheet.getDataRange().getValues();
+  for (var i = 1; i < rows.length; i++) {
+    if (rows[i][0] === data.id) {
+      var prev = rows[i][9] ? rows[i][9] + '\n' : '';
+      var ts   = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'MM/dd HH:mm');
+      sheet.getRange(i + 1, 10).setValue(prev + '[' + ts + '] ' + (data.text || ''));
+      return { status: 'ok' };
+    }
+  }
+  return { status: 'error', message: 'case not found' };
+}
+
+/* ============================================================
    お問い合わせフォーム（既存）
    ============================================================ */
 function getOrCreateFolder(parentId, name) {
@@ -272,11 +372,29 @@ function handleContact(data) {
   ].join('\n');
 
   MailApp.sendEmail({ to: NOTIFY_EMAIL, subject: subject, body: body });
-  return { status: 'ok', photos: photoUrls.length };
+
+  // 案件シートに自動登録
+  var caseResult = handleCase({
+    name:     data.name  || '',
+    tel:      data.phone || '',
+    email:    data.email || '',
+    genre:    data.genre || '',
+    source:   data.source || '',
+    stage:    '新規受付',
+    amount:   0,
+    memo:     data.message || ''
+  });
+
+  return { status: 'ok', photos: photoUrls.length, caseId: caseResult.id };
 }
 
 // テスト
 function testColumn() {
   Logger.log(JSON.stringify(postColumn({ title: 'プリウスを高く売る5つのコツ', category: '売り方', body: '本文テスト', tags: ['プリウス', '高額査定'] })));
   Logger.log(JSON.stringify(getColumnList({})));
+}
+
+function testCase() {
+  Logger.log(JSON.stringify(handleCase({ name: 'テスト 様', tel: '090-0000-0000', email: 'test@example.com', genre: '廃車', source: 'テスト' })));
+  Logger.log(JSON.stringify(getCases()));
 }

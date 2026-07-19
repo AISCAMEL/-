@@ -6,7 +6,7 @@
    ============================================================ */
 window.HQ = (function () {
   'use strict';
-  var ENDPOINT = ''; // 例: https://script.google.com/macros/s/XXXX/exec（空ならデモ）
+  var ENDPOINT = 'https://script.google.com/macros/s/AKfycbzzHW5L6u5aVN0vZDplxQhq9_uZ_rVi7hMI9QD62UK9RKF9FHb9ySt7aq3VibzeZAJT/exec';
   var STAGES = ['新規受付', '査定中', '商談中', '契約', '入金待ち', '完了'];
   var WON = ['契約', '入金待ち', '完了'];
   var CKEY = 'buymo_cases', SKEY = 'buymo_stores';
@@ -33,11 +33,14 @@ window.HQ = (function () {
 
   function loadCases(cb) {
     if (ENDPOINT) {
-      window.__hqcases = function (d) { cb(d && d.length ? d : []); };
-      var s = document.createElement('script');
-      s.src = ENDPOINT + '?action=cases&callback=__hqcases';
-      s.onerror = function () { cb(readLS(CKEY, seedCases)); };
-      document.body.appendChild(s);
+      fetch(ENDPOINT + '?action=cases')
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          var list = (d && d.length) ? d : [];
+          if (list.length) saveCases(list);
+          cb(list.length ? list : readLS(CKEY, seedCases));
+        })
+        .catch(function () { cb(readLS(CKEY, seedCases)); });
     } else { cb(readLS(CKEY, seedCases)); }
   }
   function getCasesLS() { return readLS(CKEY, seedCases); }
