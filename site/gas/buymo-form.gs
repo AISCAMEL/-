@@ -16,9 +16,11 @@ var NOTIFY_EMAIL      = 'info@aisjaltd.com';
 var DRIVE_FOLDER_NAME = 'BUYMO査定写真';
 // Slack Incoming Webhook URL（空欄なら通知しない）
 var SLACK_WEBHOOK_URL = '';
-// Anthropic API キー（空欄ならチャットボットAI無効）
-// 取得: console.anthropic.com → API Keys
-var ANTHROPIC_API_KEY = '';
+// OpenRouter API キー（空欄ならチャットボットAI無効）
+// 取得: openrouter.ai → Keys
+var OPENROUTER_API_KEY = '';
+// 使用モデル（openrouter.ai/models で一覧確認可）
+var OPENROUTER_MODEL   = 'anthropic/claude-haiku-4-5';
 // ▲ 設定 ――――――――――――――――――――――――――――――――――――――――
 
 /* ============================================================
@@ -34,7 +36,7 @@ function jsonp(cb, obj) {
 }
 
 /* ============================================================
-   チャットボット AI（Anthropic Claude）
+   チャットボット AI（OpenRouter 経由）
    GET ?action=bot&mode=user|partner&q=MESSAGE&h=HISTORY_JSON&callback=CB
    ============================================================ */
 var BOT_SYSTEM = {
@@ -97,31 +99,34 @@ function handleBot(p) {
 }
 
 function callClaude(messages, system) {
-  if (!ANTHROPIC_API_KEY) return null;
+  if (!OPENROUTER_API_KEY) return null;
+  // OpenRouter は OpenAI 互換フォーマット
+  // system はメッセージ配列の先頭に role:"system" として渡す
+  var payload = [{ role: 'system', content: system }].concat(messages);
   try {
-    var resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+    var resp = UrlFetchApp.fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'post',
       headers: {
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json'
+        'Authorization':  'Bearer ' + OPENROUTER_API_KEY,
+        'Content-Type':   'application/json',
+        'HTTP-Referer':   'https://buymo.me',
+        'X-Title':        'BUYMO Chat'
       },
       payload: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model:      OPENROUTER_MODEL,
         max_tokens: 400,
-        system: system,
-        messages: messages
+        messages:   payload
       }),
       muteHttpExceptions: true
     });
     if (resp.getResponseCode() !== 200) {
-      Logger.log('Anthropic error ' + resp.getResponseCode() + ': ' + resp.getContentText().slice(0, 300));
+      Logger.log('OpenRouter error ' + resp.getResponseCode() + ': ' + resp.getContentText().slice(0, 300));
       return null;
     }
     var d = JSON.parse(resp.getContentText());
-    return (d.content && d.content[0]) ? d.content[0].text : null;
+    return (d.choices && d.choices[0]) ? d.choices[0].message.content : null;
   } catch (e) {
-    Logger.log('callClaude: ' + e.message);
+    Logger.log('callClaude(OpenRouter): ' + e.message);
     return null;
   }
 }
