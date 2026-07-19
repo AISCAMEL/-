@@ -434,6 +434,20 @@
           </div>
         </div>
 
+        <!-- 車の写真（任意） -->
+        <div class="field field-photos">
+          <label for="photoDropZone">車の写真（任意・最大5枚）</label>
+          <div class="photo-drop-zone" id="photoDropZone" tabindex="0" role="button"
+               aria-label="写真を選択またはドラッグ＆ドロップ">
+            <span class="photo-drop-ico" aria-hidden="true">📸</span>
+            <span class="photo-drop-text">タップして写真を選ぶ</span>
+            <span class="photo-drop-hint">JPG・PNG・HEIC 対応 ／ 最大 5 枚・各 10MB 以下</span>
+          </div>
+          <input type="file" id="f-photos" accept="image/*" multiple aria-label="写真を選択" />
+          <div class="photo-preview" id="photoPreview" role="list" aria-label="選択中の写真"></div>
+          <p class="photo-count" id="photoCount" aria-live="polite"></p>
+        </div>
+
         <div class="field field-check">
           <label><input type="checkbox" id="f-agree" name="agree" required /> <a href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a>に同意します</label>
           <p class="err" data-for="f-agree"></p>

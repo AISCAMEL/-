@@ -262,6 +262,90 @@
       el.addEventListener('change', function () { if (el.classList.contains('invalid')) validateField(el); });
     });
 
+    /* ---- 写真アップロード ---- */
+    var photoFiles = [];
+
+    function compressPhoto(file) {
+      return new Promise(function (resolve) {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          var img = new Image();
+          img.onload = function () {
+            var MAX = 1280, w = img.width, h = img.height;
+            if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+            if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+            var canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            var dataUrl = canvas.toDataURL('image/jpeg', 0.80);
+            resolve({ name: file.name.replace(/\.[^.]+$/, '.jpg'), data: dataUrl.split(',')[1], type: 'image/jpeg', thumb: dataUrl });
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function updatePhotoUI() {
+      var preview = document.getElementById('photoPreview');
+      var countEl = document.getElementById('photoCount');
+      var dropZoneEl = document.getElementById('photoDropZone');
+      if (!preview) return;
+      preview.innerHTML = '';
+      photoFiles.forEach(function (p, i) {
+        var wrap = document.createElement('div');
+        wrap.className = 'photo-thumb';
+        wrap.setAttribute('role', 'listitem');
+        var img = document.createElement('img');
+        img.src = p.thumb; img.alt = p.name;
+        var del = document.createElement('button');
+        del.type = 'button'; del.className = 'photo-del';
+        del.innerHTML = '×'; del.setAttribute('aria-label', p.name + ' を削除');
+        (function (idx) {
+          del.addEventListener('click', function () { photoFiles.splice(idx, 1); updatePhotoUI(); });
+        }(i));
+        wrap.appendChild(img); wrap.appendChild(del);
+        preview.appendChild(wrap);
+      });
+      if (countEl) countEl.textContent = photoFiles.length > 0 ? photoFiles.length + ' 枚選択中（最大5枚）' : '';
+      if (dropZoneEl) dropZoneEl.classList.toggle('full', photoFiles.length >= 5);
+    }
+
+    var photoInput = document.getElementById('f-photos');
+    var dropZone = document.getElementById('photoDropZone');
+
+    if (photoInput) {
+      photoInput.addEventListener('change', function () {
+        var remaining = 5 - photoFiles.length;
+        if (remaining <= 0) return;
+        var files = Array.prototype.slice.call(this.files, 0, remaining);
+        if (!files.length) return;
+        Promise.all(files.map(compressPhoto)).then(function (compressed) {
+          photoFiles = photoFiles.concat(compressed).slice(0, 5);
+          updatePhotoUI();
+          photoInput.value = '';
+        });
+      });
+    }
+
+    if (dropZone) {
+      dropZone.addEventListener('click', function () { if (photoFiles.length < 5 && photoInput) photoInput.click(); });
+      dropZone.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); dropZone.click(); } });
+      dropZone.addEventListener('dragover', function (e) { e.preventDefault(); dropZone.classList.add('drag-over'); });
+      dropZone.addEventListener('dragleave', function () { dropZone.classList.remove('drag-over'); });
+      dropZone.addEventListener('drop', function (e) {
+        e.preventDefault(); dropZone.classList.remove('drag-over');
+        var remaining = 5 - photoFiles.length;
+        if (remaining <= 0) return;
+        var files = Array.prototype.filter.call(e.dataTransfer.files, function (f) { return f.type.startsWith('image/'); }).slice(0, remaining);
+        if (!files.length) return;
+        Promise.all(files.map(compressPhoto)).then(function (compressed) {
+          photoFiles = photoFiles.concat(compressed).slice(0, 5);
+          updatePhotoUI();
+        });
+      });
+    }
+
     // フォーム内容→GASペイロード（type:"contact"・詳細は message に整形）
     function buildPayload() {
       var get = function (id) { var el = document.getElementById(id); return el ? (el.value || '').trim() : ''; };
@@ -286,7 +370,8 @@
         name: get('f-name'),
         email: get('f-email'),
         phone: get('f-tel'),
-        message: lines.join('\n') + '\n— ' + source
+        message: lines.join('\n') + '\n— ' + source,
+        photos: photoFiles.map(function (p) { return { name: p.name, data: p.data, type: p.type }; })
       };
     }
 
@@ -325,8 +410,9 @@
         note.textContent = '送信しました。ありがとうございます。ページを移動します…';
         note.className = 'form-note ok';
         form.reset();
-        // 送信完了（サンクス）ページへ遷移。来訪元ジャンルを引き継ぐ。
+        // 送信完了（サンクス）ページへ遷移。来訪元ジャンルと写真枚数を引き継ぐ。
         var q = payload.genre ? ('?genre=' + encodeURIComponent(payload.genre)) : '';
+        if (photoFiles.length > 0) q += (q ? '&' : '?') + 'photos=' + photoFiles.length;
         window.location.href = 'buymo-thanks.html' + q;
       }).catch(function () {
         note.textContent = '送信に失敗しました。お手数ですが 050-1784-2929 へお電話ください。';

@@ -60,12 +60,25 @@
       <div class="thanks-icon" aria-hidden="true">✅</div>
       <h1 id="page-title">送信が完了しました</h1>
       <p class="page-lead" id="thanksLead">お問い合わせ・無料査定のお申し込みを受け付けました。<br>担当者より最短即日でご連絡いたします。</p>
+      <div id="thanksPhotoMsg" style="display:none;margin:0 auto 16px;max-width:480px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:10px;padding:12px 18px;font-weight:700;font-size:14px;"></div>
       <div class="area-cta">
         <a href="member.html" class="btn btn-primary btn-lg">▶ 会員ページで査定状況を確認</a>
         <a href="tel:05017842929" class="btn btn-tel">📞 急ぎの方はお電話</a>
       </div>
     </div>
   </section>
+  <script>
+  (function(){
+    try{
+      var sp = new URLSearchParams(window.location.search);
+      var n = parseInt(sp.get('photos'),10);
+      if(n > 0){
+        var el = document.getElementById('thanksPhotoMsg');
+        if(el){ el.textContent = '📸 写真 ' + n + ' 枚を受け付けました。担当者が確認します。'; el.style.display='block'; }
+      }
+    }catch(e){}
+  })();
+  </script>
 
   <section class="thanks-steps-section" aria-labelledby="steps-title">
     <div class="container">
