@@ -133,15 +133,20 @@
   function aiAsk(text, cb) {
     var cbName = '__buymoBot' + Date.now();
     var done   = false;
-    var timer  = setTimeout(function () {
-      if (!done) { done = true; cb(null); }
-    }, 14000);
+
+    function finish(answer) {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      try { delete window[cbName]; } catch(e) {}
+      cb(answer || null);
+    }
+
+    // 8秒でタイムアウト
+    var timer = setTimeout(function () { finish(null); }, 8000);
 
     window[cbName] = function (d) {
-      if (done) return;
-      done = true; clearTimeout(timer);
-      try { delete window[cbName]; } catch(e) {}
-      cb(d && d.answer ? d.answer : null);
+      finish(d && d.answer ? d.answer : null);
     };
 
     var s = document.createElement('script');
@@ -154,9 +159,16 @@
       '&q='          + encodeURIComponent(text.slice(0, 300)) +
       '&h='          + encodeURIComponent(histJson) +
       '&callback='   + cbName;
-    s.onerror = function () {
-      if (!done) { done = true; clearTimeout(timer); cb(null); }
+
+    // ネットワークエラー → 即フォールバック
+    s.onerror = function () { finish(null); };
+
+    // スクリプトが読み込めたのにコールバックが呼ばれない
+    // ＝ GASが非JSONPを返した（未デプロイ等）→ 500ms待って即フォールバック
+    s.onload = function () {
+      setTimeout(function () { finish(null); }, 500);
     };
+
     document.body.appendChild(s);
   }
 
