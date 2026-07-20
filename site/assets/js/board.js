@@ -79,11 +79,13 @@
       var body = document.createElement('div'); body.className = 'kb-col-body';
       items.forEach(function (c) {
         var card = document.createElement('div');
-        card.className = 'kb-card' + (isStale(c) ? ' stale' : ''); card.draggable = true; card.dataset.id = c.id;
+        var hasActiveClaim = c.claimStatus && c.claimStatus !== 'なし' && c.claimStatus !== '解決済み';
+        card.className = 'kb-card' + (isStale(c) ? ' stale' : '') + (hasActiveClaim ? ' has-claim' : ''); card.draggable = true; card.dataset.id = c.id;
         var hist = (c.history && c.history.length) ? '<span class="kb-hist">📝' + c.history.length + '</span>' : '';
         var staleTag = isStale(c) ? '<span class="kb-stale">滞留' + daysSince(c.date) + '日</span>' : '';
+        var claimBadge = hasActiveClaim ? '<span class="kb-claim">⚠️' + HQ.esc(c.claimStatus) + '</span>' : '';
         card.innerHTML = '<div class="kb-card-top"><span class="kb-id">' + c.id + '</span>' +
-          (c.genre ? '<span class="kb-tag">' + HQ.esc(c.genre) + '</span>' : '') + staleTag + hist + '</div>' +
+          (c.genre ? '<span class="kb-tag">' + HQ.esc(c.genre) + '</span>' : '') + staleTag + claimBadge + hist + '</div>' +
           '<div class="kb-name">' + HQ.esc(c.name || '') + '</div>' +
           '<div class="kb-meta">' + (c.date ? '<span class="kb-date">📅' + HQ.esc(c.date) + '</span>' : '') + HQ.esc(c.assignee || '担当未定') + (c.amount ? '・' + HQ.yen(c.amount) : '') + '</div>' +
           (c.memo ? '<div class="kb-memo">' + HQ.esc(c.memo) + '</div>' : '');
@@ -172,6 +174,79 @@
     flash(document.getElementById('cpFuAdd'), '追加しました ✓');
   }
 
+  /* ---- 売却管理 ---- */
+  function updateSaleCalc() {
+    var sel = document.querySelector('input[name="cpSaleM"]:checked');
+    var row = document.getElementById('cpSaleCalcRow');
+    var res = document.getElementById('cpSaleResult');
+    if (!sel) { if (row) row.style.display = 'none'; return; }
+    var method = sel.value;
+    var c = findCase(panelId);
+    var buyP = c ? (Number(c.amount) || 0) : 0;
+    if (method === 'オークション') {
+      if (row) row.style.display = '';
+      var saleP = Number((document.getElementById('cpSalePrice') || {}).value) || 0;
+      var profit = saleP - buyP;
+      var fee = Math.round(Math.max(0, profit) * 0.05);
+      var partner = profit - fee;
+      if (res) res.innerHTML =
+        '<span>仕入：' + HQ.yen(buyP) + '</span>' +
+        '<span>粗利：' + HQ.yen(profit) + '</span>' +
+        '<span class="fee">本部手数料（5%）：' + HQ.yen(fee) + '</span>' +
+        '<span class="partner">加盟店取り分：' + HQ.yen(partner) + '</span>';
+    } else {
+      if (row) row.style.display = 'none';
+      if (res) res.innerHTML = '<span class="fee">本部手数料（固定）：¥30,000</span>';
+    }
+  }
+  function printSettlement(c) {
+    if (!c) return;
+    var sel = document.querySelector('input[name="cpSaleM"]:checked');
+    if (!sel) { alert('売却方法を選択してください'); return; }
+    var method = sel.value;
+    var buyP = Number(c.amount) || 0;
+    var saleP = method === 'オークション' ? (Number((document.getElementById('cpSalePrice') || {}).value) || 0) : 0;
+    var profit = saleP - buyP;
+    var hqFee = method === 'オークション' ? Math.round(Math.max(0, profit) * 0.05) : 30000;
+    var partnerAmt = method === 'オークション' ? (profit - hqFee) : 0;
+    function p(n) { return ('0' + n).slice(-2); }
+    var now = new Date(); var due = new Date(); due.setDate(due.getDate() + 7);
+    function ds(d) { return d.getFullYear() + '/' + p(d.getMonth() + 1) + '/' + p(d.getDate()); }
+    function fy(n) { return '¥' + (Number(n) || 0).toLocaleString('en-US'); }
+    var rows = [
+      ['案件ID', c.id], ['お名前', c.name || '—'], ['ジャンル', c.genre || '—'],
+      ['担当加盟店', c.assignee || '—'], ['売却方法', method]
+    ];
+    if (method === 'オークション') {
+      rows = rows.concat([['仕入れ価格（査定額）', fy(buyP)], ['落札価格', fy(saleP)], ['粗利', fy(profit)], ['本部手数料（5%）', fy(hqFee)], ['加盟店受取額', fy(partnerAmt)]]);
+    } else {
+      rows.push(['本部手数料（固定）', fy(30000)]);
+    }
+    var trs = rows.map(function (r, i) {
+      var cls = (r[0].indexOf('本部手数料') >= 0) ? ' class="s-fee"' : (r[0].indexOf('加盟店受取') >= 0) ? ' class="s-partner"' : (r[0].indexOf('粗利') >= 0) ? ' class="s-profit"' : '';
+      return '<tr' + cls + '><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>';
+    }).join('');
+    var html = '<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>清算書 ' + c.id + '</title>' +
+      '<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:"Noto Sans JP",sans-serif;padding:40px;max-width:640px;margin:auto;color:#111;}' +
+      'h1{font-size:22px;font-weight:900;text-align:center;margin-bottom:6px;}' +
+      '.meta{text-align:center;font-size:13px;color:#666;margin-bottom:28px;}' +
+      'table{width:100%;border-collapse:collapse;font-size:14px;}' +
+      'td{padding:11px 14px;border-bottom:1px solid #eee;}td:last-child{text-align:right;font-weight:700;}' +
+      '.s-fee td{color:#C0392B;}.s-profit td{background:#f9f9f9;}.s-partner td{color:#15803d;font-size:16px;}' +
+      '.footer{margin-top:28px;font-size:12px;color:#888;text-align:center;line-height:1.8;}' +
+      '@media print{.no-print{display:none;}}' +
+      '</style></head><body>' +
+      '<h1>清算書</h1>' +
+      '<div class="meta">発行日：' + ds(now) + '　支払期限：' + ds(due) + '（1週間以内）</div>' +
+      '<table>' + trs + '</table>' +
+      '<div class="footer">BUYMO ／ 合同会社アイズ　〒971-8138 福島県いわき市若葉台1丁目31-11<br>お支払いは期限内にお振込みします。</div>' +
+      '<p style="text-align:center;margin-top:24px;" class="no-print"><button onclick="window.print()" style="padding:10px 32px;font-size:14px;cursor:pointer;border:none;background:#0e1b33;color:#fff;border-radius:8px;">印刷する</button></p>' +
+      '</body></html>';
+    var win = window.open('', '_blank', 'width=720,height=620');
+    win.document.write(html); win.document.close();
+    addHistory(c, '清算書発行：' + method + ' ' + ds(now)); save(c);
+  }
+
   /* ---- 詳細パネル ---- */
   var panel, panelId = null;
   function ensurePanel() {
@@ -191,6 +266,7 @@
           '<label>ステージ<select id="cpStage"></select></label>' +
           '<label>金額<input id="cpAmount" type="number" min="0"></label>' +
           '<label class="cp-full">メモ<textarea id="cpMemo" rows="2"></textarea></label>' +
+          '<label>クレーム対応<select id="cpClaim"><option value="なし">— なし —</option><option value="受付中">⚠️ 受付中</option><option value="対応中">🔧 対応中</option><option value="解決済み">✅ 解決済み</option></select></label>' +
         '</div>' +
         '<button class="cp-save" id="cpSave">保存する</button>' +
         '<div class="cp-hist-area"><h3>対応履歴</h3>' +
@@ -224,6 +300,18 @@
           '</div>' +
           '<ol class="cp-fu-list" id="cpFuList"></ol>' +
         '</div>' +
+        '<div class="cp-sale-area">' +
+          '<h3>買取後の管理</h3>' +
+          '<div class="cp-sale-methods">' +
+            '<label class="cp-sale-opt"><input type="radio" name="cpSaleM" value="直販" id="cpSaleDirect"> 直販<span class="cp-sale-note">本部手数料：¥30,000（固定）</span></label>' +
+            '<label class="cp-sale-opt"><input type="radio" name="cpSaleM" value="オークション" id="cpSaleAuction"> オークション<span class="cp-sale-note">利益の5%</span></label>' +
+          '</div>' +
+          '<div class="cp-sale-calc-row" id="cpSaleCalcRow" style="display:none;">' +
+            '<label>落札価格（円）<input id="cpSalePrice" type="number" min="0" placeholder="0"></label>' +
+            '<div class="cp-sale-result" id="cpSaleResult"></div>' +
+          '</div>' +
+          '<button id="cpSettlement">清算書を発行 📄</button>' +
+        '</div>' +
       '</aside>';
     document.body.appendChild(panel);
     panel.addEventListener('click', function (e) { if (e.target.hasAttribute('data-close')) closePanel(); });
@@ -240,6 +328,11 @@
       });
     });
     document.getElementById('cpFuAdd').addEventListener('click', scheduleFu);
+    panel.querySelectorAll('input[name="cpSaleM"]').forEach(function (r) {
+      r.addEventListener('change', function () { updateSaleCalc(); });
+    });
+    document.getElementById('cpSalePrice').addEventListener('input', updateSaleCalc);
+    document.getElementById('cpSettlement').addEventListener('click', function () { printSettlement(findCase(panelId)); });
   }
   function opts(arr, sel, withEmpty) {
     var o = withEmpty ? '<option value="">— 未割当 —</option>' : '';
@@ -255,8 +348,15 @@
     document.getElementById('cpStage').innerHTML = opts(STAGES, c.stage, false);
     document.getElementById('cpAmount').value = c.amount || '';
     document.getElementById('cpMemo').value = c.memo || '';
+    document.getElementById('cpClaim').value = c.claimStatus || 'なし';
     renderTimeline(c);
     renderFollowups(c);
+    /* 売却管理セクション */
+    var dr = document.getElementById('cpSaleDirect'), ar = document.getElementById('cpSaleAuction');
+    if (dr) dr.checked = c.saleMethod === '直販';
+    if (ar) ar.checked = c.saleMethod === 'オークション';
+    var sp = document.getElementById('cpSalePrice'); if (sp) sp.value = c.salePrice || '';
+    updateSaleCalc();
   }
   function renderTimeline(c) {
     var tl = document.getElementById('cpTimeline');
@@ -285,6 +385,16 @@
     c.assignee = newAsg; c.stage = newStage;
     c.amount = Number(document.getElementById('cpAmount').value) || 0;
     c.memo = document.getElementById('cpMemo').value.trim();
+    var newClaim = document.getElementById('cpClaim').value;
+    if (newClaim !== (c.claimStatus || 'なし') && newClaim !== 'なし') addHistory(c, 'クレーム対応変更：' + (c.claimStatus || 'なし') + ' → ' + newClaim);
+    c.claimStatus = newClaim;
+    var selSale = document.querySelector('input[name="cpSaleM"]:checked');
+    if (selSale) {
+      c.saleMethod = selSale.value;
+      c.salePrice = Number(document.getElementById('cpSalePrice').value) || 0;
+      var sp = c.salePrice, bp = Number(c.amount) || 0;
+      c.hqFee = c.saleMethod === 'オークション' ? Math.round(Math.max(0, sp - bp) * 0.05) : 30000;
+    }
     save(c); render(); fillPanel(c);
     flash(document.getElementById('cpSave'), '保存しました ✓');
   }
