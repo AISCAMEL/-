@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>車の査定マニュアル｜AUC-AGENT 会員サイト</title>
+<meta name="description" content="AUC-AGENT 会員向け 車の査定マニュアル。査定の流れ、オートオークションの評価点（外装・内装）の見方、査定額に影響する項目、加点・減点ポイント、自己査定チェックリスト、想定手取りの考え方まで。" />
+<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png" />
+<link rel="apple-touch-icon" href="assets/img/favicon-180.png" />
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <span class="logo">A</span>
+      <span>AUC-AGENT<small>CAR AUCTION AGENT</small></span>
+    </a>
+    <nav class="nav">
+      <a class="nav-link" href="mypage.html">マイページ</a>
+      <a class="nav-link" href="sell.html">出品代行</a>
+      <a class="btn btn-ghost btn-sm" href="#" id="logoutBtn">ログアウト</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-head">
+  <div class="wrap">
+    <h1>車の査定マニュアル</h1>
+    <p>「いくらで売れる？」の疑問に答えます。オートオークションでの評価のしくみ、査定額を左右するポイント、ご自身でできる事前チェックまでをまとめました。</p>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="mp-grid">
+    <!-- side nav -->
+    <aside class="mp-side">
+      <nav class="mp-nav">
+        <a href="#flow" class="active">🔎 査定の流れ</a>
+        <a href="#need">📑 査定に必要な情報</a>
+        <a href="#grade">⭐ 評価点の見方</a>
+        <a href="#inner">🪑 内装評価の見方</a>
+        <a href="#factor">📈 査定額を左右する項目</a>
+        <a href="#plusminus">➕➖ 加点・減点ポイント</a>
+        <a href="#selfcheck">✅ 自己査定チェックリスト</a>
+        <a href="#tedori">💰 想定手取りの考え方</a>
+        <a href="#note">⚠️ 注意点</a>
+        <a href="manual.html">→ 出品の仕方マニュアル</a>
+        <a href="mypage.html">← マイページへ戻る</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="panel" id="flow">
+        <div class="panel-head"><h3>🔎 査定の5ステップ</h3></div>
+        <div class="panel-body">
+          <div class="flow" style="grid-template-columns:repeat(5,1fr);">
+            <div class="step"><div class="n">1</div><h4>情報入力</h4><p>年式・走行・装備・状態</p></div>
+            <div class="step"><div class="n">2</div><h4>相場照合</h4><p>AA成約データと照合</p></div>
+            <div class="step"><div class="n">3</div><h4>評価点想定</h4><p>外装・内装を仮判定</p></div>
+            <div class="step"><div class="n">4</div><h4>想定額提示</h4><p>落札想定レンジを提示</p></div>
+            <div class="step"><div class="n">5</div><h4>手取り試算</h4><p>手数料控除後を確認</p></div>
+          </div>
+          <div class="alert alert-info" style="margin-top:18px;">査定額は「確定額」ではなく、直近のオートオークション（AA）成約実績にもとづく<strong>想定レンジ</strong>です。最終的な金額は当日の入札で決まります。</div>
+        </div>
+      </section>
+
+      <section class="panel" id="need">
+        <div class="panel-head"><h3>📑 査定に必要な情報</h3></div>
+        <div class="panel-body">
+          <p>正確な査定には、以下の情報が必要です。マイページの出品申込フォームからご入力ください。</p>
+          <ul class="opt-list">
+            <li>メーカー・車名・グレード <b>車検証どおり</b></li>
+            <li>初度登録年月（年式）<b>車検証</b></li>
+            <li>走行距離 <b>直近メーター値</b></li>
+            <li>修復歴の有無 <b>正確に申告</b></li>
+            <li>車検残 <b>満了日</b></li>
+            <li>主要装備（ナビ・サンルーフ・レザー・4WD 等）<b>もれなく</b></li>
+            <li>外装キズ・へこみ・内装の状態 <b>正直に</b></li>
+            <li>純正／社外パーツ・改造の有無 <b>該当あれば</b></li>
+          </ul>
+          <div class="alert alert-ok" style="margin-top:16px;">車検証・メーター・車体全体の写真があると、査定精度が大きく上がります。</div>
+        </div>
+      </section>
+
+      <section class="panel" id="grade">
+        <div class="panel-head"><h3>⭐ オートオークション 外装評価点の見方</h3></div>
+        <div class="panel-body">
+          <p>オートオークションでは、検査員が車両を1台ずつチェックし「<strong>評価点</strong>」を付けます。点数が高いほど状態が良く、落札額も高くなる傾向があります。会場により多少の差はありますが、一般的な目安は以下のとおりです。</p>
+          <table class="company-table" style="max-width:none;">
+            <tr><th>評価点</th><td><b>状態の目安</b></td></tr>
+            <tr><th>S / 6点</th><td>新車・未使用車クラス。ほぼ無傷。</td></tr>
+            <tr><th>5点</th><td>年式が新しく、内外装ともに非常に良好。目立つキズなし。</td></tr>
+            <tr><th>4.5点</th><td>走行少なめで状態良好。小キズが数か所程度。</td></tr>
+            <tr><th>4点</th><td>使用感はあるが良好。市場で最も多い一般的なコンディション。</td></tr>
+            <tr><th>3.5点</th><td>キズ・へこみがやや目立つ。内装にも使用感。</td></tr>
+            <tr><th>3点</th><td>キズ・へこみ・内装の劣化が複数。過走行車も多い。</td></tr>
+            <tr><th>2点</th><td>外装・内装ともに難あり。要補修レベル。</td></tr>
+            <tr><th>1点</th><td>不動・全塗装・改造多数など。特殊扱い。</td></tr>
+            <tr><th>R / RA</th><td>修復歴あり（事故歴・骨格部の修正・交換）。減額対象。</td></tr>
+            <tr><th>0点 / ***</th><td>メーター交換・改ざん、水没、その他で通常評価不可。</td></tr>
+          </table>
+          <div class="alert alert-info" style="margin-top:16px;">目安としては、<strong>4点</strong>が「ふつうに使われてきた良好な中古車」の基準点です。4点を境に、上下で査定額が段階的に変わります。</div>
+        </div>
+      </section>
+
+      <section class="panel" id="inner">
+        <div class="panel-head"><h3>🪑 内装評価の見方（A〜D）</h3></div>
+        <div class="panel-body">
+          <p>外装の評価点とは別に、内装（室内）の状態が<strong>アルファベット</strong>で評価されます。喫煙・ペット・汚れ・使用感の影響が大きい項目です。</p>
+          <table class="company-table" style="max-width:none;">
+            <tr><th>内装評価</th><td><b>状態の目安</b></td></tr>
+            <tr><th>A</th><td>非常にきれい。喫煙なし・汚れなし。</td></tr>
+            <tr><th>B</th><td>良好。目立つ汚れ・へたりはなし。</td></tr>
+            <tr><th>C</th><td>使用感あり。汚れ・スレ・小さな焦げ跡など。</td></tr>
+            <tr><th>D</th><td>汚れ・破れ・強い臭い等が目立つ。要クリーニング。</td></tr>
+          </table>
+          <div class="alert alert-ok" style="margin-top:16px;">出品前の<strong>内外装クリーニング（サイズ別 ¥12,000〜¥30,000）</strong>で内装評価が上がり、落札額の底上げにつながる場合があります。マイページのオプションから追加できます。</div>
+        </div>
+      </section>
+
+      <section class="panel" id="factor">
+        <div class="panel-head"><h3>📈 査定額を左右する主な項目</h3></div>
+        <div class="panel-body">
+          <ul class="opt-list">
+            <li>人気・相場（車種・色・ボディタイプ）<b>影響 大</b></li>
+            <li>年式（初度登録）<b>影響 大</b></li>
+            <li>走行距離 <b>影響 大</b></li>
+            <li>評価点・内装評価 <b>影響 大</b></li>
+            <li>修復歴の有無 <b>影響 大（減額）</b></li>
+            <li>グレード・主要装備 <b>影響 中</b></li>
+            <li>車検残・整備記録簿 <b>影響 中</b></li>
+            <li>タイヤ・消耗品の状態 <b>影響 小〜中</b></li>
+            <li>ボディカラー <b>影響 小〜中</b></li>
+            <li>出品時期・タイミング <b>影響 小〜中</b></li>
+          </ul>
+          <div class="alert alert-info" style="margin-top:16px;">同じ車種でも、<strong>年式・走行・評価点</strong>の3点で数十万円単位の差が出ます。相場は季節や需給でも動きます。</div>
+        </div>
+      </section>
+
+      <section class="panel" id="plusminus">
+        <div class="panel-head"><h3>➕➖ 加点・減点ポイント</h3></div>
+        <div class="panel-body">
+          <div class="alert alert-ok"><strong>➕ プラスに働きやすい</strong></div>
+          <ul class="opt-list">
+            <li>ワンオーナー・記録簿あり <b>加点</b></li>
+            <li>禁煙車・内装がきれい <b>加点</b></li>
+            <li>純正ナビ・純正オプション <b>加点</b></li>
+            <li>人気色・定番グレード <b>加点</b></li>
+            <li>車検残が長い <b>加点</b></li>
+            <li>タイヤ・バッテリー等が新しい <b>加点</b></li>
+          </ul>
+          <div class="alert" style="background:#fdecec;color:#b23b3b;border:1px solid #f4c7c7;margin-top:18px;"><strong>➖ マイナスに働きやすい</strong></div>
+          <ul class="opt-list">
+            <li>修復歴あり（骨格の修正・交換）<b>減額</b></li>
+            <li>過走行（年式に対し走行が多い）<b>減額</b></li>
+            <li>喫煙・ペット臭・内装の汚れ <b>減額</b></li>
+            <li>目立つキズ・へこみ・板金塗装 <b>減額</b></li>
+            <li>社外・改造パーツ（車種による）<b>減額の場合</b></li>
+            <li>警告灯点灯・不具合 <b>減額</b></li>
+            <li>申告漏れ（後から判明）<b>減額・返品・違約金</b></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="panel" id="selfcheck">
+        <div class="panel-head"><h3>✅ 自己査定チェックリスト</h3></div>
+        <div class="panel-body">
+          <p>出品前に、ご自身でチェックしておくと申告漏れを防げます。</p>
+          <ul class="opt-list">
+            <li>車検証で車名・グレード・初度登録を確認 <b>□</b></li>
+            <li>メーターの走行距離を撮影 <b>□</b></li>
+            <li>修復歴の有無を確認（不明なら「不明」と申告）<b>□</b></li>
+            <li>外装を1周し、キズ・へこみを把握 <b>□</b></li>
+            <li>内装の汚れ・臭い・破れをチェック <b>□</b></li>
+            <li>メーター内の警告灯の有無 <b>□</b></li>
+            <li>純正・社外パーツ、欠品（取説・スペアキー等）<b>□</b></li>
+            <li>タイヤの溝・ひび、消耗品の状態 <b>□</b></li>
+          </ul>
+          <div class="alert alert-info" style="margin-top:16px;">判断に迷う項目は、無理に決めず「不明」としてご相談ください。当社が実車確認・写真から判断をお手伝いします。</div>
+        </div>
+      </section>
+
+      <section class="panel" id="tedori">
+        <div class="panel-head"><h3>💰 想定手取りの考え方</h3></div>
+        <div class="panel-body">
+          <p>お受け取りいただく「手取り」は、落札額から手数料・オプションを差し引いた金額です。</p>
+          <table class="company-table" style="max-width:none;">
+            <tr><th>計算式</th><td><b>手取り ＝ 落札額 −（出品代行手数料 ＋ 出品料 ＋ 選択オプション）</b></td></tr>
+            <tr><th>出品代行手数料</th><td>価格帯別定額（〜50万 ¥39,800 … 300万〜 3%）＋クラス割増</td></tr>
+            <tr><th>出品料</th><td>¥11,000（<b>流札は無料</b>）</td></tr>
+            <tr><th>主なオプション</th><td>名義変更 ¥25,000／内外装クリーニング ¥12,000〜¥30,000／代理搬入 ¥18,000 等</td></tr>
+          </table>
+          <div class="alert alert-ok" style="margin-top:16px;">マイページの<strong>出品手取りシミュレーション</strong>で、想定落札額から手取りの目安を試算できます。</div>
+          <div style="margin-top:16px;">
+            <a class="btn btn-gold btn-sm" href="sell.html#sim">出品手取りシミュレーションへ</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="note">
+        <div class="panel-head"><h3>⚠️ 査定にあたっての注意点</h3></div>
+        <div class="panel-body">
+          <ul class="opt-list">
+            <li>提示額は想定レンジ <b>確定額ではありません</b></li>
+            <li>最終額は当日の入札で決定 <b>相場変動あり</b></li>
+            <li>評価点は会場検査員が判定 <b>当社の想定と差が出る場合あり</b></li>
+            <li>正確な状態申告が最重要 <b>申告漏れは減額・返品・違約金の対象</b></li>
+          </ul>
+          <div class="alert" style="background:#fff3d6;color:#9a7414;border:1px solid #f0e0a8;margin-top:16px;">
+            ※ クレーム期間（落札日から2週間）・違約金の詳細は契約書・利用規約に準じます。水没・冠水等の重大な瑕疵は別扱いです。不明点は遠慮なくご相談ください。
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="copy">© 2026 合同会社アイズ（AUC-AGENT）. いわき市／福島拠点. 会員向けマニュアル（デモ）。</div>
+  </div>
+</footer>
+
+<script src="assets/js/app.js"></script>
+<script>
+  // 会員限定：未ログインはログインへ
+  if (!AucAuth.current()) { location.href = "login.html"; }
+  document.getElementById("logoutBtn").onclick = function (e) {
+    e.preventDefault(); AucAuth.logout(); location.href = "index.html";
+  };
+</script>
+</body>
+</html>
