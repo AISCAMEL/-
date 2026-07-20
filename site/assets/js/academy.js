@@ -91,6 +91,50 @@ window.Academy = (function () {
       { q: 'アルミホイールやタイヤは？', c: ['車本体が無いと買取不可', '単体・セットでも買取可能', '常に無価値'], a: 1 }
     ]
   };
+  /* ---- 動的コンテンツ（本部ダッシュボードで管理） ---- */
+  var CKEY = 'buymo_academy_content';
+  function getContent() { try { return JSON.parse(localStorage.getItem(CKEY)) || {}; } catch (e) { return {}; } }
+  function saveContent(c) { try { localStorage.setItem(CKEY, JSON.stringify(c)); } catch (e) {} }
+
+  function allCourses() {
+    var ct = getContent();
+    var videos = ct.videos || {};
+    var extraLessons = ct.extraLessons || {};
+    var extraCourses = ct.courses || [];
+    var merged = COURSES.map(function (c) {
+      var lessons = c.lessons.map(function (l, i) {
+        var v = videos[c.id + ':' + i];
+        return v ? { t: l.t, video: v, text: l.text } : l;
+      }).concat(extraLessons[c.id] || []);
+      return { id: c.id, icon: c.icon, title: c.title, desc: c.desc, lessons: lessons };
+    });
+    return merged.concat(extraCourses);
+  }
+
+  function setVideo(courseId, lessonIdx, url) {
+    var ct = getContent(); ct.videos = ct.videos || {};
+    ct.videos[courseId + ':' + lessonIdx] = url; saveContent(ct);
+  }
+  function addCourse(course) {
+    var ct = getContent(); ct.courses = ct.courses || [];
+    ct.courses.push(course); saveContent(ct);
+  }
+  function addLesson(courseId, lesson) {
+    var ct = getContent(); ct.extraLessons = ct.extraLessons || {};
+    ct.extraLessons[courseId] = ct.extraLessons[courseId] || [];
+    ct.extraLessons[courseId].push(lesson); saveContent(ct);
+  }
+  function deleteCourse(courseId) {
+    var ct = getContent(); ct.courses = (ct.courses || []).filter(function(c) { return c.id !== courseId; }); saveContent(ct);
+  }
+  function deleteLesson(courseId, lessonIdx, isExtra) {
+    var ct = getContent();
+    if (isExtra) {
+      var arr = ct.extraLessons && ct.extraLessons[courseId];
+      if (arr) { arr.splice(lessonIdx, 0); ct.extraLessons[courseId] = arr; saveContent(ct); }
+    }
+  }
+
   function getPassed() { try { return JSON.parse(localStorage.getItem(QKEY)) || {}; } catch (e) { return {}; } }
   function setPassed(p) { try { localStorage.setItem(QKEY, JSON.stringify(p)); } catch (e) {} }
   function isPassed(id) { return !!getPassed()[id]; }
@@ -110,10 +154,10 @@ window.Academy = (function () {
     p[courseId] = a; setProgress(p);
   }
   function pct(courseId) { var c = byId(courseId); if (!c) return 0; return Math.round(done(courseId).length / c.lessons.length * 100); }
-  function byId(id) { for (var i = 0; i < COURSES.length; i++) if (COURSES[i].id === id) return COURSES[i]; return null; }
+  function byId(id) { var all = allCourses(); for (var i = 0; i < all.length; i++) if (all[i].id === id) return all[i]; return null; }
   function overall() {
     var total = 0, dn = 0;
-    COURSES.forEach(function (c) { total += c.lessons.length; dn += done(c.id).length; });
+    allCourses().forEach(function (c) { total += c.lessons.length; dn += done(c.id).length; });
     return total ? Math.round(dn / total * 100) : 0;
   }
 
@@ -124,7 +168,7 @@ window.Academy = (function () {
     var grid = document.getElementById('academyGrid'); if (!grid) return;
     var ov = document.getElementById('overallPct'); if (ov) ov.textContent = overall() + '%';
     var ob = document.getElementById('overallBar'); if (ob) ob.style.width = overall() + '%';
-    grid.innerHTML = COURSES.map(function (c) {
+    grid.innerHTML = allCourses().map(function (c) {
       var p = pct(c.id);
       var badge = isPassed(c.id) ? '<span class="ac-badge">🏅 修了</span>' : '';
       return '<a class="ac-card" href="partner-course.html?id=' + c.id + '">' +
@@ -164,10 +208,18 @@ window.Academy = (function () {
       var qz = document.getElementById('cvQuiz');
       if (qz) {
         if (pct(c.id) === 100) {
+          var hasQuiz = !!(QUIZ[c.id] && QUIZ[c.id].length);
           qz.hidden = false;
-          qz.innerHTML = isPassed(c.id)
-            ? '🏅 このコースは修了済みです。<a href="partner-cert.html?id=' + c.id + '">修了証を表示</a>'
-            : '全レッスン完了！<a class="cv-quiz-btn" href="partner-quiz.html?id=' + c.id + '">修了テストを受ける ›</a>';
+          if (isPassed(c.id)) {
+            qz.innerHTML = '🏅 このコースは修了済みです。<a href="partner-cert.html?id=' + c.id + '">修了証を表示</a>';
+          } else if (hasQuiz) {
+            qz.innerHTML = '全レッスン完了！<a class="cv-quiz-btn" href="partner-quiz.html?id=' + c.id + '">修了テストを受ける ›</a>';
+          } else {
+            qz.innerHTML = '全レッスン完了！<button class="cv-quiz-btn" id="cvPassBtn">修了にする（テストなし）</button>';
+            document.getElementById('cvPassBtn').addEventListener('click', function () {
+              var p = getPassed(); p[c.id] = { score: 100, date: todayStr(), no: certNo(c.id, todayStr()) }; setPassed(p); draw();
+            });
+          }
         } else { qz.hidden = true; }
       }
     }
@@ -249,5 +301,11 @@ window.Academy = (function () {
       '<div class="cert-actions"><button class="btn btn-primary" onclick="window.print()">印刷／PDF保存</button> <a class="cert-back" href="partner-academy.html">アカデミーへ戻る</a></div>';
   }
 
-  return { COURSES: COURSES, renderHub: renderHub, renderCourse: renderCourse, renderQuiz: renderQuiz, renderCert: renderCert, overall: overall, isPassed: isPassed };
+  return {
+    COURSES: COURSES, allCourses: allCourses,
+    renderHub: renderHub, renderCourse: renderCourse, renderQuiz: renderQuiz, renderCert: renderCert,
+    overall: overall, isPassed: isPassed,
+    setVideo: setVideo, addCourse: addCourse, addLesson: addLesson,
+    deleteCourse: deleteCourse, getContent: getContent, saveContent: saveContent
+  };
 })();

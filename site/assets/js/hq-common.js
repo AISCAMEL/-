@@ -107,6 +107,7 @@ window.HQ = (function () {
       ['stores', '加盟店', 'hq-stores.html'],
       ['notices', 'お知らせ', 'hq-notices.html'],
       ['column', 'コラム', 'hq-column.html'],
+      ['academy', 'アカデミー管理', 'hq-academy.html'],
       ['report', '営業レポート', 'report.html']
     ];
     el.innerHTML = items.map(function (it) {
