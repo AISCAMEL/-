@@ -88,7 +88,8 @@
 .store-status{margin-left:auto;border:none;cursor:pointer;border-radius:30px;padding:4px 12px;font-weight:700;font-size:12px;}
 .store-status.on{background:#E3F7E8;color:#15803d;}
 .store-status.off{background:#eee;color:#777;}
-.store-meta{color:#666;font-size:13px;line-height:1.7;margin-bottom:14px;}
+.store-meta{color:#666;font-size:13px;line-height:1.7;margin-bottom:8px;}
+.store-notify{font-size:12px;color:#666;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
 .store-stats{display:flex;justify-content:space-between;border-top:1px solid #eee;padding-top:12px;text-align:center;gap:8px;}
 .store-stats .ss-num{display:block;font-weight:900;color:var(--navy);font-size:18px;}
 .store-stats .ss-label{font-size:11px;color:#999;}

@@ -47,6 +47,13 @@ function doGet(e) {
     if (ncb) return ContentService.createTextOutput(ncb + "(" + nbody + ")").setMimeType(ContentService.MimeType.JAVASCRIPT);
     return ContentService.createTextOutput(nbody).setMimeType(ContentService.MimeType.JSON);
   }
+  // 加盟店一覧（JSONP）
+  if (e && e.parameter && e.parameter.action === "stores") {
+    var stores = (typeof getStoresJson_ === "function") ? getStoresJson_() : [];
+    var sbody = JSON.stringify(stores), scb = e.parameter.callback;
+    if (scb) return ContentService.createTextOutput(scb + "(" + sbody + ")").setMimeType(ContentService.MimeType.JAVASCRIPT);
+    return ContentService.createTextOutput(sbody).setMimeType(ContentService.MimeType.JSON);
+  }
   // 看板ボード：案件一覧（JSONP）。assignee 指定で担当のみ。
   if (e && e.parameter && e.parameter.action === "cases") {
     var cases = (typeof getCasesJson_ === "function") ? getCasesJson_(e.parameter.assignee || "") : [];
@@ -99,6 +106,7 @@ function doPost(e) {
       case "case":     result = (typeof requireAuth_!=="function"||requireAuth_(data)) ? handleCase_(data) : { ok:false, error:"unauthorized" }; break; // 看板ボードの作成/更新（要ログイン）
       case "note":     result = (typeof requireAuth_!=="function"||requireAuth_(data)) ? handleNote_(data) : { ok:false, error:"unauthorized" }; break; // 対応履歴メモ（要ログイン）
       case "notice":   result = (typeof requireAuth_!=="function"||requireAuth_(data)) ? handleNotice_(data) : { ok:false, error:"unauthorized" }; break; // お知らせ投稿（要ログイン）
+      case "store":    result = (typeof requireAuth_!=="function"||requireAuth_(data)) ? handleStore_(data)  : { ok:false, error:"unauthorized" }; break; // 加盟店登録/更新（要ログイン）
       default:         result = { ok: false, error: "unknown type" };
     }
     return json_(result);

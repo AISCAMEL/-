@@ -43,17 +43,45 @@ function handleCase_(d) {
   if (d.id) {
     var row = findCaseRow_(sh, d.id);
     if (row) {
-      var prev = sh.getRange(row, 8).getValue();
+      var prevStage    = String(sh.getRange(row, 8).getValue());
+      var prevAssignee = String(sh.getRange(row, 7).getValue());
+      var caseName     = String(sh.getRange(row, 3).getValue() || "-");
       sh.getRange(row, 1).setValue(new Date());
       if (d.assignee != null) sh.getRange(row, 7).setValue(d.assignee);
       sh.getRange(row, 8).setValue(stage);
       if (d.amount != null) sh.getRange(row, 9).setValue(num_(d.amount));
       if (d.memo != null) sh.getRange(row, 10).setValue(String(d.memo).slice(0, 300));
-      if (String(prev) !== stage) {
-        notifyStaff_("🗂️ 案件ステージ変更 " + d.id + "：" + prev + " → " + stage +
-          "\nお名前：" + (sh.getRange(row, 3).getValue() || "-") +
-          (d.assignee ? "\n担当：" + d.assignee : ""));
+
+      var assigneeNow = (d.assignee != null) ? d.assignee : prevAssignee;
+
+      // ステージ変更通知
+      if (prevStage !== stage) {
+        var stageMsg = "🗂️ 案件ステージ変更 " + d.id + "：" + prevStage + " → " + stage +
+          "\nお名前：" + caseName + (assigneeNow ? "\n担当：" + assigneeNow : "");
+        notifyStaff_(stageMsg);
+        if (assigneeNow && typeof notifyPartnerByName_ === "function") {
+          notifyPartnerByName_(assigneeNow,
+            "【案件ステージ変更】" +
+            "\n案件ID：" + d.id +
+            "\nお名前：" + caseName +
+            "\nステージ：" + prevStage + " → " + stage
+          );
+        }
       }
+
+      // 担当変更通知（新たに割り当てられた店舗に通知）
+      if (d.assignee != null && d.assignee && d.assignee !== prevAssignee) {
+        if (typeof notifyPartnerByName_ === "function") {
+          notifyPartnerByName_(d.assignee,
+            "【案件割り当て】新しい案件が担当に追加されました。" +
+            "\n案件ID：" + d.id +
+            "\nお名前：" + caseName +
+            "\nジャンル：" + (String(sh.getRange(row, 6).getValue()) || "-") +
+            "\nステージ：" + stage
+          );
+        }
+      }
+
       return { ok: true, id: d.id, stage: stage };
     }
   }
@@ -61,6 +89,16 @@ function handleCase_(d) {
   var id = "CS-" + nextSeq_(sh, 7000);
   sh.appendRow([new Date(), id, d.name || "", d.phone || "", d.email || "", d.genre || "", d.assignee || "", stage, num_(d.amount), String(d.memo || "").slice(0, 300)]);
   notifyStaff_("🆕 新規案件 " + id + "（" + stage + "）\nお名前：" + (d.name || "-"));
+  // 担当が付いていれば即通知
+  if (d.assignee && typeof notifyPartnerByName_ === "function") {
+    notifyPartnerByName_(d.assignee,
+      "【新規案件割り当て】" +
+      "\n案件ID：" + id +
+      "\nお名前：" + (d.name || "-") +
+      "\nジャンル：" + (d.genre || "-") +
+      "\nステージ：" + stage
+    );
+  }
   return { ok: true, id: id, stage: stage };
 }
 
@@ -97,7 +135,14 @@ function handleNotice_(d) {
   var ss = openBook_();
   var sh = ss.getSheetByName("お知らせ") || ensureSheet_(ss, "お知らせ", ["日時", "ID", "タイトル", "本文", "重要度"]);
   sh.appendRow([new Date(), d.id || ("N-" + nextSeq_(sh, 1000)), d.title, d.body || "", d.level || "info"]);
-  notifyStaff_("📢 お知らせ投稿：" + d.title + "\n" + (d.body || ""));
+  var noticeMsg = "📢 お知らせ投稿：" + d.title + "\n" + (d.body || "");
+  notifyStaff_(noticeMsg);
+  // 全加盟店に一斉通知（メール＋Slack）
+  if (typeof broadcastToAllPartners_ === "function") {
+    var broadcast = "📢 本部からのお知らせ" + (d.level === "warn" ? "【重要】" : "") +
+      "\n\n" + d.title + "\n" + (d.body || "");
+    broadcastToAllPartners_(broadcast);
+  }
   return { ok: true };
 }
 function getNoticesJson_() {

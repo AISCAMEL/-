@@ -17,10 +17,15 @@
     grid.innerHTML = stores.map(function (s, i) {
       var st = statsFor(s.name);
       var on = s.status === '稼働中';
+      var notifyIcons = [];
+      if (s.email) notifyIcons.push('<span title="メール通知：' + HQ.esc(s.email) + '">✉️</span>');
+      if (s.slack) notifyIcons.push('<span title="Slack通知設定済み">💬</span>');
       return '<div class="store-card">' +
         '<div class="store-head"><span class="store-name">🏪 ' + HQ.esc(s.name) + '</span>' +
           '<button class="store-status ' + (on ? 'on' : 'off') + '" data-i="' + i + '">' + HQ.esc(s.status) + '</button></div>' +
-        '<p class="store-meta">📍 ' + HQ.esc(s.area || '—') + '<br>📞 ' + HQ.esc(s.tel || '—') + '</p>' +
+        '<p class="store-meta">📍 ' + HQ.esc(s.area || '—') + '<br>📞 ' + HQ.esc(s.tel || '—') +
+          (s.email ? '<br>✉️ ' + HQ.esc(s.email) : '') + '</p>' +
+        '<div class="store-notify">' + (notifyIcons.length ? '通知：' + notifyIcons.join(' ') : '<span style="color:#aaa;font-size:12px;">通知設定なし</span>') + '</div>' +
         '<div class="store-stats">' +
           '<div><span class="ss-num">' + st.total + '</span><span class="ss-label">案件</span></div>' +
           '<div><span class="ss-num">' + st.active + '</span><span class="ss-label">進行中</span></div>' +
@@ -33,15 +38,27 @@
     var btn = e.target.closest('.store-status'); if (!btn) return;
     var i = Number(btn.getAttribute('data-i'));
     stores[i].status = stores[i].status === '稼働中' ? '準備中' : '稼働中';
-    HQ.saveStores(stores); render();
+    HQ.saveStores(stores);
+    HQ.postStore(stores[i]);
+    render();
   });
 
   document.getElementById('addStore').addEventListener('submit', function (e) {
     e.preventDefault();
     var name = document.getElementById('sName').value.trim();
     if (!name) return;
-    stores.push({ name: name, area: document.getElementById('sArea').value.trim(), tel: document.getElementById('sTel').value.trim(), status: '準備中' });
-    HQ.saveStores(stores); e.target.reset(); render();
+    var newStore = {
+      name:   name,
+      area:   document.getElementById('sArea').value.trim(),
+      tel:    document.getElementById('sTel').value.trim(),
+      email:  document.getElementById('sEmail').value.trim(),
+      slack:  document.getElementById('sSlack').value.trim(),
+      status: '準備中'
+    };
+    stores.push(newStore);
+    HQ.saveStores(stores);
+    HQ.postStore(newStore);
+    e.target.reset(); render();
   });
 
   /* ---- CSV出力（加盟店一覧＋実績） ---- */

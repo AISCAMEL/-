@@ -24,9 +24,9 @@ window.HQ = (function () {
   }
   function seedStores() {
     return [
-      { name: 'いわき店', area: '福島県いわき市', tel: '0246-00-0000', status: '稼働中' },
-      { name: '郡山店', area: '福島県郡山市', tel: '024-000-0000', status: '稼働中' },
-      { name: '仙台店', area: '宮城県仙台市', tel: '022-000-0000', status: '準備中' }
+      { name: 'いわき店', area: '福島県いわき市', tel: '0246-00-0000', email: '', slack: '', status: '稼働中' },
+      { name: '郡山店',   area: '福島県郡山市',  tel: '024-000-0000', email: '', slack: '', status: '稼働中' },
+      { name: '仙台店',   area: '宮城県仙台市',  tel: '022-000-0000', email: '', slack: '', status: '準備中' }
     ];
   }
   function readLS(k, seed) { try { var a = JSON.parse(localStorage.getItem(k)); return (a && a.length) ? a : seed(); } catch (e) { return seed(); } }
@@ -66,6 +66,11 @@ window.HQ = (function () {
 
   function getStores() { return readLS(SKEY, seedStores); }
   function saveStores(arr) { try { localStorage.setItem(SKEY, JSON.stringify(arr)); } catch (e) {} }
+  function postStore(s) {
+    if (!ENDPOINT) return;
+    fetch(ENDPOINT, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ type: 'store', token: authToken(), name: s.name, area: s.area, tel: s.tel, email: s.email || '', slack: s.slack || '', status: s.status }) }).catch(function () {});
+  }
 
   /* 本部→加盟店 お知らせ */
   var NKEY = 'buymo_notices';
@@ -112,7 +117,7 @@ window.HQ = (function () {
   return {
     ENDPOINT: ENDPOINT, STAGES: STAGES, WON: WON,
     loadCases: loadCases, getCasesLS: getCasesLS, saveCases: saveCases, upsertCase: upsertCase,
-    getStores: getStores, saveStores: saveStores, note: note,
+    getStores: getStores, saveStores: saveStores, postStore: postStore, note: note,
     getNotices: getNotices, addNotice: addNotice, deleteNotice: deleteNotice,
     yen: yen, esc: esc, stageIdx: stageIdx, nav: nav
   };
