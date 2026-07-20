@@ -7,7 +7,7 @@
 (function () {
   'use strict';
 
-  var GAS  = 'https://script.google.com/macros/s/AKfycbzzHW5L6u5aVN0vZDplxQhq9_uZ_rVi7hMI9QD62UK9RKF9FHb9ySt7aq3VibzeZAJT/exec';
+  var GAS  = 'https://script.google.com/macros/s/AKfycbw0Ao9-I-GUizO--TIU2AeJCIEGoW8Ot9DZXErD2oJk8fg_1sNj8FRNYkoAvtm6CwMc/exec';
   var MODE = (window.BUYMO_BOT_MODE === 'partner') ? 'partner' : 'user';
   var history = []; // 会話履歴（{role,content}[]）
 
