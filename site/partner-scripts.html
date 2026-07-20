@@ -47,6 +47,52 @@
   .sc-empty{text-align:center;color:#aaa;padding:40px;font-size:14px;}
 </style>
 <main class="portal-main">
+  <div class="partner-banner" aria-hidden="true" style="width:100%;overflow:hidden;line-height:0;margin-top:-24px;margin-bottom:24px;">
+    <svg viewBox="0 0 1200 160" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:auto;max-height:160px;">
+      <defs>
+        <linearGradient id="sb-bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#0e1b33"/>
+          <stop offset="60%" stop-color="#2a1820"/>
+          <stop offset="100%" stop-color="#c44a10"/>
+        </linearGradient>
+        <radialGradient id="sb-glow" cx="80%" cy="75%" r="40%">
+          <stop offset="0%" stop-color="#f2591f" stop-opacity="0.25"/>
+          <stop offset="100%" stop-color="#0e1b33" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect width="1200" height="160" fill="url(#sb-bg)"/>
+      <rect width="1200" height="160" fill="url(#sb-glow)"/>
+      <!-- diagonal lines -->
+      <line x1="0" y1="160" x2="220" y2="0" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+      <line x1="80" y1="160" x2="300" y2="0" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+      <!-- speech bubble 1 (large) -->
+      <rect x="80" y="30" width="200" height="68" rx="16" fill="rgba(255,255,255,0.07)"/>
+      <polygon points="95,98 80,118 122,98" fill="rgba(255,255,255,0.07)"/>
+      <!-- speech bubble 2 (smaller, right) -->
+      <rect x="310" y="50" width="140" height="48" rx="12" fill="rgba(242,89,31,0.18)"/>
+      <polygon points="430,98 444,118 410,98" fill="rgba(242,89,31,0.18)"/>
+      <!-- chat lines (simulated text) -->
+      <rect x="96" y="44" width="112" height="6" rx="3" fill="rgba(255,255,255,0.18)"/>
+      <rect x="96" y="56" width="80" height="6" rx="3" fill="rgba(255,255,255,0.14)"/>
+      <rect x="96" y="68" width="96" height="6" rx="3" fill="rgba(255,255,255,0.12)"/>
+      <rect x="324" y="64" width="68" height="5" rx="2.5" fill="rgba(255,200,150,0.22)"/>
+      <rect x="324" y="74" width="92" height="5" rx="2.5" fill="rgba(255,200,150,0.16)"/>
+      <!-- copy icon (right side) -->
+      <rect x="900" y="38" width="52" height="64" rx="8" fill="rgba(255,255,255,0.06)"/>
+      <rect x="912" y="28" width="52" height="64" rx="8" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+      <rect x="920" y="42" width="30" height="5" rx="2" fill="rgba(255,255,255,0.14)"/>
+      <rect x="920" y="52" width="24" height="5" rx="2" fill="rgba(255,255,255,0.10)"/>
+      <rect x="920" y="62" width="28" height="5" rx="2" fill="rgba(255,255,255,0.10)"/>
+      <!-- dot grid -->
+      <g fill="rgba(255,255,255,0.1)">
+        <circle cx="1080" cy="30" r="2"/> <circle cx="1110" cy="30" r="2"/> <circle cx="1140" cy="30" r="2"/>
+        <circle cx="1080" cy="55" r="2"/> <circle cx="1110" cy="55" r="2"/> <circle cx="1140" cy="55" r="2"/>
+        <circle cx="1080" cy="80" r="2"/> <circle cx="1110" cy="80" r="2"/> <circle cx="1140" cy="80" r="2"/>
+      </g>
+      <!-- wave bottom -->
+      <path d="M 0 140 Q 200 120 400 140 Q 600 160 800 140 Q 1000 120 1200 140 L 1200 160 L 0 160 Z" fill="rgba(255,255,255,0.04)"/>
+    </svg>
+  </div>
   <div class="container">
     <h1>トークスクリプト集</h1>
     <p class="portal-sub">場面別の話法。ボタンでコピーして、現場でそのまま使えます。</p>
