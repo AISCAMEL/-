@@ -1,0 +1,31 @@
+name: WPX 自動デプロイ
+
+on:
+  push:
+    branches:
+      - main          # main ブランチへの push でトリガー
+  workflow_dispatch:  # GitHub 画面から手動実行も可能
+
+jobs:
+  deploy:
+    name: FTP デプロイ
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: WPX へ FTP デプロイ（差分のみ）
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server:      ${{ secrets.FTP_HOST }}
+          username:    ${{ secrets.FTP_USER }}
+          password:    ${{ secrets.FTP_PASSWORD }}
+          local-dir:   ./site/
+          server-dir:  ${{ secrets.FTP_SERVER_DIR }}
+          # 差分検知ファイル（初回はフル転送、以降は変更分のみ）
+          state-name:  .ftp-deploy-sync-state.json
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/.DS_Store
