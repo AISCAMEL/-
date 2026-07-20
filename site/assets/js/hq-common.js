@@ -113,7 +113,8 @@ window.HQ = (function () {
       ['notices', 'お知らせ', 'hq-notices.html'],
       ['column', 'コラム', 'hq-column.html'],
       ['academy', 'アカデミー管理', 'hq-academy.html'],
-      ['report', '営業レポート', 'report.html']
+      ['report', '営業レポート', 'report.html'],
+      ['documents', '書類発行', 'hq-documents.html']
     ];
     el.innerHTML = items.map(function (it) {
       return '<a href="' + it[2] + '"' + (it[0] === active ? ' aria-current="page"' : '') + '>' + it[1] + '</a>';
