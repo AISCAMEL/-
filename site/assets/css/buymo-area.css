@@ -68,3 +68,11 @@
   .btn-tel,.btn-light,.btn-tel-light,.area-hero .btn-lg,.area-bottom-cta .btn-lg{width:100%;}
   .area-intro,.area-cities,.results,.area-related,.area-list-section{padding:44px 0;}
 }
+
+/* エリアページ ヒーローバナー */
+.area-hero {
+  background-image: url('../img/area-banner.svg');
+  background-size: cover;
+  background-position: center top;
+  background-blend-mode: luminosity;
+}
