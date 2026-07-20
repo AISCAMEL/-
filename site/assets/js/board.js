@@ -16,7 +16,7 @@
 
   function visible() { return (role === 'partner' && who) ? cases.filter(function (c) { return c.assignee === who; }) : cases; }
   // 滞留判定（受付から5日以上・未完了の初期〜商談ステージ）
-  var STALE_DAYS = 5, EARLY = ['新規受付', '査定中', '商談中'];
+  var STALE_DAYS = 5, EARLY = ['新規受付', '査定中', '商談中', '後追い'];
   function daysSince(d) { if (!d) return 0; var t = new Date(String(d).replace(/\//g, '-') + 'T00:00:00'); if (isNaN(t)) return 0; return Math.floor((new Date() - t) / 86400000); }
   function isStale(c) { return EARLY.indexOf(c.stage) >= 0 && daysSince(c.date) >= STALE_DAYS; }
   function findCase(id) { for (var i = 0; i < cases.length; i++) if (cases[i].id === id) return cases[i]; return null; }
@@ -120,6 +120,58 @@
   }
   function set(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; }
 
+  /* ---- 後追いテンプレート ---- */
+  var FU_LABEL = { reminder: '査定リマインダー', market: '相場変動のご案内', campaign: 'キャンペーン', reopen: '再検討のお願い', custom: 'カスタム' };
+  var FU_MSG = {
+    reminder: '先日はBUYMOにお問い合わせいただきありがとうございました。その後、お車の売却についてご検討いただけましたでしょうか？最新の査定額を改めてご案内できますので、お気軽にご連絡ください。',
+    market:   '現在、お車の買取相場が上昇しています。今が売り時かもしれません。BUYMOの無料査定をぜひご利用ください。',
+    campaign: '期間限定！BUYMOの査定額アップキャンペーン実施中です。この機会にぜひお問い合わせください。',
+    reopen:   '以前ご案内した査定から、さらに良い条件をご提示できる可能性がございます。改めてご検討いただけますでしょうか？',
+    custom:   ''
+  };
+  function addDaysStr(n) {
+    var d = new Date(); d.setDate(d.getDate() + n);
+    function p(x) { return ('0' + x).slice(-2); }
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  }
+  function renderFollowups(c) {
+    var el = document.getElementById('cpFuList'); if (!el) return;
+    var fus = (c.followups || []).slice().sort(function (a, b) { return a.at > b.at ? 1 : -1; });
+    el.innerHTML = fus.length ? fus.map(function (fu) {
+      var sc = { sent: 'fu-sent', cancelled: 'fu-cancelled', pending: 'fu-pending' }[fu.status] || 'fu-pending';
+      var sl = { sent: '送信済み', cancelled: '取消済', pending: '予定' }[fu.status] || '予定';
+      return '<li class="fu-item ' + sc + '">' +
+        '<span class="fu-date">' + HQ.esc(fu.at) + '</span>' +
+        '<span class="fu-lbl">' + HQ.esc(FU_LABEL[fu.template] || fu.template || '') + '</span>' +
+        '<span class="fu-pill ' + sc + '">' + sl + '</span>' +
+        (fu.status === 'pending' ? '<button class="fu-del" data-fuid="' + HQ.esc(fu.id) + '">取消</button>' : '') +
+        '</li>';
+    }).join('') : '<li class="cp-empty">後追いスケジュールはありません。</li>';
+    el.querySelectorAll('.fu-del').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var c2 = findCase(panelId); if (!c2) return;
+        var fuId = btn.getAttribute('data-fuid');
+        (c2.followups || []).forEach(function (f) { if (f.id === fuId) f.status = 'cancelled'; });
+        addHistory(c2, '後追い取消：' + fuId); save(c2); renderFollowups(c2);
+      });
+    });
+  }
+  function scheduleFu() {
+    var c = findCase(panelId); if (!c) return;
+    var dateVal = document.getElementById('cpFuDate').value; if (!dateVal) return;
+    var at = dateVal.replace(/-/g, '/');
+    var tmpl = document.getElementById('cpFuTmpl').value;
+    var msg = document.getElementById('cpFuMsg').value.trim() || FU_MSG[tmpl] || '';
+    var fu = { id: 'FU-' + Date.now().toString().slice(-6), at: at, template: tmpl, msg: msg, status: 'pending' };
+    c.followups = c.followups || [];
+    c.followups.push(fu);
+    addHistory(c, '後追い追加：' + at + '（' + (FU_LABEL[tmpl] || tmpl) + '）');
+    save(c); HQ.postFollowup(c.id, fu.id, fu.at, tmpl, msg);
+    document.getElementById('cpFuDate').value = ''; document.getElementById('cpFuMsg').value = '';
+    renderFollowups(c);
+    flash(document.getElementById('cpFuAdd'), '追加しました ✓');
+  }
+
   /* ---- 詳細パネル ---- */
   var panel, panelId = null;
   function ensurePanel() {
@@ -145,12 +197,49 @@
           '<div class="cp-note-add"><input id="cpNote" placeholder="対応メモを記録（例：電話で出張日程を調整）"><button id="cpNoteBtn">記録</button></div>' +
           '<ol class="cp-timeline" id="cpTimeline"></ol>' +
         '</div>' +
+        '<div class="cp-fu-area">' +
+          '<h3>後追いスケジュール</h3>' +
+          '<div class="cp-fu-presets">' +
+            '<button class="cp-fu-pre" data-days="3">3日後</button>' +
+            '<button class="cp-fu-pre" data-days="7">1週間</button>' +
+            '<button class="cp-fu-pre" data-days="14">2週間</button>' +
+            '<button class="cp-fu-pre" data-days="30">1ヶ月</button>' +
+            '<button class="cp-fu-pre" data-days="90">3ヶ月</button>' +
+            '<button class="cp-fu-pre" data-days="180">6ヶ月</button>' +
+            '<button class="cp-fu-pre" data-days="365">1年後</button>' +
+          '</div>' +
+          '<div class="cp-fu-form">' +
+            '<div class="cp-fu-row">' +
+              '<input type="date" id="cpFuDate" />' +
+              '<select id="cpFuTmpl">' +
+                '<option value="reminder">査定リマインダー</option>' +
+                '<option value="market">相場変動のご案内</option>' +
+                '<option value="campaign">キャンペーンのご案内</option>' +
+                '<option value="reopen">再検討のお願い</option>' +
+                '<option value="custom">カスタムメッセージ</option>' +
+              '</select>' +
+            '</div>' +
+            '<textarea id="cpFuMsg" rows="2" placeholder="送信メッセージ（テンプレート選択で自動入力）"></textarea>' +
+            '<button id="cpFuAdd">後追いを追加</button>' +
+          '</div>' +
+          '<ol class="cp-fu-list" id="cpFuList"></ol>' +
+        '</div>' +
       '</aside>';
     document.body.appendChild(panel);
     panel.addEventListener('click', function (e) { if (e.target.hasAttribute('data-close')) closePanel(); });
     document.getElementById('cpSave').addEventListener('click', savePanel);
     document.getElementById('cpNoteBtn').addEventListener('click', addNote);
     document.getElementById('cpNote').addEventListener('keydown', function (e) { if (e.key === 'Enter') addNote(); });
+    document.getElementById('cpFuTmpl').addEventListener('change', function () {
+      var v = this.value;
+      document.getElementById('cpFuMsg').value = FU_MSG[v] || '';
+    });
+    panel.querySelectorAll('.cp-fu-pre').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.getElementById('cpFuDate').value = addDaysStr(Number(btn.getAttribute('data-days')));
+      });
+    });
+    document.getElementById('cpFuAdd').addEventListener('click', scheduleFu);
   }
   function opts(arr, sel, withEmpty) {
     var o = withEmpty ? '<option value="">— 未割当 —</option>' : '';
@@ -167,6 +256,7 @@
     document.getElementById('cpAmount').value = c.amount || '';
     document.getElementById('cpMemo').value = c.memo || '';
     renderTimeline(c);
+    renderFollowups(c);
   }
   function renderTimeline(c) {
     var tl = document.getElementById('cpTimeline');

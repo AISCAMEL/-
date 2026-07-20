@@ -7,7 +7,7 @@
 window.HQ = (function () {
   'use strict';
   var ENDPOINT = 'https://script.google.com/macros/s/AKfycbw0Ao9-I-GUizO--TIU2AeJCIEGoW8Ot9DZXErD2oJk8fg_1sNj8FRNYkoAvtm6CwMc/exec';
-  var STAGES = ['新規受付', '査定中', '商談中', '契約', '入金待ち', '完了'];
+  var STAGES = ['新規受付', '査定中', '商談中', '後追い', '契約', '入金待ち', '完了', '失注'];
   var WON = ['契約', '入金待ち', '完了'];
   var CKEY = 'buymo_cases', SKEY = 'buymo_stores';
 
@@ -62,6 +62,11 @@ window.HQ = (function () {
     if (!ENDPOINT) return;
     fetch(ENDPOINT, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ type: 'note', token: (window.AUTH && AUTH.token) ? AUTH.token() : '', id: id, text: text }) }).catch(function () {});
+  }
+  function postFollowup(caseId, fuId, at, template, msg) {
+    if (!ENDPOINT) return;
+    fetch(ENDPOINT, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ type: 'followup', token: authToken(), caseId: caseId, fuId: fuId, at: at, template: template, msg: msg }) }).catch(function () {});
   }
 
   function getStores() { return readLS(SKEY, seedStores); }
@@ -118,7 +123,7 @@ window.HQ = (function () {
   return {
     ENDPOINT: ENDPOINT, STAGES: STAGES, WON: WON,
     loadCases: loadCases, getCasesLS: getCasesLS, saveCases: saveCases, upsertCase: upsertCase,
-    getStores: getStores, saveStores: saveStores, postStore: postStore, note: note,
+    getStores: getStores, saveStores: saveStores, postStore: postStore, note: note, postFollowup: postFollowup,
     getNotices: getNotices, addNotice: addNotice, deleteNotice: deleteNotice,
     yen: yen, esc: esc, stageIdx: stageIdx, nav: nav
   };

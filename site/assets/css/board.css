@@ -183,6 +183,43 @@
   .cp-fields{grid-template-columns:1fr;}
 }
 
+/* 後追い・失注カラム色 */
+.kb-col[data-stage="後追い"]  .kb-col-head{color:#9A5B00;}
+.kb-col[data-stage="後追い"]  {background:#FDF4E7;}
+.kb-col[data-stage="後追い"]  .kb-count{background:#C9820A;}
+.kb-col[data-stage="後追い"]  .kb-card{border-left-color:#C9820A;}
+.kb-col[data-stage="失注"]    {background:#F5F5F5;}
+.kb-col[data-stage="失注"]    .kb-col-head{color:#888;}
+.kb-col[data-stage="失注"]    .kb-count{background:#aaa;}
+.kb-col[data-stage="失注"]    .kb-card{border-left-color:#ccc;opacity:.8;}
+
+/* 後追いスケジュール（パネル内） */
+.cp-fu-area{margin-top:22px;border-top:1px solid #eee;padding-top:18px;}
+.cp-fu-area h3{font-size:15px;font-weight:900;color:var(--navy);margin-bottom:12px;}
+.cp-fu-presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.cp-fu-pre{height:30px;padding:0 12px;border:1px solid #e0d0a0;border-radius:30px;background:#FFFBF0;color:#9A5B00;font-weight:700;font-size:12px;cursor:pointer;transition:.15s;}
+.cp-fu-pre:hover{background:#FDF4E7;border-color:#C9820A;}
+.cp-fu-form{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.cp-fu-row{display:flex;gap:8px;}
+.cp-fu-row input[type="date"]{flex:1;height:36px;border:1px solid #ddd;border-radius:8px;padding:0 10px;font-size:13px;font-family:inherit;}
+.cp-fu-row select{flex:1.4;height:36px;border:1px solid #ddd;border-radius:8px;padding:0 10px;font-size:13px;font-family:inherit;}
+.cp-fu-form textarea{border:1px solid #ddd;border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;resize:vertical;}
+.cp-fu-form textarea:focus,.cp-fu-row input:focus,.cp-fu-row select:focus{outline:none;border-color:#C9820A;}
+#cpFuAdd{height:40px;border:none;border-radius:10px;background:#C9820A;color:#fff;font-weight:900;font-size:14px;cursor:pointer;}
+#cpFuAdd:hover{filter:brightness(1.08);}
+.cp-fu-list{padding-left:0;list-style:none;display:flex;flex-direction:column;gap:6px;}
+.fu-item{display:flex;align-items:center;gap:8px;background:#F9F9F9;border-radius:8px;padding:8px 10px;font-size:13px;}
+.fu-item.fu-sent{opacity:.6;}
+.fu-item.fu-cancelled{opacity:.45;text-decoration:line-through;}
+.fu-date{font-weight:700;color:#333;white-space:nowrap;}
+.fu-lbl{flex:1;color:#555;}
+.fu-pill{font-size:11px;font-weight:700;border-radius:30px;padding:2px 8px;white-space:nowrap;}
+.fu-pill.fu-pending{background:#FDF4E7;color:#9A5B00;}
+.fu-pill.fu-sent{background:#E3F7E8;color:#15803d;}
+.fu-pill.fu-cancelled{background:#eee;color:#888;}
+.fu-del{margin-left:auto;height:26px;padding:0 10px;border:1px solid #eee;border-radius:6px;background:#fff;color:#C0392B;font-size:12px;font-weight:700;cursor:pointer;}
+.fu-del:hover{background:#FDECEC;}
+
 /* 営業レポート：見出し＋CSV出力ボタン */
 .report-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
 .report-head h1{margin:0;}
