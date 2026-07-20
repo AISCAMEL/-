@@ -32,32 +32,51 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ maxWidth: 360, margin: "80px auto", textAlign: "center" }}>
-      <div style={{ display: "grid", placeItems: "center", gap: 8 }}>
-        <span style={{ width: 64, height: 64, borderRadius: 18, display: "grid", placeItems: "center", background: "var(--primary-weak)" }}>
-          <Logo size={48} />
-        </span>
-        <h1 style={{ fontSize: 20, margin: 0 }}>necorope</h1>
+    <div style={{ maxWidth: 360, margin: "60px auto", textAlign: "center" }}>
+      <div style={{
+        background: "#fff",
+        borderRadius: 24,
+        padding: "40px 32px 32px",
+        boxShadow: "0 4px 24px rgba(244,114,182,0.12)",
+        border: "2px solid var(--card-border)",
+      }}>
+        <div style={{ display: "grid", placeItems: "center", gap: 8, marginBottom: 8 }}>
+          <span style={{
+            width: 72, height: 72, borderRadius: 20, display: "grid", placeItems: "center",
+            background: "linear-gradient(135deg, #fce7f3, #ede9fe)",
+          }}>
+            <Logo size={54} />
+          </span>
+          <h1 style={{ fontSize: 22, margin: "8px 0 0", fontWeight: 700 }}>necorope</h1>
+        </div>
+        <p style={{ color: "var(--muted)", fontSize: 14, margin: "4px 0 24px" }}>
+          🐾 猫グッズ管理画面にログイン
+        </p>
+        <form onSubmit={submit} style={{ display: "grid", gap: 14 }}>
+          <input
+            type="password"
+            placeholder="パスワード"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoFocus
+            style={{ padding: 12, fontSize: 16, border: "2px solid var(--card-border)", borderRadius: 12 }}
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              padding: 12,
+              background: "linear-gradient(135deg, #f472b6, #a78bfa)",
+              color: "#fff", border: 0, borderRadius: 12,
+              cursor: "pointer", fontSize: 16, fontWeight: 700,
+              boxShadow: "0 2px 12px rgba(244,114,182,0.3)",
+            }}
+          >
+            {loading ? "確認中…" : "🐱 ログイン"}
+          </button>
+          {error && <p style={{ color: "#dc2626", margin: 0, fontSize: 14 }}>😿 {error}</p>}
+        </form>
       </div>
-      <p style={{ color: "#777", fontSize: 14 }}>猫グッズ管理画面にログイン</p>
-      <form onSubmit={submit} style={{ display: "grid", gap: 12, marginTop: 24 }}>
-        <input
-          type="password"
-          placeholder="パスワード"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          autoFocus
-          style={{ padding: 10, fontSize: 16, border: "1px solid #d1d5db", borderRadius: 8 }}
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          style={{ padding: 10, background: "#e8612e", color: "#fff", border: 0, borderRadius: 8, cursor: "pointer", fontSize: 16 }}
-        >
-          {loading ? "確認中…" : "ログイン"}
-        </button>
-        {error && <p style={{ color: "#dc2626", margin: 0 }}>{error}</p>}
-      </form>
     </div>
   );
 }

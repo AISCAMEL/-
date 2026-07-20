@@ -8,7 +8,16 @@ export default function LogoutButton() {
   return (
     <button
       onClick={logout}
-      style={{ padding: "4px 12px", fontSize: 13, border: "1px solid #d1d5db", borderRadius: 6, background: "#fff", cursor: "pointer", color: "#444" }}
+      style={{
+        padding: "6px 14px", fontSize: 13,
+        border: "2px solid var(--card-border)",
+        borderRadius: 20, background: "#fff",
+        cursor: "pointer", color: "var(--muted)",
+        fontWeight: 500,
+        transition: "all 0.2s",
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#f472b6"; e.currentTarget.style.color = "#f472b6"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--card-border)"; e.currentTarget.style.color = "var(--muted)"; }}
     >
       ログアウト
     </button>

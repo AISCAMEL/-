@@ -26,46 +26,67 @@ function MarketingInner() {
   return (
     <div style={{ maxWidth: 720 }}>
       <p style={{ marginBottom: 16 }}>
-        <a href="/research" style={{ color: "#e8612e" }}>← スクリーニング</a>
+        <a href="/research">← スクリーニング</a>
         {"  |  "}
-        <a href="/" style={{ color: "#e8612e" }}>ダッシュボード</a>
+        <a href="/">ダッシュボード</a>
       </p>
-      <h1>SNS集客リンク（UTM）発行</h1>
-      <p style={{ color: "#666" }}>投稿ごとに計測リンクを発行し、どの投稿・プラットフォームから売れたかを把握します。</p>
+      <h1 style={{ fontSize: 22 }}>📣 SNS集客リンク（UTM）発行</h1>
+      <p style={{ color: "var(--muted)", fontSize: 14 }}>投稿ごとに計測リンクを発行し、どの投稿・プラットフォームから売れたかを把握します。</p>
 
-      <div style={{ display: "grid", gap: 12, margin: "16px 0" }}>
-        <label>商品URL（BASE）
-          <input value={url} onChange={(e) => setUrl(e.target.value)} style={{ width: "100%", padding: 8 }} />
+      <div style={{
+        display: "grid", gap: 14, margin: "16px 0",
+        background: "#fff", padding: 24, borderRadius: "var(--radius)",
+        border: "2px solid var(--card-border)", boxShadow: "var(--shadow)",
+      }}>
+        <label style={{ fontSize: 14, fontWeight: 600 }}>商品URL（BASE）
+          <input value={url} onChange={(e) => setUrl(e.target.value)} style={{ width: "100%", marginTop: 4 }} />
         </label>
-        <label>プラットフォーム
-          <select value={platform} onChange={(e) => setPlatform(e.target.value as typeof platform)} style={{ display: "block", padding: 8 }}>
-            <option value="tiktok">TikTok</option>
-            <option value="instagram">Instagram</option>
-            <option value="x">X</option>
-            <option value="youtube">YouTube</option>
+        <label style={{ fontSize: 14, fontWeight: 600 }}>プラットフォーム
+          <select value={platform} onChange={(e) => setPlatform(e.target.value as typeof platform)} style={{ display: "block", marginTop: 4 }}>
+            <option value="tiktok">🎵 TikTok</option>
+            <option value="instagram">📸 Instagram</option>
+            <option value="x">✖️ X</option>
+            <option value="youtube">▶️ YouTube</option>
           </select>
         </label>
-        <label>キャンペーン名（商品/施策）
-          <input value={campaign} onChange={(e) => setCampaign(e.target.value)} style={{ width: "100%", padding: 8 }} />
+        <label style={{ fontSize: 14, fontWeight: 600 }}>キャンペーン名（商品/施策）
+          <input value={campaign} onChange={(e) => setCampaign(e.target.value)} style={{ width: "100%", marginTop: 4 }} />
         </label>
-        <label>投稿識別子（A/Bテスト用）
-          <input value={content} onChange={(e) => setContent(e.target.value)} style={{ width: "100%", padding: 8 }} />
+        <label style={{ fontSize: 14, fontWeight: 600 }}>投稿識別子（A/Bテスト用）
+          <input value={content} onChange={(e) => setContent(e.target.value)} style={{ width: "100%", marginTop: 4 }} />
         </label>
-        <button onClick={generate} style={{ padding: "8px 20px", background: "#e8612e", color: "#fff", border: 0, borderRadius: 8, cursor: "pointer", width: "fit-content" }}>
-          リンク生成
+        <button onClick={generate} style={{
+          padding: "10px 24px",
+          background: "linear-gradient(135deg, #f472b6, #a78bfa)",
+          color: "#fff", border: 0, borderRadius: 20, cursor: "pointer",
+          fontWeight: 700, fontSize: 14, width: "fit-content",
+          boxShadow: "0 2px 12px rgba(244,114,182,0.3)",
+        }}>
+          🐾 リンク生成
         </button>
       </div>
 
-      {error && <p style={{ color: "#dc2626" }}>{error}</p>}
+      {error && <p style={{ color: "#dc2626" }}>😿 {error}</p>}
       {link && (
-        <div style={{ padding: 16, background: "#f8fafc", border: "1px solid #e5e7eb", borderRadius: 8 }}>
-          <code style={{ wordBreak: "break-all" }}>{link}</code>
-          <div style={{ marginTop: 8 }}>
+        <div style={{
+          padding: 20, background: "#fff",
+          border: "2px solid var(--card-border)", borderRadius: "var(--radius)",
+          boxShadow: "var(--shadow)",
+        }}>
+          <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 8 }}>🔗 生成されたリンク</div>
+          <code style={{ wordBreak: "break-all", fontSize: 14, color: "var(--ink)", lineHeight: 1.6 }}>{link}</code>
+          <div style={{ marginTop: 12 }}>
             <button
               onClick={() => { navigator.clipboard?.writeText(link); setCopied(true); }}
-              style={{ padding: "4px 12px", cursor: "pointer" }}
+              style={{
+                padding: "6px 16px", cursor: "pointer", borderRadius: 20,
+                border: copied ? "2px solid #86efac" : "2px solid var(--card-border)",
+                background: copied ? "#dcfce7" : "#fff",
+                color: copied ? "#166534" : "var(--ink)",
+                fontWeight: 600, fontSize: 13,
+              }}
             >
-              {copied ? "コピーしました" : "コピー"}
+              {copied ? "✅ コピーしました" : "📋 コピー"}
             </button>
           </div>
         </div>
@@ -76,7 +97,7 @@ function MarketingInner() {
 
 export default function MarketingPage() {
   return (
-    <Suspense fallback={<p>読み込み中…</p>}>
+    <Suspense fallback={<p style={{ color: "var(--muted)" }}>🐾 読み込み中…</p>}>
       <MarketingInner />
     </Suspense>
   );

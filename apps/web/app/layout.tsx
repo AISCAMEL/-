@@ -12,8 +12,8 @@ const font = M_PLUS_Rounded_1c({
 });
 
 export const metadata = {
-  title: "Dropshipping Hub",
-  description: "中国輸入 無在庫販売 ハブ — 管理ダッシュボード",
+  title: "necorope - 猫グッズ無在庫販売ハブ",
+  description: "猫グッズ 無在庫販売 管理ダッシュボード",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -22,9 +22,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <header
           style={{
-            padding: "12px 24px",
-            background: "var(--surface)",
-            borderBottom: "1px solid var(--card-border)",
+            padding: "10px 24px",
+            background: "linear-gradient(135deg, #fce7f3 0%, #ede9fe 50%, #d1fae5 100%)",
+            borderBottom: "2px solid #fde2d4",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
@@ -36,20 +36,27 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <a href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "var(--ink)" }}>
             <span
               style={{
-                width: 40, height: 40, borderRadius: 12, display: "grid", placeItems: "center",
-                background: "var(--primary-weak)",
+                width: 44, height: 44, borderRadius: 14, display: "grid", placeItems: "center",
+                background: "#fff",
+                boxShadow: "0 2px 8px rgba(244,114,182,0.15)",
               }}
             >
-              <Logo size={30} />
+              <Logo size={34} />
             </span>
-            <span>
-              <strong style={{ fontSize: 16 }}>necorope</strong>
-              <span style={{ color: "var(--muted)", marginLeft: 8, fontSize: 13 }}>猫グッズ 無在庫販売ハブ</span>
+            <span style={{ display: "flex", flexDirection: "column" }}>
+              <strong style={{ fontSize: 17, letterSpacing: "0.02em" }}>necorope</strong>
+              <span style={{ color: "var(--muted)", fontSize: 11 }}>猫グッズ 無在庫販売ハブ</span>
             </span>
           </a>
-          <LogoutButton />
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{ fontSize: 20 }}>🐾</span>
+            <LogoutButton />
+          </div>
         </header>
         <main style={{ padding: 24, maxWidth: 1200, margin: "0 auto" }}>{children}</main>
+        <footer style={{ textAlign: "center", padding: "24px 0", color: "var(--muted)", fontSize: 12 }}>
+          🐱 necorope &copy; 2024 — 猫グッズで世界をハッピーに
+        </footer>
       </body>
     </html>
   );

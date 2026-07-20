@@ -33,13 +33,13 @@ const STATUS_LABEL: Record<string, string> = {
   completed: "完了",
   cancelled: "キャンセル",
 };
-const STATUS_COLOR: Record<string, string> = {
-  received: "#e8612e",
-  fulfilling: "#ca8a04",
-  ordered_to_supplier: "#7c3aed",
-  shipped: "#0891b2",
-  completed: "#16a34a",
-  cancelled: "#9ca3af",
+const STATUS_STYLE: Record<string, { bg: string; color: string; emoji: string }> = {
+  received: { bg: "linear-gradient(135deg, #f472b6, #ec4899)", color: "#fff", emoji: "🐱" },
+  fulfilling: { bg: "linear-gradient(135deg, #fde68a, #fbbf24)", color: "#92400e", emoji: "🐾" },
+  ordered_to_supplier: { bg: "linear-gradient(135deg, #c4b5fd, #a78bfa)", color: "#fff", emoji: "📦" },
+  shipped: { bg: "linear-gradient(135deg, #67e8f9, #22d3ee)", color: "#164e63", emoji: "🚀" },
+  completed: { bg: "linear-gradient(135deg, #6ee7b7, #34d399)", color: "#fff", emoji: "✅" },
+  cancelled: { bg: "#e5e7eb", color: "#6b7280", emoji: "✗" },
 };
 
 export default function OrdersPage() {
@@ -60,64 +60,77 @@ export default function OrdersPage() {
       .catch(() => setError("受注データの取得に失敗（Hub API 未起動の可能性）"));
   }, []);
 
-  const cards = pnl
+  const cardDefs = pnl
     ? [
-        { label: "売上", value: yen(pnl.revenue), color: "#111" },
-        { label: "仕入原価", value: yen(pnl.supplierCost), color: "#b45309" },
-        { label: "手数料", value: yen(pnl.platformFee), color: "#6b7280" },
-        { label: "利益", value: yen(pnl.profit), color: "#16a34a" },
-        { label: "平均利益率", value: `${(pnl.avgMarginRate * 100).toFixed(1)}%`, color: "#16a34a" },
-        { label: "受注件数", value: `${pnl.orderCount}件`, color: "#111" },
+        { label: "売上", value: yen(pnl.revenue), emoji: "💰", gradient: "linear-gradient(135deg, #fce7f3, #fff)" },
+        { label: "仕入原価", value: yen(pnl.supplierCost), emoji: "📦", gradient: "linear-gradient(135deg, #ffedd5, #fff)" },
+        { label: "手数料", value: yen(pnl.platformFee), emoji: "🏷️", gradient: "linear-gradient(135deg, #f3f4f6, #fff)" },
+        { label: "利益", value: yen(pnl.profit), emoji: "🐱", gradient: "linear-gradient(135deg, #d1fae5, #fff)" },
+        { label: "平均利益率", value: `${(pnl.avgMarginRate * 100).toFixed(1)}%`, emoji: "📊", gradient: "linear-gradient(135deg, #ede9fe, #fff)" },
+        { label: "受注件数", value: `${pnl.orderCount}件`, emoji: "🧾", gradient: "linear-gradient(135deg, #fef3c7, #fff)" },
       ]
     : [];
 
   return (
     <div>
       <p style={{ marginBottom: 16 }}>
-        <a href="/" style={{ color: "#e8612e" }}>← ダッシュボード</a>
+        <a href="/">← ダッシュボード</a>
       </p>
-      <h1>受注 / 損益</h1>
-      {error && <p style={{ color: "#dc2626" }}>{error}</p>}
+      <h1 style={{ fontSize: 22 }}>🧾 受注 / 損益</h1>
+      {error && <p style={{ color: "#dc2626" }}>😿 {error}</p>}
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 12, margin: "16px 0 28px" }}>
-        {cards.map((c) => (
-          <div key={c.label} style={{ padding: 16, border: "1px solid #e5e7eb", borderRadius: 12 }}>
-            <div style={{ fontSize: 13, color: "#777" }}>{c.label}</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: c.color }}>{c.value}</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(155px, 1fr))", gap: 12, margin: "16px 0 28px" }}>
+        {cardDefs.map((c) => (
+          <div key={c.label} style={{
+            padding: "16px 18px", border: "2px solid var(--card-border)",
+            borderRadius: "var(--radius)", background: c.gradient,
+            boxShadow: "var(--shadow)",
+          }}>
+            <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 4 }}>{c.emoji} {c.label}</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: "var(--ink)" }}>{c.value}</div>
           </div>
         ))}
       </div>
 
       {orders.length > 0 && (
-        <table style={{ borderCollapse: "collapse", width: "100%", fontSize: 14 }}>
-          <thead>
-            <tr style={{ textAlign: "left", borderBottom: "2px solid #e5e7eb" }}>
-              {["注文ID", "日付", "購入者", "商品", "数量", "売上", "原価", "手数料", "利益", "状態"].map((h) => (
-                <th key={h} style={{ padding: "8px 6px" }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((o) => (
-              <tr key={o.orderId} style={{ borderBottom: "1px solid #f0f0f0", opacity: o.status === "cancelled" ? 0.5 : 1 }}>
-                <td style={{ padding: "8px 6px", color: "#888" }}>{o.orderId}</td>
-                <td style={{ padding: "8px 6px" }}>{o.orderedAt}</td>
-                <td style={{ padding: "8px 6px" }}>{o.buyerName}</td>
-                <td style={{ padding: "8px 6px" }}>{o.itemTitle}</td>
-                <td style={{ padding: "8px 6px" }}>{o.quantity}</td>
-                <td style={{ padding: "8px 6px" }}>{yen(o.revenue)}</td>
-                <td style={{ padding: "8px 6px", color: "#b45309" }}>{yen(o.supplierCost)}</td>
-                <td style={{ padding: "8px 6px", color: "#6b7280" }}>{yen(o.platformFee)}</td>
-                <td style={{ padding: "8px 6px", fontWeight: 600, color: o.status === "cancelled" ? "#9ca3af" : "#16a34a" }}>{yen(o.profit)}</td>
-                <td style={{ padding: "8px 6px" }}>
-                  <span style={{ background: STATUS_COLOR[o.status] ?? "#999", color: "#fff", padding: "2px 8px", borderRadius: 999, fontSize: 12 }}>
-                    {STATUS_LABEL[o.status] ?? o.status}
-                  </span>
-                </td>
+        <div style={{ overflowX: "auto", background: "#fff", borderRadius: "var(--radius)", border: "2px solid var(--card-border)", padding: 4 }}>
+          <table>
+            <thead>
+              <tr>
+                {["注文ID", "日付", "購入者", "商品", "数量", "売上", "原価", "手数料", "利益", "状態"].map((h) => (
+                  <th key={h}>{h}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {orders.map((o) => {
+                const ss = STATUS_STYLE[o.status] ?? { bg: "#e5e7eb", color: "#6b7280", emoji: "?" };
+                return (
+                  <tr key={o.orderId} style={{ opacity: o.status === "cancelled" ? 0.5 : 1 }}>
+                    <td style={{ color: "var(--muted)", fontSize: 13 }}>{o.orderId}</td>
+                    <td>{o.orderedAt}</td>
+                    <td>{o.buyerName}</td>
+                    <td style={{ fontWeight: 500 }}>{o.itemTitle}</td>
+                    <td>{o.quantity}</td>
+                    <td>{yen(o.revenue)}</td>
+                    <td style={{ color: "#b45309" }}>{yen(o.supplierCost)}</td>
+                    <td style={{ color: "var(--muted)" }}>{yen(o.platformFee)}</td>
+                    <td style={{ fontWeight: 700, color: o.status === "cancelled" ? "#9ca3af" : "#16a34a" }}>{yen(o.profit)}</td>
+                    <td>
+                      <span style={{
+                        background: ss.bg, color: ss.color,
+                        padding: "3px 10px", borderRadius: 20, fontSize: 12, fontWeight: 600,
+                        whiteSpace: "nowrap",
+                      }}>
+                        {ss.emoji} {STATUS_LABEL[o.status] ?? o.status}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

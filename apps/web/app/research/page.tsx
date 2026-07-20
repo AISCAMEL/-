@@ -22,7 +22,11 @@ interface ScreenedItem {
   score: ScoreResult;
 }
 
-const GRADE_COLOR: Record<string, string> = { A: "#16a34a", B: "#ca8a04", C: "#9ca3af" };
+const GRADE_STYLE: Record<string, { bg: string; color: string; emoji: string }> = {
+  A: { bg: "linear-gradient(135deg, #6ee7b7, #34d399)", color: "#fff", emoji: "😻" },
+  B: { bg: "linear-gradient(135deg, #fde68a, #fbbf24)", color: "#92400e", emoji: "😺" },
+  C: { bg: "linear-gradient(135deg, #e5e7eb, #d1d5db)", color: "#6b7280", emoji: "😿" },
+};
 const yen = (n: number | null | undefined) => (n == null ? "-" : `¥${n.toLocaleString()}`);
 const pct = (n: number | undefined) => (n == null ? "-" : `${(n * 100).toFixed(1)}%`);
 
@@ -33,14 +37,11 @@ export default function ResearchPage() {
   const [items, setItems] = useState<ScreenedItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // 出品状態（key 単位）: idle / publishing / done / error
   const [pubState, setPubState] = useState<Record<string, { status: string; msg?: string }>>({});
-  // 実データ(live)の調査先。空なら mock 全体にフォールバック。
   const [liveMarkets, setLiveMarkets] = useState<string[]>([]);
 
   const ALL_MARKETS = ["amazon", "rakuten", "yahoo", "ebay"];
 
-  // 猫グッズのキーワードと推奨設定を読み込む
   useEffect(() => {
     fetch("/api/cat-goods")
       .then((r) => r.json())
@@ -54,7 +55,6 @@ export default function ResearchPage() {
       .catch(() => setError("猫グッズプリセットの取得に失敗（Hub API 未起動の可能性）"));
   }, []);
 
-  // 各コネクタのモードを取得し、live の調査先を特定
   useEffect(() => {
     fetch("/api/connectors")
       .then((r) => r.json())
@@ -66,7 +66,6 @@ export default function ResearchPage() {
       .catch(() => {});
   }, []);
 
-  // 集計に使う調査先: live があればそれだけ、無ければ日本3モール(mock)
   const marketsToUse = liveMarkets.length > 0 ? liveMarkets : ["amazon", "rakuten", "yahoo"];
 
   async function runScreen() {
@@ -94,7 +93,6 @@ export default function ResearchPage() {
     }
   }
 
-  // 1行をBASEへ出品（key="supplierId:externalId" を分解して送る）
   async function publish(it: ScreenedItem) {
     const [supplierId, externalId] = it.key.split(":");
     setPubState((s) => ({ ...s, [it.key]: { status: "publishing" } }));
@@ -126,29 +124,30 @@ export default function ResearchPage() {
   function renderPublish(it: ScreenedItem) {
     const st = pubState[it.key];
     if (st?.status === "done") {
-      return <span style={{ color: "#16a34a", fontSize: 13 }}>✓ 出品済</span>;
+      return <span style={{ color: "#16a34a", fontSize: 13, fontWeight: 600 }}>✅ 出品済</span>;
     }
     if (st?.status === "error") {
       return (
         <span title={st.msg}>
-          <span style={{ color: "#dc2626", fontSize: 13 }}>✗ 不可</span>{" "}
-          <button onClick={() => publish(it)} style={{ fontSize: 12, cursor: "pointer" }}>再試行</button>
+          <span style={{ color: "#dc2626", fontSize: 13 }}>😿 不可</span>{" "}
+          <button onClick={() => publish(it)} style={{ fontSize: 12, cursor: "pointer", borderRadius: 8, border: "1px solid #fecaca", background: "#fff", padding: "2px 8px" }}>再試行</button>
         </span>
       );
     }
     const publishing = st?.status === "publishing";
-    // A評価を強調（B/Cも出品は可能）
     const isA = it.score.grade === "A";
     return (
       <button
         onClick={() => publish(it)}
         disabled={publishing}
         style={{
-          padding: "4px 12px", borderRadius: 6, cursor: "pointer", fontSize: 13,
-          border: 0, color: "#fff", background: isA ? "#16a34a" : "#64748b",
+          padding: "5px 14px", borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 600,
+          border: 0, color: "#fff",
+          background: isA ? "linear-gradient(135deg, #6ee7b7, #34d399)" : "linear-gradient(135deg, #94a3b8, #64748b)",
+          boxShadow: isA ? "0 2px 8px rgba(52,211,153,0.3)" : "none",
         }}
       >
-        {publishing ? "出品中…" : "BASE出品"}
+        {publishing ? "🐾 出品中…" : "BASE出品"}
       </button>
     );
   }
@@ -156,48 +155,53 @@ export default function ResearchPage() {
   return (
     <div>
       <p style={{ marginBottom: 16 }}>
-        <a href="/" style={{ color: "#e8612e" }}>← ダッシュボード</a>
+        <a href="/">← ダッシュボード</a>
       </p>
-      <h1>猫グッズ スクリーニング</h1>
-      <p style={{ color: "#666" }}>
+      <h1 style={{ fontSize: 22 }}>🔍 猫グッズ スクリーニング</h1>
+      <p style={{ color: "var(--muted)", fontSize: 14 }}>
         猫グッズのキーワードを実データのモール（楽天・Yahoo!等）で調査し、仕入れ値と突き合わせて利益率で採点・ランキングします。
       </p>
-      <p style={{ fontSize: 13, margin: "4px 0 0" }}>
-        調査先:{" "}
+
+      <div style={{
+        display: "flex", gap: 8, flexWrap: "wrap", margin: "8px 0 16px",
+        padding: "10px 14px", borderRadius: "var(--radius-sm)",
+        background: "#fff", border: "2px solid var(--card-border)",
+        fontSize: 13,
+      }}>
+        <span style={{ color: "var(--muted)", alignSelf: "center" }}>調査先:</span>
         {marketsToUse.map((m) => {
           const isLive = liveMarkets.includes(m);
           return (
-            <span
-              key={m}
-              style={{
-                marginRight: 6, padding: "2px 8px", borderRadius: 999,
-                background: isLive ? "#dcfce7" : "#f3f4f6",
-                color: isLive ? "#166534" : "#6b7280",
-              }}
-            >
+            <span key={m} style={{
+              padding: "3px 10px", borderRadius: 20,
+              background: isLive ? "#dcfce7" : "#f9fafb",
+              color: isLive ? "#166534" : "#9ca3af",
+              border: `1.5px solid ${isLive ? "#86efac" : "#e5e7eb"}`,
+              fontWeight: 600, fontSize: 12,
+            }}>
               {isLive ? "🟢" : "⚪"} {m}
             </span>
           );
         })}
         {liveMarkets.length > 0 ? (
-          <span style={{ color: "#16a34a" }}>（実データのみで集計）</span>
+          <span style={{ color: "#16a34a", alignSelf: "center" }}>（実データのみで集計）</span>
         ) : (
-          <span style={{ color: "#9ca3af" }}>（全て mock）</span>
+          <span style={{ color: "#9ca3af", alignSelf: "center" }}>（全て mock）</span>
         )}
-      </p>
+      </div>
 
       <div style={{ display: "flex", gap: 16, alignItems: "end", flexWrap: "wrap", margin: "16px 0" }}>
-        <label>
+        <label style={{ fontSize: 14, fontWeight: 600 }}>
           最低利益率<br />
           <input
             type="number" step="0.05" min="0" max="1" value={minMarginRate}
             onChange={(e) => setMinMarginRate(Number(e.target.value))}
-            style={{ padding: 6, width: 100 }}
+            style={{ width: 100, marginTop: 4 }}
           />
         </label>
-        <label>
+        <label style={{ fontSize: 14, fontWeight: 600 }}>
           最低グレード<br />
-          <select value={minGrade} onChange={(e) => setMinGrade(e.target.value as "A" | "B" | "C")} style={{ padding: 6 }}>
+          <select value={minGrade} onChange={(e) => setMinGrade(e.target.value as "A" | "B" | "C")} style={{ marginTop: 4 }}>
             <option value="A">A</option>
             <option value="B">B</option>
             <option value="C">C</option>
@@ -205,47 +209,65 @@ export default function ResearchPage() {
         </label>
         <button
           onClick={runScreen} disabled={loading || keywords.length === 0}
-          style={{ padding: "8px 20px", background: "#e8612e", color: "#fff", border: 0, borderRadius: 8, cursor: "pointer" }}
+          style={{
+            padding: "10px 24px",
+            background: "linear-gradient(135deg, #f472b6, #a78bfa)",
+            color: "#fff", border: 0, borderRadius: 20, cursor: "pointer",
+            fontWeight: 700, fontSize: 14,
+            boxShadow: "0 2px 12px rgba(244,114,182,0.3)",
+          }}
         >
-          {loading ? "調査中…" : `スクリーニング実行（${keywords.length}件）`}
+          {loading ? "🐾 調査中…" : `スクリーニング実行（${keywords.length}件）`}
         </button>
       </div>
 
-      {error && <p style={{ color: "#dc2626" }}>{error}</p>}
+      {error && <p style={{ color: "#dc2626" }}>😿 {error}</p>}
 
       {items.length > 0 && (
-        <table style={{ borderCollapse: "collapse", width: "100%", fontSize: 14 }}>
-          <thead>
-            <tr style={{ textAlign: "left", borderBottom: "2px solid #e5e7eb" }}>
-              {["#", "商品", "判定", "スコア", "売値(中央)", "原価", "利益", "利益率", "ROI", "BASE出品", "計測"].map((h) => (
-                <th key={h} style={{ padding: "8px 6px" }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((it, i) => (
-              <tr key={it.key} style={{ borderBottom: "1px solid #f0f0f0" }}>
-                <td style={{ padding: "8px 6px" }}>{i + 1}</td>
-                <td style={{ padding: "8px 6px" }}>{it.keyword}</td>
-                <td style={{ padding: "8px 6px" }}>
-                  <span style={{ background: GRADE_COLOR[it.score.grade], color: "#fff", padding: "2px 10px", borderRadius: 12, fontWeight: 700 }}>
-                    {it.score.grade}
-                  </span>
-                </td>
-                <td style={{ padding: "8px 6px" }}>{it.score.score}</td>
-                <td style={{ padding: "8px 6px" }}>{yen(it.chosen?.sellPrice)}</td>
-                <td style={{ padding: "8px 6px" }}>{yen(it.landedCost)}</td>
-                <td style={{ padding: "8px 6px", fontWeight: 600 }}>{yen(it.chosen?.profit)}</td>
-                <td style={{ padding: "8px 6px" }}>{pct(it.chosen?.marginRate)}</td>
-                <td style={{ padding: "8px 6px" }}>{pct(it.chosen?.roi)}</td>
-                <td style={{ padding: "8px 6px" }}>{renderPublish(it)}</td>
-                <td style={{ padding: "8px 6px" }}>
-                  <a href={`/marketing?campaign=${encodeURIComponent(it.key)}`} style={{ color: "#e8612e" }}>UTMリンク</a>
-                </td>
+        <div style={{ overflowX: "auto", background: "#fff", borderRadius: "var(--radius)", border: "2px solid var(--card-border)", padding: 4 }}>
+          <table>
+            <thead>
+              <tr>
+                {["#", "商品", "判定", "スコア", "売値(中央)", "原価", "利益", "利益率", "ROI", "BASE出品", "計測"].map((h) => (
+                  <th key={h}>{h}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {items.map((it, i) => {
+                const gs = GRADE_STYLE[it.score.grade] ?? GRADE_STYLE.C;
+                return (
+                  <tr key={it.key}>
+                    <td>{i + 1}</td>
+                    <td style={{ fontWeight: 500 }}>{it.keyword}</td>
+                    <td>
+                      <span style={{
+                        background: gs.bg, color: gs.color,
+                        padding: "3px 12px", borderRadius: 20, fontWeight: 700, fontSize: 13,
+                        display: "inline-flex", alignItems: "center", gap: 4,
+                      }}>
+                        {gs.emoji} {it.score.grade}
+                      </span>
+                    </td>
+                    <td style={{ fontWeight: 600 }}>{it.score.score}</td>
+                    <td>{yen(it.chosen?.sellPrice)}</td>
+                    <td>{yen(it.landedCost)}</td>
+                    <td style={{ fontWeight: 700, color: "#16a34a" }}>{yen(it.chosen?.profit)}</td>
+                    <td>{pct(it.chosen?.marginRate)}</td>
+                    <td>{pct(it.chosen?.roi)}</td>
+                    <td>{renderPublish(it)}</td>
+                    <td>
+                      <a href={`/marketing?campaign=${encodeURIComponent(it.key)}`}
+                        style={{ fontSize: 13, fontWeight: 600 }}>
+                        UTMリンク
+                      </a>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
