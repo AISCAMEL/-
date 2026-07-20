@@ -44,7 +44,45 @@ function getConfig() {
 
     // ⑥ デジタル出品票（PDF）出力先 Google ドライブ フォルダID（任意）
     //    空欄ならマイドライブ直下に作成します。
-    SELL_SHEET_PDF_FOLDER_ID: ""
+    SELL_SHEET_PDF_FOLDER_ID: "",
+
+    // ============================================================
+    // ⑦ USS精算書 自動取込（USS精算.gs）用の設定
+    // ============================================================
+
+    // 精算書メールの差出人（部分一致でOK）。例: "uss.co.jp"
+    USS_MAIL_FROM: "uss",
+    // 精算書メールの件名キーワード（部分一致）。例: "精算" / "精算書"
+    USS_MAIL_SUBJECT: "精算",
+    // 未処理メールだけ拾うためのGmailラベル名（自動作成されます）
+    USS_DONE_LABEL: "USS処理済み",
+
+    // 添付パスワード（USSから事前共有される固定パスワード）
+    // 例では U3472。実運用の値を入れてください。
+    USS_PDF_PASSWORD: "U3472",
+
+    // ── パスワード付き添付の「復号」方式 ──
+    //   "pdfco" … PDF.co API で復号＋テキスト化（方式A・手軽）
+    //   "none"  … 復号せず、USS管理画面からDLしたCSVを取り込む（方式C）
+    USS_DECRYPT_MODE: "pdfco",
+    // PDF.co の APIキー（https://pdf.co でサインアップ後に取得）
+    PDFCO_API_KEY: "",
+
+    // ── 本部手数料（加盟店へ請求する固定手数料）──
+    USS_FEE_RAKUSATSU: 11000, // 落札手数料
+    USS_FEE_FURIKOMI: 550,    // 振込手数料
+    // 合計＝11,550円（＝上の2つの合計。コード側で自動計算）
+
+    // ── 入金消し込み（runReconciliation）用 ──
+    //   銀行の入出金明細CSVを置くGoogleドライブ フォルダID（任意）。
+    //   空欄ならマイドライブ直下の "USS入金CSV" フォルダを使います。
+    USS_BANK_CSV_FOLDER_ID: "",
+    // 消し込みの金額許容誤差（円）。振込手数料の差など吸収用。
+    USS_MATCH_TOLERANCE: 0,
+
+    // ⑧ USS関連のシート名（基本変更不要）
+    SHEET_USS: "USS精算_加盟店",   // 加盟店向け精算（転写先）
+    SHEET_NYUKIN: "入金消し込み"    // 入金突合・消し込み管理
   };
 }
 
