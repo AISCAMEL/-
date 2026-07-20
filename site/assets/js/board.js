@@ -20,6 +20,16 @@
   function daysSince(d) { if (!d) return 0; var t = new Date(String(d).replace(/\//g, '-') + 'T00:00:00'); if (isNaN(t)) return 0; return Math.floor((new Date() - t) / 86400000); }
   function isStale(c) { return EARLY.indexOf(c.stage) >= 0 && daysSince(c.date) >= STALE_DAYS; }
   function findCase(id) { for (var i = 0; i < cases.length; i++) if (cases[i].id === id) return cases[i]; return null; }
+  function clearAssignee(id) {
+    var c = findCase(id); if (!c || !c.assignee) return;
+    addHistory(c, '担当解除：' + c.assignee); c.assignee = ''; save(c); render();
+  }
+  function assignCase(id, storeName) {
+    var c = findCase(id); if (!c) return;
+    addHistory(c, '担当割当：' + (c.assignee || '未割当') + ' → ' + storeName);
+    c.assignee = storeName; save(c); render();
+    if (panelId === id) fillPanel(c);
+  }
   function nowStr() { var d = new Date(); function p(n) { return ('0' + n).slice(-2); } return d.getFullYear() + '/' + p(d.getMonth() + 1) + '/' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()); }
   function addHistory(c, m) { c.history = c.history || []; c.history.unshift({ t: nowStr(), m: m }); }
   function save(c) { HQ.upsertCase(c); }
@@ -28,6 +38,39 @@
     var board = document.getElementById('board');
     board.innerHTML = '';
     var list = visible();
+
+    /* 未割当カラム（本部のみ） */
+    if (role === 'hq') {
+      var unassigned = list.filter(function (c) { return !c.assignee; });
+      var ucol = document.createElement('div');
+      ucol.className = 'kb-col kb-col-unassigned'; ucol.dataset.stage = '__unassigned__';
+      ucol.innerHTML = '<div class="kb-col-head">未割当<span class="kb-count">' + unassigned.length + '</span></div>';
+      var ubody = document.createElement('div'); ubody.className = 'kb-col-body';
+      unassigned.forEach(function (c) {
+        var card = document.createElement('div');
+        card.className = 'kb-card'; card.draggable = true; card.dataset.id = c.id;
+        var storeOpts = '<option value="">担当を選択</option>' +
+          HQ.getStores().map(function (s) { return '<option value="' + HQ.esc(s.name) + '">' + HQ.esc(s.name) + '</option>'; }).join('');
+        card.innerHTML = '<div class="kb-card-top"><span class="kb-id">' + c.id + '</span>' +
+          (c.genre ? '<span class="kb-tag">' + HQ.esc(c.genre) + '</span>' : '') + '</div>' +
+          '<div class="kb-name">' + HQ.esc(c.name || '') + '</div>' +
+          '<div class="kb-meta">' + (c.date ? '<span class="kb-date">📅' + HQ.esc(c.date) + '</span>' : '') + '</div>' +
+          '<div class="kb-assign-row"><select class="kb-assign-sel" data-id="' + HQ.esc(c.id) + '">' + storeOpts + '</select></div>';
+        var sel = card.querySelector('.kb-assign-sel');
+        sel.addEventListener('change', function () { if (sel.value) assignCase(c.id, sel.value); });
+        sel.addEventListener('click', function (e) { e.stopPropagation(); });
+        card.addEventListener('dragstart', function (e) { e.dataTransfer.setData('text/plain', c.id); card.classList.add('dragging'); });
+        card.addEventListener('dragend', function () { card.classList.remove('dragging'); });
+        card.addEventListener('click', function (e) { if (!card.classList.contains('dragging') && !e.target.closest('.kb-assign-sel')) openPanel(c.id); });
+        ubody.appendChild(card);
+      });
+      ucol.appendChild(ubody);
+      ucol.addEventListener('dragover', function (e) { e.preventDefault(); ucol.classList.add('over'); });
+      ucol.addEventListener('dragleave', function () { ucol.classList.remove('over'); });
+      ucol.addEventListener('drop', function (e) { e.preventDefault(); ucol.classList.remove('over'); clearAssignee(e.dataTransfer.getData('text/plain')); });
+      board.appendChild(ucol);
+    }
+
     STAGES.forEach(function (stage) {
       var col = document.createElement('div');
       col.className = 'kb-col'; col.dataset.stage = stage;
@@ -61,9 +104,11 @@
   function move(id, stage) {
     var c = findCase(id);
     if (!c || c.stage === stage) return;
+    var wasUnassigned = !c.assignee;
     addHistory(c, 'ステージ変更：' + c.stage + ' → ' + stage);
     c.stage = stage; save(c); render();
     if (panelId === id) fillPanel(c);
+    if (wasUnassigned) openPanel(id);
   }
 
   function summary() {
