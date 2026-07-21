@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>車両状態申告書｜AUC-AGENT</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font-family:'Noto Sans CJK JP','Hiragino Kaku Gothic ProN','IPAGothic',sans-serif;color:#141414;background:#e9edf3;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .toolbar{position:sticky;top:0;z-index:10;background:#0e1b33;color:#fff;display:flex;gap:10px;align-items:center;padding:10px 16px;font-size:13px}
+  .toolbar b{font-weight:800;color:#e0bd6a;margin-right:auto}
+  .toolbar button,.toolbar a{font:inherit;border:0;border-radius:8px;padding:8px 16px;cursor:pointer;text-decoration:none}
+  .btn-print{background:linear-gradient(135deg,#e0bd6a,#c9a14a);color:#0e1b33;font-weight:700}
+  .btn-back{background:transparent;color:#cfd6e6;border:1px solid rgba(255,255,255,.35)}
+  .sheet{width:210mm;min-height:297mm;margin:14px auto;background:#fff;padding:16mm 15mm;box-shadow:0 8px 30px rgba(16,27,51,.18);position:relative}
+  .doc-head{display:flex;justify-content:space-between;align-items:flex-start;font-size:11px;color:#444;margin-bottom:6px}
+  .doc-brand{font-weight:800;color:#0e1b33;font-size:12px}
+  h1.title{text-align:center;font-size:26px;font-weight:900;letter-spacing:.5em;margin:14px 0 4px;padding-left:.5em}
+  .subttl{text-align:center;font-size:12px;color:#555;margin:0 0 18px}
+  .lead{font-size:13px;line-height:1.9;margin:14px 0}
+  table.form{width:100%;border-collapse:collapse;margin:10px 0}
+  .form th,.form td{border:1px solid #2a2a2a;padding:9px 10px;font-size:12.5px;vertical-align:middle;line-height:1.7}
+  .form th{background:#f2f3f6;font-weight:700;width:34%;text-align:left;white-space:nowrap}
+  .form td.fill{min-height:26px}
+  .sec{margin-top:20px;font-size:13px;font-weight:800;color:#0e1b33;border-left:4px solid #c9a14a;padding-left:10px}
+  .checks{font-size:12.5px;line-height:2.2}
+  .checks span{display:inline-block;margin-right:22px;white-space:nowrap}
+  .box{display:inline-block;width:14px;height:14px;border:1.5px solid #333;margin-right:5px;vertical-align:-2px;border-radius:2px}
+  .seal{display:inline-block;width:56px;height:56px;border:1px dashed #bbb;border-radius:50%;color:#bbb;font-size:10px;text-align:center;line-height:56px;vertical-align:middle}
+  .daterow{font-size:13px;margin:16px 0 4px;letter-spacing:.05em}
+  .note{font-size:11px;color:#666;line-height:1.8;margin-top:14px;border-top:1px dashed #ccc;padding-top:10px}
+  .foot{position:absolute;left:15mm;right:15mm;bottom:12mm;font-size:10px;color:#666;border-top:1px solid #ddd;padding-top:6px;display:flex;justify-content:space-between}
+  .u{border-bottom:1px solid #333;display:inline-block;min-width:60px}
+  @media print{
+    .toolbar{display:none}
+    body{background:#fff}
+    .sheet{margin:0;width:auto;min-height:auto;padding:0;box-shadow:none}
+    @page{size:A4;margin:16mm 15mm}
+    .foot{position:fixed}
+  }
+</style></head>
+<body>
+<div class="toolbar">
+  <b>AUC-AGENT 書類</b>
+  <span style="color:#cfd6e6">車両状態申告書</span>
+  <button class="btn-print" onclick="window.print()">🖨 印刷 / PDFで保存</button>
+  <a class="btn-back" href="../forms.html">← 一覧へ</a>
+</div>
+<div class="sheet">
+  <div class="doc-head">
+    <div class="doc-brand">AUC-AGENT（合同会社アイズ）</div>
+    <div>福島県いわき市四倉町細谷字大町1番／TEL 050-1722-3365</div>
+  </div>
+  
+  <h1 class="title">車両状態申告書</h1>
+  <p class="subttl">出品前の状態申告（正確な申告が減額・返品リスクの回避につながります）</p>
+  <table class="form">
+    <tr><th>車名・グレード</th><td class="fill">&nbsp;</td><th style="width:16%">初度登録</th><td class="fill">令和/平成　　年　　月</td></tr>
+    <tr><th>型式・車台番号</th><td class="fill">&nbsp;</td><th>走行距離</th><td class="fill">　　　　　　km</td></tr>
+    <tr><th>車検満了日</th><td class="fill">令和　　年　　月　　日</td><th>ボディカラー</th><td class="fill">&nbsp;</td></tr>
+  </table>
+  <div class="sec">修復歴（骨格部位の修正・交換）</div>
+  <div class="checks" style="border:1px solid #2a2a2a;padding:10px 12px">
+    <span><i class="box"></i>なし</span>
+    <span><i class="box"></i>あり（箇所：<span class="u" style="min-width:220px">&nbsp;</span>）</span>
+    <span><i class="box"></i>不明</span>
+  </div>
+  <div class="sec">主要装備（該当に✓）</div>
+  <div class="checks" style="border:1px solid #2a2a2a;padding:10px 12px">
+    <span><i class="box"></i>純正ナビ</span><span><i class="box"></i>社外ナビ</span>
+    <span><i class="box"></i>バックカメラ</span><span><i class="box"></i>ETC</span>
+    <span><i class="box"></i>ドラレコ</span><span><i class="box"></i>サンルーフ</span>
+    <span><i class="box"></i>レザー</span><span><i class="box"></i>4WD</span>
+    <span><i class="box"></i>両側電動スライド</span><span><i class="box"></i>その他（<span class="u" style="min-width:120px">&nbsp;</span>）</span>
+  </div>
+  <div class="sec">内装・臭い</div>
+  <div class="checks" style="border:1px solid #2a2a2a;padding:10px 12px">
+    <span>喫煙：<i class="box"></i>なし　<i class="box"></i>あり</span>
+    <span>ペット：<i class="box"></i>なし　<i class="box"></i>あり</span>
+    <span>臭い・汚れ：<i class="box"></i>なし　<i class="box"></i>あり</span>
+  </div>
+  <div class="sec">外装キズ・へこみ・その他不具合（具体的に）</div>
+  <table class="form"><tr><td class="fill" style="height:70px;vertical-align:top">&nbsp;</td></tr></table>
+  <div class="sec">付属品（該当に✓）</div>
+  <div class="checks" style="border:1px solid #2a2a2a;padding:10px 12px">
+    <span><i class="box"></i>スペアキー</span><span><i class="box"></i>取扱説明書</span>
+    <span><i class="box"></i>整備記録簿</span><span><i class="box"></i>純正ホイール</span>
+    <span><i class="box"></i>その他（<span class="u" style="min-width:140px">&nbsp;</span>）</span>
+  </div>
+  <p class="daterow" style="margin-top:18px">申告日　令和　<span class="u">　</span>　年　<span class="u">　</span>　月　<span class="u">　</span>　日　　氏名　<span class="u" style="min-width:160px">&nbsp;</span>　<span class="seal" style="width:44px;height:44px;line-height:44px">印</span></p>
+  <p class="note">※ 申告内容と異なる重大な瑕疵が後日判明した場合、減額・返品・違約金の対象となることがあります。不明な項目は「不明」とご記入ください。</p>
+
+  <div class="foot"><span>合同会社アイズ　古物商許可 福島県公安委員会許可　第25121A010859号</span><span>登録番号 T9380003004349</span></div>
+</div>
+</body></html>
