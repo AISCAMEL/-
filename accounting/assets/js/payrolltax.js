@@ -68,15 +68,23 @@ A.payrolltax = (function () {
     const spouse = data.hasSpouse ? 380000 : 0;
     const dependentsDed = (Math.max(0, Number(data.dependents) || 0)) * 380000;
     const social = Math.max(0, Math.floor(data.socialInsurance) || 0);
-    const totalDeduction = basic + spouse + dependentsDed + social;
+    // 各種控除（金額は入力値を採用）
+    const num = (v) => Math.max(0, Math.floor(Number(v) || 0));
+    const lifeIns = num(data.lifeInsurance);          // 生命保険料控除
+    const quakeIns = num(data.earthquakeInsurance);   // 地震保険料控除
+    const smallMutual = num(data.smallMutual);        // 小規模企業共済等掛金控除（iDeco等）
+    const otherDed = num(data.otherDeduction);        // その他所得控除
+    const housingCredit = num(data.housingCredit);    // 住宅借入金等特別控除（税額控除）
+    const totalDeduction = basic + spouse + dependentsDed + social + lifeIns + quakeIns + smallMutual + otherDed;
     let taxable = employmentIncome - totalDeduction;
     taxable = Math.max(0, Math.floor(taxable / 1000) * 1000); // 課税所得（1,000円未満切捨）
     const br = NATIONAL_BRACKETS.find((b) => taxable <= b[0]);
     const baseTax = Math.max(0, Math.floor(taxable * br[1] - br[2]));
-    const yearTax = Math.floor(baseTax * 1.021 / 100) * 100; // 復興特別所得税込み・年税額（100円未満切捨）
+    const afterCredit = Math.max(0, baseTax - housingCredit); // 住宅ローン控除は税額控除
+    const yearTax = Math.floor(afterCredit * 1.021 / 100) * 100; // 復興特別所得税込み・年税額（100円未満切捨）
     const withheld = Math.max(0, Math.floor(data.withheldTotal) || 0);
     const diff = withheld - yearTax; // プラス＝還付、マイナス＝追加徴収
-    return { salaryDeduction, employmentIncome, totalDeduction, taxable, baseTax, yearTax, withheld, diff };
+    return { salaryDeduction, employmentIncome, totalDeduction, taxable, baseTax, housingCredit, afterCredit, yearTax, withheld, diff };
   };
 
   return { salaryDeductionAnnual, monthlyWithholding, yearEnd };

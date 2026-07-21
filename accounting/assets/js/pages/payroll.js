@@ -142,6 +142,7 @@ window.A = window.A || {};
     employees.forEach((e) => empSel.appendChild(el('option', { value: e.id, text: e.name })));
     const yearI = el('input', { type: 'number', value: Number(U.today().slice(0, 4)) });
     const spouse = el('input', { type: 'checkbox' });
+    const life = yenInput(0), quake = yenInput(0), mutual = yenInput(0), housing = yenInput(0);
     const result = el('div');
 
     const recompute = () => {
@@ -151,7 +152,8 @@ window.A = window.A || {};
       const salaryIncome = slips.reduce((a, p) => a + (p.gross - (p.commute || 0)), 0); // 課税支給合計
       const social = slips.reduce((a, p) => a + (p.health + p.pension + p.employment), 0);
       const withheld = slips.reduce((a, p) => a + p.incomeTax, 0);
-      const r = A.payrolltax.yearEnd({ salaryIncome, socialInsurance: social, dependents: emp.dependents || 0, hasSpouse: spouse.checked, withheldTotal: withheld });
+      const r = A.payrolltax.yearEnd({ salaryIncome, socialInsurance: social, dependents: emp.dependents || 0, hasSpouse: spouse.checked, withheldTotal: withheld,
+        lifeInsurance: U.parseYen(life.value), earthquakeInsurance: U.parseYen(quake.value), smallMutual: U.parseYen(mutual.value), housingCredit: U.parseYen(housing.value) });
       result.innerHTML = '';
       result.appendChild(el('div.income-result', {}, [
         el('div', {}, [
@@ -171,12 +173,15 @@ window.A = window.A || {};
     empSel.addEventListener('change', recompute);
     yearI.addEventListener('input', recompute);
     spouse.addEventListener('change', recompute);
+    [life, quake, mutual, housing].forEach((i) => i.addEventListener('input', recompute));
     recompute();
 
     const body = el('div.editor', {}, [
       el('div.form-row', {}, [el('label.grow', {}, [el('span', { text: '従業員' }), empSel]), el('label', {}, [el('span', { text: '対象年' }), yearI]), el('label', {}, [el('span', { text: '配偶者控除' }), spouse])]),
+      el('div.form-row', {}, [el('label', {}, [el('span', { text: '生命保険料控除' }), life]), el('label', {}, [el('span', { text: '地震保険料控除' }), quake])]),
+      el('div.form-row', {}, [el('label', {}, [el('span', { text: '小規模企業共済等(iDeco等)' }), mutual]), el('label', {}, [el('span', { text: '住宅ローン控除(税額控除)' }), housing])]),
       el('div.preview-box', {}, [el('div.muted', { text: '年末調整（電算特例に基づく概算）' }), result]),
-      el('p.muted.small', { text: '※ 給与明細から自動集計した概算です。実際の年末調整は各種控除（生命保険料・住宅ローン等）や最新の税制をご確認ください。' }),
+      el('p.muted.small', { text: '※ 給与明細から自動集計した概算です。各種控除は控除額を直接入力してください。最新の税制・要件は別途ご確認ください。' }),
     ]);
     const post = async () => {
       const d = result._data; if (!d) return;

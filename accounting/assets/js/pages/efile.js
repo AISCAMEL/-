@@ -10,6 +10,12 @@ window.A = window.A || {};
     const a = el('a', { href: URL.createObjectURL(blob), download: filename });
     document.body.appendChild(a); a.click(); a.remove();
   };
+  const downloadText = (filename, text, mime) => {
+    const blob = new Blob([text], { type: (mime || 'text/plain') + ';charset=utf-8' });
+    const a = el('a', { href: URL.createObjectURL(blob), download: filename });
+    document.body.appendChild(a); a.click(); a.remove();
+  };
+  const xmlEsc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const line = (label, value, big) => el('div.income-line' + (big ? '.big' : ''), {}, [el('span', { text: label }), el('span', { text: '¥' + U.yenSigned(value) })]);
 
   ui.register('efile', async () => {
@@ -93,12 +99,46 @@ window.A = window.A || {};
       downloadCsv(`売掛金内訳_${fy.start.slice(0, 4)}.csv`, rows);
     };
 
+    // e-Tax連携用XML（財務諸表・消費税・法人税を構造化）
+    const buildXml = () => {
+      const secXml = (name, items) => `    <${name}>\n` + items.filter((i) => i.amount).map((i) =>
+        `      <科目 コード="${xmlEsc(i.code || '')}" 名称="${xmlEsc(i.name)}" 金額="${Math.round(i.amount)}"/>`).join('\n') + `\n    </${name}>`;
+      const bsRight = [...st.bs.liability.items, ...st.bs.equity.items, { name: '当期純利益', amount: st.bs.netIncome }];
+      return `<?xml version="1.0" encoding="UTF-8"?>
+<会計データ 規格="aizu-kaikei/1.0" 会社名="${xmlEsc(s.name)}" 登録番号="${xmlEsc(s.invoiceRegNo || '')}" 会計期間開始="${fy.start}" 会計期間終了="${fy.end}">
+  <財務諸表>
+    <貸借対照表>
+${secXml('資産の部', st.bs.asset.items)}
+${secXml('負債純資産の部', bsRight)}
+    </貸借対照表>
+    <損益計算書>
+${secXml('収益', st.pl.revenue.items)}
+${secXml('費用', st.pl.expense.items)}
+      <当期純利益 金額="${Math.round(st.pl.netIncome)}"/>
+    </損益計算書>
+  </財務諸表>
+  <消費税申告 計算方式="${xmlEsc(methodLabel)}">
+    <課税標準額>${ret.taxableBase}</課税標準額>
+    <消費税額>${ret.nationalTax}</消費税額>
+    <控除対象仕入税額>${ret.deduction}</控除対象仕入税額>
+    <差引税額>${ret.nationalPayable}</差引税額>
+    <地方消費税>${ret.localTax}</地方消費税>
+    <納付税額合計>${ret.totalPayable}</納付税額合計>
+  </消費税申告>
+  <法人税基礎>
+    <当期純利益>${Math.round(st.pl.netIncome)}</当期純利益>
+    <概算税率>${s.corporateTaxRate || 15}</概算税率>
+  </法人税基礎>
+</会計データ>`;
+    };
+
     wrap.appendChild(el('div.card', {}, [
       el('h2', { text: 'e-Tax取込用データ（財務諸表・内訳）' }),
-      el('p.muted.small', { text: '財務諸表（決算書）と勘定科目内訳の基礎データをCSVで出力します。e-Tax の財務諸表・勘定科目内訳明細書の作成に取り込む際の元データとしてご利用ください。' }),
+      el('p.muted.small', { text: '財務諸表（決算書）と勘定科目内訳の基礎データをCSV／XMLで出力します。e-Tax の財務諸表・勘定科目内訳明細書の作成に取り込む際の元データとしてご利用ください。' }),
       el('div.quick-row', {}, [
         el('button.btn', { text: '⬇ 財務諸表 CSV', onclick: financialCsv }),
         el('button.btn', { text: '⬇ 売掛金内訳 CSV', onclick: arCsv }),
+        el('button.btn', { text: '⬇ 会計データ XML', onclick: () => downloadText(`会計データ_${fy.start.slice(0, 4)}.xml`, buildXml(), 'application/xml') }),
       ]),
     ]));
 

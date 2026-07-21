@@ -139,7 +139,7 @@ A.store = (function () {
     },
     async remove(id) {
       const a = await db.get('assets', id);
-      await journals.removeWhere((j) => j.refId === id && j.source === 'depreciation');
+      await journals.removeWhere((j) => j.refId === id && (j.source === 'depreciation' || j.source === 'disposal'));
       await db.del('assets', id);
       if (a && A.audit) await A.audit.log('delete', 'asset', id, `${a.name} 取得¥${U.yen(a.acquireCost)}`);
     },

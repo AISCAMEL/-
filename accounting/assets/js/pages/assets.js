@@ -91,6 +91,75 @@ window.A = window.A || {};
     ui.modal(`償却スケジュール：${asset.name}`, body, { footer: [] });
   };
 
+  // 既存インストールに科目が無い場合は作成
+  const ensureAccount = async (code, name, category) => {
+    if (!S.accounts.byCode(code)) await S.accounts.save({ code, name, category, default_tax: 'out' });
+  };
+
+  // 除却・売却
+  const disposeModal = (asset, journals) => {
+    const bookValue = asset.acquireCost - postedAccum(journals, asset.id);
+    const kind = el('select', {}, [el('option', { value: 'retire', text: '除却（廃棄）' }), el('option', { value: 'sell', text: '売却' })]);
+    const date = el('input', { type: 'date', value: U.today() });
+    const priceWrap = el('span');
+    const price = el('input.amt-in', { type: 'text', inputmode: 'numeric', placeholder: '売却価額（税込）' });
+    const taxable = el('input', { type: 'checkbox' }); taxable.checked = true;
+    price.addEventListener('blur', () => { price.value = price.value ? U.yen(U.parseYen(price.value)) : ''; refresh(); });
+    price.addEventListener('input', refresh);
+    const preview = el('div.jsummary');
+    function applyKind() {
+      priceWrap.innerHTML = '';
+      if (kind.value === 'sell') priceWrap.appendChild(el('div.form-row', {}, [el('label.grow', {}, [el('span', { text: '売却価額(税込)' }), price]), el('label', {}, [el('span', { text: '課税売上に計上' }), taxable])]));
+      refresh();
+    }
+    function refresh() {
+      preview.innerHTML = '';
+      preview.appendChild(el('span', { html: `帳簿価額 <b>¥${U.yen(bookValue)}</b>` }));
+      if (kind.value === 'retire') {
+        preview.appendChild(el('span', { html: `（借）固定資産除却損 ¥${U.yen(bookValue)}` }));
+        preview.appendChild(el('span', { html: `（貸）${U.esc(S.accounts.name(asset.accountCode))} ¥${U.yen(bookValue)}` }));
+      } else {
+        const p = U.parseYen(price.value); const gain = p - bookValue;
+        preview.appendChild(el('span', { html: `売却価額 ¥${U.yen(p)}　${gain >= 0 ? '売却益' : '売却損'} ¥${U.yen(Math.abs(gain))}` }));
+      }
+    }
+    kind.addEventListener('change', applyKind);
+    applyKind();
+
+    const body = el('div.editor', {}, [
+      el('div.form-row', {}, [el('label', {}, [el('span', { text: '処理' }), kind]), el('label', {}, [el('span', { text: '処理日' }), date])]),
+      priceWrap,
+      el('div.preview-box', {}, [el('div.muted', { text: '生成される仕訳' }), preview]),
+    ]);
+    const doDispose = async () => {
+      await ensureAccount('597', '固定資産除却損', 'expense');
+      await ensureAccount('596', '固定資産売却損', 'expense');
+      await ensureAccount('491', '固定資産売却益', 'revenue');
+      await S.accounts.loadAll();
+      let lines;
+      if (kind.value === 'retire') {
+        lines = [
+          { side: 'debit', account: '597', tax: 'out', amount: bookValue },
+          { side: 'credit', account: asset.accountCode, tax: 'out', amount: bookValue },
+        ];
+      } else {
+        const p = U.parseYen(price.value);
+        if (p <= 0) return ui.toast('売却価額を入力してください', 'err');
+        const gain = p - bookValue;
+        lines = [{ side: 'debit', account: '110', tax: taxable.checked ? 'sales10' : 'out', amount: p }];
+        lines.push({ side: 'credit', account: asset.accountCode, tax: 'out', amount: bookValue });
+        if (gain > 0) lines.push({ side: 'credit', account: '491', tax: 'out', amount: gain });
+        else if (gain < 0) lines.push({ side: 'debit', account: '596', tax: 'out', amount: -gain });
+      }
+      await S.journals.save({ refId: asset.id, source: 'disposal', date: date.value, description: `${kind.value === 'retire' ? '除却' : '売却'}：${asset.name}`, lines });
+      await S.assets.save({ ...asset, disposed: true, disposedDate: date.value, disposedKind: kind.value });
+      m.close(); ui.toast(kind.value === 'retire' ? '除却を計上しました' : '売却を計上しました', 'ok'); ui.renderRoute();
+    };
+    const m = ui.modal(`固定資産の除却・売却：${asset.name}`, body, {
+      footer: [el('button.btn', { text: 'キャンセル', onclick: () => m.close() }), el('button.btn.primary', { text: '計上する', onclick: doDispose })],
+    });
+  };
+
   const postDepreciation = async (asset, fyStart, fyEnd) => {
     const s = S.settings.get();
     const row = R.depForFiscalYear(asset, s.fiscalStartMonth || 4, fyStart);
@@ -148,6 +217,7 @@ window.A = window.A || {};
       { key: 'book', label: '帳簿価額', align: 'right', render: (r) => '¥' + U.yen(r.acquireCost - postedAccum(journals, r.id)) },
       {
         key: 'fydep', label: '当期償却', align: 'right', render: (r) => {
+          if (r.disposed) return el('span.badge.out', { text: (r.disposedKind === 'sell' ? '売却済' : '除却済') });
           const row = R.depForFiscalYear(r, s.fiscalStartMonth || 4, fy.start);
           if (!row) return el('span.muted', { text: '—' });
           const done = postedInFy(journals, r.id, fy.start, fy.end);
@@ -157,11 +227,14 @@ window.A = window.A || {};
       {
         key: 'act', label: '', align: 'right', render: (r) => {
           const box = el('div.row-actions');
-          const row = R.depForFiscalYear(r, s.fiscalStartMonth || 4, fy.start);
-          if (row && !postedInFy(journals, r.id, fy.start, fy.end)) box.appendChild(el('button.btn.sm', { text: '当期計上', onclick: () => postDepreciation(r, fy.start, fy.end) }));
+          if (!r.disposed) {
+            const row = R.depForFiscalYear(r, s.fiscalStartMonth || 4, fy.start);
+            if (row && !postedInFy(journals, r.id, fy.start, fy.end)) box.appendChild(el('button.btn.sm', { text: '当期計上', onclick: () => postDepreciation(r, fy.start, fy.end) }));
+            box.appendChild(el('button.btn.sm', { text: '除却/売却', onclick: () => disposeModal(r, journals) }));
+          }
           box.appendChild(el('button.icon-btn', { text: '📅', title: '償却予定', onclick: () => showSchedule(r) }));
-          box.appendChild(el('button.icon-btn', { text: '✎', onclick: () => editor(r) }));
-          box.appendChild(el('button.icon-btn.del', { text: '🗑', onclick: async () => { if (await ui.confirm('この資産と関連する減価償却仕訳を削除しますか？')) { await S.assets.remove(r.id); ui.toast('削除しました'); ui.renderRoute(); } } }));
+          if (!r.disposed) box.appendChild(el('button.icon-btn', { text: '✎', onclick: () => editor(r) }));
+          box.appendChild(el('button.icon-btn.del', { text: '🗑', onclick: async () => { if (await ui.confirm('この資産と関連する仕訳を削除しますか？')) { await S.assets.remove(r.id); ui.toast('削除しました'); ui.renderRoute(); } } }));
           return box;
         },
       },

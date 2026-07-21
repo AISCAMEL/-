@@ -55,6 +55,7 @@ A.accounts = (function () {
     // 収益
     { code: '400', name: '売上高',      category: 'revenue', default_tax: 'sales10' },
     { code: '410', name: '受取手数料',  category: 'revenue', default_tax: 'sales10' },
+    { code: '491', name: '固定資産売却益', category: 'revenue', default_tax: 'out' },
     { code: '490', name: '雑収入',      category: 'revenue', default_tax: 'sales10' },
     // 費用
     { code: '500', name: '仕入高',      category: 'expense', default_tax: 'purchase10' },
@@ -75,6 +76,8 @@ A.accounts = (function () {
     { code: '585', name: '租税公課',    category: 'expense', default_tax: 'out' },
     { code: '590', name: '減価償却費',  category: 'expense', default_tax: 'out' },
     { code: '595', name: '雑費',        category: 'expense', default_tax: 'purchase10' },
+    { code: '596', name: '固定資産売却損', category: 'expense', default_tax: 'out' },
+    { code: '597', name: '固定資産除却損', category: 'expense', default_tax: 'out' },
     { code: '600', name: '支払利息',    category: 'expense', default_tax: 'out' },
   ];
 
