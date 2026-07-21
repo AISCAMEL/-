@@ -158,6 +158,49 @@ window.A = window.A || {};
     });
   };
 
+  /* ---- 給与台帳（印刷/PDF） ------------------------------------------- */
+  const payrollLedgerModal = async () => {
+    const s = S.settings.get();
+    const employees = s.employees || [];
+    const allSlips = await S.payslips.loadAll();
+    const yearI = el('input', { type: 'number', value: Number(U.today().slice(0, 4)) });
+    const empSel = el('select', {}, [el('option', { value: '', text: '全従業員' }), ...employees.map((e) => el('option', { value: e.id, text: e.name }))]);
+    const body = el('div.editor', {}, [
+      el('div.form-row', {}, [el('label', {}, [el('span', { text: '対象年' }), yearI]), el('label.grow', {}, [el('span', { text: '従業員' }), empSel])]),
+    ]);
+    const show = () => {
+      const year = String(yearI.value);
+      const targets = empSel.value ? employees.filter((e) => e.id === empSel.value) : employees;
+      const empTable = (emp) => {
+        const slips = allSlips.filter((p) => p.employeeId === emp.id && (p.month || '').startsWith(year)).sort((a, b) => a.month.localeCompare(b.month));
+        const tot = slips.reduce((t, p) => { ['gross', 'health', 'pension', 'employment', 'incomeTax', 'deductionTotal', 'net'].forEach((k) => t[k] = (t[k] || 0) + (p[k] || 0)); return t; }, {});
+        const rows = slips.map((p) => `<tr><td class="c">${p.month.slice(5)}月</td><td class="r">¥${U.yen(p.gross)}</td><td class="r">¥${U.yen(p.health)}</td><td class="r">¥${U.yen(p.pension)}</td><td class="r">¥${U.yen(p.employment)}</td><td class="r">¥${U.yen(p.incomeTax)}</td><td class="r">¥${U.yen(p.deductionTotal)}</td><td class="r">¥${U.yen(p.net)}</td></tr>`).join('');
+        return `<h3 class="rep-h">${U.esc(emp.name)}</h3>
+          <table class="items"><thead><tr><th class="c">月</th><th class="r">総支給</th><th class="r">健康保険</th><th class="r">厚生年金</th><th class="r">雇用保険</th><th class="r">源泉税</th><th class="r">控除計</th><th class="r">差引支給</th></tr></thead>
+          <tbody>${rows || '<tr><td colspan=8>データなし</td></tr>'}</tbody>
+          <tfoot><tr><td class="c">年計</td><td class="r">¥${U.yen(tot.gross || 0)}</td><td class="r">¥${U.yen(tot.health || 0)}</td><td class="r">¥${U.yen(tot.pension || 0)}</td><td class="r">¥${U.yen(tot.employment || 0)}</td><td class="r">¥${U.yen(tot.incomeTax || 0)}</td><td class="r">¥${U.yen(tot.deductionTotal || 0)}</td><td class="r">¥${U.yen(tot.net || 0)}</td></tr></tfoot></table>`;
+      };
+      const html = `<div class="doc report-doc">
+        <div class="doc-title" style="letter-spacing:.15em">給与台帳</div>
+        <div style="text-align:center;margin-bottom:4px">${U.esc(s.name)}</div>
+        <div style="text-align:center" class="muted">${year}年</div>
+        ${targets.map(empTable).join('')}
+      </div>`;
+      m.close();
+      const overlay = el('div.print-overlay');
+      overlay.appendChild(el('div.print-bar.no-print', {}, [
+        el('button.btn.primary', { text: '🖨 印刷 / PDF保存', onclick: () => window.print() }),
+        el('button.btn', { text: '閉じる', onclick: () => { overlay.remove(); document.body.classList.remove('printing'); } }),
+      ]));
+      overlay.appendChild(el('div.print-sheet', { html }));
+      document.body.appendChild(overlay);
+      document.body.classList.add('printing');
+    };
+    const m = ui.modal('給与台帳の表示', body, {
+      footer: [el('button.btn', { text: 'キャンセル', onclick: () => m.close() }), el('button.btn.primary', { text: '表示', onclick: show })],
+    });
+  };
+
   /* ---- 年末調整 -------------------------------------------------------- */
   const yearEndModal = async () => {
     const s = S.settings.get();
@@ -235,6 +278,7 @@ window.A = window.A || {};
     const wrap = el('div');
     wrap.appendChild(ui.pageHead('給与計算', [
       el('button.btn', { text: '＋ 従業員を登録', onclick: () => employeeModal(null) }),
+      el('button.btn', { text: '🖨 給与台帳', onclick: () => payrollLedgerModal() }),
       el('button.btn', { text: '年末調整', onclick: () => yearEndModal() }),
       el('button.btn.primary', { text: '＋ 給与明細を作成', onclick: () => payslipModal(null) }),
     ]));

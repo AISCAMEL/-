@@ -232,6 +232,49 @@ window.A = window.A || {};
     ui.renderRoute();
   };
 
+  // 固定資産台帳（印刷/PDF）
+  const printLedger = (list, journals, fy, s) => {
+    const rows = list.map((a) => {
+      const accum = postedAccum(journals, a.id);
+      const fyRow = R.depForFiscalYear(a, s.fiscalStartMonth || 4, fy.start);
+      const book = a.acquireCost - accum;
+      return `<tr>
+        <td>${U.esc(a.name)}</td>
+        <td>${U.esc(S.accounts.name(a.accountCode))}</td>
+        <td>${U.fmtDate(a.acquireDate)}</td>
+        <td class="c">${(METHODS[a.method || 'straight'] || '').replace(/（.*）/, '')}</td>
+        <td class="r">${a.usefulLife || '—'}</td>
+        <td class="r">¥${U.yen(a.acquireCost)}</td>
+        <td class="r">¥${U.yen(fyRow ? fyRow.amount : 0)}</td>
+        <td class="r">¥${U.yen(accum)}</td>
+        <td class="r">¥${U.yen(book)}</td>
+        <td class="c">${a.disposed ? (a.disposedKind === 'sell' ? '売却' : '除却') : '—'}</td>
+      </tr>`;
+    }).join('');
+    const totalCost = list.reduce((s2, a) => s2 + a.acquireCost, 0);
+    const totalBook = list.reduce((s2, a) => s2 + (a.acquireCost - postedAccum(journals, a.id)), 0);
+    const html = `
+      <div class="doc report-doc">
+        <div class="doc-title" style="letter-spacing:.15em">固定資産台帳</div>
+        <div style="text-align:center;margin-bottom:4px">${U.esc(s.name)}</div>
+        <div style="text-align:center" class="muted">${fy.start.slice(0, 4)}年度（${U.fmtDate(fy.start)}〜${U.fmtDate(fy.end)}）</div>
+        <table class="items" style="margin-top:12px">
+          <thead><tr><th>資産名</th><th>科目</th><th>取得日</th><th class="c">方法</th><th class="r">耐用</th><th class="r">取得価額</th><th class="r">当期償却</th><th class="r">償却累計</th><th class="r">期末簿価</th><th class="c">状態</th></tr></thead>
+          <tbody>${rows || '<tr><td colspan=10>固定資産がありません</td></tr>'}</tbody>
+          <tfoot><tr><td colspan=5>合計</td><td class="r">¥${U.yen(totalCost)}</td><td class="r"></td><td class="r"></td><td class="r">¥${U.yen(totalBook)}</td><td></td></tr></tfoot>
+        </table>
+        <div class="muted small" style="margin-top:14px">※ 当期償却は当年度の償却予定額、償却累計・期末簿価は計上済みの減価償却に基づく金額です。</div>
+      </div>`;
+    const overlay = el('div.print-overlay');
+    overlay.appendChild(el('div.print-bar.no-print', {}, [
+      el('button.btn.primary', { text: '🖨 印刷 / PDF保存', onclick: () => window.print() }),
+      el('button.btn', { text: '閉じる', onclick: () => { overlay.remove(); document.body.classList.remove('printing'); } }),
+    ]));
+    overlay.appendChild(el('div.print-sheet.landscape', { html }));
+    document.body.appendChild(overlay);
+    document.body.classList.add('printing');
+  };
+
   ui.register('assets', async (q) => {
     if (q.new) setTimeout(() => editor(null), 0);
     const list = await S.assets.loadAll();
@@ -243,6 +286,7 @@ window.A = window.A || {};
     const wrap = el('div');
     wrap.appendChild(ui.pageHead('固定資産・減価償却', [
       el('span.muted', { text: `対象年度：${fy.start.slice(0, 4)}年度` }),
+      el('button.btn', { text: '🖨 台帳を印刷', onclick: () => printLedger(list, journals, fy, s) }),
       el('button.btn', { text: '＋ リース資産', onclick: () => leaseModal() }),
       el('button.btn.primary', { text: '＋ 固定資産を登録', onclick: () => editor(null) }),
     ]));

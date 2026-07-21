@@ -265,6 +265,10 @@ table.sum td { padding: 7px 12px; border-bottom: 1px solid var(--line); }
 table.sum .r { text-align: right; }
 table.sum .grand td { font-weight: 800; font-size: 16px; background: var(--brand-soft); border-bottom: 2px solid var(--brand); }
 .doc-note { margin-top: 16px; font-size: 12px; border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; }
+.print-sheet.landscape { width: 297mm; }
+.print-sheet.landscape table.items { font-size: 11px; }
+.print-sheet.landscape table.items th, .print-sheet.landscape table.items td { padding: 5px 6px; }
+@media print { .print-sheet.landscape { width: auto; } }
 
 /* ---- 印刷 ------------------------------------------------------------- */
 @media print {
