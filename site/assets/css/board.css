@@ -30,6 +30,7 @@
   .kpi-row-5{grid-template-columns:repeat(2,1fr);}
   .kpi{min-width:0;}                       /* グリッド項目を縮小可能にしてはみ出し防止 */
   .kpi .kpi-num{font-size:20px;}           /* 金額(¥1,500,000)が枠を超えないように縮小 */
+  .portal-main{overflow-x:hidden;}          /* モバイルでの横はみ出し防止（内部overflow:visibleを封じ込める） */
   .rep-card{overflow-x:hidden;}            /* バーチャートのauto列が枠外に出ないよう抑制 */
   .bar-val{white-space:normal;}
   /* ポータルヘッダー：折り返し＋ナビは横スクロールではみ出し防止 */
