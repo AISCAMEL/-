@@ -85,9 +85,12 @@ A.store = (function () {
       return { debit: d, credit: c, balanced: d === c && d > 0 };
     },
     async save(j) {
+      const isNew = !j.id;
       if (!j.id) { j.id = U.uid('jr'); j.no = await settings.nextSeq('journalSeq'); }
       j.source = j.source || 'manual';
       await db.put('journals', j);
+      const sum = `${j.date} ${j.description || ''} ¥${U.yen(this.totals(j).debit)}`;
+      if (A.audit) await A.audit.log(isNew ? 'create' : 'update', 'journal', j.id, sum);
       return j;
     },
     // 連番を採番して複数まとめて保存（CSV一括計上・繰越などで使用）
@@ -96,7 +99,11 @@ A.store = (function () {
       for (const j of list) out.push(await this.save(j));
       return out;
     },
-    async remove(id) { await db.del('journals', id); },
+    async remove(id) {
+      const j = await db.get('journals', id);
+      await db.del('journals', id);
+      if (j && A.audit) await A.audit.log('delete', 'journal', id, `${j.date} ${j.description || ''} ¥${U.yen(this.totals(j).debit)}`);
+    },
     // 請求書・経費など「元データ」から生成した仕訳を削除
     async removeBySource(refId) {
       const list = await this.loadAll();
@@ -124,13 +131,17 @@ A.store = (function () {
       return list;
     },
     async save(a) {
+      const isNew = !a.id;
       if (!a.id) a.id = U.uid('as');
       await db.put('assets', a);
+      if (A.audit) await A.audit.log(isNew ? 'create' : 'update', 'asset', a.id, `${a.name} 取得¥${U.yen(a.acquireCost)}`);
       return a;
     },
     async remove(id) {
+      const a = await db.get('assets', id);
       await journals.removeWhere((j) => j.refId === id && j.source === 'depreciation');
       await db.del('assets', id);
+      if (a && A.audit) await A.audit.log('delete', 'asset', id, `${a.name} 取得¥${U.yen(a.acquireCost)}`);
     },
   };
 
@@ -166,17 +177,21 @@ A.store = (function () {
       return { buckets, net, tax, total: net + tax };
     },
     async save(inv) {
+      const isNew = !inv.id;
       if (!inv.id) {
         inv.id = U.uid('iv');
         const seqType = inv.type === 'estimate' ? 'estimateSeq' : 'invoiceSeq';
         inv.no = await settings.nextSeq(seqType);
       }
       await db.put('invoices', inv);
+      if (A.audit) await A.audit.log(isNew ? 'create' : 'update', 'invoice', inv.id, `${this.displayNo(inv)} ${inv.partnerName || ''} ¥${U.yen(this.calc(inv).total)}`);
       return inv;
     },
     async remove(id) {
+      const inv = await db.get('invoices', id);
       await journals.removeBySource(id);
       await db.del('invoices', id);
+      if (inv && A.audit) await A.audit.log('delete', 'invoice', id, `${this.displayNo(inv)} ${inv.partnerName || ''} ¥${U.yen(this.calc(inv).total)}`);
     },
     // 請求書番号の整形（例: INV-2026-0007 / EST-2026-0007）
     displayNo(inv) {
@@ -203,12 +218,18 @@ A.store = (function () {
       return (await db.all('attachments')).filter((x) => x.journalId === journalId);
     },
     async save(att) {
+      const isNew = !att.id;
       if (!att.id) att.id = U.uid('at');
       if (!att.createdAt) att.createdAt = new Date().toISOString();
       await db.put('attachments', att);
+      if (A.audit) await A.audit.log(isNew ? 'create' : 'update', 'attachment', att.id, `${att.filename} ${att.date} ¥${U.yen(att.amount || 0)}`);
       return att;
     },
-    async remove(id) { await db.del('attachments', id); },
+    async remove(id) {
+      const att = await db.get('attachments', id);
+      await db.del('attachments', id);
+      if (att && A.audit) await A.audit.log('delete', 'attachment', id, `${att.filename} ${att.date} ¥${U.yen(att.amount || 0)}`);
+    },
   };
 
   return { settings, accounts, partners, journals, invoices, assets, attachments };

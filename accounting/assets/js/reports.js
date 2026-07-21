@@ -157,6 +157,29 @@ A.reports = (function () {
     };
   };
 
+  /* ---- 消費税：簡易課税・2割特例の納付額 -------------------------------
+   * 簡易課税のみなし仕入率（事業区分別）。
+   * ------------------------------------------------------------------- */
+  const DEEMED_RATES = {
+    1: { label: '第1種（卸売業）', rate: 90 },
+    2: { label: '第2種（小売業）', rate: 80 },
+    3: { label: '第3種（製造業等）', rate: 70 },
+    4: { label: '第4種（その他）', rate: 60 },
+    5: { label: '第5種（サービス業等）', rate: 50 },
+    6: { label: '第6種（不動産業）', rate: 40 },
+  };
+  // summary = taxSummary() の結果, opts = {method, bizType}
+  const taxPayable = (summary, method, bizType) => {
+    const salesTax = summary.salesTax;
+    if (method === 'special20') return Math.floor(salesTax * 0.2); // 2割特例：売上税額の2割
+    if (method === 'simplified') {
+      const rate = (DEEMED_RATES[bizType] || DEEMED_RATES[5]).rate;
+      const deduct = Math.floor(salesTax * rate / 100); // みなし仕入税額
+      return salesTax - deduct;
+    }
+    return summary.salesTax - summary.purchaseTax; // 原則課税
+  };
+
   /* ---- ダッシュボード用サマリ ----------------------------------------- */
   const dashboard = (journals, start, end) => {
     const st = statements(journals, start, end);
@@ -253,5 +276,5 @@ A.reports = (function () {
   const depForFiscalYear = (asset, fsMonth, fyStart) =>
     depSchedule(asset, fsMonth).find((r) => r.start === fyStart) || null;
 
-  return { flatLines, ledger, trialBalance, statements, taxSummary, dashboard, depSchedule, depForFiscalYear };
+  return { flatLines, ledger, trialBalance, statements, taxSummary, dashboard, depSchedule, depForFiscalYear, DEEMED_RATES, taxPayable };
 })();

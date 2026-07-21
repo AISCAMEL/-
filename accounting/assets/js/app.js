@@ -40,6 +40,8 @@ A.app = (function () {
     { path: 'tax', label: '消費税集計', icon: '🧾' },
     { path: 'opening', label: '期首残高・繰越', icon: '🔄' },
     { path: 'closing', label: '決算・確定申告', icon: '📆' },
+    { path: 'filing', label: '申告サポート', icon: '🧮' },
+    { path: 'audit', label: '訂正・削除履歴', icon: '📋' },
     { group: '' },
     { path: 'settings', label: '設定', icon: '⚙️' },
   ];

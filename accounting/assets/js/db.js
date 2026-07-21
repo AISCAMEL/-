@@ -8,7 +8,7 @@ A.db = (function () {
   'use strict';
 
   const DB_NAME = 'aizu_kaikei';
-  const DB_VERSION = 3; // v2: assets追加 / v3: attachments（証憑）追加
+  const DB_VERSION = 4; // v2:assets / v3:attachments / v4:auditlog（訂正・削除履歴）
   // オブジェクトストア（テーブル）一覧
   const STORES = {
     settings: { keyPath: 'key' },
@@ -18,6 +18,7 @@ A.db = (function () {
     invoices: { keyPath: 'id', indexes: [['date', 'date']] },
     assets: { keyPath: 'id', indexes: [['acquireDate', 'acquireDate']] },
     attachments: { keyPath: 'id', indexes: [['date', 'date'], ['journalId', 'journalId']] },
+    auditlog: { keyPath: 'id', indexes: [['ts', 'ts']] },
   };
 
   let _db = null;
@@ -69,6 +70,9 @@ A.db = (function () {
     bank: '',                              // 振込先（請求書に表示）
     fiscalStartMonth: 4,                   // 期首月（4=4月始まり）
     taxMethod: 'included',                 // 税込経理
+    taxFilingMethod: 'general',            // 消費税の計算方式 general/simplified/special20
+    simplifiedBizType: 5,                  // 簡易課税の事業区分（既定：第5種サービス業）
+    corporateTaxRate: 15,                  // 法人税等の概算税率(%)（申告サポート用）
     invoiceSeq: 0,                         // 請求書番号カウンタ
     estimateSeq: 0,                        // 見積書番号カウンタ
     journalSeq: 0,                         // 仕訳番号カウンタ

@@ -170,6 +170,19 @@ select.sm-sel { padding: 4px 6px; font-size: 12px; min-width: 110px; }
 .rule-add { display: grid; grid-template-columns: 1fr 140px 140px auto; gap: 8px; align-items: center; }
 @media (max-width: 860px) { .rule-add { grid-template-columns: 1fr; } }
 
+/* ---- 消費税 方式比較 -------------------------------------------------- */
+.compare { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+.compare-item { text-align: center; padding: 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 12px; color: var(--muted); }
+.compare-item b { font-size: 16px; color: var(--ink); }
+.compare-item.sel { border-color: var(--brand); background: var(--brand-soft); }
+.compare-item.sel b { color: var(--brand-dark); }
+
+/* ---- 申告サポート ---------------------------------------------------- */
+.adj-row { display: grid; grid-template-columns: 1fr 140px auto; gap: 8px; align-items: center; margin-bottom: 6px; }
+.income-result { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+.income-line { display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+.income-line.big { font-size: 16px; font-weight: 700; background: var(--brand-soft); border-radius: 8px; border: none; }
+
 /* ---- 決算チェックリスト ---------------------------------------------- */
 .check-row { display: flex; align-items: center; gap: 10px; padding: 8px 4px; border-bottom: 1px solid var(--line); }
 .check-row:last-child { border-bottom: none; }
