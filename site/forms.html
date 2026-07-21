@@ -3,12 +3,37 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>書類ダウンロード｜AUC-AGENT 会員サイト</title>
-<meta name="description" content="AUC-AGENT 会員向け 書類ダウンロード。委任状・譲渡証明書・申請依頼書（軽自動車）・車両状態申告書・必要書類チェックリストを印刷／PDFでご利用いただけます。" />
+<title>書類作成・ダウンロード｜AUC-AGENT 会員サイト</title>
+<meta name="description" content="AUC-AGENT 会員向け 書類作成ツール。車両・お客様情報を入力すると、委任状・譲渡証明書・買取契約書・車両状態申告書など各種書類が完成し、印刷／PDFで保存できます。" />
 <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
 <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png" />
 <link rel="apple-touch-icon" href="assets/img/favicon-180.png" />
 <link rel="stylesheet" href="assets/css/style.css" />
+<style>
+  .fb-grid{display:grid;grid-template-columns:400px 1fr;gap:22px;padding:26px 0 60px;}
+  .fb-panel{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);}
+  .fb-panel .hd{padding:14px 18px;border-bottom:1px solid var(--line);font-weight:800;color:var(--navy);font-size:15px;display:flex;align-items:center;gap:8px;}
+  .fb-body{padding:16px 18px;}
+  .doc-tabs{display:flex;flex-wrap:wrap;gap:8px;}
+  .doc-tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:700;color:var(--ink);cursor:pointer;transition:.15s;}
+  .doc-tab:hover{background:var(--bg);}
+  .doc-tab.on{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .fgrp{margin-top:14px;}
+  .fgrp>.t{font-size:12px;font-weight:800;color:var(--gold);letter-spacing:.02em;margin-bottom:8px;text-transform:uppercase;}
+  .fld{margin-bottom:10px;}
+  .fld label{display:block;font-size:12px;color:var(--muted);margin-bottom:3px;font-weight:600;}
+  .fld input,.fld select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;font:inherit;font-size:14px;background:#fff;}
+  .fld input:focus,.fld select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,161,74,.15);}
+  .fld.chk{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+  .fld.chk input{width:auto;}
+  .fld.chk label{margin:0;font-size:13.5px;color:var(--ink);font-weight:600;}
+  .fb-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .prev-wrap{background:#e9edf3;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;}
+  .prev-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#0e1b33;color:#fff;flex-wrap:wrap;}
+  .prev-bar .nm{font-weight:800;margin-right:auto;font-size:14px;}
+  #docFrame{width:100%;height:78vh;min-height:560px;border:0;background:#e9edf3;display:block;}
+  @media (max-width:900px){.fb-grid{grid-template-columns:1fr;}#docFrame{height:70vh;}}
+</style>
 </head>
 <body>
 
@@ -28,111 +53,165 @@
 
 <div class="page-head">
   <div class="wrap">
-    <h1>書類ダウンロード</h1>
-    <p>売却（出品代行）・名義変更に必要な各種書類です。ボタンから開いて「印刷／PDFで保存」、またはPDFを直接ダウンロードしてご利用ください。</p>
+    <h1>書類作成・ダウンロード</h1>
+    <p>お客様・車両の情報を入力すると、右に完成書類が表示されます。「印刷 / PDFで保存」でダウンロードできます。入力はこの端末に自動保存され、全書類に共通で反映されます。</p>
   </div>
 </div>
 
 <div class="wrap">
-  <div class="mp-grid">
-    <!-- side nav -->
-    <aside class="mp-side">
-      <nav class="mp-nav">
-        <a href="#docs" class="active">📄 各種書類</a>
-        <a href="#howto">🖊️ 記入・提出の流れ</a>
-        <a href="appraisal.html">🔎 査定マニュアル</a>
-        <a href="manual.html">📖 出品の仕方マニュアル</a>
-        <a href="mypage.html">← マイページへ戻る</a>
-      </nav>
-    </aside>
-
-    <main>
-      <section class="panel" id="docs">
-        <div class="panel-head"><h3>📄 各種書類（印刷・PDF）</h3></div>
-        <div class="panel-body">
-          <div class="alert alert-info">用紙は<strong>A4サイズ</strong>で印刷してください。委任状・譲渡証明書は<strong>実印</strong>（軽自動車の申請依頼書は<strong>認印</strong>）が必要です。ご記入後、当社へご返送ください。</div>
-
-          <ul class="opt-list" style="margin-top:6px;">
-            <li style="display:block;">
-              <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
-                <div><b>委任状</b>（普通自動車）<br><small style="color:var(--muted);">名義変更・抹消登録などの手続きを当社に委任する書類（実印）</small></div>
-                <div style="display:flex;gap:8px;">
-                  <a class="btn btn-navy btn-sm" href="forms/inin.html" target="_blank" rel="noopener">開く / 印刷</a>
-                  <a class="btn btn-gold btn-sm" href="forms/pdf/inin.pdf" download>PDF</a>
-                </div>
-              </div>
-            </li>
-            <li style="display:block;">
-              <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
-                <div><b>譲渡証明書</b>（普通自動車）<br><small style="color:var(--muted);">所有権の譲渡を証明する書類（実印）</small></div>
-                <div style="display:flex;gap:8px;">
-                  <a class="btn btn-navy btn-sm" href="forms/joto.html" target="_blank" rel="noopener">開く / 印刷</a>
-                  <a class="btn btn-gold btn-sm" href="forms/pdf/joto.pdf" download>PDF</a>
-                </div>
-              </div>
-            </li>
-            <li style="display:block;">
-              <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
-                <div><b>申請依頼書</b>（軽自動車）<br><small style="color:var(--muted);">軽自動車の手続きを当社に依頼する書類（認印・印鑑証明不要）</small></div>
-                <div style="display:flex;gap:8px;">
-                  <a class="btn btn-navy btn-sm" href="forms/kei-irai.html" target="_blank" rel="noopener">開く / 印刷</a>
-                  <a class="btn btn-gold btn-sm" href="forms/pdf/kei-irai.pdf" download>PDF</a>
-                </div>
-              </div>
-            </li>
-            <li style="display:block;">
-              <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
-                <div><b>車両状態申告書</b><br><small style="color:var(--muted);">走行・修復歴・装備・内装などの状態申告（減額・返品リスクの回避に重要）</small></div>
-                <div style="display:flex;gap:8px;">
-                  <a class="btn btn-navy btn-sm" href="forms/shinkoku.html" target="_blank" rel="noopener">開く / 印刷</a>
-                  <a class="btn btn-gold btn-sm" href="forms/pdf/shinkoku.pdf" download>PDF</a>
-                </div>
-              </div>
-            </li>
-            <li style="display:block;">
-              <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
-                <div><b>必要書類チェックリスト</b><br><small style="color:var(--muted);">普通車／軽自動車別の必要書類一覧（お手元の準備確認に）</small></div>
-                <div style="display:flex;gap:8px;">
-                  <a class="btn btn-navy btn-sm" href="forms/checklist.html" target="_blank" rel="noopener">開く / 印刷</a>
-                  <a class="btn btn-gold btn-sm" href="forms/pdf/checklist.pdf" download>PDF</a>
-                </div>
-              </div>
-            </li>
-          </ul>
+  <div class="fb-grid">
+    <!-- 入力パネル -->
+    <div class="fb-panel">
+      <div class="hd">📝 入力</div>
+      <div class="fb-body">
+        <div class="doc-tabs" id="docTabs"></div>
+        <div id="fields"></div>
+        <hr style="border:none;border-top:1px solid var(--line);margin:16px 0;" />
+        <div class="fb-actions">
+          <button class="btn btn-navy btn-sm" type="button" id="clearBtn">入力をクリア</button>
+          <button class="btn btn-ghost btn-sm" type="button" id="copyLinkBtn" style="color:var(--navy);border-color:var(--line);">差込リンクをコピー</button>
         </div>
-      </section>
+        <p style="font-size:11.5px;color:var(--muted);margin:12px 0 0;">「差込リンク」は、入力済みデータを含んだURLです。スタッフがお客様へ送ると、開いた画面にそのまま反映されダウンロードできます。</p>
+      </div>
+    </div>
 
-      <section class="panel" id="howto">
-        <div class="panel-head"><h3>🖊️ 記入・提出の流れ</h3></div>
-        <div class="panel-body">
-          <div class="flow" style="grid-template-columns:repeat(4,1fr);">
-            <div class="step"><div class="n">1</div><h4>印刷</h4><p>A4で印刷</p></div>
-            <div class="step"><div class="n">2</div><h4>記入・押印</h4><p>実印/認印で</p></div>
-            <div class="step"><div class="n">3</div><h4>書類を用意</h4><p>印鑑証明等を同封</p></div>
-            <div class="step"><div class="n">4</div><h4>返送</h4><p>当社へご返送</p></div>
-          </div>
-          <ul class="opt-list" style="margin-top:18px;">
-            <li>印鑑登録証明書（普通車）<b>発行3ヶ月以内・1通</b></li>
-            <li>実印（普通車）／認印（軽自動車）<b>各書類に押印</b></li>
-            <li>住所・氏名の記載 <b>印鑑証明書・車検証のとおり</b></li>
-            <li>ローン残債がある場合 <b>所有者情報を要連絡</b></li>
-          </ul>
-          <div class="alert" style="background:#fff3d6;color:#9a7414;border:1px solid #f0e0a8;margin-top:16px;">
-            ※ これらは記入用の雛形です。手続き内容により追加書類が必要な場合があります。ご不明点はマイページ・お問い合わせよりご連絡ください。
-          </div>
-        </div>
-      </section>
-    </main>
+    <!-- プレビュー -->
+    <div class="prev-wrap">
+      <div class="prev-bar">
+        <span class="nm" id="prevName">書類プレビュー</span>
+        <button class="btn btn-gold btn-sm" type="button" id="printBtn">🖨 印刷 / PDFで保存</button>
+        <a class="btn btn-ghost btn-sm" href="#" id="openBtn" target="_blank" style="border-color:rgba(255,255,255,.4);">別タブで開く</a>
+      </div>
+      <iframe id="docFrame" title="書類プレビュー"></iframe>
+    </div>
   </div>
 </div>
 
 <footer class="site-footer">
   <div class="wrap">
-    <div class="copy">© 2026 合同会社アイズ（AUC-AGENT）. いわき市／福島拠点. 会員向け書類（デモ）。</div>
+    <div class="copy">© 2026 合同会社アイズ（AUC-AGENT）. いわき市／福島拠点. 会員向け書類作成（デモ）。</div>
   </div>
 </footer>
 
 <script src="assets/js/app.js"></script>
+<script src="assets/js/forms.js"></script>
+<script>
+(function () {
+  var STORE = "auc_forms_v1";
+  var tabsEl = document.getElementById("docTabs");
+  var fieldsEl = document.getElementById("fields");
+  var frame = document.getElementById("docFrame");
+  var prevName = document.getElementById("prevName");
+  var openBtn = document.getElementById("openBtn");
+
+  // データ読込：localStorage → URLパラメータで上書き
+  var data = {};
+  try { data = JSON.parse(localStorage.getItem(STORE) || "{}") || {}; } catch (e) { data = {}; }
+  var q = new URLSearchParams(location.search);
+  q.forEach(function (val, key) { if (key !== "doc") data[key] = val; });
+  // 会員名で氏名を初期補完
+  try { var me = AucAuth && AucAuth.current && AucAuth.current(); if (me && me.name && !data.o_name) data.o_name = me.name; } catch (e) {}
+
+  var current = q.get("doc") || data._doc || "inin";
+
+  function save() { data._doc = current; try { localStorage.setItem(STORE, JSON.stringify(data)); } catch (e) {} }
+
+  function docById(id) { return AucForms.DOCS.filter(function (d) { return d.id === id; })[0]; }
+
+  function renderTabs() {
+    tabsEl.innerHTML = "";
+    AucForms.DOCS.forEach(function (d) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "doc-tab" + (d.id === current ? " on" : "");
+      b.textContent = d.name;
+      b.onclick = function () { current = d.id; save(); renderTabs(); renderFields(); renderPreview(); };
+      tabsEl.appendChild(b);
+    });
+  }
+
+  function fieldControl(f) {
+    if (f.type === "check") {
+      var checked = (data[f.k] === undefined ? f.def : data[f.k]) ? "checked" : "";
+      return '<div class="fld chk"><input type="checkbox" id="f_' + f.k + '" ' + checked + '><label for="f_' + f.k + '">' + f.l + "</label></div>";
+    }
+    if (f.type === "select") {
+      var opts = f.opts.map(function (o) {
+        return '<option value="' + o + '"' + ((data[f.k] || "") === o ? " selected" : "") + ">" + (o || "（選択）") + "</option>";
+      }).join("");
+      return '<div class="fld"><label>' + f.l + '</label><select id="f_' + f.k + '">' + opts + "</select></div>";
+    }
+    var val = (data[f.k] || "").replace(/"/g, "&quot;");
+    return '<div class="fld"><label>' + f.l + '</label><input type="text" id="f_' + f.k + '" value="' + val + '" placeholder="' + (f.ph || "") + '"></div>';
+  }
+
+  function renderFields() {
+    var doc = docById(current);
+    var html = "";
+    (doc.groups || []).forEach(function (g) {
+      var G = AucForms.FIELDS[g];
+      if (!G) return;
+      html += '<div class="fgrp"><div class="t">' + G.label + "</div>";
+      G.items.forEach(function (f) { html += fieldControl(f); });
+      html += "</div>";
+    });
+    if (!html) html = '<p style="color:var(--muted);font-size:13px;margin-top:14px;">この書類は入力項目がありません（そのまま印刷できます）。</p>';
+    fieldsEl.innerHTML = html;
+
+    // bind
+    (doc.groups || []).forEach(function (g) {
+      var G = AucForms.FIELDS[g]; if (!G) return;
+      G.items.forEach(function (f) {
+        var el = document.getElementById("f_" + f.k);
+        if (!el) return;
+        var evt = (f.type === "check" || f.type === "select") ? "change" : "input";
+        el.addEventListener(evt, function () {
+          data[f.k] = (f.type === "check") ? el.checked : el.value;
+          save(); renderPreview();
+        });
+      });
+    });
+  }
+
+  function renderPreview() {
+    var doc = docById(current);
+    prevName.textContent = doc.name;
+    frame.srcdoc = AucForms.render(current, data);
+    openBtn.onclick = function (e) {
+      e.preventDefault();
+      var w = window.open("", "_blank");
+      w.document.open(); w.document.write(AucForms.render(current, data)); w.document.close();
+    };
+  }
+
+  document.getElementById("printBtn").onclick = function () {
+    try { frame.contentWindow.focus(); frame.contentWindow.print(); }
+    catch (e) { var w = window.open("", "_blank"); w.document.write(AucForms.render(current, data)); w.document.close(); w.focus(); w.print(); }
+  };
+
+  document.getElementById("clearBtn").onclick = function () {
+    if (!confirm("入力内容をすべてクリアします。よろしいですか？")) return;
+    data = {}; save(); renderFields(); renderPreview();
+  };
+
+  document.getElementById("copyLinkBtn").onclick = function () {
+    var params = new URLSearchParams();
+    params.set("doc", current);
+    Object.keys(data).forEach(function (k) {
+      if (k.charAt(0) === "_") return;
+      var val = data[k];
+      if (val === "" || val == null || val === false) return;
+      params.set(k, val);
+    });
+    var url = location.origin + location.pathname + "?" + params.toString();
+    var done = function () { alert("差込リンクをコピーしました。"); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, function () { prompt("コピーしてください：", url); });
+    else prompt("コピーしてください：", url);
+  };
+
+  renderTabs(); renderFields(); renderPreview();
+})();
+</script>
 <script>
   // 会員限定：未ログインはログインへ
   if (!AucAuth.current()) { location.href = "login.html"; }
