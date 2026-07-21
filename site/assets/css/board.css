@@ -245,3 +245,4 @@
 .report-head h1{margin:0;}
 .report-head .page-mascot{float:none;margin:0;align-self:flex-end;flex-shrink:0;}
 .btn-csv{width:auto;height:44px;padding:0 22px;display:inline-flex;align-items:center;}
+@media (max-width:480px){.page-mascot{display:none;}}
