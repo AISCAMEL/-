@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="1200" viewBox="0 0 960 1200" font-family="'Noto Sans CJK JP','IPAGothic',sans-serif">
+  <defs>
+    <linearGradient id="head" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0e1b33"/><stop offset="1" stop-color="#16294a"/></linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e0bd6a"/><stop offset="1" stop-color="#c9a14a"/></linearGradient>
+  </defs>
+  <rect width="960" height="1200" fill="#f6f8fc"/>
+
+  <!-- Header -->
+  <rect width="960" height="56" fill="#0e1b33"/>
+  <rect x="32" y="14" width="28" height="28" rx="7" fill="url(#gold)"/><text x="40" y="33" fill="#0e1b33" font-size="16" font-weight="900">A</text>
+  <text x="70" y="33" fill="#fff" font-size="15" font-weight="800">AUC-AGENT</text>
+  <text x="700" y="33" fill="#cfd6e6" font-size="12">マイページ</text>
+  <text x="782" y="33" fill="#cfd6e6" font-size="12">出品代行</text>
+  <text x="866" y="33" fill="#cfd6e6" font-size="12">ログアウト</text>
+
+  <!-- page head -->
+  <rect x="0" y="56" width="960" height="86" fill="url(#head)"/>
+  <text x="32" y="98" fill="#fff" font-size="22" font-weight="800">車の査定マニュアル</text>
+  <text x="32" y="122" fill="#b9c4d8" font-size="12">「いくらで売れる？」の疑問に。オートオークションでの評価のしくみと査定額のポイントをまとめました。</text>
+
+  <!-- Sidebar -->
+  <rect x="32" y="166" width="220" height="420" rx="12" fill="#fff" stroke="#e4e8ef"/>
+  <g font-size="13" fill="#1a2233">
+    <rect x="48" y="182" width="188" height="28" rx="8" fill="#eef2f9"/><text x="62" y="201" font-weight="700">🔎 査定の流れ</text>
+    <text x="62" y="235">📑 査定に必要な情報</text>
+    <text x="62" y="265" fill="#c9a14a" font-weight="700">⭐ 評価点の見方</text>
+    <text x="62" y="295">🪑 内装評価の見方</text>
+    <text x="62" y="325">📈 査定額を左右する項目</text>
+    <text x="62" y="355">➕➖ 加点・減点ポイント</text>
+    <text x="62" y="385">✅ 自己査定チェックリスト</text>
+    <text x="62" y="415">💰 想定手取りの考え方</text>
+    <text x="62" y="445">⚠️ 注意点</text>
+    <line x1="48" y1="462" x2="236" y2="462" stroke="#e4e8ef"/>
+    <text x="62" y="490" fill="#5a6675">→ 出品の仕方マニュアル</text>
+    <text x="62" y="520" fill="#5a6675">← マイページへ戻る</text>
+  </g>
+
+  <!-- 査定の5ステップ panel -->
+  <rect x="272" y="166" width="656" height="150" rx="12" fill="#fff" stroke="#e4e8ef"/>
+  <rect x="272" y="166" width="656" height="44" rx="12" fill="#fff"/>
+  <text x="292" y="194" fill="#1a2233" font-size="16" font-weight="800">🔎 査定の5ステップ</text>
+  <line x1="272" y1="210" x2="928" y2="210" stroke="#eef1f6"/>
+  <g>
+    <!-- 5 steps -->
+    <g>
+      <rect x="292" y="226" width="118" height="72" rx="10" fill="#fbfcfe" stroke="#e4e8ef"/>
+      <circle cx="351" cy="248" r="13" fill="#0e1b33"/><text x="351" y="253" fill="#e0bd6a" font-size="12" font-weight="900" text-anchor="middle">1</text>
+      <text x="351" y="276" fill="#1a2233" font-size="12" font-weight="800" text-anchor="middle">情報入力</text>
+      <text x="351" y="291" fill="#8590a0" font-size="9.5" text-anchor="middle">年式・走行・状態</text>
+    </g>
+    <g>
+      <rect x="420" y="226" width="118" height="72" rx="10" fill="#fbfcfe" stroke="#e4e8ef"/>
+      <circle cx="479" cy="248" r="13" fill="#0e1b33"/><text x="479" y="253" fill="#e0bd6a" font-size="12" font-weight="900" text-anchor="middle">2</text>
+      <text x="479" y="276" fill="#1a2233" font-size="12" font-weight="800" text-anchor="middle">相場照合</text>
+      <text x="479" y="291" fill="#8590a0" font-size="9.5" text-anchor="middle">AA成約データ</text>
+    </g>
+    <g>
+      <rect x="548" y="226" width="118" height="72" rx="10" fill="#fbfcfe" stroke="#e4e8ef"/>
+      <circle cx="607" cy="248" r="13" fill="#0e1b33"/><text x="607" y="253" fill="#e0bd6a" font-size="12" font-weight="900" text-anchor="middle">3</text>
+      <text x="607" y="276" fill="#1a2233" font-size="12" font-weight="800" text-anchor="middle">評価点想定</text>
+      <text x="607" y="291" fill="#8590a0" font-size="9.5" text-anchor="middle">外装・内装</text>
+    </g>
+    <g>
+      <rect x="676" y="226" width="118" height="72" rx="10" fill="#fbfcfe" stroke="#e4e8ef"/>
+      <circle cx="735" cy="248" r="13" fill="#0e1b33"/><text x="735" y="253" fill="#e0bd6a" font-size="12" font-weight="900" text-anchor="middle">4</text>
+      <text x="735" y="276" fill="#1a2233" font-size="12" font-weight="800" text-anchor="middle">想定額提示</text>
+      <text x="735" y="291" fill="#8590a0" font-size="9.5" text-anchor="middle">落札レンジ</text>
+    </g>
+    <g>
+      <rect x="804" y="226" width="118" height="72" rx="10" fill="#fbfcfe" stroke="#e4e8ef"/>
+      <circle cx="863" cy="248" r="13" fill="#0e1b33"/><text x="863" y="253" fill="#e0bd6a" font-size="12" font-weight="900" text-anchor="middle">5</text>
+      <text x="863" y="276" fill="#1a2233" font-size="12" font-weight="800" text-anchor="middle">手取り試算</text>
+      <text x="863" y="291" fill="#8590a0" font-size="9.5" text-anchor="middle">控除後を確認</text>
+    </g>
+  </g>
+
+  <!-- 外装評価点 panel -->
+  <rect x="272" y="332" width="656" height="330" rx="12" fill="#fff" stroke="#e4e8ef"/>
+  <text x="292" y="362" fill="#1a2233" font-size="16" font-weight="800">⭐ オートオークション 外装評価点の見方</text>
+  <line x1="272" y1="378" x2="928" y2="378" stroke="#eef1f6"/>
+  <!-- table -->
+  <g font-size="12.5">
+    <rect x="292" y="392" width="616" height="30" fill="#f3f6fb"/>
+    <text x="306" y="412" fill="#0e1b33" font-weight="800">評価点</text>
+    <text x="420" y="412" fill="#0e1b33" font-weight="800">状態の目安</text>
+
+    <rect x="292" y="422" width="616" height="26" fill="#fff"/>
+    <text x="306" y="439" fill="#1a2233" font-weight="700">S / 6点</text><text x="420" y="439" fill="#5a6675">新車・未使用車クラス。ほぼ無傷。</text>
+    <rect x="292" y="448" width="616" height="26" fill="#fafbfd"/>
+    <text x="306" y="465" fill="#1a2233" font-weight="700">5点</text><text x="420" y="465" fill="#5a6675">年式が新しく内外装とも非常に良好。</text>
+    <rect x="292" y="474" width="616" height="26" fill="#fff"/>
+    <text x="306" y="491" fill="#1a2233" font-weight="700">4.5点</text><text x="420" y="491" fill="#5a6675">走行少なめで状態良好。小キズ数か所。</text>
+    <rect x="292" y="500" width="616" height="26" fill="#eaf7f0"/>
+    <text x="306" y="517" fill="#1a2233" font-weight="800">4点</text><text x="420" y="517" fill="#2f8f5b" font-weight="700">基準点：一般的な良好コンディション。</text>
+    <rect x="292" y="526" width="616" height="26" fill="#fff"/>
+    <text x="306" y="543" fill="#1a2233" font-weight="700">3.5点</text><text x="420" y="543" fill="#5a6675">キズ・へこみがやや目立つ。</text>
+    <rect x="292" y="552" width="616" height="26" fill="#fafbfd"/>
+    <text x="306" y="569" fill="#1a2233" font-weight="700">3点</text><text x="420" y="569" fill="#5a6675">キズ・へこみ・内装劣化が複数。</text>
+    <rect x="292" y="578" width="616" height="26" fill="#fff"/>
+    <text x="306" y="595" fill="#1a2233" font-weight="700">2点 / 1点</text><text x="420" y="595" fill="#5a6675">要補修〜特殊扱い。</text>
+    <rect x="292" y="604" width="616" height="26" fill="#fdecec"/>
+    <text x="306" y="621" fill="#b23b3b" font-weight="800">R / RA</text><text x="420" y="621" fill="#b23b3b" font-weight="700">修復歴あり（骨格の修正・交換）。減額対象。</text>
+  </g>
+  <rect x="292" y="636" width="616" height="16" rx="4" fill="#e6f0ff"/>
+  <text x="300" y="648" fill="#2a64c4" font-size="10.5">4点を境に、上下で査定額が段階的に変わります（会場により多少差あり）。</text>
+
+  <!-- 内装評価 panel -->
+  <rect x="272" y="678" width="320" height="196" rx="12" fill="#fff" stroke="#e4e8ef"/>
+  <text x="292" y="708" fill="#1a2233" font-size="15" font-weight="800">🪑 内装評価（A〜D）</text>
+  <line x1="272" y1="722" x2="592" y2="722" stroke="#eef1f6"/>
+  <g font-size="12.5">
+    <rect x="292" y="734" width="26" height="24" rx="6" fill="#eaf7f0"/><text x="305" y="751" fill="#2f8f5b" font-weight="900" text-anchor="middle">A</text>
+    <text x="330" y="751" fill="#5a6675">非常にきれい。喫煙なし。</text>
+    <rect x="292" y="764" width="26" height="24" rx="6" fill="#eef7f1"/><text x="305" y="781" fill="#3a7d57" font-weight="900" text-anchor="middle">B</text>
+    <text x="330" y="781" fill="#5a6675">良好。目立つ汚れなし。</text>
+    <rect x="292" y="794" width="26" height="24" rx="6" fill="#fff5e6"/><text x="305" y="811" fill="#b8862a" font-weight="900" text-anchor="middle">C</text>
+    <text x="330" y="811" fill="#5a6675">使用感あり。汚れ・スレ。</text>
+    <rect x="292" y="824" width="26" height="24" rx="6" fill="#fdecec"/><text x="305" y="841" fill="#b23b3b" font-weight="900" text-anchor="middle">D</text>
+    <text x="330" y="841" fill="#5a6675">汚れ・破れ・臭い。要清掃。</text>
+  </g>
+
+  <!-- 加点・減点 panel -->
+  <rect x="608" y="678" width="320" height="196" rx="12" fill="#fff" stroke="#e4e8ef"/>
+  <text x="628" y="708" fill="#1a2233" font-size="15" font-weight="800">➕➖ 加点・減点</text>
+  <line x1="608" y1="722" x2="928" y2="722" stroke="#eef1f6"/>
+  <rect x="628" y="734" width="60" height="18" rx="9" fill="#eaf7f0"/><text x="658" y="747" fill="#2f8f5b" font-size="10.5" font-weight="800" text-anchor="middle">プラス</text>
+  <g font-size="11.5" fill="#5a6675">
+    <text x="628" y="770">・ワンオーナー／記録簿あり</text>
+    <text x="628" y="788">・禁煙車・内装がきれい</text>
+    <text x="628" y="806">・純正ナビ・人気色・車検残長い</text>
+  </g>
+  <rect x="628" y="816" width="60" height="18" rx="9" fill="#fdecec"/><text x="658" y="829" fill="#b23b3b" font-size="10.5" font-weight="800" text-anchor="middle">マイナス</text>
+  <g font-size="11.5" fill="#5a6675">
+    <text x="628" y="852">・修復歴・過走行・喫煙/臭い</text>
+    <text x="628" y="868">・申告漏れ → 減額・返品・違約金</text>
+  </g>
+
+  <!-- 想定手取り panel -->
+  <rect x="272" y="890" width="656" height="150" rx="12" fill="#fff" stroke="#e4e8ef"/>
+  <text x="292" y="920" fill="#1a2233" font-size="15" font-weight="800">💰 想定手取りの考え方</text>
+  <rect x="712" y="902" width="196" height="30" rx="15" fill="url(#gold)"/><text x="810" y="921" fill="#0e1b33" font-size="12" font-weight="700" text-anchor="middle">手取りシミュレーション →</text>
+  <line x1="272" y1="934" x2="928" y2="934" stroke="#eef1f6"/>
+  <rect x="292" y="948" width="616" height="34" rx="8" fill="#0e1b33"/>
+  <text x="600" y="970" fill="#fff" font-size="13" font-weight="800" text-anchor="middle">手取り ＝ 落札額 −（出品代行手数料 ＋ 出品料 ＋ オプション）</text>
+  <g font-size="12" fill="#5a6675">
+    <text x="292" y="1006">出品代行手数料：価格帯別定額（〜50万 ¥39,800 … 300万〜 3%）＋クラス割増</text>
+    <text x="292" y="1026">出品料 ¥11,000（流札無料）／内外装クリーニング ¥12,000〜¥30,000 で底上げも</text>
+  </g>
+
+  <!-- 注意点 panel -->
+  <rect x="272" y="1056" width="656" height="112" rx="12" fill="#fff3d6" stroke="#f0e0a8"/>
+  <text x="292" y="1086" fill="#9a7414" font-size="14" font-weight="800">⚠️ 査定にあたっての注意点</text>
+  <g font-size="12" fill="#9a7414">
+    <text x="292" y="1112">・提示額は想定レンジであり確定額ではありません（最終額は当日の入札で決定）。</text>
+    <text x="292" y="1132">・評価点は会場検査員が判定。正確な状態申告が最重要です。</text>
+    <text x="292" y="1152">・クレーム期間（落札日から2週間）・違約金の詳細は契約書・利用規約に準じます。</text>
+  </g>
+
+  <!-- footer -->
+  <text x="32" y="1190" fill="#8590a0" font-size="11">© 2026 合同会社アイズ（AUC-AGENT）. いわき市／福島拠点. 会員向けマニュアル（デモ）。</text>
+</svg>
