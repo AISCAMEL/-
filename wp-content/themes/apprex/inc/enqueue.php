@@ -51,9 +51,13 @@ function apprex_enqueue_assets() {
 		$rest['member'] = apprex_chat_member_info();
 	}
 
-	// In-site AI chatbot.
-	wp_enqueue_script( 'apprex-chat', APPREX_URI . '/assets/js/chat.js', array(), APPREX_VERSION, true );
-	wp_localize_script( 'apprex-chat', 'APPREX_REST', $rest );
+	// 共有REST設定は常時読み込む apprex-main に付与（フォーム等が依存するため）。
+	wp_localize_script( 'apprex-main', 'APPREX_REST', $rest );
+
+	// サイト内AIチャットは、有効時のみ読み込む（未使用JSを削減）。
+	if ( apprex_chat_enabled() ) {
+		wp_enqueue_script( 'apprex-chat', APPREX_URI . '/assets/js/chat.js', array( 'apprex-main' ), APPREX_VERSION, true );
+	}
 
 	// Estimate → order calculator (only where needed, but cheap to always load on front).
 	wp_enqueue_script( 'apprex-estimate', APPREX_URI . '/assets/js/estimate.js', array(), APPREX_VERSION, true );
@@ -69,8 +73,8 @@ function apprex_enqueue_assets() {
 		)
 	);
 
-	// Native forms (contact / document / trial).
-	wp_enqueue_script( 'apprex-forms', APPREX_URI . '/assets/js/forms.js', array( 'apprex-chat' ), APPREX_VERSION, true );
+	// Native forms (contact / document / trial)。REST設定は apprex-main に付与済み。
+	wp_enqueue_script( 'apprex-forms', APPREX_URI . '/assets/js/forms.js', array( 'apprex-main' ), APPREX_VERSION, true );
 }
 add_action( 'wp_enqueue_scripts', 'apprex_enqueue_assets' );
 

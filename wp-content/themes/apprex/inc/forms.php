@@ -333,20 +333,20 @@ function apprex_render_form( $type = 'contact' ) {
 		<div class="apprex-form__row">
 			<label>
 				<span class="apprex-form__lbl"><?php esc_html_e( 'お名前', 'apprex' ); ?> <span class="req">*</span></span>
-				<input type="text" name="name" required>
+				<input type="text" name="name" autocomplete="name" required>
 			</label>
 			<label>
-				<span class="apprex-form__lbl"><?php esc_html_e( '会社名', 'apprex' ); ?></span>
-				<input type="text" name="company">
+				<span class="apprex-form__lbl"><?php esc_html_e( '会社名（任意）', 'apprex' ); ?></span>
+				<input type="text" name="company" autocomplete="organization">
 			</label>
 		</div>
 		<label>
 			<span class="apprex-form__lbl"><?php esc_html_e( 'メールアドレス', 'apprex' ); ?> <span class="req">*</span></span>
-			<input type="email" name="email" required>
+			<input type="email" name="email" autocomplete="email" inputmode="email" required>
 		</label>
 		<label>
 			<span class="apprex-form__lbl"><?php esc_html_e( '電話番号（任意）', 'apprex' ); ?></span>
-			<input type="tel" name="phone">
+			<input type="tel" name="phone" autocomplete="tel" inputmode="tel">
 		</label>
 		<?php if ( ! empty( $meta['datetime'] ) ) : ?>
 			<label>
