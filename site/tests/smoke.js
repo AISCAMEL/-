@@ -107,9 +107,23 @@ const MOBILE = [
       try {
         await pg.goto(BASE + '/' + url, { waitUntil: 'domcontentloaded', timeout: 15000 });
         await pg.waitForTimeout(300);
-        const m = await pg.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
+        const m = await pg.evaluate(() => {
+          var sw = document.documentElement.scrollWidth, cw = document.documentElement.clientWidth;
+          var offender = '';
+          if (sw > cw + 1) {
+            var all = document.querySelectorAll('*');
+            for (var i = 0; i < all.length; i++) {
+              var r = all[i].getBoundingClientRect();
+              if (r.right > cw + 1) {
+                offender = all[i].tagName + (all[i].id ? '#'+all[i].id : '') + '.' + (all[i].className||'').toString().replace(/\s+/g,'.').slice(0,40) + ' right=' + Math.round(r.right);
+                break;
+              }
+            }
+          }
+          return { sw: sw, cw: cw, offender: offender };
+        });
         ok = m.sw <= m.cw + 1;
-        detail = 'sw=' + m.sw + '/cw=' + m.cw + (ok ? '' : ' ⚠ 横はみ出し');
+        detail = 'sw=' + m.sw + '/cw=' + m.cw + (ok ? '' : ' ⚠ 横はみ出し' + (m.offender ? ' / ' + m.offender : ''));
       } catch (e) { detail = 'EXCEPTION ' + String(e).slice(0, 60); }
       results.push(['[mobile] ' + url, ok, detail]);
       await ctx.close();
