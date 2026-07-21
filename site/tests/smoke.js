@@ -109,21 +109,15 @@ const MOBILE = [
         await pg.waitForTimeout(300);
         const m = await pg.evaluate(() => {
           var sw = document.documentElement.scrollWidth, cw = document.documentElement.clientWidth;
-          var offender = '';
+          var info = '';
           if (sw > cw + 1) {
-            var all = document.querySelectorAll('*');
-            for (var i = 0; i < all.length; i++) {
-              var r = all[i].getBoundingClientRect();
-              if (r.right > cw + 1) {
-                offender = all[i].tagName + (all[i].id ? '#'+all[i].id : '') + '.' + (all[i].className||'').toString().replace(/\s+/g,'.').slice(0,40) + ' right=' + Math.round(r.right);
-                break;
-              }
-            }
+            function qs(sel) { var el = document.querySelector(sel); return el ? el.getBoundingClientRect().right + '/' + el.scrollWidth : 'n/a'; }
+            info = 'header=' + qs('.portal-header') + ' hdrCont=' + qs('.portal-header .container') + ' nav=' + qs('.portal-nav') + ' main=' + qs('.portal-main') + ' mCont=' + qs('.portal-main .container');
           }
-          return { sw: sw, cw: cw, offender: offender };
+          return { sw: sw, cw: cw, info: info };
         });
         ok = m.sw <= m.cw + 1;
-        detail = 'sw=' + m.sw + '/cw=' + m.cw + (ok ? '' : ' ⚠ 横はみ出し' + (m.offender ? ' / ' + m.offender : ''));
+        detail = 'sw=' + m.sw + '/cw=' + m.cw + (ok ? '' : ' ⚠ 横はみ出し | ' + m.info);
       } catch (e) { detail = 'EXCEPTION ' + String(e).slice(0, 60); }
       results.push(['[mobile] ' + url, ok, detail]);
       await ctx.close();
