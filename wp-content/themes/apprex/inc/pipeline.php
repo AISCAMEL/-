@@ -197,6 +197,94 @@ add_action( 'admin_post_apprex_pipeline_save', function () {
 	exit;
 } );
 
+/** 直近N日でスコアがしきい値以上のホットリード件数。 */
+function apprex_kpi_hotlead_count( $days = 30 ) {
+	$ids = get_posts(
+		array(
+			'post_type'      => 'apprex_inquiry',
+			'post_status'    => 'publish',
+			'posts_per_page' => 300,
+			'fields'         => 'ids',
+			'date_query'     => array( array( 'after' => $days . ' days ago' ) ),
+			'no_found_rows'  => true,
+		)
+	);
+	$threshold = (int) get_option( 'apprex_hotlead_threshold', 60 );
+	$n = 0;
+	foreach ( $ids as $id ) {
+		$age   = ( current_time( 'timestamp' ) - get_post_time( 'U', true, $id ) ) / DAY_IN_SECONDS;
+		$score = apprex_lead_score(
+			(string) get_post_meta( $id, 'apprex_type', true ),
+			(string) get_post_meta( $id, 'apprex_phone', true ),
+			(string) get_post_meta( $id, 'apprex_company', true ),
+			(string) get_post_meta( $id, 'apprex_message', true ),
+			$age
+		);
+		if ( $score >= $threshold ) {
+			$n++;
+		}
+	}
+	return $n;
+}
+
+/* KPI（案件獲得エンジンの効果測定）をダッシュボードに描画。 */
+add_action( 'apprex_dashboard_after_overdue', 'apprex_kpi_render', 20 );
+function apprex_kpi_render() {
+	if ( ! function_exists( 'apprex_dash_count' ) ) {
+		return;
+	}
+	$c = function ( $pt, $st, $meta = array(), $month = false ) {
+		return apprex_dash_count( $pt, $st, $meta, $month );
+	};
+
+	// アポ（ミーティング予約）。
+	$appt_month = $c( 'apprex_inquiry', 'publish', array( 'meta_key' => 'apprex_type', 'meta_value' => 'meeting' ), true );
+	$appt_total = $c( 'apprex_inquiry', 'publish', array( 'meta_key' => 'apprex_type', 'meta_value' => 'meeting' ) );
+
+	// チャット。
+	$chat_month  = $c( 'apprex_chatlog', 'publish', array(), true );
+	$chat_total  = $c( 'apprex_chatlog', 'publish' );
+	$clead_month = $c( 'apprex_inquiry', 'publish', array( 'meta_key' => 'apprex_source', 'meta_value' => 'chat' ), true );
+	$clead_total = $c( 'apprex_inquiry', 'publish', array( 'meta_key' => 'apprex_source', 'meta_value' => 'chat' ) );
+
+	// SEO記事。
+	$post_month = $c( 'post', 'publish', array(), true );
+	$ai_total   = $c( 'post', 'publish', array( 'meta_key' => '_apprex_ai_generated', 'meta_value' => '1' ) );
+
+	// 全体件数（転換率用）。
+	$inq_total = $c( 'apprex_inquiry', 'publish' );
+	$con_total = function_exists( 'apprex_get_contracts' ) ? count( apprex_get_contracts() ) : $c( 'apprex_contract', 'publish' );
+
+	$hot30 = apprex_kpi_hotlead_count( 30 );
+
+	$rate = function ( $num, $den ) {
+		return $den > 0 ? round( $num / $den * 100, 1 ) . '%' : '—';
+	};
+	$card = function ( $label, $value, $sub, $color ) {
+		echo '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;box-shadow:0 1px 2px rgba(0,0,0,.04);">'
+			. '<div style="font-size:12px;color:#6b7280;">' . esc_html( $label ) . '</div>'
+			. '<div style="font-size:24px;font-weight:800;color:' . esc_attr( $color ) . ';margin-top:2px;">' . esc_html( $value ) . '</div>'
+			. '<div style="font-size:11px;color:#9ca3af;">' . esc_html( $sub ) . '</div></div>';
+	};
+	?>
+	<hr style="margin:28px 0;">
+	<h2>📊 KPI（案件獲得エンジン）</h2>
+	<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;max-width:960px;">
+		<?php
+		$card( 'アポ獲得（今月）', (string) $appt_month, '累計 ' . $appt_total . '件', '#16a34a' );
+		$card( 'ホットリード（30日）', (string) $hot30, 'スコア' . (int) get_option( 'apprex_hotlead_threshold', 60 ) . '点以上', '#dc2626' );
+		$card( 'チャット会話（今月）', (string) $chat_month, '累計 ' . $chat_total . '件', '#2563eb' );
+		$card( 'チャット経由リード（今月）', (string) $clead_month, '累計 ' . $clead_total . '件', '#2563eb' );
+		$card( 'チャットCV率', $rate( $clead_total, $chat_total ), 'チャットリード ÷ 会話数', '#7c3aed' );
+		$card( 'リード→アポ率', $rate( $appt_total, $inq_total ), 'アポ ÷ 問い合わせ', '#0891b2' );
+		$card( 'アポ→受注率', $rate( $con_total, $appt_total ), '契約 ÷ アポ', '#0891b2' );
+		$card( '記事公開（今月）', (string) $post_month, 'AI生成 累計 ' . $ai_total . '本', '#d97706' );
+		?>
+	</div>
+	<p style="color:#9ca3af;font-size:12px;max-width:960px;">アポ＝ミーティング予約の問い合わせ。チャットCV率＝会話からリード化した割合。数字が伸びない箇所（集客／チャット対応／アポ化／受注化）が、次に手を打つべきボトルネックです。</p>
+	<?php
+}
+
 /* ダッシュボードに描画。 */
 add_action( 'apprex_dashboard_after_overdue', 'apprex_pipeline_render' );
 function apprex_pipeline_render() {
