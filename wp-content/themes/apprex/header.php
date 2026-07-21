@@ -57,8 +57,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<?php esc_html_e( 'マイページ', 'apprex' ); ?>
 				</a>
 			<?php endif; ?>
-			<a class="btn btn--primary" href="<?php echo esc_url( apprex_page_url( 'free-trial' ) ); ?>">
-				<?php esc_html_e( '無料体験を始める', 'apprex' ); ?>
+			<a class="btn btn--primary" href="<?php echo esc_url( apprex_page_url( 'meeting' ) ); ?>">
+				<?php esc_html_e( '無料で相談', 'apprex' ); ?>
 			</a>
 		</div>
 
@@ -81,8 +81,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 		)
 	);
 	?>
-	<a class="btn btn--primary btn--block" href="<?php echo esc_url( apprex_page_url( 'free-trial' ) ); ?>">
-		<?php esc_html_e( '無料体験を始める', 'apprex' ); ?>
+	<a class="btn btn--primary btn--block" href="<?php echo esc_url( apprex_page_url( 'meeting' ) ); ?>">
+		<?php esc_html_e( '無料で相談', 'apprex' ); ?>
 	</a>
 </div>
 
