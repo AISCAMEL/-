@@ -60,6 +60,10 @@
     if (val) return e(val);
     return '<span class="u" style="min-width:' + (minw || 80) + 'px">&nbsp;</span>';
   }
+  function yen(val) {
+    val = String(val == null ? "" : val).replace(/[^\d]/g, "");
+    return val ? "￥" + Number(val).toLocaleString() : v("", 100);
+  }
   function box(on, label) {
     return '<span><i class="box' + (on ? " on" : "") + '"></i>' + label + "</span>";
   }
@@ -103,6 +107,9 @@
   }
   function jpDate(d) {
     return d && d.d_date ? e(d.d_date) : '令和　<span class="u">　</span>　年　<span class="u">　</span>　月　<span class="u">　</span>　日';
+  }
+  function jpDate2(val) {
+    return val ? e(val) : '令和　<span class="u">　</span>　年　<span class="u">　</span>　月　<span class="u">　</span>　日';
   }
 
   /* ============================ 書類定義 ============================ */
@@ -279,6 +286,70 @@
         );
       }
     },
+    /* 11. 出品結果報告書 */
+    {
+      id: "shuppin_report", name: "出品結果報告書", cat: "報告", groups: ["owner", "vehicle", "report"],
+      render: function (d) {
+        return page("出品結果報告書", "",
+          '<p class="lead">下記自動車の出品について、結果を以下のとおりご報告いたします。</p>' +
+          '<table class="form"><tr><th>お客様氏名</th><td>' + v(d.o_name, 140) + '</td><th style="width:16%">報告日</th><td>' + jpDate2(d.r_date) + "</td></tr>" +
+          "<tr><th>出品会場</th><td>" + v(d.r_venue, 120) + "</td><th>担当</th><td>" + v(d.r_staff, 80) + "</td></tr></table>" +
+          '<div class="sec">出品車両</div><table class="form">' + vehicleRows(d, { detail: true }) + "</table>" +
+          '<div class="sec">出品結果</div><table class="form">' +
+          "<tr><th>結果</th><td>" + v(d.r_result, 100) + '</td><th style="width:16%">落札額</th><td class="amt">' + yen(d.r_amount) + "</td></tr>" +
+          "<tr><th>出品代行手数料・諸費用</th><td>" + yen(d.r_fee) + "</td><th>差引お手取り</th><td class=\"amt\">" + yen(d.r_net) + "</td></tr></table>" +
+          '<div class="sec">コメント</div><table class="form"><tr><td style="height:56px;vertical-align:top">' + e(d.r_comment || "") + "</td></tr></table>" +
+          '<p class="note">※ 金額は確定時点の内容です。ご不明点は担当（' + CO.tel + "）までお問い合わせください。</p>"
+        );
+      }
+    },
+    /* 12. 落札（購入）結果報告書 */
+    {
+      id: "rakusatsu_report", name: "落札結果報告書", cat: "報告", groups: ["owner", "vehicle", "report"],
+      render: function (d) {
+        return page("落札結果報告書", "購入代行",
+          '<p class="lead">ご依頼の車両について、下記のとおり落札・購入結果をご報告いたします。</p>' +
+          '<table class="form"><tr><th>お客様氏名</th><td>' + v(d.o_name, 140) + '</td><th style="width:16%">報告日</th><td>' + jpDate2(d.r_date) + "</td></tr>" +
+          "<tr><th>落札会場</th><td>" + v(d.r_venue, 120) + "</td><th>担当</th><td>" + v(d.r_staff, 80) + "</td></tr></table>" +
+          '<div class="sec">落札車両</div><table class="form">' + vehicleRows(d, { detail: true }) + "</table>" +
+          '<div class="sec">ご請求内訳</div><table class="form">' +
+          "<tr><th>落札価格</th><td class=\"amt\">" + yen(d.r_amount) + '</td><th style="width:16%">結果</th><td>' + v(d.r_result || "成約", 80) + "</td></tr>" +
+          "<tr><th>代行手数料・諸費用</th><td>" + yen(d.r_fee) + "</td><th>お支払総額</th><td class=\"amt\">" + yen(d.r_net) + "</td></tr></table>" +
+          '<div class="sec">コメント・納車予定</div><table class="form"><tr><td style="height:56px;vertical-align:top">' + e(d.r_comment || "") + "</td></tr></table>" +
+          '<p class="note">※ 総額は確定時点の内容です。名義変更・陸送の進捗は別途ご連絡いたします。</p>'
+        );
+      }
+    },
+    /* 13. トラブル対応報告書 */
+    {
+      id: "trouble_report", name: "トラブル対応報告書", cat: "報告", groups: ["owner", "vehicle", "trouble"],
+      render: function (d) {
+        return page("トラブル対応報告書", "社内・お客様向け",
+          '<table class="form"><tr><th>発生日</th><td>' + jpDate2(d.tr_date) + '</td><th style="width:16%">区分</th><td>' + v(d.tr_type, 100) + "</td></tr>" +
+          "<tr><th>お客様氏名</th><td>" + v(d.o_name, 140) + "</td><th>担当</th><td>" + v(d.r_staff, 80) + "</td></tr>" +
+          "<tr><th>対象車両</th><td colspan=\"3\">" + v((d.v_name || "") + (d.v_regno ? "／" + d.v_regno : ""), 200) + "</td></tr></table>" +
+          '<div class="sec">発生内容</div><table class="form"><tr><td style="height:52px;vertical-align:top">' + e(d.tr_detail || "") + "</td></tr></table>" +
+          '<div class="sec">原因</div><table class="form"><tr><td style="height:44px;vertical-align:top">' + e(d.tr_cause || "") + "</td></tr></table>" +
+          '<div class="sec">対応内容</div><table class="form"><tr><td style="height:52px;vertical-align:top">' + e(d.tr_action || "") + "</td></tr></table>" +
+          '<table class="form"><tr><th style="width:32%">結果</th><td>' + v(d.tr_result, 120) + "</td></tr></table>" +
+          '<div class="sec">再発防止策</div><table class="form"><tr><td style="height:44px;vertical-align:top">' + e(d.tr_prevent || "") + "</td></tr></table>" +
+          '<p class="note">※ クレーム期間・違約金等の判断は契約書・利用規約に準じます。重大案件は責任者へ即時共有してください。</p>'
+        );
+      }
+    },
+    /* 14. 業務日報 */
+    {
+      id: "nippo", name: "業務日報", cat: "報告", groups: ["nippo"],
+      render: function (d) {
+        function cnt(l, val) { return '<td style="text-align:center"><div style="font-size:11px;color:#555">' + l + '</div><div style="font-size:18px;font-weight:800">' + (val ? e(val) : "―") + "</div></td>"; }
+        return page("業務日報", "",
+          '<table class="form"><tr><th>日付</th><td>' + jpDate2(d.r_date) + '</td><th style="width:16%">担当</th><td>' + v(d.r_staff, 100) + "</td></tr></table>" +
+          '<div class="sec">当日の件数</div><table class="form"><tr>' + cnt("出品", d.n_ship) + cnt("落札", d.n_win) + cnt("納車", d.n_deliver) + cnt("問合せ", d.n_inq) + "</tr></table>" +
+          '<div class="sec">特記事項・対応内容</div><table class="form"><tr><td style="height:120px;vertical-align:top">' + e(d.r_comment || "") + "</td></tr></table>" +
+          '<div class="sec">翌日の予定</div><table class="form"><tr><td style="height:60px;vertical-align:top">' + e(d.n_next || "") + "</td></tr></table>"
+        );
+      }
+    },
     /* 10. 必要書類チェックリスト（データ不要） */
     {
       id: "checklist", name: "必要書類チェックリスト", cat: "査定", groups: [],
@@ -346,6 +417,42 @@
         { k: "m_repair_where", l: "修復歴の箇所", ph: "リアフロア 等" },
         { k: "m_equip", l: "装備メモ", ph: "純正ナビ・ETC 等" },
         { k: "m_note", l: "外装キズ等メモ", ph: "左後ドアに小キズ 等", wide: true }
+      ]
+    },
+    report: {
+      label: "報告内容", items: [
+        { k: "r_date", l: "報告日", ph: "令和7年7月21日" },
+        { k: "r_venue", l: "会場", ph: "USSいわき 等" },
+        { k: "r_result", l: "結果", type: "select", opts: ["", "落札", "流札", "成約", "キャンセル", "保留"] },
+        { k: "r_amount", l: "落札額／総額(円)", ph: "1200000" },
+        { k: "r_fee", l: "手数料・諸費用(円)", ph: "70800" },
+        { k: "r_net", l: "手取り／お支払総額(円)", ph: "1129200" },
+        { k: "r_staff", l: "担当", ph: "吉田" },
+        { k: "r_comment", l: "コメント", ph: "次回◯◯会場へ再出品予定 等", wide: true }
+      ]
+    },
+    trouble: {
+      label: "トラブル内容", items: [
+        { k: "tr_date", l: "発生日", ph: "令和7年7月20日" },
+        { k: "tr_type", l: "区分", type: "select", opts: ["", "クレーム", "名義変更遅延", "車両不具合", "入金・振込", "陸送", "書類不備", "その他"] },
+        { k: "tr_detail", l: "発生内容", ph: "納車後にエンジン警告灯 等", wide: true },
+        { k: "tr_cause", l: "原因", ph: "出品時の申告漏れ 等", wide: true },
+        { k: "tr_action", l: "対応内容", ph: "会場クレーム申請・返品交渉 等", wide: true },
+        { k: "tr_result", l: "結果", type: "select", opts: ["", "解決", "対応中", "継続監視"] },
+        { k: "tr_prevent", l: "再発防止策", ph: "検車チェック項目に追加 等", wide: true },
+        { k: "r_staff", l: "担当", ph: "吉田" }
+      ]
+    },
+    nippo: {
+      label: "業務日報", items: [
+        { k: "r_date", l: "日付", ph: "令和7年7月21日" },
+        { k: "r_staff", l: "担当", ph: "吉田" },
+        { k: "n_ship", l: "出品件数", ph: "3" },
+        { k: "n_win", l: "落札件数", ph: "2" },
+        { k: "n_deliver", l: "納車件数", ph: "1" },
+        { k: "n_inq", l: "問合せ件数", ph: "5" },
+        { k: "r_comment", l: "特記事項・対応内容", ph: "…", wide: true },
+        { k: "n_next", l: "翌日の予定", ph: "…", wide: true }
       ]
     },
     tetsuzuki: {

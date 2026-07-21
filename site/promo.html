@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>販促ツール｜AUC-AGENT 会員サイト</title>
+<meta name="description" content="AUC-AGENT スタッフ向け 販促ツール。チラシ見出し、LINE配信、SNS投稿、紹介カード、営業メール、クチコミ依頼の文面テンプレートをコピーして使えます。" />
+<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png" />
+<link rel="apple-touch-icon" href="assets/img/favicon-180.png" />
+<link rel="stylesheet" href="assets/css/style.css" />
+<style>
+  .tpl{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px;background:#fbfcfe;}
+  .tpl .th{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;}
+  .tpl .th b{font-size:14.5px;color:var(--navy);}
+  .tpl pre{white-space:pre-wrap;word-break:break-word;font:inherit;font-size:13.5px;line-height:1.85;color:var(--ink);margin:0;background:#fff;border:1px dashed var(--line);border-radius:8px;padding:12px 14px;}
+  .copied{color:var(--green);font-size:12px;font-weight:700;margin-left:6px;opacity:0;transition:.2s;}
+  .copied.on{opacity:1;}
+  .ph-note{font-size:12px;color:var(--muted);margin:0 0 14px;}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <span class="logo">A</span>
+      <span>AUC-AGENT<small>CAR AUCTION AGENT</small></span>
+    </a>
+    <nav class="nav">
+      <a class="nav-link" href="mypage.html">マイページ</a>
+      <a class="nav-link" href="sell.html">出品代行</a>
+      <a class="btn btn-ghost btn-sm" href="#" id="logoutBtn">ログアウト</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-head">
+  <div class="wrap">
+    <h1>販促ツール</h1>
+    <p>チラシ・LINE・SNS・紹介・メールなどの文面テンプレートです。「コピー」して、そのまま、または一部を書き換えてご利用ください。</p>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="mp-grid">
+    <aside class="mp-side">
+      <nav class="mp-nav">
+        <a href="#copy" class="active">🏷️ キャッチコピー</a>
+        <a href="#line">💬 LINE配信</a>
+        <a href="#sns">📱 SNS投稿</a>
+        <a href="#refer">🎁 紹介カード</a>
+        <a href="#mail">✉️ 営業メール</a>
+        <a href="#review">⭐ クチコミ依頼</a>
+        <a href="mypage.html">← マイページへ戻る</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="panel">
+        <div class="panel-body">
+          <p class="ph-note" style="margin:0;"><b>【　】は差し込み箇所</b>です（例：【車種】【金額】【お名前】）。実際の情報に置き換えてください。景品表示法・薬機法等に配慮し、断定的・誇大な表現は避けてください。</p>
+        </div>
+      </section>
+
+      <section class="panel" id="copy">
+        <div class="panel-head"><h3>🏷️ キャッチコピー／チラシ見出し</h3></div>
+        <div class="panel-body">
+          <div class="tpl">
+            <div class="th"><b>購入代行（安さ訴求）</b><button class="btn btn-navy btn-sm" data-copy>コピー<span class="copied">✓ コピー済</span></button></div>
+            <pre>【福島・いわき】オークション代行で"中間マージンをカット"。
+欲しい車を、業者価格＋明朗な手数料で。
+総額シミュレーションで、いくらで買えるかその場でわかる。</pre>
+          </div>
+          <div class="tpl">
+            <div class="th"><b>出品代行（高く売る訴求）</b><button class="btn btn-navy btn-sm" data-copy>コピー<span class="copied">✓ コピー済</span></button></div>
+            <pre>愛車、下取りに出す前に。
+全国のオートオークションに"あなたの1台"を出品代行。
+流札は無料。手取りシミュレーションでいくら残るか丸わかり。</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="line">
+        <div class="panel-head"><h3>💬 LINE配信</h3></div>
+        <div class="panel-body">
+          <div class="tpl">
+            <div class="th"><b>新着・入荷案内</b><button class="btn btn-navy btn-sm" data-copy>コピー<span class="copied">✓ コピー済</span></button></div>
+            <pre>【AUC-AGENT】お探しの条件で入荷しました🚗
+◆【車種】／【年式】／走行【走行】km
+◆想定総額：約【金額】円（手数料・陸送込み目安）
+気になる方はこのままメッセージで「詳細希望」とご返信ください。
+※オークション相場のため、お早めのご連絡がおすすめです。</pre>
+          </div>
+          <div class="tpl">
+            <div class="th"><b>キャンペーン告知</b><button class="btn btn-navy btn-sm" data-copy>コピー<span class="copied">✓ コピー済</span></button></div>
+            <pre>【期間限定】出品代行キャンペーン🎉
+今なら内外装クリーニングが特別価格！
+「高く売りたい」あなたの愛車、まずは無料の想定査定から。
+▶ ご希望の方は「査定希望」とご返信ください。</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="sns">
+        <div class="panel-head"><h3>📱 SNS投稿（X / Instagram）</h3></div>
+        <div class="panel-body">
+          <div class="tpl">
+            <div class="th"><b>X（旧Twitter）</b><button class="btn btn-navy btn-sm" data-copy>コピー<span class="copied">✓ コピー済</span></button></div>
+            <pre>車、買うのも売るのもオークション代行という選択。
+中間マージンをカットして、明朗な手数料で。
+総額・手取りはその場でシミュレーション👇
+#いわき #福島 #中古車 #オークション代行 #車買取</pre>
+          </div>
+          <div class="tpl">
+            <div class="th"><b>Instagram</b><button class="btn btn-navy btn-sm" data-copy>コピー<span class="copied">✓ コピー済</span></button></div>
+            <pre>\ 愛車、いくらで売れる？ /
+全国のオートオークションへ出品代行🚗💨
+▶ 流札は無料
+▶ 手取りシミュレーションで安心
+▶ 名義変更・書類もおまかせ
+気になる方はプロフィールのリンク or DMへ📩
+#車売るなら #オークション代行 #いわき市 #福島県 #アルファード #ハイエース</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="refer">
+        <div class="panel-head"><h3>🎁 お友達紹介カード</h3></div>
+        <div class="panel-body">
+          <div class="tpl">
+            <div class="th"><b>紹介カード文面</b><button class="btn btn-navy btn-sm" data-copy>コピー<span class="copied">✓ コピー済</span></button></div>
+            <pre>◤ ご紹介カード ◢  AUC-AGENT
+車の購入・売却をお考えのお友達へ。
+このカードをご提示いただくと、初回手数料を特典価格でご案内します。
+ご紹介者：【お名前】さん
+─────────────
+合同会社アイズ（AUC-AGENT）
+TEL 050-1722-3365 / info@aisjaltd.com
+福島県いわき市四倉町細谷字大町1番</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="mail">
+        <div class="panel-head"><h3>✉️ 営業メール</h3></div>
+        <div class="panel-body">
+          <div class="tpl">
+            <div class="th"><b>査定案内メール</b><button class="btn btn-navy btn-sm" data-copy>コピー<span class="copied">✓ コピー済</span></button></div>
+            <pre>件名：【AUC-AGENT】愛車の想定査定額のご案内
+
+【お名前】様
+
+お世話になっております。AUC-AGENT（合同会社アイズ）です。
+ご相談いただいた【車種】について、直近のオートオークション成約実績をもとに
+想定売却額のレンジをお出しできます。
+
+・想定売却レンジ：約【金額】円〜【金額】円
+・出品料は流札の場合は無料です。
+
+正式なお手続きの前に、まずは想定手取りをご確認ください。
+ご不明点はこのメールへご返信ください。
+
+────────────────
+合同会社アイズ（AUC-AGENT）
+TEL 050-1722-3365 / info@aisjaltd.com</pre>
+          </div>
+          <div class="tpl">
+            <div class="th"><b>成約後フォローメール</b><button class="btn btn-navy btn-sm" data-copy>コピー<span class="copied">✓ コピー済</span></button></div>
+            <pre>件名：【AUC-AGENT】この度はありがとうございました
+
+【お名前】様
+
+先日はご利用いただき誠にありがとうございました。
+お車のお手続きは滞りなく完了いたしました。
+
+今後、ご購入・ご売却のご予定がございましたら、いつでもご相談ください。
+よろしければ、ご感想を一言お寄せいただけますと励みになります。
+
+────────────────
+合同会社アイズ（AUC-AGENT）
+TEL 050-1722-3365 / info@aisjaltd.com</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="review">
+        <div class="panel-head"><h3>⭐ クチコミ依頼</h3></div>
+        <div class="panel-body">
+          <div class="tpl">
+            <div class="th"><b>Googleクチコミ依頼</b><button class="btn btn-navy btn-sm" data-copy>コピー<span class="copied">✓ コピー済</span></button></div>
+            <pre>この度はAUC-AGENTをご利用いただきありがとうございました。
+もしよろしければ、今後のサービス向上のため
+Googleのクチコミにご感想をいただけますと幸いです。
+▶ クチコミURL：【URLを貼付】
+所要1分ほどです。今後ともよろしくお願いいたします。</pre>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="copy">© 2026 合同会社アイズ（AUC-AGENT）. いわき市／福島拠点. 会員向け資料（デモ）。</div>
+  </div>
+</footer>
+
+<script src="assets/js/app.js"></script>
+<script>
+  // コピー機能
+  document.querySelectorAll("[data-copy]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var pre = btn.closest(".tpl").querySelector("pre");
+      var txt = pre.innerText;
+      var badge = btn.querySelector(".copied");
+      var done = function () { if (badge) { badge.classList.add("on"); setTimeout(function () { badge.classList.remove("on"); }, 1500); } };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, function () {});
+      else {
+        var r = document.createRange(); r.selectNode(pre);
+        var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        try { document.execCommand("copy"); done(); } catch (e) {}
+        s.removeAllRanges();
+      }
+    });
+  });
+
+  if (!AucAuth.current()) { location.href = "login.html"; }
+  document.getElementById("logoutBtn").onclick = function (e) {
+    e.preventDefault(); AucAuth.logout(); location.href = "index.html";
+  };
+</script>
+</body>
+</html>
