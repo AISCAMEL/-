@@ -20,7 +20,13 @@ $apprex_estimate = home_url( '/estimate/' );
 $apprex_meeting  = function_exists( 'apprex_meeting_url' ) ? apprex_meeting_url() : $apprex_contact;
 
 $apprex_title = get_the_title();
-$apprex_lead  = has_excerpt() ? get_the_excerpt() : '全国どこからでも、ノーコードでiOS/Androidアプリを開発。初期費用0円・月額19,800円〜、最短2週間で公開。オンラインで完結するので、47都道府県どこでも対応します。';
+$apprex_area  = trim( (string) get_post_meta( get_the_ID(), '_apprex_area', true ) ); // 例：東京都（空なら全国）。
+$apprex_lead  = has_excerpt() ? get_the_excerpt() : (
+	$apprex_area
+		? $apprex_area . 'のアプリ開発・ホームページ制作なら APPREX。オンライン完結だから、' . $apprex_area . 'のお客様にも初期費用0円・月額19,800円〜、最短2週間で対応します。まずは無料でご相談ください。'
+		: '全国どこからでも、ノーコードでiOS/Androidアプリを開発。初期費用0円・月額19,800円〜、最短2週間で公開。オンラインで完結するので、47都道府県どこでも対応します。'
+);
+$apprex_badge = $apprex_area ? '🗾 ' . $apprex_area . '対応・全国オンライン' : '🗾 全国47都道府県 対応';
 
 /* 特徴 */
 $apprex_feats = array(
@@ -68,11 +74,11 @@ $apprex_prefs = array(
 <article class="nlp">
 	<section class="page-hero nlp-hero">
 		<div class="container">
-			<span class="nlp-badge">🗾 全国47都道府県 対応</span>
+			<span class="nlp-badge"><?php echo esc_html( $apprex_badge ); ?></span>
 			<h1><?php echo esc_html( $apprex_title ); ?></h1>
 			<p><?php echo esc_html( $apprex_lead ); ?></p>
 			<div class="nlp-hero__cta">
-				<a class="btn btn--cta" href="<?php echo esc_url( $apprex_meeting ); ?>"><?php esc_html_e( '無料でオンライン相談', 'apprex' ); ?></a>
+				<a class="btn btn--cta" href="#lp-contact"><?php esc_html_e( 'この場で無料相談・問い合わせ', 'apprex' ); ?></a>
 				<a class="btn btn--ghost" href="<?php echo esc_url( $apprex_estimate ); ?>"><?php esc_html_e( '料金をシミュレーション', 'apprex' ); ?></a>
 			</div>
 		</div>
@@ -188,6 +194,29 @@ $apprex_prefs = array(
 		</div>
 	</section>
 
+	<section class="section" id="lp-contact">
+		<div class="container">
+			<?php
+			$apprex_ctitle = $apprex_area ? $apprex_area . 'から、まずはご相談・お問い合わせ' : '全国どこからでも、まずはご相談・お問い合わせ';
+			apprex_section_head( 'Contact', $apprex_ctitle, 'オンライン完結・全国対応。担当者より2営業日以内にご連絡します。しつこい営業はいたしません。' );
+			?>
+			<div class="nlp-contact">
+				<div class="nlp-contact__trust">
+					<ul>
+						<li>✅ 全国どこからでもオンラインで完結</li>
+						<li>✅ 初期費用0円・月額19,800円〜</li>
+						<li>✅ 最短2週間で公開</li>
+						<li>✅ しつこい営業なし・相談無料</li>
+					</ul>
+					<a class="btn btn--ghost btn--block" href="<?php echo esc_url( $apprex_meeting ); ?>" target="_blank" rel="noopener"><?php esc_html_e( '日程を選んでWeb相談を予約', 'apprex' ); ?></a>
+				</div>
+				<div class="nlp-contact__form">
+					<?php apprex_render_form( 'contact' ); ?>
+				</div>
+			</div>
+		</div>
+	</section>
+
 	<section class="section nlp-cta">
 		<div class="container" style="text-align:center;">
 			<h2><?php esc_html_e( 'まずは無料でご相談ください', 'apprex' ); ?></h2>
@@ -218,7 +247,9 @@ $apprex_ld = array(
 			'name'            => wp_strip_all_tags( $apprex_title ),
 			'serviceType'     => 'アプリ開発・ホームページ制作',
 			'provider'        => array( '@type' => 'Organization', 'name' => '合同会社アイズ（APPREX）' ),
-			'areaServed'      => array( '@type' => 'Country', 'name' => '日本' ),
+			'areaServed'      => $apprex_area
+				? array( '@type' => 'AdministrativeArea', 'name' => $apprex_area )
+				: array( '@type' => 'Country', 'name' => '日本' ),
 			'url'             => get_permalink(),
 			'description'     => wp_strip_all_tags( $apprex_lead ),
 		),

@@ -316,3 +316,39 @@ function apprex_lp_render_page( $post_id ) {
 	<?php
 	wp_reset_postdata();
 }
+
+/* -------------------------------------------------------------------------
+ * 全国SEO LP：対象エリア（都道府県）メタボックス
+ * ---------------------------------------------------------------------- */
+add_action( 'add_meta_boxes', function () {
+	add_meta_box( 'apprex_area_meta', '全国SEO LP：対象エリア', 'apprex_area_metabox', 'page', 'side', 'default' );
+} );
+function apprex_area_metabox( $post ) {
+	wp_nonce_field( 'apprex_area', 'apprex_area_nonce' );
+	$v     = (string) get_post_meta( $post->ID, '_apprex_area', true );
+	$prefs = array(
+		'北海道', '青森県', '岩手県', '宮城県', '秋田県', '山形県', '福島県', '茨城県', '栃木県', '群馬県',
+		'埼玉県', '千葉県', '東京都', '神奈川県', '新潟県', '富山県', '石川県', '福井県', '山梨県', '長野県',
+		'岐阜県', '静岡県', '愛知県', '三重県', '滋賀県', '京都府', '大阪府', '兵庫県', '奈良県', '和歌山県',
+		'鳥取県', '島根県', '岡山県', '広島県', '山口県', '徳島県', '香川県', '愛媛県', '高知県',
+		'福岡県', '佐賀県', '長崎県', '熊本県', '大分県', '宮崎県', '鹿児島県', '沖縄県',
+	);
+	echo '<p style="color:#666;font-size:12px;">テンプレート「全国SEO LP（HP型・ボリューム版）」で地域特化ページにする場合に選択（空＝全国向け）。見出し・リード・構造化データが選んだ地域に最適化されます。</p>';
+	echo '<select name="apprex_area" style="width:100%;"><option value="">（全国向け）</option>';
+	foreach ( $prefs as $p ) {
+		printf( '<option value="%s"%s>%s</option>', esc_attr( $p ), selected( $v, $p, false ), esc_html( $p ) );
+	}
+	echo '</select>';
+}
+add_action( 'save_post_page', function ( $post_id ) {
+	if ( ! isset( $_POST['apprex_area_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['apprex_area_nonce'] ) ), 'apprex_area' ) ) {
+		return;
+	}
+	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+		return;
+	}
+	if ( ! current_user_can( 'edit_page', $post_id ) ) {
+		return;
+	}
+	update_post_meta( $post_id, '_apprex_area', sanitize_text_field( wp_unslash( $_POST['apprex_area'] ?? '' ) ) );
+} );
