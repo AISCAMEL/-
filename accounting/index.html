@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>クラウド会計（自社版） | 合同会社アイズ</title>
+  <meta name="description" content="サーバー不要・ブラウザ単体で動く自社会計ソフト。複式簿記・請求書・経費・消費税集計に対応。">
+  <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+  <div id="app">
+    <div style="padding:3rem;text-align:center;color:#667">読み込み中…</div>
+  </div>
+
+  <!-- 依存の順に読み込む（ビルド不要・ES モジュール不使用） -->
+  <script src="assets/js/util.js"></script>
+  <script src="assets/js/accounts.js"></script>
+  <script src="assets/js/db.js"></script>
+  <script src="assets/js/store.js"></script>
+  <script src="assets/js/reports.js"></script>
+  <script src="assets/js/ui.js"></script>
+  <!-- 画面（自身でルート登録） -->
+  <script src="assets/js/pages/dashboard.js"></script>
+  <script src="assets/js/pages/journal.js"></script>
+  <script src="assets/js/pages/ledger.js"></script>
+  <script src="assets/js/pages/reports-page.js"></script>
+  <script src="assets/js/pages/invoices.js"></script>
+  <script src="assets/js/pages/expenses.js"></script>
+  <script src="assets/js/pages/tax.js"></script>
+  <script src="assets/js/pages/partners.js"></script>
+  <script src="assets/js/pages/settings.js"></script>
+  <!-- ブートストラップ（最後） -->
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
