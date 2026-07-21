@@ -170,6 +170,10 @@ select.sm-sel { padding: 4px 6px; font-size: 12px; min-width: 110px; }
 .rule-add { display: grid; grid-template-columns: 1fr 140px 140px auto; gap: 8px; align-items: center; }
 @media (max-width: 860px) { .rule-add { grid-template-columns: 1fr; } }
 
+/* ---- 部門チップ ------------------------------------------------------- */
+.chip-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 5px 8px 5px 12px; background: var(--brand-soft); color: var(--brand-dark); border-radius: 999px; font-size: 13px; font-weight: 600; }
+
 /* ---- 消費税 方式比較 -------------------------------------------------- */
 .compare { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
 .compare-item { text-align: center; padding: 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 12px; color: var(--muted); }

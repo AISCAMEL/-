@@ -180,6 +180,65 @@ A.reports = (function () {
     return summary.salesTax - summary.purchaseTax; // 原則課税
   };
 
+  /* ---- 部門別損益 ------------------------------------------------------
+   * 仕訳の dept ごとに、収益・費用・利益を集計する。
+   * departments = [{id,name}]。dept 未設定は「未配賦」に集計。
+   * ------------------------------------------------------------------- */
+  const deptSummary = (journals, start, end, departments) => {
+    const buckets = {}; // deptId -> {revenue, expense}
+    const ensure = (id) => (buckets[id] = buckets[id] || { revenue: 0, expense: 0 });
+    journals.forEach((j) => {
+      if (j.source === 'closing') return; // 決算振替は除外
+      if (!U.inRange(j.date, start, end)) return;
+      const id = j.dept || '_none';
+      const b = ensure(id);
+      (j.lines || []).forEach((l) => {
+        const cat = S.accounts.category(l.account);
+        if (cat === 'revenue') b.revenue += (l.side === 'credit' ? 1 : -1) * l.amount;
+        else if (cat === 'expense') b.expense += (l.side === 'debit' ? 1 : -1) * l.amount;
+      });
+    });
+    const rows = (departments || []).map((d) => {
+      const b = buckets[d.id] || { revenue: 0, expense: 0 };
+      return { id: d.id, name: d.name, revenue: b.revenue, expense: b.expense, profit: b.revenue - b.expense };
+    });
+    const none = buckets['_none'];
+    if (none && (none.revenue || none.expense)) rows.push({ id: '_none', name: '未配賦', revenue: none.revenue, expense: none.expense, profit: none.revenue - none.expense });
+    const total = rows.reduce((s, r) => { s.revenue += r.revenue; s.expense += r.expense; s.profit += r.profit; return s; }, { revenue: 0, expense: 0, profit: 0 });
+    return { rows, total };
+  };
+
+  /* ---- 消費税申告書の各欄（割戻し計算・概算） --------------------------
+   * 国税率：10%→7.8%、8%(軽減)→6.24%。地方消費税＝国税×22/78。
+   * summary = taxSummary() の結果。method/bizType で控除税額を切替。
+   * ------------------------------------------------------------------- */
+  const NATIONAL = { 10: 7.8, 8: 6.24 };
+  const floorTo = (n, unit) => (n < 0 ? -Math.floor(-n / unit) * unit : Math.floor(n / unit) * unit);
+  const taxReturnCalc = (summary, method, bizType) => {
+    // 税抜課税標準額（税率別）
+    const base = {};
+    let baseSum = 0, natTax = 0;
+    Object.keys(summary.salesByRate).forEach((r) => {
+      const gross = summary.salesByRate[r].gross;
+      const net = Math.floor(gross * 100 / (100 + Number(r)));
+      base[r] = net; baseSum += net;
+    });
+    const baseRounded = floorTo(baseSum, 1000); // 課税標準額（千円未満切捨）
+    Object.keys(base).forEach((r) => { natTax += Math.floor(base[r] * (NATIONAL[r] || 0) / 100); });
+    // 控除対象仕入税額（国税）
+    let deduction = 0;
+    if (method === 'special20') deduction = Math.floor(natTax * 0.8);
+    else if (method === 'simplified') { const rate = (DEEMED_RATES[bizType] || DEEMED_RATES[5]).rate; deduction = Math.floor(natTax * rate / 100); }
+    else Object.keys(summary.purchaseByRate).forEach((r) => { deduction += Math.floor(summary.purchaseByRate[r].gross * (NATIONAL[r] || 0) / (100 + Number(r))); });
+    const natPayable = floorTo(natTax - deduction, 100); // 差引税額（百円未満切捨）
+    const localTax = floorTo(natPayable * 22 / 78, 100);  // 地方消費税
+    return {
+      taxableBase: baseRounded, nationalTax: natTax, deduction,
+      nationalPayable: natPayable, localTax, totalPayable: natPayable + localTax,
+      byRate: base,
+    };
+  };
+
   /* ---- ダッシュボード用サマリ ----------------------------------------- */
   const dashboard = (journals, start, end) => {
     const st = statements(journals, start, end);
@@ -276,5 +335,5 @@ A.reports = (function () {
   const depForFiscalYear = (asset, fsMonth, fyStart) =>
     depSchedule(asset, fsMonth).find((r) => r.start === fyStart) || null;
 
-  return { flatLines, ledger, trialBalance, statements, taxSummary, dashboard, depSchedule, depForFiscalYear, DEEMED_RATES, taxPayable };
+  return { flatLines, ledger, trialBalance, statements, taxSummary, dashboard, depSchedule, depForFiscalYear, DEEMED_RATES, taxPayable, deptSummary, taxReturnCalc };
 })();

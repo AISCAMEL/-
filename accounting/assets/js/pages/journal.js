@@ -4,7 +4,7 @@ window.A = window.A || {};
   'use strict';
   const U = A.util, el = U.el, ui = A.ui, S = A.store;
   const TAX = A.accounts.TAX_CATEGORIES;
-  const SRC_LABEL = { invoice: '請求', expense: '入出金', import: '取込', depreciation: '減価償却', opening: '期首', closing: '決算', manual: '手入力' };
+  const SRC_LABEL = { invoice: '請求', expense: '入出金', import: '取込', depreciation: '減価償却', opening: '期首', closing: '決算', payroll: '給与', manual: '手入力' };
 
   // 勘定科目 <select>
   const accountSelect = (value) => {
@@ -62,6 +62,10 @@ window.A = window.A || {};
     const dateI = el('input', { type: 'date', value: j.date });
     const descI = el('input', { type: 'text', value: j.description || '', placeholder: '摘要（例：売上入金）' });
     const fileI = el('input', { type: 'file', accept: 'image/*,application/pdf' });
+    const depts = S.settings.get().departments || [];
+    const deptI = el('select');
+    deptI.appendChild(el('option', { value: '', text: '（部門なし）' }));
+    depts.forEach((d) => { const o = el('option', { value: d.id, text: d.name }); if (d.id === j.dept) o.selected = true; deptI.appendChild(o); });
     const debitBox = el('div.jlines');
     const creditBox = el('div.jlines');
     const summary = el('div.jsummary');
@@ -97,6 +101,7 @@ window.A = window.A || {};
       el('div.form-row', {}, [
         el('label', {}, [el('span', { text: '日付' }), dateI]),
         el('label.grow', {}, [el('span', { text: '摘要' }), descI]),
+        depts.length ? el('label', {}, [el('span', { text: '部門' }), deptI]) : null,
         el('label', {}, [el('span', { text: '証憑(任意)' }), fileI]),
       ]),
       el('div.dc-cols', {}, [
@@ -119,7 +124,7 @@ window.A = window.A || {};
         return ui.toast('各行に勘定科目と金額を入力してください', 'err');
       }
       if (!totals.balanced) return ui.toast('借方と貸方の合計が一致していません', 'err');
-      const rec = { ...j, date: dateI.value, description: descI.value, lines };
+      const rec = { ...j, date: dateI.value, description: descI.value, dept: deptI.value || '', lines };
       const saved = await S.journals.save(rec);
       if (fileI.files[0] && A.attachToJournal) { try { await A.attachToJournal(saved, fileI.files[0]); } catch (e) { ui.toast('証憑の保存に失敗: ' + e.message, 'err'); } }
       m.close();

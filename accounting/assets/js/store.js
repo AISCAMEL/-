@@ -232,5 +232,32 @@ A.store = (function () {
     },
   };
 
-  return { settings, accounts, partners, journals, invoices, assets, attachments };
+  /* ---- 給与明細 -------------------------------------------------------
+   * payslip = {
+   *   id, month('YYYY-MM'), employeeId, name, base, allowance, overtime, commute,
+   *   gross, health, pension, employment, incomeTax, deductionTotal, net, journalId
+   * }
+   * ------------------------------------------------------------------- */
+  const payslips = {
+    async loadAll() {
+      const list = await db.all('payslips');
+      list.sort((a, b) => (b.month || '').localeCompare(a.month || ''));
+      return list;
+    },
+    async save(ps) {
+      const isNew = !ps.id;
+      if (!ps.id) ps.id = U.uid('ps');
+      await db.put('payslips', ps);
+      if (A.audit) await A.audit.log(isNew ? 'create' : 'update', 'payslip', ps.id, `${ps.month} ${ps.name} 支給¥${U.yen(ps.gross)}`);
+      return ps;
+    },
+    async remove(id) {
+      const ps = await db.get('payslips', id);
+      if (ps && ps.journalId) await journals.remove(ps.journalId);
+      await db.del('payslips', id);
+      if (ps && A.audit) await A.audit.log('delete', 'payslip', id, `${ps.month} ${ps.name} 支給¥${U.yen(ps.gross)}`);
+    },
+  };
+
+  return { settings, accounts, partners, journals, invoices, assets, attachments, payslips };
 })();

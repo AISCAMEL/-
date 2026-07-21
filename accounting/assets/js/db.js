@@ -8,7 +8,7 @@ A.db = (function () {
   'use strict';
 
   const DB_NAME = 'aizu_kaikei';
-  const DB_VERSION = 4; // v2:assets / v3:attachments / v4:auditlog（訂正・削除履歴）
+  const DB_VERSION = 5; // v2:assets / v3:attachments / v4:auditlog / v5:payslips（給与明細）
   // オブジェクトストア（テーブル）一覧
   const STORES = {
     settings: { keyPath: 'key' },
@@ -19,6 +19,7 @@ A.db = (function () {
     assets: { keyPath: 'id', indexes: [['acquireDate', 'acquireDate']] },
     attachments: { keyPath: 'id', indexes: [['date', 'date'], ['journalId', 'journalId']] },
     auditlog: { keyPath: 'id', indexes: [['ts', 'ts']] },
+    payslips: { keyPath: 'id', indexes: [['month', 'month']] },
   };
 
   let _db = null;
@@ -73,6 +74,12 @@ A.db = (function () {
     taxFilingMethod: 'general',            // 消費税の計算方式 general/simplified/special20
     simplifiedBizType: 5,                  // 簡易課税の事業区分（既定：第5種サービス業）
     corporateTaxRate: 15,                  // 法人税等の概算税率(%)（申告サポート用）
+    departments: [],                       // 部門マスタ [{id,name}]
+    employees: [],                         // 従業員マスタ [{id,name,base,allowance,commute}]
+    // 社会保険料率(%)：健康保険・厚生年金・雇用保険（本人負担分の目安）
+    insHealthRate: 5.0,
+    insPensionRate: 9.15,
+    insEmploymentRate: 0.6,
     invoiceSeq: 0,                         // 請求書番号カウンタ
     estimateSeq: 0,                        // 見積書番号カウンタ
     journalSeq: 0,                         // 仕訳番号カウンタ
