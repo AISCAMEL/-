@@ -109,7 +109,7 @@ function prefPage(p, i) {
   const bcHome = SITE_URL ? `${SITE_URL}/` : `../../`;
   const bcArea = SITE_URL ? `${SITE_URL}/area/` : `../`;
   const title = `${p.name}の車買取ならBUYMO｜${p.name}全域対応・高価買取・無料出張査定`;
-  const desc = `${p.name}で車の買取・査定ならBUYMO。${cityText}など${p.name}全域へ無料出張査定。事故車・不動車・古い車もOK。手数料無料・最短即日入金で愛車を高価買取します。`;
+  const desc = `${p.name}で車の買取・査定ならBUYMO。${cityText}など${p.name}全域へ無料出張査定。事故車・不動車・古い車もOK。手数料無料・3営業日以内に入金で愛車を高価買取します。`;
 
   return `<!DOCTYPE html>
 <html lang="ja">
@@ -147,7 +147,7 @@ ${header(rel, 'area')}
       <nav class="breadcrumb" aria-label="パンくずリスト"><a href="${rel}index.html#top">ホーム</a><span aria-hidden="true">›</span><a href="${rel}area/">対応エリア</a><span aria-hidden="true">›</span><span>${esc(p.name)}</span></nav>
       <p class="hero-lead">${esc(p.region)}・${esc(p.name)}の車買取</p>
       <h1 id="page-title">${esc(p.name)}の車買取・査定は<span class="hl">BUYMO</span></h1>
-      <p class="page-lead">${esc(cityText)}をはじめ${esc(p.name)}全域に無料出張査定。事故車・不動車・古い車もOK。手数料0円・最短即日入金で、あなたの愛車を1円でも高く買取します。</p>
+      <p class="page-lead">${esc(cityText)}をはじめ${esc(p.name)}全域に無料出張査定。事故車・不動車・古い車もOK。手数料0円・3営業日以内に入金で、あなたの愛車を1円でも高く買取します。</p>
       <div class="area-cta">
         <a href="${rel}buymo-contact.html?pref=${encodeURIComponent(p.name)}" class="btn btn-primary btn-lg">無料査定を依頼</a>
         <a href="tel:05017842929" class="btn btn-tel">📞 電話で相談</a>
@@ -176,7 +176,7 @@ ${header(rel, 'area')}
       <div class="grid grid-3 reason-grid">
         <article class="card reason-card"><div class="card-ico" aria-hidden="true">🚗</div><h3>出張査定無料</h3><p>${esc(p.name)}全域、ご指定の場所まで無料で出張。来店不要です。</p></article>
         <article class="card reason-card"><div class="card-ico" aria-hidden="true">💰</div><h3>高価買取</h3><p>独自ルートで無駄を省き、${esc(p.name)}でも相場より高い査定を。</p></article>
-        <article class="card reason-card"><div class="card-ico" aria-hidden="true">⚡</div><h3>即日対応可能</h3><p>お急ぎでも最短即日で査定から入金まで対応します。</p></article>
+        <article class="card reason-card"><div class="card-ico" aria-hidden="true">⚡</div><h3>丁寧・確実に入金</h3><p>書類・車両を丁寧に確認のうえ、3営業日以内に確実にお振込みします。</p></article>
         <article class="card reason-card"><div class="card-ico" aria-hidden="true">🆓</div><h3>手数料無料</h3><p>査定料・出張費・名義変更などの手続き代行料は一切無料。</p></article>
         <article class="card reason-card"><div class="card-ico" aria-hidden="true">🚧</div><h3>事故車・不動車OK</h3><p>他社で断られた車も買取可能。まずはご相談を。</p></article>
         <article class="card reason-card"><div class="card-ico" aria-hidden="true">💳</div><h3>契約後すぐ入金</h3><p>ご契約後スピーディにお振込み。お待たせしません。</p></article>
@@ -251,7 +251,7 @@ function hubPage() {
   }).join('\n');
   const canonical = SITE_URL ? `${SITE_URL}/area/` : './'; // 自己参照（/area/ から相対）
   const title = '対応エリア一覧｜全国47都道府県の車買取ならBUYMO';
-  const desc = '車買取のBUYMOは全国47都道府県に対応。北海道から沖縄まで、お住まいの都道府県を選んで無料出張査定をご依頼ください。事故車・不動車もOK・手数料無料・最短即日入金。';
+  const desc = '車買取のBUYMOは全国47都道府県に対応。北海道から沖縄まで、お住まいの都道府県を選んで無料出張査定をご依頼ください。事故車・不動車もOK・手数料無料・3営業日以内に入金。';
   return `<!DOCTYPE html>
 <html lang="ja">
 <head>
