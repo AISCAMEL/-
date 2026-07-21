@@ -14,15 +14,6 @@ jobs:
       - name: リポジトリをチェックアウト
         uses: actions/checkout@v4
 
-      - name: FTP ルートディレクトリ確認（パス特定用）
-        run: |
-          echo "=== FTP ルート ==="
-          curl -s -u "${{ secrets.FTP_USER }}:${{ secrets.FTP_PASSWORD }}" \
-               "ftp://${{ secrets.FTP_HOST }}/" --list-only || echo "接続失敗"
-          echo "=== public_html 確認 ==="
-          curl -s -u "${{ secrets.FTP_USER }}:${{ secrets.FTP_PASSWORD }}" \
-               "ftp://${{ secrets.FTP_HOST }}/public_html/" --list-only || echo "なし"
-
       - name: WPX へ FTP デプロイ（差分のみ）
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
