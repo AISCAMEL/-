@@ -4,7 +4,7 @@ Theme URI: https://site.aiscompany.jp/
 Author: AIS Company
 Author URI: https://site.aiscompany.jp/
 Description: クラウド型アプリ開発プラットフォーム「APPREX」公式サイト用テーマ。Hello Elementor の思想を踏襲したライセンス非依存の自作テーマ。固定ページ構成＋カスタム投稿タイプ cases によるリニューアル実装。モバイルファースト・WebP・Lazy Load 対応。
-Version: 1.32.0
+Version: 1.33.0
 Requires at least: 6.0
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -1115,3 +1115,13 @@ a:focus-visible, button:focus-visible, .btn:focus-visible, summary:focus-visible
 /* フォーム埋め込みショートコード（LP内）（v1.27.0） */
 .apprex-form-embed { max-width: 620px; margin: 24px auto; }
 .apprex-form-embed .apprex-form { background: #fff; padding: 26px 24px; border-radius: var(--radius); box-shadow: var(--shadow-sm); }
+
+/* ===== 関連記事（自動内部リンク）（v1.33.0） ===== */
+.apprex-related { margin: 40px 0 8px; padding-top: 24px; border-top: 2px solid var(--color-line); }
+.apprex-related__h { font-size: 1.3rem; margin: 0 0 16px; color: var(--color-navy); }
+.apprex-related__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+.apprex-related__card { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--color-line); border-radius: var(--radius); overflow: hidden; text-decoration: none; color: inherit; box-shadow: var(--shadow-sm); transition: transform .15s ease, box-shadow .15s ease; }
+.apprex-related__card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+.apprex-related__thumb img { display: block; width: 100%; height: auto; aspect-ratio: 16/10; object-fit: cover; }
+.apprex-related__title { font-weight: 700; font-size: .95rem; line-height: 1.5; padding: 12px 12px 4px; color: var(--color-ink); }
+.apprex-related__date { font-size: .75rem; color: var(--color-muted); padding: 0 12px 12px; margin-top: auto; }
