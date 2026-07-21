@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="794" height="1123" viewBox="0 0 794 1123" font-family="'Noto Sans CJK JP','IPAGothic',sans-serif">
+  <defs>
+    <linearGradient id="navy" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0e1b33"/><stop offset="1" stop-color="#16294a"/></linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e0bd6a"/><stop offset="1" stop-color="#c9a14a"/></linearGradient>
+    <linearGradient id="hero" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7f9fc"/><stop offset="1" stop-color="#eef2f8"/></linearGradient>
+  </defs>
+  <rect width="794" height="1123" fill="#ffffff"/>
+
+  <!-- header -->
+  <rect width="794" height="132" fill="url(#navy)"/>
+  <rect x="44" y="40" width="52" height="52" rx="13" fill="url(#gold)"/>
+  <text x="70" y="76" fill="#0e1b33" font-size="30" font-weight="900" text-anchor="middle">A</text>
+  <text x="116" y="66" fill="#fff" font-size="26" font-weight="800">AUC-AGENT</text>
+  <text x="117" y="90" fill="#b9c4d8" font-size="13" letter-spacing="2">CAR AUCTION AGENT</text>
+  <rect x="584" y="48" width="166" height="38" rx="19" fill="url(#gold)"/>
+  <text x="667" y="73" fill="#0e1b33" font-size="17" font-weight="800" text-anchor="middle">出品代行</text>
+
+  <!-- hero -->
+  <rect y="132" width="794" height="300" fill="url(#hero)"/>
+  <text x="397" y="240" font-size="46" font-weight="900" fill="#0e1b33" text-anchor="middle">愛車、下取りより</text>
+  <text x="397" y="304" font-size="46" font-weight="900" fill="#0e1b33" text-anchor="middle"><tspan fill="#c9a14a">高く</tspan>。</text>
+  <rect x="247" y="326" width="300" height="6" rx="3" fill="url(#gold)"/>
+  <text x="397" y="384" font-size="18" fill="#41506a" text-anchor="middle">全国のオートオークションへ、あなたの1台を出品代行します。</text>
+
+  <!-- benefits -->
+  
+    <g>
+      <rect x="44" y="470" width="226" height="150" rx="14" fill="#ffffff" stroke="#e4e8ef"/>
+      <circle cx="82" cy="510" r="22" fill="url(#gold)"/>
+      <text x="82" y="518" font-size="22" text-anchor="middle">📈</text>
+      <text x="116" y="510" font-size="17" font-weight="800" fill="#0e1b33">高値を狙う</text>
+      <foreignObject x="62" y="530" width="190" height="80">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:'Noto Sans CJK JP',sans-serif;font-size:13px;line-height:1.6;color:#4a5568;">全国の需要にダイレクト出品。相場を見て会場・タイミングを選定。</div>
+      </foreignObject>
+    </g>
+  
+    <g>
+      <rect x="284" y="470" width="226" height="150" rx="14" fill="#ffffff" stroke="#e4e8ef"/>
+      <circle cx="322" cy="510" r="22" fill="url(#gold)"/>
+      <text x="322" y="518" font-size="22" text-anchor="middle">🆓</text>
+      <text x="356" y="510" font-size="17" font-weight="800" fill="#0e1b33">流札は無料</text>
+      <foreignObject x="302" y="530" width="190" height="80">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:'Noto Sans CJK JP',sans-serif;font-size:13px;line-height:1.6;color:#4a5568;">売れなかった場合の再出品は無料。まずは想定査定から。</div>
+      </foreignObject>
+    </g>
+  
+    <g>
+      <rect x="524" y="470" width="226" height="150" rx="14" fill="#ffffff" stroke="#e4e8ef"/>
+      <circle cx="562" cy="510" r="22" fill="url(#gold)"/>
+      <text x="562" y="518" font-size="22" text-anchor="middle">🧾</text>
+      <text x="596" y="510" font-size="17" font-weight="800" fill="#0e1b33">手続きお任せ</text>
+      <foreignObject x="542" y="530" width="190" height="80">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:'Noto Sans CJK JP',sans-serif;font-size:13px;line-height:1.6;color:#4a5568;">委任状・譲渡証明などの書類、名義変更もサポート。</div>
+      </foreignObject>
+    </g>
+
+  <!-- CTA -->
+  <rect x="44" y="656" width="706" height="118" rx="16" fill="url(#navy)"/>
+  <text x="72" y="710" font-size="21" font-weight="800" fill="#fff">手取りシミュレーション</text>
+  <text x="72" y="744" font-size="15" fill="#cfd6e6">手数料を引いて、いくら残るか丸わかり。</text>
+  <rect x="556" y="694" width="170" height="44" rx="22" fill="url(#gold)"/>
+  <text x="641" y="722" font-size="16" font-weight="800" fill="#0e1b33" text-anchor="middle">試してみる →</text>
+
+  <!-- steps -->
+  <text x="44" y="790" font-size="16" font-weight="800" fill="#0e1b33">かんたん4ステップ</text>
+  <line x1="120" y1="866" x2="674" y2="866" stroke="#dbe1ea" stroke-width="2"/>
+  <g><circle cx="120" cy="866" r="17" fill="#0e1b33"/><text x="120" y="872" font-size="14" font-weight="900" fill="#e0bd6a" text-anchor="middle">1</text><text x="120" y="906" font-size="12.5" font-weight="700" fill="#0e1b33" text-anchor="middle">無料査定</text></g><g><circle cx="304.66666666666663" cy="866" r="17" fill="#0e1b33"/><text x="304.66666666666663" y="872" font-size="14" font-weight="900" fill="#e0bd6a" text-anchor="middle">2</text><text x="304.66666666666663" y="906" font-size="12.5" font-weight="700" fill="#0e1b33" text-anchor="middle">契約</text></g><g><circle cx="489.3333333333333" cy="866" r="17" fill="#0e1b33"/><text x="489.3333333333333" y="872" font-size="14" font-weight="900" fill="#e0bd6a" text-anchor="middle">3</text><text x="489.3333333333333" y="906" font-size="12.5" font-weight="700" fill="#0e1b33" text-anchor="middle">出品</text></g><g><circle cx="674" cy="866" r="17" fill="#0e1b33"/><text x="674" y="872" font-size="14" font-weight="900" fill="#e0bd6a" text-anchor="middle">4</text><text x="674" y="906" font-size="12.5" font-weight="700" fill="#0e1b33" text-anchor="middle">成約・入金</text></g>
+
+  <!-- footer -->
+  <rect y="946" width="794" height="177" fill="url(#navy)"/>
+  <text x="44" y="982" fill="#fff" font-size="16" font-weight="800">合同会社アイズ（AUC-AGENT）</text>
+  <text x="44" y="1006" fill="#cfd6e6" font-size="12.5">福島県いわき市四倉町細谷字大町1番　／　平日 8:00〜17:00</text>
+  <text x="44" y="1029" fill="#8ea0bb" font-size="10.5">古物商許可 福島県公安委員会 第25121A010859号 ／ 登録番号 T9380003004349</text>
+  <text x="506" y="986" fill="#e0bd6a" font-size="27" font-weight="900">050-1722-3365</text>
+  <text x="506" y="1016" fill="#cfd6e6" font-size="13">info@aisjaltd.com（24時間受付）</text>
+</svg>

@@ -329,6 +329,25 @@
   function yen(n) { return "¥" + Math.round(n).toLocaleString("ja-JP"); }
 
   // --- 注文一覧を描画 ---
+  // 注文データ → 書類作成ツールへの差込リンク（該当データを自動プリフィル）
+  function buildDocLink(o) {
+    var user = AucAuth.current() || {};
+    var car = o.car || "";
+    var year = (car.match(/\((\d{4})\)/) || [])[1] || "";
+    var name = car.replace(/\s*\(\d{4}\)\s*/, " ").replace(/\s+/g, " ").trim();
+    var doc = (o.kind === "sell") ? "shuppin_report" : "rakusatsu_report";
+    var p = [];
+    function add(k, v) { if (v || v === 0) p.push(k + "=" + encodeURIComponent(v)); }
+    add("doc", doc);
+    add("o_name", user.name);
+    add("v_name", name);
+    if (year) add("v_first", year + "年");
+    add("r_amount", o.total); add("d_price", o.total);
+    add("r_date", o.date); add("d_date", o.date);
+    add("r_result", o.kind === "sell" ? "落札" : "成約");
+    return "forms.html?" + p.join("&");
+  }
+
   function renderOrders() {
     var orders = AucAuth.orders();
     var list = document.getElementById("orderList");
@@ -346,7 +365,8 @@
           '<div class="progress"><i style="width:' + o.progress + '%"></i></div>' +
           '<div class="meta" style="margin-top:6px;">' + (o.memo || "") + '</div></div>' +
           '<div class="right"><span class="badge-status ' + s.cls + '">' + s.label + '</span>' +
-          '<div style="margin-top:8px;font-weight:800;">' + yen(o.total) + '</div></div>' +
+          '<div style="margin-top:8px;font-weight:800;">' + yen(o.total) + '</div>' +
+          '<a class="btn btn-navy btn-sm" style="margin-top:10px;display:inline-block;white-space:nowrap;" href="' + buildDocLink(o) + '">📄 書類作成</a></div>' +
           '</div>';
       }).join("");
     }
