@@ -7,6 +7,7 @@ import { clearSession, getSession, type Session } from '@/lib/auth';
 
 // テナント（店舗・企業）向けナビ
 const tenantNav = [
+  { href: '/setup', label: '開業セットアップ', icon: '🚀' },
   { href: '/dashboard', label: 'ダッシュボード', icon: '📊' },
   { href: '/calls', label: '通話履歴', icon: '📞' },
   { href: '/ai-test', label: 'AI応対テスト', icon: '🎙️' },

@@ -11,6 +11,8 @@ import { runCampaign } from '../outbound/caller.js';
 import { INDUSTRY_TEMPLATES, getTemplate } from '../templates/industry.js';
 import * as contacts from '../outbound/contacts.js';
 import { chatText } from '../ai/llm.js';
+import { llmEnabled } from '../ai/llm.js';
+import { config } from '../config.js';
 import { sendEmail } from '../notify/email.js';
 import * as calendar from '../calendar/index.js';
 
@@ -58,6 +60,39 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
       contacts.contactStatusSummary(p.tenantId),
     ]);
     return { ...dash, contacts_summary: contactSummary };
+  });
+
+  // ---- 開業セットアップ状況（接続チェック＆設定チェックリスト） ----
+  app.get('/api/setup/status', { preHandler: authenticate }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const [s, faqs, cal, tenant] = await Promise.all([
+      getSettings(p.tenantId),
+      q.listFaqs(p.tenantId),
+      calendar.calendarStatus(p.tenantId),
+      q.getTenantDetail(p.tenantId).catch(() => null),
+    ]);
+    const provider = !config.openai.apiKey ? 'none' : (config.openai.baseUrl.includes('openrouter') ? 'openrouter' : (config.openai.baseUrl ? 'custom' : 'openai'));
+    const phoneCount = (tenant as any)?.phone_numbers?.length ?? 0;
+    return {
+      // 接続（環境変数）
+      integrations: {
+        ai: { connected: llmEnabled, provider, model: config.openai.model },
+        email: { connected: Boolean(config.mail.resendApiKey), from: config.mail.from },
+        phone: { connected: Boolean(config.twilio.accountSid), numbers: phoneCount },
+        calendar: { connected: cal.google_connected, calendar_id: cal.calendar_id },
+      },
+      // 自社設定（画面で入れる項目）
+      config: {
+        industry: (tenant as any)?.tenant?.industry ?? s?.industry ?? null,
+        greeting_set: Boolean(s?.greeting_message),
+        business_hours_set: Boolean(s?.business_hours && Object.keys(s.business_hours).length > 0),
+        faq_count: Array.isArray(faqs) ? faqs.length : 0,
+        notification_email_set: Boolean(s?.notification_email),
+        transfer_set: Boolean(s?.transfer_phone_number),
+      },
+      demo_mode: !config.databaseUrl,
+    };
   });
 
   // ---- calls ----

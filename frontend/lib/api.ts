@@ -27,6 +27,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
 export const api = {
   me: () => request<any>('/api/me'),
+  setupStatus: () => request<any>('/api/setup/status'),
   dashboard: () => request<any>('/api/dashboard'),
   calls: (qs = '') => request<any[]>(`/api/calls${qs}`),
   call: (id: string) => request<any>(`/api/calls/${id}`),
