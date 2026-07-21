@@ -12,11 +12,12 @@ window.A = window.A || {};
 
   /* ---- 従業員マスタ ---------------------------------------------------- */
   const employeeModal = (emp) => {
-    const e = emp || { name: '', base: 0, allowance: 0, commute: 0 };
+    const e = emp || { name: '', base: 0, allowance: 0, commute: 0, dependents: 0 };
     const name = el('input', { type: 'text', value: e.name, placeholder: '氏名' });
     const base = yenInput(e.base), allowance = yenInput(e.allowance), commute = yenInput(e.commute);
+    const dep = el('input', { type: 'number', min: '0', value: e.dependents || 0 });
     const body = el('div.editor', {}, [
-      el('label', {}, [el('span', { text: '氏名' }), name]),
+      el('div.form-row', {}, [el('label.grow', {}, [el('span', { text: '氏名' }), name]), el('label', {}, [el('span', { text: '扶養親族等の数' }), dep])]),
       el('div.form-row', {}, [el('label', {}, [el('span', { text: '基本給' }), base]), el('label', {}, [el('span', { text: '諸手当' }), allowance]), el('label', {}, [el('span', { text: '通勤費(非課税)' }), commute])]),
     ]);
     const m = ui.modal(emp ? '従業員の編集' : '従業員の登録', body, {
@@ -24,7 +25,7 @@ window.A = window.A || {};
         text: '保存', onclick: async () => {
           if (!name.value.trim()) return ui.toast('氏名を入力してください', 'err');
           const list = [...(S.settings.get().employees || [])];
-          const rec = { id: e.id || U.uid('em'), name: name.value.trim(), base: U.parseYen(base.value), allowance: U.parseYen(allowance.value), commute: U.parseYen(commute.value) };
+          const rec = { id: e.id || U.uid('em'), name: name.value.trim(), base: U.parseYen(base.value), allowance: U.parseYen(allowance.value), commute: U.parseYen(commute.value), dependents: Number(dep.value) || 0 };
           const idx = list.findIndex((x) => x.id === rec.id);
           if (idx >= 0) list[idx] = rec; else list.push(rec);
           await S.settings.save({ employees: list });
@@ -42,8 +43,10 @@ window.A = window.A || {};
     const pension = Math.floor(siBase * rates.pension / 100);
     const employment = Math.floor(gross * rates.employment / 100);
     const social = health + pension + employment;
-    const taxable = siBase - social; // 課税対象（源泉）
-    const incomeTax = input.incomeTaxManual != null ? input.incomeTaxManual : Math.max(0, Math.floor(taxable * 0.05 / 10) * 10); // 概算
+    const afterSocial = siBase - social; // 社会保険料控除後の給与（源泉計算の基礎）
+    // 源泉所得税＝電算機計算の特例（甲欄）。手入力があれば優先。
+    const incomeTax = input.incomeTaxManual != null ? input.incomeTaxManual
+      : A.payrolltax.monthlyWithholding(afterSocial, input.dependents || 0);
     const deductionTotal = social + incomeTax;
     const net = gross - deductionTotal;
     return { gross, siBase, health, pension, employment, social, incomeTax, deductionTotal, net };
@@ -60,15 +63,17 @@ window.A = window.A || {};
     employees.forEach((e) => { const o = el('option', { value: e.id, text: e.name }); if (e.id === ps.employeeId) o.selected = true; empSel.appendChild(o); });
     const month = el('input', { type: 'month', value: ps.month || U.today().slice(0, 7) });
     const base = yenInput(ps.base), allowance = yenInput(ps.allowance), overtime = yenInput(ps.overtime), commute = yenInput(ps.commute);
+    const dep = el('input', { type: 'number', min: '0', value: ps.dependents != null ? ps.dependents : 0 });
     const incomeTax = yenInput(ps.incomeTax);
     const result = el('div');
 
     const fillFromEmployee = () => {
       const e = employees.find((x) => x.id === empSel.value); if (!e) return;
       base.value = e.base ? U.yen(e.base) : ''; allowance.value = e.allowance ? U.yen(e.allowance) : ''; commute.value = e.commute ? U.yen(e.commute) : '';
+      dep.value = e.dependents || 0;
       recompute();
     };
-    const gather = () => ({ base: U.parseYen(base.value), allowance: U.parseYen(allowance.value), overtime: U.parseYen(overtime.value), commute: U.parseYen(commute.value), incomeTaxManual: incomeTax.value ? U.parseYen(incomeTax.value) : null });
+    const gather = () => ({ base: U.parseYen(base.value), allowance: U.parseYen(allowance.value), overtime: U.parseYen(overtime.value), commute: U.parseYen(commute.value), dependents: Number(dep.value) || 0, incomeTaxManual: incomeTax.value ? U.parseYen(incomeTax.value) : null });
     const recompute = () => {
       const c = calc(gather(), rates);
       if (!incomeTax.value) incomeTax.placeholder = '概算 ' + U.yen(c.incomeTax);
@@ -88,13 +93,13 @@ window.A = window.A || {};
       ]));
     };
     empSel.addEventListener('change', fillFromEmployee);
-    [base, allowance, overtime, commute, incomeTax].forEach((i) => i.addEventListener('input', recompute));
+    [base, allowance, overtime, commute, incomeTax, dep].forEach((i) => i.addEventListener('input', recompute));
     if (!existing) fillFromEmployee(); else recompute();
 
     const body = el('div.editor', {}, [
-      el('div.form-row', {}, [el('label.grow', {}, [el('span', { text: '従業員' }), empSel]), el('label', {}, [el('span', { text: '対象月' }), month])]),
+      el('div.form-row', {}, [el('label.grow', {}, [el('span', { text: '従業員' }), empSel]), el('label', {}, [el('span', { text: '対象月' }), month]), el('label', {}, [el('span', { text: '扶養人数' }), dep])]),
       el('div.form-row', {}, [el('label', {}, [el('span', { text: '基本給' }), base]), el('label', {}, [el('span', { text: '諸手当' }), allowance]), el('label', {}, [el('span', { text: '残業手当' }), overtime]), el('label', {}, [el('span', { text: '通勤費' }), commute])]),
-      el('label', {}, [el('span', { text: '源泉所得税（空欄で概算を使用）' }), incomeTax]),
+      el('label', {}, [el('span', { text: '源泉所得税（空欄で電算特例の概算を使用）' }), incomeTax]),
       el('div.preview-box', {}, [el('div.muted', { text: '給与明細' }), result]),
     ]);
 
@@ -102,7 +107,7 @@ window.A = window.A || {};
       const c = calc(gather(), rates);
       const e = employees.find((x) => x.id === empSel.value);
       if (c.gross <= 0) return ui.toast('支給額を入力してください', 'err');
-      const rec = { id: ps.id, month: month.value, employeeId: empSel.value, name: e.name,
+      const rec = { id: ps.id, month: month.value, employeeId: empSel.value, name: e.name, dependents: Number(dep.value) || 0,
         base: U.parseYen(base.value), allowance: U.parseYen(allowance.value), overtime: U.parseYen(overtime.value), commute: U.parseYen(commute.value),
         gross: c.gross, health: c.health, pension: c.pension, employment: c.employment, incomeTax: c.incomeTax, deductionTotal: c.deductionTotal, net: c.net, journalId: ps.journalId };
       if (withJournal) {
@@ -126,6 +131,69 @@ window.A = window.A || {};
     });
   };
 
+  /* ---- 年末調整 -------------------------------------------------------- */
+  const yearEndModal = async () => {
+    const s = S.settings.get();
+    const employees = s.employees || [];
+    if (!employees.length) return ui.toast('先に従業員を登録してください', 'err');
+    const allSlips = await S.payslips.loadAll();
+
+    const empSel = el('select');
+    employees.forEach((e) => empSel.appendChild(el('option', { value: e.id, text: e.name })));
+    const yearI = el('input', { type: 'number', value: Number(U.today().slice(0, 4)) });
+    const spouse = el('input', { type: 'checkbox' });
+    const result = el('div');
+
+    const recompute = () => {
+      const empId = empSel.value, year = String(yearI.value);
+      const slips = allSlips.filter((p) => p.employeeId === empId && (p.month || '').startsWith(year));
+      const emp = employees.find((e) => e.id === empId) || {};
+      const salaryIncome = slips.reduce((a, p) => a + (p.gross - (p.commute || 0)), 0); // 課税支給合計
+      const social = slips.reduce((a, p) => a + (p.health + p.pension + p.employment), 0);
+      const withheld = slips.reduce((a, p) => a + p.incomeTax, 0);
+      const r = A.payrolltax.yearEnd({ salaryIncome, socialInsurance: social, dependents: emp.dependents || 0, hasSpouse: spouse.checked, withheldTotal: withheld });
+      result.innerHTML = '';
+      result.appendChild(el('div.income-result', {}, [
+        el('div', {}, [
+          el('div.income-line', {}, [el('span', { text: `給与収入（${slips.length}ヶ月）` }), el('span', { text: '¥' + U.yen(salaryIncome) })]),
+          el('div.income-line', {}, [el('span', { text: '給与所得' }), el('span', { text: '¥' + U.yen(r.employmentIncome) })]),
+          el('div.income-line', {}, [el('span', { text: '社会保険料控除' }), el('span', { text: '¥' + U.yen(social) })]),
+          el('div.income-line', {}, [el('span', { text: '課税所得' }), el('span', { text: '¥' + U.yen(r.taxable) })]),
+        ]),
+        el('div', {}, [
+          el('div.income-line', {}, [el('span', { text: '年税額' }), el('span', { text: '¥' + U.yen(r.yearTax) })]),
+          el('div.income-line', {}, [el('span', { text: '源泉徴収済み' }), el('span', { text: '¥' + U.yen(r.withheld) })]),
+          el('div.income-line.big', {}, [el('span', { text: r.diff >= 0 ? '過納（還付）' : '不足（追徴）' }), el('span', { text: '¥' + U.yenSigned(r.diff) })]),
+        ]),
+      ]));
+      result._data = { r, emp };
+    };
+    empSel.addEventListener('change', recompute);
+    yearI.addEventListener('input', recompute);
+    spouse.addEventListener('change', recompute);
+    recompute();
+
+    const body = el('div.editor', {}, [
+      el('div.form-row', {}, [el('label.grow', {}, [el('span', { text: '従業員' }), empSel]), el('label', {}, [el('span', { text: '対象年' }), yearI]), el('label', {}, [el('span', { text: '配偶者控除' }), spouse])]),
+      el('div.preview-box', {}, [el('div.muted', { text: '年末調整（電算特例に基づく概算）' }), result]),
+      el('p.muted.small', { text: '※ 給与明細から自動集計した概算です。実際の年末調整は各種控除（生命保険料・住宅ローン等）や最新の税制をご確認ください。' }),
+    ]);
+    const post = async () => {
+      const d = result._data; if (!d) return;
+      const diff = d.r.diff; if (diff === 0) return ui.toast('過不足はありません');
+      // 還付（diff>0）：借)預り金 / 貸)普通預金　追徴（diff<0）：借)普通預金 / 貸)預り金
+      const amt = Math.abs(diff);
+      const lines = diff > 0
+        ? [{ side: 'debit', account: '230', tax: 'out', amount: amt }, { side: 'credit', account: '110', tax: 'out', amount: amt }]
+        : [{ side: 'debit', account: '110', tax: 'out', amount: amt }, { side: 'credit', account: '230', tax: 'out', amount: amt }];
+      await S.journals.save({ source: 'payroll', date: yearI.value + '-12-25', description: `年末調整 ${yearI.value} ${d.emp.name}（${diff > 0 ? '還付' : '追徴'}）`, lines });
+      m.close(); ui.toast('年末調整の仕訳を計上しました', 'ok'); ui.renderRoute();
+    };
+    const m = ui.modal('年末調整', body, {
+      footer: [el('button.btn', { text: '閉じる', onclick: () => m.close() }), el('button.btn.primary', { text: '過不足を仕訳計上', onclick: post })],
+    });
+  };
+
   ui.register('payroll', async () => {
     const s = S.settings.get();
     const employees = s.employees || [];
@@ -134,6 +202,7 @@ window.A = window.A || {};
     const wrap = el('div');
     wrap.appendChild(ui.pageHead('給与計算', [
       el('button.btn', { text: '＋ 従業員を登録', onclick: () => employeeModal(null) }),
+      el('button.btn', { text: '年末調整', onclick: () => yearEndModal() }),
       el('button.btn.primary', { text: '＋ 給与明細を作成', onclick: () => payslipModal(null) }),
     ]));
 

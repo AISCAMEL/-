@@ -36,6 +36,7 @@ A.app = (function () {
     { path: 'partners', label: '取引先', icon: '🏢' },
     { group: 'レポート' },
     { path: 'departments', label: '部門別損益', icon: '🏬' },
+    { path: 'budget', label: '予算・予実', icon: '🎯' },
     { path: 'ledger', label: '総勘定元帳', icon: '📚' },
     { path: 'trialbalance', label: '試算表', icon: '⚖️' },
     { path: 'statements', label: '決算書(BS/PL)', icon: '📊' },

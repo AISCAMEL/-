@@ -69,6 +69,39 @@ window.A = window.A || {};
       el('div.quick-row', {}, [el('button.btn.sm', { text: '申告サポートへ', onclick: () => ui.go('filing') })]),
     ]));
 
+    // e-Tax取込用データ（財務諸表・勘定科目内訳）
+    const CAT = A.accounts.CATEGORIES;
+    const financialCsv = () => {
+      const rows = [['区分', '科目コード', '科目名', '当期金額']];
+      const push = (secLabel, items) => items.filter((i) => i.amount).forEach((i) => rows.push([secLabel, i.code || '', i.name, i.amount]));
+      push('資産', st.bs.asset.items);
+      push('負債', st.bs.liability.items);
+      push('純資産', [...st.bs.equity.items, { name: '当期純利益', amount: st.bs.netIncome }]);
+      push('収益', st.pl.revenue.items);
+      push('費用', st.pl.expense.items);
+      downloadCsv(`財務諸表_${fy.start.slice(0, 4)}.csv`, rows);
+    };
+    const arCsv = async () => {
+      const invoices = await S.invoices.loadAll();
+      const map = {};
+      invoices.filter((iv) => iv.type === 'invoice' && iv.posted && !iv.paid).forEach((iv) => {
+        map[iv.partnerName || '（不明）'] = (map[iv.partnerName || '（不明）'] || 0) + S.invoices.calc(iv).total;
+      });
+      const rows = [['取引先', '売掛金残高']];
+      Object.keys(map).forEach((k) => rows.push([k, map[k]]));
+      if (rows.length === 1) return ui.toast('未回収の売掛金がありません');
+      downloadCsv(`売掛金内訳_${fy.start.slice(0, 4)}.csv`, rows);
+    };
+
+    wrap.appendChild(el('div.card', {}, [
+      el('h2', { text: 'e-Tax取込用データ（財務諸表・内訳）' }),
+      el('p.muted.small', { text: '財務諸表（決算書）と勘定科目内訳の基礎データをCSVで出力します。e-Tax の財務諸表・勘定科目内訳明細書の作成に取り込む際の元データとしてご利用ください。' }),
+      el('div.quick-row', {}, [
+        el('button.btn', { text: '⬇ 財務諸表 CSV', onclick: financialCsv }),
+        el('button.btn', { text: '⬇ 売掛金内訳 CSV', onclick: arCsv }),
+      ]),
+    ]));
+
     wrap.appendChild(el('div.card', {}, [
       el('p.muted.small', { text: 'e-Tax（国税）・eLTAX（地方税）の電子申告では、これらの金額を各申告書の該当欄へ入力、または会計ソフト連携CSVとしてご利用ください。最終的な申告内容は税理士等にご確認ください。' }),
     ]));
