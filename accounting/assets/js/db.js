@@ -8,7 +8,7 @@ A.db = (function () {
   'use strict';
 
   const DB_NAME = 'aizu_kaikei';
-  const DB_VERSION = 2; // v2: 固定資産(assets)ストアを追加
+  const DB_VERSION = 3; // v2: assets追加 / v3: attachments（証憑）追加
   // オブジェクトストア（テーブル）一覧
   const STORES = {
     settings: { keyPath: 'key' },
@@ -17,6 +17,7 @@ A.db = (function () {
     journals: { keyPath: 'id', indexes: [['date', 'date']] },
     invoices: { keyPath: 'id', indexes: [['date', 'date']] },
     assets: { keyPath: 'id', indexes: [['acquireDate', 'acquireDate']] },
+    attachments: { keyPath: 'id', indexes: [['date', 'date'], ['journalId', 'journalId']] },
   };
 
   let _db = null;

@@ -14,30 +14,48 @@ window.A = window.A || {};
   const postedInFy = (journals, assetId, fyStart, fyEnd) => journals
     .some((j) => j.source === 'depreciation' && j.refId === assetId && U.inRange(j.date, fyStart, fyEnd));
 
+  const METHODS = {
+    straight: '定額法',
+    declining: '定率法（200%）',
+    lump3: '一括償却資産（3年均等）',
+    immediate: '少額減価償却資産（即時償却）',
+  };
+
   const editor = (existing) => {
     const a = existing || { name: '', accountCode: '180', acquireDate: U.today(), startDate: U.today(), acquireCost: 0, usefulLife: 5, residual: 0, method: 'straight', note: '' };
     const name = el('input', { type: 'text', value: a.name, placeholder: '例：営業車（軽トラック）' });
     const accSel = el('select');
     assetAccounts().forEach((x) => { const o = el('option', { value: x.code, text: x.name }); if (x.code === a.accountCode) o.selected = true; accSel.appendChild(o); });
+    const methodSel = el('select');
+    Object.keys(METHODS).forEach((k) => { const o = el('option', { value: k, text: METHODS[k] }); if (k === (a.method || 'straight')) o.selected = true; methodSel.appendChild(o); });
     const acqDate = el('input', { type: 'date', value: a.acquireDate });
     const startDate = el('input', { type: 'date', value: a.startDate || a.acquireDate });
     const cost = el('input.amt-in', { type: 'text', inputmode: 'numeric', value: a.acquireCost ? U.yen(a.acquireCost) : '' });
     const life = el('input', { type: 'number', min: '1', value: a.usefulLife || 5 });
     const residual = el('input.amt-in', { type: 'text', inputmode: 'numeric', value: a.residual ? U.yen(a.residual) : '0' });
     const note = el('input', { type: 'text', value: a.note || '', placeholder: '備考' });
+    const lifeLabel = el('label', {}, [el('span', { text: '耐用年数(年)' }), life]);
+    const residualLabel = el('label', {}, [el('span', { text: '残存価額' }), residual]);
     const preview = el('div.jsummary');
+    const curMethod = () => methodSel.value;
+    const applyMethodVis = () => {
+      const m = curMethod();
+      lifeLabel.style.display = (m === 'lump3' || m === 'immediate') ? 'none' : '';
+      residualLabel.style.display = (m === 'straight' || m === 'declining') ? '' : 'none';
+    };
     const refresh = () => {
-      const asset = { acquireCost: U.parseYen(cost.value), residual: U.parseYen(residual.value), usefulLife: Number(life.value), acquireDate: acqDate.value, startDate: startDate.value };
+      applyMethodVis();
+      const asset = { acquireCost: U.parseYen(cost.value), residual: U.parseYen(residual.value), usefulLife: Number(life.value), method: curMethod(), acquireDate: acqDate.value, startDate: startDate.value };
       const s = S.settings.get();
       const sch = R.depSchedule(asset, s.fiscalStartMonth || 4);
       preview.innerHTML = '';
-      if (!sch.length) { preview.appendChild(el('span.muted', { text: '取得価額・耐用年数を入力すると償却予定を表示' })); return; }
-      const annual = sch.find((r) => r.months === 12) || sch[0];
-      preview.appendChild(el('span', { html: `年償却額（平年） <b>¥${U.yen(annual.amount)}</b>` }));
+      if (!sch.length) { preview.appendChild(el('span.muted', { text: '取得価額を入力すると償却予定を表示' })); return; }
+      preview.appendChild(el('span', { html: `初年度 <b>¥${U.yen(sch[0].amount)}</b>` }));
       preview.appendChild(el('span', { html: `償却終了 <b>${sch[sch.length - 1].fyYear}年度</b>` }));
-      preview.appendChild(el('span.muted', { text: `${sch.length}年度で償却` }));
+      preview.appendChild(el('span.muted', { text: `${METHODS[curMethod()]}・${sch.length}年度` }));
     };
     [cost, life, residual, acqDate, startDate].forEach((i) => i.addEventListener('input', refresh));
+    methodSel.addEventListener('change', refresh);
     cost.addEventListener('blur', () => { cost.value = cost.value ? U.yen(U.parseYen(cost.value)) : ''; });
     residual.addEventListener('blur', () => { residual.value = U.yen(U.parseYen(residual.value)); });
     refresh();
@@ -45,14 +63,15 @@ window.A = window.A || {};
     const body = el('div.editor', {}, [
       el('div.form-row', {}, [el('label.grow', {}, [el('span', { text: '資産名' }), name]), el('label', {}, [el('span', { text: '資産科目' }), accSel])]),
       el('div.form-row', {}, [el('label', {}, [el('span', { text: '取得日' }), acqDate]), el('label', {}, [el('span', { text: '事業供用日' }), startDate])]),
-      el('div.form-row', {}, [el('label', {}, [el('span', { text: '取得価額' }), cost]), el('label', {}, [el('span', { text: '耐用年数(年)' }), life]), el('label', {}, [el('span', { text: '残存価額' }), residual])]),
+      el('div.form-row', {}, [el('label', {}, [el('span', { text: '償却方法' }), methodSel]), lifeLabel, residualLabel]),
+      el('div.form-row', {}, [el('label', {}, [el('span', { text: '取得価額' }), cost])]),
       el('label', {}, [el('span', { text: '備考' }), note]),
-      el('div.preview-box', {}, [el('div.muted', { text: '減価償却（定額法）' }), preview]),
+      el('div.preview-box', {}, [el('div.muted', { text: '減価償却の見込み' }), preview]),
     ]);
     const save = async () => {
       if (!name.value) return ui.toast('資産名を入力してください', 'err');
       if (U.parseYen(cost.value) <= 0) return ui.toast('取得価額を入力してください', 'err');
-      await S.assets.save({ ...a, name: name.value, accountCode: accSel.value, acquireDate: acqDate.value, startDate: startDate.value, acquireCost: U.parseYen(cost.value), usefulLife: Number(life.value), residual: U.parseYen(residual.value), method: 'straight', note: note.value });
+      await S.assets.save({ ...a, name: name.value, accountCode: accSel.value, acquireDate: acqDate.value, startDate: startDate.value, acquireCost: U.parseYen(cost.value), usefulLife: Number(life.value), residual: U.parseYen(residual.value), method: curMethod(), note: note.value });
       m.close(); ui.toast('保存しました', 'ok'); ui.renderRoute();
     };
     const m = ui.modal(existing ? '固定資産の編集' : '固定資産の登録', body, {
@@ -123,6 +142,7 @@ window.A = window.A || {};
     card.appendChild(ui.table([
       { key: 'name', label: '資産名', render: (r) => r.name },
       { key: 'acc', label: '科目', render: (r) => S.accounts.name(r.accountCode) },
+      { key: 'method', label: '方法', render: (r) => (METHODS[r.method || 'straight'] || '').replace(/（.*）/, '') },
       { key: 'acq', label: '取得日', render: (r) => U.fmtDate(r.acquireDate) },
       { key: 'cost', label: '取得価額', align: 'right', render: (r) => '¥' + U.yen(r.acquireCost) },
       { key: 'book', label: '帳簿価額', align: 'right', render: (r) => '¥' + U.yen(r.acquireCost - postedAccum(journals, r.id)) },

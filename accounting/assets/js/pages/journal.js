@@ -4,7 +4,7 @@ window.A = window.A || {};
   'use strict';
   const U = A.util, el = U.el, ui = A.ui, S = A.store;
   const TAX = A.accounts.TAX_CATEGORIES;
-  const SRC_LABEL = { invoice: '請求', expense: '入出金', import: '取込', depreciation: '減価償却', opening: '期首', manual: '手入力' };
+  const SRC_LABEL = { invoice: '請求', expense: '入出金', import: '取込', depreciation: '減価償却', opening: '期首', closing: '決算', manual: '手入力' };
 
   // 勘定科目 <select>
   const accountSelect = (value) => {
@@ -61,6 +61,7 @@ window.A = window.A || {};
 
     const dateI = el('input', { type: 'date', value: j.date });
     const descI = el('input', { type: 'text', value: j.description || '', placeholder: '摘要（例：売上入金）' });
+    const fileI = el('input', { type: 'file', accept: 'image/*,application/pdf' });
     const debitBox = el('div.jlines');
     const creditBox = el('div.jlines');
     const summary = el('div.jsummary');
@@ -96,6 +97,7 @@ window.A = window.A || {};
       el('div.form-row', {}, [
         el('label', {}, [el('span', { text: '日付' }), dateI]),
         el('label.grow', {}, [el('span', { text: '摘要' }), descI]),
+        el('label', {}, [el('span', { text: '証憑(任意)' }), fileI]),
       ]),
       el('div.dc-cols', {}, [
         el('div.dc-col', {}, [
@@ -118,7 +120,8 @@ window.A = window.A || {};
       }
       if (!totals.balanced) return ui.toast('借方と貸方の合計が一致していません', 'err');
       const rec = { ...j, date: dateI.value, description: descI.value, lines };
-      await S.journals.save(rec);
+      const saved = await S.journals.save(rec);
+      if (fileI.files[0] && A.attachToJournal) { try { await A.attachToJournal(saved, fileI.files[0]); } catch (e) { ui.toast('証憑の保存に失敗: ' + e.message, 'err'); } }
       m.close();
       ui.toast('仕訳を保存しました', 'ok');
       ui.renderRoute();

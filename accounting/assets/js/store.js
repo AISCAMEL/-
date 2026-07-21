@@ -186,5 +186,30 @@ A.store = (function () {
     },
   };
 
-  return { settings, accounts, partners, journals, invoices, assets };
+  /* ---- 証憑（電子帳簿保存法対応の添付ファイル） -----------------------
+   * attachment = {
+   *   id, journalId(任意), date(取引年月日), amount(取引金額), partner(取引先),
+   *   filename, mime, size, dataUrl(base64), note, createdAt(登録日時)
+   * }
+   * 電帳法の検索要件（日付・金額・取引先）を満たすため、これらを保持する。
+   * ------------------------------------------------------------------- */
+  const attachments = {
+    async loadAll() {
+      const list = await db.all('attachments');
+      list.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      return list;
+    },
+    async byJournal(journalId) {
+      return (await db.all('attachments')).filter((x) => x.journalId === journalId);
+    },
+    async save(att) {
+      if (!att.id) att.id = U.uid('at');
+      if (!att.createdAt) att.createdAt = new Date().toISOString();
+      await db.put('attachments', att);
+      return att;
+    },
+    async remove(id) { await db.del('attachments', id); },
+  };
+
+  return { settings, accounts, partners, journals, invoices, assets, attachments };
 })();

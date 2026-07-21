@@ -95,27 +95,33 @@ A.reports = (function () {
    * BS: 資産 = 負債 + 純資産 + 当期純利益。
    * ------------------------------------------------------------------- */
   const statements = (journals, start, end) => {
-    const tb = trialBalance(journals, start, end);
-    const group = (cat) => {
+    // 損益振替（決算整理）仕訳は、PL表示からは除外して当期の実績を示し、
+    // BS（繰越利益剰余金）には反映させる。これにより二重計上を避ける。
+    const closingExists = journals.some((j) => j.source === 'closing' && U.inRange(j.date, start, end));
+    const plTB = trialBalance(journals.filter((j) => j.source !== 'closing'), start, end);
+    const bsTB = trialBalance(journals, start, end);
+    const groupFrom = (tb, cat) => {
       const items = tb.rows.filter((r) => r.category === cat)
         .map((r) => ({ code: r.code, name: r.name, amount: r.balance }))
         .filter((r) => r.amount !== 0);
       const total = items.reduce((s, r) => s + r.amount, 0);
       return { items, total };
     };
-    const revenue = group('revenue');
-    const expense = group('expense');
-    const netIncome = revenue.total - expense.total; // 当期純利益
+    const revenue = groupFrom(plTB, 'revenue');
+    const expense = groupFrom(plTB, 'expense');
+    const netIncome = revenue.total - expense.total; // 当期純利益（実績）
 
-    const asset = group('asset');
-    const liability = group('liability');
-    const equity = group('equity');
-    const equityWithProfit = equity.total + netIncome;
+    const asset = groupFrom(bsTB, 'asset');
+    const liability = groupFrom(bsTB, 'liability');
+    const equity = groupFrom(bsTB, 'equity');
+    // 損益振替済みなら利益は繰越利益剰余金に含まれるため、当期純利益行は0にする
+    const bsNetIncome = closingExists ? 0 : netIncome;
+    const equityWithProfit = equity.total + bsNetIncome;
 
     return {
       pl: { revenue, expense, netIncome },
       bs: {
-        asset, liability, equity, netIncome,
+        asset, liability, equity, netIncome: bsNetIncome,
         liabilityAndEquity: liability.total + equityWithProfit,
         balanced: asset.total === (liability.total + equityWithProfit),
       },
@@ -170,31 +176,76 @@ A.reports = (function () {
    * 償却率 = (取得価額 − 残存価額) ÷ 耐用年数。供用初年度は月割。
    * ------------------------------------------------------------------- */
   const pad = (x) => String(x).padStart(2, '0');
+  // method: 'straight'(定額) / 'declining'(200%定率) / 'lump3'(一括償却資産3年) / 'immediate'(少額即時)
   const depSchedule = (asset, fsMonth) => {
     const cost = Number(asset.acquireCost) || 0;
     const residual = Number(asset.residual) || 0;
     const life = Math.max(1, Number(asset.usefulLife) || 1);
+    const method = asset.method || 'straight';
     const startDate = asset.startDate || asset.acquireDate;
     if (!startDate || cost <= 0) return [];
-    const annual = Math.floor((cost - residual) / life);
     const d = new Date(startDate + 'T00:00:00');
     let fyYear = d.getFullYear() - ((d.getMonth() + 1) < fsMonth ? 1 : 0);
-    let book = cost, i = 0;
-    const rows = [];
-    while (book > residual && i < life + 3) {
-      const fyStart = `${fyYear}-${pad(fsMonth)}-01`;
-      const endD = new Date(fyYear + 1, fsMonth - 1, 0);
-      const fyEnd = `${endD.getFullYear()}-${pad(endD.getMonth() + 1)}-${pad(endD.getDate())}`;
+    const fyMeta = (y, i) => {
+      const start = `${y}-${pad(fsMonth)}-01`;
+      const endD = new Date(y + 1, fsMonth - 1, 0);
+      const end = `${endD.getFullYear()}-${pad(endD.getMonth() + 1)}-${pad(endD.getDate())}`;
       let months = 12;
       if (i === 0) {
         months = (endD.getFullYear() * 12 + endD.getMonth()) - (d.getFullYear() * 12 + d.getMonth()) + 1;
         months = Math.max(1, Math.min(12, months));
       }
-      let amt = Math.floor(annual * months / 12);
+      return { start, end, months };
+    };
+    const rows = [];
+    const push = (i, amt, book) => {
+      const m = fyMeta(fyYear, i);
+      rows.push({ fyYear, start: m.start, end: m.end, months: m.months, amount: amt, bookBefore: book, bookAfter: book - amt });
+      fyYear += 1;
+    };
+
+    // 少額即時償却：供用年度に全額
+    if (method === 'immediate') { push(0, cost - residual, cost); return rows; }
+
+    // 一括償却資産：取得価額を3年で均等（月割なし・残存0）
+    if (method === 'lump3') {
+      let book = cost; const per = Math.floor(cost / 3);
+      for (let i = 0; i < 3; i++) { const amt = i === 2 ? book : per; push(i, amt, book); book -= amt; }
+      return rows;
+    }
+
+    // 定率法（200%定率法・保証額を下回ったら残存年数で均等に切替）
+    if (method === 'declining') {
+      const rate = 2 / life; // 200%定率法の償却率
+      let book = cost, i = 0, switched = false, switchAmt = 0;
+      while (book > residual && i < life + 5) {
+        const m = fyMeta(fyYear, i);
+        let annual;
+        if (switched) annual = switchAmt;
+        else {
+          const decl = Math.floor(book * rate);
+          const remYears = Math.max(1, life - i);
+          const straight = Math.ceil((book - residual) / remYears);
+          if (decl <= straight) { switched = true; switchAmt = straight; annual = straight; }
+          else annual = decl;
+        }
+        let amt = i === 0 ? Math.floor(annual * m.months / 12) : annual;
+        if (book - amt < residual) amt = book - residual;
+        if (amt <= 0) break;
+        push(i, amt, book); book -= amt; i += 1;
+      }
+      return rows;
+    }
+
+    // 定額法
+    const annual = Math.floor((cost - residual) / life);
+    let book = cost, i = 0;
+    while (book > residual && i < life + 3) {
+      const m = fyMeta(fyYear, i);
+      let amt = Math.floor(annual * m.months / 12);
       if (book - amt < residual) amt = book - residual;
       if (amt <= 0) break;
-      rows.push({ fyYear, start: fyStart, end: fyEnd, months, amount: amt, bookBefore: book, bookAfter: book - amt });
-      book -= amt; fyYear += 1; i += 1;
+      push(i, amt, book); book -= amt; i += 1;
     }
     return rows;
   };

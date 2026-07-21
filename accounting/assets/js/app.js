@@ -31,6 +31,7 @@ A.app = (function () {
     { path: 'invoices', label: '請求書', icon: '📄' },
     { path: 'estimates', label: '見積書', icon: '📝' },
     { path: 'assets', label: '固定資産', icon: '🚚' },
+    { path: 'vouchers', label: '証憑（電帳法）', icon: '🧷' },
     { path: 'partners', label: '取引先', icon: '🏢' },
     { group: 'レポート' },
     { path: 'ledger', label: '総勘定元帳', icon: '📚' },
@@ -38,6 +39,7 @@ A.app = (function () {
     { path: 'statements', label: '決算書(BS/PL)', icon: '📊' },
     { path: 'tax', label: '消費税集計', icon: '🧾' },
     { path: 'opening', label: '期首残高・繰越', icon: '🔄' },
+    { path: 'closing', label: '決算・確定申告', icon: '📆' },
     { group: '' },
     { path: 'settings', label: '設定', icon: '⚙️' },
   ];
