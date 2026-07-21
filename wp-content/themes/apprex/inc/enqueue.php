@@ -75,6 +75,18 @@ function apprex_enqueue_assets() {
 add_action( 'wp_enqueue_scripts', 'apprex_enqueue_assets' );
 
 /**
+ * Google Fonts へ preconnect（初回描画の高速化）。
+ * gstatic.com を早期に接続開始し、日本語フォントの表示遅延を軽減。
+ */
+add_filter( 'wp_resource_hints', function ( $hints, $relation ) {
+	if ( 'preconnect' === $relation ) {
+		$hints[] = 'https://fonts.googleapis.com';
+		$hints[] = array( 'href' => 'https://fonts.gstatic.com', 'crossorigin' );
+	}
+	return $hints;
+}, 10, 2 );
+
+/**
  * Native lazy-loading is already added by WP core to content images.
  * Ensure attachment images served by the theme also get loading="lazy".
  */

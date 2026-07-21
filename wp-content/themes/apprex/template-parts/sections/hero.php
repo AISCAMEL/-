@@ -55,7 +55,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					src="<?php echo esc_url( $apprex_hero_img ); ?>"
 					alt="<?php esc_attr_e( 'APPREX で作成したアプリのイメージ', 'apprex' ); ?>"
 					class="hero__phone-screen"
-					width="300" height="620" loading="eager" decoding="async">
+					width="300" height="620" loading="eager" fetchpriority="high" decoding="async">
 			</div>
 		</div>
 	</div>

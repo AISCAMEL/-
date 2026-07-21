@@ -371,7 +371,7 @@ function apprex_head_meta() {
 	<meta property="og:image:secure_url" content="<?php echo esc_url( $img ); ?>">
 	<meta property="og:image:width" content="<?php echo esc_attr( $img_w ); ?>">
 	<meta property="og:image:height" content="<?php echo esc_attr( $img_h ); ?>">
-	<meta property="og:image:alt" content="<?php echo esc_attr( $title ); ?>">
+	<meta property="og:image:alt" content="<?php echo esc_attr( APPREX_BRAND . '｜ノーコードアプリ開発・ホームページ制作' ); ?>">
 	<meta property="og:locale" content="ja_JP">
 	<?php if ( is_singular( 'post' ) ) : ?>
 	<meta property="article:published_time" content="<?php echo esc_attr( get_the_date( 'c' ) ); ?>">
@@ -395,9 +395,16 @@ function apprex_jsonld() {
 	$graph = array();
 
 	$org = array(
-		'@type'        => 'Organization',
+		'@type'        => array( 'Organization', 'ProfessionalService' ),
 		'@id'          => home_url( '/#organization' ),
 		'name'         => APPREX_BRAND,
+		'areaServed'   => array( '@type' => 'Country', 'name' => '日本' ),
+		'openingHoursSpecification' => array(
+			'@type'     => 'OpeningHoursSpecification',
+			'dayOfWeek' => array( 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday' ),
+			'opens'     => '10:00',
+			'closes'    => '18:00',
+		),
 		'legalName'    => '合同会社アイズ',
 		'url'          => home_url( '/' ),
 		'logo'         => array(
