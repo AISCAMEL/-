@@ -39,6 +39,7 @@ A.accounts = (function () {
     { code: '150', name: '棚卸資産',    category: 'asset', default_tax: 'out' },
     { code: '180', name: '車両運搬具',  category: 'asset', default_tax: 'out' },
     { code: '185', name: '工具器具備品',category: 'asset', default_tax: 'out' },
+    { code: '186', name: 'リース資産',  category: 'asset', default_tax: 'out' },
     // 負債
     { code: '200', name: '買掛金',      category: 'liability', default_tax: 'out' },
     { code: '210', name: '未払金',      category: 'liability', default_tax: 'out' },
@@ -48,6 +49,7 @@ A.accounts = (function () {
     { code: '250', name: '未払消費税',  category: 'liability', default_tax: 'out' },
     { code: '260', name: '短期借入金',  category: 'liability', default_tax: 'out' },
     { code: '270', name: '長期借入金',  category: 'liability', default_tax: 'out' },
+    { code: '271', name: 'リース債務',  category: 'liability', default_tax: 'out' },
     // 純資産
     { code: '300', name: '資本金',      category: 'equity', default_tax: 'out' },
     { code: '310', name: '元入金',      category: 'equity', default_tax: 'out' },
@@ -76,8 +78,10 @@ A.accounts = (function () {
     { code: '585', name: '租税公課',    category: 'expense', default_tax: 'out' },
     { code: '590', name: '減価償却費',  category: 'expense', default_tax: 'out' },
     { code: '595', name: '雑費',        category: 'expense', default_tax: 'purchase10' },
+    { code: '562', name: 'リース料',    category: 'expense', default_tax: 'purchase10' },
     { code: '596', name: '固定資産売却損', category: 'expense', default_tax: 'out' },
     { code: '597', name: '固定資産除却損', category: 'expense', default_tax: 'out' },
+    { code: '598', name: '固定資産圧縮損', category: 'expense', default_tax: 'out' },
     { code: '600', name: '支払利息',    category: 'expense', default_tax: 'out' },
   ];
 

@@ -4,7 +4,7 @@ window.A = window.A || {};
   'use strict';
   const U = A.util, el = U.el, ui = A.ui, S = A.store;
   const TAX = A.accounts.TAX_CATEGORIES;
-  const SRC_LABEL = { invoice: '請求', expense: '入出金', import: '取込', depreciation: '減価償却', disposal: '除却売却', opening: '期首', closing: '決算', payroll: '給与', manual: '手入力' };
+  const SRC_LABEL = { invoice: '請求', expense: '入出金', import: '取込', depreciation: '減価償却', disposal: '除却売却', lease: 'リース', compression: '圧縮', opening: '期首', closing: '決算', payroll: '給与', manual: '手入力' };
 
   // 勘定科目 <select>
   const accountSelect = (value) => {

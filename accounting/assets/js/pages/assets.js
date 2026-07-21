@@ -96,6 +96,62 @@ window.A = window.A || {};
     if (!S.accounts.byCode(code)) await S.accounts.save({ code, name, category, default_tax: 'out' });
   };
 
+  // リース資産の計上（借:リース資産／貸:リース債務）＝所有権移転外ファイナンスリースの売買処理
+  const leaseModal = () => {
+    const name = el('input', { type: 'text', placeholder: '例：複合機（リース）' });
+    const date = el('input', { type: 'date', value: U.today() });
+    const amount = el('input.amt-in', { type: 'text', inputmode: 'numeric', placeholder: 'リース資産計上額' });
+    const life = el('input', { type: 'number', min: '1', value: 5 });
+    amount.addEventListener('blur', () => { amount.value = amount.value ? U.yen(U.parseYen(amount.value)) : ''; });
+    const body = el('div.editor', {}, [
+      el('label', {}, [el('span', { text: '資産名' }), name]),
+      el('div.form-row', {}, [el('label', {}, [el('span', { text: '計上日' }), date]), el('label', {}, [el('span', { text: 'リース資産計上額' }), amount]), el('label', {}, [el('span', { text: '耐用年数(リース期間)' }), life])]),
+      el('p.muted.small', { text: '売買処理として、借）リース資産／貸）リース債務 を計上し、資産として登録します（定額法・残存0で償却）。中小企業で賃貸借処理を採用する場合は「経費・入出金」でリース料を計上してください。' }),
+    ]);
+    const save = async () => {
+      const amt = U.parseYen(amount.value);
+      if (!name.value || amt <= 0) return ui.toast('資産名と計上額を入力してください', 'err');
+      await ensureAccount('186', 'リース資産', 'asset');
+      await ensureAccount('271', 'リース債務', 'liability');
+      await S.accounts.loadAll();
+      const asset = await S.assets.save({ name: name.value, accountCode: '186', acquireDate: date.value, startDate: date.value, acquireCost: amt, usefulLife: Number(life.value), residual: 0, method: 'straight', note: 'リース資産（売買処理）' });
+      await S.journals.save({ refId: asset.id, source: 'lease', date: date.value, description: `リース資産計上：${name.value}`, lines: [
+        { side: 'debit', account: '186', tax: 'out', amount: amt },
+        { side: 'credit', account: '271', tax: 'out', amount: amt },
+      ] });
+      m.close(); ui.toast('リース資産を計上しました', 'ok'); ui.renderRoute();
+    };
+    const m = ui.modal('リース資産の計上', body, {
+      footer: [el('button.btn', { text: 'キャンセル', onclick: () => m.close() }), el('button.btn.primary', { text: '計上する', onclick: save })],
+    });
+  };
+
+  // 圧縮記帳（直接減額方式）：借)固定資産圧縮損／貸)資産科目、取得価額を減額
+  const compressionModal = (asset) => {
+    const amount = el('input.amt-in', { type: 'text', inputmode: 'numeric', placeholder: '圧縮額' });
+    const date = el('input', { type: 'date', value: U.today() });
+    amount.addEventListener('blur', () => { amount.value = amount.value ? U.yen(U.parseYen(amount.value)) : ''; });
+    const body = el('div.editor', {}, [
+      el('div.form-row', {}, [el('label', {}, [el('span', { text: '圧縮記帳日' }), date]), el('label', {}, [el('span', { text: '圧縮額' }), amount])]),
+      el('p.muted.small', { html: `対象：<b>${U.esc(asset.name)}</b>（取得価額 ¥${U.yen(asset.acquireCost)}）。直接減額方式で、借）固定資産圧縮損／貸）${U.esc(S.accounts.name(asset.accountCode))} を計上し、取得価額を減額します（以後の減価償却は減額後の価額で計算）。` }),
+    ]);
+    const save = async () => {
+      const amt = U.parseYen(amount.value);
+      if (amt <= 0 || amt > asset.acquireCost) return ui.toast('取得価額以内の圧縮額を入力してください', 'err');
+      await ensureAccount('598', '固定資産圧縮損', 'expense');
+      await S.accounts.loadAll();
+      await S.journals.save({ refId: asset.id, source: 'compression', date: date.value, description: `圧縮記帳：${asset.name}`, lines: [
+        { side: 'debit', account: '598', tax: 'out', amount: amt },
+        { side: 'credit', account: asset.accountCode, tax: 'out', amount: amt },
+      ] });
+      await S.assets.save({ ...asset, acquireCost: asset.acquireCost - amt, note: (asset.note || '') + ` 圧縮¥${U.yen(amt)}` });
+      m.close(); ui.toast('圧縮記帳を計上しました', 'ok'); ui.renderRoute();
+    };
+    const m = ui.modal('圧縮記帳', body, {
+      footer: [el('button.btn', { text: 'キャンセル', onclick: () => m.close() }), el('button.btn.primary', { text: '計上する', onclick: save })],
+    });
+  };
+
   // 除却・売却
   const disposeModal = (asset, journals) => {
     const bookValue = asset.acquireCost - postedAccum(journals, asset.id);
@@ -187,6 +243,7 @@ window.A = window.A || {};
     const wrap = el('div');
     wrap.appendChild(ui.pageHead('固定資産・減価償却', [
       el('span.muted', { text: `対象年度：${fy.start.slice(0, 4)}年度` }),
+      el('button.btn', { text: '＋ リース資産', onclick: () => leaseModal() }),
       el('button.btn.primary', { text: '＋ 固定資産を登録', onclick: () => editor(null) }),
     ]));
 
@@ -231,6 +288,7 @@ window.A = window.A || {};
             const row = R.depForFiscalYear(r, s.fiscalStartMonth || 4, fy.start);
             if (row && !postedInFy(journals, r.id, fy.start, fy.end)) box.appendChild(el('button.btn.sm', { text: '当期計上', onclick: () => postDepreciation(r, fy.start, fy.end) }));
             box.appendChild(el('button.btn.sm', { text: '除却/売却', onclick: () => disposeModal(r, journals) }));
+            box.appendChild(el('button.icon-btn', { text: '圧', title: '圧縮記帳', onclick: () => compressionModal(r) }));
           }
           box.appendChild(el('button.icon-btn', { text: '📅', title: '償却予定', onclick: () => showSchedule(r) }));
           if (!r.disposed) box.appendChild(el('button.icon-btn', { text: '✎', onclick: () => editor(r) }));

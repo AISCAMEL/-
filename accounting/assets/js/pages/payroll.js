@@ -131,6 +131,33 @@ window.A = window.A || {};
     });
   };
 
+  /* ---- 保険料から控除額を計算 ----------------------------------------- */
+  const insuranceCalc = (lifeField, quakeField) => {
+    const general = yenInput(0), medical = yenInput(0), pension = yenInput(0), quake = yenInput(0), oldLong = yenInput(0);
+    const out = el('div.jsummary');
+    const recompute = () => {
+      const lifeDed = A.payrolltax.lifeInsuranceDeduction(U.parseYen(general.value), U.parseYen(medical.value), U.parseYen(pension.value));
+      const quakeDed = A.payrolltax.earthquakeInsuranceDeduction(U.parseYen(quake.value), U.parseYen(oldLong.value));
+      out.innerHTML = '';
+      out.appendChild(el('span', { html: `生命保険料控除 <b>¥${U.yen(lifeDed)}</b>` }));
+      out.appendChild(el('span', { html: `地震保険料控除 <b>¥${U.yen(quakeDed)}</b>` }));
+      out._life = lifeDed; out._quake = quakeDed;
+    };
+    [general, medical, pension, quake, oldLong].forEach((i) => i.addEventListener('input', recompute));
+    recompute();
+    const body = el('div.editor', {}, [
+      el('div.muted.small', { text: '年間の支払保険料を入力してください（生命保険は新制度）。' }),
+      el('div.form-row', {}, [el('label', {}, [el('span', { text: '一般生命保険料' }), general]), el('label', {}, [el('span', { text: '介護医療保険料' }), medical]), el('label', {}, [el('span', { text: '個人年金保険料' }), pension])]),
+      el('div.form-row', {}, [el('label', {}, [el('span', { text: '地震保険料' }), quake]), el('label', {}, [el('span', { text: '旧長期損害保険料' }), oldLong])]),
+      el('div.preview-box', {}, [el('div.muted', { text: '控除額' }), out]),
+    ]);
+    const m = ui.modal('保険料控除の計算', body, {
+      footer: [el('button.btn', { text: 'キャンセル', onclick: () => m.close() }), el('button.btn.primary', {
+        text: '控除額を反映', onclick: () => { lifeField.value = out._life ? U.yen(out._life) : ''; quakeField.value = out._quake ? U.yen(out._quake) : ''; lifeField.dispatchEvent(new Event('input')); m.close(); },
+      })],
+    });
+  };
+
   /* ---- 年末調整 -------------------------------------------------------- */
   const yearEndModal = async () => {
     const s = S.settings.get();
@@ -178,7 +205,8 @@ window.A = window.A || {};
 
     const body = el('div.editor', {}, [
       el('div.form-row', {}, [el('label.grow', {}, [el('span', { text: '従業員' }), empSel]), el('label', {}, [el('span', { text: '対象年' }), yearI]), el('label', {}, [el('span', { text: '配偶者控除' }), spouse])]),
-      el('div.form-row', {}, [el('label', {}, [el('span', { text: '生命保険料控除' }), life]), el('label', {}, [el('span', { text: '地震保険料控除' }), quake])]),
+      el('div.form-row', {}, [el('label', {}, [el('span', { text: '生命保険料控除' }), life]), el('label', {}, [el('span', { text: '地震保険料控除' }), quake]),
+        el('label', {}, [el('span', { text: '　' }), el('button.btn.sm', { text: '保険料から計算', onclick: () => insuranceCalc(life, quake) })])]),
       el('div.form-row', {}, [el('label', {}, [el('span', { text: '小規模企業共済等(iDeco等)' }), mutual]), el('label', {}, [el('span', { text: '住宅ローン控除(税額控除)' }), housing])]),
       el('div.preview-box', {}, [el('div.muted', { text: '年末調整（電算特例に基づく概算）' }), result]),
       el('p.muted.small', { text: '※ 給与明細から自動集計した概算です。各種控除は控除額を直接入力してください。最新の税制・要件は別途ご確認ください。' }),

@@ -50,13 +50,41 @@ A.app = (function () {
     { path: 'settings', label: '設定', icon: '⚙️' },
   ];
 
+  // 折りたたみ状態を localStorage に保持
+  const COLLAPSE_KEY = 'kaikei_nav_collapsed';
+  const getCollapsed = () => { try { return JSON.parse(localStorage.getItem(COLLAPSE_KEY)) || {}; } catch (e) { return {}; } };
+  const setCollapsed = (m) => { try { localStorage.setItem(COLLAPSE_KEY, JSON.stringify(m)); } catch (e) {} };
+
   const buildNav = () => {
     const nav = el('nav.side-nav');
+    const collapsed = getCollapsed();
+    let currentItems = []; // 現在のグループ配下の要素
+    let currentKey = null;
+    const applyGroup = (items, isCol) => {
+      items.forEach((it) => { it.style.display = isCol ? 'none' : ''; });
+    };
     NAV.forEach((n) => {
-      if (n.group !== undefined) { nav.appendChild(el('div.nav-group', { text: n.group })); return; }
+      if (n.group !== undefined) {
+        currentKey = n.group || '_';
+        const key = currentKey;
+        const items = [];
+        currentItems = items;
+        if (n.group) {
+          const header = el('div.nav-group', {}, [el('span', { text: n.group }), el('span.nav-caret', { text: collapsed[key] ? '▸' : '▾' })]);
+          header.addEventListener('click', () => {
+            const c = getCollapsed(); c[key] = !c[key]; setCollapsed(c);
+            header.querySelector('.nav-caret').textContent = c[key] ? '▸' : '▾';
+            applyGroup(items, !!c[key]);
+          });
+          nav.appendChild(header);
+        }
+        return;
+      }
       const a = el('a.nav-item', { href: '#/' + n.path, 'data-nav': n.path }, [
         el('span.nav-ico', { text: n.icon }), el('span', { text: n.label }),
       ]);
+      currentItems.push(a);
+      if (currentKey && collapsed[currentKey]) a.style.display = 'none';
       nav.appendChild(a);
     });
     return nav;

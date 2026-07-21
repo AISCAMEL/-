@@ -14,7 +14,9 @@ window.A = window.A || {};
     const p = A.app.period();
     const journals = await S.journals.loadAll();
     const invoices = await S.invoices.loadAll();
+    const assets = await S.assets.loadAll();
     const d = R.dashboard(journals, p.start, p.end);
+    const st = R.statements(journals, p.start, p.end);
     const s = S.settings.get();
 
     const unpaid = invoices.filter((i) => i.type === 'invoice' && !i.paid);
@@ -24,6 +26,29 @@ window.A = window.A || {};
     wrap.appendChild(ui.pageHead('ダッシュボード', [
       el('span.muted', { text: s.name + '　' + U.fmtDate(p.start || '') + '〜' + U.fmtDate(p.end || '') }),
     ]));
+
+    // やることリスト（アラート）
+    const fy = U.fiscalRange(p.start || U.today(), s.fiscalStartMonth || 4);
+    const today = U.today();
+    const alerts = [];
+    if (!st.bs.balanced) alerts.push({ level: 'bad', text: '貸借対照表が一致していません。仕訳をご確認ください。', to: 'statements' });
+    const depPending = assets.filter((a) => !a.disposed && R.depForFiscalYear(a, s.fiscalStartMonth || 4, fy.start) &&
+      !journals.some((j) => j.source === 'depreciation' && j.refId === a.id && U.inRange(j.date, fy.start, fy.end)));
+    if (depPending.length) alerts.push({ level: 'warn', text: `当期の減価償却が未計上の固定資産が ${depPending.length} 件あります。`, to: 'assets' });
+    const overdue = unpaid.filter((i) => i.dueDate && i.dueDate < today);
+    if (overdue.length) alerts.push({ level: 'bad', text: `支払期限を過ぎた未入金の請求書が ${overdue.length} 件あります。`, to: 'invoices' });
+    else if (unpaid.length) alerts.push({ level: 'warn', text: `未入金の請求書が ${unpaid.length} 件（¥${U.yen(unpaidTotal)}）あります。`, to: 'invoices' });
+    const draftInv = invoices.filter((i) => i.type === 'invoice' && !i.posted);
+    if (draftInv.length) alerts.push({ level: 'info', text: `売上未計上の請求書が ${draftInv.length} 件あります。`, to: 'invoices' });
+
+    if (alerts.length) {
+      wrap.appendChild(el('div.card.todo-card', {}, [
+        el('h3', { text: '📌 やることリスト' }),
+        el('div.todo-list', {}, alerts.map((a) => el('div.todo-item.' + a.level, {
+          onclick: () => ui.go(a.to),
+        }, [el('span.todo-dot'), el('span', { text: a.text }), el('span.todo-go', { text: '→' })]))),
+      ]));
+    }
 
     wrap.appendChild(el('div.stat-grid', {}, [
       stat('当期売上（収益）', d.revenue, 'good'),

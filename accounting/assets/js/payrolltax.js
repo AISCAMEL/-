@@ -87,5 +87,34 @@ A.payrolltax = (function () {
     return { salaryDeduction, employmentIncome, totalDeduction, taxable, baseTax, housingCredit, afterCredit, yearTax, withheld, diff };
   };
 
-  return { salaryDeductionAnnual, monthlyWithholding, yearEnd };
+  /* ---- 保険料控除の計算 -----------------------------------------------
+   * 生命保険料控除（新制度）: 一般・介護医療・個人年金の3区分、各上限4万円、
+   * 合計上限12万円。地震保険料控除: 地震保険は支払額（上限5万円）。
+   * ------------------------------------------------------------------- */
+  const lifeCategory = (paid) => { // 新制度・区分ごとの控除額
+    const A = Math.max(0, Math.floor(Number(paid) || 0));
+    if (A <= 0) return 0;
+    if (A <= 20000) return A;
+    if (A <= 40000) return Math.floor(A / 2) + 10000;
+    if (A <= 80000) return Math.floor(A / 4) + 20000;
+    return 40000;
+  };
+  const lifeInsuranceDeduction = (general, medical, pension) => {
+    const total = lifeCategory(general) + lifeCategory(medical) + lifeCategory(pension);
+    return Math.min(120000, total); // 合計上限12万円
+  };
+  const oldLongTermQuake = (paid) => { // 旧長期損害保険料
+    const A = Math.max(0, Math.floor(Number(paid) || 0));
+    if (A <= 0) return 0;
+    if (A <= 10000) return A;
+    if (A <= 20000) return Math.floor(A / 2) + 5000;
+    return 15000;
+  };
+  const earthquakeInsuranceDeduction = (quake, oldLongTerm) => {
+    const q = Math.min(50000, Math.max(0, Math.floor(Number(quake) || 0)));
+    const o = oldLongTermQuake(oldLongTerm);
+    return Math.min(50000, q + o); // 合計上限5万円
+  };
+
+  return { salaryDeductionAnnual, monthlyWithholding, yearEnd, lifeInsuranceDeduction, earthquakeInsuranceDeduction, lifeCategory };
 })();
