@@ -510,6 +510,9 @@ a.genre-tag:hover{background:var(--green);border-color:var(--green);color:#fff;}
 .company-mascot{text-align:right;margin-top:10px;font-size:0;}
 .company-mascot::after{content:"";display:inline-block;width:90px;height:110px;background:url('../img/buymo/09_営業プロフェッショナルスタイル.png') no-repeat center/contain;}
 
+/* ページ見出しマスコット（ポータル全ページ共通） */
+.page-mascot{float:right;width:76px;height:auto;margin:0 0 6px 12px;}
+
 /* ============ 信頼バッジ ============ */
 .badges{background:var(--gray);padding:36px 0 56px;}
 .badge-list{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;}

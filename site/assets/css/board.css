@@ -30,11 +30,14 @@
   .kpi-row-5{grid-template-columns:repeat(2,1fr);}
   .kpi{min-width:0;}                       /* グリッド項目を縮小可能にしてはみ出し防止 */
   .kpi .kpi-num{font-size:20px;}           /* 金額(¥1,500,000)が枠を超えないように縮小 */
+  .portal-main{overflow-x:hidden;}          /* モバイルでの横はみ出し防止（内部overflow:visibleを封じ込める） */
+  .rep-card{overflow-x:hidden;}            /* バーチャートのauto列が枠外に出ないよう抑制 */
+  .bar-val{white-space:normal;}
   /* ポータルヘッダー：折り返し＋ナビは横スクロールではみ出し防止 */
-  .portal-header{height:auto;}
+  .portal-header{height:auto;overflow-x:clip;}
   .portal-header .container{flex-wrap:wrap;gap:8px 10px;padding-top:8px;padding-bottom:8px;}
   .portal-role{margin-left:auto;}
-  .portal-nav{margin-left:0;width:100%;order:3;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;font-size:13px;gap:4px;padding-bottom:2px;}
+  .portal-nav{margin-left:0;width:100%;min-width:0;order:3;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;font-size:13px;gap:4px;padding-bottom:2px;}
   .portal-nav a{white-space:nowrap;}
   .portal-nav + .portal-logout{margin-left:auto;}
 }
@@ -243,4 +246,6 @@
 /* 営業レポート：見出し＋CSV出力ボタン */
 .report-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
 .report-head h1{margin:0;}
+.report-head .page-mascot{float:none;margin:0;align-self:flex-end;flex-shrink:0;}
 .btn-csv{width:auto;height:44px;padding:0 22px;display:inline-flex;align-items:center;}
+@media (max-width:480px){.page-mascot{display:none;}}
