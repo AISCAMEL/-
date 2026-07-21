@@ -38,7 +38,8 @@
     <!-- side nav -->
     <aside class="mp-side">
       <nav class="mp-nav">
-        <a href="#flow" class="active">🔎 査定の流れ</a>
+        <a href="#video" class="active">🎬 動画研修</a>
+        <a href="#flow">🔎 査定の流れ</a>
         <a href="#need">📑 査定に必要な情報</a>
         <a href="#grade">⭐ 評価点の見方</a>
         <a href="#inner">🪑 内装評価の見方</a>
@@ -56,6 +57,28 @@
     </aside>
 
     <main>
+      <section class="panel" id="video">
+        <div class="panel-head"><h3>🎬 動画研修</h3><span class="badge-status" id="vidCount" style="background:#eef2f9;color:#2a64c4;">全6章</span></div>
+        <div class="panel-body">
+          <p>査定の基礎を動画で学べます。各章は数分の短尺。スマホでも視聴できます。まずは第1章からどうぞ。</p>
+
+          <!-- player (16:9) -->
+          <div id="vidFrame" style="position:relative;padding-top:56.25%;background:#0e1b33;border-radius:12px;overflow:hidden;box-shadow:var(--shadow);">
+            <div id="vidPlaceholder" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#cfd6e6;text-align:center;padding:20px;">
+              <div style="font-size:44px;line-height:1;margin-bottom:12px;">🎬</div>
+              <div id="vidPhTitle" style="font-size:16px;font-weight:800;color:#fff;">動画は準備中です</div>
+              <div style="font-size:13px;margin-top:6px;opacity:.85;">公開までしばらくお待ちください</div>
+            </div>
+          </div>
+          <div id="vidNow" style="margin-top:12px;font-weight:800;color:var(--navy);font-size:15px;"></div>
+
+          <!-- playlist -->
+          <ol id="vidList" style="list-style:none;padding:0;margin:16px 0 0;counter-reset:les;"></ol>
+
+          <div class="alert alert-info" style="margin-top:16px;">動画は順次追加予定です。字幕・多言語対応や視聴の不具合は、マイページ・お問い合わせよりご連絡ください。</div>
+        </div>
+      </section>
+
       <section class="panel" id="flow">
         <div class="panel-head"><h3>🔎 査定の5ステップ</h3></div>
         <div class="panel-body">
@@ -294,6 +317,103 @@
 
 <script src="assets/js/app.js"></script>
 <script>
+  // ===== 動画研修 =====
+  // 各章に動画URLを設定すると視聴できます（未設定の章は「準備中」表示）。
+  // 対応形式：
+  //   YouTube  … "https://www.youtube.com/watch?v=XXXX" または "https://youtu.be/XXXX"
+  //   Vimeo    … "https://vimeo.com/1234567"
+  //   直リンク  … "assets/video/xxx.mp4"（自社ホスティングのMP4）
+  var LESSONS = [
+    { title: "第1章 査定の全体フロー", dur: "3分", url: "" },
+    { title: "第2章 AA評価点の見方（S〜R）", dur: "5分", url: "" },
+    { title: "第3章 内装評価とキズ表示記号", dur: "4分", url: "" },
+    { title: "第4章 修復歴の見分け方", dur: "5分", url: "" },
+    { title: "第5章 出品写真の撮り方", dur: "3分", url: "" },
+    { title: "第6章 手取りの計算とシミュレーター", dur: "3分", url: "" }
+  ];
+
+  (function () {
+    var frame = document.getElementById("vidFrame");
+    var ph = document.getElementById("vidPlaceholder");
+    var phTitle = document.getElementById("vidPhTitle");
+    var now = document.getElementById("vidNow");
+    var list = document.getElementById("vidList");
+    var count = document.getElementById("vidCount");
+    if (!frame) return;
+
+    count.textContent = "全" + LESSONS.length + "章";
+
+    // URL → 埋め込みURL変換（YouTube / Vimeo / MP4）
+    function toEmbed(url) {
+      if (!url) return null;
+      var m;
+      if ((m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{6,})/))) {
+        return { type: "iframe", src: "https://www.youtube-nocookie.com/embed/" + m[1] + "?rel=0" };
+      }
+      if ((m = url.match(/vimeo\.com\/(\d+)/))) {
+        return { type: "iframe", src: "https://player.vimeo.com/video/" + m[1] };
+      }
+      if (/\.(mp4|webm|ogg)(\?|$)/i.test(url)) {
+        return { type: "video", src: url };
+      }
+      return { type: "iframe", src: url }; // その他はそのまま埋め込み
+    }
+
+    function clearPlayer() {
+      var old = frame.querySelector("iframe,video");
+      if (old) old.remove();
+    }
+
+    function play(i) {
+      var les = LESSONS[i];
+      var emb = toEmbed(les.url);
+      now.textContent = "▶ " + les.title;
+      clearPlayer();
+      // active表示
+      Array.prototype.forEach.call(list.children, function (li, idx) {
+        li.style.borderColor = idx === i ? "#c9a14a" : "#e4e8ef";
+        li.style.background = idx === i ? "#fffaf0" : "#fff";
+      });
+      if (!emb) {
+        ph.style.display = "flex";
+        phTitle.textContent = les.title + "（準備中）";
+        return;
+      }
+      ph.style.display = "none";
+      var el;
+      if (emb.type === "video") {
+        el = document.createElement("video");
+        el.src = emb.src; el.controls = true; el.playsInline = true;
+      } else {
+        el = document.createElement("iframe");
+        el.src = emb.src; el.allow = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture";
+        el.setAttribute("allowfullscreen", "");
+        el.setAttribute("title", les.title);
+      }
+      el.style.cssText = "position:absolute;inset:0;width:100%;height:100%;border:0;";
+      frame.appendChild(el);
+    }
+
+    // プレイリスト描画
+    LESSONS.forEach(function (les, i) {
+      var ready = !!toEmbed(les.url);
+      var li = document.createElement("li");
+      li.style.cssText = "display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid #e4e8ef;border-radius:10px;margin-bottom:8px;cursor:pointer;transition:.15s;";
+      li.innerHTML =
+        '<span style="flex:0 0 30px;height:30px;border-radius:50%;background:#0e1b33;color:#e0bd6a;display:grid;place-items:center;font-weight:900;font-size:13px;">' + (i + 1) + '</span>' +
+        '<span style="flex:1;font-weight:700;color:#1a2233;font-size:14.5px;">' + les.title + '</span>' +
+        '<span style="flex:0 0 auto;font-size:12px;color:#8590a0;">⏱ ' + les.dur + '</span>' +
+        '<span style="flex:0 0 auto;font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px;' +
+          (ready ? 'background:#eaf7f0;color:#2f8f5b;">▶ 視聴' : 'background:#f1f3f7;color:#8590a0;">準備中') + '</span>';
+      li.addEventListener("click", function () { play(i); });
+      list.appendChild(li);
+    });
+
+    // 初期表示（最初の視聴可能な章、なければ第1章のプレースホルダ）
+    var firstReady = LESSONS.findIndex(function (l) { return !!toEmbed(l.url); });
+    play(firstReady >= 0 ? firstReady : 0);
+  })();
+
   // 会員限定：未ログインはログインへ
   if (!AucAuth.current()) { location.href = "login.html"; }
   document.getElementById("logoutBtn").onclick = function (e) {
