@@ -4,6 +4,7 @@ window.A = window.A || {};
   'use strict';
   const U = A.util, el = U.el, ui = A.ui, S = A.store;
   const TAX = A.accounts.TAX_CATEGORIES;
+  const SRC_LABEL = { invoice: '請求', expense: '入出金', import: '取込', depreciation: '減価償却', opening: '期首', manual: '手入力' };
 
   // 勘定科目 <select>
   const accountSelect = (value) => {
@@ -153,7 +154,7 @@ window.A = window.A || {};
         { key: 'credit', label: '貸方科目', render: (r) => (r.lines.filter((l) => l.side === 'credit').map((l) => S.accounts.name(l.account)).join(' / ')) },
         { key: 'desc', label: '摘要', render: (r) => r.description || '—' },
         { key: 'amt', label: '金額', align: 'right', render: (r) => '¥' + U.yen(S.journals.totals(r).debit) },
-        { key: 'src', label: '', render: (r) => r.source !== 'manual' ? el('span.badge', { text: r.source === 'invoice' ? '請求' : '経費' }) : '' },
+        { key: 'src', label: '', render: (r) => r.source !== 'manual' ? el('span.badge', { text: SRC_LABEL[r.source] || r.source }) : '' },
         {
           key: 'act', label: '', align: 'right', render: (r) => {
             const box = el('div.row-actions');

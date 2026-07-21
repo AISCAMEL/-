@@ -115,6 +115,56 @@ window.A = window.A || {};
       ]),
     ]);
     wrap.appendChild(backupCard);
+
+    /* --- クラウド同期（複数人・複数端末で共有） --- */
+    const syncUrl = el('input', { type: 'text', value: s.syncUrl || '', placeholder: 'http://localhost:8787' });
+    const syncWs = el('input', { type: 'text', value: s.syncWorkspace || '', placeholder: '例：aizu-2026' });
+    const syncToken = el('input', { type: 'text', value: s.syncToken || '', placeholder: '共有の合言葉（初回に登録）' });
+    const syncStatus = el('div.muted.small', { text: s.syncVersion ? `最終同期バージョン：${s.syncVersion}` : '未同期' });
+    const saveSync = async () => { await S.settings.save({ syncUrl: syncUrl.value.trim(), syncWorkspace: syncWs.value.trim(), syncToken: syncToken.value.trim() }); };
+
+    const syncCard = el('div.card', {}, [
+      el('h2', { text: 'クラウド同期（複数人で共有）' }),
+      el('p.muted.small', { html: '同梱の同期サーバー（<code>server/server.js</code>）を起動し、同じワークスペース名を設定すると、複数の端末・担当者で同じ帳簿を共有できます。' }),
+      el('div.form-row', {}, [
+        el('label.grow', {}, [el('span', { text: 'サーバーURL' }), syncUrl]),
+        el('label', {}, [el('span', { text: 'ワークスペース' }), syncWs]),
+        el('label', {}, [el('span', { text: 'トークン' }), syncToken]),
+      ]),
+      syncStatus,
+      el('div.quick-row', {}, [
+        el('button.btn', {
+          text: '接続確認', onclick: async () => {
+            await saveSync();
+            try { ui.toast(await A.sync.health() ? 'サーバーに接続できました' : '接続できません', 'ok'); }
+            catch (e) { ui.toast(e.message, 'err'); }
+          },
+        }),
+        el('button.btn.primary', {
+          text: '⬆ アップロード（push）', onclick: async () => {
+            await saveSync();
+            try {
+              const r = await A.sync.push();
+              if (r.ok) { ui.toast(`アップロードしました（v${r.version}）`, 'ok'); ui.renderRoute(); }
+              else if (r.conflict) ui.toast('他の端末で更新済みです。先にダウンロードしてください', 'err');
+              else ui.toast('失敗：' + r.message, 'err');
+            } catch (e) { ui.toast(e.message, 'err'); }
+          },
+        }),
+        el('button.btn', {
+          text: '⬇ ダウンロード（pull）', onclick: async () => {
+            await saveSync();
+            if (!await ui.confirm('サーバーのデータで、この端末のデータを上書きします。よろしいですか？')) return;
+            try {
+              const r = await A.sync.pull();
+              if (r.ok) { ui.toast(`ダウンロードしました（v${r.version}）`, 'ok'); ui.go('dashboard'); }
+              else ui.toast('失敗：' + r.message, 'err');
+            } catch (e) { ui.toast(e.message, 'err'); }
+          },
+        }),
+      ]),
+    ]);
+    wrap.appendChild(syncCard);
     return wrap;
   });
 })();

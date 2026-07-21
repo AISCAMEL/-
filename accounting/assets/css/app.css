@@ -163,6 +163,13 @@ textarea { resize: vertical; }
 .result-line.good { background: var(--brand-soft); color: var(--brand-dark); }
 .result-line.bad { background: #fdecec; color: var(--bad); }
 
+/* ---- CSV取込・ルール -------------------------------------------------- */
+select.sm-sel { padding: 4px 6px; font-size: 12px; min-width: 110px; }
+.rules-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.rule-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; background: #f6f8fb; border-radius: 6px; font-size: 13px; }
+.rule-add { display: grid; grid-template-columns: 1fr 140px 140px auto; gap: 8px; align-items: center; }
+@media (max-width: 860px) { .rule-add { grid-template-columns: 1fr; } }
+
 /* ---- トースト --------------------------------------------------------- */
 .toast-box { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 3000; display: flex; flex-direction: column; gap: 8px; align-items: center; }
 .toast { background: #10261f; color: #fff; padding: 10px 18px; border-radius: 999px; font-size: 13px; box-shadow: var(--shadow); opacity: 0; transform: translateY(8px); transition: .3s; }

@@ -8,7 +8,7 @@ A.db = (function () {
   'use strict';
 
   const DB_NAME = 'aizu_kaikei';
-  const DB_VERSION = 1;
+  const DB_VERSION = 2; // v2: 固定資産(assets)ストアを追加
   // オブジェクトストア（テーブル）一覧
   const STORES = {
     settings: { keyPath: 'key' },
@@ -16,6 +16,7 @@ A.db = (function () {
     partners: { keyPath: 'id' },
     journals: { keyPath: 'id', indexes: [['date', 'date']] },
     invoices: { keyPath: 'id', indexes: [['date', 'date']] },
+    assets: { keyPath: 'id', indexes: [['acquireDate', 'acquireDate']] },
   };
 
   let _db = null;
@@ -70,6 +71,11 @@ A.db = (function () {
     invoiceSeq: 0,                         // 請求書番号カウンタ
     estimateSeq: 0,                        // 見積書番号カウンタ
     journalSeq: 0,                         // 仕訳番号カウンタ
+    autoRules: [],                         // CSV自動仕訳ルール [{keyword,account,tax}]
+    syncUrl: '',                           // クラウド同期サーバーURL
+    syncWorkspace: '',                     // ワークスペースID（共有単位）
+    syncToken: '',                         // 認証トークン
+    syncVersion: 0,                        // 最後に同期したデータ版
   };
 
   // 初回のみ既定データを投入する。

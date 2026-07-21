@@ -90,11 +90,47 @@ A.store = (function () {
       await db.put('journals', j);
       return j;
     },
+    // 連番を採番して複数まとめて保存（CSV一括計上・繰越などで使用）
+    async saveMany(list) {
+      const out = [];
+      for (const j of list) out.push(await this.save(j));
+      return out;
+    },
     async remove(id) { await db.del('journals', id); },
     // 請求書・経費など「元データ」から生成した仕訳を削除
     async removeBySource(refId) {
       const list = await this.loadAll();
       await Promise.all(list.filter((j) => j.refId === refId).map((j) => db.del('journals', j.id)));
+    },
+    // source が一致する仕訳をまとめて削除（例：ある年度の期首残高を作り直す）
+    async removeWhere(pred) {
+      const list = await this.loadAll();
+      await Promise.all(list.filter(pred).map((j) => db.del('journals', j.id)));
+    },
+  };
+
+  /* ---- 固定資産 -------------------------------------------------------
+   * asset = {
+   *   id, name, accountCode(資産科目), acquireDate, acquireCost,
+   *   usefulLife(耐用年数/年), residual(残存価額), method:'straight'(定額法),
+   *   startDate(事業供用日), note, disposed(除却済), postedYears:[fiscalStartYear...]
+   * }
+   * 減価償却は直接法（借:減価償却費 / 貸:資産科目）で計上する。
+   * ------------------------------------------------------------------- */
+  const assets = {
+    async loadAll() {
+      const list = await db.all('assets');
+      list.sort((a, b) => (a.acquireDate || '').localeCompare(b.acquireDate || ''));
+      return list;
+    },
+    async save(a) {
+      if (!a.id) a.id = U.uid('as');
+      await db.put('assets', a);
+      return a;
+    },
+    async remove(id) {
+      await journals.removeWhere((j) => j.refId === id && j.source === 'depreciation');
+      await db.del('assets', id);
     },
   };
 
@@ -150,5 +186,5 @@ A.store = (function () {
     },
   };
 
-  return { settings, accounts, partners, journals, invoices };
+  return { settings, accounts, partners, journals, invoices, assets };
 })();

@@ -165,5 +165,42 @@ A.reports = (function () {
     };
   };
 
-  return { flatLines, ledger, trialBalance, statements, taxSummary, dashboard };
+  /* ---- 減価償却（定額法・月割） ---------------------------------------
+   * 直接法。年度ごとの償却額と帳簿価額の推移を返す。
+   * 償却率 = (取得価額 − 残存価額) ÷ 耐用年数。供用初年度は月割。
+   * ------------------------------------------------------------------- */
+  const pad = (x) => String(x).padStart(2, '0');
+  const depSchedule = (asset, fsMonth) => {
+    const cost = Number(asset.acquireCost) || 0;
+    const residual = Number(asset.residual) || 0;
+    const life = Math.max(1, Number(asset.usefulLife) || 1);
+    const startDate = asset.startDate || asset.acquireDate;
+    if (!startDate || cost <= 0) return [];
+    const annual = Math.floor((cost - residual) / life);
+    const d = new Date(startDate + 'T00:00:00');
+    let fyYear = d.getFullYear() - ((d.getMonth() + 1) < fsMonth ? 1 : 0);
+    let book = cost, i = 0;
+    const rows = [];
+    while (book > residual && i < life + 3) {
+      const fyStart = `${fyYear}-${pad(fsMonth)}-01`;
+      const endD = new Date(fyYear + 1, fsMonth - 1, 0);
+      const fyEnd = `${endD.getFullYear()}-${pad(endD.getMonth() + 1)}-${pad(endD.getDate())}`;
+      let months = 12;
+      if (i === 0) {
+        months = (endD.getFullYear() * 12 + endD.getMonth()) - (d.getFullYear() * 12 + d.getMonth()) + 1;
+        months = Math.max(1, Math.min(12, months));
+      }
+      let amt = Math.floor(annual * months / 12);
+      if (book - amt < residual) amt = book - residual;
+      if (amt <= 0) break;
+      rows.push({ fyYear, start: fyStart, end: fyEnd, months, amount: amt, bookBefore: book, bookAfter: book - amt });
+      book -= amt; fyYear += 1; i += 1;
+    }
+    return rows;
+  };
+  // 指定した会計年度（fyStart='YYYY-MM-DD'）の償却予定額
+  const depForFiscalYear = (asset, fsMonth, fyStart) =>
+    depSchedule(asset, fsMonth).find((r) => r.start === fyStart) || null;
+
+  return { flatLines, ledger, trialBalance, statements, taxSummary, dashboard, depSchedule, depForFiscalYear };
 })();
