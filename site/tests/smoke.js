@@ -109,10 +109,23 @@ const MOBILE = [
         await pg.waitForTimeout(300);
         const m = await pg.evaluate(() => {
           var sw = document.documentElement.scrollWidth, cw = document.documentElement.clientWidth;
-          return { sw: sw, cw: cw };
+          var info = '';
+          if (sw > cw + 1) {
+            var all = document.querySelectorAll('*');
+            var wide = [];
+            for (var i = 0; i < all.length; i++) {
+              var el = all[i];
+              if (el.scrollWidth > cw + 1) {
+                var cn = (el.className && typeof el.className === 'string') ? '.'+el.className.trim().split(/\s+/).join('.') : '';
+                wide.push(el.tagName + (el.id?'#'+el.id:'') + cn.slice(0,30) + ' sw=' + el.scrollWidth + ' ow=' + el.offsetWidth + ' cs=' + getComputedStyle(el).overflowX);
+              }
+            }
+            info = wide.slice(0,5).join(' | ');
+          }
+          return { sw: sw, cw: cw, info: info };
         });
         ok = m.sw <= m.cw + 1;
-        detail = 'sw=' + m.sw + '/cw=' + m.cw + (ok ? '' : ' ⚠ 横はみ出し');
+        detail = 'sw=' + m.sw + '/cw=' + m.cw + (ok ? '' : ' ⚠ 横はみ出し | ' + m.info);
       } catch (e) { detail = 'EXCEPTION ' + String(e).slice(0, 60); }
       results.push(['[mobile] ' + url, ok, detail]);
       await ctx.close();
