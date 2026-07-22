@@ -45,3 +45,37 @@ PORT=9000 node server/server.js
 | GET | `/api/health` | — | 稼働確認 |
 | POST | `/api/pull` | `{workspace, token}` | データ取得 `{version, data}` |
 | POST | `/api/push` | `{workspace, token, baseVersion, data}` | データ保存 `{version}`（衝突時409） |
+| POST | `/api/inbox` | `{workspace, token, items:[…]}` | 取込Webhook。取引データを受信キューに追加 |
+| POST | `/api/inbox/pull` | `{workspace, token}` | 受信キューを取得して空にする `{items}` |
+
+## 取込Webhook（外部連携）
+
+外部システム（Google Apps Script、決済/カードのwebhook、ICカードリーダーの
+スクリプト等）から取引データをPOSTしておき、会計アプリの「明細の取込」ページで
+取り込めます。`items` の各要素は次の形式です（`account`・`tax`・`dir` は任意）。
+
+```json
+{
+  "workspace": "aizu-2026",
+  "token": "共有の合言葉",
+  "items": [
+    { "date": "2026-06-05", "description": "AMAZON", "amount": 5400, "dir": "out",
+      "account": "560", "tax": "purchase10" },
+    { "date": "2026-06-15", "description": "売上入金", "amount": 110000, "dir": "in" }
+  ]
+}
+```
+
+- `dir` を省略すると `amount` の符号（マイナス＝出金）で判定します。
+- `account`（勘定科目コード）・`tax`（税区分）を指定すると、取込画面で相手科目が
+  埋まった状態で表示されます。未指定でも取込画面で選べます。
+- クレジットカードや決済サービスのAPIキーは**このサーバー側**で保持し、サーバーが
+  各APIを叩いて `/api/inbox` に流し込む構成にすると、ブラウザに鍵を置かずに連携できます。
+
+### 例：curl で受信キューへ投入
+
+```bash
+curl -X POST http://localhost:8787/api/inbox \
+  -H 'Content-Type: application/json' \
+  -d '{"workspace":"aizu-2026","token":"合言葉","items":[{"date":"2026-06-05","description":"AMAZON","amount":5400,"dir":"out"}]}'
+```

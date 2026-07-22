@@ -73,6 +73,42 @@ const server = http.createServer(async (req, res) => {
     return send(res, 200, { version: next.version });
   }
 
+  /* ---- 取込Webhook（外部システム→会計アプリの受信キュー） ------------
+   * 外部（GAS・スクリプト・決済/カードのwebhook等）が取引データをPOSTし、
+   * 会計アプリ側が pull で取り込む。items は {date, description, amount, dir?,
+   * account?, tax?} の配列。dir 省略時は amount の符号で判定。
+   * ------------------------------------------------------------------- */
+  if (url === '/api/inbox' && req.method === 'POST') {
+    const body = await readBody(req);
+    if (!body || !body.workspace) return send(res, 400, { error: 'workspace は必須です' });
+    const items = Array.isArray(body.items) ? body.items : (body.item ? [body.item] : []);
+    if (!items.length) return send(res, 400, { error: 'items がありません' });
+    let rec = readWs(body.workspace);
+    if (!rec) {
+      const token = body.token || crypto.randomBytes(12).toString('hex');
+      rec = { token, version: 0, data: {}, inbox: [], updatedAt: Date.now() };
+    }
+    if (rec.token && rec.token !== body.token) return send(res, 401, { error: 'トークンが一致しません' });
+    rec.inbox = (rec.inbox || []).concat(items.map((it) => ({
+      date: String(it.date || ''), description: String(it.description || it.desc || ''),
+      amount: Number(it.amount) || 0, dir: it.dir || null,
+      account: it.account || null, tax: it.tax || null, receivedAt: Date.now(),
+    })));
+    writeWs(body.workspace, rec);
+    return send(res, 200, { queued: items.length, total: rec.inbox.length });
+  }
+  if (url === '/api/inbox/pull' && req.method === 'POST') {
+    const body = await readBody(req);
+    if (!body || !body.workspace) return send(res, 400, { error: 'workspace は必須です' });
+    const rec = readWs(body.workspace);
+    if (!rec) return send(res, 200, { items: [] });
+    if (rec.token && rec.token !== body.token) return send(res, 401, { error: 'トークンが一致しません' });
+    const items = rec.inbox || [];
+    rec.inbox = [];
+    writeWs(body.workspace, rec);
+    return send(res, 200, { items });
+  }
+
   send(res, 404, { error: 'not found' });
 });
 

@@ -58,5 +58,22 @@ A.sync = (function () {
     return { ok: true, version: r.data.version };
   };
 
-  return { health, push, pull };
+  // 取込Webhookの受信キューを取得（取得後サーバー側は空になる）
+  const pullInbox = async () => {
+    const c = cfg();
+    if (!c.ws) throw new Error('ワークスペースが未設定です');
+    const r = await post('/api/inbox/pull', { workspace: c.ws, token: c.token });
+    if (r.status !== 200) return { ok: false, message: (r.data && r.data.error) || ('HTTP ' + r.status) };
+    return { ok: true, items: r.data.items || [] };
+  };
+  // 外部システムが使う受信キューへの投入（動作確認・連携テスト用）
+  const pushInbox = async (items) => {
+    const c = cfg();
+    if (!c.ws) throw new Error('ワークスペースが未設定です');
+    const r = await post('/api/inbox', { workspace: c.ws, token: c.token, items });
+    if (r.status !== 200) return { ok: false, message: (r.data && r.data.error) || ('HTTP ' + r.status) };
+    return { ok: true, queued: r.data.queued, total: r.data.total };
+  };
+
+  return { health, push, pull, pullInbox, pushInbox };
 })();
