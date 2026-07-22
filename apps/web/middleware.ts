@@ -13,8 +13,12 @@ export function middleware(req: NextRequest) {
   if (!password) return NextResponse.next(); // 開発時は認証なし
 
   const { pathname } = req.nextUrl;
-  // ログイン関連は素通し
-  if (pathname.startsWith("/login") || pathname.startsWith("/api/login")) {
+  // ログイン関連 + BASE OAuthコールバック は素通し
+  if (
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/api/login") ||
+    pathname.startsWith("/api/base/callback")
+  ) {
     return NextResponse.next();
   }
 

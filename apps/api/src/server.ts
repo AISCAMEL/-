@@ -7,10 +7,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 loadDotenv({ path: resolve(__dirname, "../../../.env") });
 import { z } from "zod";
 import {
+  BaseConnector,
   connectorModes,
   createChannelConnectors,
   createMarketConnectors,
   createSupplierConnectors,
+  configFor,
   type MarketResearchConnector,
   type SalesChannelConnector,
   type SupplierConnector,
@@ -53,13 +55,14 @@ export function buildServer() {
   app.get("/", async () => ({
     service: "dropshipping-hub-api",
     status: "ok",
-    endpoints: ["/health", "/connectors", "/niche/cat-goods", "/research", "/research/screen", "/orders", "/dashboard/pnl", "/sync/run", "/sync/status"],
+    endpoints: ["/health", "/connectors", "/niche/cat-goods", "/research", "/research/screen", "/orders", "/dashboard/pnl", "/sync/run", "/sync/status", "/auth/base/authorize", "/auth/base/exchange"],
   }));
 
   // 各コネクタの実効モード（mock | live）。どのデータ源が本番接続かを確認する。
   app.get("/connectors", async () => ({
     defaultMode: config.connector.mode,
     modes: connectorModes(config.connector),
+    baseOAuthConfigured: !!config.baseOAuth,
   }));
 
   // 猫グッズ特化プリセット（リサーチキーワード・推奨スクリーニング・規約注意）
@@ -204,6 +207,118 @@ export function buildServer() {
     }
     const listing = await publishToChannel(channel, result);
     return { listing, sellPrice: result.sellPrice, profit: result.profit };
+  });
+
+  // ===== BASE OAuth2 連携フロー =====
+
+  app.get("/auth/base/authorize", async (req, reply) => {
+    if (!config.baseOAuth) {
+      return reply
+        .code(500)
+        .send({ error: "BASE_CLIENT_ID / BASE_CLIENT_SECRET が未設定です" });
+    }
+    const { redirectUri } = req.query as { redirectUri?: string };
+    const uri = redirectUri || config.baseOAuth.redirectUri;
+    const scope = "read_items write_items read_orders write_orders";
+    const params = new URLSearchParams({
+      response_type: "code",
+      client_id: config.baseOAuth.clientId,
+      redirect_uri: uri,
+      scope,
+    });
+    return { url: `https://api.thebase.in/1/oauth/authorize?${params}` };
+  });
+
+  const exchangeSchema = z.object({
+    code: z.string().min(1),
+    redirectUri: z.string().url(),
+  });
+  app.post("/auth/base/exchange", async (req, reply) => {
+    if (!config.baseOAuth) {
+      return reply
+        .code(500)
+        .send({ error: "BASE_CLIENT_ID / BASE_CLIENT_SECRET が未設定です" });
+    }
+    const parsed = exchangeSchema.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
+
+    const body = new URLSearchParams({
+      grant_type: "authorization_code",
+      client_id: config.baseOAuth.clientId,
+      client_secret: config.baseOAuth.clientSecret,
+      code: parsed.data.code,
+      redirect_uri: parsed.data.redirectUri,
+    });
+
+    const res = await fetch("https://api.thebase.in/1/oauth/token", {
+      method: "POST",
+      body,
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    });
+    const tokenData = (await res.json()) as Record<string, unknown>;
+    if (!res.ok) {
+      return reply.code(res.status).send({
+        error: "token exchange failed",
+        detail: String(tokenData.error_description || tokenData.error),
+      });
+    }
+
+    const accessToken = String(tokenData.access_token);
+    config.connector.credentials!.BASE_ACCESS_TOKEN = accessToken;
+    if (tokenData.refresh_token) {
+      config.connector.credentials!.BASE_REFRESH_TOKEN = String(tokenData.refresh_token);
+    }
+    config.connector.modes!.base = "live";
+    channels.base = new BaseConnector(configFor(config.connector, "base"));
+
+    app.log.info("BASE OAuth token obtained — connector switched to live");
+    return {
+      ok: true,
+      mode: "live",
+      expiresIn: tokenData.expires_in,
+      scope: tokenData.scope,
+    };
+  });
+
+  app.post("/auth/base/refresh", async (_req, reply) => {
+    if (!config.baseOAuth) {
+      return reply
+        .code(500)
+        .send({ error: "BASE_CLIENT_ID / BASE_CLIENT_SECRET が未設定です" });
+    }
+    const refreshToken = config.connector.credentials?.BASE_REFRESH_TOKEN;
+    if (!refreshToken) {
+      return reply.code(400).send({ error: "refresh token がありません" });
+    }
+
+    const body = new URLSearchParams({
+      grant_type: "refresh_token",
+      client_id: config.baseOAuth.clientId,
+      client_secret: config.baseOAuth.clientSecret,
+      refresh_token: refreshToken,
+    });
+
+    const res = await fetch("https://api.thebase.in/1/oauth/token", {
+      method: "POST",
+      body,
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    });
+    const tokenData = (await res.json()) as Record<string, unknown>;
+    if (!res.ok) {
+      return reply.code(res.status).send({
+        error: "token refresh failed",
+        detail: String(tokenData.error_description || tokenData.error),
+      });
+    }
+
+    config.connector.credentials!.BASE_ACCESS_TOKEN = String(tokenData.access_token);
+    if (tokenData.refresh_token) {
+      config.connector.credentials!.BASE_REFRESH_TOKEN = String(tokenData.refresh_token);
+    }
+    config.connector.modes!.base = "live";
+    channels.base = new BaseConnector(configFor(config.connector, "base"));
+
+    return { ok: true, expiresIn: tokenData.expires_in };
   });
 
   return app;

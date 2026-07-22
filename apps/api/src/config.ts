@@ -1,10 +1,17 @@
 import type { ConnectorConfig, ConnectorKey, ConnectorMode } from "@hub/connectors";
 
+export interface BaseOAuthConfig {
+  clientId: string;
+  clientSecret: string;
+  redirectUri: string;
+}
+
 export interface AppConfig {
   port: number;
   connector: ConnectorConfig;
   /** 在庫・価格の定期同期間隔（分）。0 で無効。 */
   syncIntervalMinutes: number;
+  baseOAuth?: BaseOAuthConfig;
 }
 
 /**
@@ -63,15 +70,27 @@ function resolveModes(
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const mode: ConnectorMode = env.CONNECTOR_MODE === "live" ? "live" : "mock";
+  const baseOAuth =
+    env.BASE_CLIENT_ID && env.BASE_CLIENT_SECRET
+      ? {
+          clientId: env.BASE_CLIENT_ID,
+          clientSecret: env.BASE_CLIENT_SECRET,
+          redirectUri:
+            env.BASE_REDIRECT_URI ?? "http://localhost:3001/auth/base/callback",
+        }
+      : undefined;
+
   return {
     // Railway/Render 等は PORT を動的注入するため優先して読む
     port: Number(env.PORT ?? env.API_PORT ?? 3001),
     syncIntervalMinutes: Number(env.SYNC_INTERVAL_MINUTES ?? 0),
+    baseOAuth,
     connector: {
       mode,
       modes: resolveModes(env, mode),
       credentials: {
         BASE_ACCESS_TOKEN: env.BASE_ACCESS_TOKEN,
+        BASE_REFRESH_TOKEN: env.BASE_REFRESH_TOKEN,
         ALIBABA_ACCESS_TOKEN: env.ALIBABA_ACCESS_TOKEN,
         THECKB_API_KEY: env.THECKB_API_KEY,
         ALIEXPRESS_APP_KEY: env.ALIEXPRESS_APP_KEY,
