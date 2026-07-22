@@ -673,14 +673,9 @@ a.genre-link:hover{background:var(--green);border-color:var(--green);transform:t
 
   .section-title{font-size:24px;margin-bottom:28px;}
   .hero{min-height:520px;}
-<<<<<<< HEAD
   .hero::after{background:rgba(27,46,77,.82);}
-  .hero-inner{text-align:center;padding:72px 0;}
-=======
-  .hero::after{background:rgba(10,107,60,.82);}
   .hero-inner{grid-template-columns:1fr;text-align:center;padding:64px 0;}
   .hero-art{display:none;}
->>>>>>> 7ec8946 (feat: ヒーロー2カラム化・マスコット表示、特長カードにSVGアイコン導入)
   .hero h1{font-size:34px;}
   .hero-sub{margin-left:auto;margin-right:auto;}
   .hero-badges{justify-content:center;}

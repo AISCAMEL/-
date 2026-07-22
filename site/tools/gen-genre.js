@@ -112,7 +112,7 @@ function defaultFaq(g) {
     [`${g.name}は本当に買い取ってもらえますか？`, `はい。${g.desc} 状態や年式を問わず、まずは無料査定でお気軽にご相談ください。`],
     ['査定や出張に費用はかかりますか？', '査定料・出張費・名義変更などの手続き代行料は一切いただきません。完全無料です。'],
     ['必要な書類は何ですか？', '車検証・印鑑（普通車は実印＋印鑑証明）・自賠責保険証などが基本です。揃っていない場合も取得をサポートします。'],
-    ['入金はいつになりますか？', 'ご契約と必要書類の確認後、最短即日〜数営業日でご指定口座へお振込みします。'],
+    ['入金はいつになりますか？', 'ご契約と必要書類の確認後、書類・車両を丁寧に確認のうえ、3営業日以内に確実にお振込みします。'],
   ];
 }
 
@@ -230,8 +230,8 @@ function genrePage(g) {
   const canonical = SITE_URL ? `${SITE_URL}/genre/${g.slug}/` : './';
   const bcHome = SITE_URL ? `${SITE_URL}/` : '../../';
   const bcGenre = SITE_URL ? `${SITE_URL}/genre/` : '../';
-  const title = `${g.name}ならBUYMO｜高価買取・無料査定・最短即日入金`;
-  const desc = `${g.name}はBUYMOにおまかせ。${g.desc} 手数料無料・無料出張査定・最短即日入金で1円でも高く買い取ります。`;
+  const title = `${g.name}ならBUYMO｜高価買取・無料査定・3営業日以内に入金`;
+  const desc = `${g.name}はBUYMOにおまかせ。${g.desc} 手数料無料・無料出張査定・3営業日以内に入金で1円でも高く買い取ります。`;
 
   const points = cp.points.map(t => `<li class="point-item"><span class="point-check" aria-hidden="true">✓</span>${esc(t)}</li>`).join('');
   const accordion = cp.faq.map(([q, a]) =>
@@ -289,7 +289,7 @@ ${header(rel, 'genre')}
       <nav class="breadcrumb" aria-label="パンくずリスト"><a href="${rel}index.html#top">ホーム</a><span aria-hidden="true">›</span><a href="${rel}genre/">買取ジャンル</a><span aria-hidden="true">›</span><span>${esc(g.name)}</span></nav>
       <p class="hero-lead">${esc(g.icon)} ${esc(g.cat)}</p>
       <h1 id="page-title">${esc(g.name)}は<span class="hl">BUYMO</span></h1>
-      <p class="page-lead">${esc(g.desc)} 手数料0円・無料出張査定・最短即日入金で、あなたの車を1円でも高く買取します。</p>
+      <p class="page-lead">${esc(g.desc)} 手数料0円・無料出張査定・3営業日以内に入金で、あなたの車を1円でも高く買取します。</p>
       <div class="area-cta">
         <a href="${rel}buymo-contact.html?genre=${encodeURIComponent(g.name)}" class="btn btn-primary btn-lg">無料査定を依頼</a>
         <a href="tel:05017842929" class="btn btn-tel">📞 電話で相談</a>
@@ -319,7 +319,7 @@ ${header(rel, 'genre')}
       <div class="grid grid-3 reason-grid">
         <article class="card reason-card"><div class="card-ico" aria-hidden="true">💰</div><h3>高価買取</h3><p>独自ルートで無駄を省き、${esc(g.name).replace('買取','')}を相場より高く査定します。</p></article>
         <article class="card reason-card"><div class="card-ico" aria-hidden="true">🚗</div><h3>出張査定無料</h3><p>ご指定の場所まで無料で出張。来店不要・全国対応です。</p></article>
-        <article class="card reason-card"><div class="card-ico" aria-hidden="true">⚡</div><h3>即日対応可能</h3><p>お急ぎでも最短即日で査定から入金まで対応します。</p></article>
+        <article class="card reason-card"><div class="card-ico" aria-hidden="true">⚡</div><h3>丁寧・確実に入金</h3><p>書類・車両を丁寧に確認のうえ、3営業日以内に確実にお振込みします。</p></article>
         <article class="card reason-card"><div class="card-ico" aria-hidden="true">🆓</div><h3>手数料無料</h3><p>査定料・出張費・名義変更などの手続き代行料は一切無料。</p></article>
         <article class="card reason-card"><div class="card-ico" aria-hidden="true">🚧</div><h3>どんな状態でもOK</h3><p>事故・不動・過走行など、他社で断られた車もご相談ください。</p></article>
         <article class="card reason-card"><div class="card-ico" aria-hidden="true">💳</div><h3>契約後すぐ入金</h3><p>ご契約後スピーディにお振込み。お待たせしません。</p></article>
@@ -391,7 +391,7 @@ function crossPage(g, p) {
   const bcGenre = SITE_URL ? `${SITE_URL}/genre/` : '../../';
   const bcSelf = SITE_URL ? `${SITE_URL}/genre/${g.slug}/` : '../';
   const title = `${p.name}の${g.name}ならBUYMO｜${p.name}全域・高価買取・無料出張査定`;
-  const desc = `${p.name}で${g.name}をお考えならBUYMO。${cityText}など${p.name}全域へ無料出張査定。${g.desc} 手数料無料・最短即日入金で高価買取します。`;
+  const desc = `${p.name}で${g.name}をお考えならBUYMO。${cityText}など${p.name}全域へ無料出張査定。${g.desc} 手数料無料・3営業日以内に入金で高価買取します。`;
 
   const points = cp.points.map(t => `<li class="point-item"><span class="point-check" aria-hidden="true">✓</span>${esc(t)}</li>`).join('');
   const cityChips = p.cities.map(c => `<li>${esc(c)}</li>`).join('');
@@ -445,7 +445,7 @@ ${header(rel, 'genre')}
       <nav class="breadcrumb" aria-label="パンくずリスト"><a href="${rel}index.html#top">ホーム</a><span aria-hidden="true">›</span><a href="${rel}genre/">買取ジャンル</a><span aria-hidden="true">›</span><a href="../">${esc(g.name)}</a><span aria-hidden="true">›</span><span>${esc(p.name)}</span></nav>
       <p class="hero-lead">${esc(p.region)}・${esc(p.name)}の${esc(g.name)}</p>
       <h1 id="page-title">${esc(p.name)}の${esc(g.name)}は<span class="hl">BUYMO</span></h1>
-      <p class="page-lead">${esc(cityText)}をはじめ${esc(p.name)}全域に無料出張査定。${esc(g.desc)} 手数料0円・最短即日入金で、${esc(nm)}を1円でも高く買取します。</p>
+      <p class="page-lead">${esc(cityText)}をはじめ${esc(p.name)}全域に無料出張査定。${esc(g.desc)} 手数料0円・3営業日以内に入金で、${esc(nm)}を1円でも高く買取します。</p>
       <div class="area-cta">
         <a href="${rel}buymo-contact.html?genre=${encodeURIComponent(g.name)}&pref=${encodeURIComponent(p.name)}" class="btn btn-primary btn-lg">無料査定を依頼</a>
         <a href="tel:05017842929" class="btn btn-tel">📞 電話で相談</a>
@@ -483,7 +483,7 @@ ${header(rel, 'genre')}
       <div class="grid grid-3 reason-grid">
         <article class="card reason-card"><div class="card-ico" aria-hidden="true">💰</div><h3>高価買取</h3><p>独自ルートで無駄を省き、${esc(p.name)}でも${esc(nm)}を相場より高く査定します。</p></article>
         <article class="card reason-card"><div class="card-ico" aria-hidden="true">🚗</div><h3>出張査定無料</h3><p>${esc(p.name)}全域、ご指定の場所まで無料で出張。来店不要です。</p></article>
-        <article class="card reason-card"><div class="card-ico" aria-hidden="true">⚡</div><h3>即日対応可能</h3><p>お急ぎでも最短即日で査定から入金まで対応します。</p></article>
+        <article class="card reason-card"><div class="card-ico" aria-hidden="true">⚡</div><h3>丁寧・確実に入金</h3><p>書類・車両を丁寧に確認のうえ、3営業日以内に確実にお振込みします。</p></article>
         <article class="card reason-card"><div class="card-ico" aria-hidden="true">🆓</div><h3>手数料無料</h3><p>査定料・出張費・名義変更などの手続き代行料は一切無料。</p></article>
         <article class="card reason-card"><div class="card-ico" aria-hidden="true">🚧</div><h3>どんな状態でもOK</h3><p>事故・不動・過走行など、他社で断られた車もご相談ください。</p></article>
         <article class="card reason-card"><div class="card-ico" aria-hidden="true">💳</div><h3>契約後すぐ入金</h3><p>ご契約後スピーディにお振込み。お待たせしません。</p></article>
@@ -530,7 +530,7 @@ ${footer(rel)}
 /* ---- ハブページ /genre/ ---- */
 const canonical = SITE_URL ? `${SITE_URL}/genre/` : './';
 const title = '買取ジャンル一覧｜廃車・事故車・不動車もBUYMO';
-const desc = '廃車・事故車・不動車・水没車・過走行車・軽自動車・トラック・輸入車・EVまで。状態や種類を問わず車を高価買取するBUYMOのジャンル別買取一覧。手数料無料・無料出張査定・最短即日入金。';
+const desc = '廃車・事故車・不動車・水没車・過走行車・軽自動車・トラック・輸入車・EVまで。状態や種類を問わず車を高価買取するBUYMOのジャンル別買取一覧。手数料無料・無料出張査定・3営業日以内に入金。';
 const rel = '../';
 
 const hubHtml = `<!DOCTYPE html>
