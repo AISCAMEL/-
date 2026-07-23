@@ -16,8 +16,8 @@
   <!-- ===== Header ===== -->
   <rect width="960" height="60" fill="#0e1b33"/>
   <rect x="32" y="16" width="28" height="28" rx="7" fill="url(#gold)"/>
-  <text x="40" y="35" fill="#0e1b33" font-size="16" font-weight="900">A</text>
-  <text x="70" y="32" fill="#fff" font-size="16" font-weight="800">AUC-AGENT</text>
+  <text x="40" y="35" fill="#0e1b33" font-size="16" font-weight="900">バ</text>
+  <text x="70" y="32" fill="#fff" font-size="16" font-weight="800">バイモダイレクト</text>
   <text x="70" y="46" fill="#e0bd6a" font-size="9" letter-spacing="2">CAR AUCTION AGENT</text>
   <text x="600" y="36" fill="#d8deea" font-size="12">購入代行</text>
   <text x="660" y="36" fill="#d8deea" font-size="12">出品代行</text>
@@ -33,7 +33,7 @@
   <text x="40" y="170" fill="#fff" font-size="30" font-weight="900">欲しい車を、<tspan fill="#e0bd6a">相場よりおトク</tspan>に。</text>
   <text x="40" y="208" fill="#fff" font-size="30" font-weight="900">プロが代わりに<tspan fill="#e0bd6a">入札・落札</tspan>。</text>
   <text x="40" y="244" fill="#d4dcec" font-size="13">業者専用オークションは本来ディーラーしか参加できません。</text>
-  <text x="40" y="264" fill="#d4dcec" font-size="13">AUC-AGENTがあなたの「指定席」になり、相場価格で落札します。</text>
+  <text x="40" y="264" fill="#d4dcec" font-size="13">バイモダイレクトがあなたの「指定席」になり、相場価格で落札します。</text>
   <rect x="40" y="292" width="250" height="42" rx="21" fill="url(#gold)"/>
   <text x="165" y="318" fill="#0e1b33" font-size="14" font-weight="700" text-anchor="middle">▶ 総額シミュレーション</text>
   <rect x="300" y="292" width="120" height="42" rx="21" fill="none" stroke="#7d89a8"/>

@@ -6,7 +6,7 @@
     </linearGradient>
   </defs>
   <rect x="0" y="4" width="64" height="64" rx="14" fill="#0e1b33"/>
-  <path d="M32 18 L46 52 H38.5 L36 45 H28 L25.5 52 H18 Z M30 38 H34 L32 31 Z" fill="url(#gold)"/>
-  <text x="80" y="40" font-size="26" font-weight="800" fill="#0e1b33" letter-spacing="1">AUC-AGENT</text>
+  <text x="32" y="52" font-size="40" font-weight="900" fill="url(#gold)" text-anchor="middle">バ</text>
+  <text x="80" y="40" font-size="26" font-weight="800" fill="#0e1b33" letter-spacing="1">バイモダイレクト</text>
   <text x="81" y="58" font-size="11" font-weight="600" fill="#c9a14a" letter-spacing="3">CAR AUCTION AGENT</text>
 </svg>

@@ -7,8 +7,8 @@
 
   <!-- Header -->
   <rect width="960" height="56" fill="#0e1b33"/>
-  <rect x="32" y="14" width="28" height="28" rx="7" fill="url(#gold)"/><text x="40" y="33" fill="#0e1b33" font-size="16" font-weight="900">A</text>
-  <text x="70" y="33" fill="#fff" font-size="15" font-weight="800">AUC-AGENT</text>
+  <rect x="32" y="14" width="28" height="28" rx="7" fill="url(#gold)"/><text x="40" y="33" fill="#0e1b33" font-size="16" font-weight="900">バ</text>
+  <text x="70" y="33" fill="#fff" font-size="15" font-weight="800">バイモダイレクト</text>
   <text x="700" y="33" fill="#cfd6e6" font-size="12">マイページ</text>
   <text x="782" y="33" fill="#cfd6e6" font-size="12">出品代行</text>
   <text x="866" y="33" fill="#cfd6e6" font-size="12">ログアウト</text>
@@ -157,5 +157,5 @@
   </g>
 
   <!-- footer -->
-  <text x="32" y="1190" fill="#8590a0" font-size="11">© 2026 合同会社アイズ（AUC-AGENT）. いわき市／福島拠点. 会員向けマニュアル（デモ）。</text>
+  <text x="32" y="1190" fill="#8590a0" font-size="11">© 2026 合同会社アイズ（バイモダイレクト）. いわき市／福島拠点. 会員向けマニュアル（デモ）。</text>
 </svg>

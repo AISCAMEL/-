@@ -2,7 +2,7 @@
   <rect width="780" height="1040" fill="#fff"/>
   <rect x="0" y="0" width="780" height="64" fill="#0e1b33"/>
   <text x="32" y="32" fill="#fff" font-size="17" font-weight="800">オリコ オートローン クレジット申込書</text>
-  <text x="32" y="52" fill="#e0bd6a" font-size="11">（個別信用購入あっせん）　受付番号 LN-5001／加盟店：合同会社アイズ（AUC-AGENT）</text>
+  <text x="32" y="52" fill="#e0bd6a" font-size="11">（個別信用購入あっせん）　受付番号 LN-5001／加盟店：合同会社アイズ（バイモダイレクト）</text>
   <text x="32" y="84" fill="#5a6675" font-size="11">※ 取得済み情報は記入済み。空欄（____）はお客様記入・押印のうえご返送ください。</text>
 
   <g font-size="11.5" fill="#1a2233">
@@ -40,7 +40,7 @@
     <text x="40" y="574">車名・型式：________</text><text x="420" y="574">年式：____</text>
     <text x="40" y="594">走行距離：____km</text><text x="420" y="594">車台番号：________</text>
     <text x="40" y="614">現金販売価格：____円</text><text x="420" y="614">頭金：____円</text>
-    <text x="40" y="634">販売／取扱店：合同会社アイズ（AUC-AGENT）</text>
+    <text x="40" y="634">販売／取扱店：合同会社アイズ（バイモダイレクト）</text>
 
     <!-- 5 -->
     <rect x="32" y="650" width="716" height="22" fill="#eef2f9"/><text x="40" y="665" font-weight="800" fill="#0e1b33">5. 連帯保証人（必要な場合）</text>

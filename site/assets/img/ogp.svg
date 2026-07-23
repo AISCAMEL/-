@@ -13,8 +13,8 @@
   <rect x="0" y="0" width="1200" height="8" fill="url(#gold)"/>
   <g transform="translate(96,96)">
     <rect x="0" y="0" width="96" height="96" rx="20" fill="#0b1730" stroke="#c9a14a" stroke-width="2"/>
-    <path d="M48 22 L70 76 H58 L54 65 H42 L38 76 H26 Z M45 55 H51 L48 45 Z" fill="url(#gold)"/>
-    <text x="120" y="48" font-size="34" font-weight="800" fill="#fff" letter-spacing="1">AUC-AGENT</text>
+    <text x="48" y="70" font-size="58" font-weight="900" fill="url(#gold)" text-anchor="middle">バ</text>
+    <text x="120" y="48" font-size="34" font-weight="800" fill="#fff" letter-spacing="1">バイモダイレクト</text>
     <text x="121" y="80" font-size="16" font-weight="600" fill="#c9a14a" letter-spacing="4">CAR AUCTION AGENT ／ 合同会社アイズ</text>
   </g>
   <text x="96" y="330" font-size="60" font-weight="900" fill="#fff">欲しい車を、<tspan fill="#e0bd6a">相場よりおトク</tspan>に。</text>
