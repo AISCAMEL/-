@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>新人オンボーディング｜AUC-AGENT 会員サイト</title>
+<meta name="description" content="AUC-AGENT 新人スタッフ向けオンボーディング。入社後の流れ、研修動画（会社理解・接客・出品・購入・査定・書類・コンプラ）、習得チェックリスト、必読マニュアルをまとめています。" />
+<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png" />
+<link rel="apple-touch-icon" href="assets/img/favicon-180.png" />
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <span class="logo">A</span>
+      <span>AUC-AGENT<small>CAR AUCTION AGENT</small></span>
+    </a>
+    <nav class="nav">
+      <a class="nav-link" href="mypage.html">マイページ</a>
+      <a class="nav-link" href="sell.html">出品代行</a>
+      <a class="btn btn-ghost btn-sm" href="#" id="logoutBtn">ログアウト</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-head">
+  <div class="wrap">
+    <h1>新人オンボーディング</h1>
+    <p>ようこそ AUC-AGENT へ。まずはこのページの研修動画とチェックリストで、基礎を身につけましょう。</p>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="mp-grid">
+    <aside class="mp-side">
+      <nav class="mp-nav">
+        <a href="#flow" class="active">🚀 入社後の流れ</a>
+        <a href="#video">🎬 研修動画</a>
+        <a href="#check">✅ 習得チェックリスト</a>
+        <a href="#must">📚 必読マニュアル</a>
+        <a href="staff.html">🛠 業務マニュアル</a>
+        <a href="compliance.html">⚖️ コンプライアンス</a>
+        <a href="mypage.html">← マイページへ戻る</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="panel" id="flow">
+        <div class="panel-head"><h3>🚀 入社後の流れ</h3></div>
+        <div class="panel-body">
+          <div class="flow" style="grid-template-columns:repeat(5,1fr);">
+            <div class="step"><div class="n">1</div><h4>会社を知る</h4><p>事業・理念</p></div>
+            <div class="step"><div class="n">2</div><h4>研修動画</h4><p>基礎を視聴</p></div>
+            <div class="step"><div class="n">3</div><h4>マニュアル</h4><p>必読を確認</p></div>
+            <div class="step"><div class="n">4</div><h4>OJT</h4><p>先輩に同行</p></div>
+            <div class="step"><div class="n">5</div><h4>独り立ち</h4><p>担当を持つ</p></div>
+          </div>
+          <div class="alert alert-info" style="margin-top:16px;">まずは<strong>研修動画（下）</strong>を第1章から視聴し、<strong>習得チェックリスト</strong>を埋めていきましょう。</div>
+        </div>
+      </section>
+
+      <section class="panel" id="video">
+        <div class="panel-head"><h3>🎬 研修動画</h3><span class="badge-status" id="vidCount" style="background:#eef2f9;color:#2a64c4;">全7章</span></div>
+        <div class="panel-body">
+          <p>各章は短尺。会社理解から接客・実務・コンプラまで、順番に視聴してください。</p>
+          <div id="vidFrame" style="position:relative;padding-top:56.25%;background:#0e1b33;border-radius:12px;overflow:hidden;box-shadow:var(--shadow);">
+            <div id="vidPlaceholder" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#cfd6e6;text-align:center;padding:20px;">
+              <div style="font-size:44px;line-height:1;margin-bottom:12px;">🎬</div>
+              <div id="vidPhTitle" style="font-size:16px;font-weight:800;color:#fff;">動画は準備中です</div>
+              <div style="font-size:13px;margin-top:6px;opacity:.85;">公開までしばらくお待ちください</div>
+            </div>
+          </div>
+          <div id="vidNow" style="margin-top:12px;font-weight:800;color:var(--navy);font-size:15px;"></div>
+          <ol id="vidList" style="list-style:none;padding:0;margin:16px 0 0;"></ol>
+          <div class="alert alert-info" style="margin-top:16px;">動画は順次追加予定です。査定の詳しい動画は<a href="appraisal.html">査定マニュアル</a>にもあります。</div>
+        </div>
+      </section>
+
+      <section class="panel" id="check">
+        <div class="panel-head"><h3>✅ 習得チェックリスト</h3><button class="btn btn-navy btn-sm" type="button" id="resetChk">リセット</button></div>
+        <div class="panel-body">
+          <p>チェックはこの端末に保存されます。段階的に埋めていきましょう。</p>
+          <div id="chkWrap"></div>
+          <div style="margin-top:14px;font-weight:800;color:var(--navy);">進捗：<span id="chkPct">0%</span></div>
+          <div class="progress" style="margin-top:6px;"><i id="chkBar" style="width:0%"></i></div>
+        </div>
+      </section>
+
+      <section class="panel" id="must">
+        <div class="panel-head"><h3>📚 必読マニュアル</h3></div>
+        <div class="panel-body">
+          <ul class="opt-list">
+            <li><a href="staff.html">スタッフ業務マニュアル（SOP）</a> <b>必読</b></li>
+            <li><a href="appraisal.html">査定マニュアル</a> <b>必読</b></li>
+            <li><a href="manual.html">出品の仕方マニュアル</a> <b>必読</b></li>
+            <li><a href="compliance.html">コンプライアンス（古物営業法・本人確認）</a> <b>必読</b></li>
+            <li><a href="troubles.html">トラブル事例集</a> <b>推奨</b></li>
+            <li><a href="forms.html">書類作成ツール</a> <b>実務</b></li>
+            <li><a href="glossary.html">用語集</a> <b>辞書</b></li>
+          </ul>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="copy">© 2026 合同会社アイズ（AUC-AGENT）. いわき市／福島拠点. スタッフ向け資料（デモ）。</div>
+  </div>
+</footer>
+
+<script src="assets/js/app.js"></script>
+<script>
+  // ===== 研修動画（URLを設定すると視聴可能／未設定は「準備中」） =====
+  var LESSONS = [
+    { title: "第1章 会社と事業を知る", dur: "4分", url: "" },
+    { title: "第2章 接客・電話応対の基本", dur: "5分", url: "" },
+    { title: "第3章 出品代行の流れ", dur: "5分", url: "" },
+    { title: "第4章 購入代行の流れ", dur: "5分", url: "" },
+    { title: "第5章 査定の基礎（評価点・修復歴）", dur: "6分", url: "" },
+    { title: "第6章 書類と名義変更", dur: "5分", url: "" },
+    { title: "第7章 コンプライアンス（古物営業法・本人確認）", dur: "5分", url: "" }
+  ];
+  (function () {
+    var frame = document.getElementById("vidFrame"), ph = document.getElementById("vidPlaceholder");
+    var phTitle = document.getElementById("vidPhTitle"), now = document.getElementById("vidNow");
+    var list = document.getElementById("vidList"), count = document.getElementById("vidCount");
+    if (!frame) return;
+    count.textContent = "全" + LESSONS.length + "章";
+    function toEmbed(url) {
+      if (!url) return null; var m;
+      if ((m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{6,})/))) return { type: "iframe", src: "https://www.youtube-nocookie.com/embed/" + m[1] + "?rel=0" };
+      if ((m = url.match(/vimeo\.com\/(\d+)/))) return { type: "iframe", src: "https://player.vimeo.com/video/" + m[1] };
+      if (/\.(mp4|webm|ogg)(\?|$)/i.test(url)) return { type: "video", src: url };
+      return { type: "iframe", src: url };
+    }
+    function clearPlayer() { var o = frame.querySelector("iframe,video"); if (o) o.remove(); }
+    function play(i) {
+      var les = LESSONS[i], emb = toEmbed(les.url); now.textContent = "▶ " + les.title; clearPlayer();
+      Array.prototype.forEach.call(list.children, function (li, idx) { li.style.borderColor = idx === i ? "#c9a14a" : "#e4e8ef"; li.style.background = idx === i ? "#fffaf0" : "#fff"; });
+      if (!emb) { ph.style.display = "flex"; phTitle.textContent = les.title + "（準備中）"; return; }
+      ph.style.display = "none"; var el;
+      if (emb.type === "video") { el = document.createElement("video"); el.src = emb.src; el.controls = true; el.playsInline = true; }
+      else { el = document.createElement("iframe"); el.src = emb.src; el.allow = "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"; el.setAttribute("allowfullscreen", ""); el.setAttribute("title", les.title); }
+      el.style.cssText = "position:absolute;inset:0;width:100%;height:100%;border:0;"; frame.appendChild(el);
+    }
+    LESSONS.forEach(function (les, i) {
+      var ready = !!toEmbed(les.url), li = document.createElement("li");
+      li.style.cssText = "display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid #e4e8ef;border-radius:10px;margin-bottom:8px;cursor:pointer;transition:.15s;";
+      li.innerHTML = '<span style="flex:0 0 30px;height:30px;border-radius:50%;background:#0e1b33;color:#e0bd6a;display:grid;place-items:center;font-weight:900;font-size:13px;">' + (i + 1) + '</span>' +
+        '<span style="flex:1;font-weight:700;color:#1a2233;font-size:14px;">' + les.title + '</span>' +
+        '<span style="flex:0 0 auto;font-size:12px;color:#8590a0;">⏱ ' + les.dur + '</span>' +
+        '<span style="flex:0 0 auto;font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px;' + (ready ? 'background:#eaf7f0;color:#2f8f5b;">▶ 視聴' : 'background:#f1f3f7;color:#8590a0;">準備中') + '</span>';
+      li.addEventListener("click", function () { play(i); }); list.appendChild(li);
+    });
+    var fr = LESSONS.findIndex(function (l) { return !!toEmbed(l.url); }); play(fr >= 0 ? fr : 0);
+  })();
+
+  // ===== 習得チェックリスト =====
+  (function () {
+    var GROUPS = [
+      { t: "1週目：基礎", items: ["会社の事業・理念・料金体系を理解した", "研修動画 第1〜2章を視聴した", "スタッフ業務マニュアルを読んだ", "用語集にひととおり目を通した"] },
+      { t: "2週目：実務の型", items: ["出品代行フローを説明できる", "購入代行フローを説明できる", "検車チェックシートで検車できる", "書類作成ツールで委任状・譲渡証明を作れる"] },
+      { t: "3週目：応対・コンプラ", items: ["電話応対の基本トークができる", "本人確認・古物台帳の意味を理解した", "反社排除・個人情報の扱いを理解した", "トラブル事例集を読み、対応の型を理解した"] },
+      { t: "仕上げ：独り立ち", items: ["先輩同行（OJT）で1件を通しで対応した", "精算書・受領書の発行ができる", "報告書（出品/落札/トラブル/日報）を作成できる"] }
+    ];
+    var KEY = "auc_onboard_chk";
+    var state = {}; try { state = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { state = {}; }
+    var wrap = document.getElementById("chkWrap");
+    var total = 0, idx = 0;
+    GROUPS.forEach(function (g) {
+      var h = document.createElement("div");
+      h.innerHTML = '<div style="font-size:12px;font-weight:800;color:var(--gold);margin:14px 0 8px;">' + g.t + "</div>";
+      wrap.appendChild(h);
+      g.items.forEach(function (label) {
+        total++; var id = "c" + (idx++);
+        var row = document.createElement("label");
+        row.style.cssText = "display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px;cursor:pointer;";
+        var cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = !!state[id];
+        cb.addEventListener("change", function () { state[id] = cb.checked; try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} update(); });
+        cb.dataset.k = id;
+        var span = document.createElement("span"); span.textContent = label;
+        row.appendChild(cb); row.appendChild(span); wrap.appendChild(row);
+      });
+    });
+    function update() {
+      var boxes = wrap.querySelectorAll('input[type="checkbox"]');
+      var done = 0; boxes.forEach(function (b) { if (b.checked) done++; });
+      var pct = total ? Math.round(done / total * 100) : 0;
+      document.getElementById("chkPct").textContent = pct + "%（" + done + "/" + total + "）";
+      document.getElementById("chkBar").style.width = pct + "%";
+    }
+    document.getElementById("resetChk").onclick = function () {
+      if (!confirm("チェックをすべてリセットします。よろしいですか？")) return;
+      state = {}; try { localStorage.removeItem(KEY); } catch (e) {}
+      wrap.querySelectorAll('input[type="checkbox"]').forEach(function (b) { b.checked = false; });
+      update();
+    };
+    update();
+  })();
+
+  if (!AucAuth.current()) { location.href = "login.html"; }
+  document.getElementById("logoutBtn").onclick = function (e) {
+    e.preventDefault(); AucAuth.logout(); location.href = "index.html";
+  };
+</script>
+</body>
+</html>
