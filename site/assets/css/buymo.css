@@ -136,48 +136,45 @@ img{max-width:100%;display:block;}
 .hero{
   position:relative;overflow:hidden;min-height:640px;
   display:flex;align-items:center;
-  background:linear-gradient(135deg,#E6FFFA 0%,#F0FDFA 60%,#fff 100%);
+  background:url('../img/buymo/hero-cars.jpg') center/cover no-repeat, linear-gradient(135deg,#0F766E 0%,#0D9488 100%);
 }
-.hero-bg-img{
-  position:absolute;inset:0;width:100%;height:100%;
-  object-fit:cover;object-position:center;z-index:0;opacity:.12;
-}
+.hero-bg-img{display:none;}
 .hero::after{
   content:"";position:absolute;inset:0;
-  background:linear-gradient(105deg,rgba(15,118,110,.06) 0%,transparent 60%);
+  background:linear-gradient(90deg,rgba(10,30,28,.72) 0%,rgba(10,30,28,.50) 55%,rgba(10,30,28,.10) 100%);
   z-index:1;
 }
 .hero-inner{position:relative;z-index:2;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;padding:80px 0;}
 .hero-lead{
-  display:inline-block;background:rgba(15,118,110,.10);border:1px solid rgba(15,118,110,.25);
-  color:var(--green);font-weight:700;font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+  display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.40);
+  color:#fff;font-weight:700;font-size:12px;letter-spacing:.14em;text-transform:uppercase;
   padding:5px 18px;border-radius:100px;margin-bottom:20px;
 }
 .hero h1{
   font-size:56px;font-weight:900;line-height:1.2;
-  margin:0 0 24px;color:var(--text);letter-spacing:-.02em;
+  margin:0 0 24px;color:#fff;letter-spacing:-.02em;
 }
 .hero .hl{
-  background:linear-gradient(transparent 55%,rgba(45,212,191,.40) 55%);
+  background:linear-gradient(transparent 55%,rgba(45,212,191,.55) 55%);
   padding:0 4px;
 }
 .hero-sub{
-  font-size:17px;color:var(--text-sub);
+  font-size:17px;color:rgba(255,255,255,.85);
   margin-bottom:36px;max-width:520px;line-height:1.9;
 }
 .hero-badges{display:flex;gap:10px;margin-top:28px;flex-wrap:wrap;}
 .hero-badges li{
-  background:rgba(15,118,110,.08);border:1px solid rgba(15,118,110,.20);
-  color:var(--text);font-weight:700;font-size:13px;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.35);
+  color:#fff;font-weight:700;font-size:13px;
   padding:6px 18px;border-radius:100px;
 }
-.hero-badges li::before{content:"✓ ";color:var(--green);font-weight:900;}
-.hero-art{display:flex;align-items:center;justify-content:center;}
+.hero-badges li::before{content:"✓ ";color:var(--green-light);font-weight:900;}
+.hero-art{display:none;}
 .hero-img-main{display:none;}
 .hero-img-mascot{width:100%;max-width:400px;height:auto;filter:drop-shadow(0 20px 48px rgba(0,0,0,.5));}
-.hero-img-cars{width:100%;max-width:560px;aspect-ratio:3/2;border-radius:16px;background:url('../img/buymo/hero-cars.jpg') center/cover no-repeat;box-shadow:0 16px 40px rgba(15,118,110,.20);}
+.hero-img-cars{display:none;}
 @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-.cta-micro{margin-top:12px;font-weight:600;color:var(--text-sub);font-size:13px;}
+.cta-micro{margin-top:12px;font-weight:600;color:rgba(255,255,255,.75);font-size:13px;}
 .hero .btn-primary{animation:none;}
 .hero-burst{display:none;}
 
@@ -674,7 +671,7 @@ a.genre-link:hover{background:var(--green);border-color:var(--green);transform:t
 
   .section-title{font-size:24px;margin-bottom:28px;}
   .hero{min-height:520px;}
-  .hero::after{background:rgba(27,46,77,.82);}
+  .hero::after{background:rgba(10,30,28,.72);}
   .hero-inner{grid-template-columns:1fr;text-align:center;padding:64px 0;}
   .hero-art{display:none;}
   .hero h1{font-size:34px;}
