@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920" font-family="'Noto Sans CJK JP','IPAGothic',sans-serif"><defs>
+    <linearGradient id="navy" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0e1b33"/><stop offset="1" stop-color="#16294a"/></linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e0bd6a"/><stop offset="1" stop-color="#c9a14a"/></linearGradient>
+    <linearGradient id="hero" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7f9fc"/><stop offset="1" stop-color="#eef2f8"/></linearGradient>
+  </defs>
+  <rect width="1080" height="1920" fill="url(#hero)"/>
+  <rect width="1080" height="210" fill="url(#navy)"/>
+  <rect x="70" y="70" width="70" height="70" rx="17" fill="url(#gold)"/><text x="105" y="122" fill="#0e1b33" font-size="40" font-weight="900" text-anchor="middle">A</text>
+  <text x="160" y="112" fill="#fff" font-size="38" font-weight="800">AUC-AGENT</text>
+  <text x="161" y="146" fill="#b9c4d8" font-size="17" letter-spacing="2">CAR AUCTION AGENT</text>
+  <rect x="820" y="82" width="200" height="48" rx="24" fill="url(#gold)"/><text x="920" y="114" fill="#0e1b33" font-size="23" font-weight="800" text-anchor="middle">出品代行</text>
+
+  <text x="540" y="470" font-size="84" font-weight="900" fill="#0e1b33" text-anchor="middle">愛車、下取りより</text>
+  <text x="540" y="580" font-size="84" font-weight="900" fill="#0e1b33" text-anchor="middle"><tspan fill="#c9a14a">高く</tspan>。</text>
+  <rect x="380" y="618" width="320" height="8" rx="4" fill="url(#gold)"/>
+  <text x="540" y="700" font-size="30" fill="#41506a" text-anchor="middle">全国のオークションへ出品代行。流札は無料。</text>
+
+  <g><rect x="90" y="820" width="900" height="150" rx="18" fill="#ffffff" stroke="#e4e8ef"/><circle cx="170" cy="895" r="40" fill="url(#gold)"/><text x="170" y="910" font-size="40" text-anchor="middle">📈</text><text x="245" y="882" font-size="32" font-weight="800" fill="#0e1b33">高値を狙う</text><text x="245" y="928" font-size="23" fill="#5a6675">全国の需要へダイレクト出品。</text></g>
+  <g><rect x="90" y="1000" width="900" height="150" rx="18" fill="#ffffff" stroke="#e4e8ef"/><circle cx="170" cy="1075" r="40" fill="url(#gold)"/><text x="170" y="1090" font-size="40" text-anchor="middle">🆓</text><text x="245" y="1062" font-size="32" font-weight="800" fill="#0e1b33">流札無料</text><text x="245" y="1108" font-size="23" fill="#5a6675">売れなければ再出品は無料。</text></g>
+  <g><rect x="90" y="1180" width="900" height="150" rx="18" fill="#ffffff" stroke="#e4e8ef"/><circle cx="170" cy="1255" r="40" fill="url(#gold)"/><text x="170" y="1270" font-size="40" text-anchor="middle">🧾</text><text x="245" y="1242" font-size="32" font-weight="800" fill="#0e1b33">手続きお任せ</text><text x="245" y="1288" font-size="23" fill="#5a6675">委任状・名義変更もサポート。</text></g>
+
+  <rect x="240" y="1400" width="600" height="86" rx="43" fill="url(#gold)"/>
+  <text x="540" y="1455" font-size="32" font-weight="800" fill="#0e1b33" text-anchor="middle">手取りシミュを試す →</text>
+
+  <rect y="1648" width="1080" height="272" fill="url(#navy)"/>
+  <text x="80" y="1732" fill="#e0bd6a" font-size="52" font-weight="900">050-1722-3365</text>
+  <text x="80" y="1778" fill="#cfd6e6" font-size="24">info@aisjaltd.com ／ 平日 8:00〜17:00</text>
+  <text x="80" y="1816" fill="#8ea0bb" font-size="18">合同会社アイズ（AUC-AGENT）福島県いわき市</text>
+  <text x="80" y="1850" fill="#8ea0bb" font-size="15">古物商許可 福島県公安委員会 第25121A010859号</text>
+  <rect x="850.4" y="1680.4" width="151.2" height="151.2" rx="10" fill="#fff"/><rect x="856" y="1686" width="39.199999999999996" height="39.199999999999996" fill="#0e1b33"/><rect x="861.6" y="1691.6" width="28" height="28" fill="#fff"/><rect x="867.2" y="1697.2" width="16.799999999999997" height="16.799999999999997" fill="#0e1b33"/><rect x="956.8" y="1686" width="39.199999999999996" height="39.199999999999996" fill="#0e1b33"/><rect x="962.4" y="1691.6" width="28" height="28" fill="#fff"/><rect x="968" y="1697.2" width="16.799999999999997" height="16.799999999999997" fill="#0e1b33"/><rect x="856" y="1786.8" width="39.199999999999996" height="39.199999999999996" fill="#0e1b33"/><rect x="861.6" y="1792.3999999999999" width="28" height="28" fill="#fff"/><rect x="867.2" y="1798" width="16.799999999999997" height="16.799999999999997" fill="#0e1b33"/><rect x="912" y="1697.2" width="5.6" height="5.6" fill="#0e1b33"/><rect x="923.2" y="1702.8" width="5.6" height="5.6" fill="#0e1b33"/><rect x="934.4" y="1697.2" width="5.6" height="5.6" fill="#0e1b33"/><rect x="945.6" y="1708.4" width="5.6" height="5.6" fill="#0e1b33"/><rect x="956.8" y="1697.2" width="5.6" height="5.6" fill="#0e1b33"/><rect x="912" y="1714" width="5.6" height="5.6" fill="#0e1b33"/><rect x="928.8" y="1719.6" width="5.6" height="5.6" fill="#0e1b33"/><rect x="945.6" y="1719.6" width="5.6" height="5.6" fill="#0e1b33"/><rect x="962.4" y="1714" width="5.6" height="5.6" fill="#0e1b33"/><rect x="867.2" y="1753.2" width="5.6" height="5.6" fill="#0e1b33"/><rect x="872.8" y="1764.4" width="5.6" height="5.6" fill="#0e1b33"/><rect x="884" y="1753.2" width="5.6" height="5.6" fill="#0e1b33"/><rect x="867.2" y="1775.6" width="5.6" height="5.6" fill="#0e1b33"/><rect x="878.4" y="1786.8" width="5.6" height="5.6" fill="#0e1b33"/><rect x="917.6" y="1747.6" width="5.6" height="5.6" fill="#0e1b33"/><rect x="928.8" y="1753.2" width="5.6" height="5.6" fill="#0e1b33"/><rect x="940" y="1747.6" width="5.6" height="5.6" fill="#0e1b33"/><rect x="951.2" y="1758.8" width="5.6" height="5.6" fill="#0e1b33"/><rect x="962.4" y="1753.2" width="5.6" height="5.6" fill="#0e1b33"/><rect x="917.6" y="1764.4" width="5.6" height="5.6" fill="#0e1b33"/><rect x="934.4" y="1770" width="5.6" height="5.6" fill="#0e1b33"/><rect x="951.2" y="1775.6" width="5.6" height="5.6" fill="#0e1b33"/><rect x="962.4" y="1786.8" width="5.6" height="5.6" fill="#0e1b33"/><rect x="923.2" y="1786.8" width="5.6" height="5.6" fill="#0e1b33"/><rect x="940" y="1792.4" width="5.6" height="5.6" fill="#0e1b33"/><rect x="956.8" y="1798" width="5.6" height="5.6" fill="#0e1b33"/><rect x="917.6" y="1798" width="5.6" height="5.6" fill="#0e1b33"/><rect x="968" y="1742" width="5.6" height="5.6" fill="#0e1b33"/><rect x="979.2" y="1753.2" width="5.6" height="5.6" fill="#0e1b33"/><rect x="968" y="1764.4" width="5.6" height="5.6" fill="#0e1b33"/>
+  <text x="926" y="1856" fill="#8ea0bb" font-size="16" text-anchor="middle">スマホで詳しく</text>
+  </svg>
