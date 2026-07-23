@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>保存済み書類・報告｜バイモダイレクト 加盟店ポータル（社外秘）</title>
+<meta name="description" content="バイモダイレクト 加盟店ポータル 保存済み書類・報告の一覧（社外秘）。" />
+<link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png" />
+<link rel="apple-touch-icon" href="../assets/img/favicon-180.png" />
+<link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body class="confidential partner">
+<div class="conf-bar">🔒 社外秘 CONFIDENTIAL｜加盟店限定｜本資料の無断複製・転載・第三者提供を禁じます</div>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <span class="logo">バ</span>
+      <span>バイモダイレクト<small>加盟店ポータル（社外秘）</small></span>
+    </a>
+    <nav class="nav">
+      <span class="conf-badge">社外秘 / 加盟店限定</span>
+      <a class="nav-link" href="index.html">ポータル</a>
+      <a class="btn btn-ghost btn-sm" href="#" id="logoutBtn">ログアウト</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-head">
+  <div class="wrap">
+    <h1>保存済み書類・報告 <span style="font-size:14px;font-weight:700;color:#f4c7c7;">（サーバー保存・社外秘）</span></h1>
+    <p>書類作成ツールで「🗄 サーバーに保存」した控えの一覧です。「開く」で内容を再表示・再編集できます。</p>
+  </div>
+</div>
+
+<div class="wrap" style="padding:26px 20px 60px;">
+  <div class="panel">
+    <div class="panel-head">
+      <h3>📋 保存レコード</h3>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <select id="filterDoc" class="btn btn-ghost btn-sm" style="color:var(--navy);border-color:var(--line);"></select>
+        <a class="btn btn-navy btn-sm" href="forms.html">＋ 新規作成</a>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div id="status" class="alert alert-info" style="margin:0 0 14px;">読み込み中…</div>
+      <div style="overflow-x:auto;">
+        <table class="company-table" style="max-width:none;width:100%;" id="recTable" style="display:none;">
+          <thead><tr><th style="width:150px;">日時</th><th style="width:200px;">種類</th><th>ラベル</th><th style="width:110px;">加盟店</th><th style="width:80px;">操作</th></tr></thead>
+          <tbody id="recBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="copy">🔒 社外秘 CONFIDENTIAL｜加盟店限定｜© 2026 合同会社アイズ（バイモダイレクト）｜本資料の無断複製・転載・第三者提供を禁じます</div>
+  </div>
+</footer>
+
+<script src="../assets/js/app.js"></script>
+<script src="../assets/js/forms.js"></script>
+<script>
+  // 加盟店限定
+  if (!AucPartner.current()) { location.href = "login.html"; }
+  document.getElementById("logoutBtn").onclick = function (e) {
+    e.preventDefault(); AucPartner.logout(); location.href = "login.html";
+  };
+
+  var docName = {};
+  (AucForms.DOCS || []).forEach(function (d) { docName[d.id] = d.name; });
+
+  var statusEl = document.getElementById("status");
+  var table = document.getElementById("recTable");
+  var body = document.getElementById("recBody");
+  var filter = document.getElementById("filterDoc");
+  var allRecords = [];
+
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  function openLink(r) {
+    var p = new URLSearchParams();
+    p.set("doc", r.doc);
+    Object.keys(r.data || {}).forEach(function (k) {
+      var v = r.data[k];
+      if (v === "" || v == null || v === false) return;
+      p.set(k, v);
+    });
+    return "forms.html?" + p.toString();
+  }
+
+  function render(list) {
+    body.innerHTML = "";
+    if (!list.length) { statusEl.className = "alert alert-info"; statusEl.textContent = "保存されたレコードはありません。書類作成ツールで「🗄 サーバーに保存」すると、ここに一覧表示されます。"; table.style.display = "none"; return; }
+    statusEl.style.display = "none"; table.style.display = "";
+    list.forEach(function (r) {
+      var tr = document.createElement("tr");
+      var dt = (r.at || "").replace("T", " ").slice(0, 16);
+      tr.innerHTML =
+        "<td>" + esc(dt) + "</td>" +
+        "<td>" + esc(docName[r.doc] || r.doc) + "</td>" +
+        "<td>" + esc(r.label || "") + "</td>" +
+        "<td>" + esc((r.partner && r.partner.code) || "") + "</td>" +
+        '<td><a class="btn btn-navy btn-sm" href="' + openLink(r) + '">開く</a></td>';
+      body.appendChild(tr);
+    });
+  }
+
+  function applyFilter() {
+    var d = filter.value;
+    render(d ? allRecords.filter(function (r) { return r.doc === d; }) : allRecords);
+  }
+
+  fetch("/api/records?limit=500").then(function (r) { return r.json(); }).then(function (j) {
+    if (!j || !j.ok) { statusEl.className = "alert"; statusEl.style.background = "#fdecec"; statusEl.style.color = "#b23b3b"; statusEl.textContent = "セッションが切れています。再ログインしてください。"; return; }
+    allRecords = j.records || [];
+    // フィルタ選択肢
+    var docs = {}; allRecords.forEach(function (r) { docs[r.doc] = true; });
+    var opt = '<option value="">すべての種類</option>';
+    Object.keys(docs).forEach(function (d) { opt += '<option value="' + d + '">' + esc(docName[d] || d) + "</option>"; });
+    filter.innerHTML = opt;
+    filter.onchange = applyFilter;
+    render(allRecords);
+  }).catch(function () {
+    statusEl.className = "alert";
+    statusEl.style.background = "#fff3d6"; statusEl.style.color = "#9a7414"; statusEl.style.border = "1px solid #f0e0a8";
+    statusEl.innerHTML = "サーバーに接続できません。この機能は<strong>サーバー版（node server/server.js）</strong>で有効になります。デモ（file://）では利用できません。";
+  });
+</script>
+</body>
+</html>

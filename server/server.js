@@ -23,6 +23,8 @@ const SECRET = process.env.BMD_SECRET || "CHANGE-ME-IN-PRODUCTION";
 const SESSION_MS = (parseInt(process.env.SESSION_HOURS || "12", 10)) * 3600 * 1000;
 const ACCOUNTS_FILE = path.join(__dirname, "partners.json");
 const ACCESS_LOG = path.join(__dirname, "access.log");
+const DATA_DIR = path.join(__dirname, "data");
+const RECORDS_FILE = path.join(DATA_DIR, "records.json");
 
 /* ---------- パスワード（scrypt） ---------- */
 function hashPassword(pw, salt) {
@@ -137,6 +139,16 @@ function serveStatic(req, res, urlPath) {
   });
 }
 
+/* ---------- 保存レコード（申込・報告・書類の控え） ---------- */
+function loadRecords() {
+  try { return JSON.parse(fs.readFileSync(RECORDS_FILE, "utf8")); } catch (e) { return []; }
+}
+function saveRecords(list) {
+  try { fs.mkdirSync(DATA_DIR, { recursive: true }); fs.writeFileSync(RECORDS_FILE, JSON.stringify(list)); } catch (e) {}
+}
+function currentSession(req) { return verifyToken(parseCookies(req).bmd_session); }
+function jsonRes(res, code, obj) { res.writeHead(code, { "Content-Type": "application/json" }); res.end(JSON.stringify(obj)); }
+
 /* ---------- 加盟店ページの保護判定 ---------- */
 function isProtected(urlPath) {
   const p = urlPath.split("?")[0];
@@ -185,6 +197,37 @@ const server = http.createServer(async function (req, res) {
     const s = verifyToken(parseCookies(req).bmd_session);
     res.writeHead(s ? 200 : 401, { "Content-Type": "application/json" });
     return res.end(JSON.stringify(s ? { ok: true, code: s.code, staff: s.staff } : { ok: false }));
+  }
+
+  /* --- レコード保存/一覧（要ログイン） --- */
+  if (u.split("?")[0] === "/api/records" && req.method === "POST") {
+    const s = currentSession(req);
+    if (!s) return jsonRes(res, 401, { ok: false, error: "unauthorized" });
+    const body = await readBody(req);
+    if (!body || !body.doc) return jsonRes(res, 400, { ok: false, error: "doc required" });
+    const rec = {
+      id: crypto.randomBytes(6).toString("hex"),
+      doc: String(body.doc).slice(0, 60),
+      label: String(body.label || "").slice(0, 160),
+      data: (body.data && typeof body.data === "object") ? body.data : {},
+      partner: { code: s.code, staff: s.staff },
+      at: new Date().toISOString()
+    };
+    const list = loadRecords();
+    list.unshift(rec);
+    if (list.length > 5000) list.length = 5000;
+    saveRecords(list);
+    log("RECORD_SAVE id=" + rec.id + " doc=" + rec.doc + " by=" + s.code);
+    return jsonRes(res, 200, { ok: true, id: rec.id });
+  }
+  if (u.split("?")[0] === "/api/records" && req.method === "GET") {
+    const s = currentSession(req);
+    if (!s) return jsonRes(res, 401, { ok: false, error: "unauthorized" });
+    const q = new URLSearchParams(u.split("?")[1] || "");
+    let list = loadRecords();
+    const doc = q.get("doc"); if (doc) list = list.filter(function (r) { return r.doc === doc; });
+    const limit = Math.min(parseInt(q.get("limit") || "300", 10) || 300, 1000);
+    return jsonRes(res, 200, { ok: true, records: list.slice(0, limit) });
   }
 
   /* --- 加盟店ページ保護 --- */

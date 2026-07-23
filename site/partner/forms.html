@@ -83,6 +83,8 @@
       <div class="prev-bar">
         <span class="nm" id="prevName">書類プレビュー</span>
         <button class="btn btn-gold btn-sm" type="button" id="printBtn">🖨 印刷 / PDFで保存</button>
+        <button class="btn btn-navy btn-sm" type="button" id="saveBtn" style="border:1px solid rgba(255,255,255,.4);">🗄 サーバーに保存</button>
+        <a class="btn btn-ghost btn-sm" href="records.html" style="border-color:rgba(255,255,255,.4);">保存一覧</a>
         <a class="btn btn-ghost btn-sm" href="#" id="openBtn" target="_blank" style="border-color:rgba(255,255,255,.4);">別タブで開く</a>
       </div>
       <iframe id="docFrame" title="書類プレビュー"></iframe>
@@ -202,6 +204,23 @@
   document.getElementById("printBtn").onclick = function () {
     try { frame.contentWindow.focus(); frame.contentWindow.print(); }
     catch (e) { var w = window.open("", "_blank"); w.document.write(AucForms.render(current, data)); w.document.close(); w.focus(); w.print(); }
+  };
+
+  // サーバーに保存（本番。サーバー未接続時は案内）
+  document.getElementById("saveBtn").onclick = function () {
+    var doc = docById(current);
+    var label = (doc ? doc.name : current) + (data.o_name ? "／" + data.o_name : "") + (data.v_name ? "／" + data.v_name : "");
+    var payload = {}; Object.keys(data).forEach(function (k) { if (k.charAt(0) !== "_") payload[k] = data[k]; });
+    fetch("/api/records", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ doc: current, label: label, data: payload })
+    }).then(function (r) { return r.json(); }).then(function (r) {
+      if (r && r.ok) alert("サーバーに保存しました（ID: " + r.id + "）。「保存一覧」から確認・再表示できます。");
+      else if (r && r.error === "unauthorized") { alert("セッションが切れています。再ログインしてください。"); location.href = "login.html"; }
+      else alert("保存に失敗しました。");
+    }).catch(function () {
+      alert("サーバーに接続できません。サーバー版（node server/server.js）で開くと保存できます。");
+    });
   };
 
   document.getElementById("clearBtn").onclick = function () {
