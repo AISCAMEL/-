@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>加盟店ログイン｜バイモダイレクト 加盟店ポータル（社外秘）</title>
+<link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png" />
+<link rel="apple-touch-icon" href="../assets/img/favicon-180.png" />
+<link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body class="confidential partner">
+<div class="conf-bar">🔒 社外秘 CONFIDENTIAL｜加盟店限定システム｜関係者以外のアクセスを禁じます</div>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="login.html">
+      <span class="logo">バ</span>
+      <span>バイモダイレクト<small>加盟店ポータル（社外秘）</small></span>
+    </a>
+    <nav class="nav">
+      <span class="conf-badge">加盟店専用</span>
+    </nav>
+  </div>
+</header>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+    <form id="formLogin">
+      <h1>加盟店ログイン</h1>
+      <p class="sub">加盟店コードとパスワードでログインしてください。ログイン情報は本部から発行されます。</p>
+      <div class="field">
+        <label>加盟店コード</label>
+        <input type="text" id="pCode" placeholder="例：BM-001" required />
+      </div>
+      <div class="field">
+        <label>担当者名</label>
+        <input type="text" id="pStaff" placeholder="例：吉田" />
+      </div>
+      <div class="field">
+        <label>パスワード</label>
+        <input type="password" id="pPass" placeholder="••••••••" required />
+      </div>
+      <button class="btn btn-gold btn-block" type="submit">ログイン</button>
+      <p class="switch" style="color:var(--muted);font-size:12px;margin-top:14px;">
+        ※ これはデモ用のログインです。実運用では本部のサーバー認証に置き換えてください。<br>
+        加盟店コード・パスワードをお持ちでない場合は本部（info@aisjaltd.com）へご連絡ください。
+      </p>
+    </form>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="copy">🔒 社外秘 CONFIDENTIAL｜加盟店限定｜© 2026 合同会社アイズ（バイモダイレクト）｜本システムの無断利用・情報の第三者提供を禁じます</div>
+  </div>
+</footer>
+
+<script src="../assets/js/app.js"></script>
+<script>
+  if (AucPartner.current()) { location.href = "index.html"; }
+  document.getElementById("formLogin").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var code = document.getElementById("pCode").value.trim();
+    var staff = document.getElementById("pStaff").value.trim();
+    AucPartner.login({ store: code || "加盟店", code: code, staff: staff });
+    location.href = "index.html";
+  });
+</script>
+</body>
+</html>

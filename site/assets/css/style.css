@@ -1,5 +1,5 @@
 /* =========================================================
-   AUC-AGENT — オークション代行LP スタイルシート
+   バイモダイレクト — オークション代行LP スタイルシート
    カラー: ディープネイビー × ゴールド（信頼感 + プレミアム）
    ========================================================= */
 
@@ -347,3 +347,10 @@ section { padding: 76px 0; }
   .hero h1 { font-size: 27px; }
   section { padding: 54px 0; }
 }
+
+/* ---------- 加盟店ポータル（社外秘） ---------- */
+.conf-badge { display:inline-block; background:#b23b3b; color:#fff; font-size:12px; font-weight:800; padding:5px 12px; border-radius:6px; letter-spacing:.03em; }
+.conf-bar { background:#fdecec; color:#b23b3b; border-bottom:1px solid #f4c7c7; font-size:12.5px; font-weight:700; text-align:center; padding:8px 12px; }
+.partner .site-header { background:#0b1730; }
+body.confidential { background-color:#f6f8fc; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='340' height='210'><text x='6' y='150' font-family='sans-serif' font-size='30' font-weight='700' fill='%23b23b3b' fill-opacity='0.05' transform='rotate(-22 170 105)'>社外秘 加盟店限定</text></svg>"); background-repeat:repeat; background-attachment:fixed; }
+.partner-foot { font-size:12px; color:#b23b3b; font-weight:700; }

@@ -11,7 +11,7 @@
 
   <!-- bot message: 相場依頼 -->
   <rect x="44" y="110" width="36" height="36" rx="8" fill="#c9a14a"/><text x="62" y="134" fill="#fff" font-size="14" font-weight="900" text-anchor="middle">A</text>
-  <text x="92" y="126" fill="#1d1c1d" font-size="13" font-weight="800">AUC-AGENT Bot <tspan fill="#9a9a9c" font-weight="400" font-size="11">  10:42</tspan></text>
+  <text x="92" y="126" fill="#1d1c1d" font-size="13" font-weight="800">バイモダイレクト Bot <tspan fill="#9a9a9c" font-weight="400" font-size="11">  10:42</tspan></text>
   <text x="92" y="148" fill="#1d1c1d" font-size="13">📈 相場見積り依頼 QT-4001（買取相場）</text>
   <text x="92" y="168" fill="#1d1c1d" font-size="13">車両：日産 セレナ ハイウェイスター 2019 走行6万km</text>
   <text x="92" y="188" fill="#1d1c1d" font-size="13">連絡方法：メール（h@example.com）</text>
@@ -25,7 +25,7 @@
 
   <!-- bot reply -->
   <rect x="44" y="306" width="36" height="36" rx="8" fill="#c9a14a"/><text x="62" y="330" fill="#fff" font-size="14" font-weight="900" text-anchor="middle">A</text>
-  <text x="92" y="322" fill="#1d1c1d" font-size="13" font-weight="800">AUC-AGENT Bot <tspan fill="#9a9a9c" font-weight="400" font-size="11">  10:45</tspan></text>
+  <text x="92" y="322" fill="#1d1c1d" font-size="13" font-weight="800">バイモダイレクト Bot <tspan fill="#9a9a9c" font-weight="400" font-size="11">  10:45</tspan></text>
   <rect x="92" y="332" width="600" height="70" rx="8" fill="#f6f8fc" stroke="#e4e8ef"/>
   <text x="108" y="356" fill="#1f9d6b" font-size="13" font-weight="800">✅ 相場回答を登録（QT-4001）</text>
   <text x="108" y="376" fill="#1a2233" font-size="12">セレナ ハイウェイスター ／ ¥1,280,000（買取相場）</text>

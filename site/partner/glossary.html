@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>用語集｜AUC-AGENT オークション代行</title>
-<meta name="description" content="AUC-AGENT のオークション・査定・手続き・費用の用語集。評価点、流札、修復歴、委任状、手取りなど、はじめての方にもわかりやすく解説します。" />
-<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png" />
-<link rel="apple-touch-icon" href="assets/img/favicon-180.png" />
-<link rel="stylesheet" href="assets/css/style.css" />
+<title>用語集｜バイモダイレクト オークション代行</title>
+<meta name="description" content="バイモダイレクト のオークション・査定・手続き・費用の用語集。評価点、流札、修復歴、委任状、手取りなど、はじめての方にもわかりやすく解説します。" />
+<link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png" />
+<link rel="apple-touch-icon" href="../assets/img/favicon-180.png" />
+<link rel="stylesheet" href="../assets/css/style.css" />
 <style>
   .gsearch{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:15px;}
   .gsearch:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,161,74,.15);}
@@ -17,18 +17,19 @@
   .term-read{font-size:12px;color:var(--muted);font-weight:500;margin-left:6px;}
 </style>
 </head>
-<body>
+<body class="confidential partner">
+<div class="conf-bar">🔒 社外秘 CONFIDENTIAL｜加盟店限定｜本資料の無断複製・転載・第三者提供を禁じます</div>
 
 <header class="site-header">
   <div class="wrap">
     <a class="brand" href="index.html">
-      <span class="logo">A</span>
-      <span>AUC-AGENT<small>CAR AUCTION AGENT</small></span>
+      <span class="logo">バ</span>
+      <span>バイモダイレクト<small>加盟店ポータル（社外秘）</small></span>
     </a>
     <nav class="nav">
-      <a class="nav-link" href="index.html">購入代行</a>
-      <a class="nav-link" href="sell.html">出品代行</a>
-      <a class="btn btn-gold btn-sm" href="login.html">会員登録・ログイン</a>
+      <span class="conf-badge">社外秘 / 加盟店限定</span>
+      <a class="nav-link" href="index.html">ポータル</a>
+      <a class="btn btn-ghost btn-sm" href="#" id="logoutBtn">ログアウト</a>
     </nav>
   </div>
 </header>
@@ -48,8 +49,8 @@
         <a href="#assess">🔎 査定・評価</a>
         <a href="#doc">📑 手続き・書類</a>
         <a href="#fee">💰 費用・ローン</a>
-        <a href="faq.html">❓ よくある質問</a>
-        <a href="guide.html">📘 ご利用ガイド</a>
+        <a href="../faq.html">❓ よくある質問</a>
+        <a href="../guide.html">📘 ご利用ガイド</a>
         <a href="index.html">← トップへ</a>
       </nav>
     </aside>
@@ -136,11 +137,11 @@
 
 <footer class="site-footer">
   <div class="wrap">
-    <div class="copy">© 2026 合同会社アイズ（AUC-AGENT）. いわき市／福島拠点.</div>
+    <div class="copy">🔒 社外秘 CONFIDENTIAL｜加盟店限定｜© 2026 合同会社アイズ（バイモダイレクト）｜本資料の無断複製・転載・第三者提供を禁じます</div>
   </div>
 </footer>
 
-<script src="assets/js/app.js"></script>
+<script src="../assets/js/app.js"></script>
 <script>
   // 用語検索フィルター
   (function () {
@@ -164,6 +165,11 @@
       empty.classList.toggle("g-none", hits !== 0);
     });
   })();
+</script>
+<script>
+  if (!AucPartner.current()) { location.href = "login.html"; }
+  var _lo = document.getElementById("logoutBtn");
+  if (_lo) _lo.onclick = function (e) { e.preventDefault(); AucPartner.logout(); location.href = "login.html"; };
 </script>
 </body>
 </html>

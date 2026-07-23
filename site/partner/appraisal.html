@@ -3,24 +3,25 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>車の査定マニュアル｜AUC-AGENT 会員サイト</title>
-<meta name="description" content="AUC-AGENT 会員向け 車の査定マニュアル。査定の流れ、オートオークションの評価点（外装・内装）の見方、査定額に影響する項目、加点・減点ポイント、自己査定チェックリスト、想定手取りの考え方まで。" />
-<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png" />
-<link rel="apple-touch-icon" href="assets/img/favicon-180.png" />
-<link rel="stylesheet" href="assets/css/style.css" />
+<title>車の査定マニュアル｜バイモダイレクト 会員サイト</title>
+<meta name="description" content="バイモダイレクト 会員向け 車の査定マニュアル。査定の流れ、オートオークションの評価点（外装・内装）の見方、査定額に影響する項目、加点・減点ポイント、自己査定チェックリスト、想定手取りの考え方まで。" />
+<link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png" />
+<link rel="apple-touch-icon" href="../assets/img/favicon-180.png" />
+<link rel="stylesheet" href="../assets/css/style.css" />
 </head>
-<body>
+<body class="confidential partner">
+<div class="conf-bar">🔒 社外秘 CONFIDENTIAL｜加盟店限定｜本資料の無断複製・転載・第三者提供を禁じます</div>
 
 <header class="site-header">
   <div class="wrap">
     <a class="brand" href="index.html">
-      <span class="logo">A</span>
-      <span>AUC-AGENT<small>CAR AUCTION AGENT</small></span>
+      <span class="logo">バ</span>
+      <span>バイモダイレクト<small>加盟店ポータル（社外秘）</small></span>
     </a>
     <nav class="nav">
-      <a class="nav-link" href="mypage.html">マイページ</a>
-      <a class="nav-link" href="sell.html">出品代行</a>
+      <span class="conf-badge">社外秘 / 加盟店限定</span>
+      <a class="nav-link" href="index.html">ポータル</a>
       <a class="btn btn-ghost btn-sm" href="#" id="logoutBtn">ログアウト</a>
     </nav>
   </div>
@@ -53,7 +54,7 @@
         <a href="#note">⚠️ 注意点</a>
         <a href="manual.html">→ 出品の仕方マニュアル</a>
         <a href="forms.html">📄 書類ダウンロード</a>
-        <a href="mypage.html">← マイページへ戻る</a>
+        <a href="index.html">← ポータルへ戻る</a>
       </nav>
     </aside>
 
@@ -272,7 +273,7 @@
           <p style="margin-top:12px;font-size:13px;color:var(--muted);">※ 名義変更（¥25,000）や内外装クリーニング（¥12,000〜¥30,000）などのオプションを選んだ場合は、その分が差し引かれます。<b>流札（売れなかった場合）の再出品は無料</b>です。</p>
           <div class="alert alert-ok" style="margin-top:16px;">マイページ・出品代行ページの<strong>出品手取りシミュレーション</strong>で、想定落札額から手取りの目安をその場で試算できます。</div>
           <div style="margin-top:16px;">
-            <a class="btn btn-gold btn-sm" href="sell.html#sim">出品手取りシミュレーションへ</a>
+            <a class="btn btn-gold btn-sm" href="../sell.html#sim">出品手取りシミュレーションへ</a>
           </div>
         </div>
       </section>
@@ -312,11 +313,11 @@
 
 <footer class="site-footer">
   <div class="wrap">
-    <div class="copy">© 2026 合同会社アイズ（AUC-AGENT）. いわき市／福島拠点. 会員向けマニュアル（デモ）。</div>
+    <div class="copy">🔒 社外秘 CONFIDENTIAL｜加盟店限定｜© 2026 合同会社アイズ（バイモダイレクト）｜本資料の無断複製・転載・第三者提供を禁じます</div>
   </div>
 </footer>
 
-<script src="assets/js/app.js"></script>
+<script src="../assets/js/app.js"></script>
 <script>
   // ===== 動画研修 =====
   // 各章に動画URLを設定すると視聴できます（未設定の章は「準備中」表示）。
@@ -416,9 +417,9 @@
   })();
 
   // 会員限定：未ログインはログインへ
-  if (!AucAuth.current()) { location.href = "login.html"; }
+  if (!AucPartner.current()) { location.href = "login.html"; }
   document.getElementById("logoutBtn").onclick = function (e) {
-    e.preventDefault(); AucAuth.logout(); location.href = "index.html";
+    e.preventDefault(); AucPartner.logout(); location.href = "login.html";
   };
 </script>
 </body>

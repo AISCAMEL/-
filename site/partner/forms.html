@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>書類作成・ダウンロード｜AUC-AGENT 会員サイト</title>
-<meta name="description" content="AUC-AGENT 会員向け 書類作成ツール。車両・お客様情報を入力すると、委任状・譲渡証明書・買取契約書・車両状態申告書など各種書類が完成し、印刷／PDFで保存できます。" />
-<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png" />
-<link rel="apple-touch-icon" href="assets/img/favicon-180.png" />
-<link rel="stylesheet" href="assets/css/style.css" />
+<title>書類作成・ダウンロード｜バイモダイレクト 会員サイト</title>
+<meta name="description" content="バイモダイレクト 会員向け 書類作成ツール。車両・お客様情報を入力すると、委任状・譲渡証明書・買取契約書・車両状態申告書など各種書類が完成し、印刷／PDFで保存できます。" />
+<link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png" />
+<link rel="apple-touch-icon" href="../assets/img/favicon-180.png" />
+<link rel="stylesheet" href="../assets/css/style.css" />
 <style>
   .fb-grid{display:grid;grid-template-columns:400px 1fr;gap:22px;padding:26px 0 60px;}
   .fb-panel{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);}
@@ -37,17 +37,18 @@
   @media (max-width:900px){.fb-grid{grid-template-columns:1fr;}#docFrame{height:70vh;}}
 </style>
 </head>
-<body>
+<body class="confidential partner">
+<div class="conf-bar">🔒 社外秘 CONFIDENTIAL｜加盟店限定｜本資料の無断複製・転載・第三者提供を禁じます</div>
 
 <header class="site-header">
   <div class="wrap">
     <a class="brand" href="index.html">
-      <span class="logo">A</span>
-      <span>AUC-AGENT<small>CAR AUCTION AGENT</small></span>
+      <span class="logo">バ</span>
+      <span>バイモダイレクト<small>加盟店ポータル（社外秘）</small></span>
     </a>
     <nav class="nav">
-      <a class="nav-link" href="mypage.html">マイページ</a>
-      <a class="nav-link" href="sell.html">出品代行</a>
+      <span class="conf-badge">社外秘 / 加盟店限定</span>
+      <a class="nav-link" href="index.html">ポータル</a>
       <a class="btn btn-ghost btn-sm" href="#" id="logoutBtn">ログアウト</a>
     </nav>
   </div>
@@ -91,12 +92,12 @@
 
 <footer class="site-footer">
   <div class="wrap">
-    <div class="copy">© 2026 合同会社アイズ（AUC-AGENT）. いわき市／福島拠点. 会員向け書類作成（デモ）。</div>
+    <div class="copy">🔒 社外秘 CONFIDENTIAL｜加盟店限定｜© 2026 合同会社アイズ（バイモダイレクト）｜本資料の無断複製・転載・第三者提供を禁じます</div>
   </div>
 </footer>
 
-<script src="assets/js/app.js"></script>
-<script src="assets/js/forms.js"></script>
+<script src="../assets/js/app.js"></script>
+<script src="../assets/js/forms.js"></script>
 <script>
 (function () {
   var STORE = "auc_forms_v1";
@@ -228,9 +229,9 @@
 </script>
 <script>
   // 会員限定：未ログインはログインへ
-  if (!AucAuth.current()) { location.href = "login.html"; }
+  if (!AucPartner.current()) { location.href = "login.html"; }
   document.getElementById("logoutBtn").onclick = function (e) {
-    e.preventDefault(); AucAuth.logout(); location.href = "index.html";
+    e.preventDefault(); AucPartner.logout(); location.href = "login.html";
   };
 </script>
 </body>

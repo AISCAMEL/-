@@ -144,4 +144,19 @@
       return changed;
     }
   };
+
+  /* =======================================================
+     加盟店ポータル（社外秘）用の簡易認証（デモ）
+     ※ クライアント側のみ。実運用ではサーバー認証に置換必須。
+     ======================================================= */
+  var PARTNER_KEY = "auc_partner";
+  window.AucPartner = {
+    login: function (u) {
+      var p = { store: (u && u.store) || "加盟店", code: (u && u.code) || "", staff: (u && u.staff) || "", since: "2026-06-13" };
+      write(PARTNER_KEY, p);
+      return p;
+    },
+    logout: function () { localStorage.removeItem(PARTNER_KEY); },
+    current: function () { return read(PARTNER_KEY, null); }
+  };
 })();

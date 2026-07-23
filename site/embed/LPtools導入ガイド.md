@@ -1,4 +1,4 @@
-# LPtools で AUC-AGENT のLPを作るためのガイド
+# LPtools で バイモダイレクト のLPを作るためのガイド
 
 ## まず結論
 

@@ -3,24 +3,25 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>新人オンボーディング｜AUC-AGENT 会員サイト</title>
-<meta name="description" content="AUC-AGENT 新人スタッフ向けオンボーディング。入社後の流れ、研修動画（会社理解・接客・出品・購入・査定・書類・コンプラ）、習得チェックリスト、必読マニュアルをまとめています。" />
-<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png" />
-<link rel="apple-touch-icon" href="assets/img/favicon-180.png" />
-<link rel="stylesheet" href="assets/css/style.css" />
+<title>新人オンボーディング｜バイモダイレクト 会員サイト</title>
+<meta name="description" content="バイモダイレクト 新人スタッフ向けオンボーディング。入社後の流れ、研修動画（会社理解・接客・出品・購入・査定・書類・コンプラ）、習得チェックリスト、必読マニュアルをまとめています。" />
+<link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png" />
+<link rel="apple-touch-icon" href="../assets/img/favicon-180.png" />
+<link rel="stylesheet" href="../assets/css/style.css" />
 </head>
-<body>
+<body class="confidential partner">
+<div class="conf-bar">🔒 社外秘 CONFIDENTIAL｜加盟店限定｜本資料の無断複製・転載・第三者提供を禁じます</div>
 
 <header class="site-header">
   <div class="wrap">
     <a class="brand" href="index.html">
-      <span class="logo">A</span>
-      <span>AUC-AGENT<small>CAR AUCTION AGENT</small></span>
+      <span class="logo">バ</span>
+      <span>バイモダイレクト<small>加盟店ポータル（社外秘）</small></span>
     </a>
     <nav class="nav">
-      <a class="nav-link" href="mypage.html">マイページ</a>
-      <a class="nav-link" href="sell.html">出品代行</a>
+      <span class="conf-badge">社外秘 / 加盟店限定</span>
+      <a class="nav-link" href="index.html">ポータル</a>
       <a class="btn btn-ghost btn-sm" href="#" id="logoutBtn">ログアウト</a>
     </nav>
   </div>
@@ -29,7 +30,7 @@
 <div class="page-head">
   <div class="wrap">
     <h1>新人オンボーディング</h1>
-    <p>ようこそ AUC-AGENT へ。まずはこのページの研修動画とチェックリストで、基礎を身につけましょう。</p>
+    <p>ようこそ バイモダイレクト へ。まずはこのページの研修動画とチェックリストで、基礎を身につけましょう。</p>
   </div>
 </div>
 
@@ -43,7 +44,7 @@
         <a href="#must">📚 必読マニュアル</a>
         <a href="staff.html">🛠 業務マニュアル</a>
         <a href="compliance.html">⚖️ コンプライアンス</a>
-        <a href="mypage.html">← マイページへ戻る</a>
+        <a href="index.html">← ポータルへ戻る</a>
       </nav>
     </aside>
 
@@ -109,11 +110,11 @@
 
 <footer class="site-footer">
   <div class="wrap">
-    <div class="copy">© 2026 合同会社アイズ（AUC-AGENT）. いわき市／福島拠点. スタッフ向け資料（デモ）。</div>
+    <div class="copy">🔒 社外秘 CONFIDENTIAL｜加盟店限定｜© 2026 合同会社アイズ（バイモダイレクト）｜本資料の無断複製・転載・第三者提供を禁じます</div>
   </div>
 </footer>
 
-<script src="assets/js/app.js"></script>
+<script src="../assets/js/app.js"></script>
 <script>
   // ===== 研修動画（URLを設定すると視聴可能／未設定は「準備中」） =====
   var LESSONS = [
@@ -203,9 +204,9 @@
     update();
   })();
 
-  if (!AucAuth.current()) { location.href = "login.html"; }
+  if (!AucPartner.current()) { location.href = "login.html"; }
   document.getElementById("logoutBtn").onclick = function (e) {
-    e.preventDefault(); AucAuth.logout(); location.href = "index.html";
+    e.preventDefault(); AucPartner.logout(); location.href = "login.html";
   };
 </script>
 </body>

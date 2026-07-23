@@ -3,24 +3,25 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>コンプライアンス（古物営業法・本人確認）｜AUC-AGENT 会員サイト</title>
-<meta name="description" content="AUC-AGENT スタッフ向け コンプライアンスマニュアル。古物営業法の本人確認・取引記録（古物台帳）、犯罪収益移転防止法、反社会的勢力排除、特定商取引法・クーリングオフ、個人情報の取扱いをまとめています。" />
-<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png" />
-<link rel="apple-touch-icon" href="assets/img/favicon-180.png" />
-<link rel="stylesheet" href="assets/css/style.css" />
+<title>コンプライアンス（古物営業法・本人確認）｜バイモダイレクト 会員サイト</title>
+<meta name="description" content="バイモダイレクト スタッフ向け コンプライアンスマニュアル。古物営業法の本人確認・取引記録（古物台帳）、犯罪収益移転防止法、反社会的勢力排除、特定商取引法・クーリングオフ、個人情報の取扱いをまとめています。" />
+<link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png" />
+<link rel="apple-touch-icon" href="../assets/img/favicon-180.png" />
+<link rel="stylesheet" href="../assets/css/style.css" />
 </head>
-<body>
+<body class="confidential partner">
+<div class="conf-bar">🔒 社外秘 CONFIDENTIAL｜加盟店限定｜本資料の無断複製・転載・第三者提供を禁じます</div>
 
 <header class="site-header">
   <div class="wrap">
     <a class="brand" href="index.html">
-      <span class="logo">A</span>
-      <span>AUC-AGENT<small>CAR AUCTION AGENT</small></span>
+      <span class="logo">バ</span>
+      <span>バイモダイレクト<small>加盟店ポータル（社外秘）</small></span>
     </a>
     <nav class="nav">
-      <a class="nav-link" href="mypage.html">マイページ</a>
-      <a class="nav-link" href="sell.html">出品代行</a>
+      <span class="conf-badge">社外秘 / 加盟店限定</span>
+      <a class="nav-link" href="index.html">ポータル</a>
       <a class="btn btn-ghost btn-sm" href="#" id="logoutBtn">ログアウト</a>
     </nav>
   </div>
@@ -44,7 +45,7 @@
         <a href="#tokusho">📜 特商法・クーリングオフ</a>
         <a href="#privacy">🔐 個人情報</a>
         <a href="staff.html">🛠 業務マニュアル</a>
-        <a href="mypage.html">← マイページへ戻る</a>
+        <a href="index.html">← ポータルへ戻る</a>
       </nav>
     </aside>
 
@@ -123,7 +124,7 @@
           </ul>
           <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
             <a class="btn btn-navy btn-sm" href="forms.html?doc=doui">個人情報取扱い同意書</a>
-            <a class="btn btn-navy btn-sm" href="privacy.html">プライバシーポリシー</a>
+            <a class="btn btn-navy btn-sm" href="../privacy.html">プライバシーポリシー</a>
           </div>
         </div>
       </section>
@@ -133,15 +134,15 @@
 
 <footer class="site-footer">
   <div class="wrap">
-    <div class="copy">© 2026 合同会社アイズ（AUC-AGENT）. いわき市／福島拠点. 社内向け要約（デモ・法的助言ではありません）。</div>
+    <div class="copy">🔒 社外秘 CONFIDENTIAL｜加盟店限定｜© 2026 合同会社アイズ（バイモダイレクト）｜本資料の無断複製・転載・第三者提供を禁じます</div>
   </div>
 </footer>
 
-<script src="assets/js/app.js"></script>
+<script src="../assets/js/app.js"></script>
 <script>
-  if (!AucAuth.current()) { location.href = "login.html"; }
+  if (!AucPartner.current()) { location.href = "login.html"; }
   document.getElementById("logoutBtn").onclick = function (e) {
-    e.preventDefault(); AucAuth.logout(); location.href = "index.html";
+    e.preventDefault(); AucPartner.logout(); location.href = "login.html";
   };
 </script>
 </body>
