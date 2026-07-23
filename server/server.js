@@ -69,10 +69,13 @@ function loadAccounts() {
 function ensureSeed() {
   if (fs.existsSync(ACCOUNTS_FILE)) return;
   const seed = {
-    "BMD-001": { store: "いわき店", pass: hashPassword("bmd-demo-2026"), active: true }
+    "BMD-001": { store: "いわき店", pass: hashPassword("bmd-demo-2026"), active: true },
+    "HQ-ADMIN": { store: "本部", pass: hashPassword("admin-demo-2026"), active: true, role: "admin" }
   };
   fs.writeFileSync(ACCOUNTS_FILE, JSON.stringify(seed, null, 2));
-  console.log("→ partners.json を作成しました（デモ: 加盟店コード BMD-001 / パスワード bmd-demo-2026）");
+  console.log("→ partners.json を作成しました");
+  console.log("   加盟店デモ : BMD-001 / bmd-demo-2026");
+  console.log("   本部デモ   : HQ-ADMIN / admin-demo-2026");
 }
 
 /* ---------- ユーティリティ ---------- */
@@ -177,9 +180,10 @@ const server = http.createServer(async function (req, res) {
       res.writeHead(401, { "Content-Type": "application/json" });
       return res.end(JSON.stringify({ ok: false, error: "加盟店コードまたはパスワードが違います。" }));
     }
+    const role = acc.role || "partner";
     const exp = Date.now() + SESSION_MS;
-    const token = signToken({ code: code, staff: staff, exp: exp });
-    const partner = { store: acc.store, code: code, staff: staff };
+    const token = signToken({ code: code, staff: staff, role: role, exp: exp });
+    const partner = { store: acc.store, code: code, staff: staff, role: role };
     const sec = isSecure(req);
     setCookie(res, "bmd_session", token, { httpOnly: true, maxAge: Math.floor(SESSION_MS / 1000), secure: sec });
     setCookie(res, "bmd_partner", JSON.stringify(partner), { maxAge: Math.floor(SESSION_MS / 1000), secure: sec });
@@ -228,6 +232,60 @@ const server = http.createServer(async function (req, res) {
     const doc = q.get("doc"); if (doc) list = list.filter(function (r) { return r.doc === doc; });
     const limit = Math.min(parseInt(q.get("limit") || "300", 10) || 300, 1000);
     return jsonRes(res, 200, { ok: true, records: list.slice(0, limit) });
+  }
+
+  /* --- 本部（管理者）API：要 admin --- */
+  if (u.split("?")[0] === "/api/admin/partners" && req.method === "GET") {
+    const s = currentSession(req);
+    if (!s || s.role !== "admin") return jsonRes(res, 403, { ok: false, error: "forbidden" });
+    const accs = loadAccounts();
+    const list = Object.keys(accs).map(function (code) {
+      return { code: code, store: accs[code].store, active: accs[code].active !== false, role: accs[code].role || "partner" };
+    });
+    return jsonRes(res, 200, { ok: true, partners: list });
+  }
+  if (u.split("?")[0] === "/api/admin/partners" && req.method === "POST") {
+    const s = currentSession(req);
+    if (!s || s.role !== "admin") return jsonRes(res, 403, { ok: false, error: "forbidden" });
+    const body = await readBody(req);
+    const code = String(body.code || "").trim();
+    if (!code) return jsonRes(res, 400, { ok: false, error: "code required" });
+    const accs = loadAccounts();
+    const acc = accs[code] || { active: true };
+    if (body.store != null) acc.store = String(body.store).slice(0, 60);
+    if (body.role != null) acc.role = (body.role === "admin") ? "admin" : "partner";
+    if (body.active != null) acc.active = !!body.active;
+    if (body.password) acc.pass = hashPassword(String(body.password));
+    if (!acc.pass) return jsonRes(res, 400, { ok: false, error: "初回はパスワードが必要です" });
+    accs[code] = acc;
+    try { fs.writeFileSync(ACCOUNTS_FILE, JSON.stringify(accs, null, 2)); } catch (e) {}
+    log("ADMIN_PARTNER_SAVE code=" + code + " by=" + s.code);
+    return jsonRes(res, 200, { ok: true });
+  }
+  if (u.split("?")[0] === "/api/admin/records" && req.method === "GET") {
+    const s = currentSession(req);
+    if (!s || s.role !== "admin") return jsonRes(res, 403, { ok: false, error: "forbidden" });
+    const q = new URLSearchParams(u.split("?")[1] || "");
+    let list = loadRecords();
+    const doc = q.get("doc"); if (doc) list = list.filter(function (r) { return r.doc === doc; });
+    const code = q.get("code"); if (code) list = list.filter(function (r) { return r.partner && r.partner.code === code; });
+    const kw = (q.get("q") || "").toLowerCase();
+    if (kw) list = list.filter(function (r) {
+      return (r.label || "").toLowerCase().indexOf(kw) >= 0 ||
+        JSON.stringify(r.data || {}).toLowerCase().indexOf(kw) >= 0;
+    });
+    const limit = Math.min(parseInt(q.get("limit") || "500", 10) || 500, 2000);
+    return jsonRes(res, 200, { ok: true, records: list.slice(0, limit) });
+  }
+
+  /* --- 本部ページ保護（/admin/*） --- */
+  {
+    const pth = u.split("?")[0];
+    const base = pth.split("/").pop();
+    if (pth.indexOf("/admin/") === 0 && base !== "login.html" && (base === "" || base.endsWith(".html"))) {
+      const s = currentSession(req);
+      if (!s || s.role !== "admin") { res.writeHead(302, { "Location": "/admin/login.html" }); return res.end(); }
+    }
   }
 
   /* --- 加盟店ページ保護 --- */

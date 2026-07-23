@@ -1,0 +1,19 @@
+# VPS 等での常駐運用例。
+#   BMD_SECRET を .env か環境変数で必ず設定してください。
+#   例）  BMD_SECRET="$(openssl rand -hex 32)" docker compose up -d --build
+#
+# 前段に HTTPS リバースプロキシ（Caddy / Nginx）を置き、
+# X-Forwarded-Proto: https を渡すと Cookie が Secure になります。
+services:
+  bmd:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - SESSION_HOURS=12
+      - BMD_SECRET=${BMD_SECRET:?BMD_SECRET を設定してください}
+    # アカウント・監査ログ・保存レコードを永続化（ホストの ./server にbindマウント）
+    volumes:
+      - ./server:/app/server
+    restart: unless-stopped

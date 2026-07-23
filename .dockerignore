@@ -1,0 +1,9 @@
+.git
+**/node_modules
+site/tests/node_modules
+server/access.log
+server/data
+server/partners.json
+docs
+gas
+*.md

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>本部ログイン｜バイモダイレクト 管理コンソール（社外秘）</title>
+<link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png" />
+<link rel="apple-touch-icon" href="../assets/img/favicon-180.png" />
+<link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body class="confidential partner">
+<div class="conf-bar">🔒 社外秘 CONFIDENTIAL｜本部（管理者）専用｜関係者以外のアクセスを禁じます</div>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="login.html">
+      <span class="logo">バ</span>
+      <span>バイモダイレクト<small>管理コンソール（本部）</small></span>
+    </a>
+    <nav class="nav"><span class="conf-badge">本部専用</span></nav>
+  </div>
+</header>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+    <form id="formLogin">
+      <h1>本部ログイン</h1>
+      <p class="sub">本部（管理者）アカウントでログインしてください。</p>
+      <div class="field">
+        <label>管理者コード</label>
+        <input type="text" id="pCode" placeholder="例：HQ-ADMIN" required />
+      </div>
+      <div class="field">
+        <label>担当者名</label>
+        <input type="text" id="pStaff" placeholder="例：管理者" />
+      </div>
+      <div class="field">
+        <label>パスワード</label>
+        <input type="password" id="pPass" placeholder="••••••••" required />
+      </div>
+      <button class="btn btn-gold btn-block" type="submit">ログイン</button>
+      <p id="loginErr" style="display:none;color:#b23b3b;font-size:13px;font-weight:700;margin-top:12px;"></p>
+      <p class="switch" style="color:var(--muted);font-size:12px;margin-top:14px;">
+        ※ 本コンソールは本部限定です。加盟店の方は <a href="../partner/login.html">加盟店ログイン</a> をご利用ください。
+      </p>
+    </form>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="copy">🔒 社外秘 CONFIDENTIAL｜本部専用｜© 2026 合同会社アイズ（バイモダイレクト）</div>
+  </div>
+</footer>
+
+<script src="../assets/js/app.js"></script>
+<script>
+  var me = AucPartner.current();
+  if (me && me.role === "admin") { location.href = "index.html"; }
+  var errEl = document.getElementById("loginErr");
+  function showErr(m) { errEl.textContent = m; errEl.style.display = "block"; }
+  document.getElementById("formLogin").addEventListener("submit", function (e) {
+    e.preventDefault();
+    errEl.style.display = "none";
+    var code = document.getElementById("pCode").value.trim();
+    var staff = document.getElementById("pStaff").value.trim();
+    var pass = document.getElementById("pPass").value;
+    AucPartner.apiLogin(code, staff, pass).then(function (r) {
+      if (r && r.ok && r.partner && r.partner.role === "admin") { location.href = "index.html"; }
+      else if (r && r.ok) { showErr("このアカウントは本部権限がありません。"); }
+      else { showErr((r && r.error) || "ログインに失敗しました。"); }
+    }).catch(function () { showErr("サーバーに接続できません（管理コンソールはサーバー版が必要です）。"); });
+  });
+</script>
+</body>
+</html>

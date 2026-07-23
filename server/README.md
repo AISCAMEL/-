@@ -52,6 +52,32 @@ node server/server.js
 - `partners.json` … アカウント（scryptハッシュ）※gitignore・自動生成
 - `access.log` … ログイン監査ログ ※gitignore
 
+## 本部（管理者）コンソール
+本部用の管理画面が `/admin/` にあります（**admin 権限が必要**、サーバー側で保護）。
+- **加盟店アカウントの発行・停止・パスワード変更**（`add-partner.js` と同じことをブラウザから）
+- **保存レコードの横断検索**（キーワード／種類／加盟店で絞り込み、「開く」で内容を再表示）
+
+デモ管理者：`HQ-ADMIN` / `admin-demo-2026`（初回起動時に自動生成）
+入口：`http://localhost:8080/admin/login.html`
+
+管理API（admin セッション必須）：`GET/POST /api/admin/partners`、`GET /api/admin/records?q=&doc=&code=`
+
+## Docker で動かす
+
+```bash
+# ビルド＆起動（秘密鍵は必ず指定）
+BMD_SECRET="$(openssl rand -hex 32)" docker compose up -d --build
+# → http://localhost:8080
+```
+
+`docker-compose.yml` はホストの `./server` を bind マウントするので、
+`partners.json`（アカウント）・`access.log`・`data/records.json` がホスト側に永続化されます。
+
+イメージ単体（Render / Fly.io 等）の場合：
+- 環境変数 `BMD_SECRET` を設定
+- 永続ディスクを `/app/server`（または最低限 `/app/server/data` と `partners.json`）にマウント
+- アカウントは初回起動の自動生成、または `docker exec <container> node server/add-partner.js ...` で追加
+
 ## 静的ホスティングのままにしたい場合（サーバーを使わない選択肢）
 `site/` をそのまま Netlify / Cloudflare Pages 等に置く場合、`/partner/` の保護はホスト側機能で行います。
 - **Cloudflare Access**（推奨）：`/partner/*` にアクセスポリシーを設定し、許可メール/ID のみ通す

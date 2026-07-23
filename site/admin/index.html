@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>管理コンソール｜バイモダイレクト 本部（社外秘）</title>
+<link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png" />
+<link rel="apple-touch-icon" href="../assets/img/favicon-180.png" />
+<link rel="stylesheet" href="../assets/css/style.css" />
+<style>
+  .ad-wrap{padding:26px 20px 60px;}
+  .ad-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end;}
+  .ad-form .fld label{display:block;font-size:12px;color:var(--muted);margin-bottom:3px;font-weight:600;}
+  .ad-form input,.ad-form select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;font:inherit;font-size:14px;}
+  .search-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
+  .search-row input,.search-row select{padding:9px 11px;border:1px solid var(--line);border-radius:9px;font:inherit;font-size:14px;}
+  .pill{display:inline-block;font-size:11px;font-weight:800;border-radius:5px;padding:2px 8px;}
+  .pill.on{background:#eaf7f0;color:#2f8f5b;} .pill.off{background:#f1f3f7;color:#8590a0;} .pill.adm{background:#efeaff;color:#5b46c4;}
+</style>
+</head>
+<body class="confidential partner">
+<div class="conf-bar">🔒 社外秘 CONFIDENTIAL｜本部（管理者）専用｜本コンソールの操作・情報を第三者に共有しないでください</div>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <span class="logo">バ</span>
+      <span>バイモダイレクト<small>管理コンソール（本部）</small></span>
+    </a>
+    <nav class="nav">
+      <span class="conf-badge">本部専用</span>
+      <a class="nav-link" href="../partner/index.html">加盟店ポータル</a>
+      <a class="btn btn-ghost btn-sm" href="#" id="logoutBtn">ログアウト</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-head">
+  <div class="wrap">
+    <h1>管理コンソール <span style="font-size:14px;font-weight:700;color:#f4c7c7;">（本部・社外秘）</span></h1>
+    <p id="hello">加盟店アカウントの発行・停止、保存レコードの横断検索ができます。</p>
+  </div>
+</div>
+
+<div class="wrap ad-wrap">
+  <!-- 加盟店アカウント管理 -->
+  <div class="panel">
+    <div class="panel-head"><h3>🏪 加盟店アカウント管理</h3></div>
+    <div class="panel-body">
+      <div class="ad-form">
+        <div class="fld"><label>加盟店コード</label><input id="fCode" placeholder="BMD-002" /></div>
+        <div class="fld"><label>店名</label><input id="fStore" placeholder="郡山店" /></div>
+        <div class="fld"><label>パスワード（新規/変更時）</label><input id="fPass" type="text" placeholder="8文字以上推奨" /></div>
+        <div class="fld"><label>権限</label><select id="fRole"><option value="partner">加盟店</option><option value="admin">本部(admin)</option></select></div>
+        <div class="fld"><label>状態</label><select id="fActive"><option value="true">有効</option><option value="false">停止</option></select></div>
+        <div class="fld"><button class="btn btn-gold btn-sm" id="savePartner" style="width:100%;">保存 / 発行</button></div>
+      </div>
+      <div id="pMsg" style="font-size:13px;margin-top:10px;"></div>
+      <div style="overflow-x:auto;margin-top:14px;">
+        <table class="company-table" style="max-width:none;width:100%;">
+          <thead><tr><th style="width:160px;">コード</th><th>店名</th><th style="width:110px;">権限</th><th style="width:90px;">状態</th><th style="width:120px;">操作</th></tr></thead>
+          <tbody id="pBody"><tr><td colspan="5" style="color:var(--muted);">読み込み中…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- レコード横断検索 -->
+  <div class="panel" style="margin-top:24px;">
+    <div class="panel-head"><h3>🗄 保存レコード 横断検索</h3></div>
+    <div class="panel-body">
+      <div class="search-row">
+        <input id="sQ" placeholder="🔍 キーワード（氏名・車名・ラベル等）" style="flex:1;min-width:200px;" />
+        <select id="sDoc"><option value="">すべての種類</option></select>
+        <select id="sCode"><option value="">すべての加盟店</option></select>
+        <button class="btn btn-navy btn-sm" id="searchBtn">検索</button>
+      </div>
+      <div id="rMsg" class="alert alert-info" style="margin:0 0 12px;">読み込み中…</div>
+      <div style="overflow-x:auto;">
+        <table class="company-table" style="max-width:none;width:100%;">
+          <thead><tr><th style="width:140px;">日時</th><th style="width:180px;">種類</th><th>ラベル</th><th style="width:100px;">加盟店</th><th style="width:70px;">操作</th></tr></thead>
+          <tbody id="rBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap"><div class="copy">🔒 社外秘 CONFIDENTIAL｜本部専用｜© 2026 合同会社アイズ（バイモダイレクト）</div></div>
+</footer>
+
+<script src="../assets/js/app.js"></script>
+<script src="../assets/js/forms.js"></script>
+<script>
+  var me = AucPartner.current();
+  if (!me || me.role !== "admin") { location.href = "login.html"; }
+  document.getElementById("logoutBtn").onclick = function (e) { e.preventDefault(); AucPartner.logout(); location.href = "login.html"; };
+  document.getElementById("hello").textContent = (me && me.staff ? me.staff + " さん（本部）" : "本部") + "：加盟店アカウントの発行・停止、保存レコードの横断検索ができます。";
+
+  var docName = {}; (AucForms.DOCS || []).forEach(function (d) { docName[d.id] = d.name; });
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+
+  /* ---- 加盟店アカウント ---- */
+  function loadPartners() {
+    fetch("/api/admin/partners").then(function (r) { return r.json(); }).then(function (j) {
+      var tb = document.getElementById("pBody"), sc = document.getElementById("sCode");
+      if (!j || !j.ok) { tb.innerHTML = '<tr><td colspan="5">権限がありません。</td></tr>'; return; }
+      tb.innerHTML = ""; var opt = '<option value="">すべての加盟店</option>';
+      j.partners.forEach(function (p) {
+        var tr = document.createElement("tr");
+        tr.innerHTML = "<td>" + esc(p.code) + "</td><td>" + esc(p.store) + "</td>" +
+          '<td><span class="pill ' + (p.role === "admin" ? "adm" : "on") + '">' + (p.role === "admin" ? "本部" : "加盟店") + "</span></td>" +
+          '<td><span class="pill ' + (p.active ? "on" : "off") + '">' + (p.active ? "有効" : "停止") + "</span></td>" +
+          '<td><button class="btn btn-ghost btn-sm edit" data-c="' + esc(p.code) + '" data-s="' + esc(p.store) + '" data-r="' + p.role + '" data-a="' + p.active + '" style="border-color:var(--line);color:var(--navy);">編集</button></td>';
+        tb.appendChild(tr);
+        opt += '<option value="' + esc(p.code) + '">' + esc(p.code) + "（" + esc(p.store) + "）</option>";
+      });
+      sc.innerHTML = opt;
+      Array.prototype.forEach.call(document.querySelectorAll(".edit"), function (b) {
+        b.onclick = function () {
+          document.getElementById("fCode").value = b.dataset.c;
+          document.getElementById("fStore").value = b.dataset.s;
+          document.getElementById("fRole").value = b.dataset.r;
+          document.getElementById("fActive").value = b.dataset.a;
+          document.getElementById("fPass").value = "";
+          document.getElementById("pMsg").textContent = b.dataset.c + " を編集中（パスワードは変更時のみ入力）";
+        };
+      });
+    }).catch(function () { document.getElementById("pBody").innerHTML = '<tr><td colspan="5">サーバー未接続（管理コンソールはサーバー版で利用）。</td></tr>'; });
+  }
+  document.getElementById("savePartner").onclick = function () {
+    var payload = {
+      code: document.getElementById("fCode").value.trim(),
+      store: document.getElementById("fStore").value.trim(),
+      role: document.getElementById("fRole").value,
+      active: document.getElementById("fActive").value === "true"
+    };
+    var pw = document.getElementById("fPass").value; if (pw) payload.password = pw;
+    if (!payload.code) { document.getElementById("pMsg").textContent = "加盟店コードを入力してください。"; return; }
+    fetch("/api/admin/partners", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
+      .then(function (r) { return r.json(); }).then(function (j) {
+        document.getElementById("pMsg").textContent = (j && j.ok) ? "保存しました：" + payload.code : "エラー：" + ((j && j.error) || "失敗");
+        if (j && j.ok) { document.getElementById("fPass").value = ""; loadPartners(); }
+      }).catch(function () { document.getElementById("pMsg").textContent = "サーバーに接続できません。"; });
+  };
+
+  /* ---- レコード検索 ---- */
+  function openLink(r) {
+    var p = new URLSearchParams(); p.set("doc", r.doc);
+    Object.keys(r.data || {}).forEach(function (k) { var v = r.data[k]; if (v === "" || v == null || v === false) return; p.set(k, v); });
+    return "../partner/forms.html?" + p.toString();
+  }
+  function searchRecords() {
+    var q = new URLSearchParams();
+    var kw = document.getElementById("sQ").value.trim(); if (kw) q.set("q", kw);
+    var d = document.getElementById("sDoc").value; if (d) q.set("doc", d);
+    var c = document.getElementById("sCode").value; if (c) q.set("code", c);
+    var msg = document.getElementById("rMsg"), tb = document.getElementById("rBody");
+    fetch("/api/admin/records?" + q.toString()).then(function (r) { return r.json(); }).then(function (j) {
+      if (!j || !j.ok) { msg.textContent = "権限がありません。"; return; }
+      var list = j.records || [];
+      msg.style.display = list.length ? "none" : "block";
+      if (!list.length) { msg.className = "alert alert-info"; msg.textContent = "該当するレコードはありません。"; tb.innerHTML = ""; return; }
+      tb.innerHTML = "";
+      list.forEach(function (r) {
+        var tr = document.createElement("tr");
+        tr.innerHTML = "<td>" + esc((r.at || "").replace("T", " ").slice(0, 16)) + "</td>" +
+          "<td>" + esc(docName[r.doc] || r.doc) + "</td>" +
+          "<td>" + esc(r.label || "") + "</td>" +
+          "<td>" + esc((r.partner && r.partner.code) || "") + "</td>" +
+          '<td><a class="btn btn-navy btn-sm" href="' + openLink(r) + '">開く</a></td>';
+        tb.appendChild(tr);
+      });
+    }).catch(function () { msg.className = "alert"; msg.style.background = "#fff3d6"; msg.style.color = "#9a7414"; msg.textContent = "サーバーに接続できません（管理コンソールはサーバー版で利用）。"; });
+  }
+  document.getElementById("searchBtn").onclick = searchRecords;
+  document.getElementById("sQ").addEventListener("keydown", function (e) { if (e.key === "Enter") searchRecords(); });
+
+  // 種類フィルタの選択肢
+  var opt = '<option value="">すべての種類</option>';
+  (AucForms.DOCS || []).forEach(function (d) { opt += '<option value="' + d.id + '">' + esc(d.name) + "</option>"; });
+  document.getElementById("sDoc").innerHTML = opt;
+
+  loadPartners(); searchRecords();
+</script>
+</body>
+</html>
