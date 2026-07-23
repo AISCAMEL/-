@@ -484,6 +484,25 @@
         );
       }
     },
+    /* 22. 査定基準表（加盟店 内部運用・記入用） */
+    {
+      id: "satei_base", name: "査定基準表（加盟店記入用）", cat: "査定", groups: ["staff"],
+      render: function (d) {
+        function br(l) { return "<tr><td>" + l + '</td><td>' + v("", 180) + "</td></tr>"; }
+        return page("査定基準表", "加盟店 内部運用基準（社外秘・記入して統一運用）",
+          '<table class="form"><tr><th>加盟店名・担当</th><td>' + v(d.r_staff, 160) + '</td><th style="width:16%">作成日</th><td>' + jpDate2(d.r_date) + "</td></tr></table>" +
+          '<div class="sec">外装評価点による査定の反映</div><table class="form">' +
+          '<tr><th style="width:24%">評価点</th><th>査定への反映（記入）</th></tr>' +
+          br("S / 6・5点") + br("4.5・4点（基準）") + br("3.5・3点") + br("2・1点") + br("R / RA（修復歴）") + "</table>" +
+          '<div class="sec">減点項目（減額の目安を記入）</div><table class="form"><tr><th style="width:40%">項目</th><th>減額の目安</th></tr>' +
+          br("修復歴あり") + br("過走行（年1.5万km超）") + br("内装D・強い臭い（喫煙／ペット）") + br("目立つキズ・へこみ・板金塗装") + br("警告灯・機関不具合") + "</table>" +
+          '<div class="sec">加点項目（加点の目安を記入）</div><table class="form"><tr><th style="width:40%">項目</th><th>加点の目安</th></tr>' +
+          br("ワンオーナー・記録簿あり") + br("禁煙・内装良好") + br("人気色・定番グレード") + br("車検残が長い") + "</table>" +
+          '<div class="sec">クリーニング・整備の提案基準</div><table class="form"><tr><td style="height:52px;vertical-align:top">&nbsp;</td></tr></table>' +
+          '<p class="note">※ 本表は社外秘。減額率・加点額は本部の運用に合わせて記入し、査定担当者で統一運用してください。</p>'
+        );
+      }
+    },
     /* 10. 必要書類チェックリスト（データ不要） */
     {
       id: "checklist", name: "必要書類チェックリスト", cat: "査定", groups: [],
