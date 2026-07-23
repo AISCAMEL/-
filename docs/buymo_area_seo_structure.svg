@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1660 1180" width="1660" height="1180" font-family="'Noto Sans JP',sans-serif">
+  <rect width="1660" height="1180" fill="#F3F4F6"/>
+  <text x="40" y="44" font-size="24" font-weight="900" fill="#333">都道府県SEO対策ページ 構成</text>
+  <text x="40" y="68" font-size="13" fill="#888">/area/（ハブ）＋47都道府県ページ。各ページはユニーク化＋構造化データ＋内部リンクで地域KWを狙う（生成: tools/gen-area.js）。</text>
+
+  <defs>
+    <marker id="ar" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#FF6B35"/></marker>
+    <style>
+      .win{fill:#fff;stroke:#cfcfcf;stroke-width:1.5;}
+      .nav{fill:#1E3A8A;}
+      .blk{fill:#eaecef;stroke:#dadde2;stroke-width:1;}
+      .blk2{fill:#f4f6f8;stroke:#e2e5ea;stroke-width:1;}
+      .cta{fill:#FFE3D2;stroke:#FF6B35;stroke-width:1.2;}
+      .chip{fill:#fff;stroke:#f0d9c4;stroke-width:1;}
+      .tb{font-size:13px;font-weight:700;fill:#333;}
+      .t{font-size:12px;fill:#555;}
+      .tw{font-size:12px;fill:#fff;}
+      .mut{font-size:11px;fill:#9aa;}
+      .cap{font-size:15px;font-weight:900;fill:#1E3A8A;}
+      .ctaT{font-size:12px;font-weight:700;fill:#FF6B35;}
+      .seo{font-size:11px;font-weight:700;fill:#0E7C66;}
+      .code{font-size:11px;fill:#444;font-family:monospace;}
+    </style>
+  </defs>
+
+  <!-- ===== 左：都道府県ページ レイアウト ===== -->
+  <text class="cap" x="40" y="104">① 都道府県ページ（例 /area/tokyo/）レイアウト</text>
+  <rect class="win" x="40" y="116" width="500" height="1020" rx="12"/>
+  <rect class="nav" x="40" y="116" width="500" height="38" rx="12"/><text class="tw" x="56" y="140">🐮 BUYMO ｜ 共通ヘッダー（ジャンル/エリア/…）</text>
+
+  <!-- hero -->
+  <rect class="blk" x="56" y="170" width="468" height="150" rx="6"/>
+  <text class="mut" x="68" y="190">パンくず：ホーム › 対応エリア › 東京都</text>
+  <text class="ctaT" x="68" y="212">▎関東・東京都の車買取（eyebrow）</text>
+  <text class="tb" x="68" y="238" font-size="16">H1：東京都の車買取・査定はBUYMO</text>
+  <text class="t" x="68" y="260">新宿区・世田谷区・八王子市… 全域へ無料出張査定</text>
+  <rect class="cta" x="68" y="274" width="150" height="30" rx="15"/><text class="ctaT" x="86" y="294">無料査定を依頼</text>
+  <rect class="blk2" x="232" y="274" width="120" height="30" rx="15"/><text class="t" x="248" y="294">📞 電話で相談</text>
+
+  <rect class="blk" x="56" y="332" width="468" height="70" rx="6"/><text class="tb" x="68" y="356">東京都での買取の特徴（地域＋市名を含む本文）</text><text class="mut" x="68" y="380">※県ごとに本文・地名が変わる＝重複回避</text>
+
+  <rect class="blk" x="56" y="414" width="468" height="92" rx="6"/><text class="tb" x="68" y="438">東京都の主な対応エリア（市区町村チップ＝KW）</text>
+  <rect class="chip" x="68" y="450" width="78" height="24" rx="12"/><rect class="chip" x="154" y="450" width="78" height="24" rx="12"/><rect class="chip" x="240" y="450" width="78" height="24" rx="12"/><rect class="chip" x="326" y="450" width="92" height="24" rx="12"/>
+  <rect class="chip" x="68" y="480" width="78" height="24" rx="12"/><rect class="chip" x="154" y="480" width="100" height="24" rx="12"/>
+
+  <rect class="blk" x="56" y="518" width="468" height="86" rx="6"/><text class="tb" x="68" y="542">東京都でBUYMOが選ばれる理由（カード×6）</text>
+  <rect class="blk2" x="68" y="554" width="142" height="40"/><rect class="blk2" x="220" y="554" width="142" height="40"/><rect class="blk2" x="372" y="554" width="146" height="40"/>
+
+  <rect class="blk" x="56" y="616" width="468" height="74" rx="6"/><text class="tb" x="68" y="640">東京都エリアの買取実績（カード×3 ※イメージ）</text>
+  <rect class="blk2" x="68" y="652" width="142" height="30"/><rect class="blk2" x="220" y="652" width="142" height="30"/><rect class="blk2" x="372" y="652" width="146" height="30"/>
+
+  <rect class="blk" x="56" y="702" width="468" height="74" rx="6"/><text class="tb" x="68" y="726">東京都の車買取 よくある質問（FAQ×4・地域文言）</text>
+
+  <rect class="blk" x="56" y="788" width="468" height="86" rx="6"/><text class="tb" x="68" y="812">関東の対応エリア（同地方の県へ内部リンク）</text>
+  <rect class="chip" x="68" y="824" width="96" height="24" rx="12"/><rect class="chip" x="172" y="824" width="96" height="24" rx="12"/><rect class="chip" x="276" y="824" width="96" height="24" rx="12"/><rect class="chip" x="380" y="824" width="120" height="24" rx="12"/>
+  <rect class="cta" x="68" y="854" width="180" height="14" rx="7"/>
+
+  <rect class="cta" x="56" y="886" width="468" height="64" rx="6"/><text class="tb" x="68" y="912">ボトムCTA：東京都で車を売るならBUYMOへ</text><rect class="nav" x="68" y="922" width="160" height="22" rx="11" fill="#FF6B35"/><text class="tw" x="96" y="938">無料査定を依頼</text>
+
+  <rect class="nav" x="56" y="962" width="468" height="56" rx="6"/><text class="tw" x="68" y="986">共通フッター（ジャンル/サイトマップ/SNS）</text>
+  <text class="mut" x="68" y="1006">CTA → buymo-contact.html?pref=東京都（フォームに都道府県自動入力）</text>
+
+  <!-- ===== 右上：head SEO ===== -->
+  <text class="cap" x="572" y="104">② &lt;head&gt; のSEO要素（県ごとに自動生成）</text>
+  <rect class="win" x="572" y="116" width="1048" height="246" rx="12"/>
+  <text class="seo" x="590" y="142">TITLE</text><text class="code" x="660" y="142">東京都の車買取ならBUYMO｜東京都全域対応・高価買取・無料出張査定</text>
+  <text class="seo" x="590" y="170">DESC</text><text class="code" x="660" y="170">東京都で車の買取・査定ならBUYMO。新宿区・世田谷区・八王子市など全域へ無料出張査定…</text>
+  <text class="seo" x="590" y="198">H1</text><text class="code" x="660" y="198">東京都の車買取・査定はBUYMO</text>
+  <text class="seo" x="590" y="226">CANONICAL</text><text class="code" x="660" y="226">自己参照（公開時に絶対URL）</text>
+  <text class="seo" x="590" y="258">JSON-LD</text><text class="code" x="660" y="258">AutoDealer（areaServed=東京都／TEL／住所）</text>
+  <text class="code" x="660" y="278">BreadcrumbList（ホーム › 対応エリア › 東京都）</text>
+  <text class="seo" x="590" y="306">OGP</text><text class="code" x="660" y="306">og:title / og:description / og:image（BUYMO）</text>
+  <text class="seo" x="590" y="334">META</text><text class="code" x="660" y="334">viewport / theme-color / robots(index)</text>
+
+  <!-- ===== 右中：サイト構造 ===== -->
+  <text class="cap" x="572" y="404">③ サイト構造（ハブ＆スポーク＋地方クラスタ）</text>
+  <rect class="win" x="572" y="416" width="1048" height="330" rx="12"/>
+  <!-- LP -->
+  <rect class="blk2" x="700" y="446" width="160" height="44" rx="8"/><text class="tb" x="724" y="473">トップLP</text>
+  <!-- hub -->
+  <rect class="cta" x="700" y="520" width="160" height="46" rx="8"/><text class="ctaT" x="712" y="548">エリアハブ /area/</text>
+  <path d="M780 490 L780 520" stroke="#FF6B35" stroke-width="2" marker-end="url(#ar)"/>
+  <!-- region clusters -->
+  <g>
+    <rect class="blk" x="600" y="610" width="150" height="110" rx="8"/><text class="tb" x="612" y="632">関東クラスタ</text>
+    <text class="t" x="612" y="654">東京/神奈川/埼玉</text><text class="t" x="612" y="674">千葉/茨城/栃木/群馬</text><text class="mut" x="612" y="700">↔ 同地方で相互リンク</text>
+    <rect class="blk" x="766" y="610" width="150" height="110" rx="8"/><text class="tb" x="778" y="632">東北クラスタ</text><text class="t" x="778" y="654">福島(本社)/宮城…</text>
+    <rect class="blk" x="932" y="610" width="150" height="110" rx="8"/><text class="tb" x="944" y="632">中部/近畿…</text><text class="t" x="944" y="654">各地方クラスタ</text>
+    <rect class="blk" x="1098" y="610" width="200" height="110" rx="8"/><text class="tb" x="1110" y="632">… 全8地方 / 47県</text><text class="t" x="1110" y="654">各県ページ</text><text class="mut" x="1110" y="700">県→contact?pref=県</text>
+  </g>
+  <path d="M730 566 L675 610" stroke="#FF6B35" stroke-width="1.5" marker-end="url(#ar)"/>
+  <path d="M790 566 L840 610" stroke="#FF6B35" stroke-width="1.5" marker-end="url(#ar)"/>
+  <path d="M830 566 L1000 610" stroke="#FF6B35" stroke-width="1.5" marker-end="url(#ar)"/>
+  <path d="M850 566 L1180 610" stroke="#FF6B35" stroke-width="1.5" marker-end="url(#ar)"/>
+  <text class="mut" x="1330" y="470">URL：/area/&lt;ローマ字&gt;/</text>
+  <text class="mut" x="1330" y="492">例：/area/tokyo/ , /area/osaka/</text>
+  <text class="mut" x="1330" y="520">sitemap.xml に全48URL収録</text>
+  <text class="mut" x="1330" y="542">robots.txt で許可＋sitemap参照</text>
+
+  <!-- ===== 右下：SEO施策チェック ===== -->
+  <text class="cap" x="572" y="788">④ SEO施策（各県ページに自動適用）</text>
+  <rect class="win" x="572" y="800" width="1048" height="300" rx="12"/>
+  <g class="t">
+    <text x="592" y="832">✅ ユニークな title / description / H1（県名・市名入り）</text>
+    <text x="592" y="860">✅ 市区町村チップで地域ロングテールKWを網羅</text>
+    <text x="592" y="888">✅ 構造化データ：AutoDealer（areaServed）＋ BreadcrumbList</text>
+    <text x="592" y="916">✅ 内部リンク：ハブ⇄県、同地方の県どうしで相互リンク（トピッククラスタ）</text>
+    <text x="592" y="944">✅ 県ページ→お問い合わせ（?pref=県で都道府県を自動入力＝CV導線）</text>
+    <text x="592" y="972">✅ canonical（自己参照）／OGP／モバイル対応／高速（軽量・lazy）</text>
+    <text x="592" y="1000">✅ sitemap.xml・robots.txt 自動生成</text>
+    <text x="592" y="1028">🟡 公開時：SITE_URL設定→再生成で canonical/sitemap を絶対URL化</text>
+    <text x="592" y="1056">🟡 運用：各県に実績・口コミ・店舗など“固有情報”を追記で更に強化</text>
+  </g>
+  <text class="mut" x="40" y="1166">生成・再生成： site/ で  node tools/gen-area.js （テンプレ＝prefPage / 共通レイアウト＝_layout.js）。47県＋ハブ＋sitemap を一括出力。</text>
+</svg>

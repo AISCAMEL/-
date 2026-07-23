@@ -46,6 +46,22 @@ function setupAll() {
     "車両情報", "回答相場額", "回答状況"
   ]);
 
+  ensureSheet_(ss, "案件ボード", [
+    "更新日時", "案件ID", "お名前", "連絡先", "メール", "ジャンル", "担当加盟店", "ステージ", "想定金額", "メモ"
+  ]);
+
+  ensureSheet_(ss, "加盟店マスタ", [
+    "登録日時", "店名", "エリア", "電話", "メール", "Slack Webhook URL", "ステータス"
+  ]);
+
+  ensureSheet_(ss, "お知らせ", [
+    "日時", "ID", "タイトル", "本文", "重要度"
+  ]);
+
+  ensureSheet_(ss, "対応履歴", [
+    "日時", "案件ID", "内容"
+  ]);
+
   SpreadsheetApp.flush();
   Logger.log("セットアップ完了：" + ss.getUrl());
 }

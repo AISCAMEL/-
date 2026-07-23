@@ -15,6 +15,61 @@
 // 動作確認用 ＋ 会員の回答済み相場をJSONPで返す（マイページ反映用）
 //   例: <script src="…/exec?action=quotes&email=xxx&callback=cb"></script>
 function doGet(e) {
+  // ログイン（JSONP）／ログアウト
+  if (e && e.parameter && e.parameter.action === "login") {
+    var lr = (typeof authLogin_ === "function") ? authLogin_(e.parameter.email, e.parameter.pw, e.parameter.role) : { ok: false, error: "auth module missing" };
+    var lbody = JSON.stringify(lr), lcb = e.parameter.callback;
+    if (lcb) return ContentService.createTextOutput(lcb + "(" + lbody + ")").setMimeType(ContentService.MimeType.JAVASCRIPT);
+    return ContentService.createTextOutput(lbody).setMimeType(ContentService.MimeType.JSON);
+  }
+  if (e && e.parameter && e.parameter.action === "logout") {
+    if (typeof authLogout_ === "function") authLogout_(e.parameter.t || "");
+    return ContentService.createTextOutput("ok").setMimeType(ContentService.MimeType.TEXT);
+  }
+  // ステップメールの配信停止（メール末尾リンク）
+  if (e && e.parameter && e.parameter.action === "unsub") {
+    var m = (typeof unsubscribeByToken_ === "function")
+      ? unsubscribeByToken_(e.parameter.t || "")
+      : "受け付けました。";
+    return ContentService.createTextOutput(m).setMimeType(ContentService.MimeType.TEXT);
+  }
+  // チャットボット応答（JSONP）
+  if (e && e.parameter && e.parameter.action === "bot") {
+    var ans = (typeof botAnswer_ === "function") ? botAnswer_(e.parameter.mode, e.parameter.q) : "";
+    var abody = JSON.stringify({ answer: ans }), acb = e.parameter.callback;
+    if (acb) return ContentService.createTextOutput(acb + "(" + abody + ")").setMimeType(ContentService.MimeType.JAVASCRIPT);
+    return ContentService.createTextOutput(abody).setMimeType(ContentService.MimeType.JSON);
+  }
+  // お知らせ一覧（JSONP）
+  if (e && e.parameter && e.parameter.action === "notices") {
+    var ns = (typeof getNoticesJson_ === "function") ? getNoticesJson_() : [];
+    var nbody = JSON.stringify(ns), ncb = e.parameter.callback;
+    if (ncb) return ContentService.createTextOutput(ncb + "(" + nbody + ")").setMimeType(ContentService.MimeType.JAVASCRIPT);
+    return ContentService.createTextOutput(nbody).setMimeType(ContentService.MimeType.JSON);
+  }
+  // 加盟店一覧（JSONP）
+  if (e && e.parameter && e.parameter.action === "stores") {
+    var stores = (typeof getStoresJson_ === "function") ? getStoresJson_() : [];
+    var sbody = JSON.stringify(stores), scb = e.parameter.callback;
+    if (scb) return ContentService.createTextOutput(scb + "(" + sbody + ")").setMimeType(ContentService.MimeType.JAVASCRIPT);
+    return ContentService.createTextOutput(sbody).setMimeType(ContentService.MimeType.JSON);
+  }
+  // 看板ボード：案件一覧（JSONP）。assignee 指定で担当のみ。
+  if (e && e.parameter && e.parameter.action === "cases") {
+    var cases = (typeof getCasesJson_ === "function") ? getCasesJson_(e.parameter.assignee || "") : [];
+    var jbody = JSON.stringify(cases);
+    var jcb = e.parameter.callback;
+    if (jcb) return ContentService.createTextOutput(jcb + "(" + jbody + ")").setMimeType(ContentService.MimeType.JAVASCRIPT);
+    return ContentService.createTextOutput(jbody).setMimeType(ContentService.MimeType.JSON);
+  }
+  // 会員マイページ：自分の案件（メール一致・JSONP）
+  if (e && e.parameter && e.parameter.action === "mycase") {
+    var mine = (typeof getMyCasesJson_ === "function") ? getMyCasesJson_(e.parameter.email || "") : [];
+    var mbody = JSON.stringify(mine);
+    var mcb = e.parameter.callback;
+    if (mcb) return ContentService.createTextOutput(mcb + "(" + mbody + ")").setMimeType(ContentService.MimeType.JAVASCRIPT);
+    return ContentService.createTextOutput(mbody).setMimeType(ContentService.MimeType.JSON);
+  }
   if (e && e.parameter && e.parameter.action === "quotes") {
     var data = getAnsweredQuotes_(e.parameter.email || "");
     var body = JSON.stringify(data);
@@ -46,6 +101,12 @@ function doPost(e) {
       case "register": result = handleRegister_(data); break;
       case "contact":  result = handleContact_(data);  break;
       case "quote":    result = handleQuote_(data);    break;
+      case "buymo":    result = handleBuymoLead_(data); break;
+      case "stepmail": result = handleStepMailTrigger_(data); break; // WP等から後発でステップメール発動
+      case "case":     result = (typeof requireAuth_!=="function"||requireAuth_(data)) ? handleCase_(data) : { ok:false, error:"unauthorized" }; break; // 看板ボードの作成/更新（要ログイン）
+      case "note":     result = (typeof requireAuth_!=="function"||requireAuth_(data)) ? handleNote_(data) : { ok:false, error:"unauthorized" }; break; // 対応履歴メモ（要ログイン）
+      case "notice":   result = (typeof requireAuth_!=="function"||requireAuth_(data)) ? handleNotice_(data) : { ok:false, error:"unauthorized" }; break; // お知らせ投稿（要ログイン）
+      case "store":    result = (typeof requireAuth_!=="function"||requireAuth_(data)) ? handleStore_(data)  : { ok:false, error:"unauthorized" }; break; // 加盟店登録/更新（要ログイン）
       default:         result = { ok: false, error: "unknown type" };
     }
     return json_(result);
@@ -317,9 +378,10 @@ function handleRegister_(d) {
   var sh = ss.getSheetByName(cfg.SHEET_MEMBERS) || ensureSheet_(ss, cfg.SHEET_MEMBERS, []);
 
   var id = "M-" + nextSeq_(sh, 1000);
-  sh.appendRow([new Date(), id, d.name || "", d.email || "", d.plan || "", d.source || "LP"]);
+  var role = d.role || "member"; // member / partner / hq
+  sh.appendRow([new Date(), id, d.name || "", d.email || "", d.plan || "", d.source || "LP", role]);
 
-  notifyStaff_("👤 新規会員登録 " + id + "\nお名前：" + (d.name || "-") + "\nメール：" + (d.email || "-") + "\n希望プラン：" + (d.plan || "-"));
+  notifyStaff_("👤 新規登録 " + id + "（" + role + "）\nお名前：" + (d.name || "-") + "\nメール：" + (d.email || "-") + "\n希望プラン：" + (d.plan || "-"));
   return { ok: true, id: id };
 }
 
@@ -332,6 +394,49 @@ function handleContact_(d) {
   sh.appendRow([new Date(), d.name || "", d.email || "", d.phone || "", d.message || "", "未対応"]);
   notifyStaff_("✉️ お問い合わせ\nお名前：" + (d.name || "-") + "\n内容：" + (d.message || "-"));
   return { ok: true };
+}
+
+/* ---------- BUYMO 査定/問い合わせ（ステップメール登録あり） ---------- */
+function handleBuymoLead_(d) {
+  var cfg = getConfig();
+  var ss = openBook_();
+  var sh = ss.getSheetByName(cfg.SHEET_CONTACTS) || ensureSheet_(ss, cfg.SHEET_CONTACTS, []);
+  var id = "BM-" + nextSeq_(sh, 5000);
+
+  sh.appendRow([new Date(), d.name || "", d.email || "", d.phone || "", "[BUYMO]" + (d.genre ? "(" + d.genre + ")" : "") + " " + (d.message || ""), "未対応"]);
+  notifyStaff_(
+    "🐮 BUYMO 査定/問い合わせ " + id + "\n" +
+    "お名前：" + (d.name || "-") + "\n" +
+    "TEL：" + (d.phone || "-") + " / メール：" + (d.email || "-") + "\n" +
+    (d.genre ? "ジャンル：" + d.genre + "\n" : "") +
+    (d.message || "")
+  );
+
+  // ステップメール（StepMail.gs）に登録。未デプロイでもエラーにしない。
+  if (typeof enrollStepMail_ === "function") {
+    enrollStepMail_({ id: id, name: d.name, email: d.email, genre: d.genre, source: d.source });
+  }
+  // 看板ボードに案件を自動生成（Board.gs）
+  if (typeof createCaseFromLead_ === "function") {
+    createCaseFromLead_({ id: id, name: d.name, phone: d.phone, email: d.email, genre: d.genre, message: d.message });
+  }
+  return { ok: true, id: id };
+}
+
+/* ---------- ステップメールの外部トリガー（WP/Zapier等から） ----------
+   POST {type:"stepmail", token, email, name, genre}
+   token は StepMail.gs の stepCfg_().TRIGGER_TOKEN と一致が必要。 */
+function handleStepMailTrigger_(d) {
+  var cfg = (typeof stepCfg_ === "function") ? stepCfg_() : { TRIGGER_TOKEN: "" };
+  if (cfg.TRIGGER_TOKEN && String(d.token || "") !== String(cfg.TRIGGER_TOKEN)) {
+    return { ok: false, error: "invalid token" };
+  }
+  if (!d.email) return { ok: false, error: "email required" };
+  if (typeof enrollStepMail_ === "function") {
+    enrollStepMail_({ id: d.id || "", name: d.name, email: d.email, genre: d.genre, source: d.source || "external" });
+    return { ok: true };
+  }
+  return { ok: false, error: "stepmail module missing" };
 }
 
 /* ---------- 相場見積り（買取/仕入れ）受付 ---------- */

@@ -1,0 +1,40 @@
+name: QA
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  link-check:
+    name: 内部リンク健全性チェック
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Run link/asset checker
+        working-directory: site
+        run: node tools/check-links.js
+      - name: Run SEO / structured-data / consistency checker
+        working-directory: site
+        run: node tools/seo-check.js
+
+  smoke:
+    name: スモークテスト（実機回帰・Playwright）
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install test deps
+        working-directory: site/tests
+        run: npm install
+      - name: Install Chromium
+        working-directory: site/tests
+        run: npx playwright install --with-deps chromium
+      - name: Run smoke tests (28 checks)
+        working-directory: site/tests
+        run: node smoke.js

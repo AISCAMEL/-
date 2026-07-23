@@ -3,522 +3,622 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AUC-AGENT｜車のオークション代行・相場よりおトクに愛車を</title>
-<meta name="description" content="全国のオートオークション（USS/TAA/JU等）から、あなたに代わってプロが入札・落札。サイト上で総額シミュレーション、会員サイトでかんたんオーダー。中間マージンを抑えて相場よりおトクに。" />
+<title>BUYMO｜自宅から写真を送るだけ。車買取に新しいスタイル。</title>
+<meta name="description" content="オンラインで売却。手間なし、かんたん。自宅から写真を送るだけで査定完了。しつこい電話なし・書類は郵送・手数料無料。全国47都道府県対応。" />
+<meta name="theme-color" content="#1C3030" />
 
 <!-- favicon -->
-<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
-<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png" />
-<link rel="apple-touch-icon" href="assets/img/favicon-180.png" />
+<link rel="icon" type="image/svg+xml" href="assets/img/buymo-favicon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/buymo-favicon-32.png" />
+<link rel="apple-touch-icon" href="assets/img/buymo-favicon-180.png" />
 
-<!-- OGP / Twitter（公開ドメイン確定後、og:url と og:image を絶対URLに差し替え） -->
+<!-- OGP / Twitter -->
 <meta property="og:type" content="website" />
-<meta property="og:site_name" content="AUC-AGENT｜合同会社アイズ" />
-<meta property="og:title" content="車のオークション代行｜相場よりおトクに愛車を — AUC-AGENT" />
-<meta property="og:description" content="プロが代わりに業者オートオークションで入札・落札・出品。総額シミュレーション・会員サイトでかんたんオーダー。福島県いわき市／全国対応。" />
-<meta property="og:image" content="assets/img/ogp.png" />
+<meta property="og:site_name" content="BUYMO｜車買取" />
+<meta property="og:title" content="BUYMO｜自宅から写真を送るだけ。車買取に新しいスタイル。" />
+<meta property="og:description" content="オンラインで売却。手間なし、かんたん。しつこい電話なし・書類は郵送・全国対応。" />
+<meta property="og:image" content="assets/img/buymo-ogp.png" />
 <meta property="og:url" content="" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="車のオークション代行｜相場よりおトクに — AUC-AGENT" />
-<meta name="twitter:description" content="プロが代わりに入札・落札・出品。総額シミュレーション・会員サイトでかんたんオーダー。" />
-<meta name="twitter:image" content="assets/img/ogp.png" />
+<link rel="canonical" href="https://buymo.me/" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="stylesheet" href="assets/css/style.css" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" />
+<link rel="stylesheet" href="assets/css/buymo.css?v=6" />
 
-<!-- 構造化データ（自動車取引業／所在地・連絡先） -->
+<!-- 構造化データ（ローカルビジネス） -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "AutoDealer",
-  "name": "合同会社アイズ（AUC-AGENT）",
-  "description": "車のオートオークション代行（購入代行・出品代行）。総額シミュレーションと会員サイトを提供。",
-  "url": "https://aiscompany.jp/",
+  "name": "BUYMO（合同会社アイズ）",
+  "description": "ネットで完結の車買取サービス。写真査定・しつこい電話なし・全国47都道府県対応。手数料無料。",
+  "url": "",
   "telephone": "+81-50-1722-3365",
   "email": "info@aisjaltd.com",
   "address": {
     "@type": "PostalAddress",
-    "postalCode": "979-0204",
+    "addressCountry": "JP",
     "addressRegion": "福島県",
     "addressLocality": "いわき市",
-    "streetAddress": "四倉町細谷字大町1番",
-    "addressCountry": "JP"
+    "streetAddress": "若葉台1丁目31-11"
   },
-  "areaServed": "JP",
-  "openingHoursSpecification": [{
-    "@type": "OpeningHoursSpecification",
-    "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"],
-    "opens": "08:00",
-    "closes": "17:00"
-  }],
-  "taxID": "T9380003004349"
+  "openingHours": "Mo-Su 10:00-18:00",
+  "areaServed": "JP"
 }
 </script>
-
-<!-- Google Analytics 4（測定ID取得後、G-XXXXXXXXXX を差し替えると有効化） -->
-<script>
-  (function () {
-    var GA_ID = "G-XXXXXXXXXX"; // ← GA4測定IDに差し替え
-    if (!/^G-/.test(GA_ID) || GA_ID === "G-XXXXXXXXXX") return;
-    var s = document.createElement("script");
-    s.async = true; s.src = "https://www.googletagmanager.com/gtag/js?id=" + GA_ID;
-    document.head.appendChild(s);
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){ dataLayer.push(arguments); }
-    gtag("js", new Date()); gtag("config", GA_ID);
-  })();
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Organization","name":"合同会社アイズ 買取事業部","alternateName":"BUYMO","url":"","logo":"assets/img/buymo-favicon-180.png","email":"info@aisjaltd.com","telephone":"+81-50-1722-3365","address":{"@type":"PostalAddress","addressCountry":"JP","addressRegion":"福島県","addressLocality":"いわき市","streetAddress":"若葉台1丁目31-11"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebSite","name":"BUYMO｜車買取","url":"","inLanguage":"ja"}
+</script>
+<!-- FAQ 構造化データ（リッチリザルト用・本文FAQと一致） -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"査定は写真だけで大丈夫ですか？","acceptedAnswer":{"@type":"Answer","text":"はい。スマホで撮影した写真をお送りいただくだけで査定いたします。実車確認は成約後に業者が引き取りに伺う際に行います。"}},
+    {"@type":"Question","name":"電話でしつこく連絡されませんか？","acceptedAnswer":{"@type":"Answer","text":"一切ございません。査定結果はメールでご連絡し、しつこいお電話は行いません。お断りの際も同様です。"}},
+    {"@type":"Question","name":"車検証が必要ですか？","acceptedAnswer":{"@type":"Answer","text":"ご契約時には車検証・自賠責保険証・印鑑などが必要になります。詳しくはご案内いたします。"}},
+    {"@type":"Question","name":"買取金額はいつ振り込まれますか？","acceptedAnswer":{"@type":"Answer","text":"ご契約と必要書類の確認後、書類・車両を丁寧に確認のうえ、3営業日以内に確実にお振込みいたします。"}},
+    {"@type":"Question","name":"査定料はかかりますか？","acceptedAnswer":{"@type":"Answer","text":"査定料・出張費・手続き代行料などの手数料は一切いただきません。完全無料です。"}},
+    {"@type":"Question","name":"キャンセルは可能ですか？","acceptedAnswer":{"@type":"Answer","text":"査定後のキャンセルはもちろん無料です。ご契約後のキャンセルについては規定がございます。"}},
+    {"@type":"Question","name":"取引の流れを教えてください。","acceptedAnswer":{"@type":"Answer","text":"写真をお送りいただく→査定額をメールでご提示→ご契約・書類郵送→業者が引き取り・現車確認→入金、という流れです。"}},
+    {"@type":"Question","name":"ローンが残っている車でも売れますか？","acceptedAnswer":{"@type":"Answer","text":"ローン残債がある場合でも買取可能です。残債の精算手続きについてもスタッフがサポートいたします。"}},
+    {"@type":"Question","name":"複数台まとめて査定できますか？","acceptedAnswer":{"@type":"Answer","text":"複数台のまとめ査定も歓迎です。お申し込み時に台数をお知らせください。"}}
+  ]
+}
 </script>
 </head>
 <body>
 
-<!-- ===== Header ===== -->
-<header class="site-header">
-  <div class="wrap">
-    <a class="brand" href="index.html">
-      <span class="logo">A</span>
-      <span>AUC-AGENT<small>CAR AUCTION AGENT</small></span>
+<!-- ============ ヘッダー ============ -->
+<header class="site-header" id="top">
+  <div class="container header-inner">
+    <a href="#top" class="logo" aria-label="BUYMO ホーム">
+      <span class="logo-mark" aria-hidden="true">🐮</span>
+      <span class="logo-text">BUYMO</span>
     </a>
-    <nav class="nav">
-      <a class="nav-link" href="index.html">購入代行</a>
-      <a class="nav-link" href="sell.html">出品代行</a>
-      <a class="nav-link" href="shipping.html">陸送シミュ</a>
-      <a class="nav-link" href="#simulator">料金シミュ</a>
-      <a class="nav-link" href="mypage.html">マイページ</a>
-      <a class="btn btn-gold btn-sm" href="login.html">無料会員登録</a>
+
+    <nav class="gnav" id="gnav" aria-label="メインナビゲーション">
+      <ul>
+        <li><a href="#top">ホーム</a></li>
+        <li><a href="#features">サービス内容</a></li>
+        <li><a href="#genres">買取ジャンル</a></li>
+        <li><a href="area/">エリア一覧</a></li>
+        <li><a href="#faq">よくある質問</a></li>
+        <li><a href="#form">お問い合わせ</a></li>
+      </ul>
     </nav>
+
+    <a href="tel:05017842929" class="header-tel" aria-label="電話で問い合わせ 050-1784-2929">
+      <span class="tel-ico" aria-hidden="true">📞</span>050-1784-2929
+    </a>
+
+    <button class="hamburger" id="hamburger" aria-label="メニューを開く" aria-expanded="false" aria-controls="gnav">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </header>
 
-<!-- ===== Hero ===== -->
-<section class="hero">
-  <div class="wrap">
-    <div>
-      <span class="badge">★ 累計代行実績 12,000台突破</span>
-      <h1>欲しい車を、<span class="hl">相場よりおトク</span>に。<br />プロが代わりに<span class="hl">入札・落札</span>します。</h1>
-      <p class="lead">業者専用のオートオークションは、本来ディーラーや買取店しか参加できません。AUC-AGENTがあなたの「指定席」になり、希望条件にあう一台をプロが見極めて落札。中間マージンを抑えた価格で愛車が手に入ります。</p>
-      <div class="cta-row">
-        <a class="btn btn-gold" href="#simulator">▶ いくらで買える？総額シミュレーション</a>
-        <a class="btn btn-ghost" href="login.html">無料で会員登録</a>
-      </div>
-      <p class="online-note">🟢 <strong>24時間受付</strong>：メール・チャットはいつでもOK（お電話は平日 8:00〜17:00）</p>
-      <div class="trust">
-        <div><div class="t-num">12,000<span style="font-size:16px">台</span></div><div class="t-lbl">累計代行台数</div></div>
-        <div><div class="t-num">98.6<span style="font-size:16px">%</span></div><div class="t-lbl">ご成約満足度</div></div>
-        <div><div class="t-num">全国<span style="font-size:16px">納車</span></div><div class="t-lbl">ゼロ社 陸送提携</div></div>
-      </div>
-    </div>
+<main>
 
-    <!-- Hero mini-quote card (filled by JS from simulator defaults) -->
-    <div class="hero-card" id="heroCard">
-      <h3>総額イメージ（例）</h3>
-      <p class="sub">落札予算 140万円・コンパクトカーの場合</p>
-      <div class="row"><span>落札価格</span><span id="hcBid">¥1,400,000</span></div>
-      <div class="row"><span>代行手数料</span><span id="hcFee">¥59,800</span></div>
-      <div class="row"><span>陸送・登録など</span><span id="hcOther">¥74,000</span></div>
-      <div class="total">
-        <span class="lbl">乗り出し総額（目安）</span>
-        <span class="val" id="hcTotal">¥1,533,800</span>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ===== Pain / Why agent ===== -->
-<section id="reasons">
-  <div class="wrap">
-    <div class="section-head">
-      <div class="eyebrow">WHY AUCTION AGENT</div>
-      <h2>「代行」だから、おトク・安心・かんたん。</h2>
-      <p>店頭価格には、仕入れ・整備・展示・人件費などのマージンが上乗せされています。代行ならオークション相場で直接ねらえます。</p>
-    </div>
-    <div class="grid-3">
-      <div class="card">
-        <div class="ico">💰</div>
-        <h3>相場価格で手に入る</h3>
-        <p>店頭購入では落札価格に15〜25%の中間コストが乗りがち。代行手数料だけで済むので、同じ車でも総額を大きく抑えられます。</p>
-      </div>
-      <div class="card">
-        <div class="ico">🔍</div>
-        <h3>プロが車両を見極め</h3>
-        <p>検査票（出品票）と評価点を熟知したバイヤーが、修復歴・状態を確認。粗悪車をしっかり回避して入札します。</p>
-      </div>
-      <div class="card">
-        <div class="ico">🚚</div>
-        <h3>ゼロ社マイカー陸送で全国へ</h3>
-        <p>大手・株式会社ゼロのマイカー陸送と提携。福島拠点から<strong>ドアtoドア</strong>で全国へ安全にお届け。名義変更・納車までワンストップ対応します。</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ===== Flow ===== -->
-<section id="flow" style="background:#eef2f9;">
-  <div class="wrap">
-    <div class="section-head">
-      <div class="eyebrow">HOW IT WORKS</div>
-      <h2>ご利用は5ステップ。会員サイトで完結。</h2>
-      <p>会員登録後はすべてマイページ上で進行。進捗もリアルタイムに確認できます。</p>
-    </div>
-    <div class="flow">
-      <div class="step"><div class="n">1</div><h4>無料会員登録</h4><p>メールだけで1分。希望条件を登録します。</p></div>
-      <div class="step"><div class="n">2</div><h4>条件オーダー</h4><p>車種・年式・予算・上限価格をかんたん入力。申込後に車ひろばのID/PWを発行。</p></div>
-      <div class="step"><div class="n">3</div><h4>車ひろばで提案・入札</h4><p>専用システム「車ひろば」上でバイヤーが候補を提案、ご承認後に入札代行。</p></div>
-      <div class="step"><div class="n">4</div><h4>落札・お支払い</h4><p>落札成立で総額確定。オンライン決済も可。</p></div>
-      <div class="step"><div class="n">5</div><h4>整備・納車</h4><p>陸送・名義変更まで代行し、ご自宅へ納車。</p></div>
-    </div>
-  </div>
-</section>
-
-<!-- ===== Simulator ===== -->
-<section id="simulator" class="sim">
-  <div class="wrap">
-    <div class="section-head">
-      <div class="eyebrow">COST SIMULATION</div>
-      <h2>サイト上で「乗り出し総額」をその場で計算</h2>
-      <p>予算とクラス・エリアを選ぶだけ。代行手数料・陸送費・諸費用まで含めた総額と、店頭購入との差額目安がすぐ分かります。<br><strong style="color:#e0bd6a;">相場が分からない方は無料で「仕入れ相場の見積り」を依頼できます</strong>（担当がメール／チャットで回答し、マイページに反映）。</p>
-    </div>
-
-    <div class="sim-grid">
-      <!-- Inputs -->
-      <div class="sim-panel">
-        <div class="field">
-          <label>落札予算（希望上限価格）<span class="v" id="bidOut">¥1,400,000</span></label>
-          <input type="range" id="bid" min="200000" max="6000000" step="50000" value="1400000" />
-          <div style="display:flex;justify-content:space-between;font-size:12px;color:#9fb0cc;margin-top:4px;">
-            <span>¥200,000</span><span>¥6,000,000</span>
-          </div>
-        </div>
-
-        <div class="field">
-          <label>車両クラス</label>
-          <div class="seg" id="classSeg">
-            <label><input type="radio" name="cls" value="kei" /><span>軽自動車</span></label>
-            <label><input type="radio" name="cls" value="compact" checked /><span>コンパクト</span></label>
-            <label><input type="radio" name="cls" value="sedan" /><span>セダン/ミニバン</span></label>
-            <label><input type="radio" name="cls" value="suv" /><span>SUV/大型</span></label>
-            <label><input type="radio" name="cls" value="import" /><span>輸入車</span></label>
-          </div>
-        </div>
-
-        <div class="field">
-          <label>ご納車先（都道府県）<span class="v" style="color:var(--gold-2);font-size:12px;">福島拠点より配送</span></label>
-          <select id="region"></select>
-          <p style="margin:8px 0 0;font-size:12px;color:#9fb0cc;">陸送はゼロ社（マイカー陸送）の料金水準で算定。福島拠点よりドアtoドアでお届け。</p>
-        </div>
-
-        <div class="field" style="margin-bottom:0;">
-          <label>オプション（代行手続き）</label>
-          <div class="checks">
-            <label><input type="checkbox" id="optReg" checked /> 名義変更・登録代行（+¥25,000）</label>
-            <label><input type="checkbox" id="optGarage" /> 車庫証明取得代行（+¥12,000）</label>
-            <label><input type="checkbox" id="optInspect" /> 12ヶ月点検・整備パック（+¥35,000）</label>
-            <label><input type="checkbox" id="optWarranty" /> 6ヶ月保証パック（+¥28,000）</label>
-            <label><input type="checkbox" id="optShaken" /> 車検整備（車検なし車両／+¥79,800・法定費用別）</label>
-            <label><input type="checkbox" id="optClean" /> 内外装クリーニング（サイズ別 +¥12,000〜¥30,000）</label>
-          </div>
-        </div>
-      </div>
-
-      <!-- Result -->
-      <div class="result">
-        <h3>お見積り（概算）</h3>
-        <p class="note">※ 税込・参考値です。実際の費用は車両・落札状況により変動します。</p>
-        <div class="line"><span>落札価格</span><span id="rBid">¥1,400,000</span></div>
-        <div class="line"><span>代行手数料 <span class="tag" id="feeTag">100〜150万円帯</span></span><span id="rFee">¥59,800</span></div>
-        <div class="line"><span>オークション落札料・出品取り扱い</span><span id="rAuc">¥11,000</span></div>
-        <div class="line"><span>リサイクル料・自動車税等（預り）</span><span id="rRecycle">¥18,000</span></div>
-        <div class="line"><span>陸送費</span><span id="rShip">¥20,000</span></div>
-        <div class="line muted"><span>オプション合計</span><span id="rOpt">¥25,000</span></div>
-        <div class="grand">
-          <span class="lbl">乗り出し総額（目安）</span>
-          <span class="val" id="rTotal">¥1,614,000</span>
-        </div>
-        <div class="savings">店頭購入の目安より <b id="rSave">約 16万円</b> おトク（同等車を相場比較した概算）</div>
-        <a class="btn btn-navy btn-block mt-30" href="login.html">この条件でオーダーする（無料登録）</a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ===== Pricing ===== -->
-<section id="price">
-  <div class="wrap">
-    <div class="section-head">
-      <div class="eyebrow">PRICING</div>
-      <h2>代行手数料は「落札価格帯別の定額」</h2>
-      <p>全国の代行業者の公開料金の中央値に合わせた、わかりやすい明朗会計。追加の中間マージンは一切ありません。</p>
-    </div>
-
-    <!-- 価格帯別 代行手数料テーブル -->
-    <div class="fee-table">
-      <div class="fee-row fee-head">
-        <span>落札価格帯</span>
-        <span>代行手数料（税込）</span>
-      </div>
-      <div class="fee-row"><span>〜50万円</span><span>¥39,800</span></div>
-      <div class="fee-row"><span>50万円〜100万円</span><span>¥49,800</span></div>
-      <div class="fee-row feat"><span>100万円〜150万円<em>いちばん多い価格帯</em></span><span>¥59,800</span></div>
-      <div class="fee-row"><span>150万円〜200万円</span><span>¥69,800</span></div>
-      <div class="fee-row"><span>200万円〜300万円</span><span>¥79,800</span></div>
-      <div class="fee-row"><span>300万円〜</span><span>落札価格の 3%</span></div>
-    </div>
-    <p class="fee-note">※ SUV・大型車は +¥5,000、輸入車は +¥20,000 の割増。落札不成立の場合、代行手数料はいただきません。</p>
-
-    <!-- 別途かかる実費・オプション -->
-    <div class="section-head" style="margin-top:60px;margin-bottom:30px;">
-      <h2 style="font-size:24px;">別途かかる実費・オプション</h2>
-      <p>必要な分だけ。すべてシミュレーションの総額に反映されます。</p>
-    </div>
-    <div class="grid-3">
-      <div class="card">
-        <h3>必須の実費</h3>
-        <ul class="opt-list">
-          <li>オークション落札料 <b>¥11,000</b></li>
-          <li>リサイクル料・税等（預り） <b>¥12,000〜</b></li>
-          <li>陸送費（エリア別） <b>¥20,000〜</b></li>
+  <!-- ============ ヒーロー ============ -->
+  <section class="hero" aria-labelledby="hero-title">
+    <img class="hero-bg-img" src="assets/img/buymo/hero.svg" alt="" aria-hidden="true">
+    <div class="container hero-inner">
+      <div class="hero-copy reveal">
+        <p class="hero-lead">車買取に、新しいスタイル。</p>
+        <h1 id="hero-title">自宅から<span class="hl">写真を送るだけ</span></h1>
+        <p class="hero-sub">オンラインで売却。手間なし、かんたん。<br>しつこい電話なし・書類は郵送でOK・全国47都道府県対応。</p>
+        <a href="#form" class="btn btn-primary btn-lg">写真で無料査定<span aria-hidden="true">›</span></a>
+        <p class="cta-micro">＼ 完全無料・かんたん入力 ／</p>
+        <ul class="hero-badges">
+          <li>写真査定OK</li><li>電話なし</li><li>全国対応</li>
         </ul>
       </div>
-      <div class="card">
-        <h3>手続き代行（任意）</h3>
-        <ul class="opt-list">
-          <li>名義変更・登録代行 <b>¥25,000</b></li>
-          <li>車庫証明 取得代行 <b>¥12,000</b></li>
-        </ul>
-      </div>
-      <div class="card">
-        <h3>安心パック（任意）</h3>
-        <ul class="opt-list">
-          <li>12ヶ月点検・整備 <b>¥35,000</b></li>
-          <li>6ヶ月保証パック <b>¥28,000</b></li>
-        </ul>
+      <div class="hero-art reveal">
+        <div class="hero-img-cars" role="img" aria-hidden="true"></div>
       </div>
     </div>
-    <div class="center mt-30">
-      <a class="btn btn-gold" href="#simulator">▶ あなたの条件で総額を試算する</a>
-    </div>
-  </div>
-</section>
+  </section>
 
-<!-- ===== Trust / Safety ===== -->
-<section id="safety">
-  <div class="wrap">
-    <div class="section-head">
-      <div class="eyebrow">SAFETY &amp; GUARANTEE</div>
-      <h2>初めてでも安心の、3つの品質保証</h2>
-      <p>オークション車両は第三者検査機関の評価点付き。プロの目とルールで、品質とお金の不安を取り除きます。</p>
+  <!-- ============ 数字バンド ============ -->
+  <section class="stats-band" aria-label="数字で見るBUYMO">
+    <div class="container stats-grid">
+      <div class="stat-b"><span class="num">0<small>円</small></span><p>査定料</p></div>
+      <div class="stat-b"><span class="num">0<small>円</small></span><p>手数料</p></div>
+      <div class="stat-b"><span class="num">写真<small>だけ</small></span><p>査定方法</p></div>
+      <div class="stat-b"><span class="num">47<small>都道府県</small></span><p>全国対応</p></div>
     </div>
-    <div class="grid-3">
-      <div class="card">
-        <div class="ico">🔎</div>
-        <h3>評価点・検査票をプロが確認</h3>
-        <p>外装内装・修復歴・機関を出品票でチェック。評価点4点以上を基本とし、リスク車両は入札を見送ります。<span class="ph">※評価基準は自社運用に合わせて調整</span></p>
-      </div>
-      <div class="card">
-        <div class="ico">🛡️</div>
-        <h3>納車後の保証パック</h3>
-        <p>6ヶ月保証パック（任意）で、エンジン・ミッション等の主要機関を保証。万一の初期不良も安心です。<span class="ph">※保証範囲・上限は要記載</span></p>
-      </div>
-      <div class="card">
-        <div class="ico">📄</div>
-        <h3>明朗会計・キャンセル規定</h3>
-        <p>落札前に総額を確定。落札不成立なら代行手数料は不要です。キャンセル時の実費条件も事前に明示します。<span class="ph">※キャンセル料条件を要記載</span></p>
-      </div>
-    </div>
-  </div>
-</section>
+  </section>
 
-<!-- ===== Results / Testimonials ===== -->
-<section id="results" style="background:#eef2f9;">
-  <div class="wrap">
-    <div class="section-head">
-      <div class="eyebrow">RESULTS &amp; VOICE</div>
-      <h2>落札実績・お客様の声</h2>
-      <p>実際の代行事例とご感想です。<span class="ph">※下記はサンプル。実データに差し替えてください。</span></p>
+  <!-- ============ かんたん査定シミュレーター ============ -->
+  <section class="sim-section" id="sim" aria-labelledby="sim-title">
+    <div class="container">
+      <div class="eyebrow-wrap"><span class="eyebrow">SIMULATION</span></div>
+      <h2 id="sim-title" class="section-title">30秒でかんたん査定シミュレーション</h2>
+      <p class="sim-lead">車種クラス・年式・走行距離・状態を選ぶだけ。今のおおよその買取額がすぐ分かります。</p>
+      <div id="buymoSim"></div>
     </div>
+  </section>
 
-    <!-- 落札実績 -->
-    <div class="grid-3" style="margin-bottom:26px;">
-      <div class="card result-card">
-        <div class="rc-car">トヨタ ヤリス 1.5 G（2021年式）</div>
-        <div class="rc-row"><span>落札価格</span><b>¥1,420,000</b></div>
-        <div class="rc-row"><span>乗り出し総額</span><b>¥1,553,800</b></div>
-        <div class="rc-save">店頭比 約16万円おトク</div>
+  <!-- ============ 4大特長 ============ -->
+  <section class="features" id="features" aria-labelledby="features-title">
+    <div class="container">
+      <div class="eyebrow-wrap"><span class="eyebrow">POINT</span></div>
+      <h2 id="features-title" class="section-title">BUYMOの4大特長</h2>
+      <div class="grid grid-4 feature-grid">
+        <article class="card feature-card reveal">
+          <span class="badge-num">1</span>
+          <div class="card-ico" aria-hidden="true">📸</div>
+          <h3>写真だけで査定</h3>
+          <p>スマホで撮った写真を送るだけ。スタッフが来宅する必要はありません。</p>
+        </article>
+        <article class="card feature-card reveal">
+          <span class="badge-num">2</span>
+          <div class="card-ico" aria-hidden="true">📵</div>
+          <h3>しつこい電話なし</h3>
+          <p>査定結果はメールでご連絡。お断りの際もしつこいお電話は一切しません。</p>
+        </article>
+        <article class="card feature-card reveal">
+          <span class="badge-num">3</span>
+          <div class="card-ico" aria-hidden="true">🗾</div>
+          <h3>全国47都道府県対応</h3>
+          <p>北海道から沖縄まで、全国どこにお住まいでも対応いたします。</p>
+        </article>
+        <article class="card feature-card reveal">
+          <span class="badge-num">4</span>
+          <div class="card-ico" aria-hidden="true">🆓</div>
+          <h3>手数料0円</h3>
+          <p>査定料・手続き代行費・その他すべての手数料が完全無料です。</p>
+        </article>
       </div>
-      <div class="card result-card">
-        <div class="rc-car">ホンダ N-BOX カスタム（2020年式）</div>
-        <div class="rc-row"><span>落札価格</span><b>¥1,050,000</b></div>
-        <div class="rc-row"><span>乗り出し総額</span><b>¥1,162,800</b></div>
-        <div class="rc-save">店頭比 約14万円おトク</div>
-      </div>
-      <div class="card result-card">
-        <div class="rc-car">トヨタ アルファード 2.5 S（2019年式）</div>
-        <div class="rc-row"><span>落札価格</span><b>¥2,780,000</b></div>
-        <div class="rc-row"><span>乗り出し総額</span><b>¥2,937,800</b></div>
-        <div class="rc-save">店頭比 約40万円おトク</div>
-      </div>
+      <div class="section-mascot" aria-hidden="true">🐮</div>
     </div>
+  </section>
 
-    <!-- お客様の声 -->
-    <div class="grid-3">
-      <div class="card voice">
-        <div class="stars">★★★★★</div>
-        <p>「ディーラーで見た同じ年式・走行の車が、総額で20万円以上安く手に入りました。進捗もマイページで見られて安心。」</p>
-        <div class="who">東京都・40代男性</div>
+  <!-- ============ お取引の流れ ============ -->
+  <section class="flow" aria-labelledby="flow-title">
+    <div class="container flow-inner">
+      <div class="flow-main">
+        <div class="eyebrow-wrap"><span class="eyebrow">FLOW</span></div>
+        <h2 id="flow-title" class="section-title">お取引の流れ</h2>
+        <ol class="flow-steps">
+          <li class="reveal"><span class="flow-num">1</span><span class="flow-ico" aria-hidden="true">📸</span><span class="flow-label">写真を送る</span></li>
+          <li class="flow-arrow" aria-hidden="true">→</li>
+          <li class="reveal"><span class="flow-num">2</span><span class="flow-ico" aria-hidden="true">📧</span><span class="flow-label">査定額をメール受取</span></li>
+          <li class="flow-arrow" aria-hidden="true">→</li>
+          <li class="reveal"><span class="flow-num">3</span><span class="flow-ico" aria-hidden="true">✍️</span><span class="flow-label">ご契約・書類郵送</span></li>
+          <li class="flow-arrow" aria-hidden="true">→</li>
+          <li class="reveal"><span class="flow-num">4</span><span class="flow-ico" aria-hidden="true">🚗</span><span class="flow-label">業者が引き取り・現車確認</span></li>
+          <li class="flow-arrow" aria-hidden="true">→</li>
+          <li class="reveal"><span class="flow-num">5</span><span class="flow-ico" aria-hidden="true">💴</span><span class="flow-label">入金</span></li>
+        </ol>
       </div>
-      <div class="card voice">
-        <div class="stars">★★★★★</div>
-        <p>「車に詳しくないので不安でしたが、候補の提案がわかりやすく、評価点の説明も丁寧。任せて正解でした。」</p>
-        <div class="who">大阪府・30代女性</div>
-      </div>
-      <div class="card voice">
-        <div class="stars">★★★★★</div>
-        <p>「希望条件を出すだけで、陸送も名義変更も全部おまかせ。仕事が忙しくても楽にオーダーできました。」</p>
-        <div class="who">愛知県・50代男性</div>
+      <div class="flow-map reveal" aria-hidden="true">
+        <div class="map-emoji">🗾</div>
+        <p>全国エリア対応</p>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- ===== FAQ ===== -->
-<section>
-  <div class="wrap">
-    <div class="section-head">
-      <div class="eyebrow">FAQ</div>
-      <h2>よくあるご質問</h2>
-    </div>
-    <div class="faq">
-      <details class="qa"><summary>本当に店頭で買うより安くなりますか？</summary><div class="a">車種・状態によりますが、店頭価格にはオークション落札価格に対して概ね15〜25%の中間コストが上乗せされています。代行では代行手数料と実費（陸送・諸費用）のみのため、多くの場合で総額を抑えられます。シミュレーションで目安をご確認ください。</div></details>
-      <details class="qa"><summary>代行手数料はどう決まりますか？</summary><div class="a">手数料は「落札価格帯別の定額制」です（〜50万円 ¥39,800／100〜150万円 ¥59,800 など、全国の代行業者の中央値に準拠）。300万円超は落札価格の3%。SUV・大型は+¥5,000、輸入車は+¥20,000の割増です。落札前に総額が確定するため、後から増えることはありません。</div></details>
-      <details class="qa"><summary>希望の車が落札できなかった場合は？</summary><div class="a">落札できなかった場合、代行手数料は原則いただきません（出品取り下げ等の実費が発生する場合を除く）。上限価格内で落札を目指し、未成立なら次の候補をご提案します。</div></details>
-      <details class="qa"><summary>車の状態が心配です。ハズレ車を引きませんか？</summary><div class="a">オークション車両には第三者検査機関による評価点と検査票が付きます。経験豊富なバイヤーが修復歴・外装内装・機関を確認し、リスクのある車両は入札を見送ります。</div></details>
-      <details class="qa"><summary>支払い方法は？ローンは使えますか？</summary><div class="a">銀行振込・オンライン決済に対応。提携信販会社のオートローンもご利用いただけます。会員登録後、マイページからお申し込みいただけます。</div></details>
-      <details class="qa"><summary>会員登録に費用はかかりますか？</summary><div class="a">会員登録・シミュレーション・車両提案まで無料です。費用が発生するのは、実際に落札・ご成約いただいた場合のみです。</div></details>
-    </div>
-  </div>
-</section>
-
-<!-- ===== Contact / LINE ===== -->
-<section id="contact" style="background:#eef2f9;">
-  <div class="wrap">
-    <div class="section-head">
-      <div class="eyebrow">CONTACT</div>
-      <h2>ご相談・お問い合わせ</h2>
-      <p>「この車、いくらで狙える？」だけでもOK。<strong>メール・チャットは24時間受付</strong>（お電話は平日 8:00〜17:00）。LINEなら最短で回答します。</p>
-    </div>
-    <div class="contact-grid">
-      <!-- LINE -->
-      <div class="card line-cta">
-        <div class="ico" style="background:#e7f7ea;">💬</div>
-        <h3>LINEで気軽に相談</h3>
-        <p>友だち追加して、希望条件を送るだけ。担当バイヤーが車両を提案します。</p>
-        <a class="btn btn-line btn-block" href="#" id="lineBtn">LINEで友だち追加</a>
-        <p class="ph" style="margin-top:10px;">※ LINE公式アカウントのURLを設定してください</p>
+  <!-- ============ 買取対象車 ============ -->
+  <section class="targets" aria-labelledby="targets-title">
+    <div class="container">
+      <h2 id="targets-title" class="section-title">買取対象の車種</h2>
+      <div class="grid grid-5 target-grid">
+        <article class="card target-card reveal"><div class="target-img sedan" role="img" aria-label="セダンのイメージ">🚘</div><h3>セダン</h3><p>定番の人気車種を高価買取。</p></article>
+        <article class="card target-card reveal"><div class="target-img suv" role="img" aria-label="SUVのイメージ">🚙</div><h3>SUV</h3><p>需要の高いSUVも好条件で。</p></article>
+        <article class="card target-card reveal"><div class="target-img kei" role="img" aria-label="軽自動車のイメージ">🚐</div><h3>軽自動車</h3><p>軽自動車の買取も得意です。</p></article>
+        <article class="card target-card reveal"><div class="target-img minivan" role="img" aria-label="ミニバンのイメージ">🚌</div><h3>ミニバン</h3><p>ファミリーカーもお任せください。</p></article>
+        <article class="card target-card reveal"><div class="target-img old" role="img" aria-label="古い車のイメージ">🚕</div><h3>古い車</h3><p>年式が古い車もご相談を。</p></article>
       </div>
+    </div>
+  </section>
 
-      <!-- Form -->
-      <div class="card">
-        <h3>フォームから問い合わせ</h3>
-        <form id="contactForm" class="contact-form">
-          <div class="field"><label>お名前</label><input type="text" id="cName" placeholder="山田 太郎" required /></div>
-          <div class="row-2">
-            <div class="field"><label>メール</label><input type="email" id="cEmail" placeholder="you@example.com" required /></div>
-            <div class="field"><label>電話（任意）</label><input type="tel" id="cPhone" placeholder="090-0000-0000" /></div>
+  <!-- ============ 0円保証バナー ============ -->
+  <section class="guarantee" aria-label="買取最低保証">
+    <div class="container grid grid-2">
+      <div class="guarantee-banner reveal">
+        <span class="g-mascot" aria-hidden="true">🐮</span>
+        <p class="g-text">査定料・手数料<br>すべて</p>
+        <p class="g-price"><strong>0</strong>円！</p>
+        <span class="g-cars" aria-hidden="true">💴</span>
+      </div>
+      <div class="guarantee-banner reveal">
+        <span class="g-mascot" aria-hidden="true">🐮</span>
+        <p class="g-text">しつこい<br>お電話</p>
+        <p class="g-price"><strong>0</strong>回！</p>
+        <span class="g-cars" aria-hidden="true">📵</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 選ばれる理由 ============ -->
+  <section class="reasons" aria-labelledby="reasons-title">
+    <div class="container">
+      <div class="eyebrow-wrap"><span class="eyebrow">REASON</span></div>
+      <h2 id="reasons-title" class="section-title">BUYMOが選ばれる理由</h2>
+      <div class="grid grid-3 reason-grid">
+        <article class="card reason-card reveal"><div class="card-ico" aria-hidden="true">🗾</div><h3>全国対応</h3><p>全国どこでも対応可能。お近くのスタッフが伺います。</p></article>
+        <article class="card reason-card reveal"><div class="card-ico" aria-hidden="true">⚡</div><h3>丁寧・確実に入金</h3><p>書類・車両を丁寧に確認のうえ、3営業日以内に確実にお振込みします。</p></article>
+        <article class="card reason-card reveal"><div class="card-ico" aria-hidden="true">💰</div><h3>高価買取</h3><p>独自ルートで無駄を省き、相場より高い査定を実現。</p></article>
+        <article class="card reason-card reveal"><div class="card-ico" aria-hidden="true">🆓</div><h3>手数料無料</h3><p>査定料・手続き代行料など各種手数料は一切無料。</p></article>
+        <article class="card reason-card reveal"><div class="card-ico" aria-hidden="true">📸</div><h3>写真査定でネット完結</h3><p>スマホで写真を送るだけ。来店・出張なしで査定完了。</p></article>
+        <article class="card reason-card reveal"><div class="card-ico" aria-hidden="true">💳</div><h3>丁寧確認・確実入金</h3><p>書類・車両を丁寧に確認のうえ、3営業日以内に確実にお振込みします。</p></article>
+      </div>
+      <div class="section-mascot" aria-hidden="true">🐮</div>
+    </div>
+  </section>
+
+  <!-- ============ 他社比較 ============ -->
+  <section class="compare" aria-labelledby="compare-title">
+    <div class="container">
+      <div class="eyebrow-wrap"><span class="eyebrow">COMPARE</span></div>
+      <h2 id="compare-title" class="section-title">他社とくらべてください</h2>
+      <table class="compare-table">
+        <thead>
+          <tr><th scope="col">項目</th><th scope="col" class="col-buymo">BUYMO</th><th scope="col">一般的な買取店</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">査定料・出張費</th><td class="col-buymo"><span class="yes">○</span> 無料</td><td>有料の場合あり</td></tr>
+          <tr><th scope="row">手数料・手続き代行</th><td class="col-buymo"><span class="yes">○</span> 0円</td><td>別途費用がかかることも</td></tr>
+          <tr><th scope="row">査定方法</th><td class="col-buymo"><span class="yes">○</span> 写真を送るだけ</td><td>実車来店・訪問が必要な場合も</td></tr>
+          <tr><th scope="row">しつこい電話</th><td class="col-buymo"><span class="yes">○</span> 一切なし</td><td>複数回連絡が来ることも</td></tr>
+          <tr><th scope="row">入金スピード</th><td class="col-buymo"><span class="yes">○</span> 3営業日以内</td><td>数日〜かかる場合あり</td></tr>
+          <tr><th scope="row">名義変更などの手続き</th><td class="col-buymo"><span class="yes">○</span> 無料代行</td><td>自分で対応の場合も</td></tr>
+          <tr><th scope="row">対応エリア</th><td class="col-buymo"><span class="yes">○</span> 全国47都道府県</td><td>地域限定の場合あり</td></tr>
+        </tbody>
+      </table>
+      <p class="compare-note">※ 一般的な買取店との比較イメージです。店舗により条件は異なります。</p>
+    </div>
+  </section>
+
+  <!-- ============ ジャンル別買取 ============ -->
+  <section class="genres-section" id="genres" aria-labelledby="genres-title">
+    <div class="container">
+      <h2 id="genres-title" class="section-title">ジャンル別の買取</h2>
+      <p class="genres-lead">どんな状態・種類の車でもおまかせください。ジャンルごとの専門ページをご用意しています。</p>
+      <div id="genre-cards"></div>
+      <p class="center"><a href="genre/" class="btn btn-primary">買取ジャンル一覧を見る</a></p>
+    </div>
+  </section>
+
+  <!-- ============ お客様の声 ============ -->
+  <section class="voices" aria-labelledby="voices-title">
+    <div class="container">
+      <div class="eyebrow-wrap"><span class="eyebrow">VOICE</span></div>
+      <h2 id="voices-title" class="section-title">お客様の声</h2>
+      <p class="section-note" id="voicesNote">※ 掲載の声はイメージです。実際のお客様の声に差し替えてご利用ください（buymo-data.js を編集）。</p>
+      <div class="carousel" id="voiceCarousel">
+        <div class="carousel-track" id="voiceTrack"></div>
+      </div>
+      <div class="carousel-dots" id="voiceDots" role="tablist" aria-label="お客様の声の切り替え"></div>
+    </div>
+  </section>
+
+  <!-- ============ 買取実績 ============ -->
+  <section class="results" aria-labelledby="results-title">
+    <div class="container">
+      <h2 id="results-title" class="section-title">買取実績</h2>
+      <p class="section-note" id="resultsNote">※ 掲載の実績は買取イメージです。実際の買取実績に差し替えてご利用ください（buymo-data.js を編集）。</p>
+      <div class="grid grid-4 result-grid" id="resultGrid"></div>
+    </div>
+  </section>
+
+  <!-- ============ ご利用の流れ（詳細） ============ -->
+  <section class="timeline" aria-labelledby="timeline-title">
+    <div class="container">
+      <h2 id="timeline-title" class="section-title">ご利用の流れ（詳細）</h2>
+      <ol class="timeline-list">
+        <li class="reveal"><span class="tl-day">Step 1</span><span class="tl-ico" aria-hidden="true">📸</span><div><h3>お申し込み・写真送付</h3><p>フォームからお申し込みいただき、愛車の写真をお送りください。外観・内装・走行距離などをご撮影ください。</p></div></li>
+        <li class="reveal"><span class="tl-day">Step 2</span><span class="tl-ico" aria-hidden="true">📧</span><div><h3>査定額のご提示（メール）</h3><p>写真をもとに査定額を算出。メールにてご連絡いたします。しつこいお電話は一切しません。</p></div></li>
+        <li class="reveal"><span class="tl-day">Step 3</span><span class="tl-ico" aria-hidden="true">📝</span><div><h3>ご契約・書類郵送</h3><p>査定額にご納得いただけたら売買契約を締結。必要書類（車検証等）をご郵送ください。</p></div></li>
+        <li class="reveal"><span class="tl-day">Step 4</span><span class="tl-ico" aria-hidden="true">🚗</span><div><h3>業者が引き取り・現車確認</h3><p>業者がご自宅まで車両を引き取りに伺います。現車確認・最終確認を行います。</p></div></li>
+        <li class="reveal"><span class="tl-day">Step 5</span><span class="tl-ico" aria-hidden="true">💴</span><div><h3>入金完了</h3><p>現車確認・最終確認後、ご指定の口座へお振込みいたします。お取引完了です。</p></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============ FAQ ============ -->
+  <section class="faq" id="faq" aria-labelledby="faq-title">
+    <div class="container faq-inner">
+      <div class="faq-main">
+        <h2 id="faq-title" class="section-title">よくあるご質問</h2>
+        <div class="accordion" id="accordion">
+          <div class="acc-item">
+            <button class="acc-q" aria-expanded="false">査定は写真だけで大丈夫ですか？<span class="acc-toggle" aria-hidden="true">▼</span></button>
+            <div class="acc-a"><p>はい、スマホで撮影した写真をお送りいただくだけで査定いたします。外観・内装・メーター（走行距離）などをご撮影ください。実車確認は成約後に業者が引き取りに伺う際に行います。</p></div>
           </div>
-          <div class="field"><label>ご相談内容</label><textarea id="cMsg" rows="3" placeholder="例）ヴォクシー 2020年式 200万円以内で探したい" required></textarea></div>
-          <div class="alert alert-ok" id="cDone" style="display:none;">✓ 送信しました。担当より折り返しご連絡します。</div>
-          <button class="btn btn-navy btn-block" type="submit">送信する</button>
-        </form>
+          <div class="acc-item">
+            <button class="acc-q" aria-expanded="false">車検証が必要ですか？<span class="acc-toggle" aria-hidden="true">▼</span></button>
+            <div class="acc-a"><p>査定時には車検証をご用意いただくとスムーズです。ご契約時には車検証・自賠責保険証・印鑑などが必要になります。詳しくはスタッフがご案内します。</p></div>
+          </div>
+          <div class="acc-item">
+            <button class="acc-q" aria-expanded="false">買取金額はいつ振り込まれますか？<span class="acc-toggle" aria-hidden="true">▼</span></button>
+            <div class="acc-a"><p>ご契約と必要書類の確認後、書類・車両を丁寧に確認のうえ、3営業日以内に確実にお振込みいたします。</p></div>
+          </div>
+          <div class="acc-item">
+            <button class="acc-q" aria-expanded="false">査定料はかかりますか？<span class="acc-toggle" aria-hidden="true">▼</span></button>
+            <div class="acc-a"><p>査定料・出張費・手続き代行料などの手数料は一切いただきません。完全無料です。</p></div>
+          </div>
+          <div class="acc-item">
+            <button class="acc-q" aria-expanded="false">キャンセルは可能ですか？<span class="acc-toggle" aria-hidden="true">▼</span></button>
+            <div class="acc-a"><p>査定後のキャンセルはもちろん無料です。ご契約後のキャンセルについては規定がございますので、契約前にスタッフへご確認ください。</p></div>
+          </div>
+          <div class="acc-item">
+            <button class="acc-q" aria-expanded="false">電話でしつこく連絡されませんか？<span class="acc-toggle" aria-hidden="true">▼</span></button>
+            <div class="acc-a"><p>一切ございません。査定結果はメールでお届けし、しつこいお電話や追客は行いません。お断りの際も同様です。ご安心ください。</p></div>
+          </div>
+          <div class="acc-item">
+            <button class="acc-q" aria-expanded="false">ローンが残っている車でも売れますか？<span class="acc-toggle" aria-hidden="true">▼</span></button>
+            <div class="acc-a"><p>ローン残債がある場合でも買取可能です。残債の精算手続きについてもスタッフがサポートいたします。</p></div>
+          </div>
+          <div class="acc-item">
+            <button class="acc-q" aria-expanded="false">複数台まとめて査定できますか？<span class="acc-toggle" aria-hidden="true">▼</span></button>
+            <div class="acc-a"><p>複数台のまとめ査定も歓迎です。お申し込み時に台数をお知らせください。</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="faq-mascot" aria-hidden="true">🐮👉</div>
+    </div>
+  </section>
+
+  <!-- ============ 査定依頼フォーム ============ -->
+  <section class="form-section" id="form" aria-labelledby="form-title">
+    <div class="container form-inner">
+      <form class="quote-form" id="quoteForm" novalidate>
+        <h2 id="form-title">無料査定依頼</h2>
+        <p class="form-lead">下記フォームにご入力ください。<br>査定結果はメールにてご連絡いたします。</p>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="f-maker">車種</label>
+            <select id="f-maker" name="maker" required>
+              <option value="">選択してください</option>
+              <option>トヨタ</option><option>ホンダ</option><option>日産</option>
+              <option>マツダ</option><option>スバル</option><option>スズキ</option>
+              <option>ダイハツ</option><option>三菱</option><option>その他</option>
+            </select>
+            <p class="err" data-for="f-maker"></p>
+          </div>
+          <div class="field">
+            <label for="f-year">年式</label>
+            <select id="f-year" name="year" required>
+              <option value="">選択してください</option>
+            </select>
+            <p class="err" data-for="f-year"></p>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="f-mileage">走行距離</label>
+          <div class="input-unit">
+            <input type="number" id="f-mileage" name="mileage" min="0" inputmode="numeric" placeholder="例：50000" required />
+            <span class="unit">km</span>
+          </div>
+          <p class="err" data-for="f-mileage"></p>
+        </div>
+
+        <div class="field">
+          <label for="f-name">お名前</label>
+          <input type="text" id="f-name" name="name" placeholder="例：山田 太郎" required />
+          <p class="err" data-for="f-name"></p>
+        </div>
+
+        <div class="field">
+          <label for="f-tel">電話番号</label>
+          <input type="tel" id="f-tel" name="tel" placeholder="例：09012345678" required />
+          <p class="err" data-for="f-tel"></p>
+        </div>
+
+        <div class="field">
+          <label for="f-email">メールアドレス</label>
+          <input type="email" id="f-email" name="email" placeholder="例：example@buymo.jp" required />
+          <p class="err" data-for="f-email"></p>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="f-pref">都道府県</label>
+            <select id="f-pref" name="pref" required>
+              <option value="">選択してください</option>
+            </select>
+            <p class="err" data-for="f-pref"></p>
+          </div>
+          <div class="field">
+            <label for="f-addr">ご住所</label>
+            <input type="text" id="f-addr" name="addr" placeholder="例：いわき市〇〇町1-2-3" required />
+            <p class="err" data-for="f-addr"></p>
+          </div>
+        </div>
+
+        <!-- 車の写真（任意） -->
+        <div class="field field-photos">
+          <label for="photoDropZone">車の写真（任意・最大5枚）</label>
+          <div class="photo-drop-zone" id="photoDropZone" tabindex="0" role="button"
+               aria-label="写真を選択またはドラッグ＆ドロップ">
+            <span class="photo-drop-ico" aria-hidden="true">📸</span>
+            <span class="photo-drop-text">タップして写真を選ぶ</span>
+            <span class="photo-drop-hint">JPG・PNG・HEIC 対応 ／ 最大 5 枚・各 10MB 以下</span>
+          </div>
+          <input type="file" id="f-photos" accept="image/*" multiple aria-label="写真を選択" />
+          <div class="photo-preview" id="photoPreview" role="list" aria-label="選択中の写真"></div>
+          <p class="photo-count" id="photoCount" aria-live="polite"></p>
+        </div>
+
+        <div class="field field-check">
+          <label><input type="checkbox" id="f-agree" name="agree" required /> <a href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a>に同意します</label>
+          <p class="err" data-for="f-agree"></p>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block btn-lg">査定を依頼</button>
+        <p class="form-note" id="formNote" role="status" aria-live="polite"></p>
+      </form>
+
+      <div class="form-mascot" aria-hidden="true">🐮</div>
+    </div>
+  </section>
+
+  <!-- ============ サービスエリア ============ -->
+  <section class="area" aria-labelledby="area-title">
+    <div class="container">
+      <h2 id="area-title" class="section-title">サービスエリア</h2>
+      <div class="area-map">
+        <div class="map-emoji big" aria-hidden="true">🗾</div>
+        <ul class="map-pins" aria-hidden="true">
+          <li>📍</li><li>📍</li><li>📍</li><li>📍</li><li>📍</li>
+        </ul>
+      </div>
+      <ul class="area-legend">
+        <li><span class="legend-dot on"></span>対応エリア</li>
+        <li><span class="legend-dot off"></span>準備中エリア</li>
+      </ul>
+      <p class="area-note">全国47都道府県に対応。お住まいの地域を選んで無料出張査定をご依頼ください。</p>
+      <ul class="area-chips">
+        <li><a href="area/hokkaido/">北海道</a></li>
+        <li><a href="area/miyagi/">宮城県</a></li>
+        <li><a href="area/fukushima/">福島県</a></li>
+        <li><a href="area/saitama/">埼玉県</a></li>
+        <li><a href="area/chiba/">千葉県</a></li>
+        <li><a href="area/tokyo/">東京都</a></li>
+        <li><a href="area/kanagawa/">神奈川県</a></li>
+        <li><a href="area/shizuoka/">静岡県</a></li>
+        <li><a href="area/aichi/">愛知県</a></li>
+        <li><a href="area/kyoto/">京都府</a></li>
+        <li><a href="area/osaka/">大阪府</a></li>
+        <li><a href="area/hyogo/">兵庫県</a></li>
+        <li><a href="area/hiroshima/">広島県</a></li>
+        <li><a href="area/fukuoka/">福岡県</a></li>
+        <li><a href="area/okinawa/">沖縄県</a></li>
+      </ul>
+      <p class="center"><a href="area/" class="btn btn-primary">全国の対応エリアを見る ›</a></p>
+    </div>
+  </section>
+
+  <!-- ============ 会社情報 ============ -->
+  <section class="company" id="company" aria-labelledby="company-title">
+    <div class="container company-inner">
+      <h2 id="company-title" class="section-title">会社情報</h2>
+      <div class="grid grid-2 company-grid">
+        <div class="company-photo reveal" role="img" aria-label="オフィスのイメージ">🏢</div>
+        <dl class="company-dl reveal">
+          <dt>運営会社</dt><dd>合同会社アイズ</dd>
+          <dt>サービス名</dt><dd>BUYMO</dd>
+          <dt>買取センター</dt><dd>〒971-8138 福島県いわき市若葉台1丁目31-11</dd>
+          <dt>ヤード</dt><dd>〒979-0204 福島県いわき市四倉町細谷字大町1番</dd>
+          <dt>電話番号</dt><dd>050-1784-2929</dd>
+          <dt>営業時間</dt><dd>査定はオンラインで24時間受付</dd>
+          <dt>定休日</dt><dd>365日稼働　24時間受付</dd>
+          <dt>事業内容</dt><dd>自動車買取・販売業／フランチャイズ事業／IT事業</dd>
+          <dt>代表者</dt><dd>代表社員 吉田 一平</dd>
+          <dt>古物商許可</dt><dd>福島県公安委員会許可 第25121A010859号</dd>
+        </dl>
+      </div>
+      <div class="company-mascot" aria-hidden="true">🐮</div>
+    </div>
+  </section>
+
+  <!-- ============ 信頼バッジ ============ -->
+  <section class="badges" aria-label="信頼の証">
+    <div class="container">
+      <h2 class="section-title">信頼の証</h2>
+      <ul class="badge-list">
+        <li class="trust-badge"><span aria-hidden="true">🔒</span>SSLセキュア認証</li>
+        <li class="trust-badge"><span aria-hidden="true">🛡️</span>プライバシーマーク</li>
+        <li class="trust-badge"><span aria-hidden="true">📜</span>古物商許可 第25121A010859号</li>
+        <li class="trust-badge"><span aria-hidden="true">🤝</span>業界団体加盟</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 会員専用ページ誘導 ============ -->
+  <section class="member-cta" aria-labelledby="member-title">
+    <div class="container member-cta-inner">
+      <div class="member-cta-copy">
+        <span class="member-badge">会員無料</span>
+        <h2 id="member-title">会員ページで、査定状況も買取の進捗もいつでも確認</h2>
+        <p>無料登録で、査定の進み具合・お手続き・追加のご相談がマイページから完結。査定をお申し込みの方には、ご案内メールもお届けします。</p>
+        <ul class="member-points">
+          <li>査定状況・買取の進捗をオンラインで確認</li>
+          <li>追加の査定相談・お手続きがかんたん</li>
+          <li>登録は無料・メールアドレスだけ</li>
+        </ul>
+      </div>
+      <div class="member-cta-actions">
+        <a href="member.html" class="btn btn-primary btn-lg">無料で会員登録</a>
+        <a href="member.html" class="member-login">すでに会員の方はこちら ›</a>
       </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- ===== CTA band ===== -->
-<section class="cta-band">
-  <div class="wrap">
-    <h2>まずは無料で、いくらで買えるか確かめよう。</h2>
-    <p>会員登録は1分。条件を登録すれば、プロから車両提案が届きます。</p>
-    <a class="btn btn-navy" href="login.html">無料会員登録してオーダーする</a>
-  </div>
-</section>
+</main>
 
-<!-- ===== Company / 特商法 ===== -->
-<section id="company">
-  <div class="wrap">
-    <div class="section-head" style="margin-bottom:30px;">
-      <div class="eyebrow">COMPANY</div>
-      <h2>会社情報・特定商取引法に基づく表記</h2>
-    </div>
-    <table class="company-table">
-      <tr><th>販売事業者</th><td><a href="https://aiscompany.jp/" target="_blank" rel="noopener" style="color:var(--navy);text-decoration:underline;">合同会社アイズ</a>（屋号：AUC-AGENT）</td></tr>
-      <tr><th>法人番号</th><td>9380003004349</td></tr>
-      <tr><th>事業内容</th><td>フランチャイズ事業／自動車関連事業／IT事業</td></tr>
-      <tr><th>運営責任者</th><td>代表社員 吉田 一平</td></tr>
-      <tr><th>所在地</th><td>〒979-0204 福島県いわき市四倉町細谷字大町1番（事業拠点）</td></tr>
-      <tr><th>古物商許可番号</th><td>福島県公安委員会許可　第25121A010859号</td></tr>
-      <tr><th>インボイス登録番号</th><td>T9380003004349</td></tr>
-      <tr><th>電話 / メール</th><td>050-1722-3365 ／ info@aisjaltd.com</td></tr>
-      <tr><th>営業時間</th><td>平日 8:00〜17:00（土日祝休）／オンライン（メール・チャット）は24時間受付</td></tr>
-      <tr><th>サービス料金</th><td>代行手数料：落札価格帯別の定額（〜50万 ¥39,800／300万〜 3% ほか）。別途、落札料・陸送費（福島拠点より配送）・諸費用・任意オプションが必要。</td></tr>
-      <tr><th>お支払い方法</th><td>銀行振込／オンライン決済／提携オートローン</td></tr>
-      <tr><th>引渡し時期</th><td>落札・入金確認後、最短3日〜（福島拠点からの陸送状況により変動）</td></tr>
-      <tr><th>キャンセル</th><td>落札成立後のキャンセルは実費をご負担いただく場合があります。<span class="ph">※条件を明記</span></td></tr>
-    </table>
-  </div>
-</section>
+<!-- ============ 追従CTAバー ============ -->
+<div class="sticky-cta" id="stickyCta" aria-hidden="true">
+  <p>写真を送るだけ・査定無料！</p>
+  <a href="#form" class="btn">無料査定はこちら</a>
+  <a href="tel:05017842929" class="s-tel">📞 050-1784-2929</a>
+</div>
 
-<!-- ===== Footer ===== -->
+<!-- ============ フッター ============ -->
 <footer class="site-footer">
-  <div class="wrap">
-    <div class="cols">
-      <div>
-        <a class="brand" href="index.html" style="color:#fff;margin-bottom:12px;">
-          <span class="logo">A</span><span>AUC-AGENT</span>
-        </a>
-        <p style="max-width:340px;">全国のオートオークションから、あなたの一台をプロが代行落札。相場価格で、安心・かんたんにマイカーを。</p>
-      </div>
-      <div>
-        <h4>サービス</h4>
-        <a href="index.html">購入代行</a>
-        <a href="sell.html">出品代行（売却）</a>
-        <a href="shipping.html">陸送シミュレーション</a>
-        <a href="#simulator">料金シミュレーション</a>
-        <a href="manual.html">出品マニュアル</a>
-      </div>
-      <div>
-        <h4>会員・お問い合わせ</h4>
-        <a href="login.html">会員登録 / ログイン</a>
-        <a href="mypage.html">マイページ</a>
-        <a href="#contact">お問い合わせ・LINE</a>
-        <a href="#company">特定商取引法に基づく表記</a>
-        <a href="privacy.html">プライバシーポリシー</a>
-      </div>
+  <nav class="footer-genres" aria-label="ジャンル別の買取">
+    <div class="container">
+      <h3>ジャンル別の買取</h3>
+      <ul id="genre-nav" class="genre-list"></ul>
     </div>
-    <div class="copy">© 2026 合同会社アイズ（AUC-AGENT）. いわき市／福島拠点. これはデモ用ランディングページです。</div>
+  </nav>
+  <div class="container grid grid-3 footer-grid">
+    <div class="footer-col">
+      <a href="#top" class="logo logo-light"><span class="logo-mark" aria-hidden="true">🐮</span><span class="logo-text">BUYMO</span></a>
+      <p class="footer-company">合同会社アイズ　買取事業部</p>
+      <p>〒971-8138<br>福島県いわき市若葉台1丁目31-11</p>
+      <p>📞 050-1784-2929</p>
+      <p>✉️ info@aisjaltd.com</p>
+    </div>
+    <nav class="footer-col" aria-label="サイトマップ">
+      <h3>サイトマップ</h3>
+      <ul class="footer-links">
+        <li><a href="#company">会社概要</a></li>
+        <li><a href="privacy.html">プライバシーポリシー</a></li>
+        <li><a href="tokushoho.html">特定商取引法・古物商表記</a></li>
+        <li><a href="#faq">よくある質問</a></li>
+        <li><a href="#features">サービス内容</a></li>
+        <li><a href="#form">お問い合わせ</a></li>
+      </ul>
+    </nav>
+    <div class="footer-col">
+      <h3>SNS</h3>
+      <ul class="sns-list">
+        <li><a href="#" class="sns fb" aria-label="Facebook">f</a></li>
+        <li><a href="#" class="sns tw" aria-label="Twitter">𝕏</a></li>
+        <li><a href="#" class="sns ig" aria-label="Instagram">📷</a></li>
+        <li><a href="#" class="sns line" aria-label="LINE">L</a></li>
+      </ul>
+      <p class="footer-hours">営業時間 10:00〜18:00（オペレーター対応）<br>査定24時間受付</p>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>Copyright © 2026 合同会社アイズ（BUYMO） All Rights Reserved.</p>
   </div>
 </footer>
 
-<script src="assets/js/simulator.js"></script>
-<script src="assets/js/app.js"></script>
-<script>
-  // LINE友だち追加URL（設定してください）
-  var LINE_ADD_URL = ""; // 例: "https://lin.ee/xxxxxxx"
-  var lineBtn = document.getElementById("lineBtn");
-  if (lineBtn && LINE_ADD_URL) lineBtn.href = LINE_ADD_URL;
+<!-- トップに戻る -->
+<button class="to-top" id="toTop" aria-label="トップに戻る" hidden>▲</button>
 
-  // お問い合わせフォーム送信（GAS未設定でもデモとして完了表示）
-  document.getElementById("contactForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-    AucConfig.send({
-      type: "contact",
-      name: document.getElementById("cName").value,
-      email: document.getElementById("cEmail").value,
-      phone: document.getElementById("cPhone").value,
-      message: document.getElementById("cMsg").value
-    });
-    document.getElementById("cDone").style.display = "block";
-    this.reset();
-  });
-</script>
+<script src="assets/js/analytics.js" defer></script>
+<script src="assets/js/genres.js" defer></script>
+<script src="assets/js/simulator-buy.js" defer></script>
+<script>document.addEventListener('DOMContentLoaded',function(){if(window.BuymoSim)BuymoSim.init('buymoSim');});</script>
+<script src="assets/js/buymo-data.js" defer></script>
+<script src="assets/js/buymo.js" defer></script>
+<link rel="stylesheet" href="assets/css/academy.css" />
+<script>window.BUYMO_BOT_MODE='user';</script>
+<script src="assets/js/chatbot.js" defer></script>
 </body>
 </html>

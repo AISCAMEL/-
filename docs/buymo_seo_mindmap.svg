@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1182" height="1138" viewBox="0 0 1182 1138" font-family="'Noto Sans JP',sans-serif">
+<rect width="1182" height="1138" fill="#FFF9F0"/>
+<text x="40" y="1124" font-size="12" fill="#999">BUYMO 車買取サイト — SEO構造マインドマップ</text>
+<path d="M168,580.5 C254,580.5 254,132 340,132" fill="none" stroke="#FF6B35" stroke-width="2" opacity="0.55"/>
+<path d="M459,132 C549.5,132 549.5,63 640,63" fill="none" stroke="#FF6B35" stroke-width="2" opacity="0.55"/>
+<path d="M459,132 C549.5,132 549.5,109 640,109" fill="none" stroke="#FF6B35" stroke-width="2" opacity="0.55"/>
+<path d="M459,132 C549.5,132 549.5,155 640,155" fill="none" stroke="#FF6B35" stroke-width="2" opacity="0.55"/>
+<path d="M459,132 C549.5,132 549.5,201 640,201" fill="none" stroke="#FF6B35" stroke-width="2" opacity="0.55"/>
+<path d="M168,580.5 C254,580.5 254,339 340,339" fill="none" stroke="#1E3A8A" stroke-width="2" opacity="0.55"/>
+<path d="M461,339 C550.5,339 550.5,247 640,247" fill="none" stroke="#1E3A8A" stroke-width="2" opacity="0.55"/>
+<path d="M461,339 C550.5,339 550.5,293 640,293" fill="none" stroke="#1E3A8A" stroke-width="2" opacity="0.55"/>
+<path d="M461,339 C550.5,339 550.5,431 640,431" fill="none" stroke="#1E3A8A" stroke-width="2" opacity="0.55"/>
+<path d="M758,431 C849,431 849,339 940,339" fill="none" stroke="#1E3A8A" stroke-width="2" opacity="0.55"/>
+<path d="M758,431 C849,431 849,385 940,385" fill="none" stroke="#1E3A8A" stroke-width="2" opacity="0.55"/>
+<path d="M758,431 C849,431 849,431 940,431" fill="none" stroke="#1E3A8A" stroke-width="2" opacity="0.55"/>
+<path d="M758,431 C849,431 849,477 940,477" fill="none" stroke="#1E3A8A" stroke-width="2" opacity="0.55"/>
+<path d="M758,431 C849,431 849,523 940,523" fill="none" stroke="#1E3A8A" stroke-width="2" opacity="0.55"/>
+<path d="M168,580.5 C254,580.5 254,592 340,592" fill="none" stroke="#E8A300" stroke-width="2" opacity="0.55"/>
+<path d="M497,592 C568.5,592 568.5,569 640,569" fill="none" stroke="#E8A300" stroke-width="2" opacity="0.55"/>
+<path d="M497,592 C568.5,592 568.5,615 640,615" fill="none" stroke="#E8A300" stroke-width="2" opacity="0.55"/>
+<path d="M168,580.5 C254,580.5 254,684 340,684" fill="none" stroke="#0E7C66" stroke-width="2" opacity="0.55"/>
+<path d="M525,684 C582.5,684 582.5,661 640,661" fill="none" stroke="#0E7C66" stroke-width="2" opacity="0.55"/>
+<path d="M525,684 C582.5,684 582.5,707 640,707" fill="none" stroke="#0E7C66" stroke-width="2" opacity="0.55"/>
+<path d="M168,580.5 C254,580.5 254,845 340,845" fill="none" stroke="#9333EA" stroke-width="2" opacity="0.55"/>
+<path d="M506,845 C573,845 573,753 640,753" fill="none" stroke="#9333EA" stroke-width="2" opacity="0.55"/>
+<path d="M506,845 C573,845 573,799 640,799" fill="none" stroke="#9333EA" stroke-width="2" opacity="0.55"/>
+<path d="M506,845 C573,845 573,845 640,845" fill="none" stroke="#9333EA" stroke-width="2" opacity="0.55"/>
+<path d="M506,845 C573,845 573,891 640,891" fill="none" stroke="#9333EA" stroke-width="2" opacity="0.55"/>
+<path d="M506,845 C573,845 573,937 640,937" fill="none" stroke="#9333EA" stroke-width="2" opacity="0.55"/>
+<path d="M168,580.5 C254,580.5 254,1029 340,1029" fill="none" stroke="#C2410C" stroke-width="2" opacity="0.55"/>
+<path d="M467,1029 C553.5,1029 553.5,983 640,983" fill="none" stroke="#C2410C" stroke-width="2" opacity="0.55"/>
+<path d="M467,1029 C553.5,1029 553.5,1029 640,1029" fill="none" stroke="#C2410C" stroke-width="2" opacity="0.55"/>
+<path d="M467,1029 C553.5,1029 553.5,1075 640,1075" fill="none" stroke="#C2410C" stroke-width="2" opacity="0.55"/>
+<rect x="40" y="552.5" width="128" height="56" rx="10" fill="#1E3A8A" stroke="#1E3A8A" stroke-width="1.5"/>
+<text x="54" y="573.5" font-size="15" font-weight="700" fill="#ffffff">BUYMO 車買取</text>
+<text x="54" y="592.5" font-size="13" font-weight="400" fill="#f0f0f0">SEO構造マップ</text>
+<rect x="340" y="104" width="119" height="56" rx="10" fill="#FF6B35" stroke="#FF6B35" stroke-width="0"/>
+<text x="354" y="125" font-size="15" font-weight="700" fill="#ffffff">① トップLP</text>
+<text x="354" y="144" font-size="13" font-weight="400" fill="#f0f0f0">/buymo.html</text>
+<rect x="640" y="44.5" width="226" height="37" rx="10" fill="#ffffff" stroke="#FF6B35" stroke-width="1.5"/>
+<text x="654" y="65.5" font-size="15" font-weight="700" fill="#333">H1: あなたの愛車を高価買取</text>
+<rect x="640" y="81" width="210" height="56" rx="10" fill="#ffffff" stroke="#FF6B35" stroke-width="1.5"/>
+<text x="654" y="102" font-size="15" font-weight="700" fill="#333">主要KW</text>
+<text x="654" y="121" font-size="13" font-weight="400" fill="#666">車買取/高価買取/出張査定</text>
+<rect x="640" y="127" width="188" height="56" rx="10" fill="#ffffff" stroke="#FF6B35" stroke-width="1.5"/>
+<text x="654" y="148" font-size="15" font-weight="700" fill="#333">各セクション</text>
+<text x="654" y="167" font-size="13" font-weight="400" fill="#666">特長・流れ・FAQ・査定</text>
+<rect x="640" y="173" width="240" height="56" rx="10" fill="#ffffff" stroke="#FF6B35" stroke-width="1.5"/>
+<text x="654" y="194" font-size="15" font-weight="700" fill="#333">発リンク→</text>
+<text x="654" y="213" font-size="13" font-weight="400" fill="#666">エリア/問い合わせ/パートナー</text>
+<rect x="340" y="311" width="121" height="56" rx="10" fill="#1E3A8A" stroke="#1E3A8A" stroke-width="0"/>
+<text x="354" y="332" font-size="15" font-weight="700" fill="#ffffff">② エリアSEO</text>
+<text x="354" y="351" font-size="13" font-weight="400" fill="#f0f0f0">ハブ /area/</text>
+<rect x="640" y="219" width="127" height="56" rx="10" fill="#ffffff" stroke="#1E3A8A" stroke-width="1.5"/>
+<text x="654" y="240" font-size="15" font-weight="700" fill="#333">地方別に集約</text>
+<text x="654" y="259" font-size="13" font-weight="400" fill="#666">8地方ブロック</text>
+<rect x="640" y="274.5" width="180" height="37" rx="10" fill="#ffffff" stroke="#1E3A8A" stroke-width="1.5"/>
+<text x="654" y="295.5" font-size="15" font-weight="700" fill="#333">47都道府県へ発リンク</text>
+<rect x="640" y="403" width="118" height="56" rx="10" fill="#ffffff" stroke="#1E3A8A" stroke-width="1.5"/>
+<text x="654" y="424" font-size="15" font-weight="700" fill="#333">47県ページ</text>
+<text x="654" y="443" font-size="13" font-weight="400" fill="#666">/area/&lt;県&gt;/</text>
+<rect x="940" y="311" width="193" height="56" rx="10" fill="#ffffff" stroke="#1E3A8A" stroke-width="1.5"/>
+<text x="954" y="332" font-size="15" font-weight="700" fill="#333">ユニーク</text>
+<text x="954" y="351" font-size="13" font-weight="400" fill="#666">title/description/H1</text>
+<rect x="940" y="357" width="173" height="56" rx="10" fill="#ffffff" stroke="#1E3A8A" stroke-width="1.5"/>
+<text x="954" y="378" font-size="15" font-weight="700" fill="#333">市区町村KW</text>
+<text x="954" y="397" font-size="13" font-weight="400" fill="#666">例:東京=新宿/八王子</text>
+<rect x="940" y="403" width="202" height="56" rx="10" fill="#ffffff" stroke="#1E3A8A" stroke-width="1.5"/>
+<text x="954" y="424" font-size="15" font-weight="700" fill="#333">JSON-LD</text>
+<text x="954" y="443" font-size="13" font-weight="400" fill="#666">AutoDealer areaServed</text>
+<rect x="940" y="458.5" width="193" height="37" rx="10" fill="#ffffff" stroke="#1E3A8A" stroke-width="1.5"/>
+<text x="954" y="479.5" font-size="15" font-weight="700" fill="#333">同地方の県へ相互リンク</text>
+<rect x="940" y="504.5" width="199" height="37" rx="10" fill="#ffffff" stroke="#1E3A8A" stroke-width="1.5"/>
+<text x="954" y="525.5" font-size="15" font-weight="700" fill="#333">CTA→ contact?pref=県</text>
+<rect x="340" y="573.5" width="157" height="37" rx="10" fill="#E8A300" stroke="#E8A300" stroke-width="0"/>
+<text x="354" y="594.5" font-size="15" font-weight="700" fill="#ffffff">③ コンバージョン</text>
+<rect x="640" y="541" width="185" height="56" rx="10" fill="#ffffff" stroke="#E8A300" stroke-width="1.5"/>
+<text x="654" y="562" font-size="15" font-weight="700" fill="#333">お問い合わせ/査定</text>
+<text x="654" y="581" font-size="13" font-weight="400" fill="#666">/buymo-contact.html</text>
+<rect x="640" y="587" width="163" height="56" rx="10" fill="#ffffff" stroke="#E8A300" stroke-width="1.5"/>
+<text x="654" y="608" font-size="15" font-weight="700" fill="#333">フォーム</text>
+<text x="654" y="627" font-size="13" font-weight="400" fill="#666">都道府県を自動選択</text>
+<rect x="340" y="656" width="185" height="56" rx="10" fill="#0E7C66" stroke="#0E7C66" stroke-width="0"/>
+<text x="354" y="677" font-size="15" font-weight="700" fill="#ffffff">④ パートナー募集</text>
+<text x="354" y="696" font-size="13" font-weight="400" fill="#f0f0f0">/buymo-partner.html</text>
+<rect x="640" y="633" width="173" height="56" rx="10" fill="#ffffff" stroke="#0E7C66" stroke-width="1.5"/>
+<text x="654" y="654" font-size="15" font-weight="700" fill="#333">別KW</text>
+<text x="654" y="673" font-size="13" font-weight="400" fill="#666">車買取FC/加盟店募集</text>
+<rect x="640" y="688.5" width="193" height="37" rx="10" fill="#ffffff" stroke="#0E7C66" stroke-width="1.5"/>
+<text x="654" y="709.5" font-size="15" font-weight="700" fill="#333">応募・資料請求フォーム</text>
+<rect x="340" y="826.5" width="166" height="37" rx="10" fill="#9333EA" stroke="#9333EA" stroke-width="0"/>
+<text x="354" y="847.5" font-size="15" font-weight="700" fill="#ffffff">⑤ 技術SEO（基盤）</text>
+<rect x="640" y="734.5" width="185" height="37" rx="10" fill="#ffffff" stroke="#9333EA" stroke-width="1.5"/>
+<text x="654" y="755.5" font-size="15" font-weight="700" fill="#333">sitemap.xml (48URL)</text>
+<rect x="640" y="780.5" width="111" height="37" rx="10" fill="#ffffff" stroke="#9333EA" stroke-width="1.5"/>
+<text x="654" y="801.5" font-size="15" font-weight="700" fill="#333">robots.txt</text>
+<rect x="640" y="817" width="171" height="56" rx="10" fill="#ffffff" stroke="#9333EA" stroke-width="1.5"/>
+<text x="654" y="838" font-size="15" font-weight="700" fill="#333">canonical 自己参照</text>
+<text x="654" y="857" font-size="13" font-weight="400" fill="#666">→公開時に絶対URL</text>
+<rect x="640" y="863" width="202" height="56" rx="10" fill="#ffffff" stroke="#9333EA" stroke-width="1.5"/>
+<text x="654" y="884" font-size="15" font-weight="700" fill="#333">構造化データ</text>
+<text x="654" y="903" font-size="13" font-weight="400" fill="#666">AutoDealer/Breadcrumb</text>
+<rect x="640" y="918.5" width="136" height="37" rx="10" fill="#ffffff" stroke="#9333EA" stroke-width="1.5"/>
+<text x="654" y="939.5" font-size="15" font-weight="700" fill="#333">OGP / favicon</text>
+<rect x="340" y="1010.5" width="127" height="37" rx="10" fill="#C2410C" stroke="#C2410C" stroke-width="0"/>
+<text x="354" y="1031.5" font-size="15" font-weight="700" fill="#ffffff">⑥ 運用・改善</text>
+<rect x="640" y="964.5" width="208" height="37" rx="10" fill="#ffffff" stroke="#C2410C" stroke-width="1.5"/>
+<text x="654" y="985.5" font-size="15" font-weight="700" fill="#333">実績・口コミを実データ化</text>
+<rect x="640" y="1010.5" width="182" height="37" rx="10" fill="#ffffff" stroke="#C2410C" stroke-width="1.5"/>
+<text x="654" y="1031.5" font-size="15" font-weight="700" fill="#333">Search Console 登録</text>
+<rect x="640" y="1056.5" width="193" height="37" rx="10" fill="#ffffff" stroke="#C2410C" stroke-width="1.5"/>
+<text x="654" y="1077.5" font-size="15" font-weight="700" fill="#333">県ページを個別に肉付け</text>
+</svg>
