@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>車の査定マニュアル｜バイモダイレクト 会員サイト</title>
+<title>車の査定マニュアル｜バイモダイレクト 加盟店ポータル（社外秘）</title>
 <meta name="description" content="バイモダイレクト 加盟店 査定担当者用 社外秘マニュアル。評価基準・査定額の付け方・実車確認・お客様への伝え方。関係者以外の閲覧を禁じます。" />
 <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg" />
 <link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png" />
@@ -53,7 +53,7 @@
         <a href="#talk">🧑‍💼 お客様説明・査定運用</a>
         <a href="#faq">❓ 質問と回答例</a>
         <a href="#note">⚠️ 注意点</a>
-        <a href="manual.html">→ 出品の仕方マニュアル</a>
+        <a href="manual.html">→ 出品代行 実務マニュアル</a>
         <a href="forms.html">📄 書類ダウンロード</a>
         <a href="index.html">← ポータルへ戻る</a>
       </nav>
@@ -78,7 +78,7 @@
           <!-- playlist -->
           <ol id="vidList" style="list-style:none;padding:0;margin:16px 0 0;counter-reset:les;"></ol>
 
-          <div class="alert alert-info" style="margin-top:16px;">動画は順次追加予定です。字幕・多言語対応や視聴の不具合は、マイページ・お問い合わせよりご連絡ください。</div>
+          <div class="alert alert-info" style="margin-top:16px;">動画は順次追加予定です。字幕・多言語対応や視聴の不具合は、本部・お問い合わせよりご連絡ください。</div>
         </div>
       </section>
 
@@ -146,7 +146,7 @@
             <tr><th>C</th><td>使用感あり。汚れ・スレ・小さな焦げ跡など。</td></tr>
             <tr><th>D</th><td>汚れ・破れ・強い臭い等が目立つ。要クリーニング。</td></tr>
           </table>
-          <div class="alert alert-ok" style="margin-top:16px;">出品前の<strong>内外装クリーニング（サイズ別 ¥12,000〜¥30,000）</strong>で内装評価が上がり、落札額の底上げにつながる場合があります。マイページのオプションから追加できます。</div>
+          <div class="alert alert-ok" style="margin-top:16px;">出品前の<strong>内外装クリーニング（サイズ別 ¥12,000〜¥30,000）</strong>で内装評価が上がり、落札額の底上げにつながる場合があります。オプションで追加できます（お客様にご案内）。</div>
         </div>
       </section>
 
@@ -272,9 +272,9 @@
             <tr><th>＝ 想定手取り</th><td><b>¥1,129,200</b></td></tr>
           </table>
           <p style="margin-top:12px;font-size:13px;color:var(--muted);">※ 名義変更（¥25,000）や内外装クリーニング（¥12,000〜¥30,000）などのオプションを選んだ場合は、その分が差し引かれます。<b>流札（売れなかった場合）の再出品は無料</b>です。</p>
-          <div class="alert alert-ok" style="margin-top:16px;">マイページ・出品代行ページの<strong>出品手取りシミュレーション</strong>で、想定落札額から手取りの目安をその場で試算できます。</div>
+          <div class="alert alert-ok" style="margin-top:16px;"><strong>手取りシミュレーション</strong>（書類作成ツールと併用）で、想定落札額から手取りの目安を試算できます。</div>
           <div style="margin-top:16px;">
-            <a class="btn btn-gold btn-sm" href="../sell.html#sim">出品手取りシミュレーションへ</a>
+            <a class="btn btn-gold btn-sm" href="forms.html?doc=seisan">精算書を作成する</a>
           </div>
         </div>
       </section>
@@ -444,7 +444,7 @@
     play(firstReady >= 0 ? firstReady : 0);
   })();
 
-  // 会員限定：未ログインはログインへ
+  // 加盟店限定：未ログインはログインへ
   if (!AucPartner.current()) { location.href = "login.html"; }
   document.getElementById("logoutBtn").onclick = function (e) {
     e.preventDefault(); AucPartner.logout(); location.href = "login.html";

@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>書類作成・ダウンロード｜バイモダイレクト 会員サイト</title>
-<meta name="description" content="バイモダイレクト 会員向け 書類作成ツール。車両・お客様情報を入力すると、委任状・譲渡証明書・買取契約書・車両状態申告書など各種書類が完成し、印刷／PDFで保存できます。" />
+<title>書類作成・ダウンロード｜バイモダイレクト 加盟店ポータル（社外秘）</title>
+<meta name="description" content="バイモダイレクト 加盟店向け 書類作成ツール。車両・お客様情報を入力すると、委任状・譲渡証明書・買取契約書・車両状態申告書など各種書類が完成し、印刷／PDFで保存できます。" />
 <link rel="icon" type="image/svg+xml" href="../assets/img/favicon.svg" />
 <link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png" />
 <link rel="apple-touch-icon" href="../assets/img/favicon-180.png" />
@@ -228,7 +228,7 @@
 })();
 </script>
 <script>
-  // 会員限定：未ログインはログインへ
+  // 加盟店限定：未ログインはログインへ
   if (!AucPartner.current()) { location.href = "login.html"; }
   document.getElementById("logoutBtn").onclick = function (e) {
     e.preventDefault(); AucPartner.logout(); location.href = "login.html";
