@@ -43,9 +43,9 @@
         <input type="password" id="pPass" placeholder="••••••••" required />
       </div>
       <button class="btn btn-gold btn-block" type="submit">ログイン</button>
+      <p id="loginErr" style="display:none;color:#b23b3b;font-size:13px;font-weight:700;margin-top:12px;"></p>
       <p class="switch" style="color:var(--muted);font-size:12px;margin-top:14px;">
-        ※ これはデモ用のログインです。実運用では本部のサーバー認証に置き換えてください。<br>
-        加盟店コード・パスワードをお持ちでない場合は本部（info@aisjaltd.com）へご連絡ください。
+        ※ ログイン情報（加盟店コード・パスワード）は本部が発行します。お持ちでない場合は本部（info@aisjaltd.com）へご連絡ください。
       </p>
     </form>
   </div>
@@ -60,12 +60,23 @@
 <script src="../assets/js/app.js"></script>
 <script>
   if (AucPartner.current()) { location.href = "index.html"; }
+  var errEl = document.getElementById("loginErr");
+  function showErr(m) { errEl.textContent = m; errEl.style.display = "block"; }
   document.getElementById("formLogin").addEventListener("submit", function (e) {
     e.preventDefault();
+    errEl.style.display = "none";
     var code = document.getElementById("pCode").value.trim();
     var staff = document.getElementById("pStaff").value.trim();
-    AucPartner.login({ store: code || "加盟店", code: code, staff: staff });
-    location.href = "index.html";
+    var pass = document.getElementById("pPass").value;
+    // 本番：サーバー認証
+    AucPartner.apiLogin(code, staff, pass).then(function (r) {
+      if (r && r.ok) { location.href = "index.html"; }
+      else { showErr((r && r.error) || "ログインに失敗しました。"); }
+    }).catch(function () {
+      // サーバー未起動（file:// でのデモ閲覧）→ ローカルのデモログインにフォールバック
+      AucPartner.login({ store: code || "加盟店", code: code, staff: staff });
+      location.href = "index.html";
+    });
   });
 </script>
 </body>

@@ -146,17 +146,41 @@
   };
 
   /* =======================================================
-     加盟店ポータル（社外秘）用の簡易認証（デモ）
-     ※ クライアント側のみ。実運用ではサーバー認証に置換必須。
+     加盟店ポータル（社外秘）用の認証
+     ・本番：server/server.js が /partner/* をサーバー側で保護し、
+       ログイン成功時に署名Cookie(bmd_session)＋表示用Cookie(bmd_partner)を発行。
+     ・current() は bmd_partner Cookie を優先し、無ければ localStorage を参照
+       （file:// でのデモ閲覧でも動くようフォールバック）。
      ======================================================= */
   var PARTNER_KEY = "auc_partner";
+  function getCookie(name) {
+    var m = ("; " + document.cookie).split("; " + name + "=");
+    if (m.length === 2) { try { return decodeURIComponent(m.pop().split(";").shift()); } catch (e) { return null; } }
+    return null;
+  }
   window.AucPartner = {
+    // サーバーへログイン（本番）。成功で {ok:true, partner} を返す。
+    apiLogin: function (code, staff, password) {
+      return fetch("/api/partner/login", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: code, staff: staff, password: password })
+      }).then(function (r) { return r.json(); });
+    },
+    // デモ用（サーバー無し・file://）ローカルログイン
     login: function (u) {
-      var p = { store: (u && u.store) || "加盟店", code: (u && u.code) || "", staff: (u && u.staff) || "", since: "2026-06-13" };
+      var p = { store: (u && u.store) || "加盟店", code: (u && u.code) || "", staff: (u && u.staff) || "" };
       write(PARTNER_KEY, p);
       return p;
     },
-    logout: function () { localStorage.removeItem(PARTNER_KEY); },
-    current: function () { return read(PARTNER_KEY, null); }
+    logout: function () {
+      localStorage.removeItem(PARTNER_KEY);
+      try { fetch("/api/partner/logout", { method: "POST" }); } catch (e) {}
+    },
+    // Cookie（本番）→ localStorage（デモ）の順で現在の加盟店を返す
+    current: function () {
+      var c = getCookie("bmd_partner");
+      if (c) { try { return JSON.parse(c); } catch (e) {} }
+      return read(PARTNER_KEY, null);
+    }
   };
 })();
