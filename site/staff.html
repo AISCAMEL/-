@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>スタッフ業務マニュアル｜AUC-AGENT 会員サイト</title>
+<meta name="description" content="AUC-AGENT スタッフ向け 業務マニュアル（SOP）。出品代行・購入代行の作業手順、検車、接客・電話応対、入金・精算、クレーム対応、書類チェックをまとめています。" />
+<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png" />
+<link rel="apple-touch-icon" href="assets/img/favicon-180.png" />
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <span class="logo">A</span>
+      <span>AUC-AGENT<small>CAR AUCTION AGENT</small></span>
+    </a>
+    <nav class="nav">
+      <a class="nav-link" href="mypage.html">マイページ</a>
+      <a class="nav-link" href="sell.html">出品代行</a>
+      <a class="btn btn-ghost btn-sm" href="#" id="logoutBtn">ログアウト</a>
+    </nav>
+  </div>
+</header>
+
+<div class="page-head">
+  <div class="wrap">
+    <h1>スタッフ業務マニュアル（SOP）</h1>
+    <p>サービス品質を均一に保つための標準手順です。判断に迷う場合は自己判断せず、責任者に確認してください。</p>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="mp-grid">
+    <aside class="mp-side">
+      <nav class="mp-nav">
+        <a href="#sell" class="active">🏷️ 出品代行フロー</a>
+        <a href="#buy">🛒 購入代行フロー</a>
+        <a href="#kensha">🔧 検車手順</a>
+        <a href="#cs">📞 接客・電話応対</a>
+        <a href="#pay">🏦 入金・精算</a>
+        <a href="#claim">🛡️ クレーム対応</a>
+        <a href="#docs">📑 書類チェック</a>
+        <a href="troubles.html">🛡️ トラブル事例集</a>
+        <a href="compliance.html">⚖️ コンプライアンス</a>
+        <a href="mypage.html">← マイページへ戻る</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="panel" id="sell">
+        <div class="panel-head"><h3>🏷️ 出品代行フロー</h3></div>
+        <div class="panel-body">
+          <div class="flow" style="grid-template-columns:repeat(5,1fr);">
+            <div class="step"><div class="n">1</div><h4>申込受付</h4><p>車両情報・状態</p></div>
+            <div class="step"><div class="n">2</div><h4>査定・契約</h4><p>想定額・出品契約</p></div>
+            <div class="step"><div class="n">3</div><h4>検車・出品票</h4><p>チェック→制作</p></div>
+            <div class="step"><div class="n">4</div><h4>出品・成約</h4><p>会場搬入・入札</p></div>
+            <div class="step"><div class="n">5</div><h4>精算・入金</h4><p>精算書→振込</p></div>
+          </div>
+          <ul class="opt-list" style="margin-top:16px;">
+            <li>申込受付 <b>状態申告・書類の有無を確認</b></li>
+            <li>本人確認 <b>本人確認記録書を作成（コンプラ参照）</b></li>
+            <li>契約 <b>出品代行契約書を締結</b></li>
+            <li>検車 <b>検車チェックシートで記録→車両状態申告書へ反映</b></li>
+            <li>成約後 <b>精算書を発行→振込先指定書の口座へ入金</b></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="panel" id="buy">
+        <div class="panel-head"><h3>🛒 購入代行フロー</h3></div>
+        <div class="panel-body">
+          <div class="flow" style="grid-template-columns:repeat(5,1fr);">
+            <div class="step"><div class="n">1</div><h4>ヒアリング</h4><p>条件・予算・上限</p></div>
+            <div class="step"><div class="n">2</div><h4>車両提案</h4><p>候補・評価点</p></div>
+            <div class="step"><div class="n">3</div><h4>入札</h4><p>上限内で入札</p></div>
+            <div class="step"><div class="n">4</div><h4>請求・入金</h4><p>総額を精算</p></div>
+            <div class="step"><div class="n">5</div><h4>名義・納車</h4><p>登録・陸送</p></div>
+          </div>
+          <ul class="opt-list" style="margin-top:16px;">
+            <li>上限額 <b>必ず書面/記録で確認（違約防止）</b></li>
+            <li>総額提示 <b>手数料・陸送・税を含めて説明</b></li>
+            <li>契約 <b>購入代行契約書を締結</b></li>
+            <li>落札後 <b>落札結果報告書を発行</b></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="panel" id="kensha">
+        <div class="panel-head"><h3>🔧 検車手順</h3></div>
+        <div class="panel-body">
+          <p>出品前の車両チェックは、査定精度とクレーム防止に直結します。<strong>検車チェックシート</strong>を使って記録してください。</p>
+          <ul class="opt-list">
+            <li>外装 <b>各パネルのキズ・へこみ・補修跡（1周確認）</b></li>
+            <li>機関 <b>始動・異音・警告灯・オイル漏れ・バッテリー</b></li>
+            <li>電装 <b>ナビ・エアコン・PW・ライト・各スイッチ</b></li>
+            <li>修復歴 <b>骨格部位の修正/交換の有無（不明は不明と記録）</b></li>
+            <li>写真 <b>前後左右斜め＋内装＋キズは寄りで</b></li>
+          </ul>
+          <div style="margin-top:12px;"><a class="btn btn-navy btn-sm" href="forms.html?doc=kensha">検車チェックシートを開く</a></div>
+        </div>
+      </section>
+
+      <section class="panel" id="cs">
+        <div class="panel-head"><h3>📞 接客・電話応対</h3></div>
+        <div class="panel-body">
+          <ul class="opt-list">
+            <li>第一声 <b>「お電話ありがとうございます。AUC-AGENT ◯◯です」</b></li>
+            <li>傾聴 <b>購入か売却か、車種・予算・時期を確認</b></li>
+            <li>案内 <b>想定額は「レンジ」と明確に（確定額と言わない）</b></li>
+            <li>費用 <b>手数料・陸送・税を含む総額で説明</b></li>
+            <li>クロージング <b>次アクション（会員登録/査定/来店）を提示</b></li>
+            <li>記録 <b>対応内容を顧客記録に残す</b></li>
+          </ul>
+          <div class="alert alert-info" style="margin-top:14px;">断定・誇大表現は避ける（景表法）。わからないことは「確認してご連絡します」。</div>
+        </div>
+      </section>
+
+      <section class="panel" id="pay">
+        <div class="panel-head"><h3>🏦 入金・精算</h3></div>
+        <div class="panel-body">
+          <ul class="opt-list">
+            <li>売却 <b>成約→精算書発行→手数料控除→本人名義口座へ振込</b></li>
+            <li>購入 <b>落札→総額請求→入金確認→手続き着手</b></li>
+            <li>口座 <b>振込先指定書でカナ名義・番号を確認（相違に注意）</b></li>
+            <li>証憑 <b>受領書・精算書を保管</b></li>
+          </ul>
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+            <a class="btn btn-navy btn-sm" href="forms.html?doc=seisan">精算書</a>
+            <a class="btn btn-navy btn-sm" href="forms.html?doc=juryo">受領書</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="claim">
+        <div class="panel-head"><h3>🛡️ クレーム対応</h3></div>
+        <div class="panel-body">
+          <ul class="opt-list">
+            <li>受付 <b>事実確認（申告内容と照合）</b></li>
+            <li>期限 <b>会場クレーム期間（落札日から2週間）を意識</b></li>
+            <li>記録 <b>トラブル対応報告書に記録・社内共有</b></li>
+            <li>重大案件 <b>責任者へ即時エスカレーション</b></li>
+          </ul>
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+            <a class="btn btn-navy btn-sm" href="troubles.html">トラブル事例集</a>
+            <a class="btn btn-navy btn-sm" href="forms.html?doc=trouble_report">トラブル対応報告書</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="docs">
+        <div class="panel-head"><h3>📑 書類チェック</h3></div>
+        <div class="panel-body">
+          <ul class="opt-list">
+            <li>普通車 <b>車検証・印鑑証明(3ヶ月以内)・実印・委任状・譲渡証明</b></li>
+            <li>軽自動車 <b>車検証・認印・申請依頼書</b></li>
+            <li>記載一致 <b>住所・氏名は印鑑証明/車検証どおり</b></li>
+            <li>本人確認 <b>本人確認記録書を作成・保存</b></li>
+          </ul>
+          <div style="margin-top:12px;"><a class="btn btn-navy btn-sm" href="forms.html">書類作成ツール</a></div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="copy">© 2026 合同会社アイズ（AUC-AGENT）. いわき市／福島拠点. スタッフ向け資料（デモ）。</div>
+  </div>
+</footer>
+
+<script src="assets/js/app.js"></script>
+<script>
+  if (!AucAuth.current()) { location.href = "login.html"; }
+  document.getElementById("logoutBtn").onclick = function (e) {
+    e.preventDefault(); AucAuth.logout(); location.href = "index.html";
+  };
+</script>
+</body>
+</html>

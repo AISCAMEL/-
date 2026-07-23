@@ -350,6 +350,140 @@
         );
       }
     },
+    /* 15. 出品代行契約書 */
+    {
+      id: "shuppin_keiyaku", name: "出品代行契約書", cat: "契約", groups: ["owner", "vehicle", "deal"],
+      render: function (d) {
+        return page("出品代行契約書", "甲＝委託者（お客様）／乙＝受託者（当社）",
+          '<table class="form">' + vehicleRows(d, { detail: true }) + "</table>" +
+          '<p class="clause"><b>第1条（委託）</b> 甲は乙に対し、上記自動車（以下「本車両」）のオートオークションへの出品代行を委託し、乙はこれを受託した。</p>' +
+          '<p class="clause"><b>第2条（手数料）</b> 出品代行手数料は落札価格帯別の定額（〜50万¥39,800〜300万超3%）＋出品料¥11,000とする。流札（不成約）の場合の再出品は無料とする。</p>' +
+          '<p class="clause"><b>第3条（精算）</b> 乙は落札成立後、落札代金から手数料・選択オプションを控除した金額を甲の指定口座に支払う。</p>' +
+          '<p class="clause"><b>第4条（状態申告）</b> 甲は本車両の状態（修復歴・不具合等）を正確に申告する。申告と異なる重大な瑕疵が判明した場合、減額・返品・違約金の対象となることがある。</p>' +
+          '<p class="clause"><b>第5条（クレーム期間）</b> 会場のクレーム期間（落札日から2週間）内の申立に、乙が窓口として対応する。水没等の重大な瑕疵は会場規定に準拠する。</p>' +
+          '<p class="clause"><b>第6条（違約）</b> 落札成立後に甲の都合で成約を辞退した場合、代行手数料相当額＋落札価格の10%を違約金とする。</p>' +
+          '<p class="clause"><b>第7条（個人情報）</b> 乙は取得した個人情報を手続きに必要な範囲で適切に取り扱う。</p>' +
+          '<p class="daterow" style="margin-top:14px">契約年月日　' + jpDate(d) + "</p>" +
+          '<table class="form"><tr><th>甲（委託者）住所・氏名</th>' + (d.o_name ? '<td style="position:relative">' + e((d.o_addr ? d.o_addr + "　" : "") + d.o_name) + '<span style="position:absolute;right:14px;top:50%;transform:translateY(-50%)"><span class="seal">印</span></span></td>' : sealCell("印")) + "</tr>" +
+          "<tr><th>乙（受託者）</th><td>" + CO.addr + "　" + CO.name + "　" + CO.rep + "</td></tr></table>" +
+          '<p class="note">※ 一般的な雛形です。合意管轄など法務文言は専門家のご確認をおすすめします。詳細は利用規約に準じます。</p>'
+        );
+      }
+    },
+    /* 16. 購入代行契約書 */
+    {
+      id: "kounyu_keiyaku", name: "購入代行契約書", cat: "契約", groups: ["owner", "vehicle", "deal"],
+      render: function (d) {
+        var cap = d.d_price ? "￥" + e(Number(String(d.d_price).replace(/[^\d]/g, "")).toLocaleString()) : '金 <span class="u" style="min-width:120px">&nbsp;</span> 円';
+        return page("購入代行契約書", "甲＝委託者（お客様）／乙＝受託者（当社）",
+          '<table class="form">' + vehicleRows(d, { detail: true }) +
+          '<tr><th>落札上限額</th><td colspan="3" class="amt">' + cap + "</td></tr></table>" +
+          '<p class="clause"><b>第1条（委託）</b> 甲は乙に対し、上記条件での自動車の購入（落札）代行を委託し、乙はこれを受託した。</p>' +
+          '<p class="clause"><b>第2条（上限額）</b> 乙は落札上限額の範囲で入札する。上限額を超える入札は行わない。</p>' +
+          '<p class="clause"><b>第3条（手数料・費用）</b> 購入代行手数料は価格帯別の定額（〜50万¥39,800〜300万超3%）＋クラス割増、及び落札料・陸送費・税等の実費とする。</p>' +
+          '<p class="clause"><b>第4条（支払）</b> 甲は乙の請求に基づき、落札価格・手数料・諸費用を所定の期日までに支払う。</p>' +
+          '<p class="clause"><b>第5条（引渡し・登録）</b> 乙は名義変更・陸送を手配し、本車両を甲に引き渡す。</p>' +
+          '<p class="clause"><b>第6条（違約）</b> 落札成立後に甲の都合で購入を辞退した場合、代行手数料相当額＋落札価格の10%を違約金とする。</p>' +
+          '<p class="daterow" style="margin-top:14px">契約年月日　' + jpDate(d) + "</p>" +
+          '<table class="form"><tr><th>甲（委託者）住所・氏名</th>' + (d.o_name ? '<td style="position:relative">' + e((d.o_addr ? d.o_addr + "　" : "") + d.o_name) + '<span style="position:absolute;right:14px;top:50%;transform:translateY(-50%)"><span class="seal">印</span></span></td>' : sealCell("印")) + "</tr>" +
+          "<tr><th>乙（受託者）</th><td>" + CO.addr + "　" + CO.name + "　" + CO.rep + "</td></tr></table>" +
+          '<p class="note">※ 一般的な雛形です。合意管轄など法務文言は専門家のご確認をおすすめします。</p>'
+        );
+      }
+    },
+    /* 17. 検車チェックシート（スタッフ用） */
+    {
+      id: "kensha", name: "検車チェックシート", cat: "査定", groups: ["vehicle", "staff"],
+      render: function (d) {
+        return page("検車チェックシート", "スタッフ用・出品前車両チェック",
+          '<table class="form">' + vehicleRows(d, { detail: true }) +
+          '<tr><th>評価点（想定）</th><td>' + v("", 60) + '</td><th style="width:16%">内装評価</th><td>' + v("", 60) + "</td></tr></table>" +
+          '<div class="sec">外装（キズ・へこみ・補修跡）</div><div class="checks">' +
+          box(0, "フロント") + box(0, "ボンネット") + box(0, "ルーフ") + box(0, "左側面") + box(0, "右側面") + box(0, "リア") + box(0, "バンパー") + "</div>" +
+          '<div class="sec">機関・下回り</div><div class="checks">' +
+          box(0, "始動") + box(0, "アイドリング") + box(0, "異音") + box(0, "警告灯") + box(0, "オイル漏れ") + box(0, "バッテリー") + box(0, "タイヤ溝") + "</div>" +
+          '<div class="sec">電装・室内</div><div class="checks">' +
+          box(0, "ナビ/オーディオ") + box(0, "エアコン") + box(0, "パワーウィンドウ") + box(0, "ライト類") + box(0, "各種スイッチ") + box(0, "臭い") + "</div>" +
+          '<div class="sec">修復歴・特記</div><table class="form"><tr><td style="height:60px;vertical-align:top">&nbsp;</td></tr></table>' +
+          '<p class="daterow" style="margin-top:12px">検査日　' + jpDate2(d.r_date) + "　検査担当　" + v(d.r_staff, 100) + "</p>" +
+          '<p class="note">※ チェック結果は車両状態申告書・出品票に反映してください。判断に迷う項目は責任者へ確認を。</p>'
+        );
+      }
+    },
+    /* 18. 精算書 */
+    {
+      id: "seisan", name: "精算書", cat: "精算", groups: ["owner", "vehicle", "settle"],
+      render: function (d) {
+        function line(l, val, minus) { return "<tr><th>" + (minus ? "− " : "") + l + "</th><td class=\"amt\">" + yen(val) + "</td></tr>"; }
+        return page("精算書", "売却（出品代行）代金の精算",
+          '<table class="form"><tr><th>お客様氏名</th><td>' + v(d.o_name, 140) + '</td><th style="width:16%">精算日</th><td>' + jpDate2(d.s_date) + "</td></tr>" +
+          "<tr><th>対象車両</th><td colspan=\"3\">" + v((d.v_name || "") + (d.v_regno ? "／" + d.v_regno : ""), 200) + "</td></tr></table>" +
+          '<div class="sec">精算内訳</div><table class="form">' +
+          line("落札価格", d.s_hammer) +
+          line("代行手数料・出品料", d.s_fee, true) +
+          line("陸送費", d.s_ship, true) +
+          line("オプション費用", d.s_option, true) +
+          line("税・リサイクル等", d.s_tax, true) +
+          '<tr style="background:#f2f3f6"><th style="font-size:14px">お受取金額</th><td class="amt" style="font-size:16px">' + yen(d.s_net) + "</td></tr></table>" +
+          '<div class="sec">お振込先</div><table class="form"><tr><td>' + v((d.b_bank || "") + " " + (d.b_branch || "") + " " + (d.b_type || "") + " " + (d.b_no || ""), 200) + "</td></tr></table>" +
+          '<p class="note">※ 本精算書の内容にご不明点がある場合は、担当（' + CO.tel + "）までお問い合わせください。</p>" +
+          '<p class="daterow" style="margin-top:10px;text-align:right">' + CO.name + "　" + CO.rep + '　<span class="seal" style="width:42px;height:42px;line-height:42px">印</span></p>'
+        );
+      }
+    },
+    /* 19. 受領書 */
+    {
+      id: "juryo", name: "受領書", cat: "精算", groups: ["owner", "settle"],
+      render: function (d) {
+        return page("受領書", "",
+          '<p class="lead" style="text-align:center;font-size:15px;margin:24px 0">下記の金額を、正に受領いたしました。</p>' +
+          '<table class="form"><tr><th style="width:32%">受領金額</th><td class="amt" style="font-size:20px">' + yen(d.s_net) + "</td></tr>" +
+          "<tr><th>但し</th><td>" + v(d.juryo_for || "自動車売却代金として", 200) + "</td></tr>" +
+          "<tr><th>受領日</th><td>" + jpDate2(d.s_date) + "</td></tr></table>" +
+          '<div class="sec">受領者（お客様）</div><table class="form"><tr><th>住所</th><td>' + v(d.o_addr, 200) + "</td></tr>" +
+          "<tr><th>氏名</th>" + (d.o_name ? '<td style="position:relative">' + e(d.o_name) + '<span style="position:absolute;right:14px;top:50%;transform:translateY(-50%)"><span class="seal">印</span></span></td>' : sealCell("印")) + "</tr></table>" +
+          '<p class="note">※ 本受領書は、上記金額を受領したことの証です。金額・但し書きをご確認のうえ署名・押印してください。</p>'
+        );
+      }
+    },
+    /* 20. 本人確認記録書（古物営業法） */
+    {
+      id: "honnin", name: "本人確認記録書", cat: "コンプラ", groups: ["owner", "kyc"],
+      render: function (d) {
+        return page("本人確認記録書", "古物営業法・犯罪収益移転防止法に基づく確認記録",
+          '<table class="form">' +
+          "<tr><th>氏名</th><td>" + v(d.o_name, 160) + '</td><th style="width:16%">フリガナ</th><td>' + v(d.o_kana, 120) + "</td></tr>" +
+          "<tr><th>生年月日</th><td>" + v(d.k_birth, 120) + "</td><th>電話番号</th><td>" + v(d.o_tel, 120) + "</td></tr>" +
+          "<tr><th>住所</th><td colspan=\"3\">" + v(d.o_addr, 220) + "</td></tr></table>" +
+          '<div class="sec">確認書類</div><table class="form">' +
+          "<tr><th>種類</th><td>" + v(d.k_doctype, 160) + "</td><th style=\"width:16%\">番号</th><td>" + v(d.k_docno, 120) + "</td></tr></table>" +
+          '<div class="sec">確認方法（該当に✓）</div><div class="checks">' +
+          box(0, "対面（原本を提示）") + box(0, "非対面（写しの送付 等）") + box(0, "その他") + "</div>" +
+          '<div class="sec">取引区分（該当に✓）</div><div class="checks">' +
+          box(0, "買受け") + box(0, "売却・委託") + box(0, "その他") + "</div>" +
+          '<table class="form" style="margin-top:14px"><tr><th style="width:32%">確認日</th><td>' + jpDate2(d.k_date) + "</td></tr>" +
+          "<tr><th>確認者（担当）</th><td>" + v(d.k_checker, 140) + "</td></tr></table>" +
+          '<p class="note">※ 本記録は古物営業法・犯罪収益移転防止法に基づき、当社にて適切に保存します。</p>'
+        );
+      }
+    },
+    /* 21. 反社会的勢力排除の確認書 */
+    {
+      id: "hansha", name: "反社会的勢力排除確認書", cat: "コンプラ", groups: ["owner", "deal"],
+      render: function (d) {
+        return page("反社会的勢力の排除に関する確認書", "",
+          '<p class="lead">私は、' + CO.name + "（以下「当社」）との取引に関し、現在及び将来にわたり、下記の各号に該当しないことを表明し、確約します。</p>" +
+          '<p class="clause">1. 暴力団、暴力団員、暴力団準構成員、暴力団関係企業、総会屋、社会運動等標ぼうゴロ、その他これらに準ずる者（以下「反社会的勢力」）ではないこと。</p>' +
+          '<p class="clause">2. 反社会的勢力が経営を支配し、又は経営に実質的に関与していないこと。</p>' +
+          '<p class="clause">3. 自ら又は第三者を利用して、暴力的な要求行為・法的責任を超えた不当な要求・偽計や威力を用いた業務妨害等を行わないこと。</p>' +
+          '<p class="clause">4. 前各号に反することが判明した場合、当社が催告なく取引を解除しても異議を述べないこと。</p>' +
+          '<p class="daterow" style="margin-top:20px">' + jpDate(d) + "</p>" +
+          '<table class="form"><tr><th>住所</th><td>' + v(d.o_addr, 200) + "</td></tr>" +
+          "<tr><th>氏名</th>" + (d.o_name ? '<td style="position:relative">' + e(d.o_name) + '<span style="position:absolute;right:14px;top:50%;transform:translateY(-50%)"><span class="seal">印</span></span></td>' : sealCell("印")) + "</tr></table>" +
+          '<p class="note">※ 一般的な雛形です。文言は自社の規程・専門家の確認に合わせて調整してください。</p>'
+        );
+      }
+    },
     /* 10. 必要書類チェックリスト（データ不要） */
     {
       id: "checklist", name: "必要書類チェックリスト", cat: "査定", groups: [],
@@ -453,6 +587,33 @@
         { k: "n_inq", l: "問合せ件数", ph: "5" },
         { k: "r_comment", l: "特記事項・対応内容", ph: "…", wide: true },
         { k: "n_next", l: "翌日の予定", ph: "…", wide: true }
+      ]
+    },
+    staff: {
+      label: "担当・日付", items: [
+        { k: "r_date", l: "日付", ph: "令和7年7月21日" },
+        { k: "r_staff", l: "担当", ph: "吉田" }
+      ]
+    },
+    settle: {
+      label: "精算内訳", items: [
+        { k: "s_date", l: "精算日／受領日", ph: "令和7年7月21日" },
+        { k: "s_hammer", l: "落札価格(円)", ph: "1200000" },
+        { k: "s_fee", l: "代行手数料・出品料(円)", ph: "70800" },
+        { k: "s_ship", l: "陸送費(円)", ph: "0" },
+        { k: "s_option", l: "オプション費用(円)", ph: "0" },
+        { k: "s_tax", l: "税・リサイクル等(円)", ph: "0" },
+        { k: "s_net", l: "お受取／受領金額(円)", ph: "1129200" },
+        { k: "juryo_for", l: "受領書の但し書き", ph: "自動車売却代金として" }
+      ]
+    },
+    kyc: {
+      label: "本人確認", items: [
+        { k: "k_birth", l: "生年月日", ph: "昭和60年4月1日" },
+        { k: "k_doctype", l: "確認書類の種類", type: "select", opts: ["", "運転免許証", "マイナンバーカード", "パスポート", "在留カード", "健康保険証＋補助書類", "その他"] },
+        { k: "k_docno", l: "証明書番号", ph: "第000000000000号" },
+        { k: "k_checker", l: "確認者（担当）", ph: "吉田" },
+        { k: "k_date", l: "確認日", ph: "令和7年7月21日" }
       ]
     },
     tetsuzuki: {
