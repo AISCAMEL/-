@@ -3,7 +3,8 @@ name: WPX 自動デプロイ
 on:
   push:
     branches:
-      - main          # main ブランチへの push でトリガー
+      - main
+      - claude/gallant-hamilton-Fcy1t   # デフォルトブランチへのマージでデプロイ
   workflow_dispatch:  # GitHub 画面から手動実行も可能
 
 jobs:
