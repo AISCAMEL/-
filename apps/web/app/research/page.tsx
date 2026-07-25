@@ -87,7 +87,11 @@ export default function ResearchPage() {
       const results = data.items ?? [];
       setItems(results);
       if (results.length === 0) {
-        const info = data.candidateCount ? `候補${data.candidateCount}件中0件通過` : "0件";
+        const parts: string[] = [];
+        if (data.errors > 0) parts.push(`API失敗${data.errors}件`);
+        if (data.scoredCount > 0) parts.push(`採点済み${data.scoredCount}件（全て足切り）`);
+        if ((data.scoredCount ?? 0) === 0 && (data.errors ?? 0) === 0) parts.push("市場データ取得0件");
+        const info = `候補${data.candidateCount ?? "?"}件: ${parts.join("、") || "0件通過"}`;
         setError(`条件に合う商品が見つかりませんでした（${info}）。最低グレードを C・最低利益率を 0 に下げて再試行してみてください`);
       }
     } catch (e) {

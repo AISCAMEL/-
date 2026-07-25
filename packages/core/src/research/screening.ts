@@ -91,7 +91,7 @@ export function screen(
   const minGradeRank = opts.minGrade ? gradeRank[opts.minGrade] : 0;
 
   return items
-    .filter((it) => (it.chosen?.marginRate ?? -1) >= minMargin)
+    .filter((it) => it.chosen === null || it.chosen.marginRate >= minMargin)
     .filter((it) => gradeRank[it.score.grade] >= minGradeRank)
     .sort((a, b) => b.score.score - a.score.score);
 }

@@ -162,17 +162,19 @@ export function buildServer() {
     const selectedMarkets = marketIds.map(getMarket).filter((m): m is MarketResearchConnector => !!m);
     if (selectedMarkets.length === 0) return reply.code(404).send({ error: "no valid market" });
 
-    const ranked = await screenCandidates({
+    const result = await screenCandidates({
       candidates,
       resolveSupplier: getSupplier,
       markets: selectedMarkets,
       options: { minMarginRate, minGrade, limit },
     });
     return {
-      count: ranked.length,
+      count: result.items.length,
       candidateCount: candidates.length,
+      scoredCount: result.scoredCount,
+      errors: result.errors,
       markets: marketIds,
-      items: ranked,
+      items: result.items,
     };
   });
 

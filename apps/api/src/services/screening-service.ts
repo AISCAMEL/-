@@ -27,12 +27,18 @@ export interface ScreenOptions {
  * 複数の仕入れ候補を一括で市場調査・採点し、足切り＆スコア順に並べて返す。
  * 「利益率○%以上の売れ筋だけ」を自動リスト化する用途。
  */
+export interface ScreenResult {
+  items: ScreenedItem[];
+  errors: number;
+  scoredCount: number;
+}
+
 export async function screenCandidates(params: {
   candidates: ScreenCandidate[];
   resolveSupplier: (id: string) => SupplierConnector | undefined;
   markets: MarketResearchConnector[];
   options?: ScreenOptions;
-}): Promise<ScreenedItem[]> {
+}): Promise<ScreenResult> {
   const { candidates, resolveSupplier, markets, options = {} } = params;
 
   const scored = await Promise.all(
@@ -107,6 +113,7 @@ export async function screenCandidates(params: {
     minMarginRate: options.minMarginRate,
     minGrade: options.minGrade,
   });
-  console.log(`[screen] after filter: ${ranked.length} items passed`);
-  return ranked;
+  const errors = candidates.length - valid.length;
+  console.log(`[screen] after filter: ${ranked.length} items passed, ${errors} errors`);
+  return { items: ranked, errors, scoredCount: valid.length };
 }
