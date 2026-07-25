@@ -39,7 +39,10 @@ export async function screenCandidates(params: {
     candidates.map(async (c): Promise<ScreenedItem | null> => {
       try {
         const supplier = resolveSupplier(c.supplierId);
-        if (!supplier) return null;
+        if (!supplier) {
+          console.warn(`[screen] supplier "${c.supplierId}" not found`);
+          return null;
+        }
 
         const product = await supplier.getProduct(c.externalId);
         const keyword = c.keyword ?? product.title;
@@ -51,6 +54,10 @@ export async function screenCandidates(params: {
           supplier: { connector: supplier, externalId: c.externalId },
           rule: options.rule,
         });
+
+        console.log(
+          `[screen] "${keyword}": listings=${research.market.overall.sampleCount} landedCost=${research.landedCost} scenarios=${research.scenarios.length}`,
+        );
 
         const chosen = research.scenarios[0] ?? null;
         const issues = validateForListing(product);
@@ -80,14 +87,26 @@ export async function screenCandidates(params: {
           score,
         };
       } catch (err) {
-        console.error(`screening failed for ${c.supplierId}:${c.externalId}:`, err);
+        console.error(`[screen] FAIL ${c.supplierId}:${c.externalId}:`, err);
         return null;
       }
     }),
   );
 
-  return screen(scored.filter((s): s is ScreenedItem => s !== null), {
+  const valid = scored.filter((s): s is ScreenedItem => s !== null);
+  console.log(
+    `[screen] ${candidates.length} candidates → ${valid.length} scored, filter: minMargin=${options.minMarginRate ?? 0} minGrade=${options.minGrade ?? "any"}`,
+  );
+  for (const v of valid) {
+    console.log(
+      `[screen]   ${v.keyword}: grade=${v.score.grade} score=${v.score.score} margin=${v.chosen?.marginRate ?? "N/A"} samples=${v.marketSampleCount}`,
+    );
+  }
+
+  const ranked = screen(valid, {
     minMarginRate: options.minMarginRate,
     minGrade: options.minGrade,
   });
+  console.log(`[screen] after filter: ${ranked.length} items passed`);
+  return ranked;
 }

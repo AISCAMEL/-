@@ -55,7 +55,7 @@ export function buildServer() {
   app.get("/", async () => ({
     service: "dropshipping-hub-api",
     status: "ok",
-    endpoints: ["/health", "/connectors", "/niche/cat-goods", "/research", "/research/screen", "/orders", "/dashboard/pnl", "/sync/run", "/sync/status", "/auth/base/authorize", "/auth/base/exchange"],
+    endpoints: ["/health", "/connectors", "/niche/cat-goods", "/research", "/research/screen", "/research/test", "/orders", "/dashboard/pnl", "/sync/run", "/sync/status", "/auth/base/authorize", "/auth/base/exchange"],
   }));
 
   // 各コネクタの実効モード（mock | live）。どのデータ源が本番接続かを確認する。
@@ -168,7 +168,34 @@ export function buildServer() {
       markets: selectedMarkets,
       options: { minMarginRate, minGrade, limit },
     });
-    return { count: ranked.length, candidateCount: candidates.length, markets: marketIds, items: ranked };
+    return {
+      count: ranked.length,
+      candidateCount: candidates.length,
+      markets: marketIds,
+      items: ranked,
+    };
+  });
+
+  // 市場調査テスト（単一キーワードで楽天APIの疎通確認用）
+  const testResearchSchema = z.object({
+    keyword: z.string().default("猫 おもちゃ"),
+    market: z.enum(["amazon", "rakuten", "yahoo", "ebay"]).default("rakuten"),
+  });
+  app.get("/research/test", async (req, reply) => {
+    const parsed = testResearchSchema.safeParse(req.query);
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
+    const { keyword, market: marketId } = parsed.data;
+    const market = getMarket(marketId);
+    if (!market) return reply.code(404).send({ error: `unknown market: ${marketId}` });
+    try {
+      const listings = await market.searchListings({ keyword, limit: 5 });
+      return { market: marketId, keyword, count: listings.length, listings };
+    } catch (err) {
+      return reply.code(500).send({
+        error: "search failed",
+        detail: err instanceof Error ? err.message : String(err),
+      });
+    }
   });
 
   // 在庫・価格同期を実行（欠品の自動非公開・価格更新・在庫更新・再公開）

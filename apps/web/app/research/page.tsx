@@ -87,8 +87,8 @@ export default function ResearchPage() {
       const results = data.items ?? [];
       setItems(results);
       if (results.length === 0) {
-        const info = data.candidateCount ? `（候補${data.candidateCount}件中0件通過）` : "";
-        setError(`条件に合う商品が見つかりませんでした${info}。最低グレードを C に下げて再試行してみてください`);
+        const info = data.candidateCount ? `候補${data.candidateCount}件中0件通過` : "0件";
+        setError(`条件に合う商品が見つかりませんでした（${info}）。最低グレードを C・最低利益率を 0 に下げて再試行してみてください`);
       }
     } catch (e) {
       setError(String(e));
