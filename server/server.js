@@ -21,9 +21,14 @@ const ROOT = path.join(__dirname, "..", "site");
 const PORT = parseInt(process.env.PORT || "8080", 10);
 const SECRET = process.env.BMD_SECRET || "CHANGE-ME-IN-PRODUCTION";
 const SESSION_MS = (parseInt(process.env.SESSION_HOURS || "12", 10)) * 3600 * 1000;
-const ACCOUNTS_FILE = path.join(__dirname, "partners.json");
-const ACCESS_LOG = path.join(__dirname, "access.log");
-const DATA_DIR = path.join(__dirname, "data");
+// 永続データの保存先。BMD_DATA_DIR を指定すると、アカウント・監査ログ・
+// 保存レコードをすべてその1ディレクトリに集約する（PaaSの永続ディスクを
+// 1箇所マウントするだけで全データが残る）。未指定なら従来どおり server/ 配下。
+const DATA_HOME = process.env.BMD_DATA_DIR || __dirname;
+try { fs.mkdirSync(DATA_HOME, { recursive: true }); } catch (e) {}
+const ACCOUNTS_FILE = path.join(DATA_HOME, "partners.json");
+const ACCESS_LOG = path.join(DATA_HOME, "access.log");
+const DATA_DIR = path.join(DATA_HOME, "data");
 const RECORDS_FILE = path.join(DATA_DIR, "records.json");
 
 /* ---------- パスワード（scrypt） ---------- */
@@ -306,5 +311,6 @@ server.listen(PORT, function () {
   console.log("バイモダイレクト サーバー起動: http://localhost:" + PORT);
   console.log("  一般サイト : http://localhost:" + PORT + "/index.html");
   console.log("  加盟店ログイン: http://localhost:" + PORT + "/partner/login.html");
+  console.log("  データ保存先 : " + DATA_HOME + "（partners.json / access.log / data/records.json）");
   if (SECRET === "CHANGE-ME-IN-PRODUCTION") console.log("  ⚠ 本番では環境変数 BMD_SECRET を必ず設定してください。");
 });

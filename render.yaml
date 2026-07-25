@@ -1,0 +1,30 @@
+# バイモダイレクト 加盟店ポータル — Render ワンクリック・デプロイ設定
+# 使い方（詳細は docs/デプロイ手順.md）：
+#   1. このリポジトリを自分の GitHub に置く
+#   2. Render (https://render.com) で「New +」→「Blueprint」→ このリポジトリを選択
+#   3. render.yaml が読み込まれ、Web Service + 永続ディスクが自動作成される
+#   4. BMD_SECRET は自動生成される。デプロイ完了後、割り当てられた URL でアクセス
+#
+# 初回起動でデモ管理者/加盟店（HQ-ADMIN / BMD-001）が自動生成されます。
+# 本番では必ず本部コンソールからパスワードを変更し、デモ加盟店を停止してください。
+services:
+  - type: web
+    name: bmd-portal
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter            # 永続ディスクを使うには有料の starter 以上が必要
+    region: singapore        # 日本から近いリージョン
+    healthCheckPath: /index.html
+    envVars:
+      - key: BMD_SECRET      # セッション署名鍵。Render が安全な値を自動生成
+        generateValue: true
+      - key: PORT
+        value: "8080"
+      - key: SESSION_HOURS
+        value: "12"
+      - key: BMD_DATA_DIR    # 永続ディスクの中にアカウント・ログ・保存データを集約
+        value: /var/bmd-data
+    disk:
+      name: bmd-data
+      mountPath: /var/bmd-data
+      sizeGB: 1

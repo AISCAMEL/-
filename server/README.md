@@ -45,6 +45,7 @@ node server/server.js
 | `PORT` | 8080 | 待受ポート |
 | `BMD_SECRET` | （未設定・要変更） | セッション署名の秘密鍵。**本番必須** |
 | `SESSION_HOURS` | 12 | セッション有効時間 |
+| `BMD_DATA_DIR` | `server/` | 永続データ（`partners.json`・`access.log`・`data/records.json`）の保存先。**1ディレクトリに集約**するので、PaaSの永続ディスクをここ1箇所にマウントすれば全データが残る。未指定なら従来どおり `server/` 配下 |
 
 ## ファイル
 - `server.js` … 本体（配信＋認証＋保護）
@@ -75,8 +76,13 @@ BMD_SECRET="$(openssl rand -hex 32)" docker compose up -d --build
 
 イメージ単体（Render / Fly.io 等）の場合：
 - 環境変数 `BMD_SECRET` を設定
-- 永続ディスクを `/app/server`（または最低限 `/app/server/data` と `partners.json`）にマウント
+- `BMD_DATA_DIR` に永続ディスクのマウント先（例 `/var/bmd-data`）を指定し、そのディスクをマウント
+  （アカウント・監査ログ・保存レコードがすべてこの1ディレクトリに集約されます）
 - アカウントは初回起動の自動生成、または `docker exec <container> node server/add-partner.js ...` で追加
+
+### Render はワンクリックに近い（推奨）
+リポジトリ直下の **`render.yaml`** を使うと、Web サービス＋永続ディスク（`/var/bmd-data`）＋`BMD_SECRET` 自動生成までまとめて作成されます。
+Render で「New +」→「Blueprint」→ このリポジトリを選ぶだけ。手順の詳細は `docs/デプロイ手順.md`（F章）。
 
 ## 静的ホスティングのままにしたい場合（サーバーを使わない選択肢）
 `site/` をそのまま Netlify / Cloudflare Pages 等に置く場合、`/partner/` の保護はホスト側機能で行います。
