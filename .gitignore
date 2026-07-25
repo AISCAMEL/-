@@ -1,0 +1,10 @@
+# 実行時に生成される機密・可変データ（絶対にコミットしない）
+server/partners.json      # 加盟店/本部アカウント（パスワードハッシュを含む）
+server/access.log         # ログイン監査ログ（IP等）
+server/data/              # 申込・報告・書類の保存レコード
+
+# 依存・ビルド・OS 由来のゴミ
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
