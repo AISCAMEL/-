@@ -1,5 +1,7 @@
 const HUB = process.env.HUB_API_URL ?? "http://127.0.0.1:3001";
 
+export const maxDuration = 30;
+
 /** Hub API の /products/publish をプロキシ（BASE 出品）。 */
 export async function POST(req: Request) {
   try {

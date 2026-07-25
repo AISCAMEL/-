@@ -1,5 +1,7 @@
 const HUB = process.env.HUB_API_URL ?? "http://127.0.0.1:3001";
 
+export const maxDuration = 30;
+
 /** Hub API の /sync/run をプロキシ（在庫・価格同期）。 */
 export async function POST() {
   try {

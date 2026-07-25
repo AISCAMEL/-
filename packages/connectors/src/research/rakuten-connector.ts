@@ -44,7 +44,7 @@ export class RakutenConnector implements MarketResearchConnector {
       try {
         return await this.fetchLive(query);
       } finally {
-        await new Promise<void>((r) => setTimeout(r, 1100));
+        await new Promise<void>((r) => setTimeout(r, 700));
         resolve();
       }
     });
