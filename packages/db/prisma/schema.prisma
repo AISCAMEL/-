@@ -1,0 +1,186 @@
+// 中国輸入 無在庫販売 ハブシステム — データモデル
+// 設計書: docs/dropshipping-hub-設計書.md §5
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SupplierKind {
+  alibaba
+  theckb
+}
+
+enum ChannelKind {
+  base
+}
+
+enum ListingStatus {
+  draft
+  published
+  unpublished
+  error
+}
+
+enum OrderStatus {
+  received
+  fulfilling
+  ordered_to_supplier
+  shipped
+  completed
+  cancelled
+}
+
+/// 仕入れ先マスタ
+model Supplier {
+  id        String         @id @default(cuid())
+  kind      SupplierKind   @unique
+  name      String
+  enabled   Boolean        @default(true)
+  products  SourceProduct[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+/// 販売チャネルマスタ
+model SalesChannel {
+  id        String      @id @default(cuid())
+  kind      ChannelKind @unique
+  name      String
+  enabled   Boolean     @default(true)
+  listings  Listing[]
+  orders    Order[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+/// 仕入れ先の商品（原価・在庫の元データ）
+model SourceProduct {
+  id            String   @id @default(cuid())
+  supplier      Supplier @relation(fields: [supplierId], references: [id])
+  supplierId    String
+  externalId    String
+  title         String
+  description   String?
+  imageUrls     String[]
+  cost          Decimal  @db.Decimal(12, 2)
+  costCurrency  String   @default("CNY")
+  stock         Int?
+  sourceUrl     String?
+  raw           Json?
+  product       Product?
+  fetchedAt     DateTime @default(now())
+
+  @@unique([supplierId, externalId])
+}
+
+/// 自社管理の正規化商品
+model Product {
+  id              String         @id @default(cuid())
+  sourceProduct   SourceProduct  @relation(fields: [sourceProductId], references: [id])
+  sourceProductId String         @unique
+  title           String
+  description     String?
+  sellPrice       Decimal        @db.Decimal(12, 2)
+  priceRuleId     String?
+  priceRule       PriceRule?     @relation(fields: [priceRuleId], references: [id])
+  listings        Listing[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+/// チャネルごとの出品
+model Listing {
+  id                String        @id @default(cuid())
+  product           Product       @relation(fields: [productId], references: [id])
+  productId         String
+  channel           SalesChannel  @relation(fields: [channelId], references: [id])
+  channelId         String
+  externalListingId String?
+  status            ListingStatus @default(draft)
+  publishedPrice    Decimal?      @db.Decimal(12, 2)
+  publishedStock    Int?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@unique([productId, channelId])
+}
+
+/// 価格計算ルール
+model PriceRule {
+  id                  String    @id @default(cuid())
+  name                String
+  fxRateToJpy         Decimal   @db.Decimal(12, 4)
+  dutyRate            Decimal   @db.Decimal(6, 4)
+  intlShippingPerUnit Decimal   @db.Decimal(12, 2)
+  domesticShipping    Decimal   @db.Decimal(12, 2)
+  platformFeeRate     Decimal   @db.Decimal(6, 4)
+  marginType          String // "rate" | "fixed"
+  marginValue         Decimal   @db.Decimal(12, 4)
+  roundTo             Int       @default(10)
+  minProfit           Decimal   @db.Decimal(12, 2)
+  products            Product[]
+  createdAt           DateTime  @default(now())
+}
+
+/// 受注
+model Order {
+  id              String        @id @default(cuid())
+  channel         SalesChannel  @relation(fields: [channelId], references: [id])
+  channelId       String
+  externalOrderId String
+  status          OrderStatus   @default(received)
+  buyerName       String
+  buyerPostalCode String?
+  buyerAddress    String?
+  buyerPhone      String?
+  total           Decimal       @db.Decimal(12, 2)
+  items           OrderItem[]
+  supplierOrders  SupplierOrder[]
+  orderedAt       DateTime
+  createdAt       DateTime      @default(now())
+
+  @@unique([channelId, externalOrderId])
+}
+
+model OrderItem {
+  id             String  @id @default(cuid())
+  order          Order   @relation(fields: [orderId], references: [id])
+  orderId        String
+  externalItemId String
+  sku            String
+  quantity       Int
+  unitPrice      Decimal @db.Decimal(12, 2)
+}
+
+/// 仕入れ先への自動発注
+model SupplierOrder {
+  id                String   @id @default(cuid())
+  order             Order    @relation(fields: [orderId], references: [id])
+  orderId           String
+  supplierKind      String
+  externalProductId String
+  externalSkuId     String?
+  quantity          Int
+  cost              Decimal? @db.Decimal(12, 2)
+  supplierOrderId   String?
+  trackingNumber    String?
+  carrier           String?
+  accepted          Boolean  @default(false)
+  createdAt         DateTime @default(now())
+}
+
+/// 同期・自動化の実行ログ
+model SyncLog {
+  id        String   @id @default(cuid())
+  kind      String // "inventory" | "price" | "order" | "fulfill"
+  target    String?
+  action    String?
+  success   Boolean  @default(true)
+  message   String?
+  createdAt DateTime @default(now())
+}

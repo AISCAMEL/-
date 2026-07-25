@@ -1,0 +1,84 @@
+:root {
+  --bg: #fef6f0;
+  --surface: #ffffff;
+  --primary: #f472b6;
+  --primary-hover: #ec4899;
+  --primary-weak: #fce7f3;
+  --accent: #a78bfa;
+  --accent-weak: #ede9fe;
+  --mint: #6ee7b7;
+  --mint-weak: #d1fae5;
+  --peach: #fdba74;
+  --peach-weak: #ffedd5;
+  --ink: #4a3728;
+  --muted: #9c8578;
+  --card-border: #fde2d4;
+  --shadow: 0 2px 12px rgba(244, 114, 182, 0.10);
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--primary-hover);
+}
+
+input,
+select,
+button {
+  font-family: inherit;
+}
+
+input, select {
+  border: 2px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 15px;
+  transition: border-color 0.2s;
+  outline: none;
+  background: #fff;
+}
+input:focus, select:focus {
+  border-color: var(--primary);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14px;
+}
+thead tr {
+  border-bottom: 2px solid var(--primary-weak);
+}
+th {
+  padding: 10px 8px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+tbody tr {
+  border-bottom: 1px solid #fef0e8;
+  transition: background 0.15s;
+}
+tbody tr:hover {
+  background: var(--primary-weak);
+}
+td {
+  padding: 10px 8px;
+}

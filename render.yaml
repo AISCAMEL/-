@@ -1,0 +1,21 @@
+# Render 用 Blueprint（無料プランで Hub API を公開）
+# Render はリポジトリ直下の Dockerfile でビルドします。
+# 無料プランは15分の無アクセスでスリープします（定期同期は起動中のみ実行）。
+services:
+  - type: web
+    name: hub-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /health
+    # PORT は Render が自動注入し、Hub API がそれを読みます
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SYNC_INTERVAL_MINUTES
+        value: "60"
+      # 以下は secret 扱い（ダッシュボードで入力）。キーがあれば該当コネクタが自動 live
+      - key: YAHOO_APP_ID
+        sync: false
+      - key: RAKUTEN_APP_ID
+        sync: false

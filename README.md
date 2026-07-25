@@ -1,97 +1,98 @@
-# 合同会社アイズ — Web サイト & 業務システム
+# Dropshipping Hub — 猫グッズ 中国輸入 無在庫販売 ハブシステム
 
-静的サイト（HTML/CSS/JS）＋ Google Apps Script（GAS）バックエンドで構成された、
-**2ブランド**のサイトと業務システムのモノレポです。
+BASE（販売）× Alibaba.com / THE CKB（仕入れ）を連携し、**猫グッズ**を中心に中国輸入の**無在庫ドロップシッピング**を自動化する中核システム（モノレポ・骨組み）。猫グッズ特化のリサーチキーワード・推奨スクリーニング・規約注意は `GET /niche/cat-goods`（`packages/core/niche/cat-goods.ts`）。
 
-| ブランド | 内容 | 入口 |
-|---|---|---|
-| **BUYMO** | 車買取サービス（集客LP・SEO・査定シミュ・問い合わせ／本部・加盟店システム・アカデミー） | `site/buymo.html` |
-| **AUC-AGENT** | オークション代行（購入/出品代行・各種シミュレーター・会員/マイページ） | `site/index.html` |
+> 📄 設計の全体像は [`docs/dropshipping-hub-設計書.md`](docs/dropshipping-hub-設計書.md) を参照。
 
-会社情報：合同会社アイズ／福島県いわき市四倉町細谷字大町1番／古物商 第25121A010859号／info@aisjaltd.com
+## できること（自動化の対象）
 
----
+- **市場調査**: 楽天・Yahoo!ショッピング・Amazon・eBay で売値を調査（楽天/Yahooは無料API・live実装済み）
+- 仕入れ先（Alibaba / THE CKB / AliExpress）から商品取得 → BASE へ自動出品
+- 為替・送料・手数料・利益を加味した**価格自動計算**
+- 在庫・価格の定期同期（欠品時の**自動非公開**）
+- BASE 受注 → 仕入れ先へ**自動発注**（無在庫フロー）
+- 規約・法令の**出品前バリデーション**
+- 損益の可視化
 
-## ディレクトリ構成
+## 構成（モノレポ）
 
 ```
-site/            公開する静的サイト（このディレクトリを丸ごとホスティング）
-  assets/        css / js / img
-  genre/         BUYMO 買取ジャンル（ハブ＋25ジャンルLP＋ジャンル×エリア掛け合わせLP）
-  area/          BUYMO 都道府県別SEO LP（ハブ＋47県）
-  tools/         ページ生成・QA スクリプト（Node）
-  tests/         スモークテスト（Playwright）/ verify（jsdom）
-gas/             GAS バックエンド（doPost/doGet・通知・ステップメール・認証 等）
-docs/            設計・運用ドキュメント、ワイヤー、料金表 等
-netlify.toml     デプロイ設定（publish = site）
+apps/
+  api/         Hub API（Fastify）— products / suppliers / publish
+  web/         ダッシュボード（Next.js・骨組み）
+packages/
+  core/        ドメイン / 価格計算 / 同期 / 規約チェック（純粋ロジック）
+  connectors/  BASE / Alibaba / THE CKB コネクタ（mock | live 切替）
+  db/          Prisma スキーマ（PostgreSQL）
+docs/          設計書
 ```
 
----
-
-## ローカルでプレビュー
-
-静的サイトなのでビルド不要。
+## はじめに
 
 ```bash
-cd site
-python3 -m http.server 8000
-# BUYMO:     http://localhost:8000/buymo.html
-# AUC-AGENT: http://localhost:8000/index.html
+pnpm install
+cp .env.example .env          # API キー等を設定（未設定でも mock で動作）
+
+# Hub API（mock モードで起動）
+pnpm dev:api                  # http://localhost:3001/health
+
+# ダッシュボード
+pnpm dev:web                  # http://localhost:3000
+#   /research  … 猫グッズをスクリーニングして利益率で採点・ランキング
+#   /marketing … SNS集客の UTM 計測リンクを発行
+#   ※ Hub API(:3001) を起動した状態で利用（web は同一オリジンのプロキシ経由で叩く）
+
+# テスト / 型チェック
+pnpm test
+pnpm typecheck
 ```
 
----
+### mock / live モード
 
-## ページ生成（BUYMO のジャンル/エリア）
+`.env` の `CONNECTOR_MODE` で切り替え。
 
-ジャンルは `site/assets/js/genres.js`、掛け合わせ対象は `site/tools/_cross.js` が唯一のデータソース。
-編集したら再生成します。
+- `mock`（既定）: 外部APIを叩かず決定的なダミーで動作。設計・開発・テスト用。
+- `live`: 実API連携。各プラットフォームの**審査・契約・キー発行が前提**。
+  - **コネクタ単位で自動切替**: キーがあるコネクタだけ live、無いものは mock のまま。
+  - **楽天は live 実装済み**: `.env` に `RAKUTEN_APP_ID` を入れるだけで楽天が実データになる（無料・他は mock のまま）。
+  - **Amazon は Keepa live 実装済み**: `KEEPA_API_KEY`（Keepa有料契約）を入れると Amazon.co.jp の相場を取得。PA-APIは将来対応。
+  - BASE / Alibaba / THE CKB は審査・契約後に実装。
+  - 現在の各コネクタのモードは `GET /connectors` で確認できる。
+
+## API クイック例（mock）
 
 ```bash
-cd site
-node tools/gen-genre.js   # ジャンルハブ＋25ジャンルLP＋掛け合わせLP
-node tools/gen-area.js    # 47都道府県LP＋ハブ＋sitemap.xml＋robots.txt
+# 市場調査（Amazon・楽天で売値を調べ、仕入れ値と突き合わせて利益率/ROIを算出）
+curl -X POST localhost:3001/research \
+  -H 'content-type: application/json' \
+  -d '{"keyword":"ワイヤレスイヤホン","markets":["amazon","rakuten"],"supplierId":"theckb","externalId":"CKB-0001"}'
+#  → 市場の min/median/max ＋「市場中央値/最安値/最安値-5%」での利益・利益率・ROI
+
+# 一括スクリーニング（複数候補を採点し、利益率30%以上・B以上だけランキング）
+curl -X POST localhost:3001/research/screen \
+  -H 'content-type: application/json' \
+  -d '{"candidates":[{"supplierId":"theckb","externalId":"CKB-0001","keyword":"ワイヤレスイヤホン"}],"minMarginRate":0.3,"minGrade":"B"}'
+#  → 各候補に 0-100 スコア / A・B・C グレード / 採点理由 を付けて降順に返す
+
+# 仕入れ商品の取り込み（価格計算＋規約チェック）
+curl -X POST localhost:3001/products/import \
+  -H 'content-type: application/json' \
+  -d '{"supplierId":"theckb","externalId":"CKB-0001"}'
+
+# BASE へ出品（mock）
+curl -X POST localhost:3001/products/publish \
+  -H 'content-type: application/json' \
+  -d '{"supplierId":"theckb","externalId":"CKB-0001","channelId":"base"}'
 ```
 
-公開ドメイン確定後は `SITE_URL` を渡すと canonical / sitemap / robots が絶対URLになります。
+## 本番公開
 
-```bash
-SITE_URL=https://（本番ドメイン） node tools/gen-genre.js && node tools/gen-area.js
-```
+- 管理画面は **Vercel**、Hub API は **Railway/Render/VPS**（リポジトリ直下の `Dockerfile`）にデプロイ。
+- 管理画面は **`DASHBOARD_PASSWORD` でログイン必須**（未設定だと認証なし＝開発用）。`AUTH_TOKEN` にランダム秘密文字列を設定。
+- 手順の詳細は [`docs/デプロイ手順.md`](docs/デプロイ手順.md)。
 
----
+## 重要な前提・注意
 
-## QA（品質チェック）
-
-```bash
-cd site
-node tools/check-links.js   # 内部リンク／アセット切れ
-node tools/seo-check.js     # JSON-LD・title重複・canonical・OGP・データ整合
-node tools/launch-check.js  # 公開準備の残り（ENDPOINT/GA4/SITE_URL/画像）を一覧
-```
-
-実機回帰（主要28ページをブラウザで開いてエラー0＋要素存在を検証）：
-
-```bash
-cd site/tests
-npm install && npx playwright install chromium
-node smoke.js
-```
-
-> `check-links` / `seo-check` / `smoke` は GitHub Actions（`.github/workflows/qa.yml`）で push 毎に自動実行されます。
-
----
-
-## デプロイ
-
-- 静的ホスティング（Netlify / Cloudflare Pages / GitHub Pages 等）に **`site/` を公開**（`netlify.toml`：publish = site）。
-- 申込・業務データの自動化は `gas/` をデプロイし、各 JS の `ENDPOINT` に GAS の `/exec` URL を設定。
-- 手順の詳細は **`docs/デプロイ手順.md`（BUYMO は C2 章）**。
-
----
-
-## 主要ドキュメント
-
-- `docs/プロジェクト状況.md` … 現状サマリ
-- `docs/BUYMO_全体マップ.md` … ページ／モジュール／GAS／設定箇所／公開チェックリスト
-- `docs/デプロイ手順.md` … 公開手順（AUC＝B章 / BUYMO＝C2章）
-- `docs/BUYMO_認証設計.md`／`docs/BUYMO_業務システム設計.md`／`docs/BUYMO画像差し替えガイド.md`
+- 本リポジトリは**設計＋骨組み（フェーズ0）**。実API連携は審査・契約後に実装。
+- 無在庫転売は各プラットフォーム/法令の規約に抵触する場合があるため、**公式API中心・規約準拠**を原則とする（`packages/core/compliance`）。
+- ロードマップは設計書 §12 を参照。
