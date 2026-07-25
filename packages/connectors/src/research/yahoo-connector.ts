@@ -7,7 +7,7 @@ import type { ConnectorConfig, MarketResearchConnector, MarketSearchQuery } from
  *
  * 実連携は Yahoo!ショッピング 商品検索API(v3) を使用:
  *   GET https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch
- *       ?appid=<YAHOO_APP_ID>&query=<kw>&results=20&sort=+price
+ *       ?appid=<YAHOO_APP_ID>&query=<kw>&results=20&sort=score
  *   → hits[].{name, price, url, review.count, review.rate}
  *
  * 無料（YAHOO_APP_ID/Client ID の登録のみ）。mock では決定的なダミーを返す。
@@ -43,7 +43,7 @@ export class YahooConnector implements MarketResearchConnector {
     url.searchParams.set("appid", appId);
     url.searchParams.set("query", query.keyword);
     url.searchParams.set("results", String(Math.min(query.limit ?? 20, 50)));
-    url.searchParams.set("sort", "+price");
+    url.searchParams.set("sort", "score");
 
     const res = await fetch(url);
     if (!res.ok) throw new Error(`Yahoo API error: ${res.status} ${await res.text()}`);

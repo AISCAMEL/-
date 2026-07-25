@@ -7,7 +7,7 @@ import type { ConnectorConfig, MarketResearchConnector, MarketSearchQuery } from
  *
  * 実連携は楽天ウェブサービスの「楽天市場商品検索API」(IchibaItem/Search) を使用:
  *   GET https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601
- *       ?applicationId=...&keyword=...&hits=30&sort=+itemPrice
+ *       ?applicationId=...&keyword=...&hits=30&sort=standard
  *   → items[].item の itemName / itemPrice / itemUrl / reviewCount / reviewAverage
  *
  * 無料（applicationId の登録のみ）。mock では決定的なダミーを返す。
@@ -58,7 +58,7 @@ export class RakutenConnector implements MarketResearchConnector {
     url.searchParams.set("applicationId", appId);
     url.searchParams.set("keyword", query.keyword);
     url.searchParams.set("hits", String(Math.min(query.limit ?? 30, 30)));
-    url.searchParams.set("sort", "+itemPrice");
+    url.searchParams.set("sort", "standard");
     url.searchParams.set("formatVersion", "2");
 
     const res = await fetch(url);
