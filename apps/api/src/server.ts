@@ -168,7 +168,7 @@ export function buildServer() {
       markets: selectedMarkets,
       options: { minMarginRate, minGrade, limit },
     });
-    return { count: ranked.length, items: ranked };
+    return { count: ranked.length, candidateCount: candidates.length, markets: marketIds, items: ranked };
   });
 
   // 在庫・価格同期を実行（欠品の自動非公開・価格更新・在庫更新・再公開）

@@ -84,7 +84,12 @@ export default function ResearchPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ? JSON.stringify(data.error) : "スクリーニング失敗");
-      setItems(data.items ?? []);
+      const results = data.items ?? [];
+      setItems(results);
+      if (results.length === 0) {
+        const info = data.candidateCount ? `（候補${data.candidateCount}件中0件通過）` : "";
+        setError(`条件に合う商品が見つかりませんでした${info}。最低グレードを C に下げて再試行してみてください`);
+      }
     } catch (e) {
       setError(String(e));
       setItems([]);

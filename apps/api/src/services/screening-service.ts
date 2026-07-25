@@ -79,7 +79,8 @@ export async function screenCandidates(params: {
           marketSampleCount: research.market.overall.sampleCount,
           score,
         };
-      } catch {
+      } catch (err) {
+        console.error(`screening failed for ${c.supplierId}:${c.externalId}:`, err);
         return null;
       }
     }),
