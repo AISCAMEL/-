@@ -11,7 +11,9 @@ ENV PORT=8080
 ENV SESSION_HOURS=12
 EXPOSE 8080
 
-# アカウント/ログ/保存データは /app/server 配下に作成される。
-# 永続化する場合はこのディレクトリ（特に server/partners.json と server/data）を
-# ボリュームにマウントすること（README 参照）。
+# アカウント/ログ/保存データの保存先。
+#  - 既定（未設定）では /app/server 配下に作成される。
+#  - 本番では BMD_DATA_DIR に永続ディスクのマウント先を指定し、そこへ集約する
+#    （partners.json・access.log・data/records.json が1箇所にまとまる）。
+#    Render は render.yaml で /var/bmd-data を自動マウント。
 CMD ["node", "server/server.js"]
