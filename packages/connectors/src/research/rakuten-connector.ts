@@ -14,6 +14,7 @@ import type { ConnectorConfig, MarketResearchConnector, MarketSearchQuery } from
  */
 export class RakutenConnector implements MarketResearchConnector {
   readonly id = "rakuten" as const;
+  private queue: Promise<void> = Promise.resolve();
 
   constructor(private readonly config: ConnectorConfig) {}
 
@@ -22,7 +23,7 @@ export class RakutenConnector implements MarketResearchConnector {
   }
 
   async searchListings(query: MarketSearchQuery): Promise<MarketListing[]> {
-    if (this.live) return this.fetchLive(query);
+    if (this.live) return this.enqueue(query);
     const base = 3200;
     return Array.from({ length: query.limit ?? 5 }, (_, i) => ({
       marketId: this.id,
@@ -34,7 +35,21 @@ export class RakutenConnector implements MarketResearchConnector {
     }));
   }
 
-  /** 楽天市場 商品検索API (IchibaItem/Search) を実呼び出しする。 */
+  // 楽天APIは1秒1リクエスト制限 — 直列キューで守る
+  private enqueue(query: MarketSearchQuery): Promise<MarketListing[]> {
+    const prev = this.queue;
+    let resolve!: () => void;
+    this.queue = new Promise<void>((r) => { resolve = r; });
+    return prev.then(async () => {
+      try {
+        return await this.fetchLive(query);
+      } finally {
+        await new Promise<void>((r) => setTimeout(r, 1100));
+        resolve();
+      }
+    });
+  }
+
   private async fetchLive(query: MarketSearchQuery): Promise<MarketListing[]> {
     const appId = this.config.credentials?.RAKUTEN_APP_ID;
     if (!appId) throw new NotImplementedLiveError("rakuten.searchListings (RAKUTEN_APP_ID 未設定)");
@@ -43,11 +58,14 @@ export class RakutenConnector implements MarketResearchConnector {
     url.searchParams.set("applicationId", appId);
     url.searchParams.set("keyword", query.keyword);
     url.searchParams.set("hits", String(Math.min(query.limit ?? 30, 30)));
-    url.searchParams.set("sort", "+itemPrice"); // 価格の安い順
+    url.searchParams.set("sort", "+itemPrice");
     url.searchParams.set("formatVersion", "2");
 
     const res = await fetch(url);
-    if (!res.ok) throw new Error(`Rakuten API error: ${res.status} ${await res.text()}`);
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      throw new Error(`Rakuten API error ${res.status}: ${body}`);
+    }
     const data = (await res.json()) as RakutenSearchResponse;
 
     return (data.Items ?? []).map((item) => ({
