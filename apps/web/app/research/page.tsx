@@ -237,7 +237,7 @@ export default function ResearchPage() {
           <table>
             <thead>
               <tr>
-                {["#", "商品", "判定", "スコア", "売値(中央)", "原価", "利益", "利益率", "ROI", "BASE出品", "計測"].map((h) => (
+                {["#", "商品", "楽天で見る", "判定", "スコア", "売値(中央)", "原価", "利益", "利益率", "ROI", "BASE出品", "計測"].map((h) => (
                   <th key={h}>{h}</th>
                 ))}
               </tr>
@@ -249,6 +249,16 @@ export default function ResearchPage() {
                   <tr key={it.key}>
                     <td>{i + 1}</td>
                     <td style={{ fontWeight: 500 }}>{it.keyword}</td>
+                    <td>
+                      <a
+                        href={`https://search.rakuten.co.jp/search/mall/${encodeURIComponent(it.keyword)}/`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}
+                      >
+                        楽天で検索
+                      </a>
+                    </td>
                     <td>
                       <span style={{
                         background: gs.bg, color: gs.color,
