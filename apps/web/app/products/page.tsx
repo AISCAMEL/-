@@ -52,6 +52,9 @@ export default function ProductsPage() {
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState<string | null>(null);
   const [pubState, setPubState] = useState<Record<string, { status: string; msg?: string }>>({});
+  const [bulkIds, setBulkIds] = useState("");
+  const [bulkRunning, setBulkRunning] = useState(false);
+  const [bulkResults, setBulkResults] = useState<{ id: string; ok: boolean; msg: string }[]>([]);
 
   const load = useCallback(async () => {
     try {
@@ -94,6 +97,35 @@ export default function ProductsPage() {
     } finally {
       setImporting(false);
     }
+  }
+
+  async function handleBulkImport(e: React.FormEvent) {
+    e.preventDefault();
+    const ids = bulkIds.split(/[,\n\r\t]+/).map((s) => s.trim()).filter(Boolean);
+    if (ids.length === 0) return;
+    setBulkRunning(true);
+    setBulkResults([]);
+    const results: { id: string; ok: boolean; msg: string }[] = [];
+    for (const externalId of ids) {
+      try {
+        const res = await fetch("/api/products", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ supplierId: importForm.supplierId, externalId }),
+        });
+        const data = await res.json();
+        results.push({
+          id: externalId,
+          ok: res.ok,
+          msg: res.ok ? `${data.product?.title ?? ""} ${yen(data.sellPrice)}` : (data.error ? JSON.stringify(data.error) : "失敗"),
+        });
+      } catch (err) {
+        results.push({ id: externalId, ok: false, msg: String(err) });
+      }
+      setBulkResults([...results]);
+    }
+    setBulkRunning(false);
+    await load();
   }
 
   async function handlePublish(product: Product) {
@@ -225,6 +257,47 @@ export default function ProductsPage() {
           <p style={{ marginTop: 8, fontSize: 13, color: importMsg.startsWith("取込完了") ? "#16a34a" : "#dc2626" }}>
             {importMsg}
           </p>
+        )}
+      </div>
+
+      <div style={{
+        background: "#fff", border: "2px solid var(--card-border)", borderRadius: "var(--radius)",
+        padding: 16, marginBottom: 20,
+      }}>
+        <h3 style={{ margin: "0 0 12px", fontSize: 15 }}>一括取込</h3>
+        <form onSubmit={handleBulkImport} style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "end" }}>
+          <label style={{ fontSize: 13, fontWeight: 600, flex: 1, minWidth: 200 }}>
+            商品ID（カンマ or 改行で複数）
+            <br />
+            <textarea
+              value={bulkIds}
+              onChange={(e) => setBulkIds(e.target.value)}
+              placeholder={"CKB-0001\nCKB-0002\nCKB-0003"}
+              rows={3}
+              style={{ marginTop: 4, padding: "6px 10px", width: "100%", resize: "vertical", fontFamily: "monospace", fontSize: 13 }}
+            />
+          </label>
+          <button
+            type="submit"
+            disabled={bulkRunning || !bulkIds.trim()}
+            style={{
+              padding: "8px 20px", borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 700,
+              border: 0, color: "#fff", alignSelf: "flex-end",
+              background: "linear-gradient(135deg, #60a5fa, #3b82f6)",
+              boxShadow: "0 2px 12px rgba(59,130,246,0.3)",
+            }}
+          >
+            {bulkRunning ? `取込中… (${bulkResults.length})` : "一括取込"}
+          </button>
+        </form>
+        {bulkResults.length > 0 && (
+          <div style={{ marginTop: 8, fontSize: 12, maxHeight: 120, overflowY: "auto" }}>
+            {bulkResults.map((r) => (
+              <div key={r.id} style={{ padding: "2px 0", color: r.ok ? "#16a34a" : "#dc2626" }}>
+                {r.ok ? "✓" : "✗"} {r.id}: {r.msg}
+              </div>
+            ))}
+          </div>
         )}
       </div>
 

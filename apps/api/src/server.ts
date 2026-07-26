@@ -37,6 +37,8 @@ import { fetchCnyToJpy, updatePriceRuleFxRate, getCachedRate } from "./services/
 import { getAlerts, getUnreadCount, markAlertRead } from "./services/alert-service.js";
 import { runAutoScreen, getAutoScreenStatus } from "./services/auto-screen-service.js";
 import { dbEnabled, productRepo } from "@hub/db";
+import { fulfillOrder, autoFulfillAll } from "./services/fulfillment-service.js";
+import { isWebhookConfigured } from "./services/webhook-notify-service.js";
 
 export function buildServer() {
   const config = loadConfig();
@@ -285,6 +287,17 @@ export function buildServer() {
 
   // 損益サマリ
   app.get("/dashboard/pnl", async () => await getPnl());
+
+  // 受注 → 仕入れ先への自動発注
+  app.post("/orders/:id/fulfill", async (req) => {
+    const { id } = req.params as { id: string };
+    return fulfillOrder(id, getSupplier);
+  });
+
+  app.post("/orders/fulfill-all", async () => autoFulfillAll(getSupplier));
+
+  // Webhook通知状態
+  app.get("/notifications/status", async () => isWebhookConfigured());
 
   // BASE へ出品
   const publishSchema = z.object({

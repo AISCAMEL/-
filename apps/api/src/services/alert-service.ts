@@ -1,4 +1,5 @@
 import { dbEnabled, syncLogRepo } from "@hub/db";
+import { notifyExternal } from "./webhook-notify-service.js";
 
 export interface Alert {
   id: string;
@@ -31,6 +32,8 @@ export function pushAlert(alert: Omit<Alert, "id" | "createdAt" | "read">) {
       message: alert.message,
     }).catch(() => {});
   }
+
+  notifyExternal({ title: alert.title, message: alert.message, severity: alert.severity }).catch(() => {});
 
   return entry;
 }
