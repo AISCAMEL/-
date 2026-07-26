@@ -7,6 +7,7 @@ const sections = [
   { title: "受注 / 損益", icon: "🧾", desc: "受注一覧と売上・原価・手数料・利益の可視化", href: "/orders", ready: true, color: "#6ee7b7" },
   { title: "在庫・価格同期", icon: "🔄", desc: "仕入れ先を監視し欠品は自動非公開・価格は再計算", href: "/sync", ready: true, color: "#fdba74" },
   { title: "商品・出品管理", icon: "📦", desc: "取り込み・出品状態の管理（DB連携）", href: "/products", ready: true, color: "#60a5fa" },
+  { title: "操作マニュアル", icon: "📖", desc: "全機能の使い方・ワークフロー・用語集", href: "/manual", ready: true, color: "#94a3b8" },
 ];
 
 const paws = ["🐾", "🐱", "😺", "🐈", "✨"];
