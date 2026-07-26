@@ -53,15 +53,21 @@ export class RakutenConnector implements MarketResearchConnector {
   private async fetchLive(query: MarketSearchQuery): Promise<MarketListing[]> {
     const appId = this.config.credentials?.RAKUTEN_APP_ID;
     if (!appId) throw new NotImplementedLiveError("rakuten.searchListings (RAKUTEN_APP_ID 未設定)");
+    const accessKey = this.config.credentials?.RAKUTEN_ACCESS_KEY;
 
-    const url = new URL("https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601");
+    const url = new URL("https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20220601");
     url.searchParams.set("applicationId", appId);
     url.searchParams.set("keyword", query.keyword);
     url.searchParams.set("hits", String(Math.min(query.limit ?? 30, 30)));
     url.searchParams.set("sort", "standard");
     url.searchParams.set("formatVersion", "2");
 
-    const res = await fetch(url);
+    const headers: Record<string, string> = {};
+    if (accessKey) {
+      headers["accessKey"] = accessKey;
+    }
+
+    const res = await fetch(url, { headers });
     if (!res.ok) {
       const body = await res.text().catch(() => "");
       throw new Error(`Rakuten API error ${res.status}: ${body}`);

@@ -96,6 +96,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
         ALIEXPRESS_APP_KEY: env.ALIEXPRESS_APP_KEY,
         ALIEXPRESS_APP_SECRET: env.ALIEXPRESS_APP_SECRET,
         RAKUTEN_APP_ID: env.RAKUTEN_APP_ID,
+        RAKUTEN_ACCESS_KEY: env.RAKUTEN_ACCESS_KEY,
         KEEPA_API_KEY: env.KEEPA_API_KEY,
         AMAZON_PAAPI_ACCESS_KEY: env.AMAZON_PAAPI_ACCESS_KEY,
         YAHOO_APP_ID: env.YAHOO_APP_ID,
