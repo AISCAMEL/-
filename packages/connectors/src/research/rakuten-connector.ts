@@ -62,7 +62,11 @@ export class RakutenConnector implements MarketResearchConnector {
     url.searchParams.set("sort", "standard");
     url.searchParams.set("formatVersion", "2");
 
-    const headers: Record<string, string> = {};
+    const siteUrl = this.config.credentials?.RAKUTEN_SITE_URL || "https://hub-api-3o5c.onrender.com";
+    const headers: Record<string, string> = {
+      "Referer": siteUrl,
+      "Origin": siteUrl,
+    };
     if (accessKey) {
       headers["accessKey"] = accessKey;
     }
