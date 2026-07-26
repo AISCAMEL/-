@@ -6,9 +6,8 @@ import {
   type SupplierProduct,
 } from "@hub/core";
 import type { SalesChannelConnector, SupplierConnector } from "@hub/connectors";
-import { productRepo, listingRepo, priceRuleRepo } from "@hub/db";
+import { dbEnabled, productRepo, listingRepo, priceRuleRepo } from "@hub/db";
 
-/** DB の PriceRule が無い場合のフォールバック。 */
 export const DEFAULT_PRICE_RULE: PriceRule = {
   fxRateToJpy: 21,
   dutyRate: 0.1,
@@ -21,6 +20,7 @@ export const DEFAULT_PRICE_RULE: PriceRule = {
 };
 
 async function loadPriceRule(): Promise<PriceRule> {
+  if (!dbEnabled) return DEFAULT_PRICE_RULE;
   const dbRule = await priceRuleRepo.getDefaultPriceRule();
   return dbRule ? priceRuleRepo.toCoreRule(dbRule) : DEFAULT_PRICE_RULE;
 }
@@ -43,16 +43,18 @@ export async function importProduct(
   const price = calculateSellPrice({ cost: product.cost, costCurrency: product.costCurrency }, effectiveRule);
   const issues = validateForListing(product);
 
-  await productRepo.importProduct({
-    supplierKind: product.supplierId,
-    externalId: product.externalId,
-    title: product.title,
-    description: product.description,
-    imageUrls: product.imageUrls,
-    costCNY: product.cost,
-    stock: product.stock ?? undefined,
-    sellPrice: price.sellPrice,
-  });
+  if (dbEnabled) {
+    await productRepo.importProduct({
+      supplierKind: product.supplierId,
+      externalId: product.externalId,
+      title: product.title,
+      description: product.description,
+      imageUrls: product.imageUrls,
+      costCNY: product.cost,
+      stock: product.stock ?? undefined,
+      sellPrice: price.sellPrice,
+    });
+  }
 
   return {
     product,
@@ -82,20 +84,22 @@ export async function publishToChannel(
     stock: result.product.stock ?? 0,
   });
 
-  const dbProducts = await productRepo.listProducts({ take: 1 });
-  const dbProduct = dbProducts.items.find(
-    (p) =>
-      p.sourceProduct.externalId === result.product.externalId &&
-      p.sourceProduct.supplier.kind === result.product.supplierId,
-  );
-  if (dbProduct) {
-    await listingRepo.upsertListing({
-      productId: dbProduct.id,
-      channelKind: channel.id,
-      externalListingId: listing.externalListingId,
-      publishedPrice: result.sellPrice,
-      publishedStock: result.product.stock ?? 0,
-    });
+  if (dbEnabled) {
+    const dbProducts = await productRepo.listProducts({ take: 1 });
+    const dbProduct = dbProducts.items.find(
+      (p) =>
+        p.sourceProduct.externalId === result.product.externalId &&
+        p.sourceProduct.supplier.kind === result.product.supplierId,
+    );
+    if (dbProduct) {
+      await listingRepo.upsertListing({
+        productId: dbProduct.id,
+        channelKind: channel.id,
+        externalListingId: listing.externalListingId,
+        publishedPrice: result.sellPrice,
+        publishedStock: result.product.stock ?? 0,
+      });
+    }
   }
 
   return listing;

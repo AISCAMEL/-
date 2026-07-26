@@ -1,5 +1,5 @@
 import { buildOrderPnl, summarizePnl, type OrderPnl, type PnlSummary } from "@hub/core";
-import { orderRepo, priceRuleRepo } from "@hub/db";
+import { dbEnabled, orderRepo, priceRuleRepo } from "@hub/db";
 import { DEFAULT_PRICE_RULE } from "./listing-service.js";
 
 const SAMPLE_ORDERS: Omit<OrderPnl, "platformFee" | "profit">[] = [
@@ -13,8 +13,13 @@ const SAMPLE_ORDERS: Omit<OrderPnl, "platformFee" | "profit">[] = [
 ];
 
 export async function getOrders(): Promise<OrderPnl[]> {
-  const rule = await priceRuleRepo.getDefaultPriceRule();
-  const feeRate = rule ? Number(rule.platformFeeRate) : DEFAULT_PRICE_RULE.platformFeeRate;
+  const feeRate = dbEnabled
+    ? await priceRuleRepo.getDefaultPriceRule().then((r) => (r ? Number(r.platformFeeRate) : DEFAULT_PRICE_RULE.platformFeeRate))
+    : DEFAULT_PRICE_RULE.platformFeeRate;
+
+  if (!dbEnabled) {
+    return SAMPLE_ORDERS.map((o) => buildOrderPnl(o, feeRate));
+  }
 
   const { items: dbOrders } = await orderRepo.listOrders({ take: 100 });
 

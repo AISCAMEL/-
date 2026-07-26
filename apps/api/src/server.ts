@@ -33,7 +33,7 @@ import { researchMarket } from "./services/research-service.js";
 import { screenCandidates } from "./services/screening-service.js";
 import { getLastRun, runSync } from "./services/sync-service.js";
 import { getSchedulerInterval, startSyncScheduler } from "./scheduler.js";
-import { productRepo } from "@hub/db";
+import { dbEnabled, productRepo } from "@hub/db";
 
 export function buildServer() {
   const config = loadConfig();
@@ -112,7 +112,8 @@ export function buildServer() {
   });
 
   // 管理商品一覧（DB）
-  app.get("/products", async (req) => {
+  app.get("/products", async (req, reply) => {
+    if (!dbEnabled) return reply.code(503).send({ error: "DATABASE_URL 未設定", items: [], total: 0 });
     const { skip, take } = req.query as { skip?: string; take?: string };
     return productRepo.listProducts({
       skip: skip ? Number(skip) : undefined,
@@ -122,6 +123,7 @@ export function buildServer() {
 
   // 管理商品の詳細
   app.get("/products/:id", async (req, reply) => {
+    if (!dbEnabled) return reply.code(503).send({ error: "DATABASE_URL 未設定" });
     const { id } = req.params as { id: string };
     const product = await productRepo.getProduct(id);
     if (!product) return reply.code(404).send({ error: "product not found" });
@@ -130,6 +132,7 @@ export function buildServer() {
 
   // 管理商品の削除
   app.delete("/products/:id", async (req, reply) => {
+    if (!dbEnabled) return reply.code(503).send({ error: "DATABASE_URL 未設定" });
     const { id } = req.params as { id: string };
     try {
       await productRepo.deleteProduct(id);
