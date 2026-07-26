@@ -45,6 +45,7 @@ export default function ResearchPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pubState, setPubState] = useState<Record<string, { status: string; msg?: string }>>({});
+  const [importState, setImportState] = useState<Record<string, { status: string; msg?: string }>>({});
   const [liveMarkets, setLiveMarkets] = useState<string[]>([]);
 
   const ALL_MARKETS = ["amazon", "rakuten", "yahoo", "ebay"];
@@ -135,6 +136,49 @@ export default function ResearchPage() {
     } catch (e) {
       setPubState((s) => ({ ...s, [it.key]: { status: "error", msg: String(e) } }));
     }
+  }
+
+  async function importToDb(it: ScreenedItem) {
+    const [supplierId, externalId] = it.key.split(":");
+    setImportState((s) => ({ ...s, [it.key]: { status: "importing" } }));
+    try {
+      const res = await fetch("/api/products", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ supplierId, externalId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setImportState((s) => ({ ...s, [it.key]: { status: "error", msg: data.error ? JSON.stringify(data.error) : "取込失敗" } }));
+        return;
+      }
+      setImportState((s) => ({ ...s, [it.key]: { status: "done", msg: `¥${data.sellPrice?.toLocaleString() ?? "?"}` } }));
+    } catch (e) {
+      setImportState((s) => ({ ...s, [it.key]: { status: "error", msg: String(e) } }));
+    }
+  }
+
+  function renderImport(it: ScreenedItem) {
+    const st = importState[it.key];
+    if (st?.status === "done") {
+      return <span style={{ color: "#2563eb", fontSize: 12, fontWeight: 600 }}>📦 取込済</span>;
+    }
+    if (st?.status === "error") {
+      return <span title={st.msg} style={{ color: "#dc2626", fontSize: 12 }}>取込失敗</span>;
+    }
+    const importing = st?.status === "importing";
+    return (
+      <button
+        onClick={() => importToDb(it)}
+        disabled={importing}
+        style={{
+          padding: "3px 10px", borderRadius: 12, cursor: "pointer", fontSize: 12, fontWeight: 600,
+          border: "1.5px solid #93c5fd", color: "#2563eb", background: "#eff6ff",
+        }}
+      >
+        {importing ? "…" : "DB取込"}
+      </button>
+    );
   }
 
   function renderPublish(it: ScreenedItem) {
@@ -244,7 +288,7 @@ export default function ResearchPage() {
           <table>
             <thead>
               <tr>
-                {["#", "キーワード", "実際の商品", "判定", "スコア", "売値(中央)", "原価", "利益", "利益率", "ROI", "BASE出品", "計測"].map((h) => (
+                {["#", "キーワード", "実際の商品", "判定", "スコア", "売値(中央)", "原価", "利益", "利益率", "ROI", "取込", "BASE出品", "計測"].map((h) => (
                   <th key={h}>{h}</th>
                 ))}
               </tr>
@@ -298,6 +342,7 @@ export default function ResearchPage() {
                     <td style={{ fontWeight: 700, color: "#16a34a" }}>{yen(it.chosen?.profit)}</td>
                     <td>{pct(it.chosen?.marginRate)}</td>
                     <td>{pct(it.chosen?.roi)}</td>
+                    <td>{renderImport(it)}</td>
                     <td>{renderPublish(it)}</td>
                     <td>
                       <a href={`/marketing?campaign=${encodeURIComponent(it.key)}`}

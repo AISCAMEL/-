@@ -8,6 +8,7 @@ interface SourceProduct {
   cost: string;
   costCurrency: string;
   stock: number | null;
+  imageUrls: string[];
   supplier: { kind: string; name: string };
 }
 
@@ -248,7 +249,7 @@ export default function ProductsPage() {
             <table>
               <thead>
                 <tr>
-                  {["#", "商品名", "仕入れ先", "原価(CNY)", "在庫", "売値(JPY)", "出品状態", "操作"].map((h) => (
+                  {["#", "画像", "商品名", "仕入れ先", "原価(CNY)", "在庫", "売値(JPY)", "出品状態", "操作"].map((h) => (
                     <th key={h}>{h}</th>
                   ))}
                 </tr>
@@ -260,6 +261,17 @@ export default function ProductsPage() {
                   return (
                     <tr key={p.id}>
                       <td>{i + 1}</td>
+                      <td>
+                        {p.sourceProduct.imageUrls?.[0] ? (
+                          <img
+                            src={p.sourceProduct.imageUrls[0]}
+                            alt={p.title}
+                            style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 6, border: "1px solid #e5e7eb" }}
+                          />
+                        ) : (
+                          <span style={{ display: "inline-block", width: 48, height: 48, borderRadius: 6, background: "#f3f4f6", textAlign: "center", lineHeight: "48px", fontSize: 20 }}>📦</span>
+                        )}
+                      </td>
                       <td style={{ fontWeight: 500, maxWidth: 240 }}>{p.title}</td>
                       <td>
                         <span style={{

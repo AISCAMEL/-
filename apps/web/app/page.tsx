@@ -1,4 +1,5 @@
 import ConnectorStatus from "./connector-status";
+import AlertBanner from "./alert-banner";
 
 const sections = [
   { title: "猫グッズ スクリーニング", icon: "🔍", desc: "Amazon・楽天で調査し利益率で採点・ランキング", href: "/research", ready: true, color: "#a78bfa" },
@@ -22,6 +23,7 @@ export default function DashboardPage() {
         </p>
       </div>
 
+      <AlertBanner />
       <ConnectorStatus />
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>

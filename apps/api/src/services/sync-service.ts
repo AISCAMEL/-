@@ -7,6 +7,7 @@ import {
 } from "@hub/core";
 import { dbEnabled, listingRepo, priceRuleRepo, syncLogRepo } from "@hub/db";
 import { DEFAULT_PRICE_RULE } from "./listing-service.js";
+import { pushAlert } from "./alert-service.js";
 
 interface ManagedListing {
   externalId: string;
@@ -92,8 +93,16 @@ export async function runSync(): Promise<SyncRunResult> {
 
     let changed = false;
     for (const a of actions) {
-      if (a.type === "unpublish") (summary.unpublished++, (changed = true));
-      else if (a.type === "republish") (summary.republished++, (changed = true));
+      if (a.type === "unpublish") {
+        summary.unpublished++;
+        changed = true;
+        pushAlert({
+          type: "out_of_stock",
+          title: "在庫切れ",
+          message: `「${m.title}」(${m.externalId}) の在庫が 0 になったため非公開にしました`,
+          severity: "warning",
+        });
+      } else if (a.type === "republish") (summary.republished++, (changed = true));
       else if (a.type === "update_price") (summary.priceUpdates++, (changed = true));
       else if (a.type === "update_stock") (summary.stockUpdates++, (changed = true));
     }

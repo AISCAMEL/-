@@ -1,4 +1,5 @@
 import { runSync } from "./services/sync-service.js";
+import { updatePriceRuleFxRate } from "./services/fx-service.js";
 
 let timer: NodeJS.Timeout | null = null;
 let intervalMinutes = 0;
@@ -21,6 +22,8 @@ export function startSyncScheduler(minutes: number, log?: Logger): void {
   }
   const tick = async () => {
     try {
+      const fx = await updatePriceRuleFxRate();
+      if (fx.updated) log?.info(`為替レート更新: CNY→JPY ${fx.rate}`);
       const r = await runSync();
       log?.info(`auto-sync 実行: ${JSON.stringify(r.summary)}`);
     } catch (e) {

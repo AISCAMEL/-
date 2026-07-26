@@ -33,6 +33,9 @@ import { researchMarket } from "./services/research-service.js";
 import { screenCandidates } from "./services/screening-service.js";
 import { getLastRun, runSync } from "./services/sync-service.js";
 import { getSchedulerInterval, startSyncScheduler } from "./scheduler.js";
+import { fetchCnyToJpy, updatePriceRuleFxRate, getCachedRate } from "./services/fx-service.js";
+import { getAlerts, getUnreadCount, markAlertRead } from "./services/alert-service.js";
+import { runAutoScreen, getAutoScreenStatus } from "./services/auto-screen-service.js";
 import { dbEnabled, productRepo } from "@hub/db";
 
 export function buildServer() {
@@ -56,8 +59,42 @@ export function buildServer() {
   app.get("/", async () => ({
     service: "dropshipping-hub-api",
     status: "ok",
-    endpoints: ["/health", "/connectors", "/niche/cat-goods", "/products", "/products/:id", "/research", "/research/screen", "/research/test", "/orders", "/dashboard/pnl", "/sync/run", "/sync/status", "/auth/base/authorize", "/auth/base/exchange"],
+    endpoints: ["/health", "/connectors", "/niche/cat-goods", "/products", "/products/:id", "/research", "/research/screen", "/research/test", "/orders", "/dashboard/pnl", "/sync/run", "/sync/status", "/fx/rate", "/fx/update", "/alerts", "/auth/base/authorize", "/auth/base/exchange"],
   }));
+
+  // 為替レート取得（CNY→JPY）
+  app.get("/fx/rate", async () => {
+    const rate = await fetchCnyToJpy();
+    return { cnyToJpy: rate, cached: getCachedRate() !== null };
+  });
+
+  // 為替レートをDBに反映
+  app.post("/fx/update", async () => updatePriceRuleFxRate());
+
+  // アラート一覧
+  app.get("/alerts", async (req) => {
+    const { unread } = req.query as { unread?: string };
+    return {
+      alerts: getAlerts({ unreadOnly: unread === "1", limit: 50 }),
+      unreadCount: getUnreadCount(),
+    };
+  });
+
+  // アラート既読
+  app.post("/alerts/:id/read", async (req, reply) => {
+    const { id } = req.params as { id: string };
+    return markAlertRead(id) ? { ok: true } : reply.code(404).send({ error: "not found" });
+  });
+
+  // 定期スクリーニング手動実行
+  app.post("/research/auto-screen", async () => {
+    const selectedMarkets = (["amazon", "rakuten", "yahoo"] as const)
+      .map(getMarket).filter((m): m is MarketResearchConnector => !!m);
+    return runAutoScreen({ resolveSupplier: getSupplier, markets: selectedMarkets });
+  });
+
+  // 定期スクリーニング状態
+  app.get("/research/auto-screen/status", async () => getAutoScreenStatus());
 
   // 各コネクタの実効モード（mock | live）。どのデータ源が本番接続かを確認する。
   app.get("/connectors", async () => ({
