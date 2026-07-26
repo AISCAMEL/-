@@ -1,4 +1,4 @@
-import type { Profitability } from "./market-analysis.js";
+import type { MarketListing, Profitability } from "./market-analysis.js";
 
 /** スコアリングの入力（1商品分）。 */
 export interface ScoreInput {
@@ -70,6 +70,14 @@ export function scoreProduct(input: ScoreInput): ScoreResult {
   return { score, grade, reasons };
 }
 
+/** 市場で見つかった商品の要約（フロント表示用）。 */
+export interface ListingSummary {
+  title: string;
+  price: number;
+  url?: string;
+  marketId: string;
+}
+
 /** スクリーニング1件の結果。 */
 export interface ScreenedItem {
   key: string;
@@ -79,6 +87,8 @@ export interface ScreenedItem {
   chosen: Profitability | null;
   marketSampleCount: number;
   score: ScoreResult;
+  /** 市場で見つかった上位商品（価格中央値付近、最大5件）。 */
+  topListings?: ListingSummary[];
 }
 
 /** 最低利益率で足切りし、スコア降順に並べる。 */

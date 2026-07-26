@@ -13,6 +13,12 @@ interface ScoreResult {
   grade: "A" | "B" | "C";
   reasons: string[];
 }
+interface ListingSummary {
+  title: string;
+  price: number;
+  url?: string;
+  marketId: string;
+}
 interface ScreenedItem {
   key: string;
   keyword: string;
@@ -20,6 +26,7 @@ interface ScreenedItem {
   chosen: Profitability | null;
   marketSampleCount: number;
   score: ScoreResult;
+  topListings?: ListingSummary[];
 }
 
 const GRADE_STYLE: Record<string, { bg: string; color: string; emoji: string }> = {
@@ -237,7 +244,7 @@ export default function ResearchPage() {
           <table>
             <thead>
               <tr>
-                {["#", "商品", "楽天で見る", "判定", "スコア", "売値(中央)", "原価", "利益", "利益率", "ROI", "BASE出品", "計測"].map((h) => (
+                {["#", "キーワード", "実際の商品", "判定", "スコア", "売値(中央)", "原価", "利益", "利益率", "ROI", "BASE出品", "計測"].map((h) => (
                   <th key={h}>{h}</th>
                 ))}
               </tr>
@@ -249,15 +256,32 @@ export default function ResearchPage() {
                   <tr key={it.key}>
                     <td>{i + 1}</td>
                     <td style={{ fontWeight: 500 }}>{it.keyword}</td>
-                    <td>
-                      <a
-                        href={`https://search.rakuten.co.jp/search/mall/${encodeURIComponent(it.keyword)}/`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}
-                      >
-                        楽天で検索
-                      </a>
+                    <td style={{ maxWidth: 280, fontSize: 12 }}>
+                      {it.topListings && it.topListings.length > 0 ? (
+                        <ul style={{ margin: 0, padding: "0 0 0 14px", lineHeight: 1.6 }}>
+                          {it.topListings.slice(0, 3).map((l, j) => (
+                            <li key={j}>
+                              {l.url ? (
+                                <a href={l.url} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 500 }}>
+                                  {l.title.length > 40 ? l.title.slice(0, 40) + "…" : l.title}
+                                </a>
+                              ) : (
+                                <span>{l.title.length > 40 ? l.title.slice(0, 40) + "…" : l.title}</span>
+                              )}
+                              <span style={{ color: "#9ca3af", marginLeft: 4 }}>¥{l.price.toLocaleString()}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <a
+                          href={`https://search.rakuten.co.jp/search/mall/${encodeURIComponent(it.keyword)}/`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ fontWeight: 600, whiteSpace: "nowrap" }}
+                        >
+                          楽天で検索
+                        </a>
+                      )}
                     </td>
                     <td>
                       <span style={{

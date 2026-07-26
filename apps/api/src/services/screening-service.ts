@@ -84,6 +84,16 @@ export async function screenCandidates(params: {
           stockStable: (product.stock ?? 0) > 0,
         });
 
+        const sorted = [...research.market.listings].sort(
+          (a, b) => Math.abs(a.price - research.market.overall.median) - Math.abs(b.price - research.market.overall.median),
+        );
+        const topListings = sorted.slice(0, 5).map((l) => ({
+          title: l.title,
+          price: l.price,
+          url: l.url,
+          marketId: l.marketId,
+        }));
+
         return {
           key: `${c.supplierId}:${c.externalId}`,
           keyword,
@@ -91,6 +101,7 @@ export async function screenCandidates(params: {
           chosen,
           marketSampleCount: research.market.overall.sampleCount,
           score,
+          topListings,
         };
       } catch (err) {
         console.error(`[screen] FAIL ${c.supplierId}:${c.externalId}:`, err);
