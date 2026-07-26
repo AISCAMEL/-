@@ -19,16 +19,16 @@ export function startSyncScheduler(minutes: number, log?: Logger): void {
     log?.info("auto-sync: 無効（SYNC_INTERVAL_MINUTES 未設定）");
     return;
   }
-  const tick = () => {
+  const tick = async () => {
     try {
-      const r = runSync();
+      const r = await runSync();
       log?.info(`auto-sync 実行: ${JSON.stringify(r.summary)}`);
     } catch (e) {
       log?.error(`auto-sync 失敗: ${String(e)}`);
     }
   };
-  tick(); // 起動時に1回
-  timer = setInterval(tick, minutes * 60_000);
+  void tick();
+  timer = setInterval(() => void tick(), minutes * 60_000);
   timer.unref?.(); // プロセス終了を妨げない
   log?.info(`auto-sync: 有効（${minutes}分ごと）`);
 }

@@ -16,6 +16,9 @@ importers:
       '@hub/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@hub/db':
+        specifier: workspace:^
+        version: link:../../packages/db
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
@@ -99,6 +102,9 @@ importers:
         specifier: ^5.18.0
         version: 5.22.0(prisma@5.22.0)
     devDependencies:
+      '@types/node':
+        specifier: ^20.14.0
+        version: 20.19.43
       prisma:
         specifier: ^5.18.0
         version: 5.22.0

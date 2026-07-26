@@ -33,6 +33,7 @@ import { researchMarket } from "./services/research-service.js";
 import { screenCandidates } from "./services/screening-service.js";
 import { getLastRun, runSync } from "./services/sync-service.js";
 import { getSchedulerInterval, startSyncScheduler } from "./scheduler.js";
+import { productRepo } from "@hub/db";
 
 export function buildServer() {
   const config = loadConfig();
@@ -55,7 +56,7 @@ export function buildServer() {
   app.get("/", async () => ({
     service: "dropshipping-hub-api",
     status: "ok",
-    endpoints: ["/health", "/connectors", "/niche/cat-goods", "/research", "/research/screen", "/research/test", "/orders", "/dashboard/pnl", "/sync/run", "/sync/status", "/auth/base/authorize", "/auth/base/exchange"],
+    endpoints: ["/health", "/connectors", "/niche/cat-goods", "/products", "/products/:id", "/research", "/research/screen", "/research/test", "/orders", "/dashboard/pnl", "/sync/run", "/sync/status", "/auth/base/authorize", "/auth/base/exchange"],
   }));
 
   // 各コネクタの実効モード（mock | live）。どのデータ源が本番接続かを確認する。
@@ -108,6 +109,34 @@ export function buildServer() {
     if (!supplier) return reply.code(404).send({ error: "unknown supplier" });
     const result = await importProduct(supplier, parsed.data.externalId);
     return result;
+  });
+
+  // 管理商品一覧（DB）
+  app.get("/products", async (req) => {
+    const { skip, take } = req.query as { skip?: string; take?: string };
+    return productRepo.listProducts({
+      skip: skip ? Number(skip) : undefined,
+      take: take ? Number(take) : undefined,
+    });
+  });
+
+  // 管理商品の詳細
+  app.get("/products/:id", async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const product = await productRepo.getProduct(id);
+    if (!product) return reply.code(404).send({ error: "product not found" });
+    return product;
+  });
+
+  // 管理商品の削除
+  app.delete("/products/:id", async (req, reply) => {
+    const { id } = req.params as { id: string };
+    try {
+      await productRepo.deleteProduct(id);
+      return { ok: true };
+    } catch {
+      return reply.code(404).send({ error: "product not found" });
+    }
   });
 
   // Amazon・楽天で市場調査 → 仕入れ値と突き合わせて利益率を算出
@@ -212,10 +241,10 @@ export function buildServer() {
   }));
 
   // 受注一覧（損益付き）
-  app.get("/orders", async () => ({ orders: getOrders() }));
+  app.get("/orders", async () => ({ orders: await getOrders() }));
 
   // 損益サマリ
-  app.get("/dashboard/pnl", async () => getPnl());
+  app.get("/dashboard/pnl", async () => await getPnl());
 
   // BASE へ出品
   const publishSchema = z.object({
