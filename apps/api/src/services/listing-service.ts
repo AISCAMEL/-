@@ -6,8 +6,9 @@ import {
   type SupplierProduct,
 } from "@hub/core";
 import type { SalesChannelConnector, SupplierConnector } from "@hub/connectors";
+import { productRepo, listingRepo, priceRuleRepo } from "@hub/db";
 
-/** デモ用の既定価格ルール（本番は DB の PriceRule から取得）。 */
+/** DB の PriceRule が無い場合のフォールバック。 */
 export const DEFAULT_PRICE_RULE: PriceRule = {
   fxRateToJpy: 21,
   dutyRate: 0.1,
@@ -19,6 +20,11 @@ export const DEFAULT_PRICE_RULE: PriceRule = {
   minProfit: 300,
 };
 
+async function loadPriceRule(): Promise<PriceRule> {
+  const dbRule = await priceRuleRepo.getDefaultPriceRule();
+  return dbRule ? priceRuleRepo.toCoreRule(dbRule) : DEFAULT_PRICE_RULE;
+}
+
 export interface ImportResult {
   product: SupplierProduct;
   sellPrice: number;
@@ -27,15 +33,26 @@ export interface ImportResult {
   issues: ReturnType<typeof validateForListing>;
 }
 
-/** 仕入れ商品を取り込み、価格計算と規約チェックを行う。 */
 export async function importProduct(
   supplier: SupplierConnector,
   externalId: string,
-  rule: PriceRule = DEFAULT_PRICE_RULE,
+  rule?: PriceRule,
 ): Promise<ImportResult> {
+  const effectiveRule = rule ?? (await loadPriceRule());
   const product = await supplier.getProduct(externalId);
-  const price = calculateSellPrice({ cost: product.cost, costCurrency: product.costCurrency }, rule);
+  const price = calculateSellPrice({ cost: product.cost, costCurrency: product.costCurrency }, effectiveRule);
   const issues = validateForListing(product);
+
+  await productRepo.importProduct({
+    supplierKind: product.supplierId,
+    externalId: product.externalId,
+    title: product.title,
+    description: product.description,
+    imageUrls: product.imageUrls,
+    costCNY: product.cost,
+    stock: product.stock ?? undefined,
+    sellPrice: price.sellPrice,
+  });
 
   return {
     product,
@@ -46,7 +63,6 @@ export async function importProduct(
   };
 }
 
-/** 取り込んだ商品を販売チャネルへ出品する。 */
 export async function publishToChannel(
   channel: SalesChannelConnector,
   result: ImportResult,
@@ -56,7 +72,8 @@ export async function publishToChannel(
       `出品不可: ${result.issues.map((i) => `${i.severity}:${i.code}`).join(", ") || "最低利益未達"}`,
     );
   }
-  return channel.upsertListing({
+
+  const listing = await channel.upsertListing({
     productKey: `${result.product.supplierId}:${result.product.externalId}`,
     title: result.product.title,
     description: result.product.description,
@@ -64,4 +81,22 @@ export async function publishToChannel(
     price: result.sellPrice,
     stock: result.product.stock ?? 0,
   });
+
+  const dbProducts = await productRepo.listProducts({ take: 1 });
+  const dbProduct = dbProducts.items.find(
+    (p) =>
+      p.sourceProduct.externalId === result.product.externalId &&
+      p.sourceProduct.supplier.kind === result.product.supplierId,
+  );
+  if (dbProduct) {
+    await listingRepo.upsertListing({
+      productId: dbProduct.id,
+      channelKind: channel.id,
+      externalListingId: listing.externalListingId,
+      publishedPrice: result.sellPrice,
+      publishedStock: result.product.stock ?? 0,
+    });
+  }
+
+  return listing;
 }
