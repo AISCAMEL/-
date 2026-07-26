@@ -5,7 +5,7 @@ import {
   type ListingState,
   type SyncAction,
 } from "@hub/core";
-import { listingRepo, priceRuleRepo, syncLogRepo } from "@hub/db";
+import { dbEnabled, listingRepo, priceRuleRepo, syncLogRepo } from "@hub/db";
 import { DEFAULT_PRICE_RULE } from "./listing-service.js";
 
 interface ManagedListing {
@@ -47,10 +47,11 @@ export function getLastRun(): SyncRunResult | null {
 }
 
 export async function runSync(): Promise<SyncRunResult> {
-  const ruleModel = await priceRuleRepo.getDefaultPriceRule();
-  const rule = ruleModel ? priceRuleRepo.toCoreRule(ruleModel) : DEFAULT_PRICE_RULE;
+  const rule = dbEnabled
+    ? await priceRuleRepo.getDefaultPriceRule().then((r) => (r ? priceRuleRepo.toCoreRule(r) : DEFAULT_PRICE_RULE))
+    : DEFAULT_PRICE_RULE;
 
-  const dbListings = await listingRepo.listListingsForSync();
+  const dbListings = dbEnabled ? await listingRepo.listListingsForSync() : [];
 
   let managed: ManagedListing[];
   if (dbListings.length > 0) {
@@ -110,7 +111,7 @@ export async function runSync(): Promise<SyncRunResult> {
 
   lastRun = { ranAt: new Date().toISOString(), results, summary };
 
-  await syncLogRepo.writeSyncLog({
+  if (dbEnabled) await syncLogRepo.writeSyncLog({
     kind: "inventory",
     action: "sync_run",
     success: true,
