@@ -1,19 +1,8 @@
 import type { MarketListing } from "@hub/core";
-import { NotImplementedLiveError } from "../base/base-connector.js";
 import type { ConnectorConfig, MarketResearchConnector, MarketSearchQuery } from "../types.js";
 
-/**
- * eBay の市場調査コネクタ（越境・海外相場用）。
- *
- * 実連携は eBay Browse API を使用する想定:
- *   GET https://api.ebay.com/buy/browse/v1/item_summary/search?q=<kw>&limit=20
- *   Authorization: Bearer <OAuth アプリトークン(client_credentials)>
- *   → itemSummaries[].{title, price.value/currency, itemWebUrl}
- *
- * OAuth アプリトークンの取得が必要（EBAY_OAUTH_TOKEN）。
- * 価格は USD 等のため、利益計算前に JPY 換算する点に注意。
- * mock では決定的なダミー（JPY換算済み想定）を返す。
- */
+const EBAY_BROWSE_API = "https://api.ebay.com/buy/browse/v1";
+
 export class EbayConnector implements MarketResearchConnector {
   readonly id = "ebay" as const;
 
@@ -24,13 +13,7 @@ export class EbayConnector implements MarketResearchConnector {
   }
 
   async searchListings(query: MarketSearchQuery): Promise<MarketListing[]> {
-    if (this.live) {
-      const token = this.config.credentials?.EBAY_OAUTH_TOKEN;
-      if (!token) throw new NotImplementedLiveError("ebay.searchListings (EBAY_OAUTH_TOKEN 未設定)");
-      // TODO: Browse API を fetch し itemSummaries[] を MarketListing へ変換
-      //   価格は price.value(通貨) → JPY 換算してから price に格納する
-      throw new NotImplementedLiveError("ebay.searchListings (Browse API 連携は実装予定)");
-    }
+    if (this.live) return this.fetchLive(query);
     const base = 3600;
     return Array.from({ length: query.limit ?? 5 }, (_, i) => ({
       marketId: this.id,
@@ -41,4 +24,43 @@ export class EbayConnector implements MarketResearchConnector {
       rating: 0,
     }));
   }
+
+  private async fetchLive(query: MarketSearchQuery): Promise<MarketListing[]> {
+    const token = this.config.credentials?.EBAY_OAUTH_TOKEN;
+    if (!token) throw new Error("EBAY_OAUTH_TOKEN 未設定");
+
+    const url = new URL(`${EBAY_BROWSE_API}/item_summary/search`);
+    url.searchParams.set("q", query.keyword);
+    url.searchParams.set("limit", String(Math.min(query.limit ?? 20, 50)));
+
+    const res = await fetch(url, {
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "X-EBAY-C-MARKETPLACE-ID": "EBAY_US",
+        "Content-Type": "application/json",
+      },
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      throw new Error(`eBay API error ${res.status}: ${body}`);
+    }
+
+    const data = (await res.json()) as EbaySearchResponse;
+    return (data.itemSummaries ?? []).map((item) => ({
+      marketId: this.id,
+      title: item.title,
+      price: parseFloat(item.price?.value ?? "0"),
+      url: item.itemWebUrl,
+      reviewCount: 0,
+      rating: 0,
+    }));
+  }
+}
+
+interface EbaySearchResponse {
+  itemSummaries?: {
+    title: string;
+    price?: { value: string; currency: string };
+    itemWebUrl: string;
+  }[];
 }
