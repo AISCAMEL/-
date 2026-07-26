@@ -117,6 +117,17 @@ export default function ConnectorStatus() {
           );
         })}
 
+        <a
+          href="/setup"
+          style={{
+            padding: "4px 12px", borderRadius: 20, fontSize: 11, fontWeight: 600,
+            textDecoration: "none", border: "1.5px solid #e5e7eb",
+            background: "#f9fafb", color: "#6b7280",
+          }}
+        >
+          🔧 セットアップ
+        </a>
+
         {baseMock && baseOAuthConfigured && (
           <a
             href="/api/base/authorize"

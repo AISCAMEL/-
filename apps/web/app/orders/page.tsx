@@ -46,8 +46,10 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<OrderPnl[]>([]);
   const [pnl, setPnl] = useState<PnlSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [fulfillState, setFulfillState] = useState<Record<string, { status: string; msg?: string }>>({});
+  const [fulfillAllRunning, setFulfillAllRunning] = useState(false);
 
-  useEffect(() => {
+  function loadData() {
     Promise.all([
       fetch("/api/orders").then((r) => r.json()),
       fetch("/api/pnl").then((r) => r.json()),
@@ -58,7 +60,48 @@ export default function OrdersPage() {
         if (o.error || p.error) setError("Hub API へ接続できません（未起動の可能性）");
       })
       .catch(() => setError("受注データの取得に失敗（Hub API 未起動の可能性）"));
-  }, []);
+  }
+
+  useEffect(() => { loadData(); }, []);
+
+  async function handleFulfill(orderId: string) {
+    setFulfillState((s) => ({ ...s, [orderId]: { status: "ordering" } }));
+    try {
+      const res = await fetch("/api/fulfill", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ orderId }),
+      });
+      const data = await res.json();
+      setFulfillState((s) => ({ ...s, [orderId]: { status: data.status, msg: data.message } }));
+      if (data.status === "ordered") loadData();
+    } catch (e) {
+      setFulfillState((s) => ({ ...s, [orderId]: { status: "error", msg: String(e) } }));
+    }
+  }
+
+  async function handleFulfillAll() {
+    setFulfillAllRunning(true);
+    try {
+      const res = await fetch("/api/fulfill", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (data.results) {
+        const newState: Record<string, { status: string; msg?: string }> = {};
+        for (const r of data.results) {
+          newState[r.orderId] = { status: r.status, msg: r.message };
+        }
+        setFulfillState((s) => ({ ...s, ...newState }));
+      }
+      loadData();
+    } catch {
+    } finally {
+      setFulfillAllRunning(false);
+    }
+  }
 
   const cardDefs = pnl
     ? [
@@ -92,12 +135,32 @@ export default function OrdersPage() {
         ))}
       </div>
 
+      {orders.some((o) => o.status === "received") && (
+        <div style={{ marginBottom: 16 }}>
+          <button
+            onClick={handleFulfillAll}
+            disabled={fulfillAllRunning}
+            style={{
+              padding: "8px 20px", borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 700,
+              border: 0, color: "#fff",
+              background: "linear-gradient(135deg, #f472b6, #a78bfa)",
+              boxShadow: "0 2px 12px rgba(244,114,182,0.3)",
+            }}
+          >
+            {fulfillAllRunning ? "発注中…" : "📦 未発注を一括発注"}
+          </button>
+          <span style={{ marginLeft: 12, fontSize: 12, color: "var(--muted)" }}>
+            「受注」ステータスの注文を仕入れ先に自動発注します
+          </span>
+        </div>
+      )}
+
       {orders.length > 0 && (
         <div style={{ overflowX: "auto", background: "#fff", borderRadius: "var(--radius)", border: "2px solid var(--card-border)", padding: 4 }}>
           <table>
             <thead>
               <tr>
-                {["注文ID", "日付", "購入者", "商品", "数量", "売上", "原価", "手数料", "利益", "状態"].map((h) => (
+                {["注文ID", "日付", "購入者", "商品", "数量", "売上", "原価", "手数料", "利益", "状態", "発注"].map((h) => (
                   <th key={h}>{h}</th>
                 ))}
               </tr>
@@ -124,6 +187,28 @@ export default function OrdersPage() {
                       }}>
                         {ss.emoji} {STATUS_LABEL[o.status] ?? o.status}
                       </span>
+                    </td>
+                    <td>
+                      {o.status === "received" ? (() => {
+                        const fs = fulfillState[o.orderId];
+                        if (fs?.status === "ordered") return <span style={{ color: "#16a34a", fontSize: 12, fontWeight: 600 }}>発注済</span>;
+                        if (fs?.status === "error") return <span title={fs.msg} style={{ color: "#dc2626", fontSize: 12 }}>失敗</span>;
+                        return (
+                          <button
+                            onClick={() => handleFulfill(o.orderId)}
+                            disabled={fs?.status === "ordering"}
+                            style={{
+                              padding: "3px 10px", borderRadius: 12, cursor: "pointer",
+                              fontSize: 11, fontWeight: 600, border: "1px solid #c4b5fd",
+                              background: "#f5f3ff", color: "#7c3aed",
+                            }}
+                          >
+                            {fs?.status === "ordering" ? "発注中…" : "仕入発注"}
+                          </button>
+                        );
+                      })() : (
+                        <span style={{ color: "#9ca3af", fontSize: 11 }}>-</span>
+                      )}
                     </td>
                   </tr>
                 );
