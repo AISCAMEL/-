@@ -173,7 +173,7 @@ img{max-width:100%;display:block;}
 }
 .hero-badges li::before{content:"✓ ";color:var(--green);font-weight:900;}
 .hero-art{display:flex;align-items:center;justify-content:center;}
-.hero-img-main{display:block;width:100%;max-width:560px;height:auto;border-radius:var(--radius);}
+.hero-img-main{display:block;width:100%;height:auto;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,.10);}
 .hero-img-mascot{display:none;}
 .hero-img-cars{width:100%;max-width:560px;aspect-ratio:3/2;border-radius:16px;background:url('../img/buymo/hero-cars.jpg') center/cover no-repeat;box-shadow:0 16px 40px rgba(15,118,110,.20);}
 @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
