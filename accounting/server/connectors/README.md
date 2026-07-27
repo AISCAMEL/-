@@ -46,9 +46,50 @@ node server/connectors/stripe.js
 */15 * * * * cd /path/to/app && STRIPE_API_KEY=sk_live_xxx SYNC_URL=http://localhost:8787 WORKSPACE=aizu-2026 TOKEN=合言葉 node server/connectors/stripe.js >> /var/log/kaikei-stripe.log 2>&1
 ```
 
+## Square コネクタ（`square.js`）
+
+Square の決済（Payments API）を取得し、売上と決済手数料の2件を投入します。
+
+```bash
+SQUARE_ACCESS_TOKEN=xxx SYNC_URL=http://localhost:8787 \
+WORKSPACE=aizu-2026 TOKEN=合言葉 node server/connectors/square.js
+```
+
+| 変数 | 説明 |
+|------|------|
+| `SQUARE_ACCESS_TOKEN` | Square のアクセストークン（必須） |
+| `SQUARE_API_BASE` | 既定 `https://connect.squareup.com`（sandbox は `https://connect.squareupsandbox.com`） |
+| `SQUARE_VERSION` | Square-Version ヘッダ（既定 `2024-01-18`） |
+
+重複防止は最後の `created_at` を `.square_cursor` に保存します。
+
+## PayPal コネクタ（`paypal.js`）
+
+PayPal の取引（Transaction Search API）を取得し、入金（売上）と決済手数料の
+2件を投入します（返金・出金は符号で除外）。
+
+```bash
+PAYPAL_CLIENT_ID=xxx PAYPAL_SECRET=yyy SYNC_URL=http://localhost:8787 \
+WORKSPACE=aizu-2026 TOKEN=合言葉 node server/connectors/paypal.js
+```
+
+| 変数 | 説明 |
+|------|------|
+| `PAYPAL_CLIENT_ID` / `PAYPAL_SECRET` | PayPal アプリの認証情報（必須） |
+| `PAYPAL_API_BASE` | 既定 `https://api-m.paypal.com`（sandbox は `https://api-m.sandbox.paypal.com`） |
+
+- OAuth2（client_credentials）でトークンを取得します。
+- 金額はJPY前提（主要単位＝円）。`start_date` は過去約3年以内が有効です。
+- 重複防止は最後の取引日時を `.paypal_cursor` に保存します。
+
+## 共通ライブラリ（`_lib.js`）
+
+HTTP・金額換算（ゼロデシマル通貨対応）・カーソル・`/api/inbox` 投入・
+「売上＋手数料」生成を共通化しています。各コネクタはこれを利用します。
+
 ## 他サービスのコネクタを作るには
 
-`stripe.js` を雛形に、次の3ステップで実装できます。
+`stripe.js` / `square.js` を雛形に、次の3ステップで実装できます。
 
 1. 対象APIから取引一覧を取得する（`getJson` を利用）
 2. 各取引を `{date, description, amount, dir, account, tax}` に変換する

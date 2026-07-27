@@ -1,2 +1,2 @@
 data/
-connectors/.stripe_cursor
+connectors/.*_cursor
