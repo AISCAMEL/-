@@ -12,8 +12,8 @@ COPY apps ./apps
 COPY packages ./packages
 RUN pnpm install --frozen-lockfile
 
-# @hub/db は dist/ にビルドが必要（Prisma generate + tsc）
-RUN pnpm --filter @hub/db run build
+# Prisma Client 生成（@prisma/client を node_modules に生成）
+RUN pnpm --filter @hub/db run generate
 
 ENV NODE_ENV=production
 ENV API_PORT=3001
