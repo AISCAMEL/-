@@ -3,7 +3,7 @@ import { notifyExternal } from "./webhook-notify-service.js";
 
 export interface Alert {
   id: string;
-  type: "hot_product" | "out_of_stock" | "fx_update";
+  type: "hot_product" | "out_of_stock" | "fx_update" | "reprice" | "fulfillment";
   title: string;
   message: string;
   severity: "info" | "warning" | "critical";

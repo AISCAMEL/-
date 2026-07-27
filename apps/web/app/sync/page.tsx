@@ -52,11 +52,20 @@ interface SyncStatus {
   lastRun: SyncResult | null;
 }
 
+interface RepriceDetail {
+  id: string;
+  title: string;
+  oldPrice: number;
+  newPrice: number;
+}
+
 export default function SyncPage() {
   const [result, setResult] = useState<SyncResult | null>(null);
   const [status, setStatus] = useState<SyncStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [repricing, setRepricing] = useState(false);
+  const [repriceResult, setRepriceResult] = useState<{ updated: number; fxRate: number; details: RepriceDetail[] } | null>(null);
 
   useEffect(() => {
     fetch("/api/sync/status")
@@ -111,19 +120,66 @@ export default function SyncPage() {
         </div>
       )}
 
-      <br />
-      <button
-        onClick={run} disabled={loading}
-        style={{
-          padding: "10px 24px",
-          background: "linear-gradient(135deg, #f472b6, #a78bfa)",
-          color: "#fff", border: 0, borderRadius: 20, cursor: "pointer",
-          fontWeight: 700, fontSize: 14, margin: "14px 0",
-          boxShadow: "0 2px 12px rgba(244,114,182,0.3)",
-        }}
-      >
-        {loading ? "🐾 同期中…" : "今すぐ同期"}
-      </button>
+      <div style={{ display: "flex", gap: 12, margin: "14px 0", flexWrap: "wrap" }}>
+        <button
+          onClick={run} disabled={loading}
+          style={{
+            padding: "10px 24px",
+            background: "linear-gradient(135deg, #f472b6, #a78bfa)",
+            color: "#fff", border: 0, borderRadius: 20, cursor: "pointer",
+            fontWeight: 700, fontSize: 14,
+            boxShadow: "0 2px 12px rgba(244,114,182,0.3)",
+          }}
+        >
+          {loading ? "🐾 同期中…" : "今すぐ同期"}
+        </button>
+
+        <button
+          onClick={async () => {
+            setRepricing(true);
+            setRepriceResult(null);
+            try {
+              const res = await fetch("/api/reprice", { method: "POST" });
+              const data = await res.json();
+              setRepriceResult(data);
+            } catch {} finally { setRepricing(false); }
+          }}
+          disabled={repricing}
+          style={{
+            padding: "10px 24px",
+            background: "linear-gradient(135deg, #fde68a, #f59e0b)",
+            color: "#92400e", border: 0, borderRadius: 20, cursor: "pointer",
+            fontWeight: 700, fontSize: 14,
+            boxShadow: "0 2px 12px rgba(245,158,11,0.2)",
+          }}
+        >
+          {repricing ? "計算中…" : "💱 為替で自動価格改定"}
+        </button>
+      </div>
+
+      {repriceResult && (
+        <div style={{
+          background: "#fff", border: "2px solid var(--card-border)", borderRadius: "var(--radius)",
+          padding: 16, marginBottom: 16,
+        }}>
+          <div style={{ fontSize: 14, marginBottom: 8 }}>
+            為替レート: <strong>¥{repriceResult.fxRate.toFixed(2)}/CNY</strong>
+            {" — "}
+            <span style={{ color: repriceResult.updated > 0 ? "#16a34a" : "var(--muted)" }}>
+              {repriceResult.updated}件更新
+            </span>
+          </div>
+          {repriceResult.details.length > 0 && (
+            <div style={{ fontSize: 13, maxHeight: 200, overflowY: "auto" }}>
+              {repriceResult.details.map((d) => (
+                <div key={d.id} style={{ padding: "4px 0", borderBottom: "1px solid #f3f4f6" }}>
+                  {d.title}: {yen(d.oldPrice)} → <strong style={{ color: "#ca8a04" }}>{yen(d.newPrice)}</strong>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {error && <p style={{ color: "#dc2626" }}>😿 {error}</p>}
 

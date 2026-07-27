@@ -8,6 +8,7 @@ const sections = [
   { title: "受注 / 損益", icon: "🧾", desc: "受注一覧と売上・原価・手数料・利益の可視化", href: "/orders", ready: true, color: "#6ee7b7" },
   { title: "在庫・価格同期", icon: "🔄", desc: "仕入れ先を監視し欠品は自動非公開・価格は再計算", href: "/sync", ready: true, color: "#fdba74" },
   { title: "商品・出品管理", icon: "📦", desc: "取り込み・出品状態の管理（DB連携）", href: "/products", ready: true, color: "#60a5fa" },
+  { title: "通知設定", icon: "🔔", desc: "Slack/LINE通知の接続確認・テスト送信", href: "/notifications", ready: true, color: "#fb923c" },
   { title: "接続セットアップ", icon: "🔌", desc: "各コネクターのAPIキー取得・設定ガイド", href: "/setup", ready: true, color: "#8b5cf6" },
   { title: "操作マニュアル", icon: "📖", desc: "全機能の使い方・ワークフロー・用語集", href: "/manual", ready: true, color: "#94a3b8" },
 ];

@@ -315,9 +315,29 @@ export default function ProductsPage() {
         </div>
       ) : (
         <>
-          <p style={{ fontSize: 13, color: "var(--muted)", marginBottom: 8 }}>
-            全 {total} 件
-          </p>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <p style={{ fontSize: 13, color: "var(--muted)", margin: 0 }}>全 {total} 件</p>
+            <button
+              onClick={() => {
+                const header = "商品名,仕入れ先,原価,通貨,在庫,売値(JPY),出品状態\n";
+                const rows = products.map((p) => {
+                  const st = p.listings[0];
+                  return [p.title, p.sourceProduct.supplier.name, p.sourceProduct.cost, p.sourceProduct.costCurrency, p.sourceProduct.stock ?? "", p.sellPrice, st ? (STATUS_LABEL[st.status]?.text ?? st.status) : "未出品"].join(",");
+                }).join("\n");
+                const blob = new Blob(["﻿" + header + rows], { type: "text/csv;charset=utf-8" });
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = `products_${new Date().toISOString().slice(0, 10)}.csv`;
+                a.click();
+              }}
+              style={{
+                padding: "6px 16px", borderRadius: 20, cursor: "pointer", fontSize: 12, fontWeight: 600,
+                border: "1.5px solid var(--card-border)", background: "#fff", color: "var(--ink)",
+              }}
+            >
+              CSV
+            </button>
+          </div>
           <div style={{ overflowX: "auto", background: "#fff", borderRadius: "var(--radius)", border: "2px solid var(--card-border)", padding: 4 }}>
             <table>
               <thead>
@@ -345,7 +365,11 @@ export default function ProductsPage() {
                           <span style={{ display: "inline-block", width: 48, height: 48, borderRadius: 6, background: "#f3f4f6", textAlign: "center", lineHeight: "48px", fontSize: 20 }}>📦</span>
                         )}
                       </td>
-                      <td style={{ fontWeight: 500, maxWidth: 240 }}>{p.title}</td>
+                      <td style={{ fontWeight: 500, maxWidth: 240 }}>
+                        <a href={`/products/${p.id}`} style={{ color: "inherit", textDecoration: "none", borderBottom: "1px dashed var(--card-border)" }}>
+                          {p.title}
+                        </a>
+                      </td>
                       <td>
                         <span style={{
                           padding: "2px 8px", borderRadius: 12, fontSize: 12, fontWeight: 600,

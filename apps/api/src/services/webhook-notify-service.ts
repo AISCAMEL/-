@@ -47,3 +47,24 @@ async function sendLine(text: string): Promise<void> {
 export function isWebhookConfigured(): { slack: boolean; line: boolean } {
   return { slack: !!SLACK_WEBHOOK_URL, line: !!LINE_NOTIFY_TOKEN };
 }
+
+export async function sendTestNotification(): Promise<{ slack: string; line: string }> {
+  const results = { slack: "skip", line: "skip" };
+  if (SLACK_WEBHOOK_URL) {
+    try {
+      await sendSlack("🐱 necorope テスト通知: Slack 接続OK！");
+      results.slack = "ok";
+    } catch (e) {
+      results.slack = `error: ${e}`;
+    }
+  }
+  if (LINE_NOTIFY_TOKEN) {
+    try {
+      await sendLine("🐱 necorope テスト通知: LINE 接続OK！");
+      results.line = "ok";
+    } catch (e) {
+      results.line = `error: ${e}`;
+    }
+  }
+  return results;
+}

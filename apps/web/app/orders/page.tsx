@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import SalesChart from "./sales-chart";
 
 interface OrderPnl {
   orderId: string;
@@ -134,6 +135,32 @@ export default function OrdersPage() {
           </div>
         ))}
       </div>
+
+      {orders.length > 0 && <SalesChart orders={orders} />}
+
+      {orders.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <button
+            onClick={() => {
+              const header = "注文ID,日付,購入者,商品,数量,売上,原価,手数料,利益,状態\n";
+              const rows = orders.map((o) =>
+                [o.orderId, o.orderedAt, o.buyerName, o.itemTitle, o.quantity, o.revenue, o.supplierCost, o.platformFee, o.profit, STATUS_LABEL[o.status] ?? o.status].join(",")
+              ).join("\n");
+              const blob = new Blob(["﻿" + header + rows], { type: "text/csv;charset=utf-8" });
+              const a = document.createElement("a");
+              a.href = URL.createObjectURL(blob);
+              a.download = `orders_${new Date().toISOString().slice(0, 10)}.csv`;
+              a.click();
+            }}
+            style={{
+              padding: "6px 16px", borderRadius: 20, cursor: "pointer", fontSize: 12, fontWeight: 600,
+              border: "1.5px solid var(--card-border)", background: "#fff", color: "var(--ink)",
+            }}
+          >
+            CSV
+          </button>
+        </div>
+      )}
 
       {orders.some((o) => o.status === "received") && (
         <div style={{ marginBottom: 16 }}>

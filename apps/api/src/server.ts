@@ -38,7 +38,8 @@ import { getAlerts, getUnreadCount, markAlertRead } from "./services/alert-servi
 import { runAutoScreen, getAutoScreenStatus } from "./services/auto-screen-service.js";
 import { dbEnabled, productRepo } from "@hub/db";
 import { fulfillOrder, autoFulfillAll } from "./services/fulfillment-service.js";
-import { isWebhookConfigured } from "./services/webhook-notify-service.js";
+import { isWebhookConfigured, sendTestNotification } from "./services/webhook-notify-service.js";
+import { repriceAll } from "./services/reprice-service.js";
 
 export function buildServer() {
   const config = loadConfig();
@@ -72,6 +73,9 @@ export function buildServer() {
 
   // 為替レートをDBに反映
   app.post("/fx/update", async () => updatePriceRuleFxRate());
+
+  // 為替レートに基づき全商品の売値を再計算
+  app.post("/fx/reprice", async () => repriceAll());
 
   // アラート一覧
   app.get("/alerts", async (req) => {
@@ -167,6 +171,28 @@ export function buildServer() {
     const product = await productRepo.getProduct(id);
     if (!product) return reply.code(404).send({ error: "product not found" });
     return product;
+  });
+
+  // 管理商品の売値更新
+  app.patch("/products/:id", async (req, reply) => {
+    if (!dbEnabled) return reply.code(503).send({ error: "DATABASE_URL 未設定" });
+    const { id } = req.params as { id: string };
+    const { sellPrice } = req.body as { sellPrice?: string };
+    if (!sellPrice) return reply.code(400).send({ error: "sellPrice is required" });
+    try {
+      const { prisma } = await import("@hub/db");
+      const updated = await prisma.product.update({
+        where: { id },
+        data: { sellPrice: parseFloat(sellPrice) },
+        include: {
+          sourceProduct: { include: { supplier: true } },
+          listings: { include: { channel: true } },
+        },
+      });
+      return updated;
+    } catch {
+      return reply.code(404).send({ error: "product not found" });
+    }
   });
 
   // 管理商品の削除
@@ -298,6 +324,9 @@ export function buildServer() {
 
   // Webhook通知状態
   app.get("/notifications/status", async () => isWebhookConfigured());
+
+  // 通知テスト送信
+  app.post("/notifications/test", async () => sendTestNotification());
 
   // BASE へ出品
   const publishSchema = z.object({
