@@ -13,6 +13,7 @@ import {
   hhmm,
   type WaveHour,
 } from "@/lib/waves";
+import { DEMO, demoWaveReport, demoLocalWaves } from "@/lib/demo";
 
 export const metadata: Metadata = {
   title: "波情報｜IWASAWA SURF BASE",
@@ -32,17 +33,27 @@ function dayLabel(iso: string) {
 }
 
 export default async function WavesPage() {
-  const report = await getWaveReport();
+  const report = DEMO ? demoWaveReport : await getWaveReport();
 
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("posts")
-    .select("id, body, created_at, author:members!posts_author_id_fkey(display_name)")
-    .eq("status", "published")
-    .eq("category", "waves")
-    .order("created_at", { ascending: false })
-    .limit(5);
-  const localWaves = (data ?? []) as unknown as LocalWave[];
+  let localWaves: LocalWave[] = [];
+  if (DEMO) {
+    localWaves = demoLocalWaves.map((w) => ({
+      id: w.id,
+      body: w.body,
+      created_at: "2026-06-16T00:00:00+09:00",
+      author: { display_name: w.author },
+    }));
+  } else {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("posts")
+      .select("id, body, created_at, author:members!posts_author_id_fkey(display_name)")
+      .eq("status", "published")
+      .eq("category", "waves")
+      .order("created_at", { ascending: false })
+      .limit(5);
+    localWaves = (data ?? []) as unknown as LocalWave[];
+  }
 
   const w = report ? weatherLabel(report.now.weatherCode) : null;
 

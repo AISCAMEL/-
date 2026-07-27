@@ -8,9 +8,11 @@ import { cookies } from "next/headers";
 export async function createClient() {
   const cookieStore = await cookies();
 
+  // 未設定（デモモード）でもクライアント生成で例外を投げないようダミー値を置く。
+  // 実クエリはデモ用データに差し替えるため、この値でネットワークには出ない。
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
+    process.env.NEXT_PUBLIC_SUPABASE_URL || "https://demo.supabase.co",
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "demo-anon-key",
     {
       cookies: {
         getAll() {

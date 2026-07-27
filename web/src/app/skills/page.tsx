@@ -9,6 +9,7 @@ import {
   isSkillCategory,
   type SkillCategory,
 } from "@/lib/skills";
+import { DEMO, demoSkills } from "@/lib/demo";
 
 export const metadata: Metadata = {
   title: "スキル掲示板｜IWASAWA SURF BASE",
@@ -43,8 +44,13 @@ export default async function SkillsPage({ searchParams }: Props) {
     .limit(40);
   if (active) query = query.eq("category", active);
 
-  const { data, error } = await query;
-  const skills = (data ?? []) as unknown as SkillRow[];
+  const { data, error } = DEMO ? { data: null, error: null } : await query;
+  let skills = (data ?? []) as unknown as SkillRow[];
+  if (DEMO) {
+    skills = (active
+      ? demoSkills.filter((s) => s.category === active)
+      : demoSkills) as unknown as SkillRow[];
+  }
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">

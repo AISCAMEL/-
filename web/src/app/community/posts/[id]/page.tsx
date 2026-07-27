@@ -6,6 +6,7 @@ import { CATEGORY_LABEL, type Category } from "@/lib/community";
 import { LikeButton } from "@/components/community/like-button";
 import { CommentForm } from "@/components/community/comment-form";
 import { ReportButton } from "@/components/community/report-button";
+import { DEMO, demoPostById, demoPosts } from "@/lib/demo";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -36,6 +37,57 @@ function formatDate(iso: string) {
 
 export default async function PostDetail({ params }: Props) {
   const { id } = await params;
+
+  // デモモード：サンプル投稿で表示（Supabase未接続時）
+  if (DEMO) {
+    const demoPost = demoPosts.find((p) => p.id === id);
+    if (!demoPost) notFound();
+    const demoEntry = demoPostById[id];
+    return (
+      <main className="mx-auto max-w-2xl px-4 py-8">
+        <Link href="/community" className="text-sm text-ocean hover:underline">
+          ← コミュニティへ
+        </Link>
+        <article className="mt-4 rounded-2xl border border-navy/10 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-2 text-xs">
+            <span className="rounded-full bg-ocean/10 px-2.5 py-0.5 font-medium text-ocean">
+              {CATEGORY_LABEL[demoPost.category]}
+            </span>
+            <span className="text-navy/40">{formatDate(demoPost.created_at)}</span>
+          </div>
+          {demoPost.title ? (
+            <h1 className="mt-3 text-xl font-semibold text-navy">{demoPost.title}</h1>
+          ) : null}
+          <p className="mt-3 whitespace-pre-wrap text-navy/80">{demoPost.body}</p>
+          <div className="mt-6 flex items-center justify-between border-t border-navy/10 pt-4">
+            <span className="text-sm text-navy/50">
+              {demoPost.author?.display_name ?? "メンバー"}
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-navy/15 px-4 py-1.5 text-sm text-navy/60">
+              🌊 {demoPost.like_count}
+            </span>
+          </div>
+        </article>
+        <section className="mt-8">
+          <h2 className="text-sm font-semibold text-navy/70">
+            コメント（{demoEntry?.comments.length ?? 0}）
+          </h2>
+          <div className="mt-4 space-y-3">
+            {(demoEntry?.comments ?? []).map((c) => (
+              <div key={c.id} className="rounded-xl border border-navy/10 bg-white p-4">
+                <p className="whitespace-pre-wrap text-sm text-navy/80">{c.body}</p>
+                <p className="mt-2 text-xs text-navy/40">{c.author}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 rounded-xl border border-ocean/20 bg-white p-5 text-center text-sm text-navy/70">
+            これはデモ表示です。ログインすると、いいね・コメントができます🌊
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   const supabase = await createClient();
   const member = await getCurrentMember();
 

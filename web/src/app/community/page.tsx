@@ -5,6 +5,7 @@ import { getCurrentMember } from "@/lib/auth";
 import { CATEGORIES, GUEST_VISIBLE_POSTS, isCategory } from "@/lib/community";
 import { PostCard, type PostSummary } from "@/components/community/post-card";
 import { WaveWidget } from "@/components/waves/wave-widget";
+import { DEMO, demoPosts } from "@/lib/demo";
 
 export const metadata: Metadata = { title: "コミュニティ｜IWASAWA SURF BASE" };
 
@@ -29,8 +30,15 @@ export default async function CommunityFeed({ searchParams }: Props) {
 
   if (activeCategory) query = query.eq("category", activeCategory);
 
-  const { data, error } = await query;
-  const posts = (data ?? []) as unknown as PostSummary[];
+  const { data, error } = DEMO
+    ? { data: null, error: null }
+    : await query;
+  let posts = (data ?? []) as unknown as PostSummary[];
+  if (DEMO) {
+    posts = activeCategory
+      ? demoPosts.filter((p) => p.category === activeCategory)
+      : demoPosts;
+  }
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">

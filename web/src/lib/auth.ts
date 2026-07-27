@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Category } from "@/lib/community";
+import { DEMO } from "@/lib/demo";
 
 export type MemberRole = "visitor" | "beginner" | "local" | "staff" | "admin";
 
@@ -16,6 +17,7 @@ export type CurrentMember = {
  * Server Component / Server Action から使う「API層のゲート」の起点。
  */
 export async function getCurrentMember(): Promise<CurrentMember | null> {
+  if (DEMO) return null; // デモモードはゲスト扱い（ネットワークに出ない）
   const supabase = await createClient();
   const {
     data: { user },

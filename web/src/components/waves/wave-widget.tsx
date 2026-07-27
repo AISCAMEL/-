@@ -7,10 +7,11 @@ import {
   weatherLabel,
   vibe,
 } from "@/lib/waves";
+import { DEMO, demoWaveReport } from "@/lib/demo";
 
 /** WV-01: コンパクトな波情報ウィジェット（フィード上部などに置く） */
 export async function WaveWidget() {
-  const report = await getWaveReport();
+  const report = DEMO ? demoWaveReport : await getWaveReport();
 
   if (!report) {
     return (
