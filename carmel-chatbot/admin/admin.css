@@ -1,0 +1,18 @@
+.carmel-cb-wrap .ccb-card {
+	background: #fff; border: 1px solid #dcdcde; border-radius: 8px;
+	padding: 20px 24px; margin: 16px 0; max-width: 900px;
+	box-shadow: 0 1px 2px rgba(0,0,0,.04);
+}
+.carmel-cb-wrap .ccb-card h2 { margin-top: 0; }
+.carmel-cb-wrap .nav-tab-wrapper { margin-bottom: 8px; }
+
+.ccb-log-thread { margin-top: 16px; }
+.ccb-log-msg {
+	display: flex; flex-direction: column; gap: 2px;
+	padding: 10px 14px; border-radius: 10px; margin-bottom: 10px; max-width: 80%;
+}
+.ccb-log-msg.user { background: #e7f0fb; margin-left: auto; }
+.ccb-log-msg.bot { background: #f3f4f6; }
+.ccb-log-msg strong { font-size: 12px; color: #555; }
+.ccb-log-msg span { white-space: pre-wrap; line-height: 1.6; }
+.ccb-log-msg em { font-size: 11px; color: #999; }

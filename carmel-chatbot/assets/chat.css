@@ -1,0 +1,294 @@
+/* カーメル AIチャットボット フロントスタイル */
+#carmel-cb-root { position: fixed; right: 16px; bottom: 24px; z-index: 99999; font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif; }
+/* スマホは下部の固定CTAバーと被らないよう少し上げる */
+@media (max-width: 782px) { #carmel-cb-root { right: 12px; bottom: 78px; } }
+/* 設置先テーマの影響を受けないように箱モデルを固定 */
+#carmel-cb-root, #carmel-cb-root * { box-sizing: border-box; }
+/* チャットを開いている間は起動ボタン（吹き出し）を隠す（重なり防止） */
+#carmel-cb-root.is-open #carmel-cb-launcher { display: none !important; }
+
+/* ===== 起動：アバター＋小さな吹き出し（吹き出しはアバターの上・右寄せ／タップで開く） ===== */
+#carmel-cb-launcher {
+	display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+	background: transparent; border: none; padding: 0; cursor: pointer;
+	max-width: min(220px, calc(100vw - 28px)); margin-left: auto;
+}
+.ccb-launch-avatar {
+	width: 54px; height: 54px; border-radius: 50%; overflow: hidden; flex: none;
+	background: #fff; box-shadow: 0 6px 18px rgba(0,0,0,.28); align-self: flex-end;
+	animation: ccb-launch-bob 2.6s ease-in-out infinite; /* ふわっと軽くバウンド（点滅なし） */
+}
+.ccb-launch-avatar video, .ccb-launch-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+@keyframes ccb-launch-bob {
+	0%, 100% { transform: translateY(0); }
+	50% { transform: translateY(-5px); }
+}
+.ccb-launch-bubble {
+	position: relative; background: #fff; color: #1a2330;
+	border-radius: 11px; padding: 6px 11px; text-align: center;
+	box-shadow: 0 6px 20px rgba(0,0,0,.18); font-size: 11px; font-weight: 700; line-height: 1.35;
+	white-space: nowrap; letter-spacing: .01em;
+	/* 最初は非表示 → 2秒後にそのまま表示（フェードなし）→ 上下にバウンドして存在をアピール */
+	opacity: 0;
+	animation:
+		ccb-bubble-show .01s linear 2s forwards,
+		ccb-bubble-bob 1.3s ease-in-out 2s infinite;
+}
+@keyframes ccb-bubble-show {
+	to { opacity: 1; }
+}
+@keyframes ccb-bubble-bob {
+	0%, 100% { transform: translateY(0); }
+	50%      { transform: translateY(-7px); }
+}
+.ccb-launch-bubble b { display: none; } /* 簡易表示：ボット名は省略 */
+.ccb-launch-bubble::after { /* 吹き出しの下向きしっぽ（アバターの上に置くため） */
+	content: ""; position: absolute; right: 18px; bottom: -6px; left: auto; top: auto; transform: none;
+	border-width: 7px 7px 0 7px; border-style: solid;
+	border-color: #fff transparent transparent transparent;
+}
+#carmel-cb-launcher:hover .ccb-launch-bubble { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(0,0,0,.24); }
+/* アバターに注目を集める脈動リング */
+.ccb-launch-avatar { position: relative; }
+.ccb-launch-avatar::before {
+	content: ""; position: absolute; inset: 0; border-radius: 50%;
+	box-shadow: 0 0 0 0 rgba(11,92,171,.45); animation: ccb-pulse 2.2s ease-out infinite;
+}
+@keyframes ccb-pulse {
+	0% { box-shadow: 0 0 0 0 rgba(11,92,171,.45); }
+	70% { box-shadow: 0 0 0 16px rgba(11,92,171,0); }
+	100% { box-shadow: 0 0 0 0 rgba(11,92,171,0); }
+}
+
+#carmel-cb-window {
+	position: fixed; right: 20px; bottom: 20px;
+	width: 370px; max-width: calc(100vw - 32px);
+	height: 560px; max-height: calc(100vh - 100px);
+	background: #fff; border-radius: 16px; overflow: hidden;
+	display: none; flex-direction: column;            /* 既定は非表示 */
+	box-shadow: 0 12px 48px rgba(0,0,0,.3);
+}
+/* 開いている時だけ表示（×で確実に閉じる／最初は閉じている） */
+#carmel-cb-root.is-open #carmel-cb-window { display: flex; }
+
+/* ===== イントロ（開いた直後：女性が大きく → 会話開始で小さくなる） ===== */
+.ccb-intro {
+	position: absolute; inset: 0; z-index: 6; overflow: hidden; border-radius: 16px;
+	display: flex; flex-direction: column; justify-content: flex-end;
+	background: #0b1730; cursor: pointer;
+	transition: transform .55s cubic-bezier(.4,0,.2,1), opacity .5s ease;
+}
+.ccb-intro-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 20%; }
+.ccb-intro-close {
+	position: absolute; top: 10px; right: 12px; z-index: 3;
+	background: rgba(0,0,0,.35); color: #fff; border: none; width: 34px; height: 34px;
+	border-radius: 50%; font-size: 20px; line-height: 1; cursor: pointer;
+}
+.ccb-intro-overlay {
+	position: relative; z-index: 2; padding: 22px 18px 24px; color: #fff; text-align: center;
+	background: linear-gradient(to top, rgba(0,0,0,.7), rgba(0,0,0,.2) 55%, transparent);
+}
+.ccb-intro-title { font-size: 18px; font-weight: 800; margin: 0 0 4px; }
+.ccb-intro-sub { font-size: 13px; line-height: 1.55; opacity: .95; margin: 0 0 14px; }
+.ccb-intro-start {
+	display: inline-block; background: #fff; color: var(--ccb-primary, #0b5cab);
+	border-radius: 999px; padding: 12px 28px; font-size: 15px; font-weight: 800;
+	box-shadow: 0 6px 18px rgba(0,0,0,.3);
+}
+/* 会話開始：左上(ヘッダーのアバター位置)へ縮んで消える */
+#carmel-cb-window.is-started .ccb-intro {
+	transform: scale(.16); transform-origin: 30px 30px; opacity: 0; pointer-events: none;
+}
+.ccb-header {
+	background: var(--ccb-primary, #0b5cab); color: #fff;
+	padding: 12px 16px; display: flex; align-items: center; gap: 10px;
+}
+.ccb-header-avatar {
+	width: 36px; height: 36px; border-radius: 50%; overflow: hidden; flex: none;
+	background: #fff; border: 2px solid rgba(255,255,255,.7);
+}
+.ccb-header-avatar video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ccb-title { font-weight: 700; font-size: 16px; flex: 1; }
+#carmel-cb-close { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; line-height: 1; }
+
+#carmel-cb-messages { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 16px; background: #f6f8fa; }
+.ccb-msg { margin-bottom: 12px; display: flex; }
+.ccb-msg.user { justify-content: flex-end; }
+.ccb-bubble {
+	max-width: 84%; padding: 11px 15px; border-radius: 14px;
+	font-size: 15px; line-height: 1.65; white-space: pre-wrap; word-break: break-word;
+}
+.ccb-msg.bot .ccb-bubble { background: #fff; color: #1a1a1a; border: 1px solid #e3e8ee; border-bottom-left-radius: 4px; }
+.ccb-msg.user .ccb-bubble { background: var(--ccb-primary, #0b5cab); color: #fff; border-bottom-right-radius: 4px; }
+.ccb-bubble a { color: inherit; text-decoration: underline; }
+.ccb-msg.bot .ccb-bubble a { color: var(--ccb-primary, #0b5cab); }
+
+.ccb-typing { display: inline-flex; gap: 4px; padding: 4px 2px; }
+.ccb-typing span { width: 7px; height: 7px; border-radius: 50%; background: #b8c0cc; animation: ccb-bounce 1.2s infinite; }
+.ccb-typing span:nth-child(2){ animation-delay:.2s } .ccb-typing span:nth-child(3){ animation-delay:.4s }
+@keyframes ccb-bounce { 0%,60%,100%{ transform: translateY(0); opacity:.5 } 30%{ transform: translateY(-5px); opacity:1 } }
+
+.ccb-input-row { display: flex; align-items: center; gap: 8px; padding: 10px; border-top: 1px solid #e3e8ee; background: #fff; flex: 0 0 auto; }
+/* テーマCSSに負けないよう高さを固定（巨大化バグ対策） */
+#carmel-cb-input {
+	flex: 1 1 auto; resize: none; border: 1px solid #d4dae2; border-radius: 12px;
+	padding: 12px 14px; font-size: 15px; line-height: 1.4; outline: none; font-family: inherit;
+	height: 48px !important; min-height: 48px !important; max-height: 120px !important; overflow-y: auto;
+}
+#carmel-cb-input:focus { border-color: var(--ccb-primary, #0b5cab); }
+#carmel-cb-send {
+	background: var(--ccb-primary, #0b5cab); color: #fff; border: none;
+	width: 48px; height: 48px; min-width: 48px; border-radius: 12px; font-size: 18px; cursor: pointer; flex: none;
+}
+#carmel-cb-send:disabled { opacity: .5; cursor: default; }
+/* 添付ボタン（担当者ライブ中に表示） */
+#carmel-cb-attach {
+	width: 42px; height: 48px; min-width: 42px; flex: none;
+	display: none; align-items: center; justify-content: center;
+	font-size: 22px; cursor: pointer; color: #55606c; user-select: none;
+}
+#carmel-cb-attach:hover { color: var(--ccb-primary, #0b5cab); }
+/* 送受信した画像・ファイル */
+.ccb-bubble-media { padding: 6px !important; }
+.ccb-media-img { display: block; max-width: 200px; max-height: 240px; width: auto; height: auto; border-radius: 10px; }
+.ccb-media-file { display: inline-block; padding: 4px 6px; font-weight: 700; text-decoration: none; word-break: break-all; }
+
+/* 回答下の相談ボタン（LINE / 電話） */
+.ccb-cta { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 6px; }
+.ccb-cta-btn {
+	display: inline-flex; align-items: center; gap: 4px;
+	padding: 8px 14px; border-radius: 999px;
+	font-size: 13px; font-weight: 700; text-decoration: none; color: #fff;
+}
+.ccb-cta-line    { background: #06c755; }
+.ccb-cta-tel     { background: #5a6b7b; }
+.ccb-cta-apply   { background: #e8730a; }
+.ccb-cta-contact { background: var(--ccb-primary, #0b5cab); }
+.ccb-cta-stock   { background: #2a7f62; }
+.ccb-cta-handoff { background: #7a5cff; }
+.ccb-cta-btn:hover { opacity: .9; }
+
+/* 実在庫カード */
+.ccb-cars { display: flex; flex-direction: column; gap: 8px; margin: 2px 0 8px; width: 100%; }
+.ccb-car {
+	display: flex; gap: 10px; align-items: stretch;
+	background: #fff; border: 1px solid #e3e8ee; border-radius: 12px;
+	padding: 8px; text-decoration: none; color: #1a1a1a;
+	transition: box-shadow .15s ease, transform .15s ease;
+}
+.ccb-car:hover { box-shadow: 0 6px 18px rgba(0,0,0,.12); transform: translateY(-1px); }
+.ccb-car-img {
+	width: 84px; min-width: 84px; height: 64px; border-radius: 8px;
+	background-size: cover; background-position: center; background-color: #eef1f5;
+	display: grid; place-items: center; font-size: 22px;
+}
+.ccb-car-body { display: flex; flex-direction: column; justify-content: center; gap: 2px; min-width: 0; }
+.ccb-car-title { font-weight: 700; font-size: 13.5px; line-height: 1.35; }
+.ccb-car-meta { font-size: 11.5px; color: #6b7280; }
+.ccb-car-price { font-size: 13px; font-weight: 700; color: #e8730a; }
+.ccb-car-link { font-size: 12px; font-weight: 700; color: var(--ccb-primary, #0b5cab); margin-top: 2px; }
+
+/* タップで会話を進める候補チップ */
+.ccb-choices { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+.ccb-choice {
+	background: #fff; color: var(--ccb-primary, #0b5cab);
+	border: 1px solid var(--ccb-primary, #0b5cab); border-radius: 999px;
+	padding: 7px 13px; font-size: 13px; line-height: 1.3; cursor: pointer; font-family: inherit;
+}
+.ccb-choice:hover { background: var(--ccb-primary, #0b5cab); color: #fff; }
+
+.ccb-foot { display: flex; justify-content: center; align-items: center; gap: 14px; padding: 8px; background: #fff; border-top: 1px solid #f0f2f5; }
+.ccb-foot a { color: #06c755; font-size: 13px; font-weight: 700; text-decoration: none; }
+.ccb-foot-btn { background: none; border: none; color: var(--ccb-primary, #0b5cab); font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.ccb-foot-btn:hover { text-decoration: underline; }
+
+/* 担当者(ライブ)メッセージ */
+.ccb-bubble.ccb-op { background: #fff7e6; border-color: #f0d9a8; display: inline-block; max-width: 100%; }
+.ccb-op-label { display: block; font-size: 10.5px; font-weight: 700; color: #b07d1a; margin-bottom: 2px; }
+
+/* 担当者メッセージ：顔アイコン付き（背景画像方式でプラグイン干渉を回避） */
+.ccb-op-row { display: flex; align-items: flex-start; gap: 8px; }
+.ccb-op-avatar {
+	flex: 0 0 34px !important; width: 34px !important; height: 34px !important;
+	border-radius: 50%; overflow: hidden;
+	background-color: #eef2f6; background-size: cover; background-position: center; background-repeat: no-repeat;
+	display: flex; align-items: center; justify-content: center;
+	font-size: 18px; border: 1px solid #e3e8ee; box-sizing: border-box;
+}
+/* ラベルと吹き出しは残り幅いっぱいを使う（文字が縦積みにならないように） */
+.ccb-op-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
+
+/* 有人対応フォーム */
+.ccb-handoff { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.ccb-hi { border: 1px solid #d4dae2; border-radius: 8px; padding: 8px 10px; font-size: 13px; font-family: inherit; }
+.ccb-handoff-send { background: var(--ccb-primary, #0b5cab); color: #fff; border: none; border-radius: 999px; padding: 11px 14px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.ccb-handoff-send:disabled { opacity: .6; cursor: default; }
+.ccb-hi-label { font-size: 11.5px; font-weight: 700; color: #55606c; margin: 4px 0 -2px; }
+.ccb-handoff-err { display: none; color: #c0392b; font-size: 12px; }
+
+/* チャット内フォーム（かんたん審査 / お問い合わせ） */
+.ccb-lead { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.ccb-lead-title { font-size: 14px; font-weight: 700; color: var(--ccb-primary, #0b5cab); margin-bottom: 2px; }
+.ccb-li { border: 1px solid #d4dae2; border-radius: 8px; padding: 10px 12px; font-size: 14px; font-family: inherit; width: 100%; }
+.ccb-li:focus { outline: none; border-color: var(--ccb-primary, #0b5cab); box-shadow: 0 0 0 2px rgba(11,92,171,.15); }
+textarea.ccb-li { resize: vertical; min-height: 44px; }
+.ccb-lead-consent { display: flex; align-items: flex-start; gap: 7px; font-size: 11.5px; color: #556; line-height: 1.45; }
+.ccb-lead-consent input { margin-top: 2px; flex: 0 0 auto; }
+.ccb-lead-consent a { color: var(--ccb-primary, #0b5cab); }
+.ccb-lead-next,
+.ccb-lead-send { background: var(--ccb-primary, #0b5cab); color: #fff; border: none; border-radius: 999px; padding: 12px 14px; font-size: 14px; font-weight: 700; cursor: pointer; }
+.ccb-lead-next:disabled,
+.ccb-lead-send:disabled { opacity: .6; cursor: default; }
+.ccb-lead-err { display: none; color: #c0392b; font-size: 12px; }
+
+/* 確認画面（送信前の内容確認） */
+.ccb-lead-confirm-ttl { font-size: 13px; font-weight: 700; color: #1f2d3d; margin-bottom: 8px; }
+.ccb-lead-review { margin: 0 0 12px; display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; }
+.ccb-lead-review dt { color: #6b7280; font-size: 12px; white-space: nowrap; }
+.ccb-lead-review dd { margin: 0; color: #1a1a1a; font-size: 13px; font-weight: 700; word-break: break-word; }
+.ccb-lead-confirm-btns { display: flex; gap: 8px; }
+.ccb-lead-back { flex: 0 0 auto; background: #fff; color: #444; border: 1px solid #d4dae2; border-radius: 999px; padding: 12px 16px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.ccb-lead-confirm-btns .ccb-lead-send { flex: 1; }
+.ccb-lead-full { display: inline-block; margin-top: 4px; font-size: 12.5px; font-weight: 700; color: var(--ccb-primary, #0b5cab); text-decoration: none; }
+.ccb-lead-full:hover { text-decoration: underline; }
+
+@media (max-width: 480px) {
+	/* スマホでは画面いっぱいにせず、上下に余白のある“カード”サイズでバランスよく表示 */
+	#carmel-cb-window {
+		width: calc(100vw - 20px);
+		right: 10px; bottom: 10px; left: auto;
+		height: 78vh; max-height: 640px;
+		border-radius: 16px;
+	}
+	/* イントロ動画も大きくなりすぎないよう、顔まわりが見える位置に */
+	.ccb-intro-video { object-position: center 18%; }
+	.ccb-intro-overlay { padding: 18px 16px 20px; }
+	.ccb-intro-title { font-size: 17px; }
+	.ccb-intro-sub { font-size: 12.5px; }
+}
+
+/* ===== 直リンク/埋め込み版（フルページ・iframe内） ===== */
+/* 背景の中央にチャット画面が1枚（モニター／アプリの画面のように）浮かぶ */
+#carmel-cb-root.ccb-standalone {
+	position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+	display: flex; align-items: center; justify-content: center;
+	padding: 24px;
+}
+#carmel-cb-root.ccb-standalone #carmel-cb-launcher { display: none !important; }
+#carmel-cb-root.ccb-standalone #carmel-cb-window {
+	position: relative; top: auto; left: auto; right: auto; bottom: auto;
+	width: 420px; max-width: 100%;
+	height: calc(100vh - 48px); max-height: 760px; /* 縦長すぎないバランス */
+	border-radius: 20px;
+	box-shadow: 0 24px 70px rgba(0,0,0,.35);
+}
+#carmel-cb-root.ccb-standalone #carmel-cb-close,
+#carmel-cb-root.ccb-standalone .ccb-intro-close { display: none; } /* 共有ページでは閉じない */
+
+/* スマホでは画面いっぱいに */
+@media (max-width: 480px) {
+	#carmel-cb-root.ccb-standalone { padding: 0; }
+	#carmel-cb-root.ccb-standalone #carmel-cb-window {
+		width: 100%; height: 100%; max-height: 100%; border-radius: 0;
+	}
+}
