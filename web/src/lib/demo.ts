@@ -235,6 +235,100 @@ export const demoInstructorReviews: Record<
   ],
 };
 
+// --- オンライン講座（マニュアル＋動画・サブスク）----------------
+import type { CourseLevel } from "@/lib/courses";
+
+export type DemoLesson = {
+  id: string;
+  title: string;
+  body: string;
+  is_free: boolean;
+  duration_min: number;
+};
+
+export type DemoCourse = {
+  id: string;
+  title: string;
+  description: string;
+  level: CourseLevel;
+  cover_url: string;
+  lessons: DemoLesson[];
+};
+
+export const demoCourses: DemoCourse[] = [
+  {
+    id: "c-beginner",
+    title: "海デビュー 初心者コース",
+    description: "まったくの初めてから、自分で海に入れるようになるまで。ルール・パドリング・テイクオフを、動画とマニュアルで。",
+    level: "beginner",
+    cover_url: "/courses/beginner.png",
+    lessons: [
+      {
+        id: "l-rules",
+        title: "第1回：海のルールと安全（無料）",
+        is_free: true,
+        duration_min: 8,
+        body: "サーフィンは自然が相手のスポーツです。まず身につけたいのは『安全』と『ルール』。\n\n■ 一本の波に一人\nピーク（波の割れ始め）に近い人が優先。すでに乗っている人の前に入る『ドロップイン（前乗り）』は絶対に避けます。\n\n■ 離岸流を知る\n沖へ流れる速い流れ。捕まったら岸に平行に泳いで抜けます。逆らって岸へ戻ろうとしないこと。\n\n■ 自分のレベルで\nサイズ・風・混雑を確認し、無理をしない。初めは膝〜腰の深さ、空いた場所で練習しましょう。",
+      },
+      {
+        id: "l-paddle",
+        title: "第2回：パドリングの基礎",
+        is_free: false,
+        duration_min: 10,
+        body: "パドリングはサーフィンの土台。ここが安定すると、上達が一気に早くなります。\n\n■ ボードの上の位置\nノーズ（先端）が水面から握りこぶし1つ分出るくらい。前すぎると刺さり、後ろすぎると進みません。\n\n■ 手のかき方\n体の中心線に沿って、水を後ろへ長く押す。左右交互に、あわてず大きく。\n\n■ 目線\n進みたい方向を見る。下を向くと失速します。",
+      },
+      {
+        id: "l-takeoff",
+        title: "第3回：テイクオフ",
+        is_free: false,
+        duration_min: 12,
+        body: "波に乗って立ち上がる一連の動き。陸トレで体に覚えさせてから海へ。\n\n■ タイミング\n波が近づいたら強くパドル。ボードが波に押される感覚を掴む。\n\n■ 立ち上がり\n胸を起こし、後ろ足→前足の順にすばやく。目線は前。",
+      },
+      {
+        id: "l-getout",
+        title: "第4回：ゲッティングアウト（沖に出る）",
+        is_free: false,
+        duration_min: 9,
+        body: "沖に出るときは、乗っている人の進路を避けて回り込みます。白波の下をくぐる、押し返される力の逃し方など、安全に出るコツを解説します。",
+      },
+    ],
+  },
+  {
+    id: "c-prep",
+    title: "来訪前の準備・事前学習",
+    description: "県外から岩沢へ来る前に。持ち物・装備・海の入り方を、来る前に家で予習。",
+    level: "prep",
+    cover_url: "/courses/prep.png",
+    lessons: [
+      {
+        id: "l-gear",
+        title: "第1回：持ち物と装備（無料）",
+        is_free: true,
+        duration_min: 6,
+        body: "初回に必要なのは、ボード・ウェット・リーシュの3つ。あとはタオル・水・日焼け対策。\n\nレンタルも使えるので手ぶらでもOK。水温に合わせたウェット選びは、スクールやショップに相談を。",
+      },
+      {
+        id: "l-access",
+        title: "第2回：岩沢海岸の入り方・注意点",
+        is_free: false,
+        duration_min: 8,
+        body: "駐車場所、エントリーとカレント、混雑する時間帯、地元のマナー。初めての岩沢を安心して楽しむための実践情報。",
+      },
+    ],
+  },
+  {
+    id: "c-stepup",
+    title: "ステップアップコース",
+    description: "テイクオフができた次へ。横に走る・ターンの基礎を身につける。",
+    level: "intermediate",
+    cover_url: "/courses/stepup.png",
+    lessons: [
+      { id: "l-trim", title: "第1回：横に走る（トリム）", is_free: false, duration_min: 11, body: "波の斜面（フェイス）を横に走るための重心と目線。板を走らせる感覚を掴みます。" },
+      { id: "l-bottom", title: "第2回：ボトムターン", is_free: false, duration_min: 12, body: "すべての基本となるターン。踏み込みのタイミングと体の使い方を解説します。" },
+    ],
+  },
+];
+
 // --- オンラインショップ（無在庫・受注起点）----------------------
 import type { ProductCategory } from "@/lib/shop";
 

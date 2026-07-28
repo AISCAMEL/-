@@ -17,6 +17,7 @@ export function SiteFooter() {
 
         <FooterCol title="サービス" links={[
           { href: "/instructors", label: "サーフィンスクール" },
+          { href: "/courses", label: "オンライン講座" },
           { href: "/shop", label: "オンラインショップ" },
           { href: "/community", label: "コミュニティ" },
           { href: "/skills", label: "スキル掲示板" },
