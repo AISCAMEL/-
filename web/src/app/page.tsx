@@ -87,6 +87,12 @@ export default function Home() {
               コミュニティを見る
             </Link>
             <Link
+              href="/shop"
+              className="rounded-full border border-ocean/30 px-5 py-2 font-medium text-ocean transition hover:bg-ocean hover:text-foam"
+            >
+              オンラインショップ
+            </Link>
+            <Link
               href="/skills"
               className="rounded-full border border-ocean/30 px-5 py-2 font-medium text-ocean transition hover:bg-ocean hover:text-foam"
             >

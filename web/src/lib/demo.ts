@@ -235,6 +235,83 @@ export const demoInstructorReviews: Record<
   ],
 };
 
+// --- オンラインショップ（無在庫・受注起点）----------------------
+import type { ProductCategory } from "@/lib/shop";
+
+export type DemoProduct = {
+  id: string;
+  name: string;
+  description: string;
+  category: ProductCategory;
+  price: number;
+  shipping_fee: number;
+  lead_time_text: string;
+  image_url: string;
+};
+
+export const demoProducts: DemoProduct[] = [
+  {
+    id: "p-funboard",
+    name: 'ファンボード 7\'6"',
+    description: "初心者に最適な浮力とサイズ。岩沢のメローな波で、安定して立てる一本。",
+    category: "board",
+    price: 68000,
+    shipping_fee: 3000,
+    lead_time_text: "受注確定後 7〜14営業日で発送",
+    image_url: "/shop/funboard.png",
+  },
+  {
+    id: "p-longboard",
+    name: 'ロングボード 9\'0"',
+    description: "ゆったりしたテイクオフとクルージング。長く付き合える定番モデル。",
+    category: "board",
+    price: 98000,
+    shipping_fee: 3000,
+    lead_time_text: "受注確定後 7〜14営業日で発送",
+    image_url: "/shop/longboard.png",
+  },
+  {
+    id: "p-wetsuit",
+    name: "フルスーツ 3/2mm",
+    description: "春〜初夏の岩沢に。動きやすく、はじめての一着におすすめ。",
+    category: "wetsuit",
+    price: 24000,
+    shipping_fee: 800,
+    lead_time_text: "受注確定後 5〜10営業日で発送",
+    image_url: "/shop/wetsuit.png",
+  },
+  {
+    id: "p-wax",
+    name: "サーフワックス",
+    description: "水温に合わせて選べるベーシックワックス。",
+    category: "accessory",
+    price: 700,
+    shipping_fee: 300,
+    lead_time_text: "受注確定後 3〜7営業日で発送",
+    image_url: "/shop/wax.png",
+  },
+  {
+    id: "p-leash",
+    name: "リーシュコード",
+    description: "安全に欠かせない基本アイテム。ボードサイズに合わせて。",
+    category: "accessory",
+    price: 4500,
+    shipping_fee: 500,
+    lead_time_text: "受注確定後 3〜7営業日で発送",
+    image_url: "/shop/leash.png",
+  },
+  {
+    id: "p-deckpad",
+    name: "デッキパッド",
+    description: "後ろ足のグリップ力を高める。ショート・ファン向け。",
+    category: "accessory",
+    price: 5200,
+    shipping_fee: 500,
+    lead_time_text: "受注確定後 3〜7営業日で発送",
+    image_url: "/shop/deckpad.png",
+  },
+];
+
 // --- 広告枠（スポンサーバナー）---------------------------------
 export type DemoAd = {
   id: string;
