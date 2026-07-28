@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentMember } from "@/lib/auth";
 import { RANK_META, stars, priceLabelMonthly, type InstructorRank } from "@/lib/instructors";
+import { Avatar } from "@/components/ui/avatar";
 import { ReviewForm } from "@/components/reviews/review-form";
 import { DEMO, demoInstructors, demoInstructorReviews } from "@/lib/demo";
 
@@ -11,6 +12,7 @@ type Props = { params: Promise<{ id: string }> };
 type Instructor = {
   id: string;
   name: string;
+  avatar_url: string | null;
   rank: InstructorRank;
   headline: string | null;
   bio: string | null;
@@ -47,7 +49,7 @@ export default async function InstructorDetail({ params }: Props) {
     const { data } = await supabase
       .from("instructor_profiles")
       .select(
-        "member_id, rank, headline, bio, achievements, home_break, years, monthly_price, accepting, rating_avg, rating_count, member:members!instructor_profiles_member_id_fkey(display_name)",
+        "member_id, rank, headline, bio, achievements, home_break, years, monthly_price, accepting, rating_avg, rating_count, member:members!instructor_profiles_member_id_fkey(display_name, avatar_url)",
       )
       .eq("member_id", id)
       .single();
@@ -64,11 +66,12 @@ export default async function InstructorDetail({ params }: Props) {
       accepting: boolean;
       rating_avg: number;
       rating_count: number;
-      member: { display_name: string | null } | null;
+      member: { display_name: string | null; avatar_url: string | null } | null;
     };
     ins = {
       id: d.member_id,
       name: d.member?.display_name ?? "講師",
+      avatar_url: d.member?.avatar_url ?? null,
       rank: d.rank,
       headline: d.headline,
       bio: d.bio,
@@ -104,9 +107,7 @@ export default async function InstructorDetail({ params }: Props) {
       <section className="mt-4 overflow-hidden rounded-2xl border border-navy/10 bg-white shadow-sm">
         <div className="bg-ocean-gradient p-6 text-foam">
           <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/15 text-2xl font-semibold">
-              {ins.name.slice(0, 1)}
-            </div>
+            <Avatar url={ins.avatar_url} name={ins.name} size={64} light />
             <div>
               <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${meta.badge}`}>
                 {meta.label}

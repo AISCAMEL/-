@@ -156,6 +156,7 @@ import type { InstructorRank } from "@/lib/instructors";
 export type DemoInstructor = {
   id: string;
   name: string;
+  avatar_url: string | null;
   rank: InstructorRank;
   headline: string;
   bio: string;
@@ -172,6 +173,7 @@ export const demoInstructors: DemoInstructor[] = [
   {
     id: "ins-1",
     name: "遠藤 海斗",
+    avatar_url: null,
     rank: "pro",
     headline: "JPSA参戦のプロが、初めての一本を全力サポート",
     bio: "福島出身のプロサーファー。国内ツアーを転戦しながら、地元・岩沢で初心者スクールを開いています。「怖い」を「楽しい」に変えるのが得意です。",
@@ -186,6 +188,7 @@ export const demoInstructors: DemoInstructor[] = [
   {
     id: "ins-2",
     name: "佐藤 みなみ",
+    avatar_url: null,
     rank: "top_amateur",
     headline: "やさしく丁寧に。女性・初心者に人気の講師",
     bio: "トップアマチュアとして大会に出場しつつ、週末は初心者・女性向けレッスンを担当。基礎の姿勢づくりから、無理なくステップアップできます。",
@@ -200,6 +203,7 @@ export const demoInstructors: DemoInstructor[] = [
   {
     id: "ins-3",
     name: "工藤 亮",
+    avatar_url: null,
     rank: "instructor",
     headline: "安全第一。ファミリー・キッズも安心の認定インストラクター",
     bio: "日本サーフィン連盟 公認インストラクター。海の安全とルールを大切に、家族連れやお子さまにも丁寧に指導します。",

@@ -46,7 +46,7 @@ export default async function MePage() {
           <MeLink href="/me/edit" label="プロフィール編集" />
           <MeLink href="/me/posts" label="自分の投稿" />
           <MeLink href="/me/skills" label="自分のスキル" />
-          <MeLink href="/community" label="コミュニティ" />
+          <MeLink href="/me/instructor" label="講師プロフィール" />
         </nav>
 
         <div className="mt-8 rounded-2xl border border-navy/10 bg-white p-6 shadow-sm">

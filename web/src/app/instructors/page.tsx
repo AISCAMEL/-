@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { RANK_META, stars, priceLabelMonthly, type InstructorRank } from "@/lib/instructors";
+import { Avatar } from "@/components/ui/avatar";
 import { DEMO, demoInstructors } from "@/lib/demo";
 
 export const metadata: Metadata = {
@@ -26,6 +27,7 @@ export default async function InstructorsPage() {
   let rows: {
     id: string;
     name: string;
+    avatar_url: string | null;
     rank: InstructorRank;
     headline: string | null;
     home_break: string | null;
@@ -50,6 +52,7 @@ export default async function InstructorsPage() {
     rows = ((data ?? []) as unknown as Row[]).map((r) => ({
       id: r.member_id,
       name: r.member?.display_name ?? "講師",
+      avatar_url: r.member?.avatar_url ?? null,
       rank: r.rank,
       headline: r.headline,
       home_break: r.home_break,
@@ -88,9 +91,7 @@ export default async function InstructorsPage() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-ocean-gradient text-lg font-semibold text-foam">
-                      {r.name.slice(0, 1)}
-                    </div>
+                    <Avatar url={r.avatar_url} name={r.name} size={56} />
                     <div>
                       <div className="flex items-center gap-2">
                         <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${meta.badge}`}>

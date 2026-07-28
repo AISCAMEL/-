@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentMember } from "@/lib/auth";
 import { Brand } from "@/components/brand";
 import { ProfileForm } from "@/components/me/profile-form";
+import { AvatarUpload } from "@/components/me/avatar-upload";
 
 export const metadata: Metadata = { title: "プロフィール編集｜IWASAWA SURF BASE" };
 
@@ -15,7 +16,7 @@ export default async function EditProfilePage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("members")
-    .select("display_name, handle, bio, home_area")
+    .select("display_name, handle, bio, home_area, avatar_url")
     .eq("id", member.id)
     .single();
 
@@ -29,6 +30,15 @@ export default async function EditProfilePage() {
           ← マイページへ
         </Link>
         <h1 className="mt-4 text-2xl font-semibold text-navy">プロフィール編集</h1>
+
+        <section className="mt-8">
+          <h2 className="mb-3 text-sm font-semibold text-navy/70">プロフィール写真</h2>
+          <AvatarUpload
+            initialUrl={data?.avatar_url ?? null}
+            name={data?.display_name ?? member.display_name ?? "ゲスト"}
+          />
+        </section>
+
         <div className="mt-8">
           <ProfileForm
             initial={{
