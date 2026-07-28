@@ -117,6 +117,112 @@ export async function toggleInstructorFlag(formData: FormData) {
   revalidatePath("/admin/instructors");
 }
 
+// --- オンライン講座 ----------------------------------------------
+export async function createCourse(formData: FormData) {
+  const staff = await requireStaff();
+  const title = String(formData.get("title") || "").trim();
+  if (!title) return;
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("courses")
+    .insert({
+      title,
+      description: String(formData.get("description") || "").trim() || null,
+      level: String(formData.get("level") || "beginner"),
+      cover_url: String(formData.get("cover_url") || "").trim() || null,
+      status: "draft",
+    })
+    .select("id")
+    .single();
+  await audit(staff.id, "course.create", "course", data?.id ?? "");
+  revalidatePath("/admin/courses");
+}
+
+export async function updateCourse(formData: FormData) {
+  const staff = await requireStaff();
+  const id = String(formData.get("id"));
+  const supabase = await createClient();
+  await supabase
+    .from("courses")
+    .update({
+      title: String(formData.get("title") || "").trim(),
+      description: String(formData.get("description") || "").trim() || null,
+      level: String(formData.get("level") || "beginner"),
+      cover_url: String(formData.get("cover_url") || "").trim() || null,
+      status: String(formData.get("status") || "draft"),
+    })
+    .eq("id", id);
+  await audit(staff.id, "course.update", "course", id);
+  revalidatePath(`/admin/courses/${id}`);
+  revalidatePath("/admin/courses");
+}
+
+export async function deleteCourse(formData: FormData) {
+  const staff = await requireStaff();
+  const id = String(formData.get("id"));
+  const supabase = await createClient();
+  await supabase.from("courses").delete().eq("id", id);
+  await audit(staff.id, "course.delete", "course", id);
+  revalidatePath("/admin/courses");
+}
+
+export async function createLesson(formData: FormData) {
+  const staff = await requireStaff();
+  const courseId = String(formData.get("course_id"));
+  const title = String(formData.get("title") || "").trim();
+  if (!courseId || !title) return;
+  const supabase = await createClient();
+  await supabase.from("lessons").insert({
+    course_id: courseId,
+    title,
+    body: String(formData.get("body") || "").trim() || null,
+    video_url: String(formData.get("video_url") || "").trim() || null,
+    is_free: formData.get("is_free") === "on",
+    duration_min: formData.get("duration_min")
+      ? Number(String(formData.get("duration_min")).replace(/[^\d]/g, ""))
+      : null,
+    sort_order: formData.get("sort_order")
+      ? Number(String(formData.get("sort_order")).replace(/[^\d]/g, ""))
+      : 0,
+  });
+  await audit(staff.id, "lesson.create", "course", courseId);
+  revalidatePath(`/admin/courses/${courseId}`);
+}
+
+export async function updateLesson(formData: FormData) {
+  const staff = await requireStaff();
+  const id = String(formData.get("id"));
+  const courseId = String(formData.get("course_id"));
+  const supabase = await createClient();
+  await supabase
+    .from("lessons")
+    .update({
+      title: String(formData.get("title") || "").trim(),
+      body: String(formData.get("body") || "").trim() || null,
+      video_url: String(formData.get("video_url") || "").trim() || null,
+      is_free: formData.get("is_free") === "on",
+      duration_min: formData.get("duration_min")
+        ? Number(String(formData.get("duration_min")).replace(/[^\d]/g, ""))
+        : null,
+      sort_order: formData.get("sort_order")
+        ? Number(String(formData.get("sort_order")).replace(/[^\d]/g, ""))
+        : 0,
+    })
+    .eq("id", id);
+  await audit(staff.id, "lesson.update", "lesson", id);
+  revalidatePath(`/admin/courses/${courseId}`);
+}
+
+export async function deleteLesson(formData: FormData) {
+  const staff = await requireStaff();
+  const id = String(formData.get("id"));
+  const courseId = String(formData.get("course_id"));
+  const supabase = await createClient();
+  await supabase.from("lessons").delete().eq("id", id);
+  await audit(staff.id, "lesson.delete", "lesson", id);
+  revalidatePath(`/admin/courses/${courseId}`);
+}
+
 // --- 広告枠 ------------------------------------------------------
 export async function toggleAd(formData: FormData) {
   const staff = await requireStaff();

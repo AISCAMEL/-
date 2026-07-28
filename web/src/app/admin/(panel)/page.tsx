@@ -37,6 +37,7 @@ export default async function Dashboard() {
       count("instructor_profiles"),
       count("inquiries", (q) => q.eq("status", "open")),
     ]);
+  const courses = await count("courses");
 
   const supabase = await createClient();
   const catCounts = await Promise.all(
@@ -62,6 +63,7 @@ export default async function Dashboard() {
         <Metric label="今日の投稿数" value={todayPosts} />
         <Metric label="公開中の投稿" value={posts} />
         <Metric label="講師数" value={instructors} href="/admin/instructors" />
+        <Metric label="オンライン講座" value={courses} href="/admin/courses" />
         <Metric
           label="承認待ち（通報）"
           value={openReports}
