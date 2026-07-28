@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { RANK_META, type InstructorRank } from "@/lib/instructors";
+import { AdBanner } from "@/components/ads/ad-banner";
 import { DEMO, demoArticles } from "@/lib/demo";
 
 export const metadata: Metadata = {
@@ -64,7 +65,11 @@ export default async function ArticlesPage() {
         </p>
       </div>
 
-      <div className="mt-6 space-y-4">
+      <div className="mt-6">
+        <AdBanner placement="blog" />
+      </div>
+
+      <div className="mt-4 space-y-4">
         {cards.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-navy/20 bg-white p-10 text-center text-sm text-navy/60">
             まだ記事がありません。

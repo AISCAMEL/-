@@ -5,6 +5,7 @@ import { getCurrentMember } from "@/lib/auth";
 import { CATEGORIES, GUEST_VISIBLE_POSTS, isCategory } from "@/lib/community";
 import { PostCard, type PostSummary } from "@/components/community/post-card";
 import { WaveWidget } from "@/components/waves/wave-widget";
+import { AdBanner } from "@/components/ads/ad-banner";
 import { DEMO, demoPosts } from "@/lib/demo";
 
 export const metadata: Metadata = { title: "コミュニティ｜IWASAWA SURF BASE" };
@@ -52,6 +53,11 @@ export default async function CommunityFeed({ searchParams }: Props) {
       {/* 波情報ウィジェット（WV-01） */}
       <div className="mt-6">
         <WaveWidget />
+      </div>
+
+      {/* スポンサー広告枠 */}
+      <div className="mt-4">
+        <AdBanner placement="feed" />
       </div>
 
       {/* カテゴリフィルター */}

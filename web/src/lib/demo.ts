@@ -235,6 +235,21 @@ export const demoInstructorReviews: Record<
   ],
 };
 
+// --- 広告枠（スポンサーバナー）---------------------------------
+export type DemoAd = {
+  id: string;
+  advertiser: string;
+  image_url: string;
+  href: string;
+  placement: "feed" | "waves" | "blog" | "all";
+};
+
+export const demoAds: DemoAd[] = [
+  { id: "ad-1", advertiser: "WAVE RIDER 広野店", image_url: "/ads/shop.png", href: "#", placement: "feed" },
+  { id: "ad-2", advertiser: "AQUA wetsuits", image_url: "/ads/wetsuit.png", href: "#", placement: "waves" },
+  { id: "ad-3", advertiser: "岩沢の宿 うみやど", image_url: "/ads/cafe.png", href: "#", placement: "blog" },
+];
+
 export type DemoArticle = {
   id: string;
   title: string;

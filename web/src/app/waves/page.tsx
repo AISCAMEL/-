@@ -14,6 +14,7 @@ import {
   type WaveHour,
 } from "@/lib/waves";
 import { DEMO, demoWaveReport, demoLocalWaves } from "@/lib/demo";
+import { AdBanner } from "@/components/ads/ad-banner";
 
 export const metadata: Metadata = {
   title: "波情報｜IWASAWA SURF BASE",
@@ -177,6 +178,11 @@ export default async function WavesPage() {
             下の「ローカルの声」を参考にしてください。
           </section>
         )}
+
+        {/* スポンサー広告枠 */}
+        <div className="mt-8">
+          <AdBanner placement="waves" />
+        </div>
 
         <section className="mt-10">
           <div className="flex items-center justify-between">

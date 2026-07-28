@@ -117,6 +117,17 @@ export async function toggleInstructorFlag(formData: FormData) {
   revalidatePath("/admin/instructors");
 }
 
+// --- 広告枠 ------------------------------------------------------
+export async function toggleAd(formData: FormData) {
+  const staff = await requireStaff();
+  const id = String(formData.get("id"));
+  const active = formData.get("active") === "true";
+  const supabase = await createClient();
+  await supabase.from("ad_banners").update({ is_active: active }).eq("id", id);
+  await audit(staff.id, "ad.active", "ad", id, { active });
+  revalidatePath("/admin/ads");
+}
+
 // --- お問い合わせ ------------------------------------------------
 export async function markInquiry(formData: FormData) {
   const staff = await requireStaff();
