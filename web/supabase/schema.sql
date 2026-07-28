@@ -794,8 +794,7 @@ create table public.lessons (
   id          uuid primary key default gen_random_uuid(),
   course_id   uuid not null references public.courses (id) on delete cascade,
   title       text not null,
-  body        text,                       -- マニュアル（テキスト解説）
-  video_url   text,                       -- 動画URL（埋め込み）
+  -- 有料コンテンツ（body / video_url）は lesson_contents に分離（下記・ペイウォール保護）
   is_free     boolean not null default false,  -- 無料プレビューか
   duration_min integer,                   -- 目安分数
   sort_order  integer not null default 0,
@@ -829,6 +828,46 @@ create policy "anyone can read lessons meta"
   );
 create policy "staff can write lessons"
   on public.lessons for all to authenticated
+  using (public.is_staff()) with check (public.is_staff());
+
+-- レッスン有料コンテンツ（body / video_url）を分離してRLSで保護（ペイウォール）
+create or replace function public.is_premium()
+returns boolean language sql stable security definer set search_path = public as $$
+  select coalesce(
+    (select plan = 'premium' from public.members where id = auth.uid()),
+    false
+  );
+$$;
+
+create table public.lesson_contents (
+  lesson_id  uuid primary key references public.lessons (id) on delete cascade,
+  body       text,   -- マニュアル（テキスト解説）
+  video_url  text,   -- 動画URL（埋め込み）
+  updated_at timestamptz not null default now()
+);
+
+create trigger lesson_contents_set_updated_at
+  before update on public.lesson_contents
+  for each row execute function public.set_updated_at();
+
+alter table public.lesson_contents enable row level security;
+
+-- 読取：無料プレビュー or プレミアム or staff のみ（公開中コースに限る）
+create policy "free preview or premium or staff can read lesson content"
+  on public.lesson_contents for select
+  using (
+    public.is_staff()
+    or exists (
+      select 1
+      from public.lessons l
+      join public.courses c on c.id = l.course_id
+      where l.id = lesson_id
+        and c.status = 'active'
+        and (l.is_free or public.is_premium())
+    )
+  );
+create policy "staff can write lesson content"
+  on public.lesson_contents for all to authenticated
   using (public.is_staff()) with check (public.is_staff());
 
 

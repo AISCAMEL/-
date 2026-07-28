@@ -172,19 +172,29 @@ export async function createLesson(formData: FormData) {
   const title = String(formData.get("title") || "").trim();
   if (!courseId || !title) return;
   const supabase = await createClient();
-  await supabase.from("lessons").insert({
-    course_id: courseId,
-    title,
-    body: String(formData.get("body") || "").trim() || null,
-    video_url: String(formData.get("video_url") || "").trim() || null,
-    is_free: formData.get("is_free") === "on",
-    duration_min: formData.get("duration_min")
-      ? Number(String(formData.get("duration_min")).replace(/[^\d]/g, ""))
-      : null,
-    sort_order: formData.get("sort_order")
-      ? Number(String(formData.get("sort_order")).replace(/[^\d]/g, ""))
-      : 0,
-  });
+  // メタ情報は lessons、有料コンテンツ（body/video_url）は lesson_contents に分けて保存
+  const { data: lesson } = await supabase
+    .from("lessons")
+    .insert({
+      course_id: courseId,
+      title,
+      is_free: formData.get("is_free") === "on",
+      duration_min: formData.get("duration_min")
+        ? Number(String(formData.get("duration_min")).replace(/[^\d]/g, ""))
+        : null,
+      sort_order: formData.get("sort_order")
+        ? Number(String(formData.get("sort_order")).replace(/[^\d]/g, ""))
+        : 0,
+    })
+    .select("id")
+    .single();
+  if (lesson?.id) {
+    await supabase.from("lesson_contents").insert({
+      lesson_id: lesson.id,
+      body: String(formData.get("body") || "").trim() || null,
+      video_url: String(formData.get("video_url") || "").trim() || null,
+    });
+  }
   await audit(staff.id, "lesson.create", "course", courseId);
   revalidatePath(`/admin/courses/${courseId}`);
 }
@@ -198,8 +208,6 @@ export async function updateLesson(formData: FormData) {
     .from("lessons")
     .update({
       title: String(formData.get("title") || "").trim(),
-      body: String(formData.get("body") || "").trim() || null,
-      video_url: String(formData.get("video_url") || "").trim() || null,
       is_free: formData.get("is_free") === "on",
       duration_min: formData.get("duration_min")
         ? Number(String(formData.get("duration_min")).replace(/[^\d]/g, ""))
@@ -209,6 +217,15 @@ export async function updateLesson(formData: FormData) {
         : 0,
     })
     .eq("id", id);
+  // 有料コンテンツは lesson_contents 側を upsert
+  await supabase.from("lesson_contents").upsert(
+    {
+      lesson_id: id,
+      body: String(formData.get("body") || "").trim() || null,
+      video_url: String(formData.get("video_url") || "").trim() || null,
+    },
+    { onConflict: "lesson_id" },
+  );
   await audit(staff.id, "lesson.update", "lesson", id);
   revalidatePath(`/admin/courses/${courseId}`);
 }

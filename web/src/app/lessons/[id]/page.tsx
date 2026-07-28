@@ -48,25 +48,37 @@ export default async function LessonPage({ params }: Props) {
     }
   } else {
     const supabase = await createClient();
+    // まずメタ情報のみ取得（body/video_url は含めない＝有料コンテンツは分離済み）
     const { data } = await supabase
       .from("lessons")
-      .select("id, title, body, video_url, is_free, course:courses!inner(id, title, cover_url)")
+      .select("id, title, is_free, course:courses!inner(id, title, cover_url)")
       .eq("id", id)
       .single();
     if (data) {
       const d = data as unknown as {
         id: string;
         title: string;
-        body: string | null;
-        video_url: string | null;
         is_free: boolean;
         course: { id: string; title: string; cover_url: string | null } | null;
       };
+      // 有料コンテンツは閲覧権がある時だけ取得。lesson_contents 側の RLS でも
+      // 二重に保護されるが、アプリ層でも取りに行かないことで確実に漏らさない。
+      let body: string | null = null;
+      let video_url: string | null = null;
+      if (d.is_free || isPremium) {
+        const { data: content } = await supabase
+          .from("lesson_contents")
+          .select("body, video_url")
+          .eq("lesson_id", id)
+          .single();
+        body = content?.body ?? null;
+        video_url = content?.video_url ?? null;
+      }
       lesson = {
         id: d.id,
         title: d.title,
-        body: d.body,
-        video_url: d.video_url,
+        body,
+        video_url,
         is_free: d.is_free,
         courseId: d.course?.id ?? "",
         courseTitle: d.course?.title ?? "",

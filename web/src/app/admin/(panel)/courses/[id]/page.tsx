@@ -18,11 +18,11 @@ type Props = { params: Promise<{ id: string }> };
 type Lesson = {
   id: string;
   title: string;
-  body: string | null;
-  video_url: string | null;
   is_free: boolean;
   duration_min: number | null;
   sort_order: number;
+  // lesson_contents は 1:1。PostgREST の埋め込みはオブジェクト/配列どちらもあり得るため両対応。
+  content: { body: string | null; video_url: string | null } | { body: string | null; video_url: string | null }[] | null;
 };
 type Course = {
   id: string;
@@ -42,7 +42,7 @@ export default async function AdminCourseEdit({ params }: Props) {
   const supabase = await createClient();
   const { data } = await supabase
     .from("courses")
-    .select("id, title, description, level, cover_url, status, lessons(id, title, body, video_url, is_free, duration_min, sort_order)")
+    .select("id, title, description, level, cover_url, status, lessons(id, title, is_free, duration_min, sort_order, content:lesson_contents(body, video_url))")
     .eq("id", id)
     .single();
   if (!data) notFound();
@@ -76,7 +76,9 @@ export default async function AdminCourseEdit({ params }: Props) {
       {/* レッスン一覧 */}
       <h2 className="mt-8 text-sm font-semibold text-slate-600">レッスン（{lessons.length}）</h2>
       <div className="mt-3 space-y-3">
-        {lessons.map((l) => (
+        {lessons.map((l) => {
+          const c = Array.isArray(l.content) ? l.content[0] : l.content;
+          return (
           <div key={l.id} className="space-y-2 rounded-lg border border-slate-200 bg-white p-4">
             <form action={updateLesson} className="space-y-2">
               <input type="hidden" name="id" value={l.id} />
@@ -85,8 +87,8 @@ export default async function AdminCourseEdit({ params }: Props) {
                 <input name="sort_order" defaultValue={l.sort_order} className="w-16 rounded border border-slate-300 px-2 py-2 text-sm" title="表示順" />
                 <input name="title" defaultValue={l.title} className={input} />
               </div>
-              <textarea name="body" rows={4} defaultValue={l.body ?? ""} placeholder="マニュアル（テキスト解説）" className={input} />
-              <input name="video_url" defaultValue={l.video_url ?? ""} placeholder="動画URL（埋め込み・任意）" className={input} />
+              <textarea name="body" rows={4} defaultValue={c?.body ?? ""} placeholder="マニュアル（テキスト解説）" className={input} />
+              <input name="video_url" defaultValue={c?.video_url ?? ""} placeholder="動画URL（埋め込み・任意）" className={input} />
               <div className="flex flex-wrap items-center gap-3">
                 <input name="duration_min" defaultValue={l.duration_min ?? ""} placeholder="分" className="w-20 rounded border border-slate-300 px-2 py-1.5 text-sm" />
                 <label className="flex items-center gap-1.5 text-sm text-slate-700">
@@ -107,7 +109,8 @@ export default async function AdminCourseEdit({ params }: Props) {
               </ConfirmSubmit>
             </form>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* レッスン追加 */}
