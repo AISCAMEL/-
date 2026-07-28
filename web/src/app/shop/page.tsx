@@ -59,6 +59,20 @@ export default async function ShopPage({ searchParams }: Props) {
         </p>
       </div>
 
+      {/* 道具→ルール→プロ指導→海 の導線 */}
+      <Link
+        href="/rules"
+        className="mt-4 flex items-center justify-between rounded-2xl border border-teal/30 bg-teal/10 px-5 py-4 transition hover:bg-teal/20"
+      >
+        <div>
+          <p className="text-sm font-semibold text-navy">道具が揃ったら、海のルールも。</p>
+          <p className="mt-0.5 text-xs text-navy/60">
+            知って、プロに習って、海に入る。安全のための第一歩。
+          </p>
+        </div>
+        <span className="shrink-0 text-teal">→</span>
+      </Link>
+
       {/* 無在庫の明示（誤認防止） */}
       <p className="mt-4 rounded-xl border border-ocean/20 bg-white px-4 py-3 text-xs text-navy/60">
         ℹ️ 当ショップは受注制です。ご注文後に仕入先の在庫を確認し、確保でき次第に受注確定・発送します。

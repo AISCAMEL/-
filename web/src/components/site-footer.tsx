@@ -24,6 +24,7 @@ export function SiteFooter() {
         ]} />
 
         <FooterCol title="情報" links={[
+          { href: "/rules", label: "海に入る前に（ルール）" },
           { href: "/about", label: "私たちについて" },
           { href: "/faq", label: "よくある質問" },
           { href: "/articles", label: "プロのブログ" },

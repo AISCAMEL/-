@@ -105,9 +105,20 @@ export default function Home() {
               今日の波情報 🌊
             </Link>
           </div>
-          <p className="mt-6 text-center text-xs text-navy/40">
-            ※ 管理画面（運営向け）は順次公開予定です。
-          </p>
+          <div className="mt-8 rounded-2xl border border-teal/30 bg-teal/5 p-5 text-center">
+            <p className="text-sm font-semibold text-navy">
+              🌊 海に入る前に、ルールとマナーを。
+            </p>
+            <p className="mt-1 text-xs text-navy/60">
+              道具を揃えて終わり、ではなく——知って、プロに習って、海に入る。
+            </p>
+            <Link
+              href="/rules"
+              className="mt-3 inline-block rounded-full bg-navy px-5 py-2 text-sm font-medium text-foam transition hover:bg-ocean"
+            >
+              海のルールを学ぶ →
+            </Link>
+          </div>
         </div>
       </section>
 

@@ -16,6 +16,9 @@ export async function CommunityHeader() {
           <Link href="/instructors" className="hidden text-navy/70 hover:text-ocean sm:inline">
             スクール
           </Link>
+          <Link href="/rules" className="hidden text-navy/70 hover:text-ocean sm:inline">
+            海のルール
+          </Link>
           <Link href="/articles" className="hidden text-navy/70 hover:text-ocean sm:inline">
             ブログ
           </Link>
