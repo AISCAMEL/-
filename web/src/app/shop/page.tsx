@@ -106,6 +106,17 @@ export default async function ShopPage({ searchParams }: Props) {
         ))}
       </div>
 
+      {process.env.NEXT_PUBLIC_BASE_SHOP_URL ? (
+        <a
+          href={process.env.NEXT_PUBLIC_BASE_SHOP_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-6 block rounded-2xl bg-navy px-5 py-4 text-center text-sm font-medium text-foam transition hover:bg-ocean"
+        >
+          🛍 本店（BASE）で購入する →
+        </a>
+      ) : null}
+
       <p className="mt-8 text-center text-xs text-navy/40">
         価格は税込・送料別です。
         <Link href="/legal/tokushoho" className="text-ocean hover:underline">特定商取引法表記</Link>

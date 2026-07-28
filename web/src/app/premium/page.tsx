@@ -61,7 +61,7 @@ export default function PremiumPage() {
           </ul>
           <div className="mt-6 rounded-xl bg-teal/10 p-4 text-center">
             <p className="text-xs text-navy/60">
-              オンライン決済（サブスクリプション）は近日対応予定です。
+              サブスクリプション決済は Square で提供予定です（近日対応）。
             </p>
             <Link
               href="/contact"

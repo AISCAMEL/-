@@ -223,6 +223,85 @@ export async function deleteLesson(formData: FormData) {
   revalidatePath(`/admin/courses/${courseId}`);
 }
 
+// --- 仕入れ先 / BASE 連携 ----------------------------------------
+export async function createSupplier(formData: FormData) {
+  const staff = await requireStaff();
+  const name = String(formData.get("name") || "").trim();
+  if (!name) return;
+  const supabase = await createClient();
+  await supabase.from("suppliers").insert({
+    name,
+    contact: String(formData.get("contact") || "").trim() || null,
+    note: String(formData.get("note") || "").trim() || null,
+  });
+  await audit(staff.id, "supplier.create", "supplier", "");
+  revalidatePath("/admin/suppliers");
+}
+
+export async function createSupplierProduct(formData: FormData) {
+  const staff = await requireStaff();
+  const name = String(formData.get("name") || "").trim();
+  const price = Number(String(formData.get("price") || "0").replace(/[^\d]/g, ""));
+  if (!name || !price) return;
+  const supabase = await createClient();
+  await supabase.from("supplier_products").insert({
+    supplier_id: String(formData.get("supplier_id") || "") || null,
+    name,
+    description: String(formData.get("description") || "").trim() || null,
+    category: String(formData.get("category") || "").trim() || null,
+    cost: formData.get("cost") ? Number(String(formData.get("cost")).replace(/[^\d]/g, "")) : null,
+    price,
+    image_url: String(formData.get("image_url") || "").trim() || null,
+  });
+  await audit(staff.id, "supplier_product.create", "supplier_product", "");
+  revalidatePath("/admin/suppliers");
+}
+
+export async function deleteSupplierProduct(formData: FormData) {
+  const staff = await requireStaff();
+  const id = String(formData.get("id"));
+  const supabase = await createClient();
+  await supabase.from("supplier_products").delete().eq("id", id);
+  await audit(staff.id, "supplier_product.delete", "supplier_product", id);
+  revalidatePath("/admin/suppliers");
+}
+
+export async function publishProductToBase(formData: FormData) {
+  const staff = await requireStaff();
+  const id = String(formData.get("id"));
+  const supabase = await createClient();
+
+  const { data: p } = await supabase
+    .from("supplier_products")
+    .select("name, description, price, image_url")
+    .eq("id", id)
+    .single();
+  if (!p) return;
+
+  const { publishItemToBase } = await import("@/lib/integrations");
+  const result = await publishItemToBase({
+    name: p.name,
+    description: p.description,
+    price: p.price,
+    imageUrl: p.image_url,
+  });
+
+  await supabase
+    .from("supplier_products")
+    .update({
+      base_status: result.ok ? "published" : "error",
+      base_item_id: result.itemId ?? null,
+      base_message: result.message,
+      published_at: result.ok ? new Date().toISOString() : null,
+    })
+    .eq("id", id);
+
+  await audit(staff.id, result.ok ? "base.publish" : "base.publish_error", "supplier_product", id, {
+    message: result.message,
+  });
+  revalidatePath("/admin/suppliers");
+}
+
 // --- 広告枠 ------------------------------------------------------
 export async function toggleAd(formData: FormData) {
   const staff = await requireStaff();

@@ -9,6 +9,8 @@ const NAV = [
   { href: "/admin/members", label: "会員管理" },
   { href: "/admin/instructors", label: "講師管理" },
   { href: "/admin/courses", label: "講座管理" },
+  { href: "/admin/suppliers", label: "仕入れ先・BASE" },
+  { href: "/admin/channels", label: "チャネル・決済" },
   { href: "/admin/ads", label: "広告枠" },
   { href: "/admin/reports", label: "通報・要確認" },
   { href: "/admin/inquiries", label: "お問い合わせ" },
