@@ -10,7 +10,7 @@ test('getUsageSummary: デモテナントの当月集計', async () => {
   assert.equal(s.plan.key, 'business');
   // デモ通話3件: 92s,64s,28s → 2+2+1 = 5分
   assert.equal(s.billable_minutes, 5);
-  assert.equal(s.revenue_jpy, 29800);
+  assert.equal(s.revenue_jpy, 6980); // スタンダード（低額基本料）月150分込み・5分は含む
   assert.equal(s.cost.total_jpy, 63.16);
   assert.ok(s.margin_rate > 99 && s.margin_rate <= 100);
 });

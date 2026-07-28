@@ -11,12 +11,12 @@ const features = [
 ];
 
 const plans = [
-  { name: 'Starter', price: '9,800', target: '小規模店舗向け', limit: '月100分まで',
-    items: ['AI電話受付', 'FAQ回答', '通話要約', 'メール通知', '基本管理画面'], over: '超過 1分80円' },
-  { name: 'Business', price: '29,800', target: '店舗・中小企業向け', limit: '月500分まで', featured: true,
-    items: ['Starterの全機能', '人間転送', '予約受付', 'Slack通知', '通話履歴管理'], over: '超過 1分60円' },
-  { name: 'Pro', price: '59,800', target: '営業組織・複数担当向け', limit: '月1,500分まで',
-    items: ['Businessの全機能', '複数番号', 'CRM連携', '高度な分析', '担当者振り分け', '優先サポート'], over: '超過 1分50円' },
+  { name: 'ライト', price: '2,980', target: '小規模・低頻度向け', limit: '月30分込み',
+    items: ['AI電話受付（24時間）', 'FAQ回答', '通話要約', 'メール通知', '基本管理画面'], over: '以降 1分60円（使った分だけ）' },
+  { name: 'スタンダード', price: '6,980', target: '店舗・中小企業向け', limit: '月150分込み', featured: true,
+    items: ['ライトの全機能', '人間転送', '予約受付', 'Slack通知', '通話履歴管理'], over: '以降 1分45円（使った分だけ）' },
+  { name: 'プロ', price: '14,800', target: '営業組織・複数担当向け', limit: '月500分込み',
+    items: ['スタンダードの全機能', '複数番号', 'CRM連携', '高度な分析', '担当者振り分け', '優先サポート'], over: '以降 1分35円（使った分だけ）' },
 ];
 
 export default function LandingPage() {
@@ -96,7 +96,7 @@ export default function LandingPage() {
               </thead>
               <tbody>
                 {[
-                  ['月額の目安', '¥9,800〜', '¥0〜3,000〜', '¥5,000〜30,000', '¥100,000〜'],
+                  ['月額の目安', '¥2,980〜', '¥0〜3,000〜', '¥5,000〜30,000', '¥100,000〜'],
                   ['24時間対応', '◎', '◎', '△（高額）', '△（シフト）'],
                   ['AIが会話で要件聞き取り', '◎', '△（選択式中心）', '◎（人）', '◎（人）'],
                   ['予約・折り返し受付', '◎', '○', '◎', '◎'],
@@ -127,7 +127,7 @@ export default function LandingPage() {
       <section id="plans" className="bg-gray-50">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <h2 className="text-center text-3xl font-bold">料金プラン</h2>
-          <p className="mt-3 text-center text-gray-600">月額固定 + 通話分数上限 + 超過課金。まずは1週間のテスト導入から。</p>
+          <p className="mt-3 text-center text-gray-600">低額の月額基本料 ＋ 使った通話分だけの従量課金。基本料に含まれる分を超えた分だけ加算。まずは1週間のテスト導入から。</p>
           <div className="mt-12 grid gap-8 lg:grid-cols-3">
             {plans.map((p) => (
               <div key={p.name}

@@ -23,11 +23,13 @@ export interface PlanDef {
   overageJpyPerMin: number; // 超過単価
 }
 
+// 低額の月額基本料＋通話分の従量課金モデル。基本料に含まれる分を超えたら1分ごとに加算。
+// 原価は約¥12.6/分。従量単価はいずれも粗利60%以上を確保。
 export const PLANS: Record<string, PlanDef> = {
-  starter:    { label: 'Starter',    allowanceMin: 100,  baseJpy: 9800,  overageJpyPerMin: 80 },
-  business:   { label: 'Business',   allowanceMin: 500,  baseJpy: 29800, overageJpyPerMin: 60 },
-  pro:        { label: 'Pro',        allowanceMin: 1500, baseJpy: 59800, overageJpyPerMin: 50 },
-  enterprise: { label: 'Enterprise', allowanceMin: 5000, baseJpy: 0,     overageJpyPerMin: 50 },
+  starter:    { label: 'ライト',        allowanceMin: 30,   baseJpy: 2980,  overageJpyPerMin: 60 },
+  business:   { label: 'スタンダード',  allowanceMin: 150,  baseJpy: 6980,  overageJpyPerMin: 45 },
+  pro:        { label: 'プロ',          allowanceMin: 500,  baseJpy: 14800, overageJpyPerMin: 35 },
+  enterprise: { label: 'エンタープライズ', allowanceMin: 2000, baseJpy: 0,   overageJpyPerMin: 30 },
 };
 
 export function planDef(plan?: string | null): PlanDef {

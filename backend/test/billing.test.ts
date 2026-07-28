@@ -22,15 +22,15 @@ test('AI原価/分 ≈ ¥12.63 (為替155前提)', () => {
   assert.equal(aiCostJpy(5), 63.16);
 });
 
-test('monthlyRevenueJpy: 上限内は基本料金、超過は加算', () => {
-  const biz = PLANS.business; // base 29800 / 500分 / 超過60円
-  assert.equal(monthlyRevenueJpy(biz, 300), 29800);
-  assert.equal(monthlyRevenueJpy(biz, 500), 29800);
-  assert.equal(monthlyRevenueJpy(biz, 600), 29800 + 100 * 60);
+test('monthlyRevenueJpy: 上限内は基本料金、超過は従量加算', () => {
+  const biz = PLANS.business; // 低額基本料＋従量モデル
+  assert.equal(monthlyRevenueJpy(biz, biz.allowanceMin - 1), biz.baseJpy);      // 上限内
+  assert.equal(monthlyRevenueJpy(biz, biz.allowanceMin), biz.baseJpy);          // ちょうど
+  assert.equal(monthlyRevenueJpy(biz, biz.allowanceMin + 100), biz.baseJpy + 100 * biz.overageJpyPerMin); // 超過
 });
 
 test('planDef: 未知プランは starter にフォールバック', () => {
-  assert.equal(planDef('pro').label, 'Pro');
-  assert.equal(planDef('unknown').label, 'Starter');
-  assert.equal(planDef(null).label, 'Starter');
+  assert.equal(planDef('pro').label, PLANS.pro.label);
+  assert.equal(planDef('unknown').label, PLANS.starter.label);
+  assert.equal(planDef(null).label, PLANS.starter.label);
 });
