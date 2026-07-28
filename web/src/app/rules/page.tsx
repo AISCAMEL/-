@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Brand } from "@/components/brand";
@@ -98,7 +99,9 @@ export default function RulesPage() {
 
         {/* 確認チェック → プロへ */}
         <div className="mt-8">
-          <RulesAck />
+          <Suspense fallback={null}>
+            <RulesAck />
+          </Suspense>
         </div>
 
         {/* 補足導線 */}

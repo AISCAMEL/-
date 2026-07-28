@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { DEMO } from "@/lib/demo";
 
@@ -14,6 +15,8 @@ const ITEMS = [
 ];
 
 export function RulesAck() {
+  const params = useSearchParams();
+  const next = params.get("next");
   const [checked, setChecked] = useState<boolean[]>(ITEMS.map(() => false));
   const [recorded, setRecorded] = useState(false);
   const allChecked = checked.every(Boolean);
@@ -81,12 +84,21 @@ export function RulesAck() {
                 : "学習を記録しています…"}
               次は、プロに習ってから海へ。
             </p>
-            <Link
-              href="/instructors"
-              className="mt-4 inline-block rounded-full bg-ocean px-6 py-2.5 text-sm font-medium text-foam transition hover:bg-navy"
-            >
-              プロに習う（スクールへ）→
-            </Link>
+            {next ? (
+              <Link
+                href={next}
+                className="mt-4 inline-block rounded-full bg-ocean px-6 py-2.5 text-sm font-medium text-foam transition hover:bg-navy"
+              >
+                続けて申し込む →
+              </Link>
+            ) : (
+              <Link
+                href="/instructors"
+                className="mt-4 inline-block rounded-full bg-ocean px-6 py-2.5 text-sm font-medium text-foam transition hover:bg-navy"
+              >
+                プロに習う（スクールへ）→
+              </Link>
+            )}
           </>
         ) : (
           <p className="text-sm text-navy/50">
