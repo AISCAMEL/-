@@ -84,6 +84,50 @@ export async function setMemberStatus(formData: FormData) {
   revalidatePath("/admin/members");
 }
 
+// --- 講師管理 ----------------------------------------------------
+export async function setInstructorRank(formData: FormData) {
+  const staff = await requireStaff();
+  const id = String(formData.get("id"));
+  const rank = String(formData.get("rank")); // none | instructor | top_amateur | pro
+  const supabase = await createClient();
+
+  if (rank === "none") {
+    await supabase.from("instructor_profiles").delete().eq("member_id", id);
+    await audit(staff.id, "instructor.remove", "member", id);
+  } else {
+    await supabase
+      .from("instructor_profiles")
+      .upsert({ member_id: id, rank }, { onConflict: "member_id" });
+    await audit(staff.id, "instructor.rank", "member", id, { rank });
+  }
+  revalidatePath("/admin/instructors");
+}
+
+export async function toggleInstructorFlag(formData: FormData) {
+  const staff = await requireStaff();
+  const id = String(formData.get("id"));
+  const field = String(formData.get("field")); // is_featured | accepting
+  const value = formData.get("value") === "true";
+  const supabase = await createClient();
+  await supabase
+    .from("instructor_profiles")
+    .update({ [field]: value })
+    .eq("member_id", id);
+  await audit(staff.id, `instructor.${field}`, "member", id, { value });
+  revalidatePath("/admin/instructors");
+}
+
+// --- お問い合わせ ------------------------------------------------
+export async function markInquiry(formData: FormData) {
+  const staff = await requireStaff();
+  const id = String(formData.get("id"));
+  const status = String(formData.get("status")); // open | handled
+  const supabase = await createClient();
+  await supabase.from("inquiries").update({ status }).eq("id", id);
+  await audit(staff.id, `inquiry.${status}`, "inquiry", id);
+  revalidatePath("/admin/inquiries");
+}
+
 // --- 通報対応 ----------------------------------------------------
 export async function resolveReport(formData: FormData) {
   const staff = await requireStaff();

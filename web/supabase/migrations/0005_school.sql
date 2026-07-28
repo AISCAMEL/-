@@ -125,6 +125,9 @@ create policy "owner or staff can update instructor"
 create policy "staff can insert instructor"
   on public.instructor_profiles for insert to authenticated
   with check (public.is_staff());
+create policy "staff can delete instructor"
+  on public.instructor_profiles for delete to authenticated
+  using (public.is_staff());
 
 -- 口コミは誰でも閲覧可。投稿は認証済み（自分名義・自分自身は評価不可）
 create policy "anyone can read reviews"

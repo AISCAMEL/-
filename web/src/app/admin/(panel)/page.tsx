@@ -27,13 +27,16 @@ async function count(table: string, build?: (q: CountFilter) => CountFilter) {
 export default async function Dashboard() {
   const today = todayStartISO();
 
-  const [members, newMembers, posts, todayPosts, openReports] = await Promise.all([
-    count("members"),
-    count("members", (q) => q.gte("created_at", today)),
-    count("posts", (q) => q.eq("status", "published")),
-    count("posts", (q) => q.gte("created_at", today)),
-    count("reports", (q) => q.eq("status", "open")),
-  ]);
+  const [members, newMembers, posts, todayPosts, openReports, instructors, openInquiries] =
+    await Promise.all([
+      count("members"),
+      count("members", (q) => q.gte("created_at", today)),
+      count("posts", (q) => q.eq("status", "published")),
+      count("posts", (q) => q.gte("created_at", today)),
+      count("reports", (q) => q.eq("status", "open")),
+      count("instructor_profiles"),
+      count("inquiries", (q) => q.eq("status", "open")),
+    ]);
 
   const supabase = await createClient();
   const catCounts = await Promise.all(
@@ -58,11 +61,18 @@ export default async function Dashboard() {
         <Metric label="新規登録（今日）" value={newMembers} />
         <Metric label="今日の投稿数" value={todayPosts} />
         <Metric label="公開中の投稿" value={posts} />
+        <Metric label="講師数" value={instructors} href="/admin/instructors" />
         <Metric
           label="承認待ち（通報）"
           value={openReports}
           href="/admin/reports"
           highlight={openReports > 0}
+        />
+        <Metric
+          label="未対応の問い合わせ"
+          value={openInquiries}
+          href="/admin/inquiries"
+          highlight={openInquiries > 0}
         />
       </div>
 

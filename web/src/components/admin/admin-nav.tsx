@@ -7,7 +7,9 @@ const NAV = [
   { href: "/admin", label: "ダッシュボード" },
   { href: "/admin/posts", label: "投稿管理" },
   { href: "/admin/members", label: "会員管理" },
+  { href: "/admin/instructors", label: "講師管理" },
   { href: "/admin/reports", label: "通報・要確認" },
+  { href: "/admin/inquiries", label: "お問い合わせ" },
 ];
 
 export function AdminNav({ variant }: { variant: "side" | "top" }) {
