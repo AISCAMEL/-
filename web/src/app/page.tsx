@@ -74,6 +74,12 @@ export default function Home() {
           </div>
           <div className="mt-10 flex flex-wrap justify-center gap-3 text-sm">
             <Link
+              href="/instructors"
+              className="rounded-full border border-ocean/30 px-5 py-2 font-medium text-ocean transition hover:bg-ocean hover:text-foam"
+            >
+              サーフィンスクール
+            </Link>
+            <Link
               href="/community"
               className="rounded-full border border-ocean/30 px-5 py-2 font-medium text-ocean transition hover:bg-ocean hover:text-foam"
             >
@@ -95,6 +101,32 @@ export default function Home() {
           <p className="mt-6 text-center text-xs text-navy/40">
             ※ 管理画面（運営向け）は順次公開予定です。
           </p>
+        </div>
+      </section>
+
+      {/* サーフィンスクール（プロ講師）*/}
+      <section className="bg-ocean-gradient px-6 py-16 text-foam">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-xs tracking-[0.3em] text-teal">SURF SCHOOL</p>
+          <h2 className="mt-3 text-2xl font-semibold">プロと、海へ。</h2>
+          <p className="mt-3 text-sm text-sand/90">
+            トッププロ・トップアマ・認定インストラクターが、
+            初めての一本から丁寧にサポート。登録は無料、受講は月額制。
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3 text-sm">
+            <Link
+              href="/instructors"
+              className="rounded-full bg-teal px-6 py-2.5 font-medium text-navy transition hover:bg-foam"
+            >
+              講師を探す
+            </Link>
+            <Link
+              href="/articles"
+              className="rounded-full border border-foam/40 px-6 py-2.5 font-medium text-foam transition hover:border-foam"
+            >
+              プロのブログを読む
+            </Link>
+          </div>
         </div>
       </section>
 

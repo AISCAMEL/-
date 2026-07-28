@@ -149,3 +149,124 @@ export const demoLocalWaves = [
   { id: "demo-3", body: "朝イチがメローでおすすめ。昼から風上がりそう。", author: "タカ（Local）" },
   { id: "demo-4", body: "今日は腰くらい。初心者の練習に良い日。", author: "ケン（Local）" },
 ];
+
+// --- サーフィンスクール（プロ講師）------------------------------
+import type { InstructorRank } from "@/lib/instructors";
+
+export type DemoInstructor = {
+  id: string;
+  name: string;
+  rank: InstructorRank;
+  headline: string;
+  bio: string;
+  achievements: string;
+  home_break: string;
+  years: number;
+  monthly_price: number | null;
+  accepting: boolean;
+  rating_avg: number;
+  rating_count: number;
+};
+
+export const demoInstructors: DemoInstructor[] = [
+  {
+    id: "ins-1",
+    name: "遠藤 海斗",
+    rank: "pro",
+    headline: "JPSA参戦のプロが、初めての一本を全力サポート",
+    bio: "福島出身のプロサーファー。国内ツアーを転戦しながら、地元・岩沢で初心者スクールを開いています。「怖い」を「楽しい」に変えるのが得意です。",
+    achievements: "JPSAロングボード 年間ランキング上位／東北アマチュア選手権 優勝",
+    home_break: "岩沢海岸",
+    years: 18,
+    monthly_price: 12000,
+    accepting: true,
+    rating_avg: 4.9,
+    rating_count: 38,
+  },
+  {
+    id: "ins-2",
+    name: "佐藤 みなみ",
+    rank: "top_amateur",
+    headline: "やさしく丁寧に。女性・初心者に人気の講師",
+    bio: "トップアマチュアとして大会に出場しつつ、週末は初心者・女性向けレッスンを担当。基礎の姿勢づくりから、無理なくステップアップできます。",
+    achievements: "全日本サーフィン選手権 東北ブロック 準優勝",
+    home_break: "岩沢海岸",
+    years: 9,
+    monthly_price: 9000,
+    accepting: true,
+    rating_avg: 4.8,
+    rating_count: 27,
+  },
+  {
+    id: "ins-3",
+    name: "工藤 亮",
+    rank: "instructor",
+    headline: "安全第一。ファミリー・キッズも安心の認定インストラクター",
+    bio: "日本サーフィン連盟 公認インストラクター。海の安全とルールを大切に、家族連れやお子さまにも丁寧に指導します。",
+    achievements: "JSF公認インストラクター／ライフセービング資格保有",
+    home_break: "岩沢海岸",
+    years: 12,
+    monthly_price: 8000,
+    accepting: false,
+    rating_avg: 4.7,
+    rating_count: 15,
+  },
+];
+
+export const demoInstructorReviews: Record<
+  string,
+  { id: string; author: string; rating: number; body: string }[]
+> = {
+  "ins-1": [
+    { id: "r1", author: "みなと", rating: 5, body: "まったくの初心者でしたが、初回でテイクオフできました！褒め上手で楽しかったです。" },
+    { id: "r2", author: "あや", rating: 5, body: "海の怖さが無くなりました。安全面の説明も丁寧で安心。" },
+    { id: "r3", author: "だいき", rating: 4, body: "人気で予約が取りにくいのが玉に瑕。内容は文句なし。" },
+  ],
+  "ins-2": [
+    { id: "r4", author: "ゆい", rating: 5, body: "女性一人でも参加しやすい雰囲気。基礎から丁寧でした。" },
+    { id: "r5", author: "さき", rating: 5, body: "姿勢を直してもらってから一気に上達しました！" },
+  ],
+  "ins-3": [
+    { id: "r6", author: "たけし", rating: 5, body: "子どもと参加。安全第一で親も安心して見ていられました。" },
+  ],
+};
+
+export type DemoArticle = {
+  id: string;
+  title: string;
+  author: string;
+  rank: InstructorRank;
+  excerpt: string;
+  body: string;
+  published_at: string;
+};
+
+export const demoArticles: DemoArticle[] = [
+  {
+    id: "art-1",
+    title: "初心者がまず揃えるべき3つの道具",
+    author: "遠藤 海斗",
+    rank: "pro",
+    excerpt: "最初の一本、ウェット、そしてリーシュ。プロが本当に必要なものだけ解説します。",
+    body: "サーフィンを始めるとき、道具選びで迷う人はとても多いです。結論から言うと、最初に必要なのは『ボード・ウェット・リーシュコード』の3つ。\n\nボードは浮力のあるファンボード〜ロングがおすすめ。岩沢のようなメローな波なら、無理に短い板を選ばず、まずは安定して立てる一本を。ウェットは水温に合わせて、迷ったらショップかスクールで相談を。\n\n道具は『続けられる』ことが一番大事。最初から高価なものを揃える必要はありません。",
+    published_at: "2026-06-14",
+  },
+  {
+    id: "art-2",
+    title: "海が怖い人へ。安全に楽しむ5つの心得",
+    author: "佐藤 みなみ",
+    rank: "top_amateur",
+    excerpt: "『怖い』は正しい感覚。だからこそ知っておきたい、海と仲良くなる基本。",
+    body: "海が怖いと感じるのは、とても自然なことです。むしろその感覚は大切にしてください。\n\n①自分の膝〜腰くらいの深さから始める ②離岸流（リップカレント）を知る ③体調が悪い日は入らない ④一人では入らない ⑤無理をしない。\n\nこの5つを守れば、海はぐっと身近になります。焦らず、自分のペースで。",
+    published_at: "2026-06-12",
+  },
+  {
+    id: "art-3",
+    title: "岩沢海岸のシーズン別コンディション",
+    author: "遠藤 海斗",
+    rank: "pro",
+    excerpt: "地元プロが教える、季節ごとの波と混雑、ベストな時間帯。",
+    body: "岩沢海岸は年間を通して楽しめるビーチブレイク。春〜初夏はメローで初心者に最適、秋は台風うねりでサイズアップ。\n\n朝イチは風が弱く、面がきれいなことが多いのでおすすめです。地元の波情報とローカルの声もチェックして、その日のベストな時間に入りましょう。",
+    published_at: "2026-06-10",
+  },
+];
