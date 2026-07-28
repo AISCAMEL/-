@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Brand } from "@/components/brand";
+import { SiteFooter } from "@/components/site-footer";
 
 const SERVICES = [
   { title: "オンラインスクール", desc: "海に入る前の不安を、家で解消。" },
@@ -130,9 +131,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="bg-navy px-6 py-8 text-center text-xs text-sand/60">
-        IWASAWA SURF BASE｜福島県双葉郡広野町・岩沢海岸エリア
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
