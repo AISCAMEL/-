@@ -6,6 +6,7 @@ import { getSettings } from '../db/queries.js';
 import { tenantTestReply, type TestTurn } from '../ai/testchat.js';
 import { sendWeeklyDigest } from '../notify/digest.js';
 import { getBillingStatus, createOverageInvoice } from '../billing/square.js';
+import { PLANS, FEATURE_CATALOG } from '../billing/rates.js';
 import * as outbound from '../outbound/repo.js';
 import { runCampaign } from '../outbound/caller.js';
 import { INDUSTRY_TEMPLATES, getTemplate } from '../templates/industry.js';
@@ -44,6 +45,20 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
   const needTenant = (tenantId: string | null | undefined): tenantId is string => Boolean(tenantId);
   // owner/admin/super_admin のみ操作可（架電・連絡先など）
   const manageOutbound = requireRole(['owner', 'admin', 'super_admin']);
+
+  // ---- 料金プラン（機能別・公開） ----
+  app.get('/api/plans', async () => {
+    const order = ['starter', 'business', 'pro'];
+    const plans = order.map((key) => {
+      const p = PLANS[key];
+      return {
+        key, label: p.label, tagline: p.tagline,
+        base_jpy: p.baseJpy, allowance_min: p.allowanceMin, overage_jpy_per_min: p.overageJpyPerMin,
+        features: p.features,
+      };
+    });
+    return { plans, feature_catalog: FEATURE_CATALOG };
+  });
 
   // ---- me ----
   app.get('/api/me', { preHandler: authenticate }, async (req) => {

@@ -11,12 +11,12 @@ const features = [
 ];
 
 const plans = [
-  { name: 'ライト', price: '2,980', target: '小規模・低頻度向け', limit: '月30分込み',
-    items: ['AI電話受付（24時間）', 'FAQ回答', '通話要約', 'メール通知', '基本管理画面'], over: '以降 1分60円（使った分だけ）' },
-  { name: 'スタンダード', price: '6,980', target: '店舗・中小企業向け', limit: '月150分込み', featured: true,
-    items: ['ライトの全機能', '人間転送', '予約受付', 'Slack通知', '通話履歴管理'], over: '以降 1分45円（使った分だけ）' },
-  { name: 'プロ', price: '14,800', target: '営業組織・複数担当向け', limit: '月500分込み',
-    items: ['スタンダードの全機能', '複数番号', 'CRM連携', '高度な分析', '担当者振り分け', '優先サポート'], over: '以降 1分35円（使った分だけ）' },
+  { name: '受付プラン', price: '2,980', target: '電話番の代わり（インバウンド）', limit: '月30分込み',
+    items: ['AI電話受付（24時間）', 'FAQ自動回答', '通話要約・文字起こし', 'メール通知', '予約受付（査定・来店）', '人間へ転送'], over: '以降 1分60円（使った分だけ）' },
+  { name: '営業プラン', price: '7,980', target: '受付＋集客・追客まで', limit: '月150分込み', featured: true,
+    items: ['受付プランの全機能', '連絡先CRM', '一斉メール', 'AI営業・自動架電', '発信者ルール', 'Slack通知', 'CSV出力'], over: '以降 1分45円（使った分だけ）' },
+  { name: '統合プラン', price: '16,800', target: '全機能・多拠点・高度分析', limit: '月500分込み',
+    items: ['営業プランの全機能', 'Googleカレンダー連携', '複数電話番号', '高度な分析', '担当者振り分け', '優先サポート'], over: '以降 1分35円（使った分だけ）' },
 ];
 
 export default function LandingPage() {
@@ -127,7 +127,7 @@ export default function LandingPage() {
       <section id="plans" className="bg-gray-50">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <h2 className="text-center text-3xl font-bold">料金プラン</h2>
-          <p className="mt-3 text-center text-gray-600">低額の月額基本料 ＋ 使った通話分だけの従量課金。基本料に含まれる分を超えた分だけ加算。まずは1週間のテスト導入から。</p>
+          <p className="mt-3 text-center text-gray-600">使いたい<strong>機能の範囲</strong>で選べる3プラン。いずれも低額の月額基本料＋使った通話分だけの従量課金。まずは1週間のテスト導入から。</p>
           <div className="mt-12 grid gap-8 lg:grid-cols-3">
             {plans.map((p) => (
               <div key={p.name}
@@ -154,6 +154,45 @@ export default function LandingPage() {
                 <p className="mt-4 text-xs text-gray-400">{p.over}</p>
               </div>
             ))}
+          </div>
+
+          {/* 機能別 比較表 */}
+          <div className="mt-14">
+            <h3 className="mb-4 text-center text-xl font-bold">機能別の対応表</h3>
+            <div className="overflow-x-auto">
+              <table className="mx-auto w-full max-w-3xl border-collapse text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="px-3 py-3 text-left font-medium text-gray-600">機能</th>
+                    <th className="px-3 py-3 text-center font-medium">受付</th>
+                    <th className="bg-brand-light/40 px-3 py-3 text-center font-semibold text-brand">営業</th>
+                    <th className="px-3 py-3 text-center font-medium">統合</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    ['AI電話受付・FAQ・要約・通知', true, true, true],
+                    ['予約受付（査定・来店）', true, true, true],
+                    ['人間へ転送', true, true, true],
+                    ['連絡先CRM・一斉メール', false, true, true],
+                    ['AI営業・自動架電', false, true, true],
+                    ['発信者ルール・Slack通知・CSV', false, true, true],
+                    ['Googleカレンダー連携（重複防止）', false, false, true],
+                    ['複数電話番号・担当振り分け', false, false, true],
+                    ['高度な分析・優先サポート', false, false, true],
+                  ].map((row, idx) => (
+                    <tr key={idx} className="border-b">
+                      <td className="px-3 py-2.5 text-left text-gray-700">{row[0] as string}</td>
+                      {[1, 2, 3].map((ci) => (
+                        <td key={ci} className={`px-3 py-2.5 text-center ${ci === 2 ? 'bg-brand-light/20' : ''}`}>
+                          {row[ci] ? <span className="text-brand">✓</span> : <span className="text-gray-300">—</span>}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>

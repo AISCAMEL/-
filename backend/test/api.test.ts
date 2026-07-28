@@ -150,3 +150,13 @@ test('GET /api/setup/status → 接続と設定のチェックリストを返す
   assert.ok(d.config && typeof d.config.faq_count === 'number');
   assert.equal(typeof d.integrations.ai.connected, 'boolean');
 });
+
+test('GET /api/plans → 機能別プランとカタログを返す（公開）', async () => {
+  const res = await app.inject({ url: '/api/plans' });
+  assert.equal(res.statusCode, 200);
+  const d = res.json();
+  assert.equal(d.plans.length, 3);
+  assert.ok(d.plans[0].features.includes('reception'));
+  assert.ok(d.plans[2].features.length > d.plans[0].features.length); // 上位ほど機能多い
+  assert.ok(d.feature_catalog.outbound);
+});

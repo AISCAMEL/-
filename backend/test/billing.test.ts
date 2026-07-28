@@ -34,3 +34,18 @@ test('planDef: 未知プランは starter にフォールバック', () => {
   assert.equal(planDef('unknown').label, PLANS.starter.label);
   assert.equal(planDef(null).label, PLANS.starter.label);
 });
+
+test('planHasFeature: プランごとに機能範囲が異なる', async () => {
+  const { planHasFeature } = await import('../src/billing/rates.js');
+  // 受付プランはインバウンド機能のみ
+  assert.equal(planHasFeature('starter', 'reception'), true);
+  assert.equal(planHasFeature('starter', 'appointment'), true);
+  assert.equal(planHasFeature('starter', 'outbound'), false);   // AI架電は営業プラン以上
+  assert.equal(planHasFeature('starter', 'calendar'), false);   // カレンダーは統合プラン
+  // 営業プランは集客機能まで
+  assert.equal(planHasFeature('business', 'outbound'), true);
+  assert.equal(planHasFeature('business', 'calendar'), false);
+  // 統合プランは全部
+  assert.equal(planHasFeature('pro', 'calendar'), true);
+  assert.equal(planHasFeature('pro', 'multi_number'), true);
+});

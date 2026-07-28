@@ -16,24 +16,56 @@ export const COST_USD_PER_MIN = {
 export const AI_COST_USD_PER_MIN =
   COST_USD_PER_MIN.relay + COST_USD_PER_MIN.inbound + COST_USD_PER_MIN.llm;
 
+// 機能キー → 表示名（プランで使える機能の範囲を機能別に管理）。
+export const FEATURE_CATALOG: Record<string, string> = {
+  reception:       'AI電話受付（24時間）',
+  faq:             'FAQ自動回答',
+  summary:         '通話要約・文字起こし',
+  email_notify:    'メール通知',
+  appointment:     '予約受付（査定・来店）',
+  transfer:        '人間へ転送',
+  contacts:        '連絡先CRM（カテゴリ・メモ）',
+  bulk_email:      '一斉メール',
+  outbound:        'AI営業・自動架電',
+  caller_rules:    '発信者ルール（ブロック/個別案内）',
+  slack:           'Slack通知',
+  csv_export:      'CSV出力',
+  calendar:        'Googleカレンダー連携（重複防止）',
+  multi_number:    '複数電話番号',
+  analytics:       '高度な分析ダッシュボード',
+  routing:         '担当者振り分け',
+  priority_support:'優先サポート',
+};
+
 export interface PlanDef {
   label: string;
-  allowanceMin: number;     // 月間上限分数
-  baseJpy: number;          // 月額
-  overageJpyPerMin: number; // 超過単価
+  tagline: string;          // 誰向けか一言
+  allowanceMin: number;     // 月間の込み分数
+  baseJpy: number;          // 月額基本料
+  overageJpyPerMin: number; // 超過（従量）単価
+  features: string[];       // 利用可能な機能キー（下位プランを内包）
 }
 
-// 低額の月額基本料＋通話分の従量課金モデル。基本料に含まれる分を超えたら1分ごとに加算。
+// 低額の月額基本料＋通話分の従量課金。プランは「使える機能の範囲」で分ける（機能別）。
 // 原価は約¥12.6/分。従量単価はいずれも粗利60%以上を確保。
+const RECEPTION_FEATURES = ['reception', 'faq', 'summary', 'email_notify', 'appointment', 'transfer'];
+const SALES_FEATURES = [...RECEPTION_FEATURES, 'contacts', 'bulk_email', 'outbound', 'caller_rules', 'slack', 'csv_export'];
+const PRO_FEATURES = [...SALES_FEATURES, 'calendar', 'multi_number', 'analytics', 'routing', 'priority_support'];
+
 export const PLANS: Record<string, PlanDef> = {
-  starter:    { label: 'ライト',        allowanceMin: 30,   baseJpy: 2980,  overageJpyPerMin: 60 },
-  business:   { label: 'スタンダード',  allowanceMin: 150,  baseJpy: 6980,  overageJpyPerMin: 45 },
-  pro:        { label: 'プロ',          allowanceMin: 500,  baseJpy: 14800, overageJpyPerMin: 35 },
-  enterprise: { label: 'エンタープライズ', allowanceMin: 2000, baseJpy: 0,   overageJpyPerMin: 30 },
+  starter:    { label: '受付プラン',   tagline: '電話番の代わり（インバウンド）', allowanceMin: 30,   baseJpy: 2980,  overageJpyPerMin: 60, features: RECEPTION_FEATURES },
+  business:   { label: '営業プラン',   tagline: '受付＋集客・追客まで',           allowanceMin: 150,  baseJpy: 7980,  overageJpyPerMin: 45, features: SALES_FEATURES },
+  pro:        { label: '統合プラン',   tagline: '全機能・多拠点・高度分析',       allowanceMin: 500,  baseJpy: 16800, overageJpyPerMin: 35, features: PRO_FEATURES },
+  enterprise: { label: 'エンタープライズ', tagline: '大規模・個別要件',            allowanceMin: 2000, baseJpy: 0,    overageJpyPerMin: 30, features: PRO_FEATURES },
 };
 
 export function planDef(plan?: string | null): PlanDef {
   return PLANS[plan ?? 'starter'] ?? PLANS.starter;
+}
+
+/** プランがその機能を使えるか。 */
+export function planHasFeature(plan: string | null | undefined, feature: string): boolean {
+  return planDef(plan).features.includes(feature);
 }
 
 /** 秒→課金対象分（Twilio同様、切り上げ・最低1分）。 */
