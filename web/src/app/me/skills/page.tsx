@@ -41,7 +41,7 @@ export default async function MySkillsPage() {
     supabase
       .from("skill_applications")
       .select(
-        "id, status, message, created_at, skill:skills!inner(id, title, owner_id), applicant:members!skill_applications_applicant_id_fkey(display_name)",
+        "id, status, message, created_at, skill:skills!inner(id, title, owner_id), applicant:members!skill_applications_applicant_id_fkey(display_name, rules_ack_at)",
       )
       .eq("skill.owner_id", member.id)
       .order("created_at", { ascending: false }),
@@ -60,7 +60,7 @@ export default async function MySkillsPage() {
     message: string | null;
     created_at: string;
     skill: { id: string; title: string } | null;
-    applicant: { display_name: string | null } | null;
+    applicant: { display_name: string | null; rules_ack_at: string | null } | null;
   };
 
   const listings = (listingsRes.data ?? []) as unknown as Listing[];
@@ -107,8 +107,17 @@ export default async function MySkillsPage() {
                     {APP_STATUS_LABEL[r.status] ?? r.status}
                   </span>
                 </div>
-                <p className="mt-1 text-xs text-navy/50">
+                <p className="mt-1 flex items-center gap-2 text-xs text-navy/50">
                   {r.applicant?.display_name ?? "メンバー"} さんから
+                  {r.applicant?.rules_ack_at ? (
+                    <span className="rounded-full bg-teal/15 px-2 py-0.5 text-[0.65rem] font-medium text-teal">
+                      🌊 ルール学習済み
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[0.65rem] text-amber-700">
+                      ルール未学習
+                    </span>
+                  )}
                 </p>
                 {r.message ? (
                   <p className="mt-2 whitespace-pre-wrap text-sm text-navy/70">{r.message}</p>

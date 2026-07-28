@@ -1,6 +1,6 @@
 -- ============================================================
 -- IWASAWA SURF BASE — 統合スキーマ（丸ごとコピー → SQL Editor → Run）
--- 0001会員/0002コミュニティ/0003スキル/0004運営/0005スクール/0006画像/0007問い合わせ/0008広告/0009ショップ
+-- 0001会員/0002コミュニティ/0003スキル/0004運営/0005スクール/0006画像/0007問い合わせ/0008広告/0009ショップ/0010ルール学習
 -- ※ 0006 の前に Storage バケット 'avatars'(Public) を作成してください
 -- ============================================================
 
@@ -751,5 +751,16 @@ create policy "owner or staff can read orders"
   using (buyer_id = auth.uid() or public.is_staff());
 create policy "staff can update orders"
   on public.orders for update to authenticated using (public.is_staff());
+
+
+-- ============================================================
+-- IWASAWA SURF BASE — 0010 海のルール学習の記録
+-- 「海に入る前に」の5つの約束を確認した日時を会員に記録する。
+-- ============================================================
+
+alter table public.members
+  add column if not exists rules_ack_at timestamptz;
+
+comment on column public.members.rules_ack_at is '海のルール・マナー学習を完了した日時（修了バッジ用）';
 
 

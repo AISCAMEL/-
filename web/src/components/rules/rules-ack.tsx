@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+import { DEMO } from "@/lib/demo";
 
 const ITEMS = [
   "一本の波に乗るのは一人。前乗り（ドロップイン）はしません。",
@@ -13,14 +15,32 @@ const ITEMS = [
 
 export function RulesAck() {
   const [checked, setChecked] = useState<boolean[]>(ITEMS.map(() => false));
+  const [recorded, setRecorded] = useState(false);
   const allChecked = checked.every(Boolean);
 
-  function toggle(i: number) {
-    setChecked((prev) => prev.map((v, idx) => (idx === i ? !v : v)));
-    if (typeof window !== "undefined") {
-      const next = checked.map((v, idx) => (idx === i ? !v : v));
-      if (next.every(Boolean)) localStorage.setItem("rules_ack", "1");
+  async function record() {
+    if (typeof window !== "undefined") localStorage.setItem("rules_ack", "1");
+    if (DEMO) {
+      setRecorded(true);
+      return;
     }
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      await supabase
+        .from("members")
+        .update({ rules_ack_at: new Date().toISOString() })
+        .eq("id", user.id);
+    }
+    setRecorded(true);
+  }
+
+  function toggle(i: number) {
+    const next = checked.map((v, idx) => (idx === i ? !v : v));
+    setChecked(next);
+    if (next.every(Boolean) && !recorded) record();
   }
 
   return (
@@ -53,10 +73,13 @@ export function RulesAck() {
         {allChecked ? (
           <>
             <p className="text-sm font-medium text-teal">
-              海のルールを理解しました 🌊
+              🌊 海のルールを理解しました
             </p>
             <p className="mt-1 text-xs text-navy/60">
-              次は、プロに習ってから海へ。安全に、いちばん近い上達を。
+              {recorded
+                ? "「ルール学習済み」バッジをプロフィールに記録しました。"
+                : "学習を記録しています…"}
+              次は、プロに習ってから海へ。
             </p>
             <Link
               href="/instructors"

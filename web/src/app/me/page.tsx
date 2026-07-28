@@ -25,7 +25,7 @@ export default async function MePage() {
 
   const { data: member } = await supabase
     .from("members")
-    .select("display_name, handle, role, plan, email, bio")
+    .select("display_name, handle, role, plan, email, bio, rules_ack_at")
     .eq("id", user.id)
     .single();
 
@@ -57,6 +57,18 @@ export default async function MePage() {
             <span className="rounded-full bg-teal/10 px-3 py-1 text-xs font-medium text-teal">
               プラン：{member?.plan === "premium" ? "Premium" : "Free"}
             </span>
+            {member?.rules_ack_at ? (
+              <span className="rounded-full bg-teal/15 px-3 py-1 text-xs font-medium text-teal">
+                🌊 海のルール 学習済み
+              </span>
+            ) : (
+              <Link
+                href="/rules"
+                className="rounded-full border border-navy/15 px-3 py-1 text-xs text-navy/50 hover:border-ocean hover:text-ocean"
+              >
+                海のルールを学ぶ →
+              </Link>
+            )}
           </div>
 
           <dl className="mt-6 space-y-4 text-sm">
