@@ -12,7 +12,7 @@ import {
 import { DEMO, demoSkills } from "@/lib/demo";
 
 export const metadata: Metadata = {
-  title: "スキル掲示板｜IWASAWA SURF BASE",
+  title: "スキル掲示板",
   description: "できる人が、これからの人へ。海にまつわるスキルを教え合う。",
 };
 

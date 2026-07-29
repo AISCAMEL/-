@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Brand } from "@/components/brand";
+import { SITE } from "@/lib/site";
 
 /**
  * 認証画面の共通シェル。
@@ -22,17 +23,13 @@ export function AuthShell({
       <section className="bg-ocean-gradient relative flex flex-col justify-between p-8 text-foam md:w-1/2 md:p-12">
         <Brand light />
         <div className="hidden md:block">
-          <p className="text-3xl font-semibold leading-snug">
-            福島の波を、
-            <br />
-            もっと近くに。
-          </p>
+          <p className="text-3xl font-semibold leading-snug">{SITE.tagline}</p>
           <p className="mt-4 max-w-sm text-sm text-sand/90">
             初めてでも、また来たくなる海へ。
-            岩沢海岸で、学んで・借りて・つながる。
+            {SITE.region.beach}で、学んで・借りて・つながる。
           </p>
         </div>
-        <p className="text-xs text-sand/70">福島県双葉郡広野町・岩沢海岸エリア</p>
+        <p className="text-xs text-sand/70">{SITE.region.areaLabel}</p>
       </section>
 
       <section className="flex flex-1 items-center justify-center bg-foam px-6 py-12">

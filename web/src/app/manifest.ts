@@ -1,11 +1,11 @@
 import type { MetadataRoute } from "next";
+import { SITE } from "@/lib/site";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "IWASAWA SURF BASE",
-    short_name: "IWASAWA",
-    description:
-      "福島の波を、もっと近くに。学べる・借りられる・移動できる・案内される、岩沢海岸の海体験プラットフォーム。",
+    name: SITE.name,
+    short_name: SITE.shortName,
+    description: SITE.description,
     start_url: "/",
     display: "standalone",
     orientation: "portrait",

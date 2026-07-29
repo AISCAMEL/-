@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { CATEGORIES } from "@/lib/community";
+import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = { title: "ダッシュボード｜運営管理" };
 
@@ -55,7 +56,7 @@ export default async function Dashboard() {
   return (
     <div>
       <h1 className="text-xl font-semibold text-slate-900">ダッシュボード</h1>
-      <p className="mt-1 text-sm text-slate-500">岩沢サーフベースの今日の状況</p>
+      <p className="mt-1 text-sm text-slate-500">{SITE.region.beachShort}サーフベースの今日の状況</p>
 
       <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-3">
         <Metric label="会員数" value={members} />

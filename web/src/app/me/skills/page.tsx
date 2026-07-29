@@ -6,7 +6,7 @@ import { getCurrentMember } from "@/lib/auth";
 import { CommunityHeader } from "@/components/community/community-header";
 import { SKILL_CATEGORY_LABEL, type SkillCategory } from "@/lib/skills";
 
-export const metadata: Metadata = { title: "自分のスキル｜IWASAWA SURF BASE" };
+export const metadata: Metadata = { title: "自分のスキル" };
 
 const APP_STATUS_LABEL: Record<string, string> = {
   applied: "申込中",

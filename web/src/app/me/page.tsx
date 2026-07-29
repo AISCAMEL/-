@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Brand } from "@/components/brand";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 
-export const metadata: Metadata = { title: "マイページ｜IWASAWA SURF BASE" };
+export const metadata: Metadata = { title: "マイページ" };
 
 const ROLE_LABEL: Record<string, string> = {
   visitor: "Visitor",

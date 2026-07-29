@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { SitePage } from "@/components/site-page";
 
 export const metadata: Metadata = {
-  title: "プレミアム｜IWASAWA SURF BASE",
+  title: "プレミアム",
   description: "オンライン講座（動画＋マニュアル）が見放題。月額プレミアム。",
 };
 

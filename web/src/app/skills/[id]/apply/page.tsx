@@ -3,6 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentMember } from "@/lib/auth";
 import { ApplyForm } from "@/components/skills/apply-form";
+import { SITE } from "@/lib/site";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -45,7 +46,7 @@ export default async function ApplyPage({ params }: Props) {
             申し込む前に、海のルールを。
           </p>
           <p className="mt-2 text-sm leading-relaxed text-navy/70">
-            IWASAWA SURF BASE では、<strong>ルールとマナーを知ってから、プロに習い、海に入る</strong>
+            {SITE.name} では、<strong>ルールとマナーを知ってから、プロに習い、海に入る</strong>
             ことを大切にしています。まずは「海に入る前の5つの約束」を確認しましょう（数分で終わります）。
           </p>
           <Link

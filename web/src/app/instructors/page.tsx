@@ -6,7 +6,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { DEMO, demoInstructors } from "@/lib/demo";
 
 export const metadata: Metadata = {
-  title: "サーフィンスクール｜IWASAWA SURF BASE",
+  title: "サーフィンスクール",
   description: "トッププロ・トップアマ・認定インストラクターが、初めての一本をサポート。",
 };
 

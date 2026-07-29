@@ -7,7 +7,7 @@ import { CommunityHeader } from "@/components/community/community-header";
 import { CATEGORY_LABEL, type Category } from "@/lib/community";
 import { MyPostActions } from "@/components/me/my-post-actions";
 
-export const metadata: Metadata = { title: "自分の投稿｜IWASAWA SURF BASE" };
+export const metadata: Metadata = { title: "自分の投稿" };
 
 type Row = {
   id: string;

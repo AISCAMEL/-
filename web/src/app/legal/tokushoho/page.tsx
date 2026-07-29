@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SitePage } from "@/components/site-page";
 
 export const metadata: Metadata = {
-  title: "特定商取引法に基づく表記｜IWASAWA SURF BASE",
+  title: "特定商取引法に基づく表記",
 };
 
 const ROWS: { k: string; v: string; todo?: boolean }[] = [

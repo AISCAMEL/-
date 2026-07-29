@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { Field, SubmitButton, Notice } from "@/components/ui/form";
+import { SITE } from "@/lib/site";
 
 export function SignupForm() {
   const [displayName, setDisplayName] = useState("");
@@ -81,7 +82,7 @@ export function SignupForm() {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
-      <SubmitButton pending={pending}>登録して、岩沢の今日を覗く</SubmitButton>
+      <SubmitButton pending={pending}>登録して、{SITE.region.beachShort}の今日を覗く</SubmitButton>
       <p className="text-xs text-navy/50">
         登録すると Beginner として、投稿・いいね・スキルの申し込みができます。
       </p>

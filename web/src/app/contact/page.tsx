@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { SitePage } from "@/components/site-page";
 import { ContactForm } from "@/components/contact-form";
+import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "お問い合わせ｜IWASAWA SURF BASE",
+  title: "お問い合わせ",
 };
 
 export default function ContactPage() {
@@ -30,7 +31,7 @@ export default function ContactPage() {
           <div className="rounded-2xl border border-navy/10 bg-white p-5 text-sm text-navy/70">
             <p className="font-medium text-navy">運営情報</p>
             <p className="mt-2 text-xs leading-relaxed text-navy/50">
-              福島県双葉郡広野町・岩沢海岸エリア
+              {SITE.region.areaLabel}
               <br />
               事業者情報は{" "}
               <a href="/legal/tokushoho" className="text-ocean hover:underline">

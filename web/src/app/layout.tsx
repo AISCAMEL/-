@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { PwaRegister } from "@/components/pwa-register";
+import { SITE } from "@/lib/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,13 +15,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "IWASAWA SURF BASE",
-  description:
-    "福島の波を、もっと近くに。学べる・借りられる・移動できる・案内される、岩沢海岸の海体験プラットフォーム。",
+  // 子ページはタイトルを裸で定義（例 "ログイン"）→ ここで自動的にサフィックス付与
+  title: { default: SITE.name, template: `%s｜${SITE.name}` },
+  description: SITE.description,
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "IWASAWA",
+    title: SITE.shortName,
   },
 };
 

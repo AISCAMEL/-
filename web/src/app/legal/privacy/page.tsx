@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
 import { SitePage, Section } from "@/components/site-page";
+import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "プライバシーポリシー｜IWASAWA SURF BASE",
+  title: "プライバシーポリシー",
 };
 
 export default function PrivacyPage() {
   return (
     <SitePage
       title="プライバシーポリシー"
-      lead="IWASAWA SURF BASE（以下「当サービス」）における個人情報の取り扱い方針です。（雛形）"
+      lead={`${SITE.name}（以下「当サービス」）における個人情報の取り扱い方針です。（雛形）`}
     >
       <Section heading="1. 取得する情報">
         <p>

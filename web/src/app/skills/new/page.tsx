@@ -4,7 +4,7 @@ import Link from "next/link";
 import { getCurrentMember } from "@/lib/auth";
 import { SkillForm } from "@/components/skills/skill-form";
 
-export const metadata: Metadata = { title: "スキルを出品する｜IWASAWA SURF BASE" };
+export const metadata: Metadata = { title: "スキルを出品する" };
 
 export default async function NewSkillPage() {
   const member = await getCurrentMember();

@@ -6,7 +6,7 @@ import { AdBanner } from "@/components/ads/ad-banner";
 import { DEMO, demoArticles } from "@/lib/demo";
 
 export const metadata: Metadata = {
-  title: "プロのブログ｜IWASAWA SURF BASE",
+  title: "プロのブログ",
   description: "プロサーファー・講師が発信する、初心者に役立つコラム。",
 };
 

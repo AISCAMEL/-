@@ -1,4 +1,5 @@
 import { CommunityHeader } from "@/components/community/community-header";
+import { SITE } from "@/lib/site";
 
 export default function CommunityLayout({
   children,
@@ -17,7 +18,7 @@ export default function CommunityLayout({
           rel="noreferrer"
           className="block rounded-2xl bg-teal/10 p-5 text-center text-sm text-navy/80 transition hover:bg-teal/20"
         >
-          LINEでも、岩沢の波情報やイベントをお届けします 🌊
+          LINEでも、{SITE.region.beachShort}の波情報やイベントをお届けします 🌊
           <span className="mt-1 block font-medium text-teal">友だち追加する →</span>
         </a>
       </div>

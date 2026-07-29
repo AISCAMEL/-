@@ -15,10 +15,11 @@ import {
 } from "@/lib/waves";
 import { DEMO, demoWaveReport, demoLocalWaves } from "@/lib/demo";
 import { AdBanner } from "@/components/ads/ad-banner";
+import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "波情報｜IWASAWA SURF BASE",
-  description: "岩沢海岸の天気・波・風・水温と、ローカルの声。",
+  title: "波情報",
+  description: `${SITE.region.beach}の天気・波・風・水温と、ローカルの声。`,
 };
 
 type LocalWave = {
@@ -62,7 +63,7 @@ export default async function WavesPage() {
     <div className="min-h-screen bg-foam">
       <CommunityHeader />
       <main className="mx-auto max-w-3xl px-4 py-8">
-        <h1 className="text-2xl font-semibold text-navy">岩沢海岸の波</h1>
+        <h1 className="text-2xl font-semibold text-navy">{SITE.region.beach}の波</h1>
         <p className="mt-1 text-sm text-navy/60">
           天気・波・水温（Open-Meteo）と、地元のひと言。「今日入れる？」に答えます。
         </p>

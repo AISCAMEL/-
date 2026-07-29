@@ -3,7 +3,7 @@ import Link from "next/link";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { SignupForm } from "@/components/auth/signup-form";
 
-export const metadata: Metadata = { title: "新規登録｜IWASAWA SURF BASE" };
+export const metadata: Metadata = { title: "新規登録" };
 
 export default function SignupPage() {
   return (

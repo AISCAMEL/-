@@ -3,7 +3,7 @@ import Link from "next/link";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { ResetForm } from "@/components/auth/reset-form";
 
-export const metadata: Metadata = { title: "パスワード再設定｜IWASAWA SURF BASE" };
+export const metadata: Metadata = { title: "パスワード再設定" };
 
 export default function ResetPage() {
   return (

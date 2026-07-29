@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SITE } from "@/lib/site";
 
 /** 全ページ共通フッター（規約・情報・サービスへの導線） */
 export function SiteFooter() {
@@ -6,12 +7,12 @@ export function SiteFooter() {
     <footer className="bg-navy px-6 py-12 text-sand/70">
       <div className="mx-auto grid max-w-4xl gap-8 sm:grid-cols-4">
         <div>
-          <p className="text-sm font-semibold tracking-[0.18em] text-foam">IWASAWA</p>
-          <p className="mt-1 text-xs tracking-[0.35em] text-teal">SURF BASE</p>
+          <p className="text-sm font-semibold tracking-[0.18em] text-foam">{SITE.wordmark.line1}</p>
+          <p className="mt-1 text-xs tracking-[0.35em] text-teal">{SITE.wordmark.line2}</p>
           <p className="mt-4 text-xs leading-relaxed text-sand/60">
-            福島の波を、もっと近くに。
+            {SITE.tagline}
             <br />
-            福島県双葉郡広野町・岩沢海岸エリア
+            {SITE.region.areaLabel}
           </p>
         </div>
 
@@ -40,7 +41,7 @@ export function SiteFooter() {
       </div>
 
       <div className="mx-auto mt-10 max-w-4xl border-t border-white/10 pt-6 text-center text-xs text-sand/50">
-        © IWASAWA SURF BASE
+        © {SITE.name}
       </div>
     </footer>
   );

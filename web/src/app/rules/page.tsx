@@ -4,11 +4,11 @@ import type { Metadata } from "next";
 import { Brand } from "@/components/brand";
 import { SiteFooter } from "@/components/site-footer";
 import { RulesAck } from "@/components/rules/rules-ack";
+import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "海に入る前に｜IWASAWA SURF BASE",
-  description:
-    "海のルール・マナー・安全の注意事項。ルールを知り、プロに習い、海に入る。IWASAWA SURF BASE のスタンス。",
+  title: "海に入る前に",
+  description: `海のルール・マナー・安全の注意事項。ルールを知り、プロに習い、海に入る。${SITE.name} のスタンス。`,
 };
 
 const SAFETY = [

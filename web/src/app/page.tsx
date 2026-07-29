@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Brand } from "@/components/brand";
 import { SiteFooter } from "@/components/site-footer";
+import { SITE } from "@/lib/site";
 
 const SERVICES = [
   { title: "オンラインスクール", desc: "海に入る前の不安を、家で解消。" },
@@ -30,15 +31,13 @@ export default function Home() {
 
       {/* Hero */}
       <section className="bg-ocean-gradient flex flex-1 flex-col items-center justify-center px-6 py-24 text-center text-foam">
-        <p className="text-sm tracking-[0.4em] text-teal">IWASAWA SURF BASE</p>
+        <p className="text-sm tracking-[0.4em] text-teal">{SITE.name}</p>
         <h1 className="mt-6 text-4xl font-semibold leading-tight md:text-6xl">
-          福島の波を、
-          <br />
-          もっと近くに。
+          {SITE.tagline}
         </h1>
         <p className="mt-6 max-w-md text-sand/90">
           初めてでも、また来たくなる海へ。
-          岩沢海岸で、学んで・借りて・つながる。
+          {SITE.region.beach}で、学んで・借りて・つながる。
         </p>
         <div className="mt-10 flex gap-3">
           <Link

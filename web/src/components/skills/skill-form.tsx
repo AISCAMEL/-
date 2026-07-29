@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { SKILL_CATEGORIES, type SkillCategory } from "@/lib/skills";
 import { Field, Notice } from "@/components/ui/form";
+import { SITE } from "@/lib/site";
 
 export function SkillForm() {
   const router = useRouter();
@@ -108,7 +109,7 @@ export function SkillForm() {
         <Field
           label="エリア・場所（任意）"
           type="text"
-          placeholder="岩沢海岸 など"
+          placeholder={`${SITE.region.beach} など`}
           value={area}
           onChange={(e) => setArea(e.target.value)}
         />

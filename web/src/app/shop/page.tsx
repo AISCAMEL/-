@@ -12,7 +12,7 @@ import {
 import { DEMO, demoProducts } from "@/lib/demo";
 
 export const metadata: Metadata = {
-  title: "オンラインショップ｜IWASAWA SURF BASE",
+  title: "オンラインショップ",
   description: "ボード・ウェット・小物。海の入口につながるギアを、受注制でお届け。",
 };
 

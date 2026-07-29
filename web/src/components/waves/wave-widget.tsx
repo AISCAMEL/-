@@ -8,6 +8,7 @@ import {
   vibe,
 } from "@/lib/waves";
 import { DEMO, demoWaveReport } from "@/lib/demo";
+import { SITE } from "@/lib/site";
 
 /** WV-01: コンパクトな波情報ウィジェット（フィード上部などに置く） */
 export async function WaveWidget() {
@@ -42,7 +43,7 @@ export async function WaveWidget() {
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs text-navy/50">岩沢海岸・いまの波</p>
+          <p className="text-xs text-navy/50">{SITE.region.beach}・いまの波</p>
           <p className="mt-0.5 text-lg font-semibold text-navy">
             {waveSizeLabel(now.waveHeight)}
             {now.waveHeight != null ? (

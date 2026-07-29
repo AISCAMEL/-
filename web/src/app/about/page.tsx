@@ -1,19 +1,20 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { SitePage, Section } from "@/components/site-page";
+import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "私たちについて｜IWASAWA SURF BASE",
+  title: "私たちについて",
 };
 
 export default function AboutPage() {
   return (
-    <SitePage title="私たちについて" lead="福島の波を、もっと近くに。">
+    <SitePage title="私たちについて" lead={SITE.tagline}>
       <div className="rounded-2xl bg-ocean-gradient p-6 text-foam">
         <p className="text-sm leading-relaxed text-sand/95">
           岩沢海岸は、福島県双葉郡広野町の、静かで懐の深いビーチブレイク。
           震災と、その後の時間を越えて、いま海はまた人を迎えています。
-          IWASAWA SURF BASE は、この海を「初めての人」にも開くための拠点です。
+          {SITE.name} は、この海を「初めての人」にも開くための拠点です。
         </p>
       </div>
 

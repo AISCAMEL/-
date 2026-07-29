@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SitePage } from "@/components/site-page";
 
 export const metadata: Metadata = {
-  title: "よくある質問｜IWASAWA SURF BASE",
+  title: "よくある質問",
 };
 
 const FAQS: { q: string; a: string }[] = [

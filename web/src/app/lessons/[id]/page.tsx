@@ -8,7 +8,7 @@ import { VideoPlayer } from "@/components/courses/video-player";
 import { PremiumCTA } from "@/components/courses/premium-cta";
 import { DEMO, demoCourses } from "@/lib/demo";
 
-export const metadata: Metadata = { title: "レッスン｜IWASAWA SURF BASE" };
+export const metadata: Metadata = { title: "レッスン" };
 
 type Props = { params: Promise<{ id: string }> };
 

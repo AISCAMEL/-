@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Field, Notice } from "@/components/ui/form";
+import { SITE } from "@/lib/site";
 
 type Initial = {
   headline: string | null;
@@ -107,7 +108,7 @@ export function InstructorForm({ initial }: { initial: Initial }) {
         <Field
           label="ホームの海"
           type="text"
-          placeholder="岩沢海岸"
+          placeholder={SITE.region.beach}
           value={f.home_break}
           onChange={(e) => set("home_break", e.target.value)}
         />

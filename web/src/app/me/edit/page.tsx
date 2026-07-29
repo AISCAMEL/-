@@ -7,7 +7,7 @@ import { Brand } from "@/components/brand";
 import { ProfileForm } from "@/components/me/profile-form";
 import { AvatarUpload } from "@/components/me/avatar-upload";
 
-export const metadata: Metadata = { title: "プロフィール編集｜IWASAWA SURF BASE" };
+export const metadata: Metadata = { title: "プロフィール編集" };
 
 export default async function EditProfilePage() {
   const member = await getCurrentMember();

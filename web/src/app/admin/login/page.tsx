@@ -5,7 +5,7 @@ import { getCurrentMember } from "@/lib/auth";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { LoginForm } from "@/components/auth/login-form";
 
-export const metadata: Metadata = { title: "運営ログイン｜IWASAWA SURF BASE" };
+export const metadata: Metadata = { title: "運営ログイン" };
 
 export default async function AdminLoginPage() {
   const member = await getCurrentMember();

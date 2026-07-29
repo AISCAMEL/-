@@ -7,7 +7,7 @@ import { LEVEL_LABEL, LEVEL_BADGE, type CourseLevel } from "@/lib/courses";
 import { DEMO, demoCourses } from "@/lib/demo";
 
 export const metadata: Metadata = {
-  title: "オンライン講座｜IWASAWA SURF BASE",
+  title: "オンライン講座",
   description: "動画とマニュアルで学ぶサーフィン。来訪前の予習に。月額プレミアムで全編見放題。",
 };
 

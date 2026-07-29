@@ -4,7 +4,7 @@ import Link from "next/link";
 import { getCurrentMember } from "@/lib/auth";
 import { PostForm } from "@/components/community/post-form";
 
-export const metadata: Metadata = { title: "投稿する｜IWASAWA SURF BASE" };
+export const metadata: Metadata = { title: "投稿する" };
 
 export default async function NewPostPage() {
   const member = await getCurrentMember();

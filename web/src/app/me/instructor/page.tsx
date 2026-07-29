@@ -8,7 +8,7 @@ import { AvatarUpload } from "@/components/me/avatar-upload";
 import { InstructorForm } from "@/components/me/instructor-form";
 import { rankLabel, type InstructorRank } from "@/lib/instructors";
 
-export const metadata: Metadata = { title: "講師プロフィール編集｜IWASAWA SURF BASE" };
+export const metadata: Metadata = { title: "講師プロフィール編集" };
 
 export default async function InstructorEditPage() {
   const member = await getCurrentMember();

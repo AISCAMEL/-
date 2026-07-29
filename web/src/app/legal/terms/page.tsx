@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
 import { SitePage, Section } from "@/components/site-page";
+import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "利用規約｜IWASAWA SURF BASE",
+  title: "利用規約",
 };
 
 export default function TermsPage() {
   return (
     <SitePage
       title="利用規約"
-      lead="IWASAWA SURF BASE のご利用にあたり、以下に同意いただくものとします。（雛形）"
+      lead={`${SITE.name} のご利用にあたり、以下に同意いただくものとします。（雛形）`}
     >
       <Section heading="第1条（適用）">
         <p>本規約は、当サービスの提供条件および利用者と運営者の関係を定めるものです。</p>

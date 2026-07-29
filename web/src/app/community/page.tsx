@@ -7,8 +7,9 @@ import { PostCard, type PostSummary } from "@/components/community/post-card";
 import { WaveWidget } from "@/components/waves/wave-widget";
 import { AdBanner } from "@/components/ads/ad-banner";
 import { DEMO, demoPosts } from "@/lib/demo";
+import { SITE } from "@/lib/site";
 
-export const metadata: Metadata = { title: "コミュニティ｜IWASAWA SURF BASE" };
+export const metadata: Metadata = { title: "コミュニティ" };
 
 type Props = { searchParams: Promise<{ category?: string }> };
 
@@ -44,7 +45,7 @@ export default async function CommunityFeed({ searchParams }: Props) {
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
       <div className="rounded-2xl bg-ocean-gradient p-6 text-foam">
-        <h1 className="text-2xl font-semibold">岩沢の、今日。</h1>
+        <h1 className="text-2xl font-semibold">{SITE.region.beachShort}の、今日。</h1>
         <p className="mt-1 text-sm text-sand/90">
           波・体験・質問・イベント。海の入口で、ゆるくつながる場所。
         </p>

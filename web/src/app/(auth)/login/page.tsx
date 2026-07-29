@@ -3,14 +3,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { LoginForm } from "@/components/auth/login-form";
+import { SITE } from "@/lib/site";
 
-export const metadata: Metadata = { title: "ログイン｜IWASAWA SURF BASE" };
+export const metadata: Metadata = { title: "ログイン" };
 
 export default function LoginPage() {
   return (
     <AuthShell
       title="おかえりなさい"
-      subtitle="メンバーとして、岩沢の今日につながる。"
+      subtitle={`メンバーとして、${SITE.region.beachShort}の今日につながる。`}
       footer={
         <p>
           はじめての方は{" "}
