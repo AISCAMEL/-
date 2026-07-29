@@ -4,9 +4,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Brand } from "@/components/brand";
-import { readCart, writeCart, yen, type CartLine } from "@/lib/shop";
-import { createClient } from "@/lib/supabase/client";
-import { DEMO } from "@/lib/demo";
+import { readCart, writeCart, yen, shippingFor, type CartLine } from "@/lib/shop";
+import { placeOrder } from "@/app/shop/actions";
 import { Field, Notice } from "@/components/ui/form";
 
 export default function CartPage() {
@@ -24,8 +23,9 @@ export default function CartPage() {
     setLines(readCart());
   }, []);
 
+  // 表示用の概算。確定金額はサーバ側で products から再計算する（改ざん防止）。
   const subtotal = lines.reduce((s, l) => s + l.price * l.qty, 0);
-  const shipping = lines.length ? 800 : 0; // 簡易送料（デモ）
+  const shipping = shippingFor(lines.length);
   const total = subtotal + shipping;
 
   function setQty(id: string, qty: number) {
@@ -50,29 +50,18 @@ export default function CartPage() {
     setError(null);
     setPending(true);
 
-    if (!DEMO) {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      const { error } = await supabase.from("orders").insert({
-        buyer_id: user?.id ?? null,
-        contact_name: name.trim(),
-        contact_email: email.trim(),
-        shipping_addr: addr.trim() || null,
-        items: lines,
-        subtotal,
-        shipping_fee: shipping,
-        total,
-        status: "pending",
-      });
-      if (error) {
-        setPending(false);
-        setError("注文の送信に失敗しました。時間をおいて再度お試しください。");
-        return;
-      }
-    } else {
-      await new Promise((r) => setTimeout(r, 400));
+    // 金額はサーバ側で再計算。ここでは商品IDと数量・連絡先だけを送る。
+    const result = await placeOrder({
+      items: lines.map((l) => ({ id: l.id, qty: l.qty })),
+      name: name.trim(),
+      email: email.trim(),
+      addr: addr.trim() || undefined,
+    });
+
+    if (!result.ok) {
+      setPending(false);
+      setError(result.error);
+      return;
     }
 
     writeCart([]);

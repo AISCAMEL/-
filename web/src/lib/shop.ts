@@ -19,6 +19,18 @@ export function yen(n: number): string {
   return `¥${n.toLocaleString("ja-JP")}`;
 }
 
+/**
+ * 送料（簡易・フラット）。カートが空でなければ一律この額。
+ * 表示（クライアント）と確定（サーバ）で同じ値を使うため一元管理する。
+ * ※ products.shipping_fee（商品ごとの送料）は現状未使用。将来ポリシーを
+ *   決めるときにここを商品別ロジックへ差し替える。
+ */
+export const FLAT_SHIPPING_FEE = 800;
+
+export function shippingFor(itemCount: number): number {
+  return itemCount > 0 ? FLAT_SHIPPING_FEE : 0;
+}
+
 export type CartLine = {
   id: string;
   name: string;
