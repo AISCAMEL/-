@@ -126,7 +126,7 @@ export default async function WavesPage() {
               <section className="mt-6">
                 <h2 className="text-sm font-semibold text-navy/70">今日の波の推移</h2>
                 <div className="mt-3 rounded-2xl border border-navy/10 bg-white p-4">
-                  <HourlyBars hours={report.today} />
+                  <WaveTrend hours={report.today} nowTime={report.now.time} />
                 </div>
               </section>
             ) : null}
@@ -228,26 +228,105 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 /** 今日の波高を、3時間ごとの簡易バーで表示 */
-function HourlyBars({ hours }: { hours: WaveHour[] }) {
-  const sampled = hours.filter((_, i) => i % 3 === 0).slice(0, 8);
-  const max = Math.max(0.6, ...sampled.map((h) => h.waveHeight ?? 0));
+/** 今日の波高の推移をエリアチャート（SVG）で描く。デモ(3時間毎)でも実データ(毎時)でも見栄えする。 */
+function WaveTrend({ hours, nowTime }: { hours: WaveHour[]; nowTime: string | null }) {
+  const pts = hours
+    .map((h) => ({ time: h.time, v: h.waveHeight }))
+    .filter((p): p is { time: string; v: number } => p.v != null);
+
+  if (pts.length < 2) {
+    return (
+      <p className="py-6 text-center text-xs text-navy/40">
+        波高の推移データが取得できませんでした。
+      </p>
+    );
+  }
+
+  const W = 640;
+  const H = 180;
+  const padX = 16;
+  const padTop = 26;
+  const padBottom = 24;
+  const innerW = W - padX * 2;
+  const innerH = H - padTop - padBottom;
+  const n = pts.length;
+  const vMax = Math.max(0.6, ...pts.map((p) => p.v)) * 1.18;
+  const x = (i: number) => padX + (innerW * i) / (n - 1);
+  const y = (v: number) => padTop + innerH * (1 - v / vMax);
+  const baseline = padTop + innerH;
+
+  const line = pts
+    .map((p, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(p.v).toFixed(1)}`)
+    .join(" ");
+  const area = `${line} L${x(n - 1).toFixed(1)},${baseline} L${x(0).toFixed(1)},${baseline} Z`;
+
+  // ピーク（最大波高）と現在時刻に最も近い点
+  let peak = 0;
+  pts.forEach((p, i) => {
+    if (p.v > pts[peak].v) peak = i;
+  });
+  const target = nowTime ? nowTime.slice(0, 13) : null;
+  const cur = target ? pts.findIndex((p) => p.time.slice(0, 13) === target) : -1;
+
+  // 時刻の目盛り（最大5つ）
+  const tickCount = Math.min(5, n);
+  const tickIdx = Array.from({ length: tickCount }, (_, k) =>
+    Math.round((k * (n - 1)) / (tickCount - 1)),
+  );
+
+  const peakAnchor = peak === 0 ? "start" : peak === n - 1 ? "end" : "middle";
+
   return (
-    <div className="flex items-end justify-between gap-1.5" style={{ height: 96 }}>
-      {sampled.map((h) => {
-        const val = h.waveHeight ?? 0;
-        const pct = Math.max(6, Math.round((val / max) * 100));
-        return (
-          <div key={h.time} className="flex flex-1 flex-col items-center gap-1">
-            <span className="text-[0.6rem] text-navy/50">{val.toFixed(1)}</span>
-            <div
-              className="w-full rounded-t bg-ocean/70"
-              style={{ height: `${pct}%` }}
-              title={`${hhmm(h.time)} ${val.toFixed(1)}m`}
-            />
-            <span className="text-[0.6rem] text-navy/40">{hhmm(h.time).slice(0, 2)}時</span>
-          </div>
-        );
-      })}
-    </div>
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ height: "auto" }} role="img" aria-label="今日の波高の推移">
+      <defs>
+        <linearGradient id="waveFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#1E6F9F" stopOpacity="0.28" />
+          <stop offset="100%" stopColor="#1E6F9F" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+
+      <line x1={padX} y1={baseline} x2={W - padX} y2={baseline} stroke="#0B2540" strokeOpacity="0.08" />
+      <path d={area} fill="url(#waveFill)" />
+      <path
+        d={line}
+        fill="none"
+        stroke="#1E6F9F"
+        strokeWidth="2.5"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        vectorEffect="non-scaling-stroke"
+      />
+
+      {pts.map((p, i) => (
+        <circle
+          key={p.time}
+          cx={x(i)}
+          cy={y(p.v)}
+          r={i === cur ? 4.5 : 3}
+          fill={i === cur ? "#2BB8A3" : "#1E6F9F"}
+          stroke="#fff"
+          strokeWidth="1.5"
+        >
+          <title>{`${hhmm(p.time)}　${p.v.toFixed(1)}m`}</title>
+        </circle>
+      ))}
+
+      <text
+        x={x(peak)}
+        y={y(pts[peak].v) - 9}
+        textAnchor={peakAnchor}
+        fontSize="12"
+        fontWeight="600"
+        fill="#0B2540"
+      >
+        最大 {pts[peak].v.toFixed(1)}m
+      </text>
+
+      {tickIdx.map((i) => (
+        <text key={i} x={x(i)} y={H - 7} textAnchor="middle" fontSize="11" fill="#0B2540" fillOpacity="0.45">
+          {hhmm(pts[i].time).slice(0, 2)}時
+        </text>
+      ))}
+    </svg>
   );
 }
