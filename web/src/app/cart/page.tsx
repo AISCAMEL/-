@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Brand } from "@/components/brand";
-import { readCart, writeCart, yen, shippingFor, type CartLine } from "@/lib/shop";
+import { readCart, writeCart, yen, sumShipping, type CartLine } from "@/lib/shop";
 import { placeOrder } from "@/app/shop/actions";
 import { Field, Notice } from "@/components/ui/form";
 
@@ -25,7 +25,7 @@ export default function CartPage() {
 
   // 表示用の概算。確定金額はサーバ側で products から再計算する（改ざん防止）。
   const subtotal = lines.reduce((s, l) => s + l.price * l.qty, 0);
-  const shipping = shippingFor(lines.length);
+  const shipping = sumShipping(lines.map((l) => l.shipping_fee));
   const total = subtotal + shipping;
 
   function setQty(id: string, qty: number) {

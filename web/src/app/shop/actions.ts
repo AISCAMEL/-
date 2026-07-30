@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { DEMO, demoProducts } from "@/lib/demo";
-import { shippingFor } from "@/lib/shop";
+import { sumShipping } from "@/lib/shop";
 
 export type PlaceOrderInput = {
   items: { id: string; qty: number }[];
@@ -42,18 +42,18 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
 
   const ids = [...wanted.keys()];
 
-  // 価格・名称はサーバの真実から取得（クライアント値は使わない）
-  type Src = { id: string; name: string; price: number };
+  // 価格・名称・送料はサーバの真実から取得（クライアント値は使わない）
+  type Src = { id: string; name: string; price: number; shipping_fee: number | null };
   let sources: Src[];
   if (DEMO) {
     sources = demoProducts
       .filter((p) => wanted.has(p.id))
-      .map((p) => ({ id: p.id, name: p.name, price: p.price }));
+      .map((p) => ({ id: p.id, name: p.name, price: p.price, shipping_fee: p.shipping_fee }));
   } else {
     const supabase = await createClient();
     const { data } = await supabase
       .from("products")
-      .select("id, name, price")
+      .select("id, name, price, shipping_fee")
       .in("id", ids)
       .eq("status", "active");
     sources = (data ?? []) as Src[];
@@ -73,7 +73,8 @@ export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResu
     return { product_id: s.id, name: s.name, price, qty };
   });
   const subtotal = items.reduce((sum, it) => sum + it.price * it.qty, 0);
-  const shipping = shippingFor(items.length);
+  // 送料は商品ごとの shipping_fee を合算（同一商品は1個口＝数量は掛けない）
+  const shipping = sumShipping(sources.map((s) => s.shipping_fee));
   const total = subtotal + shipping;
 
   // デモモードは DB 書き込みなし（体験のみ）

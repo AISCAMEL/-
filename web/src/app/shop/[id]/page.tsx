@@ -71,7 +71,7 @@ export default async function ProductDetail({ params }: Props) {
 
           <div className="mt-6">
             <AddToCart
-              line={{ id: p.id, name: p.name, price: p.price, qty: 1, image_url: p.image_url }}
+              line={{ id: p.id, name: p.name, price: p.price, qty: 1, image_url: p.image_url, shipping_fee: p.shipping_fee }}
             />
           </div>
 

@@ -20,15 +20,15 @@ export function yen(n: number): string {
 }
 
 /**
- * 送料（簡易・フラット）。カートが空でなければ一律この額。
- * 表示（クライアント）と確定（サーバ）で同じ値を使うため一元管理する。
- * ※ products.shipping_fee（商品ごとの送料）は現状未使用。将来ポリシーを
- *   決めるときにここを商品別ロジックへ差し替える。
+ * 送料：商品ごとの shipping_fee を合算する（同一商品は1個口＝数量は掛けない）。
+ * 無在庫・受注制で仕入先が別々＝別便になりうるため合算を採用。
+ * 表示（クライアント）と確定（サーバ）で同じ関数を使い、値を一致させる。
  */
-export const FLAT_SHIPPING_FEE = 800;
-
-export function shippingFor(itemCount: number): number {
-  return itemCount > 0 ? FLAT_SHIPPING_FEE : 0;
+export function sumShipping(fees: (number | null | undefined)[]): number {
+  return fees.reduce<number>(
+    (sum, f) => sum + Math.max(0, Math.floor(Number(f) || 0)),
+    0,
+  );
 }
 
 export type CartLine = {
@@ -37,6 +37,8 @@ export type CartLine = {
   price: number;
   qty: number;
   image_url?: string | null;
+  /** 商品ごとの送料（表示用の概算。確定はサーバが products から再計算） */
+  shipping_fee?: number | null;
 };
 
 const KEY = "iwasawa_cart";
