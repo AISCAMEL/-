@@ -280,8 +280,8 @@ function WaveTrend({ hours, nowTime }: { hours: WaveHour[]; nowTime: string | nu
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ height: "auto" }} role="img" aria-label="今日の波高の推移">
       <defs>
         <linearGradient id="waveFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#1E6F9F" stopOpacity="0.28" />
-          <stop offset="100%" stopColor="#1E6F9F" stopOpacity="0" />
+          <stop offset="0%" stopColor="#0e8ac7" stopOpacity="0.28" />
+          <stop offset="100%" stopColor="#0e8ac7" stopOpacity="0" />
         </linearGradient>
       </defs>
 
@@ -290,7 +290,7 @@ function WaveTrend({ hours, nowTime }: { hours: WaveHour[]; nowTime: string | nu
       <path
         d={line}
         fill="none"
-        stroke="#1E6F9F"
+        stroke="#0e8ac7"
         strokeWidth="2.5"
         strokeLinejoin="round"
         strokeLinecap="round"
@@ -303,7 +303,7 @@ function WaveTrend({ hours, nowTime }: { hours: WaveHour[]; nowTime: string | nu
           cx={x(i)}
           cy={y(p.v)}
           r={i === cur ? 4.5 : 3}
-          fill={i === cur ? "#2BB8A3" : "#1E6F9F"}
+          fill={i === cur ? "#14c6a6" : "#0e8ac7"}
           stroke="#fff"
           strokeWidth="1.5"
         >
