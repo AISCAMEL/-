@@ -22,18 +22,24 @@ const PREMIUM = [
   "広告の非表示",
 ];
 
+const REASSURANCE = [
+  { icon: "🔓", title: "いつでも解約OK", desc: "期間しばりなし。マイページからすぐ停止できます。" },
+  { icon: "🔒", title: "カード情報は持ちません", desc: "決済は決済代行（PSP）経由。安心してご利用いただけます。" },
+  { icon: "👀", title: "まずは無料プレビュー", desc: "各講座の冒頭は無料。合うと思ったら月額へ。" },
+];
+
 export default function PremiumPage() {
   return (
     <SitePage
       title="プレミアム"
       lead="オンライン講座が見放題。海での上達を、家からもっと早く。"
     >
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2 md:items-stretch">
         {/* Free */}
-        <div className="rounded-2xl border border-navy/10 bg-white p-6">
+        <div className="flex h-full flex-col rounded-2xl border border-navy/10 bg-white p-6">
           <p className="text-sm font-semibold text-navy/60">無料プラン</p>
           <p className="mt-2 text-2xl font-semibold text-navy">¥0</p>
-          <p className="text-xs text-navy/40">登録は無料</p>
+          <p className="text-xs text-navy/40">登録は無料・いつでも使える</p>
           <ul className="mt-4 space-y-2 text-sm text-navy/70">
             {FREE.map((f) => (
               <li key={f} className="flex gap-2">
@@ -42,10 +48,18 @@ export default function PremiumPage() {
               </li>
             ))}
           </ul>
+          <div className="mt-auto pt-6">
+            <Link
+              href="/signup"
+              className="block rounded-full border border-navy/20 px-6 py-2.5 text-center text-sm font-medium text-navy/80 transition hover:border-ocean hover:text-ocean"
+            >
+              無料ではじめる →
+            </Link>
+          </div>
         </div>
 
         {/* Premium */}
-        <div className="rounded-2xl border-2 border-teal bg-white p-6 shadow-sm">
+        <div className="flex h-full flex-col rounded-2xl border-2 border-teal bg-white p-6 shadow-sm">
           <p className="text-sm font-semibold text-teal">✦ プレミアム</p>
           <p className="mt-2 text-2xl font-semibold text-navy">
             ¥980 <span className="text-sm font-normal text-navy/50">/ 月（税込）</span>
@@ -59,16 +73,18 @@ export default function PremiumPage() {
               </li>
             ))}
           </ul>
-          <div className="mt-6 rounded-xl bg-teal/10 p-4 text-center">
-            <p className="text-xs text-navy/60">
-              サブスクリプション決済は Square で提供予定です（近日対応）。
-            </p>
-            <Link
-              href="/contact"
-              className="mt-3 inline-block rounded-full bg-ocean px-6 py-2.5 text-sm font-medium text-foam transition hover:bg-navy"
-            >
-              先行案内を受け取る（お問い合わせ）
-            </Link>
+          <div className="mt-auto pt-6">
+            <div className="rounded-xl bg-teal/10 p-4 text-center">
+              <p className="text-xs text-navy/60">
+                サブスクリプション決済は Square で提供予定です（近日対応）。
+              </p>
+              <Link
+                href="/contact"
+                className="mt-3 inline-block rounded-full bg-ocean px-6 py-2.5 text-sm font-medium text-foam transition hover:bg-navy"
+              >
+                先行案内を受け取る（お問い合わせ）
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -79,6 +95,17 @@ export default function PremiumPage() {
         <Link href="/legal/tokushoho" className="text-ocean hover:underline">特定商取引法表記</Link>
         に準じます。
       </p>
+
+      {/* 安心材料（下部の余白を埋めつつ不安を解消） */}
+      <div className="mt-8 grid gap-3 sm:grid-cols-3">
+        {REASSURANCE.map((r) => (
+          <div key={r.title} className="rounded-2xl border border-navy/10 bg-white p-4">
+            <p className="text-xl">{r.icon}</p>
+            <p className="mt-1 text-sm font-semibold text-navy">{r.title}</p>
+            <p className="mt-1 text-xs leading-relaxed text-navy/55">{r.desc}</p>
+          </div>
+        ))}
+      </div>
 
       <div className="mt-8 text-center">
         <Link
