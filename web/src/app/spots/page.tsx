@@ -101,7 +101,8 @@ export default async function SpotsPage({ searchParams }: Props) {
 
 function SpotCard({ spot: s, levelStyle }: { spot: SurfSpot; levelStyle: string }) {
   return (
-    <div
+    <Link
+      href={`/spots/${s.id}`}
       className={`flex flex-col rounded-2xl border bg-white p-4 shadow-sm transition hover:border-ocean/40 ${
         s.home ? "border-teal/50 ring-1 ring-teal/30" : "border-navy/10"
       }`}
@@ -125,20 +126,12 @@ function SpotCard({ spot: s, levelStyle }: { spot: SurfSpot; levelStyle: string 
 
       <p className="mt-2 text-xs leading-relaxed text-navy/65">{s.summary}</p>
 
-      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[0.7rem] text-navy/50">
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.7rem] text-navy/50">
         <span>🌊 {SPOT_TYPE_LABEL[s.type]}</span>
         <span>📅 ベスト：{s.bestSeason}</span>
+        <span className="ml-auto font-medium text-ocean">詳細 →</span>
       </div>
-
-      {s.home ? (
-        <Link
-          href="/waves"
-          className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-ocean hover:underline"
-        >
-          今日の波を見る →
-        </Link>
-      ) : null}
-    </div>
+    </Link>
   );
 }
 
