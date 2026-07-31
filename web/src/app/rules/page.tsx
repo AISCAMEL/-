@@ -106,9 +106,9 @@ export default function RulesPage() {
 
         {/* 補足導線 */}
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <Link href="/shop" className="rounded-2xl border border-navy/10 bg-white p-5 transition hover:border-ocean/40">
-            <p className="font-semibold text-navy">🛍 道具を揃える</p>
-            <p className="mt-1 text-sm text-navy/60">ボード・ウェット・小物はオンラインショップで。</p>
+          <Link href="/instructors" className="rounded-2xl border border-navy/10 bg-white p-5 transition hover:border-ocean/40">
+            <p className="font-semibold text-navy">🏄 プロに習う</p>
+            <p className="mt-1 text-sm text-navy/60">はじめの一本は、認定インストラクターと一緒に。</p>
           </Link>
           <Link href="/community" className="rounded-2xl border border-navy/10 bg-white p-5 transition hover:border-ocean/40">
             <p className="font-semibold text-navy">💬 わからないことを聞く</p>

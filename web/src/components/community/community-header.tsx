@@ -10,9 +10,6 @@ export async function CommunityHeader() {
       <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
         <Brand href="/community" />
         <nav className="flex items-center gap-2 text-sm">
-          <Link href="/shop" className="hidden text-navy/70 hover:text-ocean sm:inline">
-            ショップ
-          </Link>
           <Link href="/instructors" className="hidden text-navy/70 hover:text-ocean sm:inline">
             スクール
           </Link>
