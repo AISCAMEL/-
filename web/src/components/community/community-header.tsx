@@ -28,6 +28,9 @@ export async function CommunityHeader() {
           <Link href="/waves" className="hidden text-navy/70 hover:text-ocean sm:inline">
             波情報
           </Link>
+          <Link href="/spots" className="hidden text-navy/70 hover:text-ocean sm:inline">
+            全国ポイント
+          </Link>
           <Link href="/partners" className="hidden text-navy/70 hover:text-ocean sm:inline">
             岩沢まわり
           </Link>

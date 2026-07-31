@@ -110,6 +110,12 @@ export default function Home() {
               今日の波情報 🌊
             </Link>
             <Link
+              href="/spots"
+              className="rounded-full border border-ocean/30 px-5 py-2 font-medium text-ocean transition hover:bg-ocean hover:text-foam"
+            >
+              全国サーフポイント 🗾
+            </Link>
+            <Link
               href="/partners"
               className="rounded-full border border-ocean/30 px-5 py-2 font-medium text-ocean transition hover:bg-ocean hover:text-foam"
             >
