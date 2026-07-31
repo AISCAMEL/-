@@ -23,6 +23,7 @@ export function SiteFooter() {
           { href: "/community", label: "コミュニティ" },
           { href: "/skills", label: "スキル掲示板" },
           { href: "/waves", label: "波情報" },
+          { href: "/partners", label: "岩沢まわり（周辺ガイド）" },
         ]} />
 
         <FooterCol title="情報" links={[

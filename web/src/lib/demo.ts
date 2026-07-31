@@ -6,6 +6,7 @@
 import type { PostSummary } from "@/components/community/post-card";
 import type { WaveReport } from "@/lib/waves";
 import type { SkillCategory } from "@/lib/skills";
+import type { PartnerCategory } from "@/lib/partners";
 
 /** Supabase 未設定ならデモモード */
 export const DEMO =
@@ -458,5 +459,106 @@ export const demoArticles: DemoArticle[] = [
     excerpt: "地元プロが教える、季節ごとの波と混雑、ベストな時間帯。",
     body: "岩沢海岸は年間を通して楽しめるビーチブレイク。春〜初夏はメローで初心者に最適、秋は台風うねりでサイズアップ。\n\n朝イチは風が弱く、面がきれいなことが多いのでおすすめです。地元の波情報とローカルの声もチェックして、その日のベストな時間に入りましょう。",
     published_at: "2026-06-10",
+  },
+];
+
+// --- 地域タイアップ（周辺スポット）-----------------------------
+// レンタカー・宿泊・食べる の提携事業者。掲載は無料（/partners/business）。
+// image_url は任意：未設定ならカテゴリ帯グラデ＋絵文字で表示する。
+export type DemoPartner = {
+  id: string;
+  name: string;
+  category: PartnerCategory;
+  /** エリア表記（例：広野町 / いわき・久之浜） */
+  area: string;
+  /** 一言キャッチ */
+  tagline: string;
+  description: string;
+  /** サーフベース会員向けのタイアップ特典 */
+  perk?: string;
+  /** 海までのアクセス目安 */
+  access?: string;
+  hours?: string;
+  tel?: string;
+  image_url?: string;
+  featured?: boolean;
+};
+
+export const demoPartners: DemoPartner[] = [
+  {
+    id: "pt-hirono-rentacar",
+    name: "ひろのレンタカー",
+    category: "rentalcar",
+    area: "広野町・JR広野駅前",
+    tagline: "駅から海まで、手ぶらで。",
+    description:
+      "広野駅すぐ。軽自動車からミニバンまで、サーフボードを積める車種を用意。日帰り・1泊プランに対応します。",
+    perk: "会員は基本料金10%OFF＋ボードキャリア無料貸出",
+    access: "岩沢海岸まで車で約10分",
+    hours: "8:00–19:00",
+    tel: "0240-00-0000",
+    featured: true,
+  },
+  {
+    id: "pt-iwaki-mobility",
+    name: "いわきモビリティ 久之浜",
+    category: "rentalcar",
+    area: "いわき市・久之浜",
+    tagline: "早朝スタートもおまかせ。",
+    description:
+      "24時間貸出対応。朝イチの海に合わせて前泊なしでも動けます。EV車も選べます。",
+    perk: "会員は早朝6時前の貸出手数料が無料",
+    access: "岩沢海岸まで車で約20分",
+    hours: "24時間（無人受付）",
+  },
+  {
+    id: "pt-umiyado",
+    name: "岩沢の宿 うみやど",
+    category: "stay",
+    area: "広野町・岩沢海岸そば",
+    tagline: "波音で目覚める、海際の宿。",
+    description:
+      "海まで徒歩3分の小さな宿。濡れたウェットのまま入れる土間、温水シャワー、ボード置き場を完備。朝食は地元の魚。",
+    perk: "会員は素泊まり1,000円引き＋レイトチェックアウト",
+    access: "岩沢海岸まで徒歩3分",
+    tel: "0240-00-0001",
+    featured: true,
+  },
+  {
+    id: "pt-guesthouse-nami",
+    name: "ゲストハウス なぎ",
+    category: "stay",
+    area: "いわき市・四倉",
+    tagline: "ひとり旅にちょうどいい。",
+    description:
+      "ドミトリー中心のリーズナブルな宿。共用キッチン・乾燥室あり。連泊割引で長期の波待ちにも。",
+    perk: "会員は連泊（2泊以上）でドリンク1杯サービス",
+    access: "岩沢海岸まで車で約15分",
+    hours: "チェックイン 15:00–21:00",
+  },
+  {
+    id: "pt-cafe-shiosai",
+    name: "海カフェ しおさい",
+    category: "eat",
+    area: "広野町・海岸通り",
+    tagline: "上がってすぐ、あたたかい一杯。",
+    description:
+      "海を見ながら休めるカフェ。名物は具だくさんの浜汁と自家製シフォン。テラスはボード立てかけOK。",
+    perk: "会員はコーヒー or 味噌汁を1杯サービス",
+    access: "岩沢海岸まで徒歩5分",
+    hours: "7:00–17:00（火休）",
+    featured: true,
+  },
+  {
+    id: "pt-shokudo-isohei",
+    name: "磯平食堂",
+    category: "eat",
+    area: "いわき市・久之浜漁港",
+    tagline: "腹ぺこサーファーの定番。",
+    description:
+      "漁港直送の海鮮定食が評判の食堂。ボリューム満点で、朝サーフのあとにぴったり。大盛り無料。",
+    perk: "会員はごはん大盛り・おかわり無料",
+    access: "岩沢海岸まで車で約20分",
+    hours: "11:00–14:30 / 17:00–20:00",
   },
 ];
