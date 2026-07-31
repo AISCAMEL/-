@@ -1,0 +1,550 @@
+<?php
+/**
+ * Store (franchise) portal.
+ *
+ * Renders via the [carmel_store] shortcode on the /store page (gated to
+ * store_owner / store_staff by Carmel_Access_Control). Shows a dashboard of
+ * the *own store's* deals (row-level scoped by store_id) and lets staff advance
+ * the deals through the phases they own. HQ-only transitions (審査・契約) are
+ * intentionally not offered here and are blocked by Carmel_Deal_Status anyway.
+ *
+ * @package CarmelCore
+ */
+
+defined( 'ABSPATH' ) || exit;
+
+class Carmel_Store {
+
+	/** @var Carmel_Store|null */
+	private static $instance = null;
+
+	const ACTION    = 'carmel_store_action';
+	const NONCE     = 'carmel_store_nonce';
+	const SHORTCODE = 'carmel_store';
+
+	/** Target statuses that only HQ may set — never offered to stores. */
+	const HQ_ONLY = array( 'approved', 'rejected', 'matched', 'contracted' );
+
+	public static function instance() {
+		if ( null === self::$instance ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
+
+	/** Forward flow: status => candidate next statuses. */
+	public static function forward_map() {
+		return array(
+			// loan
+			'matched'        => array( 'doc_prep' ),
+			'doc_prep'       => array( 'contracted' ), // HQ only → filtered out
+			'contracted'     => array( 'delivery_prep' ),
+			'delivery_prep'  => array( 'delivered' ),
+			'delivered'      => array( 'after_support' ),
+			'after_support'  => array( 'closed' ),
+			// buyback
+			'appraisal_request' => array( 'appraising' ),
+			'appraising'        => array( 'quoted' ),
+			'quoted'            => array( 'bb_agreed', 'bb_declined' ),
+			'bb_agreed'         => array( 'bb_doc_prep' ),
+			'bb_doc_prep'       => array( 'bb_collected' ),
+			'bb_collected'      => array( 'bb_closed' ),
+			// lease
+			'lease_request'    => array( 'lease_screening' ),
+			'lease_screening'  => array( 'lease_contracted' ),
+			'lease_contracted' => array( 'lease_delivered' ),
+			'lease_delivered'  => array( 'lease_active' ),
+			'lease_active'     => array( 'lease_completed' ),
+			'lease_completed'  => array( 'lease_closed' ),
+		);
+	}
+
+	const LINK_ACTION   = 'carmel_link_customer';
+	const ACTION_NEXT   = 'carmel_deal_nextaction';
+
+	public function register_hooks() {
+		add_shortcode( self::SHORTCODE, array( $this, 'render' ) );
+		add_action( 'admin_post_' . self::ACTION, array( $this, 'handle_post' ) );
+		add_action( 'admin_post_carmel_staff_add', array( $this, 'handle_staff_add' ) );
+		add_action( 'admin_post_' . self::LINK_ACTION, array( $this, 'handle_link_customer' ) );
+		add_action( 'admin_post_' . self::ACTION_NEXT, array( $this, 'handle_next_action' ) );
+	}
+
+	/**
+	 * 次アクション（やること＋期日）を案件に保存。
+	 */
+	public function handle_next_action() {
+		if ( ! $this->can_access() ) {
+			wp_die( esc_html__( '権限がありません。', 'carmel-core' ), '', array( 'response' => 403 ) );
+		}
+		$deal_id  = isset( $_POST['deal_id'] ) ? (int) $_POST['deal_id'] : 0;
+		$redirect = wp_get_referer() ? wp_get_referer() : home_url( '/store' );
+		if ( ! wp_verify_nonce( isset( $_POST['carmel_next_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['carmel_next_nonce'] ) ) : '', self::ACTION_NEXT . '_' . $deal_id ) ) {
+			wp_die( esc_html__( '不正なリクエストです。', 'carmel-core' ), '', array( 'response' => 400 ) );
+		}
+		$deal_store = (int) get_post_meta( $deal_id, 'store_id', true );
+		$my_store   = $this->current_store_id();
+		if ( ! current_user_can( 'carmel_manage_stores' ) && ( ! $my_store || $deal_store !== $my_store ) ) {
+			wp_die( esc_html__( '他店舗の案件は操作できません。', 'carmel-core' ), '', array( 'response' => 403 ) );
+		}
+		$action = isset( $_POST['next_action'] ) ? sanitize_text_field( wp_unslash( $_POST['next_action'] ) ) : '';
+		$due    = isset( $_POST['next_due'] ) ? sanitize_text_field( wp_unslash( $_POST['next_due'] ) ) : '';
+		update_post_meta( $deal_id, 'next_action', $action );
+		update_post_meta( $deal_id, 'next_action_due', $due );
+		delete_post_meta( $deal_id, '_next_alerted' ); // 期日変更で再アラート可能に。
+		wp_safe_redirect( add_query_arg( 'carmel_msg', 'next_ok', $redirect ) );
+		exit;
+	}
+
+	/** 次アクションの設定セル。 */
+	private function next_action_cell( $deal_id ) {
+		$action = (string) get_post_meta( $deal_id, 'next_action', true );
+		$due    = (string) get_post_meta( $deal_id, 'next_action_due', true );
+		$nonce  = wp_create_nonce( self::ACTION_NEXT . '_' . $deal_id );
+		$summary = $action ? esc_html( $action ) . ( $due ? '（' . esc_html( $due ) . '）' : '' ) : '次アクション設定';
+		$overdue = ( $due && strtotime( $due ) < strtotime( current_time( 'Y-m-d' ) ) ) ? ' carmel-next-overdue' : '';
+		$out  = '<details class="carmel-next' . $overdue . '"><summary>' . $summary . '</summary>';
+		$out .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="carmel-next-form">'
+			. '<input type="hidden" name="action" value="' . esc_attr( self::ACTION_NEXT ) . '">'
+			. '<input type="hidden" name="deal_id" value="' . (int) $deal_id . '">'
+			. '<input type="hidden" name="carmel_next_nonce" value="' . esc_attr( $nonce ) . '">'
+			. '<input type="text" name="next_action" value="' . esc_attr( $action ) . '" placeholder="例）見積送付・来店フォロー">'
+			. '<input type="date" name="next_due" value="' . esc_attr( $due ) . '">'
+			. '<button type="submit" class="carmel-btn carmel-btn-green">保存</button></form></details>';
+		if ( class_exists( 'Carmel_Deal_Timeline' ) ) {
+			$out .= ' <a class="carmel-tl-link" href="' . esc_url( Carmel_Deal_Timeline::url( $deal_id ) ) . '">履歴</a>';
+		}
+		return $out;
+	}
+
+	/**
+	 * 案件に顧客をひも付け（在庫共有商談など顧客未確定の案件向け）。
+	 * 既存ユーザーはメールで再利用、新規は customer ロールで発行しパスワード設定リンクを送付。
+	 */
+	public function handle_link_customer() {
+		if ( ! $this->can_access() ) {
+			wp_die( esc_html__( '権限がありません。', 'carmel-core' ), '', array( 'response' => 403 ) );
+		}
+		$deal_id  = isset( $_POST['deal_id'] ) ? (int) $_POST['deal_id'] : 0;
+		$redirect = wp_get_referer() ? wp_get_referer() : home_url( '/store' );
+
+		if ( ! wp_verify_nonce( isset( $_POST['carmel_link_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['carmel_link_nonce'] ) ) : '', self::LINK_ACTION . '_' . $deal_id ) ) {
+			wp_die( esc_html__( '不正なリクエストです。', 'carmel-core' ), '', array( 'response' => 400 ) );
+		}
+
+		// 自店スコープ（本部はバイパス）。
+		$deal_store = (int) get_post_meta( $deal_id, 'store_id', true );
+		$my_store   = $this->current_store_id();
+		if ( ! current_user_can( 'carmel_manage_stores' ) && ( ! $my_store || $deal_store !== $my_store ) ) {
+			wp_die( esc_html__( '他店舗の案件は操作できません。', 'carmel-core' ), '', array( 'response' => 403 ) );
+		}
+
+		$name  = isset( $_POST['cust_name'] ) ? sanitize_text_field( wp_unslash( $_POST['cust_name'] ) ) : '';
+		$email = isset( $_POST['cust_email'] ) ? sanitize_email( wp_unslash( $_POST['cust_email'] ) ) : '';
+		$phone = isset( $_POST['cust_phone'] ) ? sanitize_text_field( wp_unslash( $_POST['cust_phone'] ) ) : '';
+		if ( '' === $email || ! is_email( $email ) ) {
+			wp_safe_redirect( add_query_arg( 'carmel_msg', 'link_err', $redirect ) );
+			exit;
+		}
+
+		$account = Carmel_Application_Intake::provision_user( $name ? $name : $email, $email, 'customer' );
+		if ( is_wp_error( $account ) ) {
+			wp_safe_redirect( add_query_arg( 'carmel_msg', 'link_err', $redirect ) );
+			exit;
+		}
+
+		update_post_meta( $deal_id, 'customer_id', (int) $account['user_id'] );
+		if ( $name ) {
+			update_post_meta( $deal_id, 'applicant_name', $name );
+		}
+		update_post_meta( $deal_id, 'applicant_email', $email );
+		if ( $phone ) {
+			update_post_meta( $deal_id, 'applicant_phone', $phone );
+		}
+
+		if ( ! empty( $account['set_password_url'] ) && ! empty( $account['created'] ) ) {
+			wp_mail(
+				$email,
+				'カーメル：お手続きのご案内',
+				"お車のお手続きを開始しました。マイページのログイン設定（パスワード設定）はこちら：\n" . $account['set_password_url']
+			);
+		}
+
+		do_action( 'carmel_deal_customer_linked', $deal_id, (int) $account['user_id'] );
+		wp_safe_redirect( add_query_arg( 'carmel_msg', 'link_ok', $redirect ) );
+		exit;
+	}
+
+	/**
+	 * Owner adds a staff member to their own store (cap carmel_manage_staff).
+	 */
+	public function handle_staff_add() {
+		$redirect = wp_get_referer() ? wp_get_referer() : home_url( '/store' );
+
+		if ( ! current_user_can( 'carmel_manage_staff' ) ) {
+			wp_die( esc_html__( '権限がありません。', 'carmel-core' ), '', array( 'response' => 403 ) );
+		}
+		if ( ! wp_verify_nonce( isset( $_POST['carmel_staff_nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['carmel_staff_nonce'] ) ) : '', 'carmel_staff_add' ) ) {
+			wp_die( esc_html__( '不正なリクエストです。', 'carmel-core' ), '', array( 'response' => 400 ) );
+		}
+
+		$store_id = $this->current_store_id();
+		if ( ! $store_id ) {
+			wp_safe_redirect( add_query_arg( 'carmel_msg', 'err', $redirect ) );
+			exit;
+		}
+
+		$name  = isset( $_POST['staff_name'] ) ? sanitize_text_field( wp_unslash( $_POST['staff_name'] ) ) : '';
+		$email = isset( $_POST['staff_email'] ) ? sanitize_email( wp_unslash( $_POST['staff_email'] ) ) : '';
+
+		$account = Carmel_Application_Intake::provision_user( $name ? $name : $email, $email, 'store_staff' );
+		if ( is_wp_error( $account ) ) {
+			wp_safe_redirect( add_query_arg( 'carmel_msg', 'err', $redirect ) );
+			exit;
+		}
+		// Bind the staff to this owner's store.
+		update_user_meta( (int) $account['user_id'], 'store_id', $store_id );
+
+		if ( ! empty( $account['set_password_url'] ) && $email ) {
+			wp_mail(
+				$email,
+				'カーメル：スタッフアカウント発行のご案内',
+				"スタッフアカウントが発行されました。初回ログイン（パスワード設定）はこちら：\n" . $account['set_password_url']
+			);
+		}
+
+		wp_safe_redirect( add_query_arg( 'carmel_msg', 'staff_ok', $redirect ) );
+		exit;
+	}
+
+	/**
+	 * The store_id the current user belongs to (0 if none).
+	 *
+	 * @return int
+	 */
+	private function current_store_id() {
+		return (int) get_user_meta( get_current_user_id(), 'store_id', true );
+	}
+
+	/**
+	 * Whether the current user may operate the store portal.
+	 *
+	 * @return bool
+	 */
+	private function can_access() {
+		return is_user_logged_in() && current_user_can( 'carmel_change_deal_status' );
+	}
+
+	/**
+	 * Handle a status-advance submission with row-level scope enforcement.
+	 */
+	public function handle_post() {
+		if ( ! $this->can_access() ) {
+			wp_die( esc_html__( '権限がありません。', 'carmel-core' ), '', array( 'response' => 403 ) );
+		}
+
+		$deal_id   = isset( $_POST['deal_id'] ) ? (int) $_POST['deal_id'] : 0;
+		$to_status = isset( $_POST['to_status'] ) ? sanitize_key( $_POST['to_status'] ) : '';
+		$delivery  = isset( $_POST['delivery_date'] ) ? sanitize_text_field( wp_unslash( $_POST['delivery_date'] ) ) : '';
+		$redirect  = wp_get_referer() ? wp_get_referer() : home_url( '/store' );
+
+		if ( ! wp_verify_nonce( isset( $_POST[ self::NONCE ] ) ? sanitize_text_field( wp_unslash( $_POST[ self::NONCE ] ) ) : '', self::ACTION . '_' . $deal_id ) ) {
+			wp_die( esc_html__( '不正なリクエストです。', 'carmel-core' ), '', array( 'response' => 400 ) );
+		}
+
+		// Row-level security: the deal must belong to the user's store
+		// (HQ users with carmel_manage_stores bypass).
+		$deal_store = (int) get_post_meta( $deal_id, 'store_id', true );
+		$my_store   = $this->current_store_id();
+		if ( ! current_user_can( 'carmel_manage_stores' ) && ( ! $my_store || $deal_store !== $my_store ) ) {
+			wp_die( esc_html__( '他店舗の案件は操作できません。', 'carmel-core' ), '', array( 'response' => 403 ) );
+		}
+
+		// Never allow HQ-only targets from the store portal.
+		if ( in_array( $to_status, self::HQ_ONLY, true ) ) {
+			wp_safe_redirect( add_query_arg( 'carmel_msg', 'forbidden', $redirect ) );
+			exit;
+		}
+
+		// Validate that this is a legitimate forward step from the current status.
+		$current = get_post_meta( $deal_id, 'deal_status', true );
+		$map     = self::forward_map();
+		$allowed = isset( $map[ $current ] ) ? array_diff( $map[ $current ], self::HQ_ONLY ) : array();
+		if ( ! in_array( $to_status, $allowed, true ) ) {
+			wp_safe_redirect( add_query_arg( 'carmel_msg', 'badstep', $redirect ) );
+			exit;
+		}
+
+		$args = array();
+		if ( 'delivery_prep' === $to_status && '' !== $delivery ) {
+			update_post_meta( $deal_id, 'delivery_date', $delivery );
+			$args['vars'] = array( 'delivery_date' => $delivery );
+		}
+
+		$result = Carmel_Deal_Status::change( $deal_id, $to_status, $args );
+		$msg    = is_wp_error( $result ) ? 'err' : 'ok';
+
+		wp_safe_redirect( add_query_arg( 'carmel_msg', $msg, $redirect ) );
+		exit;
+	}
+
+	/**
+	 * Render the store dashboard + deal list.
+	 *
+	 * @return string
+	 */
+	public function render() {
+		if ( ! $this->can_access() ) {
+			return '<p class="carmel-notice">加盟店ポータルを表示する権限がありません。</p>';
+		}
+
+		$store_id = $this->current_store_id();
+		$is_hq    = current_user_can( 'carmel_manage_stores' );
+
+		if ( ! $store_id && ! $is_hq ) {
+			return '<p class="carmel-notice">アカウントに加盟店が紐付いていません。本部にお問い合わせください。</p>';
+		}
+
+		$meta_query = array();
+		if ( $store_id ) {
+			$meta_query[] = array( 'key' => 'store_id', 'value' => $store_id );
+		}
+
+		$deals = get_posts(
+			array(
+				'post_type'      => 'carmel_deal',
+				'post_status'    => 'publish',
+				'posts_per_page' => 100,
+				'meta_query'     => $meta_query ? $meta_query : array(),
+				'orderby'        => 'modified',
+				'order'          => 'DESC',
+			)
+		);
+
+		ob_start();
+		echo $this->styles(); // phpcs:ignore WordPress.Security.EscapeOutput
+		echo $this->notice_banner(); // phpcs:ignore WordPress.Security.EscapeOutput
+		echo '<div class="carmel-store">';
+		echo '<h2>加盟店ダッシュボード' . ( $is_hq && ! $store_id ? '（全店）' : '' ) . '</h2>';
+
+		/**
+		 * Allow modules (e.g. franchise content) to render at the top of the
+		 * store dashboard.
+		 */
+		ob_start();
+		do_action( 'carmel_store_dashboard_top' );
+		echo ob_get_clean(); // phpcs:ignore WordPress.Security.EscapeOutput
+
+		echo $this->dashboard( $deals ); // phpcs:ignore WordPress.Security.EscapeOutput
+		echo $this->staff_form(); // phpcs:ignore WordPress.Security.EscapeOutput
+
+		if ( empty( $deals ) ) {
+			echo '<p>担当案件はありません。</p></div>';
+			return ob_get_clean();
+		}
+
+		echo '<table class="carmel-table"><thead><tr>';
+		echo '<th>案件</th><th>申込者</th><th>種別</th><th>ステータス</th><th>操作</th>';
+		echo '</tr></thead><tbody>';
+
+		foreach ( $deals as $deal ) {
+			$status = get_post_meta( $deal->ID, 'deal_status', true );
+			$name   = get_post_meta( $deal->ID, 'applicant_name', true );
+			$type   = get_post_meta( $deal->ID, 'deal_type', true );
+			$label  = $this->status_label( $status );
+
+			echo '<tr>';
+			$customer_id = (int) get_post_meta( $deal->ID, 'customer_id', true );
+			echo '<td>#' . (int) $deal->ID . '</td>';
+			echo '<td>' . esc_html( $name ? $name : $deal->post_title );
+			if ( ! $customer_id ) {
+				echo ' <span class="carmel-no-cust">顧客未確定</span>';
+			}
+			echo '</td>';
+			echo '<td>' . esc_html( $this->type_label( $type ) ) . '</td>';
+			echo '<td><span class="carmel-badge">' . esc_html( $label ) . '</span></td>';
+			echo '<td>' . $this->action_cell( $deal->ID, $status ) // phpcs:ignore WordPress.Security.EscapeOutput
+				. $this->customer_link_cell( $deal->ID, $customer_id ) // phpcs:ignore WordPress.Security.EscapeOutput
+				. $this->next_action_cell( $deal->ID ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput
+			echo '</tr>';
+		}
+
+		echo '</tbody></table></div>';
+		return ob_get_clean();
+	}
+
+	/**
+	 * Status-count summary cards.
+	 *
+	 * @param WP_Post[] $deals
+	 * @return string
+	 */
+	private function dashboard( array $deals ) {
+		$counts = array();
+		foreach ( $deals as $deal ) {
+			$s = get_post_meta( $deal->ID, 'deal_status', true );
+			$counts[ $s ] = isset( $counts[ $s ] ) ? $counts[ $s ] + 1 : 1;
+		}
+		$out = '<div class="carmel-cards">';
+		$out .= '<div class="carmel-stat"><div class="carmel-stat-num">' . count( $deals ) . '</div><div class="carmel-stat-label">担当案件</div></div>';
+		foreach ( $counts as $status => $n ) {
+			$out .= '<div class="carmel-stat"><div class="carmel-stat-num">' . (int) $n . '</div>'
+				. '<div class="carmel-stat-label">' . esc_html( $this->status_label( $status ) ) . '</div></div>';
+		}
+		$out .= '</div>';
+		return $out;
+	}
+
+	/**
+	 * Build the action cell (forward-step buttons) for a deal.
+	 *
+	 * @param int    $deal_id
+	 * @param string $status
+	 * @return string
+	 */
+	private function action_cell( $deal_id, $status ) {
+		$map     = self::forward_map();
+		$allowed = isset( $map[ $status ] ) ? array_diff( $map[ $status ], self::HQ_ONLY ) : array();
+
+		// If the only next step is HQ-only, show a waiting hint.
+		if ( empty( $allowed ) ) {
+			$next_raw = isset( $map[ $status ] ) ? $map[ $status ] : array();
+			if ( ! empty( array_intersect( $next_raw, self::HQ_ONLY ) ) ) {
+				return '<span class="carmel-wait">本部の手続き待ち</span>';
+			}
+			return '<span class="carmel-wait">—</span>';
+		}
+
+		$action_url = esc_url( admin_url( 'admin-post.php' ) );
+		$nonce      = wp_create_nonce( self::ACTION . '_' . $deal_id );
+		$hidden     = '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '">'
+			. '<input type="hidden" name="deal_id" value="' . (int) $deal_id . '">'
+			. '<input type="hidden" name="' . esc_attr( self::NONCE ) . '" value="' . esc_attr( $nonce ) . '">';
+
+		$out = '<div class="carmel-actions">';
+		foreach ( $allowed as $to ) {
+			$cls   = ( 'bb_declined' === $to ) ? 'carmel-btn-red' : 'carmel-btn-green';
+			$out  .= '<form method="post" action="' . $action_url . '">' . $hidden
+				. '<input type="hidden" name="to_status" value="' . esc_attr( $to ) . '">';
+			// Optional delivery date when entering 納車準備.
+			if ( 'delivery_prep' === $to ) {
+				$out .= '<input type="date" name="delivery_date" class="carmel-date">';
+			}
+			$out .= '<button type="submit" class="carmel-btn ' . $cls . '">' . esc_html( $this->status_label( $to ) ) . 'へ</button></form>';
+		}
+		$out .= '</div>';
+		return $out;
+	}
+
+	/**
+	 * 顧客未確定の案件に顧客をひも付けるフォーム（在庫共有商談など）。
+	 *
+	 * @param int $deal_id
+	 * @param int $customer_id
+	 * @return string
+	 */
+	private function customer_link_cell( $deal_id, $customer_id ) {
+		if ( $customer_id ) {
+			return '';
+		}
+		$nonce = wp_create_nonce( self::LINK_ACTION . '_' . $deal_id );
+		$out   = '<details class="carmel-link-cust"><summary>顧客をひも付け</summary>';
+		$out  .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="carmel-link-form">'
+			. '<input type="hidden" name="action" value="' . esc_attr( self::LINK_ACTION ) . '">'
+			. '<input type="hidden" name="deal_id" value="' . (int) $deal_id . '">'
+			. '<input type="hidden" name="carmel_link_nonce" value="' . esc_attr( $nonce ) . '">'
+			. '<input type="text" name="cust_name" placeholder="氏名">'
+			. '<input type="email" name="cust_email" placeholder="メールアドレス" required>'
+			. '<input type="text" name="cust_phone" placeholder="電話番号">'
+			. '<button type="submit" class="carmel-btn carmel-btn-green">ひも付け</button>'
+			. '<p class="carmel-staff-note">既存ユーザーは再利用、新規はアカウント発行＋設定リンクを送付します。</p>'
+			. '</form></details>';
+		return $out;
+	}
+
+	/**
+	 * Staff invitation form (owners only — carmel_manage_staff).
+	 *
+	 * @return string
+	 */
+	private function staff_form() {
+		if ( ! current_user_can( 'carmel_manage_staff' ) || ! $this->current_store_id() ) {
+			return '';
+		}
+		$nonce = wp_create_nonce( 'carmel_staff_add' );
+		$out   = '<div class="carmel-staff-add"><h3>スタッフを追加</h3>';
+		$out  .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="carmel-staff-form">';
+		$out  .= '<input type="hidden" name="action" value="carmel_staff_add">';
+		$out  .= '<input type="hidden" name="carmel_staff_nonce" value="' . esc_attr( $nonce ) . '">';
+		$out  .= '<input type="text" name="staff_name" placeholder="氏名">';
+		$out  .= '<input type="email" name="staff_email" placeholder="メールアドレス" required>';
+		$out  .= '<button type="submit" class="carmel-btn carmel-btn-green">発行</button>';
+		$out  .= '</form><p class="carmel-staff-note">自店のスタッフ（store_staff）アカウントを発行します。ログイン設定リンクをメールで送付します。</p></div>';
+		return $out;
+	}
+
+	private function notice_banner() {
+		$msg = isset( $_GET['carmel_msg'] ) ? sanitize_key( $_GET['carmel_msg'] ) : '';
+		if ( '' === $msg ) {
+			return '';
+		}
+		$map = array(
+			'ok'        => array( 'success', 'ステータスを更新しました。' ),
+			'err'       => array( 'error', '更新できませんでした。' ),
+			'forbidden' => array( 'error', 'この操作は本部のみ可能です。' ),
+			'badstep'   => array( 'error', 'この遷移は許可されていません。' ),
+			'staff_ok'  => array( 'success', 'スタッフアカウントを発行しました（ログイン設定メールを送付）。' ),
+			'link_ok'   => array( 'success', '顧客をひも付けました。' ),
+			'link_err'  => array( 'error', '顧客のひも付けに失敗しました（メールアドレスをご確認ください）。' ),
+			'next_ok'   => array( 'success', '次アクションを保存しました。' ),
+		);
+		if ( ! isset( $map[ $msg ] ) ) {
+			return '';
+		}
+		return '<div class="carmel-banner carmel-banner-' . esc_attr( $map[ $msg ][0] ) . '">' . esc_html( $map[ $msg ][1] ) . '</div>';
+	}
+
+	private function status_label( $status ) {
+		$labels = Carmel_MyPage::status_labels();
+		return isset( $labels[ $status ] ) ? $labels[ $status ] : $status;
+	}
+
+	private function type_label( $type ) {
+		$labels = array( 'loan' => 'ローン', 'buyback' => '買取', 'lease' => 'リース' );
+		return isset( $labels[ $type ] ) ? $labels[ $type ] : ( $type ? $type : '—' );
+	}
+
+	private function styles() {
+		return '<style>
+.carmel-store{font-size:14px}
+.carmel-cards{display:flex;gap:.7em;flex-wrap:wrap;margin:1em 0}
+.carmel-stat{border:1px solid #e0e3ea;border-radius:.5em;padding:.7em 1.1em;min-width:90px;text-align:center;background:#fff}
+.carmel-stat-num{font-size:1.6em;font-weight:bold;color:#2e86de}
+.carmel-stat-label{font-size:.78em;color:#666}
+.carmel-table{width:100%;border-collapse:collapse;margin-top:1em}
+.carmel-table th,.carmel-table td{border:1px solid #e0e3ea;padding:.6em .7em;text-align:left;vertical-align:middle}
+.carmel-table th{background:#f4f6fb}
+.carmel-badge{display:inline-block;padding:.2em .7em;border-radius:1em;background:#2e86de;color:#fff;font-size:.85em;white-space:nowrap}
+.carmel-actions{display:flex;flex-wrap:wrap;gap:.4em}
+.carmel-actions form{display:inline-flex;gap:.3em;margin:0;align-items:center}
+.carmel-btn{border:0;border-radius:.3em;padding:.4em .8em;color:#fff;cursor:pointer;font-size:.85em}
+.carmel-btn-green{background:#16a085}.carmel-btn-red{background:#c0392b}
+.carmel-date{border:1px solid #ccc;border-radius:.3em;padding:.3em}
+.carmel-wait{color:#999;font-size:.85em}
+.carmel-no-cust{display:inline-block;background:#fff6ec;color:#e67e22;border:1px solid #f0c89a;border-radius:.3em;padding:.05em .5em;font-size:.75em}
+.carmel-link-cust{margin-top:.4em}
+.carmel-link-cust summary{cursor:pointer;color:#2e86de;font-size:.85em}
+.carmel-link-form{display:flex;flex-direction:column;gap:.3em;margin-top:.4em}
+.carmel-link-form input{border:1px solid #ccc;border-radius:.3em;padding:.35em}
+.carmel-next{margin-top:.4em}
+.carmel-next summary{cursor:pointer;color:#16a085;font-size:.82em}
+.carmel-next.carmel-next-overdue summary{color:#c0392b;font-weight:bold}
+.carmel-next-form{display:flex;flex-direction:column;gap:.3em;margin-top:.4em}
+.carmel-next-form input{border:1px solid #ccc;border-radius:.3em;padding:.35em}
+.carmel-banner{padding:.7em 1em;border-radius:.4em;margin:1em 0}
+.carmel-banner-success{background:#e8f8f3;color:#0e6e58;border:1px solid #16a085}
+.carmel-banner-error{background:#fdecea;color:#a5281b;border:1px solid #c0392b}
+.carmel-notice{padding:1em;background:#fdecea;border:1px solid #c0392b;border-radius:.4em}
+</style>';
+	}
+}
