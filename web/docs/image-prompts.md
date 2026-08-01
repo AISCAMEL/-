@@ -140,3 +140,63 @@ text, letters, typography, watermark, logo, signage text, distorted hands, extra
 | パートナー ×6 | `public/partners/*.png` | 1200×675 / 16:9 | 要（依頼ください） |
 | 講師 ×3 | `public/instructors/*.png` | 800×800 / 1:1 | 要（依頼ください） |
 | ヒーロー（任意） | `public/hero.png` 等 | 2400×1600 / 3:2 | 要（依頼ください） |
+
+---
+
+# コピペ用・完成プロンプト（共通スタイル組み込み済み）
+
+各ブロックをそのまま画像生成ツールに貼り付けてください。
+ネガティブ欄がある場合は共通ネガティブ（上記）を併用すると安定します。
+
+## 広告バナー（2400×680 / 3.5:1）
+**ads/shop.png**
+`Bright airy morning-sea aesthetic, Japanese Pacific coast in Fukushima (Iwasawa beach vibe), soft early-morning light, clean azure-to-teal water, natural authentic editorial photography, realistic high detail, no text no logo no watermark. Ultra-wide 3.5:1 banner: interior of a stylish surf shop near the beach, rows of surfboards along a bright wall, wetsuits on racks, warm daylight through large windows, clean minimal composition with generous empty space on the right for text overlay, inviting lifestyle mood.`
+
+**ads/wetsuit.png**
+`Bright airy morning-sea aesthetic, Japanese Pacific coast in Fukushima, soft morning light, cool teal and navy tones, natural authentic editorial photography, realistic high detail, no text no logo no watermark. Ultra-wide 3.5:1 banner: close-up of a high-quality wetsuit hanging with water droplets, studio-meets-beach mood, soft gradient background, generous clean negative space on the left for text.`
+
+**ads/cafe.png**
+`Bright airy morning-sea aesthetic, Japanese Pacific coast in Fukushima, golden morning light, clean azure water, natural authentic editorial photography, realistic high detail, no text no logo no watermark. Ultra-wide 3.5:1 banner: a cozy seaside inn/cafe terrace overlooking the ocean, wooden deck, a warm cup of coffee on a table, a surfboard leaning nearby, relaxed welcoming, empty sky area on one side for text.`
+
+## 講座カバー（2400×1350 / 16:9）
+**courses/beginner.png**
+`Bright airy morning-sea aesthetic, Japanese Pacific coast in Fukushima (Iwasawa beach vibe), soft encouraging morning light, clean azure-to-teal water, pale sand, gentle mellow waves, natural authentic editorial photography, realistic high detail, no text no logo no watermark. 16:9 cover: a friendly beginner surfer standing in shallow calm water holding a soft-top funboard, approachable and safe feeling, clean space along the top for a title overlay.`
+
+**courses/prep.png**
+`Bright airy morning-sea aesthetic, soft daylight, natural authentic editorial photography, realistic high detail, no text no logo no watermark. 16:9 cover: top-down flat-lay of surf gear neatly arranged on light wood — wetsuit, leash, wax, towel and a notebook, organized "getting ready before the beach" mood, clean and tidy.`
+
+**courses/stepup.png**
+`Bright airy morning-sea aesthetic, Japanese Pacific coast in Fukushima, morning light, backlit spray, natural authentic editorial photography, realistic high detail, no text no logo no watermark. 16:9 cover: a surfer performing a clean bottom-turn trimming along the face of a chest-high wave, dynamic but not extreme, sense of progress and flow, space for a title overlay.`
+
+## パートナー（1200×675 / 16:9）
+**partners/hirono-rentacar.png**
+`Bright airy morning-sea aesthetic, rural Japanese coastal town in Fukushima, bright morning light, natural authentic editorial photography, realistic high detail, no text no logo no watermark. 16:9: a compact car or minivan parked in front of a small-town train station, a surfboard being loaded onto a roof rack, casual friendly mood.`
+
+**partners/iwaki-mobility.png**
+`Bright airy morning-sea aesthetic, quiet Japanese coastal town, cool blue early-dawn tones, natural authentic editorial photography, realistic high detail, no text no logo no watermark. 16:9: a clean modern electric car at a self-service rental lot, a charging station visible, convenient and minimal.`
+
+**partners/umiyado.png**
+`Bright airy morning-sea aesthetic, Japanese seaside village in Fukushima, warm morning light, ocean in the background, natural authentic editorial photography, realistic high detail, no text no logo no watermark. 16:9: exterior of a small cozy Japanese seaside guesthouse, wooden entrance, surfboards leaning by the door, homey and welcoming.`
+
+**partners/guesthouse-nami.png**
+`Bright airy morning-sea aesthetic, soft daylight through large windows, natural authentic editorial photography, realistic high detail, no text no logo no watermark. 16:9: a bright tidy hostel common room with a shared kitchen and bunk beds, plants, relaxed backpacker-surfer vibe.`
+
+**partners/cafe-shiosai.png**
+`Bright airy morning-sea aesthetic, ocean view, gentle morning light, natural authentic editorial photography, realistic high detail, no text no logo no watermark. 16:9: a seaside cafe terrace with a warm bowl of soup and a slice of chiffon cake on a wooden table, a surfboard leaning on the railing, comforting.`
+
+**partners/shokudo-isohei.png**
+`Bright airy morning-sea aesthetic, harbor-side diner, natural daylight, natural authentic editorial food photography, realistic high detail, appetizing, no text no logo no watermark. 16:9: a generous Japanese seafood set meal — sashimi, rice, miso soup — on a rustic wooden table, hearty "hungry surfer's favorite" mood.`
+
+## 講師ポートレート（800×800 / 1:1・実在の特定個人ではなく一般人物として）
+**instructors/endo.png**
+`Bright airy morning-sea aesthetic, natural morning light, ocean softly blurred behind, realistic high detail, no text no logo no watermark. Square 1:1 head-and-shoulders portrait of a Japanese man in his late 30s, tanned, friendly confident smile, casual surf tee, approachable surf coach. Generic person, not a specific real individual.`
+
+**instructors/sato.png**
+`Bright airy morning-sea aesthetic, soft daylight, ocean softly blurred behind, realistic high detail, no text no logo no watermark. Square 1:1 head-and-shoulders portrait of a Japanese woman in her late 20s, warm gentle smile, sun-kissed, casual beachwear, reassuring beginner instructor. Generic person, not a specific real individual.`
+
+**instructors/kudo.png**
+`Bright airy morning-sea aesthetic, natural light, beach background, realistic high detail, no text no logo no watermark. Square 1:1 head-and-shoulders portrait of a calm dependable Japanese man in his 40s, kind expression, rash guard or polo shirt, safety-first family-friendly coach. Generic person, not a specific real individual.`
+
+## （任意）ヒーロー背景（2400×1600 / 3:2）
+**hero.png**
+`Bright airy morning-sea aesthetic, Iwasawa-like beach in Fukushima at dawn, soft pink-and-teal morning sky, gentle glassy waves, long empty shoreline, cinematic calm aspirational, natural authentic editorial photography, realistic high detail, no text no logo no watermark. Wide 3:2 hero shot: a lone surfer silhouette walking toward the water carrying a board, upper area kept relatively clean for a headline.`
