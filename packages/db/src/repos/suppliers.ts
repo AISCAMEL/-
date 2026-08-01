@@ -1,7 +1,7 @@
 import { prisma } from "../index.js";
 
 export async function getSupplierByKind(kind: string) {
-  return prisma.supplier.findUnique({ where: { kind: kind as "alibaba" | "theckb" } });
+  return prisma.supplier.findUnique({ where: { kind: kind as any } });
 }
 
 export async function listSuppliers() {

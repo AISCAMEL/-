@@ -16,7 +16,7 @@ export interface ImportProductInput {
 
 export async function importProduct(input: ImportProductInput) {
   const supplier = await prisma.supplier.findUnique({
-    where: { kind: input.supplierKind as "alibaba" | "theckb" },
+    where: { kind: input.supplierKind as any },
   });
   if (!supplier) throw new Error(`supplier "${input.supplierKind}" not found`);
 

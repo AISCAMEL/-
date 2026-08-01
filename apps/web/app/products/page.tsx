@@ -55,6 +55,13 @@ export default function ProductsPage() {
   const [bulkIds, setBulkIds] = useState("");
   const [bulkRunning, setBulkRunning] = useState(false);
   const [bulkResults, setBulkResults] = useState<{ id: string; ok: boolean; msg: string }[]>([]);
+  const [importTab, setImportTab] = useState<"manual" | "api">("manual");
+  const [manualForm, setManualForm] = useState({
+    title: "", cost: "", costCurrency: "CNY", stock: "",
+    imageUrl1: "", imageUrl2: "", sourceUrl: "", supplierName: "", description: "",
+  });
+  const [manualSaving, setManualSaving] = useState(false);
+  const [manualMsg, setManualMsg] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -126,6 +133,42 @@ export default function ProductsPage() {
     }
     setBulkRunning(false);
     await load();
+  }
+
+  async function handleManualImport(e: React.FormEvent) {
+    e.preventDefault();
+    if (!manualForm.title || !manualForm.cost) return;
+    setManualSaving(true);
+    setManualMsg(null);
+    try {
+      const imageUrls = [manualForm.imageUrl1, manualForm.imageUrl2].filter(Boolean);
+      const res = await fetch("/api/products/manual", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          title: manualForm.title,
+          cost: parseFloat(manualForm.cost),
+          costCurrency: manualForm.costCurrency,
+          stock: manualForm.stock ? parseInt(manualForm.stock) : undefined,
+          imageUrls,
+          sourceUrl: manualForm.sourceUrl || undefined,
+          supplierName: manualForm.supplierName || undefined,
+          description: manualForm.description || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setManualMsg(`登録失敗: ${data.error ? JSON.stringify(data.error) : "不明"}`);
+        return;
+      }
+      setManualMsg(`登録完了: ${data.product?.title ?? manualForm.title}  売値 ${yen(data.sellPrice)}`);
+      setManualForm({ title: "", cost: "", costCurrency: "CNY", stock: "", imageUrl1: "", imageUrl2: "", sourceUrl: "", supplierName: "", description: "" });
+      await load();
+    } catch (e) {
+      setManualMsg(`エラー: ${String(e)}`);
+    } finally {
+      setManualSaving(false);
+    }
   }
 
   async function handlePublish(product: Product) {
@@ -208,96 +251,229 @@ export default function ProductsPage() {
       </p>
       <h1 style={{ fontSize: 22 }}>📦 商品・出品管理</h1>
       <p style={{ color: "var(--muted)", fontSize: 14 }}>
-        仕入れ先から取り込んだ商品の管理と、BASEへの出品操作ができます。
+        手動登録またはAPI取込で商品を追加し、BASEへの出品操作ができます。
       </p>
 
       <div style={{
         background: "#fff", border: "2px solid var(--card-border)", borderRadius: "var(--radius)",
         padding: 16, marginBottom: 20,
       }}>
-        <h3 style={{ margin: "0 0 12px", fontSize: 15 }}>商品取込</h3>
-        <form onSubmit={handleImport} style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "end" }}>
-          <label style={{ fontSize: 13, fontWeight: 600 }}>
-            仕入れ先
-            <br />
-            <select
-              value={importForm.supplierId}
-              onChange={(e) => setImportForm((f) => ({ ...f, supplierId: e.target.value }))}
-              style={{ marginTop: 4, padding: "6px 10px" }}
+        <div style={{ display: "flex", gap: 0, marginBottom: 14 }}>
+          {([["manual", "手動登録"], ["api", "API取込"]] as const).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setImportTab(key)}
+              style={{
+                padding: "7px 20px", fontSize: 13, fontWeight: 700, cursor: "pointer",
+                border: "1.5px solid var(--card-border)", borderBottom: importTab === key ? "2px solid #f472b6" : "1.5px solid var(--card-border)",
+                background: importTab === key ? "#fff" : "#f9fafb",
+                color: importTab === key ? "#f472b6" : "var(--muted)",
+                borderRadius: key === "manual" ? "8px 0 0 0" : "0 8px 0 0",
+              }}
             >
-              <option value="theckb">THE CKB</option>
-              <option value="alibaba">Alibaba</option>
-            </select>
-          </label>
-          <label style={{ fontSize: 13, fontWeight: 600 }}>
-            商品ID
-            <br />
-            <input
-              type="text"
-              value={importForm.externalId}
-              onChange={(e) => setImportForm((f) => ({ ...f, externalId: e.target.value }))}
-              placeholder="CKB-0001"
-              style={{ marginTop: 4, padding: "6px 10px", width: 140 }}
-            />
-          </label>
-          <button
-            type="submit"
-            disabled={importing || !importForm.externalId}
-            style={{
-              padding: "8px 20px", borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 700,
-              border: 0, color: "#fff",
-              background: "linear-gradient(135deg, #f472b6, #a78bfa)",
-              boxShadow: "0 2px 12px rgba(244,114,182,0.3)",
-            }}
-          >
-            {importing ? "取込中…" : "取込"}
-          </button>
-        </form>
-        {importMsg && (
-          <p style={{ marginTop: 8, fontSize: 13, color: importMsg.startsWith("取込完了") ? "#16a34a" : "#dc2626" }}>
-            {importMsg}
-          </p>
-        )}
-      </div>
+              {label}
+            </button>
+          ))}
+        </div>
 
-      <div style={{
-        background: "#fff", border: "2px solid var(--card-border)", borderRadius: "var(--radius)",
-        padding: 16, marginBottom: 20,
-      }}>
-        <h3 style={{ margin: "0 0 12px", fontSize: 15 }}>一括取込</h3>
-        <form onSubmit={handleBulkImport} style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "end" }}>
-          <label style={{ fontSize: 13, fontWeight: 600, flex: 1, minWidth: 200 }}>
-            商品ID（カンマ or 改行で複数）
-            <br />
-            <textarea
-              value={bulkIds}
-              onChange={(e) => setBulkIds(e.target.value)}
-              placeholder={"CKB-0001\nCKB-0002\nCKB-0003"}
-              rows={3}
-              style={{ marginTop: 4, padding: "6px 10px", width: "100%", resize: "vertical", fontFamily: "monospace", fontSize: 13 }}
-            />
-          </label>
-          <button
-            type="submit"
-            disabled={bulkRunning || !bulkIds.trim()}
-            style={{
-              padding: "8px 20px", borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 700,
-              border: 0, color: "#fff", alignSelf: "flex-end",
-              background: "linear-gradient(135deg, #60a5fa, #3b82f6)",
-              boxShadow: "0 2px 12px rgba(59,130,246,0.3)",
-            }}
-          >
-            {bulkRunning ? `取込中… (${bulkResults.length})` : "一括取込"}
-          </button>
-        </form>
-        {bulkResults.length > 0 && (
-          <div style={{ marginTop: 8, fontSize: 12, maxHeight: 120, overflowY: "auto" }}>
-            {bulkResults.map((r) => (
-              <div key={r.id} style={{ padding: "2px 0", color: r.ok ? "#16a34a" : "#dc2626" }}>
-                {r.ok ? "✓" : "✗"} {r.id}: {r.msg}
+        {importTab === "manual" ? (
+          <>
+            <p style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12 }}>
+              仕入先サイトで見つけた商品を手動で登録できます。売値は為替レートと利益率から自動計算されます。
+            </p>
+            <form onSubmit={handleManualImport}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 16px" }}>
+                <label style={{ fontSize: 13, fontWeight: 600, gridColumn: "1 / -1" }}>
+                  商品名 *
+                  <input
+                    type="text" required value={manualForm.title}
+                    onChange={(e) => setManualForm((f) => ({ ...f, title: e.target.value }))}
+                    placeholder="猫用爪とぎタワー 3段"
+                    style={{ marginTop: 4, padding: "8px 10px", width: "100%", display: "block" }}
+                  />
+                </label>
+                <label style={{ fontSize: 13, fontWeight: 600 }}>
+                  原価 *
+                  <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+                    <input
+                      type="number" required step="0.01" min="0" value={manualForm.cost}
+                      onChange={(e) => setManualForm((f) => ({ ...f, cost: e.target.value }))}
+                      placeholder="128.00"
+                      style={{ padding: "8px 10px", width: 120 }}
+                    />
+                    <select
+                      value={manualForm.costCurrency}
+                      onChange={(e) => setManualForm((f) => ({ ...f, costCurrency: e.target.value }))}
+                      style={{ padding: "8px 10px" }}
+                    >
+                      <option value="CNY">CNY</option>
+                      <option value="USD">USD</option>
+                      <option value="JPY">JPY</option>
+                    </select>
+                  </div>
+                </label>
+                <label style={{ fontSize: 13, fontWeight: 600 }}>
+                  在庫数
+                  <input
+                    type="number" min="0" value={manualForm.stock}
+                    onChange={(e) => setManualForm((f) => ({ ...f, stock: e.target.value }))}
+                    placeholder="100"
+                    style={{ marginTop: 4, padding: "8px 10px", width: "100%", display: "block" }}
+                  />
+                </label>
+                <label style={{ fontSize: 13, fontWeight: 600 }}>
+                  仕入先名
+                  <input
+                    type="text" value={manualForm.supplierName}
+                    onChange={(e) => setManualForm((f) => ({ ...f, supplierName: e.target.value }))}
+                    placeholder="Alibaba / AliExpress / ..."
+                    style={{ marginTop: 4, padding: "8px 10px", width: "100%", display: "block" }}
+                  />
+                </label>
+                <label style={{ fontSize: 13, fontWeight: 600 }}>
+                  仕入先URL
+                  <input
+                    type="url" value={manualForm.sourceUrl}
+                    onChange={(e) => setManualForm((f) => ({ ...f, sourceUrl: e.target.value }))}
+                    placeholder="https://www.alibaba.com/product/..."
+                    style={{ marginTop: 4, padding: "8px 10px", width: "100%", display: "block" }}
+                  />
+                </label>
+                <label style={{ fontSize: 13, fontWeight: 600 }}>
+                  画像URL 1
+                  <input
+                    type="url" value={manualForm.imageUrl1}
+                    onChange={(e) => setManualForm((f) => ({ ...f, imageUrl1: e.target.value }))}
+                    placeholder="https://..."
+                    style={{ marginTop: 4, padding: "8px 10px", width: "100%", display: "block" }}
+                  />
+                </label>
+                <label style={{ fontSize: 13, fontWeight: 600, gridColumn: "1 / -1" }}>
+                  画像URL 2
+                  <input
+                    type="url" value={manualForm.imageUrl2}
+                    onChange={(e) => setManualForm((f) => ({ ...f, imageUrl2: e.target.value }))}
+                    placeholder="https://..."
+                    style={{ marginTop: 4, padding: "8px 10px", width: "100%", display: "block" }}
+                  />
+                </label>
+                <label style={{ fontSize: 13, fontWeight: 600, gridColumn: "1 / -1" }}>
+                  説明
+                  <textarea
+                    value={manualForm.description}
+                    onChange={(e) => setManualForm((f) => ({ ...f, description: e.target.value }))}
+                    placeholder="商品の説明（任意）"
+                    rows={2}
+                    style={{ marginTop: 4, padding: "8px 10px", width: "100%", display: "block", resize: "vertical", fontSize: 13 }}
+                  />
+                </label>
               </div>
-            ))}
-          </div>
+              <div style={{ marginTop: 14, display: "flex", gap: 8, alignItems: "center" }}>
+                <button
+                  type="submit"
+                  disabled={manualSaving || !manualForm.title || !manualForm.cost}
+                  style={{
+                    padding: "8px 24px", borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 700,
+                    border: 0, color: "#fff",
+                    background: manualForm.title && manualForm.cost ? "linear-gradient(135deg, #f472b6, #a78bfa)" : "#d1d5db",
+                    boxShadow: manualForm.title && manualForm.cost ? "0 2px 12px rgba(244,114,182,0.3)" : "none",
+                  }}
+                >
+                  {manualSaving ? "登録中..." : "商品登録"}
+                </button>
+                {manualMsg && (
+                  <span style={{ fontSize: 12, color: manualMsg.startsWith("登録完了") ? "#16a34a" : "#dc2626" }}>
+                    {manualMsg}
+                  </span>
+                )}
+              </div>
+            </form>
+          </>
+        ) : (
+          <>
+            <h3 style={{ margin: "0 0 12px", fontSize: 15 }}>API取込（仕入先コネクタ経由）</h3>
+            <form onSubmit={handleImport} style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "end" }}>
+              <label style={{ fontSize: 13, fontWeight: 600 }}>
+                仕入れ先
+                <br />
+                <select
+                  value={importForm.supplierId}
+                  onChange={(e) => setImportForm((f) => ({ ...f, supplierId: e.target.value }))}
+                  style={{ marginTop: 4, padding: "6px 10px" }}
+                >
+                  <option value="theckb">THE CKB</option>
+                  <option value="alibaba">Alibaba</option>
+                  <option value="aliexpress">AliExpress</option>
+                </select>
+              </label>
+              <label style={{ fontSize: 13, fontWeight: 600 }}>
+                商品ID
+                <br />
+                <input
+                  type="text"
+                  value={importForm.externalId}
+                  onChange={(e) => setImportForm((f) => ({ ...f, externalId: e.target.value }))}
+                  placeholder="CKB-0001"
+                  style={{ marginTop: 4, padding: "6px 10px", width: 140 }}
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={importing || !importForm.externalId}
+                style={{
+                  padding: "8px 20px", borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 700,
+                  border: 0, color: "#fff",
+                  background: "linear-gradient(135deg, #f472b6, #a78bfa)",
+                  boxShadow: "0 2px 12px rgba(244,114,182,0.3)",
+                }}
+              >
+                {importing ? "取込中..." : "取込"}
+              </button>
+            </form>
+            {importMsg && (
+              <p style={{ marginTop: 8, fontSize: 13, color: importMsg.startsWith("取込完了") ? "#16a34a" : "#dc2626" }}>
+                {importMsg}
+              </p>
+            )}
+
+            <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--card-border)" }}>
+              <h3 style={{ margin: "0 0 12px", fontSize: 15 }}>一括取込</h3>
+              <form onSubmit={handleBulkImport} style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "end" }}>
+                <label style={{ fontSize: 13, fontWeight: 600, flex: 1, minWidth: 200 }}>
+                  商品ID（カンマ or 改行で複数）
+                  <br />
+                  <textarea
+                    value={bulkIds}
+                    onChange={(e) => setBulkIds(e.target.value)}
+                    placeholder={"CKB-0001\nCKB-0002\nCKB-0003"}
+                    rows={3}
+                    style={{ marginTop: 4, padding: "6px 10px", width: "100%", resize: "vertical", fontFamily: "monospace", fontSize: 13 }}
+                  />
+                </label>
+                <button
+                  type="submit"
+                  disabled={bulkRunning || !bulkIds.trim()}
+                  style={{
+                    padding: "8px 20px", borderRadius: 20, cursor: "pointer", fontSize: 13, fontWeight: 700,
+                    border: 0, color: "#fff", alignSelf: "flex-end",
+                    background: "linear-gradient(135deg, #60a5fa, #3b82f6)",
+                    boxShadow: "0 2px 12px rgba(59,130,246,0.3)",
+                  }}
+                >
+                  {bulkRunning ? `取込中... (${bulkResults.length})` : "一括取込"}
+                </button>
+              </form>
+              {bulkResults.length > 0 && (
+                <div style={{ marginTop: 8, fontSize: 12, maxHeight: 120, overflowY: "auto" }}>
+                  {bulkResults.map((r) => (
+                    <div key={r.id} style={{ padding: "2px 0", color: r.ok ? "#16a34a" : "#dc2626" }}>
+                      {r.ok ? "OK" : "NG"} {r.id}: {r.msg}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
         )}
       </div>
 

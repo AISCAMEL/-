@@ -13,6 +13,8 @@ datasource db {
 enum SupplierKind {
   alibaba
   theckb
+  aliexpress
+  manual
 }
 
 enum ChannelKind {
