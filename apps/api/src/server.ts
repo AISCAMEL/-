@@ -27,7 +27,7 @@ import {
   type SupplierId,
 } from "@hub/core";
 import { loadConfig } from "./config.js";
-import { importProduct, publishToChannel } from "./services/listing-service.js";
+import { importProduct, importManualProduct, publishToChannel } from "./services/listing-service.js";
 import { getOrders, getPnl } from "./services/orders-service.js";
 import { researchMarket } from "./services/research-service.js";
 import { screenCandidates } from "./services/screening-service.js";
@@ -151,6 +151,25 @@ export function buildServer() {
     const supplier = getSupplier(parsed.data.supplierId);
     if (!supplier) return reply.code(404).send({ error: "unknown supplier" });
     const result = await importProduct(supplier, parsed.data.externalId);
+    return result;
+  });
+
+  // 手動商品登録（仕入先API不要）
+  const manualImportSchema = z.object({
+    title: z.string().min(1),
+    cost: z.number().positive(),
+    costCurrency: z.enum(["CNY", "USD", "JPY"]).default("CNY"),
+    stock: z.number().int().nonnegative().optional(),
+    imageUrls: z.array(z.string()).default([]),
+    sourceUrl: z.string().optional(),
+    supplierName: z.string().optional(),
+    description: z.string().optional(),
+  });
+  app.post("/products/manual", async (req, reply) => {
+    if (!dbEnabled) return reply.code(503).send({ error: "DATABASE_URL 未設定" });
+    const parsed = manualImportSchema.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error.flatten() });
+    const result = await importManualProduct(parsed.data);
     return result;
   });
 

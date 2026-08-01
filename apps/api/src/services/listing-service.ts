@@ -65,6 +65,63 @@ export async function importProduct(
   };
 }
 
+export interface ManualImportInput {
+  title: string;
+  cost: number;
+  costCurrency: string;
+  stock?: number;
+  imageUrls?: string[];
+  sourceUrl?: string;
+  supplierName?: string;
+  description?: string;
+}
+
+export async function importManualProduct(
+  input: ManualImportInput,
+  rule?: PriceRule,
+): Promise<ImportResult> {
+  const effectiveRule = rule ?? (await loadPriceRule());
+  const price = calculateSellPrice({ cost: input.cost, costCurrency: input.costCurrency as "CNY" | "USD" | "JPY" }, effectiveRule);
+
+  const externalId = `manual_${Date.now()}`;
+  const product = {
+    supplierId: "manual" as const,
+    externalId,
+    title: input.title,
+    description: input.description ?? "",
+    imageUrls: input.imageUrls?.filter((u) => u) ?? [],
+    cost: input.cost,
+    costCurrency: input.costCurrency as "CNY" | "USD" | "JPY",
+    stock: input.stock ?? null,
+    skus: [] as { externalSkuId: string; attributes: Record<string, string>; cost: number; stock: number | null }[],
+    sourceUrl: input.sourceUrl || undefined,
+  };
+
+  const issues = validateForListing(product as unknown as SupplierProduct);
+
+  if (dbEnabled) {
+    await productRepo.importProduct({
+      supplierKind: "manual",
+      externalId: product.externalId,
+      title: product.title,
+      description: product.description,
+      imageUrls: product.imageUrls,
+      costCNY: product.cost,
+      stock: input.stock,
+      sourceUrl: input.sourceUrl,
+      sellPrice: price.sellPrice,
+    });
+  }
+
+  return {
+    product: product as unknown as SupplierProduct,
+    sellPrice: price.sellPrice,
+    profit: price.profit,
+    publishable: canPublish(issues) && price.meetsMinProfit,
+    issues,
+  };
+}
+
 export async function publishToChannel(
   channel: SalesChannelConnector,
   result: ImportResult,
