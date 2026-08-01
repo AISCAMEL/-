@@ -249,6 +249,12 @@ export const demoExpenses: DemoExpense[] = [
   { id: 'ex-4', label: '広告・マーケティング', category: 'marketing', monthly_jpy: 50000, created_at: iso(-1000) },
 ];
 
+export interface DemoApiKey {
+  id: string; tenant_id: string; name: string; key_prefix: string; key_hash: string;
+  scopes: string[]; last_used_at: string | null; created_at: string; revoked_at: string | null;
+}
+export const demoApiKeys: DemoApiKey[] = [];
+
 export interface DemoContactActivity {
   id: string; tenant_id: string; contact_id: string; type: string;
   detail: string | null; created_at: string;

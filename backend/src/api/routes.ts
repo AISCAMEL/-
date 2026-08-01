@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
-import { authenticate, requireSuperAdmin, requireRole } from '../auth/jwt.js';
+import { authenticate, requireSuperAdmin, requireRole, authenticateApiKey } from '../auth/jwt.js';
+import * as apikeys from '../apikeys/repo.js';
 import * as q from '../db/queries.js';
 import { sendCallNotification } from '../notify/email.js';
 import { getSettings } from '../db/queries.js';
@@ -64,6 +65,65 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/me', { preHandler: authenticate }, async (req) => {
     const p = req.principal!;
     return { auth_user_id: p.authUserId, tenant_id: p.tenantId, role: p.role, email: p.email };
+  });
+
+  // ---- APIキー管理（管理画面ログインが必要。owner/admin のみ） ----
+  app.get('/api/api-keys', { preHandler: manageOutbound }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    return apikeys.listKeys(p.tenantId);
+  });
+  app.post('/api/api-keys', { preHandler: manageOutbound }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const { name } = (req.body ?? {}) as { name?: string };
+    if (!name) return reply.code(400).send({ error: 'キーの名前を入力してください' });
+    // key は発行時のみ返す（以後は取得不可）
+    return apikeys.createKey(p.tenantId, name);
+  });
+  app.delete('/api/api-keys/:id', { preHandler: manageOutbound }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const ok = await apikeys.revokeKey(p.tenantId, (req.params as any).id);
+    if (!ok) return reply.code(404).send({ error: 'not found' });
+    return { ok: true };
+  });
+
+  // ================= 外部連携API v1（APIキー認証）=================
+  // 例: 御社サイトの査定フォーム → POST /api/v1/inquiries で査定依頼を登録
+  app.post('/api/v1/inquiries', { preHandler: authenticateApiKey }, async (req, reply) => {
+    const p = req.principal!;
+    const b = (req.body ?? {}) as any;
+    if (!b.name && !b.phone && !b.email) return reply.code(400).send({ error: 'name / phone / email のいずれかは必須です' });
+    // 車情報などをメモにまとめる
+    const carParts = [b.car, b.make, b.model, b.year, b.mileage, b.note].filter(Boolean);
+    const note = [b.message, carParts.length ? `車両: ${carParts.join(' / ')}` : ''].filter(Boolean).join('\n') || null;
+    const [contact] = await contacts.createContacts(p.tenantId!, [{
+      name: b.name ?? null, company: b.company ?? null, phone_number: b.phone ?? null, email: b.email ?? null,
+      category: b.category ?? '査定見込み', note,
+    }]);
+    if (contact) await contacts.logActivity(p.tenantId!, contact.id, 'note', '外部フォームから査定依頼を受信');
+    // 担当へメール通知（設定があれば）
+    const s = await getSettings(p.tenantId!);
+    if (s?.notification_email) {
+      await sendEmail(s.notification_email, '【査定依頼】外部フォームから新規受付',
+        [`お名前: ${b.name ?? '—'}`, `電話: ${b.phone ?? '—'}`, `メール: ${b.email ?? '—'}`, note ? `内容:\n${note}` : ''].filter(Boolean).join('\n'));
+    }
+    return reply.code(201).send({ ok: true, contact_id: contact?.id ?? null });
+  });
+  // 連絡先の作成（汎用）
+  app.post('/api/v1/contacts', { preHandler: authenticateApiKey }, async (req, reply) => {
+    const p = req.principal!;
+    const b = (req.body ?? {}) as any;
+    const items = Array.isArray(b.contacts) ? b.contacts : [b];
+    const created = await contacts.createContacts(p.tenantId!, items);
+    return reply.code(201).send({ ok: true, created: created.length, ids: created.map((c: any) => c.id) });
+  });
+  // 連絡先の取得（読み取り連携）
+  app.get('/api/v1/contacts', { preHandler: authenticateApiKey }, async (req) => {
+    const p = req.principal!;
+    const { category, q, status } = req.query as Record<string, string>;
+    return contacts.listContacts(p.tenantId!, { category, q, status });
   });
 
   // ---- dashboard ----

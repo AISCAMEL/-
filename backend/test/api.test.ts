@@ -160,3 +160,41 @@ test('GET /api/plans → 機能別プランとカタログを返す（公開）'
   assert.ok(d.plans[2].features.length > d.plans[0].features.length); // 上位ほど機能多い
   assert.ok(d.feature_catalog.outbound);
 });
+
+test('APIキー: 発行→そのキーで査定依頼を登録→失効で拒否', async () => {
+  // 発行（owner）
+  const created = await app.inject({ method: 'POST', url: '/api/api-keys', headers: J, payload: { name: 'HP査定フォーム' } });
+  assert.equal(created.statusCode, 200);
+  const { key, record } = created.json();
+  assert.ok(key.startsWith('aiop_live_'));
+  assert.ok(record.key_prefix.startsWith('aiop_live_'));
+
+  // 一覧はマスク（平文キーは含まない）
+  const list = await app.inject({ url: '/api/api-keys', headers: owner });
+  assert.ok(list.json().every((k: any) => !('key' in k) && !('key_hash' in k)));
+
+  // そのキーで外部から査定依頼（X-API-Key）
+  const ing = await app.inject({ method: 'POST', url: '/api/v1/inquiries',
+    headers: { 'content-type': 'application/json', 'x-api-key': key },
+    payload: { name: '外部太郎', phone: '09000000000', car: 'プリウス 2019 4万km' } });
+  assert.equal(ing.statusCode, 201);
+  assert.ok(ing.json().contact_id);
+
+  // Bearer でも通る
+  const ing2 = await app.inject({ method: 'POST', url: '/api/v1/inquiries',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` }, payload: { name: '外部花子' } });
+  assert.equal(ing2.statusCode, 201);
+
+  // 不正キーは401
+  const bad = await app.inject({ method: 'POST', url: '/api/v1/inquiries', headers: { 'content-type': 'application/json', 'x-api-key': 'aiop_live_wrong' }, payload: { name: 'x' } });
+  assert.equal(bad.statusCode, 401);
+
+  // 失効させると拒否
+  await app.inject({ method: 'DELETE', url: `/api/api-keys/${record.id}`, headers: owner });
+  const after = await app.inject({ method: 'POST', url: '/api/v1/inquiries', headers: { 'content-type': 'application/json', 'x-api-key': key }, payload: { name: 'y' } });
+  assert.equal(after.statusCode, 401);
+});
+
+test('APIキー: 発行は owner/admin のみ（staff=403）', async () => {
+  assert.equal((await app.inject({ method: 'POST', url: '/api/api-keys', headers: { ...J, ...staff }, payload: { name: 'x' } })).statusCode, 403);
+});

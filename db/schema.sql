@@ -650,3 +650,25 @@ alter table operator_expenses enable row level security;
 drop policy if exists operator_only on operator_expenses;
 create policy operator_only on operator_expenses
   using (is_super_admin()) with check (is_super_admin());
+
+-- =============================================================
+-- api_keys  (テナントごとの外部連携用APIキー。ハッシュ保存・失効可)
+-- =============================================================
+create table if not exists api_keys (
+  id           uuid primary key default gen_random_uuid(),
+  tenant_id    uuid not null references tenants(id) on delete cascade,
+  name         text not null,
+  key_prefix   text not null,            -- 表示用の先頭数文字（例 aiop_live_ab12…）
+  key_hash     text not null,            -- 完全なキーの sha256（平文は保存しない）
+  scopes       text[] not null default '{}',
+  last_used_at timestamptz,
+  created_at   timestamptz not null default now(),
+  revoked_at   timestamptz
+);
+create unique index if not exists idx_api_keys_hash on api_keys(key_hash);
+create index if not exists idx_api_keys_tenant on api_keys(tenant_id, created_at desc);
+alter table api_keys enable row level security;
+drop policy if exists tenant_isolation on api_keys;
+create policy tenant_isolation on api_keys
+  using (is_super_admin() or tenant_id = current_tenant_id())
+  with check (is_super_admin() or tenant_id = current_tenant_id());

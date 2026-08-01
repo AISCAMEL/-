@@ -61,6 +61,10 @@ export const api = {
   updatePhoneNumber: (id: string, body: any) =>
     request<any>(`/api/phone-numbers/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
 
+  apiKeys: () => request<any[]>('/api/api-keys'),
+  createApiKey: (name: string) => request<{ key: string; record: any }>('/api/api-keys', { method: 'POST', body: JSON.stringify({ name }) }),
+  revokeApiKey: (id: string) => request<any>(`/api/api-keys/${id}`, { method: 'DELETE' }),
+
   users: () => request<any[]>('/api/users'),
   createUser: (body: any) => request<any>('/api/users', { method: 'POST', body: JSON.stringify(body) }),
   updateUser: (id: string, body: any) => request<any>(`/api/users/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),

@@ -1,12 +1,13 @@
 import jwt from 'jsonwebtoken';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { config } from '../config.js';
+import { resolveTenantByKey } from '../apikeys/repo.js';
 
 // 認証済みリクエストに付与する主体情報。
 export interface AuthPrincipal {
   authUserId: string | null;
   tenantId: string | null;     // super_admin は null（全テナント対象）
-  role: 'owner' | 'admin' | 'staff' | 'super_admin';
+  role: 'owner' | 'admin' | 'staff' | 'super_admin' | 'api';
   email: string | null;
 }
 
@@ -29,6 +30,22 @@ export function authenticate(req: FastifyRequest, reply: FastifyReply, done: (er
   }
   req.principal = principal;
   done();
+}
+
+/**
+ * 外部連携用APIキー認証。`Authorization: Bearer aiop_...` または `X-API-Key: aiop_...`。
+ * 有効なキーならそのテナントの principal を付与する（role=api、テナント固定）。
+ */
+export async function authenticateApiKey(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  const header = req.headers.authorization;
+  const bearer = header?.startsWith('Bearer ') ? header.slice(7) : null;
+  const key = (req.headers['x-api-key'] as string) || bearer || '';
+  const tenantId = await resolveTenantByKey(key);
+  if (!tenantId) {
+    reply.code(401).send({ error: 'invalid or missing API key' });
+    return;
+  }
+  req.principal = { authUserId: 'apikey', tenantId, role: 'api', email: null };
 }
 
 /** super_admin 限定エンドポイント用。 */

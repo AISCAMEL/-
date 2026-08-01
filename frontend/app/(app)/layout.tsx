@@ -22,6 +22,7 @@ const tenantNav = [
   { href: '/settings/notification', label: '通知設定', icon: '✉️' },
   { href: '/phone-numbers', label: '電話番号設定', icon: '☎️' },
   { href: '/caller-rules', label: '発信者ルール', icon: '🚫' },
+  { href: '/settings/api', label: 'API連携', icon: '🔌' },
 ];
 
 // 運営者（自社・super_admin）向けナビ
