@@ -198,3 +198,19 @@ test('APIキー: 発行→そのキーで査定依頼を登録→失効で拒否
 test('APIキー: 発行は owner/admin のみ（staff=403）', async () => {
   assert.equal((await app.inject({ method: 'POST', url: '/api/api-keys', headers: { ...J, ...staff }, payload: { name: 'x' } })).statusCode, 403);
 });
+
+test('業種テンプレート: replace=true で既存FAQを置き換えて別業種に切替', async () => {
+  // まず何か適用してFAQを入れておく
+  await app.inject({ method: 'POST', url: '/api/industry-templates/salon/apply', headers: J, payload: {} });
+  // replaceで飲食店に切り替え → 既存FAQを消して入れ替え
+  const r = await app.inject({ method: 'POST', url: '/api/industry-templates/restaurant/apply', headers: J, payload: { replace: true } });
+  assert.equal(r.statusCode, 200);
+  assert.equal(r.json().replaced, true);
+  assert.ok(r.json().applied.cleared_faqs >= 1);     // 既存を消した
+  assert.ok(r.json().applied.faqs >= 1);             // 新規を入れた
+  // 結果のFAQ件数はテンプレの件数に一致（混ざっていない）
+  const faqs = (await app.inject({ url: '/api/faqs', headers: owner })).json();
+  const tpls = (await app.inject({ url: '/api/industry-templates', headers: owner })).json();
+  const restaurant = tpls.find((t: any) => t.key === 'restaurant');
+  assert.equal(faqs.length, restaurant.faq_count);
+});

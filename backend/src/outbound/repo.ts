@@ -27,6 +27,18 @@ export async function getCampaign(tenantId: string, id: string) {
   return { ...c, targets };
 }
 
+/** テナントの下書き(draft)キャンペーンを全削除（業種切り替え時の置き換え用）。 */
+export async function clearDraftCampaigns(tenantId: string): Promise<number> {
+  if (!dbEnabled) {
+    const ids = demoCampaigns.filter((c) => (c.tenant_id === tenantId || tenantId === demoTenant.id) && c.status === 'draft').map((c) => c.id);
+    for (let i = demoCampaigns.length - 1; i >= 0; i--) if (ids.includes(demoCampaigns[i].id)) demoCampaigns.splice(i, 1);
+    for (let i = demoTargets.length - 1; i >= 0; i--) if (ids.includes(demoTargets[i].campaign_id)) demoTargets.splice(i, 1);
+    return ids.length;
+  }
+  const rows = await query(`delete from outbound_campaigns where tenant_id=$1 and status='draft' returning id`, [tenantId]);
+  return rows.length;
+}
+
 export async function createCampaign(tenantId: string, input: any) {
   const purpose = PURPOSES.includes(input.purpose) ? input.purpose : 'sales';
   if (!dbEnabled) {

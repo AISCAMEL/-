@@ -345,6 +345,19 @@ export async function deleteFaq(tenantId: string, faqId: string) {
   return rows.length > 0;
 }
 
+/** テナントのFAQを全削除（業種切り替え時の置き換え用）。削除件数を返す。 */
+export async function clearFaqs(tenantId: string): Promise<number> {
+  if (!dbEnabled) {
+    const before = demoFaqs.length;
+    for (let i = demoFaqs.length - 1; i >= 0; i--) {
+      if (demoFaqs[i].tenant_id === tenantId || tenantId === demoTenant.id) demoFaqs.splice(i, 1);
+    }
+    return before - demoFaqs.length;
+  }
+  const rows = await query(`delete from faqs where tenant_id=$1 returning id`, [tenantId]);
+  return rows.length;
+}
+
 // ---------------- Settings ----------------
 export async function getSettings(tenantId: string) {
   if (!dbEnabled) return demoSettings;

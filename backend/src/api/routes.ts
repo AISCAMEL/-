@@ -685,11 +685,17 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
     const tpl = getTemplate((req.params as any).key);
     if (!tpl) return reply.code(404).send({ error: 'template not found' });
-    const opts = (req.body ?? {}) as { faqs?: boolean; campaigns?: boolean; settings?: boolean };
+    const opts = (req.body ?? {}) as { faqs?: boolean; campaigns?: boolean; settings?: boolean; replace?: boolean };
 
     if (opts.settings !== false) {
       await q.updateSettings(p.tenantId, { greeting_message: tpl.greeting, ai_tone: tpl.ai_tone });
       await q.updateTenant(p.tenantId, { industry: tpl.industry });
+    }
+    // replace=true なら業種を「切り替える」＝既存のFAQ・下書きシナリオを消してから入れる
+    let cleared_faqs = 0, cleared_campaigns = 0;
+    if (opts.replace) {
+      if (opts.faqs !== false) cleared_faqs = await q.clearFaqs(p.tenantId);
+      if (opts.campaigns !== false) cleared_campaigns = await outbound.clearDraftCampaigns(p.tenantId);
     }
     let faqs = 0, campaigns = 0;
     if (opts.faqs !== false) {
@@ -698,7 +704,7 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     if (opts.campaigns !== false) {
       for (const c of tpl.campaigns) { await outbound.createCampaign(p.tenantId, c); campaigns++; }
     }
-    return { ok: true, applied: { settings: opts.settings !== false, faqs, campaigns } };
+    return { ok: true, replaced: opts.replace === true, applied: { settings: opts.settings !== false, faqs, campaigns, cleared_faqs, cleared_campaigns } };
   });
 
   // ---- super admin ----
