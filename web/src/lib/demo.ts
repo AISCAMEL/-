@@ -174,7 +174,7 @@ export const demoInstructors: DemoInstructor[] = [
   {
     id: "ins-1",
     name: "遠藤 海斗",
-    avatar_url: null,
+    avatar_url: "/instructors/endo.png",
     rank: "pro",
     headline: "JPSA参戦のプロが、初めての一本を全力サポート",
     bio: "福島出身のプロサーファー。国内ツアーを転戦しながら、地元・岩沢で初心者スクールを開いています。「怖い」を「楽しい」に変えるのが得意です。",
@@ -189,7 +189,7 @@ export const demoInstructors: DemoInstructor[] = [
   {
     id: "ins-2",
     name: "佐藤 みなみ",
-    avatar_url: null,
+    avatar_url: "/instructors/sato.png",
     rank: "top_amateur",
     headline: "やさしく丁寧に。女性・初心者に人気の講師",
     bio: "トップアマチュアとして大会に出場しつつ、週末は初心者・女性向けレッスンを担当。基礎の姿勢づくりから、無理なくステップアップできます。",
@@ -204,7 +204,7 @@ export const demoInstructors: DemoInstructor[] = [
   {
     id: "ins-3",
     name: "工藤 亮",
-    avatar_url: null,
+    avatar_url: "/instructors/kudo.png",
     rank: "instructor",
     headline: "安全第一。ファミリー・キッズも安心の認定インストラクター",
     bio: "日本サーフィン連盟 公認インストラクター。海の安全とルールを大切に、家族連れやお子さまにも丁寧に指導します。",
@@ -487,6 +487,7 @@ export type DemoPartner = {
 export const demoPartners: DemoPartner[] = [
   {
     id: "pt-hirono-rentacar",
+    image_url: "/partners/hirono-rentacar.png",
     name: "ひろのレンタカー",
     category: "rentalcar",
     area: "広野町・JR広野駅前",
@@ -501,6 +502,7 @@ export const demoPartners: DemoPartner[] = [
   },
   {
     id: "pt-iwaki-mobility",
+    image_url: "/partners/iwaki-mobility.png",
     name: "いわきモビリティ 久之浜",
     category: "rentalcar",
     area: "いわき市・久之浜",
@@ -513,6 +515,7 @@ export const demoPartners: DemoPartner[] = [
   },
   {
     id: "pt-umiyado",
+    image_url: "/partners/umiyado.png",
     name: "岩沢の宿 うみやど",
     category: "stay",
     area: "広野町・岩沢海岸そば",
@@ -526,6 +529,7 @@ export const demoPartners: DemoPartner[] = [
   },
   {
     id: "pt-guesthouse-nami",
+    image_url: "/partners/guesthouse-nami.png",
     name: "ゲストハウス なぎ",
     category: "stay",
     area: "いわき市・四倉",
@@ -538,6 +542,7 @@ export const demoPartners: DemoPartner[] = [
   },
   {
     id: "pt-cafe-shiosai",
+    image_url: "/partners/cafe-shiosai.png",
     name: "海カフェ しおさい",
     category: "eat",
     area: "広野町・海岸通り",
@@ -551,6 +556,7 @@ export const demoPartners: DemoPartner[] = [
   },
   {
     id: "pt-shokudo-isohei",
+    image_url: "/partners/shokudo-isohei.png",
     name: "磯平食堂",
     category: "eat",
     area: "いわき市・久之浜漁港",

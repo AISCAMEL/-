@@ -30,7 +30,13 @@ export default function Home() {
       </header>
 
       {/* Hero */}
-      <section className="bg-ocean-gradient flex flex-1 flex-col items-center justify-center px-6 py-24 text-center text-foam">
+      <section
+        className="bg-ocean-gradient flex flex-1 flex-col items-center justify-center bg-cover bg-center px-6 py-24 text-center text-foam"
+        style={{
+          backgroundImage:
+            "linear-gradient(150deg, rgba(10,95,156,0.78) 0%, rgba(14,111,174,0.55) 45%, rgba(31,192,176,0.45) 100%), url('/hero.png')",
+        }}
+      >
         <p className="text-sm tracking-[0.4em] text-teal">{SITE.name}</p>
         <h1 className="mt-6 text-4xl font-semibold leading-tight md:text-6xl">
           {SITE.tagline}
