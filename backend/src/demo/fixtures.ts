@@ -45,8 +45,8 @@ function daysFromNow(n: number): string {
 
 export const demoTenant = {
   id: TENANT,
-  company_name: '合同会社アイズ（オークション代行 AUC-AGENT）',
-  industry: '車オークション代行・買取',
+  company_name: '車買取のバイモ',
+  industry: '車買取',
   plan: 'business',
   status: 'trial',
   trial_ends_at: daysFromNow(5),       // 5日後にトライアル終了（アラート対象）
@@ -73,7 +73,7 @@ export const demoSettings = {
   tenant_id: TENANT,
   business_hours: { mon: [['10:00', '19:00']], tue: [['10:00', '19:00']], wed: [['10:00', '19:00']], thu: [['10:00', '19:00']], fri: [['10:00', '19:00']], sat: [['10:00', '17:00']] },
   holiday_settings: { weekly: ['sun'], dates: [] as string[] },
-  greeting_message: 'お電話ありがとうございます。オークション代行のアイズ、AI受付です。購入代行・出品代行・買取査定など、ご用件をお話しください。',
+  greeting_message: 'お電話ありがとうございます。車買取のバイモ、AI受付です。買取査定のご依頼を承ります。お車の車種・年式などを教えてください。',
   ai_tone: 'polite',
   default_language: 'ja-JP',
   recording_enabled: false,
@@ -102,7 +102,7 @@ export const demoCalls: DemoCall[] = [
     next_action: '出張査定の日程確定・担当割当', urgency: 'normal', sentiment: 'positive', duration_sec: 96,
     started_at: iso(-35), ended_at: iso(-33), tags: ['買取査定'],
     transcripts: [
-      { speaker: 'ai', message: 'お電話ありがとうございます。オークション代行のアイズ、AI受付です。ご用件をお話しください。', sequence: 0 },
+      { speaker: 'ai', message: 'お電話ありがとうございます。車買取のバイモ、AI受付です。買取査定のご依頼を承ります。', sequence: 0 },
       { speaker: 'customer', message: '車を売りたいんですけど、査定お願いできますか', sequence: 1 },
       { speaker: 'ai', message: 'ありがとうございます。買取査定を承ります。車種・年式・走行距離を教えていただけますか？', sequence: 2 },
       { speaker: 'customer', message: 'プリウスの2019年式、4万キロくらいです', sequence: 3 },
@@ -117,32 +117,32 @@ export const demoCalls: DemoCall[] = [
   {
     id: 'call-1002', tenant_id: TENANT, from_number: '+819033334444', to_number: '+815099998888',
     status: 'callback_requested', category: 'callback', customer_name: '佐藤健一', company_name: null,
-    requested_datetime: null, request_detail: '購入代行の見積もりについて折り返し希望', summary: '佐藤様より購入代行（アルファード希望・予算350万）の見積もりの件で折り返し希望。現在の番号で連絡可。',
-    next_action: '担当バイヤーより折り返し', urgency: 'normal', sentiment: 'neutral', duration_sec: 68,
-    started_at: iso(-120), ended_at: iso(-119), tags: ['購入代行'],
+    requested_datetime: null, request_detail: '買取査定額について折り返し希望（ヴェルファイア・ローン残債あり）', summary: '佐藤様よりヴェルファイア（2018年式・ローン残債あり）の買取査定額について折り返し希望。現在の番号で連絡可。',
+    next_action: '担当より査定額・残債精算の折り返し', urgency: 'normal', sentiment: 'neutral', duration_sec: 68,
+    started_at: iso(-120), ended_at: iso(-119), tags: ['買取査定'],
     transcripts: [
-      { speaker: 'ai', message: 'お電話ありがとうございます。オークション代行のアイズ、AI受付です。ご用件をお話しください。', sequence: 0 },
-      { speaker: 'customer', message: '購入代行を考えてて、担当の人に折り返してほしいんですが', sequence: 1 },
-      { speaker: 'ai', message: '承知しました。購入代行のご相談ですね。ご希望の車種やご予算はお決まりですか？', sequence: 2 },
-      { speaker: 'customer', message: 'アルファードで、予算は350万くらい', sequence: 3 },
-      { speaker: 'ai', message: 'アルファード・ご予算350万円ほどですね。お名前を伺えますか？', sequence: 4 },
+      { speaker: 'ai', message: 'お電話ありがとうございます。車買取のバイモ、AI受付です。買取査定のご依頼を承ります。', sequence: 0 },
+      { speaker: 'customer', message: '査定の額について担当の人に折り返してほしいんですが', sequence: 1 },
+      { speaker: 'ai', message: '承知しました。買取査定のご相談ですね。車種・年式を教えていただけますか？', sequence: 2 },
+      { speaker: 'customer', message: 'ヴェルファイアの2018年式。ローンがまだ残ってるんだけど', sequence: 3 },
+      { speaker: 'ai', message: 'ヴェルファイア2018年式ですね。ローン残債のあるお車も買取・残債精算に対応しております。お名前を伺えますか？', sequence: 4 },
       { speaker: 'customer', message: '佐藤健一です', sequence: 5 },
-      { speaker: 'ai', message: '佐藤様ですね。現在おかけの番号へ担当バイヤーより折り返しでよろしいでしょうか？', sequence: 6 },
+      { speaker: 'ai', message: '佐藤様ですね。現在おかけの番号へ担当より折り返しでよろしいでしょうか？', sequence: 6 },
       { speaker: 'customer', message: 'はい、お願いします', sequence: 7 },
-      { speaker: 'ai', message: 'ありがとうございます。担当より折り返しご連絡いたします。', sequence: 8 },
+      { speaker: 'ai', message: 'ありがとうございます。担当より査定額と残債のお手続きについて折り返しご連絡いたします。', sequence: 8 },
     ],
-    notes: [{ id: 'note-1', note: '予算350万・アルファード希望。優先対応。', created_at: iso(-110) }],
+    notes: [{ id: 'note-1', note: 'ヴェルファイア2018・ローン残債あり。残債精算の説明を。優先対応。', created_at: iso(-110) }],
   },
   {
     id: 'call-1003', tenant_id: TENANT, from_number: '+819055556666', to_number: '+815099998888',
     status: 'new', category: 'inquiry', customer_name: null, company_name: null,
-    requested_datetime: null, request_detail: '購入代行の手数料・会員登録の問い合わせ', summary: '購入代行の手数料と会員登録について問い合わせ。FAQに基づき「落札価格帯別の定額・会員登録は無料」と回答済み。',
+    requested_datetime: null, request_detail: '出張査定の対応エリアと必要書類の問い合わせ', summary: '出張査定の対応エリアと必要書類について問い合わせ。FAQに基づき「全国対応・車検証/認印/本人確認書類が必要」と回答済み。',
     next_action: null, urgency: 'low', sentiment: 'neutral', duration_sec: 32,
     started_at: iso(-15), ended_at: iso(-14), tags: [],
     transcripts: [
-      { speaker: 'ai', message: 'お電話ありがとうございます。オークション代行のアイズ、AI受付です。ご用件をお話しください。', sequence: 0 },
-      { speaker: 'customer', message: '購入代行って手数料いくらですか？会員登録も要る？', sequence: 1 },
-      { speaker: 'ai', message: '手数料は落札価格帯別の定額です。ご利用には無料の会員登録が必要で、メールがあれば1分ほどで完了します。ご希望の予算・車種を伺えれば、担当より詳しい概算をご案内します。', sequence: 2 },
+      { speaker: 'ai', message: 'お電話ありがとうございます。車買取のバイモ、AI受付です。買取査定のご依頼を承ります。', sequence: 0 },
+      { speaker: 'customer', message: '出張査定ってどこまで来てくれる？必要なものは？', sequence: 1 },
+      { speaker: 'ai', message: '出張査定は全国対応・無料です。当日は車検証・お認印・ご本人確認書類をご用意ください。ご希望の日時とお車の場所を伺えれば、担当が伺います。', sequence: 2 },
       { speaker: 'customer', message: 'わかりました、ありがとう', sequence: 3 },
     ],
     notes: [],
@@ -150,9 +150,9 @@ export const demoCalls: DemoCall[] = [
 ];
 
 export const demoFaqs: DemoFaq[] = [
-  { id: 'faq-1', tenant_id: TENANT, question: '営業時間・対応エリアを教えてください', answer: '受付は平日10時から19時、土曜10時から17時です。福島県いわき市を拠点に全国対応しております。', category: '営業案内', keywords: ['営業時間', '何時', 'エリア', '対応'], is_active: true, sort_order: 1, created_at: iso(-1000), updated_at: iso(-1000) },
-  { id: 'faq-2', tenant_id: TENANT, question: '車を売りたい（買取査定・出品代行）', answer: '無料査定と出品代行を承っております。車種・年式・走行距離・お車の状態をお伺いし、担当者より査定・お手取りの目安をご案内します。', category: '出品・買取', keywords: ['売りたい', '買取', '査定', '出品'], is_active: true, sort_order: 2, created_at: iso(-1000), updated_at: iso(-1000) },
-  { id: 'faq-3', tenant_id: TENANT, question: '購入代行の手数料はいくらですか', answer: '手数料は落札価格帯別の定額です。ご希望の予算・車種をお伺いし、担当者より詳細をご案内します。会員登録は無料です。', category: '購入代行', keywords: ['手数料', '料金', '購入', '代行'], is_active: true, sort_order: 3, created_at: iso(-1000), updated_at: iso(-1000) },
+  { id: 'faq-1', tenant_id: TENANT, question: '営業時間・対応エリアを教えてください', answer: '受付は平日10時から19時、土曜10時から17時です。全国対応・無料出張査定も承っております。', category: '営業案内', keywords: ['営業時間', '何時', 'エリア', '出張'], is_active: true, sort_order: 1, created_at: iso(-1000), updated_at: iso(-1000) },
+  { id: 'faq-2', tenant_id: TENANT, question: '買取査定をお願いしたい', answer: '無料査定を承ります。車種・年式・走行距離・おおよその状態をお伺いし、担当者より査定のご案内をいたします。出張・持ち込みどちらも対応可能です。', category: '買取査定', keywords: ['売りたい', '買取', '査定'], is_active: true, sort_order: 2, created_at: iso(-1000), updated_at: iso(-1000) },
+  { id: 'faq-3', tenant_id: TENANT, question: '査定に必要なもの・ローンが残っていても売れますか', answer: '車検証・お認印・ご本人確認書類をご用意ください。ローン中のお車も残債精算を含めて対応可能です。詳細は担当者よりご案内します。', category: '必要書類', keywords: ['必要', '書類', 'ローン', '残債'], is_active: true, sort_order: 3, created_at: iso(-1000), updated_at: iso(-1000) },
 ];
 
 export interface DemoUser {
@@ -182,8 +182,8 @@ export interface DemoTarget {
 export const demoCampaigns: DemoCampaign[] = [
   {
     id: 'camp-1', tenant_id: TENANT, name: '買取査定のご提案', purpose: 'sales',
-    goal_prompt: '乗り換え・売却に関心がある方へ無料査定をご提案し、希望者は車種・年式・走行距離を伺い担当者へつなぐ。金額の確約はしない。',
-    opening: 'お世話になっております。オークション代行アイズのAI担当です。お車の無料査定・買取のご案内でお電話しました。少しお時間よろしいでしょうか？',
+    goal_prompt: '乗り換え・売却に関心がある方へ無料査定をご提案し、希望者は車種・年式・走行距離を伺い、出張/持込査定の日程を打診して担当者へつなぐ。金額の確約はしない。',
+    opening: 'お世話になっております。車買取のバイモ、AI担当です。お車の無料査定のご案内でお電話しました。少しお時間よろしいでしょうか？',
     status: 'draft', created_at: iso(-60 * 24 * 2),
   },
 ];
@@ -221,9 +221,9 @@ export interface DemoContact {
   note: string | null; tags: string[]; status: string; created_at: string;
 }
 export const demoContacts: DemoContact[] = [
-  { id: 'ct-1', tenant_id: TENANT, name: '田中太郎', company: '田中商店', phone_number: '+819012340001', email: 'tanaka@example.com', category: '見込み客', note: '展示会で名刺交換。予約システムに関心。', tags: ['ホット'], status: 'in_progress', created_at: iso(-60 * 24 * 3) },
-  { id: 'ct-2', tenant_id: TENANT, name: '佐藤花子', company: '佐藤クリニック', phone_number: '+819012340002', email: 'sato@example.com', category: '既存顧客', note: '毎月利用。アップセル候補。', tags: ['VIP'], status: 'won', created_at: iso(-60 * 24 * 10) },
-  { id: 'ct-3', tenant_id: TENANT, name: '鈴木一郎', company: '鈴木工務店', phone_number: '+819012340003', email: null, category: '休眠', note: '半年連絡なし。再アプローチ。', tags: [], status: 'active', created_at: iso(-60 * 24 * 30) },
+  { id: 'ct-1', tenant_id: TENANT, name: '田中太郎', company: null, phone_number: '+819012340001', email: 'tanaka@example.com', category: '査定見込み', note: 'プリウス2019・4万km。出張査定を検討中。', tags: ['ホット'], status: 'in_progress', created_at: iso(-60 * 24 * 3) },
+  { id: 'ct-2', tenant_id: TENANT, name: '佐藤花子', company: null, phone_number: '+819012340002', email: 'sato@example.com', category: '成約', note: 'アクア買取成約。次回の乗り換え時も相談したいとのこと。', tags: ['VIP'], status: 'won', created_at: iso(-60 * 24 * 10) },
+  { id: 'ct-3', tenant_id: TENANT, name: '鈴木一郎', company: null, phone_number: '+819012340003', email: null, category: '追客', note: '車検が3ヶ月後。時期を見て買取案内。', tags: [], status: 'active', created_at: iso(-60 * 24 * 30) },
 ];
 
 export interface DemoAppointment {
@@ -237,8 +237,8 @@ function todayAt(hour: number, min = 0): string {
   const d = new Date(); d.setHours(hour, min, 0, 0); return d.toISOString();
 }
 export const demoAppointments: DemoAppointment[] = [
-  { id: 'ap-1', tenant_id: TENANT, contact_id: 'ct-1', call_id: null, type: '査定', title: '田中商店 出張査定', customer_name: '田中太郎', phone_number: '+819012340001', start_at: todayAt(11, 0), end_at: todayAt(11, 45), status: 'confirmed', source: 'ai_outbound', google_event_id: null, note: '車種：プリウス／年式2019', created_at: iso(-60 * 24) },
-  { id: 'ap-2', tenant_id: TENANT, contact_id: null, call_id: 'call-1002', type: '来店', title: '佐藤様 来店相談', customer_name: '佐藤花子', phone_number: '+819033334444', start_at: todayAt(14, 30), end_at: todayAt(15, 0), status: 'tentative', source: 'ai_inbound', google_event_id: null, note: null, created_at: iso(-100) },
+  { id: 'ap-1', tenant_id: TENANT, contact_id: 'ct-1', call_id: null, type: '査定', title: '田中様 出張査定', customer_name: '田中太郎', phone_number: '+819012340001', start_at: todayAt(11, 0), end_at: todayAt(11, 45), status: 'confirmed', source: 'ai_outbound', google_event_id: null, note: '車種：プリウス／年式2019／走行4万km', created_at: iso(-60 * 24) },
+  { id: 'ap-2', tenant_id: TENANT, contact_id: null, call_id: 'call-1002', type: '査定', title: '佐藤様 持込査定', customer_name: '佐藤健一', phone_number: '+819033334444', start_at: todayAt(14, 30), end_at: todayAt(15, 0), status: 'tentative', source: 'ai_inbound', google_event_id: null, note: 'ヴェルファイア2018／ローン残債あり', created_at: iso(-100) },
 ];
 
 export interface DemoExpense { id: string; label: string; category: string; monthly_jpy: number; created_at: string; }
