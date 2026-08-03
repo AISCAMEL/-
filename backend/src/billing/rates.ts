@@ -40,23 +40,23 @@ export const FEATURE_CATALOG: Record<string, string> = {
 export interface PlanDef {
   label: string;
   tagline: string;          // 誰向けか一言
-  allowanceMin: number;     // 月間の込み分数
-  baseJpy: number;          // 月額基本料
-  overageJpyPerMin: number; // 超過（従量）単価
+  allowanceMin: number;     // 込み分数（本モデルは0＝無料通話分なし）
+  baseJpy: number;          // 月額基本料（システム利用料）
+  overageJpyPerMin: number; // 通話単価（1分目から従量）
   features: string[];       // 利用可能な機能キー（下位プランを内包）
 }
 
-// 低額の月額基本料＋通話分の従量課金。プランは「使える機能の範囲」で分ける（機能別）。
-// 原価は約¥12.6/分。従量単価はいずれも粗利60%以上を確保。
+// 低額の月額基本料（システム利用料）＋通話は1分目から全部従量。無料通話分は付けない。
+// 原価は約¥12.6/分。通話単価はいずれも粗利55%以上を確保。
 const RECEPTION_FEATURES = ['reception', 'faq', 'summary', 'email_notify', 'appointment', 'transfer'];
 const SALES_FEATURES = [...RECEPTION_FEATURES, 'contacts', 'bulk_email', 'outbound', 'caller_rules', 'slack', 'csv_export'];
 const PRO_FEATURES = [...SALES_FEATURES, 'calendar', 'multi_number', 'analytics', 'routing', 'priority_support'];
 
 export const PLANS: Record<string, PlanDef> = {
-  starter:    { label: '受付プラン',   tagline: '電話番の代わり（インバウンド）', allowanceMin: 30,   baseJpy: 2980,  overageJpyPerMin: 60, features: RECEPTION_FEATURES },
-  business:   { label: '営業プラン',   tagline: '受付＋集客・追客まで',           allowanceMin: 150,  baseJpy: 7980,  overageJpyPerMin: 45, features: SALES_FEATURES },
-  pro:        { label: '統合プラン',   tagline: '全機能・多拠点・高度分析',       allowanceMin: 500,  baseJpy: 16800, overageJpyPerMin: 35, features: PRO_FEATURES },
-  enterprise: { label: 'エンタープライズ', tagline: '大規模・個別要件',            allowanceMin: 2000, baseJpy: 0,    overageJpyPerMin: 30, features: PRO_FEATURES },
+  starter:    { label: '受付プラン',   tagline: '電話番の代わり（インバウンド）', allowanceMin: 0, baseJpy: 2980,  overageJpyPerMin: 50, features: RECEPTION_FEATURES },
+  business:   { label: '営業プラン',   tagline: '受付＋集客・追客まで',           allowanceMin: 0, baseJpy: 7980,  overageJpyPerMin: 40, features: SALES_FEATURES },
+  pro:        { label: '統合プラン',   tagline: '全機能・多拠点・高度分析',       allowanceMin: 0, baseJpy: 16800, overageJpyPerMin: 30, features: PRO_FEATURES },
+  enterprise: { label: 'エンタープライズ', tagline: '大規模・個別要件',            allowanceMin: 0, baseJpy: 0,     overageJpyPerMin: 30, features: PRO_FEATURES },
 };
 
 export function planDef(plan?: string | null): PlanDef {

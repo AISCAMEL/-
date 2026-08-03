@@ -61,8 +61,7 @@ export default function UsagePage() {
   // ---- テナント向け ----
   if (!data) return <p className="text-gray-400">読み込み中…</p>;
   const used = data.billable_minutes;
-  const allowance = data.plan.allowance_min;
-  const pct = Math.min(100, Math.round((used / allowance) * 100));
+  const callCharge = used * data.plan.overage_jpy_per_min;
 
   return (
     <div>
@@ -79,15 +78,13 @@ export default function UsagePage() {
       <Card className="mb-6">
         <div className="flex items-end justify-between">
           <div>
-            <div className="text-xs text-gray-500">今月の利用分数</div>
-            <div className="mt-1 text-3xl font-bold">{used}<span className="text-base font-normal text-gray-500"> / {allowance}分</span></div>
+            <div className="text-xs text-gray-500">今月の通話分数</div>
+            <div className="mt-1 text-3xl font-bold">{used}<span className="text-base font-normal text-gray-500"> 分</span></div>
           </div>
           <div className="text-right text-sm text-gray-500">
-            超過 {data.overage_minutes}分{data.overage_minutes > 0 && `（@¥${data.plan.overage_jpy_per_min}/分）`}
+            通話料 {used}分 × ¥{data.plan.overage_jpy_per_min} = <span className="font-semibold text-gray-700">{yen(callCharge)}</span>
+            <div className="text-xs text-gray-400">＋ 基本料 {yen(data.plan.base_jpy)}（1分目から従量・無料通話分なし）</div>
           </div>
-        </div>
-        <div className="mt-3 h-3 w-full overflow-hidden rounded-full bg-gray-100">
-          <div className={`h-full ${pct >= 100 ? 'bg-red-500' : pct >= 80 ? 'bg-amber-500' : 'bg-brand'}`} style={{ width: `${pct}%` }} />
         </div>
       </Card>
 
@@ -101,8 +98,8 @@ export default function UsagePage() {
       <Card className="mt-6">
         <h2 className="mb-3 text-sm font-semibold text-gray-500">内訳</h2>
         <dl className="space-y-2 text-sm">
-          <Row label="基本料金" value={yen(data.plan.base_jpy)} />
-          <Row label="超過分" value={data.overage_minutes > 0 ? `${data.overage_minutes}分 × ¥${data.plan.overage_jpy_per_min} = ${yen(data.overage_minutes * data.plan.overage_jpy_per_min)}` : '—'} />
+          <Row label="基本料金（システム利用料）" value={yen(data.plan.base_jpy)} />
+          <Row label="通話料（従量）" value={used > 0 ? `${used}分 × ¥${data.plan.overage_jpy_per_min} = ${yen(callCharge)}` : '—'} />
           <Row label="AI通話原価" value={`${yen(data.cost.ai_jpy)}（約¥${data.ai_cost_per_min_jpy}/分）`} />
           <Row label="転送追加原価" value={yen(data.cost.transfer_jpy)} />
           <Row label="推定粗利" value={`${yen(data.margin_jpy)}（${data.margin_rate}%）`} strong />

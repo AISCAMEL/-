@@ -11,12 +11,12 @@ const features = [
 ];
 
 const plans = [
-  { name: '受付プラン', price: '2,980', target: '電話番の代わり（インバウンド）', limit: '月30分込み',
-    items: ['AI電話受付（24時間）', 'FAQ自動回答', '通話要約・文字起こし', 'メール通知', '予約受付（査定・来店）', '人間へ転送'], over: '以降 1分60円（使った分だけ）' },
-  { name: '営業プラン', price: '7,980', target: '受付＋集客・追客まで', limit: '月150分込み', featured: true,
-    items: ['受付プランの全機能', '連絡先CRM', '一斉メール', 'AI営業・自動架電', '発信者ルール', 'Slack通知', 'CSV出力'], over: '以降 1分45円（使った分だけ）' },
-  { name: '統合プラン', price: '16,800', target: '全機能・多拠点・高度分析', limit: '月500分込み',
-    items: ['営業プランの全機能', 'Googleカレンダー連携', '複数電話番号', '高度な分析', '担当者振り分け', '優先サポート'], over: '以降 1分35円（使った分だけ）' },
+  { name: '受付プラン', price: '2,980', target: '電話番の代わり（インバウンド）', limit: '通話 ¥50/分（1分目から）',
+    items: ['AI電話受付（24時間）', 'FAQ自動回答', '通話要約・文字起こし', 'メール通知', '予約受付（査定・来店）', '人間へ転送'], over: '基本料＋使った通話分だけ（無料分なし）' },
+  { name: '営業プラン', price: '7,980', target: '受付＋集客・追客まで', limit: '通話 ¥40/分（1分目から）', featured: true,
+    items: ['受付プランの全機能', '連絡先CRM', '一斉メール', 'AI営業・自動架電', '発信者ルール', 'Slack通知', 'CSV出力'], over: '基本料＋使った通話分だけ（無料分なし）' },
+  { name: '統合プラン', price: '16,800', target: '全機能・多拠点・高度分析', limit: '通話 ¥30/分（1分目から）',
+    items: ['営業プランの全機能', 'Googleカレンダー連携', '複数電話番号', '高度な分析', '担当者振り分け', '優先サポート'], over: '基本料＋使った通話分だけ（無料分なし）' },
 ];
 
 export default function LandingPage() {
@@ -127,7 +127,7 @@ export default function LandingPage() {
       <section id="plans" className="bg-gray-50">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <h2 className="text-center text-3xl font-bold">料金プラン</h2>
-          <p className="mt-3 text-center text-gray-600">使いたい<strong>機能の範囲</strong>で選べる3プラン。いずれも低額の月額基本料＋使った通話分だけの従量課金。まずは1週間のテスト導入から。</p>
+          <p className="mt-3 text-center text-gray-600">使いたい<strong>機能の範囲</strong>で選べる3プラン。いずれも低額の月額基本料＋<strong>使った通話分だけ</strong>の従量課金（無料通話分なし・1分目から）。まずは1週間のテスト導入から。</p>
           <div className="mt-12 grid gap-8 lg:grid-cols-3">
             {plans.map((p) => (
               <div key={p.name}

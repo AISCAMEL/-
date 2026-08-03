@@ -721,11 +721,11 @@ export async function getInvoice(tenantId: string, month?: string) {
   const p = summary.plan;
 
   const lines: { desc: string; qty: number; unit: string; unitPrice: number; amount: number }[] = [
-    { desc: `基本料金（${p.label}プラン / 月${p.allowance_min}分まで）`, qty: 1, unit: '式', unitPrice: p.base_jpy, amount: p.base_jpy },
+    { desc: `基本料金（${p.label} / システム利用料）`, qty: 1, unit: '式', unitPrice: p.base_jpy, amount: p.base_jpy },
   ];
-  if (summary.overage_minutes > 0) {
-    const amt = summary.overage_minutes * p.overage_jpy_per_min;
-    lines.push({ desc: '超過通話料', qty: summary.overage_minutes, unit: '分', unitPrice: p.overage_jpy_per_min, amount: amt });
+  if (summary.billable_minutes > 0) {
+    const amt = summary.billable_minutes * p.overage_jpy_per_min;
+    lines.push({ desc: '通話料（従量）', qty: summary.billable_minutes, unit: '分', unitPrice: p.overage_jpy_per_min, amount: amt });
   }
   const subtotal = lines.reduce((s, l) => s + l.amount, 0);
   const tax = Math.round(subtotal * TAX_RATE);

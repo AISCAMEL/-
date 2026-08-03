@@ -22,11 +22,11 @@ test('AI原価/分 ≈ ¥12.63 (為替155前提)', () => {
   assert.equal(aiCostJpy(5), 63.16);
 });
 
-test('monthlyRevenueJpy: 上限内は基本料金、超過は従量加算', () => {
-  const biz = PLANS.business; // 低額基本料＋従量モデル
-  assert.equal(monthlyRevenueJpy(biz, biz.allowanceMin - 1), biz.baseJpy);      // 上限内
-  assert.equal(monthlyRevenueJpy(biz, biz.allowanceMin), biz.baseJpy);          // ちょうど
-  assert.equal(monthlyRevenueJpy(biz, biz.allowanceMin + 100), biz.baseJpy + 100 * biz.overageJpyPerMin); // 超過
+test('monthlyRevenueJpy: 基本料＋1分目からの従量（無料通話分なし）', () => {
+  const biz = PLANS.business; // 低額基本料＋全通話従量モデル
+  assert.equal(biz.allowanceMin, 0);                                       // 無料通話分は0
+  assert.equal(monthlyRevenueJpy(biz, 0), biz.baseJpy);                    // 通話0なら基本料のみ
+  assert.equal(monthlyRevenueJpy(biz, 100), biz.baseJpy + 100 * biz.overageJpyPerMin); // 1分目から従量
 });
 
 test('planDef: 未知プランは starter にフォールバック', () => {
