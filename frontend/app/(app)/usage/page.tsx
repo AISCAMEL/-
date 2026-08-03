@@ -61,7 +61,8 @@ export default function UsagePage() {
   // ---- テナント向け ----
   if (!data) return <p className="text-gray-400">読み込み中…</p>;
   const used = data.billable_minutes;
-  const callCharge = used * data.plan.overage_jpy_per_min;
+  const minuteCharge = data.minute_charge_jpy ?? used * data.plan.overage_jpy_per_min;
+  const callCharge = data.call_charge_jpy ?? data.calls * (data.plan.per_call_jpy ?? 0);
 
   return (
     <div>
@@ -76,14 +77,24 @@ export default function UsagePage() {
       </div>
 
       <Card className="mb-6">
-        <div className="flex items-end justify-between">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <div>
-            <div className="text-xs text-gray-500">今月の通話分数</div>
-            <div className="mt-1 text-3xl font-bold">{used}<span className="text-base font-normal text-gray-500"> 分</span></div>
+            <div className="text-xs text-gray-500">基本料（月額）</div>
+            <div className="mt-1 text-xl font-bold">{yen(data.plan.base_jpy)}</div>
           </div>
-          <div className="text-right text-sm text-gray-500">
-            通話料 {used}分 × ¥{data.plan.overage_jpy_per_min} = <span className="font-semibold text-gray-700">{yen(callCharge)}</span>
-            <div className="text-xs text-gray-400">＋ 基本料 {yen(data.plan.base_jpy)}（1分目から従量・無料通話分なし）</div>
+          <div>
+            <div className="text-xs text-gray-500">着信対応料</div>
+            <div className="mt-1 text-xl font-bold">{yen(callCharge)}</div>
+            <div className="text-xs text-gray-400">{data.calls}件 × ¥{data.plan.per_call_jpy}</div>
+          </div>
+          <div>
+            <div className="text-xs text-gray-500">通話料</div>
+            <div className="mt-1 text-xl font-bold">{yen(minuteCharge)}</div>
+            <div className="text-xs text-gray-400">{used}分 × ¥{data.plan.overage_jpy_per_min}</div>
+          </div>
+          <div>
+            <div className="text-xs text-gray-500">今月の請求（税抜）</div>
+            <div className="mt-1 text-xl font-bold text-brand">{yen(data.revenue_jpy)}</div>
           </div>
         </div>
       </Card>
@@ -99,7 +110,8 @@ export default function UsagePage() {
         <h2 className="mb-3 text-sm font-semibold text-gray-500">内訳</h2>
         <dl className="space-y-2 text-sm">
           <Row label="基本料金（システム利用料）" value={yen(data.plan.base_jpy)} />
-          <Row label="通話料（従量）" value={used > 0 ? `${used}分 × ¥${data.plan.overage_jpy_per_min} = ${yen(callCharge)}` : '—'} />
+          <Row label="着信対応料" value={data.calls > 0 ? `${data.calls}件 × ¥${data.plan.per_call_jpy} = ${yen(callCharge)}` : '—'} />
+          <Row label="通話料（従量）" value={used > 0 ? `${used}分 × ¥${data.plan.overage_jpy_per_min} = ${yen(minuteCharge)}` : '—'} />
           <Row label="AI通話原価" value={`${yen(data.cost.ai_jpy)}（約¥${data.ai_cost_per_min_jpy}/分）`} />
           <Row label="転送追加原価" value={yen(data.cost.transfer_jpy)} />
           <Row label="推定粗利" value={`${yen(data.margin_jpy)}（${data.margin_rate}%）`} strong />

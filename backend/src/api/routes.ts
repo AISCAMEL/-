@@ -7,7 +7,7 @@ import { getSettings } from '../db/queries.js';
 import { tenantTestReply, type TestTurn } from '../ai/testchat.js';
 import { sendWeeklyDigest } from '../notify/digest.js';
 import { getBillingStatus, createOverageInvoice } from '../billing/square.js';
-import { PLANS, FEATURE_CATALOG } from '../billing/rates.js';
+import { PLANS, FEATURE_CATALOG, NUMBER_OPTIONS } from '../billing/rates.js';
 import * as outbound from '../outbound/repo.js';
 import { runCampaign } from '../outbound/caller.js';
 import { INDUSTRY_TEMPLATES, getTemplate } from '../templates/industry.js';
@@ -54,11 +54,11 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
       const p = PLANS[key];
       return {
         key, label: p.label, tagline: p.tagline,
-        base_jpy: p.baseJpy, allowance_min: p.allowanceMin, overage_jpy_per_min: p.overageJpyPerMin,
+        base_jpy: p.baseJpy, per_call_jpy: p.perCallJpy, overage_jpy_per_min: p.overageJpyPerMin,
         features: p.features,
       };
     });
-    return { plans, feature_catalog: FEATURE_CATALOG };
+    return { plans, feature_catalog: FEATURE_CATALOG, number_options: NUMBER_OPTIONS };
   });
 
   // ---- me ----

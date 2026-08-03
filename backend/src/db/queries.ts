@@ -8,7 +8,7 @@ import {
 } from '../demo/fixtures.js';
 import type { CallSummary, TenantContext } from '../types.js';
 import {
-  planDef, billableMinutes, aiCostJpy, transferAddCostJpy, monthlyRevenueJpy,
+  planDef, billableMinutes, aiCostJpy, transferAddCostJpy, revenueJpy,
   AI_COST_USD_PER_MIN, USD_JPY,
 } from '../billing/rates.js';
 
@@ -524,15 +524,19 @@ function buildSummary(
   const costAi = aiCostJpy(billableMin);
   const costTransfer = transferAddCostJpy(transferMin);
   const totalCost = round2(costAi + costTransfer);
-  const revenue = monthlyRevenueJpy(p, billableMin);
+  const callCharge = calls * p.perCallJpy;          // 着信対応料
+  const minuteCharge = billableMin * p.overageJpyPerMin; // 通話料
+  const revenue = revenueJpy(p, calls, billableMin);
   const margin = round2(revenue - totalCost);
   return {
     month: monthKey,
-    plan: { key: plan ?? 'starter', label: p.label, allowance_min: p.allowanceMin, base_jpy: p.baseJpy, overage_jpy_per_min: p.overageJpyPerMin },
+    plan: { key: plan ?? 'starter', label: p.label, allowance_min: p.allowanceMin, base_jpy: p.baseJpy, per_call_jpy: p.perCallJpy, overage_jpy_per_min: p.overageJpyPerMin },
     calls,
     billable_minutes: billableMin,
     transfer_minutes: transferMin,
     overage_minutes: Math.max(0, billableMin - p.allowanceMin),
+    call_charge_jpy: callCharge,
+    minute_charge_jpy: minuteCharge,
     cost: { ai_jpy: costAi, transfer_jpy: costTransfer, total_jpy: totalCost },
     revenue_jpy: revenue,
     margin_jpy: margin,
@@ -723,9 +727,11 @@ export async function getInvoice(tenantId: string, month?: string) {
   const lines: { desc: string; qty: number; unit: string; unitPrice: number; amount: number }[] = [
     { desc: `基本料金（${p.label} / システム利用料）`, qty: 1, unit: '式', unitPrice: p.base_jpy, amount: p.base_jpy },
   ];
+  if (summary.calls > 0) {
+    lines.push({ desc: '着信対応料', qty: summary.calls, unit: '件', unitPrice: p.per_call_jpy, amount: summary.calls * p.per_call_jpy });
+  }
   if (summary.billable_minutes > 0) {
-    const amt = summary.billable_minutes * p.overage_jpy_per_min;
-    lines.push({ desc: '通話料（従量）', qty: summary.billable_minutes, unit: '分', unitPrice: p.overage_jpy_per_min, amount: amt });
+    lines.push({ desc: '通話料（従量）', qty: summary.billable_minutes, unit: '分', unitPrice: p.overage_jpy_per_min, amount: summary.billable_minutes * p.overage_jpy_per_min });
   }
   const subtotal = lines.reduce((s, l) => s + l.amount, 0);
   const tax = Math.round(subtotal * TAX_RATE);

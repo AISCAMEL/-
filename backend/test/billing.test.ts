@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  billableMinutes, aiCostJpy, monthlyRevenueJpy, planDef,
+  billableMinutes, aiCostJpy, revenueJpy, planDef,
   AI_COST_USD_PER_MIN, USD_JPY, PLANS,
 } from '../src/billing/rates.js';
 
@@ -22,11 +22,10 @@ test('AI原価/分 ≈ ¥12.63 (為替155前提)', () => {
   assert.equal(aiCostJpy(5), 63.16);
 });
 
-test('monthlyRevenueJpy: 基本料＋1分目からの従量（無料通話分なし）', () => {
-  const biz = PLANS.business; // 低額基本料＋全通話従量モデル
-  assert.equal(biz.allowanceMin, 0);                                       // 無料通話分は0
-  assert.equal(monthlyRevenueJpy(biz, 0), biz.baseJpy);                    // 通話0なら基本料のみ
-  assert.equal(monthlyRevenueJpy(biz, 100), biz.baseJpy + 100 * biz.overageJpyPerMin); // 1分目から従量
+test('revenueJpy: 基本料＋着信対応料×件数＋通話料×分', () => {
+  const biz = PLANS.business;
+  assert.equal(revenueJpy(biz, 0, 0), biz.baseJpy);                                    // 利用なしなら基本料のみ
+  assert.equal(revenueJpy(biz, 10, 30), biz.baseJpy + 10 * biz.perCallJpy + 30 * biz.overageJpyPerMin); // 着信10件・通話30分
 });
 
 test('planDef: 未知プランは starter にフォールバック', () => {

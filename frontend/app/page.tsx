@@ -11,12 +11,19 @@ const features = [
 ];
 
 const plans = [
-  { name: '受付プラン', price: '2,980', target: '電話番の代わり（インバウンド）', limit: '通話 ¥50/分（1分目から）',
-    items: ['AI電話受付（24時間）', 'FAQ自動回答', '通話要約・文字起こし', 'メール通知', '予約受付（査定・来店）', '人間へ転送'], over: '基本料＋使った通話分だけ（無料分なし）' },
-  { name: '営業プラン', price: '7,980', target: '受付＋集客・追客まで', limit: '通話 ¥40/分（1分目から）', featured: true,
-    items: ['受付プランの全機能', '連絡先CRM', '一斉メール', 'AI営業・自動架電', '発信者ルール', 'Slack通知', 'CSV出力'], over: '基本料＋使った通話分だけ（無料分なし）' },
-  { name: '統合プラン', price: '16,800', target: '全機能・多拠点・高度分析', limit: '通話 ¥30/分（1分目から）',
-    items: ['営業プランの全機能', 'Googleカレンダー連携', '複数電話番号', '高度な分析', '担当者振り分け', '優先サポート'], over: '基本料＋使った通話分だけ（無料分なし）' },
+  { name: '受付プラン', price: '3,980', target: '電話番の代わり（インバウンド）', limit: '着信 ¥30/件 ＋ 通話 ¥30/分',
+    items: ['AI電話受付（24時間）', 'FAQ自動回答', '通話要約・文字起こし', 'メール通知', '予約受付（査定・来店）', '人間へ転送'], over: '基本料＋着信件数＋通話分の従量' },
+  { name: '営業プラン', price: '6,980', target: '受付＋集客・追客まで', limit: '着信 ¥30/件 ＋ 通話 ¥25/分', featured: true,
+    items: ['受付プランの全機能', '連絡先CRM', '一斉メール', 'AI営業・自動架電', '発信者ルール', 'Slack通知', 'CSV出力'], over: '基本料＋着信件数＋通話分の従量' },
+  { name: '統合プラン', price: '12,800', target: '全機能・多拠点・高度分析', limit: '着信 ¥20/件 ＋ 通話 ¥20/分',
+    items: ['営業プランの全機能', 'Googleカレンダー連携', '複数電話番号', '高度な分析', '担当者振り分け', '優先サポート'], over: '基本料＋着信件数＋通話分の従量' },
+];
+
+const numberOptions = [
+  { name: '標準番号（050）', price: '込み', note: '基本料に1つ含む' },
+  { name: '市外局番（03・06等）', price: '+¥1,000/月', note: '地域番号' },
+  { name: 'フリーダイヤル（0120/0800）', price: '+¥2,000/月', note: '信頼感アップ' },
+  { name: '追加番号', price: '+¥1,000/本', note: '拠点・用途別' },
 ];
 
 export default function LandingPage() {
@@ -127,7 +134,7 @@ export default function LandingPage() {
       <section id="plans" className="bg-gray-50">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <h2 className="text-center text-3xl font-bold">料金プラン</h2>
-          <p className="mt-3 text-center text-gray-600">使いたい<strong>機能の範囲</strong>で選べる3プラン。いずれも低額の月額基本料＋<strong>使った通話分だけ</strong>の従量課金（無料通話分なし・1分目から）。まずは1週間のテスト導入から。</p>
+          <p className="mt-3 text-center text-gray-600">安い月額基本料 ＋ <strong>着信1件・通話1分ごと</strong>の明快な従量課金。使った分だけなので無駄がありません。まずは1週間のテスト導入から。</p>
           <div className="mt-12 grid gap-8 lg:grid-cols-3">
             {plans.map((p) => (
               <div key={p.name}
@@ -192,6 +199,21 @@ export default function LandingPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          {/* 電話番号オプション */}
+          <div className="mt-14">
+            <h3 className="mb-2 text-center text-xl font-bold">電話番号オプション</h3>
+            <p className="mb-4 text-center text-sm text-gray-500">番号の種類は選べます。市外局番・フリーダイヤルもご用意。</p>
+            <div className="mx-auto grid max-w-3xl gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {numberOptions.map((o) => (
+                <div key={o.name} className="rounded-xl border bg-white p-4 text-center">
+                  <div className="text-sm font-semibold">{o.name}</div>
+                  <div className="mt-1 text-brand">{o.price}</div>
+                  <div className="mt-1 text-xs text-gray-400">{o.note}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
