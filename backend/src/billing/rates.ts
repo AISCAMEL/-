@@ -69,6 +69,14 @@ export const NUMBER_OPTIONS: NumberOption[] = [
   { key: 'extra',      label: '追加番号（1本ごと）',            monthlyJpy: 1000, note: '拠点・用途別に増やせる' },
 ];
 
+// 転送オプション（転送先で料金・原価が変わる）。転送した通話にのみ加算。
+export interface TransferOption { key: string; label: string; perMinJpy: number; note: string; }
+export const TRANSFER_OPTIONS: TransferOption[] = [
+  { key: 'landline', label: '固定電話へ転送',       perMinJpy: 10, note: '最も安い転送先' },
+  { key: 'mobile',   label: '携帯電話へ転送',       perMinJpy: 20, note: '携帯発信のため加算' },
+  { key: 'multi',    label: '複数人へ順次転送',     perMinJpy: 25, note: 'つながるまで順番に発信（複数レッグ）' },
+];
+
 export function planDef(plan?: string | null): PlanDef {
   return PLANS[plan ?? 'starter'] ?? PLANS.starter;
 }

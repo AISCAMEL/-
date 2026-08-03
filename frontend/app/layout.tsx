@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'AIオペレーター24',
-  description: 'もう、電話を取り逃がさない。AIが24時間、あなたの会社の電話受付に。',
+  title: 'AIオペレーター24｜自動車業界専門のAI電話受付',
+  description: '自動車販売・買取・整備/車検・板金に特化したAI電話受付。査定・車検予約・在庫問い合わせを24時間AIが対応し、要約して通知。商談中の電話も逃しません。',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

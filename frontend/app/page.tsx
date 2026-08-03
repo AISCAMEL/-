@@ -2,12 +2,20 @@ import Link from 'next/link';
 import ChatWidget from '@/components/ChatWidget';
 
 const features = [
-  { icon: '📞', title: '24時間AIが一次対応', desc: '営業時間外も接客中も移動中も、AIが自然な日本語で電話に応答します。' },
-  { icon: '📅', title: '予約・問い合わせ受付', desc: '希望日時・名前・要件を聞き取り、予約希望として受け付けます。' },
-  { icon: '🔁', title: '折り返し・担当者転送', desc: '折り返し依頼の受付や、必要に応じて担当者への転送を判断します。' },
-  { icon: '📝', title: '通話の文字起こし・要約', desc: '通話内容を自動で文字起こし・要約。必要な情報だけを届けます。' },
-  { icon: '✉️', title: 'メール・Slack通知', desc: '通話終了後、要件と要約をすぐに通知。折り返し漏れを防ぎます。' },
-  { icon: '📊', title: '管理画面で可視化', desc: '着信数・対応結果・履歴をダッシュボードで一目で把握できます。' },
+  { icon: '📞', title: '商談中でも電話を逃さない', desc: '接客・試乗対応・整備作業の最中も、AIが24時間お客様の電話に応答します。' },
+  { icon: '🚗', title: '査定・車検・試乗の予約受付', desc: '車種・年式・走行距離・希望日時を聞き取り、予約希望として受け付けます。' },
+  { icon: '🔁', title: '担当者・工場へスマート転送', desc: '内容に応じて担当営業・整備・板金へ。固定/携帯/複数人への転送も可能。' },
+  { icon: '📝', title: '通話の文字起こし・要約', desc: '「プリウス2019・4万km・出張査定希望」など、要件を自動で要約して届けます。' },
+  { icon: '✉️', title: 'メール・Slack通知', desc: '通話終了後すぐ通知。査定・見積り依頼の折り返し漏れを防ぎます。' },
+  { icon: '📊', title: '来店・成約につなげる管理画面', desc: '着信→連絡先→追客まで一元管理。取りこぼしを売上に変えます。' },
+];
+
+// 自動車業界のジャンル別（それぞれ専用テンプレを用意）
+const autoGenres = [
+  { icon: '🏷️', name: '自動車販売店', desc: '在庫問い合わせ・試乗予約・見積り/ローン・下取り・来店後フォロー' },
+  { icon: '💰', name: '買取専門店', desc: '買取査定・出張/持込査定・査定予約・残債相談・成約後追い' },
+  { icon: '🔧', name: '整備工場・車検', desc: '車検予約・点検/整備・オイル交換・代車・入庫案内' },
+  { icon: '🎨', name: '板金塗装・鈑金', desc: 'キズ/へこみ見積り・保険対応・代車・納期・事故/レッカー相談' },
 ];
 
 const plans = [
@@ -26,14 +34,21 @@ const numberOptions = [
   { name: '追加番号', price: '+¥1,000/本', note: '拠点・用途別' },
 ];
 
+const transferOptions = [
+  { name: '固定電話へ転送', price: '¥10/分', note: '店舗・工場の固定電話へ' },
+  { name: '携帯電話へ転送', price: '¥20/分', note: '担当者のスマホへ' },
+  { name: '複数人へ順次転送', price: '¥25/分', note: 'つながるまで順番に発信' },
+];
+
 export default function LandingPage() {
   return (
     <main className="min-h-screen bg-white">
       {/* Header */}
       <header className="border-b">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div className="text-lg font-bold text-brand">AIオペレーター24</div>
+          <div className="text-lg font-bold text-brand">AIオペレーター24 <span className="text-xs font-medium text-gray-500">for 自動車業界</span></div>
           <nav className="flex items-center gap-4 text-sm">
+            <a href="#genres" className="hidden text-gray-600 hover:text-gray-900 sm:inline">対応ジャンル</a>
             <a href="#features" className="hidden text-gray-600 hover:text-gray-900 sm:inline">機能</a>
             <a href="#compare" className="hidden text-gray-600 hover:text-gray-900 sm:inline">比較</a>
             <a href="#plans" className="hidden text-gray-600 hover:text-gray-900 sm:inline">料金</a>
@@ -47,13 +62,15 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="bg-gradient-to-b from-brand-light to-white">
         <div className="mx-auto max-w-6xl px-6 py-20 text-center">
-          <h1 className="text-4xl font-bold leading-tight sm:text-5xl">
-            もう、電話を取り逃がさない。<br />
-            <span className="text-brand">AIが24時間、あなたの会社の電話受付に。</span>
+          <span className="inline-block rounded-full bg-brand/10 px-4 py-1 text-sm font-medium text-brand">自動車業界に特化したAI電話受付</span>
+          <h1 className="mt-4 text-4xl font-bold leading-tight sm:text-5xl">
+            商談中の1本の電話が、<br />
+            <span className="text-brand">査定・車検・成約のチャンスに。</span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-600">
-            AIオペレーター24は、予約受付・問い合わせ対応・折り返し依頼・担当者転送・通話要約まで自動化するAI電話受付サービスです。
-            営業時間外も、接客中も、移動中も。AIが自然な日本語でお客様の要件を聞き取り、必要な情報だけをあなたに届けます。
+            接客中・試乗対応中・整備作業中でも、AIが24時間お客様の電話に応答。
+            買取査定・車検予約・在庫問い合わせ・見積り依頼を自然な日本語で聞き取り、要約して即通知します。
+            <strong>自動車販売・買取・整備・板金</strong>それぞれの専用テンプレートで、すぐに使えます。
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Link href="/contact" className="rounded-lg bg-brand px-8 py-3 font-semibold text-white hover:bg-brand-dark">
@@ -63,12 +80,31 @@ export default function LandingPage() {
               資料請求する
             </Link>
           </div>
+          <p className="mt-4 text-xs text-gray-400">※ 将来的に他業界向けも展開予定。まずは自動車業界に完全特化。</p>
+        </div>
+      </section>
+
+      {/* 対応ジャンル（自動車業界） */}
+      <section id="genres" className="bg-white">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <h2 className="text-center text-3xl font-bold">自動車業界の、あらゆる現場に。</h2>
+          <p className="mt-3 text-center text-gray-600">ジャンルごとに専用の受け答え・FAQ・オペレーションを用意。導入初日から自社仕様で動きます。</p>
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {autoGenres.map((g) => (
+              <div key={g.name} className="rounded-xl border p-6 text-center shadow-sm">
+                <div className="text-4xl">{g.icon}</div>
+                <h3 className="mt-3 text-lg font-bold">{g.name}</h3>
+                <p className="mt-2 text-sm text-gray-600">{g.desc}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-8 text-center text-sm text-gray-500">中古車・新車販売／買取／車検・整備／板金塗装／ロードサービス 等、自動車まわりの電話をまるごとAIに。</p>
         </div>
       </section>
 
       {/* Features */}
       <section id="features" className="mx-auto max-w-6xl px-6 py-20">
-        <h2 className="text-center text-3xl font-bold">電話対応のすべてを、AIが。</h2>
+        <h2 className="text-center text-3xl font-bold">自動車業界の電話対応を、まるごとAIに。</h2>
         <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((f) => (
             <div key={f.title} className="rounded-xl border p-6 shadow-sm">
@@ -216,6 +252,21 @@ export default function LandingPage() {
               ))}
             </div>
           </div>
+
+          {/* 転送オプション */}
+          <div className="mt-12">
+            <h3 className="mb-2 text-center text-xl font-bold">転送オプション</h3>
+            <p className="mb-4 text-center text-sm text-gray-500">転送先に応じて料金が変わります。担当営業・整備・板金へ、必要な人へつなぎます。</p>
+            <div className="mx-auto grid max-w-2xl gap-3 sm:grid-cols-3">
+              {transferOptions.map((o) => (
+                <div key={o.name} className="rounded-xl border bg-white p-4 text-center">
+                  <div className="text-sm font-semibold">{o.name}</div>
+                  <div className="mt-1 text-brand">{o.price}</div>
+                  <div className="mt-1 text-xs text-gray-400">{o.note}</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -223,7 +274,7 @@ export default function LandingPage() {
       <section className="bg-brand">
         <div className="mx-auto max-w-4xl px-6 py-16 text-center text-white">
           <h2 className="text-3xl font-bold">まずは御社専用のAI電話番号で1週間テスト。</h2>
-          <p className="mt-4 text-brand-light">電話に出られなかった問い合わせ、もう逃しません。</p>
+          <p className="mt-4 text-brand-light">取り逃していた査定・車検・見積りの電話を、そのまま売上に。自動車業界専用テンプレですぐ使えます。</p>
           <Link href="/contact" className="mt-8 inline-block rounded-lg bg-white px-8 py-3 font-semibold text-brand hover:bg-gray-100">
             無料デモを試す
           </Link>
