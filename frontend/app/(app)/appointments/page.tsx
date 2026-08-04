@@ -23,6 +23,22 @@ export default function AppointmentsPage() {
   const [msg, setMsg] = useState('');
   const [cfgOpen, setCfgOpen] = useState(false);
   const [cfg, setCfg] = useState({ google_calendar_id: '', google_refresh_token: '', appointment_duration_min: 45 });
+  const [autoForm, setAutoForm] = useState({ customer_name: '', phone_number: '', type: '出張査定', date: '', preferredHHMM: '' });
+  const [autoMsg, setAutoMsg] = useState('');
+
+  async function runAutoBook(e: React.FormEvent) {
+    e.preventDefault();
+    setAutoMsg('空き枠を探して予約中…');
+    try {
+      const r = await api.autoBookAppointment({ ...autoForm, date: autoForm.date || undefined, preferredHHMM: autoForm.preferredHHMM || undefined });
+      setAutoMsg(`✅ ${jstDateTime(r.slot.start)}〜${jstTime(r.slot.end)} に「${autoForm.type}」を仮予約しました（${r.google_synced ? 'Googleにも登録' : 'カレンダー未接続'}）。`);
+      setAutoForm({ ...autoForm, customer_name: '', phone_number: '' });
+      loadList();
+    } catch (err: any) {
+      const m = String(err);
+      setAutoMsg(m.includes('409') ? '希望日の周辺に空き枠がありませんでした。別の日を指定してください。' : `エラー: ${err.message ?? err}`);
+    }
+  }
 
   function loadList() { api.appointments().then(setList); }
   function loadStatus() { api.calendarStatus().then((s) => { setStatus(s); setCfg((c) => ({ ...c, appointment_duration_min: s.appointment_duration_min, google_calendar_id: s.calendar_id || '' })); }); }
@@ -86,9 +102,26 @@ export default function AppointmentsPage() {
         </Card>
       )}
 
+      {/* AIで自動予約（最短の空き枠） */}
+      <Card className="mb-6 border-brand/40">
+        <h2 className="mb-1 text-sm font-semibold text-brand">🤖 AIで自動予約（最短の空き枠に仮予約）</h2>
+        <p className="mb-3 text-xs text-gray-500">AIが通話中に使うのと同じ仕組み。希望日を指定すると、Googleカレンダーと既存予約を避けて最短の空き枠に仮予約します。遠方はオンライン査定を選択。</p>
+        <form onSubmit={runAutoBook} className="flex flex-wrap items-end gap-2">
+          <input value={autoForm.customer_name} onChange={(e) => setAutoForm({ ...autoForm, customer_name: e.target.value })} placeholder="顧客名" className="rounded-lg border px-3 py-2 text-sm" />
+          <input value={autoForm.phone_number} onChange={(e) => setAutoForm({ ...autoForm, phone_number: e.target.value })} placeholder="電話番号" className="rounded-lg border px-3 py-2 text-sm" />
+          <select value={autoForm.type} onChange={(e) => setAutoForm({ ...autoForm, type: e.target.value })} className="rounded-lg border px-3 py-2 text-sm">
+            {['出張査定', '持込査定', 'オンライン査定', '来店商談', '電話商談'].map((t) => <option key={t}>{t}</option>)}
+          </select>
+          <label className="text-xs text-gray-500">希望日<input type="date" value={autoForm.date} min={todayYmd()} onChange={(e) => setAutoForm({ ...autoForm, date: e.target.value })} className="ml-1 rounded-lg border px-2 py-2 text-sm" /></label>
+          <label className="text-xs text-gray-500">希望時刻<input type="time" value={autoForm.preferredHHMM} onChange={(e) => setAutoForm({ ...autoForm, preferredHHMM: e.target.value })} className="ml-1 rounded-lg border px-2 py-2 text-sm" /></label>
+          <button className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark">AIで最短枠に予約</button>
+        </form>
+        {autoMsg && <p className="mt-2 text-sm text-brand">{autoMsg}</p>}
+      </Card>
+
       {/* 空き枠を探して予約 */}
       <Card className="mb-6">
-        <h2 className="mb-3 text-sm font-semibold text-gray-500">空き枠を探して予約</h2>
+        <h2 className="mb-3 text-sm font-semibold text-gray-500">空き枠を探して予約（手動）</h2>
         <div className="flex flex-wrap items-end gap-2">
           <label className="text-sm text-gray-600">希望日
             <input type="date" value={date} min={todayYmd()} onChange={(e) => setDate(e.target.value)} className="ml-2 rounded-lg border px-3 py-2 text-sm" />

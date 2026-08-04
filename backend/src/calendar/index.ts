@@ -81,6 +81,52 @@ export async function book(tenantId: string, input: AppointmentInput): Promise<B
   return { ok: true, appointment, google_synced: Boolean(googleEventId) };
 }
 
+export interface AutoBookOpts {
+  type?: string; customer_name?: string | null; phone_number?: string | null; note?: string | null;
+  contact_id?: string | null; call_id?: string | null; source?: string;
+  date?: string;          // YYYY-MM-DD 希望日（無ければ最短の空き）
+  preferredHHMM?: string; // "14:00" 希望時刻（近い枠を優先）
+  withinDays?: number;    // 希望日に空きが無い場合、何日先まで探すか（既定14）
+  durationMin?: number;
+  status?: string;        // 既定 tentative（仮予約）
+}
+
+/**
+ * AIが通話中に使う自動予約。希望日（または最短）の空き枠を探して仮予約する。
+ * 空きが無ければ候補を返す（予約はしない）。オンライン査定など出張不要でも同じ枠管理でOK。
+ */
+export async function autoBook(tenantId: string, opts: AutoBookOpts): Promise<BookResult & { slot?: Slot; alternatives?: Slot[] }> {
+  const settings = await getSettings(tenantId);
+  const duration = opts.durationMin ?? durationOf(settings);
+  const within = opts.withinDays ?? 14;
+  // 起点日（希望日 or 明日）から順に、空き枠が見つかる日まで探す
+  const startDate = opts.date ? new Date(`${opts.date}T00:00:00+09:00`) : new Date(Date.now() + 24 * 3600_000);
+  let chosen: Slot | undefined;
+  let firstDaySlots: Slot[] = [];
+  for (let i = 0; i <= within && !chosen; i++) {
+    const d = new Date(startDate.getTime() + i * 24 * 3600_000);
+    const ymd = d.toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' }); // YYYY-MM-DD(JST)
+    const slots = await findSlots(tenantId, ymd, duration);
+    if (i === 0) firstDaySlots = slots;
+    if (slots.length === 0) continue;
+    // 希望時刻に最も近い枠を選ぶ
+    if (opts.preferredHHMM && i === 0) {
+      const target = new Date(`${ymd}T${opts.preferredHHMM}:00+09:00`).getTime();
+      chosen = slots.slice().sort((a, b) => Math.abs(new Date(a.start).getTime() - target) - Math.abs(new Date(b.start).getTime() - target))[0];
+    } else {
+      chosen = slots[0];
+    }
+  }
+  if (!chosen) return { ok: false, error: '空き枠が見つかりませんでした', alternatives: firstDaySlots };
+  const r = await book(tenantId, {
+    type: opts.type ?? '査定', title: `${opts.type ?? '査定'}：${opts.customer_name ?? ''}`.trim(),
+    customer_name: opts.customer_name, phone_number: opts.phone_number, note: opts.note,
+    contact_id: opts.contact_id, call_id: opts.call_id, source: opts.source ?? 'ai_inbound',
+    status: opts.status ?? 'tentative', start_at: chosen.start, end_at: chosen.end,
+  });
+  return { ...r, slot: chosen };
+}
+
 /** 予約のステータス変更（confirmed/cancelled/done）。キャンセル時はGoogleイベントも削除。 */
 export async function changeStatus(tenantId: string, id: string, status: string): Promise<any | null> {
   const appt = await getAppointment(tenantId, id);

@@ -105,6 +105,7 @@ export const api = {
   appointmentSlots: (date: string, duration?: number) =>
     request<{ date: string; slots: { start: string; end: string }[] }>(`/api/appointments/slots?date=${date}${duration ? `&duration=${duration}` : ''}`),
   createAppointment: (body: any) => request<any>('/api/appointments', { method: 'POST', body: JSON.stringify(body) }),
+  autoBookAppointment: (body: any) => request<any>('/api/appointments/auto-book', { method: 'POST', body: JSON.stringify(body) }),
   setAppointmentStatus: (id: string, status: string) => request<any>(`/api/appointments/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
 
   industryTemplates: () => request<any[]>('/api/industry-templates'),

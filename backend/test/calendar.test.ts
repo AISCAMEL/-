@@ -69,3 +69,24 @@ test('カレンダー状態: 未接続なら google_connected=false', async () =
   assert.equal(res.statusCode, 200);
   assert.equal(res.json().google_connected, false);
 });
+
+test('autoBook: 希望日の空き枠に自動で仮予約する', async () => {
+  const { autoBook } = await import('../src/calendar/index.js');
+  // 十分未来の平日を希望日に（営業時間 平日10-19時想定）
+  const r: any = await autoBook('00000000-0000-0000-0000-000000000001', {
+    date: '2999-01-06', type: 'オンライン査定', customer_name: '遠方太郎', phone_number: '09000000000', preferredHHMM: '14:00',
+  });
+  assert.equal(r.ok, true);
+  assert.ok(r.slot && r.appointment);
+  assert.equal(r.appointment.status, 'tentative');
+  assert.equal(r.appointment.type, 'オンライン査定');
+});
+
+test('auto-book API: 空き枠に仮予約（201）', async () => {
+  const res = await app.inject({ method: 'POST', url: '/api/appointments/auto-book',
+    headers: { 'content-type': 'application/json' },
+    payload: { date: '2999-01-07', type: '出張査定', customer_name: 'API太郎' } });
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.json().ok, true);
+  assert.ok(res.json().slot);
+});

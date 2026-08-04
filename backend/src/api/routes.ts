@@ -125,6 +125,13 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     const { category, q, status } = req.query as Record<string, string>;
     return contacts.listContacts(p.tenantId!, { category, q, status });
   });
+  // AI/外部から自動予約（空き枠に仮予約）。査定タイプ・希望日時を渡すと最短枠に入る
+  app.post('/api/v1/appointments/auto-book', { preHandler: authenticateApiKey }, async (req, reply) => {
+    const p = req.principal!;
+    const r = await calendar.autoBook(p.tenantId!, { ...(req.body ?? {}) as any, source: 'ai_inbound' });
+    if (!r.ok) return reply.code(409).send({ ok: false, error: r.error, alternatives: r.alternatives });
+    return reply.code(201).send(r);
+  });
 
   // ---- dashboard ----
   app.get('/api/dashboard', { preHandler: authenticate }, async (req, reply) => {
@@ -590,6 +597,14 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
     const { from, to } = req.query as Record<string, string>;
     return calendar.listAppointments(p.tenantId, from, to, false);
+  });
+  // AI自動予約：希望日（または最短）の空き枠に仮予約する
+  app.post('/api/appointments/auto-book', { preHandler: manageOutbound }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const r = await calendar.autoBook(p.tenantId, (req.body ?? {}) as any);
+    if (!r.ok) return reply.code(409).send({ error: r.error, alternatives: r.alternatives });
+    return r;
   });
   // 予約を取る（重複時は409）
   app.post('/api/appointments', { preHandler: manageOutbound }, async (req, reply) => {

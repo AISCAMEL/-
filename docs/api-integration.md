@@ -64,6 +64,23 @@ curl -X POST https://<...>.onrender.com/api/v1/inquiries \
 
 登録済みの連絡先を返します（他システムへの取り込み用）。
 
+### 空き枠に自動予約：`POST /api/v1/appointments/auto-book`
+
+希望日・査定タイプを渡すと、Googleカレンダーと既存予約を避けて**最短の空き枠に仮予約**します（AIが通話中に使うのと同じ仕組み）。
+
+| フィールド | 説明 |
+|---|---|
+| `type` | 出張査定 / 持込査定 / オンライン査定 など |
+| `customer_name` / `phone_number` | 顧客情報 |
+| `date` | 希望日 YYYY-MM-DD（省略時は最短の空き） |
+| `preferredHHMM` | 希望時刻 "14:00"（近い枠を優先） |
+| `withinDays` | 希望日に空きが無い場合、何日先まで探すか（既定14） |
+
+```json
+{ "ok": true, "slot": {"start":"...","end":"..."}, "appointment": {"id":"...","status":"tentative"} }
+```
+空きが無い場合は 409 と `alternatives`（その日の空き枠候補）を返します。
+
 ## 4. HTMLフォームからの最小例
 
 ```html
