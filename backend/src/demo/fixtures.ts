@@ -45,7 +45,7 @@ function daysFromNow(n: number): string {
 
 export const demoTenant = {
   id: TENANT,
-  company_name: '車買取のバイモ',
+  company_name: '車買取専門店',
   industry: '車買取',
   plan: 'business',
   status: 'trial',
@@ -73,7 +73,7 @@ export const demoSettings = {
   tenant_id: TENANT,
   business_hours: { mon: [['10:00', '19:00']], tue: [['10:00', '19:00']], wed: [['10:00', '19:00']], thu: [['10:00', '19:00']], fri: [['10:00', '19:00']], sat: [['10:00', '17:00']] },
   holiday_settings: { weekly: ['sun'], dates: [] as string[] },
-  greeting_message: 'お電話ありがとうございます。車買取のバイモ、AI受付です。買取査定のご依頼を承ります。お車の車種・年式と、だいたいの地域を教えてください。',
+  greeting_message: 'お電話ありがとうございます。車買取専門店、AI受付です。買取査定のご依頼を承ります。お車の車種・年式と、だいたいの地域を教えてください。',
   ai_tone: 'polite',
   default_language: 'ja-JP',
   recording_enabled: false,
@@ -102,7 +102,7 @@ export const demoCalls: DemoCall[] = [
     next_action: '出張査定の日程確定・担当割当', urgency: 'normal', sentiment: 'positive', duration_sec: 96,
     started_at: iso(-35), ended_at: iso(-33), tags: ['買取査定'],
     transcripts: [
-      { speaker: 'ai', message: 'お電話ありがとうございます。車買取のバイモ、AI受付です。買取査定のご依頼を承ります。', sequence: 0 },
+      { speaker: 'ai', message: 'お電話ありがとうございます。車買取専門店、AI受付です。買取査定のご依頼を承ります。', sequence: 0 },
       { speaker: 'customer', message: '車を売りたいんですけど、査定お願いできますか', sequence: 1 },
       { speaker: 'ai', message: 'ありがとうございます。買取査定を承ります。車種・年式・走行距離を教えていただけますか？', sequence: 2 },
       { speaker: 'customer', message: 'プリウスの2019年式、4万キロくらいです', sequence: 3 },
@@ -121,7 +121,7 @@ export const demoCalls: DemoCall[] = [
     next_action: '担当より査定額・残債精算の折り返し', urgency: 'normal', sentiment: 'neutral', duration_sec: 68,
     started_at: iso(-120), ended_at: iso(-119), tags: ['買取査定'],
     transcripts: [
-      { speaker: 'ai', message: 'お電話ありがとうございます。車買取のバイモ、AI受付です。買取査定のご依頼を承ります。', sequence: 0 },
+      { speaker: 'ai', message: 'お電話ありがとうございます。車買取専門店、AI受付です。買取査定のご依頼を承ります。', sequence: 0 },
       { speaker: 'customer', message: '査定の額について担当の人に折り返してほしいんですが', sequence: 1 },
       { speaker: 'ai', message: '承知しました。買取査定のご相談ですね。車種・年式を教えていただけますか？', sequence: 2 },
       { speaker: 'customer', message: 'ヴェルファイアの2018年式。ローンがまだ残ってるんだけど', sequence: 3 },
@@ -140,7 +140,7 @@ export const demoCalls: DemoCall[] = [
     next_action: 'オンライン査定の案内メール送付・日程調整', urgency: 'low', sentiment: 'neutral', duration_sec: 40,
     started_at: iso(-15), ended_at: iso(-14), tags: ['オンライン査定'],
     transcripts: [
-      { speaker: 'ai', message: 'お電話ありがとうございます。車買取のバイモ、AI受付です。買取査定のご依頼を承ります。お車の車種・年式と、だいたいの地域を教えてください。', sequence: 0 },
+      { speaker: 'ai', message: 'お電話ありがとうございます。車買取専門店、AI受付です。買取査定のご依頼を承ります。お車の車種・年式と、だいたいの地域を教えてください。', sequence: 0 },
       { speaker: 'customer', message: 'アクアの2020年式。青森なんだけど出張で来てもらえる？', sequence: 1 },
       { speaker: 'ai', message: 'ありがとうございます。青森方面は出張査定に伺えない場合がございます。その場合は、お写真やビデオでのオンライン査定で対応いたします。金額にご納得いただけましたら、引き取りの手配も可能です。', sequence: 2 },
       { speaker: 'customer', message: 'じゃあオンラインでお願いしようかな', sequence: 3 },
@@ -184,7 +184,7 @@ export const demoCampaigns: DemoCampaign[] = [
   {
     id: 'camp-1', tenant_id: TENANT, name: '買取査定のご提案', purpose: 'sales',
     goal_prompt: '乗り換え・売却に関心がある方へ無料査定をご提案し、希望者は車種・年式・走行距離を伺い、出張/持込査定の日程を打診して担当者へつなぐ。金額の確約はしない。',
-    opening: 'お世話になっております。車買取のバイモ、AI担当です。お車の無料査定のご案内でお電話しました。少しお時間よろしいでしょうか？',
+    opening: 'お世話になっております。車買取専門店、AI担当です。お車の無料査定のご案内でお電話しました。少しお時間よろしいでしょうか？',
     status: 'draft', created_at: iso(-60 * 24 * 2),
   },
 ];
