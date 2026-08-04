@@ -73,7 +73,7 @@ export const demoSettings = {
   tenant_id: TENANT,
   business_hours: { mon: [['10:00', '19:00']], tue: [['10:00', '19:00']], wed: [['10:00', '19:00']], thu: [['10:00', '19:00']], fri: [['10:00', '19:00']], sat: [['10:00', '17:00']] },
   holiday_settings: { weekly: ['sun'], dates: [] as string[] },
-  greeting_message: 'お電話ありがとうございます。車買取のバイモ、AI受付です。買取査定のご依頼を承ります。お車の車種・年式などを教えてください。',
+  greeting_message: 'お電話ありがとうございます。車買取のバイモ、AI受付です。買取査定のご依頼を承ります。お車の車種・年式と、だいたいの地域を教えてください。',
   ai_tone: 'polite',
   default_language: 'ja-JP',
   recording_enabled: false,
@@ -136,14 +136,15 @@ export const demoCalls: DemoCall[] = [
   {
     id: 'call-1003', tenant_id: TENANT, from_number: '+819055556666', to_number: '+815099998888',
     status: 'new', category: 'inquiry', customer_name: null, company_name: null,
-    requested_datetime: null, request_detail: '出張査定の対応エリアと必要書類の問い合わせ', summary: '出張査定の対応エリアと必要書類について問い合わせ。FAQに基づき「全国対応・車検証/認印/本人確認書類が必要」と回答済み。',
-    next_action: null, urgency: 'low', sentiment: 'neutral', duration_sec: 32,
-    started_at: iso(-15), ended_at: iso(-14), tags: [],
+    requested_datetime: null, request_detail: '遠方のため出張不可→オンライン査定を案内', summary: '遠方（対応エリア外）のお客様。出張査定は難しいため、写真・ビデオでのオンライン査定をご案内。折り返し・日程調整待ち。',
+    next_action: 'オンライン査定の案内メール送付・日程調整', urgency: 'low', sentiment: 'neutral', duration_sec: 40,
+    started_at: iso(-15), ended_at: iso(-14), tags: ['オンライン査定'],
     transcripts: [
-      { speaker: 'ai', message: 'お電話ありがとうございます。車買取のバイモ、AI受付です。買取査定のご依頼を承ります。', sequence: 0 },
-      { speaker: 'customer', message: '出張査定ってどこまで来てくれる？必要なものは？', sequence: 1 },
-      { speaker: 'ai', message: '出張査定は全国対応・無料です。当日は車検証・お認印・ご本人確認書類をご用意ください。ご希望の日時とお車の場所を伺えれば、担当が伺います。', sequence: 2 },
-      { speaker: 'customer', message: 'わかりました、ありがとう', sequence: 3 },
+      { speaker: 'ai', message: 'お電話ありがとうございます。車買取のバイモ、AI受付です。買取査定のご依頼を承ります。お車の車種・年式と、だいたいの地域を教えてください。', sequence: 0 },
+      { speaker: 'customer', message: 'アクアの2020年式。青森なんだけど出張で来てもらえる？', sequence: 1 },
+      { speaker: 'ai', message: 'ありがとうございます。青森方面は出張査定に伺えない場合がございます。その場合は、お写真やビデオでのオンライン査定で対応いたします。金額にご納得いただけましたら、引き取りの手配も可能です。', sequence: 2 },
+      { speaker: 'customer', message: 'じゃあオンラインでお願いしようかな', sequence: 3 },
+      { speaker: 'ai', message: '承知しました。オンライン査定として承ります。車検証と、外装・内装・メーターのお写真をお送りいただければ、担当より査定のご連絡をいたします。', sequence: 4 },
     ],
     notes: [],
   },
@@ -238,7 +239,7 @@ function todayAt(hour: number, min = 0): string {
 }
 export const demoAppointments: DemoAppointment[] = [
   { id: 'ap-1', tenant_id: TENANT, contact_id: 'ct-1', call_id: null, type: '査定', title: '田中様 出張査定', customer_name: '田中太郎', phone_number: '+819012340001', start_at: todayAt(11, 0), end_at: todayAt(11, 45), status: 'confirmed', source: 'ai_outbound', google_event_id: null, note: '車種：プリウス／年式2019／走行4万km', created_at: iso(-60 * 24) },
-  { id: 'ap-2', tenant_id: TENANT, contact_id: null, call_id: 'call-1002', type: '査定', title: '佐藤様 持込査定', customer_name: '佐藤健一', phone_number: '+819033334444', start_at: todayAt(14, 30), end_at: todayAt(15, 0), status: 'tentative', source: 'ai_inbound', google_event_id: null, note: 'ヴェルファイア2018／ローン残債あり', created_at: iso(-100) },
+  { id: 'ap-2', tenant_id: TENANT, contact_id: null, call_id: 'call-1002', type: 'オンライン査定', title: '佐藤様 オンライン査定（遠方）', customer_name: '佐藤健一', phone_number: '+819033334444', start_at: todayAt(14, 30), end_at: todayAt(15, 0), status: 'tentative', source: 'ai_inbound', google_event_id: null, note: 'ヴェルファイア2018／ローン残債あり／対応エリア外のため写真・ビデオで査定', created_at: iso(-100) },
 ];
 
 export interface DemoExpense { id: string; label: string; category: string; monthly_jpy: number; created_at: string; }

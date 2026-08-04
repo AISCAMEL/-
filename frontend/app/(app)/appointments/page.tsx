@@ -118,7 +118,7 @@ export default function AppointmentsPage() {
             <div className="text-sm font-medium">{jstDateTime(picked.start)}〜{jstTime(picked.end)} に予約</div>
             <div className="flex flex-wrap gap-2">
               <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="rounded-lg border px-3 py-2 text-sm">
-                {['査定', '来店', '内見', '施術', '相談'].map((t) => <option key={t}>{t}</option>)}
+                {['出張査定', '持込査定', 'オンライン査定', '来店商談', '電話商談'].map((t) => <option key={t}>{t}</option>)}
               </select>
               <input value={form.customer_name} onChange={(e) => setForm({ ...form, customer_name: e.target.value })} placeholder="顧客名" className="flex-1 rounded-lg border px-3 py-2 text-sm" />
               <input value={form.phone_number} onChange={(e) => setForm({ ...form, phone_number: e.target.value })} placeholder="電話番号" className="rounded-lg border px-3 py-2 text-sm" />
