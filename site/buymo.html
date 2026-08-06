@@ -25,7 +25,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" />
-<link rel="stylesheet" href="assets/css/buymo.css?v=10" />
+<link rel="stylesheet" href="assets/css/buymo.css?v=11" />
 
 <!-- 構造化データ（ローカルビジネス） -->
 <script type="application/ld+json">
@@ -102,6 +102,10 @@
 
   <!-- ============ ヒーロー ============ -->
   <section class="hero" aria-labelledby="hero-title">
+    <!-- hero-art は .hero 直下に配置してフルブリード背景として機能させる -->
+    <div class="hero-art" aria-hidden="true">
+      <img class="hero-img-main" src="assets/img/buymo/hero.jpg.png" alt="" />
+    </div>
     <div class="container hero-inner">
       <div class="hero-copy reveal">
         <p class="hero-lead">どこよりも高く、早く、手間なく！</p>
@@ -112,9 +116,6 @@
         <ul class="hero-badges">
           <li>査定無料</li><li>手数料0円</li><li>3営業日以内に入金</li>
         </ul>
-      </div>
-      <div class="hero-art">
-        <img class="hero-img-main" src="assets/img/buymo/hero-main.jpg.png" alt="車の前に立つスタッフと買取査定アプリ画面" width="700" height="480" />
       </div>
     </div>
   </section>

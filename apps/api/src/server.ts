@@ -107,6 +107,10 @@ export function buildServer() {
     defaultMode: config.connector.mode,
     modes: connectorModes(config.connector),
     baseOAuthConfigured: !!config.baseOAuth,
+    notifications: isWebhookConfigured(),
+    syncEnabled: config.syncIntervalMinutes > 0,
+    syncIntervalMinutes: config.syncIntervalMinutes,
+    dbConnected: dbEnabled,
   }));
 
   // 猫グッズ特化プリセット（リサーチキーワード・推奨スクリーニング・規約注意）

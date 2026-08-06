@@ -19,5 +19,5 @@ ENV NODE_ENV=production
 ENV API_PORT=3001
 EXPOSE 3001
 
-# tsx でそのまま実行（ビルド不要）
-CMD ["pnpm", "--filter", "@hub/api", "exec", "tsx", "src/server.ts"]
+# 起動時にマイグレーション実行 → API サーバー起動
+CMD pnpm --filter @hub/db exec prisma migrate deploy && pnpm --filter @hub/api exec tsx src/server.ts

@@ -8,13 +8,13 @@ export async function GET(req: Request) {
   const error = url.searchParams.get("error");
 
   if (error) {
-    const dest = new URL("/", url.origin);
+    const dest = new URL("/setup", url.origin);
     dest.searchParams.set("base_error", error);
     return NextResponse.redirect(dest.toString());
   }
 
   if (!code) {
-    const dest = new URL("/", url.origin);
+    const dest = new URL("/setup", url.origin);
     dest.searchParams.set("base_error", "code_missing");
     return NextResponse.redirect(dest.toString());
   }
@@ -29,7 +29,7 @@ export async function GET(req: Request) {
     });
     const data = await res.json();
 
-    const dest = new URL("/", url.origin);
+    const dest = new URL("/setup", url.origin);
     if (res.ok && data.ok) {
       dest.searchParams.set("base", "connected");
     } else {
@@ -40,7 +40,7 @@ export async function GET(req: Request) {
     }
     return NextResponse.redirect(dest.toString());
   } catch (e) {
-    const dest = new URL("/", url.origin);
+    const dest = new URL("/setup", url.origin);
     dest.searchParams.set("base_error", `hub_unreachable: ${String(e)}`);
     return NextResponse.redirect(dest.toString());
   }
