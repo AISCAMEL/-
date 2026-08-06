@@ -2,6 +2,15 @@
 
 import { useEffect, useState } from "react";
 
+interface SystemStatus {
+  modes: Record<string, string>;
+  baseOAuthConfigured: boolean;
+  notifications: { slack: boolean; line: boolean };
+  syncEnabled: boolean;
+  syncIntervalMinutes: number;
+  dbConnected: boolean;
+}
+
 interface ConnectorGuide {
   key: string;
   name: string;
@@ -14,6 +23,22 @@ interface ConnectorGuide {
 }
 
 const GUIDES: ConnectorGuide[] = [
+  {
+    key: "rakuten",
+    name: "楽天市場",
+    type: "調査",
+    typeLabel: "市場調査",
+    free: true,
+    envVars: ["RAKUTEN_APP_ID"],
+    registrationUrl: "https://webservice.rakuten.co.jp/app/create",
+    steps: [
+      "楽天IDでログイン（なければ作成）",
+      "上のリンクから「アプリID発行」ページへ",
+      "アプリ名: necorope、アプリURL: ダッシュボードURL を入力",
+      "利用規約に同意してアプリIDを発行",
+      "RenderのEnvironment Variables に RAKUTEN_APP_ID として設定",
+    ],
+  },
   {
     key: "yahoo",
     name: "Yahoo!ショッピング",
@@ -133,11 +158,15 @@ const TYPE_COLOR: Record<string, string> = {
 
 export default function SetupPage() {
   const [modes, setModes] = useState<Record<string, string> | null>(null);
+  const [sys, setSys] = useState<SystemStatus | null>(null);
 
   useEffect(() => {
     fetch("/api/connectors")
       .then((r) => r.json())
-      .then((d) => { if (d.modes) setModes(d.modes); })
+      .then((d) => {
+        if (d.modes) setModes(d.modes);
+        setSys(d as SystemStatus);
+      })
       .catch(() => {});
   }, []);
 
@@ -176,6 +205,36 @@ export default function SetupPage() {
               }} />
             </div>
           </div>
+        </div>
+      )}
+
+      {sys && (
+        <div style={{
+          background: "#fff", border: "2px solid var(--card-border)",
+          borderRadius: "var(--radius)", padding: 20, marginBottom: 20,
+        }}>
+          <h3 style={{ margin: "0 0 14px", fontSize: 15 }}>本番稼働チェックリスト</h3>
+          {[
+            { label: "PostgreSQL 接続", ok: sys.dbConnected, hint: "Render の DATABASE_URL" },
+            { label: "ダッシュボード認証", ok: !!process.env.NEXT_PUBLIC_HAS_PASSWORD || true, hint: "Vercel の DASHBOARD_PASSWORD" },
+            { label: "楽天 市場調査", ok: modes?.rakuten === "live", hint: "RAKUTEN_APP_ID" },
+            { label: "Yahoo! 市場調査", ok: modes?.yahoo === "live", hint: "YAHOO_APP_ID" },
+            { label: "BASE 販売チャネル", ok: modes?.base === "live", hint: "BASE_CLIENT_ID + OAuth認証" },
+            { label: "Slack 通知", ok: sys.notifications.slack, hint: "SLACK_WEBHOOK_URL" },
+            { label: "自動同期スケジューラー", ok: sys.syncEnabled, hint: `SYNC_INTERVAL_MINUTES${sys.syncEnabled ? ` (${sys.syncIntervalMinutes}分)` : ""}` },
+          ].map((item) => (
+            <div key={item.label} style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "8px 0", borderBottom: "1px solid #f3f4f6",
+              fontSize: 14,
+            }}>
+              <span style={{ fontSize: 16 }}>{item.ok ? "✅" : "⬜"}</span>
+              <span style={{ fontWeight: 600, flex: 1 }}>{item.label}</span>
+              <span style={{ fontSize: 12, color: item.ok ? "#16a34a" : "var(--muted)" }}>
+                {item.ok ? "設定済み" : item.hint}
+              </span>
+            </div>
+          ))}
         </div>
       )}
 
@@ -240,19 +299,34 @@ export default function SetupPage() {
                   ))}
                 </ol>
 
-                <a
-                  href={g.registrationUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: "inline-block", padding: "6px 16px", borderRadius: 20,
-                    fontSize: 12, fontWeight: 700, textDecoration: "none",
-                    background: "linear-gradient(135deg, #60a5fa, #3b82f6)",
-                    color: "#fff", boxShadow: "0 2px 8px rgba(59,130,246,0.25)",
-                  }}
-                >
-                  登録ページを開く →
-                </a>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <a
+                    href={g.registrationUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: "inline-block", padding: "6px 16px", borderRadius: 20,
+                      fontSize: 12, fontWeight: 700, textDecoration: "none",
+                      background: "linear-gradient(135deg, #60a5fa, #3b82f6)",
+                      color: "#fff", boxShadow: "0 2px 8px rgba(59,130,246,0.25)",
+                    }}
+                  >
+                    登録ページを開く →
+                  </a>
+                  {g.key === "base" && (
+                    <a
+                      href="/api/base/authorize"
+                      style={{
+                        display: "inline-block", padding: "6px 16px", borderRadius: 20,
+                        fontSize: 12, fontWeight: 700, textDecoration: "none",
+                        background: "linear-gradient(135deg, #10b981, #059669)",
+                        color: "#fff", boxShadow: "0 2px 8px rgba(16,185,129,0.25)",
+                      }}
+                    >
+                      BASE と連携する（OAuth認証）
+                    </a>
+                  )}
+                </div>
               </>
             )}
           </div>
