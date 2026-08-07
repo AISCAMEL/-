@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>カーメル 加盟店ポータル｜合同会社アイズ</title>
+<meta name="robots" content="noindex,nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" />
+<style>
+:root{
+  --navy:#0e1b33;
+  --navy-2:#16294a;
+  --navy-soft:#1f3a66;
+  --gold:#c9a14a;
+  --gold-2:#e0bd6a;
+  --ink:#1a2233;
+  --muted:#5a6675;
+  --line:#e4e8ef;
+  --bg:#f6f8fc;
+  --white:#ffffff;
+  --green:#1f9d6b;
+  --red:#d44b4b;
+  --radius:14px;
+  --shadow:0 10px 30px rgba(14,27,51,.10);
+  --shadow-lg:0 24px 60px rgba(14,27,51,.18);
+  --font:"Noto Sans JP","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic",Meiryo,system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{margin:0;font-family:var(--font);color:var(--ink);background:var(--bg);line-height:1.7;-webkit-font-smoothing:antialiased;}
+a{color:inherit;text-decoration:none;}
+
+/* ===== header ===== */
+.hdr{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 60%,var(--navy-soft) 100%);color:#fff;box-shadow:var(--shadow);}
+.hdr-inner{max-width:1120px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.brand{display:flex;align-items:baseline;gap:10px;font-weight:900;font-size:20px;letter-spacing:.04em;}
+.brand-mark{display:inline-block;width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--gold),var(--gold-2));position:relative;top:6px;box-shadow:0 4px 12px rgba(201,161,74,.35);}
+.brand-sub{font-size:12px;color:#c9d3e5;font-weight:500;letter-spacing:.08em;}
+.hdr-spacer{flex:1;}
+.hdr-store{display:flex;align-items:center;gap:10px;font-size:13px;color:#e6ecf7;}
+.hdr-store b{color:#fff;font-weight:700;}
+.hdr-logout{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;transition:.15s;}
+.hdr-logout:hover{background:rgba(255,255,255,.16);}
+
+/* ===== hero ===== */
+.hero{background:linear-gradient(180deg,#fff 0%,var(--bg) 100%);border-bottom:1px solid var(--line);}
+.hero-inner{max-width:1120px;margin:0 auto;padding:28px 20px 20px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;}
+.hero h1{font-size:26px;font-weight:900;margin:0 0 6px;letter-spacing:.02em;}
+.hero p{margin:0;color:var(--muted);font-size:14px;}
+.hero-badge{display:inline-block;background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#3a2a05;font-size:11px;font-weight:900;padding:4px 10px;border-radius:20px;margin-right:8px;letter-spacing:.08em;}
+.hero-kpis{margin-left:auto;display:flex;gap:14px;flex-wrap:wrap;}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 16px;min-width:120px;text-align:center;box-shadow:0 4px 14px rgba(14,27,51,.04);}
+.kpi-l{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.05em;}
+.kpi-v{font-size:22px;font-weight:900;color:var(--navy);}
+.kpi-v small{font-size:12px;color:var(--muted);font-weight:700;margin-left:2px;}
+
+/* ===== tabs ===== */
+.tabs{max-width:1120px;margin:20px auto 0;padding:0 20px;}
+.tab-list{display:flex;gap:4px;flex-wrap:wrap;border-bottom:2px solid var(--line);}
+.tab-btn{background:none;border:none;font-family:inherit;font-size:14px;font-weight:800;color:var(--muted);cursor:pointer;padding:12px 18px;border-bottom:3px solid transparent;margin-bottom:-2px;transition:.15s;display:flex;align-items:center;gap:8px;}
+.tab-btn:hover{color:var(--navy);}
+.tab-btn.is-active{color:var(--navy);border-bottom-color:var(--gold);}
+.tab-btn .badge{background:var(--red);color:#fff;font-size:10px;font-weight:900;padding:1px 7px;border-radius:20px;}
+
+/* ===== main ===== */
+main{max-width:1120px;margin:0 auto;padding:24px 20px 60px;}
+.panel{display:none;}
+.panel.is-active{display:block;}
+
+/* ===== section headings ===== */
+.sec-h{display:flex;align-items:center;gap:10px;margin:0 0 14px;font-size:15px;font-weight:900;color:var(--navy);}
+.sec-h::before{content:"";width:4px;height:16px;background:linear-gradient(180deg,var(--gold),var(--gold-2));border-radius:2px;}
+
+/* ===== search / filter ===== */
+.toolbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.toolbar input[type="search"]{flex:1;min-width:220px;height:42px;border:1px solid var(--line);border-radius:10px;padding:0 14px;font-size:14px;font-family:inherit;background:#fff;}
+.toolbar input[type="search"]:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,161,74,.18);}
+.chip-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.chip{background:#fff;border:1px solid var(--line);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;color:var(--muted);font-family:inherit;transition:.15s;}
+.chip:hover{border-color:var(--navy-soft);color:var(--navy);}
+.chip.is-active{background:var(--navy);border-color:var(--navy);color:#fff;}
+
+/* ===== notice ===== */
+.n-list{display:flex;flex-direction:column;gap:12px;}
+.n-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px 22px;box-shadow:var(--shadow);display:flex;gap:16px;align-items:flex-start;}
+.n-lv{flex-shrink:0;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:20px;color:#fff;}
+.n-lv.important{background:var(--red);}
+.n-lv.notice{background:var(--navy);}
+.n-lv.info{background:var(--green);}
+.n-lv.campaign{background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#3a2a05;}
+.n-body{flex:1;min-width:0;}
+.n-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:4px;}
+.n-tag{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:1px 8px;font-weight:700;font-size:11px;color:var(--navy);}
+.n-tag.pin{background:var(--red);color:#fff;border-color:var(--red);}
+.n-t{font-size:15px;font-weight:900;color:var(--navy);margin:0 0 6px;}
+.n-b{margin:0;font-size:13px;color:#3a4553;line-height:1.75;white-space:pre-line;}
+
+/* ===== course grid ===== */
+.c-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;}
+.c-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column;transition:.18s;}
+.c-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);}
+.c-thumb{position:relative;aspect-ratio:16/9;background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 60%,var(--navy-soft) 100%);display:grid;place-items:center;color:#fff;overflow:hidden;}
+.c-thumb::after{content:"▶";font-size:44px;color:#fff;text-shadow:0 4px 20px rgba(0,0,0,.4);opacity:.85;}
+.c-thumb .c-num{position:absolute;top:10px;left:12px;font-size:11px;font-weight:900;letter-spacing:.1em;color:var(--gold-2);}
+.c-thumb .c-time{position:absolute;bottom:10px;right:12px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;}
+.c-body{padding:16px 18px 18px;flex:1;display:flex;flex-direction:column;gap:8px;}
+.c-title{font-size:15px;font-weight:900;color:var(--navy);margin:0;line-height:1.5;}
+.c-desc{margin:0;font-size:12px;color:var(--muted);line-height:1.7;flex:1;}
+.c-meta{display:flex;gap:6px;flex-wrap:wrap;font-size:11px;}
+.c-cat{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:1px 8px;font-weight:700;color:var(--navy);}
+.c-progress{margin-top:6px;}
+.c-progress-bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;}
+.c-progress-bar span{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-2));border-radius:3px;}
+.c-progress-l{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-weight:700;margin-top:4px;}
+
+/* ===== scripts ===== */
+.s-list{display:flex;flex-direction:column;gap:12px;}
+.s-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow);}
+.s-head{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.s-cat{background:var(--navy);color:#fff;font-size:10px;font-weight:900;padding:2px 8px;border-radius:6px;letter-spacing:.05em;}
+.s-t{flex:1;font-size:14px;font-weight:900;color:var(--navy);margin:0;}
+.s-copy{background:none;border:1px solid var(--gold);color:#8f6f26;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;transition:.15s;white-space:nowrap;}
+.s-copy:hover{background:var(--gold);color:#fff;}
+.s-body{font-size:13px;color:#3a4553;line-height:1.8;background:#fafbfd;border-left:3px solid var(--gold-2);border-radius:6px;padding:12px 14px;margin:0;white-space:pre-line;}
+
+/* ===== docs ===== */
+.d-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+.d-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow);display:flex;gap:14px;align-items:flex-start;transition:.15s;}
+.d-card:hover{border-color:var(--gold);transform:translateY(-1px);}
+.d-ico{flex-shrink:0;width:44px;height:44px;border-radius:10px;display:grid;place-items:center;font-size:20px;font-weight:900;color:#fff;}
+.d-ico.pdf{background:#c8384a;}
+.d-ico.doc{background:#2c6bd6;}
+.d-ico.xls{background:#1f7a3d;}
+.d-ico.zip{background:#6b5a2e;}
+.d-ico.mp4{background:#5b2f8a;}
+.d-info{flex:1;min-width:0;}
+.d-t{font-size:14px;font-weight:900;color:var(--navy);margin:0 0 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.d-m{font-size:11px;color:var(--muted);}
+.d-dl{background:var(--navy);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;margin-top:6px;transition:.15s;}
+.d-dl:hover{background:var(--navy-2);}
+
+/* ===== empty ===== */
+.empty{text-align:center;padding:60px 20px;color:var(--muted);font-size:13px;}
+
+/* ===== video modal ===== */
+.modal{position:fixed;inset:0;background:rgba(14,27,51,.7);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px;}
+.modal.is-open{display:flex;}
+.modal-inner{background:#fff;border-radius:16px;max-width:820px;width:100%;max-height:90vh;overflow:auto;box-shadow:var(--shadow-lg);}
+.modal-head{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;}
+.modal-t{flex:1;font-size:16px;font-weight:900;color:var(--navy);margin:0;}
+.modal-x{background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer;font-family:inherit;padding:0 6px;line-height:1;}
+.modal-x:hover{color:var(--red);}
+.modal-video{aspect-ratio:16/9;background:linear-gradient(135deg,var(--navy),var(--navy-soft));display:grid;place-items:center;color:#fff;font-size:14px;letter-spacing:.05em;}
+.modal-video::before{content:"▶";font-size:60px;margin-right:10px;color:var(--gold-2);}
+.modal-body{padding:20px 22px;font-size:13px;color:#3a4553;line-height:1.8;}
+.modal-body h4{font-size:13px;font-weight:900;color:var(--navy);margin:16px 0 6px;}
+.modal-body ul{margin:0 0 8px;padding-left:22px;}
+.modal-actions{padding:14px 22px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;}
+.btn{border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;transition:.15s;}
+.btn-primary{background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#3a2a05;}
+.btn-primary:hover{filter:brightness(1.05);}
+.btn-ghost{background:#fff;color:var(--muted);border:1px solid var(--line);}
+.btn-ghost:hover{color:var(--navy);border-color:var(--navy);}
+
+/* ===== toast ===== */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:700;opacity:0;pointer-events:none;transition:.25s;z-index:1100;box-shadow:var(--shadow-lg);}
+.toast.is-show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+@media (max-width:640px){
+  .hero-inner{padding:20px 16px 14px;}
+  .hero h1{font-size:20px;}
+  .hero-kpis{margin-left:0;width:100%;}
+  .kpi{flex:1;min-width:0;padding:8px 10px;}
+  .kpi-v{font-size:18px;}
+  .tab-btn{padding:10px 12px;font-size:13px;}
+  main{padding:18px 16px 40px;}
+}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>CARMEL</span>
+      <span class="brand-sub">加盟店ポータル</span>
+    </div>
+    <div class="hdr-spacer"></div>
+    <div class="hdr-store">
+      <span>🏪 <b id="storeName">いわき本店</b> さん</span>
+      <button class="hdr-logout" type="button" onclick="alert('デモ画面のため、ログアウトは無効です。');">ログアウト</button>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <div><span class="hero-badge">MERCHANT</span><span style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.05em;">2026-08-07 (金)</span></div>
+      <h1>こんにちは、いわき本店さん</h1>
+      <p>本部からのお知らせ・研修動画・スクリプト・マニュアルをここから閲覧できます。</p>
+    </div>
+    <div class="hero-kpis">
+      <div class="kpi"><div class="kpi-l">未読お知らせ</div><div class="kpi-v" id="kpiNotice">3<small>件</small></div></div>
+      <div class="kpi"><div class="kpi-l">研修 進捗</div><div class="kpi-v" id="kpiCourse">42<small>%</small></div></div>
+      <div class="kpi"><div class="kpi-l">今月DL資料</div><div class="kpi-v" id="kpiDoc">7<small>件</small></div></div>
+    </div>
+  </div>
+</section>
+
+<nav class="tabs" aria-label="コンテンツ切替">
+  <div class="tab-list" role="tablist">
+    <button class="tab-btn is-active" data-tab="notice" role="tab" aria-selected="true">📢 お知らせ<span class="badge" id="badgeNotice">3</span></button>
+    <button class="tab-btn" data-tab="course" role="tab" aria-selected="false">🎬 研修動画</button>
+    <button class="tab-btn" data-tab="script" role="tab" aria-selected="false">💬 スクリプト・FAQ</button>
+    <button class="tab-btn" data-tab="doc" role="tab" aria-selected="false">📁 マニュアル・資料</button>
+  </div>
+</nav>
+
+<main>
+
+  <!-- ========= 1. お知らせ ========= -->
+  <section class="panel is-active" id="panel-notice" role="tabpanel">
+    <h2 class="sec-h">お知らせ・掲示板</h2>
+    <div class="toolbar">
+      <input type="search" id="qNotice" placeholder="お知らせを検索（例：キャンペーン）" />
+    </div>
+    <div class="chip-row" data-chip-group="notice">
+      <button class="chip is-active" data-cat="">すべて</button>
+      <button class="chip" data-cat="重要">重要</button>
+      <button class="chip" data-cat="通達">通達</button>
+      <button class="chip" data-cat="お知らせ">お知らせ</button>
+      <button class="chip" data-cat="キャンペーン">キャンペーン</button>
+    </div>
+    <div class="n-list" id="listNotice"></div>
+  </section>
+
+  <!-- ========= 2. 研修動画 ========= -->
+  <section class="panel" id="panel-course" role="tabpanel">
+    <h2 class="sec-h">研修動画・コース</h2>
+    <div class="toolbar">
+      <input type="search" id="qCourse" placeholder="コースを検索（例：査定 / 電話対応）" />
+    </div>
+    <div class="chip-row" data-chip-group="course">
+      <button class="chip is-active" data-cat="">すべて</button>
+      <button class="chip" data-cat="基礎">基礎</button>
+      <button class="chip" data-cat="査定">査定</button>
+      <button class="chip" data-cat="接客">接客</button>
+      <button class="chip" data-cat="手続き">手続き</button>
+      <button class="chip" data-cat="コンプライアンス">コンプライアンス</button>
+    </div>
+    <div class="c-grid" id="listCourse"></div>
+  </section>
+
+  <!-- ========= 3. スクリプト・FAQ ========= -->
+  <section class="panel" id="panel-script" role="tabpanel">
+    <h2 class="sec-h">トークスクリプト・想定問答（FAQ）</h2>
+    <div class="toolbar">
+      <input type="search" id="qScript" placeholder="スクリプトを検索（例：ローン残債）" />
+    </div>
+    <div class="chip-row" data-chip-group="script">
+      <button class="chip is-active" data-cat="">すべて</button>
+      <button class="chip" data-cat="電話">電話応対</button>
+      <button class="chip" data-cat="来店">来店応対</button>
+      <button class="chip" data-cat="査定">査定</button>
+      <button class="chip" data-cat="クロージング">クロージング</button>
+      <button class="chip" data-cat="FAQ">FAQ</button>
+    </div>
+    <div class="s-list" id="listScript"></div>
+  </section>
+
+  <!-- ========= 4. マニュアル・資料 ========= -->
+  <section class="panel" id="panel-doc" role="tabpanel">
+    <h2 class="sec-h">マニュアル・PDF 等の資料</h2>
+    <div class="toolbar">
+      <input type="search" id="qDoc" placeholder="ファイル名で検索" />
+    </div>
+    <div class="chip-row" data-chip-group="doc">
+      <button class="chip is-active" data-cat="">すべて</button>
+      <button class="chip" data-cat="業務">業務マニュアル</button>
+      <button class="chip" data-cat="契約">契約書・規約</button>
+      <button class="chip" data-cat="販促">販促物</button>
+      <button class="chip" data-cat="教材">研修教材</button>
+    </div>
+    <div class="d-grid" id="listDoc"></div>
+  </section>
+
+</main>
+
+<!-- 動画モーダル -->
+<div class="modal" id="videoModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-inner">
+    <div class="modal-head">
+      <h3 class="modal-t" id="modalTitle">タイトル</h3>
+      <button class="modal-x" type="button" data-close aria-label="閉じる">×</button>
+    </div>
+    <div class="modal-video">サンプル動画プレビュー</div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" type="button" data-close>閉じる</button>
+      <button class="btn btn-primary" type="button" id="btnMarkDone">受講済みにする</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite">コピーしました</div>
+
+<script>
+/* ============================================================
+   カーメル 加盟店ポータル - ダミーデータ / 表示ロジック
+   ※ 本部側のデータ連携は未実装。全て静的サンプルです。
+   ============================================================ */
+
+/* ---- ダミーデータ ---- */
+var NOTICES = [
+  {lv:'important', cat:'重要', pin:true,  date:'2026-08-06', title:'【重要】8月の廃車手続き変更点について',
+   body:'8月1日以降、永久抹消登録の書類提出フローが変わりました。\n・自動車税申告書の記載欄が1項目増えています（環境性能割）。\n・お客様からナンバープレートを預かる際、破損チェック表への記名が必須になります。\n最新の様式は「マニュアル・資料」タブ内の「廃車手続きチェックシート_v3.pdf」を必ずご参照ください。'},
+  {lv:'campaign', cat:'キャンペーン', date:'2026-08-05', title:'【8月】買取強化キャンペーン開始（〜8/31）',
+   body:'8月は「軽自動車＋ハイブリッド」の買取金額を最大￥10,000アップ。\n販促用チラシPDF・SNS投稿用画像は「マニュアル・資料 → 販促物」からダウンロードできます。\n実績報告は例月通り、月末までに本部フォームからお願いします。'},
+  {lv:'notice', cat:'通達', date:'2026-08-04', title:'LINE公式アカウント：応対時間の統一について',
+   body:'加盟店から寄せられたお客様問い合わせの一次対応時間を「平日 9:00〜19:00」に統一します。\n時間外は自動応答（AI受付）に切り替わります。詳細は本通達 PDF をご確認ください。'},
+  {lv:'info', cat:'お知らせ', date:'2026-08-02', title:'新研修「事故車査定のポイント」を公開しました',
+   body:'研修動画タブに新コース「事故車・修復歴車の査定 実践編（全4章／約38分）」を追加しました。\nベテラン査定士による現車チェックの動画つきです。全加盟店にご視聴をお願いします。'},
+  {lv:'notice', cat:'通達', date:'2026-07-30', title:'月次実績報告フォームのURLが変わります',
+   body:'8月分報告より、新しいフォームURLに切り替わります。ブックマークの更新をお願いします。旧フォームは9月末で受付を停止します。'},
+  {lv:'info', cat:'お知らせ', date:'2026-07-28', title:'加盟店ポータル リニューアルのお知らせ',
+   body:'加盟店の皆さまがコンテンツを閲覧しやすいよう、ポータル画面を全面リニューアルしました。\nお気づきの点・改善要望は本部 info@aisjaltd.com までお寄せください。'}
+];
+
+var COURSES = [
+  {num:'C-01', cat:'基礎',         time:'12:30', progress:100, title:'カーメル加盟店 はじめの一歩',
+   desc:'ブランドコンセプト・提供価値・基本業務フローを短時間で把握します。',
+   chapters:['ブランドと理念（3:20）','業務全体像（4:10）','1日の流れ（5:00）']},
+  {num:'C-02', cat:'査定',         time:'18:45', progress:65,  title:'基本の車両査定 - 外装チェック編',
+   desc:'外装の傷・凹み・塗装ムラの見方と、写真の撮り方を実例で解説。',
+   chapters:['チェック項目 8 点','写真撮影のコツ','査定シート記入例']},
+  {num:'C-03', cat:'査定',         time:'22:10', progress:20,  title:'内装・機関部の査定基準',
+   desc:'内装ヤレ、シート状態、機関部の異音・オイル漏れの判断基準。',
+   chapters:['内装チェック','機関部チェック','試乗判定']},
+  {num:'C-04', cat:'査定',         time:'38:00', progress:0,   title:'事故車・修復歴車の査定 実践編【NEW】',
+   desc:'修復歴の見分け方、減額目安、お客様への説明トーク。ベテラン査定士の現車チェック動画つき。',
+   chapters:['修復歴とは','見分け方 5 選','減額目安表','お客様への説明']},
+  {num:'C-05', cat:'接客',         time:'15:20', progress:80,  title:'電話一次対応のスクリプトと注意点',
+   desc:'お問い合わせから来店誘導までの標準トーク。NG フレーズも紹介。',
+   chapters:['第一声','ヒアリング','来店誘導']},
+  {num:'C-06', cat:'接客',         time:'14:00', progress:50,  title:'来店対応 - 初回のヒアリング',
+   desc:'お客様が来店された際の 15 分ヒアリング枠の使い方。',
+   chapters:['アイスブレイク','売却理由の把握','希望額の確認']},
+  {num:'C-07', cat:'手続き',       time:'20:00', progress:10,  title:'名義変更・所有権解除 実務編',
+   desc:'必要書類・受付方法・お客様向け説明のセット。',
+   chapters:['必要書類一覧','受付フロー','説明トーク']},
+  {num:'C-08', cat:'コンプライアンス', time:'10:00', progress:0, title:'古物営業法とカーメルの遵守事項',
+   desc:'古物商としての遵守事項を必ず押さえるべきポイントに絞って解説。',
+   chapters:['古物営業法の要点','本人確認','取引記録']}
+];
+
+var SCRIPTS = [
+  {cat:'電話', cat_l:'電話応対', title:'一次受付の第一声', body:
+   'お電話ありがとうございます、カーメル◯◯店の××が承ります。\n本日は車の買取・売却のご相談でしょうか？\n（お名前・お車の車種・年式を伺い、来店 or 出張査定のご希望をお聞きします）'},
+  {cat:'電話', cat_l:'電話応対', title:'折り返し連絡が必要な場合', body:
+   '恐れ入ります、担当の◯◯はただ今別のお客様対応中でして、折り返しご連絡を差し上げてもよろしいでしょうか。\n本日中の◯時までにはご連絡いたします。念のためお電話番号を復唱させていただきます。'},
+  {cat:'来店', cat_l:'来店応対', title:'ご来店時のアイスブレイク', body:
+   '本日はご来店いただきありがとうございます。カーメル◯◯店の××と申します。\nまずはお車を拝見しながら、10 分ほどお話しさせてください。\n（席へご案内し、飲み物をお出ししながらお車の使用状況をヒアリング）'},
+  {cat:'査定', cat_l:'査定', title:'査定金額を提示する時', body:
+   'お待たせしました。\nお車の状態と現在の相場を確認したところ、当店では￥◯◯◯,◯◯◯でのお引き取りが可能です。\n（減額要因があれば、写真を見せながら具体的に説明し、金額の根拠を明示する）'},
+  {cat:'クロージング', cat_l:'クロージング', title:'即決を促す一言', body:
+   '本日ご成約いただければ、この金額を保証させていただきます。\n相場は日々変動しており、来週ですと同額をお約束できない可能性があります。\n（無理な即決は禁止。お客様の意思確認を必ず取る）'},
+  {cat:'FAQ', cat_l:'FAQ', title:'Q. ローン残債があるが売れるか？', body:
+   'A. はい、可能です。買取金額でローンを精算する「ローン完済サービス」がご利用いただけます。\n残債が買取額を上回る場合は差額のご自身での精算が必要となります。\n所有権解除の書類は当店で代行手続きいたしますのでご安心ください。'},
+  {cat:'FAQ', cat_l:'FAQ', title:'Q. 事故車・不動車でも買取できるか？', body:
+   'A. できます。事故歴・修復歴車、動かないお車もお引き取り可能です。\n廃車手続きも当店で無料代行いたしますので、ご自宅・現地までの引取もお任せください。'},
+  {cat:'FAQ', cat_l:'FAQ', title:'Q. 車検切れ・自賠責切れでも大丈夫か？', body:
+   'A. はい、車検・自賠責が切れていても買取に影響はありません。\n公道を走行できないため、当店の積載車で引取に伺います（引取費用は無料）。'}
+];
+
+var DOCS = [
+  {cat:'業務',   type:'pdf', title:'加盟店業務マニュアル_v4.pdf',        size:'12.4 MB', date:'2026-07-15'},
+  {cat:'業務',   type:'pdf', title:'廃車手続きチェックシート_v3.pdf',    size:'1.2 MB',  date:'2026-08-01'},
+  {cat:'業務',   type:'xls', title:'月次実績報告テンプレート_2026.xlsx',  size:'240 KB',  date:'2026-08-04'},
+  {cat:'契約',   type:'doc', title:'買取契約書 雛形_202608.docx',         size:'88 KB',   date:'2026-07-31'},
+  {cat:'契約',   type:'pdf', title:'加盟店規約_v2.pdf',                    size:'640 KB',  date:'2026-06-20'},
+  {cat:'販促',   type:'zip', title:'8月キャンペーン販促キット.zip',        size:'48 MB',   date:'2026-08-05'},
+  {cat:'販促',   type:'pdf', title:'店頭掲示ポスター_A2.pdf',              size:'6.1 MB',  date:'2026-08-05'},
+  {cat:'販促',   type:'zip', title:'SNS投稿用 画像素材（Instagram）.zip', size:'22 MB',   date:'2026-07-28'},
+  {cat:'教材',   type:'pdf', title:'査定基準表_2026年版.pdf',              size:'3.8 MB',  date:'2026-04-10'},
+  {cat:'教材',   type:'mp4', title:'新人研修ダイジェスト.mp4',              size:'180 MB',  date:'2026-05-02'},
+  {cat:'教材',   type:'pdf', title:'ケーススタディ集（10 事例）.pdf',       size:'5.6 MB',  date:'2026-06-14'}
+];
+
+/* ---- ヘルパ ---- */
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function $(sel,root){return (root||document).querySelector(sel);}
+function $$(sel,root){return Array.prototype.slice.call((root||document).querySelectorAll(sel));}
+function toast(msg){var t=$('#toast');t.textContent=msg;t.classList.add('is-show');setTimeout(function(){t.classList.remove('is-show');},1800);}
+
+/* ---- タブ切替 ---- */
+$$('.tab-btn').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var key=btn.getAttribute('data-tab');
+    $$('.tab-btn').forEach(function(b){var on=b===btn;b.classList.toggle('is-active',on);b.setAttribute('aria-selected',on?'true':'false');});
+    $$('.panel').forEach(function(p){p.classList.toggle('is-active',p.id==='panel-'+key);});
+  });
+});
+
+/* ---- チップフィルタ状態（タブごと） ---- */
+var activeCat={notice:'',course:'',script:'',doc:''};
+var activeQ  ={notice:'',course:'',script:'',doc:''};
+
+$$('.chip-row').forEach(function(row){
+  var grp=row.getAttribute('data-chip-group');
+  row.addEventListener('click',function(e){
+    var b=e.target.closest('button[data-cat]');if(!b)return;
+    activeCat[grp]=b.getAttribute('data-cat');
+    $$('button',row).forEach(function(x){x.classList.toggle('is-active',x===b);});
+    renderAll();
+  });
+});
+[['qNotice','notice'],['qCourse','course'],['qScript','script'],['qDoc','doc']].forEach(function(p){
+  var el=$('#'+p[0]);if(!el)return;
+  el.addEventListener('input',function(){activeQ[p[1]]=el.value.trim().toLowerCase();renderAll();});
+});
+
+/* ---- 検索マッチ ---- */
+function matchQ(q,fields){
+  if(!q)return true;
+  return fields.some(function(f){return String(f||'').toLowerCase().indexOf(q)>=0;});
+}
+
+/* ---- お知らせ ---- */
+function renderNotice(){
+  var q=activeQ.notice, cat=activeCat.notice;
+  var items=NOTICES.filter(function(n){
+    if(cat && n.cat!==cat)return false;
+    return matchQ(q,[n.title,n.body,n.cat]);
+  });
+  var el=$('#listNotice');
+  if(!items.length){el.innerHTML='<div class="empty">該当するお知らせがありません。</div>';return;}
+  el.innerHTML=items.map(function(n){
+    return '<article class="n-card">'+
+      '<div class="n-lv '+n.lv+'">'+(n.lv==='important'?'!':(n.lv==='campaign'?'★':(n.lv==='info'?'i':'📢')))+'</div>'+
+      '<div class="n-body">'+
+        '<div class="n-meta">'+
+          (n.pin?'<span class="n-tag pin">PIN</span>':'')+
+          '<span class="n-tag">'+esc(n.cat)+'</span>'+
+          '<span>'+esc(n.date)+'</span>'+
+        '</div>'+
+        '<h3 class="n-t">'+esc(n.title)+'</h3>'+
+        '<p class="n-b">'+esc(n.body)+'</p>'+
+      '</div>'+
+    '</article>';
+  }).join('');
+}
+
+/* ---- 研修動画 ---- */
+function renderCourse(){
+  var q=activeQ.course, cat=activeCat.course;
+  var items=COURSES.filter(function(c){
+    if(cat && c.cat!==cat)return false;
+    return matchQ(q,[c.title,c.desc,c.cat]);
+  });
+  var el=$('#listCourse');
+  if(!items.length){el.innerHTML='<div class="empty">該当するコースがありません。</div>';return;}
+  el.innerHTML=items.map(function(c,idx){
+    return '<article class="c-card" data-course-idx="'+COURSES.indexOf(c)+'">'+
+      '<div class="c-thumb">'+
+        '<span class="c-num">'+esc(c.num)+'</span>'+
+        '<span class="c-time">'+esc(c.time)+'</span>'+
+      '</div>'+
+      '<div class="c-body">'+
+        '<h3 class="c-title">'+esc(c.title)+'</h3>'+
+        '<p class="c-desc">'+esc(c.desc)+'</p>'+
+        '<div class="c-meta"><span class="c-cat">'+esc(c.cat)+'</span></div>'+
+        '<div class="c-progress">'+
+          '<div class="c-progress-bar"><span style="width:'+c.progress+'%;"></span></div>'+
+          '<div class="c-progress-l"><span>進捗</span><b>'+c.progress+'%</b></div>'+
+        '</div>'+
+      '</div>'+
+    '</article>';
+  }).join('');
+  $$('.c-card',el).forEach(function(card){
+    card.addEventListener('click',function(){openCourse(Number(card.getAttribute('data-course-idx')));});
+  });
+}
+
+/* ---- スクリプト ---- */
+function renderScript(){
+  var q=activeQ.script, cat=activeCat.script;
+  var items=SCRIPTS.filter(function(s){
+    if(cat && s.cat!==cat)return false;
+    return matchQ(q,[s.title,s.body,s.cat_l]);
+  });
+  var el=$('#listScript');
+  if(!items.length){el.innerHTML='<div class="empty">該当するスクリプトがありません。</div>';return;}
+  el.innerHTML=items.map(function(s,i){
+    return '<article class="s-card">'+
+      '<div class="s-head">'+
+        '<span class="s-cat">'+esc(s.cat_l)+'</span>'+
+        '<h3 class="s-t">'+esc(s.title)+'</h3>'+
+        '<button class="s-copy" type="button" data-copy="'+i+'">📋 コピー</button>'+
+      '</div>'+
+      '<p class="s-body">'+esc(s.body)+'</p>'+
+    '</article>';
+  }).join('');
+  $$('.s-copy',el).forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var idx=Number(btn.getAttribute('data-copy'));
+      var filtered=SCRIPTS.filter(function(s){if(cat && s.cat!==cat)return false;return matchQ(q,[s.title,s.body,s.cat_l]);});
+      var text=filtered[idx].body;
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(function(){toast('スクリプトをコピーしました');},function(){toast('コピーに失敗しました');});
+      }else{
+        var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();
+        try{document.execCommand('copy');toast('スクリプトをコピーしました');}catch(e){toast('コピーに失敗しました');}
+        document.body.removeChild(ta);
+      }
+    });
+  });
+}
+
+/* ---- 資料 ---- */
+function renderDoc(){
+  var q=activeQ.doc, cat=activeCat.doc;
+  var items=DOCS.filter(function(d){
+    if(cat && d.cat!==cat)return false;
+    return matchQ(q,[d.title,d.cat]);
+  });
+  var el=$('#listDoc');
+  if(!items.length){el.innerHTML='<div class="empty">該当する資料がありません。</div>';return;}
+  el.innerHTML=items.map(function(d){
+    var t=d.type||'pdf';
+    return '<article class="d-card">'+
+      '<div class="d-ico '+t+'">'+t.toUpperCase()+'</div>'+
+      '<div class="d-info">'+
+        '<h3 class="d-t" title="'+esc(d.title)+'">'+esc(d.title)+'</h3>'+
+        '<div class="d-m">'+esc(d.size)+' ／ 更新 '+esc(d.date)+'</div>'+
+        '<button class="d-dl" type="button" data-doc="'+esc(d.title)+'">⬇ ダウンロード</button>'+
+      '</div>'+
+    '</article>';
+  }).join('');
+  $$('.d-dl',el).forEach(function(btn){
+    btn.addEventListener('click',function(){toast('デモ画面：ダウンロードは無効です（'+btn.getAttribute('data-doc')+'）');});
+  });
+}
+
+/* ---- 全描画 ---- */
+function renderAll(){renderNotice();renderCourse();renderScript();renderDoc();}
+
+/* ---- 動画モーダル ---- */
+var modalIdx=-1;
+function openCourse(idx){
+  modalIdx=idx;
+  var c=COURSES[idx];if(!c)return;
+  $('#modalTitle').textContent=c.title;
+  var chap=(c.chapters||[]).map(function(x){return '<li>'+esc(x)+'</li>';}).join('');
+  $('#modalBody').innerHTML=
+    '<p>'+esc(c.desc)+'</p>'+
+    '<h4>章立て</h4><ul>'+chap+'</ul>'+
+    '<h4>視聴時間 / 進捗</h4><p>'+esc(c.time)+' ／ 現在の進捗 <b>'+c.progress+'%</b></p>';
+  $('#videoModal').classList.add('is-open');
+}
+function closeModal(){$('#videoModal').classList.remove('is-open');}
+$$('[data-close]').forEach(function(b){b.addEventListener('click',closeModal);});
+$('#videoModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal();});
+$('#btnMarkDone').addEventListener('click',function(){
+  if(modalIdx<0)return;
+  COURSES[modalIdx].progress=100;
+  closeModal();renderCourse();toast('受講済みに更新しました');
+});
+
+/* ---- 初期描画 ---- */
+renderAll();
+</script>
+</body>
+</html>
