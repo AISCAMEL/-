@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>カーメル 本部管理｜合同会社アイズ</title>
+<meta name="robots" content="noindex,nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" />
+<style>
+:root{
+  --navy:#0e1b33; --navy-2:#16294a; --navy-soft:#1f3a66;
+  --gold:#c9a14a; --gold-2:#e0bd6a;
+  --ink:#1a2233; --muted:#5a6675; --line:#e4e8ef;
+  --bg:#f6f8fc; --white:#ffffff;
+  --green:#1f9d6b; --red:#d44b4b; --amber:#e58a1f;
+  --radius:14px;
+  --shadow:0 10px 30px rgba(14,27,51,.10);
+  --shadow-lg:0 24px 60px rgba(14,27,51,.18);
+  --font:"Noto Sans JP","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic",Meiryo,system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:var(--font);color:var(--ink);background:var(--bg);line-height:1.7;-webkit-font-smoothing:antialiased;}
+a{color:inherit;text-decoration:none;}
+
+.hdr{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 60%,var(--navy-soft) 100%);color:#fff;box-shadow:var(--shadow);}
+.hdr-inner{max-width:1200px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.brand{display:flex;align-items:baseline;gap:10px;font-weight:900;font-size:20px;letter-spacing:.04em;}
+.brand-mark{display:inline-block;width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--gold),var(--gold-2));position:relative;top:6px;box-shadow:0 4px 12px rgba(201,161,74,.35);}
+.brand-sub{font-size:12px;color:#c9d3e5;font-weight:500;letter-spacing:.08em;}
+.badge-hq{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;font-size:11px;font-weight:800;padding:3px 10px;border-radius:20px;letter-spacing:.08em;margin-left:6px;}
+.hdr-spacer{flex:1;}
+.hdr-actions{display:flex;gap:8px;align-items:center;}
+.btn-preview{background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#3a2a05;border:none;border-radius:20px;padding:8px 16px;font-size:12px;font-weight:900;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
+.btn-preview:hover{filter:brightness(1.05);}
+.btn-outline{background:rgba(255,255,255,.05);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:8px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;}
+.btn-outline:hover{background:rgba(255,255,255,.12);}
+
+.top{max-width:1200px;margin:22px auto 0;padding:0 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.top h1{font-size:22px;font-weight:900;margin:0;}
+.updated{font-size:12px;color:var(--muted);}
+.updated b{color:var(--navy);font-weight:900;}
+.top-kpis{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap;}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 14px;text-align:center;min-width:96px;box-shadow:0 4px 14px rgba(14,27,51,.04);}
+.kpi-l{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.05em;}
+.kpi-v{font-size:20px;font-weight:900;color:var(--navy);}
+
+.tabs{max-width:1200px;margin:16px auto 0;padding:0 20px;}
+.tab-list{display:flex;gap:4px;flex-wrap:wrap;border-bottom:2px solid var(--line);}
+.tab-btn{background:none;border:none;font-family:inherit;font-size:14px;font-weight:800;color:var(--muted);cursor:pointer;padding:12px 18px;border-bottom:3px solid transparent;margin-bottom:-2px;transition:.15s;display:flex;align-items:center;gap:8px;}
+.tab-btn:hover{color:var(--navy);}
+.tab-btn.is-active{color:var(--navy);border-bottom-color:var(--gold);}
+.tab-btn .cnt{background:var(--navy);color:#fff;font-size:10px;font-weight:900;padding:1px 8px;border-radius:20px;}
+
+main{max-width:1200px;margin:0 auto;padding:20px 20px 60px;}
+.panel{display:none;}
+.panel.is-active{display:block;}
+
+/* toolbar per tab */
+.mgr-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.mgr-bar input[type="search"]{flex:1;min-width:220px;height:40px;border:1px solid var(--line);border-radius:10px;padding:0 14px;font-size:14px;font-family:inherit;background:#fff;}
+.mgr-bar input[type="search"]:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,161,74,.18);}
+.btn-add{background:var(--navy);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;transition:.15s;display:inline-flex;align-items:center;gap:6px;}
+.btn-add:hover{background:var(--navy-2);}
+.btn-add::before{content:"＋";font-size:14px;font-weight:900;}
+
+/* table (list) */
+.tbl{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;font-size:13px;}
+.tbl thead th{background:#f0f3f9;color:var(--navy);font-weight:800;text-align:left;padding:10px 12px;font-size:12px;border-bottom:1px solid var(--line);}
+.tbl tbody td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+.tbl tbody tr:last-child td{border-bottom:none;}
+.tbl tbody tr:hover{background:#fafbfd;}
+.tbl-title{font-weight:800;color:var(--navy);}
+.tbl-meta{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4;}
+.tbl-actions{white-space:nowrap;text-align:right;}
+.act-btn{border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;margin-left:4px;transition:.15s;}
+.act-btn:hover{border-color:var(--navy);}
+.act-btn.del{color:var(--red);border-color:#f0d5d5;}
+.act-btn.del:hover{background:var(--red);color:#fff;border-color:var(--red);}
+
+/* tag chips inside table */
+.chip-mini{display:inline-block;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-size:10px;font-weight:800;color:var(--navy);margin-right:4px;}
+.chip-mini.pin{background:var(--red);color:#fff;border-color:var(--red);}
+.chip-lv{display:inline-block;font-size:10px;font-weight:900;padding:1px 8px;border-radius:6px;color:#fff;margin-right:4px;}
+.chip-lv.important{background:var(--red);}
+.chip-lv.notice{background:var(--navy);}
+.chip-lv.info{background:var(--green);}
+.chip-lv.campaign{background:var(--amber);}
+
+.type-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:900;color:#fff;}
+.type-badge.pdf{background:#c8384a;}
+.type-badge.doc{background:#2c6bd6;}
+.type-badge.xls{background:#1f7a3d;}
+.type-badge.zip{background:#6b5a2e;}
+.type-badge.mp4{background:#5b2f8a;}
+
+.progress-mini{display:inline-block;width:80px;height:6px;background:var(--line);border-radius:3px;overflow:hidden;vertical-align:middle;margin-right:6px;}
+.progress-mini span{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-2));}
+
+/* modal (edit) */
+.modal{position:fixed;inset:0;background:rgba(14,27,51,.6);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px;}
+.modal.is-open{display:flex;}
+.modal-inner{background:#fff;border-radius:16px;max-width:720px;width:100%;max-height:92vh;overflow:auto;box-shadow:var(--shadow-lg);}
+.modal-head{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;}
+.modal-t{flex:1;font-size:16px;font-weight:900;color:var(--navy);margin:0;}
+.modal-x{background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer;padding:0 6px;line-height:1;font-family:inherit;}
+.modal-x:hover{color:var(--red);}
+.modal-body{padding:20px 22px;}
+.modal-actions{padding:14px 22px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;background:#fafbfd;}
+
+/* form */
+.fld{margin-bottom:14px;}
+.fld label{display:block;font-size:12px;font-weight:800;color:var(--navy);margin-bottom:6px;}
+.fld input[type="text"],.fld input[type="url"],.fld input[type="date"],.fld select,.fld textarea{
+  width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink);
+}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,161,74,.18);}
+.fld textarea{min-height:120px;resize:vertical;line-height:1.7;}
+.fld-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.fld-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.fld-check{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--navy);cursor:pointer;user-select:none;}
+.fld-check input[type="checkbox"]{width:16px;height:16px;accent-color:var(--gold);}
+.help{font-size:11px;color:var(--muted);margin-top:4px;}
+
+.btn{border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;transition:.15s;}
+.btn-primary{background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#3a2a05;}
+.btn-primary:hover{filter:brightness(1.05);}
+.btn-ghost{background:#fff;color:var(--muted);border:1px solid var(--line);}
+.btn-ghost:hover{color:var(--navy);border-color:var(--navy);}
+.btn-danger{background:#fff;color:var(--red);border:1px solid #f0d5d5;}
+.btn-danger:hover{background:var(--red);color:#fff;border-color:var(--red);}
+
+/* toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:700;opacity:0;pointer-events:none;transition:.25s;z-index:1100;box-shadow:var(--shadow-lg);}
+.toast.is-show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* empty */
+.empty{background:#fff;border:1px dashed var(--line);border-radius:12px;padding:40px;text-align:center;color:var(--muted);font-size:13px;}
+
+@media (max-width:720px){
+  .top{padding:0 16px;}
+  .top-kpis{margin-left:0;width:100%;}
+  .kpi{flex:1;min-width:0;padding:6px 8px;}
+  .kpi-v{font-size:16px;}
+  main{padding:16px 12px 40px;}
+  .tab-btn{padding:10px 12px;font-size:13px;}
+  .tbl thead{display:none;}
+  .tbl tbody tr{display:block;padding:12px;border-bottom:1px solid var(--line);}
+  .tbl tbody td{display:block;padding:4px 0;border:none;}
+  .tbl tbody td.tbl-actions{text-align:left;padding-top:8px;}
+  .fld-row,.fld-row-3{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span>CARMEL</span>
+      <span class="brand-sub">本部管理</span>
+      <span class="badge-hq">HQ</span>
+    </div>
+    <div class="hdr-spacer"></div>
+    <div class="hdr-actions">
+      <button class="btn-outline" type="button" id="btnReset">既定に戻す</button>
+      <a class="btn-preview" href="carmel-partner.html" target="_blank" rel="noopener">加盟店ページを開く →</a>
+    </div>
+  </div>
+</header>
+
+<section class="top">
+  <h1>コンテンツ管理</h1>
+  <span class="updated">最終更新: <b id="updatedAt">-</b></span>
+  <div class="top-kpis">
+    <div class="kpi"><div class="kpi-l">お知らせ</div><div class="kpi-v" id="kNotice">0</div></div>
+    <div class="kpi"><div class="kpi-l">研修動画</div><div class="kpi-v" id="kCourse">0</div></div>
+    <div class="kpi"><div class="kpi-l">スクリプト</div><div class="kpi-v" id="kScript">0</div></div>
+    <div class="kpi"><div class="kpi-l">資料</div><div class="kpi-v" id="kDoc">0</div></div>
+  </div>
+</section>
+
+<nav class="tabs" aria-label="コンテンツ切替">
+  <div class="tab-list" role="tablist">
+    <button class="tab-btn is-active" data-tab="notice" role="tab" aria-selected="true">📢 お知らせ<span class="cnt" id="cNotice">0</span></button>
+    <button class="tab-btn" data-tab="course" role="tab" aria-selected="false">🎬 研修動画<span class="cnt" id="cCourse">0</span></button>
+    <button class="tab-btn" data-tab="script" role="tab" aria-selected="false">💬 スクリプト・FAQ<span class="cnt" id="cScript">0</span></button>
+    <button class="tab-btn" data-tab="doc" role="tab" aria-selected="false">📁 資料<span class="cnt" id="cDoc">0</span></button>
+  </div>
+</nav>
+
+<main>
+
+  <!-- ===== お知らせ ===== -->
+  <section class="panel is-active" id="panel-notice" role="tabpanel">
+    <div class="mgr-bar">
+      <input type="search" id="qNotice" placeholder="タイトル・本文で検索" />
+      <button class="btn-add" type="button" data-add="notice">お知らせを追加</button>
+    </div>
+    <div id="wrapNotice"></div>
+  </section>
+
+  <!-- ===== 研修動画 ===== -->
+  <section class="panel" id="panel-course" role="tabpanel">
+    <div class="mgr-bar">
+      <input type="search" id="qCourse" placeholder="コース名・カテゴリで検索" />
+      <button class="btn-add" type="button" data-add="course">コースを追加</button>
+    </div>
+    <div id="wrapCourse"></div>
+  </section>
+
+  <!-- ===== スクリプト ===== -->
+  <section class="panel" id="panel-script" role="tabpanel">
+    <div class="mgr-bar">
+      <input type="search" id="qScript" placeholder="タイトル・本文で検索" />
+      <button class="btn-add" type="button" data-add="script">スクリプトを追加</button>
+    </div>
+    <div id="wrapScript"></div>
+  </section>
+
+  <!-- ===== 資料 ===== -->
+  <section class="panel" id="panel-doc" role="tabpanel">
+    <div class="mgr-bar">
+      <input type="search" id="qDoc" placeholder="ファイル名で検索" />
+      <button class="btn-add" type="button" data-add="doc">資料を追加</button>
+    </div>
+    <div id="wrapDoc"></div>
+  </section>
+
+</main>
+
+<!-- ===== 編集モーダル ===== -->
+<div class="modal" id="editModal" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+  <div class="modal-inner">
+    <div class="modal-head">
+      <h3 class="modal-t" id="editTitle">編集</h3>
+      <button class="modal-x" type="button" data-close aria-label="閉じる">×</button>
+    </div>
+    <form class="modal-body" id="editForm" onsubmit="return false;"></form>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" type="button" data-close>キャンセル</button>
+      <button class="btn btn-primary" type="button" id="btnSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/js/carmel-data.js"></script>
+<script>
+/* ============================================================
+   カーメル本部管理 - CRUD
+   ============================================================ */
+
+/* ---- ヘルパ ---- */
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function attr(s){return esc(s).replace(/"/g,'&quot;');}
+function $(sel,root){return (root||document).querySelector(sel);}
+function $$(sel,root){return Array.prototype.slice.call((root||document).querySelectorAll(sel));}
+function toast(msg){var t=$('#toast');t.textContent=msg;t.classList.add('is-show');setTimeout(function(){t.classList.remove('is-show');},1800);}
+
+/* ---- state ---- */
+var STATE = CarmelData.load();
+var activeQ = {notice:'',course:'',script:'',doc:''};
+
+CarmelData.onChange(function(d){ STATE=d; renderAll(); toast('別ウィンドウでの変更を反映しました'); });
+
+/* ---- タブ ---- */
+$$('.tab-btn').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var key=btn.getAttribute('data-tab');
+    $$('.tab-btn').forEach(function(b){var on=b===btn;b.classList.toggle('is-active',on);b.setAttribute('aria-selected',on?'true':'false');});
+    $$('.panel').forEach(function(p){p.classList.toggle('is-active',p.id==='panel-'+key);});
+  });
+});
+
+/* ---- 検索 ---- */
+[['qNotice','notice'],['qCourse','course'],['qScript','script'],['qDoc','doc']].forEach(function(p){
+  var el=$('#'+p[0]);if(!el)return;
+  el.addEventListener('input',function(){ activeQ[p[1]]=el.value.trim().toLowerCase(); renderAll(); });
+});
+function matchQ(q,fields){ if(!q) return true; return fields.some(function(f){return String(f||'').toLowerCase().indexOf(q)>=0;}); }
+
+/* ---- KPI / タブ件数 ---- */
+function updateKpi(){
+  $('#updatedAt').textContent = STATE.updatedAt || '-';
+  $('#kNotice').textContent = STATE.notices.length;
+  $('#kCourse').textContent = STATE.courses.length;
+  $('#kScript').textContent = STATE.scripts.length;
+  $('#kDoc').textContent = STATE.docs.length;
+  $('#cNotice').textContent = STATE.notices.length;
+  $('#cCourse').textContent = STATE.courses.length;
+  $('#cScript').textContent = STATE.scripts.length;
+  $('#cDoc').textContent = STATE.docs.length;
+}
+
+/* ---- 一覧描画 ---- */
+function renderNotice(){
+  var q=activeQ.notice;
+  var items = STATE.notices.filter(function(n){return matchQ(q,[n.title,n.body,n.cat]);});
+  var el=$('#wrapNotice');
+  if(!items.length){ el.innerHTML='<div class="empty">お知らせがありません。「お知らせを追加」から作成してください。</div>'; return; }
+  var rows = items.map(function(n){
+    return '<tr>'+
+      '<td style="width:120px;">'+
+        '<span class="chip-lv '+esc(n.lv||'info')+'">'+esc(lvLabel(n.lv))+'</span>'+
+        (n.pin?'<span class="chip-mini pin">PIN</span>':'')+
+      '</td>'+
+      '<td>'+
+        '<div class="tbl-title">'+esc(n.title)+'</div>'+
+        '<div class="tbl-meta">'+esc(n.cat)+' ／ '+esc(n.date)+'</div>'+
+      '</td>'+
+      '<td class="tbl-actions">'+
+        '<button class="act-btn" data-edit="notice" data-id="'+attr(n.id)+'">編集</button>'+
+        '<button class="act-btn del" data-del="notice" data-id="'+attr(n.id)+'">削除</button>'+
+      '</td>'+
+    '</tr>';
+  }).join('');
+  el.innerHTML = '<table class="tbl"><thead><tr><th>種別</th><th>タイトル</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+
+function renderCourse(){
+  var q=activeQ.course;
+  var items = STATE.courses.filter(function(c){return matchQ(q,[c.title,c.desc,c.cat,c.num]);});
+  var el=$('#wrapCourse');
+  if(!items.length){ el.innerHTML='<div class="empty">コースがありません。</div>'; return; }
+  var rows = items.map(function(c){
+    return '<tr>'+
+      '<td style="width:80px;font-weight:900;color:var(--navy);">'+esc(c.num)+'</td>'+
+      '<td>'+
+        '<div class="tbl-title">'+esc(c.title)+'</div>'+
+        '<div class="tbl-meta"><span class="chip-mini">'+esc(c.cat)+'</span>時間 '+esc(c.time)+' ／ 章 '+((c.chapters||[]).length)+'</div>'+
+      '</td>'+
+      '<td style="width:140px;"><span class="progress-mini"><span style="width:'+(c.progress||0)+'%;"></span></span><b>'+(c.progress||0)+'%</b></td>'+
+      '<td class="tbl-actions">'+
+        '<button class="act-btn" data-edit="course" data-id="'+attr(c.id)+'">編集</button>'+
+        '<button class="act-btn del" data-del="course" data-id="'+attr(c.id)+'">削除</button>'+
+      '</td>'+
+    '</tr>';
+  }).join('');
+  el.innerHTML = '<table class="tbl"><thead><tr><th>番号</th><th>タイトル</th><th>進捗</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+
+function renderScript(){
+  var q=activeQ.script;
+  var items = STATE.scripts.filter(function(s){return matchQ(q,[s.title,s.body,s.cat_l,s.cat]);});
+  var el=$('#wrapScript');
+  if(!items.length){ el.innerHTML='<div class="empty">スクリプトがありません。</div>'; return; }
+  var rows = items.map(function(s){
+    return '<tr>'+
+      '<td style="width:110px;"><span class="chip-mini">'+esc(s.cat_l||s.cat)+'</span></td>'+
+      '<td>'+
+        '<div class="tbl-title">'+esc(s.title)+'</div>'+
+        '<div class="tbl-meta">'+esc((s.body||'').slice(0,60))+(s.body&&s.body.length>60?'…':'')+'</div>'+
+      '</td>'+
+      '<td class="tbl-actions">'+
+        '<button class="act-btn" data-edit="script" data-id="'+attr(s.id)+'">編集</button>'+
+        '<button class="act-btn del" data-del="script" data-id="'+attr(s.id)+'">削除</button>'+
+      '</td>'+
+    '</tr>';
+  }).join('');
+  el.innerHTML = '<table class="tbl"><thead><tr><th>カテゴリ</th><th>タイトル</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+
+function renderDoc(){
+  var q=activeQ.doc;
+  var items = STATE.docs.filter(function(d){return matchQ(q,[d.title,d.cat]);});
+  var el=$('#wrapDoc');
+  if(!items.length){ el.innerHTML='<div class="empty">資料がありません。</div>'; return; }
+  var rows = items.map(function(d){
+    return '<tr>'+
+      '<td style="width:70px;"><span class="type-badge '+esc(d.type||'pdf')+'">'+esc((d.type||'pdf').toUpperCase())+'</span></td>'+
+      '<td>'+
+        '<div class="tbl-title">'+esc(d.title)+'</div>'+
+        '<div class="tbl-meta"><span class="chip-mini">'+esc(d.cat)+'</span>'+esc(d.size||'')+' ／ 更新 '+esc(d.date||'')+'</div>'+
+      '</td>'+
+      '<td class="tbl-actions">'+
+        '<button class="act-btn" data-edit="doc" data-id="'+attr(d.id)+'">編集</button>'+
+        '<button class="act-btn del" data-del="doc" data-id="'+attr(d.id)+'">削除</button>'+
+      '</td>'+
+    '</tr>';
+  }).join('');
+  el.innerHTML = '<table class="tbl"><thead><tr><th>種類</th><th>ファイル</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+
+function renderAll(){ updateKpi(); renderNotice(); renderCourse(); renderScript(); renderDoc(); }
+
+function lvLabel(lv){ return ({important:'重要',notice:'通達',info:'お知らせ',campaign:'キャンペーン'})[lv]||lv||'お知らせ'; }
+
+/* ---- クリック委譲: 追加 / 編集 / 削除 ---- */
+document.addEventListener('click', function(e){
+  var add=e.target.closest('button[data-add]');
+  if(add){ openEdit(add.getAttribute('data-add'), null); return; }
+  var edit=e.target.closest('button[data-edit]');
+  if(edit){ openEdit(edit.getAttribute('data-edit'), edit.getAttribute('data-id')); return; }
+  var del=e.target.closest('button[data-del]');
+  if(del){
+    var kind=del.getAttribute('data-del'), id=del.getAttribute('data-id');
+    if(!confirm('本当に削除しますか？（この操作は取り消せません）')) return;
+    removeItem(kind,id);
+    return;
+  }
+});
+
+/* ---- 削除 ---- */
+function removeItem(kind,id){
+  var arr = STATE[kindKey(kind)];
+  var i = arr.findIndex(function(x){return x.id===id;});
+  if(i<0) return;
+  arr.splice(i,1);
+  STATE = CarmelData.save(STATE);
+  renderAll();
+  toast('削除しました');
+}
+function kindKey(kind){ return kind==='notice'?'notices':kind==='course'?'courses':kind==='script'?'scripts':'docs'; }
+
+/* ---- 既定に戻す ---- */
+$('#btnReset').addEventListener('click', function(){
+  if(!confirm('全てのコンテンツを既定のサンプルに戻します。よろしいですか？')) return;
+  STATE = CarmelData.reset();
+  renderAll();
+  toast('既定データに戻しました');
+});
+
+/* ---- 編集モーダル ---- */
+var currentKind=null, currentId=null;
+function openEdit(kind, id){
+  currentKind=kind; currentId=id;
+  var isNew = !id;
+  var item = null;
+  if(id){ item = STATE[kindKey(kind)].find(function(x){return x.id===id;}); }
+  if(!item){
+    item = defaultItem(kind);
+    isNew = true;
+  }
+  $('#editTitle').textContent = (isNew?'新規追加':'編集') + ' - ' + kindTitle(kind);
+  $('#editForm').innerHTML = formHtml(kind, item);
+  currentId = item.id;
+  if(isNew && !STATE[kindKey(kind)].some(function(x){return x.id===item.id;})){
+    // 未追加。保存時に push
+    currentId = null;
+    currentDraft = item;
+  } else {
+    currentDraft = null;
+  }
+  $('#editModal').classList.add('is-open');
+  var firstInput = $('#editForm').querySelector('input,select,textarea');
+  if(firstInput) firstInput.focus();
+}
+function closeModal(){ $('#editModal').classList.remove('is-open'); currentKind=null; currentId=null; currentDraft=null; }
+$$('[data-close]').forEach(function(b){b.addEventListener('click',closeModal);});
+$('#editModal').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeModal(); });
+
+var currentDraft=null;
+
+function kindTitle(k){ return ({notice:'お知らせ',course:'研修動画',script:'スクリプト',doc:'資料'})[k]; }
+
+function defaultItem(kind){
+  var today = new Date();
+  var y=today.getFullYear(),m=('0'+(today.getMonth()+1)).slice(-2),d=('0'+today.getDate()).slice(-2);
+  var date=y+'-'+m+'-'+d;
+  if(kind==='notice'){
+    return { id: CarmelData.newId('n'), lv:'info', cat:'お知らせ', pin:false, date:date, title:'', body:'' };
+  }
+  if(kind==='course'){
+    var next = 'C-' + String((STATE.courses.length+1)).padStart(2,'0');
+    return { id: CarmelData.newId('c'), num:next, cat:'基礎', time:'10:00', progress:0, title:'', desc:'', chapters:[] };
+  }
+  if(kind==='script'){
+    return { id: CarmelData.newId('s'), cat:'FAQ', cat_l:'FAQ', title:'', body:'' };
+  }
+  if(kind==='doc'){
+    return { id: CarmelData.newId('d'), cat:'業務', type:'pdf', title:'', size:'', date:date };
+  }
+}
+
+function formHtml(kind, x){
+  if(kind==='notice'){
+    return ''
+      +'<div class="fld-row-3">'
+        +'<div class="fld"><label>重要度</label><select name="lv">'
+          +sel('important','重要', x.lv)+sel('notice','通達', x.lv)+sel('info','お知らせ', x.lv)+sel('campaign','キャンペーン', x.lv)
+        +'</select></div>'
+        +'<div class="fld"><label>カテゴリ</label><input type="text" name="cat" value="'+attr(x.cat)+'" list="dl-notice-cat" placeholder="例：通達"><datalist id="dl-notice-cat"><option value="重要"><option value="通達"><option value="お知らせ"><option value="キャンペーン"></datalist></div>'
+        +'<div class="fld"><label>日付</label><input type="date" name="date" value="'+attr(x.date)+'"></div>'
+      +'</div>'
+      +'<div class="fld"><label>タイトル</label><input type="text" name="title" value="'+attr(x.title)+'" placeholder="例：【8月】買取強化キャンペーンについて"></div>'
+      +'<div class="fld"><label>本文</label><textarea name="body" rows="6" placeholder="加盟店に伝える本文">'+esc(x.body)+'</textarea><div class="help">改行は加盟店ページでも改行として表示されます。</div></div>'
+      +'<div class="fld"><label class="fld-check"><input type="checkbox" name="pin"'+(x.pin?' checked':'')+'>上部にピン留めする</label></div>';
+  }
+  if(kind==='course'){
+    return ''
+      +'<div class="fld-row-3">'
+        +'<div class="fld"><label>コース番号</label><input type="text" name="num" value="'+attr(x.num)+'" placeholder="C-15"></div>'
+        +'<div class="fld"><label>カテゴリ</label><select name="cat">'
+          +sel('基礎','基礎',x.cat)+sel('査定','査定',x.cat)+sel('接客','接客',x.cat)+sel('手続き','手続き',x.cat)+sel('コンプライアンス','コンプライアンス',x.cat)
+        +'</select></div>'
+        +'<div class="fld"><label>再生時間</label><input type="text" name="time" value="'+attr(x.time)+'" placeholder="15:20"></div>'
+      +'</div>'
+      +'<div class="fld"><label>タイトル</label><input type="text" name="title" value="'+attr(x.title)+'" placeholder="例：査定シート入力の基本"></div>'
+      +'<div class="fld"><label>概要</label><textarea name="desc" rows="3" placeholder="このコースで学べる内容">'+esc(x.desc)+'</textarea></div>'
+      +'<div class="fld"><label>章立て（1 行 1 章）</label><textarea name="chapters" rows="4" placeholder="1章のタイトル&#10;2章のタイトル&#10;…">'+esc((x.chapters||[]).join('\n'))+'</textarea></div>'
+      +'<div class="fld"><label>進捗（既定値、%）</label><input type="text" name="progress" value="'+attr(x.progress)+'" placeholder="0〜100"></div>';
+  }
+  if(kind==='script'){
+    return ''
+      +'<div class="fld-row">'
+        +'<div class="fld"><label>カテゴリ</label><select name="cat">'
+          +sel('電話','電話',x.cat)+sel('来店','来店',x.cat)+sel('査定','査定',x.cat)+sel('クロージング','クロージング',x.cat)+sel('FAQ','FAQ',x.cat)
+        +'</select></div>'
+        +'<div class="fld"><label>表示ラベル</label><input type="text" name="cat_l" value="'+attr(x.cat_l||x.cat)+'" placeholder="例：電話応対"></div>'
+      +'</div>'
+      +'<div class="fld"><label>タイトル</label><input type="text" name="title" value="'+attr(x.title)+'" placeholder="例：一次受付の第一声"></div>'
+      +'<div class="fld"><label>本文（トークスクリプト / 回答）</label><textarea name="body" rows="7" placeholder="実際のトークをそのまま入力">'+esc(x.body)+'</textarea><div class="help">加盟店ページ側で「コピー」ボタン一つでクリップボードにコピーできます。</div></div>';
+  }
+  if(kind==='doc'){
+    return ''
+      +'<div class="fld"><label>ファイル名</label><input type="text" name="title" value="'+attr(x.title)+'" placeholder="例：加盟店業務マニュアル_v5.pdf"></div>'
+      +'<div class="fld-row-3">'
+        +'<div class="fld"><label>種類</label><select name="type">'
+          +sel('pdf','PDF',x.type)+sel('doc','Word (DOC)',x.type)+sel('xls','Excel (XLS)',x.type)+sel('zip','ZIP',x.type)+sel('mp4','MP4',x.type)
+        +'</select></div>'
+        +'<div class="fld"><label>カテゴリ</label><select name="cat">'
+          +sel('業務','業務',x.cat)+sel('契約','契約',x.cat)+sel('販促','販促',x.cat)+sel('教材','教材',x.cat)
+        +'</select></div>'
+        +'<div class="fld"><label>サイズ</label><input type="text" name="size" value="'+attr(x.size)+'" placeholder="例：12.4 MB"></div>'
+      +'</div>'
+      +'<div class="fld"><label>更新日</label><input type="date" name="date" value="'+attr(x.date)+'"></div>'
+      +'<div class="help">※ 現状はモック画面のため、実ファイルのアップロードは行わずメタ情報のみ管理します。</div>';
+  }
+  return '';
+}
+function sel(v,l,cur){ return '<option value="'+attr(v)+'"'+(String(cur)===String(v)?' selected':'')+'>'+esc(l)+'</option>'; }
+
+/* ---- 保存 ---- */
+$('#btnSave').addEventListener('click', function(){
+  if(!currentKind) return;
+  var form=$('#editForm');
+  var kind=currentKind;
+  var payload = {};
+  Array.prototype.forEach.call(form.elements, function(el){
+    if(!el.name) return;
+    if(el.type==='checkbox') payload[el.name]=el.checked;
+    else payload[el.name]=el.value;
+  });
+  if(!payload.title || !String(payload.title).trim()){
+    toast('タイトルを入力してください'); return;
+  }
+  if(kind==='course'){
+    payload.chapters = String(payload.chapters||'').split('\n').map(function(s){return s.trim();}).filter(Boolean);
+    var p=parseInt(payload.progress,10); if(isNaN(p)) p=0; p=Math.max(0,Math.min(100,p)); payload.progress=p;
+  }
+  var arr = STATE[kindKey(kind)];
+  if(currentId){
+    var i=arr.findIndex(function(x){return x.id===currentId;});
+    if(i>=0){ arr[i] = Object.assign({}, arr[i], payload, {id:currentId}); }
+  } else {
+    var draft = currentDraft || { id: CarmelData.newId(kind.charAt(0)) };
+    arr.unshift(Object.assign({}, draft, payload, {id: draft.id}));
+  }
+  STATE = CarmelData.save(STATE);
+  closeModal();
+  renderAll();
+  toast('保存しました');
+});
+
+/* ---- 初期描画 ---- */
+renderAll();
+</script>
+</body>
+</html>
