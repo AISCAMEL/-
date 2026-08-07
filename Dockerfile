@@ -20,4 +20,6 @@ ENV API_PORT=3001
 EXPOSE 3001
 
 # 起動時にマイグレーション実行 → API サーバー起動
-CMD pnpm --filter @hub/db exec prisma migrate deploy && pnpm --filter @hub/api exec tsx src/server.ts
+CMD pnpm --filter @hub/db exec prisma migrate resolve --rolled-back 20260801010000_add_manual_supplier 2>/dev/null || true; \
+    pnpm --filter @hub/db exec prisma migrate deploy && \
+    pnpm --filter @hub/api exec tsx src/server.ts
