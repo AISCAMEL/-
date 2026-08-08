@@ -21,6 +21,7 @@ export async function sendSlackNotification(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) return { ok: false, error: `Slack ${res.status}: ${await res.text()}` };
     return { ok: true };

@@ -45,9 +45,13 @@ export default function CallDetailPage() {
   }
   async function renotify() {
     setMsg('通知を送信中…');
-    const r = await api.renotify(id);
-    const slack = r.slack ? (r.slack.ok ? '／Slackにも送信✓' : `／Slack失敗: ${r.slack.error}`) : '';
-    setMsg(r.ok ? `通知を送信しました（${r.destination}）${slack}` : `送信失敗: ${r.error}`);
+    try {
+      const r = await api.renotify(id);
+      const slack = r.slack ? (r.slack.ok ? '／Slackにも送信✓' : `／Slack失敗: ${r.slack.error}`) : '（Slack未設定）';
+      setMsg(r.ok ? `通知を送信しました（${r.destination}）${slack}` : `送信失敗: ${r.error}`);
+    } catch (e: any) {
+      setMsg(`送信失敗: ${String(e?.message ?? e)}`);
+    }
   }
   function openFaq() {
     // 通話内容からFAQ候補をプリフィル
