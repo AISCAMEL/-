@@ -37,11 +37,16 @@ export async function researchMarket(params: {
 }): Promise<ResearchResult> {
   const rule = params.rule ?? DEFAULT_PRICE_RULE;
 
-  // 1) 市場の売値を収集
-  const collected = await Promise.all(
+  // 1) 市場の売値を収集（1つの市場が失敗しても他の結果を使う）
+  const results = await Promise.allSettled(
     params.markets.map((m) => m.searchListings({ keyword: params.keyword, limit: params.limit })),
   );
-  const listings = collected.flat();
+  for (const r of results) {
+    if (r.status === "rejected") console.warn(`[research] market error: ${r.reason}`);
+  }
+  const listings = results
+    .filter((r): r is PromiseFulfilledResult<MarketListing[]> => r.status === "fulfilled")
+    .flatMap((r) => r.value);
   const { byMarket, overall } = analyzeMarkets(listings);
 
   // 2) 仕入れ値から着地原価を算出（指定があれば）

@@ -30,6 +30,7 @@ export interface ScreenOptions {
 export interface ScreenResult {
   items: ScreenedItem[];
   errors: number;
+  errorDetails: string[];
   scoredCount: number;
 }
 
@@ -110,6 +111,12 @@ export async function screenCandidates(params: {
     }),
   );
 
+  const errorDetails: string[] = [];
+  for (let i = 0; i < scored.length; i++) {
+    if (scored[i] === null) {
+      errorDetails.push(`${candidates[i].supplierId}:${candidates[i].externalId}`);
+    }
+  }
   const valid = scored.filter((s): s is ScreenedItem => s !== null);
   console.log(
     `[screen] ${candidates.length} candidates → ${valid.length} scored, filter: minMargin=${options.minMarginRate ?? 0} minGrade=${options.minGrade ?? "any"}`,
@@ -126,5 +133,5 @@ export async function screenCandidates(params: {
   });
   const errors = candidates.length - valid.length;
   console.log(`[screen] after filter: ${ranked.length} items passed, ${errors} errors`);
-  return { items: ranked, errors, scoredCount: valid.length };
+  return { items: ranked, errors, errorDetails, scoredCount: valid.length };
 }
