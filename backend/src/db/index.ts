@@ -58,6 +58,7 @@ export async function resolveTenantByPhone(toNumber: string): Promise<TenantCont
       ? r.reception_types.split(/[,、\n]/).map((s: string) => s.trim()).filter(Boolean)
       : (Array.isArray(r.reception_types) ? r.reception_types : []),
     salesCallReply: r.sales_call_reply ?? null,
+    onlineBookingUrl: r.online_booking_url ?? null,
     faqs,
   };
 }

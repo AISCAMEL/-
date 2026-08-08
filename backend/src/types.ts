@@ -65,8 +65,9 @@ export interface TenantContext {
   notifyOnTransfer: boolean;
   fallbackMessage: string | null;
   aiInstructions: string | null;   // 運営が自由に書く追加指示（AIの教育）
-  receptionTypes: string[];        // 予約/受付の対応タイプ（例：出張査定/オンライン査定）
+  receptionTypes: string[];        // 予約/受付の対応タイプ（例：画像査定/オンライン査定）
   salesCallReply: string | null;   // 営業・勧誘電話への返し方（既定あり）
+  onlineBookingUrl: string | null; // オンライン査定の予約ページ（Google予約リンク等）
   faqs: Faq[];
 }
 

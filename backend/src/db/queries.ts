@@ -370,7 +370,7 @@ const SETTING_FIELDS = [
   'recording_enabled', 'human_transfer_enabled', 'transfer_phone_number', 'notification_email',
   'slack_webhook_url', 'notify_on_call_end', 'notify_on_callback', 'notify_on_transfer', 'fallback_message',
   'google_calendar_id', 'google_refresh_token', 'appointment_duration_min',
-  'ai_instructions', 'reception_types', 'sales_call_reply',
+  'ai_instructions', 'reception_types', 'sales_call_reply', 'online_booking_url',
 ] as const;
 
 export async function updateSettings(tenantId: string, patch: Record<string, unknown>) {
@@ -422,6 +422,7 @@ export async function getTenantAiContext(tenantId: string): Promise<TenantContex
     aiInstructions: s?.ai_instructions ?? null,
     receptionTypes: parseReceptionTypes(s?.reception_types),
     salesCallReply: s?.sales_call_reply ?? null,
+    onlineBookingUrl: s?.online_booking_url ?? null,
     faqs: (faqRows ?? []).filter((f: any) => f.is_active !== false)
       .map((f: any) => ({ question: f.question, answer: f.answer, category: f.category ?? null })),
   };

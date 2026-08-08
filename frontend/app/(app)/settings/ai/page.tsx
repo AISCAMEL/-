@@ -23,7 +23,7 @@ export default function AiSettingsPage() {
         recording_enabled: s.recording_enabled, fallback_message: s.fallback_message,
         business_hours: s.business_hours ?? {}, holiday_settings: s.holiday_settings ?? {},
         ai_instructions: s.ai_instructions ?? '', reception_types: s.reception_types ?? '',
-        sales_call_reply: s.sales_call_reply ?? '',
+        sales_call_reply: s.sales_call_reply ?? '', online_booking_url: s.online_booking_url ?? '',
       });
       setMsg('保存しました。');
     } catch (err: any) {
@@ -74,9 +74,19 @@ export default function AiSettingsPage() {
                 label="対応タイプ（予約・受付の種別／カンマ区切り）"
                 value={s.reception_types ?? ''}
                 onChange={(v) => field('reception_types', v)}
-                placeholder="出張査定,持込査定,オンライン査定"
+                placeholder="画像査定,オンライン査定,出張査定,持込査定"
               />
-              <p className="mt-1 text-xs text-gray-500">業種に合わせて自由に増減できます（例：来店,オンライン相談,電話商談）。AIは相手の状況に合うタイプを提案します。</p>
+              <p className="mt-1 text-xs text-gray-500">業種に合わせて自由に増減できます。先頭を基本の対応にすると案内しやすいです（例：画像査定を基本に）。</p>
+            </div>
+
+            <div className="mt-4">
+              <Text
+                label="オンライン査定の予約ページURL（希望者にAIが案内）"
+                value={s.online_booking_url ?? ''}
+                onChange={(v) => field('online_booking_url', v)}
+                placeholder="https://calendar.app.google/xxxxxxxx"
+              />
+              <p className="mt-1 text-xs text-gray-500">ビデオ査定を希望されたお客様にだけ、このGoogle予約ページを案内します（Googleが日時枠とMeetを自動発行）。</p>
             </div>
 
             <div className="mt-4">

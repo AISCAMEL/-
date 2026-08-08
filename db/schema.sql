@@ -680,3 +680,6 @@ alter table tenant_settings add column if not exists sales_call_reply text;     
 
 -- オンライン査定用：Google Meet のURL（Google連携時に自動発行）
 alter table appointments add column if not exists meet_url text;
+
+-- オンライン査定の予約ページURL（Google予約リンク等）。希望者にAIが案内する。
+alter table tenant_settings add column if not exists online_booking_url text;

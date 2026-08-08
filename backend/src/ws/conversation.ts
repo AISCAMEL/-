@@ -24,7 +24,7 @@ function demoContext(): TenantContext {
     notificationEmail: null, slackWebhookUrl: null,
     notifyOnCallEnd: true, notifyOnCallback: true, notifyOnTransfer: true,
     fallbackMessage: null,
-    aiInstructions: null, receptionTypes: [], salesCallReply: null,
+    aiInstructions: null, receptionTypes: [], salesCallReply: null, onlineBookingUrl: null,
     faqs: [
       { question: '営業時間を教えてください', answer: '営業時間は平日10時から18時までです。土日祝日はお休みです。', category: '営業案内' },
     ],

@@ -88,9 +88,10 @@ export const demoSettings = {
   google_calendar_id: '',
   google_refresh_token: '',
   appointment_duration_min: 45,
-  ai_instructions: '遠方（対応エリア外）のお客様には出張査定ではなくオンライン査定（写真・ビデオ）を案内する。査定額はお電話で確約しない。',
-  reception_types: '出張査定,持込査定,オンライン査定',
+  ai_instructions: '査定は基本「画像査定」（お車の写真をお送りいただき査定）で進める。ビデオでの査定をご希望の方にだけ「オンライン査定」を案内し、オンライン予約ページのURLをお伝えする。査定額はお電話で確約しない。',
+  reception_types: '画像査定,オンライン査定,出張査定,持込査定',
   sales_call_reply: '恐れ入りますが、営業・勧誘のお電話はお取り次ぎしておりません。ご用件があれば会社名とお名前を伺い、担当者より折り返しご連絡いたします。',
+  online_booking_url: 'https://calendar.app.google/4aF7F5nWS77rmf3M7',
 };
 
 export const demoPhoneNumbers = [
