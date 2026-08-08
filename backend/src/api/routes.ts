@@ -3,6 +3,7 @@ import { authenticate, requireSuperAdmin, requireRole, authenticateApiKey } from
 import * as apikeys from '../apikeys/repo.js';
 import * as q from '../db/queries.js';
 import { sendCallNotification } from '../notify/email.js';
+import { sendSlackNotification } from '../notify/slack.js';
 import { getSettings } from '../db/queries.js';
 import { tenantTestReply, type TestTurn } from '../ai/testchat.js';
 import { sendWeeklyDigest } from '../notify/digest.js';
@@ -282,19 +283,21 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     if (!call) return reply.code(404).send({ error: 'not found' });
     const settings = await getSettings(p.tenantId);
     const dest = settings?.notification_email ?? 'owner@example.com';
-    const result = await sendCallNotification(dest, {
-      fromNumber: call.from_number ?? '',
-      summary: {
-        summary: call.summary ?? '', category: call.category ?? 'other',
-        customer_name: call.customer_name ?? null, company_name: call.company_name ?? null,
-        requested_datetime: call.requested_datetime ?? null, request_detail: call.request_detail ?? null,
-        next_action: call.next_action ?? null, urgency: call.urgency ?? 'normal',
-        sentiment: call.sentiment ?? 'neutral', callback_requested: call.status === 'callback_requested',
-        should_follow_up: false,
-      },
-      statusLabel: '再通知',
-    });
-    return { ok: result.ok, destination: dest, error: result.error };
+    const summary = {
+      summary: call.summary ?? '', category: call.category ?? 'other',
+      customer_name: call.customer_name ?? null, company_name: call.company_name ?? null,
+      requested_datetime: call.requested_datetime ?? null, request_detail: call.request_detail ?? null,
+      next_action: call.next_action ?? null, urgency: call.urgency ?? 'normal',
+      sentiment: call.sentiment ?? 'neutral', callback_requested: call.status === 'callback_requested',
+      should_follow_up: false,
+    } as const;
+    const result = await sendCallNotification(dest, { fromNumber: call.from_number ?? '', summary, statusLabel: '再通知' });
+    // Slack Webhook 設定時はSlackにも通知する
+    let slack: { ok: boolean; error?: string } | null = null;
+    if (settings?.slack_webhook_url) {
+      slack = await sendSlackNotification(settings.slack_webhook_url, { fromNumber: call.from_number ?? '', summary, statusLabel: '再通知' });
+    }
+    return { ok: result.ok, destination: dest, error: result.error, slack };
   });
 
   // ---- FAQ ----

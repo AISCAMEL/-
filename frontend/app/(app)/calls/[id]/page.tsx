@@ -46,7 +46,8 @@ export default function CallDetailPage() {
   async function renotify() {
     setMsg('通知を送信中…');
     const r = await api.renotify(id);
-    setMsg(r.ok ? `通知を送信しました（${r.destination}）` : `送信失敗: ${r.error}`);
+    const slack = r.slack ? (r.slack.ok ? '／Slackにも送信✓' : `／Slack失敗: ${r.slack.error}`) : '';
+    setMsg(r.ok ? `通知を送信しました（${r.destination}）${slack}` : `送信失敗: ${r.error}`);
   }
   function openFaq() {
     // 通話内容からFAQ候補をプリフィル
