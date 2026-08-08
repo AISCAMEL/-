@@ -223,3 +223,10 @@ test('査定フォームSMS: URL設定済みならドライラン送信、番号
   const noPhone = await app.inject({ method: 'POST', url: '/api/appraisal/send-sms', headers: J, payload: {} });
   assert.equal(noPhone.statusCode, 400);
 });
+
+test('本文なしPOST（通知再送）が400にならず処理される', async () => {
+  // Content-Type: application/json だが body 空 → 空オブジェクト扱いで200
+  const res = await app.inject({ method: 'POST', url: '/api/calls/call-1001/notify', headers: { ...J, ...owner } });
+  assert.equal(res.statusCode, 200);
+  assert.ok('destination' in res.json());
+});

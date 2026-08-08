@@ -17,6 +17,14 @@ import { runWeeklyDigests } from './notify/digest.js';
 export async function buildApp(opts: { logger?: boolean } = {}): Promise<FastifyInstance> {
   const app = Fastify({ logger: opts.logger ?? true });
 
+  // 本文なしのPOST（通知再送など）で Content-Type: application/json が付いても
+  // エラーにせず空オブジェクトとして扱う（FST_ERR_CTP_EMPTY_JSON_BODY 回避）。
+  app.addContentTypeParser('application/json', { parseAs: 'string' }, (_req, body, done) => {
+    const s = (body as string).trim();
+    if (!s) return done(null, {});
+    try { done(null, JSON.parse(s)); } catch (err) { done(err as Error); }
+  });
+
   // 管理画面フロントからのアクセスを許可（CORS）。
   await app.register(cors, { origin: config.corsOrigin });
   // Twilio Webhook は application/x-www-form-urlencoded。
