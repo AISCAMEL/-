@@ -42,7 +42,16 @@ export default function AppointmentsPage() {
 
   function loadList() { api.appointments().then(setList); }
   function loadStatus() { api.calendarStatus().then((s) => { setStatus(s); setCfg((c) => ({ ...c, appointment_duration_min: s.appointment_duration_min, google_calendar_id: s.calendar_id || '' })); }); }
-  useEffect(() => { loadList(); loadStatus(); }, []);
+  const [types, setTypes] = useState<string[]>(['出張査定', '持込査定', 'オンライン査定', '来店商談', '電話商談']);
+  useEffect(() => {
+    loadList(); loadStatus();
+    // 対応タイプはAI設定（reception_types）から取得。業種ごとに設定可能。
+    api.aiSettings().then((s: any) => {
+      const raw = s?.reception_types;
+      const list = typeof raw === 'string' ? raw.split(/[,、\n]/).map((x: string) => x.trim()).filter(Boolean) : [];
+      if (list.length) { setTypes(list); setAutoForm((f) => ({ ...f, type: list[0] })); setForm((f) => ({ ...f, type: list[0] })); }
+    }).catch(() => {});
+  }, []);
 
   async function findSlots() {
     setMsg(''); setPicked(null);
@@ -110,7 +119,7 @@ export default function AppointmentsPage() {
           <input value={autoForm.customer_name} onChange={(e) => setAutoForm({ ...autoForm, customer_name: e.target.value })} placeholder="顧客名" className="rounded-lg border px-3 py-2 text-sm" />
           <input value={autoForm.phone_number} onChange={(e) => setAutoForm({ ...autoForm, phone_number: e.target.value })} placeholder="電話番号" className="rounded-lg border px-3 py-2 text-sm" />
           <select value={autoForm.type} onChange={(e) => setAutoForm({ ...autoForm, type: e.target.value })} className="rounded-lg border px-3 py-2 text-sm">
-            {['出張査定', '持込査定', 'オンライン査定', '来店商談', '電話商談'].map((t) => <option key={t}>{t}</option>)}
+            {types.map((t) => <option key={t}>{t}</option>)}
           </select>
           <label className="text-xs text-gray-500">希望日<input type="date" value={autoForm.date} min={todayYmd()} onChange={(e) => setAutoForm({ ...autoForm, date: e.target.value })} className="ml-1 rounded-lg border px-2 py-2 text-sm" /></label>
           <label className="text-xs text-gray-500">希望時刻<input type="time" value={autoForm.preferredHHMM} onChange={(e) => setAutoForm({ ...autoForm, preferredHHMM: e.target.value })} className="ml-1 rounded-lg border px-2 py-2 text-sm" /></label>
@@ -151,7 +160,7 @@ export default function AppointmentsPage() {
             <div className="text-sm font-medium">{jstDateTime(picked.start)}〜{jstTime(picked.end)} に予約</div>
             <div className="flex flex-wrap gap-2">
               <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="rounded-lg border px-3 py-2 text-sm">
-                {['出張査定', '持込査定', 'オンライン査定', '来店商談', '電話商談'].map((t) => <option key={t}>{t}</option>)}
+                {types.map((t) => <option key={t}>{t}</option>)}
               </select>
               <input value={form.customer_name} onChange={(e) => setForm({ ...form, customer_name: e.target.value })} placeholder="顧客名" className="flex-1 rounded-lg border px-3 py-2 text-sm" />
               <input value={form.phone_number} onChange={(e) => setForm({ ...form, phone_number: e.target.value })} placeholder="電話番号" className="rounded-lg border px-3 py-2 text-sm" />

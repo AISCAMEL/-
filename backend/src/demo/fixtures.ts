@@ -88,6 +88,9 @@ export const demoSettings = {
   google_calendar_id: '',
   google_refresh_token: '',
   appointment_duration_min: 45,
+  ai_instructions: '遠方（対応エリア外）のお客様には出張査定ではなくオンライン査定（写真・ビデオ）を案内する。査定額はお電話で確約しない。',
+  reception_types: '出張査定,持込査定,オンライン査定',
+  sales_call_reply: '恐れ入りますが、営業・勧誘のお電話はお取り次ぎしておりません。ご用件があれば会社名とお名前を伺い、担当者より折り返しご連絡いたします。',
 };
 
 export const demoPhoneNumbers = [

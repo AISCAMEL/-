@@ -22,6 +22,8 @@ export default function AiSettingsPage() {
         transfer_phone_number: s.transfer_phone_number, human_transfer_enabled: s.human_transfer_enabled,
         recording_enabled: s.recording_enabled, fallback_message: s.fallback_message,
         business_hours: s.business_hours ?? {}, holiday_settings: s.holiday_settings ?? {},
+        ai_instructions: s.ai_instructions ?? '', reception_types: s.reception_types ?? '',
+        sales_call_reply: s.sales_call_reply ?? '',
       });
       setMsg('保存しました。');
     } catch (err: any) {
@@ -55,6 +57,39 @@ export default function AiSettingsPage() {
             onChange={(bh, hol) => { field('business_hours', bh); field('holiday_settings', hol); }}
           />
 
+          {/* AIの教育（追加指示・対応タイプ・営業電話） */}
+          <div className="rounded-xl border border-brand/30 bg-brand-light/40 p-4">
+            <h2 className="mb-3 text-sm font-semibold text-brand">🎓 AIの教育（受け答えの調整）</h2>
+
+            <Area
+              label="AIへの追加指示（状況・受け答えの方針）"
+              value={s.ai_instructions ?? ''}
+              onChange={(v) => field('ai_instructions', v)}
+              placeholder="例：遠方（対応エリア外）のお客様には出張ではなくオンライン査定を案内する。査定額は電話で確約しない。特定の車種は高価買取をアピール。など、AIに守らせたい方針を自由に書けます。"
+              hint="ここに書いた内容をAIが最優先で守ります。状況ごとの受け答えを自由に教育できます。"
+            />
+
+            <div className="mt-4">
+              <Text
+                label="対応タイプ（予約・受付の種別／カンマ区切り）"
+                value={s.reception_types ?? ''}
+                onChange={(v) => field('reception_types', v)}
+                placeholder="出張査定,持込査定,オンライン査定"
+              />
+              <p className="mt-1 text-xs text-gray-500">業種に合わせて自由に増減できます（例：来店,オンライン相談,電話商談）。AIは相手の状況に合うタイプを提案します。</p>
+            </div>
+
+            <div className="mt-4">
+              <Area
+                label="営業・勧誘電話への返し方"
+                value={s.sales_call_reply ?? ''}
+                onChange={(v) => field('sales_call_reply', v)}
+                placeholder="恐れ入りますが、営業・勧誘のお電話はお取り次ぎしておりません。ご用件があれば会社名とお名前を伺い、担当者より折り返しご連絡いたします。"
+                hint="営業電話とAIが判断したら、この方針でかわします（査定・予約フローには進めません）。"
+              />
+            </div>
+          </div>
+
           <div className="flex items-center gap-3 pt-2">
             <button className="rounded-lg bg-brand px-5 py-2 text-sm font-medium text-white hover:bg-brand-dark">保存</button>
             {msg && <span className="text-sm text-brand">{msg}</span>}
@@ -71,6 +106,17 @@ function Text({ label, value, onChange, placeholder }: { label: string; value: s
       <label className="block text-sm font-medium text-gray-700">{label}</label>
       <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
         className="mt-1 w-full rounded-lg border px-3 py-2 text-sm" />
+    </div>
+  );
+}
+
+function Area({ label, value, onChange, placeholder, hint }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; hint?: string }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      <textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={4}
+        className="mt-1 w-full rounded-lg border px-3 py-2 text-sm" />
+      {hint && <p className="mt-1 text-xs text-gray-500">{hint}</p>}
     </div>
   );
 }

@@ -370,6 +370,7 @@ const SETTING_FIELDS = [
   'recording_enabled', 'human_transfer_enabled', 'transfer_phone_number', 'notification_email',
   'slack_webhook_url', 'notify_on_call_end', 'notify_on_callback', 'notify_on_transfer', 'fallback_message',
   'google_calendar_id', 'google_refresh_token', 'appointment_duration_min',
+  'ai_instructions', 'reception_types', 'sales_call_reply',
 ] as const;
 
 export async function updateSettings(tenantId: string, patch: Record<string, unknown>) {
@@ -418,9 +419,19 @@ export async function getTenantAiContext(tenantId: string): Promise<TenantContex
     notifyOnCallback: s?.notify_on_callback ?? true,
     notifyOnTransfer: s?.notify_on_transfer ?? true,
     fallbackMessage: s?.fallback_message ?? null,
+    aiInstructions: s?.ai_instructions ?? null,
+    receptionTypes: parseReceptionTypes(s?.reception_types),
+    salesCallReply: s?.sales_call_reply ?? null,
     faqs: (faqRows ?? []).filter((f: any) => f.is_active !== false)
       .map((f: any) => ({ question: f.question, answer: f.answer, category: f.category ?? null })),
   };
+}
+
+// カンマ/読点/改行区切りの文字列を配列に。空なら既定の来店/折り返し系。
+function parseReceptionTypes(v: unknown): string[] {
+  if (Array.isArray(v)) return v.map(String).map((s) => s.trim()).filter(Boolean);
+  if (typeof v === 'string' && v.trim()) return v.split(/[,、\n]/).map((s) => s.trim()).filter(Boolean);
+  return [];
 }
 
 // ---------------- 発信者ルール（ブロック/専用アナウンス） ----------------

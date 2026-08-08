@@ -53,6 +53,11 @@ export async function resolveTenantByPhone(toNumber: string): Promise<TenantCont
     notifyOnCallback: r.notify_on_callback ?? true,
     notifyOnTransfer: r.notify_on_transfer ?? true,
     fallbackMessage: r.fallback_message,
+    aiInstructions: r.ai_instructions ?? null,
+    receptionTypes: typeof r.reception_types === 'string' && r.reception_types.trim()
+      ? r.reception_types.split(/[,、\n]/).map((s: string) => s.trim()).filter(Boolean)
+      : (Array.isArray(r.reception_types) ? r.reception_types : []),
+    salesCallReply: r.sales_call_reply ?? null,
     faqs,
   };
 }

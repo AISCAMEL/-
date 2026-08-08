@@ -672,3 +672,8 @@ drop policy if exists tenant_isolation on api_keys;
 create policy tenant_isolation on api_keys
   using (is_super_admin() or tenant_id = current_tenant_id())
   with check (is_super_admin() or tenant_id = current_tenant_id());
+
+-- AIの教育・振り分け用（運営が自由に設定）
+alter table tenant_settings add column if not exists ai_instructions text;        -- AIへの追加指示（状況・受け答え）
+alter table tenant_settings add column if not exists reception_types text;         -- 対応タイプ（カンマ区切り 例: 出張査定,オンライン査定）
+alter table tenant_settings add column if not exists sales_call_reply text;        -- 営業・勧誘電話への返し方

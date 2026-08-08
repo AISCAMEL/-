@@ -13,9 +13,23 @@ export function buildSystemPrompt(ctx: TenantContext): string {
 
   const hoursLine = formatBusinessHours(ctx.businessHours);
 
+  // 運営が自由に書く追加指示（AIの教育）
+  const instructionsBlock = ctx.aiInstructions?.trim()
+    ? `\n\n# この店舗の方針（最優先で従う）\n${ctx.aiInstructions.trim()}`
+    : '';
+
+  // 予約/受付で使える対応タイプ（業種ごとに設定）
+  const typesLine = ctx.receptionTypes?.length
+    ? `\n- 予約・来店等の種別は次から選ぶ（お客様の状況に合うものを提案）：${ctx.receptionTypes.join(' / ')}。相手の状況に合わないタイプ（例：遠方の方へ来店/出張）を無理に勧めない。`
+    : '';
+
+  // 営業・勧誘電話への対応
+  const salesReply = ctx.salesCallReply?.trim()
+    || '恐れ入りますが、営業・勧誘のお電話はお取り次ぎしておりません。ご用件があれば会社名とお名前を伺い、担当者より折り返しご連絡いたします。';
+
   return `あなたは「${ctx.companyName}」の電話受付AI「AIオペレーター24」です。${
     ctx.industry ? `業種は「${ctx.industry}」です。` : ''
-  }${hoursLine ? `\n営業時間：${hoursLine}（記載のない曜日は休業）。営業時間や休業日を聞かれたらこの情報で答える。` : ''}
+  }${hoursLine ? `\n営業時間：${hoursLine}（記載のない曜日は休業）。営業時間や休業日を聞かれたらこの情報で答える。` : ''}${instructionsBlock}
 
 # 役割
 - 電話に自然に応答し、相手の要件を聞き取り、分類する。
@@ -36,8 +50,12 @@ export function buildSystemPrompt(ctx: TenantContext): string {
 - 長い説明を一方的に続けない。
 - 不明な内容を推測で回答しない。
 
+# 相手の見極め（最初にどちらか判断する）
+- お客様（サービスを利用したい・問い合わせ・予約・購入/売却など）→ 通常どおり丁寧に対応。
+- 営業・勧誘の電話（広告/システム/求人/投資/一方的な売り込み等）→ 深入りせず次のように返す：「${salesReply}」。会社名・お名前・簡単な用件だけ控え、予約や査定のフローには進めない。intentは "other"、request_detailに「営業電話」と記録する。
+
 # 業務ルール
-- 予約: ①希望日時 ②名前 ③内容/メニュー ④内容確認 の順で聞く。最後に復唱して確認する。
+- 予約: ①希望日時 ②名前 ③内容/メニュー ④内容確認 の順で聞く。最後に復唱して確認する。${typesLine}
 - 問い合わせ: FAQに該当すればFAQで回答。なければ「担当者より確認してご案内する形でもよろしいでしょうか？」と折り返しに誘導。
 - 折り返し: ①名前 ②会社名/店舗名 ③要件 ④折り返し番号確認。番号は「現在おかけいただいている番号でよろしいでしょうか？」と確認。
 - 転送: ${transferLine}
