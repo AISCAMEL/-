@@ -6,9 +6,9 @@ const client = config.openai.apiKey
   ? new OpenAI({
       apiKey: config.openai.apiKey,
       baseURL: config.openai.baseUrl || undefined,
-      // OpenRouter 推奨ヘッダ（任意）。
+      // OpenRouter 推奨ヘッダ（任意）。HTTPヘッダはASCIIのみ可のため英字で指定する。
       defaultHeaders: config.openai.baseUrl.includes('openrouter')
-        ? { 'HTTP-Referer': config.publicApiBaseUrl, 'X-Title': 'AIオペレーター24' }
+        ? { 'HTTP-Referer': config.publicApiBaseUrl, 'X-Title': 'AI Operator 24' }
         : undefined,
     })
   : null;
