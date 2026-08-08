@@ -214,3 +214,12 @@ test('業種テンプレート: replace=true で既存FAQを置き換えて別�
   const restaurant = tpls.find((t: any) => t.key === 'restaurant');
   assert.equal(faqs.length, restaurant.faq_count);
 });
+
+test('査定フォームSMS: URL設定済みならドライラン送信、番号なしは400', async () => {
+  const ok = await app.inject({ method: 'POST', url: '/api/appraisal/send-sms', headers: J, payload: { phone: '09012345678', name: 'テスト' } });
+  assert.equal(ok.statusCode, 200);
+  assert.equal(ok.json().ok, true); // Twilio未接続なのでdryRun
+
+  const noPhone = await app.inject({ method: 'POST', url: '/api/appraisal/send-sms', headers: J, payload: {} });
+  assert.equal(noPhone.statusCode, 400);
+});

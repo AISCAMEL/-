@@ -370,7 +370,7 @@ const SETTING_FIELDS = [
   'recording_enabled', 'human_transfer_enabled', 'transfer_phone_number', 'notification_email',
   'slack_webhook_url', 'notify_on_call_end', 'notify_on_callback', 'notify_on_transfer', 'fallback_message',
   'google_calendar_id', 'google_refresh_token', 'appointment_duration_min',
-  'ai_instructions', 'reception_types', 'sales_call_reply', 'online_booking_url',
+  'ai_instructions', 'reception_types', 'sales_call_reply', 'online_booking_url', 'appraisal_form_url',
 ] as const;
 
 export async function updateSettings(tenantId: string, patch: Record<string, unknown>) {

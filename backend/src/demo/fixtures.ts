@@ -88,10 +88,11 @@ export const demoSettings = {
   google_calendar_id: '',
   google_refresh_token: '',
   appointment_duration_min: 45,
-  ai_instructions: '査定は基本「画像査定」（お車の写真をお送りいただき査定）で進める。ビデオでの査定をご希望の方にだけ「オンライン査定」を案内し、オンライン予約ページのURLをお伝えする。査定額はお電話で確約しない。',
+  ai_instructions: '査定は基本「画像査定」で進める：お客様の携帯番号を確認し、「お車の写真を送っていただく査定フォームのURLを、この番号にショートメール（SMS）でお送りします」と伝える（送信はシステムが行う）。ビデオでの査定をご希望の方にだけ「オンライン査定」を案内し、オンライン予約ページのURLをお伝えする。査定額はお電話で確約しない。',
   reception_types: '画像査定,オンライン査定,出張査定,持込査定',
   sales_call_reply: '恐れ入りますが、営業・勧誘のお電話はお取り次ぎしておりません。ご用件があれば会社名とお名前を伺い、担当者より折り返しご連絡いたします。',
   online_booking_url: 'https://calendar.app.google/4aF7F5nWS77rmf3M7',
+  appraisal_form_url: 'https://example.com/satei-form',
 };
 
 export const demoPhoneNumbers = [

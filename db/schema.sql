@@ -683,3 +683,6 @@ alter table appointments add column if not exists meet_url text;
 
 -- オンライン査定の予約ページURL（Google予約リンク等）。希望者にAIが案内する。
 alter table tenant_settings add column if not exists online_booking_url text;
+
+-- 画像査定フォームのURL（SMSでお客様に送って誘導する）
+alter table tenant_settings add column if not exists appraisal_form_url text;

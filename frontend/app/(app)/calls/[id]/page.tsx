@@ -66,6 +66,18 @@ export default function CallDetailPage() {
     }]);
     setMsg('連絡先リストに追加しました（カテゴリ：問い合わせ）。');
   }
+  async function sendSateiSms() {
+    setMsg('査定フォームをSMS送信中…');
+    try {
+      const r = await api.sendAppraisalSms(call.from_number, call.customer_name);
+      setMsg(r.dryRun
+        ? `SMS（ドライラン）：この番号に査定フォームを送信予定です（実送信にはTwilio接続が必要）。`
+        : `査定フォームをSMSで送信しました（${call.from_number}）。`);
+    } catch (e: any) {
+      const m = String(e?.message ?? e);
+      setMsg(m.includes('査定フォームURL') ? '査定フォームURLが未設定です。AI設定で登録してください。' : `送信失敗: ${m}`);
+    }
+  }
 
   return (
     <div>
@@ -81,6 +93,7 @@ export default function CallDetailPage() {
           )}
           <button onClick={openFaq} className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">FAQに追加</button>
           <button onClick={addToContacts} className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">連絡先に追加</button>
+          {call.from_number && <button onClick={sendSateiSms} className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">📱 査定フォームをSMS送信</button>}
           <Link href="/appointments" className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">予約を取る</Link>
           <Link href={`/calls/${id}/print`} className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">印刷 / PDF</Link>
           <button onClick={resummarize} className="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">要約を再生成</button>

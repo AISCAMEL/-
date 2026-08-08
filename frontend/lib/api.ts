@@ -47,6 +47,7 @@ export const api = {
   moveFaq: (id: string, dir: 'up' | 'down') => request<any>(`/api/faqs/${id}/move`, { method: 'POST', body: JSON.stringify({ dir }) }),
 
   aiSettings: () => request<any>('/api/settings/ai'),
+  sendAppraisalSms: (phone: string, name?: string) => request<any>('/api/appraisal/send-sms', { method: 'POST', body: JSON.stringify({ phone, name }) }),
   saveAiSettings: (body: any) => request<any>('/api/settings/ai', { method: 'PUT', body: JSON.stringify(body) }),
   notificationSettings: () => request<any>('/api/settings/notification'),
   notifications: () => request<any[]>('/api/notifications'),

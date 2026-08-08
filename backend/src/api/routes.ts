@@ -16,6 +16,7 @@ import { chatText } from '../ai/llm.js';
 import { llmEnabled } from '../ai/llm.js';
 import { config } from '../config.js';
 import { sendEmail } from '../notify/email.js';
+import { sendSms } from '../notify/sms.js';
 import * as calendar from '../calendar/index.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -131,6 +132,32 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     const r = await calendar.autoBook(p.tenantId!, { ...(req.body ?? {}) as any, source: 'ai_inbound' });
     if (!r.ok) return reply.code(409).send({ ok: false, error: r.error, alternatives: r.alternatives });
     return reply.code(201).send(r);
+  });
+
+  // 画像査定フォームのURLを、お客様の携帯にSMS送信して誘導する
+  async function sendAppraisalSms(tenantId: string, phone: string, name?: string) {
+    const s = await getSettings(tenantId);
+    const url = s?.appraisal_form_url;
+    if (!phone) return { ok: false, error: '電話番号がありません' };
+    if (!url) return { ok: false, error: '査定フォームURLが未設定です（AI設定で登録してください）' };
+    const body = `${name ? name + '様 ' : ''}お車の査定フォームはこちらです。写真とお車の情報をご入力ください。\n${url}`;
+    const r = await sendSms(phone, body);
+    return { ...r, url };
+  }
+  app.post('/api/appraisal/send-sms', { preHandler: manageOutbound }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const { phone, name } = (req.body ?? {}) as { phone?: string; name?: string };
+    const r = await sendAppraisalSms(p.tenantId, phone ?? '', name);
+    if (!r.ok) return reply.code(400).send(r);
+    return r;
+  });
+  app.post('/api/v1/appraisal/send-sms', { preHandler: authenticateApiKey }, async (req, reply) => {
+    const p = req.principal!;
+    const { phone, name } = (req.body ?? {}) as { phone?: string; name?: string };
+    const r = await sendAppraisalSms(p.tenantId!, phone ?? '', name);
+    if (!r.ok) return reply.code(400).send(r);
+    return r;
   });
 
   // ---- dashboard ----

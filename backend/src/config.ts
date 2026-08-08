@@ -16,6 +16,8 @@ export const config = {
     accountSid: process.env.TWILIO_ACCOUNT_SID ?? '',
     authToken: process.env.TWILIO_AUTH_TOKEN ?? '',
     validateSignature: (process.env.TWILIO_VALIDATE_SIGNATURE ?? 'true') === 'true',
+    // SMS送信元（電話番号 or Messaging Service SID）。未設定ならSMSはドライラン。
+    smsFrom: process.env.TWILIO_SMS_FROM ?? '',
   },
 
   openai: {

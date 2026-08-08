@@ -24,6 +24,7 @@ export default function AiSettingsPage() {
         business_hours: s.business_hours ?? {}, holiday_settings: s.holiday_settings ?? {},
         ai_instructions: s.ai_instructions ?? '', reception_types: s.reception_types ?? '',
         sales_call_reply: s.sales_call_reply ?? '', online_booking_url: s.online_booking_url ?? '',
+        appraisal_form_url: s.appraisal_form_url ?? '',
       });
       setMsg('保存しました。');
     } catch (err: any) {
@@ -77,6 +78,16 @@ export default function AiSettingsPage() {
                 placeholder="画像査定,オンライン査定,出張査定,持込査定"
               />
               <p className="mt-1 text-xs text-gray-500">業種に合わせて自由に増減できます。先頭を基本の対応にすると案内しやすいです（例：画像査定を基本に）。</p>
+            </div>
+
+            <div className="mt-4">
+              <Text
+                label="画像査定フォームのURL（SMSでお客様に送信）"
+                value={s.appraisal_form_url ?? ''}
+                onChange={(v) => field('appraisal_form_url', v)}
+                placeholder="https://（写真を送ってもらう査定フォーム）"
+              />
+              <p className="mt-1 text-xs text-gray-500">基本の画像査定で、お客様の携帯にこのフォームのリンクをショートメール（SMS）で送って誘導します。通話詳細の「査定フォームをSMS送信」から送れます（SMS実送信はTwilio接続が必要）。</p>
             </div>
 
             <div className="mt-4">
