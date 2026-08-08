@@ -31,7 +31,8 @@ export default function AppointmentsPage() {
     setAutoMsg('空き枠を探して予約中…');
     try {
       const r = await api.autoBookAppointment({ ...autoForm, date: autoForm.date || undefined, preferredHHMM: autoForm.preferredHHMM || undefined });
-      setAutoMsg(`✅ ${jstDateTime(r.slot.start)}〜${jstTime(r.slot.end)} に「${autoForm.type}」を仮予約しました（${r.google_synced ? 'Googleにも登録' : 'カレンダー未接続'}）。`);
+      const meet = r.meet_url ? `／Google Meet発行：${r.meet_url}` : '';
+      setAutoMsg(`✅ ${jstDateTime(r.slot.start)}〜${jstTime(r.slot.end)} に「${autoForm.type}」を仮予約しました（${r.google_synced ? 'Googleにも登録' : 'カレンダー未接続'}）${meet}。`);
       setAutoForm({ ...autoForm, customer_name: '', phone_number: '' });
       loadList();
     } catch (err: any) {
@@ -183,7 +184,7 @@ export default function AppointmentsPage() {
             {list.map((a) => (
               <tr key={a.id} className="border-b last:border-0 align-top">
                 <td className="px-4 py-3 text-gray-700">{jstDateTime(a.start_at)}<div className="text-xs text-gray-400">〜{jstTime(a.end_at)}</div></td>
-                <td className="px-4 py-3">{a.type}<div className="text-xs text-gray-500">{a.customer_name ?? '—'}{a.phone_number ? ` / ${a.phone_number}` : ''}</div>{a.note && <div className="text-xs text-gray-400">{a.note}</div>}</td>
+                <td className="px-4 py-3">{a.type}<div className="text-xs text-gray-500">{a.customer_name ?? '—'}{a.phone_number ? ` / ${a.phone_number}` : ''}</div>{a.note && <div className="text-xs text-gray-400">{a.note}</div>}{a.meet_url && <a href={a.meet_url} target="_blank" rel="noreferrer" className="mt-1 inline-block rounded bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 hover:bg-green-100">🎥 ビデオ通話に参加</a>}</td>
                 <td className="px-4 py-3 text-xs text-gray-500">{SOURCE_LABEL[a.source] ?? a.source}</td>
                 <td className="px-4 py-3"><span className={`rounded-full px-2 py-0.5 text-xs ${STATUS_COLOR[a.status] ?? 'bg-gray-100'}`}>{STATUS_LABEL[a.status] ?? a.status}</span></td>
                 <td className="px-4 py-3 text-right">

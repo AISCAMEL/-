@@ -1,5 +1,6 @@
 // Googleカレンダー連携。テナントごとの refresh_token と組み合わせて使う。
 // 未接続(クレデンシャル/トークン無し)の場合は connected=false を返し、内部予約のみで重複判定する。
+import { randomBytes } from 'node:crypto';
 import { config } from '../config.js';
 import type { Interval } from './slots.js';
 
@@ -59,24 +60,35 @@ export async function googleBusy(conn: GoogleConn, fromIso: string, toIso: strin
 /** Google カレンダーへイベントを作成。成功時 eventId、失敗時 null。 */
 export async function googleCreateEvent(
   conn: GoogleConn,
-  ev: { summary: string; description?: string; startIso: string; endIso: string },
-): Promise<string | null> {
+  ev: { summary: string; description?: string; startIso: string; endIso: string; withMeet?: boolean },
+): Promise<{ eventId: string; meetUrl: string | null } | null> {
   const token = await getAccessToken(conn.refreshToken);
   if (!token) return null;
   try {
-    const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(conn.calendarId)}/events`, {
+    const body: any = {
+      summary: ev.summary,
+      description: ev.description ?? '',
+      start: { dateTime: ev.startIso, timeZone: 'Asia/Tokyo' },
+      end: { dateTime: ev.endIso, timeZone: 'Asia/Tokyo' },
+    };
+    // オンライン査定などは Google Meet を自動発行する
+    if (ev.withMeet) {
+      body.conferenceData = {
+        createRequest: { requestId: randomBytes(12).toString('hex'), conferenceSolutionKey: { type: 'hangoutsMeet' } },
+      };
+    }
+    const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(conn.calendarId)}/events${ev.withMeet ? '?conferenceDataVersion=1' : ''}`;
+    const res = await fetch(url, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        summary: ev.summary,
-        description: ev.description ?? '',
-        start: { dateTime: ev.startIso, timeZone: 'Asia/Tokyo' },
-        end: { dateTime: ev.endIso, timeZone: 'Asia/Tokyo' },
-      }),
+      body: JSON.stringify(body),
     });
     if (!res.ok) { console.error('[google] insert failed', res.status, await res.text()); return null; }
     const data = (await res.json()) as any;
-    return data.id ?? null;
+    const meetUrl = data.hangoutLink
+      ?? data.conferenceData?.entryPoints?.find((e: any) => e.entryPointType === 'video')?.uri
+      ?? null;
+    return { eventId: data.id, meetUrl };
   } catch (err) {
     console.error('[google] insert error', err);
     return null;

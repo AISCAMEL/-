@@ -677,3 +677,6 @@ create policy tenant_isolation on api_keys
 alter table tenant_settings add column if not exists ai_instructions text;        -- AIへの追加指示（状況・受け答え）
 alter table tenant_settings add column if not exists reception_types text;         -- 対応タイプ（カンマ区切り 例: 出張査定,オンライン査定）
 alter table tenant_settings add column if not exists sales_call_reply text;        -- 営業・勧誘電話への返し方
+
+-- オンライン査定用：Google Meet のURL（Google連携時に自動発行）
+alter table appointments add column if not exists meet_url text;

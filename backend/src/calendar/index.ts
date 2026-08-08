@@ -53,6 +53,7 @@ export interface BookResult {
   conflict?: boolean;
   appointment?: any;
   google_synced?: boolean;
+  meet_url?: string | null;
   error?: string;
 }
 
@@ -69,16 +70,20 @@ export async function book(tenantId: string, input: AppointmentInput): Promise<B
 
   const settings = await getSettings(tenantId);
   const conn = googleConnFromSettings(settings);
+  // 「オンライン」を含むタイプはビデオ査定 → Google Meet を自動発行
+  const wantsMeet = /オンライン|online|ビデオ|web|ウェブ/i.test(input.type ?? '');
   let googleEventId: string | null = null;
+  let meetUrl: string | null = null;
   if (conn) {
-    googleEventId = await googleCreateEvent(conn, {
+    const created = await googleCreateEvent(conn, {
       summary: input.title || `${input.type ?? '査定'}：${input.customer_name ?? ''}`.trim(),
       description: [input.note, input.phone_number].filter(Boolean).join('\n'),
-      startIso: input.start_at, endIso: input.end_at,
+      startIso: input.start_at, endIso: input.end_at, withMeet: wantsMeet,
     });
+    if (created) { googleEventId = created.eventId; meetUrl = created.meetUrl; }
   }
-  const appointment = await createAppointment(tenantId, { ...input, google_event_id: googleEventId });
-  return { ok: true, appointment, google_synced: Boolean(googleEventId) };
+  const appointment = await createAppointment(tenantId, { ...input, google_event_id: googleEventId, meet_url: meetUrl });
+  return { ok: true, appointment, google_synced: Boolean(googleEventId), meet_url: meetUrl };
 }
 
 export interface AutoBookOpts {

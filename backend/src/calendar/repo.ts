@@ -6,7 +6,7 @@ export interface AppointmentInput {
   contact_id?: string | null; call_id?: string | null;
   type?: string; title?: string | null; customer_name?: string | null; phone_number?: string | null;
   start_at: string; end_at: string; status?: string; source?: string;
-  google_event_id?: string | null; note?: string | null;
+  google_event_id?: string | null; note?: string | null; meet_url?: string | null;
 }
 
 /** 期間内の予約（cancelledを除く）を開始時刻順に返す。 */
@@ -31,16 +31,16 @@ export async function createAppointment(tenantId: string, a: AppointmentInput) {
       id: newId('ap'), tenant_id: tenantId, contact_id: a.contact_id ?? null, call_id: a.call_id ?? null,
       type: a.type ?? '査定', title: a.title ?? null, customer_name: a.customer_name ?? null, phone_number: a.phone_number ?? null,
       start_at: a.start_at, end_at: a.end_at, status: a.status ?? 'confirmed', source: a.source ?? 'manual',
-      google_event_id: a.google_event_id ?? null, note: a.note ?? null, created_at: new Date().toISOString(),
+      google_event_id: a.google_event_id ?? null, note: a.note ?? null, meet_url: a.meet_url ?? null, created_at: new Date().toISOString(),
     };
     demoAppointments.push(row);
     return row;
   }
   const [row] = await query<any>(
-    `insert into appointments (tenant_id, contact_id, call_id, type, title, customer_name, phone_number, start_at, end_at, status, source, google_event_id, note)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) returning *`,
+    `insert into appointments (tenant_id, contact_id, call_id, type, title, customer_name, phone_number, start_at, end_at, status, source, google_event_id, note, meet_url)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) returning *`,
     [tenantId, a.contact_id ?? null, a.call_id ?? null, a.type ?? '査定', a.title ?? null, a.customer_name ?? null, a.phone_number ?? null,
-     a.start_at, a.end_at, a.status ?? 'confirmed', a.source ?? 'manual', a.google_event_id ?? null, a.note ?? null]);
+     a.start_at, a.end_at, a.status ?? 'confirmed', a.source ?? 'manual', a.google_event_id ?? null, a.note ?? null, a.meet_url ?? null]);
   return row;
 }
 

@@ -234,15 +234,15 @@ export interface DemoAppointment {
   id: string; tenant_id: string; contact_id: string | null; call_id: string | null;
   type: string; title: string | null; customer_name: string | null; phone_number: string | null;
   start_at: string; end_at: string; status: string; source: string;
-  google_event_id: string | null; note: string | null; created_at: string;
+  google_event_id: string | null; note: string | null; meet_url: string | null; created_at: string;
 }
 // 当日の指定時刻(JST想定)を ISO で返すデモ用ヘルパー。
 function todayAt(hour: number, min = 0): string {
   const d = new Date(); d.setHours(hour, min, 0, 0); return d.toISOString();
 }
 export const demoAppointments: DemoAppointment[] = [
-  { id: 'ap-1', tenant_id: TENANT, contact_id: 'ct-1', call_id: null, type: '査定', title: '田中様 出張査定', customer_name: '田中太郎', phone_number: '+819012340001', start_at: todayAt(11, 0), end_at: todayAt(11, 45), status: 'confirmed', source: 'ai_outbound', google_event_id: null, note: '車種：プリウス／年式2019／走行4万km', created_at: iso(-60 * 24) },
-  { id: 'ap-2', tenant_id: TENANT, contact_id: null, call_id: 'call-1002', type: 'オンライン査定', title: '佐藤様 オンライン査定（遠方）', customer_name: '佐藤健一', phone_number: '+819033334444', start_at: todayAt(14, 30), end_at: todayAt(15, 0), status: 'tentative', source: 'ai_inbound', google_event_id: null, note: 'ヴェルファイア2018／ローン残債あり／対応エリア外のため写真・ビデオで査定', created_at: iso(-100) },
+  { id: 'ap-1', tenant_id: TENANT, contact_id: 'ct-1', call_id: null, type: '出張査定', title: '田中様 出張査定', customer_name: '田中太郎', phone_number: '+819012340001', start_at: todayAt(11, 0), end_at: todayAt(11, 45), status: 'confirmed', source: 'ai_outbound', google_event_id: null, note: '車種：プリウス／年式2019／走行4万km', meet_url: null, created_at: iso(-60 * 24) },
+  { id: 'ap-2', tenant_id: TENANT, contact_id: null, call_id: 'call-1002', type: 'オンライン査定', title: '佐藤様 オンライン査定（遠方）', customer_name: '佐藤健一', phone_number: '+819033334444', start_at: todayAt(14, 30), end_at: todayAt(15, 0), status: 'tentative', source: 'ai_inbound', google_event_id: null, note: 'ヴェルファイア2018／ローン残債あり／対応エリア外のため写真・ビデオで査定', meet_url: 'https://meet.google.com/demo-abc-defg', created_at: iso(-100) },
 ];
 
 export interface DemoExpense { id: string; label: string; category: string; monthly_jpy: number; created_at: string; }
