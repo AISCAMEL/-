@@ -3,7 +3,8 @@ import AlertBanner from "./alert-banner";
 import DashboardKpi from "./dashboard-kpi";
 
 const sections = [
-  { title: "猫グッズ スクリーニング", icon: "🔍", desc: "Amazon・楽天で調査し利益率で採点・ランキング", href: "/research", ready: true, color: "#a78bfa" },
+  { title: "市場調査（無料）", icon: "📊", desc: "楽天・Yahoo!でキーワード検索し価格帯とレビューを確認", href: "/market", ready: true, color: "#3b82f6" },
+  { title: "猫グッズ スクリーニング", icon: "🔍", desc: "仕入先APIと突き合わせて利益率で採点・ランキング", href: "/research", ready: true, color: "#a78bfa" },
   { title: "SNS集客リンク（UTM）", icon: "📣", desc: "投稿ごとの計測リンクを発行（TikTok/Instagram）", href: "/marketing", ready: true, color: "#f472b6" },
   { title: "受注 / 損益", icon: "🧾", desc: "受注一覧と売上・原価・手数料・利益の可視化", href: "/orders", ready: true, color: "#6ee7b7" },
   { title: "在庫・価格同期", icon: "🔄", desc: "仕入れ先を監視し欠品は自動非公開・価格は再計算", href: "/sync", ready: true, color: "#fdba74" },
