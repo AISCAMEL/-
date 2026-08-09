@@ -79,8 +79,11 @@ export const demoSettings = {
   recording_enabled: false,
   human_transfer_enabled: true,
   transfer_phone_number: '+815011112222',
-  notification_email: 'owner@example.com',
-  slack_webhook_url: '',
+  // デモモード（DB未接続）では設定はメモリ上のこのオブジェクトに保持され、
+  // 再起動・スリープ復帰でリセットされる。Renderの環境変数を初期値にしておけば
+  // 再起動しても通知先/Slackが保持され、実運用の確認がしやすい。
+  notification_email: process.env.DEMO_NOTIFICATION_EMAIL ?? 'owner@example.com',
+  slack_webhook_url: process.env.DEMO_SLACK_WEBHOOK_URL ?? '',
   notify_on_call_end: true,
   notify_on_callback: true,
   notify_on_transfer: true,
