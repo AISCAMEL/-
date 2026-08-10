@@ -286,8 +286,8 @@ function seedDemo() {
   const now = Date.now();
   const lead: Lead = {
     id: 'lead-demo1', source: 'lp_form', category: 'consultation', status: 'contacted',
-    name: '田中一郎', company: '田中工務店', email: 'tanaka@example.com', phone: '+819012345678',
-    industry: '工事業', message: '営業時間外の電話を取りこぼしているので相談したい。',
+    name: '中村健太', company: '中村オートセールス', email: 'nakamura@example.com', phone: '+819012345678',
+    industry: '中古車販売・買取', message: '商談中や定休日に査定の電話を取りこぼしている。AIで一次受付と画像査定の案内を任せたい。',
     assigned_to: null, meta: { utm_source: 'google' },
     created_at: new Date(now - 86400_000 * 2).toISOString(), updated_at: new Date(now - 86400_000).toISOString(),
   };

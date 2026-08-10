@@ -292,10 +292,18 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
       should_follow_up: false,
     } as const;
     const result = await sendCallNotification(dest, { fromNumber: call.from_number ?? '', summary, statusLabel: '再通知' });
+    await q.addNotification({
+      tenantId: p.tenantId, callId: call.id, type: 'email', destination: dest,
+      status: result.ok ? 'sent' : 'failed', subject: '【AIオペレーター24】通知の再送', error: result.error ?? null,
+    });
     // Slack Webhook 設定時はSlackにも通知する
     let slack: { ok: boolean; error?: string } | null = null;
     if (settings?.slack_webhook_url) {
       slack = await sendSlackNotification(settings.slack_webhook_url, { fromNumber: call.from_number ?? '', summary, statusLabel: '再通知' });
+      await q.addNotification({
+        tenantId: p.tenantId, callId: call.id, type: 'slack', destination: 'Slack',
+        status: slack.ok ? 'sent' : 'failed', subject: null, error: slack.error ?? null,
+      });
     }
     return { ok: result.ok, destination: dest, error: result.error, slack };
   });

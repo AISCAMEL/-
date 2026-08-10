@@ -496,6 +496,30 @@ export async function listNotifications(tenantId: string, limit = 50) {
   );
 }
 
+/** 実際の通知送信結果を送信ログに記録する（デモ時はメモリ配列の先頭へ、DB時はテーブルへ）。 */
+export async function addNotification(input: {
+  tenantId: string; callId: string | null; type: string; destination: string | null;
+  status: 'sent' | 'failed'; subject: string | null; error?: string | null;
+}): Promise<void> {
+  const now = new Date().toISOString();
+  if (!dbEnabled) {
+    demoNotifications.unshift({
+      id: newId('ntf'), tenant_id: input.tenantId, call_id: input.callId, type: input.type,
+      destination: input.destination, status: input.status, subject: input.subject,
+      error_message: input.error ?? null, created_at: now,
+      sent_at: input.status === 'sent' ? now : null,
+    });
+    // メモリ肥大を防ぐため直近100件に制限。
+    if (demoNotifications.length > 100) demoNotifications.length = 100;
+    return;
+  }
+  await query(
+    `insert into notifications (tenant_id, call_id, type, destination, status, subject, error_message, sent_at)
+     values ($1,$2,$3,$4,$5,$6,$7, case when $5='sent' then now() else null end)`,
+    [input.tenantId, input.callId, input.type, input.destination, input.status, input.subject, input.error ?? null],
+  );
+}
+
 // ---------------- Phone numbers ----------------
 export async function listPhoneNumbers(tenantId: string) {
   if (!dbEnabled) return demoPhoneNumbers.filter((p) => p.tenant_id === tenantId || tenantId === demoTenant.id);

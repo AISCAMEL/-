@@ -159,9 +159,16 @@ export const demoCalls: DemoCall[] = [
 ];
 
 export const demoFaqs: DemoFaq[] = [
-  { id: 'faq-1', tenant_id: TENANT, question: '営業時間・対応エリアを教えてください', answer: '受付は平日10時から19時、土曜10時から17時です。全国対応・無料出張査定も承っております。', category: '営業案内', keywords: ['営業時間', '何時', 'エリア', '出張'], is_active: true, sort_order: 1, created_at: iso(-1000), updated_at: iso(-1000) },
-  { id: 'faq-2', tenant_id: TENANT, question: '買取査定をお願いしたい', answer: '無料査定を承ります。車種・年式・走行距離・おおよその状態をお伺いし、担当者より査定のご案内をいたします。出張・持ち込みどちらも対応可能です。', category: '買取査定', keywords: ['売りたい', '買取', '査定'], is_active: true, sort_order: 2, created_at: iso(-1000), updated_at: iso(-1000) },
-  { id: 'faq-3', tenant_id: TENANT, question: '査定に必要なもの・ローンが残っていても売れますか', answer: '車検証・お認印・ご本人確認書類をご用意ください。ローン中のお車も残債精算を含めて対応可能です。詳細は担当者よりご案内します。', category: '必要書類', keywords: ['必要', '書類', 'ローン', '残債'], is_active: true, sort_order: 3, created_at: iso(-1000), updated_at: iso(-1000) },
+  { id: 'faq-1', tenant_id: TENANT, question: '営業時間・対応エリアを教えてください', answer: '受付は平日10時から19時、土曜10時から17時です。出張査定はエリアが限られるため、遠方のお客様には写真・ビデオでのオンライン査定を承っております。', category: '営業案内', keywords: ['営業時間', '何時', 'エリア', '出張'], is_active: true, sort_order: 1, created_at: iso(-1000), updated_at: iso(-1000) },
+  { id: 'faq-2', tenant_id: TENANT, question: '買取査定をお願いしたい', answer: '無料査定を承ります。車種・年式・走行距離・おおよその状態と、お住まいの地域をお伺いします。基本はお写真を送っていただく画像査定でご案内し、ご希望の方には出張・持ち込み・オンライン査定も承ります。', category: '買取査定', keywords: ['売りたい', '買取', '査定'], is_active: true, sort_order: 2, created_at: iso(-1000), updated_at: iso(-1000) },
+  { id: 'faq-3', tenant_id: TENANT, question: '画像査定（写真を送るだけ）はできますか', answer: 'はい、お写真を送っていただく画像査定を基本で承っております。お客様の携帯番号あてに査定フォームのURLをショートメール（SMS）でお送りしますので、車検証・外装・内装・メーターのお写真をお送りください。担当者より概算をご案内します。', category: '査定', keywords: ['画像', '写真', 'SMS', 'フォーム', 'ショートメール'], is_active: true, sort_order: 3, created_at: iso(-1000), updated_at: iso(-1000) },
+  { id: 'faq-4', tenant_id: TENANT, question: '出張査定はできますか / 遠方でも売れますか', answer: '対応エリア内であれば無料の出張査定を承ります。エリア外・遠方の場合は、写真・ビデオでのオンライン査定でご案内し、金額にご納得いただけましたら陸送・引き取りの手配も可能です。', category: '査定', keywords: ['出張', '遠方', 'オンライン', 'エリア外'], is_active: true, sort_order: 4, created_at: iso(-1000), updated_at: iso(-1000) },
+  { id: 'faq-5', tenant_id: TENANT, question: '査定に必要なものは？', answer: '車検証・お認印・ご本人確認書類をご用意ください。画像・オンライン査定の場合は、車検証と外装・内装・メーターのお写真があるとスムーズです。', category: '必要書類', keywords: ['必要', '書類', '車検証', '本人確認'], is_active: true, sort_order: 5, created_at: iso(-1000), updated_at: iso(-1000) },
+  { id: 'faq-6', tenant_id: TENANT, question: 'ローンが残っていても売れますか', answer: '残債のあるお車も買取可能です。残債精算のお手続きも含めて担当者がご案内します。おおよその残額をお伺いできますとスムーズです。', category: '買取査定', keywords: ['ローン', '残債', '残ってる'], is_active: true, sort_order: 6, created_at: iso(-1000), updated_at: iso(-1000) },
+  { id: 'faq-7', tenant_id: TENANT, question: '事故車・不動車・車検切れでも買い取れますか', answer: '事故車・不動車・車検切れのお車も査定対象です。状態と地域をお伺いし、引き取りを含めて担当者より買取可否と目安をご案内します。', category: '買取査定', keywords: ['事故車', '不動車', '車検切れ', '動かない'], is_active: true, sort_order: 7, created_at: iso(-1000), updated_at: iso(-1000) },
+  { id: 'faq-8', tenant_id: TENANT, question: '査定料や出張費、キャンセル料はかかりますか', answer: '査定料・出張費・キャンセル料はすべて無料です。査定後に売却をお決めいただかなくても費用は一切かかりません。', category: '料金', keywords: ['査定料', '費用', '無料', 'キャンセル料'], is_active: true, sort_order: 8, created_at: iso(-1000), updated_at: iso(-1000) },
+  { id: 'faq-9', tenant_id: TENANT, question: '入金・名義変更はいつになりますか', answer: '必要書類が揃えば最短即日でのお支払いも可能です。名義変更（移転登録）は当店で責任をもって手続きいたします。詳細は担当者よりご案内します。', category: '手続き', keywords: ['入金', '名義変更', '支払い', 'いつ'], is_active: true, sort_order: 9, created_at: iso(-1000), updated_at: iso(-1000) },
+  { id: 'faq-10', tenant_id: TENANT, question: '査定額はその場でわかりますか / 相見積もりでも大丈夫ですか', answer: 'お車を確認のうえ査定額をご提示します。お電話では概算までとなり、確定額は現車・画像確認後となります（金額の確約はいたしかねます）。相見積もりも歓迎です。他社様の条件を伺えれば精一杯がんばります。', category: '買取査定', keywords: ['査定額', 'いくら', '相見積もり', '他社'], is_active: true, sort_order: 10, created_at: iso(-1000), updated_at: iso(-1000) },
 ];
 
 export interface DemoUser {
@@ -217,10 +224,12 @@ export const demoCallerRules: DemoCallerRule[] = [
   { id: 'cr-2', tenant_id: TENANT, phone_number: '+819011112222', action: 'greeting', message: 'いつもありがとうございます。VIPのお客様として担当者へおつなぎします。', label: 'VIP', created_at: iso(-60 * 24) },
 ];
 
+// 送信ログのサンプル（実際の「通知を再送」を行うと、この配列の先頭に本物の結果が積み上がる）。
+const demoNotifyDest = process.env.DEMO_NOTIFICATION_EMAIL ?? 'owner@example.com';
 export const demoNotifications: DemoNotification[] = [
-  { id: 'ntf-1', tenant_id: TENANT, call_id: 'call-1001', type: 'email', destination: 'owner@example.com', status: 'sent', subject: '【AIオペレーター24】新しい電話受付がありました', error_message: null, created_at: iso(-33), sent_at: iso(-33) },
-  { id: 'ntf-2', tenant_id: TENANT, call_id: 'call-1002', type: 'email', destination: 'owner@example.com', status: 'sent', subject: '【AIオペレーター24】新しい電話受付がありました', error_message: null, created_at: iso(-119), sent_at: iso(-119) },
-  { id: 'ntf-3', tenant_id: TENANT, call_id: 'call-1002', type: 'slack', destination: 'slack', status: 'failed', subject: null, error_message: 'Slack 404: invalid_token', created_at: iso(-119), sent_at: null },
+  { id: 'ntf-1', tenant_id: TENANT, call_id: 'call-1001', type: 'email', destination: demoNotifyDest, status: 'sent', subject: '【AIオペレーター24】新しい電話受付がありました', error_message: null, created_at: iso(-33), sent_at: iso(-33) },
+  { id: 'ntf-2', tenant_id: TENANT, call_id: 'call-1002', type: 'slack', destination: 'Slack', status: 'sent', subject: null, error_message: null, created_at: iso(-119), sent_at: iso(-119) },
+  { id: 'ntf-3', tenant_id: TENANT, call_id: 'call-1002', type: 'email', destination: demoNotifyDest, status: 'sent', subject: '【AIオペレーター24】新しい電話受付がありました', error_message: null, created_at: iso(-119), sent_at: iso(-119) },
 ];
 
 
