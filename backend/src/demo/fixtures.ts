@@ -102,6 +102,48 @@ export const demoPhoneNumbers = [
   { id: 'pn-1', tenant_id: TENANT, phone_number: '+815099998888', type: 'demo', status: 'active', assigned_at: iso(-60 * 24 * 7) },
 ];
 
+// ---- ダッシュボード/利用状況を自然に見せるための履歴（軽量：詳細な会話ログは持たない） ----
+// n日前の指定時刻(ローカル)を ISO で返す。n>=1 のため常に過去（未来時刻にならない）。
+function atDaysAgo(days: number, hour: number, min = 0): string {
+  const d = new Date(Date.now() - days * 86400_000);
+  d.setHours(hour, min, 0, 0);
+  return d.toISOString();
+}
+interface Hist {
+  days: number; hour: number; cat: string; status: string;
+  name: string | null; detail: string; summary: string; dur: number; tags: string[]; phone: string;
+}
+// 直近2週間の受付履歴（今週=1〜7日前が多め、先週=8〜13日前）。車買取の実務に沿った内訳。
+const histData: Hist[] = [
+  { days: 1, hour: 10, cat: 'reservation', status: 'completed', name: '高橋美咲', detail: 'ノート2021・画像査定フォーム送付', summary: '高橋様よりノート2021の査定依頼。画像査定フォームをSMS送付。', dur: 78, tags: ['画像査定'], phone: '+819020000101' },
+  { days: 1, hour: 14, cat: 'pricing', status: 'completed', name: '渡辺翔', detail: 'ハリアー2019の相場を確認', summary: '渡辺様よりハリアー2019の買取相場のお問い合わせ。概算を案内し画像査定へ誘導。', dur: 112, tags: ['買取査定'], phone: '+819020000102' },
+  { days: 2, hour: 11, cat: 'reservation', status: 'completed', name: '伊藤大輔', detail: 'フィット2017・出張査定を予約', summary: '伊藤様よりフィット2017の出張査定を予約。日程は担当調整。', dur: 95, tags: ['出張査定'], phone: '+819020000103' },
+  { days: 2, hour: 16, cat: 'callback', status: 'callback_requested', name: '山本花子', detail: 'セレナ・査定額の折り返し希望', summary: '山本様よりセレナの査定額について折り返し希望。', dur: 54, tags: ['買取査定'], phone: '+819020000104' },
+  { days: 3, hour: 9, cat: 'inquiry', status: 'completed', name: '中村誠', detail: '必要書類の問い合わせ', summary: '中村様より査定に必要な書類のお問い合わせ。車検証・本人確認書類を案内。', dur: 41, tags: [], phone: '+819020000105' },
+  { days: 3, hour: 13, cat: 'reservation', status: 'completed', name: '小林由紀', detail: 'アクア2020・画像査定', summary: '小林様よりアクア2020の画像査定依頼。フォームSMS送付。', dur: 69, tags: ['画像査定'], phone: '+819020000106' },
+  { days: 3, hour: 18, cat: 'transfer', status: 'transferred', name: '加藤健', detail: '担当者へ直接相談希望', summary: '加藤様より具体的な条件相談のため担当者へ転送。', dur: 150, tags: ['買取査定'], phone: '+819020000107' },
+  { days: 4, hour: 10, cat: 'reservation', status: 'completed', name: '吉田優子', detail: 'ヴォクシー2018・出張査定', summary: '吉田様よりヴォクシー2018の出張査定を予約。', dur: 88, tags: ['出張査定'], phone: '+819020000108' },
+  { days: 4, hour: 15, cat: 'pricing', status: 'completed', name: '佐々木亮', detail: 'ローン残債ありの売却相談', summary: '佐々木様よりローン残債ありのお車の売却相談。残債精算を案内。', dur: 132, tags: ['買取査定'], phone: '+819020000109' },
+  { days: 5, hour: 12, cat: 'reservation', status: 'completed', name: '松本さやか', detail: 'タント2019・画像査定', summary: '松本様よりタント2019の画像査定依頼。フォームSMS送付。', dur: 63, tags: ['画像査定'], phone: '+819020000110' },
+  { days: 5, hour: 17, cat: 'inquiry', status: 'new', name: null, detail: '査定エリアの確認（無言気味）', summary: '対応エリアの確認。詳細不明のため折り返し要。', dur: 32, tags: [], phone: '+819020000111' },
+  { days: 6, hour: 11, cat: 'reservation', status: 'completed', name: '井上和也', detail: 'CX-5 2020・持込査定を予約', summary: '井上様よりCX-5の持込査定を予約。来店日時を案内。', dur: 84, tags: ['持込査定'], phone: '+819020000112' },
+  { days: 7, hour: 14, cat: 'pricing', status: 'completed', name: '木村麻衣', detail: '遠方・オンライン査定を案内', summary: '木村様（遠方）へオンライン査定を案内。写真・ビデオでの査定へ。', dur: 101, tags: ['オンライン査定'], phone: '+819020000113' },
+  { days: 8, hour: 10, cat: 'reservation', status: 'completed', name: '林大地', detail: 'スイフト2016・画像査定', summary: '林様よりスイフト2016の画像査定依頼。', dur: 58, tags: ['画像査定'], phone: '+819020000114' },
+  { days: 9, hour: 16, cat: 'callback', status: 'callback_requested', name: '清水彩', detail: 'デイズ・査定額の折り返し', summary: '清水様よりデイズの査定額について折り返し希望。', dur: 47, tags: ['買取査定'], phone: '+819020000115' },
+  { days: 10, hour: 13, cat: 'complaint', status: 'completed', name: '斎藤浩', detail: '折り返しが遅いとのお申し出', summary: '斎藤様より折り返し連絡が遅いとのお申し出。担当へ共有し謝罪・再連絡。', dur: 96, tags: [], phone: '+819020000116' },
+  { days: 11, hour: 12, cat: 'reservation', status: 'completed', name: '山口拓也', detail: 'ステップワゴン2018・出張査定', summary: '山口様よりステップワゴンの出張査定を予約。', dur: 90, tags: ['出張査定'], phone: '+819020000117' },
+  { days: 13, hour: 15, cat: 'reservation', status: 'completed', name: '森田奈々', detail: 'ムーヴ2017・画像査定', summary: '森田様よりムーヴ2017の画像査定依頼。', dur: 66, tags: ['画像査定'], phone: '+819020000118' },
+];
+const demoHistoryCalls: DemoCall[] = histData.map((h, i) => ({
+  id: `call-h${100 + i}`, tenant_id: TENANT, from_number: h.phone, to_number: '+815099998888',
+  status: h.status, category: h.cat, customer_name: h.name, company_name: null,
+  requested_datetime: null, request_detail: h.detail, summary: h.summary,
+  next_action: h.status === 'callback_requested' ? '担当より折り返し' : null,
+  urgency: 'normal', sentiment: h.cat === 'complaint' ? 'negative' : 'neutral',
+  duration_sec: h.dur, started_at: atDaysAgo(h.days, h.hour), ended_at: atDaysAgo(h.days, h.hour),
+  tags: h.tags, transcripts: [], notes: [],
+}));
+
 export const demoCalls: DemoCall[] = [
   {
     id: 'call-1001', tenant_id: TENANT, from_number: '+819011112222', to_number: '+815099998888',
@@ -156,6 +198,7 @@ export const demoCalls: DemoCall[] = [
     ],
     notes: [],
   },
+  ...demoHistoryCalls,
 ];
 
 export const demoFaqs: DemoFaq[] = [
@@ -177,8 +220,9 @@ export interface DemoUser {
 }
 
 export const demoUsers: DemoUser[] = [
-  { id: 'user-1', tenant_id: TENANT, name: 'デモ店長', email: 'owner@example.com', role: 'owner', is_active: true, created_at: iso(-60 * 24 * 30) },
-  { id: 'user-2', tenant_id: TENANT, name: '受付スタッフ A', email: 'staff-a@example.com', role: 'staff', is_active: true, created_at: iso(-60 * 24 * 10) },
+  { id: 'user-1', tenant_id: TENANT, name: '店長（オーナー）', email: 'owner@example.com', role: 'owner', is_active: true, created_at: iso(-60 * 24 * 30) },
+  { id: 'user-2', tenant_id: TENANT, name: '受付担当 佐藤', email: 'sato@example.com', role: 'staff', is_active: true, created_at: iso(-60 * 24 * 10) },
+  { id: 'user-3', tenant_id: TENANT, name: '査定担当 鈴木', email: 'suzuki@example.com', role: 'admin', is_active: true, created_at: iso(-60 * 24 * 20) },
 ];
 
 export function newId(prefix: string): string {
@@ -204,8 +248,10 @@ export const demoCampaigns: DemoCampaign[] = [
   },
 ];
 export const demoTargets: DemoTarget[] = [
-  { id: 'tgt-1', campaign_id: 'camp-1', tenant_id: TENANT, name: '田中様', company: '田中商店', phone_number: '+819012340001', status: 'pending', outcome: null, note: null, amount: null, due_date: null, created_at: iso(-60 * 24) },
-  { id: 'tgt-2', campaign_id: 'camp-1', tenant_id: TENANT, name: '鈴木様', company: null, phone_number: '+819012340002', status: 'pending', outcome: null, note: null, amount: null, due_date: null, created_at: iso(-60 * 24) },
+  { id: 'tgt-1', campaign_id: 'camp-1', tenant_id: TENANT, name: '田中様', company: null, phone_number: '+819012340001', status: 'done', outcome: '査定予約', note: 'プリウス2019・出張査定の日程を打診。担当へ引き継ぎ。', amount: null, due_date: null, created_at: iso(-60 * 24 * 3) },
+  { id: 'tgt-2', campaign_id: 'camp-1', tenant_id: TENANT, name: '鈴木様', company: null, phone_number: '+819012340002', status: 'done', outcome: '要折り返し', note: '検討中。1週間後に再連絡希望。', amount: null, due_date: daysFromNow(7), created_at: iso(-60 * 24 * 2) },
+  { id: 'tgt-3', campaign_id: 'camp-1', tenant_id: TENANT, name: '高橋様', company: null, phone_number: '+819012340003', status: 'pending', outcome: null, note: null, amount: null, due_date: null, created_at: iso(-60 * 24) },
+  { id: 'tgt-4', campaign_id: 'camp-1', tenant_id: TENANT, name: '渡辺様', company: null, phone_number: '+819012340004', status: 'pending', outcome: null, note: null, amount: null, due_date: null, created_at: iso(-60 * 24) },
 ];
 
 export interface DemoNotification {

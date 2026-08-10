@@ -37,28 +37,35 @@ const ATTENTION_STATUSES = ['new', 'need_human'];
 // ---------------- Dashboard ----------------
 export async function getDashboard(tenantId: string) {
   if (!dbEnabled) {
-    const today = demoCalls; // デモは全件を当日扱い
-    const recent = [...today].sort((a, b) => b.started_at.localeCompare(a.started_at)).slice(0, 10);
-    const weekAgo = new Date(Date.now() - 7 * 86400_000).toISOString();
-    const twoWeeksAgo = new Date(Date.now() - 14 * 86400_000).toISOString();
-    const this_week = today.filter((c) => c.started_at >= weekAgo).length;
-    const last_week = today.filter((c) => c.started_at >= twoWeeksAgo && c.started_at < weekAgo).length;
+    const all = demoCalls.filter((c) => c.tenant_id === tenantId || tenantId === demoTenant.id);
+    const now = Date.now();
+    const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
+    const startOfMonth = new Date(); startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
+    const todayIso = startOfToday.toISOString();
+    const monthIso = startOfMonth.toISOString();
+    const weekAgo = new Date(now - 7 * 86400_000).toISOString();
+    const twoWeeksAgo = new Date(now - 14 * 86400_000).toISOString();
+    const monthCalls = all.filter((c) => c.started_at >= monthIso);
+    const recent = [...all].sort((a, b) => b.started_at.localeCompare(a.started_at)).slice(0, 10);
+    const this_week = all.filter((c) => c.started_at >= weekAgo).length;
+    const last_week = all.filter((c) => c.started_at >= twoWeeksAgo && c.started_at < weekAgo).length;
     const byCategory: Record<string, number> = {};
     const byHour = Array.from({ length: 24 }, () => 0);
     const byTag: Record<string, number> = {};
-    for (const c of today) {
+    for (const c of monthCalls) {
       if (c.category) byCategory[c.category] = (byCategory[c.category] ?? 0) + 1;
       byHour[new Date(c.started_at).getHours()]++;
       for (const t of c.tags ?? []) byTag[t] = (byTag[t] ?? 0) + 1;
     }
+    const withDur = monthCalls.filter((c) => c.duration_sec != null);
     return {
-      calls_today: today.length,
-      calls_this_month: today.length,
-      completed_count: today.filter((c) => c.status === 'completed').length,
-      callback_count: today.filter((c) => c.status === 'callback_requested').length,
-      transfer_count: today.filter((c) => c.status === 'transferred').length,
-      unhandled_count: today.filter((c) => ['new', 'need_human'].includes(c.status)).length,
-      avg_duration_sec: Math.round(today.reduce((s, c) => s + (c.duration_sec ?? 0), 0) / (today.length || 1)),
+      calls_today: all.filter((c) => c.started_at >= todayIso).length,
+      calls_this_month: monthCalls.length,
+      completed_count: monthCalls.filter((c) => c.status === 'completed').length,
+      callback_count: monthCalls.filter((c) => c.status === 'callback_requested').length,
+      transfer_count: monthCalls.filter((c) => c.status === 'transferred').length,
+      unhandled_count: monthCalls.filter((c) => ['new', 'need_human'].includes(c.status)).length,
+      avg_duration_sec: Math.round(withDur.reduce((s, c) => s + (c.duration_sec ?? 0), 0) / (withDur.length || 1)),
       calls_this_week: this_week,
       calls_last_week: last_week,
       by_category: byCategory,

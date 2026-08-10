@@ -7,11 +7,21 @@ import { Card, PageTitle } from '@/components/ui';
 
 interface Turn { role: 'customer' | 'ai'; content: string; intent?: string; transfer?: boolean; }
 
-const SUGGESTIONS = ['営業時間を教えてください', '予約を取りたいです', '料金について聞きたい', '担当者につないでください', '折り返してほしい'];
+const SUGGESTIONS = [
+  '車を売りたいので査定してほしい',
+  'プリウス2019年式、写真で査定できますか？',
+  '青森なんだけど出張で来てもらえる？',
+  'ローンが残ってても売れますか？',
+  '査定料や出張費はかかりますか？',
+  '広告掲載のご案内でお電話しました', // 営業電話の見極め確認
+  '担当者に折り返してほしい',
+];
+
+const OPENING = 'お電話ありがとうございます。車買取専門店、AI受付です。買取査定のご依頼を承ります。お車の車種・年式と、だいたいの地域を教えてください。（これはテスト画面です）';
 
 export default function AiTestPage() {
   const [messages, setMessages] = useState<Turn[]>([
-    { role: 'ai', content: 'お電話ありがとうございます。AI受付です。ご用件をお話しください。（これはテスト画面です）' },
+    { role: 'ai', content: OPENING },
   ]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -39,7 +49,7 @@ export default function AiTestPage() {
   }
 
   function reset() {
-    setMessages([{ role: 'ai', content: 'お電話ありがとうございます。AI受付です。ご用件をお話しください。（これはテスト画面です）' }]);
+    setMessages([{ role: 'ai', content: OPENING }]);
   }
 
   return (

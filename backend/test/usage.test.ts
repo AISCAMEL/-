@@ -5,15 +5,18 @@ import { summarizeCall } from '../src/ai/summarize.js';
 import { config } from '../src/config.js';
 
 // DB未接続（デモモード）での集計を検証。
+// デモには当日の詳細通話3件＋直近2週間の履歴が含まれ、当月件数・分数は実行日により変動する。
+// そのため固定値ではなく「必ず成り立つ下限」と「収益＝基本料＋着信×単価＋従量分×単価の内部整合」で検証する。
 test('getUsageSummary: デモテナントの当月集計', async () => {
   const s = await getUsageSummary(config.demoTenantId);
   assert.equal(s.plan.key, 'business');
-  // デモ通話3件: 92s,64s,28s → 2+2+1 = 5分
-  assert.equal(s.billable_minutes, 5);
-  // 営業プラン: 基本料6980 ＋ 着信3件×¥30 ＋ 通話5分×¥25
-  assert.equal(s.revenue_jpy, 6980 + 3 * 30 + 5 * 25);
-  assert.equal(s.cost.total_jpy, 63.16);
-  assert.ok(s.margin_rate > 99 && s.margin_rate <= 100);
+  // 当日の詳細3件（96s,68s,40s → 2+2+1）は必ず当月に含まれる
+  assert.ok(s.calls >= 3, `calls=${s.calls}`);
+  assert.ok(s.billable_minutes >= 5, `billable=${s.billable_minutes}`);
+  // 営業プラン: 基本料6980 ＋ 着信×¥30 ＋ 従量分×¥25（無料分なし）で内部整合していること
+  assert.equal(s.revenue_jpy, 6980 + s.calls * 30 + s.billable_minutes * 25);
+  assert.ok(s.cost.total_jpy > 0);
+  assert.ok(s.margin_rate > 90 && s.margin_rate <= 100);
 });
 
 test('summarizeCall: LLM未設定時はフォールバック要約', async () => {
