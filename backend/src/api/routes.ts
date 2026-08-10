@@ -19,8 +19,21 @@ import { config } from '../config.js';
 import { sendEmail } from '../notify/email.js';
 import { sendSms } from '../notify/sms.js';
 import * as calendar from '../calendar/index.js';
+import { googleOAuthConfigured, buildGoogleAuthUrl, exchangeCodeForTokens, fetchPrimaryCalendarId } from '../calendar/google.js';
+import jwt from 'jsonwebtoken';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// OAuth stateの署名鍵。JWT secret があればそれを、無ければ Google client secret を使う（連携時は必ず存在）。
+function oauthStateSecret(): string {
+  return config.auth.jwtSecret || config.google.clientSecret || 'aioperator-oauth-state';
+}
+// 連携後に戻す管理画面(フロント)のURL。PUBLIC_APP_URL 優先、無ければ CORS_ORIGIN の先頭。
+function appRedirectBase(): string {
+  if (config.appUrl) return config.appUrl.replace(/\/$/, '');
+  if (config.corsOrigin && config.corsOrigin !== '*') return config.corsOrigin.split(',')[0].trim().replace(/\/$/, '');
+  return '';
+}
 
 // 設定更新時の入力検証。問題があればエラーメッセージ、なければ null。
 function validateSettingsPatch(patch: Record<string, unknown>): string | null {
@@ -619,6 +632,40 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     if ('appointment_duration_min' in b) patch.appointment_duration_min = Number(b.appointment_duration_min) || 45;
     await q.updateSettings(p.tenantId, patch);
     return calendar.calendarStatus(p.tenantId);
+  });
+
+  // Googleワンクリック連携①：同意画面URLを発行（管理者のみ）。stateにテナントを署名して載せる。
+  app.get('/api/calendar/oauth/start', { preHandler: manageOutbound }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    if (!googleOAuthConfigured()) {
+      return reply.code(400).send({ error: 'GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET が未設定です。' });
+    }
+    const state = jwt.sign({ t: p.tenantId, purpose: 'gcal' }, oauthStateSecret(), { expiresIn: '10m' });
+    return { url: buildGoogleAuthUrl(state) };
+  });
+
+  // Googleワンクリック連携②：Googleからのコールバック。認可コードをトークンに交換して保存し、管理画面へ戻す。
+  // ブラウザ経由でGoogleがリダイレクトしてくるため、ここは公開エンドポイント（stateの署名で正当性を担保）。
+  app.get('/api/calendar/oauth/callback', async (req, reply) => {
+    const { code, state, error } = req.query as Record<string, string>;
+    const base = appRedirectBase();
+    const back = (status: string) => base
+      ? reply.redirect(`${base}/appointments?google=${status}`)
+      : reply.type('text/html').send(`<html lang="ja"><body style="font-family:sans-serif;padding:2rem">Googleカレンダー連携：<b>${status === 'connected' ? '成功しました' : '失敗しました（' + status + '）'}</b>。管理画面の「予約管理」に戻ってください。</body></html>`);
+    if (error) return back('denied');
+    if (!code || !state) return back('invalid');
+    let tenantId: string;
+    try {
+      const claims = jwt.verify(state, oauthStateSecret()) as any;
+      if (claims.purpose !== 'gcal' || !claims.t) return back('invalid');
+      tenantId = claims.t;
+    } catch { return back('expired'); }
+    const tokens = await exchangeCodeForTokens(code);
+    if (!tokens?.refreshToken) return back('notoken'); // 再同意が必要（prompt=consentで通常は取得できる）
+    const calendarId = tokens.accessToken ? await fetchPrimaryCalendarId(tokens.accessToken) : 'primary';
+    await q.updateSettings(tenantId, { google_refresh_token: tokens.refreshToken, google_calendar_id: calendarId });
+    return back('connected');
   });
   // 指定日の空き枠（内部予約＋Google予定を除外）
   app.get('/api/appointments/slots', { preHandler: authenticate }, async (req, reply) => {

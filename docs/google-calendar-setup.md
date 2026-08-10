@@ -25,7 +25,9 @@
 2. 「APIとサービス」→「ライブラリ」→ **Google Calendar API** を有効化
 3. 「OAuth同意画面」を設定（テスト/外部）。スコープに `https://www.googleapis.com/auth/calendar` を追加
 4. 「認証情報」→「OAuthクライアントID」→ 種類は **ウェブアプリケーション**
-   - リダイレクトURIに `https://developers.google.com/oauthplayground` を追加（トークン取得用）
+   - **承認済みのリダイレクトURI**に、次の2つを追加：
+     - `https://<バックエンドのホスト>/api/calendar/oauth/callback` （★ワンクリック連携用・推奨）
+     - `https://developers.google.com/oauthplayground` （手動取得のフォールバック用）
 5. 発行された **クライアントID / クライアントシークレット** を控える
 6. Render のバックエンドに環境変数を追加：
 
@@ -33,10 +35,23 @@
 |---|---|
 | `GOOGLE_CLIENT_ID` | `xxxx.apps.googleusercontent.com` |
 | `GOOGLE_CLIENT_SECRET` | `GOCSPX-...` |
+| `PUBLIC_APP_URL` | 管理画面(フロント)のURL（連携後にここへ戻す。例：`https://1-ymob.onrender.com`） |
+| `GOOGLE_REDIRECT_URI` | （任意）既定は `PUBLIC_API_BASE_URL + /api/calendar/oauth/callback`。上のリダイレクトURIと一致させる |
 
 ---
 
-## ステップB：店舗のリフレッシュトークンを取得
+## ステップB（推奨）：ワンクリックで連携する
+
+1. 管理画面 →「**予約管理**」→ 上部の「**Googleアカウントで連携**」ボタンを押す
+2. 連携したい店舗のGoogleアカウントでログイン・許可
+3. 自動で予約管理画面に戻り、バナーが「✅ Googleカレンダー連携中」になれば成功
+
+> これだけでOKです。カレンダーIDは自動で取得（primary＝そのアカウントのメイン）し、リフレッシュトークンも自動保存します。
+> 別カレンダー（共有カレンダー等）を使いたい場合だけ、下の「詳細設定 → 手動入力」でカレンダーIDを変更してください。
+
+---
+
+## ステップB'（フォールバック）：手動でリフレッシュトークンを取得
 
 各店舗（連携したいGoogleアカウント）でこの作業をします。
 

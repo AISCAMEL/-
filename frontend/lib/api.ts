@@ -99,6 +99,7 @@ export const api = {
   // 予約（査定・来店）＋Googleカレンダー連携
   calendarStatus: () => request<any>('/api/calendar/status'),
   saveCalendarSettings: (body: any) => request<any>('/api/calendar/settings', { method: 'PUT', body: JSON.stringify(body) }),
+  calendarOauthStart: () => request<{ url: string }>('/api/calendar/oauth/start'),
   appointments: (from?: string, to?: string) => {
     const p = new URLSearchParams(); if (from) p.set('from', from); if (to) p.set('to', to);
     const s = p.toString(); return request<any[]>(`/api/appointments${s ? `?${s}` : ''}`);

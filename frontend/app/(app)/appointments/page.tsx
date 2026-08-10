@@ -43,6 +43,33 @@ export default function AppointmentsPage() {
 
   function loadList() { api.appointments().then(setList); }
   function loadStatus() { api.calendarStatus().then((s) => { setStatus(s); setCfg((c) => ({ ...c, appointment_duration_min: s.appointment_duration_min, google_calendar_id: s.calendar_id || '' })); }); }
+
+  // 「Googleで連携」ボタン：同意画面URLを取得して遷移
+  async function connectGoogle() {
+    setMsg('Googleの認証ページへ移動します…');
+    try {
+      const { url } = await api.calendarOauthStart();
+      window.location.href = url;
+    } catch (err: any) {
+      const m = String(err?.message ?? err);
+      setMsg(m.includes('GOOGLE_CLIENT') ? 'サーバーにGoogle連携の設定（GOOGLE_CLIENT_ID/SECRET）がありません。運営側の設定が必要です。' : `エラー: ${m}`);
+      setCfgOpen(true);
+    }
+  }
+
+  // Googleコールバックからの戻り（?google=connected など）を表示
+  useEffect(() => {
+    const g = new URLSearchParams(window.location.search).get('google');
+    if (!g) return;
+    const M: Record<string, string> = {
+      connected: '✅ Googleカレンダーに接続しました。', denied: '連携がキャンセルされました。',
+      expired: '認証の有効期限が切れました。もう一度お試しください。', notoken: '再連携が必要です（Googleの権限画面で「許可」してください）。',
+      invalid: '連携に失敗しました（不正なリクエスト）。', error: '連携に失敗しました。',
+    };
+    setMsg(M[g] ?? '連携結果を確認してください。');
+    window.history.replaceState({}, '', '/appointments'); // クエリを消す
+    loadStatus();
+  }, []);
   const [types, setTypes] = useState<string[]>(['出張査定', '持込査定', 'オンライン査定', '来店商談', '電話商談']);
   useEffect(() => {
     loadList(); loadStatus();
@@ -93,14 +120,35 @@ export default function AppointmentsPage() {
             ? `✅ Googleカレンダー連携中（${status.calendar_id}）。スタッフの予定も避けて予約します。`
             : '⚠️ Googleカレンダー未連携。いまは「店内の予約どうし」の重複のみ防止します。スタッフ個人の予定も避けるには連携してください。'}
         </span>
-        <button onClick={() => setCfgOpen((v) => !v)} className="rounded-lg border bg-white px-3 py-1.5 hover:bg-gray-50">{cfgOpen ? '閉じる' : 'Google連携設定'}</button>
+        <div className="flex gap-2">
+          {!status?.google_connected && (
+            <button onClick={connectGoogle} className="rounded-lg bg-brand px-3 py-1.5 font-medium text-white hover:bg-brand-dark">Googleアカウントで連携</button>
+          )}
+          <button onClick={() => setCfgOpen((v) => !v)} className="rounded-lg border bg-white px-3 py-1.5 hover:bg-gray-50">{cfgOpen ? '閉じる' : '詳細設定'}</button>
+        </div>
       </div>
       {msg && <p className="mb-3 text-sm text-brand">{msg}</p>}
 
       {cfgOpen && (
         <Card className="mb-4">
           <h2 className="mb-2 text-sm font-semibold text-gray-500">Googleカレンダー連携</h2>
-          <form onSubmit={saveCfg} className="space-y-2">
+
+          {/* 推奨：ワンクリック連携 */}
+          <div className="mb-4 rounded-lg border border-brand/30 bg-brand-light/40 p-3">
+            <p className="mb-2 text-sm text-gray-700">
+              {status?.google_connected
+                ? `✅ 連携済み（${status.calendar_id}）。連携し直す場合は下のボタンから。`
+                : 'ボタンを押してGoogleでログイン・許可するだけで連携できます（推奨）。'}
+            </p>
+            <button onClick={connectGoogle} className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark">
+              {status?.google_connected ? 'Googleアカウントを連携し直す' : 'Googleアカウントで連携する'}
+            </button>
+            <p className="mt-2 text-xs text-gray-400">※ 運営側で GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET の設定が必要です（docs/google-calendar-setup.md）。</p>
+          </div>
+
+          <details>
+            <summary className="cursor-pointer text-xs text-gray-500">手動で入力する（上のボタンが使えない場合）</summary>
+          <form onSubmit={saveCfg} className="mt-2 space-y-2">
             <input value={cfg.google_calendar_id} onChange={(e) => setCfg({ ...cfg, google_calendar_id: e.target.value })} placeholder="カレンダーID（例：your@gmail.com）" className="w-full rounded-lg border px-3 py-2 text-sm" />
             <input value={cfg.google_refresh_token} onChange={(e) => setCfg({ ...cfg, google_refresh_token: e.target.value })} placeholder="リフレッシュトークン（docs/google-calendar-setup.md 参照）" className="w-full rounded-lg border px-3 py-2 text-sm" />
             <label className="flex items-center gap-2 text-sm text-gray-600">1件あたりの所要時間
@@ -108,7 +156,8 @@ export default function AppointmentsPage() {
             </label>
             <button className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark">保存</button>
           </form>
-          <p className="mt-2 text-xs text-gray-400">※ 接続手順は docs/google-calendar-setup.md。未接続でも店内予約の重複防止は動きます。</p>
+          </details>
+          <p className="mt-2 text-xs text-gray-400">※ 未接続でも店内予約どうしの重複防止は動きます。スタッフ個人の予定も避けたいときに連携してください。</p>
         </Card>
       )}
 

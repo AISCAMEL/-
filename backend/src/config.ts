@@ -38,7 +38,14 @@ export const config = {
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID ?? '',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
+    // OAuthワンクリック連携のリダイレクト先。未指定ならバックエンドURL＋固定パスを使う。
+    // ここで指定する値は Google Cloud の「承認済みリダイレクトURI」と完全一致させること。
+    redirectUri: process.env.GOOGLE_REDIRECT_URI
+      ?? `${process.env.PUBLIC_API_BASE_URL ?? 'http://localhost:8080'}/api/calendar/oauth/callback`,
   },
+
+  // 連携後にブラウザを戻す管理画面(フロント)のURL。未指定なら CORS_ORIGIN の先頭を使う。
+  appUrl: process.env.PUBLIC_APP_URL ?? '',
 
   // 決済（Square）。docs/square-billing.md 参照。未設定時は課金機能オフ。
   square: {

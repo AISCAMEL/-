@@ -6,6 +6,65 @@ import type { Interval } from './slots.js';
 
 export interface GoogleConn { calendarId: string; refreshToken: string; }
 
+const OAUTH_SCOPE = 'https://www.googleapis.com/auth/calendar';
+
+/** OAuthワンクリック連携が使える構成か（Client ID/Secret が揃っているか）。 */
+export function googleOAuthConfigured(): boolean {
+  return Boolean(config.google.clientId && config.google.clientSecret);
+}
+
+/** Google同意画面のURLを組み立てる。state にテナント紐付けの署名トークンを載せる。 */
+export function buildGoogleAuthUrl(state: string): string {
+  const params = new URLSearchParams({
+    client_id: config.google.clientId,
+    redirect_uri: config.google.redirectUri,
+    response_type: 'code',
+    scope: OAUTH_SCOPE,
+    access_type: 'offline',       // refresh_token を得るため
+    prompt: 'consent',            // 毎回 refresh_token を確実に返させる
+    include_granted_scopes: 'true',
+    state,
+  });
+  return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+}
+
+/** 認可コードを refresh_token / access_token に交換する。失敗時 null。 */
+export async function exchangeCodeForTokens(
+  code: string,
+): Promise<{ refreshToken: string | null; accessToken: string | null } | null> {
+  try {
+    const res = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: config.google.clientId,
+        client_secret: config.google.clientSecret,
+        code,
+        grant_type: 'authorization_code',
+        redirect_uri: config.google.redirectUri,
+      }),
+    });
+    if (!res.ok) { console.error('[google] code exchange failed', res.status, await res.text()); return null; }
+    const data = (await res.json()) as any;
+    return { refreshToken: data.refresh_token ?? null, accessToken: data.access_token ?? null };
+  } catch (err) {
+    console.error('[google] code exchange error', err);
+    return null;
+  }
+}
+
+/** アクセストークンで primary カレンダーのID（通常はメールアドレス）を取得。失敗時 'primary'。 */
+export async function fetchPrimaryCalendarId(accessToken: string): Promise<string> {
+  try {
+    const res = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList/primary', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) return 'primary';
+    const data = (await res.json()) as any;
+    return data.id ?? 'primary';
+  } catch { return 'primary'; }
+}
+
 /** テナント設定から Google 接続情報を取り出す（無ければ null）。 */
 export function googleConnFromSettings(settings: any): GoogleConn | null {
   const calendarId = settings?.google_calendar_id;
