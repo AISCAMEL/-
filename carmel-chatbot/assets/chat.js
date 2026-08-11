@@ -117,9 +117,12 @@
 
 	function focusInput() { try { if (!input.disabled) input.focus(); } catch (e) {} }
 
-	// あいさつ後のガイド（STARTERS＋1秒後の案内）— お名前確認が無効／完了後に使用
+	// あいさつ後のガイド
+	// - intro なし（お名前確認OFF）：STARTERS の候補チップも出す
+	// - intro あり（お名前・メール入力の直後）：候補チップは出さず、案内メッセージだけ表示
+	//   （ユーザーが自分で用件を入力する流れにして、会話が勝手に始まったように見えないようにする）
 	function greetGuide(intro) {
-		renderChoices(STARTERS);
+		if (!intro) { renderChoices(STARTERS); }
 		setTimeout(function () {
 			if (ho.live || convo.engaged) { return; }
 			addBubble("bot", intro || "本日はどのようなご相談ですか？下のメッセージ入力にて、その場でお答えします😊\n\nご希望の回答が得られない場合は、下の「担当者に相談」ボタンからお進みください。オペレーターが対応いたします。");
@@ -176,6 +179,7 @@
 			form.remove();
 			// 入力欄をアンロックして会話へ
 			input.disabled = false; sendBtn.disabled = false;
+			input.removeAttribute("disabled"); sendBtn.removeAttribute("disabled");
 			input.placeholder = "メッセージを入力…";
 			var after = (cfg.intakeAfterMsg || "ありがとうございます、{name}様。本日はどのようなご用件でしょうか？下のメッセージ入力にて、その場でお答えします😊").replace(/\{name\}/g, name);
 			greetGuide(after + "\n\nご希望の回答が得られない場合は、下の「担当者に相談」ボタンからお進みください。オペレーターが対応いたします。");
@@ -259,34 +263,68 @@
 		history.push({ role: "user", content: text });
 		sendBtn.disabled = true;
 		showTyping();
+		callChatEndpoint(text);
+	}
 
-		fetch(cfg.endpoint, {
+	// AIエンドポイントを呼ぶ本体（リトライボタンからも呼び直せるように分離）
+	function callChatEndpoint(text) {
+		var ctrl = null, timer = null;
+		try {
+			ctrl = ("AbortController" in window) ? new AbortController() : null;
+			// クライアント側タイムアウト（60秒）: サーバー側が応答しない時に固まらないよう保険
+			if (ctrl) { timer = setTimeout(function () { try { ctrl.abort(); } catch (e) {} }, 60000); }
+		} catch (e) {}
+
+		var opts = {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ messages: history, session_id: sessionId, page: location.href })
-		})
-			.then(function (r) { return r.json(); })
+		};
+		if (ctrl) { opts.signal = ctrl.signal; }
+
+		fetch(cfg.endpoint, opts)
+			.then(function (r) { if (!r.ok) { throw new Error("HTTP " + r.status); } return r.json(); })
 			.then(function (data) {
 				hideTyping();
 				var reply = (data && data.reply) ? data.reply : "すみません、もう一度お願いします。";
 				if (data && data.session_id) sessionId = data.session_id;
 				addBubble("bot", reply);
-				if (data && data.cars) renderCars(data.cars);            // 実在庫カード
-				// 会話の流れでAIが選んだ“入口”だけを出す（審査/問い合わせ/在庫/担当者/LINE）
+				if (data && data.cars) renderCars(data.cars);
 				if (data && data.action) renderCTA(data.action);
 				else if (data && data.cta) renderCTA("");
-				if (data && data.suggestions) renderChoices(data.suggestions); // 候補チップ
+				if (data && data.suggestions) renderChoices(data.suggestions);
 				history.push({ role: "assistant", content: reply });
-				startConvoPoll();   // 会話をSlackへミラー中：担当者の割り込みを常時監視
-				scheduleIdle();     // 一定時間無操作なら再打診
+				startConvoPoll();
+				scheduleIdle();
 			})
 			.catch(function () {
 				hideTyping();
-				addBubble("bot", "通信エラーが発生しました。お手数ですがLINEでご相談ください → " + cfg.lineUrl);
+				// 直前のユーザー発話を history から取り出しておく（リトライで再送）
+				var lastUser = "";
+				for (var i = history.length - 1; i >= 0; i--) {
+					if (history[i].role === "user") { lastUser = history[i].content; break; }
+				}
+				addBubble("bot", "通信が混み合っているようです。恐れ入りますが、もう一度お試しください🙏\nうまくいかない場合は LINE でご相談いただけます → " + cfg.lineUrl);
+				// 再送ボタン
+				var row = document.createElement("div");
+				row.className = "ccb-choices";
+				var b = document.createElement("button");
+				b.type = "button"; b.className = "ccb-choice";
+				b.textContent = "🔁 もう一度送る";
+				b.addEventListener("click", function () {
+					row.remove();
+					sendBtn.disabled = true;
+					showTyping();
+					callChatEndpoint(lastUser);
+				});
+				row.appendChild(b);
+				msgBox.appendChild(row);
+				msgBox.scrollTop = msgBox.scrollHeight;
 			})
 			.finally(function () {
+				if (timer) { clearTimeout(timer); }
 				sendBtn.disabled = false;
-				input.focus();
+				try { input.focus(); } catch (e) {}
 			});
 	}
 
