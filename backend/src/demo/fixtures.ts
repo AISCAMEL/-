@@ -285,9 +285,20 @@ export interface DemoContact {
   note: string | null; tags: string[]; status: string; created_at: string;
 }
 export const demoContacts: DemoContact[] = [
-  { id: 'ct-1', tenant_id: TENANT, name: '田中太郎', company: null, phone_number: '+819012340001', email: 'tanaka@example.com', category: '査定見込み', note: 'プリウス2019・4万km。出張査定を検討中。', tags: ['ホット'], status: 'in_progress', created_at: iso(-60 * 24 * 3) },
-  { id: 'ct-2', tenant_id: TENANT, name: '佐藤花子', company: null, phone_number: '+819012340002', email: 'sato@example.com', category: '成約', note: 'アクア買取成約。次回の乗り換え時も相談したいとのこと。', tags: ['VIP'], status: 'won', created_at: iso(-60 * 24 * 10) },
-  { id: 'ct-3', tenant_id: TENANT, name: '鈴木一郎', company: null, phone_number: '+819012340003', email: null, category: '追客', note: '車検が3ヶ月後。時期を見て買取案内。', tags: [], status: 'active', created_at: iso(-60 * 24 * 30) },
+  // 見込み（active）
+  { id: 'ct-3', tenant_id: TENANT, name: '鈴木一郎', company: null, phone_number: '+819012340003', email: null, category: '追客', note: '車検が3ヶ月後。時期を見て買取案内。', tags: ['追客'], status: 'active', created_at: iso(-60 * 24 * 30) },
+  { id: 'ct-4', tenant_id: TENANT, name: '高橋美咲', company: null, phone_number: '+819012340004', email: 'takahashi@example.com', category: '査定見込み', note: 'ノート2021・画像査定フォーム送付済み。返信待ち。', tags: ['画像査定'], status: 'active', created_at: iso(-60 * 24 * 1) },
+  { id: 'ct-5', tenant_id: TENANT, name: '木村麻衣', company: null, phone_number: '+819012340005', email: null, category: '査定見込み', note: '遠方（青森）・オンライン査定を案内。写真受領待ち。', tags: ['遠方', 'オンライン査定'], status: 'active', created_at: iso(-60 * 24 * 2) },
+  // 商談中（in_progress）
+  { id: 'ct-1', tenant_id: TENANT, name: '田中太郎', company: null, phone_number: '+819012340001', email: 'tanaka@example.com', category: '商談中', note: 'プリウス2019・4万km。出張査定を実施、金額提示済み。', tags: ['ホット'], status: 'in_progress', created_at: iso(-60 * 24 * 3) },
+  { id: 'ct-6', tenant_id: TENANT, name: '伊藤大輔', company: null, phone_number: '+819012340006', email: 'ito@example.com', category: '商談中', note: 'フィット2017・出張査定済み。他社と相見積もり中。', tags: ['相見積もり'], status: 'in_progress', created_at: iso(-60 * 24 * 4) },
+  { id: 'ct-7', tenant_id: TENANT, name: '佐々木亮', company: null, phone_number: '+819012340007', email: null, category: '商談中', note: 'ローン残債あり。残債精算の見積もりを提示、検討中。', tags: ['残債'], status: 'in_progress', created_at: iso(-60 * 24 * 5) },
+  // 成約（won）
+  { id: 'ct-2', tenant_id: TENANT, name: '佐藤花子', company: null, phone_number: '+819012340002', email: 'sato@example.com', category: '成約', note: 'アクア買取成約（¥780,000）。次回の乗り換え時も相談したいとのこと。', tags: ['VIP'], status: 'won', created_at: iso(-60 * 24 * 10) },
+  { id: 'ct-8', tenant_id: TENANT, name: '井上和也', company: null, phone_number: '+819012340008', email: null, category: '成約', note: 'CX-5 2020・持込査定で成約（¥1,450,000）。', tags: [], status: 'won', created_at: iso(-60 * 24 * 8) },
+  // 見送り（lost）
+  { id: 'ct-9', tenant_id: TENANT, name: '山本健', company: null, phone_number: '+819012340009', email: null, category: '見送り', note: '他社の方が高値で見送り。相場変動時に再案内。', tags: ['相見積もり'], status: 'lost', created_at: iso(-60 * 24 * 14) },
+  { id: 'ct-10', tenant_id: TENANT, name: '中村彩', company: null, phone_number: '+819012340010', email: null, category: '見送り', note: '家族と相談の結果、乗り換え自体を保留。', tags: [], status: 'lost', created_at: iso(-60 * 24 * 20) },
 ];
 
 export interface DemoAppointment {
@@ -325,6 +336,9 @@ export interface DemoContactActivity {
 }
 export const demoContactActivities: DemoContactActivity[] = [
   { id: 'ca-1', tenant_id: TENANT, contact_id: 'ct-1', type: 'status_changed', detail: '見込み → 商談中', created_at: iso(-60 * 24 * 1) },
-  { id: 'ca-2', tenant_id: TENANT, contact_id: 'ct-2', type: 'email_sent', detail: '【ご案内】新サービスのお知らせ', created_at: iso(-60 * 24 * 5) },
+  { id: 'ca-2', tenant_id: TENANT, contact_id: 'ct-2', type: 'email_sent', detail: '【ご案内】買取成約のお礼と次回のご案内', created_at: iso(-60 * 24 * 5) },
   { id: 'ca-3', tenant_id: TENANT, contact_id: 'ct-2', type: 'status_changed', detail: '商談中 → 成約', created_at: iso(-60 * 24 * 4) },
+  { id: 'ca-4', tenant_id: TENANT, contact_id: 'ct-4', type: 'sms_sent', detail: '画像査定フォームのURLをSMS送信', created_at: iso(-60 * 24 * 1) },
+  { id: 'ca-5', tenant_id: TENANT, contact_id: 'ct-6', type: 'note_added', detail: '他社見積もり¥620,000。上回れるか確認中。', created_at: iso(-60 * 24 * 2) },
+  { id: 'ca-6', tenant_id: TENANT, contact_id: 'ct-8', type: 'status_changed', detail: '商談中 → 成約（CX-5 ¥1,450,000）', created_at: iso(-60 * 24 * 8) },
 ];
