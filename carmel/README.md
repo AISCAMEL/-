@@ -215,3 +215,29 @@ CSS は `wpcode-loan-guide.php` 内の `.carmel-lg__warranty-slots` /
 ### 前提データ
 - `hoshou2` / `tenken` … 在庫メイン情報（ACF）＝月々の右横に表示される保証・点検
 - `seibi` / `kanreichi` / `joutai` / `hoshou` … 修正5のメタボックスで入力する追加4項目
+
+---
+
+## 修正7: ローン概算＋シミュレーションが全車両で消えた問題（`wpcode-loan-guide.php`）
+
+### 症状
+車両詳細ページの緑の枠（車両本体価格＋3パターン＋保証バッジ＋返済回数スライダー）が
+**全車両でまるごと非表示**になった。
+
+### 原因
+`[carmel_loan_guide]` ショートコードが、月々計算の外部関数
+`carmel_plan_monthly()`（**別スニペット `carmel-stock-ui.php` 内**）に依存しており、
+その関数が読めない（スニペット無効化・読み込み順・エラー等）と
+`if ( $total <= 0 || ! function_exists('carmel_plan_monthly') ) { return ''; }`
+で**ボックスごと空文字を返して**いた。関数は全ページ共通なので全車両で消える。
+
+### 対応
+1. 計算関数を snippet 内に内蔵（`carmelx_lg_monthly()`）し、**外部スニペット非依存**に。
+2. `est_total`（支払総額）が空でも `est_honntai`（本体価格）→ `price` → `honntai`
+   の順にフォールバックして概算を描画。価格情報が全く無い車両のみ非表示。
+
+これで `carmel-stock-ui.php` の有効/無効に関わらず、シミュレーションが確実に表示される。
+
+### 補足
+- バッジ表示（修正6）とは独立。バッジは `.carmel-lg__warranty-slots` のみ操作するので、
+  今回の非表示問題とは無関係だった。

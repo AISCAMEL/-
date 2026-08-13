@@ -13,6 +13,24 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 if ( ! function_exists( 'carmelx_loan_guide_shortcode' ) ) {
 
+	/**
+	 * 月々の元利均等返済額（外部スニペットの carmel_plan_monthly に依存しない自己完結版）。
+	 * ※ 以前は carmel_plan_monthly()（carmel-stock-ui.php 内）が無いと
+	 *   ローン概算ボックスごと非表示になっていた。ここに内蔵して確実に描画する。
+	 */
+	if ( ! function_exists( 'carmelx_lg_monthly' ) ) {
+		function carmelx_lg_monthly( $principal, $nenritsu, $count ) {
+			if ( $count <= 0 || $principal <= 0 ) { return 0; }
+			if ( $nenritsu > 0 ) {
+				$r = ( $nenritsu / 100 ) / 12;
+				$m = $principal * $r / ( 1 - pow( 1 + $r, -$count ) );
+			} else {
+				$m = $principal / $count;
+			}
+			return (int) ( ceil( $m / 100 ) * 100 );
+		}
+	}
+
 	function carmelx_loan_guide_shortcode( $atts ) {
 		$atts = shortcode_atts( array( 'id' => 0, 'counts' => '36,60,84' ), $atts, 'carmel_loan_guide' );
 		$pid  = $atts['id'] ? (int) $atts['id'] : get_the_ID();
@@ -29,7 +47,11 @@ if ( ! function_exists( 'carmelx_loan_guide_shortcode' ) ) {
 		$atama     = $num( 'est_atamakin' );
 		$nen       = $num( 'est_nenritsu' );
 
-		if ( $total <= 0 || ! function_exists( 'carmel_plan_monthly' ) ) { return ''; }
+		// est_total（支払総額）が空でも、本体価格などから概算できるようフォールバック。
+		if ( $total <= 0 ) { $total = $honntai; }
+		if ( $total <= 0 ) { $total = $num( 'price' ); }
+		if ( $total <= 0 ) { $total = $num( 'honntai' ); }
+		if ( $total <= 0 ) { return ''; } // 価格情報が全く無い車両のみ非表示
 
 		$principal = max( 0, $total - $atama );
 
@@ -39,7 +61,7 @@ if ( ! function_exists( 'carmelx_loan_guide_shortcode' ) ) {
 		// 3パターン静的表示
 		$rows = '';
 		foreach ( $counts as $c ) {
-			$m = carmel_plan_monthly( $principal, $nen, $c );
+			$m = carmelx_lg_monthly( $principal, $nen, $c );
 			if ( $m <= 0 ) { continue; }
 			$rows .= '<span class="carmel-lg__row"><b>' . (int) $c . '回</b>月々' . number_format( $m ) . '円</span>';
 		}
