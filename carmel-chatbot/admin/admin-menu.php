@@ -510,11 +510,18 @@ function carmel_cb_notice( $msg, $type = 'success' ) {
 	$GLOBALS['carmel_cb_notices'][] = array( $msg, $cls );
 }
 
-/** 蓄積した通知をページ上部に描画する。 */
+/** 蓄積した通知をページ上部に描画する。プラグイン自身が発する通知なので安全なHTMLを許可。 */
 function carmel_cb_render_notices() {
 	if ( empty( $GLOBALS['carmel_cb_notices'] ) ) { return; }
+	$allowed = array(
+		'strong' => array(), 'em' => array(), 'br' => array(), 'small' => array(),
+		'code'   => array(),
+		'pre'    => array( 'style' => array() ),
+		'a'      => array( 'href' => array(), 'target' => array(), 'rel' => array() ),
+		'span'   => array( 'style' => array() ),
+	);
 	foreach ( $GLOBALS['carmel_cb_notices'] as $n ) {
-		echo '<div class="notice ' . esc_attr( $n[1] ) . ' is-dismissible"><p>' . esc_html( $n[0] ) . '</p></div>';
+		echo '<div class="notice ' . esc_attr( $n[1] ) . ' is-dismissible"><p>' . wp_kses( (string) $n[0], $allowed ) . '</p></div>';
 	}
 	$GLOBALS['carmel_cb_notices'] = array();
 }
@@ -1136,19 +1143,19 @@ function carmel_cb_view_appearance() {
 							</select>
 						</div>
 						<div>
-							<button type="submit" name="carmel_action" value="followup_test_send" class="button button-primary">テスト送信</button>
+							<button type="submit" name="carmel_cb_action" value="followup_test_send" class="button button-primary">テスト送信</button>
 						</div>
 					</div>
 
 					<hr style="margin:14px 0">
 					<h4 style="margin:0 0 6px">⚡ 後追いキューを今すぐ実行</h4>
 					<p class="description" style="margin-top:0">通常は10分ごとに自動で回りますが、待たずにテストしたい場合はここから即実行できます（送信対象があれば送られます）。</p>
-					<button type="submit" name="carmel_action" value="followup_run_now" class="button">今すぐ実行</button>
+					<button type="submit" name="carmel_cb_action" value="followup_run_now" class="button">今すぐ実行</button>
 
 					<hr style="margin:14px 0">
 					<h4 style="margin:0 0 6px">🩺 メール環境の診断</h4>
 					<p class="description" style="margin-top:0">「テスト送信」で届かないときはこちらを実行。サイトのメール送信環境を診断します。</p>
-					<button type="submit" name="carmel_action" value="followup_diagnose" class="button">診断する</button>
+					<button type="submit" name="carmel_cb_action" value="followup_diagnose" class="button">診断する</button>
 				</td>
 			</tr>
 			<tr>
