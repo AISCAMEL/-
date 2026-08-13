@@ -101,6 +101,7 @@ function doPost(e) {
       case "register": result = handleRegister_(data); break;
       case "contact":  result = handleContact_(data);  break;
       case "quote":    result = handleQuote_(data);    break;
+      case "cmldoc":   result = handleCmlDoc_(data);   break; // カーメル書面作成システム（CarmelDocs.gs）
       case "buymo":    result = handleBuymoLead_(data); break;
       case "stepmail": result = handleStepMailTrigger_(data); break; // WP等から後発でステップメール発動
       case "case":     result = (typeof requireAuth_!=="function"||requireAuth_(data)) ? handleCase_(data) : { ok:false, error:"unauthorized" }; break; // 看板ボードの作成/更新（要ログイン）

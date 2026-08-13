@@ -46,6 +46,9 @@ input,select,textarea{font-family:inherit;}
   background:rgba(255,255,255,.12); color:#DCE8FF; white-space:nowrap;
   max-width:240px; overflow:hidden; text-overflow:ellipsis;
 }
+.hd .cbadge{font-size:11px; padding:4px 10px; border-radius:20px; font-weight:700; white-space:nowrap; cursor:pointer; border:1px solid transparent;}
+.hd .cbadge.off{background:rgba(255,255,255,.10); color:#B9C9E8; border-color:rgba(255,255,255,.18);}
+.hd .cbadge.on{background:rgba(60,190,130,.22); color:#C7F2DC; border-color:rgba(120,220,170,.5);}
 .hd .sp{flex:1;}
 .hd .hbtn{
   height:34px; padding:0 14px; border:1px solid rgba(255,255,255,.25);
@@ -211,7 +214,13 @@ table.ltbl tbody tr:hover{background:#FAFCFF;}
 .badge{display:inline-block; padding:3px 10px; border-radius:8px; color:#fff; font-size:11px; font-weight:800;}
 .lbtn{height:30px; padding:0 12px; border-radius:7px; font-size:12px; font-weight:700; border:1.5px solid var(--bdr); background:#fff; color:var(--sub); margin-right:6px;}
 .lbtn.load{border-color:var(--blue); color:var(--blue);}
+.lbtn.send{border-color:#7FBF9E; color:var(--green);}
 .lbtn.del{border-color:#E0A5A5; color:var(--red);}
+.ctag{display:inline-block; padding:2px 9px; border-radius:8px; font-size:11px; font-weight:800;}
+.ctag.ok{background:#E6F5EC; color:#14785E;}
+.ctag.err{background:#FBE9E9; color:#BE2020;}
+.ctag.pend{background:#EEF2FA; color:#486080;}
+.ctag.na{background:transparent; color:#B7C3D4;}
 .lbtn:hover{filter:brightness(.97);}
 .empty{padding:50px 20px; text-align:center; color:var(--mute);}
 .empty .ei{font-size:40px; margin-bottom:10px;}
@@ -300,6 +309,7 @@ table.ltbl tbody tr:hover{background:#FAFCFF;}
   <header class="hd">
     <div class="brand">🚗 カーメル<small>｜書面作成システム</small></div>
     <div class="cust" id="custName">お客様未入力</div>
+    <span class="cbadge off" id="cloudBadge" onclick="setTab('saved')" title="">☁ 未接続</span>
     <div class="sp"></div>
     <button class="hbtn" onclick="newRec()">🆕 新規</button>
     <button class="hbtn" onclick="saveRec()">💾 保存</button>
@@ -349,6 +359,21 @@ table.ltbl tbody tr:hover{background:#FAFCFF;}
 
 <script>
 "use strict";
+
+/* =======================================================================
+   クラウド連携 設定（★あとから組み込み用★）
+   -----------------------------------------------------------------------
+   GAS（Google Apps Script）ウェブアプリと連携すると、「☁ クラウド保存」で
+   フォーム内容が Google スプレッドシートに記録され、スタッフへLINE通知されます。
+   - 空欄のままでも本ツールはローカル保存（localStorage）だけで完全に動作します。
+   - 連携する時は、GASを「ウェブアプリ」としてデプロイして得られる /exec URL を
+     下の ENDPOINT に貼り付けるだけ（HTMLの再デプロイのみ、他の変更は不要）。
+   - GAS側の受け口は gas/CarmelDocs.gs（type:"cmldoc" を処理）。
+   ======================================================================= */
+const CLOUD = {
+  ENDPOINT: '',                 // ← 例: "https://script.google.com/macros/s/XXXXX/exec"
+  get ENABLED(){ return !!this.ENDPOINT; },
+};
 
 /* ================= 共通ユーティリティ ================= */
 function today(){ const d=new Date(); const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; }
@@ -957,6 +982,42 @@ function setTab(tab){
   if(tab==='saved'){ rSaved(); }
 }
 
+/* ================= クラウド連携（送信の仕組み） =================
+   ・ENDPOINT 未設定でも動作（ローカル保存のみ）。設定すると自動でクラウド送信。
+   ・GASはCORSヘッダを返さないため no-cors + text/plain でプリフライトを回避。
+   　（fire-and-forget：可否はGAS側シートで確認。UIはローカルで完結）           */
+function valBySuffix(st, suffix){ const k=Object.keys(st).find(x=>!x.startsWith('_') && x.endsWith(suffix)); return k?st[k]:''; }
+function buildPayload(rec){
+  const dt=DTMAP[rec._doctype]||{};
+  const fields={}; Object.keys(rec).forEach(k=>{ if(!k.startsWith('_')) fields[k]=rec[k]; });
+  return {
+    type:'cmldoc',
+    doctype: rec._doctype,
+    doctypeName: dt.name||'',
+    docNo: valBySuffix(rec,'_no'),
+    customer: valBySuffix(rec,'_name'),
+    staff: valBySuffix(rec,'_staff'),
+    date: valBySuffix(rec,'_date'),
+    savedAt: rec._saved||'',
+    fields
+  };
+}
+function cloudSend(rec){
+  if(!CLOUD.ENABLED) return Promise.resolve({ok:false,skipped:true});
+  return fetch(CLOUD.ENDPOINT,{
+    method:'POST',
+    mode:'no-cors',
+    headers:{'Content-Type':'text/plain;charset=utf-8'}, // プリフライト回避
+    body: JSON.stringify(buildPayload(rec))
+  }).then(()=>({ok:true})).catch(e=>({ok:false,error:String(e)}));
+}
+/* ヘッダーの接続バッジ更新 */
+function updCloudBadge(){
+  const el=document.getElementById('cloudBadge'); if(!el) return;
+  if(CLOUD.ENABLED){ el.textContent='☁ クラウド接続'; el.className='cbadge on'; el.title='GASウェブアプリに接続済み'; }
+  else{ el.textContent='☁ 未接続（ローカル保存）'; el.className='cbadge off'; el.title='CLOUD.ENDPOINT を設定すると連携します'; }
+}
+
 /* ================= localStorage ================= */
 const PREFIX='cml_';
 function saveRec(){
@@ -965,9 +1026,31 @@ function saveRec(){
   const nowStr=new Date().toLocaleString('ja-JP');
   const key=`${PREFIX}${curDoc}_${Date.now()}`;
   rec._key=key; rec._saved=nowStr; rec._doctype=curDoc;
-  try{ localStorage.setItem(key, JSON.stringify(rec)); toast('💾 保存しました'); }
-  catch(e){ toast('⚠️ 保存に失敗しました'); }
+  try{ localStorage.setItem(key, JSON.stringify(rec)); }
+  catch(e){ toast('⚠️ 保存に失敗しました'); return; }
+  if(CLOUD.ENABLED){
+    toast('💾 保存 → ☁ 送信中…');
+    cloudSend(rec).then(r=>{
+      const ok = r && r.ok;
+      try{ const cur=JSON.parse(localStorage.getItem(key)); if(cur){ cur._cloud= ok?'sent':'error'; localStorage.setItem(key,JSON.stringify(cur)); } }catch(e){}
+      toast(ok?'✅ 保存＋クラウド送信 完了':'💾 保存済み（☁送信は失敗）');
+      if(curTab==='saved') rSaved();
+    });
+  }else{
+    toast('💾 保存しました（ローカル）');
+  }
   if(curTab==='saved') rSaved();
+}
+/* 保存済みレコードを手動でクラウド再送信 */
+function cloudResend(key){
+  if(!CLOUD.ENABLED){ toast('☁ エンドポイント未設定です'); return; }
+  const raw=localStorage.getItem(key); if(!raw) return;
+  const rec=JSON.parse(raw);
+  toast('☁ 送信中…');
+  cloudSend(rec).then(r=>{
+    const ok=r&&r.ok; rec._cloud=ok?'sent':'error'; localStorage.setItem(key,JSON.stringify(rec));
+    toast(ok?'✅ クラウド送信 完了':'⚠️ クラウド送信 失敗'); rSaved();
+  });
 }
 function listRecs(){
   const out=[];
@@ -1023,8 +1106,15 @@ function rSaved(){
     el.innerHTML=`<div class="lcard"><div class="empty"><div class="ei">📭</div>保存済みの書面はありません。<br>フォーム入力後「💾 保存」で保存できます。</div></div>`;
     return;
   }
+  const cloudTag=(v)=>{
+    if(!CLOUD.ENABLED) return '<span class="ctag na">—</span>';
+    if(v==='sent') return '<span class="ctag ok">✓ 送信済</span>';
+    if(v==='error') return '<span class="ctag err">✗ 失敗</span>';
+    return '<span class="ctag pend">未送信</span>';
+  };
   const rows=recs.map(r=>{
     const dt=DTMAP[r._doctype]||DTMAP.d1;
+    const resendBtn = CLOUD.ENABLED ? `<button class="lbtn send" onclick="cloudResend('${r._key}')">☁ 再送</button>` : '';
     return `<tr>
       <td><span class="badge" style="background:${dt.color}">${dt.icon} ${esc(dt.name)}</span></td>
       <td>${esc(findVal(r,'_name')||'—')}</td>
@@ -1032,15 +1122,20 @@ function rSaved(){
       <td>${esc(findVal(r,'_staff')||'—')}</td>
       <td>${esc(findVal(r,'_date')||'—')}</td>
       <td>${esc(r._saved||'—')}</td>
+      <td>${cloudTag(r._cloud)}</td>
       <td>
         <button class="lbtn load" onclick="loadRec('${r._key}')">読込</button>
+        ${resendBtn}
         <button class="lbtn del" onclick="delRec('${r._key}')">削除</button>
       </td></tr>`;
   }).join('');
+  const cloudNote = CLOUD.ENABLED
+    ? `<span class="cnt" style="background:#E6F5EC;color:#14785E">☁ クラウド連携 ON</span>`
+    : `<span class="cnt" style="background:#FFF4E0;color:#8A5E00">☁ 未接続：ローカル保存のみ（CLOUD.ENDPOINT 設定で連携）</span>`;
   el.innerHTML=`<div class="lcard">
-    <div class="lhead"><h2>📋 保存済み書面</h2><span class="cnt">${recs.length} 件</span></div>
+    <div class="lhead"><h2>📋 保存済み書面</h2><span class="cnt">${recs.length} 件</span>${cloudNote}</div>
     <div style="overflow-x:auto"><table class="ltbl">
-      <thead><tr><th>書面タイプ</th><th>お客様氏名</th><th>書類番号</th><th>担当者</th><th>作成日</th><th>保存日時</th><th>操作</th></tr></thead>
+      <thead><tr><th>書面タイプ</th><th>お客様氏名</th><th>書類番号</th><th>担当者</th><th>作成日</th><th>保存日時</th><th>クラウド</th><th>操作</th></tr></thead>
       <tbody>${rows}</tbody></table></div></div>`;
 }
 
@@ -1713,6 +1808,7 @@ document.documentElement.style.setProperty('--dcc',DTMAP[curDoc].color);
 rDocBar();
 setTab('form');
 updProg();
+updCloudBadge();
 </script>
 </body>
 </html>
