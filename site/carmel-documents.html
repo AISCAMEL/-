@@ -361,6 +361,8 @@ const DTYPES=[
   {id:'d1', icon:'📋', name:'車両購入意向確認書', desc:'希望条件・審査・申込金・特約', color:'#0C2354', bg:'#EEF2FA'},
   {id:'d2', icon:'💴', name:'初期費用同意書',     desc:'費用明細・自動計算・支払条件', color:'#1A5F35', bg:'#EDF6F0'},
   {id:'d3', icon:'🆘', name:'緊急連絡先確認書',   desc:'第一/第二連絡先・連帯保証人',   color:'#8B1D1D', bg:'#FAEEEE'},
+  {id:'d4', icon:'🔁', name:'下取車 売買契約書',   desc:'下取車情報・残債精算・告知',     color:'#8A5A12', bg:'#F6F1E6'},
+  {id:'d5', icon:'✒️', name:'念書',               desc:'差入人の誓約・履行期限・立会人', color:'#3B4351', bg:'#EEF0F3'},
 ];
 const DTMAP={}; DTYPES.forEach(d=>DTMAP[d.id]=d);
 
@@ -379,6 +381,8 @@ const O={
   screen:['未申込','審査中','承認','条件付承認','否認'],
   deppay:['','現金','銀行振込','クレジットカード'],
   acct:['','普通','当座'],
+  debtpay:['','売主が一括返済','下取価格から相殺','買主が代位弁済（立替）'],
+  refund:['','売主へ返還','下取価格に含む','対象外'],
 };
 
 /* ================= セクション & フィールド定義 ================= */
@@ -532,6 +536,78 @@ const SECS={
     {k:'d3_signy',l:'署名 年',t:'number'},{k:'d3_signm',l:'月',t:'number'},{k:'d3_signd',l:'日',t:'number'},
   ]},
  ],
+ d4:[
+  {id:'s1', icon:'📄', label:'契約情報', fs:[
+    {k:'d4_no',l:'契約番号',p:'TRD-2026-001'},{k:'d4_date',l:'契約日',t:'date'},
+    {k:'d4_store',l:'店舗名'},{k:'d4_staff',l:'担当者名'},
+  ]},
+  {id:'s2', icon:'🏢', label:'買主（甲）', fs:[
+    {k:'d4_company',l:'会社名'},{k:'d4_rep',l:'代表者名'},
+    {k:'d4_addr',l:'所在地',w:true},{k:'d4_tel',l:'電話'},
+    {k:'d4_license',l:'古物商許可番号'},{k:'d4_staffname',l:'担当者名'},
+  ]},
+  {id:'s3', icon:'🧑', label:'売主（乙）', fs:[
+    {k:'d4_name',l:'氏名',req:true},{k:'d4_kana',l:'フリガナ'},
+    {k:'d4_birth',l:'生年月日',t:'date'},{k:'d4_zip',l:'〒'},
+    {k:'d4_caddr',l:'住所',w:true},{k:'d4_mobile',l:'携帯'},{k:'d4_homel',l:'自宅電話'},
+    {k:'d4_email',l:'メール'},{k:'d4_licenseno',l:'免許証番号'},
+  ]},
+  {id:'s4', icon:'🚗', label:'下取車両情報', fs:[
+    {k:'d4_car',l:'車名',req:true,p:'例）ホンダ フィット'},{k:'d4_maker',l:'メーカー'},
+    {k:'d4_regno',l:'登録番号（ナンバー）',p:'いわき 300 あ 12-34'},{k:'d4_chassis',l:'車台番号'},
+    {k:'d4_model',l:'型式'},{k:'d4_firstreg',l:'初度登録年月',p:'2019-03'},
+    {k:'d4_year',l:'年式'},{k:'d4_mileage',l:'走行距離（km）',t:'number'},
+    {k:'d4_color',l:'車体色'},{k:'d4_disp',l:'排気量（cc）',t:'number'},
+    {k:'d4_mission',l:'ミッション',t:'sel',o:O.mission},{k:'d4_fuel',l:'燃料',t:'sel',o:O.fuel},
+    {k:'d4_shaken',l:'車検満了日',t:'date'},
+  ]},
+  {id:'s5', icon:'💴', label:'下取価格・精算', fs:[
+    {k:'d4_price',l:'下取価格（円）',t:'number'},
+    {k:'d4_debt',l:'ローン残債',t:'sel',o:O.yesno},{k:'d4_debtamt',l:'ローン残債額（円）',t:'number'},
+    {k:'d4_debtco',l:'残債先（信販会社名）'},{k:'d4_debtpay',l:'残債処理方法',t:'sel',o:O.debtpay},
+    {k:'d4_net',l:'相殺後 支払額（円）',t:'number',readonly:true,auto:true},
+    {k:'d4_paydate',l:'支払期日',t:'date'},{k:'d4_regdate',l:'名義変更期日',t:'date'},
+    {k:'d4_tax',l:'自動車税還付',t:'sel',o:O.refund},{k:'d4_recycle',l:'リサイクル預託金相当額（円）',t:'number'},
+  ]},
+  {id:'s6', icon:'📋', label:'告知・特約', fs:[
+    {k:'d4_repair',l:'修復歴',t:'sel',o:O.yesno},{k:'d4_accident',l:'事故歴',t:'sel',o:O.yesno},
+    {k:'d4_defect',l:'瑕疵・不具合の告知事項',t:'ta',w:true,p:'エンジン・修復歴・水没・警告灯 等の申告'},
+    {k:'d4_accessory',l:'付属品',t:'ta',w:true,p:'スペアキー / 取扱説明書 / 記録簿 / ナビSD 等'},
+    {k:'d4_special',l:'特約事項',t:'ta',w:true},
+  ]},
+  {id:'s7', icon:'✍️', label:'署名', sign:true, fs:[
+    {k:'d4_signaddr',l:'署名住所',w:true},{k:'d4_signname',l:'署名氏名（売主）'},
+    {k:'d4_signy',l:'署名 年',t:'number'},{k:'d4_signm',l:'月',t:'number'},{k:'d4_signd',l:'日',t:'number'},
+  ]},
+ ],
+ d5:[
+  {id:'s1', icon:'📄', label:'書類情報', fs:[
+    {k:'d5_no',l:'書類番号',p:'NEN-2026-001'},{k:'d5_date',l:'作成日',t:'date'},
+    {k:'d5_store',l:'店舗名'},{k:'d5_staff',l:'担当者名'},
+  ]},
+  {id:'s2', icon:'🏢', label:'差入先（宛先）', fs:[
+    {k:'d5_company',l:'会社名（宛先）'},{k:'d5_rep',l:'代表者名'},
+    {k:'d5_addr',l:'所在地',w:true},
+  ]},
+  {id:'s3', icon:'🧑', label:'差入人', fs:[
+    {k:'d5_name',l:'氏名',req:true},{k:'d5_kana',l:'フリガナ'},
+    {k:'d5_birth',l:'生年月日',t:'date'},{k:'d5_zip',l:'〒'},
+    {k:'d5_caddr',l:'住所',w:true},{k:'d5_mobile',l:'携帯'},{k:'d5_homel',l:'自宅電話'},
+    {k:'d5_licenseno',l:'免許証番号'},
+  ]},
+  {id:'s4', icon:'📝', label:'念書内容', fs:[
+    {k:'d5_subject',l:'件名',req:true,p:'例）名義変更手続きに関する念書'},
+    {k:'d5_car',l:'対象車両',p:'車名・登録番号・車台番号 等'},
+    {k:'d5_body',l:'念書本文',t:'ta',w:true,p:'誓約する内容を記載'},
+    {k:'d5_deadline',l:'履行期限日',t:'date'},
+    {k:'d5_penalty',l:'不履行時の取り決め',t:'ta',w:true},
+  ]},
+  {id:'s5', icon:'✍️', label:'立会人・署名', sign:true, fs:[
+    {k:'d5_witness',l:'立会人 氏名'},{k:'d5_witnessaddr',l:'立会人 住所',w:true},
+    {k:'d5_signaddr',l:'差入人 住所',w:true},{k:'d5_signname',l:'差入人 氏名'},
+    {k:'d5_signy',l:'署名 年',t:'number'},{k:'d5_signm',l:'月',t:'number'},{k:'d5_signd',l:'日',t:'number'},
+  ]},
+ ],
 };
 
 /* ================= 状態 ================= */
@@ -554,6 +630,16 @@ function mkDefault(docId){
   }
   if(docId==='d2'){ o.d2_date=today(); o.d2_tax='0'; o.d2_total='0'; }
   if(docId==='d3'){ o.d3_company='合同会社アイズ カーメル'; o.d3_date=today(); }
+  if(docId==='d4'){
+    o.d4_company='合同会社アイズ カーメル'; o.d4_addr='福島県いわき市';
+    o.d4_date=today(); o.d4_debt='なし'; o.d4_net='0';
+    o.d4_mission='指定なし'; o.d4_fuel='指定なし';
+    o.d4_repair='なし'; o.d4_accident='なし';
+  }
+  if(docId==='d5'){
+    o.d5_company='合同会社アイズ カーメル'; o.d5_addr='福島県いわき市'; o.d5_date=today();
+    o.d5_body='私は、貴社との車両取引に関し、下記の事項を確約し、これを誠実に履行することを誓約いたします。\n\n一、私は、本件車両の名義変更手続きに必要な書類を、履行期限日までに貴社へ提出いたします。\n一、私は、上記手続きの完了まで本件車両を善良な管理者の注意をもって保管いたします。\n一、万一本念書に違反し貴社に損害を与えた場合は、その一切の責任を負います。';
+  }
   return o;
 }
 DTYPES.forEach(d=>{ STATE[d.id]=mkDefault(d.id); curSec[d.id]=SECS[d.id][0].id; });
@@ -567,6 +653,13 @@ function autoCalc(){
   // DOM反映
   document.querySelectorAll('[data-k="d2_tax"],[data-k="d2_total"]').forEach(el=>{ el.value=STATE.d2[el.getAttribute('data-k')]; });
   const tb=document.getElementById('d2TotBanner'); if(tb) tb.textContent=(yen(STATE.d2.d2_total)||'¥0')+' 円';
+}
+/* 下取り（doc4）：相殺後支払額 = 下取価格 − 残債額 */
+function autoCalc4(){
+  const net = num(STATE.d4.d4_price) - num(STATE.d4.d4_debtamt);
+  STATE.d4.d4_net = net.toString();
+  document.querySelectorAll('[data-k="d4_net"]').forEach(el=>{ el.value=yen(STATE.d4.d4_net)||'¥0'; });
+  const tb=document.getElementById('d4NetBanner'); if(tb) tb.textContent=(yen(STATE.d4.d4_net)||'¥0')+' 円';
 }
 
 /* ================= 進捗 ================= */
@@ -651,6 +744,10 @@ function rForm(){
   if(curDoc==='d2' && sec.id==='s4'){
     body += `<div class="totbanner"><span class="lb">初期費用 合計金額</span><span class="vl" id="d2TotBanner">${(yen(STATE.d2.d2_total)||'¥0')} 円</span></div>`;
   }
+  // doc4 s5 は相殺後支払額バナーを先頭に
+  if(curDoc==='d4' && sec.id==='s5'){
+    body += `<div class="totbanner"><span class="lb">相殺後 お支払額（下取価格 − 残債額）</span><span class="vl" id="d4NetBanner">${(yen(STATE.d4.d4_net)||'¥0')} 円</span></div>`;
+  }
   body += sec.fs.map(fieldHTML).join('');
   const prevDis = idx===0?'disabled':'';
   const nextDis = idx===secs.length-1?'disabled':'';
@@ -689,6 +786,7 @@ function stepSec(dir){
 function u(key,value){
   D[key]=value;
   if(curDoc==='d2') autoCalc();
+  if(curDoc==='d4') autoCalc4();
   updProg(); rSB();
 }
 
@@ -743,6 +841,7 @@ function loadRec(key){
   curDoc=dt; D=STATE[dt];
   document.documentElement.style.setProperty('--dcc',DTMAP[dt].color);
   if(dt==='d2') autoCalc();
+  if(dt==='d4') autoCalc4();
   toast('📂 読込みました');
   rDocBar(); setTab('form'); updProg();
 }
@@ -755,6 +854,7 @@ function newRec(){
   STATE[curDoc]=mkDefault(curDoc); D=STATE[curDoc];
   curSec[curDoc]=SECS[curDoc][0].id;
   if(curDoc==='d2') autoCalc();
+  if(curDoc==='d4') autoCalc4();
   toast('🆕 新規作成しました');
   rSB(); rForm(); updProg();
   setTab('form');
@@ -813,14 +913,16 @@ function feeRow(label,key){ const v=D[key]; if(v===''||v==null||num(v)===0) retu
 
 /* 署名・捺印欄（共通） */
 function signBlock(cfg){
-  // cfg: {company, staff, sy,sm,sd, addr, name}
+  // cfg: {company, staff, sy,sm,sd, addr, name, kouRole, otsuRole}
+  const kouRole=cfg.kouRole||'販 売 者';
+  const otsuRole=cfg.otsuRole||'お 客 様';
   return `
   <div class="signblk">
     <div class="signhd">✍️ 署 名 ・ 捺 印 欄 <span class="en">SIGNATURE &amp; SEAL SECTION</span></div>
     <div class="signnote">以下に署名・捺印することにより、甲乙双方は本書面の全内容を確認し、これに同意したことを証します。</div>
     <div class="signgrid">
       <div class="signcol kou">
-        <div class="partyband kou">【甲】 販 売 者</div>
+        <div class="partyband kou">【甲】 ${kouRole}</div>
         <div class="signrow"><span class="k">会社名:</span><span class="v">${dsh(esc(cfg.company||''))}</span></div>
         <div class="signrow"><span class="k">担当者:</span><span class="v">${dsh(esc(cfg.staff||''))}</span></div>
         <div class="sigbox kou">
@@ -831,7 +933,7 @@ function signBlock(cfg){
         <div class="signdate">署名日 <span class="u"></span> 年 <span class="u"></span> 月 <span class="u"></span> 日</div>
       </div>
       <div class="signcol otsu">
-        <div class="partyband otsu">【乙】 お 客 様</div>
+        <div class="partyband otsu">【乙】 ${otsuRole}</div>
         <div class="signrow"><span class="k">住所:</span><span class="v">${dsh(esc(cfg.addr||''))}</span></div>
         <div class="sigbox otsu">
           <div class="cap">SIGNATURE / 署名</div>
@@ -1086,7 +1188,136 @@ function genD3(){
   </div>`;
 }
 
-function genHTML(){ if(curDoc==='d2') return genD2(); if(curDoc==='d3') return genD3(); return genD1(); }
+/* ================= 書面④：下取車 売買契約書 ================= */
+function genD4(){
+  const c='#8A5A12', cbg='#F6F1E6';
+  const style=`--tc:${c};--tbg:${cbg}`;
+  const infobar=`<div class="infobar">
+    <span><b>契約番号</b> ${gv('d4_no')}</span>
+    <span><b>契約日</b> ${gv('d4_date')}</span>
+    <span><b>店舗</b> ${gv('d4_store')}</span>
+    <span><b>担当者</b> ${gv('d4_staff')}</span>
+  </div>`;
+
+  const parties = `<div class="art"><div class="arth">第1条（当事者）</div>`+
+    ct( sh('■ 甲（買主）') +
+        r2('会社名',gv('d4_company'),'代表者',gv('d4_rep')) +
+        r1('所在地',gv('d4_addr')) +
+        r2('電話',gv('d4_tel'),'古物商許可番号',gv('d4_license')) +
+        r1('担当者',gv('d4_staffname')) ) +
+    ct( sh('■ 乙（売主）') +
+        r2('氏名',gv('d4_name'),'フリガナ',gv('d4_kana')) +
+        r2('生年月日',gv('d4_birth'),'免許証番号',gv('d4_licenseno')) +
+        r1('住所',`〒${g('d4_zip')} ${g('d4_caddr')}`) +
+        r2('携帯',gv('d4_mobile'),'自宅電話',gv('d4_homel')) +
+        r1('メール',gv('d4_email')) ) +
+    `</div>`;
+
+  const carinfo = `<div class="art"><div class="arth">第2条（下取車両）</div>`+
+    ct( r2('車名',gv('d4_car'),'メーカー',gv('d4_maker')) +
+        r2('登録番号',gv('d4_regno'),'車台番号',gv('d4_chassis')) +
+        r2('型式',gv('d4_model'),'初度登録',gv('d4_firstreg')) +
+        r2('年式',gv('d4_year'),'走行距離',D.d4_mileage?`${num(D.d4_mileage).toLocaleString()} km`:dsh('')) +
+        r2('車体色',gv('d4_color'),'排気量',D.d4_disp?`${num(D.d4_disp).toLocaleString()} cc`:dsh('')) +
+        r2('ミッション',gv('d4_mission'),'燃料',gv('d4_fuel')) +
+        r1('車検満了日',gv('d4_shaken')) ) +
+    `</div>`;
+
+  const settle = `<div class="art"><div class="arth">第3条（下取価格および残債精算）</div>`+
+    ct( r2('下取価格',gvm('d4_price'),'ローン残債',gv('d4_debt')) +
+        r2('ローン残債額',gvm('d4_debtamt'),'残債先',gv('d4_debtco')) +
+        r1('残債処理方法',gv('d4_debtpay')) +
+        `<tr class="totrow"><th>相殺後 支払額</th><td class="money" colspan="3">${yen(D.d4_net)||'¥0'}</td></tr>` +
+        r2('支払期日',gv('d4_paydate'),'名義変更期日',gv('d4_regdate')) +
+        r2('自動車税還付',gv('d4_tax'),'リサイクル預託金相当',gvm('d4_recycle')) ) +
+    `</div>`;
+
+  const disclose = `<div class="art"><div class="arth">第4条（売主の告知・保証）</div>`+
+    ct( r2('修復歴',gv('d4_repair'),'事故歴',gv('d4_accident')) +
+        r1('瑕疵・不具合の告知',gv('d4_defect')) +
+        r1('付属品',gv('d4_accessory')) ) +
+    `<p class="clause">1. 乙は、本件車両に関する上記告知事項が真実かつ正確であることを甲に保証する。</p>
+     <p class="clause">2. 名義変更手続完了までに生じた税金・交通違反・事故等の一切の責任は乙が負う。</p>
+     <p class="clause">3. 告知内容に重大な相違が判明した場合、甲は下取価格の見直しまたは本契約の解除を求めることができる。</p></div>`;
+
+  const terms = `<div class="art"><div class="arth">第5条〜第7条（一般条項）</div>
+    <p class="clause"><b>第5条（所有権移転・引渡し）</b> 本件車両の所有権は、乙が甲へ車両および名義変更に必要な書類一式を引渡した時点で甲に移転する。</p>
+    <p class="clause"><b>第6条（個人情報・反社条項）</b> 甲は取得した個人情報を本取引の目的の範囲で適正に取扱う。甲乙双方は自らが反社会的勢力でないことを表明・確約する。</p>
+    <p class="clause"><b>第7条（準拠法・合意管轄）</b> 本契約は日本法に準拠し、紛争は甲の本店所在地を管轄する裁判所を第一審の専属的合意管轄裁判所とする。</p></div>`;
+
+  const special = `<div class="art"><div class="arth">第8条（特約事項）</div>
+    <table class="ct"><tbody><tr><td class="val" style="min-height:50px">${D.d4_special?esc(D.d4_special).replace(/\n/g,'<br>'):'<span style="color:#bbb">特約事項なし</span>'}</td></tr></tbody></table></div>`;
+
+  const sign=signBlock({company:g('d4_company'), staff:g('d4_staffname'), addr:g('d4_signaddr'), name:g('d4_signname'), sy:g('d4_signy'), sm:g('d4_signm'), sd:g('d4_signd'), kouRole:'買 主', otsuRole:'売 主'});
+
+  return `<div class="doc" style="${style}">
+    <div class="dtitle">下 取 車 売 買 契 約 書</div>
+    <div class="dtitle-en">TRADE-IN VEHICLE PURCHASE AGREEMENT</div>
+    ${infobar}
+    <p class="lead">売主（乙）は、その所有する下記自動車を買主（甲）に売渡し、甲はこれを買受けた。甲乙は本契約を締結し、以下のとおり合意する。</p>
+    ${parties}${carinfo}${settle}${disclose}${terms}${special}
+    ${sign}
+  </div>`;
+}
+
+/* ================= 書面⑤：念書 ================= */
+function genD5(){
+  const c='#3B4351', cbg='#EEF0F3';
+  const style=`--tc:${c};--tbg:${cbg}`;
+  const bodyTxt = D.d5_body? esc(D.d5_body).replace(/\n/g,'<br>') : '<span style="color:#bbb">念書本文を入力してください</span>';
+  const carLine = D.d5_car? `<div class="art"><div class="arth">記（対象車両）</div><table class="ct"><tbody><tr><th>対象車両</th><td class="val">${gv('d5_car')}</td></tr>${D.d5_deadline?`<tr><th>履行期限</th><td class="val">${gv('d5_deadline')}</td></tr>`:''}</tbody></table></div>` : (D.d5_deadline?`<div class="art"><table class="ct"><tbody><tr><th>履行期限</th><td class="val">${gv('d5_deadline')}</td></tr></tbody></table></div>`:'');
+  const penalty = D.d5_penalty? `<div class="agree"><h4>【不履行時の取り決め】</h4><div style="font-size:11px">${esc(D.d5_penalty).replace(/\n/g,'<br>')}</div></div>` : '';
+
+  // 念書は差入人が差入先へ差し入れる一方的な書面（宛先＋差入人署名）
+  const signblk = `
+  <div class="signblk">
+    <div class="signnote" style="text-align:right;border-bottom:none;padding-bottom:0">${ymd('d5_signy','d5_signm','d5_signd')}</div>
+    <div class="signgrid">
+      <div class="signcol kou">
+        <div class="partyband kou">差 入 先（宛先）</div>
+        <div class="signrow"><span class="k">会社名:</span><span class="v">${dsh(esc(g('d5_company')))} 御中</span></div>
+        <div class="signrow"><span class="k">代表者:</span><span class="v">${dsh(esc(g('d5_rep')))}</span></div>
+        <div class="signrow"><span class="k">所在地:</span><span class="v">${dsh(esc(g('d5_addr')))}</span></div>
+      </div>
+      <div class="signcol otsu">
+        <div class="partyband otsu">差 入 人</div>
+        <div class="signrow"><span class="k">住所:</span><span class="v">${dsh(esc(g('d5_signaddr')||g('d5_caddr')))}</span></div>
+        <div class="sigbox otsu">
+          <div class="cap">SIGNATURE / 署名</div>
+          <div class="signrow"><span class="k">氏名:</span><span class="v">${dsh(esc(g('d5_signname')||g('d5_name')))}</span></div>
+          <div class="line"></div>
+          <div class="seal">㊞</div>
+        </div>
+      </div>
+    </div>
+    ${g('d5_witness')?`<div class="signnote" style="text-align:left;border-top:1px solid #e4e9f1;border-bottom:none">立会人　住所：${dsh(esc(g('d5_witnessaddr')))}　氏名：${dsh(esc(g('d5_witness')))}　㊞</div>`:''}
+  </div>`;
+
+  return `<div class="doc" style="${style}">
+    <div class="dtitle">念　　書</div>
+    <div class="dtitle-en">WRITTEN PLEDGE</div>
+    <div class="infobar">
+      <span><b>書類番号</b> ${gv('d5_no')}</span>
+      <span><b>作成日</b> ${gv('d5_date')}</span>
+      <span><b>店舗</b> ${gv('d5_store')}</span>
+      <span><b>担当者</b> ${gv('d5_staff')}</span>
+    </div>
+    <div style="text-align:left;font-weight:900;font-size:13px;margin:8px 0 4px">${gv('d5_company')} 御中</div>
+    ${D.d5_subject?`<div style="text-align:center;font-weight:800;font-size:14px;margin:10px 0 6px;text-decoration:underline">${gv('d5_subject')}</div>`:''}
+    <div class="agree" style="min-height:120px"><div style="font-size:12px;line-height:1.9">${bodyTxt}</div></div>
+    ${carLine}
+    ${penalty}
+    ${signblk}
+  </div>`;
+}
+
+function genHTML(){
+  if(curDoc==='d2') return genD2();
+  if(curDoc==='d3') return genD3();
+  if(curDoc==='d4') return genD4();
+  if(curDoc==='d5') return genD5();
+  return genD1();
+}
 
 /* ================= 印刷 ================= */
 function doPrint(){ document.getElementById('pb').innerHTML=genHTML(); window.print(); }
