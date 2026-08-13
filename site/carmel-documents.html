@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>カーメル｜書面作成システム</title>
+<meta name="robots" content="noindex,nofollow" />
+<style>
+:root{
+  /* ブランド */
+  --navy:#0B2050; --blue:#1452A8; --sky:#E2EDFF; --skylt:#F0F5FF;
+  --bg:#E8EEF8; --card:#FFFFFF; --bdr:#C8DAEA;
+  /* テキスト */
+  --ink:#0A1628; --sub:#486080; --mute:#8FABC0;
+  /* セマンティック */
+  --green:#14785E; --gold:#8A5E00; --red:#BE2020;
+  /* 署名 */
+  --signbdr:#C8960A;
+  /* 現在書面色（switchDocで上書き） */
+  --dcc:#0C2354; --dcbg:#EEF2FA;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif;
+  background:var(--bg); color:var(--ink); font-size:14px; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit; cursor:pointer;}
+input,select,textarea{font-family:inherit;}
+
+/* ===== APP レイアウト ===== */
+.app{display:flex; flex-direction:column; height:100vh; overflow:hidden;}
+
+/* HEADER */
+.hd{
+  height:52px; flex:0 0 52px; display:flex; align-items:center; gap:14px;
+  padding:0 18px; color:#fff;
+  background:linear-gradient(120deg,#0A1F4E 0%,#0B2050 55%,#123A7A 100%);
+  box-shadow:0 2px 10px rgba(11,32,80,.25); z-index:20;
+}
+.hd .brand{font-weight:800; font-size:16px; letter-spacing:.3px; white-space:nowrap;}
+.hd .brand small{font-weight:500; opacity:.75; font-size:12px; margin-left:2px;}
+.hd .cust{
+  margin-left:6px; font-size:12px; padding:4px 12px; border-radius:20px;
+  background:rgba(255,255,255,.12); color:#DCE8FF; white-space:nowrap;
+  max-width:240px; overflow:hidden; text-overflow:ellipsis;
+}
+.hd .sp{flex:1;}
+.hd .hbtn{
+  height:34px; padding:0 14px; border:1px solid rgba(255,255,255,.25);
+  border-radius:8px; background:rgba(255,255,255,.08); color:#fff;
+  font-size:13px; font-weight:700; display:inline-flex; align-items:center; gap:6px;
+  transition:.15s;
+}
+.hd .hbtn:hover{background:rgba(255,255,255,.2);}
+.hd .hbtn.pri{background:#2C7BE5; border-color:#2C7BE5;}
+.hd .hbtn.pri:hover{background:#3E8BF5;}
+
+/* DOC TYPE BAR */
+.docbar{
+  flex:0 0 auto; display:grid; grid-template-columns:repeat(3,1fr); gap:12px;
+  padding:14px 18px; background:var(--sky);
+}
+.dcard{
+  display:flex; align-items:center; gap:12px; padding:12px 16px;
+  background:#fff; border:2px solid var(--bdr); border-radius:12px;
+  text-align:left; transition:.15s; position:relative; overflow:hidden;
+}
+.dcard:hover{border-color:var(--blue); transform:translateY(-1px);}
+.dcard.on{border-color:var(--dc); box-shadow:0 6px 18px rgba(11,32,80,.18);}
+.dcard.on::before{content:""; position:absolute; left:0; top:0; bottom:0; width:5px; background:var(--dc);}
+.dcard .ic{font-size:26px; line-height:1;}
+.dcard .tx{display:flex; flex-direction:column; gap:1px;}
+.dcard .nm{font-weight:800; font-size:14px; color:var(--navy);}
+.dcard.on .nm{color:var(--dc);}
+.dcard .ds{font-size:11px; color:var(--sub);}
+
+/* TAB BAR */
+.tabbar{
+  flex:0 0 40px; height:40px; display:flex; align-items:center; gap:4px;
+  padding:0 18px; background:#fff; border-bottom:1px solid var(--bdr);
+}
+.tab{
+  height:40px; padding:0 16px; border:none; background:transparent;
+  color:var(--sub); font-weight:700; font-size:13px; position:relative;
+  display:inline-flex; align-items:center; gap:6px;
+}
+.tab:hover{color:var(--navy);}
+.tab.on{color:var(--blue);}
+.tab.on::after{content:""; position:absolute; left:10px; right:10px; bottom:0; height:3px; background:var(--blue); border-radius:3px 3px 0 0;}
+.tabbar .sp{flex:1;}
+.tabbar .prog{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--sub); font-weight:700;}
+.tabbar .pbar{width:120px; height:7px; background:var(--sky); border-radius:5px; overflow:hidden;}
+.tabbar .pfill{height:100%; width:0; background:linear-gradient(90deg,#2C7BE5,#14785E); transition:width .25s;}
+
+/* BODY */
+.body{flex:1; display:flex; min-height:0; overflow:hidden;}
+
+/* SIDEBAR */
+.sb{
+  flex:0 0 208px; width:208px; overflow-y:auto; padding:10px 0 24px;
+  background:linear-gradient(180deg,#0A1F4E 0%,#0C2354 100%); color:#fff;
+}
+.sb .sbtitle{font-size:11px; letter-spacing:1px; color:#7E9BD6; padding:12px 16px 6px; font-weight:700;}
+.secbtn{
+  width:100%; display:flex; align-items:center; gap:10px; padding:9px 14px 9px 13px;
+  background:transparent; border:none; border-left:3px solid transparent; color:#C6D6F5;
+  text-align:left; transition:.12s;
+}
+.secbtn:hover{background:rgba(255,255,255,.06);}
+.secbtn.on{background:rgba(91,170,238,.14); border-left-color:#5BAAEE; color:#fff;}
+.secbtn .sic{font-size:16px; width:20px; text-align:center;}
+.secbtn .stx{flex:1; min-width:0;}
+.secbtn .snm{font-size:12.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.secbtn .scnt{font-size:10px; color:#8FA8D6;}
+.secbtn.on .scnt{color:#B9D0F5;}
+.secbtn .dot{width:9px; height:9px; border-radius:50%; background:rgba(255,255,255,.28); flex:0 0 9px;}
+.secbtn .dot.done{background:#81C784;}
+.secbtn.on .dot{background:#64B5F6; box-shadow:0 0 8px 1px rgba(100,181,246,.8);}
+.secbtn.sign{margin-top:6px; padding-top:13px; border-top:1px solid rgba(200,150,10,.3);}
+.secbtn.sign .snm{color:#F2CE77;}
+.secbtn.sign .sic{color:#F2CE77;}
+
+/* FORM AREA */
+.fa{flex:1; overflow-y:auto; padding:18px 22px 30px; background:var(--dcbg);}
+.fcard{
+  background:#fff; border:1px solid var(--bdr); border-radius:14px;
+  box-shadow:0 3px 14px rgba(11,32,80,.06); overflow:hidden; max-width:1040px; margin:0 auto;
+}
+.fchead{
+  display:flex; align-items:center; gap:10px; padding:14px 20px;
+  background:linear-gradient(120deg,var(--dc),color-mix(in srgb,var(--dc) 70%, #2C7BE5));
+  color:#fff;
+}
+.fchead .ic{font-size:20px;}
+.fchead .t{font-weight:800; font-size:15px;}
+.fchead .sub{margin-left:auto; font-size:11px; opacity:.85;}
+.fgrid{display:grid; grid-template-columns:1fr 1fr; gap:14px 18px; padding:20px;}
+.fld{display:flex; flex-direction:column; gap:5px;}
+.fld.full{grid-column:1 / -1;}
+.fld label{font-size:12px; font-weight:700; color:var(--sub); display:flex; align-items:center; gap:6px;}
+.fld label .rq{color:var(--red); font-weight:800;}
+.fld label .autob{
+  font-size:9.5px; font-weight:800; color:#fff; background:var(--green);
+  padding:1px 6px; border-radius:8px; letter-spacing:.3px;
+}
+.fld input,.fld select,.fld textarea{
+  width:100%; border:1.5px solid var(--bdr); border-radius:9px; padding:9px 11px;
+  font-size:13.5px; background:var(--skylt); color:var(--ink); transition:.12s;
+}
+.fld input:focus,.fld select:focus,.fld textarea:focus{
+  outline:none; border-color:var(--blue); background:#fff; box-shadow:0 0 0 3px rgba(20,82,168,.12);
+}
+.fld input[readonly]{background:#EEF2F0; color:var(--green); font-weight:800; cursor:default;}
+.fld textarea{height:76px; resize:vertical; line-height:1.5;}
+.fld select{
+  appearance:none; -webkit-appearance:none; padding-right:34px;
+  background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23486080' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 12px center;
+}
+/* 日付3分割 */
+.ymd{display:flex; align-items:center; gap:6px;}
+.ymd input{text-align:center;}
+.ymd span{font-size:12px; color:var(--sub); font-weight:700; flex:0 0 auto;}
+/* 合計バナー（doc2） */
+.totbanner{
+  grid-column:1 / -1; display:flex; align-items:center; justify-content:space-between;
+  padding:14px 20px; border-radius:12px; color:#fff;
+  background:linear-gradient(120deg,#0A1F4E,#123A7A);
+  box-shadow:0 4px 14px rgba(11,32,80,.25);
+}
+.totbanner .lb{font-size:13px; font-weight:700; opacity:.9;}
+.totbanner .vl{font-size:26px; font-weight:900; letter-spacing:.5px;}
+/* subhead 区切り（明細内） */
+.subhead{grid-column:1 / -1; font-size:12px; font-weight:800; color:var(--sub); border-bottom:2px solid var(--bdr); padding-bottom:5px; margin-top:4px;}
+/* nav */
+.fnav{display:flex; justify-content:space-between; gap:10px; padding:14px 20px; border-top:1px solid var(--bdr); background:#FAFCFF;}
+.fnav button{
+  height:40px; padding:0 20px; border-radius:10px; font-weight:800; font-size:13px;
+  border:1.5px solid var(--bdr); background:#fff; color:var(--sub);
+  display:inline-flex; align-items:center; gap:6px;
+}
+.fnav button:hover:not(:disabled){border-color:var(--blue); color:var(--blue);}
+.fnav button:disabled{opacity:.4; cursor:not-allowed;}
+.fnav button.next{background:var(--blue); color:#fff; border-color:var(--blue); margin-left:auto;}
+.fnav button.next:hover{background:#1A63C8;}
+
+/* PREVIEW AREA */
+.pa{flex:1; overflow-y:auto; padding:20px; background:#5A6B84;}
+.pwrap{max-width:820px; margin:0 auto;}
+.ptoolbar{display:flex; gap:10px; margin-bottom:14px; justify-content:flex-end;}
+.ptoolbar button{
+  height:38px; padding:0 18px; border-radius:9px; font-weight:800; font-size:13px;
+  border:none; background:#fff; color:var(--navy); display:inline-flex; align-items:center; gap:7px;
+  box-shadow:0 2px 8px rgba(0,0,0,.2);
+}
+.ptoolbar button.print{background:#2C7BE5; color:#fff;}
+.ptoolbar button:hover{filter:brightness(1.06);}
+
+/* SAVED LIST */
+.la{flex:1; overflow-y:auto; padding:22px; background:var(--dcbg);}
+.lcard{background:#fff; border:1px solid var(--bdr); border-radius:14px; box-shadow:0 3px 14px rgba(11,32,80,.06); overflow:hidden; max-width:1100px; margin:0 auto;}
+.lcard .lhead{padding:16px 20px; border-bottom:1px solid var(--bdr); display:flex; align-items:center; gap:10px;}
+.lcard .lhead h2{font-size:15px; color:var(--navy);}
+.lcard .lhead .cnt{font-size:12px; color:var(--sub); background:var(--sky); padding:3px 10px; border-radius:12px; font-weight:700;}
+table.ltbl{width:100%; border-collapse:collapse; font-size:13px;}
+table.ltbl th,table.ltbl td{padding:11px 14px; border-bottom:1px solid #EDF1F8; text-align:left; white-space:nowrap;}
+table.ltbl thead th{background:#F4F7FC; color:var(--sub); font-weight:700; font-size:11.5px; letter-spacing:.3px;}
+table.ltbl tbody tr:hover{background:#FAFCFF;}
+.badge{display:inline-block; padding:3px 10px; border-radius:8px; color:#fff; font-size:11px; font-weight:800;}
+.lbtn{height:30px; padding:0 12px; border-radius:7px; font-size:12px; font-weight:700; border:1.5px solid var(--bdr); background:#fff; color:var(--sub); margin-right:6px;}
+.lbtn.load{border-color:var(--blue); color:var(--blue);}
+.lbtn.del{border-color:#E0A5A5; color:var(--red);}
+.lbtn:hover{filter:brightness(.97);}
+.empty{padding:50px 20px; text-align:center; color:var(--mute);}
+.empty .ei{font-size:40px; margin-bottom:10px;}
+
+/* toast */
+.toast{
+  position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px);
+  background:var(--navy); color:#fff; padding:12px 22px; border-radius:10px; font-weight:700;
+  box-shadow:0 8px 24px rgba(0,0,0,.3); opacity:0; pointer-events:none; transition:.25s; z-index:60; font-size:13px;
+}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+/* ===== 印刷用文書 共通スタイル ===== */
+#pc{display:none;}
+.doc{background:#fff; color:#111; font-size:12px; line-height:1.7; padding:26px 30px; box-shadow:0 6px 30px rgba(0,0,0,.25); border-radius:4px;}
+.doc *{box-sizing:border-box;}
+.doc .dtitle{text-align:center; font-size:21px; font-weight:900; letter-spacing:3px; padding:8px 0 6px; border-bottom:3px double var(--tc,#0C2354); color:var(--tc,#0C2354); margin-bottom:6px;}
+.doc .dtitle-en{text-align:center; font-size:10px; letter-spacing:2px; color:#777; margin-top:-4px; margin-bottom:14px; font-weight:600;}
+.doc .infobar{display:flex; flex-wrap:wrap; gap:6px 18px; background:var(--tbg,#EEF2FA); border:1px solid #d5deeb; border-radius:6px; padding:9px 14px; font-size:11px; margin-bottom:14px; color:#333;}
+.doc .infobar b{color:var(--tc,#0C2354);}
+.doc p.lead{font-size:11.5px; margin:10px 0 14px; text-align:justify;}
+.doc .art{margin:14px 0;}
+.doc .arth{font-weight:900; font-size:13px; color:var(--tc,#0C2354); border-left:5px solid var(--tc,#0C2354); padding:2px 0 2px 9px; margin-bottom:7px; background:linear-gradient(90deg,var(--tbg,#EEF2FA),transparent);}
+.doc .clause{font-size:11px; margin:5px 0; padding-left:14px; text-indent:-14px; text-align:justify;}
+.doc table.ct{width:100%; border-collapse:collapse; margin:8px 0 12px; font-size:11px;}
+.doc table.ct th,.doc table.ct td{border:1px solid #b9c6d8; padding:6px 9px; text-align:left; vertical-align:top;}
+.doc table.ct th{background:var(--tbg,#EEF2FA); color:#243b63; font-weight:800; width:130px; white-space:nowrap;}
+.doc table.ct td.val{background:#fff;}
+.doc table.ct td.sh2{background:var(--tc,#0C2354); color:#fff; font-weight:800; text-align:center; font-size:11px; letter-spacing:1px;}
+.doc .valtxt{min-height:15px;}
+.doc .money{text-align:right; font-variant-numeric:tabular-nums;}
+/* 費用明細合計行 */
+.doc tr.totrow th,.doc tr.totrow td{background:#1A5F35; color:#fff; font-weight:900; font-size:14px; border-color:#0f3f22;}
+/* セクションヘッダー（doc3） */
+.doc .schead{font-weight:900; font-size:12.5px; color:#fff; padding:6px 12px; border-radius:5px 5px 0 0; margin-top:14px;}
+.doc .schead.c1{background:#B22222;}
+.doc .schead.c2{background:#D97706;}
+.doc .schead.c3{background:#1452A8;}
+.doc .agree{border:1px solid #c9d3e2; border-radius:6px; padding:10px 14px; margin:12px 0; background:#FAFBFD;}
+.doc .agree h4{font-size:12px; color:var(--tc,#0C2354); margin-bottom:6px;}
+.doc .agree ol{margin:0; padding-left:20px; font-size:10.5px;}
+.doc .agree li{margin:3px 0; text-align:justify;}
+.doc .terms{font-size:9.5px; color:#555; margin-top:16px; border-top:1px dashed #bbb; padding-top:10px; text-align:justify; line-height:1.6;}
+.doc .terms h4{font-size:11px; color:var(--tc,#0C2354); margin-bottom:5px;}
+
+/* 署名・捺印欄 */
+.doc .signblk{margin-top:20px; border:1px solid #c8d2e0; border-radius:8px; overflow:hidden;}
+.doc .signhd{display:flex; align-items:center; gap:8px; padding:8px 14px; color:#fff; font-weight:900; font-size:13px; letter-spacing:2px;
+  background:linear-gradient(120deg,#0A1F4E,#123A7A);}
+.doc .signhd .en{font-size:9px; letter-spacing:1px; opacity:.7; font-weight:600; margin-left:auto;}
+.doc .signnote{font-style:italic; text-align:center; font-size:10.5px; color:#555; padding:8px 14px; border-bottom:1px solid #e4e9f1;}
+.doc .signgrid{display:grid; grid-template-columns:1fr 1fr;}
+.doc .signcol{padding:14px; }
+.doc .signcol.kou{border-right:1px solid #e4e9f1;}
+.doc .partyband{font-weight:900; font-size:12px; color:#fff; text-align:center; padding:5px; border-radius:5px; margin-bottom:10px; letter-spacing:2px;}
+.doc .partyband.kou{background:linear-gradient(120deg,#0A1F4E,#1452A8);}
+.doc .partyband.otsu{background:linear-gradient(120deg,#8A5E00,#C8960A);}
+.doc .signrow{font-size:11px; margin:6px 0; display:flex; gap:6px; align-items:flex-end;}
+.doc .signrow .k{color:#555; font-weight:700; flex:0 0 auto;}
+.doc .signrow .v{flex:1; border-bottom:1.5px solid #0B2050; min-height:16px; padding:0 4px;}
+.doc .signcol.otsu .signrow .v{border-bottom-color:#8A5E00;}
+.doc .sigbox{position:relative; margin:12px 0 8px; padding:16px 12px 20px; border-radius:8px;}
+.doc .sigbox.kou{background:#F8FAFF; border:1.5px dashed #8FABC0;}
+.doc .sigbox.otsu{background:#FFFBF0; border:1.5px dashed #C8960A;}
+.doc .sigbox .cap{font-size:8.5px; letter-spacing:1px; color:#889; font-weight:700; margin-bottom:14px;}
+.doc .sigbox .line{border-bottom:1.5px solid #0B2050; height:26px;}
+.doc .sigbox.otsu .line{border-bottom-color:#8A5E00;}
+.doc .sigbox .seal{position:absolute; right:14px; bottom:10px; width:34px; height:34px; border:1.5px dashed #bbb; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; color:#c99;}
+.doc .signdate{font-size:11px; margin-top:8px; display:flex; align-items:center; gap:5px;}
+.doc .signdate .u{border-bottom:1px solid #0B2050; min-width:34px; text-align:center; padding:0 4px;}
+.doc .signcol.otsu .signdate .u{border-bottom-color:#8A5E00;}
+
+/* ===== 印刷 ===== */
+@media print{
+  .app{display:none !important;}
+  #pc{display:block !important;}
+  .doc{box-shadow:none; border-radius:0; padding:0; font-size:11px;}
+  @page{size:A4; margin:16mm;}
+}
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <!-- HEADER -->
+  <header class="hd">
+    <div class="brand">🚗 カーメル<small>｜書面作成システム</small></div>
+    <div class="cust" id="custName">お客様未入力</div>
+    <div class="sp"></div>
+    <button class="hbtn" onclick="newRec()">🆕 新規</button>
+    <button class="hbtn" onclick="saveRec()">💾 保存</button>
+    <button class="hbtn pri" onclick="setTab('preview')">📄 プレビュー</button>
+  </header>
+
+  <!-- DOC TYPE BAR -->
+  <div class="docbar" id="docbar"></div>
+
+  <!-- TAB BAR -->
+  <div class="tabbar">
+    <button class="tab" data-tab="form" onclick="setTab('form')">📝 入力フォーム</button>
+    <button class="tab" data-tab="preview" onclick="setTab('preview')">📄 書面プレビュー</button>
+    <button class="tab" data-tab="saved" onclick="setTab('saved')">📋 保存済み</button>
+    <div class="sp"></div>
+    <div class="prog">
+      <span>進捗</span>
+      <div class="pbar"><div class="pfill" id="pfill"></div></div>
+      <span id="ppct">0%</span>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body">
+    <!-- FORM -->
+    <aside class="sb" id="sb" style="display:none"></aside>
+    <div class="fa" id="fa" style="display:none"></div>
+    <!-- PREVIEW -->
+    <div class="pa" id="pa" style="display:none">
+      <div class="pwrap">
+        <div class="ptoolbar">
+          <button onclick="setTab('form')">✏️ 編集に戻る</button>
+          <button class="print" onclick="doPrint()">🖨️ PDF / 印刷</button>
+        </div>
+        <div id="pvlive"></div>
+      </div>
+    </div>
+    <!-- SAVED -->
+    <div class="la" id="la" style="display:none"></div>
+  </div>
+</div>
+
+<!-- 印刷専用コンテナ -->
+<div id="pc"><div id="pb"></div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* ================= 共通ユーティリティ ================= */
+function today(){ const d=new Date(); const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function yen(v){ const n=parseFloat(v); if(!v||isNaN(n)) return ''; return '¥'+Math.round(n).toLocaleString('ja-JP'); }
+function num(v){ const n=parseFloat(v); return isNaN(n)?0:n; }
+
+/* ================= 書面タイプ定義 ================= */
+const DTYPES=[
+  {id:'d1', icon:'📋', name:'車両購入意向確認書', desc:'希望条件・審査・申込金・特約', color:'#0C2354', bg:'#EEF2FA'},
+  {id:'d2', icon:'💴', name:'初期費用同意書',     desc:'費用明細・自動計算・支払条件', color:'#1A5F35', bg:'#EDF6F0'},
+  {id:'d3', icon:'🆘', name:'緊急連絡先確認書',   desc:'第一/第二連絡先・連帯保証人',   color:'#8B1D1D', bg:'#FAEEEE'},
+];
+const DTMAP={}; DTYPES.forEach(d=>DTMAP[d.id]=d);
+
+/* セレクト用オプション */
+const O={
+  gender:['','男性','女性','その他'],
+  emp:['','正社員','契約社員','派遣社員','パート・アルバイト','自営業','会社役員','公務員','年金受給','その他'],
+  yesno:['なし','あり'],
+  family:['','独身','既婚','既婚（子あり）','その他'],
+  body:['','軽自動車','コンパクト','セダン','ミニバン','SUV','ステーションワゴン','クーペ','トラック','その他'],
+  mission:['指定なし','AT','MT','CVT'],
+  drive:['指定なし','FF','FR','4WD','AWD'],
+  fuel:['指定なし','ガソリン','ハイブリッド','ディーゼル','EV','PHEV'],
+  pay:['','現金一括','ローン','現金＋ローン'],
+  loandest:['','自社ローン','提携信販会社','持込ローン','銀行系ローン'],
+  screen:['未申込','審査中','承認','条件付承認','否認'],
+  deppay:['','現金','銀行振込','クレジットカード'],
+  acct:['','普通','当座'],
+};
+
+/* ================= セクション & フィールド定義 ================= */
+/* field: {k,l,t,o,req,w,p,auto,readonly} ; t: text(既定)/date/number/ta/sel */
+const SECS={
+ d1:[
+  {id:'s1', icon:'📄', label:'書類情報', fs:[
+    {k:'d1_no',l:'契約番号',p:'CML-2026-001'},{k:'d1_date',l:'作成日',t:'date'},
+    {k:'d1_expire',l:'有効期限',t:'date'},{k:'d1_store',l:'店舗名'},
+  ]},
+  {id:'s2', icon:'🏢', label:'販売店（甲）', fs:[
+    {k:'d1_company',l:'会社名'},{k:'d1_rep',l:'代表者名'},
+    {k:'d1_addr',l:'所在地',w:true},{k:'d1_tel',l:'電話'},{k:'d1_staff',l:'担当者名'},
+    {k:'d1_stafftel',l:'担当直通'},{k:'d1_license',l:'古物商許可番号'},{k:'d1_line',l:'LINE ID'},
+  ]},
+  {id:'s3', icon:'🧑', label:'お客様（乙）', fs:[
+    {k:'d1_name',l:'氏名',req:true},{k:'d1_kana',l:'フリガナ'},
+    {k:'d1_birth',l:'生年月日',t:'date'},{k:'d1_age',l:'年齢',t:'number'},
+    {k:'d1_gender',l:'性別',t:'sel',o:O.gender},{k:'d1_zip',l:'〒',p:'970-0000'},
+    {k:'d1_caddr',l:'住所',w:true},{k:'d1_mobile',l:'携帯'},{k:'d1_homel',l:'自宅電話'},
+    {k:'d1_email',l:'メール'},{k:'d1_cline',l:'LINE'},
+    {k:'d1_licenseno',l:'免許証番号'},{k:'d1_licenseexp',l:'免許有効期限',t:'date'},
+  ]},
+  {id:'s4', icon:'💼', label:'職業・収入', fs:[
+    {k:'d1_workplace',l:'勤務先名'},{k:'d1_worktel',l:'勤務先電話'},
+    {k:'d1_workzip',l:'勤務先〒'},{k:'d1_workaddr',l:'勤務先住所',w:true},
+    {k:'d1_emptype',l:'雇用形態',t:'sel',o:O.emp},
+    {k:'d1_workyears',l:'勤続年数',t:'number'},{k:'d1_workmonths',l:'勤続月数',t:'number'},
+    {k:'d1_income',l:'年収（円）',t:'number'},{k:'d1_mincome',l:'月収（円）',t:'number'},
+    {k:'d1_debt',l:'他社借入',t:'sel',o:O.yesno},{k:'d1_debtamt',l:'他社借入額（円）',t:'number'},
+  ]},
+  {id:'s5', icon:'👨‍👩‍👧', label:'家族・緊急連絡先', fs:[
+    {k:'d1_family',l:'家族構成',t:'sel',o:O.family},{k:'d1_children',l:'子供人数',t:'number'},
+    {k:'d1_ename',l:'緊急連絡先氏名'},{k:'d1_erel',l:'続柄'},
+    {k:'d1_etel',l:'緊急連絡先電話'},{k:'d1_eaddr',l:'緊急連絡先住所',w:true},
+  ]},
+  {id:'s6', icon:'🚙', label:'希望車両条件', fs:[
+    {k:'d1_car',l:'希望車種',req:true,p:'例）トヨタ アルファード'},
+    {k:'d1_body',l:'ボディタイプ',t:'sel',o:O.body},
+    {k:'d1_yearmin',l:'年式（下限）',p:'2018'},{k:'d1_yearmax',l:'年式（上限）',p:'2024'},
+    {k:'d1_mileage',l:'走行距離上限（km）',t:'number'},
+    {k:'d1_pricemin',l:'価格（下限・円）',t:'number'},{k:'d1_pricemax',l:'価格（上限・円）',t:'number'},
+    {k:'d1_monthly',l:'希望月額（円）',t:'number'},
+    {k:'d1_color1',l:'希望色1'},{k:'d1_color2',l:'希望色2'},
+    {k:'d1_mission',l:'ミッション',t:'sel',o:O.mission},{k:'d1_drive',l:'駆動方式',t:'sel',o:O.drive},
+    {k:'d1_fuel',l:'燃料',t:'sel',o:O.fuel},
+    {k:'d1_equip',l:'必須装備',t:'ta',w:true,p:'ナビ / バックカメラ / 両側電動スライド 等'},
+    {k:'d1_trade',l:'下取り',t:'sel',o:O.yesno},{k:'d1_tradecar',l:'下取り車種'},
+    {k:'d1_trademileage',l:'下取り走行距離（km）',t:'number'},
+    {k:'d1_other',l:'その他要望',t:'ta',w:true},
+    {k:'d1_searchstart',l:'探索開始日',t:'date'},{k:'d1_searchperiod',l:'探索期間（日）',t:'number'},
+    {k:'d1_searchend',l:'探索期限日',t:'date'},
+  ]},
+  {id:'s7', icon:'🏦', label:'ローン・審査', fs:[
+    {k:'d1_pay',l:'支払方法',t:'sel',o:O.pay},{k:'d1_down',l:'頭金（円）',t:'number'},
+    {k:'d1_installments',l:'支払回数',t:'number'},
+    {k:'d1_loandest',l:'ローン申込先',t:'sel',o:O.loandest},{k:'d1_loancompany',l:'持込ローン会社名'},
+    {k:'d1_screenorg',l:'審査機関名'},
+    {k:'d1_screeny',l:'審査申込 年',t:'number',p:'2026'},{k:'d1_screenm',l:'月',t:'number'},{k:'d1_screend',l:'日',t:'number'},
+    {k:'d1_screenresult',l:'審査結果',t:'sel',o:O.screen},
+    {k:'d1_approvecond',l:'承認条件'},{k:'d1_remark',l:'備考',t:'ta',w:true},
+  ]},
+  {id:'s8', icon:'💰', label:'申込金', fs:[
+    {k:'d1_dep',l:'申込金有無',t:'sel',o:O.yesno},{k:'d1_depamt',l:'申込金額（円）',t:'number'},
+    {k:'d1_recvy',l:'受領 年',t:'number'},{k:'d1_recvm',l:'月',t:'number'},{k:'d1_recvd',l:'日',t:'number'},
+    {k:'d1_deppay',l:'支払方法',t:'sel',o:O.deppay},{k:'d1_transfername',l:'振込名義'},
+    {k:'d1_bankname',l:'返金銀行名'},{k:'d1_branchname',l:'返金支店名'},
+    {k:'d1_accttype',l:'口座種別',t:'sel',o:O.acct},{k:'d1_acctno',l:'口座番号'},
+    {k:'d1_acctname',l:'口座名義'},{k:'d1_cancelfee',l:'キャンセル料'},
+  ]},
+  {id:'s9', icon:'✍️', label:'特約・署名', sign:true, fs:[
+    {k:'d1_special',l:'特約事項',t:'ta',w:true},
+    {k:'d1_signaddr',l:'署名住所',w:true},{k:'d1_signname',l:'署名氏名'},
+    {k:'d1_signy',l:'署名 年',t:'number'},{k:'d1_signm',l:'月',t:'number'},{k:'d1_signd',l:'日',t:'number'},
+  ]},
+ ],
+ d2:[
+  {id:'s1', icon:'📄', label:'書類情報', fs:[
+    {k:'d2_no',l:'書類番号',p:'INV-2026-001'},{k:'d2_date',l:'作成日',t:'date'},
+    {k:'d2_store',l:'店舗名'},{k:'d2_staff',l:'担当者名'},
+  ]},
+  {id:'s2', icon:'🧑', label:'お客様情報', fs:[
+    {k:'d2_name',l:'氏名',req:true},{k:'d2_kana',l:'フリガナ'},
+    {k:'d2_zip',l:'〒'},{k:'d2_addr',l:'住所',w:true},
+    {k:'d2_mobile',l:'携帯'},{k:'d2_homel',l:'自宅電話'},{k:'d2_email',l:'メール',w:true},
+  ]},
+  {id:'s3', icon:'🚙', label:'購入車両情報', fs:[
+    {k:'d2_maker',l:'メーカー'},{k:'d2_carname',l:'車名・グレード'},
+    {k:'d2_year',l:'年式'},{k:'d2_mileage',l:'走行距離（km）',t:'number'},
+    {k:'d2_chassis',l:'車台番号'},{k:'d2_color',l:'車体色'},
+  ]},
+  {id:'s4', icon:'💴', label:'初期費用明細', fs:[
+    {k:'d2_price',l:'車両本体価格（円）',t:'number'},
+    {k:'d2_tax',l:'消費税10%（円）',t:'number',readonly:true,auto:true},
+    {k:'d2_wtax',l:'自動車重量税（円）',t:'number'},{k:'d2_ins',l:'自賠責保険料（円）',t:'number'},
+    {k:'d2_cartax',l:'自動車税・月割（円）',t:'number'},{k:'d2_reg',l:'登録手数料（円）',t:'number'},
+    {k:'d2_garage',l:'車庫証明費用（円）',t:'number'},{k:'d2_inspect',l:'検査・点検費用（円）',t:'number'},
+    {k:'d2_delivery',l:'納車費用（円）',t:'number'},
+    {k:'d2_opt1',l:'オプション名①'},{k:'d2_opt1p',l:'金額①（円）',t:'number'},
+    {k:'d2_opt2',l:'オプション名②'},{k:'d2_opt2p',l:'金額②（円）',t:'number'},
+    {k:'d2_opt3',l:'オプション名③'},{k:'d2_opt3p',l:'金額③（円）',t:'number'},
+    {k:'d2_other',l:'その他費用名称'},{k:'d2_otherp',l:'その他金額（円）',t:'number'},
+    {k:'d2_total',l:'合計金額（円）',t:'number',readonly:true,auto:true},
+  ]},
+  {id:'s5', icon:'🏦', label:'支払条件', fs:[
+    {k:'d2_pay',l:'支払方法',t:'sel',o:O.pay},{k:'d2_down',l:'頭金（円）',t:'number'},
+    {k:'d2_loanamt',l:'ローン金額（円）',t:'number'},{k:'d2_loancompany',l:'ローン会社名'},
+    {k:'d2_monthly',l:'月額支払（円）',t:'number'},{k:'d2_installments',l:'支払回数',t:'number'},
+    {k:'d2_firstpay',l:'初回支払日',t:'date'},
+  ]},
+  {id:'s6', icon:'✍️', label:'同意・署名', sign:true, fs:[
+    {k:'d2_special',l:'特記事項',t:'ta',w:true},
+    {k:'d2_signaddr',l:'署名住所',w:true},{k:'d2_signname',l:'署名氏名'},
+    {k:'d2_signy',l:'署名 年',t:'number'},{k:'d2_signm',l:'月',t:'number'},{k:'d2_signd',l:'日',t:'number'},
+  ]},
+ ],
+ d3:[
+  {id:'s1', icon:'📄', label:'書類情報', fs:[
+    {k:'d3_no',l:'書類番号',p:'EMG-2026-001'},{k:'d3_date',l:'作成日',t:'date'},
+    {k:'d3_store',l:'店舗名'},{k:'d3_staff',l:'担当者名'},
+    {k:'d3_company',l:'会社名'},{k:'d3_companytel',l:'会社電話番号'},
+  ]},
+  {id:'s2', icon:'🧑', label:'お客様情報', fs:[
+    {k:'d3_name',l:'氏名',req:true},{k:'d3_kana',l:'フリガナ'},
+    {k:'d3_zip',l:'〒'},{k:'d3_addr',l:'住所',w:true},
+    {k:'d3_mobile',l:'携帯'},{k:'d3_homel',l:'自宅電話'},{k:'d3_email',l:'メール',w:true},
+  ]},
+  {id:'s3', icon:'🔴', label:'第一緊急連絡先', fs:[
+    {k:'d3_e1name',l:'氏名',req:true},{k:'d3_e1kana',l:'フリガナ'},{k:'d3_e1rel',l:'続柄'},
+    {k:'d3_e1zip',l:'〒'},{k:'d3_e1addr',l:'住所',w:true},
+    {k:'d3_e1mobile',l:'携帯'},{k:'d3_e1homel',l:'自宅電話'},
+    {k:'d3_e1worktel',l:'勤務先電話'},{k:'d3_e1work',l:'勤務先名'},
+    {k:'d3_e1workaddr',l:'勤務先住所',w:true},{k:'d3_e1time',l:'連絡可能時間'},
+  ]},
+  {id:'s4', icon:'🟠', label:'第二緊急連絡先', fs:[
+    {k:'d3_e2name',l:'氏名'},{k:'d3_e2kana',l:'フリガナ'},{k:'d3_e2rel',l:'続柄'},
+    {k:'d3_e2zip',l:'〒'},{k:'d3_e2addr',l:'住所',w:true},
+    {k:'d3_e2mobile',l:'携帯'},{k:'d3_e2homel',l:'自宅電話'},
+    {k:'d3_e2worktel',l:'勤務先電話'},{k:'d3_e2work',l:'勤務先名'},{k:'d3_e2time',l:'連絡可能時間'},
+  ]},
+  {id:'s5', icon:'🤝', label:'連帯保証人', fs:[
+    {k:'d3_gname',l:'氏名'},{k:'d3_gkana',l:'フリガナ'},{k:'d3_grel',l:'続柄'},
+    {k:'d3_gzip',l:'〒'},{k:'d3_gaddr',l:'住所',w:true},
+    {k:'d3_gmobile',l:'携帯'},{k:'d3_ghomel',l:'自宅電話'},
+    {k:'d3_gwork',l:'勤務先名'},{k:'d3_gworktel',l:'勤務先電話'},
+    {k:'d3_gworkaddr',l:'勤務先住所',w:true},{k:'d3_gincome',l:'年収（円）',t:'number'},
+  ]},
+  {id:'s6', icon:'✍️', label:'同意・署名', sign:true, fs:[
+    {k:'d3_note',l:'備考',t:'ta',w:true},
+    {k:'d3_signaddr',l:'署名住所',w:true},{k:'d3_signname',l:'署名氏名'},
+    {k:'d3_signy',l:'署名 年',t:'number'},{k:'d3_signm',l:'月',t:'number'},{k:'d3_signd',l:'日',t:'number'},
+  ]},
+ ],
+};
+
+/* ================= 状態 ================= */
+let curDoc='d1';
+let curTab='form';
+const curSec={};
+const STATE={};
+let D;   // = STATE[curDoc]
+
+function allFields(docId){ const a=[]; SECS[docId].forEach(s=>s.fs.forEach(f=>a.push(f))); return a; }
+
+function mkDefault(docId){
+  const o={};
+  allFields(docId).forEach(f=> o[f.k]='');
+  if(docId==='d1'){
+    o.d1_company='合同会社アイズ カーメル'; o.d1_addr='福島県いわき市';
+    o.d1_debt='なし'; o.d1_trade='なし'; o.d1_dep='なし'; o.d1_searchperiod='30';
+    o.d1_date=today(); o.d1_mission='指定なし'; o.d1_drive='指定なし'; o.d1_fuel='指定なし';
+    o.d1_screenresult='未申込';
+  }
+  if(docId==='d2'){ o.d2_date=today(); o.d2_tax='0'; o.d2_total='0'; }
+  if(docId==='d3'){ o.d3_company='合同会社アイズ カーメル'; o.d3_date=today(); }
+  return o;
+}
+DTYPES.forEach(d=>{ STATE[d.id]=mkDefault(d.id); curSec[d.id]=SECS[d.id][0].id; });
+D=STATE[curDoc];
+
+/* ================= 自動計算（doc2） ================= */
+const CALC_KEYS=['d2_price','d2_tax','d2_wtax','d2_ins','d2_cartax','d2_reg','d2_garage','d2_inspect','d2_delivery','d2_opt1p','d2_opt2p','d2_opt3p','d2_otherp'];
+function autoCalc(){
+  STATE.d2.d2_tax = Math.floor(num(STATE.d2.d2_price)*0.1).toString();
+  STATE.d2.d2_total = CALC_KEYS.reduce((s,k)=> s+num(STATE.d2[k]),0).toString();
+  // DOM反映
+  document.querySelectorAll('[data-k="d2_tax"],[data-k="d2_total"]').forEach(el=>{ el.value=STATE.d2[el.getAttribute('data-k')]; });
+  const tb=document.getElementById('d2TotBanner'); if(tb) tb.textContent=(yen(STATE.d2.d2_total)||'¥0')+' 円';
+}
+
+/* ================= 進捗 ================= */
+function filledCount(docId){
+  const st=STATE[docId];
+  const ks=Object.keys(st).filter(k=>!k.startsWith('_'));
+  const filled=ks.filter(k=> st[k] && st[k]!=='' && st[k]!=='なし').length;
+  return {filled, total:ks.length};
+}
+function updProg(){
+  const {filled,total}=filledCount(curDoc);
+  const pct= total? Math.round(filled/total*100):0;
+  document.getElementById('pfill').style.width=pct+'%';
+  document.getElementById('ppct').textContent=pct+'%';
+  // お客様名（_name で終わるキー）
+  const st=STATE[curDoc];
+  const nk=Object.keys(st).find(k=>k.endsWith('_name') && st[k]);
+  const el=document.getElementById('custName');
+  el.textContent = nk? ('👤 '+st[nk]+' 様') : 'お客様未入力';
+}
+
+/* 各セクションの入力済み数 */
+function secProgress(docId, sec){
+  const st=STATE[docId];
+  const total=sec.fs.length;
+  const filled=sec.fs.filter(f=> st[f.k] && st[f.k]!=='' && st[f.k]!=='なし').length;
+  return {filled,total,done:filled===total && total>0};
+}
+
+/* ================= レンダリング ================= */
+function rDocBar(){
+  document.getElementById('docbar').innerHTML = DTYPES.map(d=>`
+    <button class="dcard ${d.id===curDoc?'on':''}" style="--dc:${d.color}" onclick="switchDoc('${d.id}')">
+      <span class="ic">${d.icon}</span>
+      <span class="tx"><span class="nm">${esc(d.name)}</span><span class="ds">${esc(d.desc)}</span></span>
+    </button>`).join('');
+}
+
+function rSB(){
+  const secs=SECS[curDoc];
+  document.getElementById('sb').innerHTML =
+    `<div class="sbtitle">セクション</div>` +
+    secs.map(s=>{
+      const p=secProgress(curDoc,s);
+      const on=s.id===curSec[curDoc];
+      const dotcls = on? '' : (p.done?'done':'');
+      return `<button class="secbtn ${on?'on':''} ${s.sign?'sign':''}" onclick="gotoSec('${s.id}')">
+        <span class="sic">${s.icon}</span>
+        <span class="stx"><span class="snm">${esc(s.label)}</span><span class="scnt">${p.filled}/${p.total} 入力済み</span></span>
+        <span class="dot ${dotcls}"></span>
+      </button>`;
+    }).join('');
+}
+
+function fieldHTML(f){
+  const val=esc(D[f.k]||'');
+  const lbl=`<label>${esc(f.l)}${f.req?'<span class="rq">＊</span>':''}${f.auto?'<span class="autob">自動計算</span>':''}</label>`;
+  const cls='fld'+((f.w||f.t==='ta')?' full':'');
+  let ctrl;
+  const oninput=`oninput="u('${f.k}',this.value)"`;
+  const onchange=`onchange="u('${f.k}',this.value)"`;
+  if(f.t==='ta'){
+    ctrl=`<textarea data-k="${f.k}" ${oninput} placeholder="${esc(f.p||'')}">${val}</textarea>`;
+  }else if(f.t==='sel'){
+    ctrl=`<select data-k="${f.k}" ${onchange}>`+ (f.o||[]).map(op=>`<option ${op===D[f.k]?'selected':''}>${esc(op)}</option>`).join('') +`</select>`;
+  }else if(f.readonly){
+    ctrl=`<input type="text" data-k="${f.k}" value="${esc(yen(D[f.k])||D[f.k]||'')}" readonly>`;
+  }else{
+    const tp=f.t==='date'?'date':(f.t==='number'?'number':'text');
+    ctrl=`<input type="${tp}" data-k="${f.k}" value="${val}" ${oninput} placeholder="${esc(f.p||'')}">`;
+  }
+  return `<div class="${cls}">${lbl}${ctrl}</div>`;
+}
+
+function rForm(){
+  const secs=SECS[curDoc];
+  const idx=secs.findIndex(s=>s.id===curSec[curDoc]);
+  const sec=secs[idx];
+  const dt=DTMAP[curDoc];
+  let body='';
+  // doc2 s4 は合計バナーを先頭に
+  if(curDoc==='d2' && sec.id==='s4'){
+    body += `<div class="totbanner"><span class="lb">初期費用 合計金額</span><span class="vl" id="d2TotBanner">${(yen(STATE.d2.d2_total)||'¥0')} 円</span></div>`;
+  }
+  body += sec.fs.map(fieldHTML).join('');
+  const prevDis = idx===0?'disabled':'';
+  const nextDis = idx===secs.length-1?'disabled':'';
+  document.getElementById('fa').innerHTML=`
+    <div class="fcard" style="--dc:${dt.color}">
+      <div class="fchead"><span class="ic">${sec.icon}</span><span class="t">${esc(sec.label)}</span><span class="sub">${idx+1} / ${secs.length}</span></div>
+      <div class="fgrid">${body}</div>
+      <div class="fnav">
+        <button ${prevDis} onclick="stepSec(-1)">← 前のセクション</button>
+        <button class="next" ${nextDis} onclick="stepSec(1)">次のセクション →</button>
+      </div>
+    </div>`;
+}
+
+function rLive(){ document.getElementById('pvlive').innerHTML=genHTML(); }
+
+/* ================= 操作 ================= */
+function switchDoc(id){
+  curDoc=id; D=STATE[id];
+  curSec[id]=curSec[id]||SECS[id][0].id;
+  document.documentElement.style.setProperty('--dcc',DTMAP[id].color);
+  document.querySelector('.fa').style.background=DTMAP[id].bg;
+  rDocBar(); rSB();
+  if(curTab==='form') rForm();
+  else if(curTab==='preview') rLive();
+  else if(curTab==='saved') rSaved();
+  updProg();
+}
+function gotoSec(sid){ curSec[curDoc]=sid; rSB(); rForm(); }
+function stepSec(dir){
+  const secs=SECS[curDoc]; const i=secs.findIndex(s=>s.id===curSec[curDoc]);
+  const n=i+dir; if(n<0||n>=secs.length) return;
+  curSec[curDoc]=secs[n].id; rSB(); rForm();
+  document.getElementById('fa').scrollTop=0;
+}
+function u(key,value){
+  D[key]=value;
+  if(curDoc==='d2') autoCalc();
+  updProg(); rSB();
+}
+
+function setTab(tab){
+  curTab=tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===tab));
+  const show=(id,v)=>document.getElementById(id).style.display=v;
+  show('sb', tab==='form'?'block':'none');
+  show('fa', tab==='form'?'block':'none');
+  show('pa', tab==='preview'?'block':'none');
+  show('la', tab==='saved'?'block':'none');
+  if(tab==='form'){ rSB(); rForm(); }
+  if(tab==='preview'){ rLive(); document.getElementById('pa').scrollTop=0; }
+  if(tab==='saved'){ rSaved(); }
+}
+
+/* ================= localStorage ================= */
+const PREFIX='cml_';
+function saveRec(){
+  const st=STATE[curDoc];
+  const rec=Object.assign({},st);
+  const nowStr=new Date().toLocaleString('ja-JP');
+  const key=`${PREFIX}${curDoc}_${Date.now()}`;
+  rec._key=key; rec._saved=nowStr; rec._doctype=curDoc;
+  try{ localStorage.setItem(key, JSON.stringify(rec)); toast('💾 保存しました'); }
+  catch(e){ toast('⚠️ 保存に失敗しました'); }
+  if(curTab==='saved') rSaved();
+}
+function listRecs(){
+  const out=[];
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k && k.startsWith(PREFIX)){
+      try{ out.push(JSON.parse(localStorage.getItem(k))); }catch(e){}
+    }
+  }
+  out.sort((a,b)=>{
+    const ta=parseInt((a._key||'').split('_').pop())||0;
+    const tb=parseInt((b._key||'').split('_').pop())||0;
+    return tb-ta;
+  });
+  return out;
+}
+function findVal(rec, suffix){ const k=Object.keys(rec).find(x=>!x.startsWith('_') && x.endsWith(suffix)); return k?rec[k]:''; }
+function loadRec(key){
+  const raw=localStorage.getItem(key); if(!raw) return;
+  const rec=JSON.parse(raw);
+  const dt=rec._doctype||'d1';
+  const base=mkDefault(dt);
+  Object.keys(rec).forEach(k=>{ if(!k.startsWith('_')) base[k]=rec[k]; });
+  STATE[dt]=base;
+  curDoc=dt; D=STATE[dt];
+  document.documentElement.style.setProperty('--dcc',DTMAP[dt].color);
+  if(dt==='d2') autoCalc();
+  toast('📂 読込みました');
+  rDocBar(); setTab('form'); updProg();
+}
+function delRec(key){
+  if(!confirm('この保存データを削除しますか？')) return;
+  localStorage.removeItem(key); toast('🗑️ 削除しました'); rSaved();
+}
+function newRec(){
+  if(!confirm('現在の入力内容を破棄して新規作成しますか？')) return;
+  STATE[curDoc]=mkDefault(curDoc); D=STATE[curDoc];
+  curSec[curDoc]=SECS[curDoc][0].id;
+  if(curDoc==='d2') autoCalc();
+  toast('🆕 新規作成しました');
+  rSB(); rForm(); updProg();
+  setTab('form');
+}
+
+function rSaved(){
+  const recs=listRecs();
+  const el=document.getElementById('la');
+  if(!recs.length){
+    el.innerHTML=`<div class="lcard"><div class="empty"><div class="ei">📭</div>保存済みの書面はありません。<br>フォーム入力後「💾 保存」で保存できます。</div></div>`;
+    return;
+  }
+  const rows=recs.map(r=>{
+    const dt=DTMAP[r._doctype]||DTMAP.d1;
+    return `<tr>
+      <td><span class="badge" style="background:${dt.color}">${dt.icon} ${esc(dt.name)}</span></td>
+      <td>${esc(findVal(r,'_name')||'—')}</td>
+      <td>${esc(findVal(r,'_no')||'—')}</td>
+      <td>${esc(findVal(r,'_staff')||'—')}</td>
+      <td>${esc(findVal(r,'_date')||'—')}</td>
+      <td>${esc(r._saved||'—')}</td>
+      <td>
+        <button class="lbtn load" onclick="loadRec('${r._key}')">読込</button>
+        <button class="lbtn del" onclick="delRec('${r._key}')">削除</button>
+      </td></tr>`;
+  }).join('');
+  el.innerHTML=`<div class="lcard">
+    <div class="lhead"><h2>📋 保存済み書面</h2><span class="cnt">${recs.length} 件</span></div>
+    <div style="overflow-x:auto"><table class="ltbl">
+      <thead><tr><th>書面タイプ</th><th>お客様氏名</th><th>書類番号</th><th>担当者</th><th>作成日</th><th>保存日時</th><th>操作</th></tr></thead>
+      <tbody>${rows}</tbody></table></div></div>`;
+}
+
+/* ================= toast ================= */
+let toastTmr;
+function toast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTmr); toastTmr=setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+/* ================= 書面HTML ヘルパー ================= */
+const g = k => esc(D[k]||'');                       // 生値
+const gm = k => yen(D[k]);                            // 金額
+const dsh = v => (v==null||v==='')?'<span style="color:#bbb">—</span>':v; // 空はダッシュ
+const gv = k => dsh(g(k));                            // 値 or ダッシュ
+const gvm = k => dsh(gm(k));                          // 金額 or ダッシュ
+const ymd = (y,m,d)=>`${dsh(g(y))} 年 ${dsh(g(m))} 月 ${dsh(g(d))} 日`;
+
+const r2=(l1,v1,l2,v2)=>`<tr><th>${l1}</th><td class="val" width="35%">${v1}</td><th>${l2}</th><td class="val">${v2}</td></tr>`;
+const r1=(l,v)=>`<tr><th>${l}</th><td class="val" colspan="3">${v}</td></tr>`;
+const sh=t=>`<tr><td colspan="4" class="sh2">${t}</td></tr>`;
+const ct=rows=>`<table class="ct"><tbody>${rows}</tbody></table>`;
+
+/* 費用明細1行（金額） */
+function feeRow(label,key){ const v=D[key]; if(v===''||v==null||num(v)===0) return `<tr><th>${label}</th><td class="money" style="color:#999">¥0</td></tr>`; return `<tr><th>${label}</th><td class="money">${yen(v)}</td></tr>`; }
+
+/* 署名・捺印欄（共通） */
+function signBlock(cfg){
+  // cfg: {company, staff, sy,sm,sd, addr, name}
+  return `
+  <div class="signblk">
+    <div class="signhd">✍️ 署 名 ・ 捺 印 欄 <span class="en">SIGNATURE &amp; SEAL SECTION</span></div>
+    <div class="signnote">以下に署名・捺印することにより、甲乙双方は本書面の全内容を確認し、これに同意したことを証します。</div>
+    <div class="signgrid">
+      <div class="signcol kou">
+        <div class="partyband kou">【甲】 販 売 者</div>
+        <div class="signrow"><span class="k">会社名:</span><span class="v">${dsh(esc(cfg.company||''))}</span></div>
+        <div class="signrow"><span class="k">担当者:</span><span class="v">${dsh(esc(cfg.staff||''))}</span></div>
+        <div class="sigbox kou">
+          <div class="cap">SIGNATURE / 署名</div>
+          <div class="line"></div>
+          <div class="seal">㊞</div>
+        </div>
+        <div class="signdate">署名日 <span class="u"></span> 年 <span class="u"></span> 月 <span class="u"></span> 日</div>
+      </div>
+      <div class="signcol otsu">
+        <div class="partyband otsu">【乙】 お 客 様</div>
+        <div class="signrow"><span class="k">住所:</span><span class="v">${dsh(esc(cfg.addr||''))}</span></div>
+        <div class="sigbox otsu">
+          <div class="cap">SIGNATURE / 署名</div>
+          <div class="signrow"><span class="k">氏名:</span><span class="v">${dsh(esc(cfg.name||''))}</span></div>
+          <div class="line"></div>
+          <div class="seal">㊞</div>
+        </div>
+        <div class="signdate">署名日 <span class="u">${dsh(esc(cfg.sy||''))}</span> 年 <span class="u">${dsh(esc(cfg.sm||''))}</span> 月 <span class="u">${dsh(esc(cfg.sd||''))}</span> 日</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ================= 書面①：車両購入意向確認書 ================= */
+function genD1(){
+  const c='#0C2354', cbg='#EEF2FA';
+  const style=`--tc:${c};--tbg:${cbg}`;
+  const infobar=`<div class="infobar">
+    <span><b>契約番号</b> ${gv('d1_no')}</span>
+    <span><b>作成日</b> ${gv('d1_date')}</span>
+    <span><b>有効期限</b> ${gv('d1_expire')}</span>
+    <span><b>店舗</b> ${gv('d1_store')}</span>
+  </div>`;
+
+  const art1 = `<div class="art"><div class="arth">第1条（当事者情報）</div>`+
+    sh('■ 甲（販売店）') +
+    ct( r2('会社名',gv('d1_company'),'代表者',gv('d1_rep')) +
+        r1('所在地',gv('d1_addr')) +
+        r2('電話',gv('d1_tel'),'担当者',gv('d1_staff')) +
+        r2('担当直通',gv('d1_stafftel'),'古物商許可番号',gv('d1_license')) +
+        r1('LINE ID',gv('d1_line')) ) +
+    ct( sh('■ 乙（お客様）') +
+        r2('氏名',gv('d1_name'),'フリガナ',gv('d1_kana')) +
+        r2('生年月日',gv('d1_birth'),'年齢／性別',`${gv('d1_age')} ／ ${gv('d1_gender')}`) +
+        r2('〒',gv('d1_zip'),'携帯',gv('d1_mobile')) +
+        r1('住所',gv('d1_caddr')) +
+        r2('自宅電話',gv('d1_homel'),'メール',gv('d1_email')) +
+        r2('LINE',gv('d1_cline'),'免許証番号',gv('d1_licenseno')) +
+        r1('免許有効期限',gv('d1_licenseexp')) ) +
+    ct( sh('■ 職業・収入') +
+        r2('勤務先名',gv('d1_workplace'),'勤務先電話',gv('d1_worktel')) +
+        r1('勤務先住所',`〒${g('d1_workzip')} ${g('d1_workaddr')}`) +
+        r2('雇用形態',gv('d1_emptype'),'勤続',`${g('d1_workyears')} 年 ${g('d1_workmonths')} ヶ月`) +
+        r2('年収',gvm('d1_income'),'月収',gvm('d1_mincome')) +
+        r2('他社借入',gv('d1_debt'),'他社借入額',gvm('d1_debtamt')) ) +
+    ct( sh('■ 家族・緊急連絡先') +
+        r2('家族構成',gv('d1_family'),'子供人数',gv('d1_children')) +
+        r2('緊急連絡先氏名',gv('d1_ename'),'続柄',gv('d1_erel')) +
+        r2('緊急連絡先電話',gv('d1_etel'),'',``) +
+        r1('緊急連絡先住所',gv('d1_eaddr')) ) +
+    `</div>`;
+
+  const art2 = `<div class="art"><div class="arth">第2条（希望車両条件）</div>`+
+    ct( r2('希望車種',gv('d1_car'),'ボディタイプ',gv('d1_body')) +
+        r2('年式',`${g('d1_yearmin')} 〜 ${g('d1_yearmax')}`,'走行距離上限',D.d1_mileage?`${num(D.d1_mileage).toLocaleString()} km`:dsh('')) +
+        r2('価格帯',`${gm('d1_pricemin')||'—'} 〜 ${gm('d1_pricemax')||'—'}`,'希望月額',gvm('d1_monthly')) +
+        r2('希望色',`${g('d1_color1')} / ${g('d1_color2')}`,'ミッション',gv('d1_mission')) +
+        r2('駆動方式',gv('d1_drive'),'燃料',gv('d1_fuel')) +
+        r1('必須装備',gv('d1_equip')) +
+        r2('下取り',gv('d1_trade'),'下取り車種',gv('d1_tradecar')) +
+        r1('下取り走行距離',D.d1_trademileage?`${num(D.d1_trademileage).toLocaleString()} km`:dsh('')) +
+        r1('その他要望',gv('d1_other')) +
+        r2('探索開始日',gv('d1_searchstart'),'探索期間',D.d1_searchperiod?`${g('d1_searchperiod')} 日`:dsh('')) +
+        r1('探索期限日',gv('d1_searchend')) ) +
+    `</div>`;
+
+  const art3 = `<div class="art"><div class="arth">第3条（ローン・審査に関する同意）</div>
+    <p class="clause">1. 乙は、本件車両購入のためのローン契約締結にあたり、甲および提携信販会社・金融機関が乙の信用情報を照会・確認することに同意する。</p>
+    <p class="clause">2. 審査の結果、乙が希望する条件でのローンが承認されない場合があることを、乙はあらかじめ了承する。</p>
+    <p class="clause">3. 乙が甲に提供した情報に虚偽があった場合、本申込は無効となることがある。</p>`+
+    ct( sh('■ 審査記録') +
+        r2('支払方法',gv('d1_pay'),'頭金',gvm('d1_down')) +
+        r2('支払回数',D.d1_installments?`${g('d1_installments')} 回`:dsh(''),'ローン申込先',gv('d1_loandest')) +
+        r2('持込ローン会社',gv('d1_loancompany'),'審査機関名',gv('d1_screenorg')) +
+        r2('審査申込日',ymd('d1_screeny','d1_screenm','d1_screend'),'審査結果',gv('d1_screenresult')) +
+        r1('承認条件',gv('d1_approvecond')) +
+        r1('備考',gv('d1_remark')) ) +
+    `</div>`;
+
+  const art4 = `<div class="art"><div class="arth">第4条（申込金）</div>`+
+    ct( r2('申込金有無',gv('d1_dep'),'申込金額',gvm('d1_depamt')) +
+        r2('受領日',ymd('d1_recvy','d1_recvm','d1_recvd'),'支払方法',gv('d1_deppay')) +
+        r2('振込名義',gv('d1_transfername'),'キャンセル料',gv('d1_cancelfee')) +
+        sh('■ 返金先口座') +
+        r2('銀行名',gv('d1_bankname'),'支店名',gv('d1_branchname')) +
+        r2('口座種別',gv('d1_accttype'),'口座番号',gv('d1_acctno')) +
+        r1('口座名義',gv('d1_acctname')) ) +
+    `</div>`;
+
+  const art5 = `<div class="art"><div class="arth">第5条（キャンセル規定）</div>
+    <table class="ct"><tbody>
+      <tr><td class="sh2">区分</td><td class="sh2">タイミング</td><td class="sh2">キャンセル料</td></tr>
+      <tr><th>①</th><td>車両探索前（申込当日）</td><td class="money">無料</td></tr>
+      <tr><th>②</th><td>車両探索中（提案前）</td><td class="money">申込金の50%</td></tr>
+      <tr><th>③</th><td>車両提案後・成約前</td><td class="money">申込金全額</td></tr>
+      <tr><th>④</th><td>成約後・登録前</td><td class="money">車両価格の10%</td></tr>
+      <tr><th>⑤</th><td>登録後・納車前</td><td class="money">実費＋車両価格の20%</td></tr>
+    </tbody></table></div>`;
+
+  const art6 = `<div class="art"><div class="arth">第6条〜第10条（一般条項）</div>
+    <p class="clause"><b>第6条（所有権）</b> 本件車両の所有権は、乙が売買代金の全額を甲に支払い、かつ登録手続が完了した時点で乙に移転する。ローン利用の場合は信販会社の定めに従う。</p>
+    <p class="clause"><b>第7条（個人情報の取扱い）</b> 甲は、本申込により取得した乙の個人情報を、車両販売・ローン審査・アフターサービスおよび関連する連絡の目的の範囲内で適正に利用し、法令に基づく場合を除き第三者に提供しない。</p>
+    <p class="clause"><b>第8条（反社会的勢力の排除）</b> 甲乙双方は、自らが暴力団その他の反社会的勢力に該当せず、将来にわたっても該当しないことを表明・確約する。これに反した場合、相手方は何らの催告なく本契約を解除できる。</p>
+    <p class="clause"><b>第9条（損害賠償）</b> 甲乙いずれかが本契約に違反し相手方に損害を与えた場合、当該当事者はその損害を賠償する責を負う。</p>
+    <p class="clause"><b>第10条（準拠法・合意管轄）</b> 本契約は日本法に準拠し、本契約に関する紛争については、甲の本店所在地を管轄する裁判所を第一審の専属的合意管轄裁判所とする。</p></div>`;
+
+  const art11 = `<div class="art"><div class="arth">第11条（特約事項）</div>
+    <table class="ct"><tbody><tr><td class="val" style="min-height:60px">${D.d1_special?esc(D.d1_special).replace(/\n/g,'<br>'):'<span style="color:#bbb">特約事項なし</span>'}</td></tr></tbody></table></div>`;
+
+  const sign=signBlock({company:g('d1_company'), staff:g('d1_staff'), addr:g('d1_signaddr'), name:g('d1_signname'), sy:g('d1_signy'), sm:g('d1_signm'), sd:g('d1_signd')});
+
+  const terms=`<div class="terms"><h4>【重要事項・約款】</h4>
+    本書面は、乙が甲に対し車両購入の意向を示し、甲がこれに基づき車両を探索・提案するための「意向確認」を目的とするものであり、本書面のみをもって売買契約が成立するものではありません。売買契約は別途締結する「自動車売買契約書」により成立します。申込金は売買代金の一部に充当され、成約に至らなかった場合は本書面第4条・第5条の定めに従い取扱います。乙は本書面記載の全内容を理解のうえ署名・捺印するものとします。</div>`;
+
+  return `<div class="doc" style="${style}">
+    <div class="dtitle">車 両 購 入 意 向 確 認 書</div>
+    <div class="dtitle-en">VEHICLE PURCHASE INTENTION CONFIRMATION</div>
+    ${infobar}
+    <p class="lead">本書面は、下記当事者間において、乙が希望する車両の購入意向を確認し、甲による車両探索および購入手続の前提条件を定めることを目的として作成する。</p>
+    ${art1}${art2}${art3}${art4}${art5}${art6}${art11}
+    ${sign}
+    ${terms}
+  </div>`;
+}
+
+/* ================= 書面②：初期費用同意書 ================= */
+function genD2(){
+  const c='#1A5F35', cbg='#EDF6F0';
+  const style=`--tc:${c};--tbg:${cbg}`;
+  const infobar=`<div class="infobar">
+    <span><b>書類番号</b> ${gv('d2_no')}</span>
+    <span><b>作成日</b> ${gv('d2_date')}</span>
+    <span><b>店舗</b> ${gv('d2_store')}</span>
+    <span><b>担当者</b> ${gv('d2_staff')}</span>
+  </div>`;
+
+  const cust=ct( sh('■ お客様情報') +
+    r2('氏名',gv('d2_name'),'フリガナ',gv('d2_kana')) +
+    r1('住所',`〒${g('d2_zip')} ${g('d2_addr')}`) +
+    r2('携帯',gv('d2_mobile'),'自宅電話',gv('d2_homel')) +
+    r1('メール',gv('d2_email')) );
+
+  const car=ct( sh('■ 購入車両情報') +
+    r2('メーカー',gv('d2_maker'),'車名・グレード',gv('d2_carname')) +
+    r2('年式',gv('d2_year'),'走行距離',D.d2_mileage?`${num(D.d2_mileage).toLocaleString()} km`:dsh('')) +
+    r2('車台番号',gv('d2_chassis'),'車体色',gv('d2_color')) );
+
+  // 費用明細
+  let feeRows=
+    feeRow('車両本体価格','d2_price')+
+    feeRow('消費税（10%）','d2_tax')+
+    feeRow('自動車重量税','d2_wtax')+
+    feeRow('自賠責保険料','d2_ins')+
+    feeRow('自動車税（月割）','d2_cartax')+
+    feeRow('登録手数料','d2_reg')+
+    feeRow('車庫証明費用','d2_garage')+
+    feeRow('検査・点検費用','d2_inspect')+
+    feeRow('納車費用','d2_delivery');
+  if(D.d2_opt1||num(D.d2_opt1p)) feeRows+=feeRow(esc(D.d2_opt1||'オプション①'),'d2_opt1p');
+  if(D.d2_opt2||num(D.d2_opt2p)) feeRows+=feeRow(esc(D.d2_opt2||'オプション②'),'d2_opt2p');
+  if(D.d2_opt3||num(D.d2_opt3p)) feeRows+=feeRow(esc(D.d2_opt3||'オプション③'),'d2_opt3p');
+  if(D.d2_other||num(D.d2_otherp)) feeRows+=feeRow(esc(D.d2_other||'その他費用'),'d2_otherp');
+  feeRows+=`<tr class="totrow"><th>合計金額（税込）</th><td class="money">${yen(D.d2_total)||'¥0'}</td></tr>`;
+  const fee=`<div class="arth">■ 初期費用明細</div><table class="ct"><tbody>${feeRows}</tbody></table>`;
+
+  const paycond=ct( sh('■ 支払条件') +
+    r2('支払方法',gv('d2_pay'),'頭金',gvm('d2_down')) +
+    r2('ローン金額',gvm('d2_loanamt'),'ローン会社',gv('d2_loancompany')) +
+    r2('月額支払',gvm('d2_monthly'),'支払回数',D.d2_installments?`${g('d2_installments')} 回`:dsh('')) +
+    r1('初回支払日',gv('d2_firstpay')) );
+
+  const agree=`<div class="agree"><h4>【同意事項】</h4><ol>
+    <li>お客様は、上記初期費用の明細および合計金額を確認し、その内容に同意します。</li>
+    <li>各費用のうち税金・保険料等の法定費用は、金額改定や月割計算により実額と差異が生じる場合があり、精算されることに同意します。</li>
+    <li>納車後に判明した追加整備等の費用は、事前に見積り提示のうえ別途協議のうえ決定します。</li>
+    <li>本同意書は初期費用の内訳確認を目的とし、正式な売買条件は自動車売買契約書によります。</li>
+  </ol></div>`;
+
+  const special = D.d2_special? `<div class="agree"><h4>【特記事項】</h4><div style="font-size:11px">${esc(D.d2_special).replace(/\n/g,'<br>')}</div></div>`:'';
+
+  const sign=signBlock({company:'合同会社アイズ カーメル', staff:g('d2_staff'), addr:g('d2_signaddr'), name:g('d2_signname'), sy:g('d2_signy'), sm:g('d2_signm'), sd:g('d2_signd')});
+
+  return `<div class="doc" style="${style}">
+    <div class="dtitle">初 期 費 用 同 意 書</div>
+    <div class="dtitle-en">INITIAL COST AGREEMENT</div>
+    ${infobar}
+    <p class="lead">本書面は、下記車両の購入にあたり必要となる初期費用の明細および合計金額について、お客様の確認と同意を得ることを目的として作成するものです。</p>
+    ${cust}${car}${fee}${paycond}${agree}${special}
+    ${sign}
+  </div>`;
+}
+
+/* ================= 書面③：緊急連絡先確認書 ================= */
+function genD3(){
+  const c='#8B1D1D', cbg='#FAEEEE';
+  const style=`--tc:${c};--tbg:${cbg}`;
+  const infobar=`<div class="infobar">
+    <span><b>書類番号</b> ${gv('d3_no')}</span>
+    <span><b>作成日</b> ${gv('d3_date')}</span>
+    <span><b>店舗</b> ${gv('d3_store')}</span>
+    <span><b>担当者</b> ${gv('d3_staff')}</span>
+    <span><b>会社</b> ${gv('d3_company')}</span>
+    <span><b>会社TEL</b> ${gv('d3_companytel')}</span>
+  </div>`;
+
+  const cust=ct( sh('■ お客様情報') +
+    r2('氏名',gv('d3_name'),'フリガナ',gv('d3_kana')) +
+    r1('住所',`〒${g('d3_zip')} ${g('d3_addr')}`) +
+    r2('携帯',gv('d3_mobile'),'自宅電話',gv('d3_homel')) +
+    r1('メール',gv('d3_email')) );
+
+  const e1=`<div class="schead c1">🔴 第一緊急連絡先</div>`+
+    ct( r2('氏名',gv('d3_e1name'),'フリガナ',gv('d3_e1kana')) +
+        r2('続柄',gv('d3_e1rel'),'連絡可能時間',gv('d3_e1time')) +
+        r1('住所',`〒${g('d3_e1zip')} ${g('d3_e1addr')}`) +
+        r2('携帯',gv('d3_e1mobile'),'自宅電話',gv('d3_e1homel')) +
+        r2('勤務先名',gv('d3_e1work'),'勤務先電話',gv('d3_e1worktel')) +
+        r1('勤務先住所',gv('d3_e1workaddr')) );
+
+  const e2=`<div class="schead c2">🟠 第二緊急連絡先</div>`+
+    ct( r2('氏名',gv('d3_e2name'),'フリガナ',gv('d3_e2kana')) +
+        r2('続柄',gv('d3_e2rel'),'連絡可能時間',gv('d3_e2time')) +
+        r1('住所',`〒${g('d3_e2zip')} ${g('d3_e2addr')}`) +
+        r2('携帯',gv('d3_e2mobile'),'自宅電話',gv('d3_e2homel')) +
+        r2('勤務先名',gv('d3_e2work'),'勤務先電話',gv('d3_e2worktel')) );
+
+  const gua=`<div class="schead c3">🤝 連帯保証人</div>`+
+    ct( r2('氏名',gv('d3_gname'),'フリガナ',gv('d3_gkana')) +
+        r2('続柄',gv('d3_grel'),'年収',gvm('d3_gincome')) +
+        r1('住所',`〒${g('d3_gzip')} ${g('d3_gaddr')}`) +
+        r2('携帯',gv('d3_gmobile'),'自宅電話',gv('d3_ghomel')) +
+        r2('勤務先名',gv('d3_gwork'),'勤務先電話',gv('d3_gworktel')) +
+        r1('勤務先住所',gv('d3_gworkaddr')) );
+
+  const agree=`<div class="agree"><h4>【同意事項】</h4><ol>
+    <li>お客様は、上記の緊急連絡先および連帯保証人について、本人の了承を得たうえで届け出たことを確認します。</li>
+    <li>お客様と連絡が取れない場合に限り、甲が上記緊急連絡先に連絡することに同意します。</li>
+    <li>連絡先情報に変更が生じた場合は、速やかに甲へ届け出るものとします。</li>
+  </ol></div>`;
+
+  const note = D.d3_note? `<div class="agree"><h4>【備考】</h4><div style="font-size:11px">${esc(D.d3_note).replace(/\n/g,'<br>')}</div></div>`:'';
+
+  const sign=signBlock({company:g('d3_company'), staff:g('d3_staff'), addr:g('d3_signaddr'), name:g('d3_signname'), sy:g('d3_signy'), sm:g('d3_signm'), sd:g('d3_signd')});
+
+  return `<div class="doc" style="${style}">
+    <div class="dtitle">緊 急 連 絡 先 確 認 書</div>
+    <div class="dtitle-en">EMERGENCY CONTACT CONFIRMATION</div>
+    ${infobar}
+    <p class="lead">本書面は、車両購入契約に関連して、お客様ご本人と連絡が取れない場合に備えた緊急連絡先および連帯保証人を確認することを目的として作成します。</p>
+    ${cust}${e1}${e2}${gua}${agree}${note}
+    ${sign}
+  </div>`;
+}
+
+function genHTML(){ if(curDoc==='d2') return genD2(); if(curDoc==='d3') return genD3(); return genD1(); }
+
+/* ================= 印刷 ================= */
+function doPrint(){ document.getElementById('pb').innerHTML=genHTML(); window.print(); }
+
+/* ================= 初期化 ================= */
+document.documentElement.style.setProperty('--dcc',DTMAP[curDoc].color);
+rDocBar();
+setTab('form');
+updProg();
+</script>
+</body>
+</html>
