@@ -183,6 +183,25 @@ function carmel_cb_handle_post() {
 			carmel_cb_notice( '受付データを削除しました。' );
 			break;
 
+		case 'followup_test_send':
+			$to = sanitize_email( wp_unslash( $_POST['followup_test_email'] ?? '' ) );
+			$nm = sanitize_text_field( wp_unslash( $_POST['followup_test_name'] ?? 'テスト太郎' ) );
+			$stage = (int) ( $_POST['followup_test_stage'] ?? 1 );
+			if ( ! is_email( $to ) ) { carmel_cb_notice( 'テスト送信先のメールアドレスをご確認ください。' ); break; }
+			if ( ! function_exists( 'carmel_cb_apply_stage_defs' ) ) { carmel_cb_notice( '後追い機能が読み込まれていません。' ); break; }
+			$defs = carmel_cb_apply_stage_defs( carmel_cb_get_settings() );
+			$def  = $defs[ $stage ] ?? $defs[1];
+			$row  = (object) array( 'email' => $to, 'name' => $nm, 'page' => home_url( '/' ) );
+			$ok   = carmel_cb_apply_send_stage_mail( carmel_cb_get_settings(), $row, $stage, $def );
+			carmel_cb_notice( $ok ? ( 'テストメールを送信しました → ' . esc_html( $to ) ) : 'テストメール送信に失敗しました。WordPressのメール送信設定をご確認ください。' );
+			break;
+
+		case 'followup_run_now':
+			if ( ! function_exists( 'carmel_cb_apply_run_followup' ) ) { carmel_cb_notice( '後追い機能が読み込まれていません。' ); break; }
+			carmel_cb_apply_run_followup();
+			carmel_cb_notice( '後追いキューを1回処理しました。「直近の記録」の送信ステージが更新されているかご確認ください。' );
+			break;
+
 		case 'save_faq':
 			$faq_id   = (int) ( $_POST['faq_id'] ?? 0 );
 			$question = sanitize_textarea_field( wp_unslash( $_POST['question'] ?? '' ) );
@@ -1052,6 +1071,36 @@ function carmel_cb_view_appearance() {
 						}
 					}
 					?>
+
+					<hr style="margin:14px 0">
+					<h4 style="margin:0 0 6px">🧪 テスト送信</h4>
+					<p class="description" style="margin-top:0">実際にメールが届くかを確認できます。「①〜③」から段階を選び、宛先とお名前を入れて「テスト送信」を押してください。</p>
+					<div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:8px">
+						<div>
+							<label>宛先メール</label><br>
+							<input type="email" name="followup_test_email" value="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>" class="regular-text" placeholder="you@example.com">
+						</div>
+						<div>
+							<label>差し込み用のお名前</label><br>
+							<input type="text" name="followup_test_name" value="テスト太郎" class="regular-text">
+						</div>
+						<div>
+							<label>段階</label><br>
+							<select name="followup_test_stage">
+								<option value="1">① 30分後</option>
+								<option value="2">② 24時間後</option>
+								<option value="3">③ 3日後</option>
+							</select>
+						</div>
+						<div>
+							<button type="submit" name="carmel_action" value="followup_test_send" class="button button-primary">テスト送信</button>
+						</div>
+					</div>
+
+					<hr style="margin:14px 0">
+					<h4 style="margin:0 0 6px">⚡ 後追いキューを今すぐ実行</h4>
+					<p class="description" style="margin-top:0">通常は10分ごとに自動で回りますが、待たずにテストしたい場合はここから即実行できます（送信対象があれば送られます）。</p>
+					<button type="submit" name="carmel_action" value="followup_run_now" class="button">今すぐ実行</button>
 				</td>
 			</tr>
 			<tr>
