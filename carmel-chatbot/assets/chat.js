@@ -702,12 +702,13 @@
 		var wrap = document.createElement("div");
 		wrap.className = "ccb-cta";
 
-		function addBtnLink(cls, text, href, sameTab) {
+		function addBtnLink(cls, text, href, sameTab, onClickAlso) {
 			var a = document.createElement("a");
 			a.className = "ccb-cta-btn " + cls;
 			a.href = href;
 			if (!sameTab) { a.target = "_blank"; a.rel = "noopener"; }
 			a.textContent = text;
+			if (typeof onClickAlso === "function") { a.addEventListener("click", onClickAlso); }
 			wrap.appendChild(a);
 		}
 		function addBtnAct(cls, text, fn) {
@@ -718,10 +719,29 @@
 			wrap.appendChild(b);
 		}
 
+		// 後追いメール：審査ボタンを押した瞬間に「保留」を記録（お客様がフォームで送信しなければ後で送信）
+		function reportApplyClick() {
+			if (!cfg.applyFollowupOn || !cfg.applyClickUrl) return;
+			// v1.56 の intake が有効なら email/name は取得済み。無い場合はサーバー側でセッションから拾う。
+			try {
+				fetch(cfg.applyClickUrl, {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						session_id: sessionId,
+						name: (visitor && visitor.name) || "",
+						email: (visitor && visitor.email) || "",
+						page: location.href
+					}),
+					keepalive: true
+				}).catch(function () {});
+			} catch (e) {}
+		}
+
 		if (show.apply) {
 			// 仮審査になったら /shinsa-2 に移行（同じタブで遷移）。URL未設定のときだけチャット内フォーム。
-			if (applyToPage) addBtnLink("ccb-cta-apply", "📝 仮審査を申し込む", cfg.applyUrl, true);
-			else addBtnAct("ccb-cta-apply", "📝 かんたん審査", function () { showLeadForm("apply"); });
+			if (applyToPage) addBtnLink("ccb-cta-apply", "📝 仮審査を申し込む", cfg.applyUrl, true, reportApplyClick);
+			else addBtnAct("ccb-cta-apply", "📝 かんたん審査", function () { reportApplyClick(); showLeadForm("apply"); });
 		}
 		if (show.contact) {
 			if (formMode) addBtnAct("ccb-cta-contact", "✉️ お問い合わせ", function () { showLeadForm("contact"); });

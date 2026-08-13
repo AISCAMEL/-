@@ -37,6 +37,7 @@ function carmel_cb_create_tables() {
 	dbDelta( $sql_log );
 
 	carmel_cb_create_leads_table();
+	if ( function_exists( 'carmel_cb_apply_ensure_table' ) ) { carmel_cb_apply_ensure_table(); }
 }
 
 /**
@@ -181,6 +182,11 @@ function carmel_cb_default_settings() {
 		'intake_on'           => 1,
 		'intake_msg'          => 'ご相談ありがとうございます。まずお名前とメールアドレスをご入力ください。担当者からのご連絡やご案内に使わせていただきます😊',
 		'intake_after_msg'    => 'ありがとうございます、{name}様。本日はどのようなご用件でしょうか？下のメッセージ入力にて、その場でお答えします😊',
+		// 後追いメール（審査離脱者向け）
+		'apply_followup_on'        => 1,
+		'apply_followup_from'      => 'carmelbuzzzzz@aisjaltd.com',
+		'apply_followup_from_name' => 'カーメル',
+		'apply_followup_stages'    => array(), // 空なら apply-followup.php のデフォルト定義を使用
 		// 担当者につなぐ間の案内（ライブ待機）
 		'handoff_wait_msg' => '担当者におつなぎしています。つながるまで少々お待ちください…',
 		'handoff_busy_sec' => 15,       // この秒数つながらなければ「混雑」案内を出す

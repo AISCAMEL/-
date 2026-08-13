@@ -2,6 +2,24 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 /**
+ * 後追いメール（3段階）の保存用サニタイザ
+ */
+function carmel_cb_admin_sanitize_stages( $in ) {
+	$out = array();
+	if ( ! is_array( $in ) ) { return $out; }
+	foreach ( array( 1, 2, 3 ) as $i ) {
+		$row = isset( $in[ $i ] ) && is_array( $in[ $i ] ) ? $in[ $i ] : array();
+		$out[ $i ] = array(
+			'on'        => ! empty( $row['on'] ) ? true : false,
+			'delay_min' => max( 1, (int) ( $row['delay_min'] ?? 30 ) ),
+			'subject'   => sanitize_text_field( wp_unslash( $row['subject'] ?? '' ) ),
+			'body'      => wp_kses_post( wp_unslash( $row['body'] ?? '' ) ),
+		);
+	}
+	return $out;
+}
+
+/**
  * 管理画面メニュー登録
  */
 add_action( 'admin_menu', 'carmel_cb_admin_menu' );
@@ -151,6 +169,11 @@ function carmel_cb_handle_post() {
 				'contact_form_on' => isset( $_POST['contact_form_on'] ) ? 1 : 0,
 				'consent_text'    => sanitize_textarea_field( wp_unslash( $_POST['consent_text'] ?? '' ) ),
 				'consent_url'     => esc_url_raw( wp_unslash( $_POST['consent_url'] ?? '' ) ),
+				// 後追いメール
+				'apply_followup_on'        => isset( $_POST['apply_followup_on'] ) ? 1 : 0,
+				'apply_followup_from'      => sanitize_email( wp_unslash( $_POST['apply_followup_from'] ?? '' ) ),
+				'apply_followup_from_name' => sanitize_text_field( wp_unslash( $_POST['apply_followup_from_name'] ?? '' ) ),
+				'apply_followup_stages'    => carmel_cb_admin_sanitize_stages( $_POST['apply_followup_stages'] ?? array() ),
 			) );
 			carmel_cb_notice( '見た目設定を保存しました。' );
 			break;
@@ -965,6 +988,70 @@ function carmel_cb_view_appearance() {
 					<input type="text" name="consent_text" value="<?php echo esc_attr( $s['consent_text'] ?? '' ); ?>" class="large-text">
 					<input type="url" name="consent_url" value="<?php echo esc_attr( $s['consent_url'] ?? '' ); ?>" class="regular-text" placeholder="プライバシーポリシーURL（任意）" style="margin-top:6px">
 					<p class="description">フォーム送信前のチェックに表示します。空欄にすると同意チェックを省略します。</p>
+				</td>
+			</tr>
+			<tr>
+				<th>後追いメール（審査離脱者）</th>
+				<td>
+					<label><input type="checkbox" name="apply_followup_on" value="1" <?php checked( ! empty( $s['apply_followup_on'] ) ); ?>> 有効にする</label>
+					<p class="description">
+						お名前・メールを入力済みのお客様が「仮審査を申し込む」ボタンを押したのに、審査フォームを送信しないまま離脱した場合に、自動でフォローメールを送信します。
+						お客様が実際にフォームを送信したら、以後の後追いは自動停止します。
+					</p>
+					<div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap">
+						<div>
+							<label>送信元メール</label><br>
+							<input type="email" name="apply_followup_from" value="<?php echo esc_attr( $s['apply_followup_from'] ?? 'carmelbuzzzzz@aisjaltd.com' ); ?>" class="regular-text" placeholder="carmelbuzzzzz@aisjaltd.com">
+						</div>
+						<div>
+							<label>送信者名</label><br>
+							<input type="text" name="apply_followup_from_name" value="<?php echo esc_attr( $s['apply_followup_from_name'] ?? 'カーメル' ); ?>" class="regular-text">
+						</div>
+					</div>
+					<p class="description" style="margin-top:8px">※ WordPressから送信されるため、迷惑メール判定を避けるにはドメインのSPF/DKIM設定を推奨します（お使いの共用サーバーで <code>@aisjaltd.com</code> の設定をご確認ください）。</p>
+
+					<?php
+					$defs   = function_exists( 'carmel_cb_apply_stage_defs' ) ? carmel_cb_apply_stage_defs( $s ) : array();
+					$labels = array( 1 => '① 30分後（軽いリマインド）', 2 => '② 24時間後（相談を促す）', 3 => '③ 3日後（最終フォロー）' );
+					?>
+					<hr style="margin:14px 0">
+					<h4 style="margin:0 0 6px">送信タイミング・文面</h4>
+					<?php foreach ( $labels as $i => $lbl ) : $d = $defs[ $i ] ?? array(); ?>
+					<div style="border:1px solid #e2e4e7;padding:10px 12px;border-radius:6px;margin-bottom:10px;background:#fafbfc">
+						<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+							<strong style="min-width:220px"><?php echo esc_html( $lbl ); ?></strong>
+							<label><input type="checkbox" name="apply_followup_stages[<?php echo $i; ?>][on]" value="1" <?php checked( ! empty( $d['on'] ) ); ?>> 送信する</label>
+							<label>送信までの遅延（分）: <input type="number" name="apply_followup_stages[<?php echo $i; ?>][delay_min]" value="<?php echo esc_attr( (int) ( $d['delay_min'] ?? 30 ) ); ?>" min="1" class="small-text"></label>
+						</div>
+						<p style="margin:8px 0 4px"><label>件名</label></p>
+						<input type="text" name="apply_followup_stages[<?php echo $i; ?>][subject]" value="<?php echo esc_attr( (string) ( $d['subject'] ?? '' ) ); ?>" class="large-text">
+						<p style="margin:8px 0 4px"><label>本文（利用可: <code>{name}</code> <code>{apply_url}</code> <code>{line_url}</code> <code>{tel}</code>）</label></p>
+						<textarea name="apply_followup_stages[<?php echo $i; ?>][body]" rows="8" class="large-text" style="font-family:inherit"><?php echo esc_textarea( (string) ( $d['body'] ?? '' ) ); ?></textarea>
+					</div>
+					<?php endforeach; ?>
+
+					<?php
+					// 直近の未完了リスト
+					if ( function_exists( 'carmel_cb_apply_table_exists' ) && carmel_cb_apply_table_exists() ) {
+						global $wpdb;
+						$t = carmel_cb_apply_table();
+						$rows = $wpdb->get_results( "SELECT id, email, name, clicked_at, stage, completed FROM $t ORDER BY id DESC LIMIT 20" );
+						if ( $rows ) {
+							echo '<hr style="margin:14px 0"><h4 style="margin:0 0 6px">直近の記録（20件）</h4>';
+							echo '<table class="widefat striped" style="max-width:900px"><thead><tr><th>クリック日時</th><th>お名前</th><th>メール</th><th>送信ステージ</th><th>完了</th></tr></thead><tbody>';
+							foreach ( $rows as $r ) {
+								echo '<tr>';
+								echo '<td>' . esc_html( $r->clicked_at ) . '</td>';
+								echo '<td>' . esc_html( $r->name ) . '</td>';
+								echo '<td>' . esc_html( $r->email ) . '</td>';
+								echo '<td>' . (int) $r->stage . '/3</td>';
+								echo '<td>' . ( $r->completed ? '✅' : '—' ) . '</td>';
+								echo '</tr>';
+							}
+							echo '</tbody></table>';
+						}
+					}
+					?>
 				</td>
 			</tr>
 			<tr>

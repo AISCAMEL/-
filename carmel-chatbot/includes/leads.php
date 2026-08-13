@@ -86,6 +86,9 @@ function carmel_cb_handle_lead( WP_REST_Request $request ) {
 	carmel_cb_insert_lead( $p );
 	carmel_cb_lead_notify( $s, $p );
 
+	// 後追いメールを止めるため「完了」を通知（apply-followup.php が受信）
+	do_action( 'carmel_cb_lead_submitted', $type, $p );
+
 	$labels = carmel_cb_lead_labels( $type );
 	return new WP_REST_Response( array(
 		'ok'     => true,
