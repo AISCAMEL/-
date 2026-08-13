@@ -192,8 +192,51 @@ function carmel_cb_handle_post() {
 			$defs = carmel_cb_apply_stage_defs( carmel_cb_get_settings() );
 			$def  = $defs[ $stage ] ?? $defs[1];
 			$row  = (object) array( 'email' => $to, 'name' => $nm, 'page' => home_url( '/' ) );
-			$ok   = carmel_cb_apply_send_stage_mail( carmel_cb_get_settings(), $row, $stage, $def );
-			carmel_cb_notice( $ok ? ( 'テストメールを送信しました → ' . esc_html( $to ) ) : 'テストメール送信に失敗しました。WordPressのメール送信設定をご確認ください。' );
+
+			// 詳細診断：PHPMailerが失敗した理由を捕まえて表示
+			$capture = null;
+			$listener = function ( $wp_error ) use ( &$capture ) {
+				if ( is_object( $wp_error ) && method_exists( $wp_error, 'get_error_message' ) ) {
+					$capture = $wp_error->get_error_message();
+				}
+			};
+			add_action( 'wp_mail_failed', $listener );
+			$ok = carmel_cb_apply_send_stage_mail( carmel_cb_get_settings(), $row, $stage, $def );
+			remove_action( 'wp_mail_failed', $listener );
+
+			if ( $ok ) {
+				$sfrom = carmel_cb_get_settings();
+				carmel_cb_notice(
+					'✅ テストメールをWordPressから送信しました → <strong>' . esc_html( $to ) . '</strong>' .
+					'<br><small>差出人：' . esc_html( $sfrom['apply_followup_from'] ?? '' ) . '</small>' .
+					'<br><small>【重要】数分待って受信箱＋<strong>迷惑メールフォルダ</strong>もご確認ください。届かない場合は、共用サーバー(WPX)からメールが出ていない可能性が高いので、下の「診断結果」で状況を確認ください。</small>'
+				);
+			} else {
+				$msg = '❌ テストメール送信に失敗しました。';
+				if ( $capture ) { $msg .= '<br><strong>エラー内容：</strong><code>' . esc_html( $capture ) . '</code>'; }
+				$msg .= '<br><small>下の「診断」で原因が確認できます。多くの場合、WordPressから外部にメールを送るためのSMTP設定が未登録です。</small>';
+				carmel_cb_notice( $msg );
+			}
+			break;
+
+		case 'followup_diagnose':
+			// メール環境の診断
+			$out = array();
+			$out[] = 'PHP版：' . phpversion();
+			$out[] = 'WP版：' . get_bloginfo( 'version' );
+			$out[] = 'サイトURL：' . site_url();
+			$out[] = '管理者メール：' . get_option( 'admin_email' );
+			$out[] = 'PHP mail()関数：' . ( function_exists( 'mail' ) ? '存在' : '無効' );
+			$out[] = 'ini sendmail_path：' . ( ini_get( 'sendmail_path' ) ?: '(空)' );
+			$sms = carmel_cb_get_settings();
+			$out[] = '後追い有効：' . ( ! empty( $sms['apply_followup_on'] ) ? 'ON' : 'OFF' );
+			$out[] = '差出人設定：' . ( $sms['apply_followup_from'] ?? '(未設定)' );
+			// SMTPプラグインが入っているか
+			$smtp_plugins = array( 'wp-mail-smtp/wp_mail_smtp.php', 'easy-wp-smtp/easy-wp-smtp.php', 'post-smtp/postman-smtp.php', 'fluent-smtp/fluent-smtp.php' );
+			$active = get_option( 'active_plugins', array() );
+			$found = array_values( array_intersect( $smtp_plugins, $active ) );
+			$out[] = 'SMTP系プラグイン：' . ( $found ? implode( ', ', $found ) : '（見つからず）' );
+			carmel_cb_notice( '<strong>診断結果</strong><br><pre style="background:#fff;padding:8px;border:1px solid #ccd0d4">' . esc_html( implode( "\n", $out ) ) . '</pre>' );
 			break;
 
 		case 'followup_run_now':
@@ -1101,6 +1144,11 @@ function carmel_cb_view_appearance() {
 					<h4 style="margin:0 0 6px">⚡ 後追いキューを今すぐ実行</h4>
 					<p class="description" style="margin-top:0">通常は10分ごとに自動で回りますが、待たずにテストしたい場合はここから即実行できます（送信対象があれば送られます）。</p>
 					<button type="submit" name="carmel_action" value="followup_run_now" class="button">今すぐ実行</button>
+
+					<hr style="margin:14px 0">
+					<h4 style="margin:0 0 6px">🩺 メール環境の診断</h4>
+					<p class="description" style="margin-top:0">「テスト送信」で届かないときはこちらを実行。サイトのメール送信環境を診断します。</p>
+					<button type="submit" name="carmel_action" value="followup_diagnose" class="button">診断する</button>
 				</td>
 			</tr>
 			<tr>
