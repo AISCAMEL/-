@@ -3,35 +3,36 @@
  * カーメル：月々の下に出す「ローン概算目安＋シミュレーションスライダー」
  * ショートコード [carmel_loan_guide]
  * ---------------------------------------------------------------------------
- * v3.0 変更点
- *   ・CTA ボタン（審査申込・LINE）を削除
- *   ・シミュレーション表示を改善（月額を中央大きく・回数バッジ）
- *   ・スマホ／PC 両対応レイアウト
+ * v3.1 変更点（確実版）
+ *   ・関数名を固有名（*_v2 / *_render）にして他スニペットとの衝突を回避。
+ *     旧版は先頭の function_exists ガードで囲っていたため、別スニペットが
+ *     同名関数を先に定義していると add_shortcode ごとスキップされ、
+ *     [carmel_loan_guide] が文字のまま表示される事故があった。
+ *   ・ショートコードと style を「無条件で」登録し直すので、
+ *     どのスニペットが何を定義していても必ず carmel_loan_guide が動く。
+ *   ・月々計算を内蔵（carmel_plan_monthly 非依存）。
+ *   ・est_total が空でも本体価格などから概算（フォールバック）。
  * ---------------------------------------------------------------------------
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-if ( ! function_exists( 'carmelx_loan_guide_shortcode' ) ) {
-
-	/**
-	 * 月々の元利均等返済額（外部スニペットの carmel_plan_monthly に依存しない自己完結版）。
-	 * ※ 以前は carmel_plan_monthly()（carmel-stock-ui.php 内）が無いと
-	 *   ローン概算ボックスごと非表示になっていた。ここに内蔵して確実に描画する。
-	 */
-	if ( ! function_exists( 'carmelx_lg_monthly' ) ) {
-		function carmelx_lg_monthly( $principal, $nenritsu, $count ) {
-			if ( $count <= 0 || $principal <= 0 ) { return 0; }
-			if ( $nenritsu > 0 ) {
-				$r = ( $nenritsu / 100 ) / 12;
-				$m = $principal * $r / ( 1 - pow( 1 + $r, -$count ) );
-			} else {
-				$m = $principal / $count;
-			}
-			return (int) ( ceil( $m / 100 ) * 100 );
+/* 月々の元利均等返済額（固有名・自己完結） */
+if ( ! function_exists( 'carmelx_lg_monthly_v2' ) ) {
+	function carmelx_lg_monthly_v2( $principal, $nenritsu, $count ) {
+		if ( $count <= 0 || $principal <= 0 ) { return 0; }
+		if ( $nenritsu > 0 ) {
+			$r = ( $nenritsu / 100 ) / 12;
+			$m = $principal * $r / ( 1 - pow( 1 + $r, -$count ) );
+		} else {
+			$m = $principal / $count;
 		}
+		return (int) ( ceil( $m / 100 ) * 100 );
 	}
+}
 
-	function carmelx_loan_guide_shortcode( $atts ) {
+/* 本体 */
+if ( ! function_exists( 'carmelx_loan_guide_render' ) ) {
+	function carmelx_loan_guide_render( $atts ) {
 		$atts = shortcode_atts( array( 'id' => 0, 'counts' => '36,60,84' ), $atts, 'carmel_loan_guide' );
 		$pid  = $atts['id'] ? (int) $atts['id'] : get_the_ID();
 		if ( ! $pid ) { return ''; }
@@ -42,12 +43,12 @@ if ( ! function_exists( 'carmelx_loan_guide_shortcode' ) ) {
 			return (float) preg_replace( '/[^0-9.]/', '', (string) $v );
 		};
 
-		$honntai   = $num( 'est_honntai' );
-		$total     = $num( 'est_total' );
-		$atama     = $num( 'est_atamakin' );
-		$nen       = $num( 'est_nenritsu' );
+		$honntai = $num( 'est_honntai' );
+		$total   = $num( 'est_total' );
+		$atama   = $num( 'est_atamakin' );
+		$nen     = $num( 'est_nenritsu' );
 
-		// est_total（支払総額）が空でも、本体価格などから概算できるようフォールバック。
+		// est_total が空でも本体価格などから概算できるようフォールバック。
 		if ( $total <= 0 ) { $total = $honntai; }
 		if ( $total <= 0 ) { $total = $num( 'price' ); }
 		if ( $total <= 0 ) { $total = $num( 'honntai' ); }
@@ -61,7 +62,7 @@ if ( ! function_exists( 'carmelx_loan_guide_shortcode' ) ) {
 		// 3パターン静的表示
 		$rows = '';
 		foreach ( $counts as $c ) {
-			$m = carmelx_lg_monthly( $principal, $nen, $c );
+			$m = carmelx_lg_monthly_v2( $principal, $nen, $c );
 			if ( $m <= 0 ) { continue; }
 			$rows .= '<span class="carmel-lg__row"><b>' . (int) $c . '回</b>月々' . number_format( $m ) . '円</span>';
 		}
@@ -154,6 +155,7 @@ if ( ! function_exists( 'carmelx_loan_guide_shortcode' ) ) {
 			var slider  = document.getElementById( uid + '-slider' );
 			var countEl = document.getElementById( uid + '-count' );
 			var amtEl   = document.getElementById( uid + '-amount' );
+			if ( ! slider ) { return; }
 
 			function updateTrack() {
 				var min = parseInt( slider.min, 10 );
@@ -176,9 +178,14 @@ if ( ! function_exists( 'carmelx_loan_guide_shortcode' ) ) {
 		<?php
 		return ob_get_clean();
 	}
-	add_shortcode( 'carmel_loan_guide', 'carmelx_loan_guide_shortcode' );
+}
 
-	add_action( 'wp_head', function () {
+/* ★ 無条件で登録し直す（他スニペットが同名関数を持っていても確実に有効化） */
+add_shortcode( 'carmel_loan_guide', 'carmelx_loan_guide_render' );
+
+/* スタイル（固有名・無条件で登録） */
+if ( ! function_exists( 'carmelx_lg_styles_v2' ) ) {
+	function carmelx_lg_styles_v2() {
 		static $done = false;
 		if ( $done ) { return; }
 		$done = true;
@@ -235,5 +242,6 @@ if ( ! function_exists( 'carmelx_loan_guide_shortcode' ) ) {
 			.carmel-lg__sim-badge span{font-size:19px;}
 		}
 		</style>';
-	} );
+	}
 }
+add_action( 'wp_head', 'carmelx_lg_styles_v2' );
