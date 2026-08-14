@@ -27,7 +27,7 @@
 var CML_HEADERS = [
   "受信日時", "書面ID", "書面タイプ", "書面種別コード",
   "お客様氏名", "書類番号", "担当者", "作成日", "端末保存日時",
-  "MF連携", "MF契約ID",
+  "作成者(ログイン)", "MF連携", "MF契約ID",
   "明細(JSON)"
 ];
 
@@ -73,6 +73,7 @@ function handleCmlDoc_(d) {
     d.staff || "",
     d.date || "",
     d.savedAt || "",
+    d.operator || "",
     mfStatus,
     mfId,
     JSON.stringify(fields)

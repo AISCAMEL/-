@@ -73,6 +73,9 @@ input,select,textarea{font-family:inherit;}
 .hd .cbadge.off{background:#EEF3FB; color:var(--sub); border-color:var(--bdr);}
 .hd .cbadge.on{background:#E6F5EC; color:#0F6B50; border-color:#BFE6CF;}
 .hd .cbadge:hover{filter:brightness(.98);}
+.hd .userchip{font-size:12px; padding:5px 12px; border-radius:20px; font-weight:700; white-space:nowrap;
+  background:linear-gradient(135deg,#EAF1FB,#E1EBF9); color:var(--navy); border:1px solid #CBDBF2;
+  max-width:200px; overflow:hidden; text-overflow:ellipsis;}
 .hd .sp{flex:1;}
 .hd .hbtn{
   height:36px; padding:0 15px; border:1.5px solid var(--bdr);
@@ -362,8 +365,12 @@ table.ltbl tbody tr:hover{background:#F5F9FF;}
   background:linear-gradient(145deg,#173B7A,#0B2050); box-shadow:0 10px 24px rgba(11,32,80,.35), inset 0 0 0 1px rgba(255,255,255,.12);}
 .loginCard .lg{font-size:22px; font-weight:800; color:var(--navy); letter-spacing:1px;}
 .loginCard .sub{color:var(--sub); font-size:12px; margin:5px 0 22px;}
-.loginCard input{width:100%; height:56px; border:1.5px solid var(--bdr); border-radius:14px; text-align:center; font-size:22px; letter-spacing:8px; background:var(--skylt); color:var(--ink); transition:.18s var(--ease);}
+.loginCard input{width:100%; height:52px; border:1.5px solid var(--bdr); border-radius:14px; font-size:15px; padding:0 16px; background:var(--skylt); color:var(--ink); transition:.18s var(--ease);}
+.loginCard input.li{text-align:left; margin-bottom:11px;}
+.loginCard #pcInput{height:56px; text-align:center; letter-spacing:8px; font-size:22px; padding:0;}
+.loginCard input::placeholder{color:var(--mute); letter-spacing:normal;}
 .loginCard input:focus{outline:none; border-color:var(--blue); background:#fff; box-shadow:0 0 0 4px rgba(20,82,168,.15);}
+.loginCard button:disabled{opacity:.65; cursor:progress;}
 .loginCard button{margin-top:16px; width:100%; height:52px; border:none; border-radius:14px; background:linear-gradient(135deg,#2C7BE5,#1A63C8); color:#fff; font-weight:800; font-size:15px; box-shadow:0 8px 20px rgba(44,123,229,.4); transition:.18s var(--ease);}
 .loginCard button:hover{filter:brightness(1.07); transform:translateY(-1px);}
 .loginCard .err{color:var(--red); font-size:12px; min-height:18px; margin-top:12px; font-weight:700;}
@@ -391,10 +398,11 @@ table.ltbl tbody tr:hover{background:#F5F9FF;}
     <div class="cust" id="custName">お客様未入力</div>
     <span class="cbadge off" id="cloudBadge" onclick="setTab('saved')" title="">☁ 未接続</span>
     <div class="sp"></div>
+    <span class="userchip" id="userChip" style="display:none"></span>
     <button class="hbtn" onclick="newRec()">🆕 新規</button>
     <button class="hbtn" onclick="saveRec()">💾 保存</button>
     <button class="hbtn pri" onclick="setTab('preview')">📄 プレビュー</button>
-    <button class="hbtn" id="logoutBtn" style="display:none" onclick="authLogout()" title="ロックして終了">🔒 ロック</button>
+    <button class="hbtn" id="logoutBtn" style="display:none" onclick="authLogout()" title="ログアウト">🚪 ログアウト</button>
   </header>
 
   <!-- DOC TYPE BAR -->
@@ -442,10 +450,9 @@ table.ltbl tbody tr:hover{background:#F5F9FF;}
     <div class="badge2">🚗</div>
     <div class="lg">カーメル</div>
     <div class="sub">書面作成システム｜スタッフログイン</div>
-    <input id="pcInput" type="password" inputmode="numeric" autocomplete="off" placeholder="パスコード" aria-label="パスコード" />
-    <button type="submit">🔓 ログイン</button>
+    <div id="loginBody"></div>
     <div class="err" id="pcErr"></div>
-    <div class="hint">共有パスコードを入力してください</div>
+    <div class="hint" id="loginHint"></div>
   </form>
 </div>
 
@@ -470,20 +477,31 @@ const CLOUD = {
 };
 
 /* =======================================================================
-   ログイン設定（方式A：共有パスコード内蔵）
+   ログイン設定
    -----------------------------------------------------------------------
-   ・PASSCODE を設定すると、起動時にパスコード入力を要求します。
-   ・空文字 "" にすると認証OFF（誰でも開ける従来動作）。
-   ・ログイン状態は端末に TTL_HOURS 時間だけ保持（自動でロック）。
-   ・★注意★ これはクライアント側の簡易ゲートです（強固なセキュリティでは
-     ありません）。しっかり保護したい場合は GASスタッフ認証（方式B）へ。
+   MODE:
+     'account'  … 正式ログイン（GAS Auth.gs のスタッフ個別アカウント / ID＋PW）
+     'passcode' … 共有パスコード（簡易）
+     'off'      … 認証なし（誰でも開ける）
+   ENDPOINT: GASウェブアプリ /exec（空なら CLOUD.ENDPOINT を使用）。
+     account で ENDPOINT 未設定のときは「デモログイン」（任意IDで入れる）。
+   -----------------------------------------------------------------------
+   ▼ 正式ログインの準備（GAS側）
+     1) gas/ を同一GASプロジェクトにデプロイ（Auth.gs / WebApp.gs 含む）
+     2) GASエディタで createUser('you@example.com','強いPW','hq','氏名') 実行
+     3) ウェブアプリの /exec URL を CLOUD.ENDPOINT（または下の ENDPOINT）に設定
+   ※ GASはCORS応答を返さないためログインはJSONP(GET)。PWがURL/ログに残り得ます。
    ======================================================================= */
 const AUTHZ = {
-  PASSCODE: '0000',             // ★運用前に必ず変更★（空 "" で認証OFF）
-  TTL_HOURS: 8,                 // ログイン保持時間
+  MODE: 'account',              // 'account'（正式）/ 'passcode' / 'off'
+  ENDPOINT: '',                 // 空なら CLOUD.ENDPOINT を使用
+  PASSCODE: '0000',             // MODE='passcode' 用（★変更★）
+  TTL_HOURS: 8,
   SKEY: 'cml_auth',
-  get REQUIRED(){ return !!this.PASSCODE; },
+  get EP(){ return this.ENDPOINT || CLOUD.ENDPOINT; },
+  get REQUIRED(){ return this.MODE !== 'off'; },
 };
+let CURRENT_USER = null;        // ログイン中スタッフ {name, role, email, token}
 
 /* ================= 共通ユーティリティ ================= */
 function today(){ const d=new Date(); const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; }
@@ -1109,6 +1127,7 @@ function buildPayload(rec){
     staff: valBySuffix(rec,'_staff'),
     date: valBySuffix(rec,'_date'),
     savedAt: rec._saved||'',
+    operator: rec._user||'',
     fields
   };
 }
@@ -1136,6 +1155,7 @@ function saveRec(){
   const nowStr=new Date().toLocaleString('ja-JP');
   const key=`${PREFIX}${curDoc}_${Date.now()}`;
   rec._key=key; rec._saved=nowStr; rec._doctype=curDoc;
+  { const u=CURRENT_USER||authGet(); rec._user=(u&&(u.name||u.email))||''; }
   try{ localStorage.setItem(key, JSON.stringify(rec)); }
   catch(e){ toast('⚠️ 保存に失敗しました'); return; }
   if(CLOUD.ENABLED){
@@ -1913,33 +1933,104 @@ function genHTML(){
 /* ================= 印刷 ================= */
 function doPrint(){ document.getElementById('pb').innerHTML=genHTML(); window.print(); }
 
-/* ================= ログイン（方式A：共有パスコード） ================= */
+/* ================= ログイン（方式A/B：パスコード / スタッフアカウント） ================= */
 function authGet(){ try{ const s=JSON.parse(localStorage.getItem(AUTHZ.SKEY)); return (s&&s.exp>Date.now())?s:null; }catch(e){ return null; } }
 function authOk(){ return !AUTHZ.REQUIRED || !!authGet(); }
-function showLogin(){
-  const o=document.getElementById('loginOverlay'); o.style.display='flex';
-  setTimeout(()=>{ const i=document.getElementById('pcInput'); if(i){ i.value=''; i.focus(); } },40);
+function setSession(obj){ try{ localStorage.setItem(AUTHZ.SKEY, JSON.stringify(obj)); }catch(e){} }
+function loginErr(msg){
+  const c=document.querySelector('.loginCard'), e=document.getElementById('pcErr');
+  e.textContent=msg; c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake');
 }
-function hideLogin(){ document.getElementById('loginOverlay').style.display='none'; }
-function doLogin(){
-  const inp=document.getElementById('pcInput'); const v=(inp.value||'').trim();
-  if(v===String(AUTHZ.PASSCODE)){
-    try{ localStorage.setItem(AUTHZ.SKEY, JSON.stringify({exp:Date.now()+AUTHZ.TTL_HOURS*3600*1000})); }catch(e){}
-    document.getElementById('pcErr').textContent=''; hideLogin();
+/* ログインカード内の入力欄をモードに応じて描画 */
+function renderLogin(){
+  const b=document.getElementById('loginBody'), hint=document.getElementById('loginHint');
+  if(AUTHZ.MODE==='passcode'){
+    b.innerHTML=`<input id="pcInput" type="password" inputmode="numeric" autocomplete="off" placeholder="パスコード" aria-label="パスコード">
+      <button type="submit">🔓 ログイン</button>`;
+    hint.textContent='共有パスコードを入力してください';
   }else{
-    const c=document.querySelector('.loginCard'), e=document.getElementById('pcErr');
-    e.textContent='パスコードが違います'; c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake');
-    inp.value=''; inp.focus();
+    b.innerHTML=`<input id="liEmail" class="li" type="text" autocomplete="username" placeholder="メール / スタッフID" aria-label="ID">
+      <input id="liPw" class="li" type="password" autocomplete="current-password" placeholder="パスワード" aria-label="パスワード">
+      <button type="submit">🔓 ログイン</button>`;
+    hint.innerHTML = AUTHZ.EP ? '登録済みのスタッフアカウントでログイン' : '未接続：デモログイン（任意のIDで入れます）';
   }
 }
-function authLogout(){ localStorage.removeItem(AUTHZ.SKEY); showLogin(); }
+function showLogin(){
+  renderLogin();
+  document.getElementById('pcErr').textContent='';
+  const o=document.getElementById('loginOverlay'); o.style.display='flex';
+  setTimeout(()=>{ const i=document.getElementById('pcInput')||document.getElementById('liEmail'); if(i){ i.value=''; i.focus(); } },40);
+}
+function hideLogin(){ document.getElementById('loginOverlay').style.display='none'; }
+function loginSuccess(sess){
+  CURRENT_USER = sess; setSession(sess);
+  document.getElementById('pcErr').textContent='';
+  hideLogin(); applyUser();
+}
+function doLogin(){
+  const TTL=AUTHZ.TTL_HOURS*3600*1000;
+  /* --- パスコード方式 --- */
+  if(AUTHZ.MODE==='passcode'){
+    const inp=document.getElementById('pcInput'); const v=(inp.value||'').trim();
+    if(v===String(AUTHZ.PASSCODE)){ loginSuccess({exp:Date.now()+TTL, name:'', role:'staff'}); }
+    else{ loginErr('パスコードが違います'); inp.value=''; inp.focus(); }
+    return;
+  }
+  /* --- スタッフアカウント方式（正式） --- */
+  const email=(document.getElementById('liEmail').value||'').trim();
+  const pw=(document.getElementById('liPw').value||'');
+  if(!email||!pw){ loginErr('IDとパスワードを入力してください'); return; }
+  const ep=AUTHZ.EP;
+  if(!ep){ // 未接続：デモログイン
+    loginSuccess({exp:Date.now()+TTL, name:email, role:'staff', email, token:'demo', demo:true});
+    return;
+  }
+  // GAS Auth.gs へ JSONP ログイン（doGet action=login）
+  const btn=document.querySelector('.loginCard button'); if(btn){ btn.disabled=true; btn.textContent='認証中…'; }
+  const restore=()=>{ if(btn){ btn.disabled=false; btn.textContent='🔓 ログイン'; } };
+  const cbName='__cmlLogin_'+Math.floor(Date.now()/1000);
+  let done=false;
+  window[cbName]=function(d){
+    done=true;
+    if(d && d.ok){
+      loginSuccess({exp:Date.now()+(d.ttl||TTL), name:d.name||email, role:d.role||'staff', email, token:d.token});
+    }else{ loginErr((d && d.error) || 'ログインに失敗しました'); }
+    restore(); cleanup();
+  };
+  const s=document.createElement('script');
+  function cleanup(){ try{ delete window[cbName]; }catch(e){ window[cbName]=undefined; } if(s.parentNode) s.parentNode.removeChild(s); }
+  s.onerror=function(){ if(!done){ loginErr('サーバーに接続できませんでした'); restore(); cleanup(); } };
+  s.src=ep+'?action=login&email='+encodeURIComponent(email)+'&pw='+encodeURIComponent(pw)+'&role=hq&callback='+cbName;
+  document.body.appendChild(s);
+  setTimeout(()=>{ if(!done){ loginErr('応答がありません（接続をご確認ください）'); restore(); cleanup(); } }, 12000);
+}
+function authLogout(){
+  const s=authGet();
+  // GAS 側セッション破棄（任意・fire-and-forget）
+  if(AUTHZ.MODE==='account' && AUTHZ.EP && s && s.token && s.token!=='demo'){
+    try{ const x=document.createElement('script'); x.src=AUTHZ.EP+'?action=logout&t='+encodeURIComponent(s.token); document.body.appendChild(x); }catch(e){}
+  }
+  localStorage.removeItem(AUTHZ.SKEY); CURRENT_USER=null; applyUser(); showLogin();
+}
+/* ヘッダーのログインユーザー表示 */
+function applyUser(){
+  const chip=document.getElementById('userChip');
+  const s=CURRENT_USER || authGet();
+  if(AUTHZ.REQUIRED && s && (s.name||s.email)){
+    chip.style.display='inline-flex';
+    chip.textContent='👤 '+(s.name||s.email)+(s.demo?'（デモ）':'');
+  }else{ chip.style.display='none'; }
+}
 function initAuth(){
   document.getElementById('logoutBtn').style.display = AUTHZ.REQUIRED ? 'inline-flex' : 'none';
+  CURRENT_USER = authGet();
   if(AUTHZ.REQUIRED && !authOk()) showLogin(); else hideLogin();
+  applyUser();
 }
 
 /* ================= 初期化 ================= */
 document.documentElement.style.setProperty('--dcc',DTMAP[curDoc].color);
+renderLogin();
 initAuth();
 rDocBar();
 setTab('form');
