@@ -45,7 +45,29 @@ function getConfig() {
 
     // ⑥ デジタル出品票（PDF）出力先 Google ドライブ フォルダID（任意）
     //    空欄ならマイドライブ直下に作成します。
-    SELL_SHEET_PDF_FOLDER_ID: ""
+    SELL_SHEET_PDF_FOLDER_ID: "",
+
+    // ⑦ マネーフォワード クラウド契約 連携（★あとから組み込み用★）
+    //    すべて空欄なら連携はOFF（書面はシート記録＋通知のみで通常動作）。
+    //    値は MF開発者コンソール（https://developers.biz.moneyforward.com/）で取得。
+    //    ▼ 有効化スイッチ（"1" で有効）
+    MF_ENABLED: "",
+    //    ▼ 認証方式： "oauth2"（推奨）または "apikey"
+    MF_AUTH_TYPE: "oauth2",
+    //    ▼ OAuth2（クライアントクレデンシャル/認可コードのトークン発行先）
+    MF_TOKEN_URL: "",         // 例: https://api.biz.moneyforward.com/token（★公式仕様で確認★）
+    MF_CLIENT_ID: "",
+    MF_CLIENT_SECRET: "",
+    MF_SCOPE: "",             // 例: "mfc/contract" 等（★公式仕様で確認★）
+    MF_REFRESH_TOKEN: "",     // 認可コードフローを使う場合の更新用トークン（任意）
+    //    ▼ APIキー方式を使う場合
+    MF_API_KEY: "",
+    //    ▼ クラウド契約 API のベースURLと各エンドポイント（★公式仕様で確認・設定★）
+    MF_API_BASE: "",          // 例: https://api.biz.moneyforward.com/contract/v1
+    MF_EP_CREATE_CONTRACT: "/contracts",     // 契約作成（相対パス）
+    MF_EP_GET_CONTRACT:    "/contracts/{id}",// 契約取得（{id}を置換）
+    //    ▼ 電子契約に回す書面種別（カンマ区切り。既定は契約系のみ）
+    MF_CONTRACT_DOCTYPES: "d1,d4,d6"
   };
 }
 

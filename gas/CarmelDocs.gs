@@ -27,6 +27,7 @@
 var CML_HEADERS = [
   "受信日時", "書面ID", "書面タイプ", "書面種別コード",
   "お客様氏名", "書類番号", "担当者", "作成日", "端末保存日時",
+  "MF連携", "MF契約ID",
   "明細(JSON)"
 ];
 
@@ -53,6 +54,15 @@ function handleCmlDoc_(d) {
   var id = "CML-" + nextSeq_(sh, 1000);
   var fields = d.fields || {};
 
+  // マネーフォワード クラウド契約 連携（MoneyForward.gs があり、有効時のみ実行）
+  var mfStatus = "—", mfId = "";
+  if (typeof mfForwardIfEligible_ === "function") {
+    var mfr = mfForwardIfEligible_(d);
+    if (mfr && mfr.skipped) { mfStatus = "—"; }
+    else if (mfr && mfr.ok) { mfStatus = "連携済"; mfId = mfr.contractId || ""; }
+    else if (mfr) { mfStatus = "失敗"; mfId = (mfr.error || "").slice(0, 120); }
+  }
+
   sh.appendRow([
     new Date(),
     id,
@@ -63,6 +73,8 @@ function handleCmlDoc_(d) {
     d.staff || "",
     d.date || "",
     d.savedAt || "",
+    mfStatus,
+    mfId,
     JSON.stringify(fields)
   ]);
 
