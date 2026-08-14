@@ -293,9 +293,25 @@ table.ltbl tbody tr:hover{background:#FAFCFF;}
 .doc .signdate .u{border-bottom:1px solid #0B2050; min-width:34px; text-align:center; padding:0 4px;}
 .doc .signcol.otsu .signdate .u{border-bottom-color:#8A5E00;}
 
+/* ===== ログインゲート ===== */
+#loginOverlay{position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center;
+  background:radial-gradient(700px 320px at 80% -10%,#1E4C9A,transparent 60%),linear-gradient(135deg,#0A1F4E,#0B2050 55%,#123A7A);}
+.loginCard{background:#fff; border-radius:18px; box-shadow:0 24px 70px rgba(0,0,0,.45); padding:34px 30px 28px; width:344px; max-width:92%; text-align:center;}
+.loginCard .lg{font-size:26px; font-weight:800; color:var(--navy); letter-spacing:.5px;}
+.loginCard .sub{color:var(--sub); font-size:12px; margin:4px 0 22px;}
+.loginCard input{width:100%; height:54px; border:1.5px solid var(--bdr); border-radius:12px; text-align:center; font-size:22px; letter-spacing:6px; background:var(--skylt); color:var(--ink);}
+.loginCard input:focus{outline:none; border-color:var(--blue); background:#fff; box-shadow:0 0 0 3px rgba(20,82,168,.15);}
+.loginCard button{margin-top:16px; width:100%; height:50px; border:none; border-radius:12px; background:var(--blue); color:#fff; font-weight:800; font-size:15px;}
+.loginCard button:hover{background:#1A63C8;}
+.loginCard .err{color:var(--red); font-size:12px; min-height:18px; margin-top:10px; font-weight:700;}
+.loginCard .hint{color:var(--mute); font-size:11px; margin-top:6px;}
+.loginCard.shake{animation:shk .4s;}
+@keyframes shk{0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-8px)} 40%,80%{transform:translateX(8px)}}
+
 /* ===== 印刷 ===== */
 @media print{
   .app{display:none !important;}
+  #loginOverlay{display:none !important;}
   #pc{display:block !important;}
   .doc{box-shadow:none; border-radius:0; padding:0; font-size:11px;}
   @page{size:A4; margin:16mm;}
@@ -314,6 +330,7 @@ table.ltbl tbody tr:hover{background:#FAFCFF;}
     <button class="hbtn" onclick="newRec()">🆕 新規</button>
     <button class="hbtn" onclick="saveRec()">💾 保存</button>
     <button class="hbtn pri" onclick="setTab('preview')">📄 プレビュー</button>
+    <button class="hbtn" id="logoutBtn" style="display:none" onclick="authLogout()" title="ロックして終了">🔒 ロック</button>
   </header>
 
   <!-- DOC TYPE BAR -->
@@ -355,6 +372,18 @@ table.ltbl tbody tr:hover{background:#FAFCFF;}
 <!-- 印刷専用コンテナ -->
 <div id="pc"><div id="pb"></div></div>
 
+<!-- ログインゲート（方式A：共有パスコード） -->
+<div id="loginOverlay">
+  <form class="loginCard" onsubmit="doLogin();return false;">
+    <div class="lg">🚗 カーメル</div>
+    <div class="sub">書面作成システム｜スタッフログイン</div>
+    <input id="pcInput" type="password" inputmode="numeric" autocomplete="off" placeholder="パスコード" aria-label="パスコード" />
+    <button type="submit">🔓 ログイン</button>
+    <div class="err" id="pcErr"></div>
+    <div class="hint">共有パスコードを入力してください</div>
+  </form>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -373,6 +402,22 @@ table.ltbl tbody tr:hover{background:#FAFCFF;}
 const CLOUD = {
   ENDPOINT: '',                 // ← 例: "https://script.google.com/macros/s/XXXXX/exec"
   get ENABLED(){ return !!this.ENDPOINT; },
+};
+
+/* =======================================================================
+   ログイン設定（方式A：共有パスコード内蔵）
+   -----------------------------------------------------------------------
+   ・PASSCODE を設定すると、起動時にパスコード入力を要求します。
+   ・空文字 "" にすると認証OFF（誰でも開ける従来動作）。
+   ・ログイン状態は端末に TTL_HOURS 時間だけ保持（自動でロック）。
+   ・★注意★ これはクライアント側の簡易ゲートです（強固なセキュリティでは
+     ありません）。しっかり保護したい場合は GASスタッフ認証（方式B）へ。
+   ======================================================================= */
+const AUTHZ = {
+  PASSCODE: '0000',             // ★運用前に必ず変更★（空 "" で認証OFF）
+  TTL_HOURS: 8,                 // ログイン保持時間
+  SKEY: 'cml_auth',
+  get REQUIRED(){ return !!this.PASSCODE; },
 };
 
 /* ================= 共通ユーティリティ ================= */
@@ -1803,8 +1848,34 @@ function genHTML(){
 /* ================= 印刷 ================= */
 function doPrint(){ document.getElementById('pb').innerHTML=genHTML(); window.print(); }
 
+/* ================= ログイン（方式A：共有パスコード） ================= */
+function authGet(){ try{ const s=JSON.parse(localStorage.getItem(AUTHZ.SKEY)); return (s&&s.exp>Date.now())?s:null; }catch(e){ return null; } }
+function authOk(){ return !AUTHZ.REQUIRED || !!authGet(); }
+function showLogin(){
+  const o=document.getElementById('loginOverlay'); o.style.display='flex';
+  setTimeout(()=>{ const i=document.getElementById('pcInput'); if(i){ i.value=''; i.focus(); } },40);
+}
+function hideLogin(){ document.getElementById('loginOverlay').style.display='none'; }
+function doLogin(){
+  const inp=document.getElementById('pcInput'); const v=(inp.value||'').trim();
+  if(v===String(AUTHZ.PASSCODE)){
+    try{ localStorage.setItem(AUTHZ.SKEY, JSON.stringify({exp:Date.now()+AUTHZ.TTL_HOURS*3600*1000})); }catch(e){}
+    document.getElementById('pcErr').textContent=''; hideLogin();
+  }else{
+    const c=document.querySelector('.loginCard'), e=document.getElementById('pcErr');
+    e.textContent='パスコードが違います'; c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake');
+    inp.value=''; inp.focus();
+  }
+}
+function authLogout(){ localStorage.removeItem(AUTHZ.SKEY); showLogin(); }
+function initAuth(){
+  document.getElementById('logoutBtn').style.display = AUTHZ.REQUIRED ? 'inline-flex' : 'none';
+  if(AUTHZ.REQUIRED && !authOk()) showLogin(); else hideLogin();
+}
+
 /* ================= 初期化 ================= */
 document.documentElement.style.setProperty('--dcc',DTMAP[curDoc].color);
+initAuth();
 rDocBar();
 setTab('form');
 updProg();
