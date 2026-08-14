@@ -180,8 +180,12 @@ if ( ! function_exists( 'carmelx_loan_guide_render' ) ) {
 	}
 }
 
-/* ★ 無条件で登録し直す（他スニペットが同名関数を持っていても確実に有効化） */
+/* ★ 無条件で登録し直す（他スニペットが同名関数を持っていても確実に有効化）。
+   さらに init 後半でも登録し直し、競合スニペットが先に登録していても上書きして勝つ。 */
 add_shortcode( 'carmel_loan_guide', 'carmelx_loan_guide_render' );
+add_action( 'init', function () {
+	add_shortcode( 'carmel_loan_guide', 'carmelx_loan_guide_render' );
+}, 99 );
 
 /* スタイル（固有名・無条件で登録） */
 if ( ! function_exists( 'carmelx_lg_styles_v2' ) ) {
