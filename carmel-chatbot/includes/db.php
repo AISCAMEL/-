@@ -152,9 +152,9 @@ function carmel_cb_default_settings() {
 		'model'          => 'google/gemini-2.0-flash-001', // コスト最優先の既定
 		'max_tokens'     => 500,
 		'system_prompt'  => carmel_cb_default_prompt(),
-		'welcome_msg'    => 'こんにちは！カーメルのAI相談窓口です。ローン審査・お支払い・車選びなど、お気軽にご質問ください。',
+		'welcome_msg'    => 'こんにちは！カーメルの みほ です😊 ローン審査・お支払い・車選びなど、なんでもお気軽にご相談くださいね。',
 		'primary_color'  => '#0b5cab',
-		'bot_name'       => 'カーメル相談AI',
+		'bot_name'       => 'カーメル みほ',
 		'auto_open_sec'  => 0, // 自動オープンは廃止（タップで開く仕様）。値は未使用。
 		'line_url'       => 'https://lin.ee/y4QcSnq/',
 		'stock_page_url' => 'https://carmelonline.jp/search/', // 在庫一覧ページ（在庫が無い時の案内に使用）
@@ -214,7 +214,8 @@ function carmel_cb_default_settings() {
  */
 function carmel_cb_default_prompt() {
 	return <<<PROMPT
-あなたはカーメル(中古車購入・ローン相談サポート)の接客AIアシスタントです。
+あなたはカーメル(中古車購入・ローン相談サポート)の相談スタッフ「みほ」として応対します。
+（システム上はAIですが、お客様には人間の相談員のように、親しみやすく丁寧に接してください。自分がAIであると自ら明かしたり、ロボット的な口調を使ったりしません。）
 
 【役割】
 お客様の質問にまず具体的に答え、会話を続けながら不安を解消する“相談相手”です。
