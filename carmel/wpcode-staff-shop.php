@@ -194,9 +194,9 @@ if ( ! function_exists( 'carmelx_staff_shop_shortcode' ) ) {
 
 		return $out;
 	}
-	add_shortcode( 'carmel_staff_shop', 'carmelx_staff_shop_shortcode' );
 
-	add_action( 'wp_head', function () {
+	function carmelx_ss_styles() {
+		static $done = false; if ( $done ) { return; } $done = true;
 		echo '<style>
 		.cx-sec{background:#fff;border-radius:12px;padding:24px;box-shadow:0 6px 18px rgba(0,0,0,.07);margin:18px 0;border:1px solid #eef0f3;font-family:inherit;}
 		.cx-ttl{text-align:center;margin-bottom:20px;}
@@ -223,5 +223,15 @@ if ( ! function_exists( 'carmelx_staff_shop_shortcode' ) ) {
 		.cx-shop__btns .form{background:#f47920;color:#fff;box-shadow:0 4px 0 #d9650d;}
 		@media(max-width:680px){.cx-staff__photo{flex-basis:120px;width:120px;min-height:120px;font-size:56px;}}
 		</style>';
-	} );
+	}
+}
+
+/* 無条件で登録し直す（他スニペットが同名関数を持っていても確実に有効化）。
+   さらに init 後半でも登録して、競合スニペットより後に確実に勝つ。 */
+if ( function_exists( 'carmelx_staff_shop_shortcode' ) ) {
+	add_shortcode( 'carmel_staff_shop', 'carmelx_staff_shop_shortcode' );
+	add_action( 'init', function () { add_shortcode( 'carmel_staff_shop', 'carmelx_staff_shop_shortcode' ); }, 99 );
+}
+if ( function_exists( 'carmelx_ss_styles' ) ) {
+	add_action( 'wp_head', 'carmelx_ss_styles' );
 }
