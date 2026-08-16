@@ -157,9 +157,9 @@ function carmel_cb_default_settings() {
 		'primary_color'  => '#0b5cab',
 		'bot_name'       => 'カーメル みほ',
 		'auto_open_sec'  => 0, // 自動オープンは廃止（タップで開く仕様）。値は未使用。
-		'line_url'       => 'https://lin.ee/y4QcSnq/',
+		'line_url'       => 'https://omu247l0.autosns.app/line',
 		'stock_page_url' => 'https://carmelonline.jp/search/', // 在庫一覧ページ（在庫が無い時の案内に使用）
-		'tel'            => '', // 電話番号（入力すると回答下に電話ボタンを表示）
+		'tel'            => '050-1793-5554', // 電話番号（入力すると回答下に電話ボタンを表示）
 		'apply_page_id'   => 7348, // 審査申込ページのID（CTA「審査を申し込む」）
 		'contact_page_id' => 7361, // お問い合わせページのID（CTA「お問い合わせ」）
 		'apply_url'       => '', // ↑IDが使えない場合のURL直指定（任意）
