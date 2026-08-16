@@ -1,33 +1,19 @@
 <?php
 /**
- * CARMEL: [carmel_staff_shop]  (tantou staff + shop info card on the detail page)
+ * CARMEL: [carmel_staff_shop]  担当スタッフ＋販売店情報カード（詳細ページ）
  * ---------------------------------------------------------------------------
- * Staff photo resolution (so the DETAIL page shows a PERSON, same as /search,
- * while the shop search page keeps the LOGO as its featured image):
- *   (1) vehicle meta (tantou_photo ...)
- *   (2) per-shop staff-photo MAP keyed by shop slug  <-- same idea as /search
- *   (3) shop meta tantou_photo ...
- *   (4) carmel_staff_photo_url() fallback (may be the shop logo)
- * Staff NAME = selected shop title (shop = tantousha).
- *
- * Install: WPCode -> Add Snippet -> PHP Snippet -> paste from <?php ->
- *          Run Everywhere -> Activate.  Place [carmel_staff_shop] in template.
- * NOTE: all Japanese is written as HTML numeric entities on purpose, so the
- *       pasted code stays pure ASCII and cannot pick up corrupt characters.
+ * 確実版 v2：他スニペットと絶対に衝突しないよう、全関数を固有名（*_ss2_ / *_render2）
+ *   にし、さらに各関数を個別 function_exists ガードで囲む。ショートコードと
+ *   スタイルは無条件で登録し直す。旧版は共通名（carmelx_ss_*）を使っていたため、
+ *   別スニペットと同名関数が重複して致命的エラー→連鎖でローン試算まで止まっていた。
+ * 日本語は全て HTML 実体参照（ASCIIのみ）で記述し、文字化けを防止。
  * ---------------------------------------------------------------------------
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-if ( ! function_exists( 'carmelx_staff_shop_shortcode' ) ) {
-
-	/* ---- per-shop staff map (shop slug => staff source) --------------------
-	 * EDIT HERE to set each shop's staff. Keys are the shop slugs used in the
-	 * vehicle "shop" field. Each value can be EITHER:
-	 *   - a staff post ID (integer)  -> name + photo pulled from that スタッフ post
-	 *   - array( 'name' => '...', 'photo' => 'https://...' )  -> literal override
-	 *   - 0  -> fall back to shop name / shop photo
-	 * Find a staff post ID: スタッフ -> open the staff -> the URL shows post=NNN. */
-	function carmelx_ss_shop_staff_map() {
+/* 店舗slug => スタッフ投稿ID（手動マップ。通常は staff 投稿の staff_shop で自動解決） */
+if ( ! function_exists( 'carmelx_ss2_map' ) ) {
+	function carmelx_ss2_map() {
 		return array(
 			'fukushima' => 2984,
 			'chiba'     => 3016,
@@ -35,9 +21,10 @@ if ( ! function_exists( 'carmelx_staff_shop_shortcode' ) ) {
 			'yamanashi' => 3065,
 		);
 	}
+}
 
-	/* resolve a map value into array( name, photo ) */
-	function carmelx_ss_resolve_staff( $val ) {
+if ( ! function_exists( 'carmelx_ss2_resolve' ) ) {
+	function carmelx_ss2_resolve( $val ) {
 		$out = array( 'name' => '', 'photo' => '' );
 		if ( is_numeric( $val ) && (int) $val > 0 ) {
 			$sid = (int) $val;
@@ -49,57 +36,61 @@ if ( ! function_exists( 'carmelx_staff_shop_shortcode' ) ) {
 		}
 		return $out;
 	}
+}
 
-	/* first non-empty value from candidate keys (ACF -> meta) */
-	function carmelx_ss_first( $pid, $keys ) {
+if ( ! function_exists( 'carmelx_ss2_first' ) ) {
+	function carmelx_ss2_first( $pid, $keys ) {
 		foreach ( (array) $keys as $k ) {
 			$v = function_exists( 'get_field' ) ? get_field( $k, $pid ) : '';
 			if ( '' === $v || null === $v || false === $v ) { $v = get_post_meta( $pid, $k, true ); }
-			if ( is_array( $v ) ) { $v = implode( "\xE3\x83\xBB", array_filter( $v ) ); } // nakaguro
+			if ( is_array( $v ) ) { $v = implode( "\xE3\x83\xBB", array_filter( $v ) ); }
 			$v = is_string( $v ) ? trim( $v ) : $v;
 			if ( '' !== $v && null !== $v ) { return $v; }
 		}
 		return '';
 	}
+}
 
-	/* image value -> URL */
-	function carmelx_ss_imgurl( $v ) {
+if ( ! function_exists( 'carmelx_ss2_imgurl' ) ) {
+	function carmelx_ss2_imgurl( $v ) {
 		if ( function_exists( 'carmel_img_url' ) ) { return carmel_img_url( $v ); }
 		if ( is_array( $v ) ) { return ! empty( $v['url'] ) ? $v['url'] : ( ! empty( $v['ID'] ) ? (string) wp_get_attachment_image_url( (int) $v['ID'], 'medium' ) : '' ); }
 		if ( is_numeric( $v ) ) { return (string) wp_get_attachment_image_url( (int) $v, 'medium' ); }
 		return ( is_string( $v ) && preg_match( '#^https?://#', $v ) ) ? $v : '';
 	}
+}
 
-	/* vehicle meta shop (slug or ID) -> raw slug */
-	function carmelx_ss_shop_slug( $pid ) {
+if ( ! function_exists( 'carmelx_ss2_slug' ) ) {
+	function carmelx_ss2_slug( $pid ) {
 		$val = get_post_meta( $pid, 'shop', true );
 		return is_string( $val ) ? trim( $val ) : $val;
 	}
+}
 
-	/* vehicle meta shop (slug or ID) -> shop post ID */
-	function carmelx_ss_shop_id( $pid ) {
-		$val = carmelx_ss_shop_slug( $pid );
+if ( ! function_exists( 'carmelx_ss2_shopid' ) ) {
+	function carmelx_ss2_shopid( $pid ) {
+		$val = carmelx_ss2_slug( $pid );
 		if ( ! $val ) { return 0; }
 		$map = function_exists( 'carmel_shop_post_map' ) ? carmel_shop_post_map() : array();
 		if ( isset( $map[ $val ] ) ) { return (int) $map[ $val ]; }
 		if ( is_numeric( $val ) ) { return (int) $val; }
 		return 0;
 	}
+}
 
-	function carmelx_staff_shop_shortcode( $atts ) {
+if ( ! function_exists( 'carmelx_staff_shop_render2' ) ) {
+	function carmelx_staff_shop_render2( $atts ) {
 		$atts = shortcode_atts( array( 'id' => 0 ), $atts, 'carmel_staff_shop' );
 		$pid  = $atts['id'] ? (int) $atts['id'] : get_the_ID();
 		if ( ! $pid ) { return ''; }
-		$slug = carmelx_ss_shop_slug( $pid );
-		$sid  = carmelx_ss_shop_id( $pid );
+		$slug = carmelx_ss2_slug( $pid );
+		$sid  = carmelx_ss2_shopid( $pid );
 
 		/* ---- staff ---- */
 		$name_keys  = array( 'tantou_name', 'tantousha_name', 'staff_name', 'tantou', 'sekinin' );
 		$role_keys  = array( 'tantou_role', 'tantou_yakushoku', 'staff_role', 'position' );
 		$photo_keys = array( 'tantou_photo', 'tantousha_photo', 'staff_photo', 'tantou_image', 'staff_image' );
 
-		// (A) staff post assigned to this shop in the スタッフ screen (no code).
-		//     Managed by franchises: set staff_shop = this shop, set アイキャッチ.
 		$ss = array( 'name' => '', 'photo' => '' );
 		if ( $slug && post_type_exists( 'staff' ) ) {
 			$assigned = get_posts( array(
@@ -116,26 +107,22 @@ if ( ! function_exists( 'carmelx_staff_shop_shortcode' ) ) {
 				$ss['photo'] = (string) get_the_post_thumbnail_url( $assigned[0]->ID, 'medium' );
 			}
 		}
-		// (B) optional manual override map (back-compat; usually all 0 now).
 		if ( '' === $ss['name'] && '' === $ss['photo'] ) {
-			$smap = carmelx_ss_shop_staff_map();
-			if ( $slug && isset( $smap[ $slug ] ) ) { $ss = carmelx_ss_resolve_staff( $smap[ $slug ] ); }
+			$smap = carmelx_ss2_map();
+			if ( $slug && isset( $smap[ $slug ] ) ) { $ss = carmelx_ss2_resolve( $smap[ $slug ] ); }
 		}
 
-		$st_role  = carmelx_ss_first( $pid, $role_keys );
-		if ( '' === $st_role && $sid ) { $st_role = carmelx_ss_first( $sid, $role_keys ); }
-		if ( '' === $st_role ) { $st_role = '&#21942;&#26989;&#25285;&#24403;'; } // eigyo tantou
+		$st_role = carmelx_ss2_first( $pid, $role_keys );
+		if ( '' === $st_role && $sid ) { $st_role = carmelx_ss2_first( $sid, $role_keys ); }
+		if ( '' === $st_role ) { $st_role = '&#21942;&#26989;&#25285;&#24403;'; }
 
-		// NAME : vehicle override -> per-shop map -> shop name (same as /search).
-		// (no global staff-post fallback, so each shop shows its own name.)
-		$st_name = carmelx_ss_first( $pid, $name_keys );
+		$st_name = carmelx_ss2_first( $pid, $name_keys );
 		if ( '' === $st_name && ! empty( $ss['name'] ) ) { $st_name = $ss['name']; }
 		if ( '' === $st_name && $sid ) { $st_name = (string) get_the_title( $sid ); }
 
-		// PHOTO : vehicle override -> per-shop map -> shop meta -> generic fallback.
-		$st_photo = carmelx_ss_imgurl( carmelx_ss_first( $pid, $photo_keys ) );
+		$st_photo = carmelx_ss2_imgurl( carmelx_ss2_first( $pid, $photo_keys ) );
 		if ( '' === $st_photo && ! empty( $ss['photo'] ) ) { $st_photo = $ss['photo']; }
-		if ( '' === $st_photo && $sid ) { $st_photo = carmelx_ss_imgurl( carmelx_ss_first( $sid, $photo_keys ) ); }
+		if ( '' === $st_photo && $sid ) { $st_photo = carmelx_ss2_imgurl( carmelx_ss2_first( $sid, $photo_keys ) ); }
 		if ( '' === $st_photo && function_exists( 'carmel_staff_photo_url' ) ) { $st_photo = carmel_staff_photo_url( $pid ); }
 
 		$comment = function_exists( 'carmel_detail_get' ) ? carmel_detail_get( $pid, 'comment' ) : get_post_meta( $pid, 'comment', true );
@@ -144,24 +131,22 @@ if ( ! function_exists( 'carmelx_staff_shop_shortcode' ) ) {
 		$fee = function_exists( 'carmel_get_fee_settings' ) ? carmel_get_fee_settings() : array();
 		$shop_name = $sid ? get_the_title( $sid ) : '';
 		if ( '' === $shop_name && ! empty( $fee['shop']['name'] ) ) { $shop_name = $fee['shop']['name']; }
-		$addr  = $sid ? carmelx_ss_first( $sid, array( 'address', 'jusho', 'shop_address' ) ) : '';
+		$addr  = $sid ? carmelx_ss2_first( $sid, array( 'address', 'jusho', 'shop_address' ) ) : '';
 		if ( '' === $addr && ! empty( $fee['shop']['address'] ) ) { $addr = $fee['shop']['address']; }
-		$tel   = $sid ? carmelx_ss_first( $sid, array( 'tel', 'phone', 'denwa' ) ) : '';
+		$tel   = $sid ? carmelx_ss2_first( $sid, array( 'tel', 'phone', 'denwa' ) ) : '';
 		if ( '' === $tel && ! empty( $fee['shop']['tel'] ) ) { $tel = $fee['shop']['tel']; }
-		$hours = $sid ? carmelx_ss_first( $sid, array( 'hours', 'open_hours', 'business_hours', 'eigyo' ) ) : '';
+		$hours = $sid ? carmelx_ss2_first( $sid, array( 'hours', 'open_hours', 'business_hours', 'eigyo' ) ) : '';
 		if ( '' === $hours ) { $hours = '10:00&#12316;18:00'; }
-		$closed = $sid ? carmelx_ss_first( $sid, array( 'closed', 'holiday', 'teikyubi' ) ) : '';
-		if ( '' === $closed ) { $closed = '&#12394;&#12375;&#65288;&#24180;&#20013;&#28961;&#20241;&#65289;'; } // nashi (nenju mukyu)
-		$line    = $sid ? carmelx_ss_first( $sid, array( 'line_link', 'line-link' ) ) : '';
-		if ( '' === $line ) { $line = carmelx_ss_first( $pid, array( 'line-link', 'line_link' ) ); }
-		$contact = $sid ? carmelx_ss_first( $sid, array( 'contact-link', 'contact_link' ) ) : '';
-		if ( '' === $contact ) { $contact = carmelx_ss_first( $pid, array( 'contact-link', 'contact_link' ) ); }
+		$closed = $sid ? carmelx_ss2_first( $sid, array( 'closed', 'holiday', 'teikyubi' ) ) : '';
+		if ( '' === $closed ) { $closed = '&#12394;&#12375;&#65288;&#24180;&#20013;&#28961;&#20241;&#65289;'; }
+		$line    = $sid ? carmelx_ss2_first( $sid, array( 'line_link', 'line-link' ) ) : '';
+		if ( '' === $line ) { $line = carmelx_ss2_first( $pid, array( 'line-link', 'line_link' ) ); }
+		$contact = $sid ? carmelx_ss2_first( $sid, array( 'contact-link', 'contact_link' ) ) : '';
+		if ( '' === $contact ) { $contact = carmelx_ss2_first( $pid, array( 'contact-link', 'contact_link' ) ); }
 		$telnum = preg_replace( '/[^0-9+]/', '', (string) $tel );
 
 		/* ---- output ---- */
 		$out = '';
-
-		// tantou staff  (alt="" so a missing image shows a small icon, not giant text)
 		$icon = $st_photo
 			? '<span class="cx-staff__photo has"><img src="' . esc_url( $st_photo ) . '" alt="" loading="lazy"></span>'
 			: '<span class="cx-staff__photo">&#128104;&#8205;&#128188;</span>';
@@ -175,7 +160,6 @@ if ( ! function_exists( 'carmelx_staff_shop_shortcode' ) ) {
 			. '<div class="cx-staff__tags"><span>&#12525;&#12540;&#12531;&#30456;&#35527;OK</span><span>&#20302;&#19982;&#20449;&#12525;&#12540;&#12531;&#23550;&#24540;</span><span>&#20840;&#22269;&#32013;&#36554;</span></div>'
 			. '</div></div></div>';
 
-		// shop info
 		$rows = '';
 		if ( $addr )   { $rows .= '<tr><th>&#20303;&#25152;</th><td>' . esc_html( $addr ) . '</td></tr>'; }
 		if ( $tel )    { $rows .= '<tr><th>&#38651;&#35441;&#30058;&#21495;</th><td>' . esc_html( $tel ) . '</td></tr>'; }
@@ -194,8 +178,10 @@ if ( ! function_exists( 'carmelx_staff_shop_shortcode' ) ) {
 
 		return $out;
 	}
+}
 
-	function carmelx_ss_styles() {
+if ( ! function_exists( 'carmelx_ss2_styles' ) ) {
+	function carmelx_ss2_styles() {
 		static $done = false; if ( $done ) { return; } $done = true;
 		echo '<style>
 		.cx-sec{background:#fff;border-radius:12px;padding:24px;box-shadow:0 6px 18px rgba(0,0,0,.07);margin:18px 0;border:1px solid #eef0f3;font-family:inherit;}
@@ -226,12 +212,7 @@ if ( ! function_exists( 'carmelx_staff_shop_shortcode' ) ) {
 	}
 }
 
-/* 無条件で登録し直す（他スニペットが同名関数を持っていても確実に有効化）。
-   さらに init 後半でも登録して、競合スニペットより後に確実に勝つ。 */
-if ( function_exists( 'carmelx_staff_shop_shortcode' ) ) {
-	add_shortcode( 'carmel_staff_shop', 'carmelx_staff_shop_shortcode' );
-	add_action( 'init', function () { add_shortcode( 'carmel_staff_shop', 'carmelx_staff_shop_shortcode' ); }, 99 );
-}
-if ( function_exists( 'carmelx_ss_styles' ) ) {
-	add_action( 'wp_head', 'carmelx_ss_styles' );
-}
+/* 無条件で登録（他スニペットが何を定義していても確実に有効化） */
+add_shortcode( 'carmel_staff_shop', 'carmelx_staff_shop_render2' );
+add_action( 'init', function () { add_shortcode( 'carmel_staff_shop', 'carmelx_staff_shop_render2' ); }, 99 );
+add_action( 'wp_head', 'carmelx_ss2_styles' );
