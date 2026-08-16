@@ -1,0 +1,40 @@
+/* =========================================================================
+   カーメル：追加パーツをサイトの書体・デザインに合わせる
+   （カスタムCSS & JS / Simple Custom CSS などに貼り付け。CSSのみ・可逆）
+   ========================================================================= */
+
+/* --- 書体：追加パーツをサイト本文と同じフォントに統一 --- */
+.carmel-plan,
+.carmel-comment,
+.carmel-cond,
+.carmel-basic,
+.carmel-monthly,
+.carmel-equipment {
+	font-family: inherit !important;
+}
+
+/* --- 配色：担当者コメントをサイトのグリーン基調へ統一（オレンジ→グリーン） --- */
+.carmel-comment__icon {
+	background: #eaf6ee !important;
+	border-color: #9ed8b1 !important;
+}
+.carmel-comment__icon.has-photo {
+	background: #fff !important;
+}
+.carmel-comment__bubble {
+	background: #f3faf5 !important;
+	border-color: #cfe7d8 !important;
+	box-shadow: 0 2px 8px rgba(44,172,68,.06) !important;
+}
+.carmel-comment__bubble::before {
+	border-color: transparent #f3faf5 transparent transparent !important;
+}
+.carmel-comment__name {
+	background: #2cac44 !important;
+}
+
+/* --- 状態・基本情報テーブルの見出し色もテーマのグリーンに合わせる --- */
+.carmel-cond th {
+	background: #f3faf5 !important;
+	color: #1c7a3a !important;
+}
