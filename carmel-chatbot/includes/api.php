@@ -171,6 +171,9 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
 
 	carmel_cb_log( $session_id, 'assistant', $parsed['reply'] );
 
+	// 会話離脱後追い：AI返答が返るたびに「最終発言時刻」を更新（intakeでメール取得済みの場合のみ）
+	if ( function_exists( 'carmel_cb_convo_fu_touch' ) ) { carmel_cb_convo_fu_touch( $session_id ); }
+
 	// 会話ミラー：Slackのスレッドに「お客様🙋 / AI🤖」を流す（スタッフが会話を見て割り込める）
 	if ( function_exists( 'carmel_cb_convo_mirror' ) && function_exists( 'carmel_cb_slack_live_on' ) && carmel_cb_slack_live_on( $s ) ) {
 		$within_lbl = carmel_cb_within_hours( $s ) ? '（営業時間内）' : '（時間外・AI自動対応中）';

@@ -102,6 +102,8 @@ function carmel_cb_handle_apply_click( WP_REST_Request $r ) {
 	if ( ! is_email( $email ) ) { return new WP_REST_Response( array( 'ok' => false, 'skipped' => 'no_email' ), 200 ); }
 
 	$ok = carmel_cb_apply_record_click( $email, $name, $sid, $page );
+	// 会話離脱後追いは、審査ボタンを押した時点で「行動を起こした」→ 解決扱いにして送らない
+	if ( function_exists( 'carmel_cb_convo_fu_resolve' ) ) { carmel_cb_convo_fu_resolve( $sid, $email ); }
 	return new WP_REST_Response( array( 'ok' => (bool) $ok ), 200 );
 }
 

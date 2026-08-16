@@ -174,6 +174,9 @@ function carmel_cb_handle_post() {
 				'apply_followup_from'      => sanitize_email( wp_unslash( $_POST['apply_followup_from'] ?? '' ) ),
 				'apply_followup_from_name' => sanitize_text_field( wp_unslash( $_POST['apply_followup_from_name'] ?? '' ) ),
 				'apply_followup_stages'    => carmel_cb_admin_sanitize_stages( $_POST['apply_followup_stages'] ?? array() ),
+				// 会話離脱後追い
+				'convo_followup_on'        => isset( $_POST['convo_followup_on'] ) ? 1 : 0,
+				'convo_followup_stages'    => carmel_cb_admin_sanitize_stages( $_POST['convo_followup_stages'] ?? array() ),
 			) );
 			carmel_cb_notice( '見た目設定を保存しました。' );
 			break;
@@ -1156,6 +1159,59 @@ function carmel_cb_view_appearance() {
 					<h4 style="margin:0 0 6px">🩺 メール環境の診断</h4>
 					<p class="description" style="margin-top:0">「テスト送信」で届かないときはこちらを実行。サイトのメール送信環境を診断します。</p>
 					<button type="submit" name="carmel_cb_action" value="followup_diagnose" class="button">診断する</button>
+				</td>
+			</tr>
+			<tr>
+				<th>後追いメール（会話離脱）</th>
+				<td>
+					<label><input type="checkbox" name="convo_followup_on" value="1" <?php checked( ! empty( $s['convo_followup_on'] ) ); ?>> 有効にする</label>
+					<p class="description">
+						お名前・メール入力済みのお客様がチャットで会話を始めたのに、審査/問い合わせ/担当者相談のどれもせず離脱した場合に、
+						「解決できていましたか？」の後追いメールを段階的に自動送信します。
+						お客様が審査や問い合わせなどの行動を起こした時点で、以降の送信は自動停止します。
+					</p>
+					<?php
+					$cdefs   = function_exists( 'carmel_cb_convo_fu_stage_defs' ) ? carmel_cb_convo_fu_stage_defs( $s ) : array();
+					$clabels = array( 1 => '① 2時間後（軽い確認）', 2 => '② 24時間後（再アプローチ）', 3 => '③ 3日後（最終フォロー）' );
+					?>
+					<hr style="margin:14px 0">
+					<h4 style="margin:0 0 6px">送信タイミング・文面</h4>
+					<?php foreach ( $clabels as $i => $lbl ) : $d = $cdefs[ $i ] ?? array(); ?>
+					<div style="border:1px solid #e2e4e7;padding:10px 12px;border-radius:6px;margin-bottom:10px;background:#fafbfc">
+						<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+							<strong style="min-width:220px"><?php echo esc_html( $lbl ); ?></strong>
+							<label><input type="checkbox" name="convo_followup_stages[<?php echo $i; ?>][on]" value="1" <?php checked( ! empty( $d['on'] ) ); ?>> 送信する</label>
+							<label>送信までの遅延（分）: <input type="number" name="convo_followup_stages[<?php echo $i; ?>][delay_min]" value="<?php echo esc_attr( (int) ( $d['delay_min'] ?? 120 ) ); ?>" min="1" class="small-text"></label>
+						</div>
+						<p style="margin:8px 0 4px"><label>件名</label></p>
+						<input type="text" name="convo_followup_stages[<?php echo $i; ?>][subject]" value="<?php echo esc_attr( (string) ( $d['subject'] ?? '' ) ); ?>" class="large-text">
+						<p style="margin:8px 0 4px"><label>本文（利用可: <code>{name}</code> <code>{apply_url}</code> <code>{line_url}</code> <code>{tel}</code> <code>{stock_url}</code> <code>{site_url}</code>）</label></p>
+						<textarea name="convo_followup_stages[<?php echo $i; ?>][body]" rows="10" class="large-text" style="font-family:inherit"><?php echo esc_textarea( (string) ( $d['body'] ?? '' ) ); ?></textarea>
+					</div>
+					<?php endforeach; ?>
+
+					<?php
+					if ( function_exists( 'carmel_cb_convo_fu_table_exists' ) && carmel_cb_convo_fu_table_exists() ) {
+						global $wpdb;
+						$t = carmel_cb_convo_fu_table();
+						$rows = $wpdb->get_results( "SELECT id, email, name, first_message_at, last_message_at, stage, resolved FROM $t ORDER BY id DESC LIMIT 20" );
+						if ( $rows ) {
+							echo '<hr style="margin:14px 0"><h4 style="margin:0 0 6px">直近の記録（20件）</h4>';
+							echo '<table class="widefat striped" style="max-width:1000px"><thead><tr><th>会話開始</th><th>最終発言</th><th>お名前</th><th>メール</th><th>送信ステージ</th><th>解決</th></tr></thead><tbody>';
+							foreach ( $rows as $r ) {
+								echo '<tr>';
+								echo '<td>' . esc_html( $r->first_message_at ) . '</td>';
+								echo '<td>' . esc_html( $r->last_message_at ) . '</td>';
+								echo '<td>' . esc_html( $r->name ) . '</td>';
+								echo '<td>' . esc_html( $r->email ) . '</td>';
+								echo '<td>' . (int) $r->stage . '/3</td>';
+								echo '<td>' . ( $r->resolved ? '✅' : '—' ) . '</td>';
+								echo '</tr>';
+							}
+							echo '</tbody></table>';
+						}
+					}
+					?>
 				</td>
 			</tr>
 			<tr>

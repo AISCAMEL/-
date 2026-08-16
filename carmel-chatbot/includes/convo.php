@@ -178,6 +178,8 @@ function carmel_cb_handle_convo_handoff( WP_REST_Request $request ) {
 	$b   = $request->get_json_params();
 	$sid = sanitize_text_field( $b['session_id'] ?? '' );
 	$q   = sanitize_textarea_field( $b['question'] ?? '' );
+	// 担当者に相談＝行動を起こした → 会話離脱後追いは解決扱い
+	if ( function_exists( 'carmel_cb_convo_fu_resolve' ) ) { carmel_cb_convo_fu_resolve( $sid ); }
 	$sess = carmel_cb_convo_ensure( $s, $sid, esc_url_raw( $b['page'] ?? '' ), '（営業時間内）' );
 	if ( ! $sess ) { return new WP_REST_Response( array( 'mode' => 'notify' ), 200 ); }
 
