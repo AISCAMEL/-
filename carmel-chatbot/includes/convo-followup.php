@@ -155,20 +155,29 @@ function carmel_cb_convo_fu_run() {
 }
 
 function carmel_cb_convo_fu_send_stage_mail( $s, $row, $stage_num, $def ) {
+	// オプトアウト済みなら送らない
+	if ( function_exists( 'carmel_cb_is_opted_out' ) && carmel_cb_is_opted_out( $row->email ) ) { return true; /* 送らず完了扱い */ }
+
 	$name      = $row->name !== '' ? $row->name : 'お客様';
 	$apply_url = ! empty( $s['apply_url'] ) ? $s['apply_url'] : home_url( '/shinsa-2/' );
 	$line_url  = (string) ( $s['line_url'] ?? '' );
 	$tel       = (string) ( $s['tel'] ?? '' );
 	$stock_url = (string) ( $s['stock_page_url'] ?? '' );
 	$site_url  = home_url( '/' );
+	$signature = (string) ( $s['followup_signature'] ?? '' );
+	$unsub_url = function_exists( 'carmel_cb_unsub_url' ) ? carmel_cb_unsub_url( $row->email ) : '';
+	$unsub_note = (string) ( $s['followup_unsub_note'] ?? '' );
 
 	$vars = array(
-		'{name}'      => $name,
-		'{apply_url}' => $apply_url,
-		'{line_url}'  => $line_url,
-		'{tel}'       => $tel,
-		'{stock_url}' => $stock_url,
-		'{site_url}'  => $site_url,
+		'{name}'            => $name,
+		'{apply_url}'       => $apply_url,
+		'{line_url}'        => $line_url,
+		'{tel}'             => $tel,
+		'{stock_url}'       => $stock_url,
+		'{site_url}'        => $site_url,
+		'{signature}'       => $signature,
+		'{unsubscribe_url}' => $unsub_url,
+		'{unsub_note}'      => $unsub_note,
 	);
 	$subject = strtr( (string) ( $def['subject'] ?? '' ), $vars );
 	$body    = strtr( (string) ( $def['body'] ?? '' ),    $vars );
@@ -189,19 +198,19 @@ function carmel_cb_convo_fu_stage_defs( $s ) {
 			'on'        => true,
 			'delay_min' => 120, // 2時間
 			'subject'   => '【カーメル】ご相談の続き、お答え足りていましたでしょうか？',
-			'body'      => "{name} 様\n\n先ほどはカーメルにご相談いただき、ありがとうございました。\nみほ（カーメル相談窓口）です。\n\nご質問への回答は十分でしたか？\nもし途中で気になる点や、聞き足りなかったことがあれば、いつでも続きからご相談いただけます。\n\n▼ 続きから相談する\n{site_url}\n\nお車のご検討はもちろん、審査の不安や頭金のことなど、どんな小さなことでもお気軽にどうぞ。\n・LINEでも承ります：{line_url}\n・お電話：{tel}\n\n────────────\nカーメル\n{site_url}\n",
+			'body'      => "{name} 様\n\nカーメル相談窓口の みほ です😊\n先ほどはカーメルにご相談いただき、ありがとうございました。\n\nご質問への回答は十分でしたか？\nもし途中で気になる点や、聞き足りなかったことがあれば、いつでも続きからご相談いただけます。\n\n▼ 続きから相談する\n{site_url}\n\nお車のご検討はもちろん、審査の不安や頭金のことなど、どんな小さなことでもお気軽にどうぞ。\n・LINEでも承ります：{line_url}\n・お電話：{tel}\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n※ このメールは自動送信です。ご返信いただいても対応できない場合があります。\n",
 		),
 		2 => array(
 			'on'        => true,
 			'delay_min' => 60 * 24, // 24時間
 			'subject'   => '【カーメル】その後、お車のご検討はいかがでしょうか？',
-			'body'      => "{name} 様\n\nお世話になっております、カーメルのみほです。\n昨日はご相談いただき、ありがとうございました。\n\nその後、お車のご検討は進んでいらっしゃいますか？\nご予算や車種のご希望、支払い方法など、\nお決まりの部分だけでも教えていただければ、\n最適なプランをご提案いたします。\n\n▼ 在庫を見てみる\n{stock_url}\n\n▼ 続きから相談する\n{site_url}\n\n・LINEでも気軽にどうぞ：{line_url}\n\n────────────\nカーメル\n",
+			'body'      => "{name} 様\n\nお世話になっております、カーメルの みほ です。\n昨日はご相談いただき、ありがとうございました。\n\nその後、お車のご検討は進んでいらっしゃいますか？\nご予算や車種のご希望、支払い方法など、\nお決まりの部分だけでも教えていただければ、\n最適なプランをご提案いたします。\n\n▼ 在庫を見てみる\n{stock_url}\n\n▼ 続きから相談する\n{site_url}\n\n・LINEでも気軽にどうぞ：{line_url}\n・お電話：{tel}\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n※ このメールは自動送信です。ご返信いただいても対応できない場合があります。\n",
 		),
 		3 => array(
 			'on'        => true,
 			'delay_min' => 60 * 24 * 3, // 3日
 			'subject'   => '【カーメル】お手伝いできることがあれば、いつでもご相談ください',
-			'body'      => "{name} 様\n\nカーメルのみほです。\n先日はご相談いただき、ありがとうございました。\n\nもしまだお車探しでお困りのことがあれば、いつでもお声がけください。\n他社様で審査が通らなかった方でも、当店の低与信ローンでご案内できるケースが多くあります。\n\n▼ 仮審査を申し込む\n{apply_url}\n\n▼ もう一度相談する\n{site_url}\n\n・LINE：{line_url}\n\n無理な営業は一切いたしません。ご相談だけでも大歓迎です😊\n\n────────────\nカーメル\n\n※ このメールは自動送信です。返信は不要です。\n　今後のご案内が不要な場合はお手数ですが LINE または上記フォームからご連絡ください。\n",
+			'body'      => "{name} 様\n\nカーメルの みほ です。\n先日はご相談いただき、ありがとうございました。\n\nもしまだお車探しでお困りのことがあれば、いつでもお声がけください。\n他社様で審査が通らなかった方でも、当店の低与信ローンでご案内できるケースが多くあります。\n\n▼ 仮審査を申し込む\n{apply_url}\n▼ もう一度相談する\n{site_url}\n▼ 在庫を見る\n{stock_url}\n・LINE：{line_url}\n・お電話：{tel}\n\n無理な営業は一切いたしません。ご相談だけでも大歓迎です😊\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n※ このメールは自動送信です。ご返信いただいても対応できない場合があります。\n",
 		),
 	);
 	$user = is_array( $s['convo_followup_stages'] ?? null ) ? $s['convo_followup_stages'] : array();

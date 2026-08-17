@@ -191,6 +191,9 @@ function carmel_cb_default_settings() {
 		// 会話離脱者への後追いメール
 		'convo_followup_on'        => 1,
 		'convo_followup_stages'    => array(), // 空なら convo-followup.php のデフォルト定義を使用
+		// 後追いメール共通：署名（会社情報）とオプトアウトのご案内
+		'followup_signature'       => "──────────────────────────\nカーメル\nWeb : https://carmelonline.jp/\nLINE: https://omu247l0.autosns.app/line\nTel : 050-1793-5554\nMail: info@carmelonline.jp\n──────────────────────────",
+		'followup_unsub_note'      => '今後このようなご案内が不要な場合は、下記のリンクから配信停止できます。',
 		// 担当者につなぐ間の案内（ライブ待機）
 		'handoff_wait_msg' => '担当者におつなぎしています。つながるまで少々お待ちください…',
 		'handoff_busy_sec' => 15,       // この秒数つながらなければ「混雑」案内を出す
