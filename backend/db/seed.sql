@@ -25,7 +25,7 @@ values (
   '車買取',
   'business',
   'trial',
-  'owner@example.com',        -- TODO: real billing email
+  'info@aisjaltd.com',         -- 課金・請求先メール
   'none'
 )
 on conflict (id) do nothing;
@@ -37,7 +37,7 @@ insert into app_users (tenant_id, name, email, role, is_active)
 values (
   '00000000-0000-0000-0000-000000000001',
   '店長（オーナー）',
-  'owner@example.com',        -- TODO: real owner login email
+  'info@aisjaltd.com',         -- オーナーのログインメール
   'owner',
   true
 )
@@ -79,7 +79,7 @@ values (
   false,
   true,
   '+815011112222',            -- TODO: real human-transfer phone number
-  'owner@example.com',        -- TODO: real notification email
+  'info@aisjaltd.com',         -- 着信通知メール
   '',                         -- Slack webhook (empty = off; set via env/UI)
   true,
   true,
@@ -91,7 +91,7 @@ values (
   '査定は基本「画像査定」で進める：お客様の携帯番号を確認し、査定フォームのURLをSMSでお送りする旨を伝える。ビデオ査定希望者にはオンライン査定を案内。査定額はお電話で確約しない。',
   '画像査定,オンライン査定,出張査定,持込査定',
   '恐れ入りますが、営業・勧誘のお電話はお取り次ぎしておりません。ご用件があれば会社名とお名前を伺い、担当者より折り返しご連絡いたします。',
-  'https://example.com/online-booking',   -- TODO: real online booking URL
+  'https://calendar.app.google/4aF7F5nWS77rmf3M7',  -- オンライン査定のGoogle予約ページ
   'https://example.com/satei-form'        -- TODO: real appraisal form URL
 )
 on conflict (tenant_id) do nothing;
