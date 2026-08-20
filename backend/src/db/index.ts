@@ -4,7 +4,15 @@ import type { TenantContext, TranscriptLine, CallSummary } from '../types.js';
 
 // DATABASE_URL 未設定時は「DBなしデモモード」で動作（ローカル/PoC 用）。
 const enabled = Boolean(config.databaseUrl);
-const pool = enabled ? new pg.Pool({ connectionString: config.databaseUrl }) : null;
+// Supabase等のマネージドPostgresはSSL必須。ローカル以外はSSLを有効化する
+// （マネージドDBの証明書チェーンで落ちないよう rejectUnauthorized:false）。
+const isLocalDb = /@(localhost|127\.0\.0\.1|\[?::1)/.test(config.databaseUrl);
+const pool = enabled
+  ? new pg.Pool({
+      connectionString: config.databaseUrl,
+      ssl: isLocalDb ? undefined : { rejectUnauthorized: false },
+    })
+  : null;
 
 export const dbEnabled = enabled;
 
