@@ -1,0 +1,380 @@
+<title>カーメル かんたん審査</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<style>
+  :root{
+    --ground:#eef1f4; --card:#ffffff; --card-2:#f6f8fa;
+    --ink:#1a2431; --muted:#5f6a7a; --faint:#93a0af;
+    --border:#e2e7ee; --border-strong:#cfd7e1;
+    --line:#06c755; --line-ink:#ffffff; --line-soft:#e3f7ec;
+    --accent:#1f6feb;
+    --rankA:#0e9d54; --rankB:#2a6fd4; --rankC:#c07a10; --rankD:#c0433c;
+    --radius:14px; --shadow:0 1px 2px rgba(20,30,50,.05),0 8px 26px rgba(20,30,50,.08);
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --ground:#0c121b; --card:#151d29; --card-2:#111825;
+    --ink:#e8edf4; --muted:#9aa5b4; --faint:#6a7688;
+    --border:#26313f; --border-strong:#33404f;
+    --line:#22c96a; --line-ink:#06210f; --line-soft:#12271c;
+    --accent:#5f9bff;
+    --rankA:#3fbb74; --rankB:#5f9bff; --rankC:#e0a53a; --rankD:#f0736c;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 30px rgba(0,0,0,.4);
+  }}
+  :root[data-theme="dark"]{
+    --ground:#0c121b; --card:#151d29; --card-2:#111825;
+    --ink:#e8edf4; --muted:#9aa5b4; --faint:#6a7688;
+    --border:#26313f; --border-strong:#33404f;
+    --line:#22c96a; --line-ink:#06210f; --line-soft:#12271c;
+    --accent:#5f9bff;
+    --rankA:#3fbb74; --rankB:#5f9bff; --rankC:#e0a53a; --rankD:#f0736c;
+    --shadow:0 1px 2px rgba(0,0,0,.35),0 10px 30px rgba(0,0,0,.4);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--ground); color:var(--ink); font-size:15px; line-height:1.6;
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI","Noto Sans JP","Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased; font-variant-numeric:tabular-nums;
+  }
+  .app{max-width:460px; margin:0 auto; min-height:100vh; background:var(--ground); display:flex; flex-direction:column}
+
+  header{position:sticky; top:0; z-index:10; background:var(--card); border-bottom:1px solid var(--border); padding:12px 16px 10px}
+  .htop{display:flex; align-items:center; gap:8px}
+  .htop .m{font-size:17px} .htop b{font-weight:800; letter-spacing:.01em}
+  .htop .liff{margin-left:auto; font-size:10px; font-weight:800; letter-spacing:.12em; color:var(--line); background:var(--line-soft); padding:3px 8px; border-radius:999px}
+  .prog{display:flex; gap:6px; margin-top:11px}
+  .prog i{height:5px; flex:1; border-radius:99px; background:var(--border)}
+  .prog i.on{background:var(--line)}
+  .steplabel{font-size:12px; color:var(--muted); margin-top:7px; font-weight:600}
+
+  main{flex:1; padding:16px}
+  .step{display:none} .step.on{display:block; animation:fade .25s ease}
+  @keyframes fade{from{opacity:0; transform:translateY(6px)}to{opacity:1;transform:none}}
+  .step h2{font-size:18px; margin:2px 0 3px; font-weight:800; text-wrap:balance}
+  .step p.lead{color:var(--muted); font-size:13px; margin:0 0 14px}
+
+  .field{margin-bottom:14px}
+  .field > label{display:block; font-size:13px; font-weight:700; margin-bottom:6px}
+  .field .req{color:var(--rankD); font-weight:800; margin-left:3px; font-size:12px}
+  .field .hint{color:var(--faint); font-size:11.5px; font-weight:600; margin-left:6px}
+  input,select{width:100%; font:inherit; font-size:15px; padding:12px 13px; border:1px solid var(--border-strong); border-radius:10px; background:var(--card); color:var(--ink); appearance:none}
+  input::placeholder{color:var(--faint)}
+  select{background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%); background-position:calc(100% - 18px) 19px,calc(100% - 13px) 19px; background-size:5px 5px,5px 5px; background-repeat:no-repeat}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .row3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px}
+  .suffix{position:relative}
+  .suffix span{position:absolute; right:13px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:13px; font-weight:700; pointer-events:none}
+  .suffix input{padding-right:42px}
+
+  .seg{display:flex; gap:8px}
+  .seg label{flex:1}
+  .seg input{position:absolute; opacity:0; pointer-events:none}
+  .seg .b{display:block; text-align:center; padding:11px; border:1px solid var(--border-strong); border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; color:var(--muted); background:var(--card)}
+  .seg input:checked + .b{border-color:var(--line); background:var(--line-soft); color:var(--ink)}
+
+  footer{position:sticky; bottom:0; background:linear-gradient(to top,var(--card) 70%,transparent); padding:12px 16px calc(12px + env(safe-area-inset-bottom)); border-top:1px solid var(--border)}
+  .nav{display:flex; gap:10px}
+  .btn{font:inherit; font-weight:800; border:0; border-radius:12px; padding:14px; cursor:pointer; font-size:15px}
+  .btn.primary{flex:1; background:var(--line); color:var(--line-ink)}
+  .btn.primary:active{filter:brightness(.96)}
+  .btn.ghost{background:var(--card-2); color:var(--muted); border:1px solid var(--border); padding:14px 18px}
+  .err{color:var(--rankD); font-size:12px; font-weight:700; margin-top:6px; display:none}
+  .field.bad input,.field.bad select{border-color:var(--rankD)}
+  .field.bad .err{display:block}
+
+  /* result */
+  .result{display:none; padding:22px 18px 40px; text-align:center}
+  .result.on{display:block}
+  .ricon{width:56px; height:56px; border-radius:16px; margin:6px auto 12px; display:grid; place-items:center; font-size:26px; background:var(--line-soft)}
+  .result h2{font-size:20px; margin:0 0 4px; font-weight:800}
+  .result .sub{color:var(--muted); font-size:13px; margin-bottom:20px}
+  .rankwrap{background:var(--card); border:1px solid var(--border); border-radius:18px; box-shadow:var(--shadow); padding:22px 18px; margin-bottom:16px}
+  .rankbig{font-size:52px; font-weight:800; line-height:1; color:#fff; width:92px; height:92px; border-radius:24px; display:grid; place-items:center; margin:0 auto 12px}
+  .rankbig.A{background:var(--rankA)} .rankbig.B{background:var(--rankB)} .rankbig.C{background:var(--rankC)} .rankbig.D{background:var(--rankD)}
+  .rankmsg{font-weight:800; font-size:16px}
+  .rankmsg small{display:block; color:var(--muted); font-weight:600; font-size:12.5px; margin-top:4px}
+  .kpis{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px}
+  .kpi{background:var(--card-2); border-radius:12px; padding:12px}
+  .kpi .n{font-size:19px; font-weight:800} .kpi .l{font-size:11px; color:var(--muted); margin-top:1px}
+  .next{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px; text-align:left; margin-bottom:16px}
+  .next h3{margin:0 0 10px; font-size:14px; font-weight:800}
+  .next ol{margin:0; padding-left:18px; color:var(--muted); font-size:13px; line-height:1.9}
+  .disc{color:var(--faint); font-size:11px; line-height:1.7; margin-top:14px}
+  :focus-visible{outline:2px solid var(--line); outline-offset:2px}
+</style>
+
+<div class="app">
+  <header>
+    <div class="htop"><span class="m">🚗</span><b>カーメル かんたん審査</b><span class="liff">LIFF DEMO</span></div>
+    <div class="prog" id="prog"><i class="on"></i><i></i><i></i></div>
+    <div class="steplabel" id="steplabel">STEP 1 / 3 ・ ご状況</div>
+  </header>
+
+  <main id="main">
+    <!-- STEP 1 -->
+    <section class="step on" data-step="1">
+      <h2>まずはご状況を教えてください</h2>
+      <p class="lead">他社で断られた方でも、14社の提携先からご提案します。</p>
+      <div class="field" data-name="jijou">
+        <label>現在の事情<span class="req">必須</span></label>
+        <select id="jijou">
+          <option value="">選択してください</option>
+          <option>現在、他社ローンの返済遅れ</option>
+          <option>過去に延滞経験ありだが現在は解消済</option>
+          <option>債務整理</option>
+          <option>自己破産</option>
+          <option>他社審査が通らなかった</option>
+          <option>ローン自体が不安</option>
+          <option>特にない</option>
+        </select>
+        <div class="err">選択してください</div>
+      </div>
+      <div class="field" data-name="jiki">
+        <label>購入時期</label>
+        <select id="jiki">
+          <option>今すぐ</option><option>1ヶ月以内</option><option>3ヶ月以内</option><option>まだ検討中</option>
+        </select>
+      </div>
+      <div class="field" data-name="shinsa">
+        <label>これまでの審査社数</label>
+        <select id="shinsa">
+          <option value="0">はじめて</option>
+          <option value="2">2社目</option>
+          <option value="3">3社目</option>
+          <option value="5">それ以上</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- STEP 2 -->
+    <section class="step" data-step="2">
+      <h2>お客様情報</h2>
+      <p class="lead">審査結果のご連絡に使用します。</p>
+      <div class="field" data-name="name">
+        <label>お名前<span class="req">必須</span></label>
+        <input id="name" placeholder="例）山田 太郎" autocomplete="name">
+        <div class="err">入力してください</div>
+      </div>
+      <div class="field" data-name="birth">
+        <label>生年月日<span class="req">必須</span></label>
+        <input id="birth" type="date" min="1940-01-01" max="2008-12-31">
+        <div class="err">入力してください</div>
+      </div>
+      <div class="field" data-name="tel">
+        <label>お電話番号<span class="req">必須</span></label>
+        <input id="tel" type="tel" inputmode="numeric" placeholder="09012345678" autocomplete="tel">
+        <div class="err">入力してください</div>
+      </div>
+      <div class="field" data-name="zip">
+        <label>郵便番号<span class="hint">住所は自動で型を保持</span></label>
+        <input id="zip" inputmode="numeric" placeholder="1000001">
+      </div>
+    </section>
+
+    <!-- STEP 3 -->
+    <section class="step" data-step="3">
+      <h2>お仕事・ご希望</h2>
+      <p class="lead">この内容から審査スコアを算出します。</p>
+      <div class="field" data-name="emp">
+        <label>雇用形態<span class="req">必須</span></label>
+        <select id="emp">
+          <option value="">選択してください</option>
+          <option>正社員</option><option>公務員</option><option>会社役員</option>
+          <option>個人事業主</option><option>契約社員</option><option>派遣社員</option>
+          <option>パート・アルバイト</option>
+        </select>
+        <div class="err">選択してください</div>
+      </div>
+      <div class="field" data-name="tenure">
+        <label>勤続年数<span class="req">必須</span></label>
+        <div class="row2">
+          <div class="suffix"><input id="ty" type="number" inputmode="numeric" min="0" placeholder="3"><span>年</span></div>
+          <div class="suffix"><input id="tm" type="number" inputmode="numeric" min="0" max="11" placeholder="6"><span>ヶ月</span></div>
+        </div>
+        <div class="err">入力してください</div>
+      </div>
+      <div class="field" data-name="income">
+        <label>年収<span class="req">必須</span></label>
+        <div class="suffix"><input id="income" type="number" inputmode="numeric" min="0" placeholder="400"><span>万円</span></div>
+        <div class="err">入力してください</div>
+      </div>
+      <div class="field" data-name="pay">
+        <label>月々お支払い可能額</label>
+        <select id="pay">
+          <option value="10000">〜1万円</option>
+          <option value="20000" selected>1〜2万円</option>
+          <option value="30000">2〜3万円</option>
+          <option value="40000">3〜4万円</option>
+          <option value="50000">4〜5万円</option>
+          <option value="70000">5〜7万円</option>
+        </select>
+      </div>
+      <div class="field" data-name="other">
+        <label>他社お借入</label>
+        <select id="other">
+          <option value="0">なし</option>
+          <option value="100000">10万円未満</option>
+          <option value="500000">50万円未満</option>
+          <option value="1000000">100万円未満</option>
+          <option value="2000000">100万円以上</option>
+        </select>
+      </div>
+      <div class="field" data-name="house">
+        <label>住居</label>
+        <select id="house">
+          <option>持家</option><option>賃貸</option><option>実家・親族宅</option><option>社宅・寮</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>頭金</label>
+        <div class="seg" id="down">
+          <label><input type="radio" name="down" value="1"><span class="b">あり</span></label>
+          <label><input type="radio" name="down" value="0" checked><span class="b">なし</span></label>
+        </div>
+      </div>
+      <div class="field">
+        <label>保証人</label>
+        <div class="seg" id="guar">
+          <label><input type="radio" name="guar" value="1"><span class="b">立てられる</span></label>
+          <label><input type="radio" name="guar" value="0" checked><span class="b">なし</span></label>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="footer">
+    <div class="nav">
+      <button class="btn ghost" id="back" style="display:none">戻る</button>
+      <button class="btn primary" id="next">次へ</button>
+    </div>
+  </footer>
+
+  <!-- RESULT -->
+  <div class="result" id="result">
+    <div class="ricon">✅</div>
+    <h2>仮審査が完了しました</h2>
+    <div class="sub" id="resultName">山田 太郎 様</div>
+    <div class="rankwrap">
+      <div class="rankbig A" id="rankBig">A</div>
+      <div class="rankmsg" id="rankMsg">通過の可能性が高いです<small>提携信販へ優先的にお繋ぎします</small></div>
+      <div class="kpis">
+        <div class="kpi"><div class="n" id="kScore">88点</div><div class="l">審査スコア</div></div>
+        <div class="kpi"><div class="n" id="kPay">¥20,000</div><div class="l">月々お支払い目安</div></div>
+      </div>
+    </div>
+    <div class="next">
+      <h3>このあとの流れ</h3>
+      <ol id="steps">
+        <li>担当より提携信販会社へお繋ぎします</li>
+        <li>必要書類（免許証など）をLINEで送付</li>
+        <li>最短即日で結果をLINEにご連絡</li>
+      </ol>
+    </div>
+    <button class="btn primary" style="width:100%" id="toLine">LINEに戻る</button>
+    <button class="btn ghost" style="width:100%; margin-top:10px" id="again">もう一度入力する（デモ）</button>
+    <p class="disc">これはLIFF申込フォームのデモです。実際のLINEでは userId を自動取得し、この結果をスプレッドシートに登録・審査へ連携します。表示スコアは実システムと同じ計算式による目安で、最終審査結果を保証するものではありません。</p>
+  </div>
+</div>
+
+<script>
+let step = 1;
+const totalSteps = 3;
+const $ = s => document.querySelector(s);
+const main=$('#main'), footer=$('#footer'), result=$('#result');
+
+function showStep(n){
+  document.querySelectorAll('.step').forEach(s=>s.classList.toggle('on', +s.dataset.step===n));
+  document.querySelectorAll('#prog i').forEach((i,idx)=>i.classList.toggle('on', idx<n));
+  const labels={1:'ご状況',2:'お客様情報',3:'お仕事・ご希望'};
+  $('#steplabel').textContent = `STEP ${n} / ${totalSteps} ・ ${labels[n]}`;
+  $('#back').style.display = n>1 ? 'block':'none';
+  $('#next').textContent = n===totalSteps ? '審査結果を見る' : '次へ';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function validate(n){
+  const req = {
+    1:[['jijou','#jijou']],
+    2:[['name','#name'],['birth','#birth'],['tel','#tel']],
+    3:[['emp','#emp'],['tenure','#ty'],['income','#income']]
+  }[n]||[];
+  let ok=true;
+  req.forEach(([name,sel])=>{
+    const el=$(sel); const f=document.querySelector(`.field[data-name="${name}"]`);
+    const bad = !el.value;
+    if(f) f.classList.toggle('bad', bad);
+    if(bad) ok=false;
+  });
+  return ok;
+}
+
+$('#next').addEventListener('click', ()=>{
+  if(!validate(step)) return;
+  if(step<totalSteps){ step++; showStep(step); }
+  else finish();
+});
+$('#back').addEventListener('click', ()=>{ if(step>1){ step--; showStep(step); } });
+document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',()=>{
+  const f=el.closest('.field'); if(f) f.classList.remove('bad');
+}));
+
+// --- 実システムと同じ計算式（デモ版） ---
+function calcAge(v){ if(!v) return 0; const d=new Date(v),t=new Date(); let a=t.getFullYear()-d.getFullYear(); const m=t.getMonth()-d.getMonth(); if(m<0||(m===0&&t.getDate()<d.getDate()))a--; return a; }
+function score(){
+  const emp=$('#emp').value;
+  const ty=+$('#ty').value||0, tm=+$('#tm').value||0, months=ty*12+tm;
+  const income=(+$('#income').value||0)*10000;
+  const pay=+$('#pay').value||0;
+  const other=+$('#other').value||0;
+  const shinsa=+$('#shinsa').value||0;
+  const jijou=$('#jijou').value;
+  const house=$('#house').value;
+  const down=+document.querySelector('input[name="down"]:checked').value;
+  const guar=+document.querySelector('input[name="guar"]:checked').value;
+  const age=calcAge($('#birth').value);
+
+  if(months>0 && months<3) return {s:0,r:'D',ko:true};
+  let s=0;
+  if(/正社員|公務員/.test(emp))s+=25; else if(/役員/.test(emp))s+=20; else if(/個人事業主/.test(emp))s+=15; else if(/契約|派遣/.test(emp))s+=10; else if(/パート|アルバイト/.test(emp))s+=5;
+  if(months>=60)s+=20; else if(months>=36)s+=15; else if(months>=12)s+=8; else if(months>=6)s+=5; else s+=3;
+  if(income>0&&pay>0){ const r=pay*12/income*100; if(r<=20)s+=25; else if(r<=30)s+=15; else if(r<=40)s+=5; }
+  if(other===0)s+=10; else if(other<=500000)s+=7; else if(other<=1000000)s+=3;
+  if(shinsa===0)s+=5; else if(shinsa>=3)s-=10; else if(shinsa>=2)s-=5;
+  if(/現在/.test(jijou))s-=10; else if(/債務整理|自己破産/.test(jijou)){} else if(/過去|延滞/.test(jijou)){} else if(jijou==='特にない')s+=5;
+  if(down)s+=10;
+  if(/持家/.test(house))s+=8; else if(/実家|親族/.test(house))s+=4;
+  if(guar)s+=10;
+  if(age>=70)s-=15; else if(age>=65)s-=10; else if(age>=60)s-=5;
+  s=Math.max(0,Math.min(100,s));
+  const r = s>=85?'A':s>=60?'B':s>=40?'C':'D';
+  return {s,r,ko:false};
+}
+
+function finish(){
+  const {s,r,ko}=score();
+  const name=$('#name').value||'お客様';
+  const pay=+$('#pay').value||0;
+  $('#resultName').textContent = name+' 様';
+  $('#rankBig').textContent = r;
+  $('#rankBig').className = 'rankbig '+r;
+  $('#kScore').textContent = s+'点';
+  $('#kPay').textContent = '¥'+pay.toLocaleString();
+  const msg = {
+    A:['通過の可能性が高いです','提携信販へ優先的にお繋ぎします'],
+    B:['前向きにご案内できます','複数の提携先で審査可能です'],
+    C:['対応可能な提携先があります','自社ローン等もご提案します'],
+    D:[ ko?'勤続期間の条件により、担当が個別にご相談します':'まずは担当がご相談を承ります','あきらめず一度ご相談ください']
+  }[r];
+  $('#rankMsg').innerHTML = msg[0]+'<small>'+msg[1]+'</small>';
+  const rootIcon=$('.ricon'); rootIcon.style.background = getComputedStyle(document.documentElement).getPropertyValue('--line-soft');
+  main.style.display='none'; footer.style.display='none';
+  document.querySelector('header').style.display='none';
+  result.classList.add('on');
+  window.scrollTo({top:0});
+}
+$('#again').addEventListener('click', ()=>{
+  result.classList.remove('on'); main.style.display=''; footer.style.display='';
+  document.querySelector('header').style.display=''; step=1; showStep(1);
+});
+$('#toLine').addEventListener('click', ()=>{ alert('デモです。実際のLINEではトーク画面に戻り、審査結果が届きます。'); });
+showStep(1);
+</script>
