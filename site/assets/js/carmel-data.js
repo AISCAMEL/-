@@ -138,7 +138,7 @@ window.CarmelData = (function () {
     ],
 
     docs: [
-      { id: 'd01', cat: '業務', type: 'pdf', title: '加盟店業務マニュアル_v4.pdf',       size: '12.4 MB', date: '2026-07-15' },
+      { id: 'd01', cat: '業務', type: 'pdf', title: '加盟店業務マニュアル_v4（基礎編）',  size: '12.4 MB', date: '2026-07-15', href: 'carmel-manual-basic.html' },
       { id: 'd02', cat: '業務', type: 'pdf', title: '廃車手続きチェックシート_v3.pdf',   size: '1.2 MB',  date: '2026-08-01' },
       { id: 'd03', cat: '業務', type: 'xls', title: '月次実績報告テンプレート_2026.xlsx', size: '240 KB',  date: '2026-08-04' },
       { id: 'd04', cat: '業務', type: 'pdf', title: '査定シート_A4両面版.pdf',            size: '380 KB',  date: '2026-06-01' },

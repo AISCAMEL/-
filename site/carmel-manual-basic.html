@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>加盟店業務マニュアル（基礎編）｜カーメル</title>
+<meta name="robots" content="noindex,nofollow" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" />
+<style>
+:root{
+  --navy:#0e1b33; --navy-2:#16294a; --navy-soft:#1f3a66;
+  --gold:#c9a14a; --gold-2:#e0bd6a;
+  --ink:#1a2233; --muted:#5a6675; --line:#e4e8ef;
+  --bg:#f6f8fc; --white:#ffffff;
+  --green:#1f9d6b; --red:#d44b4b; --amber:#e58a1f;
+  --shadow:0 10px 30px rgba(14,27,51,.10);
+  --shadow-lg:0 24px 60px rgba(14,27,51,.18);
+  --font:"Noto Sans JP","Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic",Meiryo,system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:var(--font);color:var(--ink);background:var(--bg);line-height:1.85;-webkit-font-smoothing:antialiased;font-size:15px;}
+a{color:var(--navy);text-decoration:underline;text-decoration-color:var(--gold-2);text-underline-offset:3px;}
+a:hover{text-decoration-color:var(--gold);}
+
+/* ===== 表紙 ===== */
+.cover{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 55%,var(--navy-soft) 100%);color:#fff;padding:64px 20px 72px;position:relative;overflow:hidden;}
+.cover::before{content:"";position:absolute;inset:auto -80px -160px auto;width:420px;height:420px;background:radial-gradient(closest-side, rgba(201,161,74,.28), transparent 70%);}
+.cover-inner{max-width:820px;margin:0 auto;position:relative;}
+.cover-tag{display:inline-block;background:linear-gradient(135deg,var(--gold),var(--gold-2));color:#3a2a05;font-size:11px;font-weight:900;letter-spacing:.15em;padding:6px 14px;border-radius:20px;margin-bottom:20px;}
+.cover h1{font-size:36px;font-weight:900;line-height:1.35;margin:0 0 12px;letter-spacing:.02em;}
+.cover .sub{font-size:15px;color:#c9d3e5;margin:0 0 32px;max-width:640px;}
+.cover-meta{display:flex;gap:24px;flex-wrap:wrap;font-size:12px;color:#c9d3e5;}
+.cover-meta b{color:#fff;font-weight:800;display:block;margin-bottom:2px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;}
+
+/* ===== レイアウト ===== */
+.wrap{max-width:900px;margin:0 auto;padding:40px 20px 80px;display:grid;grid-template-columns:220px 1fr;gap:40px;}
+@media (max-width:820px){ .wrap{grid-template-columns:1fr;gap:24px;padding:24px 16px 60px;} }
+
+/* ===== 目次(サイド) ===== */
+.toc{position:sticky;top:20px;align-self:start;background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow);font-size:13px;max-height:calc(100vh - 40px);overflow:auto;}
+.toc h2{font-size:12px;font-weight:900;color:var(--navy);letter-spacing:.08em;margin:0 0 10px;padding-bottom:8px;border-bottom:2px solid var(--gold);}
+.toc ol{margin:0;padding-left:20px;line-height:1.7;}
+.toc li{margin-bottom:4px;}
+.toc a{color:var(--ink);text-decoration:none;}
+.toc a:hover{color:var(--navy);text-decoration:underline;text-decoration-color:var(--gold);}
+@media (max-width:820px){ .toc{position:static;max-height:none;} }
+
+/* ===== 本文 ===== */
+article h2{font-size:24px;font-weight:900;color:var(--navy);margin:48px 0 12px;padding-left:14px;border-left:5px solid var(--gold);scroll-margin-top:20px;}
+article h2:first-child{margin-top:0;}
+article h3{font-size:17px;font-weight:900;color:var(--navy);margin:28px 0 8px;display:flex;align-items:center;gap:8px;}
+article h3::before{content:"";width:6px;height:6px;background:var(--gold);border-radius:50%;}
+article p{margin:0 0 14px;}
+article ul, article ol{margin:0 0 14px;padding-left:22px;}
+article li{margin-bottom:4px;}
+
+/* コールアウト */
+.callout{border-radius:12px;padding:14px 18px;margin:16px 0;font-size:14px;line-height:1.8;border:1px solid transparent;}
+.callout b{display:block;margin-bottom:4px;font-weight:900;letter-spacing:.02em;}
+.callout.info{background:#eef4ff;border-color:#c9d8f5;color:#1e3a75;}
+.callout.warn{background:#fff5e6;border-color:#f5d9a6;color:#7a4a10;}
+.callout.danger{background:#fdecec;border-color:#f2c5c5;color:#8a1f1f;}
+.callout.tip{background:#eafbf1;border-color:#bde8cc;color:#0e4d2e;}
+
+/* 表 */
+table{width:100%;border-collapse:collapse;margin:12px 0 20px;font-size:14px;background:#fff;box-shadow:var(--shadow);border-radius:8px;overflow:hidden;}
+th{background:var(--navy);color:#fff;text-align:left;padding:10px 12px;font-weight:800;font-size:12px;}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+
+/* チェックリスト */
+.chk{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0;box-shadow:var(--shadow);}
+.chk-h{font-size:13px;font-weight:900;color:var(--navy);margin-bottom:10px;letter-spacing:.02em;}
+.chk-item{display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-bottom:1px dashed var(--line);font-size:14px;}
+.chk-item:last-child{border-bottom:none;}
+.chk-item input[type="checkbox"]{width:18px;height:18px;margin-top:3px;accent-color:var(--gold);flex-shrink:0;}
+.chk-item label{cursor:pointer;line-height:1.6;}
+
+/* スクリプト枠 */
+.script{background:#fafbfd;border-left:3px solid var(--gold-2);border-radius:6px;padding:12px 16px;margin:10px 0;font-size:14px;line-height:1.8;white-space:pre-line;color:#2a3548;}
+.script b{color:var(--navy);}
+
+/* KPI カード */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin:12px 0 20px;}
+.kpi-card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;text-align:center;box-shadow:var(--shadow);}
+.kpi-card .l{font-size:11px;color:var(--muted);font-weight:800;letter-spacing:.05em;}
+.kpi-card .v{font-size:22px;font-weight:900;color:var(--navy);line-height:1.2;}
+.kpi-card .u{font-size:11px;color:var(--muted);}
+
+/* フッタ */
+footer{max-width:900px;margin:20px auto 0;padding:20px 20px 40px;font-size:12px;color:var(--muted);text-align:center;border-top:1px solid var(--line);}
+footer a{color:var(--muted);}
+
+/* 印刷 */
+@media print{
+  .cover{padding:40px 24px;color:#0e1b33;background:#fff;}
+  .cover::before{display:none;}
+  .cover h1,.cover .sub,.cover-meta,.cover-meta b{color:#0e1b33;}
+  .cover-tag{background:#c9a14a;color:#3a2a05;}
+  .toc{display:none;}
+  .wrap{grid-template-columns:1fr;padding:20px;}
+  .callout,.chk,.script,table{box-shadow:none;border:1px solid #aaa;page-break-inside:avoid;}
+  article h2{page-break-after:avoid;}
+}
+</style>
+</head>
+<body>
+
+<section class="cover">
+  <div class="cover-inner">
+    <span class="cover-tag">CARMEL — 加盟店マニュアル</span>
+    <h1>加盟店業務マニュアル<br>［基礎編］</h1>
+    <p class="sub">お客様のご相談を受けてからお引き渡しまで、加盟店の 1 日と 1 案件の流れを、標準トークとチェックリストつきで解説します。</p>
+    <div class="cover-meta">
+      <div><b>Version</b>v4.0（2026年7月改訂）</div>
+      <div><b>対象</b>全加盟店スタッフ</div>
+      <div><b>所要</b>通読 40 分／実務適用 1 週間</div>
+      <div><b>発行</b>カーメル本部</div>
+    </div>
+  </div>
+</section>
+
+<div class="wrap">
+
+  <!-- ===== 目次 ===== -->
+  <aside class="toc" aria-label="目次">
+    <h2>目次</h2>
+    <ol>
+      <li><a href="#c1">はじめに</a></li>
+      <li><a href="#c2">1 日の業務フロー</a></li>
+      <li><a href="#c3">問い合わせ受付</a></li>
+      <li><a href="#c4">来店・出張査定</a></li>
+      <li><a href="#c5">車両査定の基準</a></li>
+      <li><a href="#c6">金額提示とクロージング</a></li>
+      <li><a href="#c7">契約と書類</a></li>
+      <li><a href="#c8">お引取り・入金</a></li>
+      <li><a href="#c9">コンプライアンス</a></li>
+      <li><a href="#c10">緊急時対応</a></li>
+      <li><a href="#c11">月次報告と KPI</a></li>
+      <li><a href="#c12">お問い合わせ先</a></li>
+    </ol>
+  </aside>
+
+  <!-- ===== 本文 ===== -->
+  <article>
+
+    <h2 id="c1">1. はじめに</h2>
+    <p>カーメルは「売りたい」というお客様の一言に、<strong>誠実に、素早く、正確に</strong>応えることを大切にしているブランドです。加盟店の皆さまはブランドの顔として、お客様と最前線で向き合う存在です。本マニュアルは、その現場でぶれない判断ができるようにするための基準書です。</p>
+    <p>本書は「基礎編」として、査定・接客・契約・引取りまでの一連の流れを扱います。詳細な業種別マニュアル（事故車編・EV編・ローン残債あり編）は別紙をご参照ください。</p>
+
+    <div class="callout tip">
+      <b>本書の使い方</b>
+      新規スタッフは最初の 1 週間で通読 → 現場で実践 → 疑問点を月次ミーティングで共有、というサイクルを推奨します。改訂は年 2 回（4 月・10 月）行います。
+    </div>
+
+    <h2 id="c2">2. 1 日の業務フロー</h2>
+    <table>
+      <thead><tr><th style="width:120px;">時間帯</th><th>主な業務</th><th style="width:220px;">ポイント</th></tr></thead>
+      <tbody>
+        <tr><td>9:00〜9:30</td><td>朝礼／店内清掃／査定機材点検</td><td>ノートPC・カメラ・書類の在庫確認</td></tr>
+        <tr><td>9:30〜10:00</td><td>前日の未対応リード確認／本日アポ確認</td><td>ダブルブッキング防止</td></tr>
+        <tr><td>10:00〜12:00</td><td>来店・電話・出張査定 対応</td><td>1 件あたり 30〜60 分</td></tr>
+        <tr><td>12:00〜13:00</td><td>昼休憩／自動応答モードに切替</td><td>LINE 応対は 13:00 から</td></tr>
+        <tr><td>13:00〜17:00</td><td>午後の査定／契約手続き／引取手配</td><td>お客様最優先</td></tr>
+        <tr><td>17:00〜18:30</td><td>本日案件の記録／翌日準備／清掃</td><td>案件は当日中に管理表へ入力</td></tr>
+        <tr><td>18:30〜19:00</td><td>本部への日報／退店</td><td>閉店後の残業は原則なし</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="c3">3. 問い合わせ受付</h2>
+
+    <h3>3.1 電話一次対応</h3>
+    <p>最初の 30 秒で「この店にお願いしたい」と思っていただけるかが決まります。声のトーンは <strong>普段より半音高め</strong>、話す速度は <strong>普段より 1 割ゆっくり</strong> を意識してください。</p>
+    <div class="script"><b>［第一声］</b>
+お電話ありがとうございます、カーメル◯◯店の××が承ります。
+本日はお車の買取・売却のご相談でしょうか？</div>
+
+    <h3>3.2 ヒアリング必須 5 項目</h3>
+    <ol>
+      <li>お客様のお名前とご連絡先</li>
+      <li>お車の車種・年式・走行距離</li>
+      <li>売却をご検討されている理由（乗り換え／廃車／転居 等）</li>
+      <li>希望の査定方法（来店／出張）と日時</li>
+      <li>他社ご検討の有無（他社比較なら金額感の把握が重要）</li>
+    </ol>
+
+    <div class="callout warn">
+      <b>NG フレーズ</b>
+      「うちでは高く買えないと思います」「他所の方がいいかもしれません」など、初手で自店を下げる発言は禁止です。適正な提示は査定後に行います。
+    </div>
+
+    <h3>3.3 LINE 一次対応</h3>
+    <p>公式アカウントに問い合わせがあった場合、<strong>平日 9:00〜19:00 は 15 分以内の返信</strong>を目安とします。時間外は AI 自動応答が案内します。定型返信のテンプレートは「加盟店ポータル → スクリプト」から確認できます。</p>
+
+    <h2 id="c4">4. 来店・出張査定</h2>
+
+    <h3>4.1 来店応対</h3>
+    <ol>
+      <li>来店から 30 秒以内に必ず声かけ（アイコンタクト＋会釈）</li>
+      <li>席へご案内し、お飲み物をご提案（コーヒー／お茶／お水）</li>
+      <li>10 分ヒアリング → 30 分査定 → 20 分お見積り説明 が標準</li>
+    </ol>
+
+    <h3>4.2 出張査定</h3>
+    <p>出張査定は無料。片道 30km 圏内が標準対応エリアです。到着時は必ず「お約束の◯時ぴったりに参りました」と伝えます（早すぎる到着はご迷惑）。</p>
+
+    <div class="chk">
+      <div class="chk-h">✅ 出張査定 持ち物チェック</div>
+      <div class="chk-item"><input type="checkbox" id="p1"><label for="p1">査定シート（A4 両面）× 3 部</label></div>
+      <div class="chk-item"><input type="checkbox" id="p2"><label for="p2">デジタルカメラ or スマホ（撮影用）</label></div>
+      <div class="chk-item"><input type="checkbox" id="p3"><label for="p3">タイヤ溝ゲージ／ライト／マグネット</label></div>
+      <div class="chk-item"><input type="checkbox" id="p4"><label for="p4">契約書ひな形／委任状ひな形</label></div>
+      <div class="chk-item"><input type="checkbox" id="p5"><label for="p5">名刺（十分な枚数）</label></div>
+      <div class="chk-item"><input type="checkbox" id="p6"><label for="p6">現金 5 万円（緊急時交通費・お子様用小物）</label></div>
+    </div>
+
+    <h2 id="c5">5. 車両査定の基準</h2>
+
+    <h3>5.1 外装チェック 8 項目</h3>
+    <p>お客様の前で言葉に出して指差し確認しながら進めると、金額の根拠が伝わりやすくなります。</p>
+    <ol>
+      <li>ボンネット・ルーフの塗装ヤケ</li>
+      <li>フロントバンパー／リアバンパーの飛び石・傷</li>
+      <li>フェンダーの凹み（板金修理歴の有無）</li>
+      <li>ドアパネルの色ムラ（オールペン歴の兆候）</li>
+      <li>フロントガラスのヒビ・飛び石</li>
+      <li>ホイールのガリ傷</li>
+      <li>タイヤ溝（3mm 未満は要交換）</li>
+      <li>下回りの錆・オイル漏れ</li>
+    </ol>
+
+    <h3>5.2 内装チェック 6 項目</h3>
+    <ol>
+      <li>シートの破れ・タバコ焦げ</li>
+      <li>ダッシュボードの割れ・変色</li>
+      <li>天井の垂れ／シミ</li>
+      <li>フロアマットのカビ・水濡れ痕</li>
+      <li>ペダルの摩耗度合い</li>
+      <li>臭い（タバコ・ペット）</li>
+    </ol>
+
+    <h3>5.3 減額の目安表</h3>
+    <table>
+      <thead><tr><th>状態</th><th>減額目安</th><th>お客様への説明例</th></tr></thead>
+      <tbody>
+        <tr><td>10cm 未満の傷</td><td>▲5,000 円</td><td>「タッチアップで対応可能な範囲です」</td></tr>
+        <tr><td>10〜30cm の傷</td><td>▲15,000 円</td><td>「板金修理で概算 3 万円ほどかかります」</td></tr>
+        <tr><td>大きな凹み（板金要）</td><td>▲30,000〜50,000 円</td><td>写真を見せながら板金見積を提示</td></tr>
+        <tr><td>タイヤ溝 3mm 未満</td><td>▲8,000 円/本</td><td>「販売時に交換が必要になります」</td></tr>
+        <tr><td>タバコ臭・強</td><td>▲30,000 円</td><td>「消臭コストがかかります」</td></tr>
+        <tr><td>修復歴あり</td><td>▲30〜50%</td><td>骨格部位の修復は大きな減額要因</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="c6">6. 金額提示とクロージング</h2>
+
+    <h3>6.1 金額提示の型</h3>
+    <div class="script"><b>［金額提示］</b>
+お待たせしました。
+お車の状態と現在の相場を確認したところ、
+当店では ￥◯◯◯,◯◯◯ でのお引き取りが可能です。
+
+（減額要因があれば、写真を見せながら具体的に）
+先ほどご説明した右前フェンダーの傷が◯円、
+タイヤ溝が◯円、合計 ◯円の減額となっております。</div>
+
+    <h3>6.2 即決を促す一言（強要ではなく安心材料として）</h3>
+    <div class="script">本日ご成約いただければ、この金額を保証させていただきます。
+相場は日々変動しており、来週ですと
+同額をお約束できない可能性があります。</div>
+
+    <div class="callout danger">
+      <b>禁止事項</b>
+      「今契約しないと 10 万下がりますよ」といった脅迫的な言い回しは絶対に禁止です。<strong>本部で通報を確認した場合、ペナルティ対象</strong>となります。
+    </div>
+
+    <h3>6.3 他社相見積もり時</h3>
+    <p>「他社さまと比較検討されるのは当然のことです」と最初に肯定してから、<strong>金額 + 手続きサポート + 引取無料</strong> の三点セットで差別化を伝えます。</p>
+
+    <h2 id="c7">7. 契約と書類</h2>
+
+    <h3>7.1 契約時の必要書類</h3>
+    <table>
+      <thead><tr><th style="width:200px;">書類</th><th>本人</th><th>家族名義</th></tr></thead>
+      <tbody>
+        <tr><td>車検証</td><td>◯</td><td>◯</td></tr>
+        <tr><td>自動車税納税証明書</td><td>◯</td><td>◯</td></tr>
+        <tr><td>実印</td><td>◯</td><td>名義人の実印</td></tr>
+        <tr><td>印鑑証明書（3 ヶ月以内）</td><td>◯</td><td>名義人分</td></tr>
+        <tr><td>本人確認書類（免許証等）</td><td>◯</td><td>本人＋名義人</td></tr>
+        <tr><td>委任状</td><td>不要</td><td>◯（名義人 → 本人）</td></tr>
+        <tr><td>振込先口座情報</td><td>◯</td><td>◯</td></tr>
+      </tbody>
+    </table>
+
+    <h3>7.2 契約書の説明</h3>
+    <p>契約書は <strong>お客様と一緒に音読</strong> することを推奨します。特に「所有権移転日」「入金予定日」「キャンセル規定」の 3 点はオレンジ蛍光ペンで印を付け、必ず確認していただきます。</p>
+
+    <h2 id="c8">8. お引取り・入金</h2>
+
+    <h3>8.1 お引取り時のチェック</h3>
+    <ul>
+      <li>車内の私物確認（お客様と一緒に）</li>
+      <li>ETC カード・駐車券・カーナビの個人情報の抜き取り</li>
+      <li>スペアキー・整備手帳・取扱説明書の受取</li>
+      <li>車両状態の最終写真撮影（4 面＋室内 2 枚）</li>
+    </ul>
+
+    <h3>8.2 入金スケジュール</h3>
+    <p>ご契約日から <strong>最短翌営業日、通常 3 営業日以内</strong> にご指定口座へお振込みします。即日現金でのお支払いは、税法上の管理のため原則として承っていません。</p>
+
+    <h2 id="c9">9. コンプライアンス</h2>
+
+    <h3>9.1 古物営業法</h3>
+    <ul>
+      <li>営業日には古物商許可証を店頭に必ず掲示</li>
+      <li>1 万円以上の取引はお客様の本人確認が必須</li>
+      <li>取引記録は 3 年間保存（帳簿またはシステム）</li>
+      <li>盗品らしき車両の申し込みを受けたら、その場で警察に通報</li>
+    </ul>
+
+    <h3>9.2 個人情報の取り扱い</h3>
+    <ul>
+      <li>お客様のお車の写真は社内共有以外に使用禁止</li>
+      <li>SNS 投稿は本部承認済みのモデル車のみ可</li>
+      <li>個人情報を含む書類は施錠可能なキャビネットで保管</li>
+      <li>離職者のアカウントは離職当日中に無効化</li>
+    </ul>
+
+    <h2 id="c10">10. 緊急時対応</h2>
+
+    <h3>10.1 クレーム発生時の初動 3 分</h3>
+    <ol>
+      <li>まずは <strong>お詫び</strong>（内容の是非は保留）</li>
+      <li>状況を <strong>復唱</strong> しながらメモ</li>
+      <li>店長・本部への <strong>エスカレーション判断</strong>（下表）</li>
+    </ol>
+
+    <table>
+      <thead><tr><th>内容</th><th>対応者</th><th>本部連絡</th></tr></thead>
+      <tbody>
+        <tr><td>金額への不満</td><td>店長</td><td>翌日報告</td></tr>
+        <tr><td>スタッフ態度への苦情</td><td>店長</td><td>当日報告</td></tr>
+        <tr><td>金銭トラブル</td><td>本部</td><td>即時</td></tr>
+        <tr><td>事故・怪我</td><td>本部＋救急</td><td>即時</td></tr>
+        <tr><td>盗難車疑い</td><td>本部＋警察</td><td>即時</td></tr>
+      </tbody>
+    </table>
+
+    <h3>10.2 本部緊急連絡先</h3>
+    <ul>
+      <li>本部 業務サポート：<a href="mailto:info@aisjaltd.com">info@aisjaltd.com</a></li>
+      <li>本部 緊急ホットライン：加盟店ポータルの「トップ → 緊急連絡」から発信</li>
+    </ul>
+
+    <h2 id="c11">11. 月次報告と KPI</h2>
+
+    <p>加盟店の運営状況は、以下の 4 つの KPI で本部と共有します。ダッシュボードは「加盟店ポータル → ホーム」で確認できます。</p>
+
+    <div class="kpi-row">
+      <div class="kpi-card"><div class="l">月間 査定件数</div><div class="v">40+</div><div class="u">件/月 目安</div></div>
+      <div class="kpi-card"><div class="l">成約率</div><div class="v">45%</div><div class="u">以上</div></div>
+      <div class="kpi-card"><div class="l">クレーム率</div><div class="v">2%</div><div class="u">以下</div></div>
+      <div class="kpi-card"><div class="l">研修受講率</div><div class="v">100%</div><div class="u">四半期ごと</div></div>
+    </div>
+
+    <p>月次報告は毎月月末までに、加盟店ポータルの「報告フォーム」から提出してください。旧フォームは 9 月末で受付を停止します。</p>
+
+    <h2 id="c12">12. お問い合わせ先</h2>
+    <p>本マニュアルの内容や現場でのご不明点は、本部 業務サポート窓口までご連絡ください。</p>
+    <ul>
+      <li>メール：<a href="mailto:info@aisjaltd.com">info@aisjaltd.com</a></li>
+      <li>加盟店ポータル：<a href="carmel-partner.html">加盟店ページを開く</a></li>
+      <li>本部管理画面：<a href="carmel-hq.html">本部管理を開く</a></li>
+    </ul>
+
+    <div class="callout info">
+      <b>改訂履歴</b>
+      v4.0（2026-07）章立てを見直し、KPI 章を追加／v3.2（2026-01）事故車査定の減額目安を更新／v3.0（2025-10）出張査定エリアの記載を明記
+    </div>
+
+  </article>
+</div>
+
+<footer>
+  © 合同会社アイズ｜カーメル本部
+  ／ <a href="javascript:window.print()">このページを印刷</a>
+</footer>
+
+</body>
+</html>

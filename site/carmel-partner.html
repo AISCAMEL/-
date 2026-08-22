@@ -483,17 +483,23 @@ function renderDoc(){
   if(!items.length){el.innerHTML='<div class="empty">該当する資料がありません。</div>';return;}
   el.innerHTML=items.map(function(d){
     var t=d.type||'pdf';
+    var hasHref=!!d.href;
+    var label = hasHref ? '📖 開く' : '⬇ ダウンロード';
     return '<article class="d-card">'+
       '<div class="d-ico '+t+'">'+t.toUpperCase()+'</div>'+
       '<div class="d-info">'+
-        '<h3 class="d-t" title="'+esc(d.title)+'">'+esc(d.title)+'</h3>'+
+        '<h3 class="d-t" title="'+esc(d.title)+'">'+esc(d.title)+(hasHref?' <span style="font-size:10px;color:var(--green);font-weight:900;background:#e6f8ee;padding:2px 6px;border-radius:4px;margin-left:4px;">読める</span>':'')+'</h3>'+
         '<div class="d-m">'+esc(d.size)+' ／ 更新 '+esc(d.date)+'</div>'+
-        '<button class="d-dl" type="button" data-doc="'+esc(d.title)+'">⬇ ダウンロード</button>'+
+        '<button class="d-dl" type="button" data-doc="'+esc(d.title)+'" data-href="'+esc(d.href||'')+'">'+label+'</button>'+
       '</div>'+
     '</article>';
   }).join('');
   $$('.d-dl',el).forEach(function(btn){
-    btn.addEventListener('click',function(){toast('デモ画面：ダウンロードは無効です（'+btn.getAttribute('data-doc')+'）');});
+    btn.addEventListener('click',function(){
+      var href=btn.getAttribute('data-href');
+      if(href){ window.open(href,'_blank','noopener'); return; }
+      toast('デモ画面：ダウンロードは無効です（'+btn.getAttribute('data-doc')+'）');
+    });
   });
 }
 
