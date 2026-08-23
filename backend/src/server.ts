@@ -9,6 +9,7 @@ import { llmEnabled } from './ai/llm.js';
 import { registerTwilioRoutes } from './twilio/routes.js';
 import { registerConversationWs } from './ws/conversation.js';
 import { registerApiRoutes } from './api/routes.js';
+import { registerAuthRoutes } from './auth/routes.js';
 import { registerLeadRoutes } from './leads/routes.js';
 import { processDueEmails } from './leads/repo.js';
 import { runWeeklyDigests } from './notify/digest.js';
@@ -39,6 +40,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
 
   await registerTwilioRoutes(app);
   await registerConversationWs(app);
+  await registerAuthRoutes(app);
   await registerApiRoutes(app);
   await registerLeadRoutes(app);
 

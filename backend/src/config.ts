@@ -56,10 +56,15 @@ export const config = {
   },
 
   auth: {
-    // Supabase の JWT 秘密鍵（HS256）。設定時は署名検証する。
-    jwtSecret: process.env.SUPABASE_JWT_SECRET ?? '',
+    // JWT 署名鍵（HS256）。自前ログインの発行/検証とSupabase JWT検証の両方に使う。
+    // AUTH_JWT_SECRET を優先し、なければ従来の SUPABASE_JWT_SECRET を使う。
+    jwtSecret: process.env.AUTH_JWT_SECRET ?? process.env.SUPABASE_JWT_SECRET ?? '',
     // 開発/デモ用。署名検証を行わず、ヘッダ or デフォルトでテナントを解決する。
     devMode: (process.env.AUTH_DEV_MODE ?? 'true') === 'true',
+    // 初回パスワード設定(bootstrap)用のワンタイムトークン。設定時のみ /api/auth/bootstrap が有効。
+    setupToken: process.env.SETUP_TOKEN ?? '',
+    // 発行するログイントークンの有効期限。
+    tokenTtl: process.env.AUTH_TOKEN_TTL ?? '30d',
   },
 
   // デモテナント（seed.sql の固定 UUID）。

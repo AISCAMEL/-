@@ -79,8 +79,9 @@ create table if not exists app_users (
   tenant_id  uuid not null references tenants(id) on delete cascade,
   name       text,
   email      text not null,
-  role       text not null default 'staff',   -- owner/admin/staff
+  role       text not null default 'staff',   -- owner/admin/staff/super_admin
   is_active  boolean not null default true,
+  password_hash text,                          -- 自前ログイン用（scrypt）。未設定なら /api/auth/bootstrap で設定
   created_at timestamptz not null default now(),
   unique (tenant_id, email)
 );

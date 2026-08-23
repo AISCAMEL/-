@@ -527,6 +527,29 @@ export async function addNotification(input: {
   );
 }
 
+// ---------------- Auth (email/password login) ----------------
+/** ログイン用にメールでユーザーを1件引く（パスワードハッシュ込み）。無ければ null。 */
+export async function getUserForLogin(email: string): Promise<any | null> {
+  const e = email.trim().toLowerCase();
+  if (!dbEnabled) {
+    const u = demoUsers.find((x) => x.email.toLowerCase() === e);
+    return u ? { ...u, password_hash: null } : null;
+  }
+  const [row] = await query<any>(
+    `select id, tenant_id, name, email, role, is_active, password_hash
+       from app_users where lower(email) = $1 limit 1`, [e]);
+  return row ?? null;
+}
+
+/** 初回パスワード設定/リセット。対象ユーザーが居れば true。 */
+export async function setUserPassword(email: string, passwordHash: string): Promise<boolean> {
+  const e = email.trim().toLowerCase();
+  if (!dbEnabled) return false;
+  const rows = await query(
+    `update app_users set password_hash = $2 where lower(email) = $1 returning id`, [e, passwordHash]);
+  return rows.length > 0;
+}
+
 // ---------------- Phone numbers ----------------
 export async function listPhoneNumbers(tenantId: string) {
   if (!dbEnabled) return demoPhoneNumbers.filter((p) => p.tenant_id === tenantId || tenantId === demoTenant.id);

@@ -26,6 +26,12 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
+  // 認証（メール＋パスワード）
+  login: (email: string, password: string) =>
+    request<any>('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  bootstrapPassword: (email: string, password: string, setup_token: string) =>
+    request<any>('/api/auth/bootstrap', { method: 'POST', body: JSON.stringify({ email, password, setup_token }) }),
+
   me: () => request<any>('/api/me'),
   setupStatus: () => request<any>('/api/setup/status'),
   dashboard: () => request<any>('/api/dashboard'),
