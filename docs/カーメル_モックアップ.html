@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>カーメル 画面モックアップ（現状）</title>
+<style>
+:root{--brand:#6b4fbb;--brand2:#5b2a86;--ink:#1a1a2e;--line:#e7e2ef;--green:#16a085}
+*{box-sizing:border-box}
+body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;color:var(--ink);margin:0;background:#f4f2f8;line-height:1.6}
+header.top{background:linear-gradient(100deg,#5b2a86,#7c3aed);color:#fff;padding:1.4em 1.2em;text-align:center}
+header.top h1{margin:.1em 0;font-size:1.5em;letter-spacing:.04em}
+header.top p{margin:.2em 0 0;opacity:.9;font-size:.9em}
+nav.tabs{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);display:flex;gap:.2em;overflow-x:auto;padding:.5em}
+nav.tabs a{flex:0 0 auto;text-decoration:none;color:var(--brand);font-size:.85em;padding:.45em .9em;border-radius:1em;white-space:nowrap}
+nav.tabs a:hover{background:#f1ecfb}
+.wrap{max-width:1000px;margin:0 auto;padding:1.2em}
+section{background:#fff;border:1px solid var(--line);border-radius:14px;padding:1.4em;margin:1.4em 0;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+section>h2{margin:.1em 0 .2em;font-size:1.25em;color:var(--brand2)}
+section>.desc{color:#7a7488;font-size:.88em;margin:0 0 1em}
+.btn{display:inline-block;border:0;border-radius:.4em;padding:.5em 1em;color:#fff;text-decoration:none;font-size:.85em;cursor:pointer}
+.b-pp{background:var(--brand)}.b-bl{background:#2e86de}.b-gr{background:var(--green)}.b-gh{background:#eef2fb;color:#2e86de}.b-rd{background:#c0392b}.b-gy{background:#34495e}
+.filterbar{display:flex;gap:.5em;flex-wrap:wrap;margin:.4em 0 1em}
+.filterbar input,.filterbar select{border:1px solid #ccc;border-radius:.3em;padding:.45em;font-size:.85em}
+.chip{display:inline-block;background:#eef2fb;border:1px solid #cdd9f0;border-radius:.5em;padding:.35em .8em;font-size:.85em;margin-bottom:.6em}
+/* car grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1em}
+.card{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;position:relative}
+.thumb{position:relative;aspect-ratio:4/3;background:linear-gradient(135deg,#dfe6f3,#eef2fb);display:flex;align-items:center;justify-content:center;color:#9aa;font-size:.8em}
+.thumb .sbadge{position:absolute;top:.5em;left:.5em;background:rgba(107,79,187,.92);color:#fff;border-radius:.3em;padding:.1em .6em;font-size:.72em}
+.badges{position:absolute;top:.5em;right:.5em;display:flex;gap:.3em}
+.bnew{background:var(--green);color:#fff;border-radius:.3em;padding:.1em .5em;font-size:.7em;font-weight:bold}
+.bdrop{background:#c0392b;color:#fff;border-radius:.3em;padding:.1em .5em;font-size:.7em;font-weight:bold}
+.fav{position:absolute;bottom:.5em;right:.5em;width:1.9em;height:1.9em;border-radius:50%;background:rgba(255,255,255,.9);color:#c0392b;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.cbody{padding:.6em .7em}
+.cbody h4{margin:0;font-size:.95em}
+.specs{font-size:.78em;color:#666;margin:.2em 0}
+.price{font-weight:bold;color:var(--brand);font-size:1.1em}
+.oldp{text-decoration:line-through;color:#aaa;font-size:.6em;margin-right:.3em}
+.monthly{font-size:.78em;color:var(--green);font-weight:600}
+.sold .thumb{filter:grayscale(.7)}
+.sold .ribbon{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-12deg);background:rgba(192,57,43,.92);color:#fff;font-weight:bold;padding:.15em .8em;border-radius:.3em}
+.coming{border:1px dashed var(--green);border-radius:10px;background:#f1fbf8;padding:.7em 1em;margin:1em 0}
+.coming h3{margin:.1em 0 .5em;color:#0e6e58;font-size:1em}
+.cribbon{position:absolute;top:.5em;left:.5em;background:var(--green);color:#fff;font-weight:bold;font-size:.7em;padding:.1em .6em;border-radius:.3em}
+.pg{display:flex;gap:.3em;justify-content:center;margin:1em 0}
+.pg a,.pg .cur{padding:.3em .7em;border:1px solid #ddd2f5;border-radius:.3em;color:var(--brand);text-decoration:none;font-size:.85em}
+.pg .cur{background:var(--brand);color:#fff}
+/* detail */
+.detail{display:grid;grid-template-columns:1fr 1fr;gap:1.2em}
+.gallery .main{aspect-ratio:4/3;background:linear-gradient(135deg,#dfe6f3,#eef2fb);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#9aa}
+.gallery .thumbs{display:flex;gap:.4em;margin-top:.4em}
+.gallery .thumbs span{width:54px;height:40px;background:#e6ebf5;border-radius:6px;border:2px solid transparent}
+.gallery .thumbs span.on{border-color:var(--brand)}
+.spec{width:100%;border-collapse:collapse;font-size:.88em;margin:.4em 0}
+.spec th,.spec td{border:1px solid #eef0f4;padding:.4em .6em;text-align:left}.spec th{background:#f7f5fb;width:35%}
+.loanw{border:1px solid #ddd2f5;border-radius:10px;padding:.8em;background:#faf9fc;margin:.8em 0}
+.loanw .row{display:flex;gap:.5em;flex-wrap:wrap}
+.loanw .row label{font-size:.75em;color:#555;display:flex;flex-direction:column}
+.loanw input{border:1px solid #ccc;border-radius:.3em;padding:.35em;max-width:90px}
+.loanw .out{font-size:1.1em;margin:.5em 0}.loanw .out b{color:var(--brand);font-size:1.3em}
+/* table */
+table.t{width:100%;border-collapse:collapse;font-size:.85em;margin-top:.5em}
+table.t th,table.t td{border:1px solid var(--line);padding:.45em .55em;text-align:left}
+table.t th{background:#f4f6fb}
+.badge-st{background:var(--brand);color:#fff;border-radius:1em;padding:.1em .7em;font-size:.8em}
+.tag{border-radius:.3em;padding:.05em .5em;font-size:.75em}
+.tag-new{background:#fff8f4;color:#e67e22;border:1px solid #f0c89a}
+.tag-line{background:#eef9f0;color:#06a84e}
+.lead-badge{background:#c0392b;color:#fff;border-radius:1em;padding:.1em .7em;font-size:.72em}
+.todo{border:1px solid #f3d9b8;background:#fff7ed;border-radius:10px;padding:.7em 1em;margin:.6em 0}
+.todo h3{margin:.1em 0 .4em;font-size:1em}
+.todo li{margin:.2em 0}
+/* stats */
+.stats{display:flex;gap:.7em;flex-wrap:wrap;margin:.6em 0}
+.stat{border:1px solid var(--line);border-radius:.6em;padding:.7em 1.1em;text-align:center;min-width:90px}
+.stat .n{font-size:1.4em;font-weight:bold;color:var(--brand)}
+.stat .l{font-size:.78em;color:#666}
+.staff{display:flex;gap:1em;flex-wrap:wrap}
+.member{text-align:center;width:84px}
+.member .ava{width:54px;height:54px;border-radius:50%;background:#d9d2ef;margin:0 auto}
+.member .nm{font-size:.82em;font-weight:600;margin-top:.3em}.member .rl{font-size:.72em;color:#888}
+.stars{color:#e6a100}
+.review{border-top:1px solid #ece6f5;padding:.6em 0}
+.review .au{font-weight:600;margin-left:.4em}
+/* funnel */
+.funnel{display:flex;gap:.6em;align-items:center;flex-wrap:wrap;margin:.6em 0}
+.fstep{border:1px solid var(--line);border-radius:.6em;padding:.8em 1.2em;text-align:center;min-width:90px}
+.fstep .n{font-size:1.5em;font-weight:bold;color:var(--brand)}.fstep .l{font-size:.8em;color:#666}
+.farrow{color:var(--green);font-weight:bold}
+.kpis{display:flex;gap:.7em;flex-wrap:wrap;margin:.6em 0}
+.kpi{flex:1;min-width:120px;border:1px solid var(--line);border-radius:.6em;padding:.9em;text-align:center}
+.kpi .v{font-size:1.5em;font-weight:bold}.kpi .l{font-size:.78em;color:#666}
+.period a{font-size:.82em;text-decoration:none;color:var(--brand);border:1px solid #ddd2f5;border-radius:1em;padding:.2em .9em;margin-right:.3em}
+.period a.on{background:var(--brand);color:#fff}
+/* line */
+.phone{max-width:330px;margin:0 auto;border:10px solid #222;border-radius:28px;overflow:hidden;background:#7494c0}
+.phone .lhead{background:#06c755;color:#fff;text-align:center;padding:.5em;font-weight:bold}
+.lchat{padding:.7em;min-height:160px}
+.bubble{background:#fff;border-radius:12px;padding:.5em .7em;font-size:.82em;margin:.4em 0;max-width:80%}
+.bubble.me{background:#9be15d;margin-left:auto}
+.qr{display:flex;gap:.3em;overflow-x:auto;padding:.4em .2em}
+.qr span{flex:0 0 auto;background:#fff;border:1px solid #06c755;color:#06c755;border-radius:1em;padding:.2em .7em;font-size:.75em}
+.flexcard{background:#fff;border-radius:10px;overflow:hidden;width:150px;flex:0 0 auto}
+.flexcard .im{height:80px;background:linear-gradient(135deg,#dfe6f3,#eef2fb)}
+.flexcard .bd{padding:.4em .5em}.flexcard .pr{color:var(--brand);font-weight:bold;font-size:.85em}
+.richmenu{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:#06c755}
+.richmenu div{background:#0a3;color:#fff;text-align:center;padding:1.2em .3em;font-size:.75em}
+.note{font-size:.8em;color:#888}
+.legend{font-size:.78em;color:#888;margin-top:.4em}
+/* timeline */
+.tl{max-width:560px;position:relative;list-style:none;padding:0;margin:.6em 0}
+.tl:before{content:"";position:absolute;left:13px;top:.4em;bottom:.4em;width:2px;background:var(--line)}
+.tl li{display:flex;gap:.7em;position:relative;padding:.5em 0}
+.tl .ic{flex:0 0 auto;width:28px;height:28px;border-radius:50%;background:#fff;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:.85em;z-index:1}
+.tl li.memo .ic{border-color:var(--brand)}
+.tl .bd{background:#fff;border:1px solid var(--line);border-radius:10px;padding:.5em .8em;flex:1}
+.tl li.memo .bd{background:#faf9fc}
+.tl .wh{font-size:.78em;color:#9298a5}
+.tl .by{font-size:.78em;color:#888}
+.tl .nt{color:#7a7488;font-size:.9em}
+.memoform{display:flex;flex-direction:column;gap:.4em;max-width:560px;margin:.4em 0 1em}
+.memoform textarea{border:1px solid #ccc;border-radius:.4em;padding:.5em}
+</style></head>
+<body>
+<header class="top">
+  <h1>カーメル 統合管理システム</h1>
+  <p>画面モックアップ（現状・ダミーデータ）　※実際のプラグインCSSに近い見た目で再現</p>
+</header>
+<nav class="tabs">
+  <a href="#inv">① 在庫一覧（公開）</a>
+  <a href="#detail">② 在庫詳細</a>
+  <a href="#store">③ 加盟店ダッシュボード</a>
+  <a href="#profile">④ 公開・店舗ページ</a>
+  <a href="#report">⑤ レポート</a>
+  <a href="#line">⑥ LINE導線</a>
+  <a href="#timeline">⑦ 商談タイムライン</a>
+</nav>
+<div class="wrap">
+
+<!-- ① 在庫一覧 -->
+<section id="inv">
+  <h2>① カーメル在庫ページ（公開・ログイン分け）</h2>
+  <p class="desc">[carmel_inventory]：絞り込み・並び替え・ページ送り・近日入荷・NEW/値下げ/SOLD・月々目安・お気に入り</p>
+  <div class="filterbar">
+    <input placeholder="車種・キーワード"><select><option>メーカー（すべて）</option></select>
+    <select><option>価格上限</option></select><select><option>ボディタイプ</option></select>
+    <select><option>年式</option></select><select><option>走行距離</option></select>
+    <select><option>新着順</option><option>価格が安い順</option><option>人気順</option></select>
+    <button class="btn b-pp">絞り込む</button>
+  </div>
+  <span class="chip">🏬 港南カーメル の在庫を表示中　<a href="#">店舗ページ</a>　<a href="#">✕ すべて</a></span>
+
+  <div class="coming">
+    <h3>🆕 近日入荷</h3>
+    <div class="grid">
+      <div class="card"><div class="thumb">車両画像<span class="cribbon">近日入荷</span></div>
+        <div class="cbody"><h4>ホンダ N-BOX</h4><div class="specs">2023年｜8,000km</div><div class="price">¥1,480,000</div>
+        <div style="margin-top:.4em"><button class="btn b-gr">🔔 入荷したら通知</button></div></div></div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card"><div class="thumb">車両画像<span class="sbadge">販売中</span><div class="badges"><span class="bnew">NEW</span></div><span class="fav">♡</span></div>
+      <div class="cbody"><h4>トヨタ アクア</h4><div class="specs">2019年｜45,000km｜白</div><div class="price">¥1,280,000<small>（税込）</small></div><div class="monthly">月々 ¥21,800〜</div></div></div>
+    <div class="card"><div class="thumb">車両画像<span class="sbadge">販売中</span><div class="badges"><span class="bdrop">値下げ</span></div><span class="fav">♥</span></div>
+      <div class="cbody"><h4>日産 ノート</h4><div class="specs">2020年｜32,000km</div><div class="price"><span class="oldp">¥1,390,000</span>¥1,250,000</div><div class="monthly">月々 ¥21,300〜</div></div></div>
+    <div class="card"><div class="thumb">車両画像<span class="sbadge">販売中</span><span class="fav">♡</span></div>
+      <div class="cbody"><h4>マツダ CX-5</h4><div class="specs">2021年｜28,000km</div><div class="price">¥2,480,000</div><div class="monthly">月々 ¥42,200〜</div></div></div>
+    <div class="card sold"><div class="thumb">車両画像<span class="sbadge">売約済</span><span class="ribbon">SOLD</span></div>
+      <div class="cbody"><h4>スズキ ハスラー</h4><div class="specs">2022年｜12,000km</div><div class="price">¥1,580,000</div><div class="note">販売終了</div></div></div>
+  </div>
+  <div class="pg"><span class="cur">1</span><a href="#">2</a><a href="#">3</a><a href="#">次へ ›</a></div>
+  <div class="legend">最近見た車・お気に入り・保存検索/新着アラート・在庫マップ（地図）も実装済み</div>
+</section>
+
+<!-- ② 在庫詳細 -->
+<section id="detail">
+  <h2>② 在庫詳細</h2>
+  <p class="desc">複数画像ギャラリー・スペック・月々ウィジェット・SNSシェア・地図・この店舗の他の在庫・類似在庫・問い合わせ・SEO構造化データ</p>
+  <div class="detail">
+    <div class="gallery"><div class="main">メイン画像</div><div class="thumbs"><span class="on"></span><span></span><span></span></div></div>
+    <div>
+      <h3 style="margin:.1em 0">トヨタ アクア S</h3>
+      <div class="price" style="font-size:1.5em">¥1,280,000<small>（税込）</small></div>
+      <table class="spec"><tr><th>年式</th><td>2019年</td></tr><tr><th>走行距離</th><td>45,000km</td></tr><tr><th>色</th><td>ホワイト</td></tr><tr><th>取扱店</th><td><a href="#">港南カーメル</a></td></tr></table>
+      <div class="loanw"><b>🧮 ローン月々の概算</b>
+        <div class="row"><label>頭金<input value="0"></label><label>回数<input value="60"></label><label>年率%<input value="8.9"></label></div>
+        <div class="out">月々 <b>¥21,800</b> × 60回</div>
+        <a class="btn b-pp">この条件で審査・相談する</a></div>
+      <div style="margin:.5em 0"><a class="btn b-pp">このお車を相談する</a> <a class="btn b-gh">🗺 地図</a></div>
+      <div style="margin:.4em 0"><span class="note">シェア：</span><a class="btn" style="background:#06c755">LINE</a> <a class="btn" style="background:#000">X</a> <a class="btn" style="background:#1877f2">Facebook</a></div>
+      <p><a href="#">🅼 会員ページでお手続き状況を確認する →</a></p>
+    </div>
+  </div>
+  <h3 style="margin-top:1.2em">🏬 港南カーメル の他の在庫</h3>
+  <div class="grid"><div class="card"><div class="thumb">画像</div><div class="cbody"><h4>トヨタ ヤリス</h4><div class="price">¥1,650,000</div></div></div>
+  <div class="card"><div class="thumb">画像</div><div class="cbody"><h4>トヨタ ルーミー</h4><div class="price">¥1,420,000</div></div></div></div>
+</section>
+
+<!-- ③ 加盟店ダッシュボード -->
+<section id="store">
+  <h2>③ 加盟店ダッシュボード（/store）</h2>
+  <p class="desc">スタートガイド・今日のやること・LINE反響一覧・案件管理（工程/顧客ひも付け/次アクション）・各機能への導線</p>
+  <div style="display:flex;gap:.5em;flex-wrap:wrap;margin:.4em 0">
+    <a class="btn b-pp">📄 帳票・契約書</a><a class="btn b-bl">🤝 販売支援</a><a class="btn b-gr">🚗 在庫共有</a><a class="btn" style="background:#e67e22">💬 コミュニティ</a>
+  </div>
+  <div class="todo"><h3>📋 今日のやること（次アクション期日）</h3>
+    <ul><li>#1042 山田様 — <b>見積送付</b>（本日）<a href="#"> 開く</a></li><li>#1037 佐藤様 — <b>来店フォロー</b>（期日超過）<a href="#"> 開く</a></li></ul></div>
+
+  <div style="border:1px solid var(--line);border-radius:.6em;padding:1em;margin:.6em 0;background:#fff">
+    <h3 style="margin:.1em 0 .5em">📨 反響（LINE・在庫・店舗問い合わせ）<span class="lead-badge">未対応 3</span></h3>
+    <table class="t"><thead><tr><th>日時</th><th>種別</th><th>お客様</th><th>連絡先</th><th>エリア</th><th>内容</th><th>状況</th><th>操作</th></tr></thead>
+    <tbody>
+      <tr><td>6/28 14:20</td><td><span class="tag tag-line">LINE</span></td><td>田中太郎</td><td>090-…</td><td>関東</td><td>アクア在庫ありますか…</td><td><b>新規</b></td><td><a class="btn b-gh">→対応中</a> <a class="btn b-gr">商談化</a></td></tr>
+      <tr><td>6/28 11:05</td><td>在庫問合せ</td><td>鈴木花子</td><td>080-…</td><td>—</td><td>CX-5の見積り希望</td><td>対応中</td><td><a class="btn b-gh">→完了</a> <a href="#">商談 #1051</a></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="stats"><div class="stat"><div class="n">38</div><div class="l">担当案件</div></div><div class="stat"><div class="n">7</div><div class="l">書類準備中</div></div><div class="stat"><div class="n">5</div><div class="l">納車準備中</div></div></div>
+  <table class="t"><thead><tr><th>案件</th><th>申込者</th><th>種別</th><th>ステータス</th><th>操作 / 次アクション</th></tr></thead>
+  <tbody>
+    <tr><td>#1042</td><td>山田太郎</td><td>ローン</td><td><span class="badge-st">書類準備中</span></td><td><a class="btn b-gr">納車準備へ</a> ｜ 次：見積送付（本日）</td></tr>
+    <tr><td>#1051</td><td>鈴木花子 <span class="tag tag-new">顧客未確定</span></td><td>ローン</td><td><span class="badge-st">加盟店マッチング</span></td><td><a href="#">顧客をひも付け</a> ｜ 次アクション設定</td></tr>
+  </tbody></table>
+</section>
+
+<!-- ④ 店舗ページ -->
+<section id="profile">
+  <h2>④ 公開・加盟店（店舗）ページ（/stores?store=ID）</h2>
+  <p class="desc">店舗情報・曜日別営業時間・地図・実績・スタッフ紹介・在庫・レビュー・フォロー・問い合わせ／一覧はエリア/種別フィルタ＋地図</p>
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1em">
+    <h3 style="margin:.1em 0">港南カーメル</h3><a class="btn b-pp">♡ この店舗をフォロー</a>
+  </div>
+  <table class="spec"><tr><th>住所</th><td>東京都港区港南…</td></tr><tr><th>電話</th><td>03-1234-5678</td></tr></table>
+  <table class="spec" style="max-width:260px"><tr><th>月</th><td>10:00〜19:00</td></tr><tr><th>火</th><td style="color:#c0392b">定休日</td></tr><tr><th>水〜日</th><td>10:00〜19:00</td></tr></table>
+  <div class="stats"><div class="stat"><div class="n">24台</div><div class="l">公開在庫</div></div><div class="stat"><div class="n">118件</div><div class="l">成約実績</div></div><div class="stat"><div class="n">156件</div><div class="l">取扱案件</div></div></div>
+  <h3>スタッフ紹介</h3>
+  <div class="staff"><div class="member"><div class="ava"></div><div class="nm">店長 山本</div><div class="rl">店長</div></div><div class="member"><div class="ava"></div><div class="nm">鈴木</div><div class="rl">スタッフ</div></div></div>
+  <h3>お客様の声・レビュー</h3>
+  <div><span class="stars">★★★★☆</span> <b>4.3</b> / 5（27件）</div>
+  <div class="review"><span class="stars">★★★★★</span><span class="au">T.K さん</span><div>対応が丁寧で安心して購入できました。</div></div>
+  <h3>この店舗に問い合わせる</h3>
+  <div style="max-width:360px"><input class="filterbar" style="display:block;width:100%;margin:.3em 0" placeholder="お名前"><textarea style="width:100%;border:1px solid #ccc;border-radius:.3em;padding:.4em" rows="2" placeholder="お問い合わせ内容"></textarea><button class="btn b-bl" style="margin-top:.4em">送信する</button></div>
+</section>
+
+<!-- ⑤ レポート -->
+<section id="report">
+  <h2>⑤ レポート（/hq）</h2>
+  <p class="desc">KPI・業務種別・売上内訳・ステータス分布・加盟店別・在庫/問い合わせKPI・反響→商談→成約ファネル（期間フィルタ）・CSV出力</p>
+  <div class="kpis"><div class="kpi"><div class="v">312</div><div class="l">案件総数</div></div><div class="kpi"><div class="v">118</div><div class="l">成約</div></div><div class="kpi"><div class="v" style="color:var(--brand)">37.8%</div><div class="l">転換率</div></div><div class="kpi"><div class="v">¥4,820,000</div><div class="l">売上合計</div></div></div>
+  <h3>反響 → 商談 → 成約 ファネル</h3>
+  <div class="period"><a class="on">今月</a><a>先月</a><a>全期間</a></div>
+  <div class="funnel"><div class="fstep"><div class="n">86</div><div class="l">反響受付</div></div><span class="farrow">→ 52.3%</span><div class="fstep"><div class="n">45</div><div class="l">商談化</div></div><span class="farrow">→ 33.3%</span><div class="fstep"><div class="n">15</div><div class="l">成約</div></div></div>
+  <div class="kpis"><div class="kpi"><div class="v">142</div><div class="l">在庫総数</div></div><div class="kpi"><div class="v">96</div><div class="l">掲載中</div></div><div class="kpi"><div class="v">68</div><div class="l">問い合わせ(累計)</div></div><div class="kpi"><div class="v">24</div><div class="l">直近30日</div></div></div>
+  <p><button class="btn b-gy">案件CSVをダウンロード</button></p>
+</section>
+
+<!-- ⑥ LINE -->
+<section id="line">
+  <h2>⑥ LINE導線（公式アカウント＋LIFF＋自動応答）</h2>
+  <p class="desc">リッチメニュー → LIFF審査フォーム/会員ログイン、自動応答（FAQ/AI）、会話型ヒアリング、Flex在庫カード、通知（プロライン→公式へ段階移行）</p>
+  <div style="display:flex;gap:1.5em;flex-wrap:wrap;justify-content:center">
+    <div class="phone">
+      <div class="lhead">カーメル公式</div>
+      <div class="lchat">
+        <div class="bubble">友だち追加ありがとうございます！お車探し・審査申込を承ります。</div>
+        <div class="bubble me">在庫見たい</div>
+        <div class="bubble">おすすめの在庫をご案内します👇</div>
+        <div class="qr" style="background:#7494c0;padding:.3em"><div class="flexcard"><div class="im"></div><div class="bd">トヨタ アクア<div class="pr">¥1,280,000</div><span class="btn b-pp" style="font-size:.7em">詳細</span></div></div><div class="flexcard"><div class="im"></div><div class="bd">日産 ノート<div class="pr">¥1,250,000</div><span class="btn b-pp" style="font-size:.7em">詳細</span></div></div></div>
+        <div class="qr"><span>在庫を見る</span><span>審査申込</span><span>会員ページ</span><span>チャットで相談</span></div>
+      </div>
+      <div class="richmenu"><div>在庫を探す</div><div>審査申込</div><div>会員ページ</div><div>査定・買取</div><div>店舗を探す</div><div>お問い合わせ</div></div>
+    </div>
+    <div class="phone">
+      <div class="lhead">チャットで相談</div>
+      <div class="lchat">
+        <div class="bubble">お名前（フルネーム）を教えてください。</div>
+        <div class="bubble me">田中太郎</div>
+        <div class="bubble">ご希望のエリアを選んでください。</div>
+        <div class="qr"><span>関東</span><span>中部</span><span>近畿</span><span>九州・沖縄</span></div>
+        <div class="bubble me">関東</div>
+        <div class="bubble">ありがとうございます。受け付けました。担当よりご連絡します✨</div>
+      </div>
+      <div style="padding:.6em;font-size:.78em;color:#555">→ 反響を <b>carmel_support</b> に起票、エリアで担当店へ自動ルーティング、/store の反響一覧に表示</div>
+    </div>
+  </div>
+  <p class="note" style="text-align:center">※ 通知は現状プロライン、設定変更で LINE公式 Messaging API push へ段階移行（フォールバック＝メール）</p>
+</section>
+
+<!-- ⑦ 商談タイムライン -->
+<section id="timeline">
+  <h2>⑦ 商談タイムライン（/deal?deal=ID）</h2>
+  <p class="desc">[carmel_deal_timeline]：起票・ステータス変更（実行者/システム/メモ）・対応メモを時系列表示。閲覧＝本部/担当店/本人、メモ追加＝本部・担当店。/store の案件行「履歴」から</p>
+  <h3 style="margin:.1em 0">商談タイムライン　#1042　山田太郎</h3>
+  <form class="memoform"><textarea rows="2" placeholder="対応メモを追加（来店日・電話内容・次回約束など）"></textarea><button class="btn b-pp" style="align-self:flex-start">メモを追加</button></form>
+  <ul class="tl">
+    <li class="memo"><span class="ic">📝</span><div class="bd"><div class="wh">2026-06-28 15:10</div><div>本日来店。CX-5と比較検討中。週末に再来店予定。見積を先に送付。</div><div class="by">山本（店長）</div></div></li>
+    <li><span class="ic">📦</span><div class="bd"><div class="wh">2026-06-27 10:02</div><div>ステータス変更：加盟店マッチング → <strong>書類準備中</strong></div><div class="by">鈴木</div></div></li>
+    <li><span class="ic">📦</span><div class="bd"><div class="wh">2026-06-25 18:30</div><div>ステータス変更：審査OK → <strong>加盟店マッチング</strong><br><span class="nt">エリア（関東）で港南カーメルに割当</span></div><div class="by">システム</div></div></li>
+    <li><span class="ic">📦</span><div class="bd"><div class="wh">2026-06-25 14:12</div><div>ステータス変更：信販審査中 → <strong>審査OK</strong></div><div class="by">本部 田中</div></div></li>
+    <li><span class="ic">📦</span><div class="bd"><div class="wh">2026-06-24 09:40</div><div>ステータス変更：仮申込 → <strong>AIスコア済</strong><br><span class="nt">AIスコア 72 / ランクB</span></div><div class="by">システム</div></div></li>
+    <li><span class="ic">🟢</span><div class="bd"><div class="wh">2026-06-24 09:35</div><div>商談を起票（申込フォーム）</div></div></li>
+  </ul>
+</section>
+
+</div>
+<footer style="text-align:center;padding:1.4em;color:#888;font-size:.82em">カーメル統合管理システム ｜ モックアップ（現状）｜ ブランチ claude/carmel-wordpress-system-zDCWJ</footer>
+</body></html>
