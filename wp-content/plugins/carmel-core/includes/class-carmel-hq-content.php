@@ -78,6 +78,10 @@ class Carmel_HQ_Content {
 		$pinned  = ! empty( $_POST['pinned'] ) ? 1 : 0;
 		$notify  = ! empty( $_POST['notify_stores'] ) ? 1 : 0;
 		$step    = isset( $_POST['step_order'] ) ? (int) $_POST['step_order'] : 0;
+		$tags    = isset( $_POST['content_tags'] ) ? sanitize_text_field( wp_unslash( $_POST['content_tags'] ) ) : '';
+		$video   = isset( $_POST['video_url'] ) ? esc_url_raw( wp_unslash( $_POST['video_url'] ) ) : '';
+		$atts    = isset( $_POST['attachments'] ) ? sanitize_textarea_field( wp_unslash( $_POST['attachments'] ) ) : '';
+		$vis     = isset( $_POST['visible_store_ids'] ) ? preg_replace( '/[^0-9,\s]/', '', wp_unslash( $_POST['visible_store_ids'] ) ) : '';
 
 		if ( '' === $title ) {
 			wp_safe_redirect( add_query_arg( 'carmel_hc', 'err', $redirect ) );
@@ -85,12 +89,16 @@ class Carmel_HQ_Content {
 		}
 
 		$meta = array(
-			'content_type'  => $type,
-			'summary'       => $summary,
-			'file_url'      => $file,
-			'pinned'        => $pinned,
-			'notify_stores' => $notify,
-			'step_order'    => $step,
+			'content_type'      => $type,
+			'summary'           => $summary,
+			'file_url'          => $file,
+			'content_tags'      => $tags,
+			'video_url'         => $video,
+			'attachments'       => $atts,
+			'visible_store_ids' => trim( $vis ),
+			'pinned'            => $pinned,
+			'notify_stores'     => $notify,
+			'step_order'        => $step,
 		);
 
 		// 更新（既存の carmel_content のみ）。
@@ -217,6 +225,10 @@ class Carmel_HQ_Content {
 	<label class="carmel-hc-block">概要（一覧表示用）<input type="text" name="summary" value="<?php echo esc_attr( $g( 'summary' ) ); ?>"></label>
 	<label class="carmel-hc-block">本文<textarea name="body" rows="6"><?php echo esc_textarea( $body ); ?></textarea></label>
 	<label class="carmel-hc-block">添付ファイルURL（資料DL用）<input type="url" name="file_url" value="<?php echo esc_attr( $g( 'file_url' ) ); ?>" placeholder="https://..."></label>
+	<label class="carmel-hc-block">タグ（カンマ区切り）<input type="text" name="content_tags" value="<?php echo esc_attr( $g( 'content_tags' ) ); ?>" placeholder="例）在庫,CSV,審査"></label>
+	<label class="carmel-hc-block">動画URL（YouTube/Vimeo等・埋め込み）<input type="url" name="video_url" value="<?php echo esc_attr( $g( 'video_url' ) ); ?>" placeholder="https://youtu.be/..."></label>
+	<label class="carmel-hc-block">複数添付（1行に「URL|ラベル」）<textarea name="attachments" rows="3" placeholder="https://.../a.pdf|申込書&#10;https://.../b.xlsx|価格表"><?php echo esc_textarea( $g( 'attachments' ) ); ?></textarea></label>
+	<label class="carmel-hc-block">限定公開する店舗ID（カンマ区切り・空欄=全店）<input type="text" name="visible_store_ids" value="<?php echo esc_attr( $g( 'visible_store_ids' ) ); ?>" placeholder="例）12,18（空欄で全加盟店）"></label>
 	<div class="carmel-hc-row">
 		<label class="carmel-hc-check"><input type="checkbox" name="pinned" value="1"<?php checked( in_array( (string) $g( 'pinned' ), array( '1', 'yes', 'true' ), true ) ); ?>> 重要（上部に固定）</label>
 		<label class="carmel-hc-check"><input type="checkbox" name="notify_stores" value="1"> 加盟店へ通知する</label>
@@ -248,16 +260,23 @@ class Carmel_HQ_Content {
 			return $out . '<p class="carmel-hint">まだコンテンツはありません。</p>';
 		}
 		$types = self::types();
-		$out  .= '<table class="carmel-table"><thead><tr><th>種別</th><th>タイトル</th><th>固定</th><th>更新日</th><th>操作</th></tr></thead><tbody>';
+		$total_stores = (int) wp_count_posts( 'carmel_store' )->publish;
+		$out  .= '<table class="carmel-table"><thead><tr><th>種別</th><th>タイトル</th><th>固定</th><th>確認</th><th>公開範囲</th><th>更新日</th><th>操作</th></tr></thead><tbody>';
 		foreach ( $items as $p ) {
 			$type   = (string) get_post_meta( $p->ID, 'content_type', true );
 			$pinned = in_array( (string) get_post_meta( $p->ID, 'pinned', true ), array( '1', 'yes', 'true' ), true );
 			$edit   = add_query_arg( 'edit', $p->ID, remove_query_arg( array( 'carmel_hc' ) ) );
 			$del    = wp_create_nonce( self::DEL_ACTION . '_' . $p->ID );
+			$acks   = get_post_meta( $p->ID, '_acks', true );
+			$ackn   = is_array( $acks ) ? count( $acks ) : 0;
+			$vis    = trim( (string) get_post_meta( $p->ID, 'visible_store_ids', true ) );
+			$scope  = '' === $vis ? '全店' : '限定' . count( array_filter( array_map( 'intval', preg_split( '/[\s,]+/', $vis ) ) ) ) . '店';
 			$out   .= '<tr>';
 			$out   .= '<td>' . esc_html( isset( $types[ $type ] ) ? $types[ $type ] : $type ) . '</td>';
 			$out   .= '<td>' . esc_html( get_the_title( $p->ID ) ) . '</td>';
 			$out   .= '<td>' . ( $pinned ? '📌' : '' ) . '</td>';
+			$out   .= '<td>' . (int) $ackn . '/' . (int) $total_stores . '</td>';
+			$out   .= '<td>' . esc_html( $scope ) . '</td>';
 			$out   .= '<td>' . esc_html( get_the_modified_date( 'Y-m-d', $p->ID ) ) . '</td>';
 			$out   .= '<td class="carmel-hc-ops">';
 			$out   .= '<a class="carmel-btn carmel-btn-blue" href="' . esc_url( $edit ) . '">編集</a>';

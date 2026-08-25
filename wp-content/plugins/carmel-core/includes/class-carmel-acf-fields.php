@@ -270,6 +270,10 @@ class Carmel_ACF_Fields {
 			$this->f( 'content', 'step_order', '表示順（スタートガイド用）', 'number' ),
 			$this->f( 'content', 'summary', '概要（一覧表示用）', 'text' ),
 			$this->f( 'content', 'file_url', '添付ファイルURL（資料DL用）', 'url' ),
+			$this->f( 'content', 'content_tags', 'タグ（カンマ区切り）', 'text' ),
+			$this->f( 'content', 'video_url', '動画URL（YouTube/Vimeo等・埋め込み）', 'url' ),
+			$this->f( 'content', 'attachments', '複数添付（1行1件・「URL|ラベル」）', 'textarea' ),
+			$this->f( 'content', 'visible_store_ids', '限定公開する店舗ID（カンマ区切り・空欄=全店）', 'text' ),
 			$this->f( 'content', 'pinned', '重要（上部に固定）', 'true_false' ),
 			$this->f( 'content', 'notify_stores', '公開時に加盟店へ通知する', 'true_false' ),
 		) );

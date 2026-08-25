@@ -397,11 +397,18 @@ GASへ送る案件ペイロードは `carmel_gas_deal_payload` フィルタで�
 `Carmel_HQ_Content`。ショートコード **`[carmel_hq_content]`**（`carmel_manage_stores`＝本部のみ）。wp-admin を開かずに加盟店向けコンテンツを作成・編集・公開・削除できる。
 
 - **種別**：スタートガイド(guide)／お知らせ(notice)／マニュアル(manual)／FAQ(faq)／販促ツール(promo)
-- 入力：タイトル・概要・本文(HTML可・`wp_kses_post`)・添付URL・重要(固定)・表示順(ガイド)・**加盟店へ通知**
-- 公開すると加盟店の **`[carmel_store_content]`（/store-content）** に表示。「加盟店へ通知」ONで全加盟店へ一斉通知（`store_notice`・記事単位で冪等）
-- 公開中コンテンツの一覧から編集（`?edit=ID`）・削除。nonce＋本部capで保護
+- 入力：タイトル・概要・本文(HTML可・`wp_kses_post`)・添付URL・**タグ**・**動画URL**・**複数添付**・**限定公開店舗ID**・重要(固定)・表示順(ガイド)・**加盟店へ通知**
+- 公開すると加盟店の **`[carmel_store_content]`（/store-content）** に表示。「加盟店へ通知」ONで全加盟店へ一斉通知（`store_notice`・記事単位で冪等・**限定公開なら対象店舗のみ**）
+- 一覧に**確認数（○/全店）・公開範囲（全店/限定N店）**を表示。編集（`?edit=ID`）・削除。nonce＋本部capで保護
 
 > wp-admin の `carmel_content` 直接編集も従来どおり可。本ショートコードはフロントからの簡易作成手段。
+
+### 閲覧側の機能（`[carmel_store_content]`）
+- **キーワード検索・タグ**：`?cq=` でお知らせ/マニュアル/FAQを横断検索。タグ（`content_tags`）はチップ表示＆クリックで絞り込み
+- **確認（既読受領）**：お知らせに「確認しました」ボタン → 店舗単位で `_acks` に記録 → 本部の `[carmel_hq_content]` 一覧に確認数を集計
+- **動画埋め込み・複数添付**：`video_url`（oEmbed）＋ `attachments`（1行「URL\|ラベル」）を各記事に表示
+- **スタートガイド完了チェック**：各ステップに「完了にする」トグル（`carmel_guide_done` user_meta）→ **進捗バー**（X/N・%）をガイド上部と `/store` ダッシュボードに表示
+- **限定公開**：`visible_store_ids`（カンマ区切り店舗ID）指定時は**その店舗のみ**表示・通知（空欄＝全店）。本部は常に全件閲覧
 
 ## 加盟店向けコンテンツ（実装済み）
 
