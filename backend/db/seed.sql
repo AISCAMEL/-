@@ -43,6 +43,15 @@ values (
 )
 on conflict (tenant_id, email) do nothing;
 
+-- 運営者(super_admin)アカウント。tenant_id=NULL で全店舗を横断管理する。
+-- ログインは店舗オーナーとは別メールにすること（メール重複による曖昧さを避ける）。
+-- パスワードは /api/auth/bootstrap（初回設定）で設定する。
+insert into app_users (tenant_id, name, email, role, is_active)
+select null, '運営者', 'admin@aisjaltd.com', 'super_admin', true
+where not exists (
+  select 1 from app_users where role = 'super_admin' and lower(email) = 'admin@aisjaltd.com'
+);
+
 -- Tenant settings (one row; upserted by the app on save).
 insert into tenant_settings (
   tenant_id,

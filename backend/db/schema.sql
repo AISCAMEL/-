@@ -76,7 +76,8 @@ create table if not exists tenant_settings (
 -- 重複メール検出は code の 23505 ハンドリングに合わせて (tenant_id, email) をユニークに。
 create table if not exists app_users (
   id         uuid primary key default gen_random_uuid(),
-  tenant_id  uuid not null references tenants(id) on delete cascade,
+  -- tenant_id が NULL の行は「運営者(super_admin)」＝特定店舗に属さず全店舗を横断管理する。
+  tenant_id  uuid references tenants(id) on delete cascade,
   name       text,
   email      text not null,
   role       text not null default 'staff',   -- owner/admin/staff/super_admin
