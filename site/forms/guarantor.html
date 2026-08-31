@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>連帯保証人 申請フォーム | カーメル</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#1b2935;--navy-deep:#15335f;--blue:#f47920;--blue-hover:#d9650d;--blue-light:#fff4ec;--blue-50:#fff7ef;
+  --accent-blue:#1d63c8;--accent-blue-bg:#eaf4ff;--page-bg:#f5fbff;--white:#fff;
+  --green:#16a34a;--green-bg:#f0fdf4;--green-border:#bbf7d0;--red:#dc2626;--orange:#ea580c;--orange-bg:#fff7ed;--orange-border:#fed7aa;
+  --gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-400:#94a3b8;--gray-500:#64748b;--gray-600:#475569;--gray-700:#334155;--gray-800:#1e293b;
+  --radius:10px;--radius-lg:14px;--card-shadow:0 8px 24px rgba(0,0,0,.08);--btn-shadow:0 6px 0 var(--blue-hover);--transition:all .2s ease;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:16px;-webkit-text-size-adjust:100%;scroll-behavior:smooth;}
+body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(--page-bg);line-height:1.75;-webkit-font-smoothing:antialiased;}
+.caf-header{background:linear-gradient(135deg,#fff7ef,#eaf4ff);text-align:center;padding:40px 16px 28px;border-top:5px solid var(--blue);border-bottom:1px solid var(--gray-200);}
+.caf-header-eyebrow{display:inline-block;font-size:.78rem;font-weight:900;letter-spacing:.14em;color:#fff;background:var(--blue);padding:6px 18px;border-radius:999px;margin-bottom:14px;}
+.caf-header h1{font-size:1.9rem;font-weight:900;color:var(--navy-deep);line-height:1.3;margin-bottom:10px;}
+.caf-header h1 span{color:var(--blue);}
+.caf-header-sub{font-size:.92rem;color:var(--gray-500);font-weight:600;line-height:1.8;}
+.caf-trust{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:16px;}
+.caf-trust span{background:#fff;border:1.5px solid #ffdcbc;border-radius:20px;padding:6px 14px;font-size:.8rem;font-weight:800;color:var(--blue-hover);}
+.caf-step-bar{position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid var(--gray-200);padding:12px 16px;box-shadow:0 4px 12px rgba(0,0,0,.06);}
+.caf-step-dots{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:6px;}
+.caf-step-dots .dot{width:10px;height:10px;border-radius:50%;background:var(--gray-300);flex-shrink:0;transition:var(--transition);}
+.caf-step-dots .dot.active{background:var(--blue);transform:scale(1.25);box-shadow:0 0 0 3px rgba(244,121,32,.2);}
+.caf-step-dots .dot.done{background:var(--green);}
+.caf-step-dots .dot-line{width:12px;height:2px;background:var(--gray-200);flex-shrink:0;}
+.caf-step-dots .dot-line.done{background:var(--green);}
+.caf-step-info{text-align:center;}
+.caf-step-info .step-num{font-size:.82rem;font-weight:800;color:var(--blue);}
+.caf-step-info .step-label{font-size:.78rem;color:var(--gray-500);margin-left:6px;}
+.caf-progress-wrap{padding:8px 16px 0;display:flex;align-items:center;gap:10px;}
+.caf-progress{background:var(--gray-200);border-radius:20px;height:9px;overflow:hidden;flex:1;}
+.caf-progress-bar{height:100%;background:linear-gradient(90deg,var(--blue),#ff9248);border-radius:20px;width:0;transition:width .4s ease;}
+.caf-progress-txt{font-size:.72rem;font-weight:700;color:var(--blue);white-space:nowrap;}
+.caf-wrap{max-width:720px;margin:0 auto;padding:26px 12px 60px;}
+.caf{font-size:.92rem;}
+.note-top{background:#fff8e8;border:1px solid #ffe0c2;border-radius:12px;padding:14px 16px;font-size:.85rem;color:#7a4a10;font-weight:600;margin-bottom:8px;line-height:1.8;}
+.step-page{background:#fff;border:1px solid #e5eef5;border-radius:20px;box-shadow:var(--card-shadow);padding:26px 22px;margin-top:18px;animation:fadeIn .3s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+.caf h3{font-size:1.15rem;font-weight:900;color:var(--navy-deep);margin:0 0 20px;padding:12px 0 14px 16px;border-left:6px solid var(--blue);border-bottom:2px dashed #ffdcbc;background:linear-gradient(90deg,#fff7ef,transparent);border-radius:0 8px 8px 0;}
+.caf h4{font-size:.95rem;font-weight:800;color:var(--navy-deep);margin:18px 0 12px;padding:9px 13px;background:var(--accent-blue-bg);border-left:4px solid var(--accent-blue);border-radius:0 8px 8px 0;}
+.caf p{margin:0 0 15px;font-size:.85rem;font-weight:600;color:var(--gray-700);}
+.caf select,.caf input[type=text],.caf input[type=tel],.caf input[type=email],.caf input[type=date]{display:block;width:100%;margin-top:6px;padding:11px 14px;font-size:.9rem;font-family:inherit;border:1.5px solid var(--gray-300);border-radius:var(--radius);background:#fff;color:var(--gray-800);transition:var(--transition);appearance:none;-webkit-appearance:none;}
+.caf select{-webkit-appearance:menulist;appearance:menulist;cursor:pointer;}
+.caf select:focus,.caf input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(244,121,32,.15);}
+.required{display:inline-block;margin-left:6px;background:var(--blue);color:#fff;font-size:.68rem;font-weight:800;padding:3px 7px;border-radius:5px;vertical-align:middle;}
+.optional{display:inline-block;margin-left:6px;background:#93b7e0;color:#fff;font-size:.68rem;font-weight:800;padding:3px 7px;border-radius:5px;vertical-align:middle;}
+.caf-half{display:grid;grid-template-columns:1fr 1fr;gap:0 16px;}
+@media(max-width:600px){.caf-half{grid-template-columns:1fr;}}
+.caf-age{font-size:.8rem;font-weight:700;display:none;margin-top:4px;}
+.caf-age.is-show{display:inline-block;color:var(--green);background:var(--green-bg);padding:2px 10px;border-radius:4px;}
+.caf-age.is-error{color:var(--red);background:#fef2f2;}
+.email-msg{font-size:.78rem;font-weight:700;margin-top:5px;display:inline-block;}
+.hint{font-size:.78rem;color:var(--gray-500);background:var(--gray-50);border-left:3px solid var(--gray-300);border-radius:var(--radius);padding:9px 12px;margin:6px 0 14px;font-weight:500;line-height:1.7;}
+.caf-up-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:8px 0 14px;}
+@media(max-width:600px){.caf-up-grid{grid-template-columns:1fr;}}
+.caf-up{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:18px 14px;border:2px dashed var(--gray-300);border-radius:var(--radius-lg);cursor:pointer;background:#fff;min-height:112px;transition:var(--transition);}
+.caf-up:hover{border-color:var(--blue);background:var(--blue-50);}
+.caf-up.has-file{border-color:var(--green);border-style:solid;background:var(--green-bg);}
+.caf-up-ttl{font-size:.82rem;font-weight:700;color:var(--navy);margin-bottom:4px;}
+.caf-up-sub{font-size:.7rem;color:var(--gray-500);margin-bottom:8px;}
+.caf-up-btn{display:inline-block;padding:6px 16px;font-size:.78rem;font-weight:700;background:var(--blue);color:#fff;border-radius:6px;}
+.caf-up-name{font-size:.72rem;color:var(--green);font-weight:600;margin-top:6px;}
+.caf-up-prev{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;justify-content:center;}
+.caf-up-item img{width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--gray-200);}
+.caf-up-pdf{display:flex;align-items:center;justify-content:center;width:56px;height:56px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:6px;font-size:.66rem;color:var(--gray-600);font-weight:700;}
+.caf-agree{margin-top:8px;}
+.caf-check{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;margin:8px 0;border:1.5px solid var(--gray-200);border-radius:var(--radius);font-size:.82rem;font-weight:500;line-height:1.6;cursor:pointer;background:#fff;transition:var(--transition);}
+.caf-check:hover{border-color:var(--blue);background:var(--blue-50);}
+.caf-check.is-checked{border-color:var(--blue);background:var(--blue-light);}
+.caf-check input{width:18px;height:18px;margin-top:2px;accent-color:var(--blue);flex-shrink:0;}
+.caf-check a{color:var(--blue);font-weight:700;}
+.step-nav{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;margin-top:22px;padding-top:18px;border-top:1px solid var(--gray-200);}
+.sbtn{padding:14px 28px;font-size:.95rem;font-weight:800;font-family:inherit;border:none;border-radius:999px;cursor:pointer;transition:var(--transition);}
+.sbtn-prev{background:var(--gray-100);color:var(--gray-600);border:1.5px solid var(--gray-300);}
+.sbtn-next{background:linear-gradient(135deg,var(--blue),#ff9248);color:#fff;box-shadow:0 6px 0 var(--blue-hover);flex:1;padding:16px 32px;font-size:1rem;font-weight:900;}
+.sbtn-next:hover{transform:translateY(3px);box-shadow:0 3px 0 #b8560a;}
+.step-nav-msg{flex-basis:100%;color:var(--red);font-size:.8rem;font-weight:700;margin-top:8px;text-align:center;order:9;}
+.caf-field-err{display:block;color:var(--red);font-size:.78rem;font-weight:700;margin-top:5px;}
+.caf-field-err::before{content:'⚠ ';}
+.is-invalid{border-color:var(--red)!important;box-shadow:0 0 0 3px rgba(220,38,38,.12)!important;}
+.submit{display:block;width:100%;max-width:360px;margin:22px auto 0;padding:17px;font-size:1.05rem;font-weight:900;color:#fff;border:none;border-radius:999px;background:linear-gradient(135deg,var(--blue),#ff9248);box-shadow:var(--btn-shadow);letter-spacing:.06em;cursor:pointer;}
+.submit:disabled{opacity:.5;cursor:not-allowed;}
+.presubmit{text-align:center;font-size:.82rem;color:var(--gray-500);margin:14px 0 6px;font-weight:500;}
+.hide{display:none!important;}
+.caf-hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0;}
+@media(max-width:480px){html{font-size:14px;}.caf-header{padding:22px 14px 16px;}.caf-header h1{font-size:1.4rem;}.step-page{padding:18px 14px 22px;}}
+</style>
+</head>
+<body>
+
+<!-- ▼▼▼ 送信先（GAS中継ハブのウェブアプリURL）。空のままだとプレビュー表示 ▼▼▼ -->
+<script>
+  window.GUARANTOR_ENDPOINT = ""; // 例: "https://script.google.com/macros/s/xxxx/exec"
+</script>
+
+<header class="caf-header">
+  <span class="caf-header-eyebrow">CARMEL 信用回復ローン</span>
+  <h1>連帯<span>保証人</span>申請フォーム</h1>
+  <p class="caf-header-sub">お申込者様の審査にともなう、保証人様のご登録フォームです（約3分）</p>
+  <div class="caf-trust"><span>秘密厳守</span><span>SSL暗号化</span><span>全国対応</span></div>
+</header>
+
+<div class="caf-step-bar" id="caf-step-bar">
+  <div class="caf-step-dots" id="caf-step-dots"></div>
+  <div class="caf-step-info"><span class="step-num" id="step-num-label">STEP 1 / 7</span><span class="step-label" id="step-name-label"></span></div>
+  <div class="caf-progress-wrap"><div class="caf-progress"><div class="caf-progress-bar" id="pbar"></div></div><span class="caf-progress-txt" id="ptxt">入力 0%</span></div>
+</div>
+
+<div class="caf-wrap">
+<div class="note-top">このフォームは<b>連帯保証人ご本人様</b>がご入力ください。ご入力内容は、お申込者様のローン審査のためにのみ利用します。</div>
+<form class="caf" id="caf-form" novalidate enctype="multipart/form-data">
+<input type="text" name="hp" id="caf-hp" autocomplete="off" tabindex="-1" aria-hidden="true" class="caf-hp">
+
+<h3>STEP1 お申込みの紐付け</h3>
+<p>お申込者（ご本人）のお名前 (必須)<br><input type="text" placeholder="山田 太郎"></p>
+<div class="caf-half">
+<p>お申込者との続柄 (必須)<br><select><option>選択してください</option><option>配偶者</option><option>親</option><option>子</option><option>兄弟姉妹</option><option>その他親族</option><option>知人・友人</option><option>その他</option></select></p>
+<p>案件番号・受付番号 (任意)<br><input type="text" placeholder="お分かりになる場合のみ"></p>
+</div>
+
+<h3>STEP2 保証人ご本人情報</h3>
+<div class="caf-half">
+<p>お名前 (必須)<br><input type="text" placeholder="佐藤 花子"></p>
+<p>フリガナ (必須)<br><input type="text" placeholder="サトウ ハナコ"></p>
+<p>生年月日 (必須)<br><input type="date" id="birthday"><span class="caf-age" id="birthday-age"></span></p>
+<p>性別 (必須)<br><select><option>選択してください</option><option>男性</option><option>女性</option></select></p>
+<p>携帯電話 (必須)<br><input type="tel" placeholder="09012345678"></p>
+<p>自宅電話 (任意)<br><input type="tel"></p>
+<p>メールアドレス (必須)<br><input type="email" id="email-main" placeholder="sample@example.com"></p>
+<p>メールアドレス（確認用） (必須)<br><input type="email" id="email-confirm" placeholder="確認のためもう一度入力"><span class="email-msg" id="email-msg"></span></p>
+<p>ご希望の連絡方法 (必須)<br><select><option>選択してください</option><option>電話</option><option>メール</option><option>どちらでも可</option></select></p>
+<p>連絡可能な時間帯 (必須)<br><select><option>選択してください</option><option>9-12時</option><option>12-15時</option><option>15-18時</option><option>18-21時</option><option>終日可</option></select></p>
+</div>
+
+<h3>STEP3 現住所</h3>
+<div class="caf-half">
+<p>郵便番号 (必須)<br><input type="text" inputmode="numeric" maxlength="7" class="zipcode" placeholder="1234567（住所自動入力）"></p>
+<p>居住形態 (必須)<br><select><option>選択してください</option><option>持家（本人名義）</option><option>持家（家族名義）</option><option>賃貸アパート</option><option>賃貸マンション</option><option>賃貸戸建</option><option>社宅・寮</option><option>公営住宅</option><option>親と同居</option><option>その他</option></select></p>
+</div>
+<p>ご住所（自動入力） (必須)<br><input type="text" class="address to-hankaku" placeholder="都道府県・市区町村・番地"></p>
+<p>建物名・部屋番号 (任意)<br><input type="text" class="to-hankaku" placeholder="〇〇マンション 101号室"></p>
+<p>世帯主との続柄 (必須)<br><select><option>選択してください</option><option>本人</option><option>配偶者</option><option>親</option><option>子</option><option>その他</option></select></p>
+<h4>居住年数</h4>
+<div class="caf-half">
+<p>居住年数（年） (必須)<br><select class="year-sel"></select></p>
+<p>居住年数（月） (必須)<br><select class="month-sel"></select></p>
+</div>
+
+<h3>STEP4 お勤め先・ご収入</h3>
+<p>就労形態 (必須)<br><select><option>選択してください</option><option>正社員</option><option>契約社員</option><option>派遣社員</option><option>パート・アルバイト</option><option>会社役員・経営者</option><option>自営業・個人事業主</option><option>年金受給</option><option>その他</option></select></p>
+<div class="caf-half">
+<p>会社名・屋号 (必須)<br><input type="text"></p>
+<p>業種 (任意)<br><input type="text" placeholder="例：製造・建設・サービス"></p>
+</div>
+<h4>勤続・営業年数</h4>
+<div class="caf-half">
+<p>勤続年数（年） (必須)<br><select class="year-sel"></select></p>
+<p>勤続年数（月） (必須)<br><select class="month-sel"></select></p>
+</div>
+<div class="caf-half">
+<p>年収（額面） (必須)<br><select><option>選択してください</option><option>200万未満</option><option>200〜300万</option><option>300〜400万</option><option>400〜500万</option><option>500〜700万</option><option>700〜1000万</option><option>1000万以上</option></select></p>
+<p>会社の電話番号 (任意)<br><input type="tel" placeholder="0312345678"></p>
+<p>会社の郵便番号 (任意)<br><input type="text" inputmode="numeric" maxlength="7" class="company-zipcode" placeholder="1234567"></p>
+</div>
+<p>会社の所在地（郵便番号で自動入力） (任意)<br><input type="text" class="company-address to-hankaku"></p>
+
+<h3>STEP5 他社お借入・信用状況</h3>
+<div class="caf-half">
+<p>他社お借入の件数 (必須)<br><select><option>選択してください</option><option>なし</option><option>1社</option><option>2社</option><option>3社</option><option>4社以上</option></select></p>
+<p>他社お借入の総額 (任意)<br><select><option>選択してください</option><option>なし</option><option>〜50万円</option><option>〜100万円</option><option>〜200万円</option><option>〜300万円</option><option>300万円以上</option><option>わからない</option></select></p>
+</div>
+<p>ローン・クレジットの延滞 (必須)<br><select><option>選択してください</option><option>なし</option><option>あり（解消済み）</option><option>あり（延滞中）</option></select></p>
+<p class="hint">正確な保証審査のため、現在の状況を正直にご入力ください。</p>
+
+<h3>STEP6 本人確認書類<small></small></h3>
+<p>運転免許証など、ご本人確認書類をご提出ください（スマホ撮影OK・PDF/画像対応）。</p>
+<h4 style="color:var(--blue-hover);">運転免許証（必須）</h4>
+<div class="caf-up-grid">
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">運転免許証（表）必須</span><span class="caf-up-sub">四隅まで鮮明に</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">運転免許証（裏）必須</span><span class="caf-up-sub">裏面の記載も</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+</div>
+<h4>収入証明（任意・お持ちの方）</h4>
+<div class="caf-up-grid">
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">給与明細・源泉徴収票 など</span><span class="caf-up-sub">後日提出でもOK</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+</div>
+
+<h3>STEP7 保証意思・同意事項</h3>
+<div class="caf-agree">
+<label class="caf-check"><input type="checkbox"><span>私は、お申込者の債務について<b>連帯保証人となる意思がある</b>ことを確認します（必須）</span></label>
+<label class="caf-check"><input type="checkbox"><span>本審査にあたり、<b>個人信用情報機関（CIC・JICC等）への照会・登録・利用</b>に同意します（必須）</span></label>
+<label class="caf-check"><input type="checkbox"><span>私および関係者は<b>反社会的勢力ではなく、今後も一切関係しない</b>ことを表明・確約します（必須）</span></label>
+<label class="caf-check"><input type="checkbox"><span>提携信販・ローン会社へ、審査に必要な範囲で<b>入力情報を提供すること</b>に同意します（必須）</span></label>
+<label class="caf-check"><input type="checkbox"><span><a href="https://carmelonline.jp/privacy-policy/" target="_blank" rel="noopener">プライバシーポリシー</a>に同意のうえ送信します（必須）</span></label>
+<p class="presubmit">ご入力いただいた内容をもとに、担当が個別にご案内します。</p>
+<button type="submit" class="submit">この内容で保証人申請をする</button>
+</div>
+
+<div id="caf-done" class="hide" style="text-align:center;background:var(--green-bg);border:1.5px solid var(--green-border);border-radius:var(--radius-lg);padding:24px;margin-top:18px;">
+<p style="font-size:18px;font-weight:900;color:var(--green);margin:0 0 8px;">保証人申請を受け付けました</p>
+<p style="font-size:13.5px;color:var(--gray-700);font-weight:700;margin:0;line-height:1.8;">担当より個別にご連絡いたします。<br>※追加の書類は後日のご提出でも問題ありません。</p>
+</div>
+
+</form>
+</div>
+
+<script>
+/* 年(0〜20年以上)・月(0〜11ヶ月) セレクトを生成 */
+document.querySelectorAll('.caf .year-sel').forEach(function(sel){
+  sel.innerHTML='<option>選択してください</option>';
+  for(var y=0;y<=19;y++){var o=document.createElement('option');o.textContent=y+'年';sel.appendChild(o);}
+  var o2=document.createElement('option');o2.textContent='20年以上';sel.appendChild(o2);
+});
+document.querySelectorAll('.caf .month-sel').forEach(function(sel){
+  sel.innerHTML='<option>選択してください</option>';
+  for(var m=0;m<=11;m++){var o=document.createElement('option');o.textContent=m+'ヶ月';sel.appendChild(o);}
+});
+
+/* 進捗バー */
+function updateProgress(){
+  var cs=document.querySelectorAll('.caf select,.caf input[type=text],.caf input[type=tel],.caf input[type=email],.caf input[type=date]');
+  var total=0,done=0;
+  cs.forEach(function(c){
+    if(c.closest('.hide'))return;var _p=c.closest('p');if(!(_p&&/必須/.test(_p.textContent||'')))return;total++;
+    var v=(c.value||'').trim();
+    if(c.tagName==='SELECT'){if(v&&v!=='選択してください')done++;}else{if(v)done++;}
+  });
+  var pct=total?Math.round(done/total*100):0;
+  var b=document.getElementById('pbar');if(b)b.style.width=pct+'%';
+  var t=document.getElementById('ptxt');if(t)t.textContent='入力 '+pct+'%';
+}
+var _wrap=document.querySelector('.caf');
+_wrap.addEventListener('input',updateProgress);_wrap.addEventListener('change',updateProgress);updateProgress();
+
+/* メール一致チェック */
+var em=document.getElementById('email-main'),ec=document.getElementById('email-confirm'),emsg=document.getElementById('email-msg');
+function emailMatch(){return em.value.trim()!=='' && em.value.trim()===ec.value.trim();}
+function checkEmail(){
+  if(!ec.value){emsg.textContent='';return;}
+  if(emailMatch()){emsg.textContent='✓ 一致しています';emsg.style.color='#16a34a';}
+  else{emsg.textContent='メールアドレスが一致しません';emsg.style.color='#dc2626';}
+}
+em.addEventListener('input',checkEmail);ec.addEventListener('input',checkEmail);
+
+/* 生年月日→年齢 */
+(function(){var bd=document.getElementById('birthday'),out=document.getElementById('birthday-age');if(!bd||!out)return;
+function calc(){var v=bd.value;out.className='caf-age';if(!v)return;var d=new Date(v);if(isNaN(d.getTime()))return;
+var t=new Date(),age=t.getFullYear()-d.getFullYear(),m=t.getMonth()-d.getMonth();if(m<0||(m===0&&t.getDate()<d.getDate()))age--;
+if(age<0||age>120||d>t){out.textContent='生年月日をご確認ください';out.className='caf-age is-show is-error';return;}
+out.textContent='満 '+age+' 歳';out.className='caf-age is-show';}
+bd.addEventListener('change',calc);bd.addEventListener('input',calc);})();
+
+/* 郵便番号→住所（JSONP） */
+function carmelZip(zip,target){
+  if(!target)return;zip=(zip||'').replace(/[０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-65248);}).replace(/[^0-9]/g,'');
+  if(zip.length!==7)return;var cb='czcb'+Date.now();var s=document.createElement('script');
+  window[cb]=function(d){if(d&&d.results&&d.results[0]){var r=d.results[0];target.value=r.address1+r.address2+r.address3;}delete window[cb];if(s.parentNode)s.parentNode.removeChild(s);};
+  s.src='https://zipcloud.ibsnet.co.jp/api/search?zipcode='+zip+'&callback='+cb;document.body.appendChild(s);
+}
+function bindZip(zipSel,addrSel){var z=document.querySelector(zipSel),a=document.querySelector(addrSel);if(!z||!a)return;
+  z.addEventListener('input',function(){carmelZip(z.value,a);});z.addEventListener('blur',function(){carmelZip(z.value,a);});}
+bindZip('.zipcode','.address');bindZip('.company-zipcode','.company-address');
+
+/* 全角→半角 */
+document.querySelectorAll('.caf .to-hankaku').forEach(function(el){el.addEventListener('blur',function(){
+  el.value=el.value.replace(/[Ａ-Ｚａ-ｚ０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-65248);}).replace(/－/g,'-');});});
+
+/* 書類アップロード：ファイル名＋プレビュー */
+document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
+  var store=new DataTransfer();var lbl=inp.closest('.caf-up'),nm=lbl.querySelector('.caf-up-name'),btn=lbl.querySelector('.caf-up-btn');
+  function render(){
+    var prev=lbl.querySelector('.caf-up-prev');if(!prev){prev=document.createElement('div');prev.className='caf-up-prev';lbl.appendChild(prev);}
+    prev.innerHTML='';
+    Array.prototype.forEach.call(store.files,function(f){
+      var item=document.createElement('span');item.className='caf-up-item';
+      if(f.type.indexOf('image/')===0){var img=document.createElement('img');img.src=URL.createObjectURL(f);item.appendChild(img);}
+      else{var p=document.createElement('span');p.className='caf-up-pdf';p.textContent=(f.name.split('.').pop()||'DATA').toUpperCase().slice(0,4);item.appendChild(p);}
+      prev.appendChild(item);
+    });
+    if(store.files.length){nm.textContent=store.files.length+'件 添付中';lbl.classList.add('has-file');if(btn)btn.textContent='続けて追加';}
+    else{nm.textContent='';lbl.classList.remove('has-file');if(btn)btn.textContent='ファイルを選択';}
+  }
+  inp.addEventListener('change',function(){Array.prototype.forEach.call(inp.files,function(f){store.items.add(f);});inp.files=store.files;render();});
+});
+
+/* ページネーター＋ステップ検証（メール一致・必須） */
+(function(){
+  function init(){
+    var form=document.querySelector('.caf');if(!form)return;
+    var kids=Array.prototype.slice.call(form.children);
+    var firstIdx=-1;for(var i=0;i<kids.length;i++){if(kids[i].tagName==='H3'){firstIdx=i;break;}}if(firstIdx<0)return;
+    var pages=[],cur=null;
+    for(var j=firstIdx;j<kids.length;j++){var n=kids[j];if(n.tagName==='H3'){cur={title:(n.textContent||'').replace(/\s+/g,' ').trim(),nodes:[n]};pages.push(cur);}else if(cur)cur.nodes.push(n);}
+    var total=pages.length;if(!total)return;var anchor=kids[firstIdx];
+    var dotsC=document.getElementById('caf-step-dots');
+    if(dotsC){for(var di=0;di<total;di++){if(di>0){var ln=document.createElement('span');ln.className='dot-line';dotsC.appendChild(ln);}var dt=document.createElement('span');dt.className='dot';dotsC.appendChild(dt);}}
+    var pageEls=[];
+    pages.forEach(function(pg,idx){
+      var d=document.createElement('div');d.className='step-page';pg.nodes.forEach(function(n){d.appendChild(n);});
+      var nav=document.createElement('div');nav.className='step-nav';
+      if(idx>0){var pv=document.createElement('button');pv.type='button';pv.className='sbtn sbtn-prev';pv.textContent='← 戻る';pv.addEventListener('click',function(){go(idx-1);});nav.appendChild(pv);}
+      if(idx<total-1){var nx=document.createElement('button');nx.type='button';nx.className='sbtn sbtn-next';nx.textContent='次へ進む →';nx.addEventListener('click',function(){if(validateStep(d))go(idx+1);});nav.appendChild(nx);}
+      d.appendChild(nav);form.appendChild(d);pageEls.push(d);
+    });
+    function empty(el){var v=String(el.value||'').trim();return !v||v==='選択してください';}
+    function validateStep(pageEl){
+      if(!pageEl)return true;
+      pageEl.querySelectorAll('.caf-field-err').forEach(function(x){x.remove();});
+      pageEl.querySelectorAll('.is-invalid').forEach(function(x){x.classList.remove('is-invalid');});
+      var nm=pageEl.querySelector('.step-nav-msg');if(nm)nm.remove();
+      var ok=true,first=null;
+      pageEl.querySelectorAll('input,select,textarea').forEach(function(el){
+        if(['file','checkbox','radio','hidden'].indexOf(el.type)>=0)return;if(el.closest('.hide'))return;
+        var p=el.closest('p');if(!p||!/必須/.test(p.textContent))return;
+        if(empty(el)){ok=false;if(!first)first=el;mark(el,'入力してください');}
+      });
+      /* メール一致（確認欄があるステップのみ） */
+      if(pageEl.contains(ec)){
+        if(!empty(em)&&!empty(ec)&&!emailMatch()){ok=false;if(!first)first=ec;mark(ec,'メールアドレスが一致しません');}
+      }
+      if(!ok){var nav=pageEl.querySelector('.step-nav');if(nav){var m=document.createElement('div');m.className='step-nav-msg';m.textContent='未入力または不一致の項目があります。ご確認ください。';nav.appendChild(m);}
+        if(first){first.scrollIntoView({behavior:'smooth',block:'center'});try{first.focus({preventScroll:true});}catch(e){}}}
+      return ok;
+    }
+    function mark(el,msg){el.classList.add('is-invalid');var s=document.createElement('span');s.className='caf-field-err';s.textContent=msg;el.insertAdjacentElement('afterend',s);
+      var clr=function(){if(!empty(el)&&!(el===ec&&!emailMatch())){el.classList.remove('is-invalid');if(s.parentNode)s.remove();el.removeEventListener('input',clr);el.removeEventListener('change',clr);}};
+      el.addEventListener('input',clr);el.addEventListener('change',clr);}
+    var curIdx=0,initial=true;
+    function go(i){if(i<0||i>=total)return;curIdx=i;pageEls.forEach(function(el,k){el.style.display=(k===i)?'':'none';});
+      var nl=document.getElementById('step-num-label');if(nl)nl.textContent='STEP '+(i+1)+' / '+total;
+      var sl=document.getElementById('step-name-label');if(sl)sl.textContent=pages[i].title.replace(/^STEP\d+\s*/,'');
+      if(dotsC){var ds=dotsC.querySelectorAll('.dot'),ls=dotsC.querySelectorAll('.dot-line');ds.forEach(function(dot,k){dot.classList.toggle('active',k===i);dot.classList.toggle('done',k<i);});ls.forEach(function(l,k){l.classList.toggle('done',k<i);});}
+      try{updateProgress();}catch(e){}
+      if(!initial){try{document.querySelector('.caf-step-bar').scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}}}
+    window.__gGoToField=function(el){if(!el||!el.closest)return;var pg=el.closest('.step-page');if(pg){var idx=pageEls.indexOf(pg);if(idx>=0)go(idx);}};
+    go(0);initial=false;
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else setTimeout(init,0);
+})();
+
+/* 送信 */
+(function(){
+  var form=document.getElementById('caf-form');if(!form)return;var btn=form.querySelector('.submit');
+  function visible(el){return !el.closest('.hide');}
+  function leadLabel(p){var t='';for(var i=0;i<p.childNodes.length;i++){var n=p.childNodes[i];if(n.nodeName==='BR')break;if(n.nodeType===3)t+=n.textContent;else if(n.nodeType===1&&['B','A','SMALL'].indexOf(n.tagName)>=0)t+=n.textContent;}return t.replace(/[\s　]+/g,' ').replace(/[（(]\s*(必須|任意)\s*[）)]/g,'').trim();}
+  function sectionOf(el){var c=el;while(c){var s=c.previousElementSibling;while(s){if(s.tagName==='H3')return s.textContent.replace(/\s+/g,' ').trim();s=s.previousElementSibling;}c=c.parentElement;}return '';}
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    var errs=[],firstBad=null;
+    form.querySelectorAll('input,select,textarea').forEach(function(el){
+      if(['file','checkbox','radio','hidden'].indexOf(el.type)>=0)return;if(!visible(el))return;
+      var p=el.closest('p');if(!p||!/必須/.test(p.textContent))return;
+      var v=String(el.value).trim();if(!v||v==='選択してください'){errs.push(leadLabel(p)+'は必須です');if(!firstBad)firstBad=el;}
+    });
+    if(!emailMatch()){errs.push('メールアドレス（確認用）が一致しません');if(!firstBad)firstBad=ec;}
+    var consent=form.querySelectorAll('.caf-check input[type=checkbox]');
+    if(!Array.prototype.every.call(consent,function(c){return c.checked;})){errs.push('同意項目すべてにチェックが必要です');if(!firstBad)firstBad=form.querySelector('.caf-check');}
+    var lic=[];form.querySelectorAll('.caf-up').forEach(function(l){var t=l.querySelector('.caf-up-ttl');if(t&&/運転免許証（[表裏]）/.test(t.textContent)){var f=l.querySelector('input[type=file]');lic.push(!!(f&&f.files&&f.files.length));}});
+    if(lic.length&&lic.some(function(x){return !x;})){errs.push('運転免許証（表・裏）の添付は必須です');if(!firstBad)firstBad=form.querySelector('.caf-up');}
+    if(errs.length){alert('ご確認ください：\n・'+errs.slice(0,8).join('\n・')+(errs.length>8?'\n・ ほか '+(errs.length-8)+'件':''));if(window.__gGoToField)window.__gGoToField(firstBad);
+      setTimeout(function(){if(firstBad&&firstBad.scrollIntoView)firstBad.scrollIntoView({behavior:'smooth',block:'center'});},80);return;}
+
+    var GAS=(typeof window.GUARANTOR_ENDPOINT==='string'&&window.GUARANTOR_ENDPOINT)?window.GUARANTOR_ENDPOINT:'';
+    if(!GAS){alert('プレビュー環境のため送信は行いません（本番では設定済みの送信先に送信されます）。');return;}
+
+    var fields=[];
+    form.querySelectorAll('input,select,textarea').forEach(function(el){
+      if(['file','checkbox','radio','hidden'].indexOf(el.type)>=0)return;if(!visible(el))return;
+      var v=String(el.value).trim();if(!v||v==='選択してください')return;var p=el.closest('p');if(!p)return;
+      fields.push({section:sectionOf(el),label:leadLabel(p),value:v});
+    });
+    function pick(re){for(var i=0;i<fields.length;i++){if(re.test(fields[i].label))return fields[i].value;}return '';}
+    var meta={name:pick(/^お名前/)||'',kana:pick(/フリガナ/),phone:pick(/携帯/)||pick(/電話/),email:(em.value||''),applicant:pick(/お申込者/)};
+
+    function readFile(file,label){return new Promise(function(res){var r=new FileReader();r.onload=function(){var s=String(r.result||'');var b64=s.indexOf(',')>=0?s.slice(s.indexOf(',')+1):s;res({label:label,name:file.name,mime:file.type||'application/octet-stream',size:file.size,dataBase64:b64});};r.onerror=function(){res(null);};r.readAsDataURL(file);});}
+    var fileJobs=[];
+    form.querySelectorAll('.caf-up input[type=file]').forEach(function(f){if(!f.files||!f.files.length)return;var ttl=((f.closest('.caf-up').querySelector('.caf-up-ttl')||{}).textContent||'書類').replace(/\s+/g,' ').trim();Array.prototype.forEach.call(f.files,function(file){fileJobs.push(readFile(file,ttl));});});
+
+    btn.disabled=true;var old=btn.textContent;btn.textContent='送信中…';
+    var settled=false,optimistic=null;
+    function showDone(){if(settled)return;settled=true;if(optimistic)clearTimeout(optimistic);var d=document.getElementById('caf-done');if(d){d.classList.remove('hide');d.scrollIntoView({behavior:'smooth',block:'center'});}form.querySelectorAll('input,select,textarea,button').forEach(function(el){el.disabled=true;});}
+    function showErr(msg){if(settled)return;settled=true;if(optimistic)clearTimeout(optimistic);alert(msg);btn.disabled=false;btn.textContent=old;}
+    Promise.all(fileJobs).then(function(files){
+      files=files.filter(Boolean);var hp=form.querySelector('[name=hp]');
+      var payload={type:'guarantor',source:'guarantor.html',submittedAt:new Date().toISOString(),hp:hp?hp.value:'',meta:meta,fields:fields,consent:true,files:files};
+      optimistic=setTimeout(showDone,2500);
+      return fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}).then(function(r){return r.json();});
+    }).then(function(res){if(settled)return;if(res&&(res.success||res.ok||res.status==='ok'))showDone();else showErr((res&&(res.message||(res.data&&res.data.message)))||'送信に失敗しました。時間をおいて再度お試しください。');})
+    .catch(function(){showDone();});
+  });
+})();
+</script>
+</body>
+</html>
