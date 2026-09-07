@@ -113,10 +113,14 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
 
 	$stock_page = ! empty( $s['stock_page_url'] ) ? $s['stock_page_url'] : 'https://carmelonline.jp/search/';
 
+	// キャンペーン：アクティブなら AIプロンプトに追記（会話中に自然に案内する）
+	$campaign_block = function_exists( 'carmel_cb_campaign_prompt_block' ) ? carmel_cb_campaign_prompt_block( $s ) : '';
+
 	$system = $s['system_prompt'] . $faq_block
 		. "\n\n【LINE相談リンク】" . $s['line_url']
 		. "\n【在庫一覧ページ】" . $stock_page
 		. $inventory_block
+		. $campaign_block
 		. carmel_cb_protocol_instruction();
 
 	$messages = array_merge(

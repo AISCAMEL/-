@@ -103,6 +103,8 @@
 		if (!greeted) {
 			greeted = true;
 			addBubble("bot", cfg.welcome);
+			// 🎯 キャンペーンバナー：期間中でONなら冒頭に表示
+			if (cfg.campaign && cfg.campaign.showBanner && cfg.campaign.title) { renderCampaignBanner(cfg.campaign); }
 			// お名前・メール確認モード：先に連絡先を伺い、その後に用件へ進む
 			if (cfg.intakeOn && !visitor.done) {
 				showVisitorForm();
@@ -376,6 +378,23 @@
 			b.addEventListener("click", function () { sendText(s); });
 			row.appendChild(b);
 		});
+		msgBox.appendChild(row);
+		msgBox.scrollTop = msgBox.scrollHeight;
+	}
+
+	// 🎯 キャンペーンバナー
+	function renderCampaignBanner(cp) {
+		var row = document.createElement("div");
+		row.className = "ccb-msg bot";
+		var color = "var(--ccb-primary, #0b5cab)";
+		var html = '<div class="ccb-campaign" style="border:2px dashed ' + color + ';border-radius:12px;padding:12px 14px;background:#fff8e1;max-width:100%">'
+			+ '<div style="font-size:11px;color:' + color + ';font-weight:700;margin-bottom:4px">🎯 期間限定キャンペーン</div>'
+			+ '<div style="font-size:15px;font-weight:700;color:#1a2330;margin-bottom:6px">' + escapeHtml(cp.title) + '</div>'
+			+ (cp.body ? '<div style="font-size:13px;color:#374151;line-height:1.55;white-space:pre-wrap">' + escapeHtml(cp.body) + '</div>' : '')
+			+ ((cp.end || cp.start) ? '<div style="font-size:11px;color:#6b7280;margin-top:6px">期間: ' + escapeHtml((cp.start || '') + '〜' + (cp.end || '')) + '</div>' : '')
+			+ (cp.url ? '<div style="margin-top:8px"><a href="' + cp.url + '" target="_blank" rel="noopener" style="display:inline-block;background:' + color + ';color:#fff;padding:8px 14px;border-radius:999px;text-decoration:none;font-size:12px;font-weight:700">くわしく見る →</a></div>' : '')
+			+ '</div>';
+		row.innerHTML = html;
 		msgBox.appendChild(row);
 		msgBox.scrollTop = msgBox.scrollHeight;
 	}

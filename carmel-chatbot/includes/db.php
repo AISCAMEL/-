@@ -194,6 +194,26 @@ function carmel_cb_default_settings() {
 		// 後追いメール共通：署名（会社情報）とオプトアウトのご案内
 		'followup_signature'       => "──────────────────────────\nカーメル\nWeb : https://carmelonline.jp/\nLINE: https://omu247l0.autosns.app/line\nTel : 050-1793-5554\nMail: info@carmelonline.jp\n──────────────────────────",
 		'followup_unsub_note'      => '今後このようなご案内が不要な場合は、下記のリンクから配信停止できます。',
+		// 管理者通知（イベント別ON/OFF）
+		'admin_notify_email'       => '', // 空なら notify_email → admin_email へフォールバック
+		'notify_events'            => array(
+			'lead_apply'      => 1,
+			'lead_contact'    => 1,
+			'apply_click'     => 1,
+			'convo_started'   => 1,
+			'handoff_request' => 1,
+			'offhours_notify' => 1,
+			'followup_cv'     => 1,
+		),
+		// 🎯 キャンペーン誘導
+		'campaign_on'      => 0,
+		'campaign_title'   => '',
+		'campaign_body'    => '',
+		'campaign_url'     => '',
+		'campaign_start'   => '', // YYYY-MM-DD（空なら無制限）
+		'campaign_end'     => '', // YYYY-MM-DD（空なら無制限）
+		'campaign_show_banner' => 1, // チャット冒頭にバナー表示するか
+		'campaign_ai_hint' => 'ローンや車のご相談で、お客様のメリットになりそうな場面で自然に案内してください。強引な売り込みはしないこと。',
 		// 担当者につなぐ間の案内（ライブ待機）
 		'handoff_wait_msg' => '担当者におつなぎしています。つながるまで少々お待ちください…',
 		'handoff_busy_sec' => 15,       // この秒数つながらなければ「混雑」案内を出す

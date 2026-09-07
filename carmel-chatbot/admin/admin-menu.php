@@ -2,6 +2,17 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 /**
+ * 管理者通知イベント（チェックボックス群）保存用
+ */
+function carmel_cb_admin_sanitize_notify_events( $in ) {
+	$keys = array( 'lead_apply', 'lead_contact', 'apply_click', 'convo_started', 'handoff_request', 'offhours_notify', 'followup_cv' );
+	$out = array();
+	if ( ! is_array( $in ) ) { $in = array(); }
+	foreach ( $keys as $k ) { $out[ $k ] = ! empty( $in[ $k ] ) ? 1 : 0; }
+	return $out;
+}
+
+/**
  * 後追いメール（3段階）の保存用サニタイザ
  */
 function carmel_cb_admin_sanitize_stages( $in ) {
@@ -35,6 +46,7 @@ function carmel_cb_admin_menu() {
 	);
 	add_submenu_page( 'carmel-cb', '基本設定', '基本設定', 'manage_options', 'carmel-cb', 'carmel_cb_page_router' );
 	add_submenu_page( 'carmel-cb', '応答・人格', '応答・人格', 'manage_options', 'carmel-cb&tab=prompt', 'carmel_cb_page_router' );
+	add_submenu_page( 'carmel-cb', '分析', '📊 分析', 'manage_options', 'carmel-cb&tab=analytics', 'carmel_cb_page_router' );
 	add_submenu_page( 'carmel-cb', '学習データ(FAQ)', '学習データ(FAQ)', 'manage_options', 'carmel-cb&tab=faq', 'carmel_cb_page_router' );
 	add_submenu_page( 'carmel-cb', '申込・問い合わせ', '申込・問い合わせ', 'manage_options', 'carmel-cb&tab=leads', 'carmel_cb_page_router' );
 	add_submenu_page( 'carmel-cb', '会話ログ', '会話ログ', 'manage_options', 'carmel-cb&tab=logs', 'carmel_cb_page_router' );
@@ -63,6 +75,7 @@ function carmel_cb_page_router() {
 
 	switch ( $tab ) {
 		case 'prompt':     carmel_cb_view_prompt(); break;
+		case 'analytics':  carmel_cb_view_analytics(); break;
 		case 'faq':        carmel_cb_view_faq(); break;
 		case 'faqimport':  carmel_cb_view_faqimport(); break;
 		case 'leads':      carmel_cb_view_leads(); break;
@@ -77,6 +90,7 @@ function carmel_cb_render_tabs( $active ) {
 	$tabs = array(
 		'general'    => '基本設定',
 		'prompt'     => '応答・人格',
+		'analytics'  => '📊 分析',
 		'faq'        => '学習データ(FAQ)',
 		'faqimport'  => 'FAQ一括投入',
 		'leads'      => '申込・問い合わせ',
@@ -116,6 +130,8 @@ function carmel_cb_handle_post() {
 				'biz_end'         => max( 1, min( 24, (int) ( $_POST['biz_end'] ?? 19 ) ) ),
 				'biz_days'        => $days_in ? implode( ',', $days_in ) : '0,1,2,3,4,5,6',
 				'notify_email'    => sanitize_email( wp_unslash( $_POST['notify_email'] ?? '' ) ),
+				'admin_notify_email' => sanitize_text_field( wp_unslash( $_POST['admin_notify_email'] ?? '' ) ),
+				'notify_events'   => carmel_cb_admin_sanitize_notify_events( $_POST['notify_events'] ?? array() ),
 				'operator_name'       => sanitize_text_field( wp_unslash( $_POST['operator_name'] ?? '担当者' ) ),
 				'operator_avatar_url' => esc_url_raw( wp_unslash( $_POST['operator_avatar_url'] ?? '' ) ),
 				'chat_start_notify'   => isset( $_POST['chat_start_notify'] ) ? 1 : 0,
@@ -177,6 +193,15 @@ function carmel_cb_handle_post() {
 				// 会話離脱後追い
 				'convo_followup_on'        => isset( $_POST['convo_followup_on'] ) ? 1 : 0,
 				'convo_followup_stages'    => carmel_cb_admin_sanitize_stages( $_POST['convo_followup_stages'] ?? array() ),
+				// 🎯 キャンペーン
+				'campaign_on'           => isset( $_POST['campaign_on'] ) ? 1 : 0,
+				'campaign_title'        => sanitize_text_field( wp_unslash( $_POST['campaign_title'] ?? '' ) ),
+				'campaign_body'         => sanitize_textarea_field( wp_unslash( $_POST['campaign_body'] ?? '' ) ),
+				'campaign_url'          => esc_url_raw( wp_unslash( $_POST['campaign_url'] ?? '' ) ),
+				'campaign_start'        => sanitize_text_field( wp_unslash( $_POST['campaign_start'] ?? '' ) ),
+				'campaign_end'          => sanitize_text_field( wp_unslash( $_POST['campaign_end'] ?? '' ) ),
+				'campaign_show_banner'  => isset( $_POST['campaign_show_banner'] ) ? 1 : 0,
+				'campaign_ai_hint'      => sanitize_textarea_field( wp_unslash( $_POST['campaign_ai_hint'] ?? '' ) ),
 			) );
 			carmel_cb_notice( '見た目設定を保存しました。' );
 			break;
@@ -650,6 +675,32 @@ function carmel_cb_view_general() {
 				<td><input type="email" name="notify_email" value="<?php echo esc_attr( $s['notify_email'] ?? '' ); ?>" class="regular-text" placeholder="<?php echo esc_attr( get_option( 'admin_email' ) ); ?>（空なら管理者メール）"></td>
 			</tr>
 			<tr>
+				<th>🔔 管理者通知</th>
+				<td>
+					<p style="margin-top:0"><label>通知先メール（複数はカンマ区切り）</label><br>
+						<input type="text" name="admin_notify_email" value="<?php echo esc_attr( $s['admin_notify_email'] ?? '' ); ?>" class="regular-text" placeholder="空欄なら上の「通知先メール」を使用">
+					</p>
+					<p class="description" style="margin:6px 0 8px">Slack（Bot/Webhook）が設定されていれば同時に投稿されます。以下のイベントごとに通知ON/OFFを切り替えられます。</p>
+					<?php
+					$ev = is_array( $s['notify_events'] ?? null ) ? $s['notify_events'] : array();
+					$rows = array(
+						'convo_started'   => array( '👤 新規会話（お名前・メール入力完了）', 'お客様がチャットで名前・メールを入力した瞬間' ),
+						'apply_click'     => array( '📝 審査ボタン押下', '離脱の予兆（30分以内にフォーム送信が無ければ後追い起動）' ),
+						'lead_apply'      => array( '🎯 審査申込み送信', '実際に審査フォームが送信された' ),
+						'lead_contact'    => array( '✉️ お問い合わせ送信', 'お問い合わせフォームが送信された' ),
+						'handoff_request' => array( '🙋 担当者相談（営業時間内）', 'ライブ相談への切替を希望' ),
+						'offhours_notify' => array( '🌙 担当者相談（時間外）', '営業時間外の相談希望' ),
+						'followup_cv'     => array( '🏆 後追いメール経由でCV', '過去に離脱→後追い→今回申込 の流れ' ),
+					);
+					foreach ( $rows as $k => $r ) {
+						$on = ! isset( $ev[ $k ] ) || ! empty( $ev[ $k ] );
+						echo '<div style="margin-bottom:6px"><label><input type="checkbox" name="notify_events[' . esc_attr( $k ) . ']" value="1" ' . checked( $on, true, false ) . '> <strong>' . esc_html( $r[0] ) . '</strong> <span style="color:#6b7280">— ' . esc_html( $r[1] ) . '</span></label></div>';
+					}
+					?>
+					<p class="description">※ 同一イベントは1分以内なら1回のみ送信（連投防止）。</p>
+				</td>
+			</tr>
+			<tr>
 				<th>担当者の表示名</th>
 				<td>
 					<input type="text" name="operator_name" value="<?php echo esc_attr( $s['operator_name'] ?? '担当者' ); ?>" class="regular-text" placeholder="担当者">
@@ -991,6 +1042,113 @@ function carmel_cb_view_logs() {
 	<?php
 }
 
+/** 📊 分析ダッシュボード */
+function carmel_cb_view_analytics() {
+	global $wpdb;
+	$log_t   = $wpdb->prefix . CARMEL_CB_LOG_TABLE;
+	$lead_t  = $wpdb->prefix . 'carmel_cb_leads';
+	$apply_t = function_exists( 'carmel_cb_apply_table' ) ? carmel_cb_apply_table() : $wpdb->prefix . 'carmel_cb_apply_pending';
+	$convo_t = function_exists( 'carmel_cb_convo_fu_table' ) ? carmel_cb_convo_fu_table() : $wpdb->prefix . 'carmel_cb_convo_pending';
+
+	// 期間指定（?days=7 など、デフォルト30日）
+	$days = max( 1, min( 365, (int) ( $_GET['days'] ?? 30 ) ) );
+	$since = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days} days" ) );
+
+	$has = function ( $tbl ) use ( $wpdb ) { return $wpdb->get_var( "SHOW TABLES LIKE '" . esc_sql( $tbl ) . "'" ) === $tbl; };
+
+	// 基本メトリクス
+	$sessions = $has( $log_t ) ? (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(DISTINCT session_id) FROM $log_t WHERE created_at >= %s", $since ) ) : 0;
+	$user_msgs = $has( $log_t ) ? (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $log_t WHERE role='user' AND created_at >= %s", $since ) ) : 0;
+	$leads_apply = $has( $lead_t ) ? (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $lead_t WHERE type='apply' AND created_at >= %s", $since ) ) : 0;
+	$leads_contact = $has( $lead_t ) ? (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $lead_t WHERE type='contact' AND created_at >= %s", $since ) ) : 0;
+	$apply_clicks = $has( $apply_t ) ? (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $apply_t WHERE clicked_at >= %s", $since ) ) : 0;
+	$apply_completed = $has( $apply_t ) ? (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $apply_t WHERE completed=1 AND clicked_at >= %s", $since ) ) : 0;
+	$apply_sent = $has( $apply_t ) ? (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $apply_t WHERE stage >= 1 AND clicked_at >= %s", $since ) ) : 0;
+	$convo_tracked = $has( $convo_t ) ? (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $convo_t WHERE first_message_at >= %s", $since ) ) : 0;
+	$convo_resolved = $has( $convo_t ) ? (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $convo_t WHERE resolved=1 AND first_message_at >= %s", $since ) ) : 0;
+	$convo_sent = $has( $convo_t ) ? (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $convo_t WHERE stage >= 1 AND first_message_at >= %s", $since ) ) : 0;
+
+	// 派生指標
+	$intake_rate  = $sessions > 0 ? round( ( $convo_tracked / $sessions ) * 100, 1 ) : 0; // 名前・メール入力率（近似）
+	$cv_apply     = $apply_clicks > 0 ? round( ( $leads_apply / $apply_clicks ) * 100, 1 ) : 0;
+	$abandon_apply = $apply_clicks > 0 ? round( ( ( $apply_clicks - $apply_completed ) / $apply_clicks ) * 100, 1 ) : 0;
+	$abandon_convo = $convo_tracked > 0 ? round( ( ( $convo_tracked - $convo_resolved ) / $convo_tracked ) * 100, 1 ) : 0;
+
+	$optout_count = count( function_exists( 'carmel_cb_optout_list' ) ? carmel_cb_optout_list() : array() );
+
+	// 期間切替リンク
+	$mk_link = function ( $d ) use ( $days ) {
+		$url = admin_url( 'admin.php?page=carmel-cb&tab=analytics&days=' . $d );
+		$style = ( $days === $d ) ? 'font-weight:700;text-decoration:none;color:#000;background:#f0f0f1;padding:4px 10px;border-radius:4px' : 'text-decoration:none';
+		return '<a href="' . esc_url( $url ) . '" style="' . $style . '">' . $d . '日</a>';
+	};
+
+	// カード描画ヘルパ
+	$card = function ( $title, $value, $unit = '', $sub = '', $accent = '#0b5cab' ) {
+		echo '<div style="background:#fff;border:1px solid #dcdcde;border-radius:8px;padding:14px 16px;min-width:160px;flex:1">';
+		echo '<div style="font-size:12px;color:#6b7280;margin-bottom:6px">' . esc_html( $title ) . '</div>';
+		echo '<div style="font-size:28px;font-weight:700;color:' . esc_attr( $accent ) . '">' . esc_html( $value ) . ' <span style="font-size:12px;color:#6b7280;font-weight:normal">' . esc_html( $unit ) . '</span></div>';
+		if ( $sub ) { echo '<div style="font-size:11px;color:#6b7280;margin-top:4px">' . esc_html( $sub ) . '</div>'; }
+		echo '</div>';
+	};
+	?>
+	<h2>📊 分析ダッシュボード</h2>
+	<p>期間：<?php echo implode( ' / ', array( $mk_link( 1 ), $mk_link( 7 ), $mk_link( 30 ), $mk_link( 90 ), $mk_link( 365 ) ) ); ?>（過去<?php echo (int) $days; ?>日の集計）</p>
+
+	<h3 style="margin-top:20px">👥 全体（会話）</h3>
+	<div style="display:flex;flex-wrap:wrap;gap:10px">
+	<?php
+	$card( 'セッション数', number_format( $sessions ), '件', 'チャットが開かれた回数' );
+	$card( 'お客様の発言数', number_format( $user_msgs ), '通', '全セッション合計' );
+	$card( 'お名前・メール登録', number_format( $convo_tracked ), '件', '入力率 ' . $intake_rate . '%', '#059669' );
+	?>
+	</div>
+
+	<h3 style="margin-top:20px">🎯 CV（コンバージョン）</h3>
+	<div style="display:flex;flex-wrap:wrap;gap:10px">
+	<?php
+	$card( '審査申込', number_format( $leads_apply ), '件', '', '#dc2626' );
+	$card( 'お問い合わせ', number_format( $leads_contact ), '件', '', '#ea580c' );
+	$card( '審査 CV率', $cv_apply, '%', '審査ボタン→送信完了', '#0b5cab' );
+	?>
+	</div>
+
+	<h3 style="margin-top:20px">📩 後追いメール</h3>
+	<div style="display:flex;flex-wrap:wrap;gap:10px">
+	<?php
+	$card( '審査：ボタン押下', number_format( $apply_clicks ), '件', '離脱率 ' . $abandon_apply . '%' );
+	$card( '審査：後追い送信', number_format( $apply_sent ), '件', '未完了に送った回数' );
+	$card( '会話：追跡開始', number_format( $convo_tracked ), '件', '離脱率 ' . $abandon_convo . '%' );
+	$card( '会話：後追い送信', number_format( $convo_sent ), '件' );
+	$card( '配信停止済み', number_format( $optout_count ), '件', '累計（期間非依存）', '#6b7280' );
+	?>
+	</div>
+
+	<h3 style="margin-top:24px">📈 直近リード一覧（10件）</h3>
+	<?php
+	if ( $has( $lead_t ) ) {
+		$rows = $wpdb->get_results( "SELECT type, name, email, tel, created_at FROM $lead_t ORDER BY id DESC LIMIT 10" );
+		if ( $rows ) {
+			echo '<table class="widefat striped" style="max-width:900px"><thead><tr><th>日時</th><th>種別</th><th>お名前</th><th>メール</th><th>電話</th></tr></thead><tbody>';
+			foreach ( $rows as $r ) {
+				$type_label = $r->type === 'apply' ? '<span style="background:#dc2626;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px">審査</span>' : '<span style="background:#ea580c;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px">問合</span>';
+				echo '<tr><td>' . esc_html( $r->created_at ) . '</td><td>' . $type_label . '</td><td>' . esc_html( $r->name ) . '</td><td>' . esc_html( $r->email ) . '</td><td>' . esc_html( $r->tel ) . '</td></tr>';
+			}
+			echo '</tbody></table>';
+		} else {
+			echo '<p><em>まだリードがありません。</em></p>';
+		}
+	}
+	?>
+
+	<p style="margin-top:16px;font-size:12px;color:#6b7280">
+		※ 数字はプラグイン内部データに基づく概算です。<br>
+		※ 「お名前・メール登録」は intake フォーム完了ベース（v1.56.0 以降で有効）。<br>
+		※ 「配信停止」は累計値です（期間フィルタなし）。
+	</p>
+	<?php
+}
+
 /** 見た目設定 */
 function carmel_cb_view_appearance() {
 	$s = carmel_cb_get_settings();
@@ -1212,6 +1370,33 @@ function carmel_cb_view_appearance() {
 						}
 					}
 					?>
+				</td>
+			</tr>
+			<tr>
+				<th>🎯 キャンペーン誘導</th>
+				<td>
+					<label><input type="checkbox" name="campaign_on" value="1" <?php checked( ! empty( $s['campaign_on'] ) ); ?>> 有効にする</label>
+					<p class="description" style="margin-top:4px">
+						期間限定のキャンペーンを、チャット冒頭のバナーとAIの会話案内に自動反映します。
+						（期間外は自動で非表示になります）
+					</p>
+					<table style="margin-top:8px">
+						<tr><th style="text-align:left;padding:4px 8px 4px 0">タイトル</th><td><input type="text" name="campaign_title" value="<?php echo esc_attr( $s['campaign_title'] ?? '' ); ?>" class="large-text" placeholder="例：9月限定 頭金0円キャンペーン"></td></tr>
+						<tr><th style="text-align:left;padding:4px 8px 4px 0;vertical-align:top">本文</th><td><textarea name="campaign_body" rows="3" class="large-text" placeholder="例：この期間中のお申込みで、頭金0円・初月お支払い半額でご案内できます。"><?php echo esc_textarea( $s['campaign_body'] ?? '' ); ?></textarea></td></tr>
+						<tr><th style="text-align:left;padding:4px 8px 4px 0">詳細URL（任意）</th><td><input type="url" name="campaign_url" value="<?php echo esc_attr( $s['campaign_url'] ?? '' ); ?>" class="regular-text" placeholder="キャンペーン詳細ページ"></td></tr>
+						<tr><th style="text-align:left;padding:4px 8px 4px 0">期間</th><td><input type="date" name="campaign_start" value="<?php echo esc_attr( $s['campaign_start'] ?? '' ); ?>"> 〜 <input type="date" name="campaign_end" value="<?php echo esc_attr( $s['campaign_end'] ?? '' ); ?>"> <span class="description">（両方空欄なら無期限）</span></td></tr>
+						<tr><th style="text-align:left;padding:4px 8px 4px 0">バナー表示</th><td><label><input type="checkbox" name="campaign_show_banner" value="1" <?php checked( ! empty( $s['campaign_show_banner'] ) ); ?>> チャット冒頭にバナーを表示する</label></td></tr>
+						<tr><th style="text-align:left;padding:4px 8px 4px 0;vertical-align:top">AIへの案内方針</th><td><textarea name="campaign_ai_hint" rows="2" class="large-text" placeholder="どんな場面で・どんなトーンで案内するか"><?php echo esc_textarea( $s['campaign_ai_hint'] ?? '' ); ?></textarea><p class="description">AIがキャンペーンを会話中でどう扱うかの指示です。例：「ローンの支払い相談で興味を示した時だけ自然に案内。押し売り厳禁」</p></td></tr>
+					</table>
+					<?php if ( function_exists( 'carmel_cb_campaign_is_active' ) ) : ?>
+						<p style="margin-top:10px">現在の状態：
+							<?php if ( carmel_cb_campaign_is_active( $s ) ) : ?>
+								<strong style="color:#059669">🟢 アクティブ（配信中）</strong>
+							<?php else : ?>
+								<strong style="color:#6b7280">⚫ 非アクティブ（無効 or 期間外 or 未設定）</strong>
+							<?php endif; ?>
+						</p>
+					<?php endif; ?>
 				</td>
 			</tr>
 			<tr>

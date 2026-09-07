@@ -134,16 +134,12 @@ function carmel_cb_handle_visitor( WP_REST_Request $request ) {
 	// セッションに保存（会話ミラー／担当者引き継ぎでお客様名を表示するために使う）
 	set_transient( carmel_cb_visitor_key( $sid ), array( 'name' => $name, 'email' => $email, 'page' => $page ), 3 * HOUR_IN_SECONDS );
 
-	// 通知：Bot（双方向）ならスレッド冒頭にお客様情報。未設定ならWebhook等へお知らせ。
+	// 通知：Bot（双方向）ならスレッド冒頭にお客様情報。それとは別に、管理者通知フック発火。
 	if ( carmel_cb_slack_live_on( $s ) ) {
 		carmel_cb_convo_ensure( $s, $sid, $page, carmel_cb_within_hours( $s ) ? '（営業時間内）' : '（営業時間外）' );
-	} elseif ( function_exists( 'carmel_cb_slack_notify_text' ) ) {
-		$txt = "🆕 新しいお客様がチャットを開始しました\n"
-			. 'お名前: ' . $name . "\n"
-			. 'メール: ' . ( $email !== '' ? $email : '(未入力)' ) . "\n"
-			. 'ページ: ' . ( $page !== '' ? $page : '(不明)' );
-		carmel_cb_slack_notify_text( $s, $txt );
 	}
+	// 統一通知（notify.php が受信）：Bot設定の有無に依らず、管理者にお知らせ
+	do_action( 'carmel_cb_convo_started', $email, $name, $sid, $page );
 
 	return new WP_REST_Response( array( 'ok' => true ), 200 );
 }
@@ -169,17 +165,30 @@ function carmel_cb_handle_convo_handoff( WP_REST_Request $request ) {
 	$s = carmel_cb_get_settings();
 	if ( empty( $s['handoff_enabled'] ) ) { return new WP_REST_Response( array( 'mode' => 'disabled' ), 200 ); }
 
-	$within = carmel_cb_within_hours( $s );
-	if ( ! $within ) {
-		return new WP_REST_Response( array( 'mode' => 'offhours', 'msg' => (string) ( $s['handoff_offhours_msg'] ?? '' ) ), 200 );
-	}
-	if ( ! carmel_cb_slack_live_on( $s ) ) { return new WP_REST_Response( array( 'mode' => 'notify' ), 200 ); }
-
 	$b   = $request->get_json_params();
 	$sid = sanitize_text_field( $b['session_id'] ?? '' );
 	$q   = sanitize_textarea_field( $b['question'] ?? '' );
+
+	// intake でメール取得済みなら通知に含める
+	$email = '';
+	if ( function_exists( 'carmel_cb_visitor_key' ) && $sid !== '' ) {
+		$v = get_transient( carmel_cb_visitor_key( $sid ) );
+		if ( is_array( $v ) ) { $email = (string) ( $v['email'] ?? '' ); }
+	}
+
+	$within = carmel_cb_within_hours( $s );
+	if ( ! $within ) {
+		do_action( 'carmel_cb_handoff_requested', 'offhours', $sid, $q, $email );
+		return new WP_REST_Response( array( 'mode' => 'offhours', 'msg' => (string) ( $s['handoff_offhours_msg'] ?? '' ) ), 200 );
+	}
+	if ( ! carmel_cb_slack_live_on( $s ) ) {
+		do_action( 'carmel_cb_handoff_requested', 'notify', $sid, $q, $email );
+		return new WP_REST_Response( array( 'mode' => 'notify' ), 200 );
+	}
+
 	// 担当者に相談＝行動を起こした → 会話離脱後追いは解決扱い
 	if ( function_exists( 'carmel_cb_convo_fu_resolve' ) ) { carmel_cb_convo_fu_resolve( $sid ); }
+	do_action( 'carmel_cb_handoff_requested', 'live', $sid, $q, $email );
 	$sess = carmel_cb_convo_ensure( $s, $sid, esc_url_raw( $b['page'] ?? '' ), '（営業時間内）' );
 	if ( ! $sess ) { return new WP_REST_Response( array( 'mode' => 'notify' ), 200 ); }
 

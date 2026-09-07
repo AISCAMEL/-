@@ -45,6 +45,7 @@ function carmel_cb_js_config( $s, $extra = array() ) {
 		'visitorUrl'      => esc_url_raw( rest_url( 'carmel-cb/v1/visitor' ) ),
 		'applyClickUrl'   => esc_url_raw( rest_url( 'carmel-cb/v1/apply-click' ) ),
 		'applyFollowupOn' => ! empty( $s['apply_followup_on'] ),
+		'campaign'        => function_exists( 'carmel_cb_campaign_data' ) ? carmel_cb_campaign_data( $s ) : null,
 		'convoPollUrl'    => esc_url_raw( rest_url( 'carmel-cb/v1/convo/poll' ) ),
 		'convoSendUrl'    => esc_url_raw( rest_url( 'carmel-cb/v1/convo/send' ) ),
 		'convoHandoffUrl' => esc_url_raw( rest_url( 'carmel-cb/v1/convo/handoff' ) ),
