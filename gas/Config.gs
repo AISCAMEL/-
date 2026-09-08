@@ -68,10 +68,22 @@ function getConfig() {
     // PDF.co の APIキー（https://pdf.co でサインアップ後に取得）
     PDFCO_API_KEY: "",
 
-    // ── 本部手数料（加盟店へ請求する固定手数料）──
-    USS_FEE_RAKUSATSU: 11000, // 落札手数料
-    USS_FEE_FURIKOMI: 550,    // 振込手数料
-    // 合計＝11,550円（＝上の2つの合計。コード側で自動計算）
+    // ── 本部手数料（加盟店へ請求）──
+    //   合計 ＝ 固定(落札11,000 + 振込550) ＋ 粗利×ロイヤリティ率
+    USS_FEE_RAKUSATSU: 11000,   // 固定：落札手数料
+    USS_FEE_FURIKOMI: 550,      // 固定：振込手数料
+    USS_ROYALTY_RATE: 0.05,     // 粗利（成約金額−仕入れ）に対する本部手数料率＝5%
+
+    // ── 請求書（加盟店向け）発行元情報 ──
+    INV_ISSUER_NAME: "合同会社アイズ",
+    INV_ISSUER_ZIP: "266-0026",
+    INV_ISSUER_ADDR: "福島県いわき市四倉町細谷字大町1番",
+    INV_ISSUER_TEL: "0246-38-4641",
+    INV_ISSUER_FAX: "0246-38-4643",
+    INV_BANK: "PayPay銀行　ビジネス営業部　普通　3196378",
+    INV_BANK_HOLDER: "ド）アイズ　ダイヒョウシャイン　ヨシダイッペイ",
+    // 請求書PDFの出力先フォルダID（空欄ならマイドライブ直下 "USS請求書PDF"）
+    INV_PDF_FOLDER_ID: "",
 
     // ── 入金消し込み（runReconciliation）用 ──
     //   銀行の入出金明細CSVを置くGoogleドライブ フォルダID（任意）。
@@ -81,8 +93,10 @@ function getConfig() {
     USS_MATCH_TOLERANCE: 0,
 
     // ⑧ USS関連のシート名（基本変更不要）
-    SHEET_USS: "USS精算_加盟店",   // 加盟店向け精算（転写先）
-    SHEET_NYUKIN: "入金消し込み"    // 入金突合・消し込み管理
+    SHEET_USS: "USS精算_明細",       // 精算書の明細（転写先・仕入れ入力・手数料自動計算）
+    SHEET_NYUKIN: "入金消し込み",     // 入金突合・消し込み管理
+    SHEET_INVOICE_LOG: "請求書控え",  // 発行した請求書の一覧（システム管理用）
+    SHEET_PARTNER: "加盟店マスタ"     // 加盟店名→住所/〒 の対応（請求書の宛先に使用）
   };
 }
 
