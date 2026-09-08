@@ -207,6 +207,7 @@ function carmel_cb_default_settings() {
 		),
 		// 🎯 キャンペーン誘導
 		'campaign_on'      => 0,
+		'campaign_seed'    => '', // AI下書きの元となるメモ・キーワード
 		'campaign_title'   => '',
 		'campaign_body'    => '',
 		'campaign_url'     => '',

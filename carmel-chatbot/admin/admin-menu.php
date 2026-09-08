@@ -195,6 +195,7 @@ function carmel_cb_handle_post() {
 				'convo_followup_stages'    => carmel_cb_admin_sanitize_stages( $_POST['convo_followup_stages'] ?? array() ),
 				// 🎯 キャンペーン
 				'campaign_on'           => isset( $_POST['campaign_on'] ) ? 1 : 0,
+				'campaign_seed'         => sanitize_textarea_field( wp_unslash( $_POST['campaign_seed'] ?? '' ) ),
 				'campaign_title'        => sanitize_text_field( wp_unslash( $_POST['campaign_title'] ?? '' ) ),
 				'campaign_body'         => sanitize_textarea_field( wp_unslash( $_POST['campaign_body'] ?? '' ) ),
 				'campaign_url'          => esc_url_raw( wp_unslash( $_POST['campaign_url'] ?? '' ) ),
@@ -245,6 +246,26 @@ function carmel_cb_handle_post() {
 				$msg .= '<br><small>下の「診断」で原因が確認できます。多くの場合、WordPressから外部にメールを送るためのSMTP設定が未登録です。</small>';
 				carmel_cb_notice( $msg );
 			}
+			break;
+
+		case 'campaign_ai_draft':
+			$seed = sanitize_textarea_field( wp_unslash( $_POST['campaign_seed'] ?? '' ) );
+			if ( ! function_exists( 'carmel_cb_campaign_ai_draft' ) ) { carmel_cb_notice( 'キャンペーンAI機能が読み込まれていません。', 'error' ); break; }
+			$r = carmel_cb_campaign_ai_draft( $seed );
+			if ( empty( $r['ok'] ) ) { carmel_cb_notice( '❌ AI下書きに失敗：' . ( $r['error'] ?? '' ), 'error' ); break; }
+			// seed も同時に保存しておく（後で再生成できるように）
+			carmel_cb_update_settings( array(
+				'campaign_seed'    => $seed,
+				'campaign_title'   => $r['title'],
+				'campaign_body'    => $r['body'],
+				'campaign_ai_hint' => $r['hint'],
+			) );
+			carmel_cb_notice(
+				'✅ AIがキャンペーン内容を作成しました。<br>'
+				. '<strong>タイトル：</strong>' . esc_html( $r['title'] ) . '<br>'
+				. '<strong>本文：</strong>' . esc_html( mb_substr( $r['body'], 0, 120 ) ) . '<br>'
+				. '内容を確認して、必要なら手直しして「保存」してください。'
+			);
 			break;
 
 		case 'followup_diagnose':
@@ -1380,6 +1401,17 @@ function carmel_cb_view_appearance() {
 						期間限定のキャンペーンを、チャット冒頭のバナーとAIの会話案内に自動反映します。
 						（期間外は自動で非表示になります）
 					</p>
+
+					<div style="background:#eef7ff;border:1px solid #b6dcff;border-radius:8px;padding:12px;margin:12px 0">
+						<h4 style="margin:0 0 6px">🤖 AIで内容を自動作成</h4>
+						<p class="description" style="margin:0 0 6px">キャンペーンのメモ・キーワードを入力して「AIで作成する」を押すと、みほ AI が下のタイトル・本文・案内方針を自動で書き上げます。生成後は自由に手直しできます。</p>
+						<textarea name="campaign_seed" rows="3" class="large-text" placeholder="例：9月末まで、頭金0円、初月半額、他社NGの方歓迎"><?php echo esc_textarea( $s['campaign_seed'] ?? '' ); ?></textarea>
+						<div style="margin-top:8px">
+							<button type="submit" name="carmel_cb_action" value="campaign_ai_draft" class="button button-primary">🤖 AIで作成する</button>
+							<span class="description" style="margin-left:8px">※押すと下の「タイトル/本文/案内方針」が上書きされます</span>
+						</div>
+					</div>
+
 					<table style="margin-top:8px">
 						<tr><th style="text-align:left;padding:4px 8px 4px 0">タイトル</th><td><input type="text" name="campaign_title" value="<?php echo esc_attr( $s['campaign_title'] ?? '' ); ?>" class="large-text" placeholder="例：9月限定 頭金0円キャンペーン"></td></tr>
 						<tr><th style="text-align:left;padding:4px 8px 4px 0;vertical-align:top">本文</th><td><textarea name="campaign_body" rows="3" class="large-text" placeholder="例：この期間中のお申込みで、頭金0円・初月お支払い半額でご案内できます。"><?php echo esc_textarea( $s['campaign_body'] ?? '' ); ?></textarea></td></tr>
