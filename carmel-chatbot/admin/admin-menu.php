@@ -193,6 +193,11 @@ function carmel_cb_handle_post() {
 				// 会話離脱後追い
 				'convo_followup_on'        => isset( $_POST['convo_followup_on'] ) ? 1 : 0,
 				'convo_followup_stages'    => carmel_cb_admin_sanitize_stages( $_POST['convo_followup_stages'] ?? array() ),
+				// 🔔 通知音・離脱時メール
+				'sound_on'                 => isset( $_POST['sound_on'] ) ? 1 : 0,
+				'away_email_on'            => isset( $_POST['away_email_on'] ) ? 1 : 0,
+				'away_email_subject'       => sanitize_text_field( wp_unslash( $_POST['away_email_subject'] ?? '' ) ),
+				'away_email_body'          => wp_kses_post( wp_unslash( $_POST['away_email_body'] ?? '' ) ),
 				// 🎯 キャンペーン
 				'campaign_on'           => isset( $_POST['campaign_on'] ) ? 1 : 0,
 				'campaign_seed'         => sanitize_textarea_field( wp_unslash( $_POST['campaign_seed'] ?? '' ) ),
@@ -1420,6 +1425,28 @@ function carmel_cb_view_appearance() {
 						}
 					}
 					?>
+				</td>
+			</tr>
+			<tr>
+				<th>🔔 通知音＆離脱時メール</th>
+				<td>
+					<label><input type="checkbox" name="sound_on" value="1" <?php checked( ! empty( $s['sound_on'] ) ); ?>> チャットで通知音を鳴らす</label>
+					<p class="description" style="margin:4px 0 12px">
+						・会話開始時に控えめな2音チャイム（1セッション1回）<br>
+						・担当者から返信があった時に短い通知音<br>
+						※ ブラウザの仕様上、お客様が1度もクリック/タップしていない状態では音は鳴りません。
+					</p>
+
+					<label><input type="checkbox" name="away_email_on" value="1" <?php checked( ! empty( $s['away_email_on'] ) ); ?>> お客様が離脱中に担当者応答があればメール通知する</label>
+					<p class="description" style="margin:4px 0 8px">
+						タブを切り替えている・60秒以上無操作 の時に担当者返信があると、
+						お客様のメールアドレス宛に「担当者から返信があります」メールを自動送信。
+						同一セッションで10分以内は再送しません。
+					</p>
+					<p style="margin:8px 0 4px"><label>件名</label></p>
+					<input type="text" name="away_email_subject" value="<?php echo esc_attr( $s['away_email_subject'] ?? '' ); ?>" class="large-text" placeholder="【カーメル】担当者から返信があります">
+					<p style="margin:8px 0 4px"><label>本文（利用可: <code>{name}</code> <code>{page}</code> <code>{site}</code> <code>{signature}</code> <code>{unsubscribe_url}</code> <code>{unsub_note}</code>）</label></p>
+					<textarea name="away_email_body" rows="8" class="large-text" style="font-family:inherit"><?php echo esc_textarea( $s['away_email_body'] ?? '' ); ?></textarea>
 				</td>
 			</tr>
 			<tr>

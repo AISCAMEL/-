@@ -205,6 +205,11 @@ function carmel_cb_default_settings() {
 			'offhours_notify' => 1,
 			'followup_cv'     => 1,
 		),
+		// 🔔 通知音＆離脱時メール
+		'sound_on'          => 1, // 会話開始チャイム＋担当者応答音を鳴らす
+		'away_email_on'     => 1, // 離脱中に担当者応答があればメール通知
+		'away_email_subject' => '【カーメル】担当者から返信があります',
+		'away_email_body'    => "{name} 様\n\nカーメルの みほ です😊\n先ほどご相談中の担当者から返信が届いています。\n\n引き続きチャットで会話を続けていただけます。\n▼ チャット画面に戻る\n{page}\n\nチャット画面が閉じていた場合は、下記からもう一度お開きください。\n▼ カーメル\n{site}\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n",
 		// 🎯 キャンペーン誘導
 		'campaign_on'      => 0,
 		'campaign_seed'    => '', // AI下書きの元となるメモ・キーワード

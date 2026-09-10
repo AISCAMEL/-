@@ -112,7 +112,55 @@ add_action( 'rest_api_init', function () {
 	register_rest_route( $ns, '/convo/send',    array( 'methods' => 'POST', 'callback' => 'carmel_cb_handle_convo_send',    'permission_callback' => '__return_true' ) );
 	register_rest_route( $ns, '/convo/handoff', array( 'methods' => 'POST', 'callback' => 'carmel_cb_handle_convo_handoff', 'permission_callback' => '__return_true' ) );
 	register_rest_route( $ns, '/visitor',       array( 'methods' => 'POST', 'callback' => 'carmel_cb_handle_visitor',       'permission_callback' => '__return_true' ) );
+	register_rest_route( $ns, '/away-notify',   array( 'methods' => 'POST', 'callback' => 'carmel_cb_handle_away_notify',   'permission_callback' => '__return_true' ) );
 } );
+
+/**
+ * 🔔 離脱中のお客様に「担当者から返信があります」メールを送る
+ * - 同一セッションで10分以内は再送しない（サーバー側でも制限）
+ */
+function carmel_cb_handle_away_notify( WP_REST_Request $r ) {
+	$s = carmel_cb_get_settings();
+	if ( empty( $s['away_email_on'] ) ) { return new WP_REST_Response( array( 'ok' => false, 'reason' => 'off' ), 200 ); }
+
+	$b   = $r->get_json_params();
+	$sid = sanitize_text_field( $b['session_id'] ?? '' );
+	$page = esc_url_raw( $b['page'] ?? '' );
+	if ( $sid === '' ) { return new WP_REST_Response( array( 'ok' => false, 'reason' => 'no_sid' ), 200 ); }
+
+	// 訪問者情報を取得
+	if ( ! function_exists( 'carmel_cb_visitor_key' ) ) { return new WP_REST_Response( array( 'ok' => false ), 200 ); }
+	$v = get_transient( carmel_cb_visitor_key( $sid ) );
+	if ( ! is_array( $v ) || empty( $v['email'] ) || ! is_email( $v['email'] ) ) {
+		return new WP_REST_Response( array( 'ok' => false, 'reason' => 'no_email' ), 200 );
+	}
+
+	// 再送防止（セッションキー）
+	$lock_key = 'ccb_awaymail_' . md5( $sid );
+	if ( get_transient( $lock_key ) ) { return new WP_REST_Response( array( 'ok' => false, 'reason' => 'throttled' ), 200 ); }
+	set_transient( $lock_key, 1, 10 * MINUTE_IN_SECONDS );
+
+	$name  = (string) ( $v['name'] ?? 'お客様' );
+	$email = (string) $v['email'];
+	$site  = home_url( '/' );
+	$signature = (string) ( $s['followup_signature'] ?? '' );
+	$unsub_url = function_exists( 'carmel_cb_unsub_url' ) ? carmel_cb_unsub_url( $email ) : '';
+	$unsub_note = (string) ( $s['followup_unsub_note'] ?? '' );
+
+	$subject = (string) ( $s['away_email_subject'] ?? '【カーメル】担当者から返信があります' );
+	$body_tpl = (string) ( $s['away_email_body'] ?? "{name} 様\n\nカーメルの みほ です😊\n先ほどご相談中の担当者から返信が届いています。\n\n引き続きチャットで会話を続けていただけます。\n▼ チャット画面に戻る\n{page}\n\nチャット画面が閉じていた場合は、下記からもう一度お開きください。\n▼ カーメル\n{site}\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n" );
+
+	$vars = array( '{name}' => $name, '{page}' => $page ?: $site, '{site}' => $site, '{signature}' => $signature, '{unsubscribe_url}' => $unsub_url, '{unsub_note}' => $unsub_note );
+	$subject = strtr( $subject, $vars );
+	$body    = strtr( $body_tpl, $vars );
+
+	// 差出人は後追いメールと共通
+	$GLOBALS['carmel_cb_apply_sending'] = true;
+	$ok = wp_mail( $email, $subject, $body, array( 'Content-Type: text/plain; charset=UTF-8' ) );
+	$GLOBALS['carmel_cb_apply_sending'] = false;
+
+	return new WP_REST_Response( array( 'ok' => (bool) $ok, 'to' => $email ), 200 );
+}
 
 /**
  * チャット開始時のお客様情報（名前・メール）を受け取り、セッションに保存＋通知する。

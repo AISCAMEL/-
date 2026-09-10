@@ -22,6 +22,14 @@
 	var idle = { timer: null, count: 0 };
 	// 開始時のお客様情報（名前・メール）確認
 	var visitor = { name: "", email: "", done: false };
+	// 🔔 通知音・在席検知（担当者応答時に鳴らす / 離脱時はメール依頼）
+	var presence = {
+		lastActive: Date.now(),
+		startChimePlayed: false,
+		lastAwayNotifyAt: 0,
+		audioCtx: null,
+		userInteracted: false
+	};
 
 	document.addEventListener("DOMContentLoaded", init);
 	if (document.readyState !== "loading") init();
@@ -35,6 +43,7 @@
 		closeBtn = document.getElementById("carmel-cb-close");
 		if (!launcher || win.dataset.ready) return;
 		win.dataset.ready = "1";
+		bindPresence();
 
 		launcher.addEventListener("click", userToggle);
 		closeBtn.addEventListener("click", userToggle);
@@ -103,6 +112,7 @@
 		if (!greeted) {
 			greeted = true;
 			addBubble("bot", cfg.welcome);
+			playStartChime(); // 🔔 会話開始チャイム（控えめ、1セッション1回）
 			// 🎯 キャンペーンバナー：期間中でONなら冒頭に表示
 			if (cfg.campaign && cfg.campaign.showBanner && cfg.campaign.title) { renderCampaignBanner(cfg.campaign); }
 			// お名前・メール確認モード：先に連絡先を伺い、その後に用件へ進む
@@ -422,6 +432,9 @@
 					if (m.text) addOperator(m.text);
 					if (m.files && m.files.length) { m.files.forEach(function (f) { addOperatorMedia(f); }); }
 				});
+				// 🔔 担当者応答時：在席中なら通知音、離脱中ならメール通知
+				playOperatorPing();
+				maybeNotifyAway();
 			})
 			.catch(function () {});
 	}
@@ -529,7 +542,8 @@
 		fetch(cfg.handoffPollUrl + "?session_id=" + encodeURIComponent(ho.sid))
 			.then(function (r) { return r.json(); })
 			.then(function (d) {
-				(d && d.messages ? d.messages : []).forEach(function (m) {
+				var msgs = (d && d.messages ? d.messages : []);
+				msgs.forEach(function (m) {
 					if (!ho.connected) {
 						ho.connected = true;
 						clearTimeout(ho.giveup); clearTimeout(ho.busy); clearTimeout(ho.nudge);
@@ -538,6 +552,11 @@
 					if (m.text) addOperator(m.text);
 					if (m.files && m.files.length) { m.files.forEach(function (f) { addOperatorMedia(f); }); }
 				});
+				if (msgs.length) {
+					// 🔔 担当者応答時：在席中なら通知音、離脱中ならメール通知
+					playOperatorPing();
+					maybeNotifyAway();
+				}
 			})
 			.catch(function () {});
 	}
@@ -906,6 +925,75 @@
 		return String(s).replace(/[&<>"']/g, function (c) {
 			return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
 		});
+	}
+
+	/* ============ 🔔 通知音・在席検知 ============ */
+	function bindPresence() {
+		var mark = function () { presence.lastActive = Date.now(); };
+		["mousemove", "keydown", "touchstart", "click", "scroll", "focus"].forEach(function (ev) {
+			window.addEventListener(ev, mark, { passive: true });
+		});
+		// 音声再生を許可するには 1度のユーザー操作が必要（自動再生ブロック回避）
+		var arm = function () { presence.userInteracted = true; window.removeEventListener("click", arm); window.removeEventListener("touchstart", arm); window.removeEventListener("keydown", arm); };
+		window.addEventListener("click", arm);
+		window.addEventListener("touchstart", arm);
+		window.addEventListener("keydown", arm);
+		document.addEventListener("visibilitychange", function () { if (!document.hidden) mark(); });
+	}
+	function isUserPresent() {
+		if (document.hidden) return false;
+		return (Date.now() - presence.lastActive) < 60000; // 60秒以内に活動があれば在席
+	}
+	function playTone(freq, dur, volume) {
+		try {
+			if (cfg.soundOn === false) return; // 設定でOFF可能
+			if (!presence.userInteracted) return; // 未操作時は鳴らさない（ブラウザ制限）
+			if (!presence.audioCtx) {
+				var AC = window.AudioContext || window.webkitAudioContext;
+				if (!AC) return;
+				presence.audioCtx = new AC();
+			}
+			var ctx = presence.audioCtx;
+			var t = ctx.currentTime;
+			var osc = ctx.createOscillator();
+			var gain = ctx.createGain();
+			osc.type = "sine";
+			osc.frequency.setValueAtTime(freq, t);
+			gain.gain.setValueAtTime(0, t);
+			gain.gain.linearRampToValueAtTime(volume || 0.08, t + 0.02);
+			gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+			osc.connect(gain).connect(ctx.destination);
+			osc.start(t);
+			osc.stop(t + dur + 0.05);
+		} catch (e) {}
+	}
+	function playStartChime() {
+		if (presence.startChimePlayed) return;
+		presence.startChimePlayed = true;
+		// 控えめな2音チャイム（ソ→ド、短め）
+		playTone(784, 0.18, 0.05);
+		setTimeout(function () { playTone(1046, 0.22, 0.05); }, 130);
+	}
+	function playOperatorPing() {
+		// 明るめの2音（ド→ミ、少し長め）
+		playTone(880, 0.22, 0.10);
+		setTimeout(function () { playTone(1108, 0.28, 0.10); }, 170);
+	}
+	function maybeNotifyAway() {
+		if (!cfg.awayEmailOn) return;
+		if (isUserPresent()) return; // 在席中なら送らない
+		var now = Date.now();
+		if (now - presence.lastAwayNotifyAt < 10 * 60 * 1000) return; // 10分に1回まで
+		presence.lastAwayNotifyAt = now;
+		if (!cfg.awayNotifyUrl) return;
+		try {
+			fetch(cfg.awayNotifyUrl, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ session_id: sessionId, page: location.href }),
+				keepalive: true
+			}).catch(function () {});
+		} catch (e) {}
 	}
 	function linkify(s) {
 		// マークダウンのリンク [表示文](URL) → クリック可能なリンク
