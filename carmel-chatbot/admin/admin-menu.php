@@ -1071,23 +1071,31 @@ function carmel_cb_view_analytics() {
 	$apply_t = function_exists( 'carmel_cb_apply_table' ) ? carmel_cb_apply_table() : $wpdb->prefix . 'carmel_cb_apply_pending';
 	$convo_t = function_exists( 'carmel_cb_convo_fu_table' ) ? carmel_cb_convo_fu_table() : $wpdb->prefix . 'carmel_cb_convo_pending';
 
-	// 期間指定（?days=7 など、デフォルト30日）
-	$days = max( 1, min( 365, (int) ( $_GET['days'] ?? 30 ) ) );
-	$since = gmdate( 'Y-m-d H:i:s', strtotime( "-{$days} days" ) );
+	// 期間指定（?days=7 など、デフォルト30日 / 0=全期間）
+	$days = max( 0, min( 365, (int) ( $_GET['days'] ?? 30 ) ) );
+	// 各テーブルのTIMESTAMPは MySQLサーバー時刻ベースなので、DATE_SUB(NOW(), INTERVAL X DAY) で比較する（UTC/JSTズレ回避）
+	$since_sql = $days > 0 ? "DATE_SUB(NOW(), INTERVAL {$days} DAY)" : "'1970-01-01 00:00:00'";
 
 	$has = function ( $tbl ) use ( $wpdb ) { return $wpdb->get_var( "SHOW TABLES LIKE '" . esc_sql( $tbl ) . "'" ) === $tbl; };
 
-	// 基本メトリクス
-	$sessions = $has( $log_t ) ? (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(DISTINCT session_id) FROM $log_t WHERE created_at >= %s", $since ) ) : 0;
-	$user_msgs = $has( $log_t ) ? (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $log_t WHERE role='user' AND created_at >= %s", $since ) ) : 0;
-	$leads_apply = $has( $lead_t ) ? (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $lead_t WHERE type='apply' AND created_at >= %s", $since ) ) : 0;
-	$leads_contact = $has( $lead_t ) ? (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $lead_t WHERE type='contact' AND created_at >= %s", $since ) ) : 0;
-	$apply_clicks = $has( $apply_t ) ? (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $apply_t WHERE clicked_at >= %s", $since ) ) : 0;
-	$apply_completed = $has( $apply_t ) ? (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $apply_t WHERE completed=1 AND clicked_at >= %s", $since ) ) : 0;
-	$apply_sent = $has( $apply_t ) ? (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $apply_t WHERE stage >= 1 AND clicked_at >= %s", $since ) ) : 0;
-	$convo_tracked = $has( $convo_t ) ? (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $convo_t WHERE first_message_at >= %s", $since ) ) : 0;
-	$convo_resolved = $has( $convo_t ) ? (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $convo_t WHERE resolved=1 AND first_message_at >= %s", $since ) ) : 0;
-	$convo_sent = $has( $convo_t ) ? (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $convo_t WHERE stage >= 1 AND first_message_at >= %s", $since ) ) : 0;
+	// 基本メトリクス（期間フィルタ）
+	$sessions        = $has( $log_t )   ? (int) $wpdb->get_var( "SELECT COUNT(DISTINCT session_id) FROM $log_t WHERE created_at >= $since_sql" ) : 0;
+	$user_msgs       = $has( $log_t )   ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM $log_t WHERE role='user' AND created_at >= $since_sql" ) : 0;
+	$leads_apply     = $has( $lead_t )  ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM $lead_t WHERE type='apply' AND created_at >= $since_sql" ) : 0;
+	$leads_contact   = $has( $lead_t )  ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM $lead_t WHERE (type='contact' OR type='' OR type IS NULL) AND created_at >= $since_sql" ) : 0;
+	$apply_clicks    = $has( $apply_t ) ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM $apply_t WHERE clicked_at >= $since_sql" ) : 0;
+	$apply_completed = $has( $apply_t ) ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM $apply_t WHERE completed=1 AND clicked_at >= $since_sql" ) : 0;
+	$apply_sent      = $has( $apply_t ) ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM $apply_t WHERE stage >= 1 AND clicked_at >= $since_sql" ) : 0;
+	$convo_tracked   = $has( $convo_t ) ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM $convo_t WHERE first_message_at >= $since_sql" ) : 0;
+	$convo_resolved  = $has( $convo_t ) ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM $convo_t WHERE resolved=1 AND first_message_at >= $since_sql" ) : 0;
+	$convo_sent      = $has( $convo_t ) ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM $convo_t WHERE stage >= 1 AND first_message_at >= $since_sql" ) : 0;
+
+	// 累計値（期間フィルタなし）：0が本当に0か、期間フィルタで漏れたかを判別
+	$leads_total       = $has( $lead_t ) ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM $lead_t" ) : 0;
+	$leads_apply_all   = $has( $lead_t ) ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM $lead_t WHERE type='apply'" ) : 0;
+	$leads_contact_all = $has( $lead_t ) ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM $lead_t WHERE type<>'apply'" ) : 0;
+	$latest_lead_at    = $has( $lead_t ) ? (string) $wpdb->get_var( "SELECT created_at FROM $lead_t ORDER BY id DESC LIMIT 1" ) : '';
+	$type_breakdown    = $has( $lead_t ) ? (array) $wpdb->get_results( "SELECT type, COUNT(*) AS n FROM $lead_t GROUP BY type ORDER BY n DESC" ) : array();
 
 	// 派生指標
 	$intake_rate  = $sessions > 0 ? round( ( $convo_tracked / $sessions ) * 100, 1 ) : 0; // 名前・メール入力率（近似）
@@ -1114,7 +1122,23 @@ function carmel_cb_view_analytics() {
 	};
 	?>
 	<h2>📊 分析ダッシュボード</h2>
-	<p>期間：<?php echo implode( ' / ', array( $mk_link( 1 ), $mk_link( 7 ), $mk_link( 30 ), $mk_link( 90 ), $mk_link( 365 ) ) ); ?>（過去<?php echo (int) $days; ?>日の集計）</p>
+	<p>期間：<?php echo implode( ' / ', array( $mk_link( 1 ), $mk_link( 7 ), $mk_link( 30 ), $mk_link( 90 ), $mk_link( 365 ), $mk_link( 0 ) ) ); ?>
+		<?php echo $days === 0 ? '（全期間の集計）' : '（過去' . (int) $days . '日の集計）'; ?>
+	</p>
+	<div style="background:#eef7ff;border:1px solid #b6dcff;border-radius:6px;padding:8px 12px;margin:8px 0;font-size:12px;color:#374151">
+		<strong>📋 累計（期間フィルタなし）：</strong>
+		リード合計 <strong><?php echo (int) $leads_total; ?>件</strong>
+		（審査 <?php echo (int) $leads_apply_all; ?> / 問合 <?php echo (int) $leads_contact_all; ?>）
+		<?php if ( $latest_lead_at ) : ?>
+			　最新: <?php echo esc_html( $latest_lead_at ); ?>
+		<?php endif; ?>
+		<?php if ( $leads_total > 0 && $leads_apply + $leads_contact === 0 ) : ?>
+			<br><span style="color:#dc2626">⚠️ 累計データはあるのに期間内は0件です。期間を「全期間」に切り替えてご確認ください。</span>
+		<?php endif; ?>
+		<?php if ( $leads_total === 0 ) : ?>
+			<br><span style="color:#6b7280">まだ実際のフォーム送信がありません。テストとして「申込・問い合わせ」フォームを1件送信すると数字が反映されます。</span>
+		<?php endif; ?>
+	</div>
 
 	<h3 style="margin-top:20px">👥 全体（会話）</h3>
 	<div style="display:flex;flex-wrap:wrap;gap:10px">
@@ -1128,11 +1152,16 @@ function carmel_cb_view_analytics() {
 	<h3 style="margin-top:20px">🎯 CV（コンバージョン）</h3>
 	<div style="display:flex;flex-wrap:wrap;gap:10px">
 	<?php
-	$card( '審査申込', number_format( $leads_apply ), '件', '', '#dc2626' );
-	$card( 'お問い合わせ', number_format( $leads_contact ), '件', '', '#ea580c' );
-	$card( '審査 CV率', $cv_apply, '%', '審査ボタン→送信完了', '#0b5cab' );
+	$card( '審査申込', number_format( $leads_apply ), '件', '累計 ' . (int) $leads_apply_all . ' 件', '#dc2626' );
+	$card( 'お問い合わせ', number_format( $leads_contact ), '件', '累計 ' . (int) $leads_contact_all . ' 件', '#ea580c' );
+	$card( '審査 CV率', $cv_apply, '%', $apply_clicks > 0 ? '審査ボタン→送信完了' : '審査ボタン押下がまだありません', '#0b5cab' );
 	?>
 	</div>
+	<?php if ( ! empty( $type_breakdown ) && count( $type_breakdown ) > 2 ) : ?>
+		<p style="font-size:11px;color:#6b7280;margin:6px 0 0">
+			🩺 種別内訳（累計）：
+			<?php foreach ( $type_breakdown as $tb ) { echo '<code style="background:#f0f0f1;padding:2px 6px;border-radius:3px;margin-right:6px">' . esc_html( $tb->type === '' ? '(空)' : $tb->type ) . ': ' . (int) $tb->n . '</code>'; } ?>
+			<?php echo '</p>'; endif; ?>
 
 	<h3 style="margin-top:20px">📩 後追いメール</h3>
 	<div style="display:flex;flex-wrap:wrap;gap:10px">
