@@ -71,6 +71,10 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
 	$history    = isset( $body['messages'] ) && is_array( $body['messages'] ) ? $body['messages'] : array();
 	$session_id = isset( $body['session_id'] ) ? sanitize_text_field( $body['session_id'] ) : wp_generate_uuid4();
 
+	// 🧪 テストモード：管理者が管理画面で試すとき。ログ・通知・後追い・会話ミラー等の副作用を一切行わない。
+	// 管理者(manage_options)本人からのリクエストのみ有効。
+	$is_test = ! empty( $body['test'] ) && current_user_can( 'manage_options' );
+
 	// 最新のユーザー発話
 	$last_user = '';
 	for ( $i = count( $history ) - 1; $i >= 0; $i-- ) {
@@ -128,20 +132,21 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
 		carmel_cb_sanitize_history( $history )
 	);
 
-	// ログ：ユーザー発話
-	if ( $last_user !== '' ) {
+	// ログ：ユーザー発話（テストモードでは記録しない）
+	if ( $last_user !== '' && ! $is_test ) {
 		carmel_cb_log( $session_id, 'user', $last_user );
 	}
 
-	// 新規チャット開始の通知（初回のみ）。Slack Bot未設定のときだけ簡易通知（メール/Webhook/LINE WORKS）。
-	// Bot設定時は後段の「会話ミラー」がスレッドの先頭で開始を知らせる。
-	$user_turns = 0;
-	foreach ( $history as $h ) { if ( isset( $h['role'] ) && $h['role'] === 'user' ) { $user_turns++; } }
-	// お名前・メール確認（intake）が有効で、すでにお客様情報を登録済みのときは
-	// /visitor 側で「新しいお客様」を通知済みのため、二重通知を避ける。
-	$intake_notified = ( ! empty( $s['intake_on'] ) && function_exists( 'carmel_cb_visitor_key' ) && get_transient( carmel_cb_visitor_key( $session_id ) ) );
-	if ( $user_turns <= 1 && $last_user !== '' && ! $intake_notified && ( ! function_exists( 'carmel_cb_slack_live_on' ) || ! carmel_cb_slack_live_on( $s ) ) ) {
-		carmel_cb_notify_chat_start( $s, $last_user, $session_id, isset( $body['page'] ) ? $body['page'] : '' );
+	// 新規チャット開始の通知（初回のみ）。テストモードでは通知しない。
+	if ( ! $is_test ) {
+		$user_turns = 0;
+		foreach ( $history as $h ) { if ( isset( $h['role'] ) && $h['role'] === 'user' ) { $user_turns++; } }
+		// お名前・メール確認（intake）が有効で、すでにお客様情報を登録済みのときは
+		// /visitor 側で「新しいお客様」を通知済みのため、二重通知を避ける。
+		$intake_notified = ( ! empty( $s['intake_on'] ) && function_exists( 'carmel_cb_visitor_key' ) && get_transient( carmel_cb_visitor_key( $session_id ) ) );
+		if ( $user_turns <= 1 && $last_user !== '' && ! $intake_notified && ( ! function_exists( 'carmel_cb_slack_live_on' ) || ! carmel_cb_slack_live_on( $s ) ) ) {
+			carmel_cb_notify_chat_start( $s, $last_user, $session_id, isset( $body['page'] ) ? $body['page'] : '' );
+		}
 	}
 
 	// OpenRouter 呼び出し（モデルを順に試すフォールバック付き）
@@ -173,15 +178,18 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
 		if ( $inf !== '' ) { $parsed['action'] = $inf; $parsed['cta'] = true; }
 	}
 
-	carmel_cb_log( $session_id, 'assistant', $parsed['reply'] );
+	// 以降の記録・連携はテストモードでは全てスキップ
+	if ( ! $is_test ) {
+		carmel_cb_log( $session_id, 'assistant', $parsed['reply'] );
 
-	// 会話離脱後追い：AI返答が返るたびに「最終発言時刻」を更新（intakeでメール取得済みの場合のみ）
-	if ( function_exists( 'carmel_cb_convo_fu_touch' ) ) { carmel_cb_convo_fu_touch( $session_id ); }
+		// 会話離脱後追い：AI返答が返るたびに「最終発言時刻」を更新（intakeでメール取得済みの場合のみ）
+		if ( function_exists( 'carmel_cb_convo_fu_touch' ) ) { carmel_cb_convo_fu_touch( $session_id ); }
 
-	// 会話ミラー：Slackのスレッドに「お客様🙋 / AI🤖」を流す（スタッフが会話を見て割り込める）
-	if ( function_exists( 'carmel_cb_convo_mirror' ) && function_exists( 'carmel_cb_slack_live_on' ) && carmel_cb_slack_live_on( $s ) ) {
-		$within_lbl = carmel_cb_within_hours( $s ) ? '（営業時間内）' : '（時間外・AI自動対応中）';
-		carmel_cb_convo_mirror( $s, $session_id, $last_user, $parsed['reply'], isset( $body['page'] ) ? esc_url_raw( $body['page'] ) : '', $within_lbl );
+		// 会話ミラー：Slackのスレッドに「お客様🙋 / AI🤖」を流す（スタッフが会話を見て割り込める）
+		if ( function_exists( 'carmel_cb_convo_mirror' ) && function_exists( 'carmel_cb_slack_live_on' ) && carmel_cb_slack_live_on( $s ) ) {
+			$within_lbl = carmel_cb_within_hours( $s ) ? '（営業時間内）' : '（時間外・AI自動対応中）';
+			carmel_cb_convo_mirror( $s, $session_id, $last_user, $parsed['reply'], isset( $body['page'] ) ? esc_url_raw( $body['page'] ) : '', $within_lbl );
+		}
 	}
 
 	// AIが選んだ在庫IDを、実在庫のカード情報に変換（実在URLのみ・捏造防止）

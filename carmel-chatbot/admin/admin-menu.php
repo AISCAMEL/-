@@ -46,6 +46,7 @@ function carmel_cb_admin_menu() {
 	);
 	add_submenu_page( 'carmel-cb', '基本設定', '基本設定', 'manage_options', 'carmel-cb', 'carmel_cb_page_router' );
 	add_submenu_page( 'carmel-cb', '応答・人格', '応答・人格', 'manage_options', 'carmel-cb&tab=prompt', 'carmel_cb_page_router' );
+	add_submenu_page( 'carmel-cb', 'テスト会話', '🧪 テスト会話', 'manage_options', 'carmel-cb&tab=testchat', 'carmel_cb_page_router' );
 	add_submenu_page( 'carmel-cb', '分析', '📊 分析', 'manage_options', 'carmel-cb&tab=analytics', 'carmel_cb_page_router' );
 	add_submenu_page( 'carmel-cb', '学習データ(FAQ)', '学習データ(FAQ)', 'manage_options', 'carmel-cb&tab=faq', 'carmel_cb_page_router' );
 	add_submenu_page( 'carmel-cb', '申込・問い合わせ', '申込・問い合わせ', 'manage_options', 'carmel-cb&tab=leads', 'carmel_cb_page_router' );
@@ -75,6 +76,7 @@ function carmel_cb_page_router() {
 
 	switch ( $tab ) {
 		case 'prompt':     carmel_cb_view_prompt(); break;
+		case 'testchat':   carmel_cb_view_testchat(); break;
 		case 'analytics':  carmel_cb_view_analytics(); break;
 		case 'faq':        carmel_cb_view_faq(); break;
 		case 'faqimport':  carmel_cb_view_faqimport(); break;
@@ -90,6 +92,7 @@ function carmel_cb_render_tabs( $active ) {
 	$tabs = array(
 		'general'    => '基本設定',
 		'prompt'     => '応答・人格',
+		'testchat'   => '🧪 テスト会話',
 		'analytics'  => '📊 分析',
 		'faq'        => '学習データ(FAQ)',
 		'faqimport'  => 'FAQ一括投入',
@@ -899,6 +902,105 @@ function carmel_cb_view_prompt() {
 			<summary style="cursor:pointer;font-weight:600">📖 最新テンプレートを見る（参考）</summary>
 			<pre style="white-space:pre-wrap;font-family:'Menlo','Consolas',monospace;font-size:12px;margin-top:10px;background:#fff;padding:10px;border:1px solid #e5e7eb;border-radius:4px;max-height:400px;overflow:auto"><?php echo esc_html( $default_prompt ); ?></pre>
 		</details>
+	</div>
+	<?php
+}
+
+/** 🧪 テスト会話（本番AIで試す・ログや通知は残さない） */
+function carmel_cb_view_testchat() {
+	$s = carmel_cb_get_settings();
+	$endpoint = esc_url_raw( rest_url( 'carmel-cb/v1/chat' ) );
+	$nonce    = wp_create_nonce( 'wp_rest' );
+	$model    = esc_html( $s['model'] ?? '' );
+	$has_key  = ! empty( $s['api_key'] );
+	?>
+	<div class="ccb-card">
+		<h2 style="margin-top:0">🧪 テスト会話</h2>
+		<p>いま保存されている<strong>本番のAI設定（応答・人格プロンプト＋FAQ＋在庫）</strong>そのままで会話を試せます。
+		ここでの会話は<strong>ログに残らず、通知・後追いメール・Slack連携も一切動きません</strong>。お客様には表示されません。</p>
+		<p class="description">現在のモデル：<code><?php echo $model ?: '(未設定)'; ?></code>
+			<?php if ( ! $has_key ) : ?><span style="color:#dc2626">／⚠️ APIキー未設定のため動きません（応答・人格タブで設定）</span><?php endif; ?>
+			　プロンプトを編集したら <a href="<?php echo esc_url( admin_url( 'admin.php?page=carmel-cb&tab=prompt' ) ); ?>">応答・人格</a> で保存 → ここで再テスト、を繰り返せます。
+		</p>
+
+		<div id="ccb-test-log" style="border:1px solid #dcdcde;border-radius:8px;background:#f6f8fa;padding:14px;height:440px;overflow-y:auto;margin:12px 0"></div>
+
+		<div style="display:flex;gap:8px;align-items:flex-end">
+			<textarea id="ccb-test-input" rows="2" class="large-text" placeholder="お客様になったつもりで入力…（例：10年前に自己破産したけど車のローン組める？）" style="flex:1"></textarea>
+			<button id="ccb-test-send" class="button button-primary" style="height:56px">送信</button>
+			<button id="ccb-test-reset" class="button" style="height:56px">リセット</button>
+		</div>
+
+		<script>
+		(function(){
+			var endpoint = <?php echo wp_json_encode( $endpoint ); ?>;
+			var nonce    = <?php echo wp_json_encode( $nonce ); ?>;
+			var logEl   = document.getElementById('ccb-test-log');
+			var inputEl = document.getElementById('ccb-test-input');
+			var sendEl  = document.getElementById('ccb-test-send');
+			var resetEl = document.getElementById('ccb-test-reset');
+			var history = [];
+			var sid = 'admin-test-' + Date.now();
+
+			function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+			function bubble(role, text){
+				var mine = role === 'user';
+				var wrap = document.createElement('div');
+				wrap.style.cssText = 'display:flex;margin:8px 0;'+(mine?'justify-content:flex-end':'justify-content:flex-start');
+				var b = document.createElement('div');
+				b.style.cssText = 'max-width:78%;padding:10px 14px;border-radius:14px;white-space:pre-wrap;line-height:1.6;font-size:14px;'+
+					(mine ? 'background:#0b5cab;color:#fff;border-bottom-right-radius:4px' : 'background:#fff;color:#1a1a1a;border:1px solid #e3e8ee;border-bottom-left-radius:4px');
+				b.innerHTML = esc(text).replace(/\n/g,'<br>');
+				wrap.appendChild(b); logEl.appendChild(wrap); logEl.scrollTop = logEl.scrollHeight;
+			}
+			function chips(list){
+				if(!list || !list.length) return;
+				var row = document.createElement('div');
+				row.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px';
+				list.forEach(function(t){
+					var c = document.createElement('button');
+					c.type='button'; c.textContent = t;
+					c.style.cssText='background:#fff;border:1px solid #0b5cab;color:#0b5cab;border-radius:999px;padding:5px 12px;font-size:12px;cursor:pointer';
+					c.onclick=function(){ inputEl.value = t; send(); };
+					row.appendChild(c);
+				});
+				logEl.appendChild(row); logEl.scrollTop = logEl.scrollHeight;
+			}
+			function typing(on){
+				var ex = document.getElementById('ccb-test-typing');
+				if(on){ if(ex) return; var w=document.createElement('div'); w.id='ccb-test-typing'; w.style.cssText='color:#6b7280;font-size:13px;margin:6px 0'; w.textContent='みほ が入力中…'; logEl.appendChild(w); logEl.scrollTop=logEl.scrollHeight; }
+				else { if(ex) ex.remove(); }
+			}
+			function send(){
+				var text = (inputEl.value||'').trim();
+				if(!text) return;
+				inputEl.value='';
+				bubble('user', text);
+				history.push({role:'user', content:text});
+				sendEl.disabled = true; typing(true);
+				fetch(endpoint, {
+					method:'POST',
+					headers:{ 'Content-Type':'application/json', 'X-WP-Nonce': nonce },
+					body: JSON.stringify({ messages: history, session_id: sid, test: true })
+				})
+				.then(function(r){ return r.json(); })
+				.then(function(d){
+					typing(false);
+					var reply = (d && d.reply) ? d.reply : '(応答なし)';
+					bubble('bot', reply);
+					history.push({role:'assistant', content:reply});
+					if(d && d.action){ bubble('bot', '［システム：CTAボタン表示 → '+d.action+'］'); }
+					if(d && d.cars && d.cars.length){ bubble('bot', '［システム：在庫カード '+d.cars.length+'台 表示］'); }
+					if(d && d.suggestions) chips(d.suggestions);
+				})
+				.catch(function(){ typing(false); bubble('bot','（通信エラー：APIキー・モデル設定を確認してください）'); })
+				.finally(function(){ sendEl.disabled=false; inputEl.focus(); });
+			}
+			sendEl.onclick = send;
+			resetEl.onclick = function(){ history=[]; sid='admin-test-'+Date.now(); logEl.innerHTML=''; inputEl.focus(); };
+			inputEl.addEventListener('keydown', function(e){ if(e.key==='Enter' && !e.shiftKey && !e.isComposing){ e.preventDefault(); send(); } });
+		})();
+		</script>
 	</div>
 	<?php
 }
