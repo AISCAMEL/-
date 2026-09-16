@@ -160,6 +160,11 @@ function carmel_cb_handle_post() {
 			carmel_cb_run_slack_test();
 			break;
 
+		case 'reset_prompt_to_default':
+			carmel_cb_update_settings( array( 'system_prompt' => carmel_cb_default_prompt() ) );
+			carmel_cb_notice( '✅ 応答・人格プロンプトを最新テンプレートに更新しました。（自己破産・信用回復ローン説明・繰り返し防止・人らしい話し方を含む）' );
+			break;
+
 		case 'save_prompt':
 			carmel_cb_update_settings( array(
 				'system_prompt' => sanitize_textarea_field( wp_unslash( $_POST['system_prompt'] ?? '' ) ),
@@ -866,14 +871,34 @@ function carmel_cb_view_general() {
 /** 応答・人格 */
 function carmel_cb_view_prompt() {
 	$s = carmel_cb_get_settings();
+	$default_prompt = carmel_cb_default_prompt();
+	$is_outdated = trim( $s['system_prompt'] ) !== trim( $default_prompt );
 	?>
 	<div class="ccb-card">
 		<p>ここでボットの<strong>性格・話し方・守るべきルール</strong>を決めます。下のFAQ（学習データ）と合わせて使われます。</p>
+
+		<?php if ( $is_outdated ) : ?>
+		<div style="background:#fff8e1;border:1px solid #f0d9a8;border-radius:6px;padding:10px 14px;margin:10px 0">
+			<strong>💡 最新テンプレートが更新されています</strong>
+			<p style="margin:6px 0">
+				カーメル向けに最適化した最新版プロンプト（自己破産・債務整理・信用回復ローンの説明ルール、繰り返し防止、より人間らしい会話設計を含む）が用意されています。
+			</p>
+			<?php carmel_cb_form_open( 'reset_prompt_to_default' ); ?>
+				<button type="submit" class="button button-primary" onclick="return confirm('現在のプロンプトを最新テンプレートで上書きします。よろしいですか？');">✨ 最新テンプレートに更新する</button>
+			</form>
+		</div>
+		<?php endif; ?>
+
 		<?php carmel_cb_form_open( 'save_prompt' ); ?>
-		<textarea name="system_prompt" rows="20" class="large-text code"><?php echo esc_textarea( $s['system_prompt'] ); ?></textarea>
+		<textarea name="system_prompt" rows="24" class="large-text code" style="font-family:'Menlo','Consolas',monospace;font-size:12.5px"><?php echo esc_textarea( $s['system_prompt'] ); ?></textarea>
 		<p class="description">※ 金利や審査可否を断定させない指示は、コンプライアンス上そのまま残すことを推奨します。</p>
 		<?php submit_button( '保存する' ); ?>
 		</form>
+
+		<details style="margin-top:20px;background:#f9fafb;padding:10px 14px;border-radius:6px">
+			<summary style="cursor:pointer;font-weight:600">📖 最新テンプレートを見る（参考）</summary>
+			<pre style="white-space:pre-wrap;font-family:'Menlo','Consolas',monospace;font-size:12px;margin-top:10px;background:#fff;padding:10px;border:1px solid #e5e7eb;border-radius:4px;max-height:400px;overflow:auto"><?php echo esc_html( $default_prompt ); ?></pre>
+		</details>
 	</div>
 	<?php
 }
