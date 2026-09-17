@@ -84,5 +84,14 @@ A.sync = (function () {
     return { ok: true, answer: r.data.answer };
   };
 
-  return { health, push, pull, pullInbox, pushInbox, ai };
+  // 領収書OCR（サーバー経由でVision LLMに画像を渡し、日付/金額/取引先等を抽出）
+  const ocr = async (imageDataUrl, mime) => {
+    const c = cfg();
+    if (!c.url) return { ok: false, message: 'サーバーURLが未設定です' };
+    const r = await post('/api/ocr', { workspace: c.ws, token: c.token, image: imageDataUrl, mime });
+    if (r.status !== 200) return { ok: false, message: (r.data && r.data.error) || ('HTTP ' + r.status) };
+    return { ok: true, data: r.data.data };
+  };
+
+  return { health, push, pull, pullInbox, pushInbox, ai, ocr };
 })();

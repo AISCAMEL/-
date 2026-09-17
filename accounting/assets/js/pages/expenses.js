@@ -89,7 +89,38 @@ window.A = window.A || {};
     amtI.addEventListener('blur', () => { amtI.value = amtI.value ? U.yen(U.parseYen(amtI.value)) : ''; });
     buildMain(); refresh();
 
+    // 領収書OCR（AI連携が設定されているとき）
+    const aiConfigured = !!(S.settings.get().syncUrl && S.settings.get().syncWorkspace);
+    const ocrFile = el('input', { type: 'file', accept: 'image/*' });
+    const ocrStatus = el('span.muted.small');
+    const runOcr = async () => {
+      const f = ocrFile.files[0]; if (!f) return;
+      ocrStatus.textContent = '読み取り中…';
+      try {
+        const dataUrl = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error); r.readAsDataURL(f); });
+        const r = await A.sync.ocr(dataUrl, f.type);
+        if (!r.ok) { ocrStatus.textContent = '読み取り失敗：' + r.message; return; }
+        const d = r.data || {};
+        if (d.date) dateI.value = d.date;
+        if (d.amount) amtI.value = U.yen(d.amount);
+        if (d.summary || d.vendor) memoI.value = d.summary || d.vendor;
+        if (d.taxRatePercent === 8) taxSel.value = 'purchase8';
+        else if (d.taxRatePercent === 10) taxSel.value = 'purchase10';
+        // 取引先名から自動仕訳ルールで科目推定
+        const rules = S.settings.get().autoRules || [];
+        const hit = rules.find((x) => x.keyword && (d.vendor || d.summary || '').includes(x.keyword));
+        if (hit && mainWrap._sel) { mainWrap._sel.value = hit.account; taxSel.value = hit.tax; }
+        refresh();
+        ocrStatus.textContent = `読み取り完了：${d.vendor || ''} ¥${U.yen(d.amount || 0)}（内容を確認してください）`;
+      } catch (e) { ocrStatus.textContent = 'エラー：' + e.message; }
+    };
+    ocrFile.addEventListener('change', runOcr);
+    const ocrRow = aiConfigured
+      ? el('div.ocr-row', {}, [el('span.small', { text: '📷 領収書から読み取り：' }), ocrFile, ocrStatus])
+      : el('p.muted.small', { text: '📷 領収書OCRは、設定でクラウド同期＋AI連携を有効にすると利用できます。' });
+
     const body = el('div.editor', {}, [
+      ocrRow,
       el('div.form-row', {}, [
         el('label', {}, [el('span', { text: '日付' }), dateI]),
         el('label', {}, [el('span', { text: '種別' }), dirSel]),

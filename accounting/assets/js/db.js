@@ -8,7 +8,7 @@ A.db = (function () {
   'use strict';
 
   const DB_NAME = 'aizu_kaikei';
-  const DB_VERSION = 5; // v2:assets / v3:attachments / v4:auditlog / v5:payslips（給与明細）
+  const DB_VERSION = 6; // v2:assets /v3:attachments /v4:auditlog /v5:payslips /v6:products（商品）
   // オブジェクトストア（テーブル）一覧
   const STORES = {
     settings: { keyPath: 'key' },
@@ -20,6 +20,7 @@ A.db = (function () {
     attachments: { keyPath: 'id', indexes: [['date', 'date'], ['journalId', 'journalId']] },
     auditlog: { keyPath: 'id', indexes: [['ts', 'ts']] },
     payslips: { keyPath: 'id', indexes: [['month', 'month']] },
+    products: { keyPath: 'id' },
   };
 
   let _db = null;
@@ -80,6 +81,7 @@ A.db = (function () {
     insHealthRate: 5.0,
     insPensionRate: 9.15,
     insEmploymentRate: 0.6,
+    inventory: {},                         // 棚卸：{ 'YYYY-MM-DD'(期首日): { closing: 期末棚卸高 } }
     invoiceSeq: 0,                         // 請求書番号カウンタ
     estimateSeq: 0,                        // 見積書番号カウンタ
     journalSeq: 0,                         // 仕訳番号カウンタ

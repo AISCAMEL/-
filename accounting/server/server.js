@@ -128,6 +128,21 @@ const server = http.createServer(async (req, res) => {
     } catch (e) { return send(res, 502, { error: 'AI応答エラー: ' + e.message }); }
   }
 
+  // 領収書・請求書のOCR（Vision対応LLMで日付・金額・取引先等を抽出）
+  if (url === '/api/ocr' && req.method === 'POST') {
+    const body = await readBody(req);
+    if (!body || !body.workspace) return send(res, 400, { error: 'workspace は必須です' });
+    const rec = readWs(body.workspace);
+    if (rec && rec.token && rec.token !== body.token) return send(res, 401, { error: 'トークンが一致しません' });
+    const key = process.env.AI_API_KEY;
+    if (!key) return send(res, 501, { error: 'AI連携が未設定です（サーバーに AI_API_KEY を設定してください）' });
+    if (!body.image) return send(res, 400, { error: 'image が必要です' });
+    try {
+      const data = await askVision(body.image, body.mime || 'image/jpeg');
+      return send(res, 200, { data });
+    } catch (e) { return send(res, 502, { error: 'OCR応答エラー: ' + e.message }); }
+  }
+
   send(res, 404, { error: 'not found' });
 });
 
@@ -176,6 +191,46 @@ async function askAI(question, ctx) {
     system: sys, messages: [{ role: 'user', content: userMsg }],
   });
   return (r.content && r.content[0] && r.content[0].text) || '(応答が空です)';
+}
+
+/* ---- 領収書OCR（Vision） ----------------------------------------------- */
+const parseJsonLoose = (text) => {
+  const m = (text || '').match(/\{[\s\S]*\}/);
+  if (!m) return {};
+  try { return JSON.parse(m[0]); } catch (e) { return {}; }
+};
+async function askVision(imageDataUrl, mime) {
+  const provider = (process.env.AI_PROVIDER || 'anthropic').toLowerCase();
+  const key = process.env.AI_API_KEY;
+  const prompt = '添付の領収書または請求書の画像から次の項目をJSONだけで出力してください（説明文は不要）。'
+    + '{"date":"YYYY-MM-DD","amount":税込合計金額を整数,"vendor":"店名または発行者","taxRatePercent":10または8または0,"summary":"品目や用途の要約"}。'
+    + '読み取れない項目は null にしてください。';
+  const b64 = String(imageDataUrl).replace(/^data:[^;]+;base64,/, '');
+
+  let text;
+  if (provider === 'openai') {
+    const base = process.env.AI_API_BASE || 'https://api.openai.com';
+    const r = await httpsJson(`${base}/v1/chat/completions`, { Authorization: `Bearer ${key}` }, {
+      model: process.env.AI_VISION_MODEL || process.env.AI_MODEL || 'gpt-4o-mini', max_tokens: 400,
+      messages: [{ role: 'user', content: [{ type: 'text', text: prompt }, { type: 'image_url', image_url: { url: imageDataUrl.startsWith('data:') ? imageDataUrl : `data:${mime};base64,${b64}` } }] }],
+    });
+    text = r.choices && r.choices[0] && r.choices[0].message && r.choices[0].message.content;
+  } else {
+    const base = process.env.AI_API_BASE || 'https://api.anthropic.com';
+    const r = await httpsJson(`${base}/v1/messages`, { 'x-api-key': key, 'anthropic-version': '2023-06-01' }, {
+      model: process.env.AI_VISION_MODEL || process.env.AI_MODEL || 'claude-3-5-sonnet-latest', max_tokens: 400,
+      messages: [{ role: 'user', content: [{ type: 'text', text: prompt }, { type: 'image', source: { type: 'base64', media_type: mime, data: b64 } }] }],
+    });
+    text = r.content && r.content[0] && r.content[0].text;
+  }
+  const obj = parseJsonLoose(text);
+  return {
+    date: obj.date || null,
+    amount: Number(obj.amount) || null,
+    vendor: obj.vendor || null,
+    taxRatePercent: (obj.taxRatePercent === 8 || obj.taxRatePercent === 0) ? obj.taxRatePercent : (obj.taxRatePercent === 10 ? 10 : null),
+    summary: obj.summary || null,
+  };
 }
 
 server.listen(PORT, () => {

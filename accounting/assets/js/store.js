@@ -259,5 +259,22 @@ A.store = (function () {
     },
   };
 
-  return { settings, accounts, partners, journals, invoices, assets, attachments, payslips };
+  /* ---- 商品（棚卸） ----------------------------------------------------
+   * product = { id, name, unit, unitPrice(評価単価), note }
+   * ------------------------------------------------------------------- */
+  const products = {
+    async loadAll() {
+      const list = await db.all('products');
+      list.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ja'));
+      return list;
+    },
+    async save(p) {
+      if (!p.id) p.id = U.uid('pr');
+      await db.put('products', p);
+      return p;
+    },
+    async remove(id) { await db.del('products', id); },
+  };
+
+  return { settings, accounts, partners, journals, invoices, assets, attachments, payslips, products };
 })();

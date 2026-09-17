@@ -48,6 +48,7 @@ PORT=9000 node server/server.js
 | POST | `/api/inbox` | `{workspace, token, items:[…]}` | 取込Webhook。取引データを受信キューに追加 |
 | POST | `/api/inbox/pull` | `{workspace, token}` | 受信キューを取得して空にする `{items}` |
 | POST | `/api/ai` | `{workspace, token, question, context}` | AI会計相談。LLM に問い合わせて `{answer}` を返す |
+| POST | `/api/ocr` | `{workspace, token, image, mime}` | 領収書OCR。Vision LLM で `{date, amount, vendor, taxRatePercent, summary}` を抽出 |
 
 ## AI会計相談（LLM連携）
 
