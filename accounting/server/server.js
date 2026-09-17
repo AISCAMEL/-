@@ -11,9 +11,11 @@
  * ========================================================================= */
 'use strict';
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { URL } = require('url');
 
 const PORT = process.env.PORT || 8787;
 const DATA_DIR = path.join(__dirname, 'data');
@@ -109,8 +111,72 @@ const server = http.createServer(async (req, res) => {
     return send(res, 200, { items });
   }
 
+  /* ---- AI会計相談プロキシ（APIキーはサーバー側で保持） ------------------
+   * body {workspace, token, question, context}。環境変数で提供者を設定：
+   *   AI_API_KEY（必須）, AI_PROVIDER=anthropic|openai, AI_MODEL, AI_API_BASE
+   * ------------------------------------------------------------------- */
+  if (url === '/api/ai' && req.method === 'POST') {
+    const body = await readBody(req);
+    if (!body || !body.workspace) return send(res, 400, { error: 'workspace は必須です' });
+    const rec = readWs(body.workspace);
+    if (rec && rec.token && rec.token !== body.token) return send(res, 401, { error: 'トークンが一致しません' });
+    const key = process.env.AI_API_KEY;
+    if (!key) return send(res, 501, { error: 'AI連携が未設定です（サーバーに AI_API_KEY を設定してください）' });
+    try {
+      const answer = await askAI(body.question || '', body.context || {});
+      return send(res, 200, { answer });
+    } catch (e) { return send(res, 502, { error: 'AI応答エラー: ' + e.message }); }
+  }
+
   send(res, 404, { error: 'not found' });
 });
+
+/* ---- LLM 呼び出し（Anthropic / OpenAI） -------------------------------- */
+const httpsJson = (urlStr, headers, payload) => new Promise((resolve, reject) => {
+  const u = new URL(urlStr);
+  const lib = u.protocol === 'http:' ? http : https;
+  const data = JSON.stringify(payload);
+  const req = lib.request(u, { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) }, headers) }, (res) => {
+    let d = ''; res.on('data', (c) => (d += c));
+    res.on('end', () => { let b = {}; try { b = JSON.parse(d); } catch (e) {} (res.statusCode >= 200 && res.statusCode < 300) ? resolve(b) : reject(new Error((b.error && (b.error.message || b.error)) || ('HTTP ' + res.statusCode))); });
+  });
+  req.on('error', reject); req.write(data); req.end();
+});
+
+const buildContext = (ctx) => {
+  const m = (ctx && ctx.metrics) || {};
+  const y = (n) => '¥' + Math.round(Number(n) || 0).toLocaleString('ja-JP');
+  const lines = [
+    `売上: ${y(m.revenue)} / 費用: ${y(m.expense)} / 当期純利益: ${y(m.net)}`,
+    `現預金: ${y(m.cash)} / 売掛金: ${y(m.receivable)} / 買掛金: ${y(m.payable)}`,
+    `課税売上(税抜): ${y(m.taxableSalesNet)}`,
+  ];
+  if (ctx && ctx.alerts && ctx.alerts.length) lines.push('検出事項: ' + ctx.alerts.map((a) => a.text).join(' / '));
+  return lines.join('\n');
+};
+
+async function askAI(question, ctx) {
+  const provider = (process.env.AI_PROVIDER || 'anthropic').toLowerCase();
+  const key = process.env.AI_API_KEY;
+  const sys = 'あなたは日本の会計・税務に詳しいアシスタントです。提供される会社の会計データ（要約）を踏まえ、簡潔で実務的な助言を日本語で行ってください。断定は避け、税額や申告に関わる重要事項には必ず「最終的な判断は税理士等の専門家にご確認ください」と添えてください。';
+  const userMsg = `【当社の会計データ要約】\n${buildContext(ctx)}\n\n【質問】\n${question}`;
+
+  if (provider === 'openai') {
+    const base = process.env.AI_API_BASE || 'https://api.openai.com';
+    const r = await httpsJson(`${base}/v1/chat/completions`, { Authorization: `Bearer ${key}` }, {
+      model: process.env.AI_MODEL || 'gpt-4o-mini', max_tokens: 700,
+      messages: [{ role: 'system', content: sys }, { role: 'user', content: userMsg }],
+    });
+    return (r.choices && r.choices[0] && r.choices[0].message && r.choices[0].message.content) || '(応答が空です)';
+  }
+  // Anthropic（既定）
+  const base = process.env.AI_API_BASE || 'https://api.anthropic.com';
+  const r = await httpsJson(`${base}/v1/messages`, { 'x-api-key': key, 'anthropic-version': '2023-06-01' }, {
+    model: process.env.AI_MODEL || 'claude-3-5-haiku-latest', max_tokens: 700,
+    system: sys, messages: [{ role: 'user', content: userMsg }],
+  });
+  return (r.content && r.content[0] && r.content[0].text) || '(応答が空です)';
+}
 
 server.listen(PORT, () => {
   console.log(`クラウド会計 同期サーバー起動: http://localhost:${PORT}`);

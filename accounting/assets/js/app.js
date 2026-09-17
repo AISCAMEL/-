@@ -24,6 +24,7 @@ A.app = (function () {
   // ナビゲーション定義
   const NAV = [
     { path: 'dashboard', label: 'ダッシュボード', icon: '🏠' },
+    { path: 'assistant', label: 'AI会計アシスタント', icon: '🤖' },
     { group: '取引' },
     { path: 'journal', label: '仕訳帳', icon: '📒' },
     { path: 'expenses', label: '経費・入出金', icon: '💴' },

@@ -47,6 +47,27 @@ PORT=9000 node server/server.js
 | POST | `/api/push` | `{workspace, token, baseVersion, data}` | データ保存 `{version}`（衝突時409） |
 | POST | `/api/inbox` | `{workspace, token, items:[…]}` | 取込Webhook。取引データを受信キューに追加 |
 | POST | `/api/inbox/pull` | `{workspace, token}` | 受信キューを取得して空にする `{items}` |
+| POST | `/api/ai` | `{workspace, token, question, context}` | AI会計相談。LLM に問い合わせて `{answer}` を返す |
+
+## AI会計相談（LLM連携）
+
+`/api/ai` は、会計アプリの「AI会計アシスタント」からの質問を LLM に中継します。
+APIキーは**このサーバーの環境変数**でのみ保持し、ブラウザには置きません。
+
+```bash
+AI_API_KEY=sk-xxx AI_PROVIDER=anthropic AI_MODEL=claude-3-5-haiku-latest \
+PORT=8787 node server/server.js
+```
+
+| 変数 | 既定 | 説明 |
+|------|------|------|
+| `AI_API_KEY` | （必須） | LLM のAPIキー。未設定なら `/api/ai` は 501 |
+| `AI_PROVIDER` | `anthropic` | `anthropic` または `openai` |
+| `AI_MODEL` | provider既定 | 使用モデル |
+| `AI_API_BASE` | 各社標準 | テスト用に差し替え可 |
+
+会計データの要約（売上・利益・現預金・課税売上・検出事項）を文脈として送信し、
+日本語で簡潔な助言を返します（重要事項は「税理士等にご確認ください」を付記）。
 
 ## 取込Webhook（外部連携）
 

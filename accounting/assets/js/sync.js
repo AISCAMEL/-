@@ -75,5 +75,14 @@ A.sync = (function () {
     return { ok: true, queued: r.data.queued, total: r.data.total };
   };
 
-  return { health, push, pull, pullInbox, pushInbox };
+  // AI会計相談（サーバーがLLM APIキーを保持して応答）
+  const ai = async (question, context) => {
+    const c = cfg();
+    if (!c.url) return { ok: false, message: 'サーバーURLが未設定です' };
+    const r = await post('/api/ai', { workspace: c.ws, token: c.token, question, context });
+    if (r.status !== 200) return { ok: false, message: (r.data && r.data.error) || ('HTTP ' + r.status) };
+    return { ok: true, answer: r.data.answer };
+  };
+
+  return { health, push, pull, pullInbox, pushInbox, ai };
 })();

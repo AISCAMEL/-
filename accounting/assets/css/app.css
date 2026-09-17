@@ -80,6 +80,18 @@ a { color: inherit; text-decoration: none; }
 .big-num { font-size: 24px; font-weight: 800; color: var(--brand); margin: 4px 0 10px; }
 .quick-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
 
+/* ---- AIアシスタント --------------------------------------------------- */
+ul.tips { margin: 0; padding-left: 20px; }
+ul.tips li { margin-bottom: 6px; font-size: 13.5px; }
+.chat-log { border: 1px solid var(--line); border-radius: 8px; padding: 12px; height: 300px; overflow-y: auto; background: #fafbfd; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.chat-msg { display: flex; }
+.chat-msg.user { justify-content: flex-end; }
+.chat-bubble { max-width: 80%; padding: 8px 12px; border-radius: 12px; font-size: 13.5px; white-space: pre-wrap; line-height: 1.6; }
+.chat-msg.ai .chat-bubble { background: #fff; border: 1px solid var(--line); border-bottom-left-radius: 3px; }
+.chat-msg.user .chat-bubble { background: var(--brand); color: #fff; border-bottom-right-radius: 3px; }
+.chat-input { display: flex; gap: 8px; }
+.chat-input input { flex: 1; }
+
 /* ---- やることリスト --------------------------------------------------- */
 .todo-card { border-left: 4px solid var(--brand); }
 .todo-card h3 { margin-bottom: 10px; }

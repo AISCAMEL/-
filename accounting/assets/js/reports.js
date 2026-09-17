@@ -335,5 +335,57 @@ A.reports = (function () {
   const depForFiscalYear = (asset, fsMonth, fyStart) =>
     depSchedule(asset, fsMonth).find((r) => r.start === fyStart) || null;
 
-  return { flatLines, ledger, trialBalance, statements, taxSummary, dashboard, depSchedule, depForFiscalYear, DEEMED_RATES, taxPayable, deptSummary, taxReturnCalc };
+  /* ---- AI会計アシスタント用の財務診断 ---------------------------------
+   * 財務指標・健全性チェック・改善/節税アドバイスを生成する（ルールベース）。
+   * ------------------------------------------------------------------- */
+  const advisor = (journals, invoices, assets, settings, start, end) => {
+    const st = statements(journals, start, end);
+    const tax = taxSummary(journals, start, end);
+    const bal = (code) => { const i = st.bs.asset.items.concat(st.bs.liability.items, st.bs.equity.items).find((x) => x.code === code); return i ? i.amount : 0; };
+    const exp = (code) => { const i = st.pl.expense.items.find((x) => x.code === code); return i ? i.amount : 0; };
+
+    const cash = bal('100') + bal('110');
+    const receivable = bal('120');
+    const payable = bal('200') + bal('210');
+    const curAssets = ['100', '110', '120', '130', '135', '150'].reduce((s, c) => s + bal(c), 0);
+    const curLiab = ['200', '210', '220', '230', '250', '260'].reduce((s, c) => s + bal(c), 0);
+    const revenue = st.pl.revenue.total, expense = st.pl.expense.total, net = st.pl.netIncome;
+
+    const metrics = {
+      revenue, expense, net,
+      profitRate: revenue ? net / revenue : 0,
+      cash, receivable, payable,
+      currentRatio: curLiab ? curAssets / curLiab : null,
+      taxableSalesNet: tax.salesNet,
+    };
+
+    const alerts = [];
+    const add = (level, text) => alerts.push({ level, text });
+    if (!st.bs.balanced) add('bad', '貸借対照表が一致していません。仕訳の借方・貸方をご確認ください。');
+    if (bal('100') < 0) add('bad', '現金残高がマイナスです。記帳漏れ（入金の未計上）の可能性があります。');
+    if (cash < 0) add('bad', '現預金残高がマイナスです。取引の記帳をご確認ください。');
+    const reg = settings.invoiceRegNo || '';
+    if (!reg || reg === 'T0000000000000') add('info', '適格請求書（インボイス）の登録番号が未設定です。設定画面で登録番号を入力すると請求書に表示されます。');
+    if (tax.salesNet > 10000000) add('warn', `課税売上（税抜 ¥${U.yen(tax.salesNet)}）が1,000万円を超えています。翌々期の消費税の課税事業者判定にご注意ください。`);
+    if (expense > 0 && exp('550') / expense > 0.1) add('info', `接待交際費が費用の${Math.round(exp('550') / expense * 100)}%を占めます。法人は交際費の損金算入に上限があるためご確認ください。`);
+    if (revenue > 0 && receivable > revenue * 0.5) add('warn', '売掛金が売上に対して大きめです。長期滞留の債権がないかご確認ください。');
+    const depPending = (assets || []).filter((a) => !a.disposed && depForFiscalYear(a, settings.fiscalStartMonth || 4, start) &&
+      !journals.some((j) => j.source === 'depreciation' && j.refId === a.id && U.inRange(j.date, start, end)));
+    if (depPending.length) add('warn', `当期の減価償却が未計上の固定資産が${depPending.length}件あります。`);
+    if (metrics.currentRatio !== null && metrics.currentRatio < 1) add('warn', `流動比率が${Math.round(metrics.currentRatio * 100)}%（100%未満）です。短期の支払能力にご注意ください。`);
+
+    const tips = [];
+    if (net > 300000) {
+      tips.push('利益が出ています。30万円未満の資産は「少額減価償却資産の特例」で当期に全額経費化できる場合があります。');
+      tips.push('決算賞与（未払計上）や短期前払費用（1年以内の家賃・保険料など）で当期の損金を増やせる場合があります。');
+    }
+    if (tax.salesNet > 0 && tax.salesNet <= 50000000) tips.push('課税売上5,000万円以下なら、簡易課税や2割特例で消費税額が有利になる場合があります（消費税集計ページで比較できます）。');
+    if (metrics.profitRate < 0.05 && revenue > 0) tips.push('利益率が低めです。経費の見直し（固定費・手数料）や単価の再検討をご検討ください。');
+    tips.push('経費の計上漏れ（自宅兼事務所の家事按分、旅費・通信費など）がないかご確認ください。');
+    tips.push('※ これは会計データに基づく一般的な参考情報です。最終的な判断は税理士等の専門家にご確認ください。');
+
+    return { metrics, alerts, tips };
+  };
+
+  return { flatLines, ledger, trialBalance, statements, taxSummary, dashboard, depSchedule, depForFiscalYear, DEEMED_RATES, taxPayable, deptSummary, taxReturnCalc, advisor };
 })();
