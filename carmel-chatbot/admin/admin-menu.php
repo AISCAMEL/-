@@ -1056,19 +1056,45 @@ function carmel_cb_view_faq() {
 	</div>
 
 	<div class="ccb-card">
-		<h2>登録済みFAQ（<?php echo count( $faqs ); ?>件）</h2>
+		<?php
+		// 🔍 検索フィルタ（質問・キーワード・回答を対象）
+		$faq_q = isset( $_GET['faq_q'] ) ? trim( (string) wp_unslash( $_GET['faq_q'] ) ) : '';
+		$total = count( $faqs );
+		$shown = $faqs;
+		if ( $faq_q !== '' ) {
+			$needle = mb_strtolower( $faq_q );
+			$shown = array_values( array_filter( $faqs, function ( $f ) use ( $needle ) {
+				$hay = mb_strtolower( (string) $f->question . ' ' . (string) $f->keywords . ' ' . (string) $f->answer );
+				return mb_strpos( $hay, $needle ) !== false;
+			} ) );
+		}
+		$limit = $faq_q !== '' ? count( $shown ) : 200; // 無検索時は先頭200件（重すぎ防止）
+		$display = array_slice( $shown, 0, $limit );
+		?>
+		<h2>登録済みFAQ（全<?php echo (int) $total; ?>件<?php echo $faq_q !== '' ? '／該当 ' . count( $shown ) . '件' : ''; ?>）</h2>
+
+		<form method="get" style="margin:8px 0 14px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+			<input type="hidden" name="page" value="carmel-cb">
+			<input type="hidden" name="tab" value="faq">
+			<input type="search" name="faq_q" value="<?php echo esc_attr( $faq_q ); ?>" placeholder="🔍 FAQを検索（質問・キーワード・回答）" class="regular-text" style="min-width:280px">
+			<button class="button button-primary">検索</button>
+			<?php if ( $faq_q !== '' ) : ?>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=carmel-cb&tab=faq' ) ); ?>" class="button">クリア</a>
+			<?php endif; ?>
+		</form>
+
 		<table class="widefat striped">
 			<thead><tr><th>質問</th><th>キーワード</th><th>状態</th><th>操作</th></tr></thead>
 			<tbody>
-			<?php if ( empty( $faqs ) ) : ?>
-				<tr><td colspan="4">まだFAQがありません。上のフォームから追加してください。</td></tr>
-			<?php else : foreach ( $faqs as $f ) : ?>
+			<?php if ( empty( $shown ) ) : ?>
+				<tr><td colspan="4"><?php echo $faq_q !== '' ? '「' . esc_html( $faq_q ) . '」に該当するFAQはありません。' : 'まだFAQがありません。上のフォームから追加してください。'; ?></td></tr>
+			<?php else : foreach ( $display as $f ) : ?>
 				<tr>
 					<td><?php echo esc_html( wp_trim_words( $f->question, 20 ) ); ?></td>
 					<td><?php echo esc_html( $f->keywords ); ?></td>
 					<td><?php echo $f->enabled ? '<span style="color:#2a7">有効</span>' : '<span style="color:#999">無効</span>'; ?></td>
 					<td>
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=carmel-cb&tab=faq&edit=' . $f->id ) ); ?>" class="button button-small">編集</a>
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=carmel-cb&tab=faq&edit=' . $f->id . ( $faq_q !== '' ? '&faq_q=' . rawurlencode( $faq_q ) : '' ) ) ); ?>" class="button button-small">編集</a>
 						<form method="post" style="display:inline" onsubmit="return confirm('削除しますか？');">
 							<?php wp_nonce_field( 'carmel_cb_nonce' ); ?>
 							<input type="hidden" name="carmel_cb_action" value="delete_faq">
@@ -1080,6 +1106,9 @@ function carmel_cb_view_faq() {
 			<?php endforeach; endif; ?>
 			</tbody>
 		</table>
+		<?php if ( $faq_q === '' && $total > $limit ) : ?>
+			<p class="description" style="margin-top:8px">※ 件数が多いため先頭 <?php echo (int) $limit; ?> 件のみ表示中。上の検索で絞り込めます。</p>
+		<?php endif; ?>
 	</div>
 	<?php
 }
