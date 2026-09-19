@@ -64,6 +64,8 @@
 		var hoBtn = document.getElementById("carmel-cb-handoff");
 		if (hoBtn) hoBtn.addEventListener("click", function () { if (opened) openHandoff(); else { userToggle(); openHandoff(); } });
 
+		bindFaqSearch(); // 🔍 よくある質問の検索窓
+
 		// イントロ（女性大きく表示）：タップ/「相談をはじめる」で会話開始、×で閉じる
 		var intro = document.querySelector('[data-role="intro"]');
 		if (intro) {
@@ -925,6 +927,79 @@
 		return String(s).replace(/[&<>"']/g, function (c) {
 			return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
 		});
+	}
+
+	/* ============ 🔍 よくある質問の検索 ============ */
+	function bindFaqSearch() {
+		if (!cfg.faqSearchOn || !cfg.faqSearchUrl) return;
+		var toggle = document.getElementById("carmel-cb-search-toggle");
+		var panel  = document.getElementById("carmel-cb-search");
+		var inputS = document.getElementById("carmel-cb-search-input");
+		var clearB = document.getElementById("carmel-cb-search-clear");
+		var results = document.getElementById("carmel-cb-search-results");
+		if (!toggle || !panel || !inputS || !results) return;
+
+		var timer = null;
+		toggle.addEventListener("click", function () {
+			panel.hidden = !panel.hidden;
+			if (!panel.hidden) { setTimeout(function () { try { inputS.focus(); } catch (e) {} }, 50); }
+		});
+		if (clearB) clearB.addEventListener("click", function () { inputS.value = ""; results.innerHTML = ""; inputS.focus(); });
+
+		inputS.addEventListener("input", function () {
+			var q = inputS.value.trim();
+			if (timer) clearTimeout(timer);
+			if (q.length < 1) { results.innerHTML = ""; return; }
+			timer = setTimeout(function () { runFaqSearch(q, results, panel); }, 250);
+		});
+		inputS.addEventListener("keydown", function (e) {
+			if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) {
+				e.preventDefault();
+				// Enterで最上位の候補を送る／無ければ入力語をそのまま質問として送る
+				var first = results.querySelector(".ccb-search-item");
+				if (first) { first.click(); }
+				else if (inputS.value.trim()) { pickFaqQuestion(inputS.value.trim(), panel); }
+			}
+		});
+	}
+	function runFaqSearch(q, results, panel) {
+		fetch(cfg.faqSearchUrl + "?q=" + encodeURIComponent(q))
+			.then(function (r) { return r.json(); })
+			.then(function (d) {
+				var list = (d && d.results) ? d.results : [];
+				results.innerHTML = "";
+				if (!list.length) {
+					var none = document.createElement("div");
+					none.className = "ccb-search-none";
+					none.textContent = "該当する質問が見つかりませんでした。そのまま入力して送信もできます。";
+					results.appendChild(none);
+					return;
+				}
+				list.forEach(function (it) {
+					var b = document.createElement("button");
+					b.type = "button";
+					b.className = "ccb-search-item";
+					b.textContent = it.question;
+					b.addEventListener("click", function () { pickFaqQuestion(it.question, panel); });
+					results.appendChild(b);
+				});
+			})
+			.catch(function () {});
+	}
+	function pickFaqQuestion(question, panel) {
+		if (panel) panel.hidden = true;
+		var si = document.getElementById("carmel-cb-search-input");
+		if (si) si.value = "";
+		var sr = document.getElementById("carmel-cb-search-results");
+		if (sr) sr.innerHTML = "";
+		// 会話がまだ始まっていなければ開始してから送る
+		if (!chatStarted) { startChat(); }
+		// intake未完了なら、まず案内（会話フローに合わせる）
+		if (cfg.intakeOn && !visitor.done && !ho.live && !convo.engaged) {
+			addBubble("bot", "先にお名前とメールをご入力いただけますか？そのあとで「" + question + "」にお答えします😊");
+			return;
+		}
+		sendText(question);
 	}
 
 	/* ============ 🔔 通知音・在席検知 ============ */

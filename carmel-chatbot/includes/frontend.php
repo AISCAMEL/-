@@ -46,6 +46,8 @@ function carmel_cb_js_config( $s, $extra = array() ) {
 		'applyClickUrl'   => esc_url_raw( rest_url( 'carmel-cb/v1/apply-click' ) ),
 		'applyFollowupOn' => ! empty( $s['apply_followup_on'] ),
 		'campaign'        => function_exists( 'carmel_cb_campaign_data' ) ? carmel_cb_campaign_data( $s ) : null,
+		'faqSearchOn'     => ! empty( $s['faq_search_on'] ),
+		'faqSearchUrl'    => esc_url_raw( rest_url( 'carmel-cb/v1/faq/search' ) ),
 		'soundOn'         => ! empty( $s['sound_on'] ),
 		'awayEmailOn'     => ! empty( $s['away_email_on'] ),
 		'awayNotifyUrl'   => esc_url_raw( rest_url( 'carmel-cb/v1/away-notify' ) ),
@@ -116,8 +118,21 @@ function carmel_cb_widget_html( $s, $standalone = false ) {
 					<video src="<?php echo esc_url( CARMEL_CB_URL . $avatar_src ); ?>" autoplay muted loop playsinline></video>
 				</span>
 				<span class="ccb-title"><?php echo esc_html( $s['bot_name'] ); ?></span>
+				<?php if ( ! empty( $s['faq_search_on'] ) ) : ?>
+				<button id="carmel-cb-search-toggle" aria-label="よくある質問を検索" title="よくある質問を検索">🔍</button>
+				<?php endif; ?>
 				<button id="carmel-cb-close" aria-label="閉じる">×</button>
 			</div>
+			<?php if ( ! empty( $s['faq_search_on'] ) ) : ?>
+			<div id="carmel-cb-search" hidden>
+				<div class="ccb-search-box">
+					<span class="ccb-search-icon">🔍</span>
+					<input type="text" id="carmel-cb-search-input" placeholder="よくある質問を検索…（例：頭金、自己破産）" autocomplete="off">
+					<button id="carmel-cb-search-clear" aria-label="クリア">×</button>
+				</div>
+				<div id="carmel-cb-search-results"></div>
+			</div>
+			<?php endif; ?>
 			<div id="carmel-cb-messages"></div>
 			<div class="ccb-input-row">
 				<label id="carmel-cb-attach" title="画像・ファイルを送る" style="display:none">📎<input type="file" id="carmel-cb-file" accept="image/*,application/pdf" hidden></label>

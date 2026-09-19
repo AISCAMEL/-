@@ -109,7 +109,21 @@
 }
 .ccb-header-avatar video { width: 100%; height: 100%; object-fit: cover; display: block; }
 .ccb-title { font-weight: 700; font-size: 16px; flex: 1; }
+#carmel-cb-search-toggle { background: none; border: none; color: #fff; font-size: 18px; cursor: pointer; line-height: 1; padding: 0 6px; opacity: .9; }
+#carmel-cb-search-toggle:hover { opacity: 1; }
 #carmel-cb-close { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; line-height: 1; }
+
+/* 🔍 FAQ検索パネル */
+#carmel-cb-search { background: #fff; border-bottom: 1px solid #e3e8ee; padding: 10px 12px; }
+.ccb-search-box { display: flex; align-items: center; gap: 6px; background: #f2f4f7; border-radius: 999px; padding: 6px 12px; }
+.ccb-search-icon { font-size: 14px; opacity: .6; }
+#carmel-cb-search-input { flex: 1; border: none; background: transparent; outline: none; font-size: 14px; color: #1a1a1a; }
+#carmel-cb-search-clear { background: none; border: none; color: #98a2b3; font-size: 18px; cursor: pointer; line-height: 1; }
+#carmel-cb-search-results { margin-top: 8px; max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.ccb-search-item { text-align: left; background: #fff; border: 1px solid #e3e8ee; border-radius: 10px; padding: 9px 12px; font-size: 13.5px; color: #1a2330; cursor: pointer; line-height: 1.45; }
+.ccb-search-item:hover { background: #eef7ff; border-color: var(--ccb-primary, #0b5cab); }
+.ccb-search-item::before { content: "Q "; color: var(--ccb-primary, #0b5cab); font-weight: 700; }
+.ccb-search-none { font-size: 12.5px; color: #6b7280; padding: 6px 4px; }
 
 #carmel-cb-messages { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 16px; background: #f6f8fa; }
 .ccb-msg { margin-bottom: 12px; display: flex; }

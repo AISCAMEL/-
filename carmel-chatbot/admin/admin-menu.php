@@ -201,6 +201,8 @@ function carmel_cb_handle_post() {
 				// 会話離脱後追い
 				'convo_followup_on'        => isset( $_POST['convo_followup_on'] ) ? 1 : 0,
 				'convo_followup_stages'    => carmel_cb_admin_sanitize_stages( $_POST['convo_followup_stages'] ?? array() ),
+				// 🔍 FAQ検索窓
+				'faq_search_on'            => isset( $_POST['faq_search_on'] ) ? 1 : 0,
 				// 🔔 通知音・離脱時メール
 				'sound_on'                 => isset( $_POST['sound_on'] ) ? 1 : 0,
 				'away_email_on'            => isset( $_POST['away_email_on'] ) ? 1 : 0,
@@ -1552,6 +1554,16 @@ function carmel_cb_view_appearance() {
 						}
 					}
 					?>
+				</td>
+			</tr>
+			<tr>
+				<th>🔍 よくある質問の検索窓</th>
+				<td>
+					<label><input type="checkbox" name="faq_search_on" value="1" <?php checked( ! empty( $s['faq_search_on'] ) ); ?>> チャット上部に虫めがね（🔍）の検索窓を表示する</label>
+					<p class="description">
+						お客様がキーワードを入れると、学習データ(FAQ)から該当する質問が候補表示され、タップするとその質問にAIが答えます。
+						検索対象は「学習データ(FAQ)」に登録した質問・キーワード・回答です。FAQが未登録だと候補は出ません。
+					</p>
 				</td>
 			</tr>
 			<tr>

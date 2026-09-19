@@ -205,6 +205,8 @@ function carmel_cb_default_settings() {
 			'offhours_notify' => 1,
 			'followup_cv'     => 1,
 		),
+		// 🔍 FAQ検索窓（チャット内でよくある質問を検索）
+		'faq_search_on'     => 1,
 		// 🔔 通知音＆離脱時メール
 		'sound_on'          => 1, // 会話開始チャイム＋担当者応答音を鳴らす
 		'away_email_on'     => 1, // 離脱中に担当者応答があればメール通知

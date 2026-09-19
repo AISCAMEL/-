@@ -55,6 +55,63 @@ function carmel_cb_match_faqs( $user_text, $limit = 4 ) {
 }
 
 /**
+ * 🔍 FAQ検索（検索窓用）。質問文・キーワード・回答を対象に、入力語を含むFAQを返す。
+ */
+function carmel_cb_search_faqs( $q, $limit = 8 ) {
+	$q = trim( (string) $q );
+	if ( $q === '' ) { return array(); }
+	$faqs = carmel_cb_get_faqs( true );
+	if ( empty( $faqs ) ) { return array(); }
+
+	$ql = mb_strtolower( $q );
+	$terms = array_filter( preg_split( '/[\s　、,]+/u', $ql ) );
+	if ( empty( $terms ) ) { $terms = array( $ql ); }
+
+	$scored = array();
+	foreach ( $faqs as $f ) {
+		$question = mb_strtolower( (string) $f->question );
+		$answer   = mb_strtolower( (string) $f->answer );
+		$keywords = mb_strtolower( (string) ( $f->keywords ?? '' ) );
+		$score = 0;
+
+		// クエリ全体が質問に含まれれば最優先
+		if ( mb_strpos( $question, $ql ) !== false ) { $score += 10; }
+
+		foreach ( $terms as $t ) {
+			if ( $t === '' ) { continue; }
+			if ( mb_strpos( $question, $t ) !== false ) { $score += 4; }
+			if ( mb_strpos( $keywords, $t ) !== false ) { $score += 3; }
+			if ( mb_strpos( $answer, $t ) !== false )   { $score += 1; }
+		}
+		if ( $score > 0 ) {
+			$scored[] = array( 'score' => $score, 'faq' => $f );
+		}
+	}
+	usort( $scored, function ( $a, $b ) { return $b['score'] - $a['score']; } );
+	$top = array_slice( $scored, 0, $limit );
+	return array_map( function ( $x ) {
+		return array(
+			'id'       => (int) $x['faq']->id,
+			'question' => (string) $x['faq']->question,
+			'answer'   => (string) $x['faq']->answer,
+		);
+	}, $top );
+}
+
+add_action( 'rest_api_init', function () {
+	register_rest_route( 'carmel-cb/v1', '/faq/search', array(
+		'methods'             => 'GET',
+		'callback'            => 'carmel_cb_handle_faq_search',
+		'permission_callback' => '__return_true',
+	) );
+} );
+function carmel_cb_handle_faq_search( WP_REST_Request $r ) {
+	$q = sanitize_text_field( $r->get_param( 'q' ) );
+	$results = carmel_cb_search_faqs( $q, 8 );
+	return new WP_REST_Response( array( 'results' => $results ), 200 );
+}
+
+/**
  * チャット本体
  */
 function carmel_cb_handle_chat( WP_REST_Request $request ) {
