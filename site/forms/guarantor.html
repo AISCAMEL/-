@@ -147,8 +147,6 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 </div>
 <p>ご住所（自動入力） (必須)<br><input type="text" class="address to-hankaku" placeholder="都道府県・市区町村・番地"></p>
 <p>建物名・部屋番号 (任意)<br><input type="text" class="to-hankaku" placeholder="〇〇マンション 101号室"></p>
-<p>世帯主との続柄 (必須)<br><select id="household-rel"><option>選択してください</option><option>本人</option><option>配偶者</option><option>親</option><option>子</option><option>その他</option></select></p>
-<p id="grp-household-other" class="hide">その他の続柄（ご記入ください） (必須)<br><input type="text" placeholder="例：祖父母・兄弟姉妹・叔父叔母 など"></p>
 <h4>居住年数</h4>
 <div class="caf-half">
 <p>居住年数（年） (必須)<br><select class="year-sel"></select></p>
@@ -288,13 +286,6 @@ if(_emp)_emp.addEventListener('change',function(){
   var gw=document.getElementById('grp-work'),gn=document.getElementById('grp-nowork');
   if(gw)gw.classList.toggle('hide',noWork);
   if(gn)gn.classList.toggle('hide',!noWork);
-  try{updateProgress();}catch(e){}
-});
-/* 世帯主との続柄＝その他 → 備考欄（必須）を表示 */
-var _hr=document.getElementById('household-rel');
-if(_hr)_hr.addEventListener('change',function(){
-  var g=document.getElementById('grp-household-other');
-  if(g)g.classList.toggle('hide',this.value!=='その他');
   try{updateProgress();}catch(e){}
 });
 /* 本人確認：免許 有無 → マイナンバー 有無 → 住民票 の分岐 */
