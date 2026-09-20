@@ -155,8 +155,41 @@ A.ui = (function () {
     return span;
   };
 
+  // 棒グラフ（インラインSVG）。rows=[obj], keys=[{key,label,color}], labelKey
+  const barChart = (rows, opts) => {
+    opts = opts || {};
+    const keys = opts.keys || [{ key: 'value', label: '', color: '#1f7a5c' }];
+    const W = opts.width || 720, H = opts.height || 220, padL = 8, padB = 22, padT = 8;
+    const max = Math.max(1, ...rows.map((r) => Math.max(...keys.map((k) => Math.abs(Number(r[k.key]) || 0)))));
+    const n = rows.length || 1;
+    const groupW = (W - padL) / n;
+    const barW = Math.max(3, (groupW - 6) / keys.length);
+    const chartH = H - padB - padT;
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('class', 'bar-chart'); svg.setAttribute('width', '100%');
+    const mk = (tag, attrs) => { const e = document.createElementNS(svgNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+    // 基線
+    svg.appendChild(mk('line', { x1: padL, y1: padT + chartH, x2: W, y2: padT + chartH, stroke: 'var(--line)', 'stroke-width': 1 }));
+    rows.forEach((r, i) => {
+      const gx = padL + i * groupW + 3;
+      keys.forEach((k, ki) => {
+        const v = Math.abs(Number(r[k.key]) || 0);
+        const h = Math.round(v / max * chartH);
+        svg.appendChild(mk('rect', { x: gx + ki * barW, y: padT + chartH - h, width: barW - 1, height: h, fill: k.color, rx: 2 }));
+      });
+      const lb = mk('text', { x: gx + (keys.length * barW) / 2, y: H - 7, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--muted)' });
+      lb.textContent = opts.labelFmt ? opts.labelFmt(r[opts.labelKey]) : r[opts.labelKey];
+      svg.appendChild(lb);
+    });
+    const wrap = el('div.chart-wrap');
+    if (opts.legend !== false) wrap.appendChild(el('div.chart-legend', {}, keys.map((k) => el('span.legend-item', {}, [el('span.legend-dot', { style: `background:${k.color}` }), el('span', { text: k.label })]))));
+    wrap.appendChild(svg);
+    return wrap;
+  };
+
   return {
     register, go, start, setOutlet, renderRoute, currentPath, queryParams,
-    toast, modal, confirm, pageHead, table, periodBar, money,
+    toast, modal, confirm, pageHead, table, periodBar, money, barChart,
   };
 })();

@@ -387,5 +387,52 @@ A.reports = (function () {
     return { metrics, alerts, tips };
   };
 
-  return { flatLines, ledger, trialBalance, statements, taxSummary, dashboard, depSchedule, depForFiscalYear, DEEMED_RATES, taxPayable, deptSummary, taxReturnCalc, advisor };
+  /* ---- 月次推移（売上・費用・利益） -----------------------------------
+   * 会計年度内の各月について収益・費用・純利益を集計する（決算振替は除外）。
+   * ------------------------------------------------------------------- */
+  const monthlyTrend = (journals, fyStart, fsMonth) => {
+    const startY = Number(fyStart.slice(0, 4)), startM = fsMonth;
+    const months = [];
+    for (let i = 0; i < 12; i++) {
+      const m0 = (startM - 1 + i) % 12;
+      const y = startY + Math.floor((startM - 1 + i) / 12);
+      months.push({ ym: `${y}-${String(m0 + 1).padStart(2, '0')}`, revenue: 0, expense: 0, net: 0 });
+    }
+    const idx = {}; months.forEach((m, i) => (idx[m.ym] = i));
+    journals.forEach((j) => {
+      if (j.source === 'closing') return;
+      const ym = (j.date || '').slice(0, 7);
+      if (!(ym in idx)) return;
+      const m = months[idx[ym]];
+      (j.lines || []).forEach((l) => {
+        const cat = S.accounts.category(l.account);
+        if (cat === 'revenue') m.revenue += (l.side === 'credit' ? 1 : -1) * l.amount;
+        else if (cat === 'expense') m.expense += (l.side === 'debit' ? 1 : -1) * l.amount;
+      });
+    });
+    months.forEach((m) => { m.net = m.revenue - m.expense; });
+    const total = months.reduce((s, m) => { s.revenue += m.revenue; s.expense += m.expense; s.net += m.net; return s; }, { revenue: 0, expense: 0, net: 0 });
+    return { months, total };
+  };
+
+  /* ---- 取引先元帳（売掛金：請求＝借方、入金＝貸方） --------------------
+   * 請求書（売上計上済み）と入金記録から、取引先ごとの残高推移を作る。
+   * ------------------------------------------------------------------- */
+  const partnerLedger = (invoices, journals, partnerName, calcInvoice, start, end) => {
+    const rows = [];
+    invoices.filter((iv) => iv.type === 'invoice' && iv.partnerName === partnerName && iv.posted)
+      .forEach((iv) => rows.push({ date: iv.date, desc: `請求 ${iv.no ? '' : ''}${iv.partnerName}`, ref: iv, debit: calcInvoice(iv).total, credit: 0 }));
+    // 入金仕訳（source=invoice で 売掛金(120) 貸方）
+    journals.filter((j) => j.source === 'invoice' && (j.description || '').includes(partnerName) && (j.description || '').includes('入金'))
+      .forEach((j) => { const amt = (j.lines || []).filter((l) => l.account === '120' && l.side === 'credit').reduce((s, l) => s + l.amount, 0); if (amt) rows.push({ date: j.date, desc: '入金', debit: 0, credit: amt }); });
+    rows.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    let bal = 0;
+    const inRange = rows.filter((r) => U.inRange(r.date, start, end));
+    inRange.forEach((r) => { bal += r.debit - r.credit; r.balance = bal; });
+    const totalDebit = inRange.reduce((s, r) => s + r.debit, 0);
+    const totalCredit = inRange.reduce((s, r) => s + r.credit, 0);
+    return { rows: inRange, closing: totalDebit - totalCredit, totalDebit, totalCredit };
+  };
+
+  return { flatLines, ledger, trialBalance, statements, taxSummary, dashboard, depSchedule, depForFiscalYear, DEEMED_RATES, taxPayable, deptSummary, taxReturnCalc, advisor, monthlyTrend, partnerLedger };
 })();
