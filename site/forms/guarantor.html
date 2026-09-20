@@ -187,6 +187,9 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 
 <h3>STEP6 本人確認書類</h3>
 <p>ご本人確認書類のご提出をお願いします（スマホ撮影OK・PDF/画像対応）。</p>
+<label class="caf-check"><input type="checkbox" id="doc-later"><span>本人確認書類は<b>後日提出</b>します（今は添付せずに進む）</span></label>
+<p class="hint">今お手元に書類がない場合は、上にチェックすると<b>添付なしで送信</b>できます。担当より改めてご案内します。</p>
+<div id="doc-area">
 <p>運転免許証はお持ちですか？ (必須)<br><select id="has-license"><option>選択してください</option><option>持っている</option><option>持っていない</option></select></p>
 
 <div id="grp-doc-license" class="hide">
@@ -217,9 +220,12 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 </div>
 </div>
 
+<div id="grp-income-proof">
 <h4>収入証明（任意・お持ちの方）</h4>
 <div class="caf-up-grid">
 <label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">給与明細・源泉徴収票 など</span><span class="caf-up-sub">後日提出でもOK</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+</div>
+</div>
 </div>
 
 <h3>STEP7 保証意思・同意事項</h3>
@@ -286,6 +292,15 @@ if(_emp)_emp.addEventListener('change',function(){
   var gw=document.getElementById('grp-work'),gn=document.getElementById('grp-nowork');
   if(gw)gw.classList.toggle('hide',noWork);
   if(gn)gn.classList.toggle('hide',!noWork);
+  var gi=document.getElementById('grp-income-proof');
+  if(gi)gi.classList.toggle('hide',this.value==='無職'); /* 無職は収入証明を非表示 */
+  try{updateProgress();}catch(e){}
+});
+/* 本人確認書類「後日提出」→ 書類エリアを丸ごと省略（添付なしで進める） */
+var _dl=document.getElementById('doc-later');
+if(_dl)_dl.addEventListener('change',function(){
+  var da=document.getElementById('doc-area');
+  if(da)da.classList.toggle('hide',this.checked);
   try{updateProgress();}catch(e){}
 });
 /* 本人確認：免許 有無 → マイナンバー 有無 → 住民票 の分岐 */
@@ -454,6 +469,47 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
     }).then(function(res){if(settled)return;if(res&&(res.success||res.ok||res.status==='ok'))showDone();else showErr((res&&(res.message||(res.data&&res.data.message)))||'送信に失敗しました。時間をおいて再度お試しください。');})
     .catch(function(){showDone();});
   });
+})();
+</script>
+
+<!-- 自動保存＆復元（同じ端末・ブラウザ／送信で消去／7日で失効） -->
+<script>
+(function () {
+  'use strict';
+  var KEY='carmel_guarantor_draft_v1',DAYS=7;
+  var form=document.getElementById('caf-form');if(!form)return;
+  function fields(){return Array.prototype.filter.call(form.querySelectorAll('input,select,textarea'),function(el){
+    if(el.type==='file'||el.type==='hidden')return false;if(el.id==='caf-hp')return false;return true;});}
+  function fire(el){try{el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));}catch(e){}}
+  function clr(){try{localStorage.removeItem(KEY);}catch(e){}}
+  function save(){try{var v={};fields().forEach(function(el,i){v[i]=(el.type==='checkbox')?(el.checked?1:0):el.value;});localStorage.setItem(KEY,JSON.stringify({t:Date.now(),v:v}));}catch(e){}}
+  function restore(){
+    var raw;try{raw=localStorage.getItem(KEY);}catch(e){return false;}if(!raw)return false;
+    var data;try{data=JSON.parse(raw);}catch(e){clr();return false;}
+    if(!data||!data.t||(Date.now()-data.t)>DAYS*864e5||!data.v){clr();return false;}
+    var cnt=0;
+    for(var pass=0;pass<2;pass++){fields().forEach(function(el,i){if(!(i in data.v))return;var val=data.v[i];
+      if(el.type==='checkbox'){var c=!!val;if(el.checked!==c){el.checked=c;fire(el);}}
+      else{if(String(val)==='')return;if(el.value!==val){el.value=val;if(el.value==val){fire(el);if(pass===0)cnt++;}}}});}
+    return cnt>0;
+  }
+  function banner(){
+    var b=document.createElement('div');
+    b.style.cssText='position:fixed;left:12px;right:12px;bottom:12px;z-index:99998;background:#1b2935;color:#fff;padding:12px 14px;border-radius:10px;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.3);display:flex;gap:10px;align-items:center;justify-content:space-between;font-family:inherit;';
+    var s=document.createElement('span');s.textContent='前回の入力内容を復元しました。';
+    var c=document.createElement('button');c.type='button';c.textContent='入力をクリア';
+    c.style.cssText='background:#f47920;color:#fff;border:none;border-radius:6px;padding:8px 12px;font-weight:700;cursor:pointer;white-space:nowrap;';
+    c.onclick=function(){clr();location.reload();};
+    var x=document.createElement('button');x.type='button';x.textContent='×';
+    x.style.cssText='background:transparent;color:#fff;border:none;font-size:18px;line-height:1;cursor:pointer;';
+    x.onclick=function(){if(b.parentNode)b.parentNode.removeChild(b);};
+    b.appendChild(s);b.appendChild(c);b.appendChild(x);document.body.appendChild(b);
+    setTimeout(function(){if(b.parentNode)b.parentNode.removeChild(b);},12000);
+  }
+  form.addEventListener('input',save);form.addEventListener('change',save);form.addEventListener('submit',clr);
+  function boot(){if(restore())banner();}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(boot,500);});
+  else setTimeout(boot,500);
 })();
 </script>
 </body>
