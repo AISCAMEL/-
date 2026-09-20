@@ -26,6 +26,21 @@ window.A = window.A || {};
       ui.periodBar(p, (np) => { A.app.setPeriod(np); ui.renderRoute(); }),
     ]));
 
+    // 予実グラフ（収益・費用・利益の 予算 vs 実績）
+    const budRevSaved = Object.keys(budgets).reduce((s2, c) => s2 + (S.accounts.category(c) === 'revenue' ? budgets[c] : 0), 0);
+    const budExpSaved = Object.keys(budgets).reduce((s2, c) => s2 + (S.accounts.category(c) === 'expense' ? budgets[c] : 0), 0);
+    wrap.appendChild(el('div.card', {}, [
+      el('h2', { text: '予算 対 実績' }),
+      ui.barChart([
+        { label: '収益', budget: budRevSaved, actual: st.pl.revenue.total },
+        { label: '費用', budget: budExpSaved, actual: st.pl.expense.total },
+        { label: '利益', budget: budRevSaved - budExpSaved, actual: st.pl.netIncome },
+      ], {
+        labelKey: 'label', height: 200,
+        keys: [{ key: 'budget', label: '予算', color: '#94a3b8' }, { key: 'actual', label: '実績', color: '#1f7a5c' }],
+      }),
+    ]));
+
     const inputs = {};
     const summary = el('div.jsummary');
     const catTable = (cat, title) => {

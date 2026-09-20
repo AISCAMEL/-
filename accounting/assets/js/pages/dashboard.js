@@ -4,11 +4,17 @@ window.A = window.A || {};
   'use strict';
   const U = A.util, el = U.el, ui = A.ui, S = A.store, R = A.reports;
 
-  const stat = (label, value, cls) =>
+  const stat = (label, value, cls, delta) =>
     el('div.stat.' + (cls || ''), {}, [
       el('div.stat-label', { text: label }),
       el('div.stat-value', { text: '¥' + U.yenSigned(value) }),
+      delta ? el('div.stat-delta.' + (delta.up ? 'up' : 'down'), { text: `前期比 ${delta.up ? '▲' : '▼'} ${delta.text}` }) : null,
     ]);
+  const deltaOf = (cur, prev) => {
+    if (!prev) return null;
+    const d = cur - prev; const rate = Math.round(d / Math.abs(prev) * 1000) / 10;
+    return { up: d >= 0, text: `¥${U.yen(Math.abs(d))}（${rate >= 0 ? '+' : ''}${rate}%）` };
+  };
 
   ui.register('dashboard', async () => {
     const p = A.app.period();
@@ -50,15 +56,19 @@ window.A = window.A || {};
       ]));
     }
 
-    wrap.appendChild(el('div.stat-grid', {}, [
-      stat('当期売上（収益）', d.revenue, 'good'),
-      stat('当期費用', d.expense, 'warn'),
-      stat('当期純利益', d.netIncome, d.netIncome >= 0 ? 'good' : 'bad'),
-      stat('現預金残高', d.cash, ''),
-    ]));
-
     // 月次売上グラフ
     const tr = R.monthlyTrend(journals, fy.start, s.fiscalStartMonth || 4);
+    // 前期実績（前期比KPI用）
+    const prevRef = new Date(new Date(fy.start + 'T00:00:00').getTime() - 86400000).toISOString().slice(0, 10);
+    const prevFy = U.fiscalRange(prevRef, s.fiscalStartMonth || 4);
+    const stPrev = R.statements(journals, prevFy.start, prevFy.end);
+
+    wrap.appendChild(el('div.stat-grid', {}, [
+      stat('当期売上（収益）', d.revenue, 'good', deltaOf(d.revenue, stPrev.pl.revenue.total)),
+      stat('当期費用', d.expense, 'warn', deltaOf(d.expense, stPrev.pl.expense.total)),
+      stat('当期純利益', d.netIncome, d.netIncome >= 0 ? 'good' : 'bad', deltaOf(d.netIncome, stPrev.pl.netIncome)),
+      stat('現預金残高', d.cash, ''),
+    ]));
     wrap.appendChild(el('div.card', {}, [
       el('div.card-head', {}, [el('h3', { text: '月次の売上・費用' }), el('button.btn.sm', { text: '月次推移へ', onclick: () => ui.go('monthly') })]),
       ui.barChart(tr.months, {

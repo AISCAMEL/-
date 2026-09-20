@@ -46,6 +46,7 @@ A.app = (function () {
     { path: 'trialbalance', label: '試算表', icon: '⚖️' },
     { path: 'statements', label: '決算書(BS/PL)', icon: '📊' },
     { path: 'cashflow', label: 'キャッシュフロー', icon: '💵' },
+    { path: 'cashforecast', label: '資金繰り予定', icon: '📅' },
     { path: 'compare', label: '年度比較', icon: '📉' },
     { path: 'tax', label: '消費税集計', icon: '🧾' },
     { path: 'opening', label: '期首残高・繰越', icon: '🔄' },

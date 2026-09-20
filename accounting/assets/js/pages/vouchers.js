@@ -103,6 +103,9 @@ window.A = window.A || {};
     return wrap;
   });
 
+  // 他画面（仕訳一覧など）から証憑をプレビューするための公開関数
+  A.previewAttachment = preview;
+
   // 仕訳・経費エディタから使う添付ヘルパー（保存済み仕訳に証憑を紐づける）
   A.attachToJournal = async (journal, file) => {
     if (!file) return;

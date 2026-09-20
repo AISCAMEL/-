@@ -77,6 +77,9 @@ a { color: inherit; text-decoration: none; }
 .stat.good .stat-value { color: var(--good); }
 .stat.bad .stat-value { color: var(--bad); }
 .stat.warn .stat-value { color: var(--warn); }
+.stat-delta { font-size: 11px; margin-top: 4px; font-weight: 600; }
+.stat-delta.up { color: var(--good); }
+.stat-delta.down { color: var(--bad); }
 .big-num { font-size: 24px; font-weight: 800; color: var(--brand); margin: 4px 0 10px; }
 .quick-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
 

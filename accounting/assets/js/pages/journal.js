@@ -142,6 +142,9 @@ window.A = window.A || {};
 
   ui.register('journal', async (q) => {
     const journals = await S.journals.loadAll();
+    const attachments = await S.attachments.loadAll();
+    const attByJournal = {};
+    attachments.forEach((a) => { if (a.journalId) (attByJournal[a.journalId] = attByJournal[a.journalId] || []).push(a); });
     if (q.new) setTimeout(() => editor(null), 0);
 
     const wrap = el('div');
@@ -163,6 +166,12 @@ window.A = window.A || {};
         { key: 'desc', label: '摘要', render: (r) => r.description || '—' },
         { key: 'amt', label: '金額', align: 'right', render: (r) => '¥' + U.yen(S.journals.totals(r).debit) },
         { key: 'src', label: '', render: (r) => r.source !== 'manual' ? el('span.badge', { text: SRC_LABEL[r.source] || r.source }) : '' },
+        {
+          key: 'att', label: '', render: (r) => {
+            const atts = attByJournal[r.id]; if (!atts || !atts.length) return '';
+            return el('button.icon-btn', { text: '📎', title: '証憑を表示', onclick: (e) => { e.stopPropagation(); A.previewAttachment(atts[0]); } });
+          },
+        },
         {
           key: 'act', label: '', align: 'right', render: (r) => {
             const box = el('div.row-actions');
