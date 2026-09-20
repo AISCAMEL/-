@@ -434,5 +434,44 @@ A.reports = (function () {
     return { rows: inRange, closing: totalDebit - totalCredit, totalDebit, totalCredit };
   };
 
-  return { flatLines, ledger, trialBalance, statements, taxSummary, dashboard, depSchedule, depForFiscalYear, DEEMED_RATES, taxPayable, deptSummary, taxReturnCalc, advisor, monthlyTrend, partnerLedger };
+  /* ---- キャッシュフロー計算書（間接法・簡易） -------------------------
+   * 当期純利益に非資金項目（減価償却）と運転資本増減を加減し、営業/投資/財務に
+   * 区分。実際の現預金増減との差は「調整」に計上して必ず一致させる（概算）。
+   * ------------------------------------------------------------------- */
+  const cashflow = (journals, start, end) => {
+    const CAT2 = A.accounts.CATEGORIES;
+    const prev = (() => { if (!start) return null; const d = new Date(start + 'T00:00:00'); d.setDate(d.getDate() - 1); const p = (x) => String(x).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; })();
+    const balAt = (code, date) => {
+      let b = 0;
+      journals.forEach((j) => {
+        if (date && j.date > date) return;
+        (j.lines || []).forEach((l) => {
+          if (l.account !== code) return;
+          const cat = S.accounts.category(l.account); if (!cat) return;
+          const dn = CAT2[cat].side === 'debit';
+          b += (l.side === 'debit' ? 1 : -1) * (dn ? 1 : -1) * l.amount;
+        });
+      });
+      return b;
+    };
+    const delta = (codes) => codes.reduce((s, c) => s + (balAt(c, end) - balAt(c, prev)), 0);
+    const st = statements(journals, start, end);
+    const net = st.pl.netIncome;
+    const dep = (st.pl.expense.items.find((i) => i.code === '590') || { amount: 0 }).amount;
+
+    const dAR = delta(['120', '130']);         // 売上債権・未収
+    const dInv = delta(['150']);               // 棚卸資産
+    const dAP = delta(['200', '210', '220', '230', '250']); // 仕入債務・未払
+    const operating = net + dep - dAR - dInv + dAP;
+    const investing = -(delta(['180', '185', '186', '135']) + dep); // 固定資産等の取得（減価償却を戻す）
+    const financing = delta(['260', '270', '271', '300', '310']); // 借入金・資本の増減
+
+    const cashOpen = balAt('100', prev) + balAt('110', prev);
+    const cashClose = balAt('100', end) + balAt('110', end);
+    const cashChange = cashClose - cashOpen;
+    const adjust = cashChange - (operating + investing + financing);
+    return { net, dep, dAR, dInv, dAP, operating, investing, financing, adjust, cashChange, cashOpen, cashClose };
+  };
+
+  return { flatLines, ledger, trialBalance, statements, taxSummary, dashboard, depSchedule, depForFiscalYear, DEEMED_RATES, taxPayable, deptSummary, taxReturnCalc, advisor, monthlyTrend, partnerLedger, cashflow };
 })();
