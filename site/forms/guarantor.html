@@ -155,7 +155,8 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 </div>
 
 <h3>STEP4 お勤め先・ご収入</h3>
-<p>就労形態 (必須)<br><select><option>選択してください</option><option>正社員</option><option>契約社員</option><option>派遣社員</option><option>パート・アルバイト</option><option>会社役員・経営者</option><option>自営業・個人事業主</option><option>年金受給</option><option>その他</option></select></p>
+<p>就労形態 (必須)<br><select id="employment"><option>選択してください</option><option>正社員</option><option>契約社員</option><option>派遣社員</option><option>パート・アルバイト</option><option>会社役員・経営者</option><option>自営業・個人事業主</option><option>年金受給</option><option>無職</option><option>その他</option></select></p>
+<div id="grp-work">
 <div class="caf-half">
 <p>会社名・屋号 (必須)<br><input type="text"></p>
 <p>業種 (任意)<br><input type="text" placeholder="例：製造・建設・サービス"></p>
@@ -171,6 +172,11 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 <p>会社の郵便番号 (任意)<br><input type="text" inputmode="numeric" maxlength="7" class="company-zipcode" placeholder="1234567"></p>
 </div>
 <p>会社の所在地（郵便番号で自動入力） (任意)<br><input type="text" class="company-address to-hankaku"></p>
+</div>
+<div id="grp-nowork" class="hide">
+<p class="hint">お勤め先がない（無職・年金受給など）を選択されたため、勤務先情報のご入力は不要です。</p>
+<p>現在の主な収入・生活の状況 (任意)<br><select><option>選択してください</option><option>年金</option><option>家族の支援</option><option>貯蓄でまかなっている</option><option>失業給付</option><option>その他</option><option>特になし</option></select></p>
+</div>
 
 <h3>STEP5 他社お借入・信用状況</h3>
 <div class="caf-half">
@@ -180,13 +186,38 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 <p>ローン・クレジットの延滞 (必須)<br><select><option>選択してください</option><option>なし</option><option>あり（解消済み）</option><option>あり（延滞中）</option></select></p>
 <p class="hint">正確な保証審査のため、現在の状況を正直にご入力ください。</p>
 
-<h3>STEP6 本人確認書類<small></small></h3>
-<p>運転免許証など、ご本人確認書類をご提出ください（スマホ撮影OK・PDF/画像対応）。</p>
+<h3>STEP6 本人確認書類</h3>
+<p>ご本人確認書類のご提出をお願いします（スマホ撮影OK・PDF/画像対応）。</p>
+<p>運転免許証はお持ちですか？ (必須)<br><select id="has-license"><option>選択してください</option><option>持っている</option><option>持っていない</option></select></p>
+
+<div id="grp-doc-license" class="hide">
 <h4 style="color:var(--blue-hover);">運転免許証（必須）</h4>
+<p class="hint">表面・裏面の両方を、四隅まで鮮明にご提出ください。</p>
 <div class="caf-up-grid">
 <label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">運転免許証（表）必須</span><span class="caf-up-sub">四隅まで鮮明に</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
 <label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">運転免許証（裏）必須</span><span class="caf-up-sub">裏面の記載も</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
 </div>
+</div>
+
+<div id="grp-doc-nolicense" class="hide">
+<p>マイナンバーカード（個人番号カード）はお持ちですか？ (必須)<br><select id="has-mynumber"><option>選択してください</option><option>持っている</option><option>持っていない</option></select></p>
+<div id="grp-doc-mynumber" class="hide">
+<h4 style="color:var(--blue-hover);">マイナンバーカード（必須）</h4>
+<p class="hint">顔写真付きの「個人番号カード」をご提出ください。※紙の「通知カード」は本人確認に使用できません。</p>
+<div class="caf-up-grid">
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">マイナンバーカード（表）必須</span><span class="caf-up-sub">顔写真面・四隅まで鮮明に</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+</div>
+</div>
+<div id="grp-doc-juminhyo" class="hide">
+<h4 style="color:var(--blue-hover);">住民票（必須）</h4>
+<p class="hint">マイナンバーカードをお持ちでない場合は、住民票（発行3ヶ月以内）をご提出ください。あわせて健康保険証など補助書類があるとスムーズです。</p>
+<div class="caf-up-grid">
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">住民票 必須</span><span class="caf-up-sub">発行3ヶ月以内</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+<label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">健康保険証など（補助・任意）</span><span class="caf-up-sub">本人確認の補助</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+</div>
+</div>
+</div>
+
 <h4>収入証明（任意・お持ちの方）</h4>
 <div class="caf-up-grid">
 <label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">給与明細・源泉徴収票 など</span><span class="caf-up-sub">後日提出でもOK</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
@@ -248,6 +279,29 @@ function checkEmail(){
   else{emsg.textContent='メールアドレスが一致しません';emsg.style.color='#dc2626';}
 }
 em.addEventListener('input',checkEmail);ec.addEventListener('input',checkEmail);
+
+/* 就労形態＝無職/年金 → 勤務先を省略 */
+var _emp=document.getElementById('employment');
+if(_emp)_emp.addEventListener('change',function(){
+  var noWork=(this.value==='無職'||this.value==='年金受給');
+  var gw=document.getElementById('grp-work'),gn=document.getElementById('grp-nowork');
+  if(gw)gw.classList.toggle('hide',noWork);
+  if(gn)gn.classList.toggle('hide',!noWork);
+  try{updateProgress();}catch(e){}
+});
+/* 本人確認：免許 有無 → マイナンバー 有無 → 住民票 の分岐 */
+var _hl=document.getElementById('has-license');
+if(_hl)_hl.addEventListener('change',function(){
+  var has=(this.value==='持っている'),no=(this.value==='持っていない');
+  document.getElementById('grp-doc-license').classList.toggle('hide',!has);
+  document.getElementById('grp-doc-nolicense').classList.toggle('hide',!no);
+});
+var _hm=document.getElementById('has-mynumber');
+if(_hm)_hm.addEventListener('change',function(){
+  var has=(this.value==='持っている'),no=(this.value==='持っていない');
+  document.getElementById('grp-doc-mynumber').classList.toggle('hide',!has);
+  document.getElementById('grp-doc-juminhyo').classList.toggle('hide',!no);
+});
 
 /* 生年月日→年齢 */
 (function(){var bd=document.getElementById('birthday'),out=document.getElementById('birthday-age');if(!bd||!out)return;
@@ -362,8 +416,14 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
     if(!emailMatch()){errs.push('メールアドレス（確認用）が一致しません');if(!firstBad)firstBad=ec;}
     var consent=form.querySelectorAll('.caf-check input[type=checkbox]');
     if(!Array.prototype.every.call(consent,function(c){return c.checked;})){errs.push('同意項目すべてにチェックが必要です');if(!firstBad)firstBad=form.querySelector('.caf-check');}
-    var lic=[];form.querySelectorAll('.caf-up').forEach(function(l){var t=l.querySelector('.caf-up-ttl');if(t&&/運転免許証（[表裏]）/.test(t.textContent)){var f=l.querySelector('input[type=file]');lic.push(!!(f&&f.files&&f.files.length));}});
-    if(lic.length&&lic.some(function(x){return !x;})){errs.push('運転免許証（表・裏）の添付は必須です');if(!firstBad)firstBad=form.querySelector('.caf-up');}
+    var missDocs=[];
+    form.querySelectorAll('.caf-up').forEach(function(l){
+      if(l.closest('.hide'))return; /* 表示中の書類のみ判定（分岐で隠れた書類は対象外） */
+      var t=l.querySelector('.caf-up-ttl');if(!t||!/必須/.test(t.textContent))return;
+      var f=l.querySelector('input[type=file]');
+      if(!(f&&f.files&&f.files.length)){missDocs.push(t.textContent.replace(/\s+/g,' ').replace('必須','').trim());if(!firstBad)firstBad=l;}
+    });
+    if(missDocs.length){errs.push('本人確認書類（'+missDocs.join('・')+'）の添付は必須です');}
     if(errs.length){alert('ご確認ください：\n・'+errs.slice(0,8).join('\n・')+(errs.length>8?'\n・ ほか '+(errs.length-8)+'件':''));if(window.__gGoToField)window.__gGoToField(firstBad);
       setTimeout(function(){if(firstBad&&firstBad.scrollIntoView)firstBad.scrollIntoView({behavior:'smooth',block:'center'});},80);return;}
 
