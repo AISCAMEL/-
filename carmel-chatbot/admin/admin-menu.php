@@ -203,6 +203,16 @@ function carmel_cb_handle_post() {
 				'convo_followup_stages'    => carmel_cb_admin_sanitize_stages( $_POST['convo_followup_stages'] ?? array() ),
 				// 🔍 FAQ検索窓
 				'faq_search_on'            => isset( $_POST['faq_search_on'] ) ? 1 : 0,
+				// 🧲 離脱防止・エンゲージ
+				'starters_on'              => isset( $_POST['starters_on'] ) ? 1 : 0,
+				'starters_list'            => sanitize_textarea_field( wp_unslash( $_POST['starters_list'] ?? '' ) ),
+				'reassure_on'              => isset( $_POST['reassure_on'] ) ? 1 : 0,
+				'reassure_msg'             => sanitize_textarea_field( wp_unslash( $_POST['reassure_msg'] ?? '' ) ),
+				'exit_popup_on'            => isset( $_POST['exit_popup_on'] ) ? 1 : 0,
+				'exit_popup_msg'           => sanitize_textarea_field( wp_unslash( $_POST['exit_popup_msg'] ?? '' ) ),
+				'sim_on'                   => isset( $_POST['sim_on'] ) ? 1 : 0,
+				'sim_default_rate'         => max( 0, min( 30, (float) ( $_POST['sim_default_rate'] ?? 12 ) ) ),
+				'sim_note'                 => sanitize_textarea_field( wp_unslash( $_POST['sim_note'] ?? '' ) ),
 				// 🔔 通知音・離脱時メール
 				'sound_on'                 => isset( $_POST['sound_on'] ) ? 1 : 0,
 				'away_email_on'            => isset( $_POST['away_email_on'] ) ? 1 : 0,
@@ -1583,6 +1593,34 @@ function carmel_cb_view_appearance() {
 						}
 					}
 					?>
+				</td>
+			</tr>
+			<tr>
+				<th>🧲 離脱防止・エンゲージ</th>
+				<td>
+					<p style="margin-top:0"><label><input type="checkbox" name="starters_on" value="1" <?php checked( ! empty( $s['starters_on'] ) ); ?>> <strong>選択式スタート</strong>：お名前・メール入力後、タップで進める選択肢ボタンを表示</label></p>
+					<p style="margin:4px 0 4px">選択肢（1行に1つ）：</p>
+					<textarea name="starters_list" rows="5" class="large-text" style="font-family:inherit"><?php echo esc_textarea( $s['starters_list'] ?? '' ); ?></textarea>
+					<p class="description">「月々」「いくら」等を含む選択肢はタップで💰シミュレーションが開きます。</p>
+
+					<hr style="margin:14px 0">
+					<p><label><input type="checkbox" name="reassure_on" value="1" <?php checked( ! empty( $s['reassure_on'] ) ); ?>> <strong>実績・安心の提示</strong>：会話の冒頭に安心メッセージを表示</label></p>
+					<textarea name="reassure_msg" rows="2" class="large-text" style="font-family:inherit"><?php echo esc_textarea( $s['reassure_msg'] ?? '' ); ?></textarea>
+
+					<hr style="margin:14px 0">
+					<p><label><input type="checkbox" name="exit_popup_on" value="1" <?php checked( ! empty( $s['exit_popup_on'] ) ); ?>> <strong>離脱防止ポップ</strong>：タブを閉じる／戻る操作の直前に引き留めポップを表示（LINE誘導）</label></p>
+					<textarea name="exit_popup_msg" rows="2" class="large-text" style="font-family:inherit"><?php echo esc_textarea( $s['exit_popup_msg'] ?? '' ); ?></textarea>
+					<p class="description">1セッション1回のみ表示。LINE URL（基本設定）へ誘導します。</p>
+
+					<hr style="margin:14px 0">
+					<p><label><input type="checkbox" name="sim_on" value="1" <?php checked( ! empty( $s['sim_on'] ) ); ?>> <strong>簡易シミュレーション</strong>：月々のお支払い目安を計算するボタンを表示</label></p>
+					<p style="margin:4px 0">
+						年率の目安：<input type="number" name="sim_default_rate" value="<?php echo esc_attr( $s['sim_default_rate'] ?? 12 ); ?>" min="0" max="30" step="0.1" class="small-text"> %
+						<span class="description">（0にすると単純割り＝金利なしの概算）</span>
+					</p>
+					<p style="margin:4px 0 4px">注意書き：</p>
+					<textarea name="sim_note" rows="2" class="large-text" style="font-family:inherit"><?php echo esc_textarea( $s['sim_note'] ?? '' ); ?></textarea>
+					<p class="description">計算結果は概算です。断定を避ける注意書きの表示を推奨します。</p>
 				</td>
 			</tr>
 			<tr>

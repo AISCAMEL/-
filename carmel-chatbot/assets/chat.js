@@ -14,6 +14,10 @@
 
 	// 最初に提示するきっかけ候補（タップで会話開始）
 	var STARTERS = ["審査が不安です", "頭金がなくても大丈夫？", "他社で断られたけど…", "どんな車があるか見たい"];
+	// 管理画面で選択式スタートの候補が設定されていれば差し替え
+	if (window.CARMEL_CB && Array.isArray(window.CARMEL_CB.starters) && window.CARMEL_CB.starters.length) {
+		STARTERS = window.CARMEL_CB.starters;
+	}
 
 	// 有人ライブ（Slack双方向）の状態
 	var ho = { live: false, sid: null, poll: null, giveup: null, busy: null, hardstop: null, nudge: null, connected: false };
@@ -65,6 +69,7 @@
 		if (hoBtn) hoBtn.addEventListener("click", function () { if (opened) openHandoff(); else { userToggle(); openHandoff(); } });
 
 		bindFaqSearch(); // 🔍 よくある質問の検索窓
+		bindExitIntent(); // 🧲 離脱防止ポップ
 
 		// イントロ（女性大きく表示）：タップ/「相談をはじめる」で会話開始、×で閉じる
 		var intro = document.querySelector('[data-role="intro"]');
@@ -115,6 +120,8 @@
 			greeted = true;
 			addBubble("bot", cfg.welcome);
 			playStartChime(); // 🔔 会話開始チャイム（控えめ、1セッション1回）
+			// 🛡 実績・安心の提示（冒頭に一言）
+			if (cfg.reassureOn && cfg.reassureMsg) { renderReassure(cfg.reassureMsg); }
 			// 🎯 キャンペーンバナー：期間中でONなら冒頭に表示
 			if (cfg.campaign && cfg.campaign.showBanner && cfg.campaign.title) { renderCampaignBanner(cfg.campaign); }
 			// お名前・メール確認モード：先に連絡先を伺い、その後に用件へ進む
@@ -140,8 +147,49 @@
 		setTimeout(function () {
 			if (ho.live || convo.engaged) { return; }
 			addBubble("bot", intro || "本日はどのようなご相談ですか？下のメッセージ入力にて、その場でお答えします😊\n\nご希望の回答が得られない場合は、下の「担当者に相談」ボタンからお進みください。オペレーターが対応いたします。");
+			// 🧲 選択式スタート：intake後でも、タップで進める大きな選択肢を出す（打つ手間をなくす）
+			if (intro && cfg.startersOn && STARTERS.length) { renderStarterButtons(STARTERS); }
 			focusInput();
 		}, intro ? 200 : 1000);
+	}
+
+	// 🛡 実績・安心メッセージ（淡い枠で1回だけ）
+	function renderReassure(msg) {
+		var row = document.createElement("div");
+		row.className = "ccb-msg bot";
+		row.innerHTML = '<div class="ccb-reassure">🛡 ' + escapeHtml(msg) + '</div>';
+		msgBox.appendChild(row);
+		msgBox.scrollTop = msgBox.scrollHeight;
+	}
+
+	// 🧲 選択式スタート（大きめのタップボタン）
+	function renderStarterButtons(list) {
+		var wrap = document.createElement("div");
+		wrap.className = "ccb-msg bot";
+		var box = document.createElement("div");
+		box.className = "ccb-starters";
+		list.forEach(function (t) {
+			var b = document.createElement("button");
+			b.type = "button"; b.className = "ccb-starter-btn";
+			b.textContent = t;
+			b.addEventListener("click", function () {
+				// 「月々いくら」系はシミュレーションを開く
+				if (cfg.simOn && /月々|いくら|シミュ|支払い|返済/.test(t)) { openSimulation(); return; }
+				sendText(t);
+			});
+			box.appendChild(b);
+		});
+		// 💰 シミュレーションボタン（明示）
+		if (cfg.simOn) {
+			var sb = document.createElement("button");
+			sb.type = "button"; sb.className = "ccb-starter-btn ccb-starter-sim";
+			sb.textContent = "💰 月々の目安を計算する";
+			sb.addEventListener("click", function () { openSimulation(); });
+			box.appendChild(sb);
+		}
+		wrap.appendChild(box);
+		msgBox.appendChild(wrap);
+		msgBox.scrollTop = msgBox.scrollHeight;
 	}
 
 	// 開始時：お名前・メールを確認するフォーム（入力するまで会話は始めない）
@@ -1000,6 +1048,104 @@
 			return;
 		}
 		sendText(question);
+	}
+
+	/* ============ 💰 簡易シミュレーション（月々の目安） ============ */
+	function openSimulation() {
+		if (!chatStarted) { startChat(); }
+		clearChoices();
+		addBubble("bot", "月々のお支払い目安を計算します💰 数字を入れて「計算する」を押してください。（概算です）");
+		var form = document.createElement("div");
+		form.className = "ccb-msg bot";
+		form.innerHTML =
+			'<div class="ccb-lead" data-type="sim">' +
+			'<div class="ccb-lead-title">月々の目安シミュレーション</div>' +
+			'<div class="ccb-lead-fields">' +
+				'<label class="ccb-sim-row">車両価格（税込・円）<input class="ccb-li" data-k="price" inputmode="numeric" placeholder="例：1500000"></label>' +
+				'<label class="ccb-sim-row">頭金（円・任意）<input class="ccb-li" data-k="down" inputmode="numeric" placeholder="例：0"></label>' +
+				'<label class="ccb-sim-row">支払回数（月）<input class="ccb-li" data-k="months" inputmode="numeric" placeholder="例：60"></label>' +
+				'<button type="button" class="ccb-lead-next">計算する</button>' +
+				'<div class="ccb-lead-err" role="alert"></div>' +
+			'</div>' +
+			'</div>';
+		msgBox.appendChild(form);
+		msgBox.scrollTop = msgBox.scrollHeight;
+
+		var btn = form.querySelector(".ccb-lead-next");
+		var err = form.querySelector(".ccb-lead-err");
+		var num = function (k) {
+			var el = form.querySelector('[data-k="' + k + '"]');
+			var v = el ? (el.value || "").replace(/[^0-9]/g, "") : "";
+			return v === "" ? null : parseInt(v, 10);
+		};
+		btn.addEventListener("click", function () {
+			var price = num("price"), down = num("down") || 0, months = num("months");
+			if (!price || price < 1) { err.textContent = "車両価格をご入力ください。"; err.style.display = "block"; return; }
+			if (!months || months < 1) { err.textContent = "支払回数（月）をご入力ください。"; err.style.display = "block"; return; }
+			if (down >= price) { err.textContent = "頭金は車両価格より小さくしてください。"; err.style.display = "block"; return; }
+			err.style.display = "none";
+			var principal = price - down;
+			var rate = (typeof cfg.simRate === "number") ? cfg.simRate : 12;
+			var monthly;
+			if (rate > 0) {
+				var r = rate / 100 / 12;
+				monthly = principal * r / (1 - Math.pow(1 + r, -months));
+			} else {
+				monthly = principal / months;
+			}
+			monthly = Math.round(monthly);
+			var total = monthly * months;
+			form.remove();
+			var yen = function (n) { return n.toLocaleString("ja-JP") + "円"; };
+			addBubble("bot",
+				"目安の月々お支払い：約 " + yen(monthly) + " / 月\n" +
+				"（車両 " + yen(price) + "・頭金 " + yen(down) + "・" + months + "回・年率目安 " + rate + "%）\n" +
+				"お支払い総額の目安：約 " + yen(total) + "\n\n" +
+				(cfg.simNote || "※ あくまで概算です。実際は審査・プランにより異なります。")
+			);
+			addBubble("bot", "この条件で、実際に組めるか無料で仮審査できます😊 ご希望でしたら下のボタンからどうぞ。");
+			renderCTA("apply");
+			scheduleIdle();
+		});
+	}
+
+	/* ============ 🧲 離脱防止ポップ（exit intent） ============ */
+	function bindExitIntent() {
+		if (!cfg.exitPopupOn) return;
+		var shown = false;
+		var fire = function () {
+			if (shown) return;
+			if (ho.live || convo.engaged) return; // 担当者対応中は出さない
+			shown = true;
+			showExitPopup();
+		};
+		// デスクトップ：画面上部へマウスが抜けたら（タブを閉じる/戻る操作の予兆）
+		document.addEventListener("mouseout", function (e) {
+			if (e.clientY <= 0 && !e.relatedTarget) { fire(); }
+		});
+		// モバイル：戻る操作を1回だけトラップ
+		try {
+			history.pushState({ ccb: 1 }, "");
+			window.addEventListener("popstate", function () {
+				if (!shown) { history.pushState({ ccb: 1 }, ""); fire(); }
+			});
+		} catch (e) {}
+	}
+	function showExitPopup() {
+		var root = document.getElementById("carmel-cb-root");
+		if (!root) return;
+		var pop = document.createElement("div");
+		pop.className = "ccb-exit-pop";
+		var msg = cfg.exitPopupMsg || "お帰りですか？ ご相談の続きはLINEでも承っています😊";
+		pop.innerHTML =
+			'<button class="ccb-exit-close" aria-label="閉じる">×</button>' +
+			'<div class="ccb-exit-msg">' + escapeHtml(msg) + '</div>' +
+			(cfg.lineUrl ? '<a class="ccb-exit-line" href="' + cfg.lineUrl + '" target="_blank" rel="noopener">LINEで相談する →</a>' : '') +
+			'<button class="ccb-exit-continue" type="button">チャットを続ける</button>';
+		root.appendChild(pop);
+		pop.querySelector(".ccb-exit-close").addEventListener("click", function () { pop.remove(); });
+		var cont = pop.querySelector(".ccb-exit-continue");
+		if (cont) cont.addEventListener("click", function () { pop.remove(); if (!opened) userToggle(); });
 	}
 
 	/* ============ 🔔 通知音・在席検知 ============ */

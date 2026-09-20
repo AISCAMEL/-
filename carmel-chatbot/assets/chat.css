@@ -211,6 +211,40 @@
 }
 .ccb-choice:hover { background: var(--ccb-primary, #0b5cab); color: #fff; }
 
+/* 🛡 実績・安心 */
+.ccb-reassure { background: #eefaf1; border: 1px solid #bfe6cb; color: #1f6b3b; border-radius: 12px; padding: 10px 13px; font-size: 13px; line-height: 1.55; max-width: 92%; }
+
+/* 🧲 選択式スタート（大きめボタン） */
+.ccb-starters { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.ccb-starter-btn {
+	text-align: left; background: #fff; color: #1a2330;
+	border: 1.5px solid var(--ccb-primary, #0b5cab); border-radius: 12px;
+	padding: 12px 15px; font-size: 14px; font-weight: 600; line-height: 1.4; cursor: pointer; font-family: inherit;
+	transition: background .12s, transform .05s;
+}
+.ccb-starter-btn:hover { background: #eef7ff; }
+.ccb-starter-btn:active { transform: scale(.99); }
+.ccb-starter-btn::before { content: "▶ "; color: var(--ccb-primary, #0b5cab); font-size: 11px; }
+.ccb-starter-sim { border-color: #e0a800; background: #fff9e6; }
+.ccb-starter-sim::before { content: ""; }
+
+/* 💰 シミュレーション行 */
+.ccb-sim-row { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #556; margin-bottom: 4px; }
+
+/* 🧲 離脱防止ポップ */
+.ccb-exit-pop {
+	position: absolute; right: 0; bottom: 76px; width: min(300px, calc(100vw - 32px));
+	background: #fff; border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,.28);
+	padding: 16px 16px 14px; z-index: 100000; border: 1px solid #e3e8ee;
+	animation: ccb-exit-in .25s ease-out;
+}
+@keyframes ccb-exit-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.ccb-exit-close { position: absolute; top: 8px; right: 10px; background: none; border: none; font-size: 20px; color: #98a2b3; cursor: pointer; line-height: 1; }
+.ccb-exit-msg { font-size: 13.5px; line-height: 1.6; color: #1a2330; margin: 2px 0 12px; }
+.ccb-exit-line { display: block; text-align: center; background: #06c755; color: #fff; font-weight: 700; text-decoration: none; border-radius: 999px; padding: 11px; font-size: 14px; margin-bottom: 8px; }
+.ccb-exit-continue { display: block; width: 100%; background: #fff; color: var(--ccb-primary, #0b5cab); border: 1px solid var(--ccb-primary, #0b5cab); border-radius: 999px; padding: 9px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
+@media (max-width: 782px) { .ccb-exit-pop { bottom: 84px; right: 4px; } }
+
 .ccb-foot { display: flex; justify-content: center; align-items: center; gap: 14px; padding: 8px; background: #fff; border-top: 1px solid #f0f2f5; }
 .ccb-foot a { color: #06c755; font-size: 13px; font-weight: 700; text-decoration: none; }
 .ccb-foot-btn { background: none; border: none; color: var(--ccb-primary, #0b5cab); font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
