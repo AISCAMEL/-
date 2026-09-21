@@ -16,11 +16,11 @@ function carmel_cb_visitor_key( $sid ) { return 'carmel_cb_visitor_' . md5( (str
 function carmel_cb_visitor_line( $sid ) {
 	$v = get_transient( carmel_cb_visitor_key( $sid ) );
 	if ( ! is_array( $v ) ) { return ''; }
-	$name  = trim( (string) ( $v['name'] ?? '' ) );
+	$name = trim( (string) ( $v['name'] ?? '' ) );
 	$email = trim( (string) ( $v['email'] ?? '' ) );
 	if ( $name === '' && $email === '' ) { return ''; }
 	$parts = array();
-	if ( $name !== '' )  { $parts[] = $name . ' 様'; }
+	if ( $name !== '' ) { $parts[] = $name . ' 様'; }
 	if ( $email !== '' ) { $parts[] = $email; }
 	return '👤 お客様: ' . implode( ' / ', $parts );
 }
@@ -28,7 +28,7 @@ function carmel_cb_visitor_line( $sid ) {
 /** スレッドを用意（無ければ作成）。 */
 function carmel_cb_convo_ensure( $s, $sid, $page, $within_label ) {
 	if ( ! carmel_cb_slack_live_on( $s ) || $sid === '' ) { return false; }
-	$key  = carmel_cb_convo_key( $sid );
+	$key = carmel_cb_convo_key( $sid );
 	$sess = get_transient( $key );
 	if ( $sess ) { return $sess; }
 
@@ -39,7 +39,7 @@ function carmel_cb_convo_ensure( $s, $sid, $page, $within_label ) {
 		. '_このスレッドに返信すると、お客様のチャットに直接届きます（会話の途中でも割り込めます）。_';
 	$res = carmel_cb_slack_api( 'chat.postMessage', $s['slack_bot_token'], array(
 		'channel' => $s['slack_channel'],
-		'text'    => $head,
+		'text'  => $head,
 	) );
 	if ( empty( $res['ok'] ) ) { return false; }
 
@@ -51,9 +51,9 @@ function carmel_cb_convo_ensure( $s, $sid, $page, $within_label ) {
 /** スレッドへ1行投稿。 */
 function carmel_cb_convo_post( $s, $sess, $text ) {
 	carmel_cb_slack_api( 'chat.postMessage', $s['slack_bot_token'], array(
-		'channel'   => $sess['channel'],
+		'channel'  => $sess['channel'],
 		'thread_ts' => $sess['thread'],
-		'text'      => $text,
+		'text'   => $text,
 	) );
 }
 
@@ -62,7 +62,7 @@ function carmel_cb_convo_mirror( $s, $sid, $user_msg, $ai_reply, $page, $within_
 	$sess = carmel_cb_convo_ensure( $s, $sid, $page, $within_label );
 	if ( ! $sess ) { return false; }
 	if ( $user_msg !== '' ) { carmel_cb_convo_post( $s, $sess, '🙋 お客様: ' . mb_substr( (string) $user_msg, 0, 1500 ) ); }
-	if ( $ai_reply !== '' )  { carmel_cb_convo_post( $s, $sess, '🤖 AI: ' . mb_substr( (string) $ai_reply, 0, 1500 ) ); }
+	if ( $ai_reply !== '' ) { carmel_cb_convo_post( $s, $sess, '🤖 AI: ' . mb_substr( (string) $ai_reply, 0, 1500 ) ); }
 	return true;
 }
 
@@ -80,8 +80,8 @@ function carmel_cb_convo_poll( $s, $sid ) {
 	if ( ! $sess ) { return array(); }
 	$res = carmel_cb_slack_api( 'conversations.replies', $s['slack_bot_token'], array(
 		'channel' => $sess['channel'],
-		'ts'      => $sess['thread'],
-		'oldest'  => $sess['last'],
+		'ts'   => $sess['thread'],
+		'oldest' => $sess['last'],
 	), false );
 	if ( empty( $res['ok'] ) || empty( $res['messages'] ) ) { return array(); }
 
@@ -95,7 +95,7 @@ function carmel_cb_convo_poll( $s, $sid ) {
 			$item['files'] = carmel_cb_slack_download_files( $s, $m['files'] );
 		}
 		$out[] = $item;
-		$last  = $m['ts'];
+		$last = $m['ts'];
 	}
 	if ( $out ) {
 		$sess['last'] = $last;
@@ -108,11 +108,11 @@ function carmel_cb_convo_poll( $s, $sid ) {
 
 add_action( 'rest_api_init', function () {
 	$ns = 'carmel-cb/v1';
-	register_rest_route( $ns, '/convo/poll',    array( 'methods' => 'GET',  'callback' => 'carmel_cb_handle_convo_poll',    'permission_callback' => '__return_true' ) );
-	register_rest_route( $ns, '/convo/send',    array( 'methods' => 'POST', 'callback' => 'carmel_cb_handle_convo_send',    'permission_callback' => '__return_true' ) );
+	register_rest_route( $ns, '/convo/poll',  array( 'methods' => 'GET', 'callback' => 'carmel_cb_handle_convo_poll',  'permission_callback' => '__return_true' ) );
+	register_rest_route( $ns, '/convo/send',  array( 'methods' => 'POST', 'callback' => 'carmel_cb_handle_convo_send',  'permission_callback' => '__return_true' ) );
 	register_rest_route( $ns, '/convo/handoff', array( 'methods' => 'POST', 'callback' => 'carmel_cb_handle_convo_handoff', 'permission_callback' => '__return_true' ) );
-	register_rest_route( $ns, '/visitor',       array( 'methods' => 'POST', 'callback' => 'carmel_cb_handle_visitor',       'permission_callback' => '__return_true' ) );
-	register_rest_route( $ns, '/away-notify',   array( 'methods' => 'POST', 'callback' => 'carmel_cb_handle_away_notify',   'permission_callback' => '__return_true' ) );
+	register_rest_route( $ns, '/visitor',    array( 'methods' => 'POST', 'callback' => 'carmel_cb_handle_visitor',    'permission_callback' => '__return_true' ) );
+	register_rest_route( $ns, '/away-notify',  array( 'methods' => 'POST', 'callback' => 'carmel_cb_handle_away_notify',  'permission_callback' => '__return_true' ) );
 } );
 
 /**
@@ -123,7 +123,7 @@ function carmel_cb_handle_away_notify( WP_REST_Request $r ) {
 	$s = carmel_cb_get_settings();
 	if ( empty( $s['away_email_on'] ) ) { return new WP_REST_Response( array( 'ok' => false, 'reason' => 'off' ), 200 ); }
 
-	$b   = $r->get_json_params();
+	$b  = $r->get_json_params();
 	$sid = sanitize_text_field( $b['session_id'] ?? '' );
 	$page = esc_url_raw( $b['page'] ?? '' );
 	if ( $sid === '' ) { return new WP_REST_Response( array( 'ok' => false, 'reason' => 'no_sid' ), 200 ); }
@@ -140,19 +140,19 @@ function carmel_cb_handle_away_notify( WP_REST_Request $r ) {
 	if ( get_transient( $lock_key ) ) { return new WP_REST_Response( array( 'ok' => false, 'reason' => 'throttled' ), 200 ); }
 	set_transient( $lock_key, 1, 10 * MINUTE_IN_SECONDS );
 
-	$name  = (string) ( $v['name'] ?? 'お客様' );
+	$name = (string) ( $v['name'] ?? 'お客様' );
 	$email = (string) $v['email'];
-	$site  = home_url( '/' );
+	$site = home_url( '/' );
 	$signature = (string) ( $s['followup_signature'] ?? '' );
 	$unsub_url = function_exists( 'carmel_cb_unsub_url' ) ? carmel_cb_unsub_url( $email ) : '';
 	$unsub_note = (string) ( $s['followup_unsub_note'] ?? '' );
 
 	$subject = (string) ( $s['away_email_subject'] ?? '【カーメル】担当者から返信があります' );
-	$body_tpl = (string) ( $s['away_email_body'] ?? "{name} 様\n\nカーメルの みほ です😊\n先ほどご相談中の担当者から返信が届いています。\n\n引き続きチャットで会話を続けていただけます。\n▼ チャット画面に戻る\n{page}\n\nチャット画面が閉じていた場合は、下記からもう一度お開きください。\n▼ カーメル\n{site}\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n" );
+	$body_tpl = (string) ( $s['away_email_body'] ?? "{name} 様\n\nカーメルの みほ です\n先ほどご相談中の担当者から返信が届いています。\n\n引き続きチャットで会話を続けていただけます。\n▼ チャット画面に戻る\n{page}\n\nチャット画面が閉じていた場合は、下記からもう一度お開きください。\n▼ カーメル\n{site}\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n" );
 
 	$vars = array( '{name}' => $name, '{page}' => $page ?: $site, '{site}' => $site, '{signature}' => $signature, '{unsubscribe_url}' => $unsub_url, '{unsub_note}' => $unsub_note );
 	$subject = strtr( $subject, $vars );
-	$body    = strtr( $body_tpl, $vars );
+	$body  = strtr( $body_tpl, $vars );
 
 	// 差出人は後追いメールと共通
 	$GLOBALS['carmel_cb_apply_sending'] = true;
@@ -170,10 +170,10 @@ function carmel_cb_handle_away_notify( WP_REST_Request $r ) {
 function carmel_cb_handle_visitor( WP_REST_Request $request ) {
 	$s = carmel_cb_get_settings();
 	$b = $request->get_json_params();
-	$sid   = sanitize_text_field( $b['session_id'] ?? '' );
-	$name  = sanitize_text_field( $b['name'] ?? '' );
+	$sid  = sanitize_text_field( $b['session_id'] ?? '' );
+	$name = sanitize_text_field( $b['name'] ?? '' );
 	$email = sanitize_email( $b['email'] ?? '' );
-	$page  = esc_url_raw( $b['page'] ?? '' );
+	$page = esc_url_raw( $b['page'] ?? '' );
 
 	if ( $sid === '' || $name === '' ) {
 		return new WP_REST_Response( array( 'ok' => false, 'error' => '入力が不足しています' ), 200 );
@@ -193,7 +193,7 @@ function carmel_cb_handle_visitor( WP_REST_Request $request ) {
 }
 
 function carmel_cb_handle_convo_poll( WP_REST_Request $request ) {
-	$s   = carmel_cb_get_settings();
+	$s  = carmel_cb_get_settings();
 	$sid = sanitize_text_field( $request->get_param( 'session_id' ) );
 	$msgs = carmel_cb_slack_live_on( $s ) ? carmel_cb_convo_poll( $s, $sid ) : array();
 	return new WP_REST_Response( array( 'messages' => $msgs ), 200 );
@@ -202,9 +202,9 @@ function carmel_cb_handle_convo_poll( WP_REST_Request $request ) {
 function carmel_cb_handle_convo_send( WP_REST_Request $request ) {
 	$s = carmel_cb_get_settings();
 	$b = $request->get_json_params();
-	$sid  = sanitize_text_field( $b['session_id'] ?? '' );
+	$sid = sanitize_text_field( $b['session_id'] ?? '' );
 	$text = sanitize_textarea_field( $b['text'] ?? '' );
-	$ok   = carmel_cb_slack_live_on( $s ) ? carmel_cb_convo_relay( $s, $sid, $text ) : false;
+	$ok  = carmel_cb_slack_live_on( $s ) ? carmel_cb_convo_relay( $s, $sid, $text ) : false;
 	return new WP_REST_Response( array( 'ok' => (bool) $ok ), 200 );
 }
 
@@ -213,9 +213,9 @@ function carmel_cb_handle_convo_handoff( WP_REST_Request $request ) {
 	$s = carmel_cb_get_settings();
 	if ( empty( $s['handoff_enabled'] ) ) { return new WP_REST_Response( array( 'mode' => 'disabled' ), 200 ); }
 
-	$b   = $request->get_json_params();
+	$b  = $request->get_json_params();
 	$sid = sanitize_text_field( $b['session_id'] ?? '' );
-	$q   = sanitize_textarea_field( $b['question'] ?? '' );
+	$q  = sanitize_textarea_field( $b['question'] ?? '' );
 
 	// intake でメール取得済みなら通知に含める
 	$email = '';
@@ -245,9 +245,9 @@ function carmel_cb_handle_convo_handoff( WP_REST_Request $request ) {
 	$busy_sec = max( 3, min( 120, (int) ( $s['handoff_busy_sec'] ?? 15 ) ) );
 	$wait_sec = max( $busy_sec + 2, min( 300, (int) ( $s['handoff_wait_sec'] ?? 45 ) ) );
 	return new WP_REST_Response( array(
-		'mode'    => 'live',
+		'mode'  => 'live',
 		'waitMsg' => (string) ( $s['handoff_wait_msg'] ?? '担当者におつなぎしています。少々お待ちください…' ),
-		'busyMs'  => $busy_sec * 1000,
+		'busyMs' => $busy_sec * 1000,
 		'busyMsg' => (string) ( $s['handoff_busy_msg'] ?? '' ),
 		'timeout' => $wait_sec * 1000,
 	), 200 );

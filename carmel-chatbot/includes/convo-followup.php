@@ -7,10 +7,10 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
  * - 各AI返答で「最終発言時刻」を更新
  * - 未解決 && 最終発言から一定時間経過で段階的に自動メール送信
  * - 解決条件：
- *   ・審査ボタンを押した / 審査フォームを送信
- *   ・お問い合わせを送信
- *   ・担当者に相談を選んだ
- *   ・チャットに戻ってきて再度メッセージを送った（=セッション継続 → 送信対象から一時的に外す）
+ *  ・審査ボタンを押した / 審査フォームを送信
+ *  ・お問い合わせを送信
+ *  ・担当者に相談を選んだ
+ *  ・チャットに戻ってきて再度メッセージを送った（=セッション継続 → 送信対象から一時的に外す）
  */
 
 /* ========================= テーブル ========================= */
@@ -70,7 +70,7 @@ function carmel_cb_convo_fu_touch( $sid ) {
 		$v = get_transient( carmel_cb_visitor_key( $sid ) );
 		if ( is_array( $v ) ) {
 			$email = sanitize_email( $v['email'] ?? '' );
-			$name  = sanitize_text_field( $v['name'] ?? '' );
+			$name = sanitize_text_field( $v['name'] ?? '' );
 		}
 	}
 	if ( ! is_email( $email ) ) { return false; } // メール未取得なら送りようがない → スキップ
@@ -85,14 +85,14 @@ function carmel_cb_convo_fu_touch( $sid ) {
 		$wpdb->update( $t, array( 'last_message_at' => $now ), array( 'id' => $exists ) );
 	} else {
 		$wpdb->insert( $t, array(
-			'session_id'       => $sid,
-			'email'            => $email,
-			'name'             => $name,
-			'page'             => '',
+			'session_id'    => $sid,
+			'email'      => $email,
+			'name'       => $name,
+			'page'       => '',
 			'first_message_at' => $now,
-			'last_message_at'  => $now,
-			'stage'            => 0,
-			'resolved'         => 0,
+			'last_message_at' => $now,
+			'stage'      => 0,
+			'resolved'     => 0,
 		) );
 	}
 	return true;
@@ -158,29 +158,29 @@ function carmel_cb_convo_fu_send_stage_mail( $s, $row, $stage_num, $def ) {
 	// オプトアウト済みなら送らない
 	if ( function_exists( 'carmel_cb_is_opted_out' ) && carmel_cb_is_opted_out( $row->email ) ) { return true; /* 送らず完了扱い */ }
 
-	$name      = $row->name !== '' ? $row->name : 'お客様';
+	$name   = $row->name !== '' ? $row->name : 'お客様';
 	$apply_url = ! empty( $s['apply_url'] ) ? $s['apply_url'] : home_url( '/shinsa-2/' );
-	$line_url  = (string) ( $s['line_url'] ?? '' );
-	$tel       = (string) ( $s['tel'] ?? '' );
+	$line_url = (string) ( $s['line_url'] ?? '' );
+	$tel    = (string) ( $s['tel'] ?? '' );
 	$stock_url = (string) ( $s['stock_page_url'] ?? '' );
-	$site_url  = home_url( '/' );
+	$site_url = home_url( '/' );
 	$signature = (string) ( $s['followup_signature'] ?? '' );
 	$unsub_url = function_exists( 'carmel_cb_unsub_url' ) ? carmel_cb_unsub_url( $row->email ) : '';
 	$unsub_note = (string) ( $s['followup_unsub_note'] ?? '' );
 
 	$vars = array(
-		'{name}'            => $name,
-		'{apply_url}'       => $apply_url,
-		'{line_url}'        => $line_url,
-		'{tel}'             => $tel,
-		'{stock_url}'       => $stock_url,
-		'{site_url}'        => $site_url,
-		'{signature}'       => $signature,
+		'{name}'      => $name,
+		'{apply_url}'    => $apply_url,
+		'{line_url}'    => $line_url,
+		'{tel}'       => $tel,
+		'{stock_url}'    => $stock_url,
+		'{site_url}'    => $site_url,
+		'{signature}'    => $signature,
 		'{unsubscribe_url}' => $unsub_url,
-		'{unsub_note}'      => $unsub_note,
+		'{unsub_note}'   => $unsub_note,
 	);
 	$subject = strtr( (string) ( $def['subject'] ?? '' ), $vars );
-	$body    = strtr( (string) ( $def['body'] ?? '' ),    $vars );
+	$body  = strtr( (string) ( $def['body'] ?? '' ),  $vars );
 	if ( $subject === '' || $body === '' ) { return false; }
 
 	$GLOBALS['carmel_cb_apply_sending'] = true; // 差出人フィルタを共通で使う（apply-followup.php 側で登録済み）
@@ -195,22 +195,22 @@ function carmel_cb_convo_fu_send_stage_mail( $s, $row, $stage_num, $def ) {
 function carmel_cb_convo_fu_stage_defs( $s ) {
 	$defaults = array(
 		1 => array(
-			'on'        => true,
+			'on'    => true,
 			'delay_min' => 120, // 2時間
-			'subject'   => '【カーメル】ご相談の続き、お答え足りていましたでしょうか？',
-			'body'      => "{name} 様\n\nカーメル相談窓口の みほ です😊\n先ほどはカーメルにご相談いただき、ありがとうございました。\n\nご質問への回答は十分でしたか？\nもし途中で気になる点や、聞き足りなかったことがあれば、いつでも続きからご相談いただけます。\n\n▼ 続きから相談する\n{site_url}\n\nお車のご検討はもちろん、審査の不安や頭金のことなど、どんな小さなことでもお気軽にどうぞ。\n・LINEでも承ります：{line_url}\n・お電話：{tel}\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n※ このメールは自動送信です。ご返信いただいても対応できない場合があります。\n",
+			'subject'  => '【カーメル】ご相談の続き、お答え足りていましたでしょうか？',
+			'body'   => "{name} 様\n\nカーメル相談窓口の みほ です\n先ほどはカーメルにご相談いただき、ありがとうございました。\n\nご質問への回答は十分でしたか？\nもし途中で気になる点や、聞き足りなかったことがあれば、いつでも続きからご相談いただけます。\n\n▼ 続きから相談する\n{site_url}\n\nお車のご検討はもちろん、審査の不安や頭金のことなど、どんな小さなことでもお気軽にどうぞ。\n・LINEでも承ります：{line_url}\n・お電話：{tel}\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n※ このメールは自動送信です。ご返信いただいても対応できない場合があります。\n",
 		),
 		2 => array(
-			'on'        => true,
+			'on'    => true,
 			'delay_min' => 60 * 24, // 24時間
-			'subject'   => '【カーメル】その後、お車のご検討はいかがでしょうか？',
-			'body'      => "{name} 様\n\nお世話になっております、カーメルの みほ です。\n昨日はご相談いただき、ありがとうございました。\n\nその後、お車のご検討は進んでいらっしゃいますか？\nご予算や車種のご希望、支払い方法など、\nお決まりの部分だけでも教えていただければ、\n最適なプランをご提案いたします。\n\n▼ 在庫を見てみる\n{stock_url}\n\n▼ 続きから相談する\n{site_url}\n\n・LINEでも気軽にどうぞ：{line_url}\n・お電話：{tel}\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n※ このメールは自動送信です。ご返信いただいても対応できない場合があります。\n",
+			'subject'  => '【カーメル】その後、お車のご検討はいかがでしょうか？',
+			'body'   => "{name} 様\n\nお世話になっております、カーメルの みほ です。\n昨日はご相談いただき、ありがとうございました。\n\nその後、お車のご検討は進んでいらっしゃいますか？\nご予算や車種のご希望、支払い方法など、\nお決まりの部分だけでも教えていただければ、\n最適なプランをご提案いたします。\n\n▼ 在庫を見てみる\n{stock_url}\n\n▼ 続きから相談する\n{site_url}\n\n・LINEでも気軽にどうぞ：{line_url}\n・お電話：{tel}\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n※ このメールは自動送信です。ご返信いただいても対応できない場合があります。\n",
 		),
 		3 => array(
-			'on'        => true,
+			'on'    => true,
 			'delay_min' => 60 * 24 * 3, // 3日
-			'subject'   => '【カーメル】お手伝いできることがあれば、いつでもご相談ください',
-			'body'      => "{name} 様\n\nカーメルの みほ です。\n先日はご相談いただき、ありがとうございました。\n\nもしまだお車探しでお困りのことがあれば、いつでもお声がけください。\n他社様で審査が通らなかった方でも、当店の低与信ローンでご案内できるケースが多くあります。\n\n▼ 仮審査を申し込む\n{apply_url}\n▼ もう一度相談する\n{site_url}\n▼ 在庫を見る\n{stock_url}\n・LINE：{line_url}\n・お電話：{tel}\n\n無理な営業は一切いたしません。ご相談だけでも大歓迎です😊\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n※ このメールは自動送信です。ご返信いただいても対応できない場合があります。\n",
+			'subject'  => '【カーメル】お手伝いできることがあれば、いつでもご相談ください',
+			'body'   => "{name} 様\n\nカーメルの みほ です。\n先日はご相談いただき、ありがとうございました。\n\nもしまだお車探しでお困りのことがあれば、いつでもお声がけください。\n他社様で審査が通らなかった方でも、当店の低与信ローンでご案内できるケースが多くあります。\n\n▼ 仮審査を申し込む\n{apply_url}\n▼ もう一度相談する\n{site_url}\n▼ 在庫を見る\n{stock_url}\n・LINE：{line_url}\n・お電話：{tel}\n\n無理な営業は一切いたしません。ご相談だけでも大歓迎です\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n※ このメールは自動送信です。ご返信いただいても対応できない場合があります。\n",
 		),
 	);
 	$user = is_array( $s['convo_followup_stages'] ?? null ) ? $s['convo_followup_stages'] : array();

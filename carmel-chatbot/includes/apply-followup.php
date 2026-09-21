@@ -56,12 +56,12 @@ function carmel_cb_apply_record_click( $email, $name = '', $sid = '', $page = ''
 	if ( $recent > 0 ) { return true; }
 
 	return (bool) $wpdb->insert( $t, array(
-		'email'      => $email,
-		'name'       => (string) $name,
+		'email'   => $email,
+		'name'    => (string) $name,
 		'session_id' => (string) $sid,
-		'page'       => (string) $page,
-		'stage'      => 0,
-		'completed'  => 0,
+		'page'    => (string) $page,
+		'stage'   => 0,
+		'completed' => 0,
 	) );
 }
 
@@ -78,7 +78,7 @@ function carmel_cb_apply_mark_complete( $email ) {
 
 add_action( 'rest_api_init', function () {
 	$ns = 'carmel-cb/v1';
-	register_rest_route( $ns, '/apply-click',    array( 'methods' => 'POST', 'callback' => 'carmel_cb_handle_apply_click',    'permission_callback' => '__return_true' ) );
+	register_rest_route( $ns, '/apply-click',  array( 'methods' => 'POST', 'callback' => 'carmel_cb_handle_apply_click',  'permission_callback' => '__return_true' ) );
 	register_rest_route( $ns, '/apply-complete', array( 'methods' => 'POST', 'callback' => 'carmel_cb_handle_apply_complete', 'permission_callback' => '__return_true' ) );
 } );
 
@@ -86,10 +86,10 @@ function carmel_cb_handle_apply_click( WP_REST_Request $r ) {
 	$s = carmel_cb_get_settings();
 	if ( empty( $s['apply_followup_on'] ) ) { return new WP_REST_Response( array( 'ok' => false, 'skipped' => 'off' ), 200 ); }
 	$b = $r->get_json_params();
-	$sid   = sanitize_text_field( $b['session_id'] ?? '' );
-	$name  = sanitize_text_field( $b['name'] ?? '' );
+	$sid  = sanitize_text_field( $b['session_id'] ?? '' );
+	$name = sanitize_text_field( $b['name'] ?? '' );
 	$email = sanitize_email( $b['email'] ?? '' );
-	$page  = esc_url_raw( $b['page'] ?? '' );
+	$page = esc_url_raw( $b['page'] ?? '' );
 
 	// intake で保存済みなら、email が空でもそちらから拾う
 	if ( $email === '' && function_exists( 'carmel_cb_visitor_key' ) && $sid !== '' ) {
@@ -149,7 +149,7 @@ function carmel_cb_opt_out( $email ) {
 	}
 	// 未送信の後追いも全部止める
 	if ( function_exists( 'carmel_cb_apply_mark_complete' ) ) { carmel_cb_apply_mark_complete( $email ); }
-	if ( function_exists( 'carmel_cb_convo_fu_resolve' ) )    { carmel_cb_convo_fu_resolve( '', $email ); }
+	if ( function_exists( 'carmel_cb_convo_fu_resolve' ) )  { carmel_cb_convo_fu_resolve( '', $email ); }
 	return true;
 }
 function carmel_cb_unsub_token( $email ) {
@@ -264,29 +264,29 @@ function carmel_cb_apply_send_stage_mail( $s, $row, $stage_num, $def ) {
 	// オプトアウト済みなら送らない
 	if ( carmel_cb_is_opted_out( $row->email ) ) { return true; /* 送らず完了扱い */ }
 
-	$name    = $row->name !== '' ? $row->name : 'お客様';
+	$name  = $row->name !== '' ? $row->name : 'お客様';
 	$apply_url = ! empty( $s['apply_url'] ) ? $s['apply_url'] : home_url( '/shinsa-2/' );
-	$line_url  = (string) ( $s['line_url'] ?? '' );
-	$tel       = (string) ( $s['tel'] ?? '' );
+	$line_url = (string) ( $s['line_url'] ?? '' );
+	$tel    = (string) ( $s['tel'] ?? '' );
 	$stock_url = (string) ( $s['stock_page_url'] ?? '' );
-	$site_url  = home_url( '/' );
+	$site_url = home_url( '/' );
 	$signature = (string) ( $s['followup_signature'] ?? '' );
 	$unsub_url = carmel_cb_unsub_url( $row->email );
 	$unsub_note = (string) ( $s['followup_unsub_note'] ?? '' );
 
 	$vars = array(
-		'{name}'            => $name,
-		'{apply_url}'       => $apply_url,
-		'{line_url}'        => $line_url,
-		'{tel}'             => $tel,
-		'{stock_url}'       => $stock_url,
-		'{site_url}'        => $site_url,
-		'{signature}'       => $signature,
+		'{name}'      => $name,
+		'{apply_url}'    => $apply_url,
+		'{line_url}'    => $line_url,
+		'{tel}'       => $tel,
+		'{stock_url}'    => $stock_url,
+		'{site_url}'    => $site_url,
+		'{signature}'    => $signature,
 		'{unsubscribe_url}' => $unsub_url,
-		'{unsub_note}'      => $unsub_note,
+		'{unsub_note}'   => $unsub_note,
 	);
 	$subject = strtr( (string) ( $def['subject'] ?? '' ), $vars );
-	$body    = strtr( (string) ( $def['body'] ?? '' ),    $vars );
+	$body  = strtr( (string) ( $def['body'] ?? '' ),  $vars );
 	if ( $subject === '' || $body === '' ) { return false; }
 
 	$GLOBALS['carmel_cb_apply_sending'] = true;
@@ -306,22 +306,22 @@ function carmel_cb_apply_send_stage_mail( $s, $row, $stage_num, $def ) {
 function carmel_cb_apply_stage_defs( $s ) {
 	$defaults = array(
 		1 => array(
-			'on'        => true,
+			'on'    => true,
 			'delay_min' => 30,
-			'subject'   => '【カーメル】審査フォームの入力途中ではありませんか？',
-			'body'      => "{name} 様\n\nカーメルの みほ です😊\n先ほど審査フォームをお開きいただき、ありがとうございました。\n入力の途中で分からないところや、気になる点はございませんでしたか？\n\nもしよろしければ、続きから入力いただけます。\n▼ 続きから審査\n{apply_url}\n\nご相談だけでも大丈夫です。お気軽にどうぞ。\n・LINE：{line_url}\n・お電話：{tel}\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n※ このメールは自動送信です。ご返信いただいても対応できない場合があります。\n",
+			'subject'  => '【カーメル】審査フォームの入力途中ではありませんか？',
+			'body'   => "{name} 様\n\nカーメルの みほ です\n先ほど審査フォームをお開きいただき、ありがとうございました。\n入力の途中で分からないところや、気になる点はございませんでしたか？\n\nもしよろしければ、続きから入力いただけます。\n▼ 続きから審査\n{apply_url}\n\nご相談だけでも大丈夫です。お気軽にどうぞ。\n・LINE：{line_url}\n・お電話：{tel}\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n※ このメールは自動送信です。ご返信いただいても対応できない場合があります。\n",
 		),
 		2 => array(
-			'on'        => true,
+			'on'    => true,
 			'delay_min' => 60 * 24,
-			'subject'   => '【カーメル】審査のご相談、いつでもお受けいたします',
-			'body'      => "{name} 様\n\nお世話になっております、カーメル相談窓口の みほ です。\n昨日は当店の審査フォームにお越しいただき、ありがとうございました。\n\nお車のご購入は大きなご決断です。ご不安な点があれば、まずはお話だけでもお聞かせください。\n他社様で審査が通らなかった方でも、当店の低与信ローンでご案内できるケースが多くあります。\n\n▼ 審査の続きはこちら\n{apply_url}\n\n・LINEで気軽に相談：{line_url}\n・お電話：{tel}\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n※ このメールは自動送信です。ご返信いただいても対応できない場合があります。\n",
+			'subject'  => '【カーメル】審査のご相談、いつでもお受けいたします',
+			'body'   => "{name} 様\n\nお世話になっております、カーメル相談窓口の みほ です。\n昨日は当店の審査フォームにお越しいただき、ありがとうございました。\n\nお車のご購入は大きなご決断です。ご不安な点があれば、まずはお話だけでもお聞かせください。\n他社様で審査が通らなかった方でも、当店の低与信ローンでご案内できるケースが多くあります。\n\n▼ 審査の続きはこちら\n{apply_url}\n\n・LINEで気軽に相談：{line_url}\n・お電話：{tel}\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n※ このメールは自動送信です。ご返信いただいても対応できない場合があります。\n",
 		),
 		3 => array(
-			'on'        => true,
+			'on'    => true,
 			'delay_min' => 60 * 24 * 3,
-			'subject'   => '【カーメル】その後、お車のご検討はいかがでしょうか？',
-			'body'      => "{name} 様\n\nカーメルの みほ です。\n先日は審査フォームにお越しいただきましたが、その後お車のご検討はいかがでしょうか？\n\nご希望の予算・車種などをお聞かせいただければ、当店で最適なプランをご提案いたします。\n無理な営業は一切いたしませんので、ご相談だけでもお気軽にどうぞ😊\n\n▼ 審査を続ける\n{apply_url}\n▼ 在庫を見る\n{stock_url}\n・LINE：{line_url}\n・お電話：{tel}\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n※ このメールは自動送信です。ご返信いただいても対応できない場合があります。\n",
+			'subject'  => '【カーメル】その後、お車のご検討はいかがでしょうか？',
+			'body'   => "{name} 様\n\nカーメルの みほ です。\n先日は審査フォームにお越しいただきましたが、その後お車のご検討はいかがでしょうか？\n\nご希望の予算・車種などをお聞かせいただければ、当店で最適なプランをご提案いたします。\n無理な営業は一切いたしませんので、ご相談だけでもお気軽にどうぞ\n\n▼ 審査を続ける\n{apply_url}\n▼ 在庫を見る\n{stock_url}\n・LINE：{line_url}\n・お電話：{tel}\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n※ このメールは自動送信です。ご返信いただいても対応できない場合があります。\n",
 		),
 	);
 

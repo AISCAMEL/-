@@ -52,7 +52,7 @@ function carmel_cb_leads_table() {
 }
 function carmel_cb_create_leads_table() {
 	global $wpdb;
-	$t       = carmel_cb_leads_table();
+	$t    = carmel_cb_leads_table();
 	$charset = $wpdb->get_charset_collate();
 	$sql = "CREATE TABLE IF NOT EXISTS $t (
 		id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -83,13 +83,13 @@ function carmel_cb_insert_lead( $data ) {
 	carmel_cb_maybe_create_leads_table();
 	global $wpdb;
 	$wpdb->insert( carmel_cb_leads_table(), array(
-		'type'       => substr( (string) ( $data['type'] ?? 'contact' ), 0, 16 ),
-		'name'       => substr( (string) ( $data['name'] ?? '' ), 0, 120 ),
-		'tel'        => substr( (string) ( $data['tel'] ?? '' ), 0, 60 ),
-		'email'      => substr( (string) ( $data['email'] ?? '' ), 0, 190 ),
-		'wish'       => (string) ( $data['wish'] ?? '' ),
-		'note'       => (string) ( $data['note'] ?? '' ),
-		'page'       => substr( (string) ( $data['page'] ?? '' ), 0, 255 ),
+		'type'    => substr( (string) ( $data['type'] ?? 'contact' ), 0, 16 ),
+		'name'    => substr( (string) ( $data['name'] ?? '' ), 0, 120 ),
+		'tel'    => substr( (string) ( $data['tel'] ?? '' ), 0, 60 ),
+		'email'   => substr( (string) ( $data['email'] ?? '' ), 0, 190 ),
+		'wish'    => (string) ( $data['wish'] ?? '' ),
+		'note'    => (string) ( $data['note'] ?? '' ),
+		'page'    => substr( (string) ( $data['page'] ?? '' ), 0, 255 ),
 		'transcript' => (string) ( $data['transcript'] ?? '' ),
 	) );
 	return (int) $wpdb->insert_id;
@@ -134,11 +134,11 @@ function carmel_cb_seed_defaults() {
 	$i = 0;
 	foreach ( $seed as $row ) {
 		$wpdb->insert( $faq, array(
-			'question'   => $row[0],
-			'answer'     => $row[1],
-			'keywords'   => $row[2],
+			'question'  => $row[0],
+			'answer'   => $row[1],
+			'keywords'  => $row[2],
 			'sort_order' => $i++,
-			'enabled'    => 1,
+			'enabled'  => 1,
 		) );
 	}
 }
@@ -148,119 +148,119 @@ function carmel_cb_seed_defaults() {
  */
 function carmel_cb_default_settings() {
 	return array(
-		'enabled'        => 1,
-		'api_key'        => '',
-		'model'          => 'google/gemini-2.0-flash-001', // コスト最優先の既定
-		'max_tokens'     => 500,
-		'system_prompt'  => carmel_cb_default_prompt(),
-		'welcome_msg'    => 'こんにちは！カーメルの みほ です😊 ローン審査・お支払い・車選びなど、なんでもお気軽にご相談くださいね。',
-		'primary_color'  => '#0b5cab',
-		'bot_name'       => 'カーメル みほ',
-		'auto_open_sec'  => 0, // 自動オープンは廃止（タップで開く仕様）。値は未使用。
-		'line_url'       => 'https://omu247l0.autosns.app/line',
+		'enabled'    => 1,
+		'api_key'    => '',
+		'model'     => 'google/gemini-2.0-flash-001', // コスト最優先の既定
+		'max_tokens'   => 500,
+		'system_prompt' => carmel_cb_default_prompt(),
+		'welcome_msg'  => 'こんにちは！カーメルの みほ です ローン審査・お支払い・車選びなど、なんでもお気軽にご相談くださいね。',
+		'primary_color' => '#0b5cab',
+		'bot_name'    => 'カーメル みほ',
+		'auto_open_sec' => 0, // 自動オープンは廃止（タップで開く仕様）。値は未使用。
+		'line_url'    => 'https://omu247l0.autosns.app/line',
 		'stock_page_url' => 'https://carmelonline.jp/search/', // 在庫一覧ページ（在庫が無い時の案内に使用）
-		'tel'            => '050-1793-5554', // 電話番号（入力すると回答下に電話ボタンを表示）
-		'apply_page_id'   => 7348, // 審査申込ページのID（CTA「審査を申し込む」）
+		'tel'      => '050-1793-5554', // 電話番号（入力すると回答下に電話ボタンを表示）
+		'apply_page_id'  => 7348, // 審査申込ページのID（CTA「審査を申し込む」）
 		'contact_page_id' => 7361, // お問い合わせページのID（CTA「お問い合わせ」）
-		'apply_url'       => '', // ↑IDが使えない場合のURL直指定（任意）
-		'contact_url'     => '', // ↑IDが使えない場合のURL直指定（任意）
+		'apply_url'    => '', // ↑IDが使えない場合のURL直指定（任意）
+		'contact_url'   => '', // ↑IDが使えない場合のURL直指定（任意）
 		// CTAの動き：'form'=チャット内フォームで受付（推奨） / 'link'=外部ページに飛ばす（従来）
-		'cta_mode'          => 'form',
-		'apply_form_on'     => 1, // 「かんたん審査」ボタンを出す
-		'contact_form_on'   => 1, // 「お問い合わせ」ボタンを出す
-		'consent_text'      => '入力内容をもとに担当者よりご連絡します。個人情報の取扱いに同意のうえ送信してください。',
-		'consent_url'       => '', // プライバシーポリシー等のURL（任意）
+		'cta_mode'     => 'form',
+		'apply_form_on'   => 1, // 「かんたん審査」ボタンを出す
+		'contact_form_on'  => 1, // 「お問い合わせ」ボタンを出す
+		'consent_text'   => '入力内容をもとに担当者よりご連絡します。個人情報の取扱いに同意のうえ送信してください。',
+		'consent_url'    => '', // プライバシーポリシー等のURL（任意）
 		// 有人対応（D）
 		'handoff_enabled' => 1,
-		'biz_start'       => 10,        // 営業開始時(時)
-		'biz_end'         => 19,        // 営業終了時(時)
-		'biz_days'        => '0,1,2,3,4,5,6', // 営業曜日(日=0)
-		'notify_email'    => '',        // 担当者通知先（空なら管理者メール）
-		'operator_name'       => '担当者',  // チャットに表示する担当者名
-		'operator_avatar_url' => '',        // 担当者アイコン画像URL（メディアのURLを貼る）
-		'chat_start_notify'   => 1,         // チャット開始時にSlack等へ通知する
+		'biz_start'    => 10,    // 営業開始時(時)
+		'biz_end'     => 19,    // 営業終了時(時)
+		'biz_days'    => '0,1,2,3,4,5,6', // 営業曜日(日=0)
+		'notify_email'  => '',    // 担当者通知先（空なら管理者メール）
+		'operator_name'    => '担当者', // チャットに表示する担当者名
+		'operator_avatar_url' => '',    // 担当者アイコン画像URL（メディアのURLを貼る）
+		'chat_start_notify'  => 1,     // チャット開始時にSlack等へ通知する
 		// チャット開始時にお名前・メールを先に確認する（誰からの問い合わせか分かるように）
-		'intake_on'           => 1,
-		'intake_msg'          => 'ご相談ありがとうございます。まずお名前とメールアドレスをご入力ください。担当者からのご連絡やご案内に使わせていただきます😊',
-		'intake_after_msg'    => 'ありがとうございます、{name}様。本日はどのようなご用件でしょうか？下のメッセージ入力にて、その場でお答えします😊',
+		'intake_on'      => 1,
+		'intake_msg'     => 'ご相談ありがとうございます。まずお名前とメールアドレスをご入力ください。担当者からのご連絡やご案内に使わせていただきます',
+		'intake_after_msg'  => 'ありがとうございます、{name}様。本日はどのようなご用件でしょうか？下のメッセージ入力にて、その場でお答えします',
 		// 後追いメール（審査離脱者向け）
-		'apply_followup_on'        => 1,
-		'apply_followup_from'      => 'carmelbuzzzzz@aisjaltd.com',
+		'apply_followup_on'    => 1,
+		'apply_followup_from'   => 'carmelbuzzzzz@aisjaltd.com',
 		'apply_followup_from_name' => 'カーメル',
-		'apply_followup_stages'    => array(), // 空なら apply-followup.php のデフォルト定義を使用
+		'apply_followup_stages'  => array(), // 空なら apply-followup.php のデフォルト定義を使用
 		// 会話離脱者への後追いメール
-		'convo_followup_on'        => 1,
-		'convo_followup_stages'    => array(), // 空なら convo-followup.php のデフォルト定義を使用
+		'convo_followup_on'    => 1,
+		'convo_followup_stages'  => array(), // 空なら convo-followup.php のデフォルト定義を使用
 		// 後追いメール共通：署名（会社情報）とオプトアウトのご案内
-		'followup_signature'       => "──────────────────────────\nカーメル\nWeb : https://carmelonline.jp/\nLINE: https://omu247l0.autosns.app/line\nTel : 050-1793-5554\nMail: info@carmelonline.jp\n──────────────────────────",
-		'followup_unsub_note'      => '今後このようなご案内が不要な場合は、下記のリンクから配信停止できます。',
+		'followup_signature'    => "──────────────────────────\nカーメル\nWeb : https://carmelonline.jp/\nLINE: https://omu247l0.autosns.app/line\nTel : 050-1793-5554\nMail: info@carmelonline.jp\n──────────────────────────",
+		'followup_unsub_note'   => '今後このようなご案内が不要な場合は、下記のリンクから配信停止できます。',
 		// 管理者通知（イベント別ON/OFF）
-		'admin_notify_email'       => '', // 空なら notify_email → admin_email へフォールバック
-		'notify_events'            => array(
-			'lead_apply'      => 1,
-			'lead_contact'    => 1,
-			'apply_click'     => 1,
-			'convo_started'   => 1,
+		'admin_notify_email'    => '', // 空なら notify_email → admin_email へフォールバック
+		'notify_events'      => array(
+			'lead_apply'   => 1,
+			'lead_contact'  => 1,
+			'apply_click'   => 1,
+			'convo_started'  => 1,
 			'handoff_request' => 1,
 			'offhours_notify' => 1,
-			'followup_cv'     => 1,
+			'followup_cv'   => 1,
 		),
 		// 🔍 FAQ検索窓（チャット内でよくある質問を検索）
-		'faq_search_on'     => 1,
-		// 🧲 離脱防止・エンゲージ強化
-		'starters_on'       => 1, // intake後に選択式スタートボタンを出す
-		'starters_list'     => "審査が不安です\n頭金がなくても大丈夫？\n他社で断られたけど…\n月々いくらか知りたい\nどんな車があるか見たい",
-		'reassure_on'       => 1, // 冒頭に安心メッセージを出す
-		'reassure_msg'      => '他社様で審査に通らなかった方も、多数ご相談いただいています😊 まずはお気軽にどうぞ。',
-		'exit_popup_on'     => 1, // 離脱しようとした時にポップを出す
-		'exit_popup_msg'    => 'お帰りですか？ ご相談の続きはLINEでも承っています。よろしければ友だち追加してお気軽にどうぞ😊',
-		'sim_on'            => 1, // 簡易シミュレーション（月々の目安）
-		'sim_default_rate'  => 12, // スライダーの初期値（％）。範囲は7〜18%
-		'sim_note'          => '※ あくまで概算です。実際のお支払いは審査・プランにより異なります。',
-		// 🔎 審査見込み 自己診断
-		'shinsa_on'         => 1,
-		// 🚗 車探しフロー＆在庫共有アプリ
+		'faq_search_on'   => 1,
+		// 離脱防止・エンゲージ強化
+		'starters_on'    => 1, // intake後に選択式スタートボタンを出す
+		'starters_list'   => "審査が不安です\n頭金がなくても大丈夫？\n他社で断られたけど…\n月々いくらか知りたい\nどんな車があるか見たい",
+		'reassure_on'    => 1, // 冒頭に安心メッセージを出す
+		'reassure_msg'   => '他社様で審査に通らなかった方も、多数ご相談いただいています まずはお気軽にどうぞ。',
+		'exit_popup_on'   => 1, // 離脱しようとした時にポップを出す
+		'exit_popup_msg'  => 'お帰りですか？ ご相談の続きはLINEでも承っています。よろしければ友だち追加してお気軽にどうぞ',
+		'sim_on'      => 1, // 簡易シミュレーション（月々の目安）
+		'sim_default_rate' => 12, // スライダーの初期値（％）。範囲は7〜18%
+		'sim_note'     => '※ あくまで概算です。実際のお支払いは審査・プランにより異なります。',
+		// 審査見込み 自己診断
+		'shinsa_on'     => 1,
+		// 車探しフロー＆在庫共有アプリ
 		'carsearch_flow_on' => 1,
-		'stock_app_url'     => 'https://mlkl.jp/mirukuru/app', // PC・不明端末のフォールバック
-		'stock_app_url_ios'     => 'https://apps.apple.com/jp/app/%E3%81%BF%E3%82%8B%E3%82%AF%E3%83%AB/id1058728324', // iPhone/iPad用 App Store URL
+		'stock_app_url'   => 'https://mlkl.jp/mirukuru/app', // PC・不明端末のフォールバック
+		'stock_app_url_ios'   => 'https://apps.apple.com/jp/app/%E3%81%BF%E3%82%8B%E3%82%AF%E3%83%AB/id1058728324', // iPhone/iPad用 App Store URL
 		'stock_app_url_android' => 'https://play.google.com/store/apps/details?id=jp.mlkl.mirukuru', // Android用 Google Play URL
-		'stock_app_id'      => '890',
-		'stock_app_store'   => 'カーメル',
-		'stock_app_note'    => "・値段は基本的に表示されない仕様です。お車のイメージをお伝えするためのアプリとしてご利用ください。\n・実際のお支払いは、審査を経て借入額が確定したうえでのご相談となります。\n・金融事故の履歴がある場合、与信枠に限りがございますので、必ず事前に詳しくお問い合わせください。",
-		// 🔔 通知音＆離脱時メール
-		'sound_on'          => 1, // 会話開始チャイム＋担当者応答音を鳴らす
-		'away_email_on'     => 1, // 離脱中に担当者応答があればメール通知
+		'stock_app_id'   => '890',
+		'stock_app_store'  => 'カーメル',
+		'stock_app_note'  => "・値段は基本的に表示されない仕様です。お車のイメージをお伝えするためのアプリとしてご利用ください。\n・実際のお支払いは、審査を経て借入額が確定したうえでのご相談となります。\n・金融事故の履歴がある場合、与信枠に限りがございますので、必ず事前に詳しくお問い合わせください。",
+		// 通知音＆離脱時メール
+		'sound_on'     => 1, // 会話開始チャイム＋担当者応答音を鳴らす
+		'away_email_on'   => 1, // 離脱中に担当者応答があればメール通知
 		'away_email_subject' => '【カーメル】担当者から返信があります',
-		'away_email_body'    => "{name} 様\n\nカーメルの みほ です😊\n先ほどご相談中の担当者から返信が届いています。\n\n引き続きチャットで会話を続けていただけます。\n▼ チャット画面に戻る\n{page}\n\nチャット画面が閉じていた場合は、下記からもう一度お開きください。\n▼ カーメル\n{site}\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n",
-		// 🎯 キャンペーン誘導
-		'campaign_on'      => 0,
-		'campaign_seed'    => '', // AI下書きの元となるメモ・キーワード
-		'campaign_title'   => '',
-		'campaign_body'    => '',
-		'campaign_url'     => '',
-		'campaign_start'   => '', // YYYY-MM-DD（空なら無制限）
-		'campaign_end'     => '', // YYYY-MM-DD（空なら無制限）
+		'away_email_body'  => "{name} 様\n\nカーメルの みほ です\n先ほどご相談中の担当者から返信が届いています。\n\n引き続きチャットで会話を続けていただけます。\n▼ チャット画面に戻る\n{page}\n\nチャット画面が閉じていた場合は、下記からもう一度お開きください。\n▼ カーメル\n{site}\n\n{signature}\n\n──────────────\n{unsub_note}\n {unsubscribe_url}\n",
+		// キャンペーン誘導
+		'campaign_on'   => 0,
+		'campaign_seed'  => '', // AI下書きの元となるメモ・キーワード
+		'campaign_title'  => '',
+		'campaign_body'  => '',
+		'campaign_url'   => '',
+		'campaign_start'  => '', // YYYY-MM-DD（空なら無制限）
+		'campaign_end'   => '', // YYYY-MM-DD（空なら無制限）
 		'campaign_show_banner' => 1, // チャット冒頭にバナー表示するか
 		'campaign_ai_hint' => 'ローンや車のご相談で、お客様のメリットになりそうな場面で自然に案内してください。強引な売り込みはしないこと。',
 		// 担当者につなぐ間の案内（ライブ待機）
 		'handoff_wait_msg' => '担当者におつなぎしています。つながるまで少々お待ちください…',
-		'handoff_busy_sec' => 15,       // この秒数つながらなければ「混雑」案内を出す
-		'handoff_busy_msg' => '申し訳ございません、ただいま少し混み合っているようです🙏 もう少しだけお待ちください（お急ぎの場合はLINEやお電話もご利用いただけます）。',
-		'handoff_wait_sec' => 45,       // 最終的にここでフォーム（連絡先）へ切り替え
+		'handoff_busy_sec' => 15,    // この秒数つながらなければ「混雑」案内を出す
+		'handoff_busy_msg' => '申し訳ございません、ただいま少し混み合っているようです もう少しだけお待ちください（お急ぎの場合はLINEやお電話もご利用いただけます）。',
+		'handoff_wait_sec' => 45,    // 最終的にここでフォーム（連絡先）へ切り替え
 		// 営業時間外に「担当者に相談」を押したときの案内（担当者は不在＝AIが自動対応）
-		'handoff_offhours_msg' => 'ただいま営業時間外のため、担当者の対応ができません🙇 このままAIが自動で対応いたしますので、お気軽にご質問ください😊（ご希望の場合はご連絡先を残していただければ、翌営業日に担当者より折り返します）',
-		'slack_webhook'   => '',        // 任意：Slack Incoming Webhook URL（一方向通知）
+		'handoff_offhours_msg' => 'ただいま営業時間外のため、担当者の対応ができません このままAIが自動で対応いたしますので、お気軽にご質問ください（ご希望の場合はご連絡先を残していただければ、翌営業日に担当者より折り返します）',
+		'slack_webhook'  => '',    // 任意：Slack Incoming Webhook URL（一方向通知）
 		// Slack 双方向（担当者がSlackで返信→チャット表示）
-		'slack_bot_token' => '',        // xoxb-...（chat:write, channels:history）
-		'slack_channel'   => '',        // 通知先チャンネルID（C0123...）
+		'slack_bot_token' => '',    // xoxb-...（chat:write, channels:history）
+		'slack_channel'  => '',    // 通知先チャンネルID（C0123...）
 		// LINE WORKS Bot（API 2.0）
-		'lw_client_id'       => '',
-		'lw_client_secret'   => '',
+		'lw_client_id'    => '',
+		'lw_client_secret'  => '',
 		'lw_service_account' => '',
-		'lw_private_key'     => '',     // PEM秘密鍵
-		'lw_bot_id'          => '',
-		'lw_channel_id'      => '',     // 送信先トークルームID
-		'log_enabled'    => 1,
+		'lw_private_key'   => '',   // PEM秘密鍵
+		'lw_bot_id'     => '',
+		'lw_channel_id'   => '',   // 送信先トークルームID
+		'log_enabled'  => 1,
 	);
 }
 
@@ -284,7 +284,7 @@ function carmel_cb_default_prompt() {
 - 「〜ですね」「〜という方、多いですよ」「〜って気になりますよね」など、共感の一言を自然に。
 - 事務的な箇条書きを冒頭から並べない。まず短い共感→簡潔な回答→次の一手（1〜2文で聞き返す）。
 - 「ご相談ありがとうございます」「無理な営業はしません」等の決まり文句は、初回だけ／必要な時だけ。
-- 絵文字は😊 くらいを1メッセージに0〜1個。多用しない。
+- 絵文字は使わない。きちんとした・信頼できる印象を優先する。
 - 敬語ベース。ただし堅すぎない、少し柔らかい口調。
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -297,18 +297,18 @@ function carmel_cb_default_prompt() {
 
 ■ 正直に伝える境界線（隠さない・盛らない）
 - 自己破産・任意整理・個人再生・特定調停 の直後や係属中の方：
-  ・借入可能額に「上限」がある場合が多いです（多くは数十万〜百数十万円台。ケースにより異なります）。
-  ・「信用回復ローン」として、少額の車を確実に返済しながら信用を積み上げていく形になることが多いです。
-  ・つまり「まず1台目で信用を回復し、次のステップで希望の車へ」という長期の設計になります。
+ ・借入可能額に「上限」がある場合が多いです（多くは数十万〜百数十万円台。ケースにより異なります）。
+ ・「信用回復ローン」として、少額の車を確実に返済しながら信用を積み上げていく形になることが多いです。
+ ・つまり「まず1台目で信用を回復し、次のステップで希望の車へ」という長期の設計になります。
 - お客様のご希望が「市場相場より高めの車」「300万〜500万円クラスの高額車両」の場合：
-  ・その希望額そのままでは、この状況下ではお通しするのが難しいことが多い、と正直に伝えます。
-  ・そのうえで「ではどう進めるか」を必ず一緒に考える（下記の3案）。
+ ・その希望額そのままでは、この状況下ではお通しするのが難しいことが多い、と正直に伝えます。
+ ・そのうえで「ではどう進めるか」を必ず一緒に考える（下記の3案）。
 - 「絶対通ります」「必ず〇〇円まで組めます」とは言わない（断定禁止）。
 
 ■ 高額希望に対しての切り返し（3案。決めつけず、選んでもらう）
-  ① まず信用回復ローンで1台目を組み、返済実績を作ってから2台目でご希望に近づける
-  ② 希望額に近づける方法として「ご家族の保証」「共有名義」「頭金の準備期間」を検討する
-  ③ 予算に合う範囲で、状態やグレードで満足度の高い車を一緒に探す
+ ① まず信用回復ローンで1台目を組み、返済実績を作ってから2台目でご希望に近づける
+ ② 希望額に近づける方法として「ご家族の保証」「共有名義」「頭金の準備期間」を検討する
+ ③ 予算に合う範囲で、状態やグレードで満足度の高い車を一緒に探す
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 【信用回復ローン（低与信ローン）の説明ルール】
@@ -337,7 +337,7 @@ function carmel_cb_default_prompt() {
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 - 個人の借入額や信用情報を最初から根掘り葉掘り聞かない。まず不安の内容を受け止める。
 - 必要に応じて、1つずつやさしく確認する：
-  例）「差し支えなければ、今のご状況を大まかに教えていただけますか？（自己破産の免責が下りた時期、任意整理中など）」
+ 例）「差し支えなければ、今のご状況を大まかに教えていただけますか？（自己破産の免責が下りた時期、任意整理中など）」
 - 話しにくそうな時は「もちろん詳しくは仮審査の中でお伺いしますので、今の段階で言える範囲で大丈夫です」と逃げ道を用意。
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -355,9 +355,9 @@ function carmel_cb_default_prompt() {
 【次の一手を出すタイミング】
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 - 会話で問題が整理できた／不安が解消の入り口に立った と感じたら、次のいずれかを1つだけ自然に案内：
-  ・仮審査を案内（apply）— お客様が金額や条件の具体化を望んだ時
-  ・お問い合わせ（contact）— 具体的に相談したいことがまとまった時
-  ・担当者（handoff）— 会話だけでは解決しない、対面相談を希望した時
+ ・仮審査を案内（apply）— お客様が金額や条件の具体化を望んだ時
+ ・お問い合わせ（contact）— 具体的に相談したいことがまとまった時
+ ・担当者（handoff）— 会話だけでは解決しない、対面相談を希望した時
 - 案内は「よろしければ〜」「もしご希望でしたら〜」と、あくまでお客様が選ぶ形にする。強要しない。
 PROMPT;
 }
@@ -374,9 +374,9 @@ function carmel_cb_save_faq( $data ) {
 	$t = $wpdb->prefix . CARMEL_CB_FAQ_TABLE;
 	$fields = array(
 		'question' => $data['question'],
-		'answer'   => $data['answer'],
+		'answer'  => $data['answer'],
 		'keywords' => isset($data['keywords']) ? $data['keywords'] : '',
-		'enabled'  => isset($data['enabled']) ? 1 : 0,
+		'enabled' => isset($data['enabled']) ? 1 : 0,
 	);
 	if ( ! empty( $data['id'] ) ) {
 		$wpdb->update( $t, $fields, array( 'id' => (int) $data['id'] ) );
@@ -418,12 +418,12 @@ function carmel_cb_q_similarity( $a, $b ) {
 	$gb = carmel_cb_bigrams_q( $b );
 	$inter = count( array_intersect_key( $ga, $gb ) );
 	$union = count( $ga + $gb );
-	$jac   = $union ? $inter / $union : 0.0;                          // 全体の重なり
-	$minc  = min( count( $ga ), count( $gb ) );
-	$ov    = $minc ? ( $inter / $minc ) : 0.0;                        // 片方への包含率
+	$jac  = $union ? $inter / $union : 0.0;             // 全体の重なり
+	$minc = min( count( $ga ), count( $gb ) );
+	$ov  = $minc ? ( $inter / $minc ) : 0.0;            // 片方への包含率
 
 	$pct = 0.0;
-	similar_text( $na, $nb, $pct );                                   // 連続一致（言い換え検出に強い）
+	similar_text( $na, $nb, $pct );                  // 連続一致（言い換え検出に強い）
 
 	return max( $jac, $ov * 0.9, $pct / 100 );
 }
@@ -451,8 +451,8 @@ function carmel_cb_log( $session_id, $role, $content ) {
 	$t = $wpdb->prefix . CARMEL_CB_LOG_TABLE;
 	$wpdb->insert( $t, array(
 		'session_id' => substr( $session_id, 0, 64 ),
-		'role'       => $role,
-		'content'    => $content,
+		'role'    => $role,
+		'content'  => $content,
 	) );
 }
 function carmel_cb_get_log_sessions( $limit = 50 ) {

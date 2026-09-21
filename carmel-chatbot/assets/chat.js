@@ -26,7 +26,7 @@
 	var idle = { timer: null, count: 0 };
 	// 開始時のお客様情報（名前・メール）確認
 	var visitor = { name: "", email: "", done: false };
-	// 🔔 通知音・在席検知（担当者応答時に鳴らす / 離脱時はメール依頼）
+	// 通知音・在席検知（担当者応答時に鳴らす / 離脱時はメール依頼）
 	var presence = {
 		lastActive: Date.now(),
 		startChimePlayed: false,
@@ -69,7 +69,7 @@
 		if (hoBtn) hoBtn.addEventListener("click", function () { if (opened) openHandoff(); else { userToggle(); openHandoff(); } });
 
 		bindFaqSearch(); // 🔍 よくある質問の検索窓
-		bindExitIntent(); // 🧲 離脱防止ポップ
+		bindExitIntent(); // 離脱防止ポップ
 
 		// イントロ（女性大きく表示）：タップ/「相談をはじめる」で会話開始、×で閉じる
 		var intro = document.querySelector('[data-role="intro"]');
@@ -119,10 +119,10 @@
 		if (!greeted) {
 			greeted = true;
 			addBubble("bot", cfg.welcome);
-			playStartChime(); // 🔔 会話開始チャイム（控えめ、1セッション1回）
-			// 🛡 実績・安心の提示（冒頭に一言）
+			playStartChime(); // 会話開始チャイム（控えめ、1セッション1回）
+			// 実績・安心の提示（冒頭に一言）
 			if (cfg.reassureOn && cfg.reassureMsg) { renderReassure(cfg.reassureMsg); }
-			// 🎯 キャンペーンバナー：期間中でONなら冒頭に表示
+			// キャンペーンバナー：期間中でONなら冒頭に表示
 			if (cfg.campaign && cfg.campaign.showBanner && cfg.campaign.title) { renderCampaignBanner(cfg.campaign); }
 			// お名前・メール確認モード：先に連絡先を伺い、その後に用件へ進む
 			if (cfg.intakeOn && !visitor.done) {
@@ -141,28 +141,28 @@
 	// あいさつ後のガイド
 	// - intro なし（お名前確認OFF）：STARTERS の候補チップも出す
 	// - intro あり（お名前・メール入力の直後）：候補チップは出さず、案内メッセージだけ表示
-	//   （ユーザーが自分で用件を入力する流れにして、会話が勝手に始まったように見えないようにする）
+	//  （ユーザーが自分で用件を入力する流れにして、会話が勝手に始まったように見えないようにする）
 	function greetGuide(intro) {
 		if (!intro) { renderChoices(STARTERS); }
 		setTimeout(function () {
 			if (ho.live || convo.engaged) { return; }
-			addBubble("bot", intro || "本日はどのようなご相談ですか？下のメッセージ入力にて、その場でお答えします😊\n\nご希望の回答が得られない場合は、下の「担当者に相談」ボタンからお進みください。オペレーターが対応いたします。");
-			// 🧲 選択式スタート：intake後でも、タップで進める大きな選択肢を出す（打つ手間をなくす）
+			addBubble("bot", intro || "本日はどのようなご相談ですか？下のメッセージ入力にて、その場でお答えします\n\nご希望の回答が得られない場合は、下の「担当者に相談」ボタンからお進みください。オペレーターが対応いたします。");
+			// 選択式スタート：intake後でも、タップで進める大きな選択肢を出す（打つ手間をなくす）
 			if (intro && cfg.startersOn && STARTERS.length) { renderStarterButtons(STARTERS); }
 			focusInput();
 		}, intro ? 200 : 1000);
 	}
 
-	// 🛡 実績・安心メッセージ（淡い枠で1回だけ）
+	// 実績・安心メッセージ（淡い枠で1回だけ）
 	function renderReassure(msg) {
 		var row = document.createElement("div");
 		row.className = "ccb-msg bot";
-		row.innerHTML = '<div class="ccb-reassure">🛡 ' + escapeHtml(msg) + '</div>';
+		row.innerHTML = '<div class="ccb-reassure"> ' + escapeHtml(msg) + '</div>';
 		msgBox.appendChild(row);
 		msgBox.scrollTop = msgBox.scrollHeight;
 	}
 
-	// 🧲 選択式スタート（大きめのタップボタン）
+	// 選択式スタート（大きめのタップボタン）
 	function renderStarterButtons(list) {
 		var wrap = document.createElement("div");
 		wrap.className = "ccb-msg bot";
@@ -179,19 +179,19 @@
 			});
 			box.appendChild(b);
 		});
-		// 🔎 審査見込み診断ボタン（明示）
+		// 審査見込み診断ボタン（明示）
 		if (cfg.shinsaOn) {
 			var db = document.createElement("button");
 			db.type = "button"; db.className = "ccb-starter-btn ccb-starter-shinsa";
-			db.textContent = "🔎 審査に通るか診断する";
+			db.textContent = " 審査に通るか診断する";
 			db.addEventListener("click", function () { openShindanCheck(); });
 			box.appendChild(db);
 		}
-		// 💰 シミュレーションボタン（明示）
+		// シミュレーションボタン（明示）
 		if (cfg.simOn) {
 			var sb = document.createElement("button");
 			sb.type = "button"; sb.className = "ccb-starter-btn ccb-starter-sim";
-			sb.textContent = "💰 月々の目安を計算する";
+			sb.textContent = " 月々の目安を計算する";
 			sb.addEventListener("click", function () { openSimulation(); });
 			box.appendChild(sb);
 		}
@@ -203,7 +203,7 @@
 	// 開始時：お名前・メールを確認するフォーム（入力するまで会話は始めない）
 	function showVisitorForm() {
 		clearChoices();
-		addBubble("bot", cfg.intakeMsg || "まずお名前とメールアドレスをご入力ください😊");
+		addBubble("bot", cfg.intakeMsg || "まずお名前とメールアドレスをご入力ください");
 		// 会話入力欄は一旦ロック（先に連絡先を入れてもらう）
 		input.disabled = true; sendBtn.disabled = true;
 		input.placeholder = "先にお名前・メールをご入力ください";
@@ -251,7 +251,7 @@
 			input.disabled = false; sendBtn.disabled = false;
 			input.removeAttribute("disabled"); sendBtn.removeAttribute("disabled");
 			input.placeholder = "メッセージを入力…";
-			var after = (cfg.intakeAfterMsg || "ありがとうございます、{name}様。本日はどのようなご用件でしょうか？下のメッセージ入力にて、その場でお答えします😊").replace(/\{name\}/g, name);
+			var after = (cfg.intakeAfterMsg || "ありがとうございます、{name}様。本日はどのようなご用件でしょうか？下のメッセージ入力にて、その場でお答えします").replace(/\{name\}/g, name);
 			greetGuide(after + "\n\nご希望の回答が得られない場合は、下の「担当者に相談」ボタンからお進みください。オペレーターが対応いたします。");
 		});
 
@@ -374,13 +374,13 @@
 				for (var i = history.length - 1; i >= 0; i--) {
 					if (history[i].role === "user") { lastUser = history[i].content; break; }
 				}
-				addBubble("bot", "通信が混み合っているようです。恐れ入りますが、もう一度お試しください🙏\nうまくいかない場合は LINE でご相談いただけます → " + cfg.lineUrl);
+				addBubble("bot", "通信が混み合っているようです。恐れ入りますが、もう一度お試しください\nうまくいかない場合は LINE でご相談いただけます → " + cfg.lineUrl);
 				// 再送ボタン
 				var row = document.createElement("div");
 				row.className = "ccb-choices";
 				var b = document.createElement("button");
 				b.type = "button"; b.className = "ccb-choice";
-				b.textContent = "🔁 もう一度送る";
+				b.textContent = " もう一度送る";
 				b.addEventListener("click", function () {
 					row.remove();
 					sendBtn.disabled = true;
@@ -412,7 +412,7 @@
 			var meta = [c.year, c.mileage].filter(Boolean).join(" / ");
 			var price = c.monthly ? ("月々 " + c.monthly + "〜 / 本体 " + c.price) : c.price;
 			a.innerHTML =
-				(c.thumb ? '<span class="ccb-car-img" style="background-image:url(\'' + c.thumb.replace(/'/g, "%27") + '\')"></span>' : '<span class="ccb-car-img ccb-car-noimg">🚗</span>') +
+				(c.thumb ? '<span class="ccb-car-img" style="background-image:url(\'' + c.thumb.replace(/'/g, "%27") + '\')"></span>' : '<span class="ccb-car-img ccb-car-noimg"></span>') +
 				'<span class="ccb-car-body">' +
 					'<span class="ccb-car-title"></span>' +
 					'<span class="ccb-car-meta"></span>' +
@@ -450,13 +450,13 @@
 		msgBox.scrollTop = msgBox.scrollHeight;
 	}
 
-	// 🎯 キャンペーンバナー
+	// キャンペーンバナー
 	function renderCampaignBanner(cp) {
 		var row = document.createElement("div");
 		row.className = "ccb-msg bot";
 		var color = "var(--ccb-primary, #0b5cab)";
 		var html = '<div class="ccb-campaign" style="border:2px dashed ' + color + ';border-radius:12px;padding:12px 14px;background:#fff8e1;max-width:100%">'
-			+ '<div style="font-size:11px;color:' + color + ';font-weight:700;margin-bottom:4px">🎯 期間限定キャンペーン</div>'
+			+ '<div style="font-size:11px;color:' + color + ';font-weight:700;margin-bottom:4px"> 期間限定キャンペーン</div>'
 			+ '<div style="font-size:15px;font-weight:700;color:#1a2330;margin-bottom:6px">' + escapeHtml(cp.title) + '</div>'
 			+ (cp.body ? '<div style="font-size:13px;color:#374151;line-height:1.55;white-space:pre-wrap">' + escapeHtml(cp.body) + '</div>' : '')
 			+ ((cp.end || cp.start) ? '<div style="font-size:11px;color:#6b7280;margin-top:6px">期間: ' + escapeHtml((cp.start || '') + '〜' + (cp.end || '')) + '</div>' : '')
@@ -484,13 +484,13 @@
 					clearIdle();
 					var att = document.getElementById("carmel-cb-attach");
 					if (att) att.style.display = "flex"; // 担当者対応中はファイルも送れる
-					addBubble("bot", "担当者が対応しています。このままご相談ください😊");
+					addBubble("bot", "担当者が対応しています。このままご相談ください");
 				}
 				msgs.forEach(function (m) {
 					if (m.text) addOperator(m.text);
 					if (m.files && m.files.length) { m.files.forEach(function (f) { addOperatorMedia(f); }); }
 				});
-				// 🔔 担当者応答時：在席中なら通知音、離脱中ならメール通知
+				// 担当者応答時：在席中なら通知音、離脱中ならメール通知
 				playOperatorPing();
 				maybeNotifyAway();
 			})
@@ -505,7 +505,7 @@
 		idle.timer = setTimeout(function () {
 			if (!opened || convo.engaged || ho.live) { return; }
 			idle.count++;
-			addBubble("bot", "その後いかがでしょうか？ご不明な点や、気になる車・お支払いのご相談など、お気軽にどうぞ😊");
+			addBubble("bot", "その後いかがでしょうか？ご不明な点や、気になる車・お支払いのご相談など、お気軽にどうぞ");
 			renderChoices(["審査について相談したい", "在庫・車種を見たい", "お支払い・頭金について", "担当者に相談したい"]);
 		}, 50000); // 約50秒
 	}
@@ -544,7 +544,7 @@
 	// 営業時間外：担当者は不在。AIが自動対応する旨を案内し、そのまま会話を続けられるようにする。
 	// 希望者だけ「折り返し」フォームを開ける（任意）。
 	function showOffHours(msg) {
-		addBubble("bot", msg || "ただいま営業時間外のため、担当者の対応ができません。このままAIが自動で対応いたしますので、お気軽にご質問ください😊");
+		addBubble("bot", msg || "ただいま営業時間外のため、担当者の対応ができません。このままAIが自動で対応いたしますので、お気軽にご質問ください");
 		var row = document.createElement("div");
 		row.className = "ccb-choices";
 		var b = document.createElement("button");
@@ -569,7 +569,7 @@
 		// 2秒後に、用件を書いてもらう案内＋選択肢を出す（担当者が先につながっていれば出さない）
 		ho.nudge = setTimeout(function () {
 			if (!ho.live || ho.connected) { return; }
-			addBubble("bot", "お待ちの間に、ご相談内容やご希望を下の欄にご入力ください。先に教えていただくと、担当者がスムーズにご案内できます😊");
+			addBubble("bot", "お待ちの間に、ご相談内容やご希望を下の欄にご入力ください。先に教えていただくと、担当者がスムーズにご案内できます");
 			renderChoices(["審査について相談したい", "在庫・車種について聞きたい", "お支払い・頭金について", "お電話で相談したい"]);
 			try { input.focus(); } catch (e) {}
 		}, 2000);
@@ -611,7 +611,7 @@
 					if (m.files && m.files.length) { m.files.forEach(function (f) { addOperatorMedia(f); }); }
 				});
 				if (msgs.length) {
-					// 🔔 担当者応答時：在席中なら通知音、離脱中ならメール通知
+					// 担当者応答時：在席中なら通知音、離脱中ならメール通知
 					playOperatorPing();
 					maybeNotifyAway();
 				}
@@ -632,7 +632,7 @@
 		w.className = "ccb-msg bot ccb-op-row";
 		// まず絵文字アイコンで表示。画像URLが実際に読めたら背景画像に差し替える（読めなければ絵文字のまま）
 		w.innerHTML =
-			'<span class="ccb-op-avatar ccb-op-avatar--none">🧑‍💼</span>' +
+			'<span class="ccb-op-avatar ccb-op-avatar--none">🧑💼</span>' +
 			'<span class="ccb-op-main">' +
 				'<span class="ccb-op-label"></span>' +
 				'<span class="ccb-bubble ccb-op"></span>' +
@@ -706,7 +706,7 @@
 	function showHandoffForm(mode) {
 		clearChoices();
 		var intro = (mode === "offhours")
-			? "ただいま営業時間外のため、担当者の対応ができません。ご用件とご連絡先をいただければ、翌営業日に担当者よりご連絡します（このままAIにもご相談いただけます）😊"
+			? "ただいま営業時間外のため、担当者の対応ができません。ご用件とご連絡先をいただければ、翌営業日に担当者よりご連絡します（このままAIにもご相談いただけます）"
 			: "担当者におつなぎします。ご用件とご連絡先をいただければ、営業時間内に折り返します。";
 		addBubble("bot", intro);
 
@@ -717,9 +717,9 @@
 			'<input class="ccb-hi" data-k="name" placeholder="お名前（任意）" autocomplete="name">' +
 			'<textarea class="ccb-hi" data-k="note" rows="2" placeholder="お問い合わせ内容"></textarea>' +
 			'<div class="ccb-hi-label">ご希望の連絡方法（メール・電話・LINEのいずれか1つ以上）</div>' +
-			'<input class="ccb-hi" data-k="email" type="email" inputmode="email" placeholder="✉️ メール（任意）" autocomplete="email">' +
-			'<input class="ccb-hi" data-k="tel" inputmode="tel" placeholder="📞 電話番号（任意）" autocomplete="tel">' +
-			'<input class="ccb-hi" data-k="line" placeholder="💬 LINE ID（任意）">' +
+			'<input class="ccb-hi" data-k="email" type="email" inputmode="email" placeholder=" メール（任意）" autocomplete="email">' +
+			'<input class="ccb-hi" data-k="tel" inputmode="tel" placeholder=" 電話番号（任意）" autocomplete="tel">' +
+			'<input class="ccb-hi" data-k="line" placeholder=" LINE ID（任意）">' +
 			'<button type="button" class="ccb-handoff-send">この内容で送信する</button>' +
 			'<div class="ccb-handoff-err" role="alert"></div>' +
 			"</div>";
@@ -751,7 +751,7 @@
 				.then(function (d) {
 					form.remove();
 					var msg = (d && d.status === "offhours")
-						? "ありがとうございます。ご用件を担当者に共有しました。翌営業日にご連絡します。引き続きAIにもご相談いただけます😊"
+						? "ありがとうございます。ご用件を担当者に共有しました。翌営業日にご連絡します。引き続きAIにもご相談いただけます"
 						: "ありがとうございます！担当者に通知しました。営業時間内に順次ご連絡します。お急ぎの場合はLINEからどうぞ。";
 					addBubble("bot", msg);
 					renderCTA();
@@ -782,13 +782,13 @@
 		// 設定・値が無いものは落とす
 		var canApply = formMode ? cfg.applyFormOn : !!cfg.applyUrl;
 		var show = {
-			apply:   want.apply   && canApply,
+			apply:  want.apply  && canApply,
 			contact: want.contact && (formMode ? cfg.contactFormOn : !!cfg.contactUrl),
 			handoff: want.handoff && !!cfg.handoffOn,
-			stock:   want.stock   && !!cfg.stockUrl,
-			app:     want.app     && !!(cfg.stockAppUrl || cfg.stockAppUrlIos || cfg.stockAppUrlAndroid),
-			line:    want.line    && !!cfg.lineUrl,
-			tel:     want.tel     && !!cfg.tel
+			stock:  want.stock  && !!cfg.stockUrl,
+			app:   want.app   && !!(cfg.stockAppUrl || cfg.stockAppUrlIos || cfg.stockAppUrlAndroid),
+			line:  want.line  && !!cfg.lineUrl,
+			tel:   want.tel   && !!cfg.tel
 		};
 		// 仮審査は専用ページ(applyUrl=/shinsa-2)へ移行させる。URLがあればフォームモードでもリンク優先。
 		var applyToPage = !!cfg.applyUrl;
@@ -838,22 +838,22 @@
 
 		if (show.apply) {
 			// 仮審査になったら /shinsa-2 に移行（同じタブで遷移）。URL未設定のときだけチャット内フォーム。
-			if (applyToPage) addBtnLink("ccb-cta-apply", "📝 仮審査を申し込む", cfg.applyUrl, true, reportApplyClick);
-			else addBtnAct("ccb-cta-apply", "📝 かんたん審査", function () { reportApplyClick(); showLeadForm("apply"); });
+			if (applyToPage) addBtnLink("ccb-cta-apply", " 仮審査を申し込む", cfg.applyUrl, true, reportApplyClick);
+			else addBtnAct("ccb-cta-apply", " かんたん審査", function () { reportApplyClick(); showLeadForm("apply"); });
 		}
 		if (show.contact) {
-			if (formMode) addBtnAct("ccb-cta-contact", "✉️ お問い合わせ", function () { showLeadForm("contact"); });
-			else addBtnLink("ccb-cta-contact", "✉️ お問い合わせ", cfg.contactUrl);
+			if (formMode) addBtnAct("ccb-cta-contact", " お問い合わせ", function () { showLeadForm("contact"); });
+			else addBtnLink("ccb-cta-contact", " お問い合わせ", cfg.contactUrl);
 		}
-		if (show.stock) addBtnLink("ccb-cta-stock", "🚗 在庫を見る", cfg.stockUrl);
-		if (show.app) addBtnLink("ccb-cta-app", "📱 在庫アプリを見る", appStoreUrl(), false);
-		if (show.handoff) addBtnAct("ccb-cta-handoff", "🙋 担当者に相談", function () { openHandoff(); });
-		if (show.line) addBtnLink("ccb-cta-line", "💬 LINEで相談", cfg.lineUrl);
+		if (show.stock) addBtnLink("ccb-cta-stock", " 在庫を見る", cfg.stockUrl);
+		if (show.app) addBtnLink("ccb-cta-app", " 在庫アプリを見る", appStoreUrl(), false);
+		if (show.handoff) addBtnAct("ccb-cta-handoff", " 担当者に相談", function () { openHandoff(); });
+		if (show.line) addBtnLink("ccb-cta-line", " LINEで相談", cfg.lineUrl);
 		if (show.tel) {
 			var t = document.createElement("a");
 			t.className = "ccb-cta-btn ccb-cta-tel";
 			t.href = "tel:" + cfg.tel;
-			t.textContent = "📞 " + cfg.tel;
+			t.textContent = " " + cfg.tel;
 			wrap.appendChild(t);
 		}
 
@@ -864,7 +864,7 @@
 		msgBox.scrollTop = msgBox.scrollHeight;
 	}
 
-	// 📱 端末を判定して在庫アプリの最適なストアURLを返す（iOS→App Store / Android→Play / それ以外→フォールバック）
+	// 端末を判定して在庫アプリの最適なストアURLを返す（iOS→App Store / Android→Play / それ以外→フォールバック）
 	function appStoreUrl() {
 		var ua = (navigator.userAgent || navigator.vendor || "").toLowerCase();
 		var isIOS = /iphone|ipad|ipod/.test(ua) || (ua.indexOf("mac") !== -1 && "ontouchend" in document);
@@ -874,16 +874,16 @@
 		return cfg.stockAppUrl || cfg.stockAppUrlIos || cfg.stockAppUrlAndroid || "#";
 	}
 
-	// 📱 在庫アプリの案内（ID・店舗名・注意事項）
+	// 在庫アプリの案内（ID・店舗名・注意事項）
 	function renderAppInfo() {
 		var row = document.createElement("div");
 		row.className = "ccb-msg bot";
 		var idLine = cfg.stockAppId ? '<div>ご登録時のID：<b>' + escapeHtml(cfg.stockAppId) + '</b>' + (cfg.stockAppStore ? '（店舗名「' + escapeHtml(cfg.stockAppStore) + '」と出ればOK）' : '') + '</div>' : '';
 		var note = cfg.stockAppNote ? '<div class="ccb-app-note">' + escapeHtml(cfg.stockAppNote).replace(/\n/g, '<br>') + '</div>' : '';
 		row.innerHTML = '<div class="ccb-app-info">'
-			+ '<div class="ccb-app-ttl">📱 在庫共有アプリのご案内</div>'
+			+ '<div class="ccb-app-ttl"> 在庫共有アプリのご案内</div>'
 			+ idLine
-			+ '<div style="margin-top:4px">在庫にないお車も、注文販売（オークション仕入れ）でお探しできます。アプリではお車のイメージをご覧いただけます😊</div>'
+			+ '<div style="margin-top:4px">在庫にないお車も、注文販売（オークション仕入れ）でお探しできます。アプリではお車のイメージをご覧いただけます</div>'
 			+ note
 			+ '</div>';
 		msgBox.appendChild(row);
@@ -894,12 +894,12 @@
 		var isApply = type === "apply";
 		clearChoices();
 		addBubble("bot", isApply
-			? "かんたん審査ですね。お名前とご連絡先をいただければ、無理のないお支払いプランを担当者からご案内します。約1分で完了します😊"
-			: "お問い合わせありがとうございます。お名前・ご連絡先・ご相談内容をご記入ください。担当者より順次ご連絡します😊");
+			? "かんたん審査ですね。お名前とご連絡先をいただければ、無理のないお支払いプランを担当者からご案内します。約1分で完了します"
+			: "お問い合わせありがとうございます。お名前・ご連絡先・ご相談内容をご記入ください。担当者より順次ご連絡します");
 
 		var consent = cfg.consentText
 			? '<label class="ccb-lead-consent"><input type="checkbox" data-k="consent"> <span>' + escapeHtml(cfg.consentText) +
-			  (cfg.consentUrl ? ' <a href="' + cfg.consentUrl + '" target="_blank" rel="noopener">詳細</a>' : '') + '</span></label>'
+			 (cfg.consentUrl ? ' <a href="' + cfg.consentUrl + '" target="_blank" rel="noopener">詳細</a>' : '') + '</span></label>'
 			: '';
 
 		// 「両方」対応：審査フォームの下に、本格審査ページ(applyUrl=/shinsa-2)への案内リンク
@@ -1019,7 +1019,7 @@
 	function bindFaqSearch() {
 		if (!cfg.faqSearchOn || !cfg.faqSearchUrl) return;
 		var toggle = document.getElementById("carmel-cb-search-toggle");
-		var panel  = document.getElementById("carmel-cb-search");
+		var panel = document.getElementById("carmel-cb-search");
 		var inputS = document.getElementById("carmel-cb-search-input");
 		var clearB = document.getElementById("carmel-cb-search-clear");
 		var results = document.getElementById("carmel-cb-search-results");
@@ -1082,13 +1082,13 @@
 		if (!chatStarted) { startChat(); }
 		// intake未完了なら、まず案内（会話フローに合わせる）
 		if (cfg.intakeOn && !visitor.done && !ho.live && !convo.engaged) {
-			addBubble("bot", "先にお名前とメールをご入力いただけますか？そのあとで「" + question + "」にお答えします😊");
+			addBubble("bot", "先にお名前とメールをご入力いただけますか？そのあとで「" + question + "」にお答えします");
 			return;
 		}
 		sendText(question);
 	}
 
-	/* ============ 💰 簡易シミュレーション（月々の目安） ============ */
+	/* ============ 簡易シミュレーション（月々の目安） ============ */
 	function ccbYen(n) { return Math.round(n).toLocaleString("ja-JP") + "円"; }
 	function ccbMonthly(principal, months, ratePct) {
 		if (months < 1) return 0;
@@ -1100,7 +1100,7 @@
 	function openSimulation() {
 		if (!chatStarted) { startChat(); }
 		clearChoices();
-		addBubble("bot", "月々のお支払い目安を計算します💰 数字を入れて「計算する」を押してください。（概算です）");
+		addBubble("bot", "月々のお支払い目安を計算します 数字を入れて「計算する」を押してください。（概算です）");
 		var initRate = (typeof cfg.simRate === "number" && cfg.simRate >= 7 && cfg.simRate <= 18) ? cfg.simRate : 12;
 		var form = document.createElement("div");
 		form.className = "ccb-msg bot";
@@ -1148,17 +1148,17 @@
 				"お支払い総額の目安：約 " + ccbYen(total) + "\n\n" +
 				(cfg.simNote || "※ あくまで概算です。実際は審査・プランにより異なります。")
 			);
-			addBubble("bot", "この条件で、実際に組めるか無料で仮審査できます😊 ご希望でしたら下のボタンからどうぞ。");
+			addBubble("bot", "この条件で、実際に組めるか無料で仮審査できます ご希望でしたら下のボタンからどうぞ。");
 			renderCTA("apply");
 			scheduleIdle();
 		});
 	}
 
-	/* ============ 🔎 審査見込み 自己診断 ============ */
+	/* ============ 審査見込み 自己診断 ============ */
 	function openShindanCheck() {
 		if (!chatStarted) { startChat(); }
 		clearChoices();
-		addBubble("bot", "審査に通る見込みを、かんたんに診断します🔎 わかる範囲で選んでください。（あくまで目安です）");
+		addBubble("bot", "審査に通る見込みを、かんたんに診断します わかる範囲で選んでください。（あくまで目安です）");
 		var opt = function (arr) { return arr.map(function (o) { return '<option value="' + o[1] + '"' + (o[2] ? ' data-y="' + o[2] + '"' : '') + '>' + o[0] + '</option>'; }).join(""); };
 		var form = document.createElement("div");
 		form.className = "ccb-msg bot";
@@ -1205,9 +1205,9 @@
 			score = Math.max(0, Math.min(100, score));
 
 			var rank, label, rate, msg, rateMid;
-			if (score >= 70) { rank = "high"; label = "🟢 通過見込み：高い"; rate = "7〜10%"; rateMid = 8.5; msg = "十分に可能性があります。この機会に無料の仮審査で、実際の条件を確認してみましょう。"; }
-			else if (score >= 45) { rank = "mid"; label = "🟡 通過見込み：中"; rate = "8〜14%"; rateMid = 11; msg = "可能性は十分あります。条件を少し整えれば、より確実になります。まずは仮審査でご確認を。"; }
-			else { rank = "low"; label = "🔴 要相談"; rate = "14〜18%"; rateMid = 16; msg = "今の状況だけでは難しい場合もありますが、あきらめる必要はありません。担当者と一緒に、通るための方法を探せます。"; }
+			if (score >= 70) { rank = "high"; label = " 通過見込み：高い"; rate = "7〜10%"; rateMid = 8.5; msg = "十分に可能性があります。この機会に無料の仮審査で、実際の条件を確認してみましょう。"; }
+			else if (score >= 45) { rank = "mid"; label = " 通過見込み：中"; rate = "8〜14%"; rateMid = 11; msg = "可能性は十分あります。条件を少し整えれば、より確実になります。まずは仮審査でご確認を。"; }
+			else { rank = "low"; label = " 要相談"; rate = "14〜18%"; rateMid = 16; msg = "今の状況だけでは難しい場合もありますが、あきらめる必要はありません。担当者と一緒に、通るための方法を探せます。"; }
 
 			form.remove();
 			var extra = "";
@@ -1236,17 +1236,17 @@
 			}
 
 			if (rank === "low") {
-				addBubble("bot", "まずは担当者に相談してみませんか？ 一緒に方法を探します😊");
+				addBubble("bot", "まずは担当者に相談してみませんか？ 一緒に方法を探します");
 				renderCTA("handoff");
 			} else {
-				addBubble("bot", "無料の仮審査で、実際の条件を確認できます。下のボタンからどうぞ😊");
+				addBubble("bot", "無料の仮審査で、実際の条件を確認できます。下のボタンからどうぞ");
 				renderCTA("apply");
 			}
 			scheduleIdle();
 		});
 	}
 
-	/* ============ 🧲 離脱防止ポップ（exit intent） ============ */
+	/* ============ 離脱防止ポップ（exit intent） ============ */
 	function bindExitIntent() {
 		if (!cfg.exitPopupOn) return;
 		var shown = false;
@@ -1273,7 +1273,7 @@
 		if (!root) return;
 		var pop = document.createElement("div");
 		pop.className = "ccb-exit-pop";
-		var msg = cfg.exitPopupMsg || "お帰りですか？ ご相談の続きはLINEでも承っています😊";
+		var msg = cfg.exitPopupMsg || "お帰りですか？ ご相談の続きはLINEでも承っています";
 		pop.innerHTML =
 			'<button class="ccb-exit-close" aria-label="閉じる">×</button>' +
 			'<div class="ccb-exit-msg">' + escapeHtml(msg) + '</div>' +
@@ -1285,7 +1285,7 @@
 		if (cont) cont.addEventListener("click", function () { pop.remove(); if (!opened) userToggle(); });
 	}
 
-	/* ============ 🔔 通知音・在席検知 ============ */
+	/* ============ 通知音・在席検知 ============ */
 	function bindPresence() {
 		var mark = function () { presence.lastActive = Date.now(); };
 		["mousemove", "keydown", "touchstart", "click", "scroll", "focus"].forEach(function (ev) {
