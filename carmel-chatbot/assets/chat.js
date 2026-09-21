@@ -1316,13 +1316,25 @@
 			else { rank = "low"; label = " 要相談"; rate = "14〜18%"; rateMid = 16; msg = "今の状況だけでは難しい場合もありますが、あきらめる必要はありません。担当者と一緒に、通るための方法を探せます。"; }
 
 			form.remove();
-			var extra = "";
-			if (price > 0) { extra = "\nこの条件での月々目安（60回）：約 " + ccbYen(ccbMonthly(price, 60, rateMid)) + " / 月"; }
-			addBubble("bot",
-				label + "（スコア " + score + "/100）" + (ratioNote ? " " + ratioNote : "") + "\n" +
-				"金利の目安：" + rate + extra + "\n\n" +
-				msg + "\n\n※ あくまで自己診断の目安です。実際の可否は本審査によります。"
-			);
+			var extraHtml = "";
+			if (price > 0) { extraHtml = '<div class="ccb-shinsa-extra">この条件での月々目安（60回）：約 ' + escapeHtml(ccbYen(ccbMonthly(price, 60, rateMid))) + ' / 月</div>'; }
+			var banner = document.createElement("div");
+			banner.className = "ccb-msg bot";
+			banner.innerHTML =
+				'<div class="ccb-shinsa-result ccb-shinsa-' + rank + '">' +
+					'<div class="ccb-shinsa-head">' +
+						'<span class="ccb-shinsa-badge">' + escapeHtml(label.trim()) + '</span>' +
+						'<span class="ccb-shinsa-score">' + score + '<small>/100</small></span>' +
+					'</div>' +
+					'<div class="ccb-shinsa-meter"><span style="width:' + score + '%"></span></div>' +
+					'<div class="ccb-shinsa-rate">金利の目安：<strong>' + escapeHtml(rate) + '</strong>' +
+						(ratioNote ? ' <span class="ccb-shinsa-ratio">' + escapeHtml(ratioNote) + '</span>' : '') + '</div>' +
+					extraHtml +
+					'<p class="ccb-shinsa-msg">' + escapeHtml(msg) + '</p>' +
+					'<p class="ccb-shinsa-note">※ あくまで自己診断の目安です。実際の可否は本審査によります。</p>' +
+				'</div>';
+			msgBox.appendChild(banner);
+			msgBox.scrollTop = msgBox.scrollHeight;
 
 			// サーバーへ保存＋通知（お名前・メールは intake から）
 			if (cfg.shinsaOn && cfg.shinsaUrl) {
