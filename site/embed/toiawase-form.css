@@ -1,0 +1,63 @@
+/* =====================================================================
+   お問い合わせフォーム（/申込フォーム共通・CF7 form 473）白＋紫デザイン
+   設置先: WPCode → CSSスニペット「お問い合わせフォーム 業デザイン」/ サイト全体ヘッダー
+   ポイント: このページのフォームは .carmel-general-form で囲まれていないため、
+             CF7フォームの固有ID #wpcf7-f473-p7361-o1 を直接狙う（確実に当たる）。
+   ===================================================================== */
+#wpcf7-f473-p7361-o1{
+  max-width:720px;margin:24px auto;
+  background:#fff;border:1px solid #e2e8f0;border-top:4px solid #7c3aed;
+  border-radius:14px;box-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1);
+  padding:28px 22px 32px;
+}
+#wpcf7-f473-p7361-o1 label{font-weight:700;color:#334155;font-size:14px;}
+#wpcf7-f473-p7361-o1 p{margin:0 0 18px;}
+#wpcf7-f473-p7361-o1 .required{
+  display:inline-block;background:#7c3aed;color:#fff;font-size:11px;font-weight:700;
+  padding:3px 8px;border-radius:5px;margin-left:6px;vertical-align:middle;
+}
+#wpcf7-f473-p7361-o1 input[type=text],
+#wpcf7-f473-p7361-o1 input[type=email],
+#wpcf7-f473-p7361-o1 input[type=tel],
+#wpcf7-f473-p7361-o1 select,
+#wpcf7-f473-p7361-o1 textarea{
+  width:100%;box-sizing:border-box;margin-top:6px;padding:11px 14px;font-size:15px;
+  border:1.5px solid #cbd5e1;border-radius:10px;background:#fff;color:#1e293b;
+  transition:all .2s ease;-webkit-appearance:none;appearance:none;
+}
+#wpcf7-f473-p7361-o1 select{-webkit-appearance:menulist;appearance:menulist;}
+#wpcf7-f473-p7361-o1 textarea{min-height:120px;resize:vertical;}
+#wpcf7-f473-p7361-o1 input:focus,
+#wpcf7-f473-p7361-o1 select:focus,
+#wpcf7-f473-p7361-o1 textarea:focus{
+  outline:none;border-color:#7c3aed;box-shadow:0 0 0 3px rgba(124,58,237,.15);
+}
+#wpcf7-f473-p7361-o1 .wpcf7-radio{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+#wpcf7-f473-p7361-o1 .wpcf7-radio .wpcf7-list-item{margin:0;}
+#wpcf7-f473-p7361-o1 .wpcf7-radio .wpcf7-list-item label{
+  display:inline-flex;align-items:center;gap:7px;margin:0;padding:9px 16px;
+  border:1.5px solid #cbd5e1;border-radius:10px;background:#fff;
+  font-weight:600;color:#334155;cursor:pointer;transition:all .2s ease;
+}
+#wpcf7-f473-p7361-o1 .wpcf7-radio input[type=radio]{width:16px;height:16px;accent-color:#7c3aed;margin:0;}
+#wpcf7-f473-p7361-o1 .wpcf7-radio .wpcf7-list-item label:has(input:checked){
+  border-color:#7c3aed;background:#f5f3ff;color:#6d28d9;font-weight:700;
+}
+#wpcf7-f473-p7361-o1 .privacy-text{font-size:13px;color:#64748b;text-align:center;margin:18px 0 4px;}
+#wpcf7-f473-p7361-o1 .wpcf7-submit,
+#wpcf7-f473-p7361-o1 .carmel-submit-btn{
+  display:block;width:100%;max-width:340px;margin:16px auto 0;height:auto;padding:16px;
+  font-size:16px;font-weight:800;color:#fff;border:none;border-radius:14px;cursor:pointer;
+  background:linear-gradient(135deg,#7c3aed,#6d28d9);
+  box-shadow:0 4px 14px rgba(124,58,237,.3);letter-spacing:.04em;transition:all .2s ease;
+}
+#wpcf7-f473-p7361-o1 .wpcf7-submit:hover,
+#wpcf7-f473-p7361-o1 .carmel-submit-btn:hover{
+  background:linear-gradient(135deg,#6d28d9,#5b21b6);transform:translateY(-1px);
+}
+#wpcf7-f473-p7361-o1 .wpcf7-not-valid{border-color:#dc2626 !important;box-shadow:0 0 0 3px rgba(220,38,38,.12) !important;}
+#wpcf7-f473-p7361-o1 .wpcf7-not-valid-tip{color:#dc2626;font-size:12px;font-weight:700;margin-top:5px;}
+
+/* このページ下部の共通CTA「売買をサポートします」を非表示 */
+body.page-id-7361 .carmel-common-cta,
+body.page-id-7361 #carmel-common-cta{display:none !important;}
