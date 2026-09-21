@@ -63,6 +63,7 @@ function carmel_cb_js_config( $s, $extra = array() ) {
 		'stockAppUrl'     => esc_url_raw( (string) ( $s['stock_app_url'] ?? '' ) ),
 		'stockAppUrlIos'     => esc_url_raw( (string) ( $s['stock_app_url_ios'] ?? '' ) ),
 		'stockAppUrlAndroid' => esc_url_raw( (string) ( $s['stock_app_url_android'] ?? '' ) ),
+		'stockAppManualUrl' => esc_url_raw( (string) ( $s['stock_app_manual_url'] ?? '' ) ),
 		'stockAppId'      => (string) ( $s['stock_app_id'] ?? '' ),
 		'stockAppStore'   => (string) ( $s['stock_app_store'] ?? '' ),
 		'stockAppNote'    => (string) ( $s['stock_app_note'] ?? '' ),

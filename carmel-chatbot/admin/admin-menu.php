@@ -218,6 +218,7 @@ function carmel_cb_handle_post() {
 				'stock_app_url'            => esc_url_raw( wp_unslash( $_POST['stock_app_url'] ?? '' ) ),
 				'stock_app_url_ios'        => esc_url_raw( wp_unslash( $_POST['stock_app_url_ios'] ?? '' ) ),
 				'stock_app_url_android'    => esc_url_raw( wp_unslash( $_POST['stock_app_url_android'] ?? '' ) ),
+				'stock_app_manual_url'     => esc_url_raw( wp_unslash( $_POST['stock_app_manual_url'] ?? '' ) ),
 				'stock_app_id'             => sanitize_text_field( wp_unslash( $_POST['stock_app_id'] ?? '' ) ),
 				'stock_app_store'          => sanitize_text_field( wp_unslash( $_POST['stock_app_store'] ?? '' ) ),
 				'stock_app_note'           => sanitize_textarea_field( wp_unslash( $_POST['stock_app_note'] ?? '' ) ),
@@ -1636,6 +1637,9 @@ function carmel_cb_view_appearance() {
 						<input type="url" name="stock_app_url_android" value="<?php echo esc_attr( $s['stock_app_url_android'] ?? '' ); ?>" class="large-text" placeholder="https://play.google.com/store/apps/details?id=...">
 						<p style="margin:8px 0 4px"><label class="f">💻 PC・その他（フォールバック）URL</label></p>
 						<input type="url" name="stock_app_url" value="<?php echo esc_attr( $s['stock_app_url'] ?? '' ); ?>" class="large-text" placeholder="https://mlkl.jp/mirukuru/app">
+						<p style="margin:8px 0 4px"><label class="f">📖 使い方マニュアルURL（任意）</label></p>
+						<input type="url" name="stock_app_manual_url" value="<?php echo esc_attr( $s['stock_app_manual_url'] ?? '' ); ?>" class="large-text" placeholder="空欄ならチャット内でマニュアル全文を表示します">
+						<p class="description">「使い方マニュアルを見る」ボタンの飛び先。空欄の場合はチャット内にマニュアル全文（登録〜お気に入りまで）を表示します。</p>
 						<p class="description" style="margin:4px 0 8px">お客様の端末を自動判定：iPhone→App Store／Android→Google Play／PC等→フォールバックURL に直接飛びます。ストアURLが空欄ならフォールバックを使います。</p>
 						<div style="display:flex;gap:10px;flex-wrap:wrap">
 							<div><label class="f">登録ID</label><br><input type="text" name="stock_app_id" value="<?php echo esc_attr( $s['stock_app_id'] ?? '' ); ?>" class="small-text" placeholder="890"></div>

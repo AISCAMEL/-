@@ -910,7 +910,18 @@
 		var a = document.createElement("a"); a.className = "ccb-cta-btn ccb-cta-app";
 		a.href = appStoreUrl(); a.target = "_blank"; a.rel = "noopener";
 		a.textContent = "みるクルを入手する";
-		w.appendChild(a); btnRow.appendChild(w); msgBox.appendChild(btnRow);
+		w.appendChild(a);
+		// 使い方マニュアル：外部URLがあればそこへ、無ければチャット内でマニュアル全文
+		var man = document.createElement("button");
+		man.type = "button"; man.className = "ccb-cta-btn ccb-cta-stock";
+		man.textContent = "使い方マニュアルを見る";
+		if (cfg.stockAppManualUrl) {
+			man.addEventListener("click", function () { window.open(cfg.stockAppManualUrl, "_blank", "noopener"); });
+		} else {
+			man.addEventListener("click", function () { showAppManual(); });
+		}
+		w.appendChild(man);
+		btnRow.appendChild(w); msgBox.appendChild(btnRow);
 
 		addBubble("bot", "ご自身の与信力（借入できる目安の金額）を意識しながら、価格帯を設定してご覧くださいね。");
 		if (cfg.stockAppNote) {
@@ -920,6 +931,26 @@
 			msgBox.appendChild(note);
 		}
 		appQA(); // 使い方の項目ボタン → 回答 → その他質問確認
+	}
+
+	// みるクル 使い方マニュアル（チャット内で全文表示）
+	function showAppManual() {
+		var idTxt = cfg.stockAppId ? escapeHtml(cfg.stockAppId) : "890";
+		var storeTxt = cfg.stockAppStore ? escapeHtml(cfg.stockAppStore) : "カーメル";
+		var row = document.createElement("div");
+		row.className = "ccb-msg bot";
+		row.innerHTML = '<div class="ccb-app-info" style="max-width:96%">'
+			+ '<div class="ccb-app-ttl">みるクル 使い方マニュアル</div>'
+			+ '<div style="margin-top:2px"><b>1. インストール</b><br>お使いのスマホにアプリを入れます（iPhoneはApp Store、AndroidはGoogle Play）。上の「みるクルを入手する」からも開けます。</div>'
+			+ '<div style="margin-top:8px"><b>2. 会員登録</b><br>アプリを開き、お名前・ご連絡先などお客様情報を登録します（無料）。</div>'
+			+ '<div style="margin-top:8px"><b>3. 販売店IDを入力</b><br>販売店ID欄に「<b>' + idTxt + '</b>」を入力 → 店舗名「<b>' + storeTxt + '</b>」と表示されれば連携完了です。</div>'
+			+ '<div style="margin-top:8px"><b>4. 価格帯を選ぶ</b><br>ご希望の価格帯を選択。ご自身の与信力（借入できる目安）に合わせると、現実的なお車が見つかりやすいです。</div>'
+			+ '<div style="margin-top:8px"><b>5. お車を選ぶ</b><br>価格帯に合うお車の一覧から、気になる車をタップして詳細（イメージ）を確認します。</div>'
+			+ '<div style="margin-top:8px"><b>6. お気に入り・お問い合わせ</b><br>気になったお車は、アプリのメッセージからお気に入り登録・お問い合わせできます。</div>'
+			+ ( cfg.stockAppNote ? '<div class="ccb-app-note" style="margin-top:8px">' + escapeHtml(cfg.stockAppNote).replace(/\n/g, "<br>") + '</div>' : '' )
+			+ '</div>';
+		msgBox.appendChild(row);
+		setTimeout(askAnythingElseApp, 300);
 	}
 
 	// みるクル 使い方：項目ボタンを出す
