@@ -165,7 +165,8 @@
 /* 送受信した画像・ファイル */
 .ccb-bubble-media { padding: 6px !important; }
 .ccb-media-img { display: block; max-width: 200px; max-height: 240px; width: auto; height: auto; border-radius: 10px; }
-.ccb-media-file { display: inline-block; padding: 4px 6px; font-weight: 700; text-decoration: none; word-break: break-all; }
+.ccb-media-file { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; font-weight: 700; text-decoration: none; word-break: break-all; }
+.ccb-media-fileicon { flex: 0 0 auto; }
 
 /* 回答下の相談ボタン（LINE / 電話） */
 .ccb-cta { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 6px; }

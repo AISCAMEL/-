@@ -378,25 +378,42 @@ function carmel_cb_slack_download_files( $s, $files ) {
 		$furl = ! empty( $fm['url_private_download'] ) ? $fm['url_private_download'] : ( $fm['url_private'] ?? '' );
 		if ( ! $furl ) { continue; }
 		$resp = wp_remote_get( $furl, array( 'timeout' => 30, 'redirection' => 5, 'headers' => array( 'Authorization' => 'Bearer ' . $s['slack_bot_token'] ) ) );
-		if ( is_wp_error( $resp ) ) { continue; }
+		if ( is_wp_error( $resp ) ) {
+			error_log( 'carmel_cb: SlackファイルDL失敗 ' . $resp->get_error_message() );
+			continue;
+		}
 		$code  = (int) wp_remote_retrieve_response_code( $resp );
 		$ctype = (string) wp_remote_retrieve_header( $resp, 'content-type' );
 		$body  = wp_remote_retrieve_body( $resp );
-		if ( $code !== 200 || $body === '' || stripos( $ctype, 'text/html' ) !== false ) { continue; }
+		// text/html が返る＝ほぼ files:read スコープ不足（ログイン/エラーページ）。判別用にログを残す。
+		if ( $code !== 200 || $body === '' || stripos( $ctype, 'text/html' ) !== false ) {
+			error_log( 'carmel_cb: Slackファイルを取得できませんでした（code=' . $code . ' ctype=' . $ctype . '）。Bot Token Scopes に files:read があるかご確認ください。' );
+			continue;
+		}
+		// 種別・拡張子は Slack のメタデータ（mimetype/filetype）を最優先。無ければHTTPヘッダで補う。
+		$mime  = strtolower( (string) ( $fm['mimetype'] ?? '' ) );
+		if ( $mime === '' ) { $mime = strtolower( $ctype ); }
+		$is_image = ( strpos( $mime, 'image/' ) === 0 );
+
 		$fname = ! empty( $fm['name'] ) ? $fm['name'] : ( 'file-' . ( $fm['id'] ?? '' ) );
 		if ( ! preg_match( '/\.[a-z0-9]{2,5}$/i', $fname ) ) {
-			$ext = carmel_cb_ext_from_ctype( $ctype );
+			$ext = '';
+			if ( ! empty( $fm['filetype'] ) ) { $ext = preg_replace( '/[^a-z0-9]/', '', strtolower( (string) $fm['filetype'] ) ); }
+			if ( $ext === '' ) { $ext = carmel_cb_ext_from_ctype( $mime ); }
 			if ( $ext ) { $fname .= '.' . $ext; }
 		}
+		// ファイル名から画像判定できない場合は mimetype の判定を採用。
+		if ( ! $is_image ) { $is_image = carmel_cb_is_image_name( $fname ); }
+
 		$saved = carmel_cb_store_upload_bits( $fname, $body );
 		if ( $saved ) {
-			$out[] = array( 'url' => $saved['url'], 'name' => $saved['name'], 'isImage' => carmel_cb_is_image_name( $saved['name'] ) );
+			$out[] = array( 'url' => $saved['url'], 'name' => $saved['name'], 'isImage' => $is_image );
 		}
 	}
 	return $out;
 }
 
-/** content-type から拡張子を推定。 */
+/** content-type / mimetype から拡張子を推定。 */
 function carmel_cb_ext_from_ctype( $ctype ) {
 	$ctype = strtolower( (string) $ctype );
 	$map = array(
