@@ -30,6 +30,18 @@ function carmel_cb_is_car_intent( $text ) {
 	);
 }
 
+/** 「どんな車があるか見たい／在庫を見せて／一覧／車を探している」など、
+ * 実車カードを出して良いほど“見たい”意思が強い発話かを判定（自動表示の保険用）。
+ */
+function carmel_cb_is_browse_intent( $text ) {
+	$text = (string) $text;
+	if ( $text === '' ) { return false; }
+	return (bool) preg_match(
+		'/(どんな(車|くるま|クルマ|中古車|在庫)|在庫(を|は)?(見|見せ|見たい|教|ある|一覧)|一覧|見せて|見てみたい|(車|くるま|クルマ|中古車)(を|が)?(探|さがし|見|見せ|見たい|紹介|おすすめ|オススメ|候補))/u',
+		$text
+	);
+}
+
 /** 1投稿を在庫アイテム配列にする（販売終了なら null）。 */
 function carmel_cb_stock_item( $p ) {
 	$st = (string) get_post_meta( $p->ID, 'stauts', true );

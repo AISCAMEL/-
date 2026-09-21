@@ -266,9 +266,13 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
 		? carmel_cb_cards_from_ids( $parsed['car_ids'], $stock_items )
 		: array();
 
-	// 以前は「在庫の話題ならサーバー側で自動的に在庫カードを補完」していたが、
-	// お客様が明確に「在庫を見たい」と伝えていない場面でも在庫が出てしまうため廃止。
-	// 在庫を出すかどうかは、AIが car_ids を明示的に返したときだけに限定する。
+	// 保険：お客様が「どんな車があるか見たい / 在庫を見せて / 一覧 / 車を探している」等、
+	// 明確に“見たい”と伝えているのに AI が car_ids を返さなかった場合は、
+	// サーバー側で数台を自動表示して「車が出てこない」を防ぐ（漠然とした話題では出さない）。
+	if ( empty( $cars ) && ! empty( $stock_items ) && carmel_cb_is_browse_intent( $last_user ) ) {
+		$auto = carmel_cb_auto_pick( $stock_items, $last_user, 3 );
+		$cars = carmel_cb_cards_from_ids( $auto, $stock_items );
+	}
 
 	return new WP_REST_Response( array(
 		'reply'       => $parsed['reply'],
