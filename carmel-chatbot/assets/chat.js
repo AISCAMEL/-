@@ -770,11 +770,12 @@
 		action = action || "";
 
 		// この入口を出す、という希望リスト（順序＝表示順）
-		var want = { apply: false, contact: false, handoff: false, stock: false, line: false, tel: false };
+		var want = { apply: false, contact: false, handoff: false, stock: false, app: false, line: false, tel: false };
 		if (action === "apply") { want.apply = true; want.line = true; }
 		else if (action === "contact") { want.contact = true; want.line = true; }
 		else if (action === "handoff") { want.handoff = true; want.line = true; }
-		else if (action === "stock") { want.stock = true; want.line = true; }
+		else if (action === "stock") { want.stock = true; want.app = true; want.line = true; }
+		else if (action === "app") { want.app = true; want.stock = true; want.line = true; }
 		else if (action === "line") { want.line = true; want.tel = true; }
 		else { want.apply = true; want.contact = true; want.line = true; } // 汎用
 
@@ -785,13 +786,14 @@
 			contact: want.contact && (formMode ? cfg.contactFormOn : !!cfg.contactUrl),
 			handoff: want.handoff && !!cfg.handoffOn,
 			stock:   want.stock   && !!cfg.stockUrl,
+			app:     want.app     && !!cfg.stockAppUrl,
 			line:    want.line    && !!cfg.lineUrl,
 			tel:     want.tel     && !!cfg.tel
 		};
 		// 仮審査は専用ページ(applyUrl=/shinsa-2)へ移行させる。URLがあればフォームモードでもリンク優先。
 		var applyToPage = !!cfg.applyUrl;
 		show.apply = want.apply && ( applyToPage || ( formMode ? cfg.applyFormOn : false ) );
-		if (!show.apply && !show.contact && !show.handoff && !show.stock && !show.line && !show.tel) return;
+		if (!show.apply && !show.contact && !show.handoff && !show.stock && !show.app && !show.line && !show.tel) return;
 
 		var row = document.createElement("div");
 		row.className = "ccb-msg bot";
@@ -844,6 +846,7 @@
 			else addBtnLink("ccb-cta-contact", "✉️ お問い合わせ", cfg.contactUrl);
 		}
 		if (show.stock) addBtnLink("ccb-cta-stock", "🚗 在庫を見る", cfg.stockUrl);
+		if (show.app) addBtnLink("ccb-cta-app", "📱 在庫アプリを見る", cfg.stockAppUrl);
 		if (show.handoff) addBtnAct("ccb-cta-handoff", "🙋 担当者に相談", function () { openHandoff(); });
 		if (show.line) addBtnLink("ccb-cta-line", "💬 LINEで相談", cfg.lineUrl);
 		if (show.tel) {
@@ -856,7 +859,24 @@
 
 		row.appendChild(wrap);
 		msgBox.appendChild(row);
+		// 在庫アプリの案内（ID・店舗名・注意）を添える
+		if (show.app) { renderAppInfo(); }
 		msgBox.scrollTop = msgBox.scrollHeight;
+	}
+
+	// 📱 在庫アプリの案内（ID・店舗名・注意事項）
+	function renderAppInfo() {
+		var row = document.createElement("div");
+		row.className = "ccb-msg bot";
+		var idLine = cfg.stockAppId ? '<div>ご登録時のID：<b>' + escapeHtml(cfg.stockAppId) + '</b>' + (cfg.stockAppStore ? '（店舗名「' + escapeHtml(cfg.stockAppStore) + '」と出ればOK）' : '') + '</div>' : '';
+		var note = cfg.stockAppNote ? '<div class="ccb-app-note">' + escapeHtml(cfg.stockAppNote).replace(/\n/g, '<br>') + '</div>' : '';
+		row.innerHTML = '<div class="ccb-app-info">'
+			+ '<div class="ccb-app-ttl">📱 在庫共有アプリのご案内</div>'
+			+ idLine
+			+ '<div style="margin-top:4px">在庫にないお車も、注文販売（オークション仕入れ）でお探しできます。アプリではお車のイメージをご覧いただけます😊</div>'
+			+ note
+			+ '</div>';
+		msgBox.appendChild(row);
 	}
 
 	// チャット内フォーム（かんたん審査 / お問い合わせ）：離脱せず連絡先を受け付ける

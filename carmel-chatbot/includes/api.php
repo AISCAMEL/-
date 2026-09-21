@@ -177,11 +177,23 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
 	// キャンペーン：アクティブなら AIプロンプトに追記（会話中に自然に案内する）
 	$campaign_block = function_exists( 'carmel_cb_campaign_prompt_block' ) ? carmel_cb_campaign_prompt_block( $s ) : '';
 
+	// 車探しフロー（在庫→注文販売→在庫共有アプリ）
+	$carsearch_block = '';
+	if ( ! empty( $s['carsearch_flow_on'] ) ) {
+		$carsearch_block = "\n\n【「どんな車をお探しですか？」への対応フロー（重要）】\n"
+			. "お客様が車探し・希望車種・予算に触れたら、次の順で対応する：\n"
+			. "1) まず【現在の在庫】から希望に近い車を1〜3台 car_ids で提案する。\n"
+			. "2) 在庫にピッタリが無ければ、オークション等から探す『注文販売』をおすすめする。\n"
+			. "3) あわせて『在庫が見られる専用アプリ』を案内する。アプリのURL・ID等は本文に書かず、action を \"app\" にしてシステムのボタンで表示させる（本文では『下の在庫アプリのボタンからご覧ください』と促す）。\n"
+			. "※ アプリは価格非表示・イメージ確認用であること、実際の支払いは審査で借入額が確定してからであること、金融事故歴がある場合は与信枠に限りがあり事前の問い合わせが必要なこと、を必要に応じてやさしく添える。";
+	}
+
 	$system = $s['system_prompt'] . $faq_block
 		. "\n\n【LINE相談リンク】" . $s['line_url']
 		. "\n【在庫一覧ページ】" . $stock_page
 		. $inventory_block
 		. $campaign_block
+		. $carsearch_block
 		. carmel_cb_protocol_instruction();
 
 	$messages = array_merge(
@@ -325,6 +337,7 @@ function carmel_cb_protocol_instruction() {
 - "handoff" = AIでは判断できない / 込み入った個別相談 / 「人と話したい・担当者に代わって」というとき → 担当者に引き継ぐ。
   【重要】「担当者につないで」等と言われても、まだ“ご用件”が分からない場合は、いきなり action=handoff にしない。まず reply で「かしこまりました。担当者にお繋ぎする前に、ご用件（ご相談内容）を教えていただけますか？」と一度だけ確認する（このターンの action は空文字）。用件が分かった次のターンで action=handoff にして引き継ぐ。
 - "stock"   = 在庫を見たいが車種や条件がまだ定まらず、具体的な車を出しきれないとき → 在庫一覧ページへ案内する。
+- "app"     = 在庫にピッタリが無い/もっと幅広く見たいとき → 在庫共有アプリ（専用アプリ）を案内する。注文販売（オークション仕入れ）とセットで勧める。
 - "line"    = すぐLINEでやり取りしたい雰囲気のとき。
 ※ 具体的な車を car_ids で出せるときは "stock" ではなく car_ids を使う。
 
@@ -378,6 +391,7 @@ function carmel_cb_infer_action( $reply, $last_user = '' ) {
 	if ( preg_match( '/(仮審査|審査|申込|申し込|ローンを組|与信)/u', $hay ) ) { return 'apply'; }
 	if ( preg_match( '/(お問い?合わせ|見積|問合)/u', $hay ) ) { return 'contact'; }
 	if ( preg_match( '/(担当者|オペレーター|スタッフにおつなぎ|人と話)/u', $hay ) ) { return 'handoff'; }
+	if ( preg_match( '/(在庫アプリ|専用アプリ|アプリ|注文販売|オークション)/u', $hay ) ) { return 'app'; }
 	if ( preg_match( '/(在庫一覧|在庫ページ|在庫を見|一覧はこちら)/u', $hay ) ) { return 'stock'; }
 
 	return '';

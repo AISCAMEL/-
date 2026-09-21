@@ -214,6 +214,11 @@ function carmel_cb_handle_post() {
 				'sim_default_rate'         => max( 7, min( 18, (float) ( $_POST['sim_default_rate'] ?? 12 ) ) ),
 				'sim_note'                 => sanitize_textarea_field( wp_unslash( $_POST['sim_note'] ?? '' ) ),
 				'shinsa_on'                => isset( $_POST['shinsa_on'] ) ? 1 : 0,
+				'carsearch_flow_on'        => isset( $_POST['carsearch_flow_on'] ) ? 1 : 0,
+				'stock_app_url'            => esc_url_raw( wp_unslash( $_POST['stock_app_url'] ?? '' ) ),
+				'stock_app_id'             => sanitize_text_field( wp_unslash( $_POST['stock_app_id'] ?? '' ) ),
+				'stock_app_store'          => sanitize_text_field( wp_unslash( $_POST['stock_app_store'] ?? '' ) ),
+				'stock_app_note'           => sanitize_textarea_field( wp_unslash( $_POST['stock_app_note'] ?? '' ) ),
 				// 🔔 通知音・離脱時メール
 				'sound_on'                 => isset( $_POST['sound_on'] ) ? 1 : 0,
 				'away_email_on'            => isset( $_POST['away_email_on'] ) ? 1 : 0,
@@ -1619,6 +1624,17 @@ function carmel_cb_view_appearance() {
 					<hr style="margin:14px 0">
 					<p><label><input type="checkbox" name="shinsa_on" value="1" <?php checked( ! empty( $s['shinsa_on'] ) ); ?>> <strong>審査見込み診断</strong>：9項目で「通る見込み（🟢中🟡🔴）」を自己診断できるボタンを表示</label></p>
 					<p class="description" style="margin:4px 0 12px">診断結果は「申込・問い合わせ」に種別=審査診断として保存され、管理者にも通知されます。金利目安 🟢7〜10%／🟡8〜14%／🔴14〜18%。</p>
+
+					<hr style="margin:14px 0">
+					<p><label><input type="checkbox" name="carsearch_flow_on" value="1" <?php checked( ! empty( $s['carsearch_flow_on'] ) ); ?>> <strong>車探しフロー＋在庫共有アプリ案内</strong>：在庫提案→無ければ注文販売→在庫アプリの順で案内</label></p>
+					<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+						<div style="flex:1;min-width:220px"><label class="f">在庫アプリURL</label><br><input type="url" name="stock_app_url" value="<?php echo esc_attr( $s['stock_app_url'] ?? '' ); ?>" class="regular-text" placeholder="https://mlkl.jp/mirukuru/app"></div>
+						<div><label class="f">登録ID</label><br><input type="text" name="stock_app_id" value="<?php echo esc_attr( $s['stock_app_id'] ?? '' ); ?>" class="small-text" placeholder="890"></div>
+						<div><label class="f">店舗名</label><br><input type="text" name="stock_app_store" value="<?php echo esc_attr( $s['stock_app_store'] ?? '' ); ?>" class="regular-text" placeholder="カーメル"></div>
+					</div>
+					<p style="margin:8px 0 4px"><label>アプリ利用時の注意事項</label></p>
+					<textarea name="stock_app_note" rows="4" class="large-text" style="font-family:inherit"><?php echo esc_textarea( $s['stock_app_note'] ?? '' ); ?></textarea>
+					<p class="description">お客様が車探しに触れると、AIが在庫→注文販売→アプリの順で自然に案内し、「📱在庫アプリを見る」ボタン＋ID・店舗名・注意事項を表示します。</p>
 
 					<p><label><input type="checkbox" name="sim_on" value="1" <?php checked( ! empty( $s['sim_on'] ) ); ?>> <strong>簡易シミュレーション</strong>：月々のお支払い目安を計算するボタンを表示</label></p>
 					<p style="margin:4px 0">
