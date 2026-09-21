@@ -912,23 +912,6 @@
 		a.textContent = "みるクルを入手する";
 		w.appendChild(a); btnRow.appendChild(w); msgBox.appendChild(btnRow);
 
-		addBubble("bot", "登録後の使い方はこちらです。気になるボタンを押してください。");
-		var guide = document.createElement("div");
-		guide.className = "ccb-msg bot";
-		var gbox = document.createElement("div"); gbox.className = "ccb-starters";
-		var steps = [
-			["① 価格帯を選ぶ", "アプリ内でご希望の価格帯を選択してください。ご自身の与信力（借入可能額の目安）に合わせて価格帯を設定すると、現実的なお車が見つかりやすいです。"],
-			["② 該当する車両を選ぶ", "選んだ価格帯に合うお車の一覧が表示されます。気になるお車をタップすると詳細（イメージ）をご覧いただけます。"],
-			["③ お気に入りに登録する", "気になったお車は、アプリのメッセージからお気に入り登録・お問い合わせいただけます。当店でもお手伝いします。"]
-		];
-		steps.forEach(function (st) {
-			var b = document.createElement("button"); b.type = "button"; b.className = "ccb-starter-btn";
-			b.textContent = st[0];
-			b.addEventListener("click", function () { addBubble("bot", st[1]); });
-			gbox.appendChild(b);
-		});
-		guide.appendChild(gbox); msgBox.appendChild(guide);
-
 		addBubble("bot", "ご自身の与信力（借入できる目安の金額）を意識しながら、価格帯を設定してご覧くださいね。");
 		if (cfg.stockAppNote) {
 			var note = document.createElement("div");
@@ -936,9 +919,48 @@
 			note.innerHTML = '<div class="ccb-app-note" style="max-width:92%">' + escapeHtml(cfg.stockAppNote).replace(/\n/g, "<br>") + '</div>';
 			msgBox.appendChild(note);
 		}
-		addBubble("bot", "見込みが気になる方は、審査見込みの診断や、担当者へのご相談もできます。");
-		renderCTA("handoff");
+		appQA(); // 使い方の項目ボタン → 回答 → その他質問確認
+	}
+
+	// みるクル 使い方：項目ボタンを出す
+	function appQA() {
+		addBubble("bot", "使い方で気になる項目を選んでください。");
+		var guide = document.createElement("div");
+		guide.className = "ccb-msg bot";
+		var gbox = document.createElement("div"); gbox.className = "ccb-starters";
+		var steps = [
+			["① 価格帯を選ぶ", "アプリ内でご希望の価格帯を選択してください。ご自身の与信力（借入可能額の目安）に合わせて価格帯を設定すると、現実的なお車が見つかりやすいです。"],
+			["② 該当する車両を選ぶ", "選んだ価格帯に合うお車の一覧が表示されます。気になるお車をタップすると詳細（イメージ）をご覧いただけます。"],
+			["③ お気に入りに登録する", "気になったお車は、アプリのメッセージからお気に入り登録・お問い合わせいただけます。当店でもお手伝いします。"],
+			["販売店IDの入れ方", "アプリの販売店ID欄に「" + (cfg.stockAppId || "890") + "」を入力してください。店舗名「" + (cfg.stockAppStore || "カーメル") + "」と表示されれば連携完了です。"]
+		];
+		steps.forEach(function (st) {
+			var b = document.createElement("button"); b.type = "button"; b.className = "ccb-starter-btn";
+			b.textContent = st[0];
+			b.addEventListener("click", function () { addBubble("bot", st[1]); setTimeout(askAnythingElseApp, 300); });
+			gbox.appendChild(b);
+		});
+		guide.appendChild(gbox); msgBox.appendChild(guide);
 		msgBox.scrollTop = msgBox.scrollHeight;
+	}
+
+	// 回答後に「その他にご質問はありますか？」で再確認
+	function askAnythingElseApp() {
+		addBubble("bot", "その他にご質問はありますか？");
+		var row = document.createElement("div");
+		row.className = "ccb-msg bot";
+		var box = document.createElement("div"); box.className = "ccb-choices";
+		var mk = function (label, fn) {
+			var b = document.createElement("button"); b.type = "button"; b.className = "ccb-choice";
+			b.textContent = label;
+			b.addEventListener("click", function () { row.remove(); addBubble("user", label); setTimeout(fn, 200); });
+			box.appendChild(b);
+		};
+		mk("みるクルの使い方をもっと見る", function () { appQA(); });
+		if (cfg.shinsaOn) { mk("審査に通るか診断する", function () { openShindanCheck(); }); }
+		if (cfg.handoffOn) { mk("担当者に相談する", function () { openHandoff(); }); }
+		mk("いいえ、大丈夫です", function () { addBubble("bot", "承知しました。ご不明な点が出ましたら、いつでもお気軽にお声がけください。"); });
+		row.appendChild(box); msgBox.appendChild(row); msgBox.scrollTop = msgBox.scrollHeight;
 	}
 
 	// チャット内フォーム（かんたん審査 / お問い合わせ）：離脱せず連絡先を受け付ける
