@@ -846,7 +846,7 @@
 			else addBtnLink("ccb-cta-contact", " お問い合わせ", cfg.contactUrl);
 		}
 		if (show.stock) addBtnLink("ccb-cta-stock", " 在庫を見る", cfg.stockUrl);
-		if (show.app) addBtnLink("ccb-cta-app", " 在庫アプリを見る", appStoreUrl(), false);
+		if (show.app) addBtnAct("ccb-cta-app", " 在庫共有アプリのご案内", function () { askAppGuide(); });
 		if (show.handoff) addBtnAct("ccb-cta-handoff", " 担当者に相談", function () { openHandoff(); });
 		if (show.line) addBtnLink("ccb-cta-line", " LINEで相談", cfg.lineUrl);
 		if (show.tel) {
@@ -859,8 +859,6 @@
 
 		row.appendChild(wrap);
 		msgBox.appendChild(row);
-		// 在庫アプリの案内（ID・店舗名・注意）を添える
-		if (show.app) { renderAppInfo(); }
 		msgBox.scrollTop = msgBox.scrollHeight;
 	}
 
@@ -875,18 +873,72 @@
 	}
 
 	// 在庫アプリの案内（ID・店舗名・注意事項）
-	function renderAppInfo() {
+	function askAppGuide() {
+		if (!chatStarted) { startChat(); }
+		addBubble("bot", "在庫共有アプリ「みるクル」では、当店の在庫だけでなく、オークションやグループ在庫のお車のイメージも幅広くご覧いただけます。ご案内しましょうか？");
 		var row = document.createElement("div");
 		row.className = "ccb-msg bot";
-		var idLine = cfg.stockAppId ? '<div>ご登録時のID：<b>' + escapeHtml(cfg.stockAppId) + '</b>' + (cfg.stockAppStore ? '（店舗名「' + escapeHtml(cfg.stockAppStore) + '」と出ればOK）' : '') + '</div>' : '';
-		var note = cfg.stockAppNote ? '<div class="ccb-app-note">' + escapeHtml(cfg.stockAppNote).replace(/\n/g, '<br>') + '</div>' : '';
-		row.innerHTML = '<div class="ccb-app-info">'
-			+ '<div class="ccb-app-ttl"> 在庫共有アプリのご案内</div>'
-			+ idLine
-			+ '<div style="margin-top:4px">在庫にないお車も、注文販売（オークション仕入れ）でお探しできます。アプリではお車のイメージをご覧いただけます</div>'
-			+ note
+		var box = document.createElement("div"); box.className = "ccb-choices";
+		var yes = document.createElement("button"); yes.type = "button"; yes.className = "ccb-choice";
+		yes.textContent = "はい、案内してください";
+		yes.addEventListener("click", function () { row.remove(); addBubble("user", "はい、案内してください"); setTimeout(showAppGuide, 250); });
+		var no = document.createElement("button"); no.type = "button"; no.className = "ccb-choice";
+		no.textContent = "いいえ、今は大丈夫です";
+		no.addEventListener("click", function () { row.remove(); addBubble("user", "いいえ、今は大丈夫です"); addBubble("bot", "承知しました。ほかにも気になる点があれば、お気軽にどうぞ。"); });
+		box.appendChild(yes); box.appendChild(no);
+		row.appendChild(box); msgBox.appendChild(row); msgBox.scrollTop = msgBox.scrollHeight;
+	}
+
+	// 在庫共有アプリ：登録手順＋操作方法（ボタン式）＋与信力の助言
+	function showAppGuide() {
+		var idTxt = cfg.stockAppId ? escapeHtml(cfg.stockAppId) : "890";
+		var storeTxt = cfg.stockAppStore ? escapeHtml(cfg.stockAppStore) : "カーメル";
+		var reg = document.createElement("div");
+		reg.className = "ccb-msg bot";
+		reg.innerHTML = '<div class="ccb-app-info">'
+			+ '<div class="ccb-app-ttl">みるクル 登録手順</div>'
+			+ '<div>① 下のボタンからアプリを入手</div>'
+			+ '<div>② アプリを開いて、お客様情報（個人情報）を登録</div>'
+			+ '<div>③ 販売店IDに「<b>' + idTxt + '</b>」を入力</div>'
+			+ '<div>④ 店舗名「<b>' + storeTxt + '</b>」と表示されればOK です</div>'
 			+ '</div>';
-		msgBox.appendChild(row);
+		msgBox.appendChild(reg);
+
+		var btnRow = document.createElement("div");
+		btnRow.className = "ccb-msg bot";
+		var w = document.createElement("div"); w.className = "ccb-cta";
+		var a = document.createElement("a"); a.className = "ccb-cta-btn ccb-cta-app";
+		a.href = appStoreUrl(); a.target = "_blank"; a.rel = "noopener";
+		a.textContent = "みるクルを入手する";
+		w.appendChild(a); btnRow.appendChild(w); msgBox.appendChild(btnRow);
+
+		addBubble("bot", "登録後の使い方はこちらです。気になるボタンを押してください。");
+		var guide = document.createElement("div");
+		guide.className = "ccb-msg bot";
+		var gbox = document.createElement("div"); gbox.className = "ccb-starters";
+		var steps = [
+			["① 価格帯を選ぶ", "アプリ内でご希望の価格帯を選択してください。ご自身の与信力（借入可能額の目安）に合わせて価格帯を設定すると、現実的なお車が見つかりやすいです。"],
+			["② 該当する車両を選ぶ", "選んだ価格帯に合うお車の一覧が表示されます。気になるお車をタップすると詳細（イメージ）をご覧いただけます。"],
+			["③ お気に入りに登録する", "気になったお車は、アプリのメッセージからお気に入り登録・お問い合わせいただけます。当店でもお手伝いします。"]
+		];
+		steps.forEach(function (st) {
+			var b = document.createElement("button"); b.type = "button"; b.className = "ccb-starter-btn";
+			b.textContent = st[0];
+			b.addEventListener("click", function () { addBubble("bot", st[1]); });
+			gbox.appendChild(b);
+		});
+		guide.appendChild(gbox); msgBox.appendChild(guide);
+
+		addBubble("bot", "ご自身の与信力（借入できる目安の金額）を意識しながら、価格帯を設定してご覧くださいね。");
+		if (cfg.stockAppNote) {
+			var note = document.createElement("div");
+			note.className = "ccb-msg bot";
+			note.innerHTML = '<div class="ccb-app-note" style="max-width:92%">' + escapeHtml(cfg.stockAppNote).replace(/\n/g, "<br>") + '</div>';
+			msgBox.appendChild(note);
+		}
+		addBubble("bot", "見込みが気になる方は、審査見込みの診断や、担当者へのご相談もできます。");
+		renderCTA("handoff");
+		msgBox.scrollTop = msgBox.scrollHeight;
 	}
 
 	// チャット内フォーム（かんたん審査 / お問い合わせ）：離脱せず連絡先を受け付ける
