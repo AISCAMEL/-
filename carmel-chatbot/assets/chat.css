@@ -236,26 +236,51 @@
 .ccb-starter-sim::before { content: ""; }
 .ccb-starter-shinsa { border-color: #0f9d63; background: #e7f7ef; }
 .ccb-starter-shinsa::before { content: ""; }
-.ccb-sim-row select.ccb-li,
-select.ccb-li {
-	width: 100%;
-	box-sizing: border-box;
-	min-height: 42px;
-	line-height: 1.5;
-	padding: 9px 34px 9px 12px;
-	border: 1px solid #d4dae2;
-	border-radius: 8px;
-	font-family: inherit;
-	font-size: 14px;
-	color: #1a1a1a;
-	-webkit-appearance: none;
-	-moz-appearance: none;
-	appearance: none;
-	background-color: #fff;
-	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M2 2l4 4 4-4' stroke='%23667' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
-	background-repeat: no-repeat;
-	background-position: right 12px center;
+/* テーマ側の select/input スタイルに負けないよう #carmel-cb-root にスコープして強制 */
+#carmel-cb-root select.ccb-li,
+#carmel-cb-root input.ccb-li,
+#carmel-cb-root textarea.ccb-li {
+	display: block !important;
+	width: 100% !important;
+	max-width: 100% !important;
+	box-sizing: border-box !important;
+	height: auto !important;
+	min-height: 44px !important;
+	line-height: 1.4 !important;
+	margin: 0 !important;
+	padding: 11px 12px !important;
+	border: 1px solid #d4dae2 !important;
+	border-radius: 8px !important;
+	font-family: inherit !important;
+	font-size: 14px !important;
+	color: #1a1a1a !important;
+	background-color: #fff !important;
+	vertical-align: middle !important;
+	text-indent: 0 !important;
+	text-align: left !important;
 }
+#carmel-cb-root select.ccb-li {
+	-webkit-appearance: none !important;
+	-moz-appearance: none !important;
+	appearance: none !important;
+	padding-right: 34px !important;
+	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M2 2l4 4 4-4' stroke='%23667' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>") !important;
+	background-repeat: no-repeat !important;
+	background-position: right 12px center !important;
+}
+#carmel-cb-root textarea.ccb-li { min-height: 60px !important; resize: vertical !important; }
+#carmel-cb-root .ccb-sim-row {
+	display: flex !important;
+	flex-direction: column !important;
+	align-items: stretch !important;
+	gap: 4px !important;
+	margin: 0 0 10px !important;
+	padding: 0 !important;
+	font-size: 12px !important;
+	line-height: 1.4 !important;
+	color: #556 !important;
+}
+#carmel-cb-root .ccb-lead-fields { display: flex !important; flex-direction: column !important; gap: 2px !important; }
 .ccb-sim-row .ccb-rate { width: 100%; margin-top: 4px; }
 
 /* 💰 シミュレーション行 */
