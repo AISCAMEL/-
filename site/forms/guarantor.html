@@ -145,8 +145,9 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 <p>郵便番号 (必須)<br><input type="text" inputmode="numeric" maxlength="7" class="zipcode" placeholder="1234567（住所自動入力）"></p>
 <p>居住形態 (必須)<br><select><option>選択してください</option><option>持家（本人名義）</option><option>持家（家族名義）</option><option>賃貸アパート</option><option>賃貸マンション</option><option>賃貸戸建</option><option>社宅・寮</option><option>公営住宅</option><option>親と同居</option><option>その他</option></select></p>
 </div>
-<p>ご住所（自動入力） (必須)<br><input type="text" class="address to-hankaku" placeholder="都道府県・市区町村・番地"></p>
-<p>建物名・部屋番号 (任意)<br><input type="text" class="to-hankaku" placeholder="〇〇マンション 101号室"></p>
+<p>ご住所（郵便番号で自動入力） (必須)<br><input type="text" class="address to-hankaku" placeholder="都道府県・市区町村・番地"></p>
+<p>ご住所（フリガナ・自動） (任意)<br><input type="text" class="address-kana" placeholder="市区町村までは自動／以降はご記入"></p>
+<p>建物名・部屋番号（補完・任意）<br><input type="text" class="to-hankaku" placeholder="〇〇マンション 101号室"></p>
 <h4>居住年数</h4>
 <div class="caf-half">
 <p>居住年数（年） (必須)<br><select class="year-sel"></select></p>
@@ -171,7 +172,9 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 <p>会社の電話番号 (任意)<br><input type="tel" placeholder="0312345678"></p>
 <p>会社の郵便番号 (任意)<br><input type="text" inputmode="numeric" maxlength="7" class="company-zipcode" placeholder="1234567"></p>
 </div>
-<p>会社の所在地（郵便番号で自動入力） (任意)<br><input type="text" class="company-address to-hankaku"></p>
+<p>会社の所在地（郵便番号で自動入力） (任意)<br><input type="text" class="company-address to-hankaku" placeholder="郵便番号を入れると自動で入ります"></p>
+<p>会社の所在地（フリガナ・自動） (任意)<br><input type="text" class="company-address-kana" placeholder="市区町村までは自動／以降はご記入"></p>
+<p>会社の建物名・階・号室（補完・任意）<br><input type="text" class="to-hankaku" placeholder="〇〇ビル 5F など"></p>
 <div id="grp-dispatch" class="hide"><h4>派遣社員の方（派遣元・派遣先）</h4>
 <div class="caf-half">
 <p>派遣元（登録派遣会社）名 (必須)<br><input type="text"></p>
@@ -337,15 +340,15 @@ out.textContent='満 '+age+' 歳';out.className='caf-age is-show';}
 bd.addEventListener('change',calc);bd.addEventListener('input',calc);})();
 
 /* 郵便番号→住所（JSONP） */
-function carmelZip(zip,target){
+function carmelZip(zip,target,kanaTarget){
   if(!target)return;zip=(zip||'').replace(/[０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-65248);}).replace(/[^0-9]/g,'');
   if(zip.length!==7)return;var cb='czcb'+Date.now();var s=document.createElement('script');
-  window[cb]=function(d){if(d&&d.results&&d.results[0]){var r=d.results[0];target.value=r.address1+r.address2+r.address3;}delete window[cb];if(s.parentNode)s.parentNode.removeChild(s);};
+  window[cb]=function(d){if(d&&d.results&&d.results[0]){var r=d.results[0];target.value=r.address1+r.address2+r.address3;if(kanaTarget&&r.kana1)kanaTarget.value=(r.kana1||'')+(r.kana2||'')+(r.kana3||'');}delete window[cb];if(s.parentNode)s.parentNode.removeChild(s);};
   s.src='https://zipcloud.ibsnet.co.jp/api/search?zipcode='+zip+'&callback='+cb;document.body.appendChild(s);
 }
-function bindZip(zipSel,addrSel){var z=document.querySelector(zipSel),a=document.querySelector(addrSel);if(!z||!a)return;
-  z.addEventListener('input',function(){carmelZip(z.value,a);});z.addEventListener('blur',function(){carmelZip(z.value,a);});}
-bindZip('.zipcode','.address');bindZip('.company-zipcode','.company-address');
+function bindZip(zipSel,addrSel,kanaSel){var z=document.querySelector(zipSel),a=document.querySelector(addrSel),k=kanaSel?document.querySelector(kanaSel):null;if(!z||!a)return;
+  z.addEventListener('input',function(){carmelZip(z.value,a,k);});z.addEventListener('blur',function(){carmelZip(z.value,a,k);});}
+bindZip('.zipcode','.address','.address-kana');bindZip('.company-zipcode','.company-address','.company-address-kana');
 
 /* 全角→半角 */
 document.querySelectorAll('.caf .to-hankaku').forEach(function(el){el.addEventListener('blur',function(){
