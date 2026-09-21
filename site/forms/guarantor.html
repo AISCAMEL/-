@@ -118,12 +118,14 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 <div class="note-top">このフォームは<b>連帯保証人ご本人様</b>がご入力ください。ご入力内容は、お申込者様のローン審査のためにのみ利用します。</div>
 <form class="caf" id="caf-form" novalidate enctype="multipart/form-data">
 <input type="text" name="hp" id="caf-hp" autocomplete="off" tabindex="-1" aria-hidden="true" class="caf-hp">
+<input type="hidden" id="applicant-email">
+<div id="invite-banner" class="hide" style="background:#eaf4ff;border:1px solid #bcd8f5;border-radius:12px;padding:12px 16px;margin-bottom:6px;font-size:.92rem;color:#15335f;font-weight:800;line-height:1.7;"></div>
 
 <h3>STEP1 お申込みの紐付け</h3>
-<p>お申込者（ご本人）のお名前 (必須)<br><input type="text" placeholder="山田 太郎"></p>
+<p>お申込者（ご本人）のお名前 (必須)<br><input type="text" id="applicant-name" placeholder="山田 太郎"></p>
 <div class="caf-half">
 <p>お申込者との続柄 (必須)<br><select><option>選択してください</option><option>配偶者</option><option>親</option><option>子</option><option>兄弟姉妹</option><option>その他親族</option><option>知人・友人</option><option>その他</option></select></p>
-<p>案件番号・受付番号 (任意)<br><input type="text" placeholder="お分かりになる場合のみ"></p>
+<p>案件番号・受付番号 (任意)<br><input type="text" id="case-no" placeholder="お分かりになる場合のみ"></p>
 </div>
 
 <h3>STEP2 保証人ご本人情報</h3>
@@ -270,6 +272,19 @@ document.querySelectorAll('.caf .month-sel').forEach(function(sel){
   sel.innerHTML='<option>選択してください</option>';
   for(var m=0;m<=11;m++){var o=document.createElement('option');o.textContent=m+'ヶ月';sel.appendChild(o);}
 });
+
+/* 招待リンクの申込者情報を自動入力＆固定（誰の保証人かを確定） */
+(function(){
+  var q=new URLSearchParams(location.search);
+  var ap=q.get('applicant')||q.get('a')||'';
+  var cid=q.get('caseid')||q.get('c')||'';
+  var ae=q.get('aemail')||q.get('e')||'';
+  function lock(el){ if(!el)return; el.readOnly=true; el.style.background='#eef2f7'; el.style.color='#334155'; el.setAttribute('title','招待リンクで指定済み'); }
+  if(ap){var n=document.getElementById('applicant-name');if(n){n.value=ap;lock(n);}}
+  if(cid){var c=document.getElementById('case-no');if(c){c.value=cid;lock(c);}}
+  if(ae){var h=document.getElementById('applicant-email');if(h)h.value=ae;}
+  if(ap){var b=document.getElementById('invite-banner');if(b){b.textContent='「'+ap+'」様の連帯保証人として申請します。'+(cid?'（案件番号：'+cid+'）':'');b.classList.remove('hide');}}
+})();
 
 /* 進捗バー */
 function updateProgress(){
@@ -465,7 +480,8 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
       fields.push({section:sectionOf(el),label:leadLabel(p),value:v});
     });
     function pick(re){for(var i=0;i<fields.length;i++){if(re.test(fields[i].label))return fields[i].value;}return '';}
-    var meta={name:pick(/^お名前/)||'',kana:pick(/フリガナ/),phone:pick(/携帯/)||pick(/電話/),email:(em.value||''),applicant:pick(/お申込者/)};
+    var meta={name:pick(/^お名前/)||'',kana:pick(/フリガナ/),phone:pick(/携帯/)||pick(/電話/),email:(em.value||''),
+      applicant:pick(/お申込者/),caseId:pick(/案件番号/),applicantEmail:(document.getElementById('applicant-email')||{}).value||''};
 
     function readFile(file,label){return new Promise(function(res){var r=new FileReader();r.onload=function(){var s=String(r.result||'');var b64=s.indexOf(',')>=0?s.slice(s.indexOf(',')+1):s;res({label:label,name:file.name,mime:file.type||'application/octet-stream',size:file.size,dataBase64:b64});};r.onerror=function(){res(null);};r.readAsDataURL(file);});}
     var fileJobs=[];

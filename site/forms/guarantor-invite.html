@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>保証人へ依頼 | カーメル</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#1b2935;--navy-deep:#15335f;--blue:#f47920;--blue-hover:#d9650d;--page-bg:#f5fbff;--white:#fff;
+--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-500:#64748b;--gray-700:#334155;--green:#16a34a;--green-bg:#f0fdf4;--green-border:#bbf7d0;--radius:10px;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;color:#1e293b;background:var(--page-bg);line-height:1.75;-webkit-font-smoothing:antialiased;}
+.hd{background:linear-gradient(135deg,#fff7ef,#eaf4ff);text-align:center;padding:34px 16px 24px;border-top:5px solid var(--blue);border-bottom:1px solid var(--gray-200);}
+.hd .eb{display:inline-block;font-size:.75rem;font-weight:900;letter-spacing:.12em;color:#fff;background:var(--blue);padding:5px 16px;border-radius:999px;margin-bottom:12px;}
+.hd h1{font-size:1.6rem;font-weight:900;color:var(--navy-deep);}
+.hd p{font-size:.9rem;color:var(--gray-500);font-weight:600;margin-top:8px;}
+.wrap{max-width:640px;margin:0 auto;padding:24px 14px 60px;}
+.card{background:#fff;border:1px solid #e5eef5;border-radius:18px;box-shadow:0 8px 24px rgba(0,0,0,.07);padding:24px 20px;margin-bottom:18px;}
+h2{font-size:1.05rem;font-weight:900;color:var(--navy-deep);margin:0 0 16px;padding-left:12px;border-left:5px solid var(--blue);}
+label{display:block;font-size:.85rem;font-weight:700;color:var(--gray-700);margin:14px 0 4px;}
+.req{color:#fff;background:var(--blue);font-size:.66rem;font-weight:800;padding:2px 7px;border-radius:5px;margin-left:6px;}
+input{display:block;width:100%;padding:11px 14px;font-size:.95rem;font-family:inherit;border:1.5px solid var(--gray-300);border-radius:var(--radius);}
+input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(244,121,32,.15);}
+.btn{display:block;width:100%;margin-top:18px;padding:15px;font-size:1rem;font-weight:900;color:#fff;border:none;border-radius:999px;background:linear-gradient(135deg,var(--blue),#ff9248);box-shadow:0 6px 0 var(--blue-hover);cursor:pointer;letter-spacing:.05em;}
+.btn:active{transform:translateY(3px);box-shadow:0 3px 0 var(--blue-hover);}
+.out{display:none;}
+.out.show{display:block;}
+.linkbox{display:flex;gap:8px;margin-top:6px;}
+.linkbox input{font-size:.82rem;background:#f8fafc;}
+.copy{flex-shrink:0;padding:0 16px;border:none;border-radius:var(--radius);background:var(--navy-deep);color:#fff;font-weight:800;cursor:pointer;font-size:.85rem;}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+.act{display:flex;align-items:center;justify-content:center;gap:6px;padding:13px;border-radius:999px;font-weight:800;font-size:.9rem;text-decoration:none;cursor:pointer;border:1.5px solid var(--gray-300);background:#fff;color:var(--navy-deep);}
+.act.mail{background:#06c755;color:#fff;border-color:#06c755;}
+.act.line{background:#06c755;color:#fff;border-color:#06c755;}
+@media(max-width:520px){.actions{grid-template-columns:1fr;}}
+#qr{display:flex;justify-content:center;margin:16px 0 6px;}
+#qr img,#qr canvas{border:8px solid #fff;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.1);}
+.qrcap{text-align:center;font-size:.8rem;color:var(--gray-500);font-weight:600;}
+.note{font-size:.8rem;color:var(--gray-500);background:#f8fafc;border-left:3px solid var(--gray-300);border-radius:var(--radius);padding:10px 12px;margin-top:12px;line-height:1.7;}
+.warn{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:var(--radius);padding:12px 14px;font-size:.82rem;font-weight:700;margin-bottom:14px;line-height:1.7;}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#1b2935;color:#fff;padding:10px 18px;border-radius:999px;font-size:.85rem;font-weight:700;opacity:0;transition:opacity .2s;z-index:99;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- ▼ 公開した保証人フォームのURLをここに設定 ▼ -->
+<script>
+  window.GUARANTOR_FORM_URL = ""; // 例: "https://carmel-guarantor.netlify.app/"
+</script>
+
+<header class="hd">
+  <span class="eb">CARMEL</span>
+  <h1>保証人へ申請を依頼する</h1>
+  <p>お申込者様（または担当者）が、保証人様へ申請フォームを送るためのページです</p>
+</header>
+
+<div class="wrap">
+  <div class="card">
+    <h2>1. 内容を入力</h2>
+    <div id="url-warn" class="warn hide">※ 保証人フォームのURLが未設定です。公開後、このページの先頭 <code>GUARANTOR_FORM_URL</code> に設定すると、正しいリンク／QRが発行されます。</div>
+    <label>お申込者（ご本人）のお名前 <span class="req">必須</span></label>
+    <input id="i-name" placeholder="山田 太郎">
+    <label>案件番号・受付番号（任意）</label>
+    <input id="i-case" placeholder="CS-1234 など">
+    <label>お申込者（ご本人）のメールアドレス（任意）</label>
+    <input id="i-aemail" type="email" placeholder="申込完了メールをこの方にも送ります">
+    <label>保証人のメールアドレス（メールで送る場合）</label>
+    <input id="i-gemail" type="email" placeholder="guarantor@example.com">
+    <button class="btn" id="gen">依頼リンク・QRを発行する</button>
+  </div>
+
+  <div class="card out" id="out">
+    <h2>2. 保証人へ送る</h2>
+    <label>依頼リンク</label>
+    <div class="linkbox"><input id="link" readonly><button class="copy" id="copy">コピー</button></div>
+
+    <div id="qr"></div>
+    <p class="qrcap">▲ 対面の場合は、このQRコードを保証人様に読み取ってもらってください</p>
+
+    <div class="actions">
+      <a class="act mail" id="send-mail" href="#">✉ メールで送る</a>
+      <a class="act line" id="send-line" href="#" target="_blank" rel="noopener">LINEで送る</a>
+    </div>
+    <p class="note">「メールで送る」を押すと、お使いのメールアプリが開き、保証人様宛の本文（リンク入り）が用意されます。送信ボタンを押すだけで送れます。<br>※自動送信（ボタンひとつでサーバー送信）にも将来対応できます。</p>
+  </div>
+</div>
+
+<div class="toast" id="toast">コピーしました</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(function(){
+  var BASE=(typeof window.GUARANTOR_FORM_URL==='string'&&window.GUARANTOR_FORM_URL)?window.GUARANTOR_FORM_URL:'';
+  if(!BASE){var w=document.getElementById('url-warn');if(w)w.classList.remove('hide');}
+
+  function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},1600);}
+  function buildLink(){
+    var name=document.getElementById('i-name').value.trim();
+    var cid=document.getElementById('i-case').value.trim();
+    var ae=document.getElementById('i-aemail').value.trim();
+    if(!name){toast('お申込者名を入力してください');return null;}
+    var base=BASE||'https://（保証人フォームURL未設定）/';
+    var p=[];
+    p.push('applicant='+encodeURIComponent(name));
+    if(cid)p.push('caseid='+encodeURIComponent(cid));
+    if(ae)p.push('aemail='+encodeURIComponent(ae));
+    return base+(base.indexOf('?')>=0?'&':'?')+p.join('&');
+  }
+
+  document.getElementById('gen').addEventListener('click',function(){
+    var link=buildLink(); if(!link)return;
+    var name=document.getElementById('i-name').value.trim();
+    var gemail=document.getElementById('i-gemail').value.trim();
+    document.getElementById('link').value=link;
+    document.getElementById('out').classList.add('show');
+
+    // QR
+    var qb=document.getElementById('qr'); qb.innerHTML='';
+    try{ new QRCode(qb,{text:link,width:190,height:190,correctLevel:QRCode.CorrectLevel.M}); }
+    catch(e){ qb.innerHTML='<p style="color:#64748b;font-size:.8rem;">QRの表示に失敗しました（リンクは上記からコピーできます）</p>'; }
+
+    // メール（mailto）
+    var subject='【カーメル】連帯保証人 申請のお願い';
+    var body='お世話になっております。\n\n'+
+      (name?('「'+name+'」様の'):'')+'自動車ローンにあたり、連帯保証人のご登録をお願いしております。\n'+
+      '下記のフォームより、保証人様ご自身でご入力ください（約3分）。\n\n'+
+      '▼ 保証人 申請フォーム\n'+link+'\n\n'+
+      'ご不明な点はカーメルまでお問い合わせください。\n';
+    var mailto='mailto:'+encodeURIComponent(gemail)+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+    document.getElementById('send-mail').setAttribute('href',mailto);
+
+    // LINE共有
+    document.getElementById('send-line').setAttribute('href','https://line.me/R/msg/text/?'+encodeURIComponent(subject+'\n'+link));
+
+    document.getElementById('out').scrollIntoView({behavior:'smooth',block:'start'});
+  });
+
+  document.getElementById('copy').addEventListener('click',function(){
+    var el=document.getElementById('link'); el.select();
+    try{ navigator.clipboard.writeText(el.value); }catch(e){ document.execCommand('copy'); }
+    toast('コピーしました');
+  });
+})();
+</script>
+</body>
+</html>
