@@ -179,6 +179,14 @@
 			});
 			box.appendChild(b);
 		});
+		// 🔎 審査見込み診断ボタン（明示）
+		if (cfg.shinsaOn) {
+			var db = document.createElement("button");
+			db.type = "button"; db.className = "ccb-starter-btn ccb-starter-shinsa";
+			db.textContent = "🔎 審査に通るか診断する";
+			db.addEventListener("click", function () { openShindanCheck(); });
+			box.appendChild(db);
+		}
 		// 💰 シミュレーションボタン（明示）
 		if (cfg.simOn) {
 			var sb = document.createElement("button");
@@ -1051,10 +1059,19 @@
 	}
 
 	/* ============ 💰 簡易シミュレーション（月々の目安） ============ */
+	function ccbYen(n) { return Math.round(n).toLocaleString("ja-JP") + "円"; }
+	function ccbMonthly(principal, months, ratePct) {
+		if (months < 1) return 0;
+		if (ratePct <= 0) return principal / months;
+		var r = ratePct / 100 / 12;
+		return principal * r / (1 - Math.pow(1 + r, -months));
+	}
+
 	function openSimulation() {
 		if (!chatStarted) { startChat(); }
 		clearChoices();
 		addBubble("bot", "月々のお支払い目安を計算します💰 数字を入れて「計算する」を押してください。（概算です）");
+		var initRate = (typeof cfg.simRate === "number" && cfg.simRate >= 7 && cfg.simRate <= 18) ? cfg.simRate : 12;
 		var form = document.createElement("div");
 		form.className = "ccb-msg bot";
 		form.innerHTML =
@@ -1063,13 +1080,19 @@
 			'<div class="ccb-lead-fields">' +
 				'<label class="ccb-sim-row">車両価格（税込・円）<input class="ccb-li" data-k="price" inputmode="numeric" placeholder="例：1500000"></label>' +
 				'<label class="ccb-sim-row">頭金（円・任意）<input class="ccb-li" data-k="down" inputmode="numeric" placeholder="例：0"></label>' +
-				'<label class="ccb-sim-row">支払回数（月）<input class="ccb-li" data-k="months" inputmode="numeric" placeholder="例：60"></label>' +
+				'<label class="ccb-sim-row">支払回数（月・最大84）<input class="ccb-li" data-k="months" inputmode="numeric" placeholder="例：60"></label>' +
+				'<label class="ccb-sim-row">実質年率：<b class="ccb-rate-lab">' + initRate.toFixed(1) + '</b> %（7〜18%）' +
+					'<input type="range" class="ccb-rate" min="7" max="18" step="0.5" value="' + initRate + '"></label>' +
 				'<button type="button" class="ccb-lead-next">計算する</button>' +
 				'<div class="ccb-lead-err" role="alert"></div>' +
 			'</div>' +
 			'</div>';
 		msgBox.appendChild(form);
 		msgBox.scrollTop = msgBox.scrollHeight;
+
+		var rateEl = form.querySelector(".ccb-rate");
+		var rateLab = form.querySelector(".ccb-rate-lab");
+		rateEl.addEventListener("input", function () { rateLab.textContent = parseFloat(rateEl.value).toFixed(1); });
 
 		var btn = form.querySelector(".ccb-lead-next");
 		var err = form.querySelector(".ccb-lead-err");
@@ -1080,31 +1103,115 @@
 		};
 		btn.addEventListener("click", function () {
 			var price = num("price"), down = num("down") || 0, months = num("months");
+			var rate = parseFloat(rateEl.value) || 12;
 			if (!price || price < 1) { err.textContent = "車両価格をご入力ください。"; err.style.display = "block"; return; }
 			if (!months || months < 1) { err.textContent = "支払回数（月）をご入力ください。"; err.style.display = "block"; return; }
+			if (months > 84) { err.textContent = "支払回数は最大84回までです。"; err.style.display = "block"; return; }
 			if (down >= price) { err.textContent = "頭金は車両価格より小さくしてください。"; err.style.display = "block"; return; }
 			err.style.display = "none";
-			var principal = price - down;
-			var rate = (typeof cfg.simRate === "number") ? cfg.simRate : 12;
-			var monthly;
-			if (rate > 0) {
-				var r = rate / 100 / 12;
-				monthly = principal * r / (1 - Math.pow(1 + r, -months));
-			} else {
-				monthly = principal / months;
-			}
-			monthly = Math.round(monthly);
+			var monthly = Math.round(ccbMonthly(price - down, months, rate));
 			var total = monthly * months;
 			form.remove();
-			var yen = function (n) { return n.toLocaleString("ja-JP") + "円"; };
 			addBubble("bot",
-				"目安の月々お支払い：約 " + yen(monthly) + " / 月\n" +
-				"（車両 " + yen(price) + "・頭金 " + yen(down) + "・" + months + "回・年率目安 " + rate + "%）\n" +
-				"お支払い総額の目安：約 " + yen(total) + "\n\n" +
+				"目安の月々お支払い：約 " + ccbYen(monthly) + " / 月\n" +
+				"（車両 " + ccbYen(price) + "・頭金 " + ccbYen(down) + "・" + months + "回・年率 " + rate.toFixed(1) + "%）\n" +
+				"お支払い総額の目安：約 " + ccbYen(total) + "\n\n" +
 				(cfg.simNote || "※ あくまで概算です。実際は審査・プランにより異なります。")
 			);
 			addBubble("bot", "この条件で、実際に組めるか無料で仮審査できます😊 ご希望でしたら下のボタンからどうぞ。");
 			renderCTA("apply");
+			scheduleIdle();
+		});
+	}
+
+	/* ============ 🔎 審査見込み 自己診断 ============ */
+	function openShindanCheck() {
+		if (!chatStarted) { startChat(); }
+		clearChoices();
+		addBubble("bot", "審査に通る見込みを、かんたんに診断します🔎 わかる範囲で選んでください。（あくまで目安です）");
+		var opt = function (arr) { return arr.map(function (o) { return '<option value="' + o[1] + '"' + (o[2] ? ' data-y="' + o[2] + '"' : '') + '>' + o[0] + '</option>'; }).join(""); };
+		var form = document.createElement("div");
+		form.className = "ccb-msg bot";
+		form.innerHTML =
+			'<div class="ccb-lead" data-type="shinsa">' +
+			'<div class="ccb-lead-title">審査見込み 自己診断</div>' +
+			'<div class="ccb-lead-fields">' +
+				'<label class="ccb-sim-row">雇用形態<select class="ccb-li" data-k="emp">' + opt([["正社員・公務員",16],["契約・派遣",11],["自営業",10],["パート・アルバイト",8],["年金受給",8],["無職・収入なし",0]]) + '</select></label>' +
+				'<label class="ccb-sim-row">勤続年数<select class="ccb-li" data-k="ten">' + opt([["3年以上",10],["1〜3年",7],["1年未満",3]]) + '</select></label>' +
+				'<label class="ccb-sim-row">年収<select class="ccb-li" data-k="inc">' + opt([["400万円以上",15,400],["300〜400万円",12,350],["200〜300万円",8,250],["200万円未満",4,150]]) + '</select></label>' +
+				'<label class="ccb-sim-row">過去の金融事故（自己破産・債務整理など）<select class="ccb-li" data-k="acc">' + opt([["なし",12],["5年以上前",9],["1〜5年前",6],["直近1年以内／整理中",3]]) + '</select></label>' +
+				'<label class="ccb-sim-row">現在の未払い・延滞<select class="ccb-li" data-k="due">' + opt([["なし",15],["1件ある",5],["複数ある",0]]) + '</select></label>' +
+				'<label class="ccb-sim-row">他社の借入（残高）<select class="ccb-li" data-k="brw">' + opt([["なし",8],["1〜2件",5],["3件以上",2]]) + '</select></label>' +
+				'<label class="ccb-sim-row">直近の他社審査（申込）<select class="ccb-li" data-k="app">' + opt([["申し込んでいない",10],["1〜2社",6],["3社以上",2]]) + '</select></label>' +
+				'<label class="ccb-sim-row">給料明細・収入証明<select class="ccb-li" data-k="pay">' + opt([["出せる",8],["出せない",2]]) + '</select></label>' +
+				'<label class="ccb-sim-row">頭金<select class="ccb-li" data-k="dwn">' + opt([["あり",3],["なし",1]]) + '</select></label>' +
+				'<label class="ccb-sim-row">希望のお車の価格（任意）<input class="ccb-li" data-k="price" inputmode="numeric" placeholder="例：1500000"></label>' +
+				'<button type="button" class="ccb-lead-next">この内容で診断する</button>' +
+				'<div class="ccb-lead-err" role="alert"></div>' +
+			'</div>' +
+			'</div>';
+		msgBox.appendChild(form);
+		msgBox.scrollTop = msgBox.scrollHeight;
+
+		var btn = form.querySelector(".ccb-lead-next");
+		var pick = function (k) { var el = form.querySelector('[data-k="' + k + '"]'); return el ? parseFloat(el.value) || 0 : 0; };
+		var pickLabel = function (k) { var el = form.querySelector('[data-k="' + k + '"]'); return (el && el.options) ? el.options[el.selectedIndex].text : ""; };
+
+		btn.addEventListener("click", function () {
+			var base = pick("emp") + pick("ten") + pick("inc") + pick("acc") + pick("due") + pick("brw") + pick("app") + pick("pay") + pick("dwn");
+			var incEl = form.querySelector('[data-k="inc"]');
+			var annual = (parseFloat(incEl.options[incEl.selectedIndex].getAttribute("data-y")) || 0) * 10000;
+			var priceEl = form.querySelector('[data-k="price"]');
+			var price = priceEl ? parseInt((priceEl.value || "").replace(/[^0-9]/g, ""), 10) || 0 : 0;
+
+			var score = base;
+			var midRate = score >= 70 ? 8.5 : (score >= 45 ? 11 : 16);
+			var ratioNote = "";
+			if (price > 0 && annual > 0) {
+				var ratio = ccbMonthly(price, 60, midRate) / (annual / 12);
+				if (ratio > 0.40) { score -= 20; ratioNote = "（返済比率が高めのため調整）"; }
+				else if (ratio > 0.30) { score -= 10; ratioNote = "（返済比率やや高め）"; }
+			}
+			score = Math.max(0, Math.min(100, score));
+
+			var rank, label, rate, msg, rateMid;
+			if (score >= 70) { rank = "high"; label = "🟢 通過見込み：高い"; rate = "7〜10%"; rateMid = 8.5; msg = "十分に可能性があります。この機会に無料の仮審査で、実際の条件を確認してみましょう。"; }
+			else if (score >= 45) { rank = "mid"; label = "🟡 通過見込み：中"; rate = "8〜14%"; rateMid = 11; msg = "可能性は十分あります。条件を少し整えれば、より確実になります。まずは仮審査でご確認を。"; }
+			else { rank = "low"; label = "🔴 要相談"; rate = "14〜18%"; rateMid = 16; msg = "今の状況だけでは難しい場合もありますが、あきらめる必要はありません。担当者と一緒に、通るための方法を探せます。"; }
+
+			form.remove();
+			var extra = "";
+			if (price > 0) { extra = "\nこの条件での月々目安（60回）：約 " + ccbYen(ccbMonthly(price, 60, rateMid)) + " / 月"; }
+			addBubble("bot",
+				label + "（スコア " + score + "/100）" + (ratioNote ? " " + ratioNote : "") + "\n" +
+				"金利の目安：" + rate + extra + "\n\n" +
+				msg + "\n\n※ あくまで自己診断の目安です。実際の可否は本審査によります。"
+			);
+
+			// サーバーへ保存＋通知（お名前・メールは intake から）
+			if (cfg.shinsaOn && cfg.shinsaUrl) {
+				var answers = {
+					"雇用形態": pickLabel("emp"), "勤続年数": pickLabel("ten"), "年収": pickLabel("inc"),
+					"金融事故": pickLabel("acc"), "現在の未払い": pickLabel("due"), "他社借入": pickLabel("brw"),
+					"他社審査": pickLabel("app"), "給料明細": pickLabel("pay"), "頭金": pickLabel("dwn")
+				};
+				if (price > 0) { answers["希望車両価格"] = price.toLocaleString("ja-JP") + "円"; }
+				try {
+					fetch(cfg.shinsaUrl, {
+						method: "POST", headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ session_id: sessionId, score: score, rank: rank, rate: rate, answers: answers, page: location.href }),
+						keepalive: true
+					}).catch(function () {});
+				} catch (e) {}
+			}
+
+			if (rank === "low") {
+				addBubble("bot", "まずは担当者に相談してみませんか？ 一緒に方法を探します😊");
+				renderCTA("handoff");
+			} else {
+				addBubble("bot", "無料の仮審査で、実際の条件を確認できます。下のボタンからどうぞ😊");
+				renderCTA("apply");
+			}
 			scheduleIdle();
 		});
 	}

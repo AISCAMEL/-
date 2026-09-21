@@ -211,8 +211,9 @@ function carmel_cb_handle_post() {
 				'exit_popup_on'            => isset( $_POST['exit_popup_on'] ) ? 1 : 0,
 				'exit_popup_msg'           => sanitize_textarea_field( wp_unslash( $_POST['exit_popup_msg'] ?? '' ) ),
 				'sim_on'                   => isset( $_POST['sim_on'] ) ? 1 : 0,
-				'sim_default_rate'         => max( 0, min( 30, (float) ( $_POST['sim_default_rate'] ?? 12 ) ) ),
+				'sim_default_rate'         => max( 7, min( 18, (float) ( $_POST['sim_default_rate'] ?? 12 ) ) ),
 				'sim_note'                 => sanitize_textarea_field( wp_unslash( $_POST['sim_note'] ?? '' ) ),
+				'shinsa_on'                => isset( $_POST['shinsa_on'] ) ? 1 : 0,
 				// 🔔 通知音・離脱時メール
 				'sound_on'                 => isset( $_POST['sound_on'] ) ? 1 : 0,
 				'away_email_on'            => isset( $_POST['away_email_on'] ) ? 1 : 0,
@@ -1148,12 +1149,15 @@ function carmel_cb_view_leads() {
 				<tbody>
 					<?php foreach ( $leads as $l ) :
 						$is_apply = ( $l->type === 'apply' );
+						$is_shinsa = ( $l->type === 'shinsa' );
+						$badge_bg = $is_apply ? '#0b5cab' : ( $is_shinsa ? '#0f9d63' : '#5a6b7b' );
+						$badge_tx = $is_apply ? '審査' : ( $is_shinsa ? '診断' : '問合' );
 						$contact  = trim( $l->tel . ( $l->tel && $l->email ? ' / ' : '' ) . $l->email );
 						$detail   = trim( (string) $l->wish . ( $l->wish && $l->note ? "\n" : '' ) . (string) $l->note );
 					?>
 					<tr>
 						<td><?php echo esc_html( mysql2date( 'y/m/d H:i', $l->created_at ) ); ?></td>
-						<td><span style="display:inline-block;padding:2px 8px;border-radius:999px;color:#fff;font-size:11px;font-weight:700;background:<?php echo $is_apply ? '#0b5cab' : '#5a6b7b'; ?>"><?php echo $is_apply ? '審査' : '問合'; ?></span></td>
+						<td><span style="display:inline-block;padding:2px 8px;border-radius:999px;color:#fff;font-size:11px;font-weight:700;background:<?php echo $badge_bg; ?>"><?php echo esc_html( $badge_tx ); ?></span></td>
 						<td><?php echo esc_html( $l->name ); ?></td>
 						<td><?php echo nl2br( esc_html( $contact ) ); ?></td>
 						<td><?php echo nl2br( esc_html( $detail ) ); ?><?php if ( $l->page ) : ?><br><a href="<?php echo esc_url( $l->page ); ?>" target="_blank" rel="noopener" class="description" style="font-size:11px">受付ページ↗</a><?php endif; ?></td>
@@ -1613,10 +1617,13 @@ function carmel_cb_view_appearance() {
 					<p class="description">1セッション1回のみ表示。LINE URL（基本設定）へ誘導します。</p>
 
 					<hr style="margin:14px 0">
+					<p><label><input type="checkbox" name="shinsa_on" value="1" <?php checked( ! empty( $s['shinsa_on'] ) ); ?>> <strong>審査見込み診断</strong>：9項目で「通る見込み（🟢中🟡🔴）」を自己診断できるボタンを表示</label></p>
+					<p class="description" style="margin:4px 0 12px">診断結果は「申込・問い合わせ」に種別=審査診断として保存され、管理者にも通知されます。金利目安 🟢7〜10%／🟡8〜14%／🔴14〜18%。</p>
+
 					<p><label><input type="checkbox" name="sim_on" value="1" <?php checked( ! empty( $s['sim_on'] ) ); ?>> <strong>簡易シミュレーション</strong>：月々のお支払い目安を計算するボタンを表示</label></p>
 					<p style="margin:4px 0">
-						年率の目安：<input type="number" name="sim_default_rate" value="<?php echo esc_attr( $s['sim_default_rate'] ?? 12 ); ?>" min="0" max="30" step="0.1" class="small-text"> %
-						<span class="description">（0にすると単純割り＝金利なしの概算）</span>
+						年率スライダーの初期値：<input type="number" name="sim_default_rate" value="<?php echo esc_attr( $s['sim_default_rate'] ?? 12 ); ?>" min="7" max="18" step="0.5" class="small-text"> %
+						<span class="description">（お客様は7〜18%・最大84回で調整できます）</span>
 					</p>
 					<p style="margin:4px 0 4px">注意書き：</p>
 					<textarea name="sim_note" rows="2" class="large-text" style="font-family:inherit"><?php echo esc_textarea( $s['sim_note'] ?? '' ); ?></textarea>

@@ -227,6 +227,10 @@
 .ccb-starter-btn::before { content: "▶ "; color: var(--ccb-primary, #0b5cab); font-size: 11px; }
 .ccb-starter-sim { border-color: #e0a800; background: #fff9e6; }
 .ccb-starter-sim::before { content: ""; }
+.ccb-starter-shinsa { border-color: #0f9d63; background: #e7f7ef; }
+.ccb-starter-shinsa::before { content: ""; }
+.ccb-sim-row select.ccb-li { width: 100%; padding: 9px 10px; border: 1px solid #d4dae2; border-radius: 8px; font-family: inherit; font-size: 14px; background: #fff; color: #1a1a1a; }
+.ccb-sim-row .ccb-rate { width: 100%; margin-top: 4px; }
 
 /* 💰 シミュレーション行 */
 .ccb-sim-row { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #556; margin-bottom: 4px; }
