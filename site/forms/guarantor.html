@@ -166,11 +166,20 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 <p>勤続年数（月） (必須)<br><select class="month-sel"></select></p>
 </div>
 <div class="caf-half">
-<p>年収（額面） (必須)<br><select><option>選択してください</option><option>200万未満</option><option>200〜300万</option><option>300〜400万</option><option>400〜500万</option><option>500〜700万</option><option>700〜1000万</option><option>1000万以上</option></select></p>
+<p>年収（額面） (必須)<br><select><option>選択してください</option><option>100万未満</option><option>100〜150万</option><option>150〜200万</option><option>200〜250万</option><option>250〜300万</option><option>300〜350万</option><option>350〜400万</option><option>400〜450万</option><option>450〜500万</option><option>500〜600万</option><option>600〜700万</option><option>700〜800万</option><option>800〜1000万</option><option>1000〜1500万</option><option>1500万以上</option></select></p>
+<p>月収（手取り目安） (必須)<br><select><option>選択してください</option><option>10万円未満</option><option>10〜13万円</option><option>13〜15万円</option><option>15〜18万円</option><option>18〜20万円</option><option>20〜23万円</option><option>23〜25万円</option><option>25〜30万円</option><option>30〜35万円</option><option>35〜40万円</option><option>40〜50万円</option><option>50万円以上</option></select></p>
 <p>会社の電話番号 (任意)<br><input type="tel" placeholder="0312345678"></p>
 <p>会社の郵便番号 (任意)<br><input type="text" inputmode="numeric" maxlength="7" class="company-zipcode" placeholder="1234567"></p>
 </div>
 <p>会社の所在地（郵便番号で自動入力） (任意)<br><input type="text" class="company-address to-hankaku"></p>
+<div id="grp-dispatch" class="hide"><h4>派遣社員の方（派遣元・派遣先）</h4>
+<div class="caf-half">
+<p>派遣元（登録派遣会社）名 (必須)<br><input type="text"></p>
+<p>派遣元の電話番号 (任意)<br><input type="tel" placeholder="0312345678"></p>
+<p>派遣先（現在の就業先）名 (必須)<br><input type="text"></p>
+<p>派遣先の所在地 (任意)<br><input type="text" class="to-hankaku" placeholder="都道府県・市区町村など"></p>
+</div>
+</div>
 </div>
 <div id="grp-nowork" class="hide">
 <p class="hint">お勤め先がない（無職・年金受給など）を選択されたため、勤務先情報のご入力は不要です。</p>
@@ -294,6 +303,8 @@ if(_emp)_emp.addEventListener('change',function(){
   if(gn)gn.classList.toggle('hide',!noWork);
   var gi=document.getElementById('grp-income-proof');
   if(gi)gi.classList.toggle('hide',this.value==='無職'); /* 無職は収入証明を非表示 */
+  var gd=document.getElementById('grp-dispatch');
+  if(gd)gd.classList.toggle('hide',this.value!=='派遣社員'); /* 派遣社員のみ派遣元・派遣先 */
   try{updateProgress();}catch(e){}
 });
 /* 本人確認書類「後日提出」→ 書類エリアを丸ごと省略（添付なしで進める） */
