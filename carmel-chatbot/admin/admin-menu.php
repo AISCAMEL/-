@@ -216,6 +216,8 @@ function carmel_cb_handle_post() {
 				'shinsa_on'                => isset( $_POST['shinsa_on'] ) ? 1 : 0,
 				'carsearch_flow_on'        => isset( $_POST['carsearch_flow_on'] ) ? 1 : 0,
 				'stock_app_url'            => esc_url_raw( wp_unslash( $_POST['stock_app_url'] ?? '' ) ),
+				'stock_app_url_ios'        => esc_url_raw( wp_unslash( $_POST['stock_app_url_ios'] ?? '' ) ),
+				'stock_app_url_android'    => esc_url_raw( wp_unslash( $_POST['stock_app_url_android'] ?? '' ) ),
 				'stock_app_id'             => sanitize_text_field( wp_unslash( $_POST['stock_app_id'] ?? '' ) ),
 				'stock_app_store'          => sanitize_text_field( wp_unslash( $_POST['stock_app_store'] ?? '' ) ),
 				'stock_app_note'           => sanitize_textarea_field( wp_unslash( $_POST['stock_app_note'] ?? '' ) ),
@@ -1627,10 +1629,18 @@ function carmel_cb_view_appearance() {
 
 					<hr style="margin:14px 0">
 					<p><label><input type="checkbox" name="carsearch_flow_on" value="1" <?php checked( ! empty( $s['carsearch_flow_on'] ) ); ?>> <strong>車探しフロー＋在庫共有アプリ案内</strong>：在庫提案→無ければ注文販売→在庫アプリの順で案内</label></p>
-					<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
-						<div style="flex:1;min-width:220px"><label class="f">在庫アプリURL</label><br><input type="url" name="stock_app_url" value="<?php echo esc_attr( $s['stock_app_url'] ?? '' ); ?>" class="regular-text" placeholder="https://mlkl.jp/mirukuru/app"></div>
-						<div><label class="f">登録ID</label><br><input type="text" name="stock_app_id" value="<?php echo esc_attr( $s['stock_app_id'] ?? '' ); ?>" class="small-text" placeholder="890"></div>
-						<div><label class="f">店舗名</label><br><input type="text" name="stock_app_store" value="<?php echo esc_attr( $s['stock_app_store'] ?? '' ); ?>" class="regular-text" placeholder="カーメル"></div>
+					<div style="margin-top:6px">
+						<label class="f">🍎 iPhone/iPad用 App Store URL</label><br>
+						<input type="url" name="stock_app_url_ios" value="<?php echo esc_attr( $s['stock_app_url_ios'] ?? '' ); ?>" class="large-text" placeholder="https://apps.apple.com/jp/app/...">
+						<p style="margin:8px 0 4px"><label class="f">🤖 Android用 Google Play URL</label></p>
+						<input type="url" name="stock_app_url_android" value="<?php echo esc_attr( $s['stock_app_url_android'] ?? '' ); ?>" class="large-text" placeholder="https://play.google.com/store/apps/details?id=...">
+						<p style="margin:8px 0 4px"><label class="f">💻 PC・その他（フォールバック）URL</label></p>
+						<input type="url" name="stock_app_url" value="<?php echo esc_attr( $s['stock_app_url'] ?? '' ); ?>" class="large-text" placeholder="https://mlkl.jp/mirukuru/app">
+						<p class="description" style="margin:4px 0 8px">お客様の端末を自動判定：iPhone→App Store／Android→Google Play／PC等→フォールバックURL に直接飛びます。ストアURLが空欄ならフォールバックを使います。</p>
+						<div style="display:flex;gap:10px;flex-wrap:wrap">
+							<div><label class="f">登録ID</label><br><input type="text" name="stock_app_id" value="<?php echo esc_attr( $s['stock_app_id'] ?? '' ); ?>" class="small-text" placeholder="890"></div>
+							<div><label class="f">店舗名</label><br><input type="text" name="stock_app_store" value="<?php echo esc_attr( $s['stock_app_store'] ?? '' ); ?>" class="regular-text" placeholder="カーメル"></div>
+						</div>
 					</div>
 					<p style="margin:8px 0 4px"><label>アプリ利用時の注意事項</label></p>
 					<textarea name="stock_app_note" rows="4" class="large-text" style="font-family:inherit"><?php echo esc_textarea( $s['stock_app_note'] ?? '' ); ?></textarea>

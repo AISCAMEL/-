@@ -786,7 +786,7 @@
 			contact: want.contact && (formMode ? cfg.contactFormOn : !!cfg.contactUrl),
 			handoff: want.handoff && !!cfg.handoffOn,
 			stock:   want.stock   && !!cfg.stockUrl,
-			app:     want.app     && !!cfg.stockAppUrl,
+			app:     want.app     && !!(cfg.stockAppUrl || cfg.stockAppUrlIos || cfg.stockAppUrlAndroid),
 			line:    want.line    && !!cfg.lineUrl,
 			tel:     want.tel     && !!cfg.tel
 		};
@@ -846,7 +846,7 @@
 			else addBtnLink("ccb-cta-contact", "✉️ お問い合わせ", cfg.contactUrl);
 		}
 		if (show.stock) addBtnLink("ccb-cta-stock", "🚗 在庫を見る", cfg.stockUrl);
-		if (show.app) addBtnLink("ccb-cta-app", "📱 在庫アプリを見る", cfg.stockAppUrl);
+		if (show.app) addBtnLink("ccb-cta-app", "📱 在庫アプリを見る", appStoreUrl(), false);
 		if (show.handoff) addBtnAct("ccb-cta-handoff", "🙋 担当者に相談", function () { openHandoff(); });
 		if (show.line) addBtnLink("ccb-cta-line", "💬 LINEで相談", cfg.lineUrl);
 		if (show.tel) {
@@ -862,6 +862,16 @@
 		// 在庫アプリの案内（ID・店舗名・注意）を添える
 		if (show.app) { renderAppInfo(); }
 		msgBox.scrollTop = msgBox.scrollHeight;
+	}
+
+	// 📱 端末を判定して在庫アプリの最適なストアURLを返す（iOS→App Store / Android→Play / それ以外→フォールバック）
+	function appStoreUrl() {
+		var ua = (navigator.userAgent || navigator.vendor || "").toLowerCase();
+		var isIOS = /iphone|ipad|ipod/.test(ua) || (ua.indexOf("mac") !== -1 && "ontouchend" in document);
+		var isAndroid = /android/.test(ua);
+		if (isIOS && cfg.stockAppUrlIos) return cfg.stockAppUrlIos;
+		if (isAndroid && cfg.stockAppUrlAndroid) return cfg.stockAppUrlAndroid;
+		return cfg.stockAppUrl || cfg.stockAppUrlIos || cfg.stockAppUrlAndroid || "#";
 	}
 
 	// 📱 在庫アプリの案内（ID・店舗名・注意事項）
