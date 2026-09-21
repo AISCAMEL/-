@@ -222,8 +222,8 @@ function carmel_cb_default_settings() {
 		// 🚗 車探しフロー＆在庫共有アプリ
 		'carsearch_flow_on' => 1,
 		'stock_app_url'     => 'https://mlkl.jp/mirukuru/app', // PC・不明端末のフォールバック
-		'stock_app_url_ios'     => '', // iPhone/iPad用 App Store URL（空ならフォールバック）
-		'stock_app_url_android' => '', // Android用 Google Play URL（空ならフォールバック）
+		'stock_app_url_ios'     => 'https://apps.apple.com/jp/app/%E3%81%BF%E3%82%8B%E3%82%AF%E3%83%AB/id1058728324', // iPhone/iPad用 App Store URL
+		'stock_app_url_android' => 'https://play.google.com/store/apps/details?id=jp.mlkl.mirukuru', // Android用 Google Play URL
 		'stock_app_id'      => '890',
 		'stock_app_store'   => 'カーメル',
 		'stock_app_note'    => "・値段は基本的に表示されない仕様です。お車のイメージをお伝えするためのアプリとしてご利用ください。\n・実際のお支払いは、審査を経て借入額が確定したうえでのご相談となります。\n・金融事故の履歴がある場合、与信枠に限りがございますので、必ず事前に詳しくお問い合わせください。",
