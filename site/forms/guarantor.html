@@ -52,6 +52,7 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 .caf select:focus,.caf input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(244,121,32,.15);}
 .required{display:inline-block;margin-left:6px;background:var(--blue);color:#fff;font-size:.68rem;font-weight:800;padding:3px 7px;border-radius:5px;vertical-align:middle;}
 .optional{display:inline-block;margin-left:6px;background:#93b7e0;color:#fff;font-size:.68rem;font-weight:800;padding:3px 7px;border-radius:5px;vertical-align:middle;}
+.caf-note-inline{display:block;margin-top:5px;font-size:.78rem;color:#64748b;line-height:1.7;}
 .caf-half{display:grid;grid-template-columns:1fr 1fr;gap:0 16px;}
 @media(max-width:600px){.caf-half{grid-template-columns:1fr;}}
 .caf-age{font-size:.8rem;font-weight:700;display:none;margin-top:4px;}
@@ -118,7 +119,6 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 <div class="note-top">このフォームは<b>連帯保証人ご本人様</b>がご入力ください。ご入力内容は、お申込者様のローン審査のためにのみ利用します。</div>
 <form class="caf" id="caf-form" novalidate enctype="multipart/form-data">
 <input type="text" name="hp" id="caf-hp" autocomplete="off" tabindex="-1" aria-hidden="true" class="caf-hp">
-<input type="hidden" id="applicant-email">
 <div id="invite-banner" class="hide" style="background:#eaf4ff;border:1px solid #bcd8f5;border-radius:12px;padding:12px 16px;margin-bottom:6px;font-size:.92rem;color:#15335f;font-weight:800;line-height:1.7;"></div>
 
 <h3>STEP1 お申込みの紐付け</h3>
@@ -127,16 +127,17 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 <p>お申込者との続柄 (必須)<br><select><option>選択してください</option><option>配偶者</option><option>親</option><option>子</option><option>兄弟姉妹</option><option>その他親族</option><option>知人・友人</option><option>その他</option></select></p>
 <p>案件番号・受付番号 (任意)<br><input type="text" id="case-no" placeholder="お分かりになる場合のみ"></p>
 </div>
+<p>お申込者（ご本人）のメールアドレス (任意)<br><input type="email" id="applicant-email" autocomplete="off" placeholder="例：yamada@example.com"><span class="caf-note-inline">審査結果・完了のご連絡を、お申込者様にもメールでお送りします。お分かりになる場合はご入力ください。</span></p>
 
 <h3>STEP2 保証人ご本人情報</h3>
 <div class="caf-half">
-<p>お名前 (必須)<br><input type="text" placeholder="佐藤 花子"></p>
+<p>お名前 (必須)<br><input type="text" autocomplete="name" placeholder="佐藤 花子"></p>
 <p>フリガナ (必須)<br><input type="text" placeholder="サトウ ハナコ"></p>
-<p>生年月日 (必須)<br><input type="date" id="birthday"><span class="caf-age" id="birthday-age"></span></p>
+<p>生年月日 (必須)<br><input type="date" id="birthday" autocomplete="bday"><span class="caf-age" id="birthday-age"></span></p>
 <p>性別 (必須)<br><select><option>選択してください</option><option>男性</option><option>女性</option></select></p>
-<p>携帯電話 (必須)<br><input type="tel" placeholder="09012345678"></p>
-<p>自宅電話 (任意)<br><input type="tel"></p>
-<p>メールアドレス (必須)<br><input type="email" id="email-main" placeholder="sample@example.com"></p>
+<p>携帯電話 (必須)<br><input type="tel" inputmode="tel" autocomplete="tel" placeholder="09012345678"></p>
+<p>自宅電話 (任意)<br><input type="tel" inputmode="tel"></p>
+<p>メールアドレス (必須)<br><input type="email" id="email-main" autocomplete="email" inputmode="email" placeholder="sample@example.com"></p>
 <p>メールアドレス（確認用） (必須)<br><input type="email" id="email-confirm" placeholder="確認のためもう一度入力"><span class="email-msg" id="email-msg"></span></p>
 <p>ご希望の連絡方法 (必須)<br><select><option>選択してください</option><option>電話</option><option>メール</option><option>どちらでも可</option></select></p>
 <p>連絡可能な時間帯 (必須)<br><select><option>選択してください</option><option>9-12時</option><option>12-15時</option><option>15-18時</option><option>18-21時</option><option>終日可</option></select></p>
@@ -144,10 +145,10 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 
 <h3>STEP3 現住所</h3>
 <div class="caf-half">
-<p>郵便番号 (必須)<br><input type="text" inputmode="numeric" maxlength="7" class="zipcode" placeholder="1234567（住所自動入力）"></p>
+<p>郵便番号 (必須)<br><input type="text" inputmode="numeric" maxlength="7" autocomplete="postal-code" class="zipcode" placeholder="1234567（住所自動入力）"></p>
 <p>居住形態 (必須)<br><select><option>選択してください</option><option>持家（本人名義）</option><option>持家（家族名義）</option><option>賃貸アパート</option><option>賃貸マンション</option><option>賃貸戸建</option><option>社宅・寮</option><option>公営住宅</option><option>親と同居</option><option>その他</option></select></p>
 </div>
-<p>ご住所（郵便番号で自動入力） (必須)<br><input type="text" class="address to-hankaku" placeholder="都道府県・市区町村・番地"></p>
+<p>ご住所（郵便番号で自動入力） (必須)<br><input type="text" class="address to-hankaku" autocomplete="street-address" placeholder="都道府県・市区町村・番地"></p>
 <p>ご住所（フリガナ・自動） (任意)<br><input type="text" class="address-kana" placeholder="市区町村までは自動／以降はご記入"></p>
 <p>建物名・部屋番号（補完・任意）<br><input type="text" class="to-hankaku" placeholder="〇〇マンション 101号室"></p>
 <h4>居住年数</h4>
@@ -282,7 +283,7 @@ document.querySelectorAll('.caf .month-sel').forEach(function(sel){
   function lock(el){ if(!el)return; el.readOnly=true; el.style.background='#eef2f7'; el.style.color='#334155'; el.setAttribute('title','招待リンクで指定済み'); }
   if(ap){var n=document.getElementById('applicant-name');if(n){n.value=ap;lock(n);}}
   if(cid){var c=document.getElementById('case-no');if(c){c.value=cid;lock(c);}}
-  if(ae){var h=document.getElementById('applicant-email');if(h)h.value=ae;}
+  if(ae){var h=document.getElementById('applicant-email');if(h){h.value=ae;lock(h);}}
   if(ap){var b=document.getElementById('invite-banner');if(b){b.textContent='「'+ap+'」様の連帯保証人として申請します。'+(cid?'（案件番号：'+cid+'）':'');b.classList.remove('hide');}}
 })();
 
