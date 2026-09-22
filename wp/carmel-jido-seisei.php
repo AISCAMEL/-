@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 10.5
+ * Version: 10.6
  * Author: CARMEL
  */
 
@@ -65,7 +65,10 @@ function carmel3_auto_get_settings() {
         'article_length' => 'standard', // 記事の長さ（short/standard/long）ニュース・加盟店ブログに適用
         'repurpose_tone' => '',        // 「元ネタから展開」の既定の文体・口調指示
         // Google口コミ AI返信
-        'gr_access_token' => '',       // Googleアクセストークン（GMBと同じ値）
+        'gr_access_token' => '',       // Googleアクセストークン（手動・約1時間で失効／自動更新が無い場合の予備）
+        'gr_client_id'     => '',       // OAuthクライアントID（トークン自動更新用）
+        'gr_client_secret' => '',       // OAuthクライアントシークレット（トークン自動更新用）
+        'gr_refresh_token' => '',       // リフレッシュトークン（これがあればアクセストークンを自動更新）
         'gr_account'      => '',        // accounts/xxxx（GMBと同じ）
         'gr_location'     => '',        // locations/xxxx（GMBと同じ）
         'gr_tone'         => '',        // 返信の文体・口調
@@ -4994,9 +4997,55 @@ function carmel3_gr_num($v) {
     return preg_replace('#^(?:accounts|locations)/#', '', $v);
 }
 
+// ===== OAuth トークン自動更新 =====
+// リフレッシュトークンから新しいアクセストークンを取得し、キャッシュ(option)へ保存
+function carmel3_gr_refresh_access_token($s) {
+    $cid = trim((string)(isset($s['gr_client_id']) ? $s['gr_client_id'] : ''));
+    $sec = trim((string)(isset($s['gr_client_secret']) ? $s['gr_client_secret'] : ''));
+    $ref = trim((string)(isset($s['gr_refresh_token']) ? $s['gr_refresh_token'] : ''));
+    if ($cid === '' || $sec === '' || $ref === '') {
+        return array('error' => 'OAuthクライアント情報（クライアントID／シークレット／リフレッシュトークン）が未設定です');
+    }
+    $r = wp_remote_post('https://oauth2.googleapis.com/token', array(
+        'timeout' => 30,
+        'headers' => array('Content-Type' => 'application/x-www-form-urlencoded'),
+        'body'    => array(
+            'client_id'     => $cid,
+            'client_secret' => $sec,
+            'refresh_token' => $ref,
+            'grant_type'    => 'refresh_token',
+        ),
+    ));
+    if (is_wp_error($r)) return array('error' => $r->get_error_message());
+    $code = (int) wp_remote_retrieve_response_code($r);
+    $data = json_decode((string) wp_remote_retrieve_body($r), true);
+    if ($code < 200 || $code >= 300 || empty($data['access_token'])) {
+        $msg = isset($data['error_description']) ? $data['error_description']
+             : (isset($data['error']) ? $data['error'] : ('HTTP ' . $code));
+        return array('error' => 'トークン更新失敗：' . $msg);
+    }
+    $token   = trim((string)$data['access_token']);
+    $expires = time() + (int)(isset($data['expires_in']) ? $data['expires_in'] : 3600) - 120; // 2分マージン
+    update_option('carmel3_gr_token_cache', array('token' => $token, 'expires' => $expires), false);
+    return array('token' => $token, 'expires' => $expires);
+}
+
+// 有効なアクセストークンを返す（キャッシュ→自動更新→手動トークンの順）
+function carmel3_gr_active_token($s) {
+    $cache = get_option('carmel3_gr_token_cache', array());
+    if (is_array($cache) && !empty($cache['token']) && !empty($cache['expires']) && (int)$cache['expires'] > time()) {
+        return trim((string)$cache['token']);
+    }
+    if (trim((string)(isset($s['gr_refresh_token']) ? $s['gr_refresh_token'] : '')) !== '') {
+        $r = carmel3_gr_refresh_access_token($s);
+        if (empty($r['error']) && !empty($r['token'])) return $r['token'];
+    }
+    return trim((string)(isset($s['gr_access_token']) ? $s['gr_access_token'] : ''));
+}
+
 // 認証情報（口コミ設定→無ければGMB/本体の値を流用）
 function carmel3_gr_creds($s) {
-    $tok = trim((string)$s['gr_access_token']);
+    $tok = carmel3_gr_active_token($s);
     $acc = carmel3_gr_num($s['gr_account']);
     $loc = carmel3_gr_num($s['gr_location']);
     // 未設定なら本体のSNS認証情報(Google)を流用してみる
@@ -5010,8 +5059,8 @@ function carmel3_gr_creds($s) {
     return array('token' => $tok, 'account' => $acc, 'location' => $loc);
 }
 
-// v4 API呼び出し
-function carmel3_gr_api($token, $method, $path, $body = null) {
+// v4 API呼び出し（$s を渡すと 401 時にトークン自動更新→1回だけ再試行）
+function carmel3_gr_api($token, $method, $path, $body = null, $s = null) {
     if (trim((string)$token) === '') return array('error' => 'アクセストークンが未設定です');
     $url  = 'https://mybusiness.googleapis.com/v4/' . $path;
     $args = array('method' => $method, 'headers' => array('Authorization' => 'Bearer ' . $token), 'timeout' => 30);
@@ -5024,21 +5073,30 @@ function carmel3_gr_api($token, $method, $path, $body = null) {
     $code = (int) wp_remote_retrieve_response_code($r);
     $data = json_decode((string) wp_remote_retrieve_body($r), true);
     if ($code < 200 || $code >= 300) {
+        // 401（トークン切れ）で、かつリフレッシュ情報があれば1回だけ更新して再試行
+        if ($code === 401 && is_array($s)
+            && trim((string)(isset($s['gr_refresh_token']) ? $s['gr_refresh_token'] : '')) !== '') {
+            delete_option('carmel3_gr_token_cache');
+            $nr = carmel3_gr_refresh_access_token($s);
+            if (empty($nr['error']) && !empty($nr['token']) && $nr['token'] !== $token) {
+                return carmel3_gr_api($nr['token'], $method, $path, $body, null); // $s=null で再帰は1回だけ
+            }
+        }
         $msg = isset($data['error']['message']) ? $data['error']['message'] : ('HTTP ' . $code);
         return array('error' => $msg, 'code' => $code);
     }
     return array('data' => is_array($data) ? $data : array());
 }
 
-function carmel3_gr_list_reviews($c) {
+function carmel3_gr_list_reviews($c, $s = null) {
     if ($c['account'] === '' || $c['location'] === '') return array('error' => 'アカウントID／ロケーションIDが未設定です');
-    return carmel3_gr_api($c['token'], 'GET', 'accounts/' . $c['account'] . '/locations/' . $c['location'] . '/reviews?pageSize=30&orderBy=updateTime%20desc');
+    return carmel3_gr_api($c['token'], 'GET', 'accounts/' . $c['account'] . '/locations/' . $c['location'] . '/reviews?pageSize=30&orderBy=updateTime%20desc', null, $s);
 }
 
-function carmel3_gr_put_reply($c, $review_id, $comment) {
+function carmel3_gr_put_reply($c, $review_id, $comment, $s = null) {
     return carmel3_gr_api($c['token'], 'PUT',
         'accounts/' . $c['account'] . '/locations/' . $c['location'] . '/reviews/' . rawurlencode($review_id) . '/reply',
-        array('comment' => (string)$comment));
+        array('comment' => (string)$comment), $s);
 }
 
 // 星の文字列→数値
@@ -5088,6 +5146,23 @@ add_action('admin_post_carmel3_reviews_save', function () {
         if ($t !== '' && strpos($t, '●') === false) $s['gr_access_token'] = sanitize_text_field($t);
         if ($t === '') $s['gr_access_token'] = '';
     }
+    // OAuthクライアント情報（マスク表示のときは変更しない）
+    if (isset($_POST['gr_client_id'])) {
+        $v = trim((string) wp_unslash($_POST['gr_client_id']));
+        if (strpos($v, '●') === false) $s['gr_client_id'] = sanitize_text_field($v);
+    }
+    if (isset($_POST['gr_client_secret'])) {
+        $v = trim((string) wp_unslash($_POST['gr_client_secret']));
+        if ($v !== '' && strpos($v, '●') === false) $s['gr_client_secret'] = sanitize_text_field($v);
+        if ($v === '') $s['gr_client_secret'] = '';
+    }
+    if (isset($_POST['gr_refresh_token'])) {
+        $v = trim((string) wp_unslash($_POST['gr_refresh_token']));
+        if ($v !== '' && strpos($v, '●') === false) $s['gr_refresh_token'] = sanitize_text_field($v);
+        if ($v === '') $s['gr_refresh_token'] = '';
+    }
+    // 認証情報が変わったらキャッシュ済みトークンを破棄（次回取得時に更新）
+    delete_option('carmel3_gr_token_cache');
     $s['gr_account']  = isset($_POST['gr_account']) ? sanitize_text_field(wp_unslash($_POST['gr_account'])) : '';
     $s['gr_location'] = isset($_POST['gr_location']) ? sanitize_text_field(wp_unslash($_POST['gr_location'])) : '';
     $s['gr_tone']     = isset($_POST['gr_tone']) ? sanitize_textarea_field(wp_unslash($_POST['gr_tone'])) : '';
@@ -5120,7 +5195,7 @@ add_action('wp_ajax_carmel3_gr_reply', function () {
     if ($rid === '' || $cmt === '') wp_send_json_error(array('msg' => '返信内容が空です'));
     $s = carmel3_auto_get_settings();
     $c = carmel3_gr_creds($s);
-    $r = carmel3_gr_put_reply($c, $rid, $cmt);
+    $r = carmel3_gr_put_reply($c, $rid, $cmt, $s);
     if (!empty($r['error'])) wp_send_json_error(array('msg' => $r['error']));
     wp_send_json_success(array('ok' => 1));
 });
@@ -5132,10 +5207,19 @@ function carmel3_reviews_page() {
     $ajax  = admin_url('admin-ajax.php');
     $nonce = wp_create_nonce('carmel3_gr_ajax');
 
+    // トークン更新テスト
+    $reftest_msg = '';
+    if (isset($_GET['reftest'])) {
+        $rt = carmel3_gr_refresh_access_token($s);
+        $reftest_msg = !empty($rt['error'])
+            ? ('更新失敗：' . $rt['error'])
+            : ('トークンを更新しました（約' . (int)max(1, floor(((int)$rt['expires'] - time())/60)) . '分間有効）');
+    }
+
     // 取得実行（ボタンから）
     $reviews = null; $fetch_err = '';
     if (isset($_GET['fetch'])) {
-        $res = carmel3_gr_list_reviews($c);
+        $res = carmel3_gr_list_reviews($c, $s);
         if (!empty($res['error'])) $fetch_err = $res['error'];
         else $reviews = isset($res['data']['reviews']) ? $res['data']['reviews'] : array();
     }
@@ -5147,6 +5231,7 @@ function carmel3_reviews_page() {
         </div>
 
         <?php if (isset($_GET['saved'])): ?><div class="notice notice-success is-dismissible"><p>設定を保存しました。</p></div><?php endif; ?>
+        <?php if ($reftest_msg !== ''): ?><div class="notice <?php echo strpos($reftest_msg,'失敗')!==false?'notice-error':'notice-success'; ?> is-dismissible"><p><?php echo esc_html($reftest_msg); ?></p></div><?php endif; ?>
         <?php if ($fetch_err !== ''): ?><div class="notice notice-error is-dismissible"><p>口コミの取得に失敗：<?php echo esc_html($fetch_err); ?><br><span style="font-size:12px">※ トークン切れ（UNAUTHENTICATED）→取り直し／PERMISSION_DENIED・not been used→GoogleのAPI利用申請が必要、の可能性があります。</span></p></div><?php endif; ?>
 
         <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
@@ -5155,8 +5240,36 @@ function carmel3_reviews_page() {
             <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin-bottom:16px">
                 <h2 style="margin:0 0 10px;font-size:16px">設定</h2>
                 <p style="margin:0 0 10px;color:#666;font-size:13px">認証は<strong>Googleマイビジネス連携と同じ値</strong>です（空欄なら本体のSNS認証情報から自動流用を試みます）。</p>
-                <p style="margin:8px 0 4px;font-weight:700">アクセストークン（xoxb…ではなく ya29… のGoogleトークン）</p>
+                <details style="margin:6px 0 12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px">
+                    <summary style="cursor:pointer;font-weight:700;font-size:14px">トークン自動更新（OAuth）— 推奨：一度設定すれば手動更新不要</summary>
+                    <p style="margin:8px 0;color:#666;font-size:12px">Google CloudのOAuthクライアント（種類=デスクトップ/ウェブ）で発行した<strong>クライアントID・シークレット</strong>と、初回同意で取得した<strong>リフレッシュトークン</strong>を入れると、アクセストークン（約1時間で失効）を<strong>自動更新</strong>します。これで常時稼働（定期取得・自動返信）が可能になります。</p>
+                    <p style="margin:8px 0 4px;font-weight:700;font-size:13px">クライアントID</p>
+                    <input type="text" name="gr_client_id" value="<?php echo esc_attr(trim((string)(isset($s['gr_client_id'])?$s['gr_client_id']:'')) !== '' ? $s['gr_client_id'] : ''); ?>" style="width:100%;padding:8px" placeholder="xxxxxxxx.apps.googleusercontent.com">
+                    <p style="margin:8px 0 4px;font-weight:700;font-size:13px">クライアントシークレット</p>
+                    <?php $has_secret = trim((string)(isset($s['gr_client_secret'])?$s['gr_client_secret']:'')) !== ''; ?>
+                    <input type="text" name="gr_client_secret" value="<?php echo esc_attr($has_secret ? '●●●●●●●●（設定済み・変更時のみ入力）' : ''); ?>" style="width:100%;padding:8px" placeholder="GOCSPX-...">
+                    <p style="margin:8px 0 4px;font-weight:700;font-size:13px">リフレッシュトークン</p>
+                    <?php $has_refresh = trim((string)(isset($s['gr_refresh_token'])?$s['gr_refresh_token']:'')) !== ''; ?>
+                    <input type="text" name="gr_refresh_token" value="<?php echo esc_attr($has_refresh ? '●●●●●●●●（設定済み・変更時のみ入力）' : ''); ?>" style="width:100%;padding:8px" placeholder="1//0g...">
+                    <?php $tok_cache = get_option('carmel3_gr_token_cache', array());
+                          $cache_ok = is_array($tok_cache) && !empty($tok_cache['expires']) && (int)$tok_cache['expires'] > time(); ?>
+                    <p style="margin:10px 0 0;font-size:12px;color:#555">
+                        現在のトークン：
+                        <?php if ($cache_ok): ?>
+                            <span style="color:#166534;font-weight:700">自動更新の有効なトークンあり</span>（あと約<?php echo (int)max(0, floor(((int)$tok_cache['expires'] - time())/60)); ?>分で自動更新）
+                        <?php elseif ($has_refresh): ?>
+                            <span style="color:#b45309;font-weight:700">未取得</span>（「取得」時に自動更新されます）
+                        <?php else: ?>
+                            <span style="color:#888">手動トークン運用</span>
+                        <?php endif; ?>
+                        <?php if ($has_refresh): ?>
+                            &nbsp;<a href="<?php echo esc_url(admin_url('admin.php?page=carmel3-reviews&reftest=1')); ?>">今すぐ更新テスト</a>
+                        <?php endif; ?>
+                    </p>
+                </details>
+                <p style="margin:8px 0 4px;font-weight:700">アクセストークン（手動運用の予備。ya29… のGoogleトークン）</p>
                 <input type="text" name="gr_access_token" value="<?php echo esc_attr($has_token && trim((string)$s['gr_access_token']) !== '' ? '●●●●●●●●（設定済み・変更時のみ入力）' : ''); ?>" style="width:100%;padding:8px" placeholder="ya29...">
+                <p style="margin:4px 0 0;color:#888;font-size:12px">※ 上のOAuth自動更新を設定していれば、この手動トークンは空欄でOKです。</p>
                 <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px">
                     <label style="font-weight:700;font-size:13px">アカウントID<br>
                         <input type="text" name="gr_account" value="<?php echo esc_attr($s['gr_account']); ?>" style="width:280px;padding:7px;font-weight:400" placeholder="accounts/106079157175561742619"></label>
@@ -5172,7 +5285,7 @@ function carmel3_reviews_page() {
                     <option value="hybrid"  <?php selected($gm,'hybrid'); ?>>ハイブリッド（★4〜5は自動／★1〜3は手動）※自動化は次段階</option>
                     <option value="auto"    <?php selected($gm,'auto'); ?>>全自動 ※自動化は次段階</option>
                 </select>
-                <p style="margin:6px 0 0;color:#888;font-size:12px">現段階は<strong>この画面で確認して投稿</strong>する運用です。定期的な自動返信は、トークン自動更新の実装後に有効化します。</p>
+                <p style="margin:6px 0 0;color:#888;font-size:12px">上の<strong>OAuthトークン自動更新</strong>を設定すると、ハイブリッド／全自動の常時稼働が可能になります（未設定・手動トークンのみの場合は約1時間で失効するため、この画面での手動運用になります）。</p>
                 <p style="margin:14px 0 0"><button type="submit" class="button button-primary">設定を保存</button></p>
             </div>
         </form>
@@ -5219,7 +5332,7 @@ function carmel3_reviews_page() {
         <?php endif; ?>
 
         <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 14px;margin-top:8px;font-size:12px;color:#92400e">
-            ⚠️ 口コミAPIはGoogleの<strong>利用審査（承認）</strong>が必要な場合があります。「取得」でエラーが出るときは、そのメッセージをお知らせください。トークンは約1時間で切れるため、切れたら取り直してください（継続運用にはトークン自動更新が必要です）。
+            ⚠️ 口コミAPIはGoogleの<strong>利用審査（承認）</strong>が必要な場合があります。「取得」でエラーが出るときは、そのメッセージをお知らせください。<strong>OAuthトークン自動更新</strong>を設定済みなら、トークン切れは自動で更新されます（手動トークンのみの場合は約1時間で失効します）。
         </div>
     </div>
 
