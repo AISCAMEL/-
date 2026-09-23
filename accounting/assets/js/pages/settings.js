@@ -123,6 +123,29 @@ window.A = window.A || {};
     ]);
     wrap.appendChild(backupCard);
 
+    /* --- ログイン（パスコードロック） --- */
+    const locked = A.auth.isEnabled();
+    const passIn = el('input', { type: 'password', inputmode: 'numeric', placeholder: '新しいパスコード' });
+    const pass2 = el('input', { type: 'password', inputmode: 'numeric', placeholder: '確認（同じもの）' });
+    const lockCard = el('div.card', {}, [
+      el('h2', { text: 'ログイン（パスコードロック）' }),
+      el('p.muted.small', { text: locked ? '現在ロックは有効です。共有端末での不用意なアクセスを防ぎます。' : 'パスコードを設定すると、次回以降の起動時にログイン画面が表示されます。' }),
+      el('div.form-row', {}, [el('label', {}, [el('span', { text: 'パスコード' }), passIn]), el('label', {}, [el('span', { text: '確認' }), pass2])]),
+      el('div.quick-row', {}, [
+        el('button.btn.primary', {
+          text: locked ? 'パスコードを変更' : 'ロックを有効にする', onclick: async () => {
+            if (!passIn.value || passIn.value.length < 4) return ui.toast('4文字以上で設定してください', 'err');
+            if (passIn.value !== pass2.value) return ui.toast('確認用と一致しません', 'err');
+            await A.auth.setPasscode(passIn.value); A.auth.markAuthed();
+            ui.toast('ロックを設定しました', 'ok'); passIn.value = ''; pass2.value = ''; ui.renderRoute();
+          },
+        }),
+        locked ? el('button.btn.danger', { text: 'ロックを解除', onclick: async () => { if (!await ui.confirm('ログインロックを解除しますか？')) return; await A.auth.disable(); ui.toast('解除しました'); ui.renderRoute(); } }) : null,
+      ]),
+      el('p.muted.small', { text: '※ 端末ローカルの簡易ロックです。データ自体の暗号化や複数ユーザーの本格認証ではありません（本格運用は同期サーバー側の管理をご利用ください）。パスコードを忘れるとブラウザデータの消去が必要です。' }),
+    ]);
+    wrap.appendChild(lockCard);
+
     /* --- クラウド同期（複数人・複数端末で共有） --- */
     const syncUrl = el('input', { type: 'text', value: s.syncUrl || '', placeholder: 'http://localhost:8787' });
     const syncWs = el('input', { type: 'text', value: s.syncWorkspace || '', placeholder: '例：aizu-2026' });

@@ -107,13 +107,22 @@ A.app = (function () {
     const app = document.getElementById('app');
     app.innerHTML = '';
 
+    // ログイン（パスコードロックが有効なとき）
+    if (A.auth && A.auth.isEnabled() && !A.auth.isAuthed()) {
+      await A.auth.showLogin(app, s.name);
+      app.innerHTML = '';
+    }
+
     const sidebar = el('aside.sidebar', {}, [
       el('div.brand', {}, [
         el('div.brand-mark', { text: '会計' }),
         el('div.brand-text', {}, [el('div.brand-name', { text: s.name || '会計ソフト' }), el('div.brand-sub', { text: 'クラウド会計 (自社版)' })]),
       ]),
       buildNav(),
-      el('div.side-foot', {}, [el('span.muted.small', { text: 'データはブラウザ内に保存' })]),
+      el('div.side-foot', {}, [
+        A.auth && A.auth.isEnabled() ? el('button.btn.sm', { text: '🔒 ログアウト', onclick: () => A.auth.logout() }) : null,
+        el('span.muted.small', { text: 'データはブラウザ内に保存' }),
+      ]),
     ]);
 
     const outlet = el('main.content');
