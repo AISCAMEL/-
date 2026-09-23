@@ -282,23 +282,55 @@ function decryptPdfToCsv_(pdfBlob, password, apiKey) {
  *   ※ 実サンプルに合わせて抽出パターンを微調整してください。
  * ========================================================================= */
 
+/**
+ * USS精算書テキストから「車両明細行」だけを抽出する。
+ *
+ * 実フォームの特徴（第954回サンプルで確認）：
+ *  - 1台＝2行（1行目:税抜金額＋車名/年式、2行目:型式+車体番号＋消費税）
+ *  - 口座行が混在：前回差引／入金／小計／合計／以下当回AA分／差引 等
+ *  - 車両行は「発生日(26/09/16) + 出品番号(3〜6桁) + 車名 …」で始まる
+ *  - 成約金額＝お支払側の「車両金額」＝行内の最大金額（出品料等より大きい）
+ *
+ * 安全策：口座行はキーワードで除外。車体番号(2行目の6桁連番)は
+ *         日付始まりでない行なので車両行の金額計算に混入しない。
+ */
 function parseUssText_(text) {
   var rows = [];
   if (!text) return rows;
-  String(text).split(/\r?\n/).forEach(function (line) {
-    var s = line.trim();
-    if (!s) return;
-    var mNo = s.match(/(?:出品|受付|車両|管理)?番?号?\s*[:：]?\s*([0-9]{4,})/);
-    if (!mNo) return;
-    var maxYen = 0, m, re = /([0-9][0-9,]{2,})/g;
-    while ((m = re.exec(s)) !== null) {
-      var v = parseInt(m[1].replace(/,/g, ""), 10);
-      if (v > maxYen) maxYen = v;
+  var skip = /(前回|繰越|入金|小計|合計|差引|御中|会員|登録番号|振込|口座|精算|以下当回|AA分|課税|税抜|消費税|ページ|ﾍﾟｰｼﾞ)/;
+  var lines = String(text).split(/\r?\n/);
+
+  for (var i = 0; i < lines.length; i++) {
+    var s = lines[i].trim();
+    if (!s) continue;
+    // 車両行＝「日付 + 出品番号 + 残り」で始まる
+    var md = s.match(/^(\d{2}\/\d{2}\/\d{2})\s+(\d{3,6})\s+(.+)$/);
+    if (!md) continue;
+    if (skip.test(s)) continue;              // 念のため口座行を除外
+    var lotNo = md[2];
+    var rest = md[3];
+
+    // 金額候補：カンマ区切り(1,234)か3桁以上の数値。車体番号・年式(1〜2桁)を除外。
+    var amts = [], m, re = /([0-9]{1,3}(?:,[0-9]{3})+|[0-9]{3,})/g;
+    while ((m = re.exec(rest)) !== null) amts.push(parseInt(m[1].replace(/,/g, ""), 10));
+    if (!amts.length) continue;
+    var seiyaku = Math.max.apply(null, amts); // 最大＝車両金額(成約金額)
+
+    // 車名：先頭の非数値トークン群（金額・年式が始まるまで）
+    var carName = (rest.match(/^([^\d,]+)/) || ["", ""])[1].replace(/\s+/g, " ").trim();
+    // 型式・車体番号は次行にあることが多い（英数字+6桁前後）。拾えれば記録。
+    var bodyNo = "";
+    if (i + 1 < lines.length) {
+      var mb = lines[i + 1].match(/([A-Za-z]{2,}[A-Za-z0-9\-]*)\s+([0-9]{5,7})/);
+      if (mb) bodyNo = mb[1] + " " + mb[2];
     }
-    var name = s.replace(mNo[0], " ").replace(/[0-9,円:：]/g, " ").replace(/\s+/g, " ").trim();
-    rows.push({ lotNo: mNo[1], year: "", carName: name, bodyNo: "", seiyaku: maxYen,
-      ussShuppin: 0, ussSeiyaku: 0, ussRakusatsu: 0, ussRecycle: 0 });
-  });
+
+    rows.push({
+      lotNo: lotNo, year: "", carName: carName, bodyNo: bodyNo, seiyaku: seiyaku,
+      ussShuppin: 0, ussSeiyaku: 0, ussRakusatsu: 0, ussRecycle: 0,
+      raw: s // 検証用に元行を保持（明細シートの備考へ）
+    });
+  }
   return rows;
 }
 
@@ -371,7 +403,7 @@ function writeSettlementRows_(sh, cfg, rows, mailDate, subject, kenmei, msgId) {
       row.ussShuppin || 0, row.ussSeiyaku || 0, row.ussRakusatsu || 0, row.ussRecycle || 0,
       feeR, feeF, "", "", "",                 // 本部落札/振込/粗利5%/合計/請求額(数式)
       "", "未請求", "",                        // 請求書NO/入金状況/消込日
-      msgId, key, ""
+      msgId, key, (row.raw || "")             // 備考（PDF元行＝検証用）
     ]);
     // 数式（K粗利, R粗利5%, S合計, T請求額）
     formulas.push({
