@@ -112,6 +112,13 @@ window.A = window.A || {};
             ui.toast('初期化しました'); ui.go('dashboard');
           },
         }),
+        el('button.btn', {
+          text: '🧪 デモデータを投入', onclick: async () => {
+            if (!await ui.confirm('現在のデータを消去して、サンプル（デモ）データを投入します。よろしいですか？')) return;
+            await A.demo.load();
+            ui.toast('デモデータを投入しました', 'ok'); ui.go('dashboard');
+          },
+        }),
       ]),
     ]);
     wrap.appendChild(backupCard);
