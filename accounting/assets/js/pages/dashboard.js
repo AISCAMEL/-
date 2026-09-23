@@ -30,8 +30,9 @@ window.A = window.A || {};
 
     const wrap = el('div');
     wrap.appendChild(ui.pageHead('ダッシュボード', [
-      el('span.muted', { text: s.name + '　' + U.fmtDate(p.start || '') + '〜' + U.fmtDate(p.end || '') }),
+      el('span.muted', { text: s.name }),
     ]));
+    wrap.appendChild(el('div.card', {}, [ui.periodBar(p, (np) => { A.app.setPeriod(np); ui.renderRoute(); })]));
 
     // やることリスト（アラート）
     const fy = U.fiscalRange(p.start || U.today(), s.fiscalStartMonth || 4);

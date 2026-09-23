@@ -53,9 +53,24 @@ window.A = window.A || {};
     const all = await S.attachments.loadAll();
     const journals = await S.journals.loadAll();
     const wrap = el('div');
+    const bulkInput = el('input', { type: 'file', accept: 'image/*,application/pdf', multiple: true, style: 'display:none' });
+    bulkInput.addEventListener('change', async () => {
+      const files = [...bulkInput.files]; if (!files.length) return;
+      let n = 0, skip = 0;
+      for (const f of files) {
+        if (f.size > 15e6) { skip += 1; continue; }
+        const dataUrl = await readAsDataUrl(f);
+        await S.attachments.save({ date: U.today(), amount: 0, partner: '', note: '', filename: f.name, mime: f.type, size: f.size, dataUrl });
+        n += 1;
+      }
+      ui.toast(`${n}件の証憑を保存しました${skip ? `（${skip}件は容量超過でスキップ）` : ''}`, 'ok');
+      ui.renderRoute();
+    });
     wrap.appendChild(ui.pageHead('証憑（電帳法対応）', [
+      el('button.btn', { text: '⬆ 一括アップロード', onclick: () => bulkInput.click() }),
       el('button.btn.primary', { text: '＋ 証憑をアップロード', onclick: () => uploadModal() }),
     ]));
+    wrap.appendChild(bulkInput);
 
     // 検索（日付・金額・取引先/ファイル名）
     const fFrom = el('input', { type: 'date' });

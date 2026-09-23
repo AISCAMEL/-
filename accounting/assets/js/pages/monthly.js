@@ -34,14 +34,21 @@ window.A = window.A || {};
       }),
     ]));
 
-    // 表
-    const card = el('div.card', {}, [el('h2', { text: '月次表' })]);
+    // 表（行クリックでその月の仕訳へドリルダウン）
+    const monthRange = (ym) => {
+      const [y, m] = ym.split('-').map(Number);
+      const end = new Date(y, m, 0);
+      const pad = (x) => String(x).padStart(2, '0');
+      return { start: `${ym}-01`, end: `${end.getFullYear()}-${pad(end.getMonth() + 1)}-${pad(end.getDate())}` };
+    };
+    const card = el('div.card', {}, [el('h2', { text: '月次表（クリックでその月の仕訳へ）' })]);
     card.appendChild(ui.table([
       { key: 'ym', label: '月', render: (r) => r.ym },
       { key: 'revenue', label: '売上', align: 'right', render: (r) => '¥' + U.yenSigned(r.revenue) },
       { key: 'expense', label: '費用', align: 'right', render: (r) => '¥' + U.yenSigned(r.expense) },
       { key: 'net', label: '利益', align: 'right', render: (r) => el('span' + (r.net < 0 ? '.neg' : ''), { text: '¥' + U.yenSigned(r.net) }) },
     ], tr.months, {
+      onRow: (r) => { A.app.setPeriod(monthRange(r.ym)); ui.go('journal'); },
       foot: el('tr.total-row', {}, [
         el('td', { text: '年間合計' }),
         el('td.right', { text: '¥' + U.yenSigned(tr.total.revenue) }),
