@@ -10,7 +10,7 @@
  * LINE通知やAI要約は該当キーを入れたときだけ動きます。
  */
 function getConfig() {
-  return {
+  var base = {
     // ① 受け皿となるスプレッドシートのID
     //    スプレッドシートのURL https://docs.google.com/spreadsheets/d/ ★ここ★ /edit
     //    新規作成する場合は空欄のままで setupAll() を実行すると自動作成されます。
@@ -103,6 +103,27 @@ function getConfig() {
     SHEET_INVOICE_LOG: "請求書控え",  // 発行した請求書の一覧（システム管理用）
     SHEET_PARTNER: "加盟店マスタ"     // 加盟店名→住所/〒 の対応（請求書の宛先に使用）
   };
+
+  // 秘密情報はコードに直書きせず「スクリプトプロパティ」に保存推奨。
+  //   設定していればそちらを優先（PDFCO_API_KEY / USS_PDF_PASSWORD / 各種トークン）。
+  return applySecrets_(base);
+}
+
+/**
+ * スクリプトプロパティ（プロジェクトの設定 > スクリプトプロパティ）に
+ * 同名キーがあれば、Config.gs の値より優先して上書きする。
+ * 例）PDFCO_API_KEY を画面から登録しておけば、コードに書かなくてよい。
+ */
+function applySecrets_(cfg) {
+  try {
+    var props = PropertiesService.getScriptProperties().getProperties();
+    ["SPREADSHEET_ID", "PDFCO_API_KEY", "USS_PDF_PASSWORD",
+     "LINE_CHANNEL_ACCESS_TOKEN", "LINE_STAFF_IDS", "OPENROUTER_API_KEY",
+     "SLACK_WEBHOOK_URL", "SLACK_SLASH_TOKEN"].forEach(function (k) {
+      if (props[k] !== undefined && props[k] !== "") cfg[k] = props[k];
+    });
+  } catch (e) { /* GAS以外では無視 */ }
+  return cfg;
 }
 
 /**

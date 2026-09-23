@@ -95,6 +95,25 @@ USS_BANK_CSV_FOLDER_ID: "",  USS_MATCH_TOLERANCE: 0,
   `USS_DECRYPT_MODE:"none"` で取り込む運用（方式C）を推奨。
 - 車両明細が入った実サンプルをいただければ、列マッピングを最終調整します。
 
+## 実PDFで通しテストする手順（方式A）
+
+> GASはお客様のGoogle Apps Script環境で動きます。以下を上から順に実行してください。
+
+1. **PDF.coのAPIキーを取得**：https://pdf.co でサインアップ → API キーをコピー
+2. **キーとパスワードを安全に保存**（コードに直書きしない）
+   - 関数選択で `ussSetApiKey` を選び、コードエディタで一時的に
+     `ussSetApiKey('ここにキー')` を実行（または「スクリプトプロパティ」に
+     `PDFCO_API_KEY` を直接登録）
+   - 同様に `ussSetPdfPassword('U3472')`（またはプロパティ `USS_PDF_PASSWORD`）
+3. **自己診断を実行**：関数 `ussSelfTest` を実行 →「実行ログ」を確認
+   - ✅ 開封成功／先頭200字／抽出台数 が出れば通し成功（シートは変更しません）
+   - ❌ の場合はログの指示（パスワード誤り／キー誤り／残高切れ／フィルタ）を確認
+4. 問題なければ `setupUss()` → `installUssTriggers()` で本番運用へ
+
+### スクリプトプロパティの場所
+GASエディタ左「⚙ プロジェクトの設定」→「スクリプト プロパティ」→ 行を追加。
+`PDFCO_API_KEY` / `USS_PDF_PASSWORD` などをここに入れると Config.gs より優先されます。
+
 ## 費用の目安
 
 - PDF.co：1通あたり数円程度（月数百円〜）。CSV運用（`USS_DECRYPT_MODE:"none"`）なら無料。

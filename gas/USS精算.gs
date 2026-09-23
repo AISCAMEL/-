@@ -784,6 +784,79 @@ function testFee() {
 }
 
 function testParseUssText() {
-  var sample = "出品番号 26677 三菱アウトランダー 成約 850,000 円\n出品番号 22110 日産ノート 720,000円";
-  Logger.log(JSON.stringify(parseUssText_(sample), null, 2));
+  // 実精算書(第954回)を模した平坦化テキスト。口座行を除外し車両行のみ抽出できること。
+  var sample = [
+    "第 954 回 9月大祭Part② 2026年 9月16日 USS新潟会場",
+    "26/09/09 前回差引ご請求額 505130 505130",
+    "26/09/10 入金 9/10 505130 入金済 (505130)",
+    "以下当回AA分",
+    "26/09/16 8573 ｱﾙﾄ 5D G 23 2000 13000 47000 8840 (40840)",
+    "HA25S 798742 200 1300 4700 (3200)",
+    "当回AA小計 2000 13000 47000 8840 (40840)",
+    "26/09/16 合計 16500 請求 60540 支払 (44040)"
+  ].join("\n");
+  Logger.log("件名: " + extractEventFromText_(sample));
+  Logger.log("明細: " + JSON.stringify(parseUssText_(sample), null, 2));
+}
+
+/* =========================================================================
+ * 実PDF通しテスト用のヘルパー（お客様のGAS環境で実行）
+ * ========================================================================= */
+
+/** ① PDF.coのAPIキーを安全に保存（コードに直書きしない） */
+function ussSetApiKey(key) {
+  if (!key) throw new Error("キーを引数で渡してください。例: ussSetApiKey('xxxxx')");
+  PropertiesService.getScriptProperties().setProperty("PDFCO_API_KEY", key);
+  Logger.log("PDFCO_API_KEY を保存しました。");
+}
+
+/** ② PDF閲覧パスワード(会員No. U3472等)を安全に保存 */
+function ussSetPdfPassword(pw) {
+  if (!pw) throw new Error("パスワードを引数で渡してください。例: ussSetPdfPassword('U3472')");
+  PropertiesService.getScriptProperties().setProperty("USS_PDF_PASSWORD", pw);
+  Logger.log("USS_PDF_PASSWORD を保存しました。");
+}
+
+/**
+ * ③ 実PDFの通し自己診断（シートには書き込みません）。
+ *    最新のUSS精算書メールを1通見つけ、U3472で開封→抽出まで試して結果をログ表示。
+ */
+function ussSelfTest() {
+  var cfg = getConfig();
+  Logger.log("=== USS自己診断 ===");
+  Logger.log("復号方式: " + cfg.USS_DECRYPT_MODE + " ／ 表抽出CSV: " + cfg.USS_PDF_TO_CSV);
+  Logger.log("APIキー設定: " + (cfg.PDFCO_API_KEY ? "あり" : "★未設定（ussSetApiKey で登録）"));
+  Logger.log("PDFパスワード: " + (cfg.USS_PDF_PASSWORD ? "あり" : "★未設定"));
+
+  var query = 'has:attachment newer_than:120d'
+    + (cfg.USS_MAIL_FROM ? ' from:' + cfg.USS_MAIL_FROM : '')
+    + (cfg.USS_MAIL_SUBJECT ? ' subject:' + cfg.USS_MAIL_SUBJECT : '');
+  var threads = GmailApp.search(query, 0, 5);
+  Logger.log("該当メール: " + threads.length + "件（query=" + query + "）");
+  if (!threads.length) { Logger.log("→ 差出人/件名フィルタ(USS_MAIL_FROM/SUBJECT)を調整してください。"); return; }
+
+  var msg = threads[0].getMessages()[0];
+  var atts = msg.getAttachments();
+  Logger.log("件名: " + msg.getSubject() + " ／ 添付: " + atts.length + "件");
+
+  atts.forEach(function (att) {
+    var nm = att.getName() || "";
+    if (nm.toLowerCase().slice(-4) !== ".pdf") { Logger.log("スキップ(PDF以外): " + nm); return; }
+    if (!cfg.PDFCO_API_KEY) { Logger.log("APIキー未設定のため復号テスト不可: " + nm); return; }
+    try {
+      var text = decryptPdfToText_(att.copyBlob(), cfg.USS_PDF_PASSWORD, cfg.PDFCO_API_KEY);
+      Logger.log("✅ 開封成功: " + nm + " ／ 先頭200字:\n" + String(text).slice(0, 200));
+      Logger.log("件名(自動): " + extractEventFromText_(text));
+      var rows = [];
+      if (cfg.USS_PDF_TO_CSV) {
+        try { rows = parseUssCsv_(decryptPdfToCsv_(att.copyBlob(), cfg.USS_PDF_PASSWORD, cfg.PDFCO_API_KEY)); } catch (e) {}
+      }
+      if (!rows.length) rows = parseUssText_(text);
+      Logger.log("抽出台数: " + rows.length + "台\n" + JSON.stringify(rows, null, 2));
+    } catch (err) {
+      Logger.log("❌ 失敗: " + nm + " ／ " + err
+        + "\n（パスワード誤り／APIキー誤り／PDF.co残高切れ等を確認）");
+    }
+  });
+  Logger.log("=== 診断おわり（シートは変更していません）===");
 }
