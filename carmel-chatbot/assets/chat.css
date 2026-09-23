@@ -128,6 +128,10 @@
 #carmel-cb-messages { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 16px; background: #f6f8fa; }
 .ccb-msg { margin-bottom: 12px; display: flex; }
 .ccb-msg.user { justify-content: flex-end; }
+/* 前回の続きから 区切り */
+.ccb-resume-sep { display: flex; align-items: center; gap: 8px; margin: 2px 0 12px; color: #98a2b3; font-size: 11px; }
+.ccb-resume-sep::before, .ccb-resume-sep::after { content: ""; flex: 1; height: 1px; background: #e0e5ec; }
+.ccb-resume-sep span { flex: 0 0 auto; }
 .ccb-bubble {
 	max-width: 84%; padding: 11px 15px; border-radius: 14px;
 	font-size: 15px; line-height: 1.65; white-space: pre-wrap; word-break: break-word;

@@ -12,6 +12,53 @@
 	function seenThisSession() { try { return window.sessionStorage.getItem("ccb_seen") === "1"; } catch (e) { return false; } }
 	function markSeen() { try { window.sessionStorage.setItem("ccb_seen", "1"); } catch (e) {} }
 
+	// 会話の途中離脱→再訪時に「前回の続きから」再開するための保存（3日間・端末ローカル）
+	var CCB_STATE_KEY = "ccb_state_v1";
+	var CCB_STATE_TTL = 3 * 24 * 60 * 60 * 1000; // 3日
+	function loadState() {
+		try {
+			var raw = window.localStorage.getItem(CCB_STATE_KEY);
+			if (!raw) return null;
+			var st = JSON.parse(raw);
+			if (!st || !st.ts || (Date.now() - st.ts) > CCB_STATE_TTL) { clearState(); return null; }
+			if (!Array.isArray(st.history) || !st.history.length) return null;
+			return st;
+		} catch (e) { return null; }
+	}
+	function saveState() {
+		try {
+			if (!history.length) return;
+			window.localStorage.setItem(CCB_STATE_KEY, JSON.stringify({
+				sessionId: sessionId,
+				history: history.slice(-60), // 直近60発言まで（保存容量の保険）
+				visitor: { name: visitor.name, email: visitor.email, done: visitor.done },
+				ts: Date.now()
+			}));
+		} catch (e) {}
+	}
+	function clearState() { try { window.localStorage.removeItem(CCB_STATE_KEY); } catch (e) {} }
+
+	// 保存された会話を画面に復元し、続きから会話できる状態にする
+	function restoreState(st) {
+		sessionId = st.sessionId || sessionId;
+		history = st.history.slice();
+		if (st.visitor) { visitor.name = st.visitor.name || ""; visitor.email = st.visitor.email || ""; visitor.done = !!st.visitor.done; }
+		chatStarted = true; greeted = true;
+		if (win) win.classList.add("is-started");
+		var sep = document.createElement("div");
+		sep.className = "ccb-resume-sep";
+		sep.innerHTML = "<span>前回の続きから</span>";
+		msgBox.appendChild(sep);
+		history.forEach(function (m) {
+			if (m && typeof m.content === "string" && m.content !== "") {
+				addBubble(m.role === "user" ? "user" : "bot", m.content);
+			}
+		});
+		// 担当者の割り込みメッセージも引き続き受け取れるように
+		try { startConvoPoll(); } catch (e) {}
+		return true;
+	}
+
 	// 最初に提示するきっかけ候補（タップで会話開始）
 	var STARTERS = ["審査が不安です", "頭金がなくても大丈夫？", "他社で断られたけど…", "どんな車があるか見たい"];
 	// 管理画面で選択式スタートの候補が設定されていれば差し替え
@@ -78,6 +125,10 @@
 			var ic = intro.querySelector('[data-role="intro-close"]');
 			if (ic) ic.addEventListener("click", function (e) { e.stopPropagation(); userToggle(); });
 		}
+
+		// 前回の会話を復元（3日以内なら自動で続きから）
+		var saved = loadState();
+		if (saved) { restoreState(saved); }
 
 		// 直リンク/埋め込み版：ランチャーもイントロ動画も出さず、すぐにチャット画面を表示。
 		if (cfg.standalone) {
@@ -331,6 +382,7 @@
 		clearChoices(); // 前回の候補チップを片付ける
 		addBubble("user", text);
 		history.push({ role: "user", content: text });
+		saveState();
 		sendBtn.disabled = true;
 		showTyping();
 		callChatEndpoint(text);
@@ -364,6 +416,7 @@
 				else if (data && data.cta) renderCTA("");
 				if (data && data.suggestions) renderChoices(data.suggestions);
 				history.push({ role: "assistant", content: reply });
+				saveState();
 				startConvoPoll();
 				scheduleIdle();
 			})
