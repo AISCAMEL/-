@@ -167,8 +167,17 @@ function processSettlementMessage_(sh, cfg, msg) {
       rows = parseUssCsv_(att.getDataAsString(detectCsvCharset_(att)));
     } else if (lower.slice(-4) === ".pdf") {
       if (cfg.USS_DECRYPT_MODE === "pdfco") {
+        // まず本文テキストで会場・回・日付を拾い、明細は表抽出(CSV)優先で解析
         var text = decryptPdfToText_(att.copyBlob(), cfg.USS_PDF_PASSWORD, cfg.PDFCO_API_KEY);
-        rows = parseUssText_(text);
+        var ev = extractEventFromText_(text);
+        if (ev) kenmei = ev;
+        if (cfg.USS_PDF_TO_CSV) {
+          try {
+            var csv = decryptPdfToCsv_(att.copyBlob(), cfg.USS_PDF_PASSWORD, cfg.PDFCO_API_KEY);
+            rows = parseUssCsv_(csv);
+          } catch (e) { Logger.log("表抽出に失敗、テキスト解析へフォールバック: " + e); }
+        }
+        if (!rows.length) rows = parseUssText_(text);
       } else {
         Logger.log("PDF復号OFFのためスキップ: " + att.getName());
       }
@@ -178,11 +187,34 @@ function processSettlementMessage_(sh, cfg, msg) {
   return added;
 }
 
-/** 件名から「USS東京 09/08」等のオークション開催名を推定 */
+/** メール件名から会場名等を推定（PDF本文が取れないCSV等のフォールバック） */
 function extractKenmei_(subject) {
   var s = String(subject || "").trim();
   var m = s.match(/(USS[^\s　:：]*[^\n]*)/);
   return m ? m[1].trim() : s;
+}
+
+/**
+ * 精算書テキストから「会場 ＋ 第○回◯◯ ＋ 日付」を組み立てる。
+ * 例：USS新潟会場 / 第 955 回 9月大祭ありがとうA / 2026年 9月23日
+ *   → "USS新潟 第955回 9月大祭ありがとうA (2026/09/23)"
+ */
+function extractEventFromText_(text) {
+  if (!text) return "";
+  var t = String(text);
+  var venue = (t.match(/USS[^\s　\n]*会場/) || [])[0] || (t.match(/USS[^\s　\n]{1,8}/) || [])[0] || "";
+  venue = venue.replace(/会場$/, "");
+  var kai = (t.match(/第\s*([0-9０-９]{1,5})\s*回\s*([^\n]{0,20})/) || null);
+  var kaiStr = kai ? ("第" + toHankaku_(kai[1]) + "回 " + (kai[2] || "").trim()) : "";
+  var dm = t.match(/([0-9]{4})\s*年\s*([0-9]{1,2})\s*月\s*([0-9]{1,2})\s*日/);
+  var dateStr = dm ? ("(" + dm[1] + "/" + ("0" + dm[2]).slice(-2) + "/" + ("0" + dm[3]).slice(-2) + ")") : "";
+  var out = [venue, kaiStr, dateStr].filter(String).join(" ").trim();
+  return out;
+}
+
+/** 全角数字→半角 */
+function toHankaku_(s) {
+  return String(s).replace(/[０-９]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0xFEE0); });
 }
 
 /* =========================================================================
@@ -215,6 +247,34 @@ function decryptPdfToText_(pdfBlob, password, apiKey) {
   if (cv.body) return cv.body;
   if (cv.url) return UrlFetchApp.fetch(cv.url, { muteHttpExceptions: true }).getContentText();
   throw new Error("PDF.coからテキストを取得できませんでした。");
+}
+
+/**
+ * パスワード付きPDFを PDF.co で復号し、表を「CSV」で取得する。
+ * 2段ヘッダの精算書グリッドはテキスト抽出より列ズレに強い。
+ */
+function decryptPdfToCsv_(pdfBlob, password, apiKey) {
+  if (!apiKey) throw new Error("PDFCO_API_KEY が未設定です（Config.gs ⑦）。");
+  var upRes = UrlFetchApp.fetch("https://api.pdf.co/v1/file/upload/base64", {
+    method: "post", contentType: "application/json",
+    headers: { "x-api-key": apiKey },
+    payload: JSON.stringify({ name: (pdfBlob.getName() || "uss.pdf"), file: Utilities.base64Encode(pdfBlob.getBytes()) }),
+    muteHttpExceptions: true
+  });
+  var up = JSON.parse(upRes.getContentText() || "{}");
+  if (up.error || !up.url) throw new Error("PDF.coアップロード失敗: " + (up.message || upRes.getContentText()));
+
+  var cvRes = UrlFetchApp.fetch("https://api.pdf.co/v1/pdf/convert/to/csv", {
+    method: "post", contentType: "application/json",
+    headers: { "x-api-key": apiKey },
+    payload: JSON.stringify({ url: up.url, password: password || "", inline: true }),
+    muteHttpExceptions: true
+  });
+  var cv = JSON.parse(cvRes.getContentText() || "{}");
+  if (cv.error) throw new Error("PDF.co表抽出失敗: " + (cv.message || cvRes.getContentText()));
+  if (cv.body) return cv.body;
+  if (cv.url) return UrlFetchApp.fetch(cv.url, { muteHttpExceptions: true }).getContentText();
+  throw new Error("PDF.coからCSVを取得できませんでした。");
 }
 
 /* =========================================================================
@@ -253,15 +313,17 @@ function parseUssCsv_(csvText) {
         if (header[i].indexOf(cands[j]) >= 0) return i;
     return -1;
   };
-  var iNo = idx(["出品NO", "出品番号", "受付番号", "管理番号"]);
+  // USS実フォーム準拠の列名（発生日/出品番号/車名/年式/車両金額/R預託金/自税相当額/
+  //   出品料/成約料/落札料/陸送代/その他 …）。表記揺れも吸収。
+  var iNo = idx(["出品番号", "出品NO", "受付番号", "管理番号"]);
   var iYear = idx(["年式"]);
   var iName = idx(["車名", "車種", "品名"]);
   var iBody = idx(["車体番号", "車台番号"]);
-  var iSei = idx(["成約金額", "落札価格", "落札金額"]);
+  var iSei = idx(["車両金額", "成約金額", "落札価格", "落札金額"]);
   var iSp = idx(["出品料"]);
   var iSr = idx(["成約料"]);
   var iRk = idx(["落札料"]);
-  var iRe = idx(["リサイクル"]);
+  var iRe = idx(["R預託金", "リサイクル", "預託金"]);
   var num = function (row, i) { return i >= 0 ? (parseInt(String(row[i]).replace(/[^0-9]/g, ""), 10) || 0) : 0; };
 
   for (var r = 1; r < table.length; r++) {

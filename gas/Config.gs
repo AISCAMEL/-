@@ -57,14 +57,17 @@ function getConfig() {
     // 未処理メールだけ拾うためのGmailラベル名（自動作成されます）
     USS_DONE_LABEL: "USS処理済み",
 
-    // 添付パスワード（USSから事前共有される固定パスワード）
-    // 例では U3472。実運用の値を入れてください。
+    // 添付パスワード ＝ USS会員番号（例：U3472）。
+    //   ※精算書PDFのパスワードには会員No.が使われます（合同会社アイズ＝会員No.U3472）。
     USS_PDF_PASSWORD: "U3472",
 
     // ── パスワード付き添付の「復号」方式 ──
-    //   "pdfco" … PDF.co API で復号＋テキスト化（方式A・手軽）
-    //   "none"  … 復号せず、USS管理画面からDLしたCSVを取り込む（方式C）
+    //   "pdfco" … PDF.co API で復号（方式A・手軽）
+    //   "none"  … 復号せず、USS会員ページからDLしたCSVを取り込む（方式C・最も正確）
     USS_DECRYPT_MODE: "pdfco",
+    // 精算書は2段ヘッダの密なグリッド表。true にすると PDF.co の
+    //   「表抽出(CSV)」を使い、テキスト抽出より列ズレに強くなります（推奨）。
+    USS_PDF_TO_CSV: true,
     // PDF.co の APIキー（https://pdf.co でサインアップ後に取得）
     PDFCO_API_KEY: "",
 
