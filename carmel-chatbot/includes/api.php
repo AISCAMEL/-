@@ -277,13 +277,15 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
 	// 保険：お客様が「どんな車があるか見たい / 在庫を見せて / 一覧 / 車を探している」等、
 	// 明確に“見たい”と伝えているのに AI が car_ids を返さなかった場合は、
 	// サーバー側で数台を自動表示して「車が出てこない」を防ぐ（漠然とした話題では出さない）。
-	if ( empty( $cars ) && ! empty( $stock_items ) && carmel_cb_is_browse_intent( $last_user ) ) {
-		$auto = carmel_cb_auto_pick( $stock_items, $last_user, 3 );
+	if ( empty( $cars ) && ! empty( $stock_items ) && ( carmel_cb_is_car_intent( $last_user ) || ! empty( $direct_hits ) ) ) {
+		$auto = ! empty( $direct_hits )
+			? array_slice( array_map( function ( $it ) { return $it['id']; }, $direct_hits ), 0, 3 )
+			: carmel_cb_auto_pick( $stock_items, $last_user, 3 );
 		$cars = carmel_cb_cards_from_ids( $auto, $stock_items );
 	}
 	// 保険：在庫カードを出したのにタップ候補が空だと会話が途切れるため、
 	// 条件で絞れる候補を補って“追い方”が甘くならないようにする。
-	if ( ! empty( $cars ) && empty( $parsed['suggestions'] ) && carmel_cb_is_browse_intent( $last_user ) ) {
+	if ( ! empty( $cars ) && empty( $parsed['suggestions'] ) ) {
 		$parsed['suggestions'] = array( '軽自動車', 'ミニバン', 'もっと在庫を見たい' );
 	}
 
