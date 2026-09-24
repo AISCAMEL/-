@@ -37,7 +37,7 @@ window.A = window.A || {};
         { label: '利益', budget: budRevSaved - budExpSaved, actual: st.pl.netIncome },
       ], {
         labelKey: 'label', height: 200,
-        keys: [{ key: 'budget', label: '予算', color: '#c4c8d0' }, { key: 'actual', label: '実績', color: '#3a4150' }],
+        keys: [{ key: 'budget', label: '予算', color: '#cbd5e1' }, { key: 'actual', label: '実績', color: '#2563eb' }],
       }),
     ]));
 

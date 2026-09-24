@@ -74,7 +74,7 @@ window.A = window.A || {};
       el('div.card-head', {}, [el('h3', { text: '月次の売上・費用' }), el('button.btn.sm', { text: '月次推移へ', onclick: () => ui.go('monthly') })]),
       ui.barChart(tr.months, {
         labelKey: 'ym', labelFmt: (ym) => ym.slice(5), height: 170,
-        keys: [{ key: 'revenue', label: '売上', color: '#3a4150' }, { key: 'expense', label: '費用', color: '#b4bac4' }],
+        keys: [{ key: 'revenue', label: '売上', color: '#2563eb' }, { key: 'expense', label: '費用', color: '#f59e0b' }],
       }),
     ]));
 

@@ -21,7 +21,7 @@ window.A = window.A || {};
       el('h2', { text: '売上・費用の月次推移' }),
       ui.barChart(tr.months, {
         labelKey: 'ym', labelFmt: (ym) => ym.slice(5) + '月', height: 240,
-        keys: [{ key: 'revenue', label: '売上', color: '#3a4150' }, { key: 'expense', label: '費用', color: '#b4bac4' }],
+        keys: [{ key: 'revenue', label: '売上', color: '#2563eb' }, { key: 'expense', label: '費用', color: '#f59e0b' }],
       }),
     ]));
 
@@ -30,7 +30,7 @@ window.A = window.A || {};
       el('h2', { text: '利益の月次推移' }),
       ui.barChart(tr.months, {
         labelKey: 'ym', labelFmt: (ym) => ym.slice(5) + '月', height: 180,
-        keys: [{ key: 'net', label: '当期純利益', color: '#6b7280' }],
+        keys: [{ key: 'net', label: '当期純利益', color: '#0d9488' }],
       }),
     ]));
 
