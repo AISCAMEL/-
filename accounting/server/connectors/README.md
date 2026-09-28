@@ -82,6 +82,76 @@ WORKSPACE=aizu-2026 TOKEN=合言葉 node server/connectors/paypal.js
 - 金額はJPY前提（主要単位＝円）。`start_date` は過去約3年以内が有効です。
 - 重複防止は最後の取引日時を `.paypal_cursor` に保存します。
 
+## Gmail コネクタ（`gmail.js`）
+
+指定した**送信元ルール**に一致するメールを Gmail から取得し、会計アプリの
+取込Webhook（`/api/inbox`）へ**下書き仕訳**を投入します。開いていない間も
+サーバーが定期的にメールを確認して下書きを作り、アプリの取込画面で
+確認・計上する運用（**承認制**）です。合同会社アイズでは主に
+**USSオークションの精算書メール**を対象にしています。
+
+```bash
+GMAIL_CLIENT_ID=xxx GMAIL_CLIENT_SECRET=yyy GMAIL_REFRESH_TOKEN=zzz \
+SYNC_URL=http://localhost:8787 WORKSPACE=aizu-2026 TOKEN=合言葉 \
+node server/connectors/gmail.js
+```
+
+### 認証（Google OAuth2）
+
+1. Google Cloud Console でプロジェクトを作成 → **Gmail API** を有効化。
+2. OAuth 同意画面を設定し、スコープ `https://www.googleapis.com/auth/gmail.readonly`
+   （読み取り専用）を追加。
+3. 「OAuth クライアント ID（デスクトップ）」を作成 → `client_id` / `client_secret` を取得。
+4. その認証情報で一度だけ認可フローを実行し、**リフレッシュトークン**を取得。
+   （`https://developers.google.com/oauthplayground` でも取得可能）
+5. 3つの値を環境変数 `GMAIL_CLIENT_ID` / `GMAIL_CLIENT_SECRET` / `GMAIL_REFRESH_TOKEN`
+   に設定します。トークンはサーバー側だけで保持し、ブラウザには置きません。
+
+### 環境変数
+
+| 変数 | 既定 | 説明 |
+|------|------|------|
+| `GMAIL_CLIENT_ID` / `GMAIL_CLIENT_SECRET` / `GMAIL_REFRESH_TOKEN` | （必須） | Google OAuth2 の認証情報 |
+| `SYNC_URL` | `http://localhost:8787` | 同期サーバーのURL |
+| `WORKSPACE` / `TOKEN` | （必須/任意） | 会計アプリと同じワークスペース・トークン |
+| `GMAIL_RULES` | 下記の既定ルール | 取込ルール（JSON）。上書き可 |
+| `GMAIL_API_BASE` / `GOOGLE_OAUTH_BASE` | Google 本番 | テスト用に差し替え可 |
+
+### 取込ルール（`GMAIL_RULES`）
+
+送信元（`from`）に一致したメールを会計対象とみなし、勘定科目・税区分・
+入出金方向を割り当てます。既定は USS 精算書のみ：
+
+```json
+[
+  { "from": "ussnet.co.jp", "account": "500", "tax": "purchase10", "dir": "out", "label": "USSオークション精算" }
+]
+```
+
+- `from`：送信元アドレスの部分一致（ドメインでOK）
+- `account`：勘定科目コード（例 `500`＝仕入高）／`tax`：税区分／`dir`：`in`（入金）or `out`（出金）
+- `label`：摘要に付く分類名
+- 複数ルールを並べれば、希望ナンバー・PayPay・その他固定費メールも追加できます。
+
+### 金額の推定と承認制
+
+- 件名・スニペットに **`¥1,250,000` や `1,250,000 円`** のような通貨表記があれば金額を推定します。
+  年号（2026）や日付は誤検出しないよう、通貨記号かカンマ区切りを伴う数値だけを候補にします。
+- **USS の精算書は金額が添付PDF内**にあることが多く、その場合は**金額0の下書き**として投入します。
+  取込画面でPDFを確認して金額を入力してください。
+- ⚠️ **USSの精算書PDFはパスワード保護**（会員番号5桁）されている場合があります。
+  自動でのPDF金額読み取り（OCR）を行うには、別途パスワードの受け渡し設定が必要です。
+  現状は「メールを検知 → 日付・件名・科目つきの下書きを自動作成 → 人が金額を確認して計上」までを自動化します。
+
+### 重複防止・定期実行
+
+- 前回取得した最大 `internalDate` を `.gmail_cursor` に保存し、次回はそれ以降のメールのみ取得します。
+- cron 例（1時間ごと）：
+
+```cron
+0 * * * * cd /path/to/app && GMAIL_CLIENT_ID=xxx GMAIL_CLIENT_SECRET=yyy GMAIL_REFRESH_TOKEN=zzz SYNC_URL=http://localhost:8787 WORKSPACE=aizu-2026 TOKEN=合言葉 node server/connectors/gmail.js >> /var/log/kaikei-gmail.log 2>&1
+```
+
 ## 共通ライブラリ（`_lib.js`）
 
 HTTP・金額換算（ゼロデシマル通貨対応）・カーソル・`/api/inbox` 投入・
