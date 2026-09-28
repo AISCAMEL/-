@@ -274,6 +274,7 @@ function carmel_cb_apply_send_stage_mail( $s, $row, $stage_num, $def ) {
 	$unsub_url = carmel_cb_unsub_url( $row->email );
 	$unsub_note = (string) ( $s['followup_unsub_note'] ?? '' );
 
+	$chat_url = $site_url ? ( rtrim( $site_url, '/' ) . '/?ccb=open' ) : $site_url;
 	$vars = array(
 		'{name}'      => $name,
 		'{apply_url}'    => $apply_url,
@@ -281,6 +282,7 @@ function carmel_cb_apply_send_stage_mail( $s, $row, $stage_num, $def ) {
 		'{tel}'       => $tel,
 		'{stock_url}'    => $stock_url,
 		'{site_url}'    => $site_url,
+		'{chat_url}'    => $chat_url, // チャットが自動で開くURL（メールから会話に戻す）
 		'{signature}'    => $signature,
 		'{unsubscribe_url}' => $unsub_url,
 		'{unsub_note}'   => $unsub_note,
@@ -309,19 +311,19 @@ function carmel_cb_apply_stage_defs( $s ) {
 			'on'    => true,
 			'delay_min' => 30,
 			'subject'  => '【カーメル】審査フォームの入力途中ではありませんか？',
-			'body'   => "{name} 様\n\nカーメルの みほ です\n先ほど審査フォームをお開きいただき、ありがとうございました。\n入力の途中で分からないところや、気になる点はございませんでしたか？\n\nもしよろしければ、続きから入力いただけます。\n▼ 続きから審査\n{apply_url}\n\nご相談だけでも大丈夫です。お気軽にどうぞ。\n・LINE：{line_url}\n・お電話：{tel}\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n※ このメールは自動送信です。ご返信いただいても対応できない場合があります。\n",
+			'body'   => "{name} 様\n\nカーメルの みほ です\n先ほど審査フォームをお開きいただき、ありがとうございました。\n入力の途中で分からないところや、気になる点はございませんでしたか？\n\nもしよろしければ、続きから入力いただけます。\n▼ 続きから審査\n{apply_url}\n▼ チャットで相談する\n{chat_url}\n\nご相談だけでも大丈夫です。お気軽にどうぞ。\n・LINE：{line_url}\n・お電話：{tel}\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n※ このメールは自動送信です。ご返信いただいても対応できない場合があります。\n",
 		),
 		2 => array(
 			'on'    => true,
 			'delay_min' => 60 * 24,
 			'subject'  => '【カーメル】審査のご相談、いつでもお受けいたします',
-			'body'   => "{name} 様\n\nお世話になっております、カーメル相談窓口の みほ です。\n昨日は当店の審査フォームにお越しいただき、ありがとうございました。\n\nお車のご購入は大きなご決断です。ご不安な点があれば、まずはお話だけでもお聞かせください。\n他社様で審査が通らなかった方でも、当店の低与信ローンでご案内できるケースが多くあります。\n\n▼ 審査の続きはこちら\n{apply_url}\n\n・LINEで気軽に相談：{line_url}\n・お電話：{tel}\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n※ このメールは自動送信です。ご返信いただいても対応できない場合があります。\n",
+			'body'   => "{name} 様\n\nお世話になっております、カーメル相談窓口の みほ です。\n昨日は当店の審査フォームにお越しいただき、ありがとうございました。\n\nお車のご購入は大きなご決断です。ご不安な点があれば、まずはお話だけでもお聞かせください。\n他社様で審査が通らなかった方でも、当店の低与信ローンでご案内できるケースが多くあります。\n\n▼ 審査の続きはこちら\n{apply_url}\n▼ チャットで相談する\n{chat_url}\n\n・LINEで気軽に相談：{line_url}\n・お電話：{tel}\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n※ このメールは自動送信です。ご返信いただいても対応できない場合があります。\n",
 		),
 		3 => array(
 			'on'    => true,
 			'delay_min' => 60 * 24 * 3,
 			'subject'  => '【カーメル】その後、お車のご検討はいかがでしょうか？',
-			'body'   => "{name} 様\n\nカーメルの みほ です。\n先日は審査フォームにお越しいただきましたが、その後お車のご検討はいかがでしょうか？\n\nご希望の予算・車種などをお聞かせいただければ、当店で最適なプランをご提案いたします。\n無理な営業は一切いたしませんので、ご相談だけでもお気軽にどうぞ\n\n▼ 審査を続ける\n{apply_url}\n▼ 在庫を見る\n{stock_url}\n・LINE：{line_url}\n・お電話：{tel}\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n※ このメールは自動送信です。ご返信いただいても対応できない場合があります。\n",
+			'body'   => "{name} 様\n\nカーメルの みほ です。\n先日は審査フォームにお越しいただきましたが、その後お車のご検討はいかがでしょうか？\n\nご希望の予算・車種などをお聞かせいただければ、当店で最適なプランをご提案いたします。\n無理な営業は一切いたしませんので、ご相談だけでもお気軽にどうぞ\n\n▼ 審査を続ける\n{apply_url}\n▼ チャットで相談する\n{chat_url}\n▼ 在庫を見る\n{stock_url}\n・LINE：{line_url}\n・お電話：{tel}\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n※ このメールは自動送信です。ご返信いただいても対応できない場合があります。\n",
 		),
 	);
 

@@ -163,13 +163,42 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
 	$direct_hits = carmel_cb_match_stock_by_text( $last_user, 20 );
 	if ( ! empty( $direct_hits ) ) { $car_ctx = true; }
 
+	// お客様が今ご覧になっている車（在庫ページ）を把握し、その車について答えられるようにする
+	$page_car_id = isset( $body['page_car_id'] ) ? (int) $body['page_car_id'] : 0;
+	$page_car    = null;
+	if ( $page_car_id > 0 ) {
+		$pp = get_post( $page_car_id );
+		if ( $pp && $pp->post_type === 'portfolio' && $pp->post_status === 'publish' ) {
+			$page_car = carmel_cb_stock_item( $pp );
+			if ( $page_car ) { $car_ctx = true; }
+		}
+	}
+
 	// 在庫を読み込んでプロンプトに添付（新着は自動反映）
 	$stock_items     = array();
 	$inventory_block = '';
 	if ( $car_ctx ) {
 		// 車種名がヒットしていればそれを優先。無ければ通常検索＋新着補完。
 		$stock_items     = ! empty( $direct_hits ) ? $direct_hits : carmel_cb_fetch_stock( $last_user, 20 );
+		// 見ている車を在庫リストの先頭に入れる（car_ids で参照できるように）
+		if ( $page_car ) {
+			$exists = false;
+			foreach ( $stock_items as $it ) { if ( (int) $it['id'] === (int) $page_car['id'] ) { $exists = true; break; } }
+			if ( ! $exists ) { array_unshift( $stock_items, $page_car ); }
+		}
 		$inventory_block = carmel_cb_inventory_block( $stock_items );
+	}
+
+	// 「今見ている車」ブロック（この車について具体的に答えるよう指示）
+	$page_car_block = '';
+	if ( $page_car ) {
+		$money = $page_car['monthly'] ? ( '月々' . number_format( $page_car['monthly'] ) . '円' ) : ( $page_car['price'] ? ( '本体' . number_format( $page_car['price'] ) . '円' ) : '価格応談' );
+		$mile  = $page_car['mileage'] ? ( ' ' . number_format( $page_car['mileage'] ) . 'km' ) : '';
+		$page_car_block = "\n\n【お客様が今ご覧になっている車（最優先でこの車について具体的に答える）】\n"
+			. "#{$page_car['id']} {$page_car['title']}{$mile} ／ {$money}\n"
+			. "・この車についての質問（総額の考え方・頭金なしで買えるか・審査の見込み・年式や装備・似た在庫はあるか等）には、この車を前提にやさしく具体的に答える。\n"
+			. "・この車を提案・言及するときは car_ids に {$page_car['id']} を入れてカード表示する。\n"
+			. "・「似た車」「他の候補」を求められたら、在庫から近いものを car_ids で数台出す。";
 	}
 
 	$stock_page = ! empty( $s['stock_page_url'] ) ? $s['stock_page_url'] : 'https://carmelonline.jp/search/';
@@ -194,6 +223,7 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
 		. "\n\n【LINE相談リンク】" . $s['line_url']
 		. "\n【在庫一覧ページ】" . $stock_page
 		. $inventory_block
+		. $page_car_block
 		. $campaign_block
 		. $carsearch_block
 		. carmel_cb_protocol_instruction();

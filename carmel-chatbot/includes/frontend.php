@@ -86,6 +86,8 @@ function carmel_cb_js_config( $s, $extra = array() ) {
 		'consentText'  => (string) ( $s['consent_text'] ?? '' ),
 		'consentUrl'   => esc_url_raw( (string) ( $s['consent_url'] ?? '' ) ),
 		'stockUrl'     => esc_url_raw( (string) ( $s['stock_page_url'] ?? '' ) ),
+		// お客様が今見ている車（在庫ページ）のID。単一の portfolio 表示中のみ。
+		'pageCarId'    => ( function_exists( 'is_singular' ) && is_singular( 'portfolio' ) ) ? (int) get_queried_object_id() : 0,
 	);
 	return array_merge( $cfg, $extra );
 }

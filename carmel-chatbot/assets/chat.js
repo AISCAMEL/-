@@ -141,7 +141,34 @@
 			return;
 		}
 
+		// メール等からの遷移（?ccb=open / #chat / #ccb）ならチャットを自動で開く
+		if (wantsAutoOpen()) {
+			interacted = true; markSeen();
+			opened = true; win.hidden = false;
+			var oroot = document.getElementById("carmel-cb-root");
+			if (oroot) oroot.classList.add("is-open");
+			launcher.style.display = "none";
+			startChat();
+			// URLの ?ccb=open は消しておく（リロードで再オープンしないように）
+			try {
+				if (window.history && history.replaceState && /[?&]ccb=open\b/.test(location.search)) {
+					var clean = location.href.replace(/([?&])ccb=open\b&?/, "$1").replace(/[?&]$/, "");
+					history.replaceState(null, "", clean);
+				}
+			} catch (e) {}
+			return;
+		}
+
 		// 自動オープンは廃止：右下アイコンをタップした時だけ開く（タップのみ仕様）
+	}
+
+	// メールなどからの「チャットを開く」指定があるか
+	function wantsAutoOpen() {
+		try {
+			if (/[?&]ccb=open\b/.test(location.search)) return true;
+			if (/^#(chat|ccb|ccb-open)$/i.test(location.hash)) return true;
+		} catch (e) {}
+		return false;
 	}
 
 	// ユーザーが自分で開閉したとき：自動オープンを止め、以後セッション中は自動で開かない
@@ -400,7 +427,7 @@
 		var opts = {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ messages: history, session_id: sessionId, page: location.href })
+			body: JSON.stringify({ messages: history, session_id: sessionId, page: location.href, page_car_id: (cfg.pageCarId || 0) })
 		};
 		if (ctrl) { opts.signal = ctrl.signal; }
 
