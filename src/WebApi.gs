@@ -25,7 +25,75 @@ function handleApiPost(e) {
   const action = String(e.parameter.action || '').toLowerCase();
   if (action === 'result') return jsonOutput(recordCreditorResult(e.parameter));
   if (action === 'assign') return jsonOutput(apiAssignFranchisee(e.parameter));
+  if (action === 'apply')  return jsonOutput(applyFromLiff(e.parameter));
   return jsonOutput({ ok: false, error: 'unknown_action' });
+}
+
+// LIFF申込アプリからの新規申込を受け付け、案件登録＋スコアリング＋信販提案を行い、
+// 結果（スコア・ランク・月々目安）を返す。LINE userId を確実に保存する。
+function applyFromLiff(params) {
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) return { ok: false, error: 'busy' };
+  try {
+    const config = getConfig();
+    const ss = SpreadsheetApp.openById(config.SPREADSHEET.ID);
+    const sheet = ss.getSheetByName(config.SPREADSHEET.SHEETS.LOAN);
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
+    const uid  = String(params.userId || '').trim();
+    const name = String(params.name || '').trim();
+    if (!uid)  return { ok: false, error: 'no_userid' };
+    if (!name) return { ok: false, error: 'no_name' };
+
+    const jijou = String(params.jijou || '');
+    const ty = String(params.ty || '0'), tm = String(params.tm || '0');
+    const caseId = 'LOAN-' + uid.slice(-8) + '-' + Utilities.formatDate(new Date(), 'Asia/Tokyo', 'MMddHHmm');
+
+    const dataMap = {
+      '申込番号':       caseId,
+      '受付日時':       new Date(),
+      'ステータス':     '書類確認中',
+      '契約者種別':     '個人',
+      '顧客名':         name,
+      '生年月日':       String(params.birth || ''),
+      '電話番号':       String(params.tel || ''),
+      'LINE_ID':        uid,
+      '郵便番号':       String(params.zip || ''),
+      '住所':           String(params.addr || ''),
+      '雇用形態':       String(params.emp || ''),
+      '勤続年数':       ty + '年' + tm + 'ヶ月',
+      '年収':           String(params.income || '') + '万円',
+      '月額支払い可能額': String(params.pay || ''),
+      '他社借入総額':   String(params.other || ''),
+      '直近6ヶ月審査数': String(params.shinsa || '0'),
+      '信用情報':       jijou,
+      '債務整理歴':     jijou.indexOf('債務整理') !== -1 ? '債務整理' : '',
+      '自己破産歴':     jijou.indexOf('自己破産') !== -1 ? '自己破産' : '',
+      '滞納履歴':       jijou,
+      '頭金有無':       String(params.down) === '1' ? '頭金あり' : '頭金なし',
+      '住居状況':       String(params.house || ''),
+      '保証人有無':     String(params.guar) === '1' ? 'はい' : 'いいえ',
+      '購入予定車両':   String(params.car || ''),
+      '登録日時':       new Date()
+    };
+
+    sheet.appendRow(buildRowFromMap(headers, dataMap));
+    const lastRow = sheet.getLastRow();
+    const sc = runScoring(lastRow);          // スコア・ランク算出（既存）
+    proposeCreditors(lastRow);               // 打診信販の自動提案（既存）
+
+    return {
+      ok: true,
+      caseId: caseId,
+      score:  sc ? sc.score : null,
+      rank:   sc ? sc.rank : null,
+      monthly: sc ? sc.monthly : null
+    };
+  } catch(err) {
+    return { ok: false, error: String(err) };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function apiAuthorized(e) {
