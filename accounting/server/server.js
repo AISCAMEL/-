@@ -78,7 +78,8 @@ const server = http.createServer(async (req, res) => {
   /* ---- 取込Webhook（外部システム→会計アプリの受信キュー） ------------
    * 外部（GAS・スクリプト・決済/カードのwebhook等）が取引データをPOSTし、
    * 会計アプリ側が pull で取り込む。items は {date, description, amount, dir?,
-   * account?, tax?} の配列。dir 省略時は amount の符号で判定。
+   * account?, tax?, counter?, auto?} の配列。dir 省略時は amount の符号で判定。
+   * counter=相手勘定、auto=true は（相手勘定・金額が揃った明細のみ）自動計上対象。
    * ------------------------------------------------------------------- */
   if (url === '/api/inbox' && req.method === 'POST') {
     const body = await readBody(req);
@@ -94,7 +95,9 @@ const server = http.createServer(async (req, res) => {
     rec.inbox = (rec.inbox || []).concat(items.map((it) => ({
       date: String(it.date || ''), description: String(it.description || it.desc || ''),
       amount: Number(it.amount) || 0, dir: it.dir || null,
-      account: it.account || null, tax: it.tax || null, receivedAt: Date.now(),
+      account: it.account || null, tax: it.tax || null,
+      counter: it.counter || null, auto: it.auto === true || undefined,
+      receivedAt: Date.now(),
     })));
     writeWs(body.workspace, rec);
     return send(res, 200, { queued: items.length, total: rec.inbox.length });

@@ -85,13 +85,22 @@ WORKSPACE=aizu-2026 TOKEN=合言葉 node server/connectors/paypal.js
 ## Gmail コネクタ（`gmail.js`）
 
 指定した**送信元ルール**に一致するメールを Gmail から取得し、会計アプリの
-取込Webhook（`/api/inbox`）へ**下書き仕訳**を投入します。開いていない間も
-サーバーが定期的にメールを確認して下書きを作り、アプリの取込画面で
-確認・計上する運用（**承認制**）です。合同会社アイズでは主に
-**USSオークションの精算書メール**を対象にしています。
+取込Webhook（`/api/inbox`）へ仕訳データを投入します。開いていない間も
+サーバーが定期的にメールを確認して仕訳（または下書き）を作ります。
+合同会社アイズでは主に **USSオークションの精算書メール**を対象にしています。
+
+処理の流れ：
+
+1. 送信元ルールに一致するメールを検知
+2. **金額を読み取る**：件名・本文 → 無ければ**添付PDFを復号して読み取り**（パスワード対応）
+3. 計上方式：
+   - 既定は**承認制**（取込画面で人が確認して計上）
+   - ルールに `autopost:true` と相手勘定 `counter` を設定した送信元は、
+     金額を確実に読めた明細だけ**自動計上**（`auto` フラグ）
 
 ```bash
 GMAIL_CLIENT_ID=xxx GMAIL_CLIENT_SECRET=yyy GMAIL_REFRESH_TOKEN=zzz \
+GMAIL_PDF_PASSWORDS=12345 \
 SYNC_URL=http://localhost:8787 WORKSPACE=aizu-2026 TOKEN=合言葉 \
 node server/connectors/gmail.js
 ```
@@ -115,6 +124,7 @@ node server/connectors/gmail.js
 | `SYNC_URL` | `http://localhost:8787` | 同期サーバーのURL |
 | `WORKSPACE` / `TOKEN` | （必須/任意） | 会計アプリと同じワークスペース・トークン |
 | `GMAIL_RULES` | 下記の既定ルール | 取込ルール（JSON）。上書き可 |
+| `GMAIL_PDF_PASSWORDS` | （任意） | 添付PDFのパスワード。カンマ区切りで複数可（例 USS会員番号 `12345`）。上から順に試します |
 | `GMAIL_API_BASE` / `GOOGLE_OAUTH_BASE` | Google 本番 | テスト用に差し替え可 |
 
 ### 取込ルール（`GMAIL_RULES`）
@@ -128,20 +138,52 @@ node server/connectors/gmail.js
 ]
 ```
 
-- `from`：送信元アドレスの部分一致（ドメインでOK）
-- `account`：勘定科目コード（例 `500`＝仕入高）／`tax`：税区分／`dir`：`in`（入金）or `out`（出金）
-- `label`：摘要に付く分類名
-- 複数ルールを並べれば、希望ナンバー・PayPay・その他固定費メールも追加できます。
+複数の送信元を並べれば、希望ナンバー・PayPay・その他固定費メールも追加できます（例）：
 
-### 金額の推定と承認制
+```json
+[
+  { "from": "ussnet.co.jp", "account": "500", "tax": "purchase10", "dir": "out",
+    "label": "USSオークション精算", "pdfPassword": "12345", "autopost": true, "counter": "110" },
+  { "from": "kibou-number@example.jp", "account": "540", "tax": "purchase10", "dir": "out",
+    "label": "希望ナンバー手数料" },
+  { "from": "paypay.ne.jp", "account": "540", "tax": "purchase10", "dir": "out",
+    "label": "PayPay固定費" }
+]
+```
 
-- 件名・スニペットに **`¥1,250,000` や `1,250,000 円`** のような通貨表記があれば金額を推定します。
-  年号（2026）や日付は誤検出しないよう、通貨記号かカンマ区切りを伴う数値だけを候補にします。
-- **USS の精算書は金額が添付PDF内**にあることが多く、その場合は**金額0の下書き**として投入します。
-  取込画面でPDFを確認して金額を入力してください。
-- ⚠️ **USSの精算書PDFはパスワード保護**（会員番号5桁）されている場合があります。
-  自動でのPDF金額読み取り（OCR）を行うには、別途パスワードの受け渡し設定が必要です。
-  現状は「メールを検知 → 日付・件名・科目つきの下書きを自動作成 → 人が金額を確認して計上」までを自動化します。
+| フィールド | 必須 | 説明 |
+|-----------|------|------|
+| `from` | ✓ | 送信元アドレスの部分一致（ドメインでOK） |
+| `account` | ✓ | 勘定科目コード（例 `500`＝仕入高、`540`＝支払手数料） |
+| `tax` | | 税区分（`purchase10` など） |
+| `dir` | | `in`（入金）or `out`（出金） |
+| `label` | | 摘要に付く分類名 |
+| `pdfPassword` | | この送信元の添付PDFパスワード（`GMAIL_PDF_PASSWORDS` でも可） |
+| `autopost` | | `true` かつ `counter` 指定時、金額を確実に読めた明細を自動計上対象にする |
+| `counter` | | 自動計上時の相手勘定（支払元の口座 `110` や 未払金 `210` など） |
+
+### 金額の読み取り（本文＋添付PDF）
+
+1. **件名・本文**に `¥1,250,000` や `1,250,000 円` のような通貨表記があれば金額を推定。
+   年号（2026）や日付は誤検出しないよう、通貨記号かカンマ区切りを伴う数値だけを候補にします。
+2. 本文に金額が無い場合、**添付PDF**を取得し、`GMAIL_PDF_PASSWORDS` / ルールの `pdfPassword`
+   （空パスワードも自動で試行）で**復号してテキストから金額を読み取り**ます。
+   - 復号は `pdfextract.js`（依存ゼロ・Node標準の crypto/zlib のみ）で実装。
+     標準セキュリティハンドラ **RC4（R2/R3）・AESV2（R4）・AESV3（R6）** に対応。
+   - ⚠️ スキャン画像だけのPDF、または数字を独自エンコーディングで埋め込むフォントの場合は
+     テキストが取れないことがあります。その場合は**金額0の下書き**として投入し、
+     取込画面でPDFを確認して金額を入力してください（安全側フォールバック）。
+   - USSの精算書パスワードは**会員番号5桁**です。`GMAIL_PDF_PASSWORDS=12345` のように設定します。
+
+### 計上方式（承認制 / 自動計上）
+
+- **既定は承認制**：受信データは取込画面「📥 受信データを取得」で一覧確認 → 人が計上。
+- **自動計上**：ルールに `autopost:true` と `counter`（相手勘定）を設定した送信元は、
+  **金額を確実に読み取れた明細だけ** `auto` フラグ付きで投入されます。取込画面で
+  「受信データを取得」した時点で、その明細は自動で仕訳計上され、残り（金額0や
+  `counter` 未設定など）は従来どおり確認待ちの一覧に表示されます。
+  - 例）USS精算書を「仕入高500 ／ 普通預金110」で自動計上するには
+    `"autopost": true, "counter": "110"`。相手勘定を後日精算にするなら `"counter": "210"`（未払金）。
 
 ### 重複防止・定期実行
 
@@ -149,13 +191,15 @@ node server/connectors/gmail.js
 - cron 例（1時間ごと）：
 
 ```cron
-0 * * * * cd /path/to/app && GMAIL_CLIENT_ID=xxx GMAIL_CLIENT_SECRET=yyy GMAIL_REFRESH_TOKEN=zzz SYNC_URL=http://localhost:8787 WORKSPACE=aizu-2026 TOKEN=合言葉 node server/connectors/gmail.js >> /var/log/kaikei-gmail.log 2>&1
+0 * * * * cd /path/to/app && GMAIL_CLIENT_ID=xxx GMAIL_CLIENT_SECRET=yyy GMAIL_REFRESH_TOKEN=zzz GMAIL_PDF_PASSWORDS=12345 SYNC_URL=http://localhost:8787 WORKSPACE=aizu-2026 TOKEN=合言葉 node server/connectors/gmail.js >> /var/log/kaikei-gmail.log 2>&1
 ```
 
-## 共通ライブラリ（`_lib.js`）
+## 共通ライブラリ（`_lib.js` / `pdfextract.js`）
 
-HTTP・金額換算（ゼロデシマル通貨対応）・カーソル・`/api/inbox` 投入・
-「売上＋手数料」生成を共通化しています。各コネクタはこれを利用します。
+- `_lib.js`：HTTP・金額換算（ゼロデシマル通貨対応）・金額推定（`guessAmount`）・
+  カーソル・`/api/inbox` 投入・「売上＋手数料」生成を共通化。各コネクタが利用します。
+- `pdfextract.js`：パスワード保護PDFのテキスト抽出（依存ゼロ、Node標準の crypto/zlib のみ）。
+  標準セキュリティハンドラの RC4 / AESV2 / AESV3 に対応。Gmail コネクタの添付PDF読取で使用。
 
 ## 他サービスのコネクタを作るには
 

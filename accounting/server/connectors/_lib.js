@@ -37,6 +37,19 @@ const ZERO_DECIMAL = new Set(['jpy', 'krw', 'clp', 'vnd', 'bif', 'djf', 'gnf', '
 const minorToYen = (amount, cur) => (ZERO_DECIMAL.has((cur || 'jpy').toLowerCase()) ? Math.round(amount) : Math.round(amount / 100));
 const majorToYen = (value) => Math.round(parseFloat(value) || 0); // 主要単位（JPYはそのまま円）
 
+// テキストから金額（¥/円/カンマ区切り）を推定。年号・日付の誤検出を避けるため、
+// 通貨記号かカンマ区切りを伴う数値のみを候補にし、最大値を採用する。
+const guessAmount = (text) => {
+  const s = String(text || '');
+  const cands = [];
+  let m;
+  const reMarked = /(?:[¥￥]\s?([\d,]{2,})|([\d,]{2,})\s?円)/g;
+  while ((m = reMarked.exec(s))) { const n = Number((m[1] || m[2]).replace(/,/g, '')); if (n) cands.push(n); }
+  const reGrouped = /(?:^|[^\d.])(\d{1,3}(?:,\d{3})+)(?![\d.])/g;
+  while ((m = reGrouped.exec(s))) { const n = Number(m[1].replace(/,/g, '')); if (n) cands.push(n); }
+  return cands.length ? Math.max(...cands) : 0;
+};
+
 const readCursor = (f) => { try { return fs.readFileSync(f, 'utf8').trim(); } catch (e) { return ''; } };
 const writeCursor = (f, v) => fs.writeFileSync(f, String(v));
 
@@ -61,4 +74,4 @@ const salesAndFee = (cfg, date, desc, gross, fee, tag) => {
   return items;
 };
 
-module.exports = { request, getJson, postJson, postForm, ymd, ymdUnix, ymdIso, minorToYen, majorToYen, readCursor, writeCursor, cfgBase, postInbox, salesAndFee };
+module.exports = { request, getJson, postJson, postForm, ymd, ymdUnix, ymdIso, minorToYen, majorToYen, guessAmount, readCursor, writeCursor, cfgBase, postInbox, salesAndFee };

@@ -216,10 +216,32 @@ window.A = window.A || {};
           const base = toItem(x.date || U.today(), x.description || x.desc || '', dir, Number(x.amount) || 0, preset);
           if (x.account) base.account = x.account;
           if (x.tax) base.tax = x.tax;
+          if (x.counter) base.counter = x.counter;
+          if (x.auto) base.auto = true;
           return base;
         });
-        renderPreview(previewBox, items, preset);
-        ui.toast(`${items.length}件を受信しました`, 'ok');
+
+        // 自動計上（auto）：相手勘定・科目・金額がそろった明細だけを自動で仕訳に計上
+        const autos = items.filter((it) => it.auto && it.amount > 0 && it.account && it.counter);
+        let autoPosted = 0;
+        if (autos.length) {
+          const journals = autos.map((it) => ({
+            source: 'import', date: it.date, description: it.desc,
+            lines: it.dir === 'out'
+              ? [{ side: 'debit', account: it.account, tax: it.tax, amount: it.amount }, { side: 'credit', account: it.counter, tax: 'out', amount: it.amount }]
+              : [{ side: 'debit', account: it.counter, tax: 'out', amount: it.amount }, { side: 'credit', account: it.account, tax: it.tax, amount: it.amount }],
+          }));
+          await S.journals.saveMany(journals);
+          autoPosted = journals.length;
+        }
+
+        // 残り（承認制の下書き）はプレビューで確認して計上
+        const review = items.filter((it) => !(it.auto && it.amount > 0 && it.account && it.counter));
+        if (review.length) renderPreview(previewBox, review, preset);
+        else previewBox.innerHTML = '';
+
+        if (autoPosted) ui.toast(`自動計上 ${autoPosted}件、確認待ち ${review.length}件を受信しました`, 'ok');
+        else ui.toast(`${items.length}件を受信しました`, 'ok');
       } catch (e) { ui.toast(e.message, 'err'); }
     };
 
