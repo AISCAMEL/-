@@ -476,6 +476,11 @@ function carmel_cb_handle_handoff_upload( WP_REST_Request $request ) {
 	$saved = carmel_cb_store_upload_bits( $name, $bits );
 	if ( ! $saved ) { return new WP_REST_Response( array( 'ok' => false, 'error' => 'save_error' ), 200 ); }
 
+	// 履歴にお客様の添付を残す
+	if ( function_exists( 'carmel_cb_log_media' ) ) {
+		carmel_cb_log_media( $sid, 'user', $saved['url'], $saved['name'], carmel_cb_is_image_name( $saved['name'] ) );
+	}
+
 	// Slackスレッドへリンク共有（画像はSlackが自動プレビュー）
 	if ( carmel_cb_slack_live_on( $s ) ) {
 		carmel_cb_slack_api( 'chat.postMessage', $s['slack_bot_token'], array(

@@ -1194,15 +1194,50 @@ function carmel_cb_view_logs() {
 		echo '<div class="ccb-card"><a href="' . esc_url( admin_url( 'admin.php?page=carmel-cb&tab=logs' ) ) . '" class="button">← 一覧へ戻る</a>';
 		echo '<h2>会話内容</h2>';
 		echo '<p class="description">お客様の質問とAIの回答を、そのまま「学習データ(FAQ)」に追加できます（内容は編集してから追加可）。</p>';
-		echo '<div class="ccb-log-thread">';
 		$arr = is_array( $msgs ) ? array_values( $msgs ) : array();
-		foreach ( $arr as $idx => $m ) {
-			$who = $m->role === 'user' ? 'お客様' : 'AI';
-			$cls = $m->role === 'user' ? 'user' : 'bot';
-			echo '<div class="ccb-log-msg ' . esc_attr( $cls ) . '"><strong>' . esc_html( $who ) . '</strong><span>' . esc_html( $m->content ) . '</span><em>' . esc_html( $m->created_at ) . '</em></div>';
 
-			// お客様の発話 → 直後のAI回答 を FAQ化するフォーム
-			if ( $m->role === 'user' ) {
+		// お客様情報（visitor行）を先頭に表示
+		foreach ( $arr as $mv ) {
+			if ( $mv->role === 'visitor' ) {
+				echo '<div class="ccb-card" style="background:#f0f6ff;border:1px solid #cfe0f5"><strong>お客様情報</strong>　' . esc_html( $mv->content ) . '</div>';
+				break;
+			}
+		}
+
+		// 役割ラベル・メディア描画のヘルパー
+		$role_label = function ( $role ) {
+			switch ( $role ) {
+				case 'user':      return array( 'お客様', 'user' );
+				case 'operator':  return array( '担当者', 'operator' );
+				case 'visitor':   return array( 'お客様情報', 'visitor' );
+				default:          return array( 'AI（みほ）', 'bot' );
+			}
+		};
+		$render_content = function ( $content ) {
+			$content = (string) $content;
+			if ( strpos( $content, '[IMG]' ) === 0 || strpos( $content, '[FILE]' ) === 0 ) {
+				$is_img = strpos( $content, '[IMG]' ) === 0;
+				$rest   = substr( $content, $is_img ? 5 : 6 );
+				$parts  = explode( '|', $rest, 2 );
+				$url    = $parts[0];
+				$fname  = isset( $parts[1] ) ? $parts[1] : 'ファイル';
+				if ( $is_img ) {
+					return '<a href="' . esc_url( $url ) . '" target="_blank" rel="noopener"><img src="' . esc_url( $url ) . '" alt="" style="max-width:220px;max-height:220px;border-radius:8px;display:block"></a>';
+				}
+				return '📎 <a href="' . esc_url( $url ) . '" target="_blank" rel="noopener">' . esc_html( $fname ) . '</a>';
+			}
+			return nl2br( esc_html( $content ) );
+		};
+
+		echo '<div class="ccb-log-thread">';
+		foreach ( $arr as $idx => $m ) {
+			if ( $m->role === 'visitor' ) { continue; } // 先頭で表示済み
+			list( $who, $cls ) = $role_label( $m->role );
+			echo '<div class="ccb-log-msg ' . esc_attr( $cls ) . '"><strong>' . esc_html( $who ) . '</strong><span>' . $render_content( $m->content ) . '</span><em>' . esc_html( $m->created_at ) . '</em></div>';
+
+			$is_media = ( strpos( (string) $m->content, '[IMG]' ) === 0 || strpos( (string) $m->content, '[FILE]' ) === 0 );
+			// お客様の発話 → 直後のAI回答 を FAQ化するフォーム（メディア行は除く）
+			if ( $m->role === 'user' && ! $is_media ) {
 				$ans = '';
 				for ( $j = $idx + 1; $j < count( $arr ); $j++ ) {
 					if ( $arr[ $j ]->role === 'assistant' ) { $ans = $arr[ $j ]->content; break; }
@@ -1229,16 +1264,29 @@ function carmel_cb_view_logs() {
 	?>
 	<div class="ccb-card">
 		<h2>会話セッション一覧</h2>
-		<p class="description">お客様がどんな質問をしているかを確認し、FAQやプロンプトの改善に役立ててください。</p>
+		<p class="description">お客様がどんな質問をしているかを確認し、FAQやプロンプトの改善に役立ててください。<br>
+		<strong>状態</strong>欄：会話が1往復で止まっていないか等の目安です。<span style="color:#c0392b">AI応答なし</span>が多い場合はAIの応答に問題がある可能性があります。</p>
 		<table class="widefat striped">
-			<thead><tr><th>開始日時</th><th>メッセージ数</th><th>操作</th></tr></thead>
+			<thead><tr><th>開始日時</th><th>お客様</th><th>やりとり</th><th>状態</th><th>操作</th></tr></thead>
 			<tbody>
 			<?php if ( empty( $sessions ) ) : ?>
-				<tr><td colspan="3">まだ会話ログがありません。</td></tr>
-			<?php else : foreach ( $sessions as $sx ) : ?>
+				<tr><td colspan="5">まだ会話ログがありません。</td></tr>
+			<?php else : foreach ( $sessions as $sx ) :
+				$u  = (int) $sx->user_msgs; $ai = (int) $sx->ai_msgs; $op = (int) $sx->op_msgs;
+				// お客様名（visitor_info の「お名前: 〇〇 / …」から抽出）
+				$nm = '';
+				if ( ! empty( $sx->visitor_info ) && preg_match( '/お名前:\s*([^\/]+)/u', $sx->visitor_info, $mm ) ) { $nm = trim( $mm[1] ); }
+				// 状態の判定
+				if ( $u > 0 && $ai === 0 && $op === 0 ) { $state = '<span style="color:#c0392b;font-weight:700">AI応答なし</span>'; }
+				elseif ( $op > 0 ) { $state = '<span style="color:#0b7">担当者対応あり</span>'; }
+				elseif ( $u <= 1 ) { $state = '<span style="color:#888">1往復で終了</span>'; }
+				else { $state = '<span style="color:#0a66c2">会話継続（' . $u . '往復前後）</span>'; }
+			?>
 				<tr>
 					<td><?php echo esc_html( $sx->started ); ?></td>
-					<td><?php echo (int) $sx->msgs; ?></td>
+					<td><?php echo $nm !== '' ? esc_html( $nm ) : '<span style="color:#aaa">—</span>'; ?></td>
+					<td>お客様 <?php echo $u; ?> ／ AI <?php echo $ai; ?><?php echo $op ? ' ／ 担当 ' . $op : ''; ?></td>
+					<td><?php echo $state; // 安全な固定HTMLのみ ?></td>
 					<td><a href="<?php echo esc_url( admin_url( 'admin.php?page=carmel-cb&tab=logs&session=' . urlencode( $sx->session_id ) ) ); ?>" class="button button-small">表示</a></td>
 				</tr>
 			<?php endforeach; endif; ?>

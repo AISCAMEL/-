@@ -456,12 +456,26 @@ function carmel_cb_log( $session_id, $role, $content ) {
 		'content'  => $content,
 	) );
 }
+/** 画像・ファイルの送受信も履歴に残す。role: user（お客様）/ operator（担当者）。 */
+function carmel_cb_log_media( $session_id, $role, $url, $name = '', $is_image = false ) {
+	$url = trim( (string) $url );
+	if ( $url === '' ) { return; }
+	$tag = $is_image ? '[IMG]' : '[FILE]';
+	carmel_cb_log( $session_id, $role, $tag . $url . '|' . $name );
+}
 function carmel_cb_get_log_sessions( $limit = 50 ) {
 	global $wpdb;
 	$t = $wpdb->prefix . CARMEL_CB_LOG_TABLE;
 	$limit = (int) $limit;
 	return $wpdb->get_results(
-		"SELECT session_id, MIN(created_at) AS started, COUNT(*) AS msgs
+		"SELECT session_id,
+		        MIN(created_at) AS started,
+		        MAX(created_at) AS last_at,
+		        COUNT(*) AS msgs,
+		        SUM(role='user') AS user_msgs,
+		        SUM(role='assistant') AS ai_msgs,
+		        SUM(role='operator') AS op_msgs,
+		        MAX(CASE WHEN role='visitor' THEN content END) AS visitor_info
 		 FROM $t GROUP BY session_id ORDER BY started DESC LIMIT $limit"
 	);
 }

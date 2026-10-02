@@ -94,6 +94,13 @@ function carmel_cb_convo_poll( $s, $sid ) {
 		if ( ! empty( $m['files'] ) && is_array( $m['files'] ) && function_exists( 'carmel_cb_slack_download_files' ) ) {
 			$item['files'] = carmel_cb_slack_download_files( $s, $m['files'] );
 		}
+		// 履歴に担当者メッセージ・画像を残す
+		if ( function_exists( 'carmel_cb_log' ) ) {
+			if ( $item['text'] !== '' ) { carmel_cb_log( $sid, 'operator', $item['text'] ); }
+			foreach ( $item['files'] as $f ) {
+				carmel_cb_log_media( $sid, 'operator', $f['url'] ?? '', $f['name'] ?? '', ! empty( $f['isImage'] ) );
+			}
+		}
 		$out[] = $item;
 		$last = $m['ts'];
 	}
@@ -182,6 +189,11 @@ function carmel_cb_handle_visitor( WP_REST_Request $request ) {
 	// セッションに保存（会話ミラー／担当者引き継ぎでお客様名を表示するために使う）
 	set_transient( carmel_cb_visitor_key( $sid ), array( 'name' => $name, 'email' => $email, 'page' => $page ), 3 * HOUR_IN_SECONDS );
 
+	// 履歴にお客様情報を残す（会話ログの先頭に表示できるように）。同一セッションで1回だけ。
+	if ( function_exists( 'carmel_cb_log' ) ) {
+		carmel_cb_log( $sid, 'visitor', 'お名前: ' . $name . ' / メール: ' . $email . ( $page ? ' / ページ: ' . $page : '' ) );
+	}
+
 	// 通知：Bot（双方向）ならスレッド冒頭にお客様情報。それとは別に、管理者通知フック発火。
 	if ( carmel_cb_slack_live_on( $s ) ) {
 		carmel_cb_convo_ensure( $s, $sid, $page, carmel_cb_within_hours( $s ) ? '（営業時間内）' : '（営業時間外）' );
@@ -204,6 +216,8 @@ function carmel_cb_handle_convo_send( WP_REST_Request $request ) {
 	$b = $request->get_json_params();
 	$sid = sanitize_text_field( $b['session_id'] ?? '' );
 	$text = sanitize_textarea_field( $b['text'] ?? '' );
+	// 担当者対応中のお客様発言も履歴に残す（AI経由ではないためここでログ）
+	if ( $text !== '' && function_exists( 'carmel_cb_log' ) ) { carmel_cb_log( $sid, 'user', $text ); }
 	$ok  = carmel_cb_slack_live_on( $s ) ? carmel_cb_convo_relay( $s, $sid, $text ) : false;
 	return new WP_REST_Response( array( 'ok' => (bool) $ok ), 200 );
 }
