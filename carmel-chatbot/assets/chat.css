@@ -393,6 +393,14 @@ textarea.ccb-li { resize: vertical; min-height: 44px; }
 	.ccb-intro-overlay { padding: 18px 16px 20px; }
 	.ccb-intro-title { font-size: 17px; }
 	.ccb-intro-sub { font-size: 12.5px; }
+
+	/* スマホ：吹き出しを小さめ＆コンパクトにして読みやすく */
+	#carmel-cb-messages { padding: 12px; }
+	.ccb-msg { margin-bottom: 9px; }
+	.ccb-bubble { max-width: 90%; padding: 9px 12px; font-size: 13.5px; line-height: 1.55; border-radius: 12px; }
+	.ccb-choices .ccb-choice, .ccb-starter-btn { font-size: 12.5px; padding: 8px 12px; }
+	.ccb-car-title { font-size: 12.5px; }
+	.ccb-reassure, .ccb-app-info { font-size: 12px; }
 }
 
 /* ===== 直リンク/埋め込み版（フルページ・iframe内） ===== */
