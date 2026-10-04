@@ -530,6 +530,10 @@ function carmel_cb_parse_ai( $content ) {
 	$reply = $content;
 	if ( preg_match( '/"reply"\s*:\s*"((?:\\\\.|[^"\\\\])*)"/s', $content, $rm ) ) {
 		$reply = stripcslashes( $rm[1] );
+	} elseif ( preg_match( '/"reply"\s*:\s*"((?:\\\\.|[^"\\\\])*)$/s', $content, $rm2 ) ) {
+		// 返答が途中で切れて閉じ引用符が無い場合も本文を拾う（max_tokens到達対策）
+		$reply = stripcslashes( $rm2[1] );
+		$reply = preg_replace( '/[",]\s*"?(?:suggestions|cta|action|car_ids).*$/su', '', $reply );
 	} else {
 		// 最初に現れる { や "suggestions"/"cta"/"car_ids" の手前までを本文とする
 		$parts = preg_split( '/\s*[{}]|\s*"(?:suggestions|cta|action|car_ids)"\s*:/u', $content );
@@ -631,7 +635,9 @@ function carmel_cb_call_openrouter( $s, $messages, $model ) {
 		'body' => wp_json_encode( array(
 			'model'      => $model,
 			'messages'   => $messages,
-			'max_tokens' => (int) $s['max_tokens'],
+			// JSON形式（reply+suggestions+action+car_ids）が途中で切れると壊れて会話が止まるため、
+			// 日本語の返答が収まるよう下限を確保する（設定値が小さくても最低800）。
+			'max_tokens' => max( 800, (int) $s['max_tokens'] ),
 		) ),
 	) );
 
