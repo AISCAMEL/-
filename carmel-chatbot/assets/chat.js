@@ -127,9 +127,13 @@
 			if (ic) ic.addEventListener("click", function (e) { e.stopPropagation(); userToggle(); });
 		}
 
-		// 前回の会話を復元（3日以内なら自動で続きから）
-		var saved = loadState();
-		if (saved) { restoreState(saved); }
+		// メールの「続きを開く」リンク（?ccb_sid=…&ccb_t=…）なら、その会話を復元して開く。
+		// 無ければブラウザ保存（localStorage）から復元。
+		var resumedFromLink = resumeFromLink();
+		if (!resumedFromLink) {
+			var saved = loadState();
+			if (saved) { restoreState(saved); }
+		}
 
 		// 直リンク/埋め込み版：ランチャーもイントロ動画も出さず、すぐにチャット画面を表示。
 		if (cfg.standalone) {
@@ -143,7 +147,7 @@
 		}
 
 		// メール等からの遷移（?ccb=open / #chat / #ccb）ならチャットを自動で開く
-		if (wantsAutoOpen()) {
+		if (!resumedFromLink && wantsAutoOpen()) {
 			interacted = true; markSeen();
 			opened = true; win.hidden = false;
 			var oroot = document.getElementById("carmel-cb-root");
@@ -161,6 +165,59 @@
 		}
 
 		// 自動オープンは廃止：右下アイコンをタップした時だけ開く（タップのみ仕様）
+	}
+
+	// URLクエリから値を取り出す
+	function getQ(k) {
+		try { var m = new RegExp("[?&]" + k + "=([^&]*)").exec(location.search); return m ? decodeURIComponent(m[1].replace(/\+/g, " ")) : ""; }
+		catch (e) { return ""; }
+	}
+
+	// チャット窓を開く（共通）
+	function openChatWindow() {
+		interacted = true; try { markSeen(); } catch (e) {}
+		opened = true; win.hidden = false;
+		var r = document.getElementById("carmel-cb-root"); if (r) r.classList.add("is-open");
+		launcher.style.display = "none";
+		win.classList.add("is-started");
+	}
+
+	// メールの「続きを開く」リンクから、その会話をサーバーの履歴で復元して開く
+	function resumeFromLink() {
+		var sid = getQ("ccb_sid"), t = getQ("ccb_t");
+		if (!sid || !t || !cfg.historyUrl) { return false; }
+		sessionId = sid; chatStarted = true; greeted = true;
+		openChatWindow();
+		var loading = addBubble("bot", "前回の会話を読み込んでいます…");
+		fetch(cfg.historyUrl + "?sid=" + encodeURIComponent(sid) + "&t=" + encodeURIComponent(t))
+			.then(function (r) { return r.json(); })
+			.then(function (d) {
+				if (loading && loading.parentNode) { loading.parentNode.remove(); }
+				if (!d || !d.ok) { addBubble("bot", "チャットを再開しました。続けてご相談ください。"); focusInput(); return; }
+				var sep = document.createElement("div"); sep.className = "ccb-resume-sep"; sep.innerHTML = "<span>前回の続きから</span>"; msgBox.appendChild(sep);
+				(d.messages || []).forEach(function (m) {
+					if (!m || !m.content) { return; }
+					if (m.role === "operator") { addOperator(m.content); }
+					else if (m.role === "user") { addBubble("user", m.content); history.push({ role: "user", content: m.content }); }
+					else { addBubble("bot", m.content); history.push({ role: "assistant", content: m.content }); }
+				});
+				addBubble("bot", "続きからご相談いただけます。担当者が入り次第、このチャットに表示されます。");
+				saveState();
+				startConvoPoll();
+				focusInput();
+			})
+			.catch(function () {
+				if (loading && loading.parentNode) { loading.parentNode.remove(); }
+				addBubble("bot", "チャットを再開しました。続けてご相談ください。"); focusInput();
+			});
+		// URLからトークンを消す（リロードで再取得しないように）
+		try {
+			if (window.history && window.history.replaceState) {
+				var clean = location.href.replace(/([?&])ccb_sid=[^&]*/, "$1").replace(/([?&])ccb_t=[^&]*/, "$1").replace(/([?&])ccb=open\b/, "$1").replace(/[?&]+$/, "").replace(/([?&])&+/g, "$1");
+				window.history.replaceState(null, "", clean);
+			}
+		} catch (e) {}
+		return true;
 	}
 
 	// メールなどからの「チャットを開く」指定があるか

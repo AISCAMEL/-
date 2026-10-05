@@ -73,6 +73,7 @@ function carmel_cb_js_config( $s, $extra = array() ) {
 		'soundOn'         => ! empty( $s['sound_on'] ),
 		'awayEmailOn'     => ! empty( $s['away_email_on'] ),
 		'awayNotifyUrl'   => esc_url_raw( rest_url( 'carmel-cb/v1/away-notify' ) ),
+		'historyUrl'      => esc_url_raw( rest_url( 'carmel-cb/v1/history' ) ),
 		'convoPollUrl'    => esc_url_raw( rest_url( 'carmel-cb/v1/convo/poll' ) ),
 		'convoSendUrl'    => esc_url_raw( rest_url( 'carmel-cb/v1/convo/send' ) ),
 		'convoHandoffUrl' => esc_url_raw( rest_url( 'carmel-cb/v1/convo/handoff' ) ),

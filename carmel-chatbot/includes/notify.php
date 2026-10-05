@@ -130,10 +130,15 @@ add_action( 'carmel_cb_apply_click_recorded', function ( $email, $name, $sid, $p
 
 // ③ 会話開始（お名前・メール入力完了）
 add_action( 'carmel_cb_convo_started', function ( $email, $name, $sid, $page ) {
+	$open = function_exists( 'carmel_cb_resume_url' ) ? carmel_cb_resume_url( $sid ) : home_url( '/?ccb=open' );
 	carmel_cb_notify_event( 'convo_started', '新しいお客様がチャットを開始', array(
 		'お名前: ' . $name,
 		'メール: ' . $email,
 		'ページ: ' . $page,
+		'',
+		'▼ この会話をチャットで開く（いつでも参加できます）',
+		$open,
+		'※ 担当者として返信する場合はSlackのスレッドからどうぞ',
 	), array( 'sid' => 'convo-start-' . $sid ) );
 }, 10, 4 );
 
@@ -141,9 +146,14 @@ add_action( 'carmel_cb_convo_started', function ( $email, $name, $sid, $page ) {
 add_action( 'carmel_cb_handoff_requested', function ( $mode, $sid, $q, $email = '' ) {
 	$evt = ( $mode === 'offhours' ) ? 'offhours_notify' : 'handoff_request';
 	$title = ( $mode === 'offhours' ) ? '営業時間外の担当者希望' : '担当者相談ボタンが押されました';
+	$open = function_exists( 'carmel_cb_resume_url' ) ? carmel_cb_resume_url( $sid ) : home_url( '/?ccb=open' );
 	carmel_cb_notify_event( $evt, $title, array(
 		'メール: ' . $email,
 		'ご相談: ' . mb_substr( (string) $q, 0, 300 ),
 		'モード: ' . $mode,
+		'',
+		'▼ この会話をチャットで開く',
+		$open,
+		'※ 担当者として返信する場合はSlackのスレッドからどうぞ',
 	), array( 'sid' => 'handoff-' . $sid ) );
 }, 10, 4 );

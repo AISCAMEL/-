@@ -120,7 +120,42 @@ add_action( 'rest_api_init', function () {
 	register_rest_route( $ns, '/convo/handoff', array( 'methods' => 'POST', 'callback' => 'carmel_cb_handle_convo_handoff', 'permission_callback' => '__return_true' ) );
 	register_rest_route( $ns, '/visitor',    array( 'methods' => 'POST', 'callback' => 'carmel_cb_handle_visitor',    'permission_callback' => '__return_true' ) );
 	register_rest_route( $ns, '/away-notify',  array( 'methods' => 'POST', 'callback' => 'carmel_cb_handle_away_notify',  'permission_callback' => '__return_true' ) );
+	register_rest_route( $ns, '/history',    array( 'methods' => 'GET', 'callback' => 'carmel_cb_handle_history',    'permission_callback' => '__return_true' ) );
 } );
+
+/** セッション復元用トークン（メールのリンクから本人の会話を開くため）。 */
+function carmel_cb_resume_token( $sid ) {
+	return substr( hash_hmac( 'sha256', 'resume|' . (string) $sid, wp_salt( 'auth' ) ), 0, 24 );
+}
+
+/** メールに載せる「会話の続きを開く」URL（?ccb=open＋セッション復元）。 */
+function carmel_cb_resume_url( $sid ) {
+	$sid = (string) $sid;
+	if ( $sid === '' ) { return home_url( '/?ccb=open' ); }
+	return home_url( '/' ) . '?ccb=open&ccb_sid=' . rawurlencode( $sid ) . '&ccb_t=' . carmel_cb_resume_token( $sid );
+}
+
+/** 署名付きでセッションの会話履歴を返す（メールのリンクから続きを復元する用）。 */
+function carmel_cb_handle_history( WP_REST_Request $r ) {
+	$sid = sanitize_text_field( $r->get_param( 'sid' ) );
+	$t   = (string) $r->get_param( 't' );
+	if ( $sid === '' || $t === '' || ! hash_equals( carmel_cb_resume_token( $sid ), $t ) ) {
+		return new WP_REST_Response( array( 'ok' => false ), 200 );
+	}
+	$rows = function_exists( 'carmel_cb_get_session_messages' ) ? carmel_cb_get_session_messages( $sid ) : array();
+	$out  = array();
+	foreach ( (array) $rows as $m ) {
+		$role = isset( $m->role ) ? $m->role : '';
+		$content = isset( $m->content ) ? (string) $m->content : '';
+		if ( $content === '' ) { continue; }
+		// 画像/ファイル行・お客様情報行は復元表示から除外（本文のやり取りのみ）
+		if ( strpos( $content, '[IMG]' ) === 0 || strpos( $content, '[FILE]' ) === 0 ) { continue; }
+		if ( $role === 'visitor' ) { continue; }
+		if ( ! in_array( $role, array( 'user', 'assistant', 'operator' ), true ) ) { continue; }
+		$out[] = array( 'role' => $role, 'content' => $content );
+	}
+	return new WP_REST_Response( array( 'ok' => true, 'messages' => $out ), 200 );
+}
 
 /**
  * 🔔 離脱中のお客様に「担当者から返信があります」メールを送る
@@ -154,10 +189,12 @@ function carmel_cb_handle_away_notify( WP_REST_Request $r ) {
 	$unsub_url = function_exists( 'carmel_cb_unsub_url' ) ? carmel_cb_unsub_url( $email ) : '';
 	$unsub_note = (string) ( $s['followup_unsub_note'] ?? '' );
 
-	$subject = (string) ( $s['away_email_subject'] ?? '【カーメル】担当者から返信があります' );
-	$body_tpl = (string) ( $s['away_email_body'] ?? "{name} 様\n\nカーメルの みほ です\n先ほどご相談中の担当者から返信が届いています。\n\n引き続きチャットで会話を続けていただけます。\n▼ チャット画面に戻る\n{page}\n\nチャット画面が閉じていた場合は、下記からもう一度お開きください。\n▼ カーメル\n{site}\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n" );
+	$chat_url = carmel_cb_resume_url( $sid ); // クリックでチャットが開き、前回の会話を復元して続きから
 
-	$vars = array( '{name}' => $name, '{page}' => $page ?: $site, '{site}' => $site, '{signature}' => $signature, '{unsubscribe_url}' => $unsub_url, '{unsub_note}' => $unsub_note );
+	$subject = (string) ( $s['away_email_subject'] ?? '【カーメル】担当者から返信があります' );
+	$body_tpl = (string) ( $s['away_email_body'] ?? "{name} 様\n\nカーメルの みほ です\n先ほどご相談中の担当者から返信が届いています。\n\n下のリンクを開くと、前回の会話の続きからご覧いただけます。\n▼ チャットの続きを開く\n{chat_url}\n\n{signature}\n\n──────────────\n{unsub_note}\n▶ {unsubscribe_url}\n" );
+
+	$vars = array( '{name}' => $name, '{page}' => $page ?: $site, '{site}' => $site, '{chat_url}' => $chat_url, '{signature}' => $signature, '{unsubscribe_url}' => $unsub_url, '{unsub_note}' => $unsub_note );
 	$subject = strtr( $subject, $vars );
 	$body  = strtr( $body_tpl, $vars );
 
