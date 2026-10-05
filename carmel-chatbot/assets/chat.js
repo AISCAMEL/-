@@ -582,12 +582,15 @@
 	function scheduleIdle() {
 		clearIdle();
 		if (idle.count >= 2) { return; } // 打診は最大2回まで（しつこくしない）
+		// 会話が止まってから再打診するまでの秒数（既定25秒）。1回目は早め、2回目は少し間を空ける。
+		var base = Math.max(10, (cfg.idleNudgeSec || 25));
+		var wait = (idle.count === 0 ? base : base * 2) * 1000;
 		idle.timer = setTimeout(function () {
 			if (!opened || convo.engaged || ho.live) { return; }
 			idle.count++;
 			addBubble("bot", "その後いかがでしょうか？ご不明な点や、気になる車・お支払いのご相談など、お気軽にどうぞ");
 			renderChoices(["審査について相談したい", "在庫・車種を見たい", "お支払い・頭金について", "担当者に相談したい"]);
-		}, 50000); // 約50秒
+		}, wait);
 	}
 
 	// 担当者に相談：会話スレッドに「担当者希望」を投げる（会話は常時ポーリング中）

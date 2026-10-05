@@ -55,6 +55,7 @@ function carmel_cb_js_config( $s, $extra = array() ) {
 		'reassureMsg'     => (string) ( $s['reassure_msg'] ?? '' ),
 		'exitPopupOn'     => ! empty( $s['exit_popup_on'] ),
 		'exitPopupMsg'    => (string) ( $s['exit_popup_msg'] ?? '' ),
+		'idleNudgeSec'    => max( 10, min( 120, (int) ( $s['idle_nudge_sec'] ?? 25 ) ) ),
 		'simOn'           => ! empty( $s['sim_on'] ),
 		'simRate'         => (float) ( $s['sim_default_rate'] ?? 12 ),
 		'simNote'         => (string) ( $s['sim_note'] ?? '' ),

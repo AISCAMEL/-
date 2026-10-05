@@ -210,6 +210,7 @@ function carmel_cb_handle_post() {
 				'reassure_msg'             => sanitize_textarea_field( wp_unslash( $_POST['reassure_msg'] ?? '' ) ),
 				'exit_popup_on'            => isset( $_POST['exit_popup_on'] ) ? 1 : 0,
 				'exit_popup_msg'           => sanitize_textarea_field( wp_unslash( $_POST['exit_popup_msg'] ?? '' ) ),
+				'idle_nudge_sec'           => max( 10, min( 120, (int) ( $_POST['idle_nudge_sec'] ?? 25 ) ) ),
 				'sim_on'                   => isset( $_POST['sim_on'] ) ? 1 : 0,
 				'sim_default_rate'         => max( 7, min( 18, (float) ( $_POST['sim_default_rate'] ?? 12 ) ) ),
 				'sim_note'                 => sanitize_textarea_field( wp_unslash( $_POST['sim_note'] ?? '' ) ),
@@ -1699,6 +1700,13 @@ function carmel_cb_view_appearance() {
 					<p><label><input type="checkbox" name="exit_popup_on" value="1" <?php checked( ! empty( $s['exit_popup_on'] ) ); ?>> <strong>離脱防止ポップ</strong>：タブを閉じる／戻る操作の直前に引き留めポップを表示（LINE誘導）</label></p>
 					<textarea name="exit_popup_msg" rows="2" class="large-text" style="font-family:inherit"><?php echo esc_textarea( $s['exit_popup_msg'] ?? '' ); ?></textarea>
 					<p class="description">1セッション1回のみ表示。LINE URL（基本設定）へ誘導します。</p>
+
+					<hr style="margin:14px 0">
+					<p><strong>会話が止まった時の再打診</strong>：お客様の操作が止まってから下記の秒数後に「その後いかがでしょうか？」と声かけ＋候補を表示します（最大2回・1回目はこの秒数、2回目はその2倍後）。</p>
+					<p><label>再打診までの秒数：
+						<input type="number" name="idle_nudge_sec" min="10" max="120" step="5" value="<?php echo (int) ( $s['idle_nudge_sec'] ?? 25 ); ?>" style="width:90px"> 秒
+					</label></p>
+					<p class="description">短いほど早く声かけします（例：15〜25秒）。10〜120秒で設定できます。</p>
 
 					<hr style="margin:14px 0">
 					<p><label><input type="checkbox" name="shinsa_on" value="1" <?php checked( ! empty( $s['shinsa_on'] ) ); ?>> <strong>審査見込み診断</strong>：9項目で「通る見込み（🟢中🟡🔴）」を自己診断できるボタンを表示</label></p>
