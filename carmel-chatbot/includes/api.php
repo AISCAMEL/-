@@ -332,10 +332,10 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
 		? carmel_cb_cards_from_ids( $parsed['car_ids'], $stock_items )
 		: array();
 
-	// 保険：お客様が「どんな車があるか見たい / 在庫を見せて / 一覧 / 車を探している」等、
-	// 明確に“見たい”と伝えているのに AI が car_ids を返さなかった場合は、
-	// サーバー側で数台を自動表示して「車が出てこない」を防ぐ（漠然とした話題では出さない）。
-	if ( empty( $cars ) && ! empty( $stock_items ) && ( carmel_cb_is_car_intent( $last_user ) || ! empty( $direct_hits ) ) ) {
+	// 保険：在庫（$stock_items）が読み込まれている＝車の話題なのに、AIが car_ids を
+	// 返さなかった場合は、サーバー側で数台を自動表示して「車が出てこない」を確実に防ぐ。
+	// （$stock_items は車の意図があるときだけ読み込まれるので、無関係な会話では出ない）
+	if ( empty( $cars ) && ! empty( $stock_items ) ) {
 		$auto = ! empty( $direct_hits )
 			? array_slice( array_map( function ( $it ) { return $it['id']; }, $direct_hits ), 0, 3 )
 			: carmel_cb_auto_pick( $stock_items, $last_user, 3 );

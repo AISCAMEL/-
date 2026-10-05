@@ -944,6 +944,34 @@ function carmel_cb_view_testchat() {
 			　プロンプトを編集したら <a href="<?php echo esc_url( admin_url( 'admin.php?page=carmel-cb&tab=prompt' ) ); ?>">応答・人格</a> で保存 → ここで再テスト、を繰り返せます。
 		</p>
 
+		<?php
+		// 🚗 在庫の認識状況（「車が出てこない」原因の切り分け用）
+		$pt_exists = post_type_exists( 'portfolio' );
+		$pf_pub    = 0;
+		if ( $pt_exists ) { $cnt = wp_count_posts( 'portfolio' ); $pf_pub = isset( $cnt->publish ) ? (int) $cnt->publish : 0; }
+		$stock_preview = function_exists( 'carmel_cb_fetch_stock' ) ? carmel_cb_fetch_stock( '', 20 ) : array();
+		$stock_count   = count( $stock_preview );
+		if ( $stock_count > 0 ) {
+			$titles = array();
+			foreach ( array_slice( $stock_preview, 0, 5 ) as $it ) { $titles[] = esc_html( $it['title'] ); }
+			echo '<div style="border:1px solid #bfe6cb;background:#eefaf2;border-radius:8px;padding:12px 14px;margin:0 0 10px">';
+			echo '<strong style="color:#1e7e45">✅ 在庫を ' . $stock_count . ' 台 認識しています</strong>（チャットはこの在庫から提案します）';
+			echo '<div style="font-size:12px;color:#555;margin-top:6px">例：' . implode( ' ／ ', $titles ) . '</div>';
+			echo '</div>';
+		} else {
+			echo '<div style="border:1px solid #f0c0c0;background:#fdeeee;border-radius:8px;padding:12px 14px;margin:0 0 10px">';
+			echo '<strong style="color:#c0392b">⚠️ 在庫を認識できていません（チャットで車を提案できません）</strong>';
+			if ( ! $pt_exists ) {
+				echo '<div style="font-size:12.5px;color:#555;margin-top:6px">原因：投稿タイプ <code>portfolio</code> が存在しません。在庫は別の仕組み（別プラグイン／別の投稿タイプ）で管理されている可能性があります。実際の在庫の投稿タイプ名を教えていただければ、チャットの読み取り先を合わせます。</div>';
+			} elseif ( $pf_pub === 0 ) {
+				echo '<div style="font-size:12.5px;color:#555;margin-top:6px">原因：公開中の <code>portfolio</code> 投稿が0件です。在庫が下書き・非公開になっていないかご確認ください。</div>';
+			} else {
+				echo '<div style="font-size:12.5px;color:#555;margin-top:6px">原因：<code>portfolio</code> の公開投稿は ' . $pf_pub . ' 件ありますが、すべて「売約・商談・終了・SOLD」等で除外されています。販売状況(stauts)の値をご確認ください。</div>';
+			}
+			echo '</div>';
+		}
+		?>
+
 		<div id="ccb-test-log" style="border:1px solid #dcdcde;border-radius:8px;background:#f6f8fa;padding:14px;height:440px;overflow-y:auto;margin:12px 0"></div>
 
 		<div style="display:flex;gap:8px;align-items:flex-end">
