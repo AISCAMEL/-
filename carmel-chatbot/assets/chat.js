@@ -641,7 +641,11 @@
 					if (d.busyMsg) { ho.busy = setTimeout(function () { if (!convo.engaged) addBubble("bot", d.busyMsg); }, d.busyMs || 15000); }
 					ho.giveup = setTimeout(function () {
 						if (convo.engaged) { return; }
-						addBubble("bot", "担当者の応答に少しお時間がかかっています。このままお待ちいただけば、担当者が入り次第このチャットに表示されます。お急ぎの場合は下記にご連絡先を残していただければ折り返します。");
+						addBubble("bot", "担当者の応答に少しお時間がかかっています。このままお待ちいただければ、担当者が入り次第このチャットに表示されます。よろしければ、それまで私（みほ）が続けてご相談を承ります。お急ぎの場合は下記にご連絡先を残していただければ折り返します。");
+						renderActionChips([
+							{ label: "AIに相談を続ける", fn: function () { addBubble("bot", "承知しました。引き続き私がお答えします。ご質問をお聞かせください。"); focusInput(); scheduleIdle(); } },
+							{ label: "↻ 最初からやり直す", fn: restartChat }
+						]);
 						showHandoffForm("notify");
 					}, d.timeout || 45000);
 				}
@@ -732,7 +736,11 @@
 	// 希望者だけ「連絡先を残す」フォームも提示する。
 	function onOperatorTimeout() {
 		if (ho.connected) return;
-		addBubble("bot", "担当者の応答に少しお時間がかかっています。このままお待ちいただけば、担当者が入り次第このチャットに表示されます。お急ぎ・お手すきでない場合は、下記にご連絡先を残していただければ折り返します。");
+		addBubble("bot", "担当者の応答に少しお時間がかかっています。このままお待ちいただければ、担当者が入り次第このチャットに表示されます。よろしければ、それまで私（みほ）が続けてご相談を承ります。お急ぎの場合は、下記にご連絡先を残していただければ折り返します。");
+		renderActionChips([
+			{ label: "AIに相談を続ける", fn: function () { stopLive(); addBubble("bot", "承知しました。引き続き私がお答えします。ご質問をお聞かせください。"); focusInput(); scheduleIdle(); } },
+			{ label: "↻ 最初からやり直す", fn: function () { stopLive(); restartChat(); } }
+		]);
 		showHandoffForm("notify");
 		// ← stopLive() しない：ポーリング継続。後から返信が来たら「担当者につながりました」と表示。
 	}
