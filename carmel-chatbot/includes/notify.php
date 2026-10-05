@@ -70,6 +70,8 @@ function carmel_cb_notify_emoji( $event ) {
 		'offhours_notify' => '🌙',
 		'followup_cv'     => '🏆',
 		'shinsa_check'    => '🔎',
+		'followup_sent'   => '✉️',
+		'followup_opened' => '📬',
 	);
 	return $map[ $event ] ?? '🔔';
 }

@@ -183,6 +183,96 @@ function carmel_cb_handle_unsubscribe( WP_REST_Request $r ) {
 	return new WP_REST_Response( $html, 200, array( 'Content-Type' => 'text/html; charset=UTF-8' ) );
 }
 
+/* ========================= 送信通知・開封トラッキング ========================= */
+
+/** 開封トラッキング用トークン（メール＋種別＋段階を署名）。 */
+function carmel_cb_track_token( $email, $kind, $stage ) {
+	$base = strtolower( trim( (string) $email ) ) . '|' . $kind . '|' . (int) $stage;
+	return substr( hash_hmac( 'sha256', $base, wp_salt( 'auth' ) ), 0, 24 );
+}
+
+/** メールに埋め込む「開封検知」用の画像URL（1x1透明GIF）。 */
+function carmel_cb_track_pixel_url( $email, $kind, $stage ) {
+	return add_query_arg( array(
+		'e' => rawurlencode( strtolower( trim( (string) $email ) ) ),
+		'k' => $kind,
+		's' => (int) $stage,
+		't' => carmel_cb_track_token( $email, $kind, $stage ),
+	), rest_url( 'carmel-cb/v1/open' ) );
+}
+
+/** プレーン本文をHTMLメール本文に変換（改行→<br>、URL→リンク）。 */
+function carmel_cb_text_to_html( $text ) {
+	$esc = esc_html( (string) $text );
+	$esc = preg_replace( '~(https?://[^\s<]+)~u', '<a href="$1" target="_blank" rel="noopener">$1</a>', $esc );
+	return '<div style="font-family:-apple-system,BlinkMacSystemFont,\'Hiragino Sans\',sans-serif;font-size:14px;line-height:1.7;color:#222">' . nl2br( $esc ) . '</div>';
+}
+
+/** 後追いメールを送信（開封トラッキング付きHTML）。$kind: apply|convo */
+function carmel_cb_followup_send( $to, $subject, $text, $kind, $stage ) {
+	$s    = carmel_cb_get_settings();
+	$html = carmel_cb_text_to_html( $text );
+	if ( ! empty( $s['followup_open_track'] ) && is_email( $to ) ) {
+		$px    = esc_url( carmel_cb_track_pixel_url( $to, $kind, (int) $stage ) );
+		$html .= '<img src="' . $px . '" width="1" height="1" alt="" style="display:none;width:1px;height:1px">';
+	}
+	$GLOBALS['carmel_cb_apply_sending'] = true;
+	$ok = wp_mail( $to, $subject, $html, array( 'Content-Type: text/html; charset=UTF-8' ) );
+	$GLOBALS['carmel_cb_apply_sending'] = false;
+
+	// 送信通知（オプション）
+	if ( $ok && ! empty( $s['followup_notify_sent'] ) && function_exists( 'carmel_cb_notify_event' ) ) {
+		$label = ( $kind === 'apply' ) ? '審査離脱 後追い' : '会話離脱 後追い';
+		carmel_cb_notify_event( 'followup_sent', '後追いメールを送信しました', array(
+			'メール' => $to,
+			'種別'  => $label . '（' . (int) $stage . '通目）',
+		) );
+	}
+	return (bool) $ok;
+}
+
+/** 開封トラッキング用エンドポイント：1x1 GIFを返し、開封を1回だけ通知。 */
+add_action( 'rest_api_init', function () {
+	register_rest_route( 'carmel-cb/v1', '/open', array(
+		'methods'             => 'GET',
+		'callback'            => 'carmel_cb_handle_open_pixel',
+		'permission_callback' => '__return_true',
+	) );
+} );
+
+function carmel_cb_handle_open_pixel( WP_REST_Request $r ) {
+	$email = sanitize_email( $r->get_param( 'e' ) );
+	$kind  = sanitize_text_field( $r->get_param( 'k' ) );
+	$stage = (int) $r->get_param( 's' );
+	$token = (string) $r->get_param( 't' );
+
+	if ( is_email( $email ) && $token !== '' && hash_equals( carmel_cb_track_token( $email, $kind, $stage ), $token ) ) {
+		$key = 'ccb_open_' . md5( $email . '|' . $kind . '|' . $stage );
+		if ( ! get_transient( $key ) ) {
+			set_transient( $key, 1, DAY_IN_SECONDS ); // 同一メールの重複通知を1日抑制
+			if ( function_exists( 'carmel_cb_notify_event' ) ) {
+				$label = ( $kind === 'apply' ) ? '審査離脱 後追い' : '会話離脱 後追い';
+				carmel_cb_notify_event( 'followup_opened', '後追いメールが開封されました', array(
+					'メール' => $email,
+					'種別'  => $label . '（' . $stage . '通目）',
+				) );
+			}
+		}
+	}
+
+	// 1x1 透明GIFを直接出力
+	$gif = base64_decode( 'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7' );
+	if ( ! headers_sent() ) {
+		status_header( 200 );
+		header( 'Content-Type: image/gif' );
+		header( 'Content-Length: ' . strlen( $gif ) );
+		header( 'Cache-Control: no-store, no-cache, must-revalidate, max-age=0' );
+		header( 'Pragma: no-cache' );
+	}
+	echo $gif;
+	exit;
+}
+
 /* ========================= 送信元メール ========================= */
 
 /**
@@ -291,15 +381,7 @@ function carmel_cb_apply_send_stage_mail( $s, $row, $stage_num, $def ) {
 	$body  = strtr( (string) ( $def['body'] ?? '' ),  $vars );
 	if ( $subject === '' || $body === '' ) { return false; }
 
-	$GLOBALS['carmel_cb_apply_sending'] = true;
-	$ok = wp_mail(
-		$row->email,
-		$subject,
-		$body,
-		array( 'Content-Type: text/plain; charset=UTF-8' )
-	);
-	$GLOBALS['carmel_cb_apply_sending'] = false;
-	return (bool) $ok;
+	return carmel_cb_followup_send( $row->email, $subject, $body, 'apply', (int) $stage_num );
 }
 
 /**

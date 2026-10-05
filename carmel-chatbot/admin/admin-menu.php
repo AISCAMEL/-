@@ -201,6 +201,9 @@ function carmel_cb_handle_post() {
 				// 会話離脱後追い
 				'convo_followup_on'        => isset( $_POST['convo_followup_on'] ) ? 1 : 0,
 				'convo_followup_stages'    => carmel_cb_admin_sanitize_stages( $_POST['convo_followup_stages'] ?? array() ),
+				// 後追いメールの通知（送信時／開封時）
+				'followup_notify_sent'     => isset( $_POST['followup_notify_sent'] ) ? 1 : 0,
+				'followup_open_track'      => isset( $_POST['followup_open_track'] ) ? 1 : 0,
 				// 🔍 FAQ検索窓
 				'faq_search_on'            => isset( $_POST['faq_search_on'] ) ? 1 : 0,
 				// 🧲 離脱防止・エンゲージ
@@ -1684,6 +1687,17 @@ function carmel_cb_view_appearance() {
 						}
 					}
 					?>
+				</td>
+			</tr>
+			<tr>
+				<th>📬 後追いメールの通知</th>
+				<td>
+					<p style="margin-top:0"><label><input type="checkbox" name="followup_notify_sent" value="1" <?php checked( ! empty( $s['followup_notify_sent'] ) ); ?>> <strong>送信を通知</strong>：後追いメールを送信したら、管理者（Slack／メール）に通知する</label></p>
+					<p><label><input type="checkbox" name="followup_open_track" value="1" <?php checked( ! empty( $s['followup_open_track'] ) ); ?>> <strong>開封を通知</strong>：お客様が後追いメールを開封したら通知する（メールに見えない画像を埋め込んで検知）</label></p>
+					<p class="description">
+						通知先は「🔔 管理者通知」の設定（Slack／メール）と同じです。<br>
+						※ 開封通知は目安です。多くのメールアプリは画像を自動で読み込まない・逆に自動で先読みする（Gmail/iPhoneのメール等）ため、<strong>実際の開封と完全には一致しません</strong>。開封ゼロ＝未読とは限りません。
+					</p>
 				</td>
 			</tr>
 			<tr>

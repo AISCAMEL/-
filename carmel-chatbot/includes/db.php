@@ -194,6 +194,9 @@ function carmel_cb_default_settings() {
 		// 後追いメール共通：署名（会社情報）とオプトアウトのご案内
 		'followup_signature'    => "──────────────────────────\nカーメル\nWeb : https://carmelonline.jp/\nLINE: https://omu247l0.autosns.app/line\nTel : 050-1793-5554\nMail: info@carmelonline.jp\n──────────────────────────",
 		'followup_unsub_note'   => '今後このようなご案内が不要な場合は、下記のリンクから配信停止できます。',
+		// 後追いメールの通知：送信時／開封時に管理者へ通知
+		'followup_notify_sent'  => 1, // 後追いメールを送信したら通知
+		'followup_open_track'   => 1, // 開封トラッキング（見えない画像でメール開封を検知して通知）
 		// 管理者通知（イベント別ON/OFF）
 		'admin_notify_email'    => '', // 空なら notify_email → admin_email へフォールバック
 		'notify_events'      => array(

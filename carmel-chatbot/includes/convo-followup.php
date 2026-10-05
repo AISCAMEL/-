@@ -185,10 +185,8 @@ function carmel_cb_convo_fu_send_stage_mail( $s, $row, $stage_num, $def ) {
 	$body  = strtr( (string) ( $def['body'] ?? '' ),  $vars );
 	if ( $subject === '' || $body === '' ) { return false; }
 
-	$GLOBALS['carmel_cb_apply_sending'] = true; // 差出人フィルタを共通で使う（apply-followup.php 側で登録済み）
-	$ok = wp_mail( $row->email, $subject, $body, array( 'Content-Type: text/plain; charset=UTF-8' ) );
-	$GLOBALS['carmel_cb_apply_sending'] = false;
-	return (bool) $ok;
+	// 送信元フィルタ＆開封トラッキング付きHTMLで送信（apply-followup.php の共通関数）
+	return carmel_cb_followup_send( $row->email, $subject, $body, 'convo', (int) $stage_num );
 }
 
 /**
