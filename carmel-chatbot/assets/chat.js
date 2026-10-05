@@ -14,7 +14,8 @@
 
 	// 会話の途中離脱→再訪時に「前回の続きから」再開するための保存（3日間・端末ローカル）
 	var CCB_STATE_KEY = "ccb_state_v1";
-	var CCB_STATE_TTL = 3 * 24 * 60 * 60 * 1000; // 3日
+	// 「前回の続きから」の保持期間（分）。管理画面で設定可・既定60分。
+	var CCB_STATE_TTL = Math.max(5, (cfg.resumeTtlMin || 60)) * 60 * 1000;
 	function loadState() {
 		try {
 			var raw = window.localStorage.getItem(CCB_STATE_KEY);

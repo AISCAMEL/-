@@ -211,6 +211,7 @@ function carmel_cb_handle_post() {
 				'exit_popup_on'            => isset( $_POST['exit_popup_on'] ) ? 1 : 0,
 				'exit_popup_msg'           => sanitize_textarea_field( wp_unslash( $_POST['exit_popup_msg'] ?? '' ) ),
 				'idle_nudge_sec'           => max( 10, min( 120, (int) ( $_POST['idle_nudge_sec'] ?? 25 ) ) ),
+				'resume_ttl_min'           => max( 5, min( 10080, (int) ( $_POST['resume_ttl_min'] ?? 60 ) ) ),
 				'sim_on'                   => isset( $_POST['sim_on'] ) ? 1 : 0,
 				'sim_default_rate'         => max( 7, min( 18, (float) ( $_POST['sim_default_rate'] ?? 12 ) ) ),
 				'sim_note'                 => sanitize_textarea_field( wp_unslash( $_POST['sim_note'] ?? '' ) ),
@@ -1707,6 +1708,13 @@ function carmel_cb_view_appearance() {
 						<input type="number" name="idle_nudge_sec" min="10" max="120" step="5" value="<?php echo (int) ( $s['idle_nudge_sec'] ?? 25 ); ?>" style="width:90px"> 秒
 					</label></p>
 					<p class="description">短いほど早く声かけします（例：15〜25秒）。10〜120秒で設定できます。</p>
+
+					<hr style="margin:14px 0">
+					<p><strong>「前回の続きから」再チャットの保持期間</strong>：お客様が離脱→再訪した時に、前回の会話を自動復元する期間です（お客様のブラウザに保存）。</p>
+					<p><label>保持期間：
+						<input type="number" name="resume_ttl_min" min="5" max="10080" step="5" value="<?php echo (int) ( $s['resume_ttl_min'] ?? 60 ); ?>" style="width:100px"> 分
+					</label>　<span class="description">（例：60＝1時間、180＝3時間、1440＝1日）</span></p>
+					<p class="description">短くすると、少し時間が空いた再訪は「最初から」になります。この期間を過ぎると自動でリセットされます。※管理画面の「会話ログ」はこれとは別で、サーバーに残ります。</p>
 
 					<hr style="margin:14px 0">
 					<p><label><input type="checkbox" name="shinsa_on" value="1" <?php checked( ! empty( $s['shinsa_on'] ) ); ?>> <strong>審査見込み診断</strong>：9項目で「通る見込み（🟢中🟡🔴）」を自己診断できるボタンを表示</label></p>
