@@ -222,14 +222,29 @@
 	// - intro あり（お名前・メール入力の直後）：候補チップは出さず、案内メッセージだけ表示
 	//  （ユーザーが自分で用件を入力する流れにして、会話が勝手に始まったように見えないようにする）
 	function greetGuide(intro) {
-		if (!intro) { renderChoices(STARTERS); }
+		var talk = (cfg.startMode !== "menu"); // 既定は「悩み相談から」自然にスタート
 		setTimeout(function () {
 			if (ho.live || convo.engaged) { return; }
-			addBubble("bot", intro || "本日はどのようなご相談ですか？下のメッセージ入力にて、その場でお答えします\n\nご希望の回答が得られない場合は、下の「担当者に相談」ボタンからお進みください。オペレーターが対応いたします。");
-			// 選択式スタート：intake後でも、タップで進める大きな選択肢を出す（打つ手間をなくす）
-			if (intro && cfg.startersOn && STARTERS.length) { renderStarterButtons(STARTERS); }
+			if (intro) { addBubble("bot", intro); }
+			if (talk) {
+				// まず悩みを聞く自然な入口。大きなボタンの羅列ではなく、軽い“きっかけ”だけ。
+				addBubble("bot", "まずは、どんなことでお悩みですか？ 審査のこと、頭金やお支払いのこと、お車のことなど、何でもお気軽にお聞かせください。下から選んでも、そのままご入力いただいても大丈夫です。");
+				renderChoices(STARTERS);
+				offerTools();
+			} else {
+				if (!intro) { addBubble("bot", "本日はどのようなご相談ですか？下のボタンから選ぶか、メッセージでお聞かせください。"); }
+				if (cfg.startersOn && STARTERS.length) { renderStarterButtons(STARTERS); }
+			}
 			focusInput();
-		}, intro ? 200 : 1000);
+		}, intro ? 200 : 700);
+	}
+
+	// 診断・シミュは“きっかけ”の下に控えめに（小さいチップで提示）
+	function offerTools() {
+		var items = [];
+		if (cfg.shinsaOn) { items.push({ label: "審査に通るか診断する", fn: openShindanCheck }); }
+		if (cfg.simOn) { items.push({ label: "月々の目安を計算する", fn: openSimulation }); }
+		if (items.length) { renderActionChips(items); }
 	}
 
 	// 実績・安心メッセージ（淡い枠で1回だけ）
@@ -330,8 +345,8 @@
 			input.disabled = false; sendBtn.disabled = false;
 			input.removeAttribute("disabled"); sendBtn.removeAttribute("disabled");
 			input.placeholder = "メッセージを入力…";
-			var after = (cfg.intakeAfterMsg || "ありがとうございます、{name}様。本日はどのようなご用件でしょうか？下のメッセージ入力にて、その場でお答えします").replace(/\{name\}/g, name);
-			greetGuide(after + "\n\nご希望の回答が得られない場合は、下の「担当者に相談」ボタンからお進みください。オペレーターが対応いたします。");
+			var after = (cfg.intakeAfterMsg || "ありがとうございます、{name}様。").replace(/\{name\}/g, name);
+			greetGuide(after);
 		});
 
 		// Enterキーでも進めるように

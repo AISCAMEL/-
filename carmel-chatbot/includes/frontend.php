@@ -49,6 +49,7 @@ function carmel_cb_js_config( $s, $extra = array() ) {
 		'faqSearchOn'     => ! empty( $s['faq_search_on'] ),
 		'faqSearchUrl'    => esc_url_raw( rest_url( 'carmel-cb/v1/faq/search' ) ),
 		// 🧲 離脱防止・エンゲージ
+		'startMode'       => ( ( $s['start_mode'] ?? 'talk' ) === 'menu' ) ? 'menu' : 'talk',
 		'startersOn'      => ! empty( $s['starters_on'] ),
 		'starters'        => array_values( array_filter( array_map( 'trim', preg_split( '/[\r\n]+/', (string) ( $s['starters_list'] ?? '' ) ) ) ) ),
 		'reassureOn'      => ! empty( $s['reassure_on'] ),

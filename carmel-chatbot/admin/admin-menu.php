@@ -204,6 +204,7 @@ function carmel_cb_handle_post() {
 				// 🔍 FAQ検索窓
 				'faq_search_on'            => isset( $_POST['faq_search_on'] ) ? 1 : 0,
 				// 🧲 離脱防止・エンゲージ
+				'start_mode'               => ( ( $_POST['start_mode'] ?? 'talk' ) === 'menu' ) ? 'menu' : 'talk',
 				'starters_on'              => isset( $_POST['starters_on'] ) ? 1 : 0,
 				'starters_list'            => sanitize_textarea_field( wp_unslash( $_POST['starters_list'] ?? '' ) ),
 				'reassure_on'              => isset( $_POST['reassure_on'] ) ? 1 : 0,
@@ -1688,7 +1689,12 @@ function carmel_cb_view_appearance() {
 			<tr>
 				<th>🧲 離脱防止・エンゲージ</th>
 				<td>
-					<p style="margin-top:0"><label><input type="checkbox" name="starters_on" value="1" <?php checked( ! empty( $s['starters_on'] ) ); ?>> <strong>選択式スタート</strong>：お名前・メール入力後、タップで進める選択肢ボタンを表示</label></p>
+					<?php $sm = ( ( $s['start_mode'] ?? 'talk' ) === 'menu' ) ? 'menu' : 'talk'; ?>
+					<p style="margin-top:0"><strong>会話の始め方</strong></p>
+					<p><label><input type="radio" name="start_mode" value="talk" <?php checked( $sm, 'talk' ); ?>> <strong>悩み相談から（おすすめ）</strong>：まず「どんなお悩みですか？」と自然に問いかけ、軽い“きっかけ”だけ表示（診断・シミュは下に小さく）</label></p>
+					<p><label><input type="radio" name="start_mode" value="menu" <?php checked( $sm, 'menu' ); ?>> <strong>選択式メニュー</strong>：最初に大きな選択ボタンを一覧表示</label></p>
+					<hr style="margin:14px 0">
+					<p style="margin-top:0"><label><input type="checkbox" name="starters_on" value="1" <?php checked( ! empty( $s['starters_on'] ) ); ?>> <strong>選択式スタート（メニュー時）</strong>：選択式メニュー時に、タップで進める選択肢ボタンを表示</label></p>
 					<p style="margin:4px 0 4px">選択肢（1行に1つ）：</p>
 					<textarea name="starters_list" rows="5" class="large-text" style="font-family:inherit"><?php echo esc_textarea( $s['starters_list'] ?? '' ); ?></textarea>
 					<p class="description">「月々」「いくら」等を含む選択肢はタップで💰シミュレーションが開きます。</p>

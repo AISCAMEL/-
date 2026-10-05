@@ -208,6 +208,7 @@ function carmel_cb_default_settings() {
 		// 🔍 FAQ検索窓（チャット内でよくある質問を検索）
 		'faq_search_on'   => 1,
 		// 離脱防止・エンゲージ強化
+		'start_mode'     => 'talk', // 開始の仕方：talk=悩み相談から自然に / menu=選択式ボタン
 		'starters_on'    => 1, // intake後に選択式スタートボタンを出す
 		'starters_list'   => "審査が不安です\n頭金がなくても大丈夫？\n他社で断られたけど…\n月々いくらか知りたい\nどんな車があるか見たい",
 		'reassure_on'    => 1, // 冒頭に安心メッセージを出す
