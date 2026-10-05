@@ -588,9 +588,36 @@
 		idle.timer = setTimeout(function () {
 			if (!opened || convo.engaged || ho.live) { return; }
 			idle.count++;
-			addBubble("bot", "その後いかがでしょうか？ご不明な点や、気になる車・お支払いのご相談など、お気軽にどうぞ");
+			addBubble("bot", "その後いかがでしょうか？ご不明な点や、気になる車・お支払いのご相談など、お気軽にどうぞ。\nもし分かりにくければ、最初からご案内し直すこともできます。");
 			renderChoices(["審査について相談したい", "在庫・車種を見たい", "お支払い・頭金について", "担当者に相談したい"]);
+			renderActionChips([{ label: "↻ 最初からやり直す", fn: restartChat }]);
 		}, wait);
+	}
+
+	// 任意の動作を実行するチップ（送信ではなく関数呼び出し）
+	function renderActionChips(items) {
+		if (!items || !items.length) return;
+		var row = document.createElement("div");
+		row.className = "ccb-choices";
+		items.forEach(function (it) {
+			var b = document.createElement("button");
+			b.type = "button"; b.className = "ccb-choice ccb-choice-restart";
+			b.textContent = it.label;
+			b.addEventListener("click", function () { it.fn(); });
+			row.appendChild(b);
+		});
+		msgBox.appendChild(row); msgBox.scrollTop = msgBox.scrollHeight;
+	}
+
+	// 会話を最初のメニューに戻す（1からやり直すニュアンス）
+	function restartChat() {
+		clearChoices();
+		idle.count = 0; // 再び打診できるようにリセット
+		addBubble("bot", "承知しました。もう一度、最初からご一緒にお探ししましょう。下のメニューから選ぶか、メッセージでお聞かせください。");
+		if (cfg.startersOn && STARTERS.length) { renderStarterButtons(STARTERS); }
+		else { renderChoices(STARTERS); }
+		focusInput();
+		scheduleIdle();
 	}
 
 	// 担当者に相談：会話スレッドに「担当者希望」を投げる（会話は常時ポーリング中）
