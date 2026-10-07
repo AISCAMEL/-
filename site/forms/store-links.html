@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>店舗別 審査フォーム リンク／QR | カーメル</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#15335f;--blue:#f47920;--blue-hover:#d9650d;--bg:#f5fbff;--gray-300:#cbd5e1;--gray-500:#64748b;--gray-700:#334155;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;color:#1e293b;background:var(--bg);line-height:1.7;-webkit-font-smoothing:antialiased;}
+.hd{background:linear-gradient(135deg,#fff7ef,#eaf4ff);text-align:center;padding:30px 16px 22px;border-top:5px solid var(--blue);border-bottom:1px solid #e2e8f0;}
+.hd .eb{display:inline-block;font-size:.72rem;font-weight:900;letter-spacing:.12em;color:#fff;background:var(--blue);padding:5px 15px;border-radius:999px;margin-bottom:10px;}
+.hd h1{font-size:1.4rem;font-weight:900;color:var(--navy);}
+.hd p{font-size:.85rem;color:var(--gray-500);font-weight:600;margin-top:6px;}
+.wrap{max-width:860px;margin:0 auto;padding:22px 14px 60px;}
+.warn{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:10px;padding:12px 14px;font-size:.82rem;font-weight:700;margin-bottom:16px;line-height:1.7;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:640px){.grid{grid-template-columns:1fr;}}
+.card{background:#fff;border:1px solid #e5eef5;border-radius:16px;box-shadow:0 6px 18px rgba(0,0,0,.06);padding:20px 18px;display:flex;flex-direction:column;}
+.card h2{font-size:1.1rem;font-weight:900;color:var(--navy);padding-left:10px;border-left:5px solid var(--blue);margin-bottom:4px;}
+.meta{font-size:.78rem;color:var(--gray-500);font-weight:600;margin-bottom:12px;}
+.qr{display:flex;justify-content:center;margin:6px 0 12px;}
+.qr img,.qr canvas{border:8px solid #fff;border-radius:8px;box-shadow:0 3px 12px rgba(0,0,0,.1);}
+.linkrow{display:flex;gap:8px;}
+.linkrow input{flex:1;min-width:0;padding:9px 11px;font-size:.78rem;border:1.5px solid var(--gray-300);border-radius:9px;background:#f8fafc;}
+.copy{flex-shrink:0;padding:0 14px;border:none;border-radius:9px;background:var(--navy);color:#fff;font-weight:800;cursor:pointer;font-size:.82rem;}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#15335f;color:#fff;padding:10px 18px;border-radius:999px;font-size:.85rem;font-weight:700;opacity:0;transition:opacity .2s;z-index:99;}
+.toast.show{opacity:1;}
+.note{font-size:.78rem;color:var(--gray-500);margin-top:16px;line-height:1.8;}
+</style>
+</head>
+<body>
+
+<!-- ▼ 審査フォームの公開URL（末尾スラッシュまで） ▼ -->
+<script>
+  window.SHINSA_FORM_URL = "https://regal-babka-f817bb.netlify.app/";
+</script>
+
+<header class="hd">
+  <span class="eb">CARMEL 社内用</span>
+  <h1>店舗別 審査フォーム リンク／QR</h1>
+  <p>各店舗の専用リンク・QRコードです。店頭POP・LINE・名刺などにご利用ください</p>
+</header>
+
+<div class="wrap">
+  <div id="url-warn" class="warn" style="display:none;">※ 審査フォームのURLが未設定です。このページ先頭の <code>SHINSA_FORM_URL</code> に、公開中の審査フォームURLを設定してください。</div>
+  <div class="grid" id="grid"></div>
+  <p class="note">※ リンクを開くと、その店舗名・電話が表示され、申込みはスプレッドシートの「店舗」列に記録されます。通知（Slack/Asana/メール）と自動返信メールも店舗ごとに振り分けられます。<br>
+  ※ QRは右クリック（スマホは長押し）で画像保存できます。</p>
+</div>
+
+<div class="toast" id="toast">コピーしました</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(function(){
+  var STORES=[
+    {key:'fukushima',label:'カーメル福島本店',tel:'050-1793-5554',area:'福島県いわき市'},
+    {key:'chiba',    label:'カーメル千葉店',  tel:'050-5236-2588',area:'千葉県千葉市'},
+    {key:'odawara',  label:'カーメル小田原店',tel:'0465-20-4286', area:'神奈川県小田原市'},
+    {key:'yamanashi',label:'カーメル山梨店',  tel:'080-7566-2556',area:'山梨県甲府市'}
+  ];
+  var BASE=(typeof window.SHINSA_FORM_URL==='string'&&window.SHINSA_FORM_URL)?window.SHINSA_FORM_URL:'';
+  if(!BASE){document.getElementById('url-warn').style.display='';}
+  function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},1500);}
+  function linkFor(key){var b=BASE||'https://（審査フォームURL未設定）/';return b+(b.indexOf('?')>=0?'&':'?')+'store='+encodeURIComponent(key);}
+  var grid=document.getElementById('grid');
+  STORES.forEach(function(s){
+    var url=linkFor(s.key);
+    var card=document.createElement('div');card.className='card';
+    card.innerHTML=
+      '<h2>'+s.label+'</h2>'+
+      '<div class="meta">'+s.area+'／TEL '+s.tel+'</div>'+
+      '<div class="qr"></div>'+
+      '<div class="linkrow"><input readonly value="'+url+'"><button class="copy">コピー</button></div>';
+    grid.appendChild(card);
+    var qb=card.querySelector('.qr');
+    try{ new QRCode(qb,{text:url,width:170,height:170,correctLevel:QRCode.CorrectLevel.M}); }
+    catch(e){ qb.innerHTML='<span style="font-size:.78rem;color:#64748b;">QR表示に失敗（リンクはコピーできます）</span>'; }
+    var inp=card.querySelector('input'),btn=card.querySelector('.copy');
+    btn.addEventListener('click',function(){inp.select();try{navigator.clipboard.writeText(inp.value);}catch(e){document.execCommand('copy');}toast('コピーしました');});
+  });
+})();
+</script>
+</body>
+</html>

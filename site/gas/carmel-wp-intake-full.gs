@@ -32,6 +32,45 @@ var WP_META_COLMAP = {
   email: 'メールアドレス', car: 'ご希望の車種'
 };
 
+// ============================================================
+//  店舗マスター（店舗別の記録・通知先・自動返信を切替）
+//  slackWebhook / asanaSectionId は空なら共通設定を使用
+// ============================================================
+var STORES = {
+  fukushima: {
+    label: 'カーメル福島本店', short: '福島本店', tel: '050-1793-5554', hours: '10:00〜18:00',
+    emails: ['carmelbuzzzzz@aisjaltd.com'],
+    replyFromName: 'カーメル 福島本店', site: 'https://carmelonline.jp/', lineUrl: 'https://lin.ee/y4QcSnq',
+    slackWebhook: '', asanaSectionId: ''
+  },
+  chiba: {
+    label: 'カーメル千葉店', short: '千葉店', tel: '050-5236-2588', hours: '9:00〜20:00',
+    emails: ['chiba@carmelonline.jp', 'carmelbuzzzzz@aisjaltd.com'],
+    replyFromName: 'カーメル 千葉店', site: 'https://chiba.carmelonline.jp/', lineUrl: 'https://lin.ee/y4QcSnq',
+    slackWebhook: '', asanaSectionId: ''
+  },
+  odawara: {
+    label: 'カーメル小田原店', short: '小田原店', tel: '0465-20-4286', hours: '10:00〜20:00',
+    emails: ['odawara@carmelonline.jp', 'carmelbuzzzzz@aisjaltd.com'],
+    replyFromName: 'カーメル 小田原店', site: 'https://odawara.carmelonline.jp/', lineUrl: 'https://lin.ee/y4QcSnq',
+    slackWebhook: '', asanaSectionId: ''
+  },
+  yamanashi: {
+    label: 'カーメル山梨店', short: '山梨店', tel: '080-7566-2556', hours: '9:30〜18:30',
+    emails: ['yawanashi@carmelonline.jp', 'carmelbuzzzzz@aisjaltd.com'],
+    replyFromName: 'カーメル 山梨店', site: 'https://yamanashi.carmelonline.jp/', lineUrl: 'https://lin.ee/y4QcSnq',
+    slackWebhook: '', asanaSectionId: ''
+  }
+};
+var DEFAULT_STORE_KEY = 'fukushima';
+function resolveStore_(key) {
+  var k = String(key || '').toLowerCase().trim();
+  var base = STORES[k] ? STORES[k] : STORES[DEFAULT_STORE_KEY];
+  var out = { key: (STORES[k] ? k : DEFAULT_STORE_KEY) };
+  Object.keys(base).forEach(function(p){ out[p] = base[p]; });
+  return out;
+}
+
 function doPost(e) {
   try {
     var cfg = getWpConfig_();
@@ -49,6 +88,7 @@ function doPost(e) {
     writeWpRowDynamic_(cfg, rec);
     if (cfg.SEND_SLACK && cfg.SLACK_WEBHOOK_URL) safeRun_(cfg, function(){ notifyWpSlack_(cfg, rec); });
     if (cfg.SEND_ASANA && cfg.ASANA_TOKEN && cfg.ASANA_PROJECT_ID) safeRun_(cfg, function(){ createWpAsana_(cfg, rec); });
+    safeRun_(cfg, function(){ notifyStoreAdmin_(cfg, rec); });
     if (cfg.SEND_THANKS) safeRun_(cfg, function(){ sendApplicantThankYou_(cfg, rec); });
     return jsonOut_({ success: true, uid: rec.uid });
   } catch (err) {
@@ -75,6 +115,7 @@ function buildWpRecord_(cfg, payload) {
   });
   return {
     uid: uid, stamp: stamp, source: cfg.SOURCE_LABEL,
+    store: resolveStore_(m.storeKey || m.store),
     name:  m.name  || '', kana:  m.kana  || '', phone: m.phone || '',
     email: m.email || '', car:   m.car   || '',
     fields: fields, body: lines.join('\n'), fileLinks: []
@@ -87,6 +128,7 @@ function writeWpRowDynamic_(cfg, rec) {
   var sheet = ss.getSheetByName(cfg.WP_SHEET_TAB) || ss.insertSheet(cfg.WP_SHEET_TAB);
   var dataObj = {};
   dataObj['申込ソース'] = rec.source;
+  dataObj['店舗']       = rec.store ? rec.store.label : '';
   dataObj['UID']        = rec.uid;
   dataObj['受付日時']   = rec.stamp;
   dataObj[WP_META_COLMAP.name]  = rec.name;
@@ -164,13 +206,15 @@ function notifyWpSlack_(cfg, rec) {
     : '（添付なし）';
   var text =
     '*新規WEB審査申込（WPフォーム）* :memo:\n' +
+    '*店舗：* ' + (rec.store ? rec.store.label : '—') + '\n' +
     '*氏名：* ' + rec.name + '（' + rec.kana + '）\n' +
     '*電話：* ' + rec.phone + '　*メール：* ' + rec.email + '\n' +
     '*希望車：* ' + (rec.car || '未定') + '\n' +
     '*受付：* ' + rec.stamp + '\n' +
     '——————————————\n' + rec.body + '\n' +
     '——————————————\n*添付書類：*\n' + files;
-  UrlFetchApp.fetch(cfg.SLACK_WEBHOOK_URL, {
+  var hook = (rec.store && rec.store.slackWebhook) ? rec.store.slackWebhook : cfg.SLACK_WEBHOOK_URL;
+  UrlFetchApp.fetch(hook, {
     method: 'post', contentType: 'application/json',
     payload: JSON.stringify({ text: text }), muteHttpExceptions: true
   });
@@ -179,6 +223,7 @@ function notifyWpSlack_(cfg, rec) {
 function createWpAsana_(cfg, rec) {
   var notes =
     '【申込ソース】WPフォーム\n' +
+    '【店舗】' + (rec.store ? rec.store.label : '—') + '\n' +
     '【受付日時】' + rec.stamp + '\n' +
     '【電話】' + rec.phone + '　【メール】' + rec.email + '\n' +
     '【希望車】' + (rec.car || '未定') + '\n\n' + rec.body + '\n\n【添付書類】\n' +
@@ -187,15 +232,16 @@ function createWpAsana_(cfg, rec) {
   var res = UrlFetchApp.fetch('https://app.asana.com/api/1.0/tasks', {
     method: 'post', headers: headers,
     payload: JSON.stringify({ data: {
-      name: '【WP新規】' + (rec.name || '名前未設定') + '　様　' + (rec.car || ''),
+      name: '【WP新規' + (rec.store ? '／' + rec.store.short : '') + '】' + (rec.name || '名前未設定') + '　様　' + (rec.car || ''),
       notes: notes, projects: [cfg.ASANA_PROJECT_ID]
     }}),
     muteHttpExceptions: true
   });
   var code = res.getResponseCode();
-  if (cfg.ASANA_SECTION_ID && (code === 200 || code === 201)) {
+  var sectionId = (rec.store && rec.store.asanaSectionId) ? rec.store.asanaSectionId : cfg.ASANA_SECTION_ID;
+  if (sectionId && (code === 200 || code === 201)) {
     var gid = JSON.parse(res.getContentText()).data.gid;
-    UrlFetchApp.fetch('https://app.asana.com/api/1.0/sections/' + cfg.ASANA_SECTION_ID + '/addTask', {
+    UrlFetchApp.fetch('https://app.asana.com/api/1.0/sections/' + sectionId + '/addTask', {
       method: 'post', headers: headers,
       payload: JSON.stringify({ data: { task: gid } }),
       muteHttpExceptions: true
@@ -203,40 +249,61 @@ function createWpAsana_(cfg, rec) {
   }
 }
 
-// ===== 申込者への自動返信メール（Brevo経由。未設定ならGmail） =====
+// ===== 申込者への自動返信メール（Brevo経由。未設定ならGmail／店舗別） =====
 function sendApplicantThankYou_(cfg, rec) {
   if (!rec.email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(rec.email)) return;
   var name = rec.name || 'お客様';
+  var st = rec.store || resolveStore_('');
   var ready = !!cfg.MYPAGE_URL;
   var mp = ready
     ? '審査の結果・進捗・今後のお手続きは、すべて「マイページ」からご確認いただけます。\n\n　▼ マイページ\n　' + cfg.MYPAGE_URL + '\n'
     : '審査の結果・進捗は、追ってご案内いたします。\n※マイページは現在準備中です。準備が整いしだい、ログイン情報をお送りいたします。\n';
   var contact = ready
     ? 'ご質問・ご相談は、マイページの「お問い合わせ」よりご連絡ください。\n担当者が順次対応いたします。\n'
-    : 'ご不明な点・お急ぎのご相談は、下記までお気軽にご連絡ください。\n　・LINE： https://lin.ee/y4QcSnq\n　・お電話： 050-1793-5554（受付 10:00〜18:00）\n';
+    : 'ご不明な点・お急ぎのご相談は、下記までお気軽にご連絡ください。\n　・LINE： ' + st.lineUrl + '\n　・お電話： ' + st.tel + '（受付 ' + st.hours + '）\n';
   var foot = ready
     ? '※本メールは送信専用です。お問い合わせはマイページからお願いいたします。'
     : '※本メールは送信専用です。お問い合わせは上記のLINE・お電話をご利用ください。';
   var body =
-    name + ' 様\n\nこの度は、カーメルの「かんたんWEB審査」にお申し込みいただき、\n誠にありがとうございます。\n' +
+    name + ' 様\n\nこの度は、' + st.label + 'の「かんたんWEB審査」にお申し込みいただき、\n誠にありがとうございます。\n' +
     'お申し込みを、確かに受け付けいたしました。\n\n' +
     '━━━━━━━━━━━━━━━━━━━━━━\n  ■ 審査結果・進捗のご確認\n━━━━━━━━━━━━━━━━━━━━━━\n\n' + mp + '\n' +
     '━━━━━━━━━━━━━━━━━━━━━━\n  ■ ご不明な点があるときは\n━━━━━━━━━━━━━━━━━━━━━━\n\n' + contact + '\n' +
     '今後ともカーメルをどうぞよろしくお願いいたします。\n\n' +
-    '────────────────────\n' + foot + '\n\nカーメル（CARMEL）\nhttps://carmelonline.jp/\n────────────────────';
-  var subject = '【カーメル】WEB審査のお申し込みを受け付けました';
-  if (cfg.BREVO_API_KEY && cfg.BREVO_SENDER) { sendViaBrevo_(cfg, rec.email, subject, body); return; }
-  var options = { name: cfg.MAIL_FROM_NAME || 'カーメル' };
+    '────────────────────\n' + foot + '\n\n' + st.replyFromName + '（CARMEL）\n' + st.site + '\n────────────────────';
+  var subject = '【' + st.label + '】WEB審査のお申し込みを受け付けました';
+  var fromName = st.replyFromName || cfg.MAIL_FROM_NAME || 'カーメル';
+  if (cfg.BREVO_API_KEY && cfg.BREVO_SENDER) { sendViaBrevo_(cfg, rec.email, subject, body, fromName); return; }
+  var options = { name: fromName };
   if (cfg.MAIL_FROM) options.from = cfg.MAIL_FROM;
   GmailApp.sendEmail(rec.email, subject, body, options);
 }
 
+// ===== 店舗への新規申込み通知メール（店舗の受信先＋本店へ） =====
+function notifyStoreAdmin_(cfg, rec) {
+  var st = rec.store || resolveStore_('');
+  var to = (st.emails && st.emails.length) ? st.emails.join(',') : (cfg.NOTIFY_EMAIL || '');
+  if (!to) return;
+  var body =
+    '新規のWEB審査申込みがありました。\n\n' +
+    '【店舗】' + st.label + '\n' +
+    '【受付日時】' + rec.stamp + '\n' +
+    '【お名前】' + rec.name + '（' + rec.kana + '）\n' +
+    '【電話】' + rec.phone + '\n' +
+    '【メール】' + rec.email + '\n' +
+    '【希望車】' + (rec.car || '未定') + '\n\n' + rec.body + '\n\n' +
+    '【添付書類】\n' + (rec.fileLinks.length ? rec.fileLinks.map(function(f){ return '・' + f.label + '： ' + f.url; }).join('\n') : '（なし）') +
+    '\n\nUID：' + rec.uid;
+  var subject = '【' + st.label + '】WEB審査 新規申込：' + (rec.name || '名前未設定') + ' 様';
+  MailApp.sendEmail(to, subject, body);
+}
+
 // ===== Brevo（外部配信）HTTP API 経由の送信 =====
-function sendViaBrevo_(cfg, to, subject, textBody) {
+function sendViaBrevo_(cfg, to, subject, textBody, fromName) {
   if (!cfg.BREVO_API_KEY) throw new Error('BREVO_API_KEY 未設定');
   if (!cfg.BREVO_SENDER)  throw new Error('BREVO_SENDER 未設定');
   var payload = {
-    sender: { name: cfg.MAIL_FROM_NAME || 'カーメル', email: cfg.BREVO_SENDER },
+    sender: { name: fromName || cfg.MAIL_FROM_NAME || 'カーメル', email: cfg.BREVO_SENDER },
     to: [{ email: to }], subject: subject, textContent: textBody
   };
   var res = UrlFetchApp.fetch('https://api.brevo.com/v3/smtp/email', {
