@@ -57,7 +57,7 @@ var STORES = {
   },
   yamanashi: {
     label: 'カーメル山梨店', short: '山梨店', tel: '080-7566-2556', hours: '9:30〜18:30',
-    emails: ['yawanashi@carmelonline.jp', 'carmelbuzzzzz@aisjaltd.com'],
+    emails: ['yamanashi@carmelonline.jp', 'carmelbuzzzzz@aisjaltd.com'],
     replyFromName: 'カーメル 山梨店', site: 'https://yamanashi.carmelonline.jp/', lineUrl: 'https://lin.ee/y4QcSnq',
     slackWebhook: '', asanaSectionId: ''
   }
