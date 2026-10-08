@@ -8,6 +8,49 @@ window.A = window.A || {};
   const templates = () => S.settings.get().recurringInvoices || [];
   const saveTemplates = (list) => S.settings.save({ recurringInvoices: list });
 
+  /* ---- 月の計算ユーティリティ ---------------------------------------- */
+  const curMonth = () => U.today().slice(0, 7);          // 'YYYY-MM'
+  const dateOf = (ym, day) => `${ym}-${String(Math.min(28, Math.max(1, day || 1))).padStart(2, '0')}`;
+  const nextMonth = (ym) => { let [y, m] = ym.split('-').map(Number); m += 1; if (m > 12) { y += 1; m = 1; } return `${y}-${String(m).padStart(2, '0')}`; };
+  const monthLE = (a, b) => a <= b; // 'YYYY-MM' は辞書順＝時系列順
+
+  // あるテンプレートの「未発行で、発行日が到来済み」の対象月を列挙（過去遡及はしない）
+  const dueMonths = (t, today, nowYm) => {
+    const months = [];
+    let ym = t.lastGenerated ? nextMonth(t.lastGenerated) : nowYm; // 初回は当月から（過去は作らない）
+    while (monthLE(ym, nowYm)) {
+      if (dateOf(ym, t.day) <= today) months.push(ym); // 発行日が到来している月のみ
+      if (ym === nowYm) break;
+      ym = nextMonth(ym);
+    }
+    return months;
+  };
+
+  /* ---- 自動発行（アプリ起動時などに呼ぶ） -----------------------------
+   * 設定 recurringAuto が false のときは何もしない。
+   * 未発行かつ発行日到来済みの月について請求書を作成し、lastGenerated を更新。
+   * 作成した請求書は未計上（下書き）。売上計上は請求書ページで確認して行う（承認制）。
+   * 戻り値: { count, details:[{partnerName, month}] }
+   * ------------------------------------------------------------------- */
+  const autoIssue = async () => {
+    const s = S.settings.get();
+    if (s.recurringAuto === false) return { count: 0, details: [] };
+    const list = (s.recurringInvoices || []).map((x) => ({ ...x }));
+    if (!list.length) return { count: 0, details: [] };
+    const today = U.today(), nowYm = curMonth();
+    let count = 0; const details = [];
+    for (const t of list) {
+      for (const ym of dueMonths(t, today, nowYm)) {
+        await S.invoices.save({ type: 'invoice', date: dateOf(ym, t.day), partnerName: t.partnerName, items: t.items, note: t.note, recurringId: t.id });
+        t.lastGenerated = ym; count += 1; details.push({ partnerName: t.partnerName, month: ym });
+      }
+    }
+    if (count) await saveTemplates(list);
+    return { count, details };
+  };
+
+  A.recurring = { autoIssue };
+
   const itemRow = (it) => {
     it = it || { name: '', qty: 1, unitPrice: 0, taxRate: 10 };
     const name = el('input', { type: 'text', value: it.name || '', placeholder: '品目' });
@@ -75,9 +118,15 @@ window.A = window.A || {};
       ui.go('invoices');
     };
 
+    // 自動発行トグル（アプリを開いた時に未発行分を自動作成）
+    const autoChk = el('input', { type: 'checkbox' });
+    autoChk.checked = S.settings.get().recurringAuto !== false;
+    autoChk.addEventListener('change', async () => { await S.settings.save({ recurringAuto: autoChk.checked }); ui.toast(autoChk.checked ? '自動発行をオンにしました' : '自動発行をオフにしました', 'ok'); });
+
     wrap.appendChild(el('div.card', {}, [
       el('div.card-head', {}, [el('div.inline', {}, [el('span.muted', { text: '対象月' }), ym]), el('button.btn.primary', { text: '対象月の請求書をまとめて作成', onclick: genAll })]),
-      el('p.muted.small', { text: '登録したテンプレートから、毎月の請求書をまとめて作成できます（同じ月に二重作成しないよう「最終作成月」で管理）。作成後は請求書ページで確認・PDF出力・売上計上できます。' }),
+      el('label.inline', { style: 'gap:.4rem;cursor:pointer' }, [autoChk, el('span', { text: 'アプリを開いた時に、未発行の月を自動で発行する' })]),
+      el('p.muted.small', { text: '登録したテンプレートから、毎月の請求書をまとめて作成できます（同じ月に二重作成しないよう「最終作成月」で管理）。自動発行は、発行日が到来した未発行の月だけを対象にします（過去には遡りません）。作成後は請求書ページで確認・PDF出力・売上計上できます。' }),
     ]));
 
     const card = el('div.card');

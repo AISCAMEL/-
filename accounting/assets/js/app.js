@@ -139,7 +139,17 @@ A.app = (function () {
     // ナビクリックでモバイルメニューを閉じる
     sidebar.addEventListener('click', (e) => { if (e.target.closest('.nav-item')) document.body.classList.remove('nav-open'); });
 
+    // 定期請求の自動発行（未発行で発行日到来済みの月を作成）
+    let recMsg = '';
+    try {
+      if (A.recurring && A.recurring.autoIssue) {
+        const r = await A.recurring.autoIssue();
+        if (r && r.count) recMsg = `定期請求 ${r.count}件を自動発行しました（請求書ページでご確認ください）`;
+      }
+    } catch (e) { console.warn('定期請求の自動発行に失敗:', e); }
+
     ui.start();
+    if (recMsg) setTimeout(() => ui.toast(recMsg, 'ok'), 400);
   };
 
   return { init, period, setPeriod };
