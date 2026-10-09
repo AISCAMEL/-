@@ -41,25 +41,25 @@ var STORES = {
     label: 'カーメル福島本店', short: '福島本店', tel: '050-1793-5554', hours: '10:00〜18:00',
     emails: ['carmelbuzzzzz@aisjaltd.com'],
     replyFromName: 'カーメル 福島本店', site: 'https://carmelonline.jp/', lineUrl: 'https://lin.ee/y4QcSnq',
-    slackWebhook: '', asanaSectionId: ''
+    slackWebhook: '', asanaSectionId: '', asanaProjectId: '1212957542191186'
   },
   chiba: {
     label: 'カーメル千葉店', short: '千葉店', tel: '050-5236-2588', hours: '9:00〜20:00',
     emails: ['chiba@carmelonline.jp', 'carmelbuzzzzz@aisjaltd.com'],
     replyFromName: 'カーメル 千葉店', site: 'https://chiba.carmelonline.jp/', lineUrl: 'https://lin.ee/y4QcSnq',
-    slackWebhook: '', asanaSectionId: ''
+    slackWebhook: '', asanaSectionId: '', asanaProjectId: '1213077965542227'
   },
   odawara: {
     label: 'カーメル小田原店', short: '小田原店', tel: '0465-20-4286', hours: '10:00〜20:00',
     emails: ['odawara@carmelonline.jp', 'carmelbuzzzzz@aisjaltd.com'],
     replyFromName: 'カーメル 小田原店', site: 'https://odawara.carmelonline.jp/', lineUrl: 'https://lin.ee/x5Ne4jf',
-    slackWebhook: '', asanaSectionId: ''
+    slackWebhook: '', asanaSectionId: '', asanaProjectId: '1213077965542236'
   },
   yamanashi: {
     label: 'カーメル山梨店', short: '山梨店', tel: '080-7566-2556', hours: '9:30〜18:30',
     emails: ['yamanashi@carmelonline.jp', 'carmelbuzzzzz@aisjaltd.com'],
     replyFromName: 'カーメル 山梨店', site: 'https://yamanashi.carmelonline.jp/', lineUrl: 'https://lin.ee/Y1nymrL',
-    slackWebhook: '', asanaSectionId: ''
+    slackWebhook: '', asanaSectionId: '', asanaProjectId: '1213077965542217'
   }
 };
 var DEFAULT_STORE_KEY = 'fukushima';
@@ -229,11 +229,12 @@ function createWpAsana_(cfg, rec) {
     '【希望車】' + (rec.car || '未定') + '\n\n' + rec.body + '\n\n【添付書類】\n' +
     (rec.fileLinks.length ? rec.fileLinks.map(function(f){ return '・' + f.label + '： ' + f.url; }).join('\n') : '（添付なし）');
   var headers = { 'Authorization': 'Bearer ' + cfg.ASANA_TOKEN, 'Content-Type': 'application/json' };
+  var projectId = (rec.store && rec.store.asanaProjectId) ? rec.store.asanaProjectId : cfg.ASANA_PROJECT_ID;
   var res = UrlFetchApp.fetch('https://app.asana.com/api/1.0/tasks', {
     method: 'post', headers: headers,
     payload: JSON.stringify({ data: {
       name: '【WP新規' + (rec.store ? '／' + rec.store.short : '') + '】' + (rec.name || '名前未設定') + '　様　' + (rec.car || ''),
-      notes: notes, projects: [cfg.ASANA_PROJECT_ID]
+      notes: notes, projects: [projectId]
     }}),
     muteHttpExceptions: true
   });
