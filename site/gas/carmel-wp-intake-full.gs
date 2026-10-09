@@ -52,13 +52,13 @@ var STORES = {
   odawara: {
     label: 'カーメル小田原店', short: '小田原店', tel: '0465-20-4286', hours: '10:00〜20:00',
     emails: ['odawara@carmelonline.jp', 'carmelbuzzzzz@aisjaltd.com'],
-    replyFromName: 'カーメル 小田原店', site: 'https://odawara.carmelonline.jp/', lineUrl: 'https://lin.ee/y4QcSnq',
+    replyFromName: 'カーメル 小田原店', site: 'https://odawara.carmelonline.jp/', lineUrl: 'https://lin.ee/x5Ne4jf',
     slackWebhook: '', asanaSectionId: ''
   },
   yamanashi: {
     label: 'カーメル山梨店', short: '山梨店', tel: '080-7566-2556', hours: '9:30〜18:30',
     emails: ['yamanashi@carmelonline.jp', 'carmelbuzzzzz@aisjaltd.com'],
-    replyFromName: 'カーメル 山梨店', site: 'https://yamanashi.carmelonline.jp/', lineUrl: 'https://lin.ee/y4QcSnq',
+    replyFromName: 'カーメル 山梨店', site: 'https://yamanashi.carmelonline.jp/', lineUrl: 'https://lin.ee/Y1nymrL',
     slackWebhook: '', asanaSectionId: ''
   }
 };
