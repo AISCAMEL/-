@@ -286,9 +286,9 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
   window.CARMEL_STORE={key:key,label:st.label,tel:st.tel};
   var b=document.getElementById('store-badge');
   if(b){
-    b.innerHTML='<div style="display:inline-flex;flex-direction:column;align-items:center;gap:2px;background:#fff;border:1.5px solid #f47920;border-radius:12px;padding:8px 18px;box-shadow:0 2px 8px rgba(0,0,0,.08);">'+
-      '<span style="font-weight:900;font-size:1.02rem;color:#15335f;">'+st.label+'</span>'+
-      '<span style="font-size:.8rem;color:#64748b;">TEL '+st.tel+'／'+st.hours+'</span></div>';
+    b.innerHTML='<div style="display:inline-flex;flex-direction:column;align-items:center;gap:2px;background:#fff;border:1.5px solid var(--blue);border-radius:12px;padding:8px 18px;box-shadow:0 2px 8px rgba(0,0,0,.08);">'+
+      '<span style="font-weight:900;font-size:1.02rem;color:var(--navy);">'+st.label+'</span>'+
+      '<span style="font-size:.8rem;color:var(--gray-500);">TEL '+st.tel+'／'+st.hours+'</span></div>';
     b.style.display='';
   }
   try{document.title=st.short+' かんたんWEB審査 | カーメル';}catch(e){}
@@ -861,7 +861,7 @@ document.getElementById('has-guarantor').addEventListener('change',function(){tg
     if(em)p.push('aemail='+encodeURIComponent(em));
     return p.length?('?'+p.join('&')):'';
   }
-  function btn(label,href){return '<a href="'+href+'" target="_blank" rel="noopener" style="display:inline-block;margin-top:4px;padding:12px 22px;border-radius:999px;background:linear-gradient(135deg,#f47920,#ff9248);color:#fff;font-weight:900;text-decoration:none;box-shadow:0 4px 0 #d9650d;">'+label+'</a>';}
+  function btn(label,href){return '<a href="'+href+'" target="_blank" rel="noopener" style="display:inline-block;margin-top:4px;padding:12px 22px;border-radius:999px;background:var(--blue);color:#fff;font-weight:900;text-decoration:none;box-shadow:0 4px 0 var(--blue-hover);">'+label+'</a>';}
   function note(t){return '<p style="font-size:.85rem;color:#334155;margin-bottom:8px;line-height:1.7;">'+t+'</p>';}
   sel.addEventListener('change',function(){
     var v=this.value, box=document.getElementById('gua-action'), qs=params();
