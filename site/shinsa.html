@@ -286,9 +286,17 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
   window.CARMEL_STORE={key:key,label:st.label,tel:st.tel};
   var b=document.getElementById('store-badge');
   if(b){
-    b.innerHTML='<div style="display:inline-flex;flex-direction:column;align-items:center;gap:2px;background:#fff;border:1.5px solid var(--blue);border-radius:12px;padding:8px 18px;box-shadow:0 2px 8px rgba(0,0,0,.08);">'+
-      '<span style="font-weight:900;font-size:1.02rem;color:var(--navy);">'+st.label+'</span>'+
-      '<span style="font-size:.8rem;color:var(--gray-500);">TEL '+st.tel+'／'+st.hours+'</span></div>';
+    b.innerHTML=
+    '<div style="display:inline-flex;align-items:center;gap:12px;background:linear-gradient(135deg,#ffffff,#fff7ef);border:1px solid var(--orange-border);border-radius:16px;padding:10px 20px 10px 14px;box-shadow:0 8px 22px rgba(244,121,32,.20);">'+
+      '<span style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,var(--blue),#ff9a4d);box-shadow:0 4px 10px rgba(244,121,32,.45);flex-shrink:0;">'+
+        '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0 1 18 0Z"/><circle cx="12" cy="10" r="3"/></svg>'+
+      '</span>'+
+      '<span style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.25;">'+
+        '<span style="font-size:.62rem;font-weight:800;letter-spacing:.16em;color:var(--blue);">ご来店店舗</span>'+
+        '<span style="font-size:1.14rem;font-weight:900;color:var(--navy);">'+st.label+'</span>'+
+        '<span style="font-size:.74rem;color:var(--gray-500);font-weight:600;margin-top:2px;">TEL '+st.tel+'　/　'+st.hours+'</span>'+
+      '</span>'+
+    '</div>';
     b.style.display='';
   }
   try{document.title=st.short+' かんたんWEB審査 | カーメル';}catch(e){}
