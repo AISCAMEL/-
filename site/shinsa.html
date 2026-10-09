@@ -9,12 +9,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{
-  --navy:#2e2a4d;
-  --navy-light:#4b4869;
-  --blue:#7c3aed;
-  --blue-hover:#6d28d9;
-  --blue-light:#ede9fe;
-  --blue-50:#f5f3ff;
+  --navy:#1b2935;
+  --navy-light:#33475b;
+  --blue:#f47920;
+  --blue-hover:#d9650d;
+  --blue-light:#ffe8d6;
+  --blue-50:#fff7ef;
   --green:#16a34a;
   --green-bg:#f0fdf4;
   --green-border:#bbf7d0;
@@ -54,13 +54,13 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 /* Trust badges */
 .caf-trust{display:flex;flex-wrap:wrap;justify-content:center;gap:9px;margin-top:18px;}
 .caf-trust span{display:inline-flex;align-items:center;gap:5px;background:var(--blue-50);border:1px solid var(--blue-light);border-radius:20px;padding:6px 15px;font-size:.82rem;font-weight:700;color:var(--blue-hover);white-space:nowrap;}
-.caf-trust span::before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 3px rgba(124,58,237,.18);flex-shrink:0;}
+.caf-trust span::before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 3px rgba(244,121,32,.18);flex-shrink:0;}
 
 /* ===== STEP INDICATOR (sticky) ===== */
 .caf-step-bar{position:sticky;top:0;z-index:100;background:var(--white);border-bottom:1px solid var(--gray-200);padding:12px 16px;box-shadow:var(--shadow);}
 .caf-step-dots{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:6px;}
 .caf-step-dots .dot{width:10px;height:10px;border-radius:50%;background:var(--gray-300);transition:var(--transition);flex-shrink:0;cursor:pointer;}
-.caf-step-dots .dot.active{background:var(--blue);transform:scale(1.25);box-shadow:0 0 0 3px rgba(124,58,237,.2);}
+.caf-step-dots .dot.active{background:var(--blue);transform:scale(1.25);box-shadow:0 0 0 3px rgba(244,121,32,.2);}
 .caf-step-dots .dot.done{background:var(--green);}
 .caf-step-dots .dot-line{width:12px;height:2px;background:var(--gray-200);flex-shrink:0;}
 .caf-step-dots .dot-line.done{background:var(--green);}
@@ -70,7 +70,7 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 
 /* ===== PROGRESS BAR ===== */
 .caf-progress{background:var(--gray-200);border-radius:20px;height:8px;margin:0 16px;overflow:hidden;position:relative;flex:1;}
-.caf-progress-bar{height:100%;background:linear-gradient(90deg,var(--blue),#a78bfa);border-radius:20px;width:0;transition:width .4s ease;}
+.caf-progress-bar{height:100%;background:linear-gradient(90deg,var(--blue),#ffb878);border-radius:20px;width:0;transition:width .4s ease;}
 .caf-progress-wrap{padding:8px 16px 0;display:flex;align-items:center;gap:10px;}
 .caf-progress-txt{font-size:.75rem;font-weight:700;color:var(--blue);white-space:nowrap;}
 
@@ -101,7 +101,7 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
   background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;cursor:pointer;
 }
 .caf select:focus,.caf input:focus,.caf textarea:focus{
-  outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(124,58,237,.15);
+  outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(244,121,32,.15);
 }
 .caf textarea{min-height:80px;resize:vertical;}
 .caf input::placeholder,.caf textarea::placeholder{color:var(--gray-400);font-weight:400;}
@@ -128,11 +128,11 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 /* Submit button */
 .caf .submit{
   display:block;width:100%;padding:16px;font-size:1.05rem;font-weight:800;font-family:inherit;
-  background:linear-gradient(135deg,var(--blue),#6d28d9);color:var(--white);
+  background:linear-gradient(135deg,var(--blue),#d9650d);color:var(--white);
   border:none;border-radius:var(--radius-lg);cursor:pointer;transition:var(--transition);
-  box-shadow:0 4px 14px rgba(124,58,237,.3);letter-spacing:.04em;
+  box-shadow:0 4px 14px rgba(244,121,32,.3);letter-spacing:.04em;
 }
-.caf .submit:hover{background:linear-gradient(135deg,#6d28d9,#5b21b6);box-shadow:0 6px 20px rgba(124,58,237,.4);transform:translateY(-1px);}
+.caf .submit:hover{background:linear-gradient(135deg,#d9650d,#5b21b6);box-shadow:0 6px 20px rgba(244,121,32,.4);transform:translateY(-1px);}
 .caf .submit:disabled{opacity:.5;cursor:not-allowed;transform:none;}
 
 /* ===== CONDITIONAL PANELS ===== */
@@ -211,8 +211,8 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 }
 .sbtn-prev{background:var(--gray-100);color:var(--gray-600);border:1.5px solid var(--gray-300);}
 .sbtn-prev:hover{background:var(--gray-200);color:var(--gray-800);}
-.sbtn-next{background:var(--blue);color:var(--white);box-shadow:0 2px 8px rgba(124,58,237,.25);}
-.sbtn-next:hover{background:var(--blue-hover);box-shadow:0 4px 12px rgba(124,58,237,.35);}
+.sbtn-next{background:var(--blue);color:var(--white);box-shadow:0 2px 8px rgba(244,121,32,.25);}
+.sbtn-next:hover{background:var(--blue-hover);box-shadow:0 4px 12px rgba(244,121,32,.35);}
 
 /* ===== LINE FLOATING BUTTON ===== */
 .caf-line-float{
