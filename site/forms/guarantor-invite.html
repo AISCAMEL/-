@@ -20,8 +20,8 @@ body{font-family:'Noto Sans JP',sans-serif;color:#1e293b;background:var(--page-b
 h2{font-size:1.05rem;font-weight:900;color:var(--navy-deep);margin:0 0 16px;padding-left:12px;border-left:5px solid var(--blue);}
 label{display:block;font-size:.85rem;font-weight:700;color:var(--gray-700);margin:14px 0 4px;}
 .req{color:#fff;background:var(--blue);font-size:.66rem;font-weight:800;padding:2px 7px;border-radius:5px;margin-left:6px;}
-input{display:block;width:100%;padding:11px 14px;font-size:.95rem;font-family:inherit;border:1.5px solid var(--gray-300);border-radius:var(--radius);}
-input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(244,121,32,.15);}
+input,select{display:block;width:100%;padding:11px 14px;font-size:.95rem;font-family:inherit;border:1.5px solid var(--gray-300);border-radius:var(--radius);background:#fff;}
+input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(244,121,32,.15);}
 .btn{display:block;width:100%;margin-top:18px;padding:15px;font-size:1rem;font-weight:900;color:#fff;border:none;border-radius:999px;background:linear-gradient(135deg,var(--blue),#ff9248);box-shadow:0 6px 0 var(--blue-hover);cursor:pointer;letter-spacing:.05em;}
 .btn:active{transform:translateY(3px);box-shadow:0 3px 0 var(--blue-hover);}
 .out{display:none;}
@@ -61,6 +61,14 @@ input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(244,
   <div class="card">
     <h2>1. 内容を入力</h2>
     <div id="url-warn" class="warn hide">※ 保証人フォームのURLが未設定です。公開後、このページの先頭 <code>GUARANTOR_FORM_URL</code> に設定すると、正しいリンク／QRが発行されます。</div>
+    <label>担当店舗 <span class="req">必須</span></label>
+    <select id="i-store">
+      <option value="">選択してください</option>
+      <option value="fukushima">カーメル福島本店</option>
+      <option value="chiba">カーメル千葉店</option>
+      <option value="odawara">カーメル小田原店</option>
+      <option value="yamanashi">カーメル山梨店</option>
+    </select>
     <label>お申込者（ご本人）のお名前 <span class="req">必須</span></label>
     <input id="i-name" placeholder="山田 太郎">
     <label>案件番号・受付番号（任意）</label>
@@ -105,12 +113,15 @@ input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(244,
 
   function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},1600);}
   function buildLink(){
+    var store=document.getElementById('i-store').value;
     var name=document.getElementById('i-name').value.trim();
     var cid=document.getElementById('i-case').value.trim();
     var ae=document.getElementById('i-aemail').value.trim();
+    if(!store){toast('担当店舗を選択してください');return null;}
     if(!name){toast('お申込者名を入力してください');return null;}
     var base=BASE||'https://（保証人フォームURL未設定）/';
     var p=[];
+    p.push('store='+encodeURIComponent(store));
     p.push('applicant='+encodeURIComponent(name));
     if(cid)p.push('caseid='+encodeURIComponent(cid));
     if(ae)p.push('aemail='+encodeURIComponent(ae));

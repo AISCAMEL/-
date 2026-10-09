@@ -41,25 +41,25 @@ var STORES = {
     label: 'カーメル福島本店', short: '福島本店', tel: '050-1793-5554', hours: '10:00〜18:00',
     emails: ['carmelbuzzzzz@aisjaltd.com'],
     replyFromName: 'カーメル 福島本店', site: 'https://carmelonline.jp/', lineUrl: 'https://lin.ee/y4QcSnq',
-    slackWebhook: '', asanaSectionId: '', asanaProjectId: '1212957542191186'
+    slackWebhook: '', asanaProjectId: '1212957542191186', asanaSectionId: '1212957542191187', asanaGuarantorSectionId: '1213077965542210'
   },
   chiba: {
     label: 'カーメル千葉店', short: '千葉店', tel: '050-5236-2588', hours: '9:00〜20:00',
     emails: ['chiba@carmelonline.jp', 'carmelbuzzzzz@aisjaltd.com'],
     replyFromName: 'カーメル 千葉店', site: 'https://chiba.carmelonline.jp/', lineUrl: 'https://lin.ee/y4QcSnq',
-    slackWebhook: '', asanaSectionId: '', asanaProjectId: '1213077965542227'
+    slackWebhook: '', asanaProjectId: '1213077965542227', asanaSectionId: '1213077965542228', asanaGuarantorSectionId: '1213078356866757'
   },
   odawara: {
     label: 'カーメル小田原店', short: '小田原店', tel: '0465-20-4286', hours: '10:00〜20:00',
     emails: ['odawara@carmelonline.jp', 'carmelbuzzzzz@aisjaltd.com'],
     replyFromName: 'カーメル 小田原店', site: 'https://odawara.carmelonline.jp/', lineUrl: 'https://lin.ee/x5Ne4jf',
-    slackWebhook: '', asanaSectionId: '', asanaProjectId: '1213077965542236'
+    slackWebhook: '', asanaProjectId: '1213077965542236', asanaSectionId: '1213077965542237', asanaGuarantorSectionId: '1213078354859839'
   },
   yamanashi: {
     label: 'カーメル山梨店', short: '山梨店', tel: '080-7566-2556', hours: '9:30〜18:30',
     emails: ['yamanashi@carmelonline.jp', 'carmelbuzzzzz@aisjaltd.com'],
     replyFromName: 'カーメル 山梨店', site: 'https://yamanashi.carmelonline.jp/', lineUrl: 'https://lin.ee/Y1nymrL',
-    slackWebhook: '', asanaSectionId: '', asanaProjectId: '1213077965542217'
+    slackWebhook: '', asanaProjectId: '1213077965542217', asanaSectionId: '1213077965542218', asanaGuarantorSectionId: '1213078349498750'
   }
 };
 var DEFAULT_STORE_KEY = 'fukushima';
@@ -87,7 +87,7 @@ function doPost(e) {
     }
     writeWpRowDynamic_(cfg, rec);
     if (cfg.SEND_SLACK && cfg.SLACK_WEBHOOK_URL) safeRun_(cfg, function(){ notifyWpSlack_(cfg, rec); });
-    if (cfg.SEND_ASANA && cfg.ASANA_TOKEN && cfg.ASANA_PROJECT_ID) safeRun_(cfg, function(){ createWpAsana_(cfg, rec); });
+    if (cfg.SEND_ASANA && cfg.ASANA_TOKEN) safeRun_(cfg, function(){ createWpAsana_(cfg, rec); });
     safeRun_(cfg, function(){ notifyStoreAdmin_(cfg, rec); });
     if (cfg.SEND_THANKS) safeRun_(cfg, function(){ sendApplicantThankYou_(cfg, rec); });
     return jsonOut_({ success: true, uid: rec.uid });
@@ -351,7 +351,7 @@ function handleGuarantor_(cfg, payload) {
     catch (fe) { rec.fileLinks = [{ label: '画像保存エラー', url: String(fe) }]; notifyWpError_('保証人ファイル保存エラー: ' + fe); }
     writeGuarantorRow_(cfg, rec);
     if (cfg.SEND_SLACK && cfg.SLACK_WEBHOOK_URL) safeRun_(cfg, function(){ notifyGuarantorSlack_(cfg, rec); });
-    if (cfg.SEND_ASANA && cfg.ASANA_TOKEN && cfg.ASANA_PROJECT_ID) safeRun_(cfg, function(){ createGuarantorAsana_(cfg, rec); });
+    if (cfg.SEND_ASANA && cfg.ASANA_TOKEN) safeRun_(cfg, function(){ createGuarantorAsana_(cfg, rec); });
     safeRun_(cfg, function(){ notifyGuarantorAdmin_(cfg, rec); });
     safeRun_(cfg, function(){ sendGuarantorReceipt_(cfg, rec); });
     if (rec.applicantEmail) safeRun_(cfg, function(){ sendApplicantGuarantorDone_(cfg, rec); });
@@ -367,7 +367,7 @@ function writeGuarantorRow_(cfg, rec) {
   var ss = SpreadsheetApp.openById(cfg.CARMEL_SHEET_ID);
   var sheet = ss.getSheetByName('保証人申請') || ss.insertSheet('保証人申請');
   var d = {};
-  d['申込ソース']=rec.source; d['UID']=rec.uid; d['受付日時']=rec.stamp;
+  d['申込ソース']=rec.source; d['店舗']=rec.store?rec.store.label:''; d['UID']=rec.uid; d['受付日時']=rec.stamp;
   d['お申込者名']=rec.applicant; d['案件番号']=rec.caseId; d['申込者メール']=rec.applicantEmail;
   d['保証人 お名前']=rec.name; d['保証人 フリガナ']=rec.kana; d['保証人 電話']=rec.phone; d['保証人 メール']=rec.email;
   rec.fields.forEach(function(f){ var col=(f.section?f.section+' / ':'')+(f.label||''); if(!col)return; d[col]=d[col]?(d[col]+' / '+f.value):f.value; });
@@ -378,66 +378,74 @@ function writeGuarantorRow_(cfg, rec) {
 function notifyGuarantorSlack_(cfg, rec) {
   var files = rec.fileLinks.length ? rec.fileLinks.map(function(f){ return '• <' + f.url + '|' + f.label + '>'; }).join('\n') : '（添付なし）';
   var text = '*新規 連帯保証人 申請* :bust_in_silhouette:\n' +
+    '*店舗：* ' + (rec.store ? rec.store.label : '—') + '\n' +
     '*お申込者：* ' + (rec.applicant || '—') + (rec.caseId ? '（案件 ' + rec.caseId + '）' : '') + '\n' +
     '*保証人：* ' + rec.name + '（' + rec.kana + '）\n' +
     '*電話：* ' + rec.phone + '　*メール：* ' + rec.email + '\n' +
     '*受付：* ' + rec.stamp + '\n——————————————\n' + rec.body + '\n——————————————\n*添付書類：*\n' + files;
-  UrlFetchApp.fetch(cfg.SLACK_WEBHOOK_URL, { method:'post', contentType:'application/json', payload: JSON.stringify({ text: text }), muteHttpExceptions:true });
+  var hook = (rec.store && rec.store.slackWebhook) ? rec.store.slackWebhook : cfg.SLACK_WEBHOOK_URL;
+  UrlFetchApp.fetch(hook, { method:'post', contentType:'application/json', payload: JSON.stringify({ text: text }), muteHttpExceptions:true });
 }
 
 function createGuarantorAsana_(cfg, rec) {
-  var notes = '【区分】連帯保証人 申請\n【お申込者】' + (rec.applicant || '—') + (rec.caseId ? '（案件 ' + rec.caseId + '）' : '') + '\n' +
+  var notes = '【区分】連帯保証人 申請\n【店舗】' + (rec.store ? rec.store.label : '—') + '\n【お申込者】' + (rec.applicant || '—') + (rec.caseId ? '（案件 ' + rec.caseId + '）' : '') + '\n' +
     '【申込者メール】' + (rec.applicantEmail || '—') + '\n【受付日時】' + rec.stamp + '\n' +
     '【保証人 電話】' + rec.phone + '　【保証人 メール】' + rec.email + '\n\n' + rec.body + '\n\n【添付書類】\n' +
     (rec.fileLinks.length ? rec.fileLinks.map(function(f){ return '・' + f.label + '： ' + f.url; }).join('\n') : '（添付なし）');
   var headers = { 'Authorization': 'Bearer ' + cfg.ASANA_TOKEN, 'Content-Type': 'application/json' };
+  var projectId = (rec.store && rec.store.asanaProjectId) ? rec.store.asanaProjectId : cfg.ASANA_PROJECT_ID;
   var res = UrlFetchApp.fetch('https://app.asana.com/api/1.0/tasks', { method:'post', headers:headers,
-    payload: JSON.stringify({ data: { name: '【保証人】' + (rec.name || '名前未設定') + ' 様 → お申込者 ' + (rec.applicant || '—'), notes: notes, projects: [cfg.ASANA_PROJECT_ID] }}), muteHttpExceptions:true });
+    payload: JSON.stringify({ data: { name: '【保証人' + (rec.store ? '／' + rec.store.short : '') + '】' + (rec.name || '名前未設定') + ' 様 → お申込者 ' + (rec.applicant || '—'), notes: notes, projects: [projectId] }}), muteHttpExceptions:true });
   var code = res.getResponseCode();
-  if (cfg.ASANA_SECTION_ID && (code === 200 || code === 201)) {
+  var sectionId = (rec.store && rec.store.asanaGuarantorSectionId) ? rec.store.asanaGuarantorSectionId : cfg.ASANA_SECTION_ID;
+  if (sectionId && (code === 200 || code === 201)) {
     var gid = JSON.parse(res.getContentText()).data.gid;
-    UrlFetchApp.fetch('https://app.asana.com/api/1.0/sections/' + cfg.ASANA_SECTION_ID + '/addTask', { method:'post', headers:headers, payload: JSON.stringify({ data: { task: gid } }), muteHttpExceptions:true });
+    UrlFetchApp.fetch('https://app.asana.com/api/1.0/sections/' + sectionId + '/addTask', { method:'post', headers:headers, payload: JSON.stringify({ data: { task: gid } }), muteHttpExceptions:true });
   }
 }
 
 function notifyGuarantorAdmin_(cfg, rec) {
-  if (!cfg.NOTIFY_EMAIL) return;
-  var body = '連帯保証人の申請がありました。\n\nお申込者：' + (rec.applicant || '—') + (rec.caseId ? '（案件 ' + rec.caseId + '）' : '') + '\n申込者メール：' + (rec.applicantEmail || '—') + '\n\n【保証人】\n氏名：' + rec.name + '（' + rec.kana + '）\n電話：' + rec.phone + '\nメール：' + rec.email + '\n\n' + rec.body + '\n\n【添付書類】\n' + (rec.fileLinks.length ? rec.fileLinks.map(function(f){ return '・' + f.label + '： ' + f.url; }).join('\n') : '（なし）') + '\n\n受付：' + rec.stamp;
-  MailApp.sendEmail(cfg.NOTIFY_EMAIL, '【カーメル】連帯保証人 申請：' + rec.name + ' 様（お申込者 ' + (rec.applicant || '—') + '）', body);
+  var st = rec.store || resolveStore_('');
+  var to = (st.emails && st.emails.length) ? st.emails.join(',') : (cfg.NOTIFY_EMAIL || '');
+  if (!to) return;
+  var body = '連帯保証人の申請がありました。\n\n店舗：' + st.label + '\nお申込者：' + (rec.applicant || '—') + (rec.caseId ? '（案件 ' + rec.caseId + '）' : '') + '\n申込者メール：' + (rec.applicantEmail || '—') + '\n\n【保証人】\n氏名：' + rec.name + '（' + rec.kana + '）\n電話：' + rec.phone + '\nメール：' + rec.email + '\n\n' + rec.body + '\n\n【添付書類】\n' + (rec.fileLinks.length ? rec.fileLinks.map(function(f){ return '・' + f.label + '： ' + f.url; }).join('\n') : '（なし）') + '\n\n受付：' + rec.stamp;
+  MailApp.sendEmail(to, '【' + st.label + '】連帯保証人 申請：' + rec.name + ' 様（お申込者 ' + (rec.applicant || '—') + '）', body);
 }
 
 function sendGuarantorReceipt_(cfg, rec) {
-  var subject = '【カーメル】連帯保証人 申請を受け付けました';
-  var body = (rec.name || 'ご担当者') + ' 様\n\nこの度は、連帯保証人としてのご申請をいただき、誠にありがとうございます。\nお申込者（' + (rec.applicant || '') + ' 様）の自動車ローンにともなう保証人申請を、確かに受け付けいたしました。\n\n内容を確認のうえ、必要に応じて担当者よりご連絡させていただきます。\n追加書類が必要な場合も、あらためてご案内いたします。\n\nご不明な点は、LINEまたはお電話でお気軽にお問い合わせください。\n　・LINE： https://lin.ee/y4QcSnq\n　・お電話： 050-1793-5554（受付 10:00〜18:00）\n\n────────────────────\n※本メールは送信専用です。\nカーメル（CARMEL）\nhttps://carmelonline.jp/\n────────────────────';
-  sendGuarantorMail_(cfg, rec.email, subject, body);
+  var st = rec.store || resolveStore_('');
+  var subject = '【' + st.label + '】連帯保証人 申請を受け付けました';
+  var body = (rec.name || 'ご担当者') + ' 様\n\nこの度は、連帯保証人としてのご申請をいただき、誠にありがとうございます。\nお申込者（' + (rec.applicant || '') + ' 様）の自動車ローンにともなう保証人申請を、確かに受け付けいたしました。\n\n内容を確認のうえ、必要に応じて担当者よりご連絡させていただきます。\n追加書類が必要な場合も、あらためてご案内いたします。\n\nご不明な点は、LINEまたはお電話でお気軽にお問い合わせください。\n　・LINE： ' + st.lineUrl + '\n　・お電話： ' + st.tel + '（受付 ' + st.hours + '）\n\n────────────────────\n※本メールは送信専用です。\n' + st.replyFromName + '（CARMEL）\n' + st.site + '\n────────────────────';
+  sendGuarantorMail_(cfg, rec.email, subject, body, st.replyFromName);
 }
 
 function sendApplicantGuarantorDone_(cfg, rec) {
-  var subject = '【カーメル】保証人様のご申請が完了しました';
+  var st = rec.store || resolveStore_('');
+  var subject = '【' + st.label + '】保証人様のご申請が完了しました';
   var ready = !!cfg.MYPAGE_URL;
   var mp = ready
     ? '今後の審査結果・進捗・お手続きは、マイページからご確認ください。\n\n　▼ マイページ\n　' + cfg.MYPAGE_URL + '\n'
     : '今後の審査結果・進捗は、追ってご案内いたします。\n※マイページは現在準備中です。準備が整いしだいご案内いたします。\n';
   var contact = ready
     ? 'ご質問・ご相談は、マイページの「お問い合わせ」よりご連絡ください。\n'
-    : 'ご不明な点・お急ぎのご相談は、下記までお気軽にご連絡ください。\n　・LINE： https://lin.ee/y4QcSnq\n　・お電話： 050-1793-5554（受付 10:00〜18:00）\n';
+    : 'ご不明な点・お急ぎのご相談は、下記までお気軽にご連絡ください。\n　・LINE： ' + st.lineUrl + '\n　・お電話： ' + st.tel + '（受付 ' + st.hours + '）\n';
   var foot = ready
     ? '※本メールは送信専用です。お問い合わせはマイページからお願いいたします。'
     : '※本メールは送信専用です。お問い合わせは上記のLINE・お電話をご利用ください。';
   var body = (rec.applicant || 'お客様') + ' 様\n\n' +
-    'いつもお世話になっております。カーメルです。\n' +
+    'いつもお世話になっております。' + st.replyFromName + 'です。\n' +
     'あなた様のお申し込みにともなう「連帯保証人」のご申請が完了いたしました。\n\n' +
     '　保証人：' + (rec.name || '') + ' 様\n' + (rec.caseId ? '　案件番号：' + rec.caseId + '\n' : '') + '　受付日時：' + rec.stamp + '\n\n' +
     '━━━━━━━━━━━━━━━━━━━━━━\n  ■ 審査結果・進捗のご確認\n━━━━━━━━━━━━━━━━━━━━━━\n\n' + mp + '\n' +
     '━━━━━━━━━━━━━━━━━━━━━━\n  ■ ご不明な点があるときは\n━━━━━━━━━━━━━━━━━━━━━━\n\n' + contact + '\n' +
-    '────────────────────\n' + foot + '\nカーメル（CARMEL）\nhttps://carmelonline.jp/\n────────────────────';
-  sendGuarantorMail_(cfg, rec.applicantEmail, subject, body);
+    '────────────────────\n' + foot + '\n' + st.replyFromName + '（CARMEL）\n' + st.site + '\n────────────────────';
+  sendGuarantorMail_(cfg, rec.applicantEmail, subject, body, st.replyFromName);
 }
 
-function sendGuarantorMail_(cfg, to, subject, body) {
+function sendGuarantorMail_(cfg, to, subject, body, fromName) {
   if (!to || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return;
-  if (cfg.BREVO_API_KEY && cfg.BREVO_SENDER) { sendViaBrevo_(cfg, to, subject, body); return; }
-  var options = { name: cfg.MAIL_FROM_NAME || 'カーメル' };
+  if (cfg.BREVO_API_KEY && cfg.BREVO_SENDER) { sendViaBrevo_(cfg, to, subject, body, fromName); return; }
+  var options = { name: fromName || cfg.MAIL_FROM_NAME || 'カーメル' };
   if (cfg.MAIL_FROM) options.from = cfg.MAIL_FROM;
   GmailApp.sendEmail(to, subject, body, options);
 }

@@ -280,11 +280,14 @@ document.querySelectorAll('.caf .month-sel').forEach(function(sel){
   var ap=q.get('applicant')||q.get('a')||'';
   var cid=q.get('caseid')||q.get('c')||'';
   var ae=q.get('aemail')||q.get('e')||'';
+  var storeMap={fukushima:'カーメル福島本店',chiba:'カーメル千葉店',odawara:'カーメル小田原店',yamanashi:'カーメル山梨店'};
+  var skey=(q.get('store')||q.get('s')||'').toLowerCase().trim(); if(!storeMap[skey])skey='';
+  window.CARMEL_GUA_STORE={key:skey,label:storeMap[skey]||''};
   function lock(el){ if(!el)return; el.readOnly=true; el.style.background='#eef2f7'; el.style.color='#334155'; el.setAttribute('title','招待リンクで指定済み'); }
   if(ap){var n=document.getElementById('applicant-name');if(n){n.value=ap;lock(n);}}
   if(cid){var c=document.getElementById('case-no');if(c){c.value=cid;lock(c);}}
   if(ae){var h=document.getElementById('applicant-email');if(h){h.value=ae;lock(h);}}
-  if(ap){var b=document.getElementById('invite-banner');if(b){b.textContent='「'+ap+'」様の連帯保証人として申請します。'+(cid?'（案件番号：'+cid+'）':'');b.classList.remove('hide');}}
+  if(ap||skey){var b=document.getElementById('invite-banner');if(b){b.textContent=(skey?'【'+storeMap[skey]+'】':'')+(ap?'「'+ap+'」様の連帯保証人として申請します。':'連帯保証人の申請フォームです。')+(cid?'（案件番号：'+cid+'）':'');b.classList.remove('hide');}}
 })();
 
 /* 進捗バー */
@@ -482,7 +485,8 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
     });
     function pick(re){for(var i=0;i<fields.length;i++){if(re.test(fields[i].label))return fields[i].value;}return '';}
     var meta={name:pick(/^お名前/)||'',kana:pick(/フリガナ/),phone:pick(/携帯/)||pick(/電話/),email:(em.value||''),
-      applicant:pick(/お申込者/),caseId:pick(/案件番号/),applicantEmail:(document.getElementById('applicant-email')||{}).value||''};
+      applicant:pick(/お申込者/),caseId:pick(/案件番号/),applicantEmail:(document.getElementById('applicant-email')||{}).value||'',
+      store:(window.CARMEL_GUA_STORE&&window.CARMEL_GUA_STORE.label)||'',storeKey:(window.CARMEL_GUA_STORE&&window.CARMEL_GUA_STORE.key)||''};
 
     function readFile(file,label){return new Promise(function(res){var r=new FileReader();r.onload=function(){var s=String(r.result||'');var b64=s.indexOf(',')>=0?s.slice(s.indexOf(',')+1):s;res({label:label,name:file.name,mime:file.type||'application/octet-stream',size:file.size,dataBase64:b64});};r.onerror=function(){res(null);};r.readAsDataURL(file);});}
     var fileJobs=[];
