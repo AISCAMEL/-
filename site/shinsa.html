@@ -355,7 +355,7 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 
 <h3>STEP3 ご本人情報</h3>
 <div class="caf-half">
-<p>お名前 (必須)<br><input type="text" placeholder="山田 太郎"></p>
+<p>お名前 (必須)<br><input type="text" id="applicant-fullname" placeholder="山田 太郎"></p>
 <p>フリガナ (必須)<br><input type="text" placeholder="ヤマダ タロウ"></p>
 <p>生年月日 (必須)<br><input type="date" id="birthday"><span class="caf-age" id="birthday-age"></span></p>
 <p>性別 (必須)<br><select><option>選択してください</option><option>男性</option><option>女性</option></select></p>
@@ -599,15 +599,15 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 
 <h3>STEP12 保証人・緊急連絡先</h3>
 <p>保証人 (必須)<br><select id="has-guarantor"><option>選択してください</option><option>はい</option><option>いいえ</option></select></p>
-<div class="caf-cond hide" id="grp-guarantor"><h4>保証人の情報（任意）</h4>
-<div class="caf-half">
-<p>お名前<br><input type="text"></p>
-<p>フリガナ<br><input type="text"></p>
-<p>続柄<br><input type="text"></p>
-<p>連絡先<br><input type="tel"></p>
-<p>勤務先（任意）<br><input type="text"></p>
-<p>年収（任意）<br><select><option>選択してください</option><option>200万未満</option><option>200〜300万</option><option>300〜400万</option><option>400〜500万</option><option>500〜700万</option><option>700万以上</option></select></p>
-</div></div>
+<div class="caf-cond hide" id="grp-guarantor"><h4>保証人のお手続き方法</h4>
+<p>ご希望の方法 (必須)<br><select id="guarantor-method">
+<option>選択してください</option>
+<option>ご本人が代わりに入力する</option>
+<option>保証人ご本人に入力してもらう（フォームを送る）</option>
+<option>後から登録する（審査後にご案内）</option>
+</select></p>
+<div id="gua-action" class="hide" style="margin-top:10px;padding:14px 16px;border-radius:12px;background:#fff;border:1px dashed var(--gray-300);"></div>
+</div>
 <p class="caf-hint">※緊急連絡先は<b>保証人ではありません</b>。ご本人と連絡が取れない場合のご連絡先で、<b>お支払いの義務は一切発生しません</b>。安心してご記入ください。</p>
 <div class="caf-cond2"><h4>緊急連絡先① （任意）</h4>
 <div class="caf-half">
@@ -847,6 +847,34 @@ document.querySelectorAll('.caf .num-only').forEach(function(el){
 document.getElementById('trade-in').addEventListener('change',function(){tg('grp-tradein',this.value==='下取りあり');});
 document.getElementById('payment-type').addEventListener('change',function(){tg('grp-bonus',this.value==='ボーナス併用');});
 document.getElementById('has-guarantor').addEventListener('change',function(){tg('grp-guarantor',this.value==='はい');});
+/* 保証人：お手続き方法の分岐 */
+(function(){
+  var GUA_FORM='https://strong-sundae-7c50a5.netlify.app/';
+  var GUA_INVITE='https://jazzy-capybara-41c031.netlify.app/';
+  var sel=document.getElementById('guarantor-method'); if(!sel)return;
+  function params(){
+    var nm=(document.getElementById('applicant-fullname')||{}).value||'';
+    var em=(document.getElementById('email-main')||{}).value||'';
+    var s=(window.CARMEL_STORE&&window.CARMEL_STORE.key)||'';
+    var p=[]; if(s)p.push('store='+encodeURIComponent(s));
+    if(nm)p.push('applicant='+encodeURIComponent(nm));
+    if(em)p.push('aemail='+encodeURIComponent(em));
+    return p.length?('?'+p.join('&')):'';
+  }
+  function btn(label,href){return '<a href="'+href+'" target="_blank" rel="noopener" style="display:inline-block;margin-top:4px;padding:12px 22px;border-radius:999px;background:linear-gradient(135deg,#f47920,#ff9248);color:#fff;font-weight:900;text-decoration:none;box-shadow:0 4px 0 #d9650d;">'+label+'</a>';}
+  function note(t){return '<p style="font-size:.85rem;color:#334155;margin-bottom:8px;line-height:1.7;">'+t+'</p>';}
+  sel.addEventListener('change',function(){
+    var v=this.value, box=document.getElementById('gua-action'), qs=params();
+    if(v==='ご本人が代わりに入力する'){
+      box.innerHTML=note('保証人様の同意のうえ、保証人様の情報を<b>ご本人が代わりに入力</b>できます。下のボタンから保証人フォームが開きます（この審査の入力内容は自動保存されます）。')+btn('保証人フォームを開く（別タブ）',GUA_FORM+qs);
+    }else if(v==='保証人ご本人に入力してもらう（フォームを送る）'){
+      box.innerHTML=note('保証人様ご自身に入力してもらう場合は、こちらから<b>リンク・QR・メール</b>で送れます。')+btn('保証人へフォームを送る（別タブ）',GUA_INVITE+qs);
+    }else if(v==='後から登録する（審査後にご案内）'){
+      box.innerHTML=note('承知しました。審査のお手続き後、受付メール・担当者よりご案内いたします。このまま審査をお進みください。');
+    }else{ box.classList.add('hide'); box.innerHTML=''; return; }
+    box.classList.remove('hide');
+  });
+})();
 document.getElementById('audit-count').addEventListener('change',function(){tg('grp-auditnames',this.value!=='1社目（初めて）'&&this.value!=='選択してください');});
 document.getElementById('debt-arrange').addEventListener('change',function(){tg('grp-debt',this.value==='あり');});
 document.getElementById('bankruptcy').addEventListener('change',function(){tg('grp-bankruptcy',this.value==='あり');});

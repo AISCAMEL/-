@@ -111,6 +111,18 @@ input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 
   var isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent||'');
   if(!BASE){var w=document.getElementById('url-warn');if(w)w.classList.remove('hide');}
 
+  /* 審査フォームなどからの引き継ぎ（?store=&applicant=&aemail=&caseid=） */
+  (function(){
+    var q=new URLSearchParams(location.search);
+    var st=(q.get('store')||'').toLowerCase().trim();
+    var ap=q.get('applicant')||'', ae=q.get('aemail')||'', cid=q.get('caseid')||'';
+    var sEl=document.getElementById('i-store');
+    if(st&&sEl){for(var i=0;i<sEl.options.length;i++){if(sEl.options[i].value===st){sEl.selectedIndex=i;break;}}}
+    if(ap){var n=document.getElementById('i-name');if(n)n.value=ap;}
+    if(ae){var a=document.getElementById('i-aemail');if(a)a.value=ae;}
+    if(cid){var c=document.getElementById('i-case');if(c)c.value=cid;}
+  })();
+
   function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},1600);}
   function buildLink(){
     var store=document.getElementById('i-store').value;
