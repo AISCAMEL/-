@@ -339,7 +339,8 @@ function forwardToPortal_(cfg, payload) {
   });
 }
 
-function jsonOut_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }function sanitize_(n) { return String(n).replace(/[\\/:*?"<>|]/g, '_'); }
+function jsonOut_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+function sanitize_(n) { return String(n).replace(/[\\/:*?"<>|]/g, '_'); }
 function safeRun_(cfg, fn) { try { return fn(); } catch (e) { notifyWpError_(String(e)); } }
 function notifyWpError_(msg) {
   try { var cfg = getWpConfig_(); if (cfg.NOTIFY_EMAIL) MailApp.sendEmail(cfg.NOTIFY_EMAIL, '【WP審査フォーム】取り込みエラー', msg); } catch (e) {}
