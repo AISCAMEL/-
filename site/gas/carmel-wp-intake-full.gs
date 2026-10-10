@@ -22,6 +22,8 @@ function getWpConfig_() {
     SEND_ASANA: (p['WP_SEND_ASANA'] || 'false') === 'true',
     SEND_SLACK: (p['WP_SEND_SLACK'] || 'false') === 'true',
     NOTIFY_EMAIL: p['NOTIFY_EMAIL'] || 'info@aisjaltd.com',
+    PORTAL_INTAKE_URL: p['PORTAL_INTAKE_URL'] || 'https://new-repository-livid-one.vercel.app/api/intake/shinsa',
+    PORTAL_INTAKE_KEY: p['PORTAL_INTAKE_KEY'] || '', // ← リース顧客管理ポータルの INTAKE_API_KEY（未設定なら転送しない）
     TZ: 'Asia/Tokyo',
     SOURCE_LABEL: 'WPフォーム'
   };
@@ -90,6 +92,7 @@ function doPost(e) {
     if (cfg.SEND_ASANA && cfg.ASANA_TOKEN) safeRun_(cfg, function(){ createWpAsana_(cfg, rec); });
     safeRun_(cfg, function(){ notifyStoreAdmin_(cfg, rec); });
     if (cfg.SEND_THANKS) safeRun_(cfg, function(){ sendApplicantThankYou_(cfg, rec); });
+    if (cfg.PORTAL_INTAKE_URL && cfg.PORTAL_INTAKE_KEY) safeRun_(cfg, function(){ forwardToPortal_(cfg, payload); }); // ★リース顧客管理ポータルへ反映
     return jsonOut_({ success: true, uid: rec.uid });
   } catch (err) {
     notifyWpError_('doPost失敗: ' + err);
@@ -317,8 +320,26 @@ function sendViaBrevo_(cfg, to, subject, textBody, fromName) {
   return true;
 }
 
-function jsonOut_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
-function sanitize_(n) { return String(n).replace(/[\\/:*?"<>|]/g, '_'); }
+// ===== 審査申込をリース顧客管理ポータルへ転送（/api/intake/shinsa）。ベストエフォート =====
+function forwardToPortal_(cfg, payload) {
+  var slim = {
+    type:   payload.type || '',
+    source: payload.source || 'web審査',
+    meta:   payload.meta || {},
+    fields: payload.fields || [],
+    // 書類はファイル名のみ（base64は送らない＝軽量化）
+    files:  (payload.files || []).map(function(f){ return { label: f.label, name: f.name }; })
+  };
+  UrlFetchApp.fetch(cfg.PORTAL_INTAKE_URL, {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { 'x-api-key': cfg.PORTAL_INTAKE_KEY },
+    payload: JSON.stringify(slim),
+    muteHttpExceptions: true
+  });
+}
+
+function jsonOut_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }function sanitize_(n) { return String(n).replace(/[\\/:*?"<>|]/g, '_'); }
 function safeRun_(cfg, fn) { try { return fn(); } catch (e) { notifyWpError_(String(e)); } }
 function notifyWpError_(msg) {
   try { var cfg = getWpConfig_(); if (cfg.NOTIFY_EMAIL) MailApp.sendEmail(cfg.NOTIFY_EMAIL, '【WP審査フォーム】取り込みエラー', msg); } catch (e) {}
