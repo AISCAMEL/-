@@ -92,7 +92,7 @@ function doPost(e) {
     if (cfg.SEND_ASANA && cfg.ASANA_TOKEN) safeRun_(cfg, function(){ createWpAsana_(cfg, rec); });
     safeRun_(cfg, function(){ notifyStoreAdmin_(cfg, rec); });
     if (cfg.SEND_THANKS) safeRun_(cfg, function(){ sendApplicantThankYou_(cfg, rec); });
-    if (cfg.PORTAL_INTAKE_URL && cfg.PORTAL_INTAKE_KEY) safeRun_(cfg, function(){ forwardToPortal_(cfg, payload); }); // ★リース顧客管理ポータルへ反映
+    if (cfg.PORTAL_INTAKE_URL && cfg.PORTAL_INTAKE_KEY) safeRun_(cfg, function(){ forwardToPortal_(cfg, payload, rec); }); // ★リース顧客管理ポータルへ反映
     return jsonOut_({ success: true, uid: rec.uid });
   } catch (err) {
     notifyWpError_('doPost失敗: ' + err);
@@ -321,14 +321,20 @@ function sendViaBrevo_(cfg, to, subject, textBody, fromName) {
 }
 
 // ===== 審査申込をリース顧客管理ポータルへ転送（/api/intake/shinsa）。ベストエフォート =====
-function forwardToPortal_(cfg, payload) {
+function forwardToPortal_(cfg, payload, rec) {
+  // 書類はGoogle Driveの閲覧リンクを送る（base64は送らない＝軽量）。rec.fileLinks は saveWpFiles_ が作成。
+  var files;
+  if (rec && rec.fileLinks && rec.fileLinks.length) {
+    files = rec.fileLinks.map(function(f){ return { label: f.label, url: f.url }; });
+  } else {
+    files = (payload.files || []).map(function(f){ return { label: f.label, name: f.name }; });
+  }
   var slim = {
     type:   payload.type || '',
     source: payload.source || 'web審査',
     meta:   payload.meta || {},
     fields: payload.fields || [],
-    // 書類はファイル名のみ（base64は送らない＝軽量化）
-    files:  (payload.files || []).map(function(f){ return { label: f.label, name: f.name }; })
+    files:  files
   };
   UrlFetchApp.fetch(cfg.PORTAL_INTAKE_URL, {
     method: 'post',
