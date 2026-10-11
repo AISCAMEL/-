@@ -24,6 +24,7 @@ function getWpConfig_() {
     NOTIFY_EMAIL: p['NOTIFY_EMAIL'] || 'info@aisjaltd.com',
     PORTAL_INTAKE_URL: p['PORTAL_INTAKE_URL'] || 'https://new-repository-livid-one.vercel.app/api/intake/shinsa',
     PORTAL_INTAKE_KEY: p['PORTAL_INTAKE_KEY'] || '', // ← リース顧客管理ポータルの INTAKE_API_KEY（未設定なら転送しない）
+    PORTAL_GUARANTOR_URL: p['PORTAL_GUARANTOR_URL'] || 'https://new-repository-livid-one.vercel.app/api/intake/guarantor',
     TZ: 'Asia/Tokyo',
     SOURCE_LABEL: 'WPフォーム'
   };
@@ -345,6 +346,31 @@ function forwardToPortal_(cfg, payload, rec) {
   });
 }
 
+// ===== 保証人申請をリース顧客管理ポータルへ転送（/api/intake/guarantor）。申込者案件にひも付け。ベストエフォート =====
+function forwardGuarantorToPortal_(cfg, payload, rec) {
+  var files;
+  if (rec && rec.fileLinks && rec.fileLinks.length) {
+    files = rec.fileLinks.map(function(f){ return { label: f.label, url: f.url }; });
+  } else {
+    files = (payload.files || []).map(function(f){ return { label: f.label, name: f.name }; });
+  }
+  // meta には 保証人本人(name/kana/phone/email) と お申込者(applicant/applicantEmail/caseId) が入る
+  var slim = {
+    type:   'guarantor',
+    source: payload.source || 'web保証人',
+    meta:   payload.meta || {},
+    fields: payload.fields || [],
+    files:  files
+  };
+  UrlFetchApp.fetch(cfg.PORTAL_GUARANTOR_URL, {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { 'x-api-key': cfg.PORTAL_INTAKE_KEY },
+    payload: JSON.stringify(slim),
+    muteHttpExceptions: true
+  });
+}
+
 function jsonOut_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 function sanitize_(n) { return String(n).replace(/[\\/:*?"<>|]/g, '_'); }
 function safeRun_(cfg, fn) { try { return fn(); } catch (e) { notifyWpError_(String(e)); } }
@@ -383,6 +409,7 @@ function handleGuarantor_(cfg, payload) {
     safeRun_(cfg, function(){ notifyGuarantorAdmin_(cfg, rec); });
     safeRun_(cfg, function(){ sendGuarantorReceipt_(cfg, rec); });
     if (rec.applicantEmail) safeRun_(cfg, function(){ sendApplicantGuarantorDone_(cfg, rec); });
+    if (cfg.PORTAL_GUARANTOR_URL && cfg.PORTAL_INTAKE_KEY) safeRun_(cfg, function(){ forwardGuarantorToPortal_(cfg, payload, rec); }); // ★ポータルの申込者案件へひも付け
     return jsonOut_({ success: true, uid: rec.uid });
   } catch (err) {
     notifyWpError_('保証人 doPost失敗: ' + err);
