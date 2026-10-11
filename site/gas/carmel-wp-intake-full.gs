@@ -14,7 +14,7 @@ function getWpConfig_() {
     ASANA_PROJECT_ID:  p['ASANA_PROJECT_ID']  || '',
     ASANA_SECTION_ID:  p['ASANA_SECTION_ID']  || '',
     SEND_THANKS: (p['WP_SEND_THANKS'] || 'false') === 'true',
-    MYPAGE_URL:  p['MYPAGE_URL'] || '',
+    MYPAGE_URL:  p['MYPAGE_URL'] || 'https://new-repository-livid-one.vercel.app/mypage',
     MAIL_FROM:      p['MAIL_FROM'] || '',
     MAIL_FROM_NAME: p['MAIL_FROM_NAME'] || 'カーメル',
     BREVO_API_KEY: p['BREVO_API_KEY'] || '',
@@ -261,10 +261,17 @@ function sendApplicantThankYou_(cfg, rec) {
   var st = rec.store || resolveStore_('');
   var ready = !!cfg.MYPAGE_URL;
   var mp = ready
-    ? '審査の結果・進捗・今後のお手続きは、すべて「マイページ」からご確認いただけます。\n\n　▼ マイページ\n　' + cfg.MYPAGE_URL + '\n'
+    ? '審査の結果・進捗・今後のお手続きは、すべて「マイページ」からご確認いただけます。\n\n' +
+      '　▼ マイページ ログイン\n　' + cfg.MYPAGE_URL + '\n\n' +
+      '【ログイン方法】\n' +
+      '　1. 上のURLを開きます\n' +
+      '　2. ご登録のメールアドレス（' + rec.email + '）でログインします\n' +
+      '　　・初回のパスワードは、別途お送りする「マイページのログイン情報」メールに記載しています\n' +
+      '　　・メールが見当たらない場合は、ログイン画面の「メールリンク」を選ぶと、メール宛に届くリンクからログインできます\n' +
+      '　3. ログイン後、「パスワードを忘れた方」からご自身のパスワードに変更できます\n'
     : '審査の結果・進捗は、追ってご案内いたします。\n※マイページは現在準備中です。準備が整いしだい、ログイン情報をお送りいたします。\n';
   var contact = ready
-    ? 'ご質問・ご相談は、マイページの「お問い合わせ」よりご連絡ください。\n担当者が順次対応いたします。\n'
+    ? 'ご質問・ご相談は、マイページの「お問い合わせ」からご連絡いただけます。\nお急ぎの場合は、下記も併せてご利用ください。\n　・LINE： ' + st.lineUrl + '\n　・お電話： ' + st.tel + '（受付 ' + st.hours + '）\n'
     : 'ご不明な点・お急ぎのご相談は、下記までお気軽にご連絡ください。\n　・LINE： ' + st.lineUrl + '\n　・お電話： ' + st.tel + '（受付 ' + st.hours + '）\n';
   var foot = ready
     ? '※本メールは送信専用です。お問い合わせはマイページからお願いいたします。'
@@ -479,10 +486,13 @@ function sendApplicantGuarantorDone_(cfg, rec) {
   var subject = '【' + st.label + '】保証人様のご申請が完了しました';
   var ready = !!cfg.MYPAGE_URL;
   var mp = ready
-    ? '今後の審査結果・進捗・お手続きは、マイページからご確認ください。\n\n　▼ マイページ\n　' + cfg.MYPAGE_URL + '\n'
+    ? '今後の審査結果・進捗・お手続きは、マイページからご確認ください。\n\n' +
+      '　▼ マイページ ログイン\n　' + cfg.MYPAGE_URL + '\n\n' +
+      '　・ご登録のメールアドレス（' + (rec.applicantEmail || '') + '）でログインいただけます\n' +
+      '　・パスワードが分からない場合は、ログイン画面の「メールリンク」または「パスワードを忘れた方」をご利用ください\n'
     : '今後の審査結果・進捗は、追ってご案内いたします。\n※マイページは現在準備中です。準備が整いしだいご案内いたします。\n';
   var contact = ready
-    ? 'ご質問・ご相談は、マイページの「お問い合わせ」よりご連絡ください。\n'
+    ? 'ご質問・ご相談は、マイページの「お問い合わせ」からご連絡いただけます。\nお急ぎの場合は、下記も併せてご利用ください。\n　・LINE： ' + st.lineUrl + '\n　・お電話： ' + st.tel + '（受付 ' + st.hours + '）\n'
     : 'ご不明な点・お急ぎのご相談は、下記までお気軽にご連絡ください。\n　・LINE： ' + st.lineUrl + '\n　・お電話： ' + st.tel + '（受付 ' + st.hours + '）\n';
   var foot = ready
     ? '※本メールは送信専用です。お問い合わせはマイページからお願いいたします。'
