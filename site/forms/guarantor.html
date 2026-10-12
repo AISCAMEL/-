@@ -254,9 +254,14 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 <button type="submit" class="submit">この内容で保証人申請をする</button>
 </div>
 
-<div id="caf-done" class="hide" style="text-align:center;background:var(--green-bg);border:1.5px solid var(--green-border);border-radius:var(--radius-lg);padding:24px;margin-top:18px;">
-<p style="font-size:18px;font-weight:900;color:var(--green);margin:0 0 8px;">保証人申請を受け付けました</p>
-<p style="font-size:13.5px;color:var(--gray-700);font-weight:700;margin:0;line-height:1.8;">担当より個別にご連絡いたします。<br>※追加の書類は後日のご提出でも問題ありません。</p>
+<div id="caf-done" class="hide" style="position:fixed;inset:0;z-index:9999;background:rgba(255,255,255,.98);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto;">
+<div style="max-width:440px;width:100%;text-align:center;background:var(--green-bg);border:1.5px solid var(--green-border);border-radius:16px;padding:28px 22px;box-shadow:0 24px 60px rgba(0,0,0,.14);">
+<div style="font-size:46px;line-height:1;margin:0 0 10px;">✅</div>
+<p style="font-size:20px;font-weight:900;color:var(--green);margin:0 0 10px;">保証人申請を受け付けました</p>
+<p style="font-size:13.5px;color:var(--gray-700);font-weight:700;margin:0 0 16px;line-height:1.9;">ご協力ありがとうございました。<br>お申込者様の審査にあわせて、担当より必要に応じてご連絡いたします。どうぞご安心ください。</p>
+<p style="font-size:11.5px;color:var(--gray-700);font-weight:700;margin:0 0 16px;line-height:1.85;">※ 追加の書類は後日のご提出でも問題ありません。<br>※ このページは閉じていただいて大丈夫です。</p>
+<a href="https://lin.ee/y4QcSnq" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;justify-content:center;gap:7px;background:#06c755;color:#fff;font-weight:900;font-size:13.5px;text-decoration:none;border-radius:10px;padding:12px 20px;">LINEで相談する</a>
+</div>
 </div>
 
 </form>
@@ -494,12 +499,14 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
 
     btn.disabled=true;var old=btn.textContent;btn.textContent='送信中…';
     var settled=false,optimistic=null;
+    /* ★送信直後からタイマー開始：画像が重い/通信が遅くても必ず完了画面へ切替（「送信中…」で固まらない） */
+    optimistic=setTimeout(showDone,3500);
     function showDone(){if(settled)return;settled=true;if(optimistic)clearTimeout(optimistic);var d=document.getElementById('caf-done');if(d){d.classList.remove('hide');d.scrollIntoView({behavior:'smooth',block:'center'});}form.querySelectorAll('input,select,textarea,button').forEach(function(el){el.disabled=true;});}
     function showErr(msg){if(settled)return;settled=true;if(optimistic)clearTimeout(optimistic);alert(msg);btn.disabled=false;btn.textContent=old;}
     Promise.all(fileJobs).then(function(files){
       files=files.filter(Boolean);var hp=form.querySelector('[name=hp]');
       var payload={type:'guarantor',source:'guarantor.html',submittedAt:new Date().toISOString(),hp:hp?hp.value:'',meta:meta,fields:fields,consent:true,files:files};
-      optimistic=setTimeout(showDone,2500);
+      /* 完了タイマーは送信直後に開始済み（上部） */
       return fetch(GAS,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}).then(function(r){return r.json();});
     }).then(function(res){if(settled)return;if(res&&(res.success||res.ok||res.status==='ok'))showDone();else showErr((res&&(res.message||(res.data&&res.data.message)))||'送信に失敗しました。時間をおいて再度お試しください。');})
     .catch(function(){showDone();});
