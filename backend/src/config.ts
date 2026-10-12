@@ -65,6 +65,8 @@ export const config = {
     setupToken: process.env.SETUP_TOKEN ?? '',
     // 発行するログイントークンの有効期限。
     tokenTtl: process.env.AUTH_TOKEN_TTL ?? '30d',
+    // 招待（パスワード設定）リンクの有効期限。
+    inviteTtl: process.env.AUTH_INVITE_TTL ?? '14d',
   },
 
   // デモテナント（seed.sql の固定 UUID）。

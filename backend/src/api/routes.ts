@@ -20,6 +20,7 @@ import { sendEmail } from '../notify/email.js';
 import { sendSms } from '../notify/sms.js';
 import * as calendar from '../calendar/index.js';
 import { googleOAuthConfigured, buildGoogleAuthUrl, exchangeCodeForTokens, fetchPrimaryCalendarId } from '../calendar/google.js';
+import { signInviteToken } from '../auth/invite.js';
 import jwt from 'jsonwebtoken';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -33,6 +34,24 @@ function appRedirectBase(): string {
   if (config.appUrl) return config.appUrl.replace(/\/$/, '');
   if (config.corsOrigin && config.corsOrigin !== '*') return config.corsOrigin.split(',')[0].trim().replace(/\/$/, '');
   return '';
+}
+
+// 新店舗オーナーへ「パスワード設定リンク」付きの招待メールを送る。
+async function sendTenantInvite(email: string, tenantId: string | null, companyName: string):
+  Promise<{ sent: boolean; error?: string; link: string }> {
+  const token = signInviteToken(email, tenantId);
+  const base = appRedirectBase();
+  const link = base ? `${base}/accept-invite?token=${token}` : '';
+  const subject = '【AIオペレーター24】管理画面アカウント開設のご案内';
+  const text =
+    `${companyName} 様\n\n` +
+    `AIオペレーター24の管理画面アカウントが発行されました。\n` +
+    `下記リンクからパスワードを設定し、ログインしてください（${config.auth.inviteTtl}有効）。\n\n` +
+    `${link || '(リンク生成にはPUBLIC_APP_URLの設定が必要です)'}\n\n` +
+    `ログイン後、AIの挨拶文・FAQ・営業時間などを設定して受付を開始できます。\n` +
+    `※お心当たりがない場合はこのメールを破棄してください。`;
+  const res = link ? await sendEmail(email, subject, text) : { ok: false, error: 'PUBLIC_APP_URL 未設定' };
+  return { sent: res.ok, error: res.error, link };
 }
 
 // 設定更新時の入力検証。問題があればエラーメッセージ、なければ null。
@@ -812,7 +831,31 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
   app.post('/api/admin/tenants', { preHandler: requireSuperAdmin }, async (req, reply) => {
     const body = (req.body ?? {}) as any;
     if (!body.company_name) return reply.code(400).send({ error: 'company_name required' });
-    return q.createTenant(body);
+    const tenant = await q.createTenant(body);
+    let owner: any = null;
+    let invite: { sent: boolean; error?: string; link: string } | null = null;
+    // オーナーのメールが指定されたら、オーナーアカウント作成＋招待メール送信まで一気に行う。
+    if (body.owner_email && EMAIL_RE.test(String(body.owner_email).trim())) {
+      const email = String(body.owner_email).trim();
+      const r = await q.createUser(tenant.id, { name: body.owner_name, email, role: 'owner' });
+      owner = 'error' in r ? null : r.user;
+      invite = await sendTenantInvite(email, tenant.id, body.company_name);
+    }
+    return { tenant, owner, invite };
+  });
+
+  // 既存店舗のオーナーへ招待（パスワード設定リンク）を送る/再送する。
+  app.post('/api/admin/tenants/:id/invite', { preHandler: requireSuperAdmin }, async (req, reply) => {
+    const id = (req.params as any).id as string;
+    const { email, name } = (req.body ?? {}) as { email?: string; name?: string };
+    if (!email || !EMAIL_RE.test(email.trim())) return reply.code(400).send({ error: '有効なメールアドレスを指定してください。' });
+    const detail = await q.getTenantDetail(id);
+    if (!detail) return reply.code(404).send({ error: 'not found' });
+    const companyName = (detail as any)?.tenant?.company_name ?? (detail as any)?.company_name ?? 'ご担当者';
+    // オーナーが未登録なら作る（重複は無視）。
+    await q.createUser(id, { name, email: email.trim(), role: 'owner' });
+    const invite = await sendTenantInvite(email.trim(), id, companyName);
+    return { ok: invite.sent, invite };
   });
   app.get('/api/admin/tenants/:id', { preHandler: requireSuperAdmin }, async (req, reply) => {
     const detail = await q.getTenantDetail((req.params as any).id);

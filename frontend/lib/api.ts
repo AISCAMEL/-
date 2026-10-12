@@ -31,6 +31,8 @@ export const api = {
     request<any>('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
   bootstrapPassword: (email: string, password: string, setup_token: string) =>
     request<any>('/api/auth/bootstrap', { method: 'POST', body: JSON.stringify({ email, password, setup_token }) }),
+  acceptInvite: (token: string, password: string) =>
+    request<any>('/api/auth/accept-invite', { method: 'POST', body: JSON.stringify({ token, password }) }),
 
   me: () => request<any>('/api/me'),
   setupStatus: () => request<any>('/api/setup/status'),
