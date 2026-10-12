@@ -47,6 +47,18 @@ function handleTextMessage(event) {
   const replyToken = event.replyToken;
   saveChatLog(lineId, message, '受信');
 
+  // 契約済みのお客様はマイページへ案内（新規向けAI相談と分ける）。
+  // ただし「オペレーター」等、人へ繋ぎたい意図があれば通常処理へ流す。
+  const humanKeywords = ['オペレーター', '担当', 'クレーム', '苦情', '電話'];
+  const wantsHuman = humanKeywords.some(function(k) { return message.includes(k); });
+  if (!wantsHuman && isContractedCustomer(lineId)) {
+    const myReply = contractedCustomerReply();
+    replyToLine(replyToken, myReply);
+    saveChatLog(lineId, myReply, '送信');
+    Logger.log('契約者→マイページ案内：' + lineId);
+    return;
+  }
+
   const prolineKeywords = [
     'ローンを相談したい',
     '気になる車がある',
@@ -132,6 +144,37 @@ function replyToLine(replyToken, message) {
     });
     Logger.log('LINE返信：' + response.getResponseCode());
   } catch(err) { Logger.log(err.toString()); }
+}
+
+// 契約済みのお客様か判定（返済管理シートにLINE_IDがあれば契約者）
+function isContractedCustomer(lineId) {
+  try {
+    const config = getConfig();
+    const ss = SpreadsheetApp.openById(config.SPREADSHEET.ID);
+    const sheet = ss.getSheetByName(config.SPREADSHEET.SHEETS.REPAYMENT);
+    if (!sheet) return false;
+    const data = sheet.getDataRange().getValues();
+    if (data.length < 2) return false;
+    const idIdx = data[0].indexOf('LINE_ID');
+    if (idIdx === -1) return false;
+    const target = String(lineId);
+    for (var i = 1; i < data.length; i++) {
+      if (data[i][idIdx] && String(data[i][idIdx]) === target) return true;
+    }
+    return false;
+  } catch(err) {
+    Logger.log('isContractedCustomerエラー：' + err.toString());
+    return false; // 判定できない時は通常処理（AI）に流す
+  }
+}
+
+// 契約者向けの案内文（マイページへ誘導）
+function contractedCustomerReply() {
+  const url = getConfig().LINKS.MYPAGE;
+  return 'いつもご利用ありがとうございます。\n'
+    + 'ご契約内容・お支払い状況の確認や各種お手続きは、マイページからご確認いただけます。\n\n'
+    + '▼ マイページ\n' + url + '\n\n'
+    + '担当者に直接ご相談の場合は「オペレーター」とご返信ください。';
 }
 
 function doGet(e) {

@@ -20,6 +20,10 @@ const CONFIG = {
     // WordPress連携APIの認証トークン。長いランダム文字列に変更してください。
     TOKEN: 'CHANGE_ME_TO_A_LONG_RANDOM_SECRET'
   },
+  LINKS: {
+    // 契約済みのお客様に案内するマイページURL（作成後に差し替え）
+    MYPAGE: 'https://carmelonline.jp/mypage/'
+  },
   SPREADSHEET: {
     ID: '17DwD3Nr5ItDxdzvP_DQ3ZceYaz3gg5X_icLTZsaToCE',
     PROLINE_FORM_ID: '1n9WXqI1HCZdNkPnFq_Q5K_fMXoglqZo0Hv3D1O85LFc',
