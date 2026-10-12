@@ -7,7 +7,7 @@ import { sendSlackNotification } from '../notify/slack.js';
 import { getSettings } from '../db/queries.js';
 import { tenantTestReply, type TestTurn } from '../ai/testchat.js';
 import { sendWeeklyDigest } from '../notify/digest.js';
-import { getBillingStatus, createOverageInvoice } from '../billing/square.js';
+import { getBillingStatus, createOverageInvoice, createMonthlyInvoice } from '../billing/square.js';
 import { PLANS, FEATURE_CATALOG, NUMBER_OPTIONS, TRANSFER_OPTIONS } from '../billing/rates.js';
 import * as outbound from '../outbound/repo.js';
 import { runCampaign } from '../outbound/caller.js';
@@ -856,6 +856,15 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     await q.createUser(id, { name, email: email.trim(), role: 'owner' });
     const invite = await sendTenantInvite(email.trim(), id, companyName);
     return { ok: invite.sent, invite };
+  });
+
+  // 指定店舗の当月フル請求書（基本料＋従量＋税）をSquareで発行し、お客様へ決済リンクを送る。
+  app.post('/api/admin/tenants/:id/invoice', { preHandler: requireSuperAdmin }, async (req, reply) => {
+    const id = (req.params as any).id as string;
+    const { month } = (req.body ?? {}) as { month?: string };
+    const detail = await q.getTenantDetail(id);
+    if (!detail) return reply.code(404).send({ error: 'not found' });
+    return createMonthlyInvoice(id, month);
   });
   app.get('/api/admin/tenants/:id', { preHandler: requireSuperAdmin }, async (req, reply) => {
     const detail = await q.getTenantDetail((req.params as any).id);

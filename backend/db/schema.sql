@@ -38,6 +38,7 @@ create table if not exists tenants (
   trial_ends_at       date,
   contract_started_at date,
   payment_status      text default 'none',                -- none/paid/overdue/...
+  square_customer_id  text,                                -- Square 顧客ID（請求書の宛先）
   created_at          timestamptz not null default now()
 );
 

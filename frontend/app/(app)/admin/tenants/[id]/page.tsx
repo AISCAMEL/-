@@ -53,6 +53,14 @@ export default function TenantDetailPage() {
     try { await api.updateTenant(id, { status }); setMsg('更新しました。'); load(); }
     catch (e: any) { setMsg(`エラー: ${e.message ?? e}`); }
   }
+  async function issueInvoice() {
+    if (!confirm('当月のご利用料（基本料＋従量＋税）の請求書をSquareで発行し、お客様にメール送信します。よろしいですか？')) return;
+    setMsg('請求書を発行中…');
+    try {
+      const r = await api.tenantInvoice(id);
+      setMsg(r.message + (r.public_url ? `　決済リンク: ${r.public_url}` : ''));
+    } catch (e: any) { setMsg(`エラー: ${e.message ?? e}`); }
+  }
 
   const u = d.usage;
 
@@ -62,6 +70,7 @@ export default function TenantDetailPage() {
       <div className="mb-6 mt-2 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">{d.tenant.company_name}</h1>
         <div className="flex gap-2">
+          <button onClick={issueInvoice} className="rounded-lg border border-brand/40 bg-brand-light/40 px-3 py-1.5 text-sm text-brand hover:bg-brand-light">当月の請求書を発行</button>
           {d.tenant.status !== 'suspended'
             ? <button onClick={() => quickStatus('suspended')} className="rounded-lg border border-red-200 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50">利用停止</button>
             : <button onClick={() => quickStatus('active')} className="rounded-lg border border-green-200 px-3 py-1.5 text-sm text-green-700 hover:bg-green-50">利用再開</button>}

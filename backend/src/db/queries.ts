@@ -831,6 +831,19 @@ async function getTenantBilling(tenantId: string) {
   return t ?? { company_name: '—', billing_email: null, address: null };
 }
 
+/** Square 顧客ID（請求書の宛先）を取得。未登録なら null。 */
+export async function getTenantSquareCustomerId(tenantId: string): Promise<string | null> {
+  if (!dbEnabled) return null;
+  const [t] = await query<any>(`select square_customer_id from tenants where id = $1`, [tenantId]);
+  return t?.square_customer_id ?? null;
+}
+
+/** Square 顧客IDを保存する。 */
+export async function setTenantSquareCustomerId(tenantId: string, customerId: string): Promise<void> {
+  if (!dbEnabled) return;
+  await query(`update tenants set square_customer_id = $2 where id = $1`, [tenantId, customerId]);
+}
+
 /** 通話明細（CSV用の行データ）。 */
 export async function getCallLineItems(tenantId: string, month?: string) {
   const { from, to } = monthRange(month);

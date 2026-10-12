@@ -137,6 +137,8 @@ export const api = {
   deleteExpense: (id: string) => request<any>(`/api/admin/expenses/${id}`, { method: 'DELETE' }),
   tenant: (id: string) => request<any>(`/api/admin/tenants/${id}`),
   updateTenant: (id: string, body: any) => request<any>(`/api/admin/tenants/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  tenantInvoice: (id: string, month?: string) => request<any>(`/api/admin/tenants/${id}/invoice`, { method: 'POST', body: JSON.stringify({ month }) }),
+  tenantInvite: (id: string, email: string, name?: string) => request<any>(`/api/admin/tenants/${id}/invite`, { method: 'POST', body: JSON.stringify({ email, name }) }),
   leads: (qs = '') => request<any[]>(`/api/admin/leads${qs}`),
   lead: (id: string) => request<any>(`/api/admin/leads/${id}`),
   updateLead: (id: string, body: any) => request<any>(`/api/admin/leads/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
