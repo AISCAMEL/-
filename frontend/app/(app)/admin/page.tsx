@@ -22,6 +22,7 @@ export default function AdminPage() {
   const [tenants, setTenants] = useState<any[]>([]);
   const [form, setForm] = useState({ company_name: '', industry: '', plan: 'business', owner_email: '', owner_name: '' });
   const [msg, setMsg] = useState('');
+  const [inviteLink, setInviteLink] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -51,9 +52,11 @@ export default function AdminPage() {
       else if (form.owner_email) {
         setMsg(data?.invite?.sent
           ? `✅ 「${form.company_name}」を追加し、${form.owner_email} に招待メールを送信しました。`
-          : `店舗は追加しましたが、招待メール送信に失敗しました（${data?.invite?.error ?? '原因不明'}）。`);
+          : `店舗は追加しました。メール送信は未完了（${data?.invite?.error ?? '原因不明'}）。下の招待リンクを手動でお送りください。`);
+        setInviteLink(data?.invite?.link ?? '');
       } else {
         setMsg(`✅ 「${form.company_name}」を追加しました（オーナー招待は未送信）。`);
+        setInviteLink('');
       }
       setForm({ company_name: '', industry: '', plan: 'business', owner_email: '', owner_name: '' });
       load();
@@ -94,6 +97,15 @@ export default function AdminPage() {
           </div>
           <p className="text-xs text-gray-400">メールを入れると、オーナーに「パスワード設定リンク」を自動送信します（空なら店舗だけ作成）。</p>
           {msg && <p className="text-sm text-brand">{msg}</p>}
+          {inviteLink && (
+            <div className="rounded-lg border bg-gray-50 p-2 text-xs">
+              <div className="mb-1 text-gray-500">招待リンク（手動で送る場合はこれをコピー）：</div>
+              <div className="flex items-center gap-2">
+                <input readOnly value={inviteLink} className="flex-1 rounded border bg-white px-2 py-1 font-mono text-[11px]" onFocus={(e) => e.target.select()} />
+                <button type="button" onClick={() => navigator.clipboard?.writeText(inviteLink)} className="rounded border bg-white px-2 py-1 hover:bg-gray-100">コピー</button>
+              </div>
+            </div>
+          )}
         </form>
       </Card>
 
