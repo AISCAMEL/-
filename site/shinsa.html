@@ -269,6 +269,13 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
   <div id="store-badge" style="display:none;margin-top:14px;"></div>
 </header>
 
+<!-- 買取査定フォームへの導線（今のお車の売却をご希望の方） -->
+<a id="kaitori-cta" href="https://new-repository-livid-one.vercel.app/kaitori"
+   style="display:flex;align-items:center;justify-content:center;gap:8px;max-width:680px;margin:14px auto 0;padding:12px 16px;background:#065f46;color:#fff;font-weight:800;font-size:.92rem;text-decoration:none;border-radius:12px;box-shadow:0 6px 18px -8px rgba(6,95,70,.6);">
+  🚗 今のお車の「売却・買取査定」をご希望の方はこちら（無料）
+</a>
+<script>(function(){try{var p=new URLSearchParams(location.search);var s=p.get('store')||p.get('storeKey');if(s){var a=document.getElementById('kaitori-cta');if(a)a.href+='?store='+encodeURIComponent(s);}}catch(e){}})();</script>
+
 <!-- 店舗切替（?store=fukushima / chiba / odawara / yamanashi） -->
 <script>
 (function(){

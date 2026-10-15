@@ -1,0 +1,23 @@
+<!--
+  車買取査定フォーム 設置スニペット（WordPress 等）
+  フォーム本体は Vercel（ポータル）: https://new-repository-livid-one.vercel.app/kaitori
+  店舗を指定する場合は末尾に ?store=fukushima / chiba / odawara / yamanashi を付けます。
+
+  ■ 方式A：ボタン→新しいタブで開く（おすすめ・長いフォーム向け）
+-->
+<a href="https://new-repository-livid-one.vercel.app/kaitori" target="_blank" rel="noopener"
+   style="display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#065f46;color:#fff;font-weight:800;text-decoration:none;border-radius:12px;padding:14px 22px;font-size:16px;">
+  🚗 無料で車の買取査定を申し込む
+</a>
+
+<!--
+  ■ 方式B：ページ内に iframe で埋め込む（直接表示）
+-->
+<div style="max-width:680px;margin:0 auto;">
+  <iframe
+    src="https://new-repository-livid-one.vercel.app/kaitori"
+    title="車買取査定フォーム"
+    loading="lazy"
+    style="width:100%;height:1700px;border:0;display:block;background:#f8fafc;border-radius:12px;"
+  ></iframe>
+</div>
