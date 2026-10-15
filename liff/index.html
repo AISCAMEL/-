@@ -198,9 +198,36 @@ $('#next').addEventListener('click',()=>{ if(!validate(step))return; if(step<tot
 $('#back').addEventListener('click',()=>{ if(step>1){step--;showStep(step);} });
 document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',()=>{const f=el.closest('.field'); if(f)f.classList.remove('bad');}));
 
-/* ===== 送信（サーバーで採点） ===== */
+/* ===== その場の目安ランク（クライアント計算・実システムと同じ式） ===== */
+function _age(v){ if(!v) return 0; const d=new Date(v),t=new Date(); let a=t.getFullYear()-d.getFullYear(); const m=t.getMonth()-d.getMonth(); if(m<0||(m===0&&t.getDate()<d.getDate()))a--; return a; }
+function localResult(){
+  const emp=$('#emp').value;
+  const months=(+$('#ty').value||0)*12+(+$('#tm').value||0);
+  const income=(+$('#income').value||0)*10000;
+  const pay=+$('#pay').value||0, other=+$('#other').value||0, shinsa=+$('#shinsa').value||0;
+  const jijou=$('#jijou').value, house=$('#house').value;
+  const down=+document.querySelector('input[name="down"]:checked').value;
+  const guar=+document.querySelector('input[name="guar"]:checked').value;
+  const age=_age($('#birth').value);
+  if(months>0&&months<3) return {rank:'D',score:0,monthly:pay};
+  let s=0;
+  if(/正社員|公務員/.test(emp))s+=25; else if(/役員/.test(emp))s+=20; else if(/個人事業主/.test(emp))s+=15; else if(/契約|派遣/.test(emp))s+=10; else if(/パート|アルバイト/.test(emp))s+=5;
+  if(months>=60)s+=20; else if(months>=36)s+=15; else if(months>=12)s+=8; else if(months>=6)s+=5; else s+=3;
+  if(income>0&&pay>0){ const r=pay*12/income*100; if(r<=20)s+=25; else if(r<=30)s+=15; else if(r<=40)s+=5; }
+  if(other===0)s+=10; else if(other<=500000)s+=7; else if(other<=1000000)s+=3;
+  if(shinsa===0)s+=5; else if(shinsa>=3)s-=10; else if(shinsa>=2)s-=5;
+  if(/現在/.test(jijou))s-=10; else if(jijou==='特にない')s+=5;
+  if(down)s+=10;
+  if(/持家/.test(house))s+=8; else if(/実家|親族/.test(house))s+=4;
+  if(guar)s+=10;
+  if(age>=70)s-=15; else if(age>=65)s-=10; else if(age>=60)s-=5;
+  s=Math.max(0,Math.min(100,s));
+  return {rank:(s>=85?'A':s>=60?'B':s>=40?'C':'D'), score:s, monthly:pay};
+}
+
+/* ===== 送信（本番システム /api/intake へ登録）＋ その場で目安表示 ===== */
 async function submit(){
-  const btn=$('#next'); btn.disabled=true; btn.textContent='審査中…';
+  const btn=$('#next'); btn.disabled=true; btn.textContent='送信中…';
   const fd=new FormData();
   fd.append('userId',USER_ID);
   [['name','#name'],['birth','#birth'],['tel','#tel'],['zip','#zip'],['addr','#addr'],
@@ -213,18 +240,18 @@ async function submit(){
     const r=await fetch(API_URL,{method:'POST',body:fd});
     const d=await r.json();
     if(!d.ok) throw new Error(d.error||'error');
-    showResult(d);
+    showResult(localResult(), d.application_no||'');
   }catch(e){
     btn.disabled=false; btn.textContent='審査結果を見る';
     alert('送信に失敗しました。通信環境をご確認のうえ、もう一度お試しください。');
   }
 }
-function showResult(d){
-  const r=d.rank||'C', pay=+($('#pay').value||0);
-  $('#resultName').textContent=($('#name').value||'お客様')+' 様';
+function showResult(res, appNo){
+  const r=res.rank;
+  $('#resultName').textContent=($('#name').value||'お客様')+' 様'+(appNo?'（受付番号 '+appNo+'）':'');
   $('#rankBig').textContent=r; $('#rankBig').className='rankbig '+r;
-  $('#kScore').textContent=(d.score!=null?d.score:'–')+'点';
-  $('#kPay').textContent='¥'+(d.monthly!=null?d.monthly:pay).toLocaleString();
+  $('#kScore').textContent=res.score+'点';
+  $('#kPay').textContent='¥'+(res.monthly||0).toLocaleString();
   const M={A:['通過の可能性が高いです','提携信販へ優先的にお繋ぎします'],
     B:['前向きにご案内できます','複数の提携先で審査可能です'],
     C:['対応可能な提携先があります','自社ローン等もご提案します'],
