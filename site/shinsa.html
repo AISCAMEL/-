@@ -307,6 +307,31 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 })();
 </script>
 
+<!-- 流入チャネル取得（?src= / ?ch= / ?channel= / utm_source）。画面表示は変えず、送信データにだけ付与。
+     店舗(?store=)と併用可。例：?store=chiba&src=line / ?src=flyer&utm_campaign=aki2026 -->
+<script>
+(function(){
+  try{
+    var CH={line:'LINE',lineadd:'LINE',instagram:'Instagram',ig:'Instagram',x:'X（旧Twitter）',twitter:'X（旧Twitter）',
+      tiktok:'TikTok',tt:'TikTok',youtube:'YouTube',yt:'YouTube',flyer:'チラシ',chirashi:'チラシ',dm:'DM・郵送',
+      poster:'店頭・ポスター',store:'店頭',web:'自社サイト',hp:'自社サイト',mail:'メール',
+      google:'Google広告',gad:'Google広告',yahoo:'Yahoo!広告',meta:'Meta広告',fbad:'Meta広告',listing:'リスティング広告',
+      referral:'ご紹介',intro:'ご紹介',friend:'ご紹介',goonet:'グーネット',carsensor:'カーセンサー',portal:'ポータル媒体'};
+    var q=new URLSearchParams(location.search);
+    var raw=(q.get('src')||q.get('ch')||q.get('channel')||q.get('utm_source')||'').toLowerCase().trim();
+    var camp=(q.get('utm_campaign')||q.get('cmp')||'').trim();
+    var SS=window.sessionStorage;
+    if(!raw){ try{ if(SS){ raw=(SS.getItem('carmel_ch_code')||'').trim(); if(!camp)camp=(SS.getItem('carmel_ch_cmp')||'').trim(); } }catch(e){} }
+    if(raw){
+      var label=CH[raw]||raw;
+      if(camp) label+='／'+camp;
+      window.CARMEL_CHANNEL={code:raw,label:label,campaign:camp};
+      try{ if(SS){ SS.setItem('carmel_ch_code',raw); if(camp)SS.setItem('carmel_ch_cmp',camp); } }catch(e){}
+    }
+  }catch(e){}
+})();
+</script>
+
 <!-- STEP INDICATOR -->
 <div class="caf-step-bar" id="caf-step-bar">
   <div class="caf-step-dots" id="caf-step-dots"></div>
@@ -1135,6 +1160,12 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
       if(picked.length) fields.push({section:sectionOf(p), label:leadLabel(p), value:picked.join('、')});
     });
 
+    /* 流入元（チャネル）：URLの ?src= 等から取得。画面には出さず、送信データにだけ付与。
+       fields に入れることで WP経路・GAS経路の両方（Slack/Asana/シート/通知）に反映される。 */
+    if(window.CARMEL_CHANNEL && window.CARMEL_CHANNEL.label){
+      fields.push({section:'流入元', label:'チャネル', value:window.CARMEL_CHANNEL.label});
+    }
+
     /* 主要項目（通知タイトル・台帳キー用） */
     function pick(re){ for(var i=0;i<fields.length;i++){ if(re.test(fields[i].label)) return fields[i].value; } return ''; }
     var meta={
@@ -1144,7 +1175,10 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
       email: (document.getElementById('email-main')||{}).value || pick(/メールアドレス/),
       car:  pick(/ご希望車種/) || pick(/メーカー/),
       store:    (window.CARMEL_STORE&&window.CARMEL_STORE.label)||'',
-      storeKey: (window.CARMEL_STORE&&window.CARMEL_STORE.key)||''
+      storeKey: (window.CARMEL_STORE&&window.CARMEL_STORE.key)||'',
+      channel:     (window.CARMEL_CHANNEL&&window.CARMEL_CHANNEL.label)||'',
+      channelCode: (window.CARMEL_CHANNEL&&window.CARMEL_CHANNEL.code)||'',
+      campaign:    (window.CARMEL_CHANNEL&&window.CARMEL_CHANNEL.campaign)||''
     };
 
     /* ---- 添付ファイルを base64 で読む ---- */
@@ -1210,6 +1244,9 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
       /* --- GAS中継ハブ（別ファイル設置時：Slack/Asana/シート/WPへ配信） --- */
       var payload={
         source:'shinsa.html',
+        channel:     meta.channel||'',
+        channelCode: meta.channelCode||'',
+        campaign:    meta.campaign||'',
         submittedAt:new Date().toISOString(),
         hp: hp?hp.value:'',
         meta: meta,

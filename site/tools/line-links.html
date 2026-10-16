@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>審査フォーム 配布リンク作成（LINE出し分け）| カーメル社内</title>
+<style>
+  :root{--navy:#1f2a44;--blue:#2563eb;--orange:#f47920;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e5e7eb;--gray-400:#9ca3af;--gray-500:#6b7280;--gray-700:#374151;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--gray-50);color:var(--gray-700);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;line-height:1.6;padding:16px;}
+  .wrap{max-width:720px;margin:0 auto;}
+  h1{font-size:1.25rem;color:var(--navy);margin:8px 0 2px;}
+  .sub{font-size:.82rem;color:var(--gray-500);margin:0 0 18px;}
+  .card{background:#fff;border:1px solid var(--gray-200);border-radius:16px;padding:18px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.03);}
+  label{display:block;font-size:.78rem;font-weight:700;color:var(--gray-500);margin:0 0 5px;}
+  select,input[type=text]{width:100%;border:1px solid var(--gray-200);border-radius:10px;padding:11px 12px;font-size:.95rem;background:#fff;color:var(--navy);}
+  select:focus,input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.12);}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .row3{display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px;}
+  .hint{font-size:.72rem;color:var(--gray-400);margin-top:4px;}
+  .out{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;}
+  .urlbox{flex:1;min-width:220px;}
+  .urlfield{width:100%;border:1px dashed var(--blue);border-radius:10px;padding:11px 12px;font-size:.86rem;color:var(--navy);background:#eff6ff;word-break:break-all;}
+  .btn{appearance:none;border:0;border-radius:10px;padding:11px 16px;font-weight:800;font-size:.9rem;cursor:pointer;}
+  .btn-copy{background:var(--orange);color:#fff;}
+  .btn-copy:active{transform:translateY(1px);}
+  .btn-ghost{background:var(--gray-100);color:var(--gray-700);}
+  .qr{flex-shrink:0;text-align:center;}
+  .qr img{width:150px;height:150px;border:1px solid var(--gray-200);border-radius:10px;background:#fff;}
+  .qr a{display:inline-block;margin-top:6px;font-size:.72rem;color:var(--blue);text-decoration:none;}
+  h2{font-size:.95rem;color:var(--navy);margin:0 0 10px;}
+  table{width:100%;border-collapse:collapse;font-size:.82rem;}
+  th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--gray-100);vertical-align:middle;}
+  th{color:var(--gray-500);font-size:.72rem;}
+  td.u{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.72rem;color:var(--gray-700);word-break:break-all;}
+  .mini{appearance:none;border:0;background:var(--blue);color:#fff;border-radius:8px;padding:6px 10px;font-weight:700;font-size:.74rem;cursor:pointer;white-space:nowrap;}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:999px;font-size:.84rem;opacity:0;transition:opacity .2s;pointer-events:none;}
+  .toast.show{opacity:1;}
+  details{margin-top:6px;}
+  summary{cursor:pointer;font-size:.8rem;color:var(--blue);}
+  code{background:var(--gray-100);padding:1px 5px;border-radius:5px;font-size:.78rem;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>審査フォーム 配布リンク作成</h1>
+  <p class="sub">LINEで出し分けるためのリンク＆QRを作ります。<b>フォーム本体の構成は変わりません</b>。店舗・チャネルを選ぶだけ。</p>
+
+  <div class="card">
+    <label>① フォームのURL（お客様に見せている審査フォームのURL）</label>
+    <input type="text" id="base" value="https://regal-babka-f817bb.netlify.app/" placeholder="https://carmelonline.jp/（審査ページのURL）">
+    <p class="hint">regal-babka（フォーム本体）でも、WordPressの審査ページURLでもOK。実際に案内しているURLを入れてください。</p>
+
+    <div class="row" style="margin-top:14px;">
+      <div>
+        <label>② 店舗</label>
+        <select id="store">
+          <option value="">指定なし（本店扱い）</option>
+          <option value="fukushima">福島本店</option>
+          <option value="chiba">千葉店</option>
+          <option value="odawara">小田原店</option>
+          <option value="yamanashi">山梨店</option>
+        </select>
+      </div>
+      <div>
+        <label>③ チャネル（流入元）</label>
+        <select id="channel">
+          <option value="line">LINE</option>
+          <option value="instagram">Instagram</option>
+          <option value="x">X（旧Twitter）</option>
+          <option value="tiktok">TikTok</option>
+          <option value="youtube">YouTube</option>
+          <option value="flyer">チラシ</option>
+          <option value="dm">DM・郵送</option>
+          <option value="poster">店頭・ポスター</option>
+          <option value="web">自社サイト</option>
+          <option value="google">Google広告</option>
+          <option value="yahoo">Yahoo!広告</option>
+          <option value="meta">Meta広告</option>
+          <option value="referral">ご紹介</option>
+          <option value="goonet">グーネット</option>
+          <option value="carsensor">カーセンサー</option>
+          <option value="__custom">その他（自由入力）</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row3">
+      <div id="customWrap" style="display:none;">
+        <label>チャネル名（自由入力）</label>
+        <input type="text" id="customCh" placeholder="例：○○イベント / 看板A">
+        <p class="hint">英数字でも日本語でもOK。そのまま流入元として記録されます。</p>
+      </div>
+      <div>
+        <label>キャンペーン名（任意）</label>
+        <input type="text" id="camp" placeholder="例：aki2026 / 決算セール">
+        <p class="hint">同じチャネルでも施策を分けたいとき。空でもOK。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>できたリンク</h2>
+    <div class="out">
+      <div class="urlbox">
+        <div class="urlfield" id="url">—</div>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button class="btn btn-copy" id="copy">リンクをコピー</button>
+          <button class="btn btn-ghost" id="open">開いて確認</button>
+        </div>
+      </div>
+      <div class="qr">
+        <img id="qr" alt="QRコード" src="">
+        <br><a id="qrdl" href="#" target="_blank" rel="noopener">QR画像を開く</a>
+      </div>
+    </div>
+    <p class="hint" style="margin-top:12px;">LINEのトーク／リッチメニュー／ショップカードに、このリンクやQRを貼ってください。チラシ・DMにはQRが便利です。</p>
+  </div>
+
+  <div class="card">
+    <h2>全店舗 × LINE（まとめて）</h2>
+    <p class="hint" style="margin-top:-4px;">よく使う「店舗別のLINEリンク」を一覧にしました。各行の「コピー」ですぐ使えます。</p>
+    <table><thead><tr><th>店舗</th><th>リンク</th><th></th></tr></thead><tbody id="presetBody"></tbody></table>
+    <details>
+      <summary>仕組み（かんたん説明）</summary>
+      <p class="hint">リンク末尾に <code>?store=店舗&amp;src=チャネル</code> を付けているだけです。お客様の画面表示は今までと全く同じで、送信されたデータに「どの店舗・どのチャネルから来たか」が記録されます。本部の通知・一覧・スプレッドシートで確認できます。</p>
+    </details>
+  </div>
+</div>
+
+<div class="toast" id="toast">コピーしました</div>
+
+<script>
+(function(){
+  var baseEl=document.getElementById('base'),storeEl=document.getElementById('store'),
+      chEl=document.getElementById('channel'),customWrap=document.getElementById('customWrap'),
+      customCh=document.getElementById('customCh'),campEl=document.getElementById('camp'),
+      urlEl=document.getElementById('url'),qrEl=document.getElementById('qr'),qrdl=document.getElementById('qrdl');
+
+  function buildUrl(base,store,ch,camp){
+    base=(base||'').trim(); if(!base) return '';
+    // 既存のクエリ/ハッシュを保ったまま store/src/utm_campaign を付与
+    var hash='',qi=base.indexOf('#'); if(qi>=0){hash=base.slice(qi);base=base.slice(0,qi);}
+    var parts=base.split('?'),path=parts[0],qs=parts[1]||'';
+    var params=new URLSearchParams(qs);
+    if(store) params.set('store',store); else params.delete('store');
+    if(ch) params.set('src',ch); else params.delete('src');
+    if(camp) params.set('utm_campaign',camp); else params.delete('utm_campaign');
+    var out=params.toString();
+    return path+(out?('?'+out):'')+hash;
+  }
+  function currentCh(){
+    if(chEl.value==='__custom') return (customCh.value||'').trim();
+    return chEl.value;
+  }
+  function render(){
+    customWrap.style.display = chEl.value==='__custom' ? 'block' : 'none';
+    var u=buildUrl(baseEl.value,storeEl.value,currentCh(),campEl.value.trim());
+    urlEl.textContent=u||'—';
+    if(u){
+      var q='https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=8&data='+encodeURIComponent(u);
+      qrEl.src=q; qrdl.href=q;
+    }else{ qrEl.removeAttribute('src'); qrdl.href='#'; }
+  }
+  [baseEl,storeEl,chEl,customCh,campEl].forEach(function(el){el.addEventListener('input',render);el.addEventListener('change',render);});
+
+  var toast=document.getElementById('toast');
+  function flash(msg){toast.textContent=msg||'コピーしました';toast.classList.add('show');setTimeout(function(){toast.classList.remove('show');},1300);}
+  function copy(text){
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){flash();},function(){fallback(text);});}
+    else fallback(text);
+  }
+  function fallback(text){var t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.select();try{document.execCommand('copy');flash();}catch(e){alert(text);}document.body.removeChild(t);}
+
+  document.getElementById('copy').addEventListener('click',function(){var u=urlEl.textContent;if(u&&u!=='—')copy(u);});
+  document.getElementById('open').addEventListener('click',function(){var u=urlEl.textContent;if(u&&u!=='—')window.open(u,'_blank','noopener');});
+
+  // プリセット：全店舗 × LINE
+  var STORES=[['','指定なし'],['fukushima','福島本店'],['chiba','千葉店'],['odawara','小田原店'],['yamanashi','山梨店']];
+  function renderPresets(){
+    var body=document.getElementById('presetBody');body.innerHTML='';
+    STORES.forEach(function(s){
+      var u=buildUrl(baseEl.value,s[0],'line','');
+      var tr=document.createElement('tr');
+      tr.innerHTML='<td style="white-space:nowrap;font-weight:700;color:var(--navy);">'+s[1]+'</td><td class="u">'+u+'</td><td></td>';
+      var btn=document.createElement('button');btn.className='mini';btn.textContent='コピー';
+      btn.addEventListener('click',(function(url){return function(){copy(url);};})(u));
+      tr.children[2].appendChild(btn);
+      body.appendChild(tr);
+    });
+  }
+  baseEl.addEventListener('input',renderPresets);
+
+  render();renderPresets();
+})();
+</script>
+</body>
+</html>
