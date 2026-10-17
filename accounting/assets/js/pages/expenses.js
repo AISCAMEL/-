@@ -7,6 +7,7 @@ window.A = window.A || {};
 
   // 相手勘定（支払・入金手段）の候補
   const PAY_ACCOUNTS = ['100', '110', '210', '230', '120', '200'];
+  let learnJournals = []; // OCRの科目自動学習に使う過去仕訳
 
   const optionsFor = (codes, value) => {
     const sel = el('select');
@@ -106,10 +107,12 @@ window.A = window.A || {};
         if (d.summary || d.vendor) memoI.value = d.summary || d.vendor;
         if (d.taxRatePercent === 8) taxSel.value = 'purchase8';
         else if (d.taxRatePercent === 10) taxSel.value = 'purchase10';
-        // 取引先名から自動仕訳ルールで科目推定
+        // 取引先名から自動仕訳ルール＋過去仕訳の自動学習で科目推定
         const rules = S.settings.get().autoRules || [];
-        const hit = rules.find((x) => x.keyword && (d.vendor || d.summary || '').includes(x.keyword));
-        if (hit && mainWrap._sel) { mainWrap._sel.value = hit.account; taxSel.value = hit.tax; }
+        const vtext = d.vendor || d.summary || '';
+        let hit = rules.find((x) => x.keyword && vtext.includes(x.keyword));
+        if (!hit && A.reports && A.reports.learnAccount) hit = A.reports.learnAccount(learnJournals, vtext, 'out');
+        if (hit && hit.account && mainWrap._sel) { mainWrap._sel.value = hit.account; if (hit.tax) taxSel.value = hit.tax; }
         refresh();
         ocrStatus.textContent = `読み取り完了：${d.vendor || ''} ¥${U.yen(d.amount || 0)}（内容を確認してください）`;
       } catch (e) { ocrStatus.textContent = 'エラー：' + e.message; }
@@ -173,6 +176,7 @@ window.A = window.A || {};
 
   ui.register('expenses', async (q) => {
     const journals = await S.journals.loadAll();
+    learnJournals = journals; // OCRの自動学習に使う
     if (q.new) setTimeout(() => editor(null), 0);
     const p = A.app.period();
     const list = journals.filter((j) => j.source === 'expense' && U.inRange(j.date, p.start, p.end))

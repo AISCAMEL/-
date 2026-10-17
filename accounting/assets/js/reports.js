@@ -334,6 +334,69 @@ A.reports = (function () {
   // 指定した会計年度（fyStart='YYYY-MM-DD'）の償却予定額
   const depForFiscalYear = (asset, fsMonth, fyStart) =>
     depSchedule(asset, fsMonth).find((r) => r.start === fyStart) || null;
+  // 指定年度の期末帳簿価額
+  const bookValueAt = (asset, fsMonth, fyStart) => {
+    const rows = depSchedule(asset, fsMonth);
+    if (!rows.length) return Number(asset.acquireCost) || 0;
+    const exact = rows.find((r) => r.start === fyStart);
+    if (exact) return exact.bookAfter;
+    if (fyStart < rows[0].start) return Number(asset.acquireCost) || 0;
+    return rows[rows.length - 1].bookAfter; // 既に償却完了
+  };
+
+  /* ---- 過去の仕訳から勘定科目を自動学習 --------------------------------
+   * 摘要（text）に関連する過去の仕訳を探し、方向(dir)に合う相手科目のうち
+   * 最も多く使われた科目を返す。ルール未登録でも「前回と同じ科目」を提案。
+   * 戻り値: { account, tax, count } または null
+   * ------------------------------------------------------------------- */
+  const learnAccount = (journals, text, dir) => {
+    text = (text || '').trim();
+    if (text.length < 2) return null;
+    const want = dir === 'out' ? ['expense', 'asset'] : ['revenue'];
+    const freq = {};
+    (journals || []).forEach((j) => {
+      if (j.source === 'closing' || j.source === 'depreciation') return;
+      const desc = (j.description || '').trim();
+      if (desc.length < 2) return;
+      const rel = desc === text || desc.includes(text) || text.includes(desc);
+      if (!rel) return;
+      (j.lines || []).forEach((l) => {
+        const cat = S.accounts.category(l.account);
+        if (dir === 'out' && l.side === 'debit' && want.includes(cat)) freq[l.account] = (freq[l.account] || 0) + 1;
+        if (dir === 'in' && l.side === 'credit' && want.includes(cat)) freq[l.account] = (freq[l.account] || 0) + 1;
+      });
+    });
+    let best = null, n = 0;
+    Object.keys(freq).forEach((c) => { if (freq[c] > n) { n = freq[c]; best = c; } });
+    if (!best) return null;
+    const acc = S.accounts.byCode(best) || {};
+    return { account: best, tax: acc.default_tax, count: n };
+  };
+
+  /* ---- 勘定科目内訳明細書（税理士提出書類のベース） --------------------
+   * 預貯金／売掛金（取引先別）／買掛金・未払金／借入金／固定資産 の内訳。
+   * 売掛金は未回収の計上済み請求書から取引先別に、その他は科目残高から作成。
+   * ------------------------------------------------------------------- */
+  const breakdown = (journals, invoices, assets, start, end, calcInvoice, fsMonth) => {
+    const tb = trialBalance(journals, start, end);
+    const bal = (code) => { const r = tb.rows.find((x) => x.code === code); return r ? r.balance : 0; };
+
+    const deposits = S.accounts.all()
+      .filter((a) => a.category === 'asset' && (['100', '110'].includes(a.code) || /預金|当座/.test(a.name)))
+      .map((a) => ({ name: a.name, amount: bal(a.code) })).filter((x) => x.amount);
+
+    const recv = {};
+    (invoices || []).filter((iv) => iv.type === 'invoice' && iv.posted && !iv.paid)
+      .forEach((iv) => { const k = iv.partnerName || '（取引先不明）'; recv[k] = (recv[k] || 0) + calcInvoice(iv).total; });
+    const receivables = Object.keys(recv).map((k) => ({ partner: k, amount: recv[k] })).filter((x) => x.amount);
+
+    const payables = ['200', '210', '220', '230', '250'].map((c) => ({ name: S.accounts.name(c), amount: bal(c) })).filter((x) => x.amount);
+    const borrowings = ['260', '270', '271'].map((c) => ({ name: S.accounts.name(c), amount: bal(c) })).filter((x) => x.amount);
+    const fixedAssets = (assets || []).filter((a) => !a.disposed)
+      .map((a) => ({ name: a.name, acquireDate: a.acquireDate || '', acquireCost: Number(a.acquireCost) || 0, bookValue: bookValueAt(a, fsMonth, start) }));
+
+    return { deposits, receivables, receivableAccountBalance: bal('120'), payables, borrowings, fixedAssets };
+  };
 
   /* ---- AI会計アシスタント用の財務診断 ---------------------------------
    * 財務指標・健全性チェック・改善/節税アドバイスを生成する（ルールベース）。
@@ -473,5 +536,5 @@ A.reports = (function () {
     return { net, dep, dAR, dInv, dAP, operating, investing, financing, adjust, cashChange, cashOpen, cashClose };
   };
 
-  return { flatLines, ledger, trialBalance, statements, taxSummary, dashboard, depSchedule, depForFiscalYear, DEEMED_RATES, taxPayable, deptSummary, taxReturnCalc, advisor, monthlyTrend, partnerLedger, cashflow };
+  return { flatLines, ledger, trialBalance, statements, taxSummary, dashboard, depSchedule, depForFiscalYear, bookValueAt, breakdown, learnAccount, DEEMED_RATES, taxPayable, deptSummary, taxReturnCalc, advisor, monthlyTrend, partnerLedger, cashflow };
 })();

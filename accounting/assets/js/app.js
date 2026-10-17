@@ -53,6 +53,7 @@ A.app = (function () {
     { path: 'closing', label: '決算・確定申告', icon: '📆' },
     { path: 'filing', label: '申告サポート', icon: '🧮' },
     { path: 'efile', label: '電子申告データ', icon: '📤' },
+    { path: 'package', label: '決算パッケージ', icon: '🗂' },
     { path: 'audit', label: '訂正・削除履歴', icon: '📋' },
     { group: '' },
     { path: 'settings', label: '設定', icon: '⚙️' },

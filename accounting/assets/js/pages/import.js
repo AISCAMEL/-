@@ -70,9 +70,14 @@ window.A = window.A || {};
     Object.keys(TAX).forEach((k) => { const o = el('option', { value: k, text: TAX[k].label }); if (k === value) o.selected = true; sel.appendChild(o); });
     return sel;
   };
-  const suggest = (desc) => {
+  let learnJournals = []; // ページ表示時に読み込む過去の仕訳（自動学習用）
+  const suggest = (desc, dir) => {
     const rules = S.settings.get().autoRules || [];
-    return rules.find((r) => r.keyword && (desc || '').includes(r.keyword)) || null;
+    const rule = rules.find((r) => r.keyword && (desc || '').includes(r.keyword));
+    if (rule) return rule;
+    // ルール未登録でも、過去の仕訳から科目を自動学習して提案
+    if (A.reports && A.reports.learnAccount) return A.reports.learnAccount(learnJournals, desc, dir);
+    return null;
   };
 
   /* ---- 自動仕訳ルールの管理 ------------------------------------------- */
@@ -150,14 +155,14 @@ window.A = window.A || {};
     container.appendChild(el('div.card', {}, [
       el('div.card-head', {}, [el('h2', { text: `プレビュー（${items.length}件）` }), post]),
       el('div.form-row', {}, [el('label', {}, [el('span', { text: preset.mode === 'out' && preset.bank === '210' ? '貸方（未払金）' : '相手（口座）科目' }), bankAcc])]),
-      el('p.muted.small', { text: '相手科目が空の行は計上されません。「自動仕訳ルール」を登録すると次回から自動で推定されます。' }),
+      el('p.muted.small', { text: '相手科目が空の行は計上されません。「自動仕訳ルール」の登録に加え、過去の仕訳からも科目を自動学習して推定します（使うほど手入力が減ります）。' }),
       table,
     ]));
   };
 
   // 明細行→取込アイテムへ（ルール/プリセットで相手科目・税区分を補完）
   const toItem = (date, desc, dir, amount, preset) => {
-    const sug = suggest(desc);
+    const sug = suggest(desc, dir);
     return {
       date: normDate(date), desc: (desc || '').trim(), dir, amount: Math.abs(amount),
       account: sug ? sug.account : (preset.defAccount || ''),
@@ -167,6 +172,7 @@ window.A = window.A || {};
   };
 
   ui.register('import', async (q) => {
+    learnJournals = await S.journals.loadAll(); // 自動学習用の過去仕訳
     const wrap = el('div');
     wrap.appendChild(ui.pageHead('明細の取込（CSV / Webhook）', [
       el('button.btn', { text: '⚙ 自動仕訳ルール', onclick: () => rulesModal() }),
