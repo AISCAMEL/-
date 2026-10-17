@@ -361,31 +361,29 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
  * 新規チャット開始をSlack（またはWebhook/LINE WORKS）へ通知。セッションごとに1回だけ。
  */
 function carmel_cb_notify_chat_start( $s, $first, $sid, $page ) {
-	$dbg = function ( $msg ) { update_option( 'carmel_cb_chatstart_debug', current_time( 'Y-m-d H:i:s' ) . ' … ' . $msg ); };
-
-	if ( empty( $s['chat_start_notify'] ) ) { $dbg( '設定「チャット開始を通知」がOFFのため送信しませんでした。' ); return; }
+	if ( empty( $s['chat_start_notify'] ) ) { return; }
 
 	// 二重通知防止（同一セッションは6時間に1回）
 	$key = 'carmel_cb_started_' . md5( (string) $sid );
-	if ( get_transient( $key ) ) { $dbg( '同じ訪問(セッション)で6時間以内に送信済みのためスキップ。新しいタブ/シークレットでお試しを。' ); return; }
+	if ( get_transient( $key ) ) { return; }
 	set_transient( $key, 1, 6 * HOUR_IN_SECONDS );
 
 	$within = carmel_cb_within_hours( $s ) ? '（営業時間内）' : '（時間外・AI自動対応中）';
-	$text   = "🗨️ *チャットが始まりました* {$within}\n"
-		. '最初のメッセージ：' . mb_substr( (string) $first, 0, 300 ) . "\n"
-		. 'ページ：' . ( $page !== '' ? $page : '(不明)' ) . "\n"
-		. '受付：' . current_time( 'Y-m-d H:i' ) . "\n"
-		. '_※これは開始のお知らせです（返信不要）。担当者対応が必要になると、別途「🆕 担当者希望」の投稿が届きます。返信はそちらのスレッドへ。_';
+	$open   = function_exists( 'carmel_cb_resume_url' ) ? carmel_cb_resume_url( $sid ) : home_url( '/?ccb=open' );
 
-	$res = function_exists( 'carmel_cb_slack_notify_text' ) ? carmel_cb_slack_notify_text( $s, $text ) : array( 'ok' => false, 'error' => '関数なし' );
-	if ( ! empty( $res['ok'] ) ) {
-		$dbg( 'Slackへ送信 成功。' );
-	} else {
-		$dbg( 'Slack送信 失敗：' . ( isset( $res['error'] ) ? $res['error'] : '不明' ) . '（' . ( ! empty( $s['slack_bot_token'] ) && ! empty( $s['slack_channel'] ) ? 'Bot送信' : ( ! empty( $s['slack_webhook'] ) ? 'Webhook送信' : 'Slack未設定' ) . '' ) . '）' );
+	// Slack・管理者メールの両方へ（統一通知）。
+	if ( function_exists( 'carmel_cb_notify_event' ) ) {
+		carmel_cb_notify_event( 'chat_started', '会話が始まりました ' . $within, array(
+			'最初のメッセージ: ' . mb_substr( (string) $first, 0, 300 ),
+			'ページ: ' . ( $page !== '' ? $page : '(不明)' ),
+			'',
+			'▼ この会話をチャットで開く（いつでも参加できます）',
+			$open,
+			'※ 担当者として返信する場合はSlackのスレッドからどうぞ',
+		) );
 	}
-
 	if ( function_exists( 'carmel_cb_lineworks_notify' ) ) {
-		carmel_cb_lineworks_notify( $s, $text );
+		carmel_cb_lineworks_notify( $s, "🗨️ 会話が始まりました {$within}\n最初のメッセージ：" . mb_substr( (string) $first, 0, 300 ) );
 	}
 }
 

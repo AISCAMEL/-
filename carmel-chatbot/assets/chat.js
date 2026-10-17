@@ -284,10 +284,8 @@
 			if (ho.live || convo.engaged) { return; }
 			if (intro) { addBubble("bot", intro); }
 			if (talk) {
-				// まず悩みを聞く自然な入口。大きなボタンの羅列ではなく、軽い“きっかけ”だけ。
-				addBubble("bot", "まずは、どんなことでお悩みですか？ 審査のこと、頭金やお支払いのこと、お車のことなど、何でもお気軽にお聞かせください。下から選んでも、そのままご入力いただいても大丈夫です。");
-				renderChoices(STARTERS);
-				offerTools();
+				// 会話だけでスタート（ボタンは出さない）。前へ進める誘導文を表示。
+				addBubble("bot", cfg.talkIntro || "こんにちは、カーメルの みほ です。審査が不安な方、他社で断られた方、頭金がない方も、あきらめる必要はありません。ご状況に合わせて、無理のないお支払いと『通るための進め方』を一緒に考えます。\n\nまずは、いま一番気になっていることを、ひと言で教えてください。（例：「審査に通るか不安」「頭金なしで買えるか」「月々いくらになるか」）");
 			} else {
 				if (!intro) { addBubble("bot", "本日はどのようなご相談ですか？下のボタンから選ぶか、メッセージでお聞かせください。"); }
 				if (cfg.startersOn && STARTERS.length) { renderStarterButtons(STARTERS); }

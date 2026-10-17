@@ -72,6 +72,7 @@ function carmel_cb_notify_emoji( $event ) {
 		'shinsa_check'    => '🔎',
 		'followup_sent'   => '✉️',
 		'followup_opened' => '📬',
+		'chat_started'    => '🗨️',
 	);
 	return $map[ $event ] ?? '🔔';
 }
