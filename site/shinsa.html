@@ -328,6 +328,14 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
       window.CARMEL_CHANNEL={code:raw,label:label,campaign:camp};
       try{ if(SS){ SS.setItem('carmel_ch_code',raw); if(camp)SS.setItem('carmel_ch_cmp',camp); } }catch(e){}
     }
+    /* LINE LIFF から開かれた場合：LINE本人情報を受け取り、マイページ（進捗確認）の
+       本人ひも付けに使う。画面表示は変えず、送信データにだけ付与。 */
+    var lid=(q.get('lineUserId')||'').trim(), lnm=(q.get('lineName')||'').trim();
+    if(!lid){ try{ if(SS){ lid=(SS.getItem('carmel_line_uid')||'').trim(); if(!lnm)lnm=(SS.getItem('carmel_line_nm')||'').trim(); } }catch(e){} }
+    if(lid){
+      window.CARMEL_LINE={userId:lid,name:lnm};
+      try{ if(SS){ SS.setItem('carmel_line_uid',lid); if(lnm)SS.setItem('carmel_line_nm',lnm); } }catch(e){}
+    }
   }catch(e){}
 })();
 </script>
@@ -1178,7 +1186,9 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
       storeKey: (window.CARMEL_STORE&&window.CARMEL_STORE.key)||'',
       channel:     (window.CARMEL_CHANNEL&&window.CARMEL_CHANNEL.label)||'',
       channelCode: (window.CARMEL_CHANNEL&&window.CARMEL_CHANNEL.code)||'',
-      campaign:    (window.CARMEL_CHANNEL&&window.CARMEL_CHANNEL.campaign)||''
+      campaign:    (window.CARMEL_CHANNEL&&window.CARMEL_CHANNEL.campaign)||'',
+      lineUserId:  (window.CARMEL_LINE&&window.CARMEL_LINE.userId)||'',
+      lineName:    (window.CARMEL_LINE&&window.CARMEL_LINE.name)||''
     };
 
     /* ---- 添付ファイルを base64 で読む ---- */
