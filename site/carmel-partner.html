@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>加盟店ポータル｜CARMEL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0e1b33; --navy2:#16294a; --navy3:#1f3862; --gold:#c9a14a; --gold-d:#a9842f;
+    --bg:#f3f5f9; --surface:#fff; --ink:#1a2235; --muted:#6b7688; --line:#e5e9f0;
+    --red:#c0392b; --orange:#d98324; --blue:#2d6cdf; --green:#1f9d63;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans JP",sans-serif;line-height:1.7;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 18px;}
+  /* ヘッダー */
+  header.top{background:var(--navy);color:#fff;}
+  .top .wrap{display:flex;align-items:center;gap:14px;height:62px;}
+  .brand{font-weight:900;letter-spacing:.04em;font-size:1.12rem;display:flex;align-items:center;gap:9px;}
+  .brand .mk{color:var(--gold);}
+  .brand small{font-weight:500;font-size:.72rem;color:#aab4c6;letter-spacing:.02em;}
+  .top .spacer{flex:1;}
+  .store{font-size:.82rem;color:#cdd6e4;}
+  .logout{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:8px;padding:7px 12px;font-size:.78rem;cursor:pointer;}
+  /* Hero */
+  .hero{background:linear-gradient(135deg,var(--navy),var(--navy3));color:#fff;padding:26px 0 30px;border-bottom:3px solid var(--gold);}
+  .hero .date{font-size:.8rem;color:#c3d0e4;}
+  .hero h1{margin:4px 0 2px;font-size:1.5rem;font-weight:900;}
+  .hero p{margin:0;color:#c3d0e4;font-size:.9rem;}
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px;}
+  .kpi{background:rgba(255,255,255,.08);border:1px solid rgba(201,161,74,.35);border-radius:14px;padding:14px 16px;}
+  .kpi .n{font-size:1.7rem;font-weight:900;color:var(--gold);line-height:1;}
+  .kpi .l{font-size:.74rem;color:#c9d4e6;margin-top:6px;}
+  /* タブ */
+  nav.tabs{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30;}
+  nav.tabs .wrap{display:flex;gap:4px;overflow-x:auto;}
+  .tab{flex:0 0 auto;border:0;background:none;padding:14px 16px;font-size:.9rem;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;font-family:inherit;}
+  .tab.on{color:var(--navy);border-bottom-color:var(--gold);}
+  /* ツール行 */
+  main{padding:22px 0 60px;}
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px;}
+  .search{flex:1;min-width:200px;position:relative;}
+  .search input{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px 11px 36px;font-size:.92rem;font-family:inherit;background:#fff;}
+  .search::before{content:"🔍";position:absolute;left:11px;top:50%;transform:translateY(-50%);opacity:.5;font-size:.9rem;}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 13px;font-size:.78rem;font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;}
+  .chip.on{background:var(--navy);border-color:var(--navy);color:#fff;}
+  /* カード共通 */
+  .grid{display:grid;gap:12px;}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;}
+  .card h3{margin:0;font-size:1rem;font-weight:700;}
+  .meta{font-size:.74rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  .lvtag{font-size:.68rem;font-weight:800;border-radius:6px;padding:2px 8px;color:#fff;}
+  .lv-important{background:var(--red);} .lv-notice{background:var(--navy3);} .lv-info{background:var(--blue);} .lv-campaign{background:var(--gold-d);}
+  .pin{color:var(--gold-d);font-weight:800;}
+  .body{margin-top:8px;color:#36414f;font-size:.9rem;white-space:pre-wrap;}
+  /* 研修 */
+  .courses{grid-template-columns:repeat(2,1fr);}
+  .course{cursor:pointer;transition:transform .08s,box-shadow .15s;}
+  .course:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(14,27,51,.1);}
+  .course .num{font-size:.72rem;font-weight:800;color:var(--gold-d);}
+  .course .cat{font-size:.68rem;background:#eef1f7;color:var(--muted);border-radius:6px;padding:2px 8px;font-weight:700;}
+  .prog{height:6px;background:#eef1f7;border-radius:999px;overflow:hidden;margin-top:10px;}
+  .prog i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-d));}
+  .progn{font-size:.72rem;color:var(--muted);margin-top:4px;}
+  /* スクリプト */
+  .script .cat{font-size:.68rem;background:var(--navy);color:#fff;border-radius:6px;padding:2px 8px;font-weight:700;}
+  .copy{margin-top:10px;background:var(--gold);color:#241b02;border:0;border-radius:9px;padding:8px 14px;font-weight:800;font-size:.8rem;cursor:pointer;font-family:inherit;}
+  .copy:active{transform:translateY(1px);}
+  /* 資料 */
+  .doc{display:flex;align-items:center;gap:13px;}
+  .ftype{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;font-size:.68rem;font-weight:900;color:#fff;flex-shrink:0;}
+  .t-pdf{background:#c0392b;} .t-doc{background:#2d6cdf;} .t-xls{background:#1f9d63;} .t-zip{background:#7a6ff0;} .t-mp4{background:#e07b39;}
+  .doc .info{flex:1;min-width:0;}
+  .doc .info .ti{font-weight:700;font-size:.92rem;}
+  .readbadge{font-size:.64rem;font-weight:800;color:var(--green);border:1px solid var(--green);border-radius:5px;padding:1px 6px;margin-left:6px;}
+  .docbtn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 13px;font-weight:700;font-size:.8rem;cursor:pointer;white-space:nowrap;font-family:inherit;color:var(--navy);}
+  .docbtn.primary{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .empty{text-align:center;color:var(--muted);padding:40px;background:#fff;border:1px dashed var(--line);border-radius:14px;}
+  /* モーダル */
+  .modal{position:fixed;inset:0;background:rgba(10,18,33,.6);display:none;align-items:flex-end;justify-content:center;z-index:50;}
+  .modal.on{display:flex;}
+  .sheet{background:#fff;width:100%;max-width:560px;border-radius:18px 18px 0 0;max-height:88vh;overflow-y:auto;}
+  @media(min-width:640px){.modal{align-items:center;}.sheet{border-radius:18px;}}
+  .player{background:var(--navy);color:#fff;aspect-ratio:16/9;display:grid;place-items:center;position:relative;}
+  .player .play{width:64px;height:64px;border-radius:50%;background:rgba(201,161,74,.9);display:grid;place-items:center;font-size:1.6rem;color:#241b02;}
+  .player .cap{position:absolute;bottom:10px;left:14px;font-size:.74rem;color:#c3d0e4;}
+  .sheet .pad{padding:18px;}
+  .sheet h2{margin:0 0 4px;font-size:1.15rem;}
+  .chapters{list-style:none;margin:12px 0;padding:0;}
+  .chapters li{padding:10px 0;border-bottom:1px solid var(--line);font-size:.9rem;display:flex;gap:10px;}
+  .chapters li span{color:var(--gold-d);font-weight:800;}
+  .donebtn{width:100%;background:var(--navy);color:#fff;border:0;border-radius:11px;padding:13px;font-weight:800;cursor:pointer;font-family:inherit;}
+  .closebtn{position:absolute;top:10px;right:12px;background:rgba(0,0,0,.35);color:#fff;border:0;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1rem;}
+  /* トースト */
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(8px);background:var(--navy);color:#fff;padding:11px 20px;border-radius:999px;font-size:.84rem;font-weight:700;opacity:0;transition:.2s;pointer-events:none;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.25);}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+  @media(max-width:640px){.kpis{gap:8px;}.kpi{padding:11px;}.kpi .n{font-size:1.35rem;}.courses{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div class="brand"><span class="mk">CARMEL</span><small>加盟店ポータル</small></div>
+  <div class="spacer"></div>
+  <span class="store" id="storeName">カーメル福島本店</span>
+  <button class="logout" onclick="toast('デモ：ログアウトは無効です')">ログアウト</button>
+</div></header>
+
+<section class="hero"><div class="wrap">
+  <div class="date" id="today"></div>
+  <h1 id="greet">こんにちは</h1>
+  <p>今日の学びとお知らせをチェックして、自信を持ってご案内しましょう。</p>
+  <div class="kpis">
+    <div class="kpi"><div class="n" id="kpiNotice">0</div><div class="l">未読のお知らせ</div></div>
+    <div class="kpi"><div class="n" id="kpiProg">0%</div><div class="l">研修 平均進捗</div></div>
+    <div class="kpi"><div class="n" id="kpiDocs">0</div><div class="l">資料・教材</div></div>
+  </div>
+</div></section>
+
+<nav class="tabs"><div class="wrap">
+  <button class="tab on" data-tab="notices">📢 お知らせ</button>
+  <button class="tab" data-tab="courses">🎬 研修動画</button>
+  <button class="tab" data-tab="scripts">💬 スクリプト・FAQ</button>
+  <button class="tab" data-tab="docs">📁 マニュアル・資料</button>
+</div></nav>
+
+<main><div class="wrap">
+  <div class="toolbar">
+    <div class="search"><input id="q" placeholder="キーワードで検索"></div>
+    <div class="chips" id="chips"></div>
+  </div>
+  <div id="view" class="grid"></div>
+</div></main>
+
+<!-- 研修モーダル -->
+<div class="modal" id="modal"><div class="sheet">
+  <div class="player"><button class="closebtn" onclick="closeModal()">×</button><div class="play">▶</div><div class="cap" id="mCap"></div></div>
+  <div class="pad">
+    <div class="meta" id="mMeta"></div>
+    <h2 id="mTitle"></h2>
+    <p id="mDesc" style="color:#36414f;font-size:.9rem;"></p>
+    <ul class="chapters" id="mChapters"></ul>
+    <button class="donebtn" id="mDone">✓ 受講済みにする</button>
+  </div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script src="assets/js/carmel-data.js"></script>
+<script>
+(function(){
+  var D = CarmelData.load();
+  var tab = 'notices', q = '', chip = 'all', curCourse = null;
+  var CHIPS = {
+    notices: ['all','重要','通達','お知らせ','キャンペーン'],
+    courses: ['all','基礎','審査','商品','接客','リース','マーケ','仕組み化','提携','コンプライアンス'],
+    scripts: ['all','電話','来店','査定','クロージング','FAQ'],
+    docs: ['all','業務','契約','販促','教材']
+  };
+  var LVLABEL = {important:'重要',notice:'通達',info:'お知らせ',campaign:'キャンペーン'};
+  var el = function(id){return document.getElementById(id);};
+
+  /* 既読管理（localStorage・端末ごと） */
+  function readSet(){ try{return JSON.parse(localStorage.getItem('carmel_read')||'[]');}catch(e){return [];} }
+  function markRead(id){ var s=readSet(); if(s.indexOf(id)<0){s.push(id);try{localStorage.setItem('carmel_read',JSON.stringify(s));}catch(e){}} }
+
+  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function hit(txt){ return (txt||'').toLowerCase().indexOf(q.toLowerCase())>=0; }
+
+  function renderHeader(){
+    var now=new Date(), w=['日','月','火','水','木','金','土'];
+    el('today').textContent = now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日('+w[now.getDay()]+')';
+    var h=now.getHours(); el('greet').textContent = (h<11?'おはようございます':h<17?'こんにちは':'お疲れさまです');
+    var read=readSet();
+    el('kpiNotice').textContent = D.notices.filter(function(n){return read.indexOf(n.id)<0;}).length;
+    var avg = D.courses.length? Math.round(D.courses.reduce(function(a,c){return a+(c.progress||0);},0)/D.courses.length):0;
+    el('kpiProg').textContent = avg+'%';
+    el('kpiDocs').textContent = D.docs.length;
+  }
+
+  function renderChips(){
+    var box=el('chips'); box.innerHTML='';
+    CHIPS[tab].forEach(function(c){
+      var b=document.createElement('button'); b.className='chip'+(chip===c?' on':''); b.textContent=(c==='all'?'すべて':c);
+      b.onclick=function(){chip=c;render();}; box.appendChild(b);
+    });
+  }
+
+  function render(){
+    renderChips();
+    var v=el('view'); v.innerHTML=''; v.className='grid'+(tab==='courses'?' courses':'');
+    var items=[];
+    if(tab==='notices'){
+      items = D.notices.filter(function(n){
+        var okc = chip==='all' || LVLABEL[n.lv]===chip;
+        return okc && (q===''||hit(n.title)||hit(n.body)||hit(n.cat));
+      }).sort(function(a,b){return (b.pin?1:0)-(a.pin?1:0) || (a.date<b.date?1:-1);});
+      items.forEach(function(n){
+        markReadLater(n.id);
+        var d=document.createElement('div'); d.className='card';
+        d.innerHTML='<div class="meta"><span class="lvtag lv-'+n.lv+'">'+esc(LVLABEL[n.lv])+'</span>'+(n.pin?'<span class="pin">★固定</span>':'')+'<span>'+esc(n.cat)+'</span><span>'+esc(n.date)+'</span></div>'
+          +'<h3 style="margin-top:8px">'+esc(n.title)+'</h3><div class="body">'+esc(n.body)+'</div>';
+        v.appendChild(d);
+      });
+    } else if(tab==='courses'){
+      items = D.courses.filter(function(c){return (chip==='all'||c.cat===chip)&&(q===''||hit(c.title)||hit(c.desc)||hit(c.cat));});
+      items.forEach(function(c){
+        var d=document.createElement('div'); d.className='card course';
+        d.innerHTML='<div class="meta"><span class="num">'+esc(c.num)+'</span><span class="cat">'+esc(c.cat)+'</span><span>⏱ '+esc(c.time)+'</span></div>'
+          +'<h3 style="margin-top:8px">'+esc(c.title)+'</h3><div class="prog"><i style="width:'+(c.progress||0)+'%"></i></div><div class="progn">進捗 '+(c.progress||0)+'%'+((c.progress||0)>=100?' ・ 受講済み':'')+'</div>';
+        d.onclick=function(){openCourse(c);}; v.appendChild(d);
+      });
+    } else if(tab==='scripts'){
+      items = D.scripts.filter(function(s){return (chip==='all'||s.cat===chip)&&(q===''||hit(s.title)||hit(s.body)||hit(s.cat_l));});
+      items.forEach(function(s){
+        var d=document.createElement('div'); d.className='card script';
+        d.innerHTML='<div class="meta"><span class="cat">'+esc(s.cat)+'</span><span>'+esc(s.cat_l)+'</span></div>'
+          +'<h3 style="margin-top:8px">'+esc(s.title)+'</h3><div class="body">'+esc(s.body)+'</div>'
+          +'<button class="copy">📋 コピー</button>';
+        d.querySelector('.copy').onclick=function(){copy(s.body);}; v.appendChild(d);
+      });
+    } else if(tab==='docs'){
+      items = D.docs.filter(function(dc){return (chip==='all'||dc.cat===chip)&&(q===''||hit(dc.title)||hit(dc.cat));});
+      items.forEach(function(dc){
+        var d=document.createElement('div'); d.className='card doc';
+        var btn = dc.href ? '<a class="docbtn primary" href="'+esc(dc.href)+'" target="_blank" rel="noopener">📖 開く</a>'
+                          : '<button class="docbtn" data-dl="1">⬇ ダウンロード</button>';
+        d.innerHTML='<div class="ftype t-'+esc(dc.type)+'">'+esc(dc.type.toUpperCase())+'</div>'
+          +'<div class="info"><div class="ti">'+esc(dc.title)+(dc.href?'<span class="readbadge">読める</span>':'')+'</div>'
+          +'<div class="meta"><span>'+esc(dc.cat)+'</span><span>'+esc(dc.size)+'</span><span>'+esc(dc.date)+'</span></div></div>'+btn;
+        var dl=d.querySelector('[data-dl]'); if(dl)dl.onclick=function(){toast('デモ：「'+dc.title+'」のダウンロードは準備中です');};
+        v.appendChild(d);
+      });
+    }
+    if(items.length===0) v.innerHTML='<div class="empty">該当する項目がありません。</div>';
+  }
+
+  /* お知らせは表示されたら既読化（KPI更新は少し遅延） */
+  var pendRead=[];
+  function markReadLater(id){ pendRead.push(id); }
+  setInterval(function(){ if(pendRead.length){ pendRead.forEach(markRead); pendRead=[]; renderHeader(); } }, 1500);
+
+  function openCourse(c){
+    curCourse=c;
+    el('mCap').textContent='CARMEL 加盟店研修 ・ '+c.num;
+    el('mMeta').innerHTML='<span class="cat" style="background:#eef1f7;color:#6b7688;border-radius:6px;padding:2px 8px;font-weight:700">'+esc(c.cat)+'</span><span>⏱ '+esc(c.time)+'</span>';
+    el('mTitle').textContent=c.title; el('mDesc').textContent=c.desc;
+    var ul=el('mChapters'); ul.innerHTML='';
+    (c.chapters||[]).forEach(function(ch,i){ var li=document.createElement('li'); li.innerHTML='<span>'+(i+1)+'.</span>'+esc(ch); ul.appendChild(li); });
+    var done=el('mDone');
+    done.textContent = (c.progress>=100)?'✓ 受講済み（もう一度見る）':'✓ 受講済みにする';
+    el('modal').classList.add('on');
+  }
+  window.closeModal=function(){ el('modal').classList.remove('on'); };
+  el('modal').addEventListener('click',function(e){ if(e.target===el('modal')) closeModal(); });
+  el('mDone').onclick=function(){
+    if(!curCourse)return;
+    var c=D.courses.find(function(x){return x.id===curCourse.id;}); if(c){c.progress=100; CarmelData.save(D);}
+    closeModal(); render(); renderHeader(); toast('受講済みにしました');
+  };
+
+  function copy(text){
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(function(){toast('コピーしました');},fb); }
+    else fb();
+    function fb(){ var t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.select();try{document.execCommand('copy');toast('コピーしました');}catch(e){toast('コピーできませんでした');}document.body.removeChild(t); }
+  }
+
+  var tt;
+  window.toast=function(m){ var t=el('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(tt); tt=setTimeout(function(){t.classList.remove('on');},1600); };
+
+  /* タブ切替 */
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(b){
+    b.onclick=function(){ document.querySelector('.tab.on').classList.remove('on'); b.classList.add('on'); tab=b.dataset.tab; chip='all'; q=''; el('q').value=''; render(); };
+  });
+  el('q').addEventListener('input',function(){ q=this.value; render(); });
+
+  /* 本部の更新を即時反映 */
+  CarmelData.onChange(function(nd){ D=nd; render(); renderHeader(); toast('本部の更新を反映しました'); });
+
+  try{ var sp=new URLSearchParams(location.search); var s=sp.get('store'); var M={fukushima:'カーメル福島本店',chiba:'カーメル千葉店',odawara:'カーメル小田原店',yamanashi:'カーメル山梨店'}; if(M[s])el('storeName').textContent=M[s]; }catch(e){}
+
+  renderHeader(); render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>本部管理｜CARMEL 加盟店コンテンツ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#0e1b33;--navy3:#1f3862;--gold:#c9a14a;--gold-d:#a9842f;--bg:#eef1f6;--surface:#fff;--ink:#1a2235;--muted:#6b7688;--line:#e5e9f0;--red:#c0392b;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans JP",sans-serif;line-height:1.7;}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 18px;}
+  header.top{background:var(--navy);color:#fff;}
+  .top .wrap{display:flex;align-items:center;gap:12px;height:62px;flex-wrap:wrap;}
+  .brand{font-weight:900;letter-spacing:.04em;display:flex;align-items:center;gap:9px;}
+  .brand .mk{color:var(--gold);} .brand small{font-weight:500;font-size:.72rem;color:#aab4c6;}
+  .top .spacer{flex:1;}
+  .topbtn{border-radius:8px;padding:8px 13px;font-size:.8rem;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;}
+  .topbtn.g{background:var(--gold);color:#241b02;border:0;}
+  .topbtn.o{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;}
+  nav.tabs{background:var(--surface);border-bottom:1px solid var(--line);}
+  nav.tabs .wrap{display:flex;gap:4px;overflow-x:auto;}
+  .tab{border:0;background:none;padding:14px 16px;font-size:.9rem;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;font-family:inherit;}
+  .tab.on{color:var(--navy);border-bottom-color:var(--gold);}
+  main{padding:20px 0 60px;}
+  .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+  .search{flex:1;min-width:200px;}
+  .search input{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:.9rem;}
+  .add{background:var(--navy);color:#fff;border:0;border-radius:10px;padding:11px 18px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;}
+  table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+  th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);font-size:.88rem;vertical-align:top;}
+  th{background:#f6f8fb;color:var(--muted);font-size:.74rem;font-weight:700;}
+  td .ti{font-weight:700;}
+  td .m{font-size:.74rem;color:var(--muted);margin-top:3px;}
+  .row-actions{white-space:nowrap;}
+  .mini{border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 11px;font-weight:700;font-size:.76rem;cursor:pointer;font-family:inherit;margin-left:6px;}
+  .mini.del{color:var(--red);border-color:#f0c7c2;}
+  /* モーダル */
+  .modal{position:fixed;inset:0;background:rgba(10,18,33,.6);display:none;align-items:center;justify-content:center;z-index:50;padding:16px;}
+  .modal.on{display:flex;}
+  .sheet{background:#fff;width:100%;max-width:560px;border-radius:16px;max-height:90vh;overflow-y:auto;}
+  .sheet .hd{background:var(--navy);color:#fff;padding:14px 18px;font-weight:800;display:flex;justify-content:space-between;align-items:center;border-radius:16px 16px 0 0;}
+  .sheet .hd button{background:rgba(255,255,255,.2);border:0;color:#fff;width:30px;height:30px;border-radius:50%;cursor:pointer;}
+  .sheet .pad{padding:18px;}
+  label{display:block;font-size:.76rem;font-weight:700;color:var(--muted);margin:12px 0 5px;}
+  input,select,textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-family:inherit;font-size:.92rem;background:#fff;}
+  textarea{min-height:92px;resize:vertical;line-height:1.6;}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .save{width:100%;background:var(--navy);color:#fff;border:0;border-radius:11px;padding:13px;font-weight:800;cursor:pointer;font-family:inherit;margin-top:18px;}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(8px);background:var(--navy);color:#fff;padding:11px 20px;border-radius:999px;font-size:.84rem;font-weight:700;opacity:0;transition:.2s;pointer-events:none;z-index:60;}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+  @media(max-width:700px){
+    table,thead,tbody,th,td,tr{display:block;} thead{display:none;}
+    tr{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;padding:6px;}
+    td{border:0;padding:8px 10px;} .row-actions{display:flex;gap:6px;} .mini{margin:0;flex:1;text-align:center;}
+    .two{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div class="brand"><span class="mk">CARMEL</span><small>本部 コンテンツ管理</small></div>
+  <div class="spacer"></div>
+  <a class="topbtn g" href="carmel-partner.html" target="_blank" rel="noopener">加盟店ページを開く →</a>
+  <button class="topbtn o" id="resetBtn">既定に戻す</button>
+</div></header>
+
+<nav class="tabs"><div class="wrap">
+  <button class="tab on" data-tab="notices">お知らせ</button>
+  <button class="tab" data-tab="courses">研修動画</button>
+  <button class="tab" data-tab="scripts">スクリプト</button>
+  <button class="tab" data-tab="docs">資料</button>
+</div></nav>
+
+<main><div class="wrap">
+  <div class="toolbar">
+    <div class="search"><input id="q" placeholder="検索"></div>
+    <button class="add" id="addBtn">＋ 追加</button>
+  </div>
+  <div id="list"></div>
+</div></main>
+
+<div class="modal" id="modal"><div class="sheet">
+  <div class="hd"><span id="mTitle">編集</span><button onclick="closeModal()">×</button></div>
+  <div class="pad"><div id="fields"></div><button class="save" id="saveBtn">保存</button></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script src="assets/js/carmel-data.js"></script>
+<script>
+(function(){
+  var D=CarmelData.load(), tab='notices', q='', editing=null;
+  var el=function(id){return document.getElementById(id);};
+  var esc=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
+  var LV=[['important','重要'],['notice','通達'],['info','お知らせ'],['campaign','キャンペーン']];
+  var SCAT=['電話','来店','査定','クロージング','FAQ'];
+  var DCAT=['業務','契約','販促','教材'], DTYPE=['pdf','doc','xls','zip','mp4'];
+  var tt; window.toast=function(m){var t=el('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('on');},1600);};
+
+  function metaOf(it){
+    if(tab==='notices')return (LV.filter(function(l){return l[0]===it.lv;})[0]||['','',''])[1]+' ・ '+esc(it.cat)+' ・ '+esc(it.date);
+    if(tab==='courses')return esc(it.num)+' ・ '+esc(it.cat)+' ・ 進捗'+(it.progress||0)+'%';
+    if(tab==='scripts')return esc(it.cat)+' ・ '+esc(it.cat_l||'');
+    return esc(it.cat)+' ・ '+esc((it.type||'').toUpperCase())+' ・ '+esc(it.size||'')+(it.href?' ・ 読める':'');
+  }
+  function titleOf(it){return it.title;}
+  function list(){ return D[tab]; }
+
+  function render(){
+    var rows=list().filter(function(it){var s=(it.title||'')+(it.body||'')+(it.desc||'')+(it.cat||'');return q===''||s.toLowerCase().indexOf(q.toLowerCase())>=0;});
+    var h='<table><thead><tr><th>タイトル</th><th>区分・メタ</th><th style="width:150px">操作</th></tr></thead><tbody>';
+    if(rows.length===0)h+='<tr><td colspan="3" style="text-align:center;color:#6b7688;padding:28px">項目がありません</td></tr>';
+    rows.forEach(function(it){
+      var sn=(it.body||it.desc||''); sn = sn ? '<div class="m">'+esc(sn.slice(0,50))+(sn.length>50?'…':'')+'</div>' : '';
+      h+='<tr><td><div class="ti">'+esc(titleOf(it))+'</div>'+sn+'</td>'
+        +'<td><div class="m">'+metaOf(it)+'</div></td>'
+        +'<td class="row-actions"><button class="mini" data-edit="'+it.id+'">編集</button><button class="mini del" data-del="'+it.id+'">削除</button></td></tr>';
+    });
+    h+='</tbody></table>';
+    el('list').innerHTML=h;
+    Array.prototype.forEach.call(el('list').querySelectorAll('[data-edit]'),function(b){b.onclick=function(){openEdit(b.dataset.edit);};});
+    Array.prototype.forEach.call(el('list').querySelectorAll('[data-del]'),function(b){b.onclick=function(){del(b.dataset.del);};});
+  }
+
+  function field(label,id,val,ph){return '<label>'+label+'</label><input id="'+id+'" value="'+esc(val||'')+'" placeholder="'+esc(ph||'')+'">';}
+  function area(label,id,val,ph){return '<label>'+label+'</label><textarea id="'+id+'" placeholder="'+esc(ph||'')+'">'+esc(val||'')+'</textarea>';}
+  function sel(label,id,opts,val){var h='<label>'+label+'</label><select id="'+id+'">';opts.forEach(function(o){var v=Array.isArray(o)?o[0]:o,t=Array.isArray(o)?o[1]:o;h+='<option value="'+esc(v)+'"'+(String(v)===String(val)?' selected':'')+'>'+esc(t)+'</option>';});return h+'</select>';}
+
+  function openEdit(id){
+    editing = id? list().filter(function(x){return x.id===id;})[0] : null;
+    var it=editing||{}; var f=el('fields'); el('mTitle').textContent=(editing?'編集':'新規追加');
+    if(tab==='notices'){
+      f.innerHTML=sel('重要度','f_lv',LV,it.lv||'info')+'<div class="two">'+field('カテゴリ','f_cat',it.cat,'例 審査')+field('日付','f_date',it.date||new Date().toISOString().slice(0,10))+'</div>'
+        +field('タイトル','f_title',it.title)+area('本文','f_body',it.body)
+        +'<label style="margin-top:12px"><input type="checkbox" id="f_pin" '+(it.pin?'checked':'')+' style="width:auto;margin-right:6px">先頭に固定（PIN）</label>';
+    } else if(tab==='courses'){
+      f.innerHTML='<div class="two">'+field('番号','f_num',it.num,'C-21')+field('カテゴリ','f_cat',it.cat,'基礎')+'</div>'
+        +'<div class="two">'+field('時間','f_time',it.time,'15:00')+field('進捗%','f_prog',(it.progress||0))+'</div>'
+        +field('タイトル','f_title',it.title)+area('説明','f_desc',it.desc)
+        +area('章立て（1行1章）','f_ch',(it.chapters||[]).join('\n'),'第1章\n第2章');
+    } else if(tab==='scripts'){
+      f.innerHTML=sel('カテゴリ','f_cat',SCAT,it.cat||'電話')+field('小カテゴリ','f_catl',it.cat_l,'例 電話一次受付')
+        +field('タイトル','f_title',it.title)+area('本文（トーク）','f_body',it.body);
+    } else {
+      f.innerHTML='<div class="two">'+sel('カテゴリ','f_cat',DCAT,it.cat||'業務')+sel('種別','f_type',DTYPE,it.type||'pdf')+'</div>'
+        +field('タイトル','f_title',it.title)+'<div class="two">'+field('サイズ','f_size',it.size,'1.2MB')+field('更新日','f_date',it.date||new Date().toISOString().slice(0,10))+'</div>'
+        +field('リンク(href・任意)','f_href',it.href,'carmel-manual-basic.html');
+    }
+    el('modal').classList.add('on');
+  }
+  window.closeModal=function(){el('modal').classList.remove('on');};
+  el('modal').addEventListener('click',function(e){if(e.target===el('modal'))closeModal();});
+  el('addBtn').onclick=function(){openEdit(null);};
+
+  function val(id){var e=el(id);return e?e.value.trim():'';}
+  el('saveBtn').onclick=function(){
+    var rec = editing || {id:CarmelData.newId(tab.slice(0,1))};
+    if(tab==='notices'){rec.lv=val('f_lv');rec.cat=val('f_cat');rec.date=val('f_date');rec.title=val('f_title');rec.body=val('f_body');rec.pin=el('f_pin').checked;}
+    else if(tab==='courses'){rec.num=val('f_num');rec.cat=val('f_cat');rec.time=val('f_time');rec.progress=Math.max(0,Math.min(100,parseInt(val('f_prog'),10)||0));rec.title=val('f_title');rec.desc=val('f_desc');rec.chapters=val('f_ch').split('\n').map(function(s){return s.trim();}).filter(Boolean);}
+    else if(tab==='scripts'){rec.cat=val('f_cat');rec.cat_l=val('f_catl');rec.title=val('f_title');rec.body=val('f_body');}
+    else {rec.cat=val('f_cat');rec.type=val('f_type');rec.title=val('f_title');rec.size=val('f_size');rec.date=val('f_date');var hv=val('f_href');if(hv)rec.href=hv;else delete rec.href;}
+    if(!rec.title){toast('タイトルを入力してください');return;}
+    if(!editing)D[tab].unshift(rec);
+    CarmelData.save(D); closeModal(); render(); toast('保存しました（加盟店ページに反映）');
+  };
+  function del(id){
+    if(!confirm('削除しますか？この操作は元に戻せません。'))return;
+    D[tab]=D[tab].filter(function(x){return x.id!==id;}); CarmelData.save(D); render(); toast('削除しました');
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(b){b.onclick=function(){document.querySelector('.tab.on').classList.remove('on');b.classList.add('on');tab=b.dataset.tab;q='';el('q').value='';render();};});
+  el('q').addEventListener('input',function(){q=this.value;render();});
+  el('resetBtn').onclick=function(){if(confirm('すべての内容を初期状態に戻します。よろしいですか？')){CarmelData.reset();D=CarmelData.load();render();toast('既定に戻しました');}};
+  CarmelData.onChange(function(nd){D=nd;render();});
+  render();
+})();
+</script>
+</body>
+</html>
