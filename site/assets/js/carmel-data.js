@@ -94,7 +94,25 @@ window.CarmelData = (function () {
         chapters: ['初動の 3 分', 'エスカレーション基準', '記録の残し方'] },
       { id: 'c14', num: 'C-14', cat: '基礎', time: '9:00', progress: 0, title: '月次実績報告の入力方法',
         desc: '実績フォームの入力項目とよくあるミス。8 月分から追加された項目の解説付き。',
-        chapters: ['フォームの開き方', '追加項目 3 点', 'よくあるミス'] }
+        chapters: ['フォームの開き方', '追加項目 3 点', 'よくあるミス'] },
+      { id: 'c15', num: 'C-15', cat: 'リース', time: '28:00', progress: 0, title: '自社リース立ち上げ手順（新店向け）',
+        desc: '新店で自社リースを開始する際の社内承認・初月オペレーション・立ち上げ 90 日計画。',
+        chapters: ['立ち上げ前チェックリスト', '必要書類と社内申請', '初月の運用', '90 日目レビュー'] },
+      { id: 'c16', num: 'C-16', cat: 'リース', time: '26:00', progress: 0, title: '車両仕入れと販売価格の設定',
+        desc: '仕入れチャネル／相場把握／残価を見据えた販売価格の計算ロジックとシートの使い方。',
+        chapters: ['仕入れチャネル', '相場把握の方法', '価格決定の計算式', '試算シート活用'] },
+      { id: 'c17', num: 'C-17', cat: 'リース', time: '22:00', progress: 0, title: '残価設定とリース満了時対応',
+        desc: '3/5/7 年の残価設定基準と、満了時の 3 ルート（売却／再リース／買取）フロー。',
+        chapters: ['残価設定の 3 原則', '満了時 3 ルート', '返却時チェック', '再活用の収益化'] },
+      { id: 'c18', num: 'C-18', cat: 'マーケ', time: '30:00', progress: 0, title: 'Web 広告運用（Google・Meta・LINE）',
+        desc: '主要 3 プラットフォームの広告設計、キーワード／オーディエンス設計、CPA 改善のサイクル。',
+        chapters: ['Google 広告の基本', 'Meta 広告の設計', 'LINE 広告の活用', 'CPA 改善サイクル'] },
+      { id: 'c19', num: 'C-19', cat: '仕組み化', time: '18:00', progress: 0, title: 'トーク業務の最適化・仕組み化',
+        desc: '属人化したトークを型化し、新人が 2 週間で成約率に乗るためのオペレーション設計。',
+        chapters: ['トーク分解と標準化', 'ロープレ設計', '週次レビュー', 'CRM との連携'] },
+      { id: 'c20', num: 'C-20', cat: '提携', time: '24:00', progress: 0, title: 'ファイナンス会社との提携の進め方',
+        desc: '新規信販・リース会社との提携交渉から契約締結、継続関係維持までの実務。',
+        chapters: ['候補会社のリストアップ', '初回アプローチ', '条件交渉のポイント', '契約後の関係維持'] }
     ],
 
     scripts: [
@@ -160,7 +178,47 @@ window.CarmelData = (function () {
       { id: 'd17', cat: '教材', type: 'pdf', title: '実質年率 計算早見表.pdf',                                        size: '860 KB', date: '2026-04-20' },
       { id: 'd18', cat: '教材', type: 'pdf', title: '否決時 代替案トーク集（10 事例）.pdf',                          size: '2.2 MB', date: '2026-06-14' },
       { id: 'd19', cat: '教材', type: 'pdf', title: '貸金業法・割賦販売法 要点まとめ（2026改正対応）.pdf',           size: '1.8 MB', date: '2026-07-25' },
-      { id: 'd20', cat: '教材', type: 'mp4', title: '審査申込 実演動画（お客様対応 30 分ロープレ）.mp4',              size: '240 MB', date: '2026-06-10' }
+      { id: 'd20', cat: '教材', type: 'mp4', title: '審査申込 実演動画（お客様対応 30 分ロープレ）.mp4',              size: '240 MB', date: '2026-06-10' },
+
+      /* ───── 自社リース運営／車両設定 ───── */
+      { id: 'd21', cat: '業務', type: 'pdf', title: '自社リース運営マニュアル v2（運営全体像）.pdf',                   size: '6.8 MB',  date: '2026-10-01' },
+      { id: 'd22', cat: '業務', type: 'pdf', title: '自社リース 新店立ち上げ手順書.pdf',                                 size: '3.2 MB',  date: '2026-09-20' },
+      { id: 'd23', cat: '業務', type: 'xls', title: '自社リース 収支シミュレータ.xlsx',                                  size: '340 KB',  date: '2026-09-15' },
+      { id: 'd24', cat: '業務', type: 'pdf', title: '車両仕入れマニュアル（オークション／業販／下取り）.pdf',           size: '4.4 MB',  date: '2026-09-10' },
+      { id: 'd25', cat: '業務', type: 'xls', title: '車両価格設定ワークシート（残価連動）.xlsx',                         size: '420 KB',  date: '2026-09-10' },
+      { id: 'd26', cat: '業務', type: 'pdf', title: '残価設定ガイド（3/5/7 年・車種別）.pdf',                            size: '2.6 MB',  date: '2026-09-05' },
+      { id: 'd27', cat: '業務', type: 'pdf', title: 'リース満了時 対応マニュアル（売却／再リース／買取）.pdf',          size: '2.1 MB',  date: '2026-09-05' },
+      { id: 'd28', cat: '業務', type: 'pdf', title: 'リース車両 再活用フロー（中古再販・卸）.pdf',                       size: '1.9 MB',  date: '2026-09-02' },
+
+      /* ───── トーク業務最適化／仕組み化 ───── */
+      { id: 'd29', cat: '業務', type: 'pdf', title: 'トークスクリプト運用最適化マニュアル v3.pdf',                      size: '2.8 MB',  date: '2026-10-05' },
+      { id: 'd30', cat: '業務', type: 'pdf', title: '新人オンボーディング 90 日プログラム.pdf',                          size: '3.6 MB',  date: '2026-09-25' },
+      { id: 'd31', cat: '業務', type: 'pdf', title: '業務フロー仕組み化ガイド（SOP 整備）.pdf',                          size: '2.4 MB',  date: '2026-09-18' },
+      { id: 'd32', cat: '業務', type: 'xls', title: 'ロープレ評価シート（全 20 項目）.xlsx',                              size: '180 KB',  date: '2026-09-18' },
+      { id: 'd33', cat: '業務', type: 'pdf', title: 'CRM 運用マニュアル（顧客台帳・次アクション）.pdf',                   size: '3.1 MB',  date: '2026-09-15' },
+      { id: 'd34', cat: '業務', type: 'pdf', title: '入電対応シフト設計マニュアル.pdf',                                   size: '1.4 MB',  date: '2026-08-28' },
+      { id: 'd35', cat: '業務', type: 'xls', title: '月次オペレーション標準手順書.xlsx',                                  size: '280 KB',  date: '2026-08-25' },
+
+      /* ───── 広告運用 ───── */
+      { id: 'd36', cat: '販促', type: 'pdf', title: 'Google 広告 運用マニュアル（検索／P-MAX）.pdf',                     size: '5.2 MB',  date: '2026-10-10' },
+      { id: 'd37', cat: '販促', type: 'pdf', title: 'Meta 広告（Facebook/Instagram）運用マニュアル.pdf',                 size: '4.8 MB',  date: '2026-10-10' },
+      { id: 'd38', cat: '販促', type: 'pdf', title: 'LINE 広告 運用マニュアル（友だち追加・CV 最適化）.pdf',             size: '3.9 MB',  date: '2026-10-08' },
+      { id: 'd39', cat: '販促', type: 'pdf', title: 'YouTube 広告 運用マニュアル.pdf',                                     size: '3.4 MB',  date: '2026-10-05' },
+      { id: 'd40', cat: '販促', type: 'zip', title: '検索広告クリエイティブ テンプレ集（30 本）.zip',                     size: '12 MB',   date: '2026-10-01' },
+      { id: 'd41', cat: '販促', type: 'zip', title: '動画広告クリエイティブ集（15 秒／30 秒）.zip',                       size: '620 MB',  date: '2026-09-28' },
+      { id: 'd42', cat: '販促', type: 'pdf', title: '広告ランディングページ 設計ガイド（コンバージョン最適化）.pdf',    size: '3.6 MB',  date: '2026-09-20' },
+      { id: 'd43', cat: '販促', type: 'xls', title: '広告予算配分ワークシート（月次）.xlsx',                              size: '240 KB',  date: '2026-09-15' },
+
+      /* ───── ファイナンス会社との提携 ───── */
+      { id: 'd44', cat: '教材', type: 'pdf', title: 'ファイナンス会社 提携交渉マニュアル v1.pdf',                        size: '4.1 MB',  date: '2026-10-12' },
+      { id: 'd45', cat: '教材', type: 'xls', title: '新規信販会社 開拓リスト（50 社・条件比較）.xlsx',                   size: '560 KB',  date: '2026-10-10' },
+      { id: 'd46', cat: '教材', type: 'pdf', title: '提携継続維持マニュアル（KPI 管理と月次報告）.pdf',                   size: '2.2 MB',  date: '2026-10-05' },
+      { id: 'd47', cat: '教材', type: 'pdf', title: '保険会社との提携ガイド（損保・自動車保険）.pdf',                     size: '2.8 MB',  date: '2026-09-30' },
+      { id: 'd48', cat: '教材', type: 'pdf', title: 'ディーラー・業販連携マニュアル.pdf',                                 size: '2.4 MB',  date: '2026-09-25' },
+
+      /* ───── 学習・経営 ───── */
+      { id: 'd49', cat: '教材', type: 'pdf', title: '自社リース 収支モデル解説書（事例 5 社）.pdf',                      size: '3.8 MB',  date: '2026-10-01' },
+      { id: 'd50', cat: '教材', type: 'pdf', title: '顧客 LTV 最大化マニュアル（リピート・紹介設計）.pdf',               size: '3.2 MB',  date: '2026-09-28' }
     ]
   };
 
