@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 10.6
+ * Version: 10.7
  * Author: CARMEL
  */
 
@@ -63,6 +63,7 @@ function carmel3_auto_get_settings() {
         'max_tokens_cap' => 12000,   // OpenRouterへの max_tokens 上限（0=制限しない／残高節約・エラー回避）
         'auto_slug_meta' => 1,       // スラッグ（英語URL）とメタディスクリプションを自動生成
         'article_length' => 'standard', // 記事の長さ（short/standard/long）ニュース・加盟店ブログに適用
+        'quality_level'  => 'standard', // 生成品質レベル（standard/high/max）文章・画像のプロンプトを高度化
         'repurpose_tone' => '',        // 「元ネタから展開」の既定の文体・口調指示
         // Google口コミ AI返信
         'gr_access_token' => '',       // Googleアクセストークン（手動・約1時間で失効／自動更新が無い場合の予備）
@@ -684,6 +685,45 @@ function carmel3_img_generate_openrouter($prompt, $model) {
 }
 
 // 画像に文字を一切描かせず、登場人物は必ず日本人にするための強い指示。すべての画像プロンプト末尾に付ける。
+/* ===== 生成品質レベル（文章・画像のプロンプトを高度化） ===== */
+
+function carmel3_quality_level($s) {
+    $q = isset($s['quality_level']) ? (string)$s['quality_level'] : 'standard';
+    return in_array($q, array('standard', 'high', 'max'), true) ? $q : 'standard';
+}
+
+// 文章生成に足す「品質指示」。レベルに応じて濃くする。
+function carmel3_quality_text_directive($level) {
+    if ($level === 'standard') return '';
+    $base = "\n【品質レベル：高品質（必ず守る）】\n"
+        . "・読者の検索意図・悩みに正面から答える。一般論で終わらせず、具体的な数字・手順・事例・判断基準・注意点まで踏み込む。\n"
+        . "・E-E-A-T（経験・専門性・権威性・信頼性）を意識し、中古車購入やローン・保証などの実務に即した具体を入れる。\n"
+        . "・AIにありがちな定型表現・冗長な前置き・『〜していきましょう』の多用・空疎な締めを避け、自然で中身のある日本語にする。\n"
+        . "・専門用語は噛み砕いて説明し、箇条書きと段落を効果的に使って読みやすくする。\n";
+    if ($level === 'max') {
+        $base .= "【品質レベル：最高品質（さらに厳守）】\n"
+            . "・構成：導入で読者の悩みに共感 → 結論を先に提示 → 根拠 → 具体的な手順/チェックポイント → よくある失敗・注意点 → まとめ＋次の一歩（CTA）。\n"
+            . "・独自の視点や現場目線の実務的アドバイスを加え、どこにでもある薄い内容にしない。\n"
+            . "・重複・水増しを徹底的に排除し、各見出しが異なる価値を持つようにする。見出しは具体的で検索されやすい表現にする。\n"
+            . "・読み終えた人が『次に何をすればよいか』が分かる、行動につながる記事にする。\n";
+    }
+    return $base;
+}
+
+// 画像生成に足す「品質キーワード」。レベルに応じて写真クオリティを引き上げる。
+function carmel3_img_quality_suffix($level) {
+    if ($level === 'high') {
+        return ' . Ultra high quality, highly detailed, professional studio-grade editorial photography,'
+            . ' crisp sharp details, realistic textures, excellent composition and balanced lighting.';
+    }
+    if ($level === 'max') {
+        return ' . Masterpiece, ultra-detailed 8K photorealistic, award-winning professional editorial photography,'
+            . ' impeccable composition, perfect natural lighting, lifelike realistic textures, flawless sharp focus,'
+            . ' high dynamic range, refined professional color grading, magazine-cover quality.';
+    }
+    return '';
+}
+
 function carmel3_img_no_text_suffix() {
     return ' . High-end photorealistic editorial photograph, shot on a full-frame camera, 50mm lens, natural soft lighting,'
         . ' sharp focus, realistic depth of field, professional color grading, clean modern Japanese composition, magazine quality.'
@@ -788,6 +828,9 @@ function carmel3_img_directives($s, $post_id = 0) {
     if (!empty($parts)) {
         $out .= ' . Art direction: ' . implode('; ', $parts) . '.';
     }
+
+    // 生成品質レベルに応じた写真クオリティの強化
+    $out .= carmel3_img_quality_suffix(carmel3_quality_level($s));
 
     $avoid = isset($s['img_avoid']) ? trim((string)$s['img_avoid']) : '';
     if ($post_id) {
@@ -1888,6 +1931,8 @@ function carmel3_gen_post($post_type, $item, $s, $existing_id = 0) {
         . "・<h2>見出しを {$hmin}〜{$hmax}個作り、各見出しの下に2〜4段落（<p>）を書く。\n"
         . "・具体例・手順・チェックリスト（<ul><li>）・数字を入れ、読み応えのある内容にする。\n"
         . "・同じ内容の繰り返しや水増しはせず、テーマに沿って中身を深掘りする。\n";
+    // 生成品質レベルに応じた品質指示
+    $user .= carmel3_quality_text_directive(carmel3_quality_level($s));
     $user .= "\nJSONキー:\n{\n  \"title\": \"\",\n  \"excerpt\": \"120〜160文字\",\n  \"content_html\": \"<h2>..</h2><p>..</p> 形式・上の文章量を必ず満たす\",\n  \"slug\": \"英語・小文字・ハイフン区切り・5〜7語・記号や日本語なし\",\n  \"meta_description\": \"日本語110〜140文字・検索結果に出る説明\"\n}\n"
         . "注意: 自然な日本語 / 本文はHTML / 誇大表現は避ける / slugは必ず英語 / 伏字（〇〇店・XXX等）は禁止 / 上の『書き方』『文章量』があれば最優先で従う。";
 
@@ -2831,6 +2876,8 @@ add_action('admin_post_carmel3_auto_save', function () {
     $s['auto_slug_meta'] = isset($_POST['auto_slug_meta']) ? 1 : 0;
     $al = isset($_POST['article_length']) ? sanitize_key($_POST['article_length']) : 'standard';
     $s['article_length'] = in_array($al, array('short', 'standard', 'long'), true) ? $al : 'standard';
+    $ql = isset($_POST['quality_level']) ? sanitize_key($_POST['quality_level']) : 'standard';
+    $s['quality_level'] = in_array($ql, array('standard', 'high', 'max'), true) ? $ql : 'standard';
     $s['text_model'] = isset($_POST['text_model']) ? sanitize_text_field(wp_unslash($_POST['text_model'])) : '';
 
     $im = isset($_POST['image_model']) ? sanitize_text_field(wp_unslash($_POST['image_model'])) : '';
@@ -5860,6 +5907,19 @@ function carmel3_auto_settings_page() {
                 </label>
                 <p style="margin:6px 0 0;color:#1e40af;font-size:12px">ニュース・加盟店ブログの<strong>文章量</strong>を指定します（見出し数・具体例・箇条書きも増やします）。<strong>長いほどAIのトークン消費＝コストが増えます。</strong><br>
                 ※ メディア記事は本体エンジンで生成されるため、長さは主に「AIの最大トークン数（下の設定）」で決まります。文章量を増やすには、その値を<strong>4000以上</strong>にしておくと途中で切れません。</p>
+            </div>
+
+            <div style="border:1px solid #d8b4fe;background:#faf5ff;border-radius:10px;padding:12px 14px;margin-bottom:12px">
+                <?php $ql = isset($s['quality_level']) ? $s['quality_level'] : 'standard'; ?>
+                <label style="font-weight:800;color:#6b21a8">生成品質レベル（文章・画像の作り込み）：
+                    <select name="quality_level" style="padding:5px;font-weight:400;min-width:300px">
+                        <option value="standard" <?php selected($ql, 'standard'); ?>>標準（従来どおり・コスト最小）</option>
+                        <option value="high"     <?php selected($ql, 'high'); ?>>高品質（具体性・SEO・写真クオリティ強化）おすすめ</option>
+                        <option value="max"      <?php selected($ql, 'max'); ?>>最高品質（構成・独自性まで作り込む・コスト最大）</option>
+                    </select>
+                </label>
+                <p style="margin:6px 0 0;color:#6b21a8;font-size:12px"><strong>文章</strong>は具体性・E-E-A-T・構成・AIっぽさ排除を強化し、<strong>画像</strong>は高解像・質感・ライティングの指示を上乗せします。ニュース・加盟店ブログ・画像すべてに適用。<br>
+                ※ 高くするほど<strong>AIのトークン消費が増えます</strong>。さらに大きく品質を上げたい場合は、下の<strong>文章モデル／画像モデル</strong>を上位モデルに変更するのが最も効果的です（残高・コストにご注意）。</p>
             </div>
 
             <p><label>
