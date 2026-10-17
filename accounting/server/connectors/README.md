@@ -194,6 +194,29 @@ node server/connectors/gmail.js
 0 * * * * cd /path/to/app && GMAIL_CLIENT_ID=xxx GMAIL_CLIENT_SECRET=yyy GMAIL_REFRESH_TOKEN=zzz GMAIL_PDF_PASSWORDS=12345 SYNC_URL=http://localhost:8787 WORKSPACE=aizu-2026 TOKEN=合言葉 node server/connectors/gmail.js >> /var/log/kaikei-gmail.log 2>&1
 ```
 
+## 在庫車アラート（`stock-alert.js`）
+
+クラウド同期サーバーの最新スナップショットを取得し、**在庫日数がしきい値を
+超えた車両**があれば一覧を Gmail で送信します（アプリを開かなくても督促）。
+
+```bash
+SYNC_URL=http://localhost:8787 WORKSPACE=aizu-2026 TOKEN=合言葉 \
+ALERT_TO=owner@example.com \
+GMAIL_CLIENT_ID=xxx GMAIL_CLIENT_SECRET=yyy GMAIL_REFRESH_TOKEN=zzz \
+node server/connectors/stock-alert.js
+```
+
+| 変数 | 説明 |
+|------|------|
+| `SYNC_URL` / `WORKSPACE` / `TOKEN` | 会計アプリと同じ同期設定（スナップショット取得に使用） |
+| `GMAIL_CLIENT_ID` / `_SECRET` / `_REFRESH_TOKEN` | Gmail送信用 OAuth（スコープ `gmail.send`） |
+| `ALERT_TO` | 通知先メール（省略時は会社設定の email） |
+| `STOCK_ALERT_DAYS` | しきい値（省略時は会社設定→45日） |
+| `DRY_RUN=1` | 送信せず内容だけ表示（動作確認用） |
+
+- 前提：会計アプリでクラウド同期を有効化していること（スナップショットに車両・仕訳が含まれます）。
+- cron 例（毎朝8時）：`0 8 * * * cd /path/to/app && SYNC_URL=... WORKSPACE=... TOKEN=... ALERT_TO=... GMAIL_CLIENT_ID=... GMAIL_CLIENT_SECRET=... GMAIL_REFRESH_TOKEN=... node server/connectors/stock-alert.js >> /var/log/kaikei-stock.log 2>&1`
+
 ## 共通ライブラリ（`_lib.js` / `pdfextract.js`）
 
 - `_lib.js`：HTTP・金額換算（ゼロデシマル通貨対応）・金額推定（`guessAmount`）・

@@ -39,6 +39,7 @@ window.A = window.A || {};
     const fsMonth = el('select');
     for (let m = 1; m <= 12; m++) { const o = el('option', { value: m, text: m + '月' }); if (m === (s.fiscalStartMonth || 4)) o.selected = true; fsMonth.appendChild(o); }
     const bank = el('textarea', { rows: 2 }); bank.value = s.bank || '';
+    const stockDays = el('input', { type: 'number', min: '1', value: s.stockAlertDays || 45, style: 'width:6rem' });
     const addr = el('textarea', { rows: 2 }); addr.value = s.address || '';
 
     const companyCard = el('div.card', {}, [
@@ -47,10 +48,13 @@ window.A = window.A || {};
       el('div.form-row', {}, [field('tel', '電話番号'), field('email', 'メール')]),
       el('label', {}, [el('span', { text: '住所' }), addr]),
       el('label', {}, [el('span', { text: '振込先（請求書の備考に表示）' }), bank]),
-      el('div.form-row', {}, [el('label', {}, [el('span', { text: '期首月（会計年度の開始）' }), fsMonth])]),
+      el('div.form-row', {}, [
+        el('label', {}, [el('span', { text: '期首月（会計年度の開始）' }), fsMonth]),
+        el('label', {}, [el('span', { text: '在庫車アラート（在庫日数がこの日数を超えたら警告）' }), stockDays]),
+      ]),
       el('button.btn.primary', {
         text: '会社情報を保存', onclick: async () => {
-          await S.settings.save({ name: f.name.value, invoiceRegNo: f.invoiceRegNo.value, tel: f.tel.value, email: f.email.value, address: addr.value, bank: bank.value, fiscalStartMonth: Number(fsMonth.value) });
+          await S.settings.save({ name: f.name.value, invoiceRegNo: f.invoiceRegNo.value, tel: f.tel.value, email: f.email.value, address: addr.value, bank: bank.value, fiscalStartMonth: Number(fsMonth.value), stockAlertDays: Math.max(1, Number(stockDays.value) || 45) });
           ui.toast('保存しました', 'ok');
         },
       }),

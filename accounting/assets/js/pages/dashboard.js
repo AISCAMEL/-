@@ -21,6 +21,7 @@ window.A = window.A || {};
     const journals = await S.journals.loadAll();
     const invoices = await S.invoices.loadAll();
     const assets = await S.assets.loadAll();
+    const vehicles = await S.vehicles.loadAll();
     const d = R.dashboard(journals, p.start, p.end);
     const st = R.statements(journals, p.start, p.end);
     const s = S.settings.get();
@@ -47,6 +48,17 @@ window.A = window.A || {};
     else if (unpaid.length) alerts.push({ level: 'warn', text: `未入金の請求書が ${unpaid.length} 件（¥${U.yen(unpaidTotal)}）あります。`, to: 'invoices' });
     const draftInv = invoices.filter((i) => i.type === 'invoice' && !i.posted);
     if (draftInv.length) alerts.push({ level: 'info', text: `売上未計上の請求書が ${draftInv.length} 件あります。`, to: 'invoices' });
+    // 在庫車アラート（長期在庫）
+    if (vehicles.length) {
+      const thr = s.stockAlertDays || 45;
+      const vpl = R.vehiclePL(journals, vehicles);
+      const longStock = vpl.rows.filter((r) => !r.sold && r.holdingDays != null && r.holdingDays > thr)
+        .sort((a, b) => b.holdingDays - a.holdingDays);
+      if (longStock.length) {
+        const top = longStock[0];
+        alerts.push({ level: 'warn', text: `長期在庫の車両が ${longStock.length} 台あります（最長：${top.v.name} ${top.holdingDays}日）。販売・値下げの検討を。`, to: 'vehicles' });
+      }
+    }
 
     if (alerts.length) {
       wrap.appendChild(el('div.card.todo-card', {}, [

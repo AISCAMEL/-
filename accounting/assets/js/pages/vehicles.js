@@ -81,10 +81,66 @@ window.A = window.A || {};
     const m = ui.modal(`${v.name}　明細`, body, { footer: [el('button.btn', { text: '閉じる', onclick: () => m.close() }), el('button.btn.primary', { text: '編集', onclick: () => { m.close(); editor(v); } })] });
   };
 
+  /* ---- 仕入上限シミュレーター（目標粗利から逆算） --------------------- */
+  const simulatorCard = () => {
+    const sale = el('input.amt-in', { type: 'text', inputmode: 'numeric', value: U.yen(2000000) });
+    const margin = el('input', { type: 'number', min: '0', step: '1', value: 15, style: 'width:5rem' });
+    const costs = el('input.amt-in', { type: 'text', inputmode: 'numeric', value: U.yen(150000) });
+    [sale, costs].forEach((i) => i.addEventListener('blur', () => { i.value = i.value ? U.yen(U.parseYen(i.value)) : ''; }));
+    const out = el('div.sim-out');
+    const recompute = () => {
+      const s = U.parseYen(sale.value), m = Number(margin.value) || 0, c = U.parseYen(costs.value);
+      const targetProfit = Math.round(s * m / 100);
+      const maxTotal = s - targetProfit;
+      const maxPurchase = maxTotal - c;
+      out.innerHTML = '';
+      if (maxPurchase <= 0) {
+        out.appendChild(el('div.todo-item.bad', {}, [el('span.todo-dot'), el('span', { text: 'この条件では目標粗利を達成できません（売価・粗利率・諸経費を見直してください）。' })]));
+        return;
+      }
+      out.appendChild(el('div.income-result', {}, [
+        el('div', {}, [
+          el('div.income-line', {}, [el('span', { text: '目標粗利' }), el('span', { text: '¥' + U.yen(targetProfit) })]),
+          el('div.income-line', {}, [el('span', { text: '諸経費見込み' }), el('span', { text: '¥' + U.yen(c) })]),
+          el('div.income-line.big', {}, [el('span', { text: '仕入上限（落札上限）' }), el('span', { text: '¥' + U.yen(maxPurchase) })]),
+        ]),
+      ]));
+      // 感応度：仕入が上限から下がるほど粗利は増える
+      const rows = [0, 100000, 200000, 300000].map((down) => {
+        const pur = maxPurchase - down;
+        const profit = s - (pur + c);
+        return { pur, profit, margin: s ? Math.round(profit / s * 1000) / 10 : 0 };
+      });
+      const tbl = el('table.grid', {}, [
+        el('thead', {}, [el('tr', {}, [el('th', { text: '仕入価格' }), el('th.right', { text: '粗利' }), el('th.right', { text: '粗利率' })])]),
+        el('tbody', {}, rows.map((r) => el('tr', {}, [
+          el('td', { text: '¥' + U.yen(r.pur) }),
+          el('td.right', { text: '¥' + U.yenSigned(r.profit) }),
+          el('td.right', { text: r.margin + '%' }),
+        ]))),
+      ]);
+      out.appendChild(tbl);
+    };
+    [sale, margin, costs].forEach((i) => i.addEventListener('input', recompute));
+    recompute();
+    return el('div.card', {}, [
+      el('h2', { text: '🎯 仕入上限シミュレーター（目標粗利から逆算）' }),
+      el('p.muted.small', { text: '「この売価・この粗利率で売るなら、いくらまでで落札すべきか」を逆算します。オークション前の上限決めに。' }),
+      el('div.form-row', {}, [
+        el('label', {}, [el('span', { text: '想定売却価格' }), sale]),
+        el('label', {}, [el('span', { text: '目標粗利率(%)' }), margin]),
+        el('label', {}, [el('span', { text: '諸経費見込み（陸送・整備・手数料）' }), costs]),
+      ]),
+      out,
+    ]);
+  };
+
   ui.register('vehicles', async () => {
     const vehicles = await S.vehicles.loadAll();
     const journals = await S.journals.loadAll();
+    const s = S.settings.get();
     const pl = R.vehiclePL(journals, vehicles);
+    const thr = s.stockAlertDays || 45;
 
     const wrap = el('div');
     wrap.appendChild(ui.pageHead('車両別損益（案件別原価管理）', [
@@ -99,6 +155,23 @@ window.A = window.A || {};
       el('div.stat.good', {}, [el('div.stat-label', { text: '販売済み 粗利' }), el('div.stat-value', { text: '¥' + U.yenSigned(pl.soldProfit) })]),
       el('div.stat', {}, [el('div.stat-label', { text: '平均粗利率（販売済み）' }), el('div.stat-value', { text: avgMargin != null ? avgMargin + '%' : '—' })]),
     ]));
+
+    // 在庫車アラート（長期在庫）
+    const longStock = pl.rows.filter((r) => !r.sold && r.holdingDays != null && r.holdingDays > thr).sort((a, b) => b.holdingDays - a.holdingDays);
+    if (longStock.length) {
+      wrap.appendChild(el('div.card.todo-card', {}, [
+        el('h3', { text: `⚠ 長期在庫アラート（${thr}日超：${longStock.length}台）` }),
+        el('div.todo-list', {}, longStock.map((r) => el('div.todo-item.warn', { onclick: () => detail(r, journals) }, [
+          el('span.todo-dot'),
+          el('span', { text: `${r.v.name}　在庫${r.holdingDays}日・原価¥${U.yen(r.cost)}` }),
+          el('span.todo-go', { text: '→' }),
+        ]))),
+        el('p.muted.small', { text: 'しきい値は「設定」で変更できます。ダッシュボードにも表示されます。' }),
+      ]));
+    }
+
+    // 仕入上限シミュレーター
+    wrap.appendChild(simulatorCard());
 
     if (!vehicles.length) {
       wrap.appendChild(el('div.card', {}, [

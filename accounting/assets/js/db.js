@@ -87,6 +87,7 @@ A.db = (function () {
     estimateSeq: 0,                        // 見積書番号カウンタ
     journalSeq: 0,                         // 仕訳番号カウンタ
     autoRules: [],                         // CSV自動仕訳ルール [{keyword,account,tax}]
+    stockAlertDays: 45,                    // 在庫車アラートのしきい値（在庫日数）
     syncUrl: '',                           // クラウド同期サーバーURL
     syncWorkspace: '',                     // ワークスペースID（共有単位）
     syncToken: '',                         // 認証トークン
