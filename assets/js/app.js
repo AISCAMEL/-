@@ -1,0 +1,166 @@
+/* =========================================================================
+ * app.js  ―  ブートストラップ（初期化・ナビ・期間状態）※最後に読み込む
+ * ========================================================================= */
+window.A = window.A || {};
+
+A.app = (function () {
+  'use strict';
+  const U = A.util, el = U.el, ui = A.ui, S = A.store;
+
+  // 期間状態（localStorage に保持）。初期値は当期（会計年度）。
+  let _period = null;
+  const PKEY = 'kaikei_period';
+  const period = () => {
+    if (_period) return _period;
+    try { _period = JSON.parse(localStorage.getItem(PKEY)); } catch (e) { _period = null; }
+    if (!_period) {
+      const s = S.settings.get();
+      _period = U.fiscalRange(U.today(), s.fiscalStartMonth || 4);
+    }
+    return _period;
+  };
+  const setPeriod = (p) => { _period = p; try { localStorage.setItem(PKEY, JSON.stringify(p)); } catch (e) {} };
+
+  // ナビゲーション定義
+  const NAV = [
+    { path: 'dashboard', label: 'ダッシュボード', icon: '🏠' },
+    { path: 'assistant', label: 'AI会計アシスタント', icon: '🤖' },
+    { group: '取引' },
+    { path: 'journal', label: '仕訳帳', icon: '📒' },
+    { path: 'expenses', label: '経費・入出金', icon: '💴' },
+    { path: 'import', label: '銀行明細取込', icon: '🏦' },
+    { path: 'invoices', label: '請求書', icon: '📄' },
+    { path: 'estimates', label: '見積書', icon: '📝' },
+    { path: 'recurring', label: '定期請求', icon: '🔁' },
+    { path: 'assets', label: '固定資産', icon: '🚚' },
+    { path: 'vehicles', label: '車両別損益', icon: '🚗' },
+    { path: 'inventory', label: '棚卸し', icon: '📦' },
+    { path: 'payroll', label: '給与計算', icon: '👥' },
+    { path: 'vouchers', label: '証憑（電帳法）', icon: '🧷' },
+    { path: 'partners', label: '取引先', icon: '🏢' },
+    { group: 'レポート' },
+    { path: 'monthly', label: '月次推移', icon: '📈' },
+    { path: 'departments', label: '部門別損益', icon: '🏬' },
+    { path: 'budget', label: '予算・予実', icon: '🎯' },
+    { path: 'ledger', label: '総勘定元帳', icon: '📚' },
+    { path: 'partnerledger', label: '取引先元帳', icon: '📇' },
+    { path: 'trialbalance', label: '試算表', icon: '⚖️' },
+    { path: 'statements', label: '決算書(BS/PL)', icon: '📊' },
+    { path: 'cashflow', label: 'キャッシュフロー', icon: '💵' },
+    { path: 'cashforecast', label: '資金繰り予定', icon: '📅' },
+    { path: 'compare', label: '年度比較', icon: '📉' },
+    { path: 'tax', label: '消費税集計', icon: '🧾' },
+    { path: 'opening', label: '期首残高・繰越', icon: '🔄' },
+    { path: 'closing', label: '決算・確定申告', icon: '📆' },
+    { path: 'filing', label: '申告サポート', icon: '🧮' },
+    { path: 'efile', label: '電子申告データ', icon: '📤' },
+    { path: 'package', label: '決算パッケージ', icon: '🗂' },
+    { path: 'audit', label: '訂正・削除履歴', icon: '📋' },
+    { group: '' },
+    { path: 'settings', label: '設定', icon: '⚙️' },
+  ];
+
+  // 折りたたみ状態を localStorage に保持
+  const COLLAPSE_KEY = 'kaikei_nav_collapsed';
+  const getCollapsed = () => { try { return JSON.parse(localStorage.getItem(COLLAPSE_KEY)) || {}; } catch (e) { return {}; } };
+  const setCollapsed = (m) => { try { localStorage.setItem(COLLAPSE_KEY, JSON.stringify(m)); } catch (e) {} };
+
+  const buildNav = () => {
+    const nav = el('nav.side-nav');
+    const collapsed = getCollapsed();
+    let currentItems = []; // 現在のグループ配下の要素
+    let currentKey = null;
+    const applyGroup = (items, isCol) => {
+      items.forEach((it) => { it.style.display = isCol ? 'none' : ''; });
+    };
+    NAV.forEach((n) => {
+      if (n.group !== undefined) {
+        currentKey = n.group || '_';
+        const key = currentKey;
+        const items = [];
+        currentItems = items;
+        if (n.group) {
+          const header = el('div.nav-group', {}, [el('span', { text: n.group }), el('span.nav-caret', { text: collapsed[key] ? '▸' : '▾' })]);
+          header.addEventListener('click', () => {
+            const c = getCollapsed(); c[key] = !c[key]; setCollapsed(c);
+            header.querySelector('.nav-caret').textContent = c[key] ? '▸' : '▾';
+            applyGroup(items, !!c[key]);
+          });
+          nav.appendChild(header);
+        }
+        return;
+      }
+      const a = el('a.nav-item', { href: '#/' + n.path, 'data-nav': n.path }, [
+        el('span.nav-ico', { text: n.icon }), el('span', { text: n.label }),
+      ]);
+      currentItems.push(a);
+      if (currentKey && collapsed[currentKey]) a.style.display = 'none';
+      nav.appendChild(a);
+    });
+    return nav;
+  };
+
+  const init = async () => {
+    await A.db.seedIfEmpty();
+    await S.settings.load();
+    await S.accounts.loadAll();
+
+    const s = S.settings.get();
+    const app = document.getElementById('app');
+    app.innerHTML = '';
+
+    // ログイン（パスコードロックが有効なとき）
+    if (A.auth && A.auth.isEnabled() && !A.auth.isAuthed()) {
+      await A.auth.showLogin(app, s.name);
+      app.innerHTML = '';
+    }
+
+    const sidebar = el('aside.sidebar', {}, [
+      el('div.brand', {}, [
+        el('div.brand-mark', { text: '会計' }),
+        el('div.brand-text', {}, [el('div.brand-name', { text: s.name || '会計ソフト' }), el('div.brand-sub', { text: 'クラウド会計 (自社版)' })]),
+      ]),
+      buildNav(),
+      el('div.side-foot', {}, [
+        A.auth && A.auth.isEnabled() ? el('button.btn.sm', { text: '🔒 ログアウト', onclick: () => A.auth.logout() }) : null,
+        el('span.muted.small', { text: 'データはブラウザ内に保存' }),
+      ]),
+    ]);
+
+    const outlet = el('main.content');
+    ui.setOutlet(outlet);
+
+    // モバイル用メニュートグル
+    const topbar = el('header.topbar.no-print', {}, [
+      el('button.icon-btn.menu-btn', { text: '☰', onclick: () => document.body.classList.toggle('nav-open') }),
+      el('div.topbar-title', { text: 'クラウド会計' }),
+    ]);
+
+    app.appendChild(el('div.layout', {}, [sidebar, el('div.main-col', {}, [topbar, outlet])]));
+
+    // ナビクリックでモバイルメニューを閉じる
+    sidebar.addEventListener('click', (e) => { if (e.target.closest('.nav-item')) document.body.classList.remove('nav-open'); });
+
+    // 定期請求の自動発行（未発行で発行日到来済みの月を作成）
+    let recMsg = '';
+    try {
+      if (A.recurring && A.recurring.autoIssue) {
+        const r = await A.recurring.autoIssue();
+        if (r && r.count) recMsg = `定期請求 ${r.count}件を自動発行しました（請求書ページでご確認ください）`;
+      }
+    } catch (e) { console.warn('定期請求の自動発行に失敗:', e); }
+
+    ui.start();
+    if (recMsg) setTimeout(() => ui.toast(recMsg, 'ok'), 400);
+  };
+
+  return { init, period, setPeriod };
+})();
+
+document.addEventListener('DOMContentLoaded', () => {
+  A.app.init().catch((e) => {
+    console.error(e);
+    document.getElementById('app').innerHTML =
+      '<div style="padding:2rem;color:#b00">初期化に失敗しました: ' + (e && e.message) + '</div>';
+  });
+});
