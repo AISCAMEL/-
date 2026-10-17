@@ -635,7 +635,7 @@ function carmel_cb_call_openrouter( $s, $messages, $model ) {
 			'messages'   => $messages,
 			// JSON形式（reply+suggestions+action+car_ids）が途中で切れると壊れて会話が止まるため、
 			// 日本語の返答が収まるよう下限を確保する（設定値が小さくても最低800）。
-			'max_tokens' => max( 800, (int) $s['max_tokens'] ),
+			'max_tokens' => max( 1100, (int) $s['max_tokens'] ),
 		) ),
 	) );
 
