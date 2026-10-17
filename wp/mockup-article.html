@@ -1,0 +1,410 @@
+<title>カーメル記事レイアウト</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@700;800&display=swap">
+<style>
+  /* Layout: single centered reading column (~720px) on a warm ground; sticky slim header;
+     accent teal for trust + warm orange for CTAs. Light/dark via tokens. */
+  :root{
+    --bg:#faf8f4; --surface:#ffffff; --surface-2:#f3efe8;
+    --fg:#1b2023; --muted:#5f6b70; --line:#e6ddd0;
+    --teal:#0f766e; --teal-soft:#d8efec; --warm:#d94f2a; --warm-soft:#fbe7df;
+    --shadow:0 1px 2px rgba(30,25,15,.05),0 8px 24px rgba(30,25,15,.06);
+    --display:"Zen Kaku Gothic New",system-ui,sans-serif;
+    --body:"Noto Sans JP",system-ui,sans-serif;
+    --maxw:720px;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#14181a; --surface:#1c2225; --surface-2:#232b2e;
+    --fg:#e9edef; --muted:#9fb0b6; --line:#313a3e;
+    --teal:#4fd1c5; --teal-soft:#12302d; --warm:#f8835f; --warm-soft:#3a241d;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+    color-scheme:dark;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#14181a; --surface:#1c2225; --surface-2:#232b2e;
+    --fg:#e9edef; --muted:#9fb0b6; --line:#313a3e;
+    --teal:#4fd1c5; --teal-soft:#12302d; --warm:#f8835f; --warm-soft:#3a241d;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--fg);font-family:var(--body);line-height:1.8;
+    -webkit-font-smoothing:antialiased;font-size:16px}
+  body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);
+    background:var(--surface);z-index:30}
+  a{color:inherit}
+  h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.35;font-weight:700}
+
+  /* header */
+  .site{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);
+    border-bottom:1px solid var(--line)}
+  .site__in{max-width:var(--maxw);margin:0 auto;display:flex;align-items:center;gap:14px;
+    padding-block:12px;
+    padding-left:max(16px,env(safe-area-inset-left,0px));
+    padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .brand{font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:.02em;
+    display:flex;align-items:center;gap:8px}
+  .brand .mark{width:26px;height:26px;border-radius:7px;background:var(--teal);color:#fff;
+    display:grid;place-items:center;font-size:15px}
+  .site nav{margin-left:auto;display:flex;gap:18px;font-size:13.5px;color:var(--muted)}
+  .site nav a{text-decoration:none}
+  .site nav a:hover{color:var(--teal)}
+  .tools{display:flex;gap:8px;align-items:center;margin-left:auto}
+  .btn-ghost{font:inherit;font-size:12.5px;color:var(--muted);background:var(--surface-2);
+    border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
+  .btn-ghost:hover{color:var(--fg)}
+  @media(max-width:620px){.site nav{display:none}}
+
+  main{max-width:var(--maxw);margin:0 auto;
+    padding-left:max(16px,env(safe-area-inset-left,0px));
+    padding-right:max(16px,env(safe-area-inset-right,0px));
+    padding-bottom:64px}
+
+  .crumbs{font-size:12.5px;color:var(--muted);display:flex;gap:7px;flex-wrap:wrap;
+    padding-top:22px}
+  .crumbs span{color:var(--teal)}
+
+  .chiprow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:18px;font-size:12.5px}
+  .chip{background:var(--teal);color:#fff;border-radius:999px;padding:4px 12px;font-weight:700;
+    font-size:12px;letter-spacing:.03em}
+  .chiprow .dot{color:var(--line)}
+  .chiprow .m{color:var(--muted);display:inline-flex;gap:5px;align-items:center}
+
+  h1.title{font-size:clamp(26px,5.3vw,38px);margin:14px 0 0;letter-spacing:.005em}
+
+  .byline{display:flex;align-items:center;gap:12px;margin-top:20px}
+  .avatar{width:42px;height:42px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;
+    color:#fff;font-weight:700;font-family:var(--display);background:linear-gradient(135deg,#0f766e,#14b8a6)}
+  .byline .who{font-size:13.5px}
+  .byline .who b{font-weight:700}
+  .byline .who span{color:var(--muted)}
+
+  figure{margin:24px 0 0}
+  .ph{position:relative;width:100%;border-radius:16px;overflow:hidden;border:1px solid var(--line);
+    box-shadow:var(--shadow);background:var(--surface-2)}
+  .ph svg{display:block;width:100%;height:auto}
+  figcaption{color:var(--muted);font-size:12px;margin-top:8px;text-align:center}
+
+  .lead{font-size:17.5px;line-height:1.85;margin:26px 0 0;color:var(--fg)}
+  p{margin:16px 0 0}
+
+  /* TOC */
+  .toc{margin:30px 0 0;background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:18px 20px;box-shadow:var(--shadow)}
+  .toc h2{font-size:13px;letter-spacing:.08em;color:var(--muted);margin:0 0 10px;font-weight:700}
+  .toc ol{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:7px;font-size:14.5px}
+  .toc a{text-decoration:none;color:var(--fg)}
+  .toc a:hover{color:var(--teal);text-decoration:underline}
+
+  section.body{margin-top:14px}
+  section.body h2{font-size:22px;margin:40px 0 0;padding-top:10px;scroll-margin-top:84px;
+    border-top:3px solid var(--teal);display:inline-block;padding-right:6px}
+  section.body h2 .num{color:var(--teal);font-size:15px;margin-right:8px;vertical-align:2px}
+  section.body h3{font-size:17px;margin:26px 0 0}
+
+  ul.check{list-style:none;margin:18px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+  ul.check li{position:relative;padding-left:32px;font-size:15.5px}
+  ul.check li::before{content:"";position:absolute;left:0;top:3px;width:21px;height:21px;border-radius:6px;
+    background:var(--teal-soft);border:1px solid var(--teal)}
+  ul.check li::after{content:"✓";position:absolute;left:5px;top:2px;color:var(--teal);font-weight:800;font-size:14px}
+
+  .callout{margin:26px 0 0;background:var(--warm-soft);border:1px solid var(--warm);
+    border-left:5px solid var(--warm);border-radius:12px;padding:16px 18px}
+  .callout b{font-family:var(--display);color:var(--warm);display:block;margin-bottom:4px;font-size:14px;letter-spacing:.03em}
+  .callout p{margin:0;font-size:14.5px}
+
+  /* banner (campaign) */
+  .banner{position:relative;margin:30px 0 0;border-radius:16px;overflow:hidden;
+    border:1px solid var(--line);box-shadow:var(--shadow);min-height:150px;display:flex;align-items:center;
+    background:linear-gradient(115deg,#0f766e 0%,#115e59 55%,#0b3b37 100%)}
+  .banner .bg{position:absolute;inset:0;opacity:.5}
+  .banner .in{position:relative;padding:22px 24px;color:#fff}
+  .banner .kicker{font-size:12px;letter-spacing:.14em;opacity:.85;font-weight:700}
+  .banner .big{font-family:var(--display);font-weight:800;font-size:clamp(22px,5vw,30px);margin:4px 0 6px;line-height:1.25}
+  .banner .cta{display:inline-block;margin-top:8px;background:var(--warm);color:#fff;font-weight:700;
+    font-size:14px;border-radius:999px;padding:9px 20px;text-decoration:none}
+
+  .tablewrap{overflow-x:auto;margin:22px 0 0;border:1px solid var(--line);border-radius:12px}
+  table{border-collapse:collapse;width:100%;min-width:460px;font-size:14px}
+  th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line)}
+  thead th{background:var(--surface-2);font-family:var(--display);font-size:13.5px}
+  tbody tr:last-child td{border-bottom:none}
+  td b{color:var(--teal)}
+
+  /* store card */
+  .store{margin:36px 0 0;background:var(--surface);border:1px solid var(--line);border-radius:16px;
+    box-shadow:var(--shadow);overflow:hidden}
+  .store__top{display:flex;gap:14px;align-items:center;padding:18px 20px;background:var(--surface-2);
+    border-bottom:1px solid var(--line)}
+  .store__logo{width:46px;height:46px;border-radius:10px;background:var(--teal);color:#fff;
+    display:grid;place-items:center;font-family:var(--display);font-weight:800;flex:0 0 auto}
+  .store__top b{font-family:var(--display);font-size:16px}
+  .store__top span{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+  .store__grid{padding:16px 20px;display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:14px}
+  .store__grid dt{color:var(--muted)}
+  .store__grid dd{margin:0}
+  .store__grid .sel{font-variant-numeric:tabular-nums;user-select:all}
+  .store__cta{display:flex;gap:10px;flex-wrap:wrap;padding:0 20px 18px}
+  .store__cta a{flex:1;min-width:140px;text-align:center;text-decoration:none;font-weight:700;font-size:14px;
+    border-radius:10px;padding:11px 14px}
+  .a-call{background:var(--teal);color:#fff}
+  .a-line{background:#06c755;color:#fff}
+  .a-visit{background:var(--warm);color:#fff}
+
+  .cta-band{margin:34px 0 0;text-align:center;background:var(--teal-soft);border:1px solid var(--teal);
+    border-radius:16px;padding:26px 20px}
+  .cta-band b{font-family:var(--display);font-size:19px;display:block}
+  .cta-band p{color:var(--muted);font-size:14px;margin:6px 0 16px}
+  .cta-band a{display:inline-block;background:var(--warm);color:#fff;font-weight:700;text-decoration:none;
+    border-radius:999px;padding:12px 30px}
+
+  .share{display:flex;gap:10px;align-items:center;margin:28px 0 0;flex-wrap:wrap}
+  .share span{font-size:12.5px;color:var(--muted);letter-spacing:.06em}
+  .share a{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;text-decoration:none;
+    border:1px solid var(--line);background:var(--surface);color:var(--muted);font-weight:700;font-size:13px}
+  .share a:hover{color:var(--fg)}
+
+  .related{margin-top:40px}
+  .related h2{font-size:16px;letter-spacing:.04em;margin:0 0 14px}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:620px){.cards{grid-template-columns:1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;
+    box-shadow:var(--shadow);text-decoration:none;display:flex;flex-direction:column}
+  .card .thumb{aspect-ratio:16/10;max-width:100%}
+  .card .c-in{padding:12px 14px}
+  .card .c-cat{font-size:11px;color:var(--teal);font-weight:700}
+  .card .c-ti{font-family:var(--display);font-size:14.5px;margin-top:4px;line-height:1.5}
+
+  footer{border-top:1px solid var(--line);margin-top:48px;color:var(--muted);font-size:12.5px}
+  footer .f-in{max-width:var(--maxw);margin:0 auto;padding-block:26px;
+    padding-left:max(16px,env(safe-area-inset-left,0px));
+    padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between}
+
+  /* annotation overlay (toggle) */
+  [data-note]{position:relative}
+  body.annotate [data-note]::after{content:attr(data-note);position:absolute;top:6px;right:6px;z-index:5;
+    background:#111826;color:#ffd89e;font-family:var(--body);font-size:10.5px;font-weight:700;line-height:1.3;
+    padding:3px 8px;border-radius:7px;max-width:70%;text-align:right;box-shadow:0 2px 8px rgba(0,0,0,.3);
+    border:1px solid rgba(255,216,158,.5);pointer-events:none}
+  body.annotate [data-note]{outline:2px dashed var(--warm);outline-offset:3px;border-radius:8px}
+  .hint{display:none}
+  body.annotate .hint{display:block}
+  .hint{margin:18px 0 0;font-size:12.5px;color:var(--warm);background:var(--warm-soft);
+    border:1px dashed var(--warm);border-radius:10px;padding:10px 14px}
+</style>
+
+<header class="site">
+  <div class="site__in">
+    <div class="brand"><span class="mark">C</span>カーメル</div>
+    <nav>
+      <a href="#">中古車を探す</a>
+      <a href="#">購入ガイド</a>
+      <a href="#">お知らせ</a>
+      <a href="#">店舗一覧</a>
+    </nav>
+    <div class="tools">
+      <button class="btn-ghost" id="noteBtn" type="button">📐 パーツ説明</button>
+      <button class="btn-ghost" id="themeBtn" type="button">◐ 表示</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="crumbs"><span>ホーム</span> › <span>購入ガイド</span> › ローン審査のコツ</div>
+
+  <p class="hint">黄色い枠は、このプラグインが自動生成する各パーツです。もう一度「パーツ説明」を押すと消えます。</p>
+
+  <div class="chiprow">
+    <span class="chip">購入ガイド</span>
+    <span class="m">📅 2026年10月17日</span>
+    <span class="dot">•</span>
+    <span class="m">⏱ 約6分で読めます</span>
+  </div>
+
+  <h1 class="title">中古車ローンの審査に通る7つのポイント｜落ちない準備を店長が解説</h1>
+
+  <div class="byline" data-note="店舗・担当者から差し込み">
+    <div class="avatar">田</div>
+    <div class="who"><b>カーメル 名古屋みなと店</b> ／ 店長 田中<br><span>中古車販売・オートローン担当</span></div>
+  </div>
+
+  <figure data-note="アイキャッチ画像（AIが自動生成）">
+    <div class="ph">
+      <svg viewBox="0 0 1200 630" role="img" aria-label="中古車店のイメージ写真">
+        <defs>
+          <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#0f766e"/><stop offset="1" stop-color="#0b3b37"/>
+          </linearGradient>
+          <linearGradient id="road" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#1f2d2b"/><stop offset="1" stop-color="#0a1413"/>
+          </linearGradient>
+        </defs>
+        <rect width="1200" height="630" fill="url(#g1)"/>
+        <rect y="420" width="1200" height="210" fill="url(#road)"/>
+        <circle cx="980" cy="120" r="70" fill="#ffe08a" opacity=".85"/>
+        <g opacity=".95">
+          <rect x="360" y="300" width="470" height="120" rx="26" fill="#0b2b28"/>
+          <rect x="400" y="255" width="330" height="80" rx="34" fill="#103b37"/>
+          <circle cx="455" cy="420" r="46" fill="#05100f"/><circle cx="455" cy="420" r="20" fill="#2a3b38"/>
+          <circle cx="735" cy="420" r="46" fill="#05100f"/><circle cx="735" cy="420" r="20" fill="#2a3b38"/>
+          <rect x="420" y="275" width="120" height="48" rx="12" fill="#1a4d47" opacity=".9"/>
+        </g>
+        <g fill="#ffffff" opacity=".07">
+          <rect x="80" y="110" width="160" height="230" rx="10"/>
+          <rect x="120" y="150" width="500" height="10" rx="5"/>
+        </g>
+      </svg>
+    </div>
+    <figcaption>※ 文字の入らない写真をAIが生成（人物は日本人・日本の設定）</figcaption>
+  </figure>
+
+  <p class="lead" data-note="抜粋（excerpt）">中古車を買うとき、いちばん不安なのが「ローン審査に通るかどうか」。実は、申し込み前のちょっとした準備で、通りやすさは大きく変わります。この記事では、審査で見られるポイントと、通過率を上げる具体的なコツを、現場の視点でまとめました。</p>
+
+  <nav class="toc" data-note="見出しから自動生成（目次）">
+    <h2>目次</h2>
+    <ol>
+      <li><a href="#s1">審査で見られる3つのこと</a></li>
+      <li><a href="#s2">通過率を上げる7つのポイント</a></li>
+      <li><a href="#s3">頭金はいくら用意すべき？</a></li>
+      <li><a href="#s4">ローンの種類と特徴（比較表）</a></li>
+      <li><a href="#s5">審査に落ちたときの対処法</a></li>
+    </ol>
+  </nav>
+
+  <section class="body">
+    <h2 id="s1"><span class="num">01</span>審査で見られる3つのこと</h2>
+    <p>オートローンの審査は、ざっくり言うと「きちんと返済できる人か」を確認するものです。金融会社によって基準は違いますが、共通して見られるのは次の3つです。</p>
+    <h3>① 年収と返済負担率</h3>
+    <p>年収そのものより、「年収に対して返済がどれくらいの割合になるか（返済負担率）」が重視されます。一般的に、年間の返済額が年収の30〜35%以内に収まると安心されやすい傾向です。</p>
+    <h3>② 勤務先・勤続年数</h3>
+    <p>安定して収入が続くかを見られます。転職直後は不利になりやすいので、可能なら勤続半年以上のタイミングでの申し込みがおすすめです。</p>
+    <h3>③ 信用情報（過去の支払い履歴）</h3>
+    <p>クレジットカードやスマホ本体の分割など、過去の支払いの遅延がないかが確認されます。心当たりがある場合は、事前の相談で対策を立てられます。</p>
+
+    <h2 id="s2"><span class="num">02</span>通過率を上げる7つのポイント</h2>
+    <p>申し込み前にできる準備を、チェックリストにまとめました。上から順に確認してみてください。</p>
+    <ul class="check" data-note="箇条書き（品質レベルで自動強化）">
+      <li>頭金を1〜2割用意し、借入額を下げる</li>
+      <li>他社の借入やリボ残高を、申し込み前に減らしておく</li>
+      <li>スマホ・カードの支払い遅延をなくしておく</li>
+      <li>勤続半年以上のタイミングで申し込む</li>
+      <li>申し込みは1社ずつ（短期間に何社も申し込まない）</li>
+      <li>無理のない返済期間・月額に設定する</li>
+      <li>不安な点は事前にお店へ相談しておく</li>
+    </ul>
+
+    <div class="callout" data-note="ポイント枠（コールアウト）">
+      <b>ここがポイント</b>
+      <p>「頭金を入れて借入額を下げる」だけで、審査はぐっと通りやすくなります。まとまった頭金が難しい場合でも、返済期間を調整すれば月々の負担は抑えられます。</p>
+    </div>
+
+    <div class="banner" data-note="バナー画像（キャンペーン）">
+      <svg class="bg" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <circle cx="1050" cy="60" r="160" fill="#ffffff" opacity=".08"/>
+        <circle cx="150" cy="280" r="190" fill="#ffffff" opacity=".06"/>
+      </svg>
+      <div class="in">
+        <div class="kicker">AUTUMN FAIR｜10月末まで</div>
+        <div class="big">決算セール 対象車 最大10万円引き</div>
+        <a class="cta" href="#">ご来店予約でガソリン券プレゼント →</a>
+      </div>
+    </div>
+
+    <h2 id="s3"><span class="num">03</span>頭金はいくら用意すべき？</h2>
+    <p>目安は車両価格の1〜2割です。たとえば150万円の車なら、15〜30万円ほど。頭金を入れると借入額と総支払額の両方が下がり、審査でもプラスに働きます。ただし、生活費を削ってまで無理をする必要はありません。手元資金とのバランスで決めましょう。</p>
+
+    <h2 id="s4"><span class="num">04</span>ローンの種類と特徴（比較表）</h2>
+    <p>中古車ローンには大きく3種類あります。金利や審査の通りやすさが異なるので、自分に合うものを選びましょう。</p>
+    <div class="tablewrap" data-note="表（content_html内）">
+      <table>
+        <thead><tr><th>種類</th><th>金利の目安</th><th>審査</th><th>向いている人</th></tr></thead>
+        <tbody>
+          <tr><td><b>銀行系</b></td><td>年1〜3%台</td><td>やや厳しめ</td><td>金利を抑えたい人</td></tr>
+          <tr><td><b>ディーラー系</b></td><td>年3〜7%台</td><td>標準</td><td>手続きを簡単にしたい人</td></tr>
+          <tr><td><b>自社ローン</b></td><td>金利なしの場合も</td><td>通りやすい</td><td>他で断られた人</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="s5"><span class="num">05</span>審査に落ちたときの対処法</h2>
+    <p>一度落ちても、あきらめる必要はありません。借入額を下げる、頭金を増やす、保証人を立てる、自社ローンに切り替えるなど、打てる手はいくつもあります。カーメルでは、審査に不安がある方のご相談も無料で承っています。状況に合わせて、通る可能性の高いプランをご提案します。</p>
+  </section>
+
+  <div class="store" data-note="店舗情報カード（店舗・担当者から差し込み）">
+    <div class="store__top">
+      <div class="store__logo">C</div>
+      <div><b>カーメル 名古屋みなと店</b><span>中古車販売・オートローン・買取</span></div>
+    </div>
+    <dl class="store__grid">
+      <dt>住所</dt><dd>愛知県名古屋市港区○○ 1-2-3</dd>
+      <dt>電話</dt><dd class="sel">052-000-0000</dd>
+      <dt>営業時間</dt><dd>10:00〜19:00（水曜定休）</dd>
+      <dt>担当</dt><dd>店長 田中</dd>
+    </dl>
+    <div class="store__cta">
+      <a class="a-call" href="#">電話で相談</a>
+      <a class="a-line" href="#">LINEで相談</a>
+      <a class="a-visit" href="#">来店を予約</a>
+    </div>
+  </div>
+
+  <div class="cta-band">
+    <b>ローン審査が不安な方へ</b>
+    <p>事前相談は無料。あなたに合った通りやすいプランをご提案します。</p>
+    <a href="#">無料でローン相談する</a>
+  </div>
+
+  <div class="share">
+    <span>シェア</span>
+    <a href="#" aria-label="Xでシェア">X</a>
+    <a href="#" aria-label="Facebookでシェア">f</a>
+    <a href="#" aria-label="LINEでシェア">L</a>
+    <a href="#" aria-label="リンクをコピー">🔗</a>
+  </div>
+
+  <div class="related">
+    <h2>関連記事</h2>
+    <div class="cards">
+      <a class="card" href="#">
+        <svg class="thumb" viewBox="0 0 320 200" aria-hidden="true"><rect width="320" height="200" fill="#0f766e"/><rect y="130" width="320" height="70" fill="#0b3b37"/><circle cx="250" cy="55" r="34" fill="#ffe08a" opacity=".8"/></svg>
+        <div class="c-in"><div class="c-cat">購入ガイド</div><div class="c-ti">初めての中古車選び、失敗しない5つの手順</div></div>
+      </a>
+      <a class="card" href="#">
+        <svg class="thumb" viewBox="0 0 320 200" aria-hidden="true"><rect width="320" height="200" fill="#115e59"/><rect y="130" width="320" height="70" fill="#0b3b37"/><rect x="40" y="60" width="240" height="40" rx="10" fill="#1a4d47"/></svg>
+        <div class="c-in"><div class="c-cat">お役立ち</div><div class="c-ti">車の維持費はいくら？年間コストの内訳</div></div>
+      </a>
+      <a class="card" href="#">
+        <svg class="thumb" viewBox="0 0 320 200" aria-hidden="true"><rect width="320" height="200" fill="#0b3b37"/><circle cx="160" cy="100" r="54" fill="#0f766e"/><circle cx="160" cy="100" r="22" fill="#143f3a"/></svg>
+        <div class="c-in"><div class="c-cat">買取</div><div class="c-ti">愛車を高く売るための準備チェックリスト</div></div>
+      </a>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="f-in">
+    <span>© カーメル（合同会社アイズ）</span>
+    <span>※ これは記事レイアウトのモックアップです</span>
+  </div>
+</footer>
+
+<script>
+  (function(){
+    var root=document.documentElement, body=document.body;
+    // theme toggle
+    try{var t=localStorage.getItem('carmel-mock-theme'); if(t)root.setAttribute('data-theme',t);}catch(e){}
+    document.getElementById('themeBtn').addEventListener('click',function(){
+      var cur=root.getAttribute('data-theme');
+      var dark=cur? cur==='dark' : matchMedia('(prefers-color-scheme:dark)').matches;
+      var next=dark?'light':'dark';
+      root.setAttribute('data-theme',next);
+      try{localStorage.setItem('carmel-mock-theme',next);}catch(e){}
+    });
+    // annotation toggle
+    document.getElementById('noteBtn').addEventListener('click',function(){
+      body.classList.toggle('annotate');
+      this.style.background=body.classList.contains('annotate')?'var(--warm)':'';
+      this.style.color=body.classList.contains('annotate')?'#fff':'';
+    });
+  })();
+</script>
