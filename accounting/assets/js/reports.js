@@ -344,6 +344,53 @@ A.reports = (function () {
     return rows[rows.length - 1].bookAfter; // 既に償却完了
   };
 
+  /* ---- 車両別損益（案件別原価管理・オークション代行向け） --------------
+   * 仕訳を車両(j.vehicleId)で集計し、1台ごとの 仕入/諸経費/売上/粗利/粗利率/
+   * 在庫日数 を出す。税込経理ベース（線の金額をそのまま使用）。
+   * ------------------------------------------------------------------- */
+  const daysBetween = (a, b) => {
+    if (!a) return null;
+    const d1 = new Date(a + 'T00:00:00'), d2 = new Date((b || U.today()) + 'T00:00:00');
+    return Math.max(0, Math.round((d2 - d1) / 86400000));
+  };
+  const vehiclePL = (journals, vehicles, start, end) => {
+    const agg = {}; // id -> {sales, purchase, expense}
+    (vehicles || []).forEach((v) => (agg[v.id] = { sales: 0, purchase: 0, expense: 0 }));
+    (journals || []).forEach((j) => {
+      if (!j.vehicleId || !agg[j.vehicleId]) return;
+      if (start && end && !U.inRange(j.date, start, end)) return;
+      (j.lines || []).forEach((l) => {
+        const cat = S.accounts.category(l.account);
+        if (cat === 'expense') {
+          const amt = (l.side === 'debit' ? 1 : -1) * l.amount;
+          if (l.account === '500' || l.account === '510') agg[j.vehicleId].purchase += amt;
+          else agg[j.vehicleId].expense += amt;
+        } else if (cat === 'revenue') {
+          agg[j.vehicleId].sales += (l.side === 'credit' ? 1 : -1) * l.amount;
+        }
+      });
+    });
+    const rows = (vehicles || []).map((v) => {
+      const a = agg[v.id];
+      const cost = a.purchase + a.expense;
+      const profit = a.sales - cost;
+      const sold = !!(v.status === 'sold' || (v.saleDate && v.saleDate <= U.today()));
+      return {
+        v, sales: a.sales, purchase: a.purchase, expense: a.expense, cost, profit,
+        marginPct: a.sales ? Math.round(profit / a.sales * 1000) / 10 : null,
+        holdingDays: daysBetween(v.purchaseDate, sold ? v.saleDate : null),
+        sold,
+      };
+    });
+    const totals = rows.reduce((s, r) => {
+      s.sales += r.sales; s.purchase += r.purchase; s.expense += r.expense; s.cost += r.cost; s.profit += r.profit; return s;
+    }, { sales: 0, purchase: 0, expense: 0, cost: 0, profit: 0 });
+    const inventoryValue = rows.filter((r) => !r.sold).reduce((s, r) => s + r.cost, 0); // 在庫車両の積み上げ原価
+    const soldProfit = rows.filter((r) => r.sold).reduce((s, r) => s + r.profit, 0);     // 販売済みの粗利
+    const inStock = rows.filter((r) => !r.sold).length;
+    return { rows, totals, inventoryValue, soldProfit, inStock };
+  };
+
   /* ---- 過去の仕訳から勘定科目を自動学習 --------------------------------
    * 摘要（text）に関連する過去の仕訳を探し、方向(dir)に合う相手科目のうち
    * 最も多く使われた科目を返す。ルール未登録でも「前回と同じ科目」を提案。
@@ -536,5 +583,5 @@ A.reports = (function () {
     return { net, dep, dAR, dInv, dAP, operating, investing, financing, adjust, cashChange, cashOpen, cashClose };
   };
 
-  return { flatLines, ledger, trialBalance, statements, taxSummary, dashboard, depSchedule, depForFiscalYear, bookValueAt, breakdown, learnAccount, DEEMED_RATES, taxPayable, deptSummary, taxReturnCalc, advisor, monthlyTrend, partnerLedger, cashflow };
+  return { flatLines, ledger, trialBalance, statements, taxSummary, dashboard, depSchedule, depForFiscalYear, bookValueAt, breakdown, learnAccount, vehiclePL, DEEMED_RATES, taxPayable, deptSummary, taxReturnCalc, advisor, monthlyTrend, partnerLedger, cashflow };
 })();

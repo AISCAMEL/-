@@ -8,6 +8,7 @@ window.A = window.A || {};
   // 相手勘定（支払・入金手段）の候補
   const PAY_ACCOUNTS = ['100', '110', '210', '230', '120', '200'];
   let learnJournals = []; // OCRの科目自動学習に使う過去仕訳
+  let vehList = [];       // 車両（案件）一覧（ページ表示時に読込）
 
   const optionsFor = (codes, value) => {
     const sel = el('select');
@@ -58,6 +59,9 @@ window.A = window.A || {};
     const paySel = optionsFor(PAY_ACCOUNTS, payCode);
     const amtI = el('input.amt-in', { type: 'text', inputmode: 'numeric', value: amount ? U.yen(amount) : '', placeholder: '税込金額' });
     const memoI = el('input', { type: 'text', value: memo, placeholder: '摘要（例：ガソリン代）' });
+    const vehSel = el('select');
+    vehSel.appendChild(el('option', { value: '', text: '（車両なし）' }));
+    vehList.forEach((v) => { const o = el('option', { value: v.id, text: v.name }); if (existing && v.id === existing.vehicleId) o.selected = true; vehSel.appendChild(o); });
     const preview = el('div.jsummary');
 
     const buildMain = () => {
@@ -136,6 +140,7 @@ window.A = window.A || {};
         el('label', {}, [el('span', { text: '支払・入金手段' }), paySel]),
         el('label', {}, [el('span', { text: '金額(税込)' }), amtI]),
       ]),
+      vehList.length ? el('div.form-row', {}, [el('label.grow', {}, [el('span', { text: '車両（案件・任意）' }), vehSel])]) : null,
       el('label', {}, [el('span', { text: '摘要' }), memoI]),
       el('div.preview-box', {}, [el('div.muted', { text: '生成される仕訳' }), preview]),
     ]);
@@ -156,7 +161,7 @@ window.A = window.A || {};
           { side: 'credit', account: mainC, tax: t, amount: amt, memo: memoI.value },
         ];
       }
-      const rec = { id, refId: refId || id, source: 'expense', date: dateI.value, description: memoI.value, lines };
+      const rec = { id, refId: refId || id, source: 'expense', date: dateI.value, description: memoI.value, vehicleId: vehSel.value || '', lines };
       if (existing) rec.no = existing.no;
       await S.journals.save(rec);
       // refId を自身のidに揃える（新規時）
@@ -177,6 +182,7 @@ window.A = window.A || {};
   ui.register('expenses', async (q) => {
     const journals = await S.journals.loadAll();
     learnJournals = journals; // OCRの自動学習に使う
+    vehList = await S.vehicles.loadAll(); // 車両（案件）タグ付け用
     if (q.new) setTimeout(() => editor(null), 0);
     const p = A.app.period();
     const list = journals.filter((j) => j.source === 'expense' && U.inRange(j.date, p.start, p.end))

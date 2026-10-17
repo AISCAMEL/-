@@ -66,6 +66,10 @@ window.A = window.A || {};
     const deptI = el('select');
     deptI.appendChild(el('option', { value: '', text: '（部門なし）' }));
     depts.forEach((d) => { const o = el('option', { value: d.id, text: d.name }); if (d.id === j.dept) o.selected = true; deptI.appendChild(o); });
+    const vlist = await S.vehicles.loadAll();
+    const vehI = el('select');
+    vehI.appendChild(el('option', { value: '', text: '（車両なし）' }));
+    vlist.forEach((v) => { const o = el('option', { value: v.id, text: v.name }); if (v.id === j.vehicleId) o.selected = true; vehI.appendChild(o); });
     const debitBox = el('div.jlines');
     const creditBox = el('div.jlines');
     const summary = el('div.jsummary');
@@ -102,6 +106,7 @@ window.A = window.A || {};
         el('label', {}, [el('span', { text: '日付' }), dateI]),
         el('label.grow', {}, [el('span', { text: '摘要' }), descI]),
         depts.length ? el('label', {}, [el('span', { text: '部門' }), deptI]) : null,
+        vlist.length ? el('label', {}, [el('span', { text: '車両' }), vehI]) : null,
         el('label', {}, [el('span', { text: '証憑(任意)' }), fileI]),
       ]),
       el('div.dc-cols', {}, [
@@ -124,7 +129,7 @@ window.A = window.A || {};
         return ui.toast('各行に勘定科目と金額を入力してください', 'err');
       }
       if (!totals.balanced) return ui.toast('借方と貸方の合計が一致していません', 'err');
-      const rec = { ...j, date: dateI.value, description: descI.value, dept: deptI.value || '', lines };
+      const rec = { ...j, date: dateI.value, description: descI.value, dept: deptI.value || '', vehicleId: vehI.value || '', lines };
       const saved = await S.journals.save(rec);
       if (fileI.files[0] && A.attachToJournal) { try { await A.attachToJournal(saved, fileI.files[0]); } catch (e) { ui.toast('証憑の保存に失敗: ' + e.message, 'err'); } }
       m.close();

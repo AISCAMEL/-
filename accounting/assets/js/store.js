@@ -276,5 +276,23 @@ A.store = (function () {
     async remove(id) { await db.del('products', id); },
   };
 
-  return { settings, accounts, partners, journals, invoices, assets, attachments, payslips, products };
+  // 車両（案件）：オークション代行の1台ごとの原価・損益管理
+  const vehicles = {
+    async loadAll() {
+      const list = await db.all('vehicles');
+      list.sort((a, b) => (b.purchaseDate || '').localeCompare(a.purchaseDate || ''));
+      return list;
+    },
+    async get(id) { return db.get('vehicles', id); },
+    async save(v) {
+      const isNew = !v.id;
+      if (!v.id) v.id = U.uid('vh');
+      await db.put('vehicles', v);
+      if (A.audit) await A.audit.log(isNew ? 'create' : 'update', 'vehicle', v.id, `${v.name || ''}`);
+      return v;
+    },
+    async remove(id) { await db.del('vehicles', id); },
+  };
+
+  return { settings, accounts, partners, journals, invoices, assets, attachments, payslips, products, vehicles };
 })();

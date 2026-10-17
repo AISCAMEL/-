@@ -70,6 +70,24 @@ A.demo = (function () {
     }
     for (const j of J) await S.journals.save(j);
 
+    // 車両別損益デモ（1台ごとの 仕入→諸経費→売却）
+    const vj = (date, desc, lines, vehicleId, source) => S.journals.save({ date, description: desc, source: source || 'manual', vehicleId, lines });
+    const v1 = await S.vehicles.save({ name: 'アルファード 2.5S', maker: 'トヨタ', carNo: 'A-001', auctionSite: 'USS東京', purchaseDate: d(0, 8), saleDate: d(1, 15), status: 'sold', note: 'デモ' });
+    const v2 = await S.vehicles.save({ name: 'ハイエース バン', maker: 'トヨタ', carNo: 'A-002', auctionSite: 'USS横浜', purchaseDate: d(1, 6), saleDate: d(2, 20), status: 'sold', note: 'デモ' });
+    const v3 = await S.vehicles.save({ name: 'N-BOX カスタム', maker: 'ホンダ', carNo: 'A-003', auctionSite: 'USS名古屋', purchaseDate: d(4, 10), saleDate: '', status: 'stock', note: 'デモ（在庫）' });
+    // v1: 仕入260万＋諸経費12万→売却320万（粗利48万）
+    await vj(d(0, 8), '車両仕入 アルファード', [{ side: 'debit', account: '500', tax: 'purchase10', amount: 2600000 }, { side: 'credit', account: '110', tax: 'out', amount: 2600000 }], v1.id);
+    await vj(d(0, 20), '陸送費 アルファード', [{ side: 'debit', account: '535', tax: 'purchase10', amount: 40000 }, { side: 'credit', account: '110', tax: 'out', amount: 40000 }], v1.id, 'expense');
+    await vj(d(1, 5), '整備費 アルファード', [{ side: 'debit', account: '580', tax: 'purchase10', amount: 80000 }, { side: 'credit', account: '110', tax: 'out', amount: 80000 }], v1.id, 'expense');
+    await vj(d(1, 15), '車両売却 アルファード', [{ side: 'debit', account: '110', tax: 'out', amount: 3200000 }, { side: 'credit', account: '400', tax: 'sales10', amount: 3200000 }], v1.id, 'invoice');
+    // v2: 仕入180万＋経費6万→売却198万（低粗利12万）
+    await vj(d(1, 6), '車両仕入 ハイエース', [{ side: 'debit', account: '500', tax: 'purchase10', amount: 1800000 }, { side: 'credit', account: '110', tax: 'out', amount: 1800000 }], v2.id);
+    await vj(d(1, 25), '整備・登録 ハイエース', [{ side: 'debit', account: '580', tax: 'purchase10', amount: 60000 }, { side: 'credit', account: '110', tax: 'out', amount: 60000 }], v2.id, 'expense');
+    await vj(d(2, 20), '車両売却 ハイエース', [{ side: 'debit', account: '110', tax: 'out', amount: 1980000 }, { side: 'credit', account: '400', tax: 'sales10', amount: 1980000 }], v2.id, 'invoice');
+    // v3: 在庫中（仕入140万＋整備5万、未売却）
+    await vj(d(4, 10), '車両仕入 N-BOX', [{ side: 'debit', account: '500', tax: 'purchase10', amount: 1400000 }, { side: 'credit', account: '110', tax: 'out', amount: 1400000 }], v3.id);
+    await vj(d(4, 20), '整備 N-BOX', [{ side: 'debit', account: '580', tax: 'purchase10', amount: 50000 }, { side: 'credit', account: '110', tax: 'out', amount: 50000 }], v3.id, 'expense');
+
     // 給与（3か月分・従業員2名）＋給与仕訳
     const rates = { health: 5.0, pension: 9.15, employment: 0.6 };
     for (let m = 3; m <= 5; m++) {

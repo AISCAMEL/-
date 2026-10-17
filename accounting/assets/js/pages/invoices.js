@@ -66,6 +66,10 @@ window.A = window.A || {};
     inv.items.forEach(addItem); refresh();
 
     const noteI = el('textarea', { rows: 2, placeholder: '備考（振込先・支払条件など）' }); noteI.value = inv.note || '';
+    const vehicles = await S.vehicles.loadAll();
+    const vehSel = el('select');
+    vehSel.appendChild(el('option', { value: '', text: '（車両なし）' }));
+    vehicles.forEach((v) => { const o = el('option', { value: v.id, text: v.name }); if (v.id === inv.vehicleId) o.selected = true; vehSel.appendChild(o); });
 
     const body = el('div.editor', {}, [
       el('div.form-row', {}, [
@@ -80,6 +84,7 @@ window.A = window.A || {};
       itemsBox,
       el('button.btn.sm', { text: '＋ 明細を追加', onclick: () => addItem() }),
       totalsBox,
+      vehicles.length ? el('div.form-row', {}, [el('label.grow', {}, [el('span', { text: '車両（案件・任意）' }), vehSel])]) : null,
       el('label', {}, [el('span', { text: '備考' }), noteI]),
     ]);
 
@@ -87,7 +92,7 @@ window.A = window.A || {};
       const items = collect();
       if (!pName.value) return ui.toast('取引先名を入力してください', 'err');
       if (!items.length) return ui.toast('明細を1行以上入力してください', 'err');
-      const rec = { ...inv, date: dateI.value, dueDate: dueI.value, partnerId: pSel.value, partnerName: pName.value, items, note: noteI.value };
+      const rec = { ...inv, date: dateI.value, dueDate: dueI.value, partnerId: pSel.value, partnerName: pName.value, items, note: noteI.value, vehicleId: vehSel.value || '' };
       const saved = await S.invoices.save(rec);
       m.close();
       ui.toast('保存しました', 'ok');
@@ -184,7 +189,7 @@ window.A = window.A || {};
       lines.push({ side: 'credit', account: '400', tax, amount: gross });
     });
     await S.journals.removeBySource(inv.id);
-    await S.journals.save({ refId: inv.id, source: 'invoice', date: inv.date, description: `売上：${inv.partnerName}（${S.invoices.displayNo(inv)}）`, lines });
+    await S.journals.save({ refId: inv.id, source: 'invoice', date: inv.date, description: `売上：${inv.partnerName}（${S.invoices.displayNo(inv)}）`, vehicleId: inv.vehicleId || '', lines });
     await S.invoices.save({ ...inv, posted: true });
     ui.toast('売上を仕訳に計上しました', 'ok');
     ui.renderRoute();

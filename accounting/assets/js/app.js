@@ -33,6 +33,7 @@ A.app = (function () {
     { path: 'estimates', label: '見積書', icon: '📝' },
     { path: 'recurring', label: '定期請求', icon: '🔁' },
     { path: 'assets', label: '固定資産', icon: '🚚' },
+    { path: 'vehicles', label: '車両別損益', icon: '🚗' },
     { path: 'inventory', label: '棚卸し', icon: '📦' },
     { path: 'payroll', label: '給与計算', icon: '👥' },
     { path: 'vouchers', label: '証憑（電帳法）', icon: '🧷' },

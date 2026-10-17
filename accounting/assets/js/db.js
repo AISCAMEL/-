@@ -8,7 +8,7 @@ A.db = (function () {
   'use strict';
 
   const DB_NAME = 'aizu_kaikei';
-  const DB_VERSION = 6; // v2:assets /v3:attachments /v4:auditlog /v5:payslips /v6:products（商品）
+  const DB_VERSION = 7; // v2:assets /v3:attachments /v4:auditlog /v5:payslips /v6:products /v7:vehicles（車両別損益）
   // オブジェクトストア（テーブル）一覧
   const STORES = {
     settings: { keyPath: 'key' },
@@ -21,6 +21,7 @@ A.db = (function () {
     auditlog: { keyPath: 'id', indexes: [['ts', 'ts']] },
     payslips: { keyPath: 'id', indexes: [['month', 'month']] },
     products: { keyPath: 'id' },
+    vehicles: { keyPath: 'id' },
   };
 
   let _db = null;
