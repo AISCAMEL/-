@@ -960,8 +960,9 @@
 		action = action || "";
 
 		// この入口を出す、という希望リスト（順序＝表示順）
-		var want = { apply: false, contact: false, handoff: false, stock: false, app: false, line: false, tel: false };
+		var want = { apply: false, contact: false, handoff: false, stock: false, app: false, line: false, tel: false, shinsa: false };
 		if (action === "apply") { want.apply = true; want.line = true; }
+		else if (action === "shinsa") { want.shinsa = true; want.line = true; }
 		else if (action === "contact") { want.contact = true; want.line = true; }
 		else if (action === "handoff") { want.handoff = true; want.line = true; }
 		else if (action === "stock") { want.stock = true; want.app = true; want.line = true; }
@@ -978,12 +979,13 @@
 			stock:  want.stock  && !!cfg.stockUrl,
 			app:   want.app   && !!(cfg.stockAppUrl || cfg.stockAppUrlIos || cfg.stockAppUrlAndroid),
 			line:  want.line  && !!cfg.lineUrl,
-			tel:   want.tel   && !!cfg.tel
+			tel:   want.tel   && !!cfg.tel,
+			shinsa: want.shinsa && !!cfg.shinsaOn
 		};
 		// 仮審査は専用ページ(applyUrl=/shinsa-2)へ移行させる。URLがあればフォームモードでもリンク優先。
 		var applyToPage = !!cfg.applyUrl;
 		show.apply = want.apply && ( applyToPage || ( formMode ? cfg.applyFormOn : false ) );
-		if (!show.apply && !show.contact && !show.handoff && !show.stock && !show.app && !show.line && !show.tel) return;
+		if (!show.apply && !show.contact && !show.handoff && !show.stock && !show.app && !show.line && !show.tel && !show.shinsa) return;
 
 		var row = document.createElement("div");
 		row.className = "ccb-msg bot";
@@ -1026,6 +1028,8 @@
 			} catch (e) {}
 		}
 
+		// 診断は“まずやってもらう”一歩なので、申込より前に出す
+		if (show.shinsa) addBtnAct("ccb-cta-shinsa", " まずは審査に通るか診断する", function () { openShindanCheck(); });
 		if (show.apply) {
 			// 仮審査になったら /shinsa-2 に移行（同じタブで遷移）。URL未設定のときだけチャット内フォーム。
 			if (applyToPage) addBtnLink("ccb-cta-apply", " 仮審査を申し込む", cfg.applyUrl, true, reportApplyClick);

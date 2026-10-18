@@ -182,6 +182,7 @@
 .ccb-cta-line    { background: #06c755; }
 .ccb-cta-tel     { background: #5a6b7b; }
 .ccb-cta-apply   { background: #e8730a; }
+.ccb-cta-shinsa  { background: #1e9e5a; }
 .ccb-cta-contact { background: var(--ccb-primary, #0b5cab); }
 .ccb-cta-stock   { background: #2a7f62; }
 .ccb-cta-app     { background: #0f9d63; }
