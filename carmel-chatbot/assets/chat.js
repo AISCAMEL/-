@@ -587,6 +587,12 @@
 	function clearChoices() {
 		var old = msgBox.querySelectorAll(".ccb-choices");
 		for (var i = 0; i < old.length; i++) { old[i].remove(); }
+		// 古いCTAボタン（まず診断/仮審査/お問い合わせ等）も片付け、常に“今の一歩”だけ見せる。
+		var ctas = msgBox.querySelectorAll(".ccb-cta");
+		for (var j = 0; j < ctas.length; j++) {
+			var row = (ctas[j].closest ? ctas[j].closest(".ccb-msg") : ctas[j].parentNode) || ctas[j];
+			row.remove();
+		}
 	}
 	function renderChoices(list) {
 		if (!list || !list.length) return;
