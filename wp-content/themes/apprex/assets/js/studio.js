@@ -98,7 +98,87 @@ function save(){
 }
 function saveImg(){ try{localStorage.setItem(KEY+'-img',JSON.stringify(IMG));}catch(e){} }
 
-function D(){return IND[S.d.ind];}
+function D(){var b=IND[S.d.ind]; if(!S.d.ov) return b; var o={}; for(var k in b){o[k]=b[k];} if(S.d.ov.catch) o.catch=S.d.ov.catch; if(S.d.ov.menus&&S.d.ov.menus.length) o.menus=S.d.ov.menus; return o;}
+
+/* ---------- AIデザイナー（サーバーのAIと連携） ---------- */
+var AI=CFG.ai||{text:false,image:false,left:0,limit:0}, IMGS=CFG.images||[], GEN={busy:false,kind:''};
+var KINDS=[['screens','画面デザイン（5画面）'],['icon','アプリアイコン'],['hero','メインビジュアル']];
+function brief(req){
+  var d=D(), p=palette();
+  return {industry:d.l,name:storeName(),goal:S.d.goal,target:S.d.target,tone:S.d.tone,color:p[1],dark:p[0],catch:d.catch,menus:d.menus,variant:S.d.variant,request:req||S.d.brief||''};
+}
+function applyAi(c){
+  var ch=[];
+  if(c.color){S.d.custom=c.color;ch.push('色');}
+  if(c.tone&&TONES[c.tone]){S.d.tone=c.tone;ch.push('雰囲気');}
+  if(c.variant){S.d.variant=c.variant;ch.push('レイアウト');}
+  if(c.cols){S.d.cols=c.cols;}
+  if(c.fs){S.d.fs=c.fs;}
+  if(typeof c.tall==='boolean'){S.d.tall=c.tall;}
+  if(typeof c.resBig==='boolean'){S.d.resBig=c.resBig;}
+  if(c.catch||c.menus){S.d.ov=S.d.ov||{}; if(c.catch){S.d.ov.catch=c.catch;ch.push('キャッチコピー');} if(c.menus){S.d.ov.menus=c.menus;ch.push('ボタン');}}
+  return ch;
+}
+function pickedImg(kind){ for(var i=0;i<IMGS.length;i++){ if(IMGS[i].kind===kind&&IMGS[i].picked) return IMGS[i]; } return null; }
+function mainImg(){ if(S._show){ for(var i=0;i<IMGS.length;i++){ if(IMGS[i].id===S._show) return IMGS[i]; } } return pickedImg('screens')||IMGS[0]||null; }
+function aiPanel(){
+  var m=mainImg();
+  var gal;
+  if(GEN.busy){
+    gal='<div class="aid-main loading" role="status"><div class="aid-spin"></div><b>AIがデザインしています…</b><span>'+esc((KINDS.filter(function(k){return k[0]===GEN.kind;})[0]||[])[1]||'')+'を作成中。30〜60秒ほどかかります。</span></div>';
+  }else if(m){
+    gal='<figure class="aid-main"><button type="button" class="aid-zoom" data-zoom="'+esc(m.url)+'" aria-label="拡大して見る"><img src="'+esc(m.url)+'" alt="AIが生成した'+esc(m.label)+'"></button><figcaption><span class="aid-tag">'+esc(m.label)+(m.picked?'・採用中':'')+'</span><small>'+esc(m.time)+(m.note?'　'+esc(m.note):'')+'</small><button type="button" class="btn btn--sm '+(m.picked?'btn--line':'btn--pri')+'" data-pick="'+m.id+'" data-kind="'+m.kind+'">'+(m.picked?'採用を外す':'この案を採用')+'</button></figcaption></figure>';
+  }else{
+    gal='<div class="aid-main empty"><b>ここにAIのデザインが表示されます</b><span>左で要望を書いて「画面デザインを生成」を押すと、5画面のデザインカンプを本格的な画像で作ります。アイコンやメインビジュアルも作れます。</span></div>';
+  }
+  var th=IMGS.length>1?'<div class="aid-thumbs" aria-label="生成したデザイン">'+IMGS.map(function(im){return '<button type="button" class="aid-th'+(m&&im.id===m.id?' on':'')+'" data-show="'+im.id+'" title="'+esc(im.label+' '+im.time)+'"><img src="'+esc(im.url)+'" alt="">'+(im.picked?'<i>採用</i>':'')+'</button>';}).join('')+'</div>':'';
+  var gen=KINDS.map(function(k){return '<button type="button" class="btn '+(k[0]==='screens'?'btn--cta':'btn--line')+' btn--sm" data-gen="'+k[0]+'"'+(GEN.busy||!AI.image||AI.left<=0?' disabled':'')+'>'+k[1]+'を生成</button>';}).join('');
+  var sug=['高級感のある和モダンにして、写真を大きく','20代女性向けにかわいく、予約を目立たせて','シニアにも読みやすく、ボタンを大きく','黒とゴールドで会員制の雰囲気に','ナチュラルで温かい雰囲気、緑を基調に'];
+  return '<div class="card aid">'
+   +'<div class="aid-l"><div class="aid-h"><span class="aid-badge">AI DESIGNER</span><h3>AIデザイナーに頼む</h3><p>どんなアプリにしたいか、自由に書いてください。色・雰囲気・キャッチコピー・ボタンをAIが作り直し、本格的なデザイン画像も生成します。</p></div>'
+   +'<label class="sr" for="aidText">デザインの要望</label><textarea id="aidText" rows="4" placeholder="例：落ち着いた高級焼肉店。黒と金で、ネット予約を一番目立たせたい。常連さん向けにポイントカードも。">'+esc(S.d.brief||'')+'</textarea>'
+   +'<div class="ai-sug">'+sug.map(function(x){return '<button type="button" data-sug="'+esc(x)+'">'+esc(x)+'</button>';}).join('')+'</div>'
+   +'<div class="aid-acts"><button type="button" class="btn btn--pri" data-go="aiDesign"'+(GEN.busy?' disabled':'')+'>AIで作り直す</button><label class="aid-chk"><input type="checkbox" id="aidAlso"'+(AI.image&&AI.left>0?' checked':' disabled')+'> 続けて画面デザイン画像も生成する</label></div>'
+   +'<div class="aid-gen"><span class="sec-t" style="margin:0">本格デザイン画像</span><div class="aid-genb">'+gen+'</div><small>'+(AI.image?'本日あと'+AI.left+'回（1日'+AI.limit+'回まで・無料）':'AI画像の生成は準備中です')+'</small></div>'
+   +'<div class="ai-msg" id="aidMsg" role="status">'+esc(S._aiMsg||'')+'</div></div>'
+   +'<div class="aid-r">'+gal+th+'</div></div>';
+}
+function zoom(url){
+  var o=document.createElement('div'); o.className='rn-studio aid-lb'; o.setAttribute('role','dialog'); o.setAttribute('aria-label','デザインを拡大');
+  o.innerHTML='<button type="button" aria-label="閉じる">×</button><img src="'+esc(url)+'" alt="">';
+  var close=function(){ document.removeEventListener('keydown',key); o.remove(); };
+  var key=function(e){ if(e.key==='Escape') close(); };
+  o.addEventListener('click',close); document.addEventListener('keydown',key); document.body.appendChild(o);
+}
+function runAiDesign(text,btn){
+  text=(text||'').trim(); if(!text){ var ta=$('aidText'); if(ta) ta.focus(); return; }
+  S.d.brief=text; var also=$('aidAlso'), doImg=also&&also.checked;
+  if(btn){btn.disabled=true;btn.textContent='AIが考えています…';}
+  api('studio/ai-design',{brief:brief(text)}).then(function(b){
+    if(b.fallback){
+      var r=revise(text);
+      S._aiMsg=r?'AI：「'+r+'」を反映しました（版'+S.vers.length+'）':'AI：自動で直せない内容は担当者への申し送りに記録しました。';
+      if(!r){ S.notes=(S.notes?S.notes+'\n':'')+'デザインの要望：'+text; }
+    }else{
+      var ch=applyAi(b.changes||{});
+      S.vers.push({n:S.vers.length+1,note:'AIデザイナー：'+(b.reply||ch.join('・')||text)});
+      if(b.note){ S.notes=(S.notes?S.notes+'\n':'')+'デザインの要望：'+b.note; }
+      S._aiMsg='AI：'+(b.reply||'デザインを作り直しました。')+'（版'+S.vers.length+'）';
+    }
+    save(); render();
+    if(doImg&&AI.image&&AI.left>0){ genImage('screens'); }
+  }).catch(function(x){ S._aiMsg=x.message; render(); });
+}
+function genImage(kind){
+  if(GEN.busy) return;
+  if(!AI.image){ S._aiMsg='AI画像の生成は準備中です。'; render(); return; }
+  GEN={busy:true,kind:kind}; render();
+  api('studio/ai-image',{kind:kind,brief:brief()}).then(function(b){
+    IMGS=b.images||IMGS; AI.left=typeof b.left==='number'?b.left:AI.left; GEN={busy:false,kind:''};
+    S._show=null; S.vers.push({n:S.vers.length+1,note:'AIが'+((KINDS.filter(function(k){return k[0]===kind;})[0]||[])[1]||'デザイン')+'の画像を生成'});
+    S._aiMsg='AI：デザイン画像ができました。気に入った案は「この案を採用」を押してください。'; save(); render();
+  }).catch(function(x){ GEN={busy:false,kind:''}; S._aiMsg=x.message; render(); });
+}
 function storeName(){return (S.d.name||'').trim()||D().name;}
 function shade(hex,k){var n=parseInt(hex.slice(1),16),r=n>>16,g=n>>8&255,b=n&255;r=Math.round(r*k);g=Math.round(g*k);b=Math.round(b*k);return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);}
 function palette(){ if(S.d.custom){return [shade(S.d.custom,.45),S.d.custom,'カスタム（'+S.d.custom+'）'];} var c=COLORS[S.d.color]; return [c[1],c[2],c[0]]; }
@@ -173,7 +253,8 @@ function vDesign(){
   var stabs=SCREENS.map(function(s){return '<button type="button" class="stab" role="tab" data-screen="'+s[0]+'" aria-selected="'+(!S.d.all&&S.d.screen===s[0])+'">'+s[1]+'</button>';}).join('')+'<button type="button" class="stab" data-screen="all" aria-selected="'+S.d.all+'">全画面を並べる</button>';
   var phones=S.d.all?SCREENS.map(function(s){return phone(s[0],true);}).join(''):phone(S.d.screen,false);
   var vers=S.vers.slice().reverse().map(function(v){return '<div class="ver"><b>版'+v.n+'</b><span>'+esc(v.note)+'</span></div>';}).join('');
-  return '<div class="vh"><div><h2>AIデザイン</h2><p>お店の情報を入れると、AIがアプリの画面を5つ作ります。言葉で頼むだけで何度でも直せます。</p></div><div class="acts" style="margin:0"><button type="button" class="btn btn--cta" data-go="confirmDesign">このデザインで決定して仕様書へ</button></div></div>'
+  return '<div class="vh"><div><h2>AIデザイン</h2><p>AIデザイナーに要望を書くと、画面の設定とデザイン画像を作ります。下で細かい調整もできます（すぐにプレビューへ反映）。</p></div><div class="acts" style="margin:0"><button type="button" class="btn btn--cta" data-go="confirmDesign">このデザインで決定して仕様書へ</button></div></div>'
+  +aiPanel()
   +'<div class="grid2">'
   +'<div class="card">'
     +'<div class="sec-t"><i>1</i>お店の情報</div>'
@@ -184,9 +265,7 @@ function vDesign(){
     +'<div class="field"><div class="chips" style="align-items:center">'+col+'<span class="colorpick"><input type="color" id="f-custom" value="'+(S.d.custom||p[1])+'" aria-label="好きな色を選ぶ">好きな色</span></div><span style="font-weight:500">選択中：'+esc(p[2])+'</span></div>'
     +'<div class="sec-t"><i>3</i>ロゴと写真（任意）</div>'
     +'<div class="up field"><label class="upbox">'+(IMG.logo?'<img src="'+IMG.logo+'" alt="ロゴ">':'<b>ロゴをのせる</b>')+'<span>PNG・JPG</span><input type="file" accept="image/*" id="f-logo"></label><label class="upbox">'+(IMG.photo?'<img src="'+IMG.photo+'" alt="写真">':'<b>メイン写真をのせる</b>')+'<span>お店や商品の写真</span><input type="file" accept="image/*" id="f-photo"></label></div>'
-    +'<div class="sec-t"><i>4</i>AIに修正を頼む</div>'
-    +'<div class="ai-box"><label for="f-ai">こうしたい、をそのまま書いてください</label><div class="ai-row"><input id="f-ai" type="text" placeholder="例：予約ボタンをもっと目立たせて"><button type="button" class="btn btn--cta btn--sm" id="aiGo">直す</button></div>'
-    +'<div class="ai-sug">'+['予約ボタンを大きくして','シニアにも読みやすく','写真を大きく','メニューを2列に','緑で高級感を出して','かわいい雰囲気に','リスト型にして'].map(function(x){return '<button type="button" data-sug="'+x+'">'+x+'</button>';}).join('')+'</div><div class="ai-msg" id="aiMsg" role="status"></div></div>'
+    +'<div class="sec-t"><i>4</i>修正の履歴</div>'
     +'<div class="vers" aria-label="修正の履歴">'+vers+'</div>'
   +'</div>'
   +'<div class="card">'
@@ -248,14 +327,18 @@ function docPlan(){
   var d=D(), name=esc(storeName()), feats=onFeat();
   var cover='<div class="cv"><div class="cv-l"><span class="kind">アプリ企画書</span><h1>'+name+'<br>公式アプリ</h1><p class="cv-sub">'+esc(d.catch)+'</p><dl class="dkv"><dt>業種</dt><dd>'+d.l+'</dd><dt>目的</dt><dd>'+esc(S.d.goal)+'</dd><dt>作成日</dt><dd>'+today()+'</dd><dt>作成</dt><dd>APPREX AIスタジオ（デザイン版'+S.vers.length+'）</dd></dl></div>'
     +'<div class="cv-r"><div class="trio"><div class="t1">'+phone('coupon',true)+'</div><div class="t2">'+phone('home',false)+'</div><div class="t3">'+phone('card',true)+'</div></div></div></div>';
-  var p2='<h2 class="dh"><span>1</span>背景と目的</h2><p>'+name+'では、'+esc(S.d.goal.replace(/たい$/,'たい'))+'と考えています。お客様のスマートフォンに自社のアプリを置き、お知らせやクーポンを直接届けることで、継続して利用していただく仕組みをつくります。</p>'
-    +'<h2 class="dh"><span>2</span>対象とするお客様</h2><p>'+esc(S.d.target)+'。日常的にスマートフォンを使い、お得な情報や手軽な予約を求めている層を想定します。</p>'
-    +'<h2 class="dh"><span>3</span>アプリのコンセプト</h2><div class="concept"><b>「'+esc(d.catch)+'」</b><span>雰囲気：'+TONES[S.d.tone].n+'　／　メインカラー：'+esc(palette()[2])+'</span></div>'
-    +'<h2 class="dh"><span>4</span>主な機能と期待する効果</h2>'+tbl(['機能','期待する効果'],feats.map(function(f){return ['<b>'+esc(f.n)+'</b>',EFFECT[f.k]||''];}));
+  var A=S.aiPlan||null;
+  var p2='<h2 class="dh"><span>1</span>背景と目的</h2><p>'+(A&&A.background?esc(A.background):name+'では、'+esc(S.d.goal)+'と考えています。お客様のスマートフォンに自社のアプリを置き、お知らせやクーポンを直接届けることで、継続して利用していただく仕組みをつくります。')+'</p>'
+    +'<h2 class="dh"><span>2</span>対象とするお客様</h2><p>'+(A&&A.target?esc(A.target):esc(S.d.target)+'。日常的にスマートフォンを使い、お得な情報や手軽な予約を求めている層を想定します。')+'</p>'
+    +'<h2 class="dh"><span>3</span>アプリのコンセプト</h2><div class="concept"><b>「'+esc(d.catch)+'」</b><span>'+(A&&A.concept?esc(A.concept)+'<br>':'')+'雰囲気：'+TONES[S.d.tone].n+'　／　メインカラー：'+esc(palette()[2])+'</span></div>'
+    +'<h2 class="dh"><span>4</span>主な機能と期待する効果</h2>'+tbl(['機能','期待する効果'],(A&&A.effects&&A.effects.length)?A.effects.map(function(e){return ['<b>'+esc(e[0])+'</b>',esc(e[1])];}):feats.map(function(f){return ['<b>'+esc(f.n)+'</b>',EFFECT[f.k]||''];}));
   var shots='<div class="shots">'+SCREENS.map(function(sc){return '<figure>'+phone(sc[0],true)+'<figcaption>'+sc[1]+'</figcaption></figure>';}).join('')+'</div>';
+  var comp=pickedImg('screens')||null, icon=pickedImg('icon'), hero=pickedImg('hero');
+  if(comp){ shots='<figure class="comp"><img src="'+esc(comp.url)+'" alt="AIが生成した画面デザイン"><figcaption>AIが生成したデザインカンプ（採用案）</figcaption></figure>'+shots; }
+  if(icon||hero){ shots+='<div class="comp2">'+(icon?'<figure><img src="'+esc(icon.url)+'" alt=""><figcaption>アプリアイコン（AI生成）</figcaption></figure>':'')+(hero?'<figure><img src="'+esc(hero.url)+'" alt=""><figcaption>メインビジュアル（AI生成）</figcaption></figure>':'')+'</div>'; }
   var p3='<h2 class="dh"><span>5</span>アプリのイメージ</h2>'+shots
     +'<h2 class="dh"><span>6</span>運用のイメージ</h2>'+tbl(['配信するもの','頻度の目安','内容'],[['プッシュ通知','週1〜2回','新着情報、空き状況、キャンペーンのお知らせ'],['クーポン','月1〜2回','来店や購入のきっかけになる特典'],['お知らせ','随時','営業日、新商品、イベント'],['会員向け特典','誕生月など','常連のお客様へのお礼']])
-    +'<h2 class="dh"><span>7</span>効果を測る指標</h2><ul class="dl"><li>ダウンロード数</li><li>月に1回以上アプリを開いた人数</li><li>クーポンの利用数</li>'+(S.feat.reserve?'<li>アプリからの予約数</li>':'')+'<li>再来店・再購入の割合</li></ul>'
+    +'<h2 class="dh"><span>7</span>効果を測る指標</h2><ul class="dl">'+((A&&A.kpi&&A.kpi.length)?A.kpi.map(function(k){return '<li>'+esc(k)+'</li>';}).join(''):'<li>ダウンロード数</li><li>月に1回以上アプリを開いた人数</li><li>クーポンの利用数</li>'+(S.feat.reserve?'<li>アプリからの予約数</li>':'')+'<li>再来店・再購入の割合</li>')+'</ul>'+((A&&A.promo&&A.promo.length)?'<h2 class="dh"><span>+</span>アプリを広める施策</h2><ul class="dl">'+A.promo.map(function(k){return '<li>'+esc(k)+'</li>';}).join('')+'</ul>':'')
     +'<h2 class="dh"><span>8</span>スケジュールと概算費用</h2><div class="two-doc">'+tbl(['時期','内容'],sched())+tbl(['項目','金額（税抜）'],costRows())+'</div><p class="dnote">正式なスケジュールと金額は、オンラインミーティングで確定します。</p>';
   return paper(cover,1,3,'cover')+paper(p2,2,3)+paper(p3,3,3);
 }
@@ -284,7 +367,7 @@ function vDocs(){
   var tab=S._doc||'plan';
   var tabs=[['plan','企画書'],['spec','仕様書'],['flow','画面構成図']].map(function(x){return '<button type="button" class="stab" role="tab" data-doc="'+x[0]+'" aria-selected="'+(tab===x[0])+'">'+x[1]+'</button>';}).join('');
   var body=tab==='plan'?docPlan():tab==='spec'?docSpec():docFlow();
-  return '<div class="vh"><div><h2>企画書・仕様書</h2><p>AIが作ったデザインと仕様から、社内やご家族にそのまま見せられる書類を作りました。ミーティングでもこの書類を使います。</p></div><div class="acts" style="margin:0"><button type="button" class="btn btn--line" id="copyDoc" data-label="本文をコピー">本文をコピー</button><button type="button" class="btn btn--cta" data-go="confirmSpec">この内容で開発を相談する</button></div></div>'
+  return '<div class="vh"><div><h2>企画書・仕様書</h2><p>AIが作ったデザインと仕様から、社内やご家族にそのまま見せられる書類を作りました。ミーティングでもこの書類を使います。</p></div><div class="acts" style="margin:0">'+(AI.text?'<button type="button" class="btn btn--pri" data-go="aiPlan">'+(S.aiPlan?'AIで企画書を書き直す':'AIで企画書の文章を作る')+'</button>':'')+'<button type="button" class="btn btn--line" id="copyDoc" data-label="本文をコピー">本文をコピー</button><button type="button" class="btn btn--cta" data-go="confirmSpec">この内容で開発を相談する</button></div></div>'
    +'<div class="stabs" role="tablist" aria-label="書類" style="margin-bottom:16px">'+tabs+'</div><div class="docs">'+body+'</div>';
 }
 
@@ -294,7 +377,7 @@ function vConsult(){
   var pl=[['self','セルフプラン','初期0円。登録は自分で、APPREXがチェック',orig],['full','おまかせプラン','制作代行300,000円〜（キャンペーン150,000円〜）',orig],['orig','オリジナル開発','独自機能を開発。ミーティングで見積り',!orig]];
   var plH=pl.map(function(p){return '<label class="pl"><input type="radio" name="plan" value="'+p[0]+'"'+(S.plan===p[0]?' checked':'')+(p[3]?' disabled':'')+'><b>'+p[1]+'</b><span>'+p[2]+'</span></label>';}).join('');
   return '<div class="vh"><div><h2>開発を相談</h2><p>作ったデザインと仕様書を、そのまま担当者に送ります。次にオンラインミーティングの日時を選びます。</p></div></div>'
-  +'<div class="card"><div class="sum">'+phone('home',true)+'<div><div class="sec-t">送る内容</div><dl class="kv"><dt>アプリ名</dt><dd>'+esc(storeName())+'（'+D().l+'）</dd><dt>デザイン</dt><dd>5画面・版'+S.vers.length+'（'+TONES[S.d.tone].n+'／案'+S.d.variant+'）</dd><dt>機能</dt><dd>'+FEAT.filter(function(f){return S.feat[f.k];}).map(function(f){return esc(f.n);}).join('、')+'</dd><dt>添付</dt><dd>企画書・仕様書・画面構成図（AI作成）</dd><dt>概算</dt><dd>'+(orig?(e.match?'オリジナル開発 300万円〜':'オリジナル開発 個別見積り'):'月額 '+YEN(e.monthly)+'（'+e.tierName+'）')+'</dd></dl></div></div>'
+  +'<div class="card"><div class="sum">'+phone('home',true)+'<div><div class="sec-t">送る内容</div><dl class="kv"><dt>アプリ名</dt><dd>'+esc(storeName())+'（'+D().l+'）</dd><dt>デザイン</dt><dd>5画面・版'+S.vers.length+'（'+TONES[S.d.tone].n+'／案'+S.d.variant+'）</dd><dt>機能</dt><dd>'+FEAT.filter(function(f){return S.feat[f.k];}).map(function(f){return esc(f.n);}).join('、')+'</dd><dt>添付</dt><dd>企画書・仕様書・画面構成図（AI作成）'+(IMGS.length?'、AIデザイン画像（'+(IMGS.filter(function(i){return i.picked;}).length?'採用案':'最新3枚')+'）':'')+'</dd><dt>概算</dt><dd>'+(orig?(e.match?'オリジナル開発 300万円〜':'オリジナル開発 個別見積り'):'月額 '+YEN(e.monthly)+'（'+e.tierName+'）')+'</dd></dl></div></div>'
   +'<div class="sec-t" style="margin-top:18px">進め方</div><div class="plans">'+plH+'</div>'
   +'<div class="field" style="margin-top:14px"><label for="f-notes">担当者に伝えたいこと（任意）</label><textarea id="f-notes" placeholder="例：来年3月のリニューアルオープンに合わせて公開したい">'+esc(S.notes)+'</textarea></div>'
   +'<div class="acts"><button type="button" class="btn btn--cta" data-go="sendConsult">相談を送ってミーティングを予約する</button></div></div>';
@@ -371,14 +454,14 @@ function render(){
   $('stMain').innerHTML=h; bind(); save();
   var ms=$('msgs'); if(ms) ms.scrollTop=ms.scrollHeight;
 }
-function go(view){ S.view=view; render(); try{window.scrollTo({top:0,behavior:'smooth'});}catch(e){window.scrollTo(0,0);} }
+function go(view){ S.view=view; S._aiMsg=''; render(); try{window.scrollTo({top:0,behavior:'smooth'});}catch(e){window.scrollTo(0,0);} }
 
 function readImg(input,key){
   var f=input.files&&input.files[0]; if(!f) return;
   if(f.size>5*1024*1024){ alertBox('5MB以下の画像を選んでください。'); return; }
   var r=new FileReader(); r.onload=function(){ IMG[key]=r.result; saveImg(); S.vers.push({n:S.vers.length+1,note:(key==='logo'?'ロゴ':'メイン写真')+'をデザインに反映'}); render(); }; r.readAsDataURL(f);
 }
-function alertBox(t){ var m=$('aiMsg'); if(m){ m.textContent=t; } }
+function alertBox(t){ var m=$('aidMsg'); if(m){ m.textContent=t; } }
 
 function copyText(text,btn){
   var label=btn.getAttribute('data-label')||btn.textContent;
@@ -398,11 +481,9 @@ function bind(){
   on('f-custom','change',function(e){ S.d.custom=e.target.value; S.vers.push({n:S.vers.length+1,note:'色を'+e.target.value+'に'}); render(); });
   on('f-logo','change',function(e){ readImg(e.target,'logo'); });
   on('f-photo','change',function(e){ readImg(e.target,'photo'); });
-  var doAi=function(t){ t=(t||'').trim(); if(!t) return; var r=revise(t); if(r){ render(); var mm=$('aiMsg'); if(mm) mm.textContent='AI：「'+r+'」を反映しました（版'+S.vers.length+'）'; } else { S.notes=(S.notes?S.notes+'\n':'')+'デザインの要望：'+t; S.vers.push({n:S.vers.length+1,note:'要望を記録：'+t}); save(); render(); var mm2=$('aiMsg'); if(mm2) mm2.textContent='AI：自動で直せない内容なので、担当者への申し送りに記録しました（色・文字・写真・予約ボタン・列数・雰囲気はその場で反映できます）'; } };
-  on('aiGo','click',function(){ doAi($('f-ai').value); });
-  on('f-ai','keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); doAi(e.target.value); } });
   on('copySpec','click',function(e){ copyText(specText(), e.currentTarget); });
   on('copyDoc','click',function(e){ var d=document.querySelector('.docs'); if(d) copyText(d.innerText, e.currentTarget); });
+  on('aidText','input',function(e){ S.d.brief=e.target.value; save(); });
   on('f-notes','input',function(e){ S.notes=e.target.value; save(); });
   on('msgForm','submit',function(e){ e.preventDefault(); var inp=$('msgText'), t=inp.value.trim(); if(!t) return; inp.disabled=true;
     api('studio/message',{text:t}).then(function(b){ S.msgs=(b.msgs||[]).map(function(m){return [m[0],m[1],m[2]];}); render(); }).catch(function(x){ inp.disabled=false; alert(x.message); }); });
@@ -416,10 +497,17 @@ document.addEventListener('click',function(e){
   if(t.dataset.doc){ S._doc=t.dataset.doc; render(); return; }
   if(t.dataset.screen){ if(t.dataset.screen==='all'){S.d.all=!S.d.all;} else {S.d.all=false;S.d.screen=t.dataset.screen;} render(); return; }
   if(t.dataset.variant){ S.d.variant=t.dataset.variant; S.vers.push({n:S.vers.length+1,note:'AIの別案「案'+t.dataset.variant+'」を選択'}); render(); return; }
-  if(t.dataset.sug){ var i=$('f-ai'); if(i){ i.value=t.dataset.sug; $('aiGo').click(); } return; }
+  if(t.dataset.sug){ var i=$('aidText'); if(i){ i.value=t.dataset.sug; i.focus(); } return; }
+  if(t.dataset.gen){ genImage(t.dataset.gen); return; }
+  if(t.dataset.zoom){ zoom(t.dataset.zoom); return; }
+  if(t.dataset.show){ S._show=+t.dataset.show; render(); return; }
+  if(t.dataset.pick){ t.disabled=true; api('studio/ai-image',{pick:+t.dataset.pick,kind:t.dataset.kind}).then(function(b){ IMGS=b.images||IMGS; save(); render(); }).catch(function(x){ alert(x.message); t.disabled=false; }); return; }
   if(t.dataset.day){ S._day=+t.dataset.day; S._time=null; render(); return; }
   if(t.dataset.time){ S._time=t.dataset.time; render(); return; }
   var g=t.dataset.go;
+  if(g==='aiDesign'){ var ta=$('aidText'); runAiDesign(ta?ta.value:'',t); return; }
+  if(g==='aiPlan'){ t.disabled=true; t.textContent='AIが書いています…';
+    api('studio/ai-plan',{brief:brief(),features:onFeat().map(function(f){return f.n;})}).then(function(b){ S.aiPlan=b.plan; S._doc='plan'; save(); render(); }).catch(function(x){ t.disabled=false; t.textContent='AIで企画書の文章を作る'; alert(x.message); }); return; }
   if(g==='confirmDesign'){ S.prog=Math.max(S.prog,2); go('spec'); }
   else if(g==='confirmSpec'){ S.prog=Math.max(S.prog,3); go('consult'); }
   else if(g==='sendConsult'){

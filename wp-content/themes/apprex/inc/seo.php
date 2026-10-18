@@ -601,8 +601,10 @@ add_action( 'template_redirect', function () {
 	echo "- 資料請求: {$home}document/\n";
 	echo "- 無料体験: {$home}free-trial/\n";
 	echo "- お問い合わせ: {$home}contact/\n";
-	echo "- AIスタジオ（無料会員・AIでデザイン/仕様書）: {$home}studio/\n";
-	echo "- マッチングアプリ開発: {$home}matching-app/\n";
+	if ( function_exists( 'apprex_rn_public' ) && apprex_rn_public() ) {
+		echo "- AIスタジオ（無料会員・AIでデザイン/仕様書）: {$home}studio/\n";
+		echo "- マッチングアプリ開発: {$home}matching-app/\n";
+	}
 	echo "- ブログ: {$home}blog/\n\n";
 	echo "## よくある質問\n";
 	echo "- Q. 地方でも対応してもらえますか？ A. はい。全国どこでもオンラインで完結するため、47都道府県どこからでも依頼できます（訪問不要）。\n";

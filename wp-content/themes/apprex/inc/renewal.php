@@ -19,7 +19,26 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /** 新デザインのトップを使うか。 */
 function apprex_rn_enabled() {
-	return 'classic' !== get_theme_mod( 'apprex_front_design', 'renewal' );
+	$mode = apprex_rn_mode();
+	if ( 'preview' === $mode ) {
+		// 公開前プレビュー：ログイン中の管理者・編集者だけが新デザインを見られる。
+		return current_user_can( 'edit_posts' );
+	}
+	return 'renewal' === $mode;
+}
+
+/**
+ * 公開モード。preview（公開前・管理者だけ）／renewal（公開）／classic（旧デザイン）。
+ * 既定は preview：テーマを入れ替えても、公開ボタンを押すまで訪問者の見た目は変わらない。
+ */
+function apprex_rn_mode() {
+	$mode = get_theme_mod( 'apprex_front_design', 'preview' );
+	return in_array( $mode, array( 'preview', 'renewal', 'classic' ), true ) ? $mode : 'preview';
+}
+
+/** AIスタジオ・マッチングページを訪問者に公開しているか。 */
+function apprex_rn_public() {
+	return 'renewal' === apprex_rn_mode();
 }
 
 /** 新デザイン用画像のURL。 */
@@ -54,9 +73,9 @@ add_action( 'customize_register', function ( $wp_customize ) {
 	$wp_customize->add_setting(
 		'apprex_front_design',
 		array(
-			'default'           => 'renewal',
+			'default'           => 'preview',
 			'sanitize_callback' => function ( $v ) {
-				return 'classic' === $v ? 'classic' : 'renewal';
+				return in_array( $v, array( 'preview', 'renewal', 'classic' ), true ) ? $v : 'preview';
 			},
 		)
 	);
@@ -64,12 +83,13 @@ add_action( 'customize_register', function ( $wp_customize ) {
 		'apprex_front_design',
 		array(
 			'section'     => 'apprex_design',
-			'label'       => 'トップページのデザイン',
-			'description' => 'いつでも元のデザインに戻せます。フォームやチャットなどの機能はどちらでも同じです。',
+			'label'       => 'リニューアルの公開',
+			'description' => '「公開前プレビュー」の間は、ログイン中の管理者だけが新デザイン・AIスタジオ・マッチングページを確認できます。訪問者には今までのサイトが表示されます。準備ができたら「公開する」に切り替えてください。いつでも戻せます。',
 			'type'        => 'radio',
 			'choices'     => array(
-				'renewal' => '新デザイン（2026リニューアル）',
-				'classic' => '旧デザイン',
+				'preview' => '公開前プレビュー（管理者だけに表示）',
+				'renewal' => '公開する（全員に新デザインを表示）',
+				'classic' => '旧デザインのまま',
 			),
 		)
 	);
@@ -91,6 +111,52 @@ add_action( 'wp_enqueue_scripts', function () {
 	wp_enqueue_style( 'apprex-renewal', APPREX_URI . '/assets/css/renewal.css', array( 'apprex-style' ), APPREX_VERSION );
 	wp_enqueue_script( 'apprex-renewal', APPREX_URI . '/assets/js/renewal.js', array( 'apprex-forms' ), APPREX_VERSION, true );
 }, 20 );
+
+/* 公開前は、AIスタジオ・マッチングページを管理者以外に見せない（トップへ移動）。 */
+add_action( 'template_redirect', function () {
+	if ( apprex_rn_public() || current_user_can( 'edit_posts' ) || ! is_page() ) {
+		return;
+	}
+	if ( is_page_template( array( 'page-templates/page-studio.php', 'page-templates/page-matching.php' ) ) ) {
+		// 会員ログインの送信（POST）は通す。
+		if ( 'POST' === ( isset( $_SERVER['REQUEST_METHOD'] ) ? $_SERVER['REQUEST_METHOD'] : '' ) ) {
+			return;
+		}
+		wp_safe_redirect( home_url( '/' ), 302 );
+		exit;
+	}
+}, 5 );
+
+/* 公開前は、新しいページを検索エンジンに登録させない。 */
+add_filter( 'wp_robots', function ( $robots ) {
+	if ( ! apprex_rn_public() && is_page_template( array( 'page-templates/page-studio.php', 'page-templates/page-matching.php' ) ) ) {
+		$robots['noindex'] = true;
+	}
+	return $robots;
+} );
+add_filter( 'wp_sitemaps_posts_query_args', function ( $args, $post_type ) {
+	if ( 'page' === $post_type && ! apprex_rn_public() ) {
+		$ids = array();
+		foreach ( array( 'studio', 'matching-app' ) as $slug ) {
+			$p = get_page_by_path( $slug );
+			if ( $p ) {
+				$ids[] = $p->ID;
+			}
+		}
+		$args['post__not_in'] = array_merge( isset( $args['post__not_in'] ) ? (array) $args['post__not_in'] : array(), $ids );
+	}
+	return $args;
+}, 10, 2 );
+
+/* プレビュー中であることを管理者に知らせる帯。 */
+add_action( 'wp_body_open', function () {
+	if ( 'preview' === apprex_rn_mode() && current_user_can( 'edit_posts' ) ) {
+		printf(
+			'<div style="background:#0b1d3f;color:#fff;text-align:center;font-size:13px;padding:6px 12px">リニューアルの<strong>公開前プレビュー</strong>中です（管理者だけに表示）。訪問者には今までのサイトが表示されています。<a style="color:#ffcf6e;margin-left:8px" href="%s">公開の設定</a></div>',
+			esc_url( admin_url( 'customize.php?autofocus[section]=apprex_design' ) )
+		);
+	}
+}, 1 );
 
 /* トップのヒーロー画像を先読み（LCP改善）。 */
 add_action( 'wp_head', function () {

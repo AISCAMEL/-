@@ -78,6 +78,9 @@ add_action( 'rest_api_init', function () {
 	register_rest_route( 'apprex/v1', '/studio/consult', array( 'methods' => 'POST', 'callback' => 'apprex_studio_rest_consult', 'permission_callback' => $member ) );
 	register_rest_route( 'apprex/v1', '/studio/meeting', array( 'methods' => 'POST', 'callback' => 'apprex_studio_rest_meeting', 'permission_callback' => $member ) );
 	register_rest_route( 'apprex/v1', '/studio/message', array( 'methods' => 'POST', 'callback' => 'apprex_studio_rest_message', 'permission_callback' => $member ) );
+	register_rest_route( 'apprex/v1', '/studio/ai-design', array( 'methods' => 'POST', 'callback' => 'apprex_studio_rest_ai_design', 'permission_callback' => $member ) );
+	register_rest_route( 'apprex/v1', '/studio/ai-image', array( 'methods' => 'POST', 'callback' => 'apprex_studio_rest_ai_image', 'permission_callback' => $member ) );
+	register_rest_route( 'apprex/v1', '/studio/ai-plan', array( 'methods' => 'POST', 'callback' => 'apprex_studio_rest_ai_plan', 'permission_callback' => $member ) );
 } );
 
 /** nonce 確認（ログイン前後どちらも wp_rest）。 */
@@ -98,6 +101,9 @@ function apprex_studio_rest_register( WP_REST_Request $request ) {
 	}
 	if ( is_user_logged_in() ) {
 		return rest_ensure_response( array( 'ok' => true ) );
+	}
+	if ( function_exists( 'apprex_rn_public' ) && ! apprex_rn_public() ) {
+		return new WP_Error( 'not_public', 'AIスタジオは公開準備中です。', array( 'status' => 403 ) );
 	}
 	// ボット対策：非表示の入力欄に値が入っていたら破棄。
 	if ( '' !== (string) $request->get_param( 'website' ) ) {
@@ -207,6 +213,17 @@ function apprex_studio_rest_consult( WP_REST_Request $request ) {
 	$user    = wp_get_current_user();
 	$summary = sanitize_textarea_field( (string) $request->get_param( 'summary' ) );
 	$plan    = sanitize_text_field( (string) $request->get_param( 'plan' ) );
+	// AIで生成して採用した画像（無ければ最新3枚）のURLを添える。
+	$imgs = apprex_studio_images_out( $user->ID );
+	$pick = array_filter( $imgs, function ( $im ) {
+		return $im['picked'];
+	} );
+	$pick = $pick ? $pick : array_slice( $imgs, 0, 3 );
+	if ( $pick ) {
+		$summary .= "\n\n【AIデザイン画像】\n" . implode( "\n", array_map( function ( $im ) {
+			return '・' . $im['label'] . ( $im['picked'] ? '（採用）' : '' ) . '：' . $im['url'];
+		}, $pick ) );
+	}
 	$res     = apprex_studio_inquiry(
 		array_merge(
 			apprex_studio_contact( $user ),
@@ -335,6 +352,13 @@ add_action( 'wp_enqueue_scripts', function () {
 		);
 		$cfg['msgs']    = apprex_studio_messages_out( $u->ID );
 		$cfg['logout']  = wp_logout_url( apprex_studio_url() );
+		$cfg['ai']      = array(
+			'text'  => '' !== apprex_openrouter_key(),
+			'image' => '' !== apprex_openrouter_key(),
+			'left'  => apprex_studio_image_left( $u->ID ),
+			'limit' => apprex_studio_image_limit(),
+		);
+		$cfg['images']  = apprex_studio_images_out( $u->ID );
 	}
 	wp_enqueue_script( 'apprex-studio', APPREX_URI . '/assets/js/studio.js', array(), APPREX_VERSION, true );
 	wp_localize_script( 'apprex-studio', 'APPREX_STUDIO', $cfg );
@@ -386,6 +410,17 @@ function apprex_studio_admin_box( $user ) {
 		</td></tr>
 		<tr><th>お見積りの説明</th><td><textarea name="apprex_studio_quote_note" rows="3" class="large-text"><?php echo esc_textarea( (string) get_user_meta( $user->ID, 'apprex_studio_quote_note', true ) ); ?></textarea></td></tr>
 		<tr><th>ミーティング</th><td><?php echo esc_html( $meeting ? $meeting : '未予約' ); ?></td></tr>
+		<tr><th>AIデザイン画像</th><td>
+			<?php
+			$imgs = apprex_studio_images_out( $user->ID );
+			if ( ! $imgs ) {
+				echo '（まだありません）';
+			}
+			foreach ( $imgs as $im ) {
+				printf( '<a href="%1$s" target="_blank" rel="noopener" style="display:inline-block;margin:0 8px 8px 0;text-align:center;font-size:11px"><img src="%1$s" alt="" style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:%3$s"><br>%2$s</a>', esc_url( $im['url'] ), esc_html( $im['label'] . ( $im['picked'] ? '（採用）' : '' ) ), $im['picked'] ? '3px solid #ff6b1f' : '1px solid #dcdcde' );
+			}
+			?>
+		</td></tr>
 		<tr><th>相談内容（AI仕様書）</th><td><textarea readonly rows="10" class="large-text code"><?php echo esc_textarea( $summary ? $summary : '（まだ相談は届いていません）' ); ?></textarea></td></tr>
 		<tr><th>メッセージ</th><td>
 			<div style="max-height:260px;overflow:auto;background:#f6f7f7;border:1px solid #dcdcde;padding:8px 10px;margin-bottom:8px">
@@ -456,3 +491,333 @@ add_filter( 'the_content', function ( $content ) {
 		. '<a class="btn btn--primary" style="margin-left:8px" href="' . esc_url( apprex_studio_url() ) . '">AIスタジオを開く</a></p>';
 	return $link . $content;
 }, 9 );
+
+/* -------------------------------------------------------------------------
+ * AIデザイン（OpenRouter：文章モデル＋画像モデル）
+ * ---------------------------------------------------------------------- */
+
+/** 1人あたり1日に生成できる画像の数（設定 > APPREX チャットのキーを使用）。 */
+function apprex_studio_image_limit() {
+	return (int) apply_filters( 'apprex_studio_image_limit', 10 );
+}
+
+/** 本日の残り回数。 */
+function apprex_studio_image_left( $user_id ) {
+	$u = get_user_meta( $user_id, 'apprex_studio_img_usage', true );
+	$n = ( is_array( $u ) && isset( $u['d'] ) && wp_date( 'Ymd' ) === $u['d'] ) ? (int) $u['n'] : 0;
+	return max( 0, apprex_studio_image_limit() - $n );
+}
+
+/** 生成画像の一覧（保存形式）。 */
+function apprex_studio_images( $user_id ) {
+	$m = get_user_meta( $user_id, 'apprex_studio_images', true );
+	return is_array( $m ) ? $m : array();
+}
+
+/** 画面表示用の生成画像一覧（新しい順）。 */
+function apprex_studio_images_out( $user_id ) {
+	$labels = array( 'screens' => '画面デザイン', 'icon' => 'アプリアイコン', 'hero' => 'メインビジュアル' );
+	$out    = array();
+	foreach ( array_reverse( apprex_studio_images( $user_id ) ) as $im ) {
+		$url = wp_get_attachment_url( (int) $im['id'] );
+		if ( ! $url ) {
+			continue;
+		}
+		$out[] = array(
+			'id'     => (int) $im['id'],
+			'url'    => $url,
+			'kind'   => $im['kind'],
+			'label'  => isset( $labels[ $im['kind'] ] ) ? $labels[ $im['kind'] ] : 'デザイン',
+			'note'   => (string) $im['note'],
+			'time'   => wp_date( 'n/j H:i', (int) $im['t'] ),
+			'picked' => ! empty( $im['picked'] ),
+		);
+	}
+	return $out;
+}
+
+/**
+ * AIの応答からJSONを取り出す。
+ *
+ * @param string $text 応答本文。
+ * @return array|null
+ */
+function apprex_studio_json( $text ) {
+	$text = trim( (string) $text );
+	$text = preg_replace( '/^```(?:json)?|```$/m', '', $text );
+	$a    = strpos( $text, '{' );
+	$b    = strrpos( $text, '}' );
+	if ( false === $a || false === $b ) {
+		return null;
+	}
+	$data = json_decode( substr( $text, $a, $b - $a + 1 ), true );
+	return is_array( $data ) ? $data : null;
+}
+
+/** デザインの要約（AIに渡す現在の設定）。 */
+function apprex_studio_brief( WP_REST_Request $request ) {
+	$b    = (array) $request->get_param( 'brief' );
+	$keep = array( 'industry', 'name', 'goal', 'target', 'tone', 'color', 'dark', 'catch', 'menus', 'variant', 'request' );
+	$out  = array();
+	foreach ( $keep as $k ) {
+		if ( ! isset( $b[ $k ] ) ) {
+			continue;
+		}
+		$out[ $k ] = is_array( $b[ $k ] )
+			? array_slice( array_map( 'sanitize_text_field', $b[ $k ] ), 0, 8 )
+			: mb_substr( sanitize_text_field( (string) $b[ $k ] ), 0, 'request' === $k ? 400 : 80 );
+	}
+	return $out;
+}
+
+/**
+ * 言葉の要望 → デザイン設定の変更（AIデザイナー）。
+ *
+ * @param WP_REST_Request $request Request.
+ * @return WP_REST_Response|WP_Error
+ */
+function apprex_studio_rest_ai_design( WP_REST_Request $request ) {
+	if ( ! apprex_studio_check_nonce( $request ) ) {
+		return new WP_Error( 'forbidden', '再読み込みしてください。', array( 'status' => 403 ) );
+	}
+	if ( '' === apprex_openrouter_key() ) {
+		return rest_ensure_response( array( 'ok' => true, 'fallback' => true ) );
+	}
+	$brief  = apprex_studio_brief( $request );
+	$system = "あなたは日本のモバイルアプリ制作会社のUIデザイナーです。お客様の要望を読み、店舗・企業アプリのデザイン設定を変更します。\n"
+		. "必ずJSONだけを出力してください（説明文やコードブロックは不要）。形式：\n"
+		. '{"reply":"変更内容を日本語で1〜2文","note":"自動で反映できない要望の要約（無ければ空）","changes":{"color":"#RRGGBB または null","tone":"luxury|pop|natural|sporty|trust または null","variant":"A(グリッド)|B(リスト)|C(大きな写真) または null","cols":"2|3 または null","fontScale":"1|1.15 または null","bigPhoto":"true|false|null","bigReserve":"true|false|null","catch":"ホームのキャッチコピー（全角24字以内）または null","menus":"ホームのボタン名6個（各8字以内）の配列 または null"}}' . "\n"
+		. "要望に関係しない項目は null。色は業種と雰囲気に合う具体的なHEXを選ぶ。キャッチコピーやボタン名は、その店らしい自然な日本語にする。";
+	$res = apprex_openrouter_complete(
+		array(
+			array( 'role' => 'system', 'content' => $system ),
+			array( 'role' => 'user', 'content' => '現在のデザイン：' . wp_json_encode( $brief, JSON_UNESCAPED_UNICODE ) ),
+		),
+		array( 'temperature' => 0.5, 'max_tokens' => 500 )
+	);
+	if ( is_wp_error( $res ) ) {
+		return rest_ensure_response( array( 'ok' => true, 'fallback' => true, 'error' => $res->get_error_message() ) );
+	}
+	$data = apprex_studio_json( $res );
+	if ( ! $data ) {
+		return rest_ensure_response( array( 'ok' => true, 'fallback' => true ) );
+	}
+	$c   = isset( $data['changes'] ) && is_array( $data['changes'] ) ? $data['changes'] : array();
+	$out = array();
+	if ( ! empty( $c['color'] ) && preg_match( '/^#[0-9a-fA-F]{6}$/', (string) $c['color'] ) ) {
+		$out['color'] = strtolower( $c['color'] );
+	}
+	if ( ! empty( $c['tone'] ) && in_array( $c['tone'], array( 'luxury', 'pop', 'natural', 'sporty', 'trust' ), true ) ) {
+		$out['tone'] = $c['tone'];
+	}
+	if ( ! empty( $c['variant'] ) && in_array( strtoupper( substr( (string) $c['variant'], 0, 1 ) ), array( 'A', 'B', 'C' ), true ) ) {
+		$out['variant'] = strtoupper( substr( (string) $c['variant'], 0, 1 ) );
+	}
+	if ( isset( $c['cols'] ) && in_array( (int) $c['cols'], array( 2, 3 ), true ) ) {
+		$out['cols'] = (int) $c['cols'];
+	}
+	if ( isset( $c['fontScale'] ) && null !== $c['fontScale'] ) {
+		$out['fs'] = ( (float) $c['fontScale'] > 1.05 ) ? 1.15 : 1;
+	}
+	foreach ( array( 'bigPhoto' => 'tall', 'bigReserve' => 'resBig' ) as $k => $to ) {
+		if ( isset( $c[ $k ] ) && null !== $c[ $k ] && 'null' !== $c[ $k ] ) {
+			$out[ $to ] = filter_var( $c[ $k ], FILTER_VALIDATE_BOOLEAN );
+		}
+	}
+	if ( ! empty( $c['catch'] ) && is_string( $c['catch'] ) ) {
+		$out['catch'] = mb_substr( sanitize_text_field( $c['catch'] ), 0, 28 );
+	}
+	if ( ! empty( $c['menus'] ) && is_array( $c['menus'] ) ) {
+		$m = array_values( array_filter( array_map( function ( $x ) {
+			return mb_substr( sanitize_text_field( (string) $x ), 0, 10 );
+		}, $c['menus'] ) ) );
+		if ( count( $m ) >= 4 ) {
+			$out['menus'] = array_slice( $m, 0, 6 );
+		}
+	}
+	return rest_ensure_response(
+		array(
+			'ok'      => true,
+			'reply'   => mb_substr( sanitize_text_field( isset( $data['reply'] ) ? (string) $data['reply'] : '' ), 0, 200 ),
+			'note'    => mb_substr( sanitize_text_field( isset( $data['note'] ) ? (string) $data['note'] : '' ), 0, 200 ),
+			'changes' => $out,
+		)
+	);
+}
+
+/**
+ * 画像生成の指示文（日本語UIの本格的なデザインカンプ）。
+ *
+ * @param string $kind  screens|icon|hero。
+ * @param array  $brief 要約。
+ * @return string
+ */
+function apprex_studio_image_prompt( $kind, $brief ) {
+	$tones = array(
+		'luxury'  => 'luxurious, elegant, refined serif headings, generous whitespace, subtle gold accents',
+		'pop'     => 'cute and playful, rounded shapes, friendly illustrations, soft shadows',
+		'natural' => 'natural and warm, soft earthy palette, organic textures, calm',
+		'sporty'  => 'sporty and energetic, bold typography, dynamic diagonal shapes',
+		'trust'   => 'clean, trustworthy, professional, clear hierarchy, medical-grade clarity',
+	);
+	$g     = function ( $k, $d = '' ) use ( $brief ) {
+		return isset( $brief[ $k ] ) && '' !== $brief[ $k ] ? $brief[ $k ] : $d;
+	};
+	$tone  = isset( $tones[ $g( 'tone' ) ] ) ? $tones[ $g( 'tone' ) ] : $tones['trust'];
+	$menus = isset( $brief['menus'] ) && is_array( $brief['menus'] ) ? implode( ' / ', $brief['menus'] ) : '';
+	$base  = sprintf(
+		'Business type: %s. App/brand name: "%s". Catch copy: "%s". Target users: %s. Goal: %s. Primary color %s, dark color %s. Mood: %s.',
+		$g( 'industry', 'shop' ),
+		$g( 'name', 'APP' ),
+		$g( 'catch' ),
+		$g( 'target' ),
+		$g( 'goal' ),
+		$g( 'color', '#2f66f5' ),
+		$g( 'dark', '#13306a' ),
+		$tone
+	);
+	$req = $g( 'request' ) ? ' Additional request from the client (Japanese): ' . $g( 'request' ) . '.' : '';
+	if ( 'icon' === $kind ) {
+		return 'Design a high-quality mobile app icon (iOS style rounded square, 1:1, centered, no text except at most one Latin letter or simple symbol, no mockup frame, flat background). ' . $base . $req;
+	}
+	if ( 'hero' === $kind ) {
+		return 'Create a photorealistic, high-end key visual for the top banner of this mobile app (landscape 16:9, no text, no UI, appetizing/attractive product or interior photography matching the business). ' . $base . $req;
+	}
+	return 'Create a professional, high-fidelity mobile app UI design presentation: five iPhone screens side by side in front view on a light neutral background — 1) home with hero image, catch copy and 6 large menu buttons (' . $menus . '), 2) menu/price list, 3) coupons, 4) reservation calendar with time slots, 5) digital membership card with points. Japanese UI text, consistent design system, polished like a top Dribbble shot, crisp typography, bottom tab bar. ' . $base . $req;
+}
+
+/**
+ * AIデザイン画像の生成。
+ *
+ * @param WP_REST_Request $request Request.
+ * @return WP_REST_Response|WP_Error
+ */
+function apprex_studio_rest_ai_image( WP_REST_Request $request ) {
+	if ( ! apprex_studio_check_nonce( $request ) ) {
+		return new WP_Error( 'forbidden', '再読み込みしてください。', array( 'status' => 403 ) );
+	}
+	$uid  = get_current_user_id();
+	$kind = sanitize_key( (string) $request->get_param( 'kind' ) );
+
+	// 採用（生成はしない）。
+	$pick = (int) $request->get_param( 'pick' );
+	if ( $pick ) {
+		$list = apprex_studio_images( $uid );
+		foreach ( $list as &$im ) {
+			if ( (int) $im['id'] === $pick ) {
+				$im['picked'] = empty( $im['picked'] );
+			} elseif ( $im['kind'] === $kind ) {
+				$im['picked'] = false; // 種類ごとに1枚だけ採用。
+			}
+		}
+		unset( $im );
+		update_user_meta( $uid, 'apprex_studio_images', $list );
+		return rest_ensure_response( array( 'ok' => true, 'images' => apprex_studio_images_out( $uid ) ) );
+	}
+
+	if ( ! in_array( $kind, array( 'screens', 'icon', 'hero' ), true ) ) {
+		$kind = 'screens';
+	}
+	if ( '' === apprex_openrouter_key() ) {
+		return new WP_Error( 'not_configured', 'AI画像の生成は準備中です。担当者が設定すると使えるようになります。', array( 'status' => 503 ) );
+	}
+	if ( apprex_studio_image_left( $uid ) <= 0 ) {
+		return new WP_Error( 'limit', '本日の生成回数の上限に達しました。明日またお試しください。', array( 'status' => 429 ) );
+	}
+	// 同じ会員の同時生成を防ぐ。
+	$lock = 'apprex_img_lock_' . $uid;
+	if ( get_transient( $lock ) ) {
+		return new WP_Error( 'busy', '生成中です。完了までお待ちください。', array( 'status' => 429 ) );
+	}
+	set_transient( $lock, 1, 3 * MINUTE_IN_SECONDS );
+
+	$brief = apprex_studio_brief( $request );
+	$img   = apprex_openrouter_image( apprex_studio_image_prompt( $kind, $brief ) );
+	delete_transient( $lock );
+	if ( is_wp_error( $img ) ) {
+		return new WP_Error( 'failed', 'デザインを生成できませんでした。少し時間をおいてもう一度お試しください。', array( 'status' => 502 ) );
+	}
+	$att = apprex_save_generated_image( $img, 'AIスタジオ-' . $uid . '-' . $kind );
+	if ( is_wp_error( $att ) ) {
+		return new WP_Error( 'failed', '画像を保存できませんでした。', array( 'status' => 500 ) );
+	}
+	update_post_meta( $att, '_apprex_studio_user', $uid );
+
+	$u = get_user_meta( $uid, 'apprex_studio_img_usage', true );
+	$n = ( is_array( $u ) && isset( $u['d'] ) && wp_date( 'Ymd' ) === $u['d'] ) ? (int) $u['n'] : 0;
+	update_user_meta( $uid, 'apprex_studio_img_usage', array( 'd' => wp_date( 'Ymd' ), 'n' => $n + 1 ) );
+
+	$list   = apprex_studio_images( $uid );
+	$list[] = array( 'id' => $att, 'kind' => $kind, 'note' => isset( $brief['request'] ) ? $brief['request'] : '', 't' => time(), 'picked' => false );
+	update_user_meta( $uid, 'apprex_studio_images', array_slice( $list, -30 ) );
+
+	return rest_ensure_response(
+		array(
+			'ok'     => true,
+			'images' => apprex_studio_images_out( $uid ),
+			'left'   => apprex_studio_image_left( $uid ),
+		)
+	);
+}
+
+/**
+ * 企画書の文章をAIが作成。
+ *
+ * @param WP_REST_Request $request Request.
+ * @return WP_REST_Response|WP_Error
+ */
+function apprex_studio_rest_ai_plan( WP_REST_Request $request ) {
+	if ( ! apprex_studio_check_nonce( $request ) ) {
+		return new WP_Error( 'forbidden', '再読み込みしてください。', array( 'status' => 403 ) );
+	}
+	if ( '' === apprex_openrouter_key() ) {
+		return new WP_Error( 'not_configured', 'AIによる文章作成は準備中です。', array( 'status' => 503 ) );
+	}
+	$brief = apprex_studio_brief( $request );
+	$feats = array_slice( array_map( 'sanitize_text_field', (array) $request->get_param( 'features' ) ), 0, 20 );
+	$res   = apprex_openrouter_complete(
+		array(
+			array(
+				'role'    => 'system',
+				'content' => "あなたはアプリ制作会社の企画担当です。店舗・企業アプリの企画書の本文を、社内稟議にそのまま使える自然で具体的な日本語で書きます。誇張や数値の断定は避けます。JSONだけを出力：\n"
+					. '{"background":"背景と目的（120〜180字）","target":"対象とするお客様（80〜120字）","concept":"コンセプトの説明（60〜100字）","effects":[{"feature":"機能名","effect":"期待する効果（40字以内）"}],"kpi":["効果を測る指標（5個まで）"],"promo":["アプリを広めるための施策（4個まで）"]}',
+			),
+			array( 'role' => 'user', 'content' => wp_json_encode( array( 'design' => $brief, 'features' => $feats ), JSON_UNESCAPED_UNICODE ) ),
+		),
+		array( 'temperature' => 0.6, 'max_tokens' => 1200, 'timeout' => 60 )
+	);
+	$data = is_wp_error( $res ) ? null : apprex_studio_json( $res );
+	if ( ! $data ) {
+		return new WP_Error( 'failed', '企画書を作成できませんでした。もう一度お試しください。', array( 'status' => 502 ) );
+	}
+	$t   = function ( $k, $n ) use ( $data ) {
+		return isset( $data[ $k ] ) ? mb_substr( sanitize_textarea_field( (string) $data[ $k ] ), 0, $n ) : '';
+	};
+	$arr = function ( $k, $n ) use ( $data ) {
+		return isset( $data[ $k ] ) && is_array( $data[ $k ] ) ? array_slice( array_map( function ( $x ) {
+			return mb_substr( sanitize_text_field( is_string( $x ) ? $x : '' ), 0, 60 );
+		}, $data[ $k ] ), 0, $n ) : array();
+	};
+	$eff = array();
+	if ( isset( $data['effects'] ) && is_array( $data['effects'] ) ) {
+		foreach ( array_slice( $data['effects'], 0, 12 ) as $e ) {
+			if ( is_array( $e ) && ! empty( $e['feature'] ) ) {
+				$eff[] = array( mb_substr( sanitize_text_field( (string) $e['feature'] ), 0, 30 ), mb_substr( sanitize_text_field( (string) ( isset( $e['effect'] ) ? $e['effect'] : '' ) ), 0, 60 ) );
+			}
+		}
+	}
+	return rest_ensure_response(
+		array(
+			'ok'   => true,
+			'plan' => array(
+				'background' => $t( 'background', 300 ),
+				'target'     => $t( 'target', 200 ),
+				'concept'    => $t( 'concept', 160 ),
+				'effects'    => $eff,
+				'kpi'        => array_filter( $arr( 'kpi', 5 ) ),
+				'promo'      => array_filter( $arr( 'promo', 4 ) ),
+			),
+		)
+	);
+}
+
