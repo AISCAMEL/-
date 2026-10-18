@@ -254,10 +254,12 @@
 		win.classList.add("is-started");
 		if (!greeted) {
 			greeted = true;
-			addBubble("bot", cfg.welcome);
+			// 会話モード（talk）は誘導メッセージ1本に集約し、ウェルカム文・安心文を重複表示しない。
+			var talkStart = (cfg.startMode !== "menu");
+			if (!talkStart) { addBubble("bot", cfg.welcome); }
 			playStartChime(); // 会話開始チャイム（控えめ、1セッション1回）
-			// 実績・安心の提示（冒頭に一言）
-			if (cfg.reassureOn && cfg.reassureMsg) { renderReassure(cfg.reassureMsg); }
+			// 実績・安心の提示（冒頭に一言）※会話モードでは誘導文に含めるため出さない
+			if (!talkStart && cfg.reassureOn && cfg.reassureMsg) { renderReassure(cfg.reassureMsg); }
 			// キャンペーンバナー：期間中でONなら冒頭に表示
 			if (cfg.campaign && cfg.campaign.showBanner && cfg.campaign.title) { renderCampaignBanner(cfg.campaign); }
 			// お名前・メール確認モード：timing="start" のときだけ最初に連絡先を伺う。
