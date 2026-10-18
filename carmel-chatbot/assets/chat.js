@@ -587,12 +587,6 @@
 	function clearChoices() {
 		var old = msgBox.querySelectorAll(".ccb-choices");
 		for (var i = 0; i < old.length; i++) { old[i].remove(); }
-		// 古いCTAボタン（まず診断/仮審査/お問い合わせ等）も片付け、常に“今の一歩”だけ見せる。
-		var ctas = msgBox.querySelectorAll(".ccb-cta");
-		for (var j = 0; j < ctas.length; j++) {
-			var row = (ctas[j].closest ? ctas[j].closest(".ccb-msg") : ctas[j].parentNode) || ctas[j];
-			row.remove();
-		}
 	}
 	function renderChoices(list) {
 		if (!list || !list.length) return;
@@ -995,6 +989,13 @@
 		var applyToPage = !!cfg.applyUrl;
 		show.apply = want.apply && ( applyToPage || ( formMode ? cfg.applyFormOn : false ) );
 		if (!show.apply && !show.contact && !show.handoff && !show.stock && !show.app && !show.line && !show.tel && !show.shinsa) return;
+
+		// 新しいCTAを出すときだけ、古いCTAを置き換える（重複で積み上げず、会話を続けても消えない）
+		var prev = msgBox.querySelectorAll(".ccb-cta");
+		for (var pi = 0; pi < prev.length; pi++) {
+			var prow = (prev[pi].closest ? prev[pi].closest(".ccb-msg") : prev[pi].parentNode) || prev[pi];
+			prow.remove();
+		}
 
 		var row = document.createElement("div");
 		row.className = "ccb-msg bot";
