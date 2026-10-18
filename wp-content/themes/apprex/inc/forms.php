@@ -299,7 +299,7 @@ function apprex_form_meta( $type ) {
  * @return string[]
  */
 function apprex_inquiry_types() {
-	return array( 'contact', 'document', 'trial', 'meeting', 'partner' );
+	return array( 'contact', 'document', 'trial', 'meeting', 'partner', 'signup', 'studio' );
 }
 
 /**
@@ -316,6 +316,8 @@ function apprex_type_label( $type ) {
 		'meeting'  => 'ミーティング予約',
 		'partner'  => 'パートナー応募',
 		'estimate' => '見積もり・発注',
+		'signup'   => 'AIスタジオ会員登録',
+		'studio'   => 'AIスタジオから開発相談',
 	);
 	return isset( $labels[ $type ] ) ? $labels[ $type ] : 'お問い合わせ';
 }
@@ -546,6 +548,10 @@ function apprex_autoreply_onscreen( $type ) {
 			return 'ミーティングのご予約を受け付けました。確認のうえ、確定のご連絡を差し上げます。リマインダーもお送りします。';
 		case 'partner':
 			return 'パートナー登録のお申し込みを受け付けました。担当者より詳細をご案内します。下のボタンから、Webミーティングのご予約もできます。';
+		case 'signup':
+			return 'AIスタジオへの登録が完了しました。さっそくアプリのデザインを作ってみましょう。';
+		case 'studio':
+			return '開発のご相談を受け付けました。続けてオンラインミーティングの日時をお選びください。';
 		default:
 			return 'お問い合わせありがとうございます。担当者より2営業日以内にご連絡いたします。お急ぎの方は、下のボタンからミーティング（Web面談）をご予約ください。';
 	}
@@ -621,6 +627,16 @@ function apprex_autoreply_message( $type, $fields ) {
 		case 'partner':
 			$subject = '【APPREX】パートナー登録のお申し込みありがとうございます';
 			$body    = "{$name} 様\n\nこの度はAPPREXパートナー（取次販売・紹介）にお申し込みいただきありがとうございます。\n担当者より制度の詳細・報酬・進め方をご案内いたします。\n";
+			break;
+		case 'signup':
+			$studio  = function_exists( 'apprex_studio_url' ) ? apprex_studio_url() : home_url( '/studio/' );
+			$subject = '【APPREX】AIスタジオへのご登録ありがとうございます';
+			$body    = "{$name} 様\n\nAPPREXのAIスタジオに無料会員登録いただき、ありがとうございます。\n\nAIスタジオでは、次のことが無料でできます。\n・業種と店名を入れるだけで、アプリの画面デザインを5画面作成\n・言葉で頼むだけでデザインを修正\n・機能を選ぶと、企画書・仕様書・画面構成図と概算費用を自動作成\n・作った内容のまま開発を相談し、オンラインミーティングを予約\n\n▼ AIスタジオはこちら（ログインしてご利用ください）\n{$studio}\n\nAIスタジオから相談いただくと、おまかせプランの制作代行費が半額（300,000円→150,000円）になるキャンペーンを実施中です（毎月先着10社）。\n";
+			break;
+		case 'studio':
+			$studio  = function_exists( 'apprex_studio_url' ) ? apprex_studio_url() : home_url( '/studio/' );
+			$subject = '【APPREX】開発のご相談を受け付けました';
+			$body    = "{$name} 様\n\nAIスタジオから開発のご相談をいただき、ありがとうございます。\nお送りいただいたデザインと仕様書を担当者が確認し、オンラインミーティングでお見積りまでご案内します。\n\nミーティングの日時がまだの方は、AIスタジオからお選びください。\n{$studio}\n";
 			break;
 		default:
 			$subject = '【APPREX】お問い合わせありがとうございます';
@@ -740,6 +756,16 @@ function apprex_step_mails( $type = 'contact' ) {
 			10080 => array( 'subject' => '【APPREX】先着10社・初期費用0円は“今月”まで', 'body' => "{name} 様\n\nご検討ありがとうございます。1つだけ、お急ぎいただきたい理由があります。\n\n現在の「初期費用0円キャンペーン（通常30万円）」は、先着10社・今月末までの限定です。毎月設けている枠ではなく、埋まり次第終了となります。\n\n迷っている時間がもったいない条件です。この機会に、ぜひお見積りを確定させてください。\n{$est}\n" ),
 			20160 => array( 'subject' => '【APPREX】その投資、何ヶ月で回収できるか', 'body' => "{name} 様\n\n「コストはわかった。では、効果は？」——当然のご関心だと思います。\n\n同じ価格帯のお客様が、再来店・客単価・新規集客でどう成果を出しているか、事例で具体的に見られます。月額以上のリターンを生んでいるケースも少なくありません。\n{$cases}\n" ),
 			43200 => array( 'subject' => '【APPREX】最後に、担当から直接ご提案させてください', 'body' => "{name} 様\n\nお見積りから1ヶ月。ご検討状況はいかがでしょうか。\n\nもし判断に迷う点が残っているなら、オンラインで直接お話しさせてください。貴社の状況に合わせて、プラン・予算・進め方を一緒に最適化します。\n\n押し売りはいたしません。「相談してよかった」と思っていただける時間をお約束します。お気軽にご返信を。\n" ),
+		),
+		// AIスタジオ会員登録後：デザイン → 仕様書 → 相談で半額.
+		'signup'   => array(
+			1440  => array( 'subject' => '【APPREX】アプリのデザイン、もう作ってみましたか？', 'body' => "{name} 様\n\nAIスタジオへのご登録ありがとうございます。\n\n業種と店名を入れるだけで、ホーム・メニュー・クーポン・予約・会員証の5画面ができあがります。「予約ボタンを大きく」「緑で高級感を」のように言葉で頼めば、すぐに作り直せます。\n\nまずは1分、触ってみてください。\n" . ( function_exists( 'apprex_studio_url' ) ? apprex_studio_url() : $home ) . "\n" ),
+			4320  => array( 'subject' => '【APPREX】企画書と仕様書も、AIが作ります', 'body' => "{name} 様\n\nデザインができたら、次は欲しい機能を選ぶだけ。AIが企画書・仕様書・画面構成図と概算費用をまとめます。社内のご説明にもそのまま使えます。\n\nノーコードで作れるか、オリジナル開発が必要かもその場で分かります。\n" . ( function_exists( 'apprex_studio_url' ) ? apprex_studio_url() : $home ) . "\n" ),
+			10080 => array( 'subject' => '【APPREX】AIスタジオから相談で、制作代行費が半額です', 'body' => "{name} 様\n\nAIスタジオで作ったデザインと仕様書のまま開発を相談いただくと、おまかせプランの制作代行費が300,000円→150,000円になります（毎月先着10社）。\n\nミーティングでは作った画面を見ながら、正式なお見積りまでご案内します。相談・ミーティングは無料です。\n" . ( function_exists( 'apprex_studio_url' ) ? apprex_studio_url() : $home ) . "\n" ),
+		),
+		// AIスタジオから相談後：ミーティング予約の後押し.
+		'studio'   => array(
+			1440 => array( 'subject' => '【APPREX】ミーティングのご予約はお済みですか？', 'body' => "{name} 様\n\n開発のご相談ありがとうございます。いただいたデザインと仕様書は担当者が確認済みです。\n\nオンラインミーティング（60分・無料）で、画面を見ながら細かいご要望を伺い、正式なお見積りをお出しします。まだの方はAIスタジオから日時をお選びください。\n" . ( function_exists( 'apprex_studio_url' ) ? apprex_studio_url() : $home ) . "\n" ),
 		),
 		// 汎用（お問い合わせ）：10分後にお礼の1通目 → 翌日以降に長期ナーチャ.
 		'contact'  => array(

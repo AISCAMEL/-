@@ -64,7 +64,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 <!-- モバイル固定CTAバー（スマホのみ表示） -->
 <div class="apprex-mobilebar" aria-label="<?php esc_attr_e( 'お問い合わせ導線', 'apprex' ); ?>">
 	<a class="apprex-mobilebar__btn apprex-mobilebar__btn--cta" href="<?php echo esc_url( apprex_page_url( 'meeting' ) ); ?>"><?php esc_html_e( '無料で相談', 'apprex' ); ?></a>
-	<a class="apprex-mobilebar__btn" href="<?php echo esc_url( apprex_page_url( 'estimate' ) ); ?>"><?php esc_html_e( '見積もり', 'apprex' ); ?></a>
+	<?php if ( function_exists( 'apprex_rn_enabled' ) && apprex_rn_enabled() ) : ?>
+		<a class="apprex-mobilebar__btn" href="<?php echo esc_url( apprex_studio_url() ); ?>"><?php esc_html_e( 'AIでデザイン', 'apprex' ); ?></a>
+	<?php else : ?>
+		<a class="apprex-mobilebar__btn" href="<?php echo esc_url( apprex_page_url( 'estimate' ) ); ?>"><?php esc_html_e( '見積もり', 'apprex' ); ?></a>
+	<?php endif; ?>
 </div>
 
 <?php wp_footer(); ?>

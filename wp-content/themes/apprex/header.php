@@ -57,6 +57,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<?php esc_html_e( 'マイページ', 'apprex' ); ?>
 				</a>
 			<?php endif; ?>
+			<?php if ( function_exists( 'apprex_rn_enabled' ) && apprex_rn_enabled() ) : ?>
+				<a class="btn btn--ghost header-studio" href="<?php echo esc_url( apprex_studio_url() ); ?>">
+					<?php echo is_user_logged_in() ? esc_html__( 'AIスタジオ', 'apprex' ) : esc_html__( '無料会員登録', 'apprex' ); ?>
+				</a>
+			<?php endif; ?>
 			<a class="btn btn--primary" href="<?php echo esc_url( apprex_page_url( 'meeting' ) ); ?>">
 				<?php esc_html_e( '無料で相談', 'apprex' ); ?>
 			</a>
@@ -81,6 +86,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 		)
 	);
 	?>
+	<?php if ( function_exists( 'apprex_rn_enabled' ) && apprex_rn_enabled() ) : ?>
+		<a class="btn btn--ghost btn--block" href="<?php echo esc_url( apprex_studio_url() ); ?>">
+			<?php esc_html_e( 'AIスタジオ（無料会員登録）', 'apprex' ); ?>
+		</a>
+	<?php endif; ?>
 	<a class="btn btn--primary btn--block" href="<?php echo esc_url( apprex_page_url( 'meeting' ) ); ?>">
 		<?php esc_html_e( '無料で相談', 'apprex' ); ?>
 	</a>

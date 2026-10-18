@@ -1,0 +1,479 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0" xmlns:excerpt="http://wordpress.org/export/1.2/excerpt/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:wfw="http://wellformedweb.org/CommentAPI/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:wp="http://wordpress.org/export/1.2/">
+<channel>
+<title>APPREX</title><link>https://site.aiscompany.jp</link><description>APPREX SEO articles</description><language>ja</language>
+<wp:wxr_version>1.2</wp:wxr_version>
+<wp:base_site_url>https://site.aiscompany.jp</wp:base_site_url>
+<wp:base_blog_url>https://site.aiscompany.jp</wp:base_blog_url>
+<wp:author><wp:author_id>1</wp:author_id><wp:author_login><![CDATA[apprex]]></wp:author_login><wp:author_email><![CDATA[]]></wp:author_email><wp:author_display_name><![CDATA[APPREX編集部]]></wp:author_display_name><wp:author_first_name><![CDATA[]]></wp:author_first_name><wp:author_last_name><![CDATA[]]></wp:author_last_name></wp:author>
+<wp:category><wp:term_id>901</wp:term_id><wp:category_nicename>app-cost</wp:category_nicename><wp:category_parent></wp:category_parent><wp:cat_name><![CDATA[アプリ開発の費用]]></wp:cat_name></wp:category>
+<wp:category><wp:term_id>902</wp:term_id><wp:category_nicename>app-howto</wp:category_nicename><wp:category_parent></wp:category_parent><wp:cat_name><![CDATA[アプリの作り方]]></wp:cat_name></wp:category>
+<wp:category><wp:term_id>903</wp:term_id><wp:category_nicename>app-compare</wp:category_nicename><wp:category_parent></wp:category_parent><wp:cat_name><![CDATA[比較・選び方]]></wp:cat_name></wp:category>
+<wp:category><wp:term_id>904</wp:term_id><wp:category_nicename>app-industry</wp:category_nicename><wp:category_parent></wp:category_parent><wp:cat_name><![CDATA[業種別の活用]]></wp:cat_name></wp:category>
+<item>
+<title><![CDATA[アプリ開発の費用相場【2026年】ノーコード・オリジナル開発・マッチングアプリまで]]></title>
+<link></link><pubDate></pubDate>
+<dc:creator><![CDATA[apprex]]></dc:creator>
+<guid isPermaLink="false">apprex-seo-app-development-cost</guid>
+<description></description>
+<content:encoded><![CDATA[<p>アプリ開発の費用は、<strong>どの作り方を選ぶか</strong>で大きく変わります。目安は次のとおりです。</p>
+<ul>
+<li><strong>ノーコード</strong>：初期費用0円〜数十万円、月額1万〜6万円ほど</li>
+<li><strong>開発基盤を使ったオリジナル開発</strong>：数十万〜数百万円</li>
+<li><strong>ゼロから作るフルスクラッチ開発</strong>：数百万〜数千万円</li>
+</ul>
+<p>この記事では、作り方ごとの費用の目安、費用の内訳、見落としやすい費用、費用を抑えるコツを順に説明します。</p>
+
+<h2>作り方別の費用の目安</h2>
+<table>
+<thead><tr><th>作り方</th><th>初期費用</th><th>月々の費用</th><th>公開までの期間</th><th>向いている企業</th></tr></thead>
+<tbody>
+<tr><td>ノーコード</td><td>0円〜数十万円</td><td>1万〜6万円</td><td>2週間〜1ヶ月</td><td>店舗・会員・予約アプリを早く始めたい</td></tr>
+<tr><td>開発基盤＋カスタマイズ</td><td>数十万〜数百万円</td><td>保守 数万円〜</td><td>1〜3ヶ月</td><td>独自の機能がほしいが予算は抑えたい</td></tr>
+<tr><td>フルスクラッチ</td><td>数百万〜数千万円</td><td>保守 開発費の年10〜20%程度</td><td>3〜12ヶ月</td><td>大規模サービス・複雑な業務システム</td></tr>
+</tbody>
+</table>
+<p>金額は一般的な目安です。必要な機能の数、デザインの作り込み、管理画面の有無、外部サービスとの連携によって上下します。</p>
+
+<h2>アプリ開発費用の内訳</h2>
+<p>見積書は、だいたい次の項目で構成されています。項目ごとの金額を見ると、どこにお金がかかっているかがわかります。</p>
+<ul>
+<li><strong>企画・要件定義</strong>：作る機能と画面を決める工程</li>
+<li><strong>デザイン</strong>：画面のレイアウト、アイコン、配色</li>
+<li><strong>開発</strong>：iOSアプリ、Androidアプリ、管理画面、サーバー</li>
+<li><strong>テスト</strong>：端末ごとの動作確認と不具合の修正</li>
+<li><strong>ストア申請</strong>：App Store と Google Play への登録と審査対応</li>
+<li><strong>保守・運用</strong>：OSの更新への対応、サーバー管理、機能の追加</li>
+</ul>
+<p>一般に、費用の大部分を占めるのは開発の工程です。iOSとAndroidを別々に作ると、ほぼ2本分の開発費がかかります。</p>
+
+<h2>見落としやすい費用</h2>
+<ul>
+<li><strong>ストアの登録費</strong>：開発者アカウントの費用がかかります</li>
+<li><strong>サーバー費</strong>：利用者が増えると上がることがあります</li>
+<li><strong>OSアップデートへの対応</strong>：iOS・Androidは毎年更新されるため、公開後も修正が必要です</li>
+<li><strong>プッシュ通知の配信費</strong>：サービスによっては配信数に応じて課金されます</li>
+</ul>
+<p>見積りを比べるときは、<strong>公開までの費用</strong>と<strong>公開後に毎月・毎年かかる費用</strong>を分けて確認すると、総額の比較がしやすくなります。</p>
+
+<h2>アプリ開発の費用を抑える5つのコツ</h2>
+<h3>1. 最初は機能を絞る</h3>
+<p>最初からすべての機能を入れず、核になる機能だけで公開します。利用者の反応を見てから追加すれば、使われない機能にお金をかけずに済みます。</p>
+<h3>2. iOSとAndroidを同時に作る</h3>
+<p>Flutterなどのクロスプラットフォーム技術を使うと、1つのコードから両方のアプリを作れます。2本分の開発費がかかりません。</p>
+<h3>3. できている部品を使う</h3>
+<p>ログイン、会員管理、プッシュ通知、決済などは、どのアプリでも必要です。開発基盤がある会社に頼むと、この部分をゼロから作らずに済みます。</p>
+<h3>4. 素材を自社で用意する</h3>
+<p>ロゴ、写真、文章を自社で用意すると、制作の工数が減ります。</p>
+<h3>5. 補助金を確認する</h3>
+<p>IT導入補助金などが使える場合があります。対象になる条件は年度で変わるため、申請前に最新の公募要領を確認してください。</p>
+
+<h2>APPREXの料金</h2>
+<table>
+<thead><tr><th>プラン</th><th>月額（税抜）</th><th>主な内容</th></tr></thead>
+<tbody>
+<tr><td>トライアル</td><td>19,800円</td><td>基本機能</td></tr>
+<tr><td>スタート</td><td>39,800円</td><td>電子カタログ</td></tr>
+<tr><td>ビジネス</td><td>59,800円</td><td>多店舗対応</td></tr>
+</tbody>
+</table>
+<p>初期設定費はキャンペーン期間中0円です。プッシュ通知は回数無制限で、ダウンロード課金もありません。アプリストアへの登録費として、別途一律55,000円がかかります。独自の機能が必要な場合はオリジナル開発（個別見積り）、マッチングアプリは開発費300万円から、月額保守7万円からご相談いただけます。最新の料金は<a href="/pricing/">料金ページ</a>でご確認ください。</p>
+
+<h2>よくある質問</h2>
+<h3>月額制と買い切りは、どちらが得ですか？</h3>
+<p>初期費用を抑えて早く始めたいなら月額制、自社でソースコードを持って長く改修し続けたいなら買い切りが向いています。3〜5年の総額で比べると判断しやすくなります。</p>
+<h3>見積りで確認すべき点は何ですか？</h3>
+<p>機能の一覧、iOSとAndroidの両方が含まれるか、管理画面の有無、ストア申請の代行の有無、公開後の保守費用の5点を確認してください。</p>
+<h3>相場より安い見積りは大丈夫ですか？</h3>
+<p>安い理由が説明できるかを確認しましょう。開発基盤の再利用や機能の絞り込みなど、理由がはっきりしていれば問題ありません。保守費用が別に高く設定されていないかもあわせて確認してください。</p>
+<h2>まずは無料資料で、料金と事例を確認してください</h2>
+<p>APPREXは、月額19,800円から始められるノーコードアプリと、開発基盤を使って費用を抑えるオリジナルアプリ開発の両方に対応しています。料金表・導入事例・開発の流れをまとめた資料を無料でお送りします。打ち合わせから公開まで全国どこからでもオンラインで進められます。</p>
+<ul>
+<li><a href="/document/">無料で資料をダウンロードする</a></li>
+<li><a href="/estimate/">料金をシミュレーションする</a></li>
+<li><a href="/contact/">オリジナル開発の見積りを相談する</a></li>
+</ul>]]></content:encoded>
+<excerpt:encoded><![CDATA[アプリ開発の費用は作り方で大きく変わります。ノーコード、開発基盤を使ったオリジナル開発、ゼロから作るフルスクラッチの費用の目安と内訳、費用を抑えるコツを解説します。]]></excerpt:encoded>
+<wp:post_id>9101</wp:post_id>
+<wp:post_date><![CDATA[2026-10-10 09:00:00]]></wp:post_date>
+<wp:post_date_gmt><![CDATA[0000-00-00 00:00:00]]></wp:post_date_gmt>
+<wp:comment_status><![CDATA[closed]]></wp:comment_status>
+<wp:ping_status><![CDATA[closed]]></wp:ping_status>
+<wp:post_name><![CDATA[app-development-cost]]></wp:post_name>
+<wp:status><![CDATA[draft]]></wp:status>
+<wp:post_parent>0</wp:post_parent><wp:menu_order>0</wp:menu_order>
+<wp:post_type><![CDATA[post]]></wp:post_type>
+<wp:post_password><![CDATA[]]></wp:post_password><wp:is_sticky>0</wp:is_sticky>
+<category domain="category" nicename="app-cost"><![CDATA[アプリ開発の費用]]></category>
+</item>
+<item>
+<title><![CDATA[LINE公式アカウントとアプリの違い｜費用・集客・機能で比較、どちらを選ぶ？]]></title>
+<link></link><pubDate></pubDate>
+<dc:creator><![CDATA[apprex]]></dc:creator>
+<guid isPermaLink="false">apprex-seo-line-official-account-vs-app</guid>
+<description></description>
+<content:encoded><![CDATA[<p>結論から言うと、<strong>新しいお客様に広く知らせるならLINE公式アカウント</strong>、<strong>常連のお客様に繰り返し来てもらうなら自社アプリ</strong>が向いています。いちばん効果が出やすいのは、LINEで集めてアプリで常連になってもらう<strong>併用</strong>です。</p>
+
+<h2>LINE公式アカウントと自社アプリの比較</h2>
+<table>
+<thead><tr><th>比べること</th><th>LINE公式アカウント</th><th>自社アプリ</th></tr></thead>
+<tbody>
+<tr><td>配信の費用</td><td>送った通数で課金。友だちが増えると月額が上がる</td><td>サービスによる（APPREXはプッシュ通知無制限）</td></tr>
+<tr><td>スマホでの見え方</td><td>LINEのトーク一覧に他のお店と並ぶ</td><td>ホーム画面に自社のアイコンが置かれる</td></tr>
+<tr><td>使える機能</td><td>メッセージ、クーポン、ショップカードなど</td><td>予約、EC、会員証、独自機能まで自由</td></tr>
+<tr><td>顧客データ</td><td>LINEの仕組みの中で管理</td><td>自社で会員情報や利用履歴を持てる</td></tr>
+<tr><td>始めやすさ</td><td>無料プランからすぐ始められる</td><td>制作期間が必要（ノーコードなら最短2週間）</td></tr>
+</tbody>
+</table>
+
+<h2>配信費用の違い</h2>
+<p>LINE公式アカウントは、無料プランで送れる通数に上限があり、それを超えると有料プランが必要になります。友だちが1,000人いて週1回配信すると、月に4,000通ほどになります。友だちが増えるほど配信費も増える仕組みです。料金体系は変更されることがあるため、最新の内容はLINEヤフーの公式サイトで確認してください。</p>
+<p>自社アプリのプッシュ通知は、サービスによって無料のものと従量課金のものがあります。APPREXは回数無制限のため、利用者が増えても配信費は変わりません。</p>
+
+<h2>お客様への届き方の違い</h2>
+<p>LINEは多くの人が毎日開くため、メッセージを見てもらいやすいのが強みです。一方で、たくさんのお店や企業のメッセージが同じトーク一覧に並ぶため、埋もれやすく、ブロックされることもあります。</p>
+<p>アプリはダウンロードしてもらう手間がありますが、ホーム画面に自社のアイコンが置かれます。会員証やポイントカードとして毎回開いてもらえると、お店を思い出してもらう機会が増えます。</p>
+
+<h2>機能の違い</h2>
+<p>LINE公式アカウントは、メッセージ配信、クーポン、ショップカード、予約連携など、決められた機能の中で使います。アプリは、予約、モバイルオーダー、EC、会員証、スタンプカードなどを組み合わせたり、自社専用の機能を作ったりできます。</p>
+
+<h2>LINEが向いている使い方</h2>
+<ul>
+<li>新しいお客様に、セールやイベントを広く知らせたい</li>
+<li>まずは費用をかけずに配信を試したい</li>
+<li>配信は月に数回で十分</li>
+</ul>
+
+<h2>アプリが向いている使い方</h2>
+<ul>
+<li>常連のお客様を増やし、来店の回数を上げたい</li>
+<li>予約、注文、会員証、ポイントを1つにまとめたい</li>
+<li>友だちや会員が増えても、配信費を増やしたくない</li>
+<li>顧客データを自社で持って、販促に活かしたい</li>
+</ul>
+
+<h2>おすすめは併用：LINEで集めて、アプリで常連に</h2>
+<ol>
+<li>LINE公式アカウントで、新しいお客様とつながる</li>
+<li>LINEのメッセージや店頭のPOPで、アプリのダウンロードを案内する（初回クーポンを付けると効果的です）</li>
+<li>アプリのプッシュ通知、ポイント、クーポンで、繰り返し来てもらう</li>
+</ol>
+<p>LINEの配信をアプリに少しずつ移していくと、配信費を抑えながら常連のお客様との関係を深められます。</p>
+
+<h2>よくある質問</h2>
+<h3>LINE公式アカウントをやめて、アプリだけにしてもいいですか？</h3>
+<p>おすすめしません。LINEは新しいお客様と出会う入り口として優秀です。アプリと役割を分けて使うのが効果的です。</p>
+<h3>アプリをダウンロードしてもらうコツは？</h3>
+<p>ダウンロード特典のクーポン、会計時の声かけ、店頭のQRコード、レシートへの案内が効果的です。「ポイントカードがアプリになりました」のように、使う理由をはっきり伝えましょう。</p>
+<h2>まずは無料資料で、料金と事例を確認してください</h2>
+<p>APPREXは、月額19,800円から始められるノーコードアプリと、開発基盤を使って費用を抑えるオリジナルアプリ開発の両方に対応しています。料金表・導入事例・開発の流れをまとめた資料を無料でお送りします。打ち合わせから公開まで全国どこからでもオンラインで進められます。</p>
+<ul>
+<li><a href="/document/">無料で資料をダウンロードする</a></li>
+<li><a href="/estimate/">料金をシミュレーションする</a></li>
+<li><a href="/contact/">オリジナル開発の見積りを相談する</a></li>
+</ul>]]></content:encoded>
+<excerpt:encoded><![CDATA[LINE公式アカウントと自社アプリは、得意なことが違います。配信費用、お客様への届き方、使える機能、顧客データの持ち方を比較し、使い分けと併用の方法を解説します。]]></excerpt:encoded>
+<wp:post_id>9102</wp:post_id>
+<wp:post_date><![CDATA[2026-10-11 09:00:00]]></wp:post_date>
+<wp:post_date_gmt><![CDATA[0000-00-00 00:00:00]]></wp:post_date_gmt>
+<wp:comment_status><![CDATA[closed]]></wp:comment_status>
+<wp:ping_status><![CDATA[closed]]></wp:ping_status>
+<wp:post_name><![CDATA[line-official-account-vs-app]]></wp:post_name>
+<wp:status><![CDATA[draft]]></wp:status>
+<wp:post_parent>0</wp:post_parent><wp:menu_order>0</wp:menu_order>
+<wp:post_type><![CDATA[post]]></wp:post_type>
+<wp:post_password><![CDATA[]]></wp:post_password><wp:is_sticky>0</wp:is_sticky>
+<category domain="category" nicename="app-compare"><![CDATA[比較・選び方]]></category>
+</item>
+<item>
+<title><![CDATA[アプリの作り方｜企画から公開まで7ステップと期間の目安【初めての企業向け】]]></title>
+<link></link><pubDate></pubDate>
+<dc:creator><![CDATA[apprex]]></dc:creator>
+<guid isPermaLink="false">apprex-seo-how-to-make-an-app</guid>
+<description></description>
+<content:encoded><![CDATA[<p>アプリは、<strong>相談→機能を決める→素材をそろえる→制作→テスト→ストア申請→運用</strong>の7ステップで作ります。期間の目安は、ノーコードなら最短2週間、オリジナル開発なら1ヶ月以上です。ストアの審査期間も見込んでおきましょう。</p>
+
+<h2>アプリができるまでの7ステップ</h2>
+<table>
+<thead><tr><th>ステップ</th><th>やること</th><th>期間の目安</th></tr></thead>
+<tbody>
+<tr><td>1. 相談</td><td>目的、作りたいもの、予算を整理する</td><td>数日</td></tr>
+<tr><td>2. 機能を決める</td><td>必要な機能と画面構成を決め、見積りをもらう</td><td>約1週間</td></tr>
+<tr><td>3. 素材をそろえる</td><td>ロゴ、写真、文章、メニューなどを用意する</td><td>数日〜</td></tr>
+<tr><td>4. 制作</td><td>デザインと開発。途中の画面を確認する</td><td>2週間〜数ヶ月</td></tr>
+<tr><td>5. テスト</td><td>実際のスマホで操作して確認する</td><td>数日〜</td></tr>
+<tr><td>6. ストア申請</td><td>App Store と Google Play に申請し、審査を通す</td><td>1〜2週間</td></tr>
+<tr><td>7. 運用</td><td>お知らせ配信、分析、機能の追加</td><td>公開後ずっと</td></tr>
+</tbody>
+</table>
+
+<h2>ステップ1：目的をはっきりさせる</h2>
+<p>最初に「アプリで何を良くしたいか」を決めます。再来店を増やしたい、電話予約を減らしたい、注文をスマホで受けたい、など目的が決まると、必要な機能が自然に決まります。</p>
+
+<h2>ステップ2：必要な機能を決める</h2>
+<p>機能は「なくては困るもの」と「あるとうれしいもの」に分けます。最初は「なくては困るもの」だけで公開するのがおすすめです。費用も期間も抑えられ、利用者の声を聞いてから追加できます。</p>
+
+<h2>ステップ3：素材をそろえる</h2>
+<p>制作をスムーズに進めるために、次のものを用意しておきましょう。</p>
+<ul>
+<li>ロゴ（できれば画像データ）</li>
+<li>店舗や商品の写真</li>
+<li>メニューや商品の一覧と価格</li>
+<li>会社情報、営業時間、アクセス</li>
+<li>アプリで伝えたい文章</li>
+</ul>
+<p>手元にない場合は、写真撮影や文章作成を制作会社に任せることもできます。</p>
+
+<h2>ステップ4・5：制作とテスト</h2>
+<p>制作中は、途中の画面を見せてもらい、早めに意見を伝えましょう。完成直前の大きな変更は、期間と費用が増える原因になります。テストでは、自分のスマホで実際に操作し、文字の読みやすさや、ボタンの押しやすさを確かめます。</p>
+
+<h2>ステップ6：ストア申請と審査</h2>
+<p>アプリは App Store（iPhone）と Google Play（Android）の審査を通ってから公開されます。特に App Store は、中身がほとんどないアプリや、Webサイトを表示するだけのアプリは審査に通りにくい傾向があります。会員証、予約、通知など、アプリならではの機能を入れておくと安心です。</p>
+
+<h2>ステップ7：公開後の運用</h2>
+<p>アプリは公開してからが本番です。お知らせやクーポンを定期的に配信し、ダウンロード数、起動数、クーポンの利用数を見ながら改善します。iOSやAndroidの更新に合わせた修正も必要です。</p>
+
+<h2>よくある質問</h2>
+<h3>専門知識がなくても作れますか？</h3>
+<p>作れます。制作会社に依頼すれば、お客様がやることは打ち合わせ、素材の用意、画面の確認が中心です。ノーコードのサービスなら、公開後の更新も管理画面から自分でできます。</p>
+<h3>どのくらいで公開できますか？</h3>
+<p>ノーコードなら最短2週間、オリジナル開発は1ヶ月以上が目安です。ストアの審査で1〜2週間かかることもあるため、公開したい日から逆算して早めに相談しましょう。</p>
+<h2>まずは無料資料で、料金と事例を確認してください</h2>
+<p>APPREXは、月額19,800円から始められるノーコードアプリと、開発基盤を使って費用を抑えるオリジナルアプリ開発の両方に対応しています。料金表・導入事例・開発の流れをまとめた資料を無料でお送りします。打ち合わせから公開まで全国どこからでもオンラインで進められます。</p>
+<ul>
+<li><a href="/document/">無料で資料をダウンロードする</a></li>
+<li><a href="/estimate/">料金をシミュレーションする</a></li>
+<li><a href="/contact/">オリジナル開発の見積りを相談する</a></li>
+</ul>]]></content:encoded>
+<excerpt:encoded><![CDATA[初めてアプリを作る企業向けに、企画から公開までの7つのステップと期間の目安、事前に準備するもの、ストア審査で注意する点をわかりやすく解説します。]]></excerpt:encoded>
+<wp:post_id>9103</wp:post_id>
+<wp:post_date><![CDATA[2026-10-12 09:00:00]]></wp:post_date>
+<wp:post_date_gmt><![CDATA[0000-00-00 00:00:00]]></wp:post_date_gmt>
+<wp:comment_status><![CDATA[closed]]></wp:comment_status>
+<wp:ping_status><![CDATA[closed]]></wp:ping_status>
+<wp:post_name><![CDATA[how-to-make-an-app]]></wp:post_name>
+<wp:status><![CDATA[draft]]></wp:status>
+<wp:post_parent>0</wp:post_parent><wp:menu_order>0</wp:menu_order>
+<wp:post_type><![CDATA[post]]></wp:post_type>
+<wp:post_password><![CDATA[]]></wp:post_password><wp:is_sticky>0</wp:is_sticky>
+<category domain="category" nicename="app-howto"><![CDATA[アプリの作り方]]></category>
+</item>
+<item>
+<title><![CDATA[ノーコードアプリとオリジナル開発の違い｜費用・自由度・期間で選び方を解説]]></title>
+<link></link><pubDate></pubDate>
+<dc:creator><![CDATA[apprex]]></dc:creator>
+<guid isPermaLink="false">apprex-seo-nocode-vs-original-app</guid>
+<description></description>
+<content:encoded><![CDATA[<p>店舗・会員・予約アプリのように<strong>よくある機能の組み合わせで足りるならノーコード</strong>、マッチングや業務システムのように<strong>自社専用の仕組みが必要ならオリジナル開発</strong>が向いています。迷ったら、まずノーコードで始めて、必要になった機能を見極めてから検討する方法もあります。</p>
+
+<h2>ノーコードとオリジナル開発の比較</h2>
+<table>
+<thead><tr><th>比べること</th><th>ノーコード</th><th>オリジナル開発</th></tr></thead>
+<tbody>
+<tr><td>初期費用</td><td>0円〜数十万円</td><td>数十万〜数百万円以上</td></tr>
+<tr><td>月々の費用</td><td>月額制（1万〜6万円ほど）</td><td>保守費用（内容による）</td></tr>
+<tr><td>公開までの期間</td><td>最短2週間</td><td>1ヶ月〜</td></tr>
+<tr><td>機能の自由度</td><td>用意された機能の組み合わせ</td><td>自由に設計できる</td></tr>
+<tr><td>更新</td><td>管理画面で自分でできる</td><td>内容によって開発会社に依頼</td></tr>
+<tr><td>向いているアプリ</td><td>店舗、会員証、予約、EC、カタログ</td><td>マッチング、業務システム、独自サービス</td></tr>
+</tbody>
+</table>
+
+<h2>ノーコードが向いている企業</h2>
+<ul>
+<li>ポイントカード、クーポン、予約、お知らせ配信がしたい</li>
+<li>初期費用をかけずに、早く始めたい</li>
+<li>公開後の更新を自社でやりたい</li>
+</ul>
+<p>ノーコードは、多くの企業が使う機能をあらかじめ用意しているため、組み合わせるだけで短期間に公開できます。</p>
+
+<h2>オリジナル開発が向いている企業</h2>
+<ul>
+<li>利用者どうしをつなぐマッチングサービスを作りたい</li>
+<li>自社の業務の流れに合わせた専用アプリが必要</li>
+<li>アプリそのものを商品として提供したい</li>
+</ul>
+<p>オリジナル開発は自由度が高い分、費用と期間がかかります。ただし、開発基盤を持つ会社に頼めば、ログインや会員管理などの共通部分をゼロから作らずに済み、費用を抑えられます。</p>
+
+<h2>選び方の3つの質問</h2>
+<ol>
+<li><strong>やりたいことは、よくある機能で実現できますか？</strong> できるならノーコードで十分です。</li>
+<li><strong>利用者どうしがやり取りしますか？</strong> マッチングや掲示板のような仕組みはオリジナル開発が向いています。</li>
+<li><strong>予算と公開時期は？</strong> 早く小さく始めたいならノーコード、時間と予算をかけて独自性を出すならオリジナル開発です。</li>
+</ol>
+
+<h2>よくある質問</h2>
+<h3>ノーコードのアプリは見た目が似てしまいませんか？</h3>
+<p>ロゴ、配色、写真、メニューの構成を自社に合わせて作れば、自社らしいアプリになります。</p>
+<h3>オリジナル開発のソースコードはもらえますか？</h3>
+<p>契約によります。APPREXでは、ソースコードを買い取るプランも用意しています。</p>
+<h2>まずは無料資料で、料金と事例を確認してください</h2>
+<p>APPREXは、月額19,800円から始められるノーコードアプリと、開発基盤を使って費用を抑えるオリジナルアプリ開発の両方に対応しています。料金表・導入事例・開発の流れをまとめた資料を無料でお送りします。打ち合わせから公開まで全国どこからでもオンラインで進められます。</p>
+<ul>
+<li><a href="/document/">無料で資料をダウンロードする</a></li>
+<li><a href="/estimate/">料金をシミュレーションする</a></li>
+<li><a href="/contact/">オリジナル開発の見積りを相談する</a></li>
+</ul>]]></content:encoded>
+<excerpt:encoded><![CDATA[ノーコードアプリとオリジナルアプリ開発の違いを、費用、作れる機能の自由度、公開までの期間、運用のしやすさで比較し、自社に合う選び方を解説します。]]></excerpt:encoded>
+<wp:post_id>9104</wp:post_id>
+<wp:post_date><![CDATA[2026-10-13 09:00:00]]></wp:post_date>
+<wp:post_date_gmt><![CDATA[0000-00-00 00:00:00]]></wp:post_date_gmt>
+<wp:comment_status><![CDATA[closed]]></wp:comment_status>
+<wp:ping_status><![CDATA[closed]]></wp:ping_status>
+<wp:post_name><![CDATA[nocode-vs-original-app]]></wp:post_name>
+<wp:status><![CDATA[draft]]></wp:status>
+<wp:post_parent>0</wp:post_parent><wp:menu_order>0</wp:menu_order>
+<wp:post_type><![CDATA[post]]></wp:post_type>
+<wp:post_password><![CDATA[]]></wp:post_password><wp:is_sticky>0</wp:is_sticky>
+<category domain="category" nicename="app-compare"><![CDATA[比較・選び方]]></category>
+</item>
+<item>
+<title><![CDATA[マッチングアプリ開発の費用と期間｜必要な機能と失敗しない進め方]]></title>
+<link></link><pubDate></pubDate>
+<dc:creator><![CDATA[apprex]]></dc:creator>
+<guid isPermaLink="false">apprex-seo-matching-app-development</guid>
+<description></description>
+<content:encoded><![CDATA[<p>マッチングアプリの開発費用は、<strong>機能の数と作り方</strong>で大きく変わります。一般的なフルスクラッチ開発では数百万〜数千万円かかることもあります。APPREXでは、開発基盤とFlutterを使い、<strong>開発費300万円から、月額保守7万円から</strong>、最短1ヶ月から対応しています。</p>
+
+<h2>マッチングアプリの種類</h2>
+<ul>
+<li><strong>スキルマッチング</strong>：仕事を頼みたい人と、スキルを持つ人をつなぐ</li>
+<li><strong>ビジネスマッチング</strong>：企業どうし、発注者と受注者をつなぐ</li>
+<li><strong>フリマ・売買</strong>：個人どうしで物を売り買いする</li>
+<li><strong>恋活・婚活</strong>：異性との出会いを提供する</li>
+</ul>
+<p>種類によっては届出や許可が必要です。異性との出会いを目的とするサービスは「インターネット異性紹介事業」の届出が必要になり、中古品の売買を仲介する場合は古物商の許可が関係することがあります。事業を始める前に、必要な手続きを確認してください。</p>
+
+<h2>マッチングアプリに必要な主な機能</h2>
+<table>
+<thead><tr><th>機能</th><th>内容</th></tr></thead>
+<tbody>
+<tr><td>会員登録・ログイン</td><td>メールやSNSアカウントで登録</td></tr>
+<tr><td>プロフィール</td><td>写真、スキル、実績などを掲載</td></tr>
+<tr><td>検索・絞り込み</td><td>条件に合う相手を探す</td></tr>
+<tr><td>マッチング・応募</td><td>相手に依頼、応募、いいねを送る</td></tr>
+<tr><td>メッセージ</td><td>マッチングした相手とやり取りする</td></tr>
+<tr><td>決済</td><td>報酬の支払い、手数料の徴収</td></tr>
+<tr><td>本人確認</td><td>身分証の確認で安全性を高める</td></tr>
+<tr><td>通報・ブロック</td><td>トラブルを防ぐ</td></tr>
+<tr><td>管理画面</td><td>会員、取引、問い合わせを管理する</td></tr>
+</tbody>
+</table>
+
+<h2>費用と期間を左右するポイント</h2>
+<ul>
+<li><strong>決済の有無</strong>：アプリ内で支払いまで行うと、開発の範囲が広がります</li>
+<li><strong>本人確認の方法</strong>：身分証の画像確認か、外部サービスを使うかで変わります</li>
+<li><strong>メッセージの機能</strong>：テキストだけか、画像やビデオ通話も入れるか</li>
+<li><strong>管理画面の作り込み</strong>：運営の手間に直結します</li>
+</ul>
+
+<h2>失敗しないための進め方</h2>
+<h3>1. 片方の利用者を先に集める</h3>
+<p>マッチングアプリは、使う人が少ないと相手が見つからず、すぐに使われなくなります。依頼する側か、受ける側のどちらかを先に集めておくと、公開直後から取引が生まれやすくなります。</p>
+<h3>2. 最初は機能を絞って公開する</h3>
+<p>登録、検索、メッセージ、決済など、取引に必要な最低限の機能で公開します。利用者の声を聞きながら機能を追加すると、費用をかけるべき所が見えてきます。</p>
+<h3>3. 運営の手間を見込んでおく</h3>
+<p>問い合わせ対応、不正利用の監視、トラブル対応など、公開後の運営体制も事前に決めておきましょう。</p>
+
+<h2>よくある質問</h2>
+<h3>どのくらいの期間で公開できますか？</h3>
+<p>機能によりますが、APPREXでは最短1ヶ月から対応しています。ストアの審査期間も含めてスケジュールをお出しします。</p>
+<h3>iOSとAndroidの両方に対応できますか？</h3>
+<p>できます。Flutterを使い、1つのコードから両方のアプリを作るため、2本分の開発費はかかりません。</p>
+<h2>まずは無料資料で、料金と事例を確認してください</h2>
+<p>APPREXは、月額19,800円から始められるノーコードアプリと、開発基盤を使って費用を抑えるオリジナルアプリ開発の両方に対応しています。料金表・導入事例・開発の流れをまとめた資料を無料でお送りします。打ち合わせから公開まで全国どこからでもオンラインで進められます。</p>
+<ul>
+<li><a href="/document/">無料で資料をダウンロードする</a></li>
+<li><a href="/estimate/">料金をシミュレーションする</a></li>
+<li><a href="/contact/">オリジナル開発の見積りを相談する</a></li>
+</ul>]]></content:encoded>
+<excerpt:encoded><![CDATA[マッチングアプリの開発費用と期間の目安、必要な機能、種類ごとに必要な届出、事業として成功させるための進め方を、これから開発を検討する企業向けに解説します。]]></excerpt:encoded>
+<wp:post_id>9105</wp:post_id>
+<wp:post_date><![CDATA[2026-10-14 09:00:00]]></wp:post_date>
+<wp:post_date_gmt><![CDATA[0000-00-00 00:00:00]]></wp:post_date_gmt>
+<wp:comment_status><![CDATA[closed]]></wp:comment_status>
+<wp:ping_status><![CDATA[closed]]></wp:ping_status>
+<wp:post_name><![CDATA[matching-app-development]]></wp:post_name>
+<wp:status><![CDATA[draft]]></wp:status>
+<wp:post_parent>0</wp:post_parent><wp:menu_order>0</wp:menu_order>
+<wp:post_type><![CDATA[post]]></wp:post_type>
+<wp:post_password><![CDATA[]]></wp:post_password><wp:is_sticky>0</wp:is_sticky>
+<category domain="category" nicename="app-cost"><![CDATA[アプリ開発の費用]]></category>
+</item>
+<item>
+<title><![CDATA[店舗アプリで再来店を増やす方法｜ポイント・クーポン・プッシュ通知の使い方]]></title>
+<link></link><pubDate></pubDate>
+<dc:creator><![CDATA[apprex]]></dc:creator>
+<guid isPermaLink="false">apprex-seo-shop-app-repeat-customers</guid>
+<description></description>
+<content:encoded><![CDATA[<p>店舗アプリで再来店を増やすには、<strong>アプリを開く理由をつくる</strong>ことが大切です。ポイントカードや会員証として毎回使ってもらい、クーポンとプッシュ通知で次の来店のきっかけをつくります。</p>
+
+<h2>店舗アプリでできること</h2>
+<ul>
+<li><strong>ポイントカード・スタンプカード</strong>：紙のカードをなくし、忘れずに貯めてもらえる</li>
+<li><strong>デジタル会員証</strong>：会計時に提示してもらい、来店履歴を残せる</li>
+<li><strong>クーポン</strong>：誕生日、初回、再来店などに合わせて配れる</li>
+<li><strong>プッシュ通知</strong>：新メニュー、空席、セールを直接知らせる</li>
+<li><strong>予約・モバイルオーダー</strong>：電話の手間を減らし、待ち時間を短くする</li>
+</ul>
+
+<h2>再来店を増やす使い方</h2>
+<h3>1. ダウンロードしたその日に特典を渡す</h3>
+<p>「今日から使える10%オフ」のように、すぐ使える特典を用意します。会計時に案内すると、その場でダウンロードしてもらいやすくなります。</p>
+<h3>2. 来店のあとにお礼と次回の特典を送る</h3>
+<p>来店の数日後に、お礼と次回使えるクーポンを送ると、次の来店につながります。</p>
+<h3>3. しばらく来ていないお客様に声をかける</h3>
+<p>最後の来店から1〜2ヶ月たったお客様に、特別なクーポンを送ります。離れかけたお客様を呼び戻すきっかけになります。</p>
+<h3>4. スタンプの「あと少し」を知らせる</h3>
+<p>「あと1つで特典です」と知らせると、来店の動機になります。</p>
+
+<h2>プッシュ通知の頻度の目安</h2>
+<p>通知が多すぎると、通知を切られたりアプリを消されたりします。<strong>週1〜2回程度</strong>を目安に、内容は「お得」「新しい」「今だけ」のどれかがはっきり伝わるものにしましょう。配信する時間帯も、ランチ前、仕事帰りなど、お客様が来店を考えるタイミングに合わせると効果的です。</p>
+
+<h2>成果の測り方</h2>
+<table>
+<thead><tr><th>見る数字</th><th>わかること</th></tr></thead>
+<tbody>
+<tr><td>ダウンロード数</td><td>アプリを知ってもらえているか</td></tr>
+<tr><td>月に1回以上開く人の数</td><td>使い続けてもらえているか</td></tr>
+<tr><td>クーポンの利用数</td><td>配信が来店につながっているか</td></tr>
+<tr><td>再来店の割合</td><td>常連のお客様が増えているか</td></tr>
+</tbody>
+</table>
+<p>数字を毎月確認し、反応がよかった配信の内容や時間帯をくり返すと、成果が積み上がっていきます。</p>
+
+<h2>業種別のポイント</h2>
+<ul>
+<li><strong>飲食店</strong>：ランチ前の通知、雨の日クーポン、モバイルオーダー</li>
+<li><strong>美容サロン</strong>：次回予約のリマインド、来店周期に合わせたクーポン</li>
+<li><strong>小売店</strong>：新商品の入荷通知、会員限定セール</li>
+<li><strong>スクール・ジム</strong>：予約、出欠、休会中の会員への声かけ</li>
+</ul>
+
+<h2>よくある質問</h2>
+<h3>小さなお店でもアプリは必要ですか？</h3>
+<p>常連のお客様が売上の中心になるお店ほど効果があります。月額制のノーコードアプリなら、初期費用をかけずに始められます。</p>
+<h3>LINE公式アカウントとの違いは？</h3>
+<p>LINEは新しいお客様に広く知らせるのが得意で、アプリは常連化が得意です。併用がおすすめです。</p>
+<h2>まずは無料資料で、料金と事例を確認してください</h2>
+<p>APPREXは、月額19,800円から始められるノーコードアプリと、開発基盤を使って費用を抑えるオリジナルアプリ開発の両方に対応しています。料金表・導入事例・開発の流れをまとめた資料を無料でお送りします。打ち合わせから公開まで全国どこからでもオンラインで進められます。</p>
+<ul>
+<li><a href="/document/">無料で資料をダウンロードする</a></li>
+<li><a href="/estimate/">料金をシミュレーションする</a></li>
+<li><a href="/contact/">オリジナル開発の見積りを相談する</a></li>
+</ul>]]></content:encoded>
+<excerpt:encoded><![CDATA[飲食店や美容サロンなどの店舗アプリで、常連のお客様を増やす方法を解説。ポイントカード、クーポン、プッシュ通知の効果的な使い方と、配信の頻度、成果の測り方を紹介します。]]></excerpt:encoded>
+<wp:post_id>9106</wp:post_id>
+<wp:post_date><![CDATA[2026-10-15 09:00:00]]></wp:post_date>
+<wp:post_date_gmt><![CDATA[0000-00-00 00:00:00]]></wp:post_date_gmt>
+<wp:comment_status><![CDATA[closed]]></wp:comment_status>
+<wp:ping_status><![CDATA[closed]]></wp:ping_status>
+<wp:post_name><![CDATA[shop-app-repeat-customers]]></wp:post_name>
+<wp:status><![CDATA[draft]]></wp:status>
+<wp:post_parent>0</wp:post_parent><wp:menu_order>0</wp:menu_order>
+<wp:post_type><![CDATA[post]]></wp:post_type>
+<wp:post_password><![CDATA[]]></wp:post_password><wp:is_sticky>0</wp:is_sticky>
+<category domain="category" nicename="app-industry"><![CDATA[業種別の活用]]></category>
+</item>
+</channel></rss>

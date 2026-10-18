@@ -108,7 +108,9 @@ add_action( 'template_redirect', function () {
 		return;
 	}
 	wp_set_current_user( $user->ID );
-	wp_safe_redirect( apprex_mypage_url() );
+	// AIスタジオなど、ログイン元のページへ戻す（サイト内のみ）。
+	$back = isset( $_POST['apprex_redirect'] ) ? wp_validate_redirect( esc_url_raw( wp_unslash( $_POST['apprex_redirect'] ) ), '' ) : '';
+	wp_safe_redirect( $back ? $back : apprex_mypage_url() );
 	exit;
 }, 1 );
 
@@ -184,7 +186,12 @@ function apprex_mypage_render() {
 	echo '</div>';
 
 	if ( empty( $ids ) ) {
-		echo '<p style="margin-top:20px;">現在ご契約情報が見つかりません。お手数ですが担当者までお問い合わせください。</p>';
+		if ( get_user_meta( $user->ID, 'apprex_studio', true ) ) {
+			// AIスタジオの無料会員（契約前）。
+			echo '<p style="margin-top:20px;">ご契約前のため、契約・お支払いの情報はまだありません。アプリのデザイン・仕様書づくりと開発のご相談は、上の「AIスタジオ」から進められます。</p>';
+		} else {
+			echo '<p style="margin-top:20px;">現在ご契約情報が見つかりません。お手数ですが担当者までお問い合わせください。</p>';
+		}
 		if ( current_user_can( 'manage_options' ) ) {
 			echo '<p style="margin-top:10px;padding:10px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:13px;color:#92400e;">【管理者向けヒント】このアカウント（' . esc_html( $user->user_email ) . '）に紐づく契約がありません。契約の「メール」を同じにするか、契約画面の「会員アカウントを発行する」で発行したアカウントでログインすると表示されます。</p>';
 		}
@@ -475,4 +482,9 @@ add_action( 'admin_notices', function () {
 		delete_transient( 'apprex_member_cred_' . $cid );
 	}
 	echo '</div>';
+} );
+
+/* 会員（投稿権限のないユーザー）にはサイト上部のWordPressツールバーを出さない。 */
+add_filter( 'show_admin_bar', function ( $show ) {
+	return current_user_can( 'edit_posts' ) ? $show : false;
 } );

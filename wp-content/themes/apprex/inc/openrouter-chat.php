@@ -171,6 +171,10 @@ PROMPT;
 	// よくある質問（学習データとして注入）。
 	if ( function_exists( 'apprex_default_faqs' ) ) {
 		$faqs = apprex_default_faqs();
+		// 新しい料金体系・AIスタジオのFAQを優先して先頭に入れる。
+		if ( function_exists( 'apprex_rn_enabled' ) && apprex_rn_enabled() ) {
+			$faqs = array_merge( apprex_rn_faqs(), $faqs );
+		}
 		if ( $faqs ) {
 			$prompt .= "\n\n# よくある質問（参考にし、自然な言葉で答える）\n";
 			foreach ( $faqs as $f ) {

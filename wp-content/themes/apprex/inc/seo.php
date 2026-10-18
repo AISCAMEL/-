@@ -78,6 +78,14 @@ function apprex_seo_pages() {
 			'title' => 'パートナー募集',
 			'desc'  => 'APPREXのパートナー（代理店・紹介）を募集しています。アプリ開発・ホームページ制作で一緒にビジネスを広げませんか。',
 		),
+		'studio'       => array(
+			'title' => 'AIスタジオ｜無料でアプリのデザインと仕様書を作成',
+			'desc'  => '無料会員登録で使えるAPPREXの「AIスタジオ」。業種と店名を入れるだけでAIがアプリの画面を5つデザインし、企画書・仕様書・画面構成図と概算費用まで自動で作成。そのまま開発の相談・オンラインミーティングへ進めます。',
+		),
+		'matching-app' => array(
+			'title' => 'マッチングアプリ開発｜開発費300万円〜・最短1ヶ月',
+			'desc'  => 'マッチングアプリ開発は開発費300万円〜・月額保守7万円〜。スキル・ビジネス・人材・フリマなど、会員登録・検索・メッセージ・決済・管理画面まで。Flutterで iOS／Android を同時開発し、一般的なフルスクラッチより低価格・短期間で公開します。',
+		),
 		'blog'        => array(
 			'title' => 'お役立ちブログ',
 			'desc'  => 'アプリ開発・ノーコード・集客・DXに関するお役立ち情報を発信。APPREX編集部によるコラムをお届けします。',
@@ -93,6 +101,12 @@ function apprex_seo_pages() {
 function apprex_current_seo() {
 	$map = apprex_seo_pages();
 	if ( is_front_page() ) {
+		if ( function_exists( 'apprex_rn_enabled' ) && apprex_rn_enabled() ) {
+			return array(
+				'title' => 'アプリ開発を格安・短納期で｜ノーコードからオリジナル開発まで',
+				'desc'  => 'アプリ開発のAPPREX（アプリックス）。月額19,800円〜のノーコードアプリから、マッチングアプリなどのオリジナルアプリ開発（iOS／Android同時開発）まで格安・短納期で対応。無料会員登録でAIがアプリのデザインと仕様書を作成。全国オンライン対応。',
+			);
+		}
 		return $map['front'];
 	}
 	if ( is_page() ) {
@@ -101,9 +115,9 @@ function apprex_current_seo() {
 			return $map[ $post->post_name ];
 		}
 	}
-	if ( is_post_type_archive( 'apprex_case' ) || is_singular( 'apprex_case' ) ) {
+	if ( is_post_type_archive( 'case' ) || is_singular( 'case' ) ) {
 		return array(
-			'title' => is_singular( 'apprex_case' ) ? get_the_title() : '導入事例',
+			'title' => is_singular( 'case' ) ? get_the_title() : '導入事例',
 			'desc'  => 'APPREXで開発されたアプリの導入事例をご紹介。業種別の活用方法や成果から、自社アプリのイメージを具体化できます。',
 		);
 	}
@@ -147,7 +161,7 @@ add_filter( 'document_title_parts', function ( $parts ) {
 	$seo = apprex_current_seo();
 	if ( is_front_page() ) {
 		$parts = array(
-			'title' => apprex_seo_pages()['front']['title'],
+			'title' => $seo ? $seo['title'] : apprex_seo_pages()['front']['title'],
 			'site'  => APPREX_BRAND,
 		);
 		return $parts;
@@ -344,6 +358,13 @@ function apprex_head_meta() {
 
 	// OG 画像（既定は専用の横長バナー 1200×630）。
 	$img   = APPREX_URI . '/assets/images/apprex-og.jpg';
+	if ( function_exists( 'apprex_rn_enabled' ) ) {
+		if ( is_front_page() && apprex_rn_enabled() ) {
+			$img = apprex_rn_img( '14_ogp.jpg' );
+		} elseif ( is_page( 'matching-app' ) ) {
+			$img = apprex_rn_img( '05_case-matching.jpg' );
+		}
+	}
 	$img_w = 1200;
 	$img_h = 630;
 	if ( is_singular() && has_post_thumbnail() ) {
@@ -419,6 +440,15 @@ function apprex_jsonld() {
 		'email'        => function_exists( 'apprex_contact_email' ) ? apprex_contact_email() : '',
 		'foundingDate' => '2018-10',
 		'founder'      => array( '@type' => 'Person', 'name' => '吉田一平' ),
+		'slogan'       => 'ノーコードで、アプリもホームページも。全国対応・初期費用0円・最短2週間。',
+		'knowsAbout'   => array( 'ノーコードアプリ開発', 'オリジナルアプリ開発', 'マッチングアプリ開発', 'モバイルアプリ制作', 'ホームページ制作', '店舗アプリ', '予約システム', 'プッシュ通知', 'DX支援', 'MEO・SEO集客' ),
+		'contactPoint' => array(
+			'@type'             => 'ContactPoint',
+			'contactType'       => 'customer support',
+			'email'             => function_exists( 'apprex_contact_email' ) ? apprex_contact_email() : '',
+			'availableLanguage' => 'Japanese',
+			'areaServed'        => 'JP',
+		),
 		'address'      => array(
 			'@type'           => 'PostalAddress',
 			'addressCountry'  => 'JP',
@@ -498,8 +528,10 @@ add_action( 'wp_head', 'apprex_jsonld', 5 );
  */
 function apprex_faq_schema() {
 	$items = array();
-	if ( function_exists( 'apprex_default_faqs' ) ) {
-		foreach ( apprex_default_faqs() as $faq ) {
+	// 新デザインのトップは、画面に表示しているFAQと構造化データを一致させる。
+	$faqs = ( is_front_page() && function_exists( 'apprex_rn_enabled' ) && apprex_rn_enabled() ) ? apprex_rn_faqs() : ( function_exists( 'apprex_default_faqs' ) ? apprex_default_faqs() : array() );
+	if ( $faqs ) {
+		foreach ( $faqs as $faq ) {
 			$items[] = array(
 				'@type'          => 'Question',
 				'name'           => $faq['q'],
@@ -553,6 +585,10 @@ add_action( 'template_redirect', function () {
 	echo "- 強み：高性能・低価格（従来の1/10）・スピード公開（最短2週間）・専任サポート・分析機能\n";
 	echo "- 導入実績：8,000社以上 / 対応：iOS・Android\n";
 	echo "- 窓口：チャット・メール・オンライン相談（平日10:00〜18:00、電話窓口なし）\n\n";
+	echo "## 対応エリア\n";
+	echo "- 全国47都道府県に対応。打ち合わせ〜制作〜運用までオンラインで完結（訪問不要）。北海道から沖縄まで対応。\n\n";
+	echo "## 対応業種\n";
+	echo "- 飲食店・美容サロン・小売・EC・士業・教育/スクール・不動産・医療/クリニック・BtoB など業種を問わず対応。\n\n";
 	echo "## 料金\n{$pricing}\n\n";
 	echo "## 主要ページ\n";
 	echo "- トップ: {$home}\n";
@@ -565,5 +601,19 @@ add_action( 'template_redirect', function () {
 	echo "- 資料請求: {$home}document/\n";
 	echo "- 無料体験: {$home}free-trial/\n";
 	echo "- お問い合わせ: {$home}contact/\n";
+	echo "- AIスタジオ（無料会員・AIでデザイン/仕様書）: {$home}studio/\n";
+	echo "- マッチングアプリ開発: {$home}matching-app/\n";
+	echo "- ブログ: {$home}blog/\n\n";
+	echo "## よくある質問\n";
+	echo "- Q. 地方でも対応してもらえますか？ A. はい。全国どこでもオンラインで完結するため、47都道府県どこからでも依頼できます（訪問不要）。\n";
+	echo "- Q. 費用はどのくらい？ A. セルフプランは初期費用0円・月額19,800円〜。制作をおまかせするプランは初期費用300,000円〜（キャンペーン時は半額）。オリジナル開発は個別見積り。\n";
+	echo "- Q. 公開までの期間は？ A. 最短2週間（内容により前後）。\n";
+	echo "- Q. プログラミングの知識は必要？ A. 不要。無料会員登録後、AIスタジオでデザインと仕様書を作り、そのまま開発の相談に進めます。\n";
+	echo "- Q. どんな業種に対応？ A. 飲食・美容・小売・士業・教育・不動産・医療・BtoBなど業種を問わず対応。マッチングアプリ等のオリジナル開発も可能。\n\n";
+	echo "## 会社情報\n";
+	echo "- 運営会社: 合同会社アイズ（サービス名 APPREX／アプリックス）\n";
+	echo "- 所在地: 福島県いわき市四倉町細谷字大町1番\n";
+	echo "- 設立: 2018年10月\n";
+	echo "- 対応時間: 平日10:00〜18:00（オンライン・電話窓口なし）\n";
 	exit;
 } );
