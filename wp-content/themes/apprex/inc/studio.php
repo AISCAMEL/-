@@ -336,6 +336,7 @@ add_action( 'wp_enqueue_scripts', function () {
 		'loggedIn'  => is_user_logged_in(),
 		'mypage'    => apprex_mypage_url(),
 		'studioUrl' => apprex_studio_url(),
+		'manual'    => function_exists( 'apprex_manual_url' ) ? apprex_manual_url() : '',
 	);
 	if ( is_user_logged_in() ) {
 		$u          = wp_get_current_user();

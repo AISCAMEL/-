@@ -39,6 +39,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<h4><?php esc_html_e( 'サポート・会社', 'apprex' ); ?></h4>
 				<ul>
 					<li><a href="<?php echo esc_url( apprex_page_url( 'faq' ) ); ?>"><?php esc_html_e( 'よくある質問', 'apprex' ); ?></a></li>
+					<?php if ( function_exists( 'apprex_rn_enabled' ) && apprex_rn_enabled() ) : ?>
+						<li><a href="<?php echo esc_url( apprex_studio_url() ); ?>"><?php esc_html_e( 'AIスタジオ（無料）', 'apprex' ); ?></a></li>
+						<li><a href="<?php echo esc_url( apprex_manual_url() ); ?>"><?php esc_html_e( 'アプリの作り方マニュアル', 'apprex' ); ?></a></li>
+						<li><a href="<?php echo esc_url( apprex_page_url( 'matching-app' ) ); ?>"><?php esc_html_e( 'マッチングアプリ開発', 'apprex' ); ?></a></li>
+					<?php endif; ?>
 					<li><a href="<?php echo esc_url( apprex_page_url( 'estimate' ) ); ?>"><?php esc_html_e( '見積もり・発注', 'apprex' ); ?></a></li>
 					<li><a href="<?php echo esc_url( apprex_page_url( 'free-trial' ) ); ?>"><?php esc_html_e( '無料体験', 'apprex' ); ?></a></li>
 					<li><a href="<?php echo esc_url( apprex_page_url( 'document' ) ); ?>"><?php esc_html_e( '資料請求', 'apprex' ); ?></a></li>

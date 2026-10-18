@@ -86,6 +86,10 @@ function apprex_seo_pages() {
 			'title' => 'マッチングアプリ開発｜開発費300万円〜・最短1ヶ月',
 			'desc'  => 'マッチングアプリ開発は開発費300万円〜・月額保守7万円〜。スキル・ビジネス・人材・フリマなど、会員登録・検索・メッセージ・決済・管理画面まで。Flutterで iOS／Android を同時開発し、一般的なフルスクラッチより低価格・短期間で公開します。',
 		),
+		'manual'       => array(
+			'title' => 'アプリの作り方マニュアル｜AIスタジオの使い方から公開後の運用まで',
+			'desc'  => 'アプリの作り方を画面ごとに解説。AIスタジオでのデザイン・本格デザイン画像・仕様書・企画書の作り方、開発の相談、公開までに準備するもの、セルフプランの進め方、公開後の運用のコツまで。わからないところはAIガイドに質問できます。',
+		),
 		'blog'        => array(
 			'title' => 'お役立ちブログ',
 			'desc'  => 'アプリ開発・ノーコード・集客・DXに関するお役立ち情報を発信。APPREX編集部によるコラムをお届けします。',
@@ -604,6 +608,7 @@ add_action( 'template_redirect', function () {
 	if ( function_exists( 'apprex_rn_public' ) && apprex_rn_public() ) {
 		echo "- AIスタジオ（無料会員・AIでデザイン/仕様書）: {$home}studio/\n";
 		echo "- マッチングアプリ開発: {$home}matching-app/\n";
+		echo "- アプリの作り方マニュアル: {$home}manual/\n";
 	}
 	echo "- ブログ: {$home}blog/\n\n";
 	echo "## よくある質問\n";

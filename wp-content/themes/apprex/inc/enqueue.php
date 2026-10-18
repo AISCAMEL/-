@@ -51,6 +51,14 @@ function apprex_enqueue_assets() {
 		$rest['member'] = apprex_chat_member_info();
 	}
 
+	// ページに合わせたチャット（あいさつ・質問ボタン・AIへの指示）。
+	if ( function_exists( 'apprex_chat_page_context' ) ) {
+		$page_ctx = apprex_chat_page_context();
+		if ( $page_ctx ) {
+			$rest['page'] = $page_ctx;
+		}
+	}
+
 	// 共有REST設定は常時読み込む apprex-main に付与（フォーム等が依存するため）。
 	wp_localize_script( 'apprex-main', 'APPREX_REST', $rest );
 

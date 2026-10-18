@@ -337,3 +337,4 @@
 .rn-studio .aid-main{grid-template-columns:minmax(0,1fr)}
 .rn-studio .aid-zoom{width:100%;min-width:0}
 @media(max-width:640px){.rn-studio .saved{display:none}.rn-studio .top-r{gap:6px}.rn-studio .top-r a{padding:4px 9px}.rn-studio .brand{font-size:1.05rem}}
+.rn-studio .help-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}

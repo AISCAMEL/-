@@ -305,6 +305,15 @@ function apprex_rest_chat( WP_REST_Request $request ) {
 		}
 	}
 
+	// ページに合わせた案内（AIスタジオでは今いる工程のマニュアルを渡す）。
+	if ( function_exists( 'apprex_chat_page_prompt' ) ) {
+		$page_key = sanitize_key( (string) $request->get_param( 'page' ) );
+		$page_ctx = apprex_chat_page_prompt( $page_key, sanitize_key( (string) $request->get_param( 'step' ) ), absint( $request->get_param( 'post' ) ) );
+		if ( '' !== $page_ctx ) {
+			$system .= "\n\n# このページでの案内（最優先で従う）\n" . $page_ctx;
+		}
+	}
+
 	$payload_messages = array_merge(
 		array( array( 'role' => 'system', 'content' => $system ) ),
 		$messages
@@ -340,6 +349,13 @@ function apprex_rest_chat( WP_REST_Request $request ) {
 	$out = array( 'reply' => $reply );
 	if ( function_exists( 'apprex_chat_suggestions' ) ) {
 		$out['suggestions'] = apprex_chat_suggestions();
+	}
+	// ページに合わせたリンクボタン（AIスタジオなら今の画面のマニュアル等）。
+	if ( function_exists( 'apprex_chat_page_links' ) && isset( $page_key ) ) {
+		$links = apprex_chat_page_links( $page_key, sanitize_key( (string) $request->get_param( 'step' ) ) );
+		if ( $links ) {
+			$out['suggestions'] = $links;
+		}
 	}
 	if ( $captured ) {
 		$out['lead_captured'] = true;

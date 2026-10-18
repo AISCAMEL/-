@@ -51,12 +51,26 @@ function apprex_studio_url() {
 	return apprex_page_url( 'studio' );
 }
 
+/** リニューアルで追加した固定ページ（slug => [タイトル, テンプレート]）。 */
+function apprex_rn_pages() {
+	return array(
+		'studio'       => array( 'AIスタジオ', 'page-templates/page-studio.php' ),
+		'matching-app' => array( 'マッチングアプリ開発', 'page-templates/page-matching.php' ),
+		'manual'       => array( 'アプリの作り方マニュアル', 'page-templates/page-manual.php' ),
+	);
+}
+
+/** リニューアルで追加したテンプレート一覧。 */
+function apprex_rn_templates() {
+	return wp_list_pluck( array_values( apprex_rn_pages() ), 1 );
+}
+
 /** 新デザインのCSSを読み込むページか。 */
 function apprex_rn_is_page() {
 	if ( is_front_page() && apprex_rn_enabled() ) {
 		return true;
 	}
-	return is_page_template( array( 'page-templates/page-studio.php', 'page-templates/page-matching.php' ) );
+	return is_page_template( apprex_rn_templates() );
 }
 
 /* -------------------------------------------------------------------------
@@ -117,7 +131,7 @@ add_action( 'template_redirect', function () {
 	if ( apprex_rn_public() || current_user_can( 'edit_posts' ) || ! is_page() ) {
 		return;
 	}
-	if ( is_page_template( array( 'page-templates/page-studio.php', 'page-templates/page-matching.php' ) ) ) {
+	if ( is_page_template( apprex_rn_templates() ) ) {
 		// 会員ログインの送信（POST）は通す。
 		if ( 'POST' === ( isset( $_SERVER['REQUEST_METHOD'] ) ? $_SERVER['REQUEST_METHOD'] : '' ) ) {
 			return;
@@ -129,7 +143,7 @@ add_action( 'template_redirect', function () {
 
 /* 公開前は、新しいページを検索エンジンに登録させない。 */
 add_filter( 'wp_robots', function ( $robots ) {
-	if ( ! apprex_rn_public() && is_page_template( array( 'page-templates/page-studio.php', 'page-templates/page-matching.php' ) ) ) {
+	if ( ! apprex_rn_public() && is_page_template( apprex_rn_templates() ) ) {
 		$robots['noindex'] = true;
 	}
 	return $robots;
@@ -137,7 +151,7 @@ add_filter( 'wp_robots', function ( $robots ) {
 add_filter( 'wp_sitemaps_posts_query_args', function ( $args, $post_type ) {
 	if ( 'page' === $post_type && ! apprex_rn_public() ) {
 		$ids = array();
-		foreach ( array( 'studio', 'matching-app' ) as $slug ) {
+		foreach ( array_keys( apprex_rn_pages() ) as $slug ) {
 			$p = get_page_by_path( $slug );
 			if ( $p ) {
 				$ids[] = $p->ID;
@@ -173,16 +187,13 @@ add_filter( 'body_class', function ( $classes ) {
 } );
 
 /* -------------------------------------------------------------------------
- * 固定ページの自動作成（AIスタジオ／マッチングアプリ開発）
+ * 固定ページの自動作成（AIスタジオ／マッチングアプリ開発／作り方マニュアル）
  * ---------------------------------------------------------------------- */
 add_action( 'init', function () {
-	if ( get_option( 'apprex_rn_pages_created' ) ) {
+	if ( (int) get_option( 'apprex_rn_pages_created' ) >= 2 ) {
 		return;
 	}
-	$defs = array(
-		'studio'       => array( 'AIスタジオ', 'page-templates/page-studio.php' ),
-		'matching-app' => array( 'マッチングアプリ開発', 'page-templates/page-matching.php' ),
-	);
+	$defs = apprex_rn_pages();
 	foreach ( $defs as $slug => $def ) {
 		if ( get_page_by_path( $slug ) ) {
 			continue;
@@ -203,7 +214,7 @@ add_action( 'init', function () {
 	if ( ! term_exists( 'news', 'category' ) ) {
 		wp_insert_term( 'お知らせ', 'category', array( 'slug' => 'news' ) );
 	}
-	update_option( 'apprex_rn_pages_created', 1 );
+	update_option( 'apprex_rn_pages_created', 2 );
 } );
 
 /* -------------------------------------------------------------------------

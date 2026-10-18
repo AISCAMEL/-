@@ -443,15 +443,17 @@ function renderProg(){
   var cur=Math.min(S.prog,STEPS.length-1), allDone=S.prod>=PROD.length;
   $('prog').innerHTML=STEPS.map(function(s,i){var c=(i<S.prog||allDone)?'done':(i===cur?'cur':'');return '<li class="'+c+'"><span class="n">'+(c==='done'?'✓':i+1)+'</span>'+s+'</li>';}).join('');
 }
+var MANUAL_ANCHOR={design:'design',spec:'spec',docs:'docs',consult:'consult',meeting:'meeting',quote:'quote',prod:'prod'};
 function renderSide(){
   $('side').innerHTML=VIEWS.map(function(v,i){var done=S.prog>v[2]||(v[0]==='prod'&&S.prod>=PROD.length);return '<button type="button" class="nav" data-view="'+v[0]+'"'+(S.view===v[0]?' aria-current="page"':'')+'><i>'+(i+1)+'</i>'+v[1]+(done?'<span class="st">完了</span>':'')+'</button>';}).join('')
-  +'<div class="help"><b style="color:var(--navy)">困ったときは</b><br>画面右下のAIチャット、または平日10–18時は担当者にメッセージで相談できます。</div>';
+  +'<div class="help"><b style="color:var(--navy)">困ったときは</b><br>今の画面の使い方を、AIガイドがその場で案内します。<div class="help-acts"><button type="button" class="btn btn--pri btn--sm" data-go="askGuide">AIガイドに聞く</button>'+(CFG.manual?'<a class="btn btn--line btn--sm" href="'+esc(CFG.manual+'#'+(MANUAL_ANCHOR[S.view]||''))+'" target="_blank" rel="noopener">この画面の使い方</a>':'')+'</div></div>';
 }
 function render(){
   renderProg(); renderSide();
   var v=S.view, h='';
   if(v==='design') h=vDesign(); else if(v==='spec') h=vSpec(); else if(v==='docs') h=vDocs(); else if(v==='consult') h=vConsult(); else if(v==='meeting') h=vMeeting(); else if(v==='quote') h=vQuote(); else h=vProd();
   $('stMain').innerHTML=h; bind(); save();
+  try{ document.dispatchEvent(new CustomEvent('apprex:studio-step',{detail:{view:S.view}})); }catch(e){}
   var ms=$('msgs'); if(ms) ms.scrollTop=ms.scrollHeight;
 }
 function go(view){ S.view=view; S._aiMsg=''; render(); try{window.scrollTo({top:0,behavior:'smooth'});}catch(e){window.scrollTo(0,0);} }
@@ -505,6 +507,7 @@ document.addEventListener('click',function(e){
   if(t.dataset.day){ S._day=+t.dataset.day; S._time=null; render(); return; }
   if(t.dataset.time){ S._time=t.dataset.time; render(); return; }
   var g=t.dataset.go;
+  if(g==='askGuide'){ try{ document.dispatchEvent(new CustomEvent('apprex:chat-open')); }catch(e){} return; }
   if(g==='aiDesign'){ var ta=$('aidText'); runAiDesign(ta?ta.value:'',t); return; }
   if(g==='aiPlan'){ t.disabled=true; t.textContent='AIが書いています…';
     api('studio/ai-plan',{brief:brief(),features:onFeat().map(function(f){return f.n;})}).then(function(b){ S.aiPlan=b.plan; S._doc='plan'; save(); render(); }).catch(function(x){ t.disabled=false; t.textContent='AIで企画書の文章を作る'; alert(x.message); }); return; }

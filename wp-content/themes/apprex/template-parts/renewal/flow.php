@@ -55,6 +55,7 @@ if ( ! defined( 'ABSPATH' ) ) {
         <div class="roles"><div class="role you"><b>お客様</b>公開日を決める</div><div class="role us"><b>APPREX</b>申請・審査対応と公開後の運用</div></div>
       </div><img class="sthumb" src="<?php echo esc_url( apprex_rn_img( '12_flow-launch.jpg' ) ); ?>" alt="アプリの公開" width="1376" height="768" decoding="async" loading="lazy"></div>
     </div>
+    <p class="manual-link"><a href="<?php echo esc_url( apprex_manual_url() ); ?>">画面ごとの操作は「アプリの作り方マニュアル」へ →</a></p>
     <div class="total"><span>公開までの目安：ノーコード <b>最短2週間</b></span><span>オリジナル開発 <b>最短1ヶ月〜</b></span><span>（ストア審査期間を含む）</span></div>
   </div>
 </section>

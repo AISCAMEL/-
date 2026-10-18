@@ -121,6 +121,48 @@
 		}
 		buildMemberQuick();
 
+		// --- ページに合わせたチャット（inc/manual.php の apprex_chat_page_context） ---
+		var pg = cfg.page || null;
+		var step = (pg && pg.step) || '';
+		function setQuick(list) {
+			if (!quick || !list || !list.length) { return; }
+			Array.prototype.forEach.call(quick.querySelectorAll('button[data-q]'), function (b) { b.remove(); });
+			var opEl = document.getElementById('apprex-chat-operator');
+			list.forEach(function (q) {
+				var b = document.createElement('button');
+				b.type = 'button';
+				b.setAttribute('data-q', q);
+				b.textContent = q;
+				quick.insertBefore(b, opEl || null);
+			});
+		}
+		function stepInfo() { return (pg && pg.steps && pg.steps[step]) || null; }
+		if (pg) {
+			setQuick(stepInfo() ? stepInfo().quick : pg.quick);
+			var hintText = hint && hint.querySelector('.apprex-chat-hint__text');
+			if (hintText && pg.hint) { hintText.textContent = pg.hint; }
+		}
+		// AIスタジオ：画面（工程）が変わったら、質問ボタンと案内を切り替える。
+		document.addEventListener('apprex:studio-step', function (e) {
+			if (!pg || !pg.steps || !e.detail || !pg.steps[e.detail.view] || step === e.detail.view) { return; }
+			step = e.detail.view;
+			setQuick(stepInfo().quick);
+			if (greeted && widget.classList.contains('is-open')) {
+				addMessage('assistant', '「' + stepInfo().title + '」の画面ですね。この画面の使い方を聞いてください。');
+				renderSuggestions([stepInfo().link]);
+			}
+		});
+		// AIスタジオの「AIガイドに聞く」ボタンなどから開く。
+		document.addEventListener('apprex:chat-open', function () { openWidget(); });
+		// ページ内の「AIガイドに聞く」ボタン（data-ask）から質問を送る。
+		document.addEventListener('click', function (e) {
+			var a = e.target.closest && e.target.closest('[data-ask]');
+			if (!a) { return; }
+			e.preventDefault();
+			openWidget();
+			send(a.getAttribute('data-ask'));
+		});
+
 		function renderSuggestions(list) {
 			if (!list || !list.length) { return; }
 			var wrap = document.createElement('div');
@@ -148,7 +190,10 @@
 			if (!greeted) {
 				greeted = true;
 				var member = cfg.member || {};
-				if (member.loggedIn) {
+				if (pg && pg.greet) {
+					addMessage('assistant', pg.greet);
+					renderSuggestions((stepInfo() ? [stepInfo().link] : []).concat(pg.links || []));
+				} else if (member.loggedIn) {
 					addMessage('assistant', (member.name || 'お客様') + ' 様、いつもありがとうございます🙂 ご契約・お支払い・更新日のご確認や、マイページのご案内ができます。お気軽にどうぞ。');
 					renderSuggestions([{ label: 'マイページ', url: member.mypageUrl }]);
 				} else {
@@ -245,7 +290,7 @@
 			fetch(cfg.root + 'chat', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': cfg.nonce },
-				body: JSON.stringify({ messages: history, session: sessionId })
+				body: JSON.stringify({ messages: history, session: sessionId, page: pg ? pg.key : '', step: step, post: (pg && pg.post) || 0 })
 			})
 				.then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
 				.then(function (res) {
