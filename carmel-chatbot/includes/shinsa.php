@@ -27,7 +27,7 @@ function carmel_cb_handle_shinsa_check( WP_REST_Request $r ) {
 	$rate  = sanitize_text_field( $b['rate'] ?? '' );      // 表示した金利目安
 	$ans   = is_array( $b['answers'] ?? null ) ? $b['answers'] : array(); // ラベルの連想配列
 
-	// intake からお名前・メールを取得
+	// お名前・メール：intake（transient）優先、無ければ本文（診断前に取得した値）で補う
 	$name = ''; $email = ''; $tel = '';
 	if ( function_exists( 'carmel_cb_visitor_key' ) && $sid !== '' ) {
 		$v = get_transient( carmel_cb_visitor_key( $sid ) );
@@ -36,6 +36,8 @@ function carmel_cb_handle_shinsa_check( WP_REST_Request $r ) {
 			$email = sanitize_email( $v['email'] ?? '' );
 		}
 	}
+	if ( $name === '' )  { $name  = sanitize_text_field( $b['name'] ?? '' ); }
+	if ( $email === '' ) { $email = sanitize_email( $b['email'] ?? '' ); }
 
 	// 回答を読みやすいテキストに整形
 	$rank_ja = $rank === 'high' ? '高い' : ( $rank === 'mid' ? '中' : '要相談' );

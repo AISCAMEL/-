@@ -260,8 +260,9 @@
 			if (cfg.reassureOn && cfg.reassureMsg) { renderReassure(cfg.reassureMsg); }
 			// キャンペーンバナー：期間中でONなら冒頭に表示
 			if (cfg.campaign && cfg.campaign.showBanner && cfg.campaign.title) { renderCampaignBanner(cfg.campaign); }
-			// お名前・メール確認モード：先に連絡先を伺い、その後に用件へ進む
-			if (cfg.intakeOn && !visitor.done) {
+			// お名前・メール確認モード：timing="start" のときだけ最初に連絡先を伺う。
+			// timing="shinsa"（おすすめ）は、先に会話で価値を出し、診断の結果前に連絡先を取得する。
+			if (cfg.intakeOn && cfg.intakeTiming !== "shinsa" && !visitor.done) {
 				showVisitorForm();
 				setTimeout(function () { focusInput(); }, 100);
 				return;
@@ -445,8 +446,8 @@
 	function sendText(raw) {
 		var text = (raw || "").trim();
 		if (!text || sendBtn.disabled) return;
-		// お名前・メール未確認のうちは会話を始めない（intake優先）
-		if (cfg.intakeOn && !visitor.done && !ho.live && !convo.engaged) { return; }
+		// timing="start" のときだけ、連絡先を聞くまで会話を止める。shinsa時は会話を妨げない。
+		if (cfg.intakeOn && cfg.intakeTiming !== "shinsa" && !visitor.done && !ho.live && !convo.engaged) { return; }
 		input.value = "";
 		autoGrow();
 		clearIdle(); // 送信したので「無操作の再打診」タイマーを止める
@@ -1379,8 +1380,8 @@
 		if (sr) sr.innerHTML = "";
 		// 会話がまだ始まっていなければ開始してから送る
 		if (!chatStarted) { startChat(); }
-		// intake未完了なら、まず案内（会話フローに合わせる）
-		if (cfg.intakeOn && !visitor.done && !ho.live && !convo.engaged) {
+		// timing="start" のときだけ、連絡先を先に求める
+		if (cfg.intakeOn && cfg.intakeTiming !== "shinsa" && !visitor.done && !ho.live && !convo.engaged) {
 			addBubble("bot", "先にお名前とメールをご入力いただけますか？そのあとで「" + question + "」にお答えします");
 			return;
 		}
@@ -1511,50 +1512,98 @@
 			form.remove();
 			var extraHtml = "";
 			if (price > 0) { extraHtml = '<div class="ccb-shinsa-extra">この条件での月々目安（60回）：約 ' + escapeHtml(ccbYen(ccbMonthly(price, 60, rateMid))) + ' / 月</div>'; }
-			var banner = document.createElement("div");
-			banner.className = "ccb-msg bot";
-			banner.innerHTML =
-				'<div class="ccb-shinsa-result ccb-shinsa-' + rank + '">' +
-					'<div class="ccb-shinsa-head">' +
-						'<span class="ccb-shinsa-badge">' + escapeHtml(label.trim()) + '</span>' +
-						'<span class="ccb-shinsa-score">' + score + '<small>/100</small></span>' +
-					'</div>' +
-					'<div class="ccb-shinsa-meter"><span style="width:' + score + '%"></span></div>' +
-					'<div class="ccb-shinsa-rate">金利の目安：<strong>' + escapeHtml(rate) + '</strong>' +
-						(ratioNote ? ' <span class="ccb-shinsa-ratio">' + escapeHtml(ratioNote) + '</span>' : '') + '</div>' +
-					extraHtml +
-					'<p class="ccb-shinsa-msg">' + escapeHtml(msg) + '</p>' +
-					'<p class="ccb-shinsa-note">※ あくまで自己診断の目安です。実際の可否は本審査によります。</p>' +
-				'</div>';
-			msgBox.appendChild(banner);
-			msgBox.scrollTop = msgBox.scrollHeight;
 
-			// サーバーへ保存＋通知（お名前・メールは intake から）
-			if (cfg.shinsaOn && cfg.shinsaUrl) {
-				var answers = {
-					"雇用形態": pickLabel("emp"), "勤続年数": pickLabel("ten"), "年収": pickLabel("inc"),
-					"金融事故": pickLabel("acc"), "現在の未払い": pickLabel("due"), "他社借入": pickLabel("brw"),
-					"他社審査": pickLabel("app"), "給料明細": pickLabel("pay"), "頭金": pickLabel("dwn")
-				};
-				if (price > 0) { answers["希望車両価格"] = price.toLocaleString("ja-JP") + "円"; }
-				try {
-					fetch(cfg.shinsaUrl, {
-						method: "POST", headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({ session_id: sessionId, score: score, rank: rank, rate: rate, answers: answers, page: location.href }),
-						keepalive: true
-					}).catch(function () {});
-				} catch (e) {}
+			// 結果を表示＋保存＋次の導線（連絡先取得の後に実行）
+			function showShinsaResult() {
+				var banner = document.createElement("div");
+				banner.className = "ccb-msg bot";
+				banner.innerHTML =
+					'<div class="ccb-shinsa-result ccb-shinsa-' + rank + '">' +
+						'<div class="ccb-shinsa-head">' +
+							'<span class="ccb-shinsa-badge">' + escapeHtml(label.trim()) + '</span>' +
+							'<span class="ccb-shinsa-score">' + score + '<small>/100</small></span>' +
+						'</div>' +
+						'<div class="ccb-shinsa-meter"><span style="width:' + score + '%"></span></div>' +
+						'<div class="ccb-shinsa-rate">金利の目安：<strong>' + escapeHtml(rate) + '</strong>' +
+							(ratioNote ? ' <span class="ccb-shinsa-ratio">' + escapeHtml(ratioNote) + '</span>' : '') + '</div>' +
+						extraHtml +
+						'<p class="ccb-shinsa-msg">' + escapeHtml(msg) + '</p>' +
+						'<p class="ccb-shinsa-note">※ あくまで自己診断の目安です。実際の可否は本審査によります。</p>' +
+					'</div>';
+				msgBox.appendChild(banner);
+				msgBox.scrollTop = msgBox.scrollHeight;
+
+				// サーバーへ保存＋通知（お名前・メールは intake または直前の取得から）
+				if (cfg.shinsaOn && cfg.shinsaUrl) {
+					var answers = {
+						"雇用形態": pickLabel("emp"), "勤続年数": pickLabel("ten"), "年収": pickLabel("inc"),
+						"金融事故": pickLabel("acc"), "現在の未払い": pickLabel("due"), "他社借入": pickLabel("brw"),
+						"他社審査": pickLabel("app"), "給料明細": pickLabel("pay"), "頭金": pickLabel("dwn")
+					};
+					if (price > 0) { answers["希望車両価格"] = price.toLocaleString("ja-JP") + "円"; }
+					try {
+						fetch(cfg.shinsaUrl, {
+							method: "POST", headers: { "Content-Type": "application/json" },
+							body: JSON.stringify({ session_id: sessionId, name: (visitor && visitor.name) || "", email: (visitor && visitor.email) || "", score: score, rank: rank, rate: rate, answers: answers, page: location.href }),
+							keepalive: true
+						}).catch(function () {});
+					} catch (e) {}
+				}
+
+				if (rank === "low") {
+					addBubble("bot", "まずは担当者に相談してみませんか？ 一緒に方法を探します");
+					renderCTA("handoff");
+				} else {
+					addBubble("bot", "無料の仮審査で、実際の条件を確認できます。下のボタンからどうぞ");
+					renderCTA("apply");
+				}
+				scheduleIdle();
 			}
 
-			if (rank === "low") {
-				addBubble("bot", "まずは担当者に相談してみませんか？ 一緒に方法を探します");
-				renderCTA("handoff");
+			// 結果の“直前”で連絡先を取得（まだ無い場合）。ここが一番ハードルが低く、取りこぼしが少ない。
+			if (cfg.intakeOn && !(visitor && visitor.done)) {
+				askShinsaContact(showShinsaResult);
 			} else {
-				addBubble("bot", "無料の仮審査で、実際の条件を確認できます。下のボタンからどうぞ");
-				renderCTA("apply");
+				showShinsaResult();
 			}
-			scheduleIdle();
 		});
+	}
+
+	// 診断の結果前に、結果のご案内先としてお名前・メールを取得する
+	function askShinsaContact(onDone) {
+		addBubble("bot", "ありがとうございます。診断結果をお出しする前に、結果のご案内先として お名前とメールアドレスをご入力ください。（無料・しつこいご連絡はいたしません）");
+		var f = document.createElement("div");
+		f.className = "ccb-msg bot";
+		f.innerHTML =
+			'<div class="ccb-lead" data-type="intake">' +
+			'<div class="ccb-lead-title">結果のご案内先</div>' +
+			'<div class="ccb-lead-fields">' +
+				'<input class="ccb-li" data-k="name" placeholder="お名前（必須）" autocomplete="name">' +
+				'<input class="ccb-li" data-k="email" inputmode="email" placeholder="メールアドレス（必須）" autocomplete="email">' +
+				'<button type="button" class="ccb-lead-next">診断結果を見る</button>' +
+				'<div class="ccb-lead-err" role="alert"></div>' +
+			'</div></div>';
+		msgBox.appendChild(f); msgBox.scrollTop = msgBox.scrollHeight;
+		setTimeout(function () { try { var el = f.querySelector('[data-k="name"]'); if (el) el.focus(); } catch (e) {} }, 60);
+
+		var nb = f.querySelector(".ccb-lead-next");
+		var err = f.querySelector(".ccb-lead-err");
+		var get = function (k) { var el = f.querySelector('[data-k="' + k + '"]'); return el ? el.value.trim() : ""; };
+		var emailOk = function (v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); };
+		nb.addEventListener("click", function () {
+			var name = get("name"), email = get("email");
+			if (!name) { err.textContent = "お名前をご入力ください。"; err.style.display = "block"; return; }
+			if (!email || !emailOk(email)) { err.textContent = "メールアドレスを正しくご入力ください。"; err.style.display = "block"; return; }
+			err.style.display = "none"; nb.disabled = true; nb.textContent = "送信中…";
+			visitor.name = name; visitor.email = email; visitor.done = true;
+			var done = false;
+			var go = function () { if (done) { return; } done = true; f.remove(); onDone(); };
+			if (cfg.visitorUrl) {
+				fetch(cfg.visitorUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id: sessionId, name: name, email: email, page: location.href }) }).then(go).catch(go);
+				setTimeout(go, 2500); // 保険：通信が遅くても結果は出す
+			} else { go(); }
+		});
+		f.addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); nb.click(); } });
 	}
 
 	/* ============ 離脱防止ポップ（exit intent） ============ */

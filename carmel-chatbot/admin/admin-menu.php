@@ -139,6 +139,7 @@ function carmel_cb_handle_post() {
 				'operator_avatar_url' => esc_url_raw( wp_unslash( $_POST['operator_avatar_url'] ?? '' ) ),
 				'chat_start_notify'   => isset( $_POST['chat_start_notify'] ) ? 1 : 0,
 				'intake_on'           => isset( $_POST['intake_on'] ) ? 1 : 0,
+				'intake_timing'       => ( ( $_POST['intake_timing'] ?? 'shinsa' ) === 'start' ) ? 'start' : 'shinsa',
 				'intake_msg'          => sanitize_textarea_field( wp_unslash( $_POST['intake_msg'] ?? '' ) ),
 				'intake_after_msg'    => sanitize_textarea_field( wp_unslash( $_POST['intake_after_msg'] ?? '' ) ),
 				'handoff_wait_msg' => sanitize_textarea_field( wp_unslash( $_POST['handoff_wait_msg'] ?? '' ) ),
@@ -684,8 +685,12 @@ function carmel_cb_view_general() {
 			<tr>
 				<th>開始時にお名前・メール確認</th>
 					<td>
-						<label><input type="checkbox" name="intake_on" <?php checked( $s['intake_on'] ?? 1, 1 ); ?>> チャット開始時に、まずお名前とメールアドレスを入力してもらう</label>
-						<p class="description">「誰から問い合わせが来たか」が分かるよう、会話の前にお名前・メールを確認します。入力後に「本日はどのようなご用件でしょうか？」へ進みます。Slack（Bot設定済み）にはお客様情報がスレッド冒頭に表示されます。</p>
+						<label><input type="checkbox" name="intake_on" <?php checked( $s['intake_on'] ?? 1, 1 ); ?>> お名前とメールアドレスを入力してもらう（リード獲得）</label>
+						<?php $it = ( ( $s['intake_timing'] ?? 'shinsa' ) === 'start' ) ? 'start' : 'shinsa'; ?>
+						<p style="margin:8px 0 2px"><strong>聞くタイミング</strong></p>
+						<p style="margin:2px 0"><label><input type="radio" name="intake_timing" value="shinsa" <?php checked( $it, 'shinsa' ); ?>> <strong>診断の結果前に聞く（おすすめ）</strong>：まず会話で安心してもらい、審査診断の結果を出す直前にお名前・メールを取得。離脱が減り、リードが増えます。</label></p>
+						<p style="margin:2px 0"><label><input type="radio" name="intake_timing" value="start" <?php checked( $it, 'start' ); ?>> <strong>最初に聞く</strong>：チャット開始時にまずお名前・メールを入力してもらう（従来方式）。</label></p>
+						<p class="description">※ どちらでも、取得後にSlack／メールへ「お客様情報」が通知されます。「診断の結果前に聞く」の場合でも、仮審査・お問い合わせフォームでも連絡先は取得されます。</p>
 						<p style="margin:8px 0 4px"><label>案内メッセージ（入力前）</label></p>
 						<textarea name="intake_msg" rows="2" class="large-text"><?php echo esc_textarea( $s['intake_msg'] ?? '' ); ?></textarea>
 						<p style="margin:8px 0 4px"><label>入力後のメッセージ（<code>{name}</code> はお名前に置き換わります）</label></p>

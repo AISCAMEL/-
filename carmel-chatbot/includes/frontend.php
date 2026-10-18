@@ -40,6 +40,7 @@ function carmel_cb_js_config( $s, $extra = array() ) {
 		'handoffPollUrl'  => esc_url_raw( rest_url( 'carmel-cb/v1/handoff/poll' ) ),
 		'handoffUploadUrl' => esc_url_raw( rest_url( 'carmel-cb/v1/handoff/upload' ) ),
 		'intakeOn'        => ! empty( $s['intake_on'] ),
+		'intakeTiming'    => ( ( $s['intake_timing'] ?? 'shinsa' ) === 'start' ) ? 'start' : 'shinsa',
 		'intakeMsg'       => (string) ( $s['intake_msg'] ?? '' ),
 		'intakeAfterMsg'  => (string) ( $s['intake_after_msg'] ?? '' ),
 		'visitorUrl'      => esc_url_raw( rest_url( 'carmel-cb/v1/visitor' ) ),
