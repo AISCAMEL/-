@@ -360,8 +360,12 @@ add_action( 'wp_enqueue_scripts', function () {
 			'limit' => apprex_studio_image_limit(),
 		);
 		$cfg['images']  = apprex_studio_images_out( $u->ID );
+		$cfg['assets']  = apprex_studio_assets( $u->ID );
+		$cfg['demoUrl'] = apprex_demo_url( apprex_demo_token( $u->ID ) );
 	}
-	wp_enqueue_script( 'apprex-studio', APPREX_URI . '/assets/js/studio.js', array(), APPREX_VERSION, true );
+	wp_enqueue_script( 'apprex-studio-data', APPREX_URI . '/assets/js/studio-data.js', array(), APPREX_VERSION, true );
+	wp_enqueue_script( 'apprex-qrcode', APPREX_URI . '/assets/js/vendor/qrcode.js', array(), '2.0.4', true );
+	wp_enqueue_script( 'apprex-studio', APPREX_URI . '/assets/js/studio.js', array( 'apprex-studio-data', 'apprex-qrcode' ), APPREX_VERSION, true );
 	wp_localize_script( 'apprex-studio', 'APPREX_STUDIO', $cfg );
 }, 25 );
 

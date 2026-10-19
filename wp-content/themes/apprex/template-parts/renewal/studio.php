@@ -36,6 +36,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     </div>
     <div class="st-cta">
       <a class="btn btn--cta btn--lg" href="<?php echo esc_url( apprex_studio_url() ); ?>">無料会員登録してAIスタジオを使う</a>
+      <a class="btn btn--line btn--lg" href="<?php echo esc_url( apprex_demo_url( 'sample' ) ); ?>" target="_blank" rel="noopener">サンプルのデモアプリを触る</a>
       <span>登録は1分。相談するまで費用は一切かかりません。</span>
     </div>
   </div>

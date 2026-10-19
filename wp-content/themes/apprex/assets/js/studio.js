@@ -33,27 +33,9 @@ if(!CFG.loggedIn){
 }
 
 var KEY='apprex-studio-v2-'+(CFG.uid||0);
-var IND={
-  food:{l:'飲食店',name:'炭火焼肉 はなび',catch:'ご来店ごとにポイントが貯まる',menus:['ネット予約','お品書き','クーポン','スタンプ','お知らせ','アクセス'],items:[['上カルビ','1,480円'],['ハラミ','1,280円'],['厚切りタン塩','1,380円'],['石焼ビビンバ','980円']],cps:[['ドリンク1杯無料','アプリ会員限定'],['お会計10%OFF','平日17時まで']],feat:['push','news','coupon','stamp','reserve','menu','access']},
-  beauty:{l:'美容サロン',name:'hair salon Luce',catch:'次回のご予約もアプリでかんたん',menus:['予約','メニュー・料金','スタイル','クーポン','会員証','スタッフ'],items:[['カット','4,400円'],['カット＋カラー','9,900円'],['髪質改善トリートメント','6,600円'],['ヘッドスパ','3,300円']],cps:[['初回カット20%OFF','ご新規様限定'],['トリートメント無料','カラーと同時で']],feat:['push','news','coupon','card','reserve','menu']},
-  golf:{l:'ゴルフ・スポーツ',name:'SWING BASE',catch:'打席予約もポイントもこれひとつ',menus:['打席予約','料金プラン','コンペ案内','レッスン','ポイント','お知らせ'],items:[['打席60分','1,650円'],['月額会員（平日）','8,800円'],['個人レッスン30分','3,300円'],['スイング診断','2,200円']],cps:[['平日昼 30分無料','11時〜15時'],['友達紹介で1,000pt','紹介した方・された方']],feat:['push','news','coupon','stamp','reserve','card','gps']},
-  clinic:{l:'クリニック',name:'さくら内科',catch:'診療予約と順番待ちをスマホで',menus:['診療予約','順番待ち','診療時間','お知らせ','Web問診','アクセス'],items:[['一般内科','保険診療'],['健康診断','5,500円〜'],['インフルエンザ予防接種','3,500円'],['オンライン診療','保険診療']],cps:[['待ち時間をお知らせ','順番が近づくと通知'],['健診の予約受付中','平日午後']],feat:['push','news','reserve','card','access','contact']},
-  school:{l:'スクール・教室',name:'こども英語 Sunny',catch:'レッスン予約とお知らせを1つに',menus:['レッスン予約','コース案内','講師紹介','お知らせ','欠席連絡','会員証'],items:[['キッズ英会話（週1）','8,800円/月'],['フォニックス','6,600円/月'],['英検対策','9,900円/月'],['体験レッスン','無料']],cps:[['体験レッスン無料','初めての方'],['兄弟割 10%OFF','2人目から']],feat:['push','news','reserve','card','contact','video']},
-  retail:{l:'小売・EC',name:'Select Shop MIKAN',catch:'会員限定セールをいち早く',menus:['オンラインストア','クーポン','会員証','新商品','ポイント','お知らせ'],items:[['リネンシャツ','8,800円'],['レザートート','16,500円'],['ソイキャンドル','2,750円'],['ギフトBOX','3,300円']],cps:[['会員限定500円OFF','5,000円以上'],['誕生月ポイント2倍','誕生月のみ']],feat:['push','news','coupon','stamp','card','ec','menu']}
-};
-var COLORS=[['ネイビー','#13306a','#2f66f5'],['ボルドー','#4a0d18','#c0392b'],['フォレスト','#0f3d2e','#1f9d6b'],['くすみピンク','#7a2350','#e0679a'],['ブラック×ゴールド','#111111','#b8912a'],['オレンジ','#7a2e00','#ff7a1a']];
-var TONES={luxury:{n:'高級感',ff:"'Zen Old Mincho',serif",r:6},pop:{n:'かわいい・ポップ',ff:"'M PLUS Rounded 1c',sans-serif",r:20},natural:{n:'ナチュラル',ff:"'Zen Kaku Gothic New',sans-serif",r:14},sporty:{n:'スポーティ',ff:"'Outfit','Zen Kaku Gothic New',sans-serif",r:8},trust:{n:'信頼感',ff:"'Noto Sans JP',sans-serif",r:10}};
-var SCREENS=[['home','ホーム'],['menu','メニュー'],['coupon','クーポン'],['reserve','予約'],['card','会員証']];
-var FEAT=[
-  {k:'push',n:'プッシュ通知',d:'回数無制限',t:'std'},{k:'news',n:'お知らせ',d:'画像つきで配信',t:'std'},{k:'coupon',n:'クーポン',d:'期間・回数を設定',t:'std'},
-  {k:'stamp',n:'スタンプ・ポイント',d:'来店で貯まる',t:'std'},{k:'card',n:'デジタル会員証',d:'バーコード表示',t:'std'},{k:'reserve',n:'予約',d:'標準の予約機能',t:'std'},
-  {k:'menu',n:'メニュー・商品一覧',d:'写真と価格',t:'std'},{k:'access',n:'アクセス・地図',d:'',t:'std'},{k:'contact',n:'お問い合わせ',d:'',t:'std'},
-  {k:'catalog',n:'電子カタログ',d:'スタートプラン以上',t:'std',tier:'start'},{k:'ec',n:'EC・モバイルオーダー',d:'ビジネスプラン',t:'std',tier:'biz'},{k:'multi',n:'多店舗対応',d:'ビジネスプラン',t:'std',tier:'biz'},
-  {k:'gps',n:'位置情報で通知（1カ所）',d:'オプション 20,000円',t:'opt',p:20000},{k:'chatf',n:'チャット機能',d:'オプション 300,000円',t:'opt',p:300000},
-  {k:'match',n:'マッチング（利用者どうし）',d:'オリジナル開発',t:'orig'},{k:'pay',n:'アプリ内決済・サブスク',d:'オリジナル開発',t:'orig'},{k:'pos',n:'POS・在庫システム連携',d:'オリジナル開発',t:'orig'},{k:'video',n:'動画配信・会員限定コンテンツ',d:'オリジナル開発',t:'orig'}
-];
+var DATA=window.APPREX_STUDIO_DATA||{}, IND=DATA.IND, COLORS=DATA.COLORS, TONES=DATA.TONES, SCREENS=DATA.SCREENS, FEAT=DATA.FEAT;
 var STEPS=['会員登録','AIデザイン','AI仕様書','開発を相談','オンラインミーティング','お見積り・入金','制作','公開'];
-var VIEWS=[['design','AIデザイン',1],['spec','AI仕様書',2],['docs','企画書・仕様書',2],['consult','開発を相談',3],['meeting','ミーティング予約',4],['quote','お見積り・入金',5],['prod','制作の進捗',6]];
+var VIEWS=[['design','AIデザイン',1],['demo','デモアプリで試す',1],['spec','AI仕様書',2],['docs','企画書・仕様書',2],['consult','開発を相談',3],['meeting','ミーティング予約',4],['quote','お見積り・入金',5],['prod','制作の進捗',6]];
 var TIERS={trial:['トライアル',19800],start:['スタート',39800],biz:['ビジネス',59800]};
 var YEN=function(n){return n.toLocaleString('ja-JP')+'円';};
 var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
@@ -74,6 +56,8 @@ var S=def(), IMG={logo:null,photo:null};
   var u=CFG.user||{};
   if(!S.d.name&&u.company){S.d.name=u.company;}
   try{var im=localStorage.getItem(KEY+'-img'); if(im){IMG=JSON.parse(im)||IMG;}}catch(e){}
+  // アカウントに保存したロゴ・写真を優先（どの端末でも同じ）。
+  var as=CFG.assets||{}; if(as.logo){IMG.logo=as.logo;} if(as.photo){IMG.photo=as.photo;}
 })();
 /* 管理画面で更新された進み具合を反映（2:ミーティング予約済 3:見積り送付 4:入金・制作中 5:公開） */
 var STAGE=CFG.stage||0;
@@ -253,7 +237,7 @@ function vDesign(){
   var stabs=SCREENS.map(function(s){return '<button type="button" class="stab" role="tab" data-screen="'+s[0]+'" aria-selected="'+(!S.d.all&&S.d.screen===s[0])+'">'+s[1]+'</button>';}).join('')+'<button type="button" class="stab" data-screen="all" aria-selected="'+S.d.all+'">全画面を並べる</button>';
   var phones=S.d.all?SCREENS.map(function(s){return phone(s[0],true);}).join(''):phone(S.d.screen,false);
   var vers=S.vers.slice().reverse().map(function(v){return '<div class="ver"><b>版'+v.n+'</b><span>'+esc(v.note)+'</span></div>';}).join('');
-  return '<div class="vh"><div><h2>AIデザイン</h2><p>AIデザイナーに要望を書くと、画面の設定とデザイン画像を作ります。下で細かい調整もできます（すぐにプレビューへ反映）。</p></div><div class="acts" style="margin:0"><button type="button" class="btn btn--cta" data-go="confirmDesign">このデザインで決定して仕様書へ</button></div></div>'
+  return '<div class="vh"><div><h2>AIデザイン</h2><p>AIデザイナーに要望を書くと、画面の設定とデザイン画像を作ります。下で細かい調整もできます（すぐにプレビューへ反映）。</p></div><div class="acts" style="margin:0"><button type="button" class="btn btn--line" data-view="demo">デモアプリで触ってみる</button><button type="button" class="btn btn--cta" data-go="confirmDesign">このデザインで決定して仕様書へ</button></div></div>'
   +aiPanel()
   +'<div class="grid2">'
   +'<div class="card">'
@@ -280,6 +264,21 @@ function specText(){
   var e=estimate(), d=D();
   var on=FEAT.filter(function(f){return S.feat[f.k];}).map(function(f){return '・'+f.n+(f.t==='orig'?'（オリジナル開発）':f.t==='opt'?'（オプション）':'');}).join('\n');
   return '【アプリ仕様書（AI作成）】\nアプリ名：'+storeName()+'\n業種：'+d.l+'\n目的：'+S.d.goal+'\nお客様の層：'+S.d.target+'\nデザイン：'+TONES[S.d.tone].n+' / '+palette()[2]+' / 案'+S.d.variant+'\n画面：ホーム、メニュー、クーポン、予約、会員証\n機能：\n'+on+'\n想定プラン：'+(e.orig.length?'オリジナル開発（個別見積り）':e.tierName+'プラン 月額'+YEN(e.monthly));
+}
+
+/* ---------- デモアプリ（実際に触れる） ---------- */
+function vDemo(){
+  var url=CFG.demoUrl||'';
+  var qr='';
+  if(window.qrcode&&url){ try{ var q=window.qrcode(0,'M'); q.addData(url); q.make(); qr=q.createSvgTag({cellSize:4,margin:2,scalable:true}); }catch(e){} }
+  return '<div class="vh"><div><h2>デモアプリで試す</h2><p>今のデザインが、実際に触れるアプリになりました。クーポン・スタンプ・予約・会員証・プッシュ通知の動きを試せます。</p></div><div class="acts" style="margin:0"><button type="button" class="btn btn--line" data-view="design">デザインを直す</button><button type="button" class="btn btn--cta" data-go="confirmDesign">このデザインで決定して仕様書へ</button></div></div>'
+  +'<div class="grid2 demo-g"><div class="card demo-stage"><div class="demo-ph"><iframe id="demoFrame" src="'+esc(url)+'" title="デモアプリ" loading="lazy"></iframe></div><button type="button" class="btn btn--line btn--sm" data-go="reloadDemo">最新のデザインで表示しなおす</button></div>'
+  +'<div class="card"><div class="sec-t">スマホで開く</div><div class="demo-qr"><div class="qr">'+qr+'</div><div><p>カメラでQRコードを読み取ると、お手元のスマホで開けます。<b>ホーム画面に追加</b>すると、アプリのように全画面で使えます。</p></div></div>'
+  +'<div class="sec-t" style="margin-top:16px">共有リンク</div><div class="demo-url"><input type="text" readonly value="'+esc(url)+'" aria-label="デモアプリのURL" id="demoUrl"><button type="button" class="btn btn--pri btn--sm" id="copyDemo" data-label="コピー">コピー</button></div>'
+  +'<p class="demo-note">リンクを知っている人だけが見られます（検索には出ません）。社内やご家族に見てもらうのにお使いください。</p>'
+  +'<div class="acts"><a class="btn btn--cta btn--sm" href="'+esc(url)+'" target="_blank" rel="noopener">新しいタブで開く</a></div>'
+  +'<div class="sec-t" style="margin-top:16px">試してみること</div><ul class="demo-try"><li>ホームのボタンから各画面へ</li><li>クーポンの「使う」→ スタッフに見せる画面</li><li>会員証の「来店スタンプを押す」→ 10個で特典</li>'+(S.feat.reserve?'<li>予約：日付と時間を選んで予約</li>':'')+'<li>その他 → 「通知のデモを受け取る」</li></ul>'
+  +'<p class="demo-note">デモはWebで動く試作です。実際のアプリはiPhone・Androidのアプリとして制作し、ストアで公開します。スタンプや予約の操作はこの端末だけに保存され、お店には届きません。</p></div></div>';
 }
 
 function vSpec(){
@@ -443,7 +442,7 @@ function renderProg(){
   var cur=Math.min(S.prog,STEPS.length-1), allDone=S.prod>=PROD.length;
   $('prog').innerHTML=STEPS.map(function(s,i){var c=(i<S.prog||allDone)?'done':(i===cur?'cur':'');return '<li class="'+c+'"><span class="n">'+(c==='done'?'✓':i+1)+'</span>'+s+'</li>';}).join('');
 }
-var MANUAL_ANCHOR={design:'design',spec:'spec',docs:'docs',consult:'consult',meeting:'meeting',quote:'quote',prod:'prod'};
+var MANUAL_ANCHOR={demo:'demo',design:'design',spec:'spec',docs:'docs',consult:'consult',meeting:'meeting',quote:'quote',prod:'prod'};
 function renderSide(){
   $('side').innerHTML=VIEWS.map(function(v,i){var done=S.prog>v[2]||(v[0]==='prod'&&S.prod>=PROD.length);return '<button type="button" class="nav" data-view="'+v[0]+'"'+(S.view===v[0]?' aria-current="page"':'')+'><i>'+(i+1)+'</i>'+v[1]+(done?'<span class="st">完了</span>':'')+'</button>';}).join('')
   +'<div class="help"><b style="color:var(--navy)">困ったときは</b><br>今の画面の使い方を、AIガイドがその場で案内します。<div class="help-acts"><button type="button" class="btn btn--pri btn--sm" data-go="askGuide">AIガイドに聞く</button>'+(CFG.manual?'<a class="btn btn--line btn--sm" href="'+esc(CFG.manual+'#'+(MANUAL_ANCHOR[S.view]||''))+'" target="_blank" rel="noopener">この画面の使い方</a>':'')+'</div></div>';
@@ -451,7 +450,7 @@ function renderSide(){
 function render(){
   renderProg(); renderSide();
   var v=S.view, h='';
-  if(v==='design') h=vDesign(); else if(v==='spec') h=vSpec(); else if(v==='docs') h=vDocs(); else if(v==='consult') h=vConsult(); else if(v==='meeting') h=vMeeting(); else if(v==='quote') h=vQuote(); else h=vProd();
+  if(v==='design') h=vDesign(); else if(v==='demo') h=vDemo(); else if(v==='spec') h=vSpec(); else if(v==='docs') h=vDocs(); else if(v==='consult') h=vConsult(); else if(v==='meeting') h=vMeeting(); else if(v==='quote') h=vQuote(); else h=vProd();
   $('stMain').innerHTML=h; bind(); save();
   try{ document.dispatchEvent(new CustomEvent('apprex:studio-step',{detail:{view:S.view}})); }catch(e){}
   var ms=$('msgs'); if(ms) ms.scrollTop=ms.scrollHeight;
@@ -461,7 +460,11 @@ function go(view){ S.view=view; S._aiMsg=''; render(); try{window.scrollTo({top:
 function readImg(input,key){
   var f=input.files&&input.files[0]; if(!f) return;
   if(f.size>5*1024*1024){ alertBox('5MB以下の画像を選んでください。'); return; }
-  var r=new FileReader(); r.onload=function(){ IMG[key]=r.result; saveImg(); S.vers.push({n:S.vers.length+1,note:(key==='logo'?'ロゴ':'メイン写真')+'をデザインに反映'}); render(); }; r.readAsDataURL(f);
+  var r=new FileReader(); r.onload=function(){
+    IMG[key]=r.result; saveImg(); S.vers.push({n:S.vers.length+1,note:(key==='logo'?'ロゴ':'メイン写真')+'をデザインに反映'}); render();
+    // アカウントにも保存（デモアプリや別の端末に反映）。
+    api('studio/upload',{kind:key,data:r.result}).then(function(b){ var a=b.assets||{}; if(a[key]){ IMG[key]=a[key]; saveImg(); } }).catch(function(x){ alertBox(x.message); });
+  }; r.readAsDataURL(f);
 }
 function alertBox(t){ var m=$('aidMsg'); if(m){ m.textContent=t; } }
 
@@ -483,6 +486,7 @@ function bind(){
   on('f-custom','change',function(e){ S.d.custom=e.target.value; S.vers.push({n:S.vers.length+1,note:'色を'+e.target.value+'に'}); render(); });
   on('f-logo','change',function(e){ readImg(e.target,'logo'); });
   on('f-photo','change',function(e){ readImg(e.target,'photo'); });
+  on('copyDemo','click',function(e){ copyText(CFG.demoUrl||'', e.currentTarget); });
   on('copySpec','click',function(e){ copyText(specText(), e.currentTarget); });
   on('copyDoc','click',function(e){ var d=document.querySelector('.docs'); if(d) copyText(d.innerText, e.currentTarget); });
   on('aidText','input',function(e){ S.d.brief=e.target.value; save(); });
@@ -508,6 +512,7 @@ document.addEventListener('click',function(e){
   if(t.dataset.time){ S._time=t.dataset.time; render(); return; }
   var g=t.dataset.go;
   if(g==='askGuide'){ try{ document.dispatchEvent(new CustomEvent('apprex:chat-open')); }catch(e){} return; }
+  if(g==='reloadDemo'){ save(); var fr=$('demoFrame'); t.disabled=true; t.textContent='保存しています…'; setTimeout(function(){ if(fr){ fr.src=CFG.demoUrl+(CFG.demoUrl.indexOf('?')>-1?'&':'?')+'t='+Date.now(); } t.disabled=false; t.textContent='最新のデザインで表示しなおす'; },1600); return; }
   if(g==='aiDesign'){ var ta=$('aidText'); runAiDesign(ta?ta.value:'',t); return; }
   if(g==='aiPlan'){ t.disabled=true; t.textContent='AIが書いています…';
     api('studio/ai-plan',{brief:brief(),features:onFeat().map(function(f){return f.n;})}).then(function(b){ S.aiPlan=b.plan; S._doc='plan'; save(); render(); }).catch(function(x){ t.disabled=false; t.textContent='AIで企画書の文章を作る'; alert(x.message); }); return; }

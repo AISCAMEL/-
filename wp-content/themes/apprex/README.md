@@ -47,6 +47,16 @@ define( 'APPREX_OPENROUTER_MODEL', 'anthropic/claude-3.5-haiku' );
 
 > ローカル等でAPIを使わず動作確認するには `define( 'APPREX_CHAT_MOCK', true );`（モック応答）。
 
+## デモアプリ（v1.44.0）
+
+- AIスタジオで作ったデザインが、**実際に触れるデモアプリ**になります（`inc/demo.php`・`template-parts/app-demo.php`・`assets/js/app-demo.js`）。
+  - ホーム／クーポン（使う→10分のカウントダウン→使用済み）／会員証・スタンプ（10個で特典クーポン）／予約（日付・時間・メニュー→予約一覧・キャンセル）／メニュー／お知らせ（未読バッジ）／アクセス／プッシュ通知のデモ。操作はその端末に保存。
+  - 会員ごとのURL `/app-demo/{トークン}/`（リンクを知っている人だけ・検索除外）。QRコードでスマホに、ホーム画面に追加すると全画面のアプリとして動作（manifest）。
+  - 訪問者向けのサンプル `/app-demo/sample/?ind=food|beauty|golf|clinic|school|retail`（トップのAIスタジオ欄にリンク）。
+  - AIスタジオに工程「デモアプリで試す」を追加（その場で操作できるプレビュー・QR・共有リンク）。
+- ロゴ・写真はアカウントに保存（REST `/studio/upload`）。デモアプリや別の端末にも反映。
+- 業種・色などのデザインデータは `assets/js/studio-data.js` に共通化。QRコードは `assets/js/vendor/qrcode.js`（qrcode-generator, MIT）。
+
 ## 作り方マニュアル＋ページに合わせたチャット（v1.43.0）
 
 - **アプリの作り方マニュアル** `/manual/`（`page-templates/page-manual.php`）：AIスタジオの使い方（10章）と、準備するもの・セルフプランの進め方・公開後の運用・困ったとき。本文は `inc/manual.php` の `apprex_manual_sections()` で一元管理（画面・チャットの知識・AIスタジオのヘルプで共通）。HowTo構造化データ付き。
