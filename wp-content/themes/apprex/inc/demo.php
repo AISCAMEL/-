@@ -281,7 +281,7 @@ add_action( 'template_redirect', function () {
 		'name'     => $name,
 		'color'    => $color,
 		'icon'     => $icon,
-		'manifest' => add_query_arg( array_filter( array( 'apprex_demo_manifest' => $token, 'ind' => ! empty( $cfg['sample'] ) ? $cfg['ind'] : '' ) ), home_url( '/' ) ),
+		'manifest' => add_query_arg( array_filter( array( 'apprex_demo_manifest' => $token, 'ind' => ! empty( $cfg['sample'] ) && isset( $cfg['ind'] ) ? $cfg['ind'] : '', 'v' => ! empty( $cfg['proto'] ) ? 'orig' : '', 't' => isset( $cfg['protoKind'] ) ? $cfg['protoKind'] : '' ) ), home_url( '/' ) ),
 	);
 	include APPREX_DIR . '/template-parts/app-demo.php';
 	exit;
