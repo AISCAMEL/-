@@ -662,9 +662,20 @@
 		idle.timer = setTimeout(function () {
 			if (!opened || convo.engaged || ho.live) { return; }
 			idle.count++;
-			addBubble("bot", "その後いかがでしょうか？ご不明な点や、気になる車・お支払いのご相談など、お気軽にどうぞ。\nもし分かりにくければ、最初からご案内し直すこともできます。");
-			renderChoices(["審査について相談したい", "在庫・車種を見たい", "お支払い・頭金について", "担当者に相談したい"]);
-			renderActionChips([{ label: "↻ 最初からやり直す", fn: restartChat }]);
+			if (idle.count === 1) {
+				// 1回目：軽く。一言だけでも返しやすいように、具体例とワンタップを用意。
+				addBubble("bot", "ご覧いただきありがとうございます。一言だけでも、今のお気持ちやご希望を教えてください。ぴったりのご案内をします。（例：「審査が不安」「頭金なし」「月々いくら」）");
+				renderChoices(["審査が不安", "頭金なしで買える？", "月々いくら？", "在庫を見たい"]);
+				if (cfg.shinsaOn) { renderActionChips([{ label: "無料で審査診断する", fn: openShindanCheck }]); }
+			} else {
+				// 2回目：急かさず、選択肢を広げる（診断・担当者・LINE・やり直し）。
+				addBubble("bot", "お時間のあるときで大丈夫です。無料の審査診断なら数問で通る見込みがわかります。LINEや担当者へのご相談も承れますので、お気軽にどうぞ。");
+				renderChoices(["担当者に相談したい", "もう少し会話で相談したい"]);
+				var acts = [];
+				if (cfg.shinsaOn) { acts.push({ label: "無料で審査診断する", fn: openShindanCheck }); }
+				acts.push({ label: "↻ 最初からやり直す", fn: restartChat });
+				renderActionChips(acts);
+			}
 		}, wait);
 	}
 
