@@ -19,7 +19,7 @@
 	/* ---------- デザインとメニュー構成 ---------- */
 	var d = CFG.d || null;
 	if (!d || !IND[d.ind]) {
-		var ind0 = (CFG.ind && IND[CFG.ind]) ? CFG.ind : 'food', sm = SAMPLE[ind0];
+		var ind0 = (CFG.ind && IND[CFG.ind]) ? CFG.ind : 'food', sm = CFG.proto ? ['trust', 0] : SAMPLE[ind0];
 		d = { ind: ind0, name: '', tone: sm[0], color: sm[1], custom: null, variant: 'A', cols: 3, fs: 1, tall: false, resBig: true };
 	}
 	var base = IND[d.ind];
@@ -34,6 +34,7 @@
 	var c1 = d.custom ? shade(d.custom, 0.45) : (COLORS[d.color] || COLORS[1])[1];
 	var tone = TONES[d.tone] || TONES.trust;
 	var IMG = CFG.images || {};
+	if (CFG.proto && CFG.proto.screens) { runProto(CFG.proto); return; }
 	var ICON = { web: '🌐', page: '📄', staff: '👤', menu: '🍽', history: '🕰', access: '📍', coupon: '🎟', card: '💳', rally: '🚩', friend: '🤝', form: '📝', reserve: '📅', shop: '🛍', fav: '♡', news: '📰', movie: '▶', gallery: '🖼', catalog: '📖', tel: '📞', mail: '✉', sns: '📷', chat: '💬', schedule: '🗓', skill: '⭐', info: 'ℹ' };
 	var icon = function (k) { return k === 'home' ? '⌂' : (ICON[PAGES[k].type] || '•'); };
 
@@ -347,4 +348,91 @@
 	shell();
 	render();
 	if (!st.pushed) { st.pushed = true; save(); setTimeout(function () { toast(info.name, info.cps[0][0] + 'のクーポンが届きました。タップして確認', couponKey); }, 4000); }
+
+	/* =====================================================================
+	 * オリジナルアプリの試作（AIが作った画面定義を、そのまま触れる形で表示）
+	 * ===================================================================== */
+	function runProto(P) {
+		var SC = {}; P.screens.forEach(function (x) { SC[x.id] = x; });
+		var tabs = (P.tabs && P.tabs.length ? P.tabs : P.screens.slice(0, 4).map(function (x) { return x.id; })).filter(function (k) { return SC[k]; }).slice(0, 5);
+		var cur = tabs[0] || P.screens[0].id, stack = [], chatAdd = {};
+		var grad = function (i) { return 'linear-gradient(' + (135 + (i || 0) * 30) + 'deg,' + c1 + ',' + c2 + ')'; };
+		function head(sc, back) {
+			return '<header class="ah">' + (back ? '<button type="button" class="ah-back" data-act="back" aria-label="戻る">‹</button>' : '<button type="button" class="ah-menu" data-act="drawer" aria-label="画面一覧">☰</button><span class="ah-logo">' + esc((P.name || 'A').charAt(0)) + '</span>')
+				+ '<b>' + esc(back ? sc.name : P.name) + '</b><span class="ah-demo">試作</span></header>';
+		}
+		function part(sc, pt, idx, bi) {
+			var to = sc.to || [], go1 = to[0] ? ' data-go="' + to[0] + '"' : ' data-act="nolink"';
+			var it = pt.items || [], L = esc(pt.label);
+			switch (pt.t) {
+				case 'hero': return '<div class="hero" style="background:' + grad(idx) + '"><small>' + esc(P.name) + '</small><b>' + L + '</b></div>';
+				case 'image': return '<div class="pimg" style="background:' + grad(idx) + '">' + (/^▶/.test(pt.label) ? '<i>▶</i>' : '') + '<b>' + esc(String(pt.label).replace(/^▶\s*/, '')) + '</b></div>';
+				case 'search': return '<form class="psearch" data-psearch="' + (to[0] || '') + '"><span>🔍</span><input type="search" placeholder="' + L + '" aria-label="' + L + '"></form>';
+				case 'tabs': return '<div class="ptabs">' + it.map(function (x, i) { return '<button type="button" class="' + (i ? '' : 'on') + '" data-seg="1">' + esc(x) + '</button>'; }).join('') + '</div>';
+				case 'list': return (L ? '<div class="sec-h">' + L + '</div>' : '') + '<div class="plist">' + it.map(function (x) { return '<button type="button" class="pli"' + go1 + ' data-label="' + esc(x) + '"><span>' + esc(x) + '</span><em>›</em></button>'; }).join('') + '</div>';
+				case 'cards': return (L ? '<div class="sec-h">' + L + '</div>' : '') + '<div class="pcards">' + it.map(function (x, i) { return '<button type="button" class="pcard"' + go1 + ' data-label="' + esc(x) + '"><i style="background:' + grad(i + idx) + '"></i><span>' + esc(x) + '</span></button>'; }).join('') + '</div>';
+				case 'form': return '<form class="dform" data-pform="' + (to[0] || '') + '">' + (L ? '<div class="sec-h">' + L + '</div>' : '') + it.map(function (x) { return '<label class="fl"><span>' + esc(x) + '</span>' + (/内容|説明|ご意見|本文/.test(x) ? '<textarea rows="3"></textarea>' : '<input type="text">') + '</label>'; }).join('') + '<button type="submit" class="cta">送信する</button></form>';
+				case 'button': { var tgt = to[bi] || to[0]; return '<button type="button" class="cta' + (bi ? ' ghost' : '') + '"' + (tgt ? ' data-go="' + tgt + '"' : ' data-act="done" data-label="' + L + '"') + '>' + L + '</button>'; }
+				case 'chat': { var msgs = it.map(function (x, i) { return [i % 2 ? 'staff' : 'me', x]; }).concat(chatAdd[sc.id] || []); return (L ? '<div class="sec-h">' + L + '</div>' : '') + '<div class="chat">' + msgs.map(function (m) { return '<div class="cm ' + m[0] + '">' + esc(m[1]) + '</div>'; }).join('') + '</div><form class="cin" data-pchat="' + sc.id + '"><input type="text" placeholder="メッセージを入力" aria-label="メッセージ"><button type="submit">送信</button></form>'; }
+				case 'map': return '<div class="map" aria-label="' + L + '"><span class="pin">📍</span></div>' + (L ? '<p class="note">' + L + '</p>' : '');
+				case 'calendar': { var dd = [], t0 = new Date(); for (var i = 0; i < 7; i++) { var x = new Date(t0); x.setDate(t0.getDate() + i); dd.push(x); } return '<div class="sec-h">' + (L || '日時') + '</div><div class="days">' + dd.map(function (x, i) { return '<button type="button" class="day' + (i ? '' : ' on') + '" data-seg="1"><small>' + '日月火水木金土'.charAt(x.getDay()) + '</small>' + x.getDate() + '</button>'; }).join('') + '</div><div class="times">' + ['10:00', '13:00', '15:00', '18:00'].map(function (t, i) { return '<button type="button" class="time' + (i ? '' : ' on') + '" data-seg="1">' + t + '</button>'; }).join('') + '</div>'; }
+				case 'text': return '<p class="txt">' + L + (it.length ? '<br>' + it.map(esc).join('<br>') : '') + '</p>';
+				case 'profile': return '<div class="staff"><span class="ava" style="background:' + grad(idx) + '">' + esc(String(pt.label).charAt(0)) + '</span><div><b>' + L + '</b>' + it.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') + '</div></div>';
+				case 'stats': return '<div class="pstats">' + it.map(function (x) { var m = String(x).match(/^(.*?)\s*([¥￥]?[\d,.]+.*)$/); return '<div><small>' + esc(m ? m[1] : x) + '</small><b>' + esc(m ? m[2] : '') + '</b></div>'; }).join('') + '</div>';
+			}
+			return '';
+		}
+		function screen(id) {
+			var sc = SC[id], bi = 0;
+			var body = (sc.role ? '<span class="prole">使う人：' + esc(sc.role) + '</span>' : '') + sc.parts.map(function (pt, i) { var h = part(sc, pt, i, bi); if (pt.t === 'button') { bi++; } return h; }).join('');
+			return head(sc, stack.length) + '<div class="body">' + body + (sc.purpose ? '<p class="note ppur">この画面の目的：' + esc(sc.purpose) + '</p>' : '') + '</div>';
+		}
+		function render() { var s = document.getElementById('screen'); s.innerHTML = screen(cur); s.scrollTop = 0; document.querySelectorAll('#app .tab').forEach(function (t) { t.classList.toggle('on', t.dataset.tab === cur); }); }
+		function go(id) { if (!SC[id]) { return; } closeDr(); if (id !== cur) { stack.push(cur); } cur = id; render(); }
+		function sheet(h) { var sh = document.getElementById('sheet'); sh.innerHTML = '<div class="sh-bg" data-act="close"></div><div class="sh-body" role="dialog">' + h + '</div>'; sh.hidden = false; }
+		function closeSheet() { var sh = document.getElementById('sheet'); sh.hidden = true; sh.innerHTML = ''; }
+		function openDr() { var dr = document.getElementById('drawer'); dr.hidden = false; void dr.offsetWidth; dr.classList.add('in'); }
+		function closeDr() { var dr = document.getElementById('drawer'); if (!dr || dr.hidden) { return; } dr.classList.remove('in'); setTimeout(function () { dr.hidden = true; }, 250); }
+		var hostPhone = window.innerWidth >= 760;
+		var tabH = tabs.map(function (k, i) { return '<button type="button" class="tab" data-tab="' + k + '"><i>' + ['⌂', '🔍', '💬', '👤', '☰'][i] + '</i>' + esc(SC[k].name) + '</button>'; }).join('');
+		var roles = {}; P.screens.forEach(function (x) { (roles[x.role || '共通'] = roles[x.role || '共通'] || []).push(x); });
+		var drawer = '<div class="drawer" id="drawer" hidden><div class="dr-bg" data-act="drawerClose"></div><nav class="dr-body" aria-label="画面一覧"><div class="dr-h"><b>画面一覧（' + P.screens.length + '）</b><button type="button" data-act="drawerClose" aria-label="閉じる">×</button></div>'
+			+ Object.keys(roles).map(function (r) { return '<div class="dr-sep">' + esc(r) + '</div>' + roles[r].map(function (x) { return '<button type="button" class="dr-i" data-go="' + x.id + '"><i>•</i>' + esc(x.name) + '</button>'; }).join(''); }).join('')
+			+ '<p class="dr-note">AIが作ったイメージ（試作）です。実際の画面・機能は、ミーティングで決めて開発します。</p></nav></div>';
+		var appEl = '<div class="app" id="app" style="--c1:' + c1 + ';--c2:' + c2 + ';--r:' + tone.r + 'px;--ff:' + tone.ff + ';--fs:1"><div class="screen" id="screen"></div><nav class="tabs" aria-label="タブ">' + tabH + '</nav>' + drawer + '<div class="sheet" id="sheet" hidden></div></div>';
+		var side = '';
+		if (hostPhone) {
+			var kinds = CFG.protoKinds ? '<div class="d-inds">' + Object.keys(CFG.protoKinds).map(function (k) { return '<a href="?v=orig&t=' + k + '"' + (k === CFG.protoKind ? ' aria-current="page"' : '') + '>' + esc(CFG.protoKinds[k]) + '</a>'; }).join('') + '</div>' : '';
+			var mvp = (P.features || []).filter(function (f) { return f.phase === 'MVP'; }).length;
+			side = '<aside class="dinfo"><span class="d-badge">オリジナルアプリの試作</span><h1>' + esc(P.name) + '</h1><p>' + esc(P.summary) + '</p>' + kinds
+				+ '<ul class="d-try"><li>画面：' + P.screens.length + '（☰ で一覧）</li><li>最初に作る機能（MVP）：' + mvp + '</li><li>使う人：' + (P.roles || []).map(function (r) { return esc(r.name); }).join('・') + '</li></ul>'
+				+ '<div class="d-qr"><div id="qr"></div><div><b>スマホで開く</b><span>QRコードを読み取ると、お手元のスマホで画面を触れます。</span></div></div>'
+				+ '<p class="d-note">AIが作ったイメージです。見た目と流れを共有するための試作で、実際の開発はミーティングで仕様を決めてから行います。</p>'
+				+ '<a class="d-cta" href="' + esc(CFG.studioUrl) + '">' + (CFG.owner ? 'AIスタジオで直す・仕様定義書を見る' : 'AIスタジオで自分のアプリを作る（無料）') + '</a></aside>';
+		}
+		root.innerHTML = side + '<div class="dev' + (hostPhone ? ' framed' : '') + '">' + appEl + '</div>';
+		if (hostPhone && window.qrcode) { try { var q = window.qrcode(0, 'M'); q.addData(CFG.url || location.href); q.make(); document.getElementById('qr').innerHTML = q.createSvgTag({ cellSize: 4, margin: 2, scalable: true }); } catch (e) {} }
+		root.addEventListener('click', function (e) {
+			var t = e.target.closest('button,a[data-go]'); if (!t || !root.contains(t)) { return; }
+			var ds = t.dataset;
+			if (ds.tab) { stack = []; cur = ds.tab; closeDr(); render(); return; }
+			if (ds.go) { go(ds.go); return; }
+			if (ds.seg) { Array.prototype.forEach.call(t.parentNode.children, function (b) { b.classList.remove('on'); }); t.classList.add('on'); return; }
+			var a = ds.act;
+			if (a === 'back') { cur = stack.pop() || tabs[0]; render(); }
+			else if (a === 'drawer') { openDr(); }
+			else if (a === 'drawerClose') { closeDr(); }
+			else if (a === 'close') { closeSheet(); }
+			else if (a === 'nolink') { sheet('<div class="use"><b>' + esc(ds.label || '') + '</b><span>この先の画面は、ミーティングで内容を決めて作ります（試作）。</span><button type="button" class="cta" data-act="close">閉じる</button></div>'); }
+			else if (a === 'done') { sheet('<div class="use"><span class="ok">✓</span><b>' + esc(ds.label || '完了') + '</b><span>試作のため、実際の処理は行われません。</span><button type="button" class="cta" data-act="close">OK</button></div>'); }
+		});
+		root.addEventListener('submit', function (e) {
+			var f = e.target; e.preventDefault();
+			if (f.dataset.pchat) { var v = f.querySelector('input').value.trim(); if (!v) { return; } (chatAdd[f.dataset.pchat] = chatAdd[f.dataset.pchat] || []).push(['me', v], ['staff', '（試作の自動返信）ありがとうございます。']); render(); return; }
+			if (f.dataset.psearch !== undefined) { if (f.dataset.psearch) { go(f.dataset.psearch); } return; }
+			if (f.dataset.pform !== undefined) { if (f.dataset.pform) { go(f.dataset.pform); } else { sheet('<div class="use"><span class="ok">✓</span><b>送信しました</b><span>試作のため、実際には送信されません。</span><button type="button" class="cta" data-act="close">OK</button></div>'); } }
+		});
+		document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeSheet(); closeDr(); } });
+		render();
+	}
 })();

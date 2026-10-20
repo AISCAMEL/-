@@ -26,7 +26,7 @@ get_header();
       <div class="chips rise d3"><span class="chip">管理画面つき</span><span class="chip">iOS・Android同時</span><span class="chip">月額保守 7万円〜</span><span class="chip">ソース買取も可</span></div>
       <div class="ctas rise d3">
         <a class="btn btn--cta btn--lg pulse" href="#lead">無料で見積りを依頼する</a>
-        <a class="btn btn--line btn--lg" href="<?php echo esc_url( apprex_studio_url() ); ?>">AIスタジオで仕様を作る</a>
+        <a class="btn btn--line btn--lg" href="<?php echo esc_url( apprex_demo_url( 'sample', array( 'v' => 'orig', 't' => 'matching' ) ) ); ?>" target="_blank" rel="noopener">試作を触ってみる</a>
       </div>
     </div>
     <div style="min-width:0">

@@ -134,7 +134,26 @@ function apprex_studio_assets( $user_id ) {
  * @return array|null
  */
 function apprex_demo_config( $token ) {
-	$inds = apprex_demo_industries();
+	$inds  = apprex_demo_industries();
+	$proto = isset( $_GET['v'] ) && 'orig' === $_GET['v']; // phpcs:ignore WordPress.Security.NonceVerification
+	if ( 'sample' === $token && $proto ) {
+		// オリジナルアプリの試作サンプル（t=matching|business|learning|event）。
+		$t     = isset( $_GET['t'] ) ? sanitize_key( wp_unslash( $_GET['t'] ) ) : 'matching'; // phpcs:ignore WordPress.Security.NonceVerification
+		$ideas = array( 'matching' => 'スキルマッチング', 'business' => '社内の日報と在庫', 'learning' => '動画レッスンのサブスク', 'event' => '地域イベントの予約' );
+		$t     = isset( $ideas[ $t ] ) ? $t : 'matching';
+		return array(
+			'sample'    => true,
+			'protoKinds' => $ideas,
+			'protoKind' => $t,
+			'proto'     => apprex_orig_sanitize( apprex_orig_template( $ideas[ $t ] ) ),
+			'd'         => null,
+			'images'    => array(),
+			'studioUrl' => apprex_studio_url(),
+			'url'       => apprex_demo_url( 'sample', array( 'v' => 'orig', 't' => $t ) ),
+			'owner'     => false,
+			'preview'   => array(),
+		);
+	}
 	if ( 'sample' === $token ) {
 		$ind = isset( $_GET['ind'] ) ? sanitize_key( wp_unslash( $_GET['ind'] ) ) : 'food'; // phpcs:ignore WordPress.Security.NonceVerification
 		$ind = isset( $inds[ $ind ] ) ? $ind : 'food';
@@ -163,7 +182,7 @@ function apprex_demo_config( $token ) {
 			$images[ $im['kind'] ] = $im['url'];
 		}
 	}
-	return array(
+	$cfg = array(
 		'sample'    => false,
 		'd'         => is_array( $state ) && isset( $state['d'] ) ? $state['d'] : null,
 		'feat'      => is_array( $state ) && isset( $state['feat'] ) ? $state['feat'] : null,
@@ -173,7 +192,12 @@ function apprex_demo_config( $token ) {
 		'owner'     => get_current_user_id() === (int) $user->ID,
 		'app'       => is_array( $state ) && isset( $state['app'] ) ? apprex_demo_clean_app( $state['app'] ) : null,
 		'preview'   => apprex_preview_app_links(),
+		'proto'     => $proto ? apprex_orig_sanitize( json_decode( (string) get_user_meta( $user->ID, 'apprex_orig_spec', true ), true ) ) : null,
 	);
+	if ( $proto ) {
+		$cfg['url'] = apprex_demo_url( $token, array( 'v' => 'orig' ) );
+	}
+	return $cfg;
 }
 
 /** テーマカラー（studio-data.js の COLORS と同じ並び）。 */
@@ -194,6 +218,9 @@ function apprex_demo_theme_color( $d ) {
 
 /** デモアプリの名前。 */
 function apprex_demo_name( $cfg ) {
+	if ( ! empty( $cfg['proto']['name'] ) ) {
+		return $cfg['proto']['name'];
+	}
 	if ( ! empty( $cfg['d']['name'] ) ) {
 		return sanitize_text_field( $cfg['d']['name'] );
 	}

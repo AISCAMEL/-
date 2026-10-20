@@ -363,6 +363,9 @@ add_action( 'wp_enqueue_scripts', function () {
 		$cfg['assets']  = apprex_studio_assets( $u->ID );
 		$cfg['demoUrl'] = apprex_demo_url( apprex_demo_token( $u->ID ) );
 		$cfg['preview'] = apprex_preview_app_links();
+		$cfg['orig']    = function_exists( 'apprex_orig_sanitize' ) ? apprex_orig_sanitize( json_decode( (string) get_user_meta( $u->ID, 'apprex_orig_spec', true ), true ) ) : null;
+		$cfg['origDemo'] = apprex_demo_url( apprex_demo_token( $u->ID ), array( 'v' => 'orig' ) );
+		$cfg['est']     = function_exists( 'apprex_orig_estimate_rules' ) ? apprex_orig_estimate_rules() : null;
 	}
 	wp_enqueue_script( 'apprex-studio-data', APPREX_URI . '/assets/js/studio-data.js', array(), APPREX_VERSION, true );
 	wp_enqueue_script( 'apprex-qrcode', APPREX_URI . '/assets/js/vendor/qrcode.js', array(), '2.0.4', true );
@@ -416,6 +419,17 @@ function apprex_studio_admin_box( $user ) {
 		</td></tr>
 		<tr><th>お見積りの説明</th><td><textarea name="apprex_studio_quote_note" rows="3" class="large-text"><?php echo esc_textarea( (string) get_user_meta( $user->ID, 'apprex_studio_quote_note', true ) ); ?></textarea></td></tr>
 		<tr><th>ミーティング</th><td><?php echo esc_html( $meeting ? $meeting : '未予約' ); ?></td></tr>
+		<?php
+		$apprex_os = function_exists( 'apprex_orig_sanitize' ) ? apprex_orig_sanitize( json_decode( (string) get_user_meta( $user->ID, 'apprex_orig_spec', true ), true ) ) : null;
+		if ( $apprex_os ) :
+			?>
+		<tr><th>オリジナルアプリ（AI試作）</th><td>
+			<strong><?php echo esc_html( $apprex_os['name'] ); ?></strong>（<?php echo esc_html( $apprex_os['category'] ); ?>・<?php echo esc_html( count( $apprex_os['screens'] ) ); ?>画面・機能<?php echo esc_html( count( $apprex_os['features'] ) ); ?>）<br>
+			<?php echo esc_html( $apprex_os['summary'] ); ?><br>
+			<a href="<?php echo esc_url( apprex_demo_url( apprex_demo_token( $user->ID ), array( 'v' => 'orig' ) ) ); ?>" target="_blank" rel="noopener">試作を開く</a>
+			<p class="description">仕様定義書は、会員がAIスタジオから相談すると「相談内容」に要約が届きます。</p>
+		</td></tr>
+		<?php endif; ?>
 		<tr><th>AIデザイン画像</th><td>
 			<?php
 			$imgs = apprex_studio_images_out( $user->ID );

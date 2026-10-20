@@ -372,3 +372,26 @@
 .rn-studio .addg b{display:block;font-size:.8rem;color:var(--navy);margin-bottom:4px}
 .rn-studio .addg .chip{font-size:.78rem;padding:5px 10px}
 .rn-studio .paper .sheet-h{font-size:1.4rem;color:var(--navy);margin:6px 0 10px}
+/* オリジナルアプリをAIで */
+.rn-studio .orig-ta{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;font-size:.95rem;line-height:1.6;resize:vertical;font-family:inherit}
+.rn-studio .ai-sug.light{margin-top:8px}
+.rn-studio .ai-sug.light button{background:var(--sky);color:var(--blue-d);border:1px solid #cbd9ff}
+.rn-studio .orig-list{margin:6px 0 0;padding-left:1.2em;display:grid;gap:6px;font-size:.9rem;color:var(--body)}
+.rn-studio .orig-name{font-size:1.4rem;color:var(--navy);margin:8px 0 4px}
+.rn-studio .orig-sum{margin:0 0 10px;color:var(--body)}
+.rn-studio .orig-est{display:grid;gap:2px;background:linear-gradient(135deg,#0b1d3f,#1f4398);color:#fff;border-radius:14px;padding:14px 16px;margin-top:12px}
+.rn-studio .orig-est small{color:#c7d4f2;font-size:.76rem}
+.rn-studio .orig-est b{font-family:var(--f-num);font-size:1.5rem;color:var(--gold)}
+.rn-studio .orig-est span{font-size:.82rem;color:#e6edff}
+.rn-studio .osc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.rn-studio .osc{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:3px;background:#fff}
+.rn-studio .osc b{color:var(--navy)}
+.rn-studio .osc small{color:var(--blue-d);font-weight:700;font-size:.74rem}
+.rn-studio .osc span{font-size:.82rem;color:var(--body)}
+.rn-studio .osc em{font-style:normal;font-size:.74rem;color:var(--muted)}
+.rn-studio .rq-sc{margin-bottom:14px}
+.rn-studio .rq-sc b{color:var(--navy)}
+.rn-studio .rq-sc small{color:var(--muted)}
+.rn-studio .rq-sc p{margin:2px 0 6px;font-size:.86rem}
+.rn-studio .paper code{font-size:.78rem;background:#f1f4fa;border-radius:4px;padding:1px 5px}
+.rn-studio .linkbtn{border:0;background:none;color:var(--blue-d);text-decoration:underline;cursor:pointer;padding:0;font:inherit}

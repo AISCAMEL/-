@@ -34,6 +34,16 @@ if ( ! defined( 'ABSPATH' ) ) {
         <a class="btn btn--cta btn--lg" href="#lead">オリジナル開発の見積りを相談する</a>
       </aside>
     </div>
+    <div class="proto-band">
+      <div><b>オリジナルアプリも、まずイメージから。</b><span>希望を書くだけで、AIが画面・機能を考えた「触れる試作」と「仕様定義書」を作ります（AIスタジオ・無料）。</span></div>
+      <div class="proto-links">
+        <span>試作のサンプル：</span>
+        <?php foreach ( array( 'matching' => 'マッチング', 'business' => '社内業務', 'learning' => '学習サブスク', 'event' => 'イベント予約' ) as $apprex_t => $apprex_l ) : ?>
+          <a href="<?php echo esc_url( apprex_demo_url( 'sample', array( 'v' => 'orig', 't' => $apprex_t ) ) ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $apprex_l ); ?></a>
+        <?php endforeach; ?>
+        <a class="btn btn--cta" href="<?php echo esc_url( apprex_studio_url() ); ?>">AIで自分のアプリを作る</a>
+      </div>
+    </div>
     <div class="oexamples">
       <a class="oex oex-link" href="<?php echo esc_url( apprex_page_url( 'matching-app' ) ); ?>"><b>マッチングアプリ</b><div class="pr">開発費 300万円〜</div><small>スキル・ビジネス・フリマなど。会員登録・検索・メッセージ・決済まで。保守は月7万円〜。</small><span class="more">詳しく見る →</span></a>
       <div class="oex"><b>社内業務アプリ</b><div class="pr">個別見積り</div><small>日報・在庫・点検・勤怠など、現場の紙やExcelをスマホに置き換えます。</small></div>
