@@ -34,6 +34,8 @@ add_action( 'admin_init', function () {
 	register_setting( 'apprex_integrations', 'apprex_twitter', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 	register_setting( 'apprex_integrations', 'apprex_slack_webhook', array( 'sanitize_callback' => 'esc_url_raw' ) );
 	register_setting( 'apprex_integrations', 'apprex_social_login_shortcode', array( 'sanitize_callback' => 'wp_kses_post' ) );
+	register_setting( 'apprex_integrations', 'apprex_preview_app_ios', array( 'sanitize_callback' => 'esc_url_raw' ) );
+	register_setting( 'apprex_integrations', 'apprex_preview_app_android', array( 'sanitize_callback' => 'esc_url_raw' ) );
 } );
 
 /**
@@ -124,6 +126,14 @@ function apprex_integrations_page() {
 						<td><input type="text" name="apprex_twitter" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_twitter', '' ) ); ?>" placeholder="例：apprex（@は不要）">
 						<p class="description"><?php esc_html_e( 'SNSシェア時のTwitterカードに表示するアカウント名（任意）。設定すると twitter:site メタタグを出力します。', 'apprex' ); ?></p></td>
 					</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'プレビューアプリ（実機確認）', 'apprex' ); ?></th>
+					<td>
+						<input type="url" name="apprex_preview_app_ios" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_preview_app_ios', '' ) ); ?>" placeholder="<?php echo esc_attr( APPREX_PREVIEW_IOS ); ?>"><br>
+						<input type="url" name="apprex_preview_app_android" class="regular-text" style="margin-top:6px" value="<?php echo esc_attr( get_option( 'apprex_preview_app_android', '' ) ); ?>" placeholder="<?php echo esc_attr( APPREX_PREVIEW_ANDROID ); ?>">
+						<p class="description"><?php esc_html_e( 'App Store／Google Play のプレビューアプリのURL（上：iOS、下：Android）。デモアプリ・AIスタジオ・マニュアルで「本番の画面を実機で確認」として案内します。空欄なら管理画面に表示されている既定のURL、「-」と入力すると非表示にします。', 'apprex' ); ?></p>
+					</td>
+				</tr>
 			</table>
 			<?php submit_button(); ?>
 		</form>

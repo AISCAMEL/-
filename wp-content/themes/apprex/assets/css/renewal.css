@@ -584,3 +584,4 @@
 .rn .man-end h3{color:var(--navy);font-size:1.3rem}
 .rn .man-end p{color:var(--body)}
 .rn .manual-link{text-align:center;margin:18px 0 0}.rn .manual-link a{color:var(--blue-d);font-weight:700}
+.rn .man-pv{margin:12px 0 0;font-size:.88rem;color:var(--body)}.rn .man-pv a{display:inline-block;margin-left:6px;border:1px solid #cbd9ff;border-radius:999px;padding:3px 12px;color:var(--blue-d);font-weight:700;text-decoration:none}

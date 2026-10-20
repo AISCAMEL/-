@@ -362,6 +362,7 @@ add_action( 'wp_enqueue_scripts', function () {
 		$cfg['images']  = apprex_studio_images_out( $u->ID );
 		$cfg['assets']  = apprex_studio_assets( $u->ID );
 		$cfg['demoUrl'] = apprex_demo_url( apprex_demo_token( $u->ID ) );
+		$cfg['preview'] = apprex_preview_app_links();
 	}
 	wp_enqueue_script( 'apprex-studio-data', APPREX_URI . '/assets/js/studio-data.js', array(), APPREX_VERSION, true );
 	wp_enqueue_script( 'apprex-qrcode', APPREX_URI . '/assets/js/vendor/qrcode.js', array(), '2.0.4', true );
@@ -562,7 +563,7 @@ function apprex_studio_json( $text ) {
 /** デザインの要約（AIに渡す現在の設定）。 */
 function apprex_studio_brief( WP_REST_Request $request ) {
 	$b    = (array) $request->get_param( 'brief' );
-	$keep = array( 'industry', 'name', 'goal', 'target', 'tone', 'color', 'dark', 'catch', 'menus', 'variant', 'request' );
+	$keep = array( 'industry', 'name', 'goal', 'target', 'tone', 'color', 'dark', 'catch', 'menus', 'pages', 'variant', 'request' );
 	$out  = array();
 	foreach ( $keep as $k ) {
 		if ( ! isset( $b[ $k ] ) ) {
@@ -591,7 +592,7 @@ function apprex_studio_rest_ai_design( WP_REST_Request $request ) {
 	$brief  = apprex_studio_brief( $request );
 	$system = "あなたは日本のモバイルアプリ制作会社のUIデザイナーです。お客様の要望を読み、店舗・企業アプリのデザイン設定を変更します。\n"
 		. "必ずJSONだけを出力してください（説明文やコードブロックは不要）。形式：\n"
-		. '{"reply":"変更内容を日本語で1〜2文","note":"自動で反映できない要望の要約（無ければ空）","changes":{"color":"#RRGGBB または null","tone":"luxury|pop|natural|sporty|trust または null","variant":"A(グリッド)|B(リスト)|C(大きな写真) または null","cols":"2|3 または null","fontScale":"1|1.15 または null","bigPhoto":"true|false|null","bigReserve":"true|false|null","catch":"ホームのキャッチコピー（全角24字以内）または null","menus":"ホームのボタン名6個（各8字以内）の配列 または null"}}' . "\n"
+		. '{"reply":"変更内容を日本語で1〜2文","note":"自動で反映できない要望の要約（無ければ空）","changes":{"color":"#RRGGBB または null","tone":"luxury|pop|natural|sporty|trust または null","variant":"A(グリッド)|B(リスト)|C(大きな写真) または null","cols":"2|3 または null","fontScale":"1|1.15 または null","bigPhoto":"true|false|null","bigReserve":"true|false|null","catch":"ホームのキャッチコピー（全角24字以内）または null","menus":"ホームのボタン6個の表示名（各8字以内）の配列。pages の同じ順番のページの役割を変えずに、その店らしい言い方にする。または null"}}' . "\n"
 		. "要望に関係しない項目は null。色は業種と雰囲気に合う具体的なHEXを選ぶ。キャッチコピーやボタン名は、その店らしい自然な日本語にする。";
 	$res = apprex_openrouter_complete(
 		array(

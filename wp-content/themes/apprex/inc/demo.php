@@ -14,6 +14,50 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/* 管理画面（アプリの基盤）に表示されている、プレビューアプリの既定URL。 */
+const APPREX_PREVIEW_IOS     = 'https://apps.apple.com/jp/app/%E3%83%97%E3%83%AC%E3%83%93%E3%83%A5%E3%83%BC%E3%82%A2%E3%83%97%E3%83%AA/id6504839258';
+const APPREX_PREVIEW_ANDROID = 'https://play.google.com/store/apps/details?id=jp.global.ebookset.app1.previewapp';
+
+/**
+ * プレビューアプリ（本番の画面を実機で確認するアプリ）のURL。
+ *
+ * @return array{ios:string,android:string}
+ */
+function apprex_preview_app_links() {
+	$out = array();
+	foreach ( array( 'ios' => APPREX_PREVIEW_IOS, 'android' => APPREX_PREVIEW_ANDROID ) as $k => $def ) {
+		$v         = trim( (string) get_option( 'apprex_preview_app_' . $k, '' ) );
+		$out[ $k ] = '-' === $v ? '' : ( $v ? $v : $def );
+	}
+	return apply_filters( 'apprex_preview_app_links', $out );
+}
+
+/**
+ * 保存されたメニュー構成を検証（studio-data.js のページキーのみ）。
+ *
+ * @param mixed $app 保存値。
+ * @return array|null
+ */
+function apprex_demo_clean_app( $app ) {
+	if ( ! is_array( $app ) || empty( $app['menu'] ) || ! is_array( $app['menu'] ) ) {
+		return null;
+	}
+	$key   = function ( $k ) {
+		return preg_match( '/^[a-z_]{2,20}$/i', (string) $k ) ? (string) $k : '';
+	};
+	$menu  = array_values( array_filter( array_map( $key, array_slice( $app['menu'], 0, 60 ) ) ) );
+	$foot  = isset( $app['footer'] ) && is_array( $app['footer'] ) ? array_values( array_filter( array_map( $key, array_slice( $app['footer'], 0, 5 ) ) ) ) : array();
+	$names = array();
+	if ( isset( $app['names'] ) && is_array( $app['names'] ) ) {
+		foreach ( $app['names'] as $k => $v ) {
+			if ( $key( $k ) && is_string( $v ) ) {
+				$names[ $k ] = mb_substr( sanitize_text_field( $v ), 0, 10 );
+			}
+		}
+	}
+	return array( 'menu' => $menu, 'footer' => $foot, 'names' => (object) $names );
+}
+
 /** サンプルの業種（studio-data.js の IND と同じキー）。 */
 function apprex_demo_industries() {
 	return array( 'food' => '飲食店', 'beauty' => '美容サロン', 'golf' => 'ゴルフ・スポーツ', 'clinic' => 'クリニック', 'school' => 'スクール・教室', 'retail' => '小売・EC' );
@@ -104,6 +148,8 @@ function apprex_demo_config( $token ) {
 			'studioUrl' => apprex_studio_url(),
 			'url'       => apprex_demo_url( 'sample', array( 'ind' => $ind ) ),
 			'owner'     => false,
+			'app'       => null,
+			'preview'   => apprex_preview_app_links(),
 		);
 	}
 	$user = apprex_demo_user( $token );
@@ -125,6 +171,8 @@ function apprex_demo_config( $token ) {
 		'studioUrl' => apprex_studio_url(),
 		'url'       => apprex_demo_url( $token ),
 		'owner'     => get_current_user_id() === (int) $user->ID,
+		'app'       => is_array( $state ) && isset( $state['app'] ) ? apprex_demo_clean_app( $state['app'] ) : null,
+		'preview'   => apprex_preview_app_links(),
 	);
 }
 

@@ -79,6 +79,15 @@ $apprex_groups = array(
                 <?php endforeach; ?>
               </ul></div>
             <?php endif; ?>
+            <?php
+            $apprex_pv = function_exists( 'apprex_preview_app_links' ) ? array_filter( apprex_preview_app_links() ) : array();
+            if ( $apprex_pv && in_array( $apprex_s['id'], array( 'self', 'prod' ), true ) ) :
+              ?>
+              <p class="man-pv"><b>プレビューアプリ（実機確認）：</b>
+                <?php if ( ! empty( $apprex_pv['ios'] ) ) : ?><a href="<?php echo esc_url( $apprex_pv['ios'] ); ?>" target="_blank" rel="noopener">App Store</a><?php endif; ?>
+                <?php if ( ! empty( $apprex_pv['android'] ) ) : ?><a href="<?php echo esc_url( $apprex_pv['android'] ); ?>" target="_blank" rel="noopener">Google Play</a><?php endif; ?>
+              </p>
+            <?php endif; ?>
             <div class="man-ask">
               <span>AIガイドに聞く：</span>
               <?php foreach ( $apprex_s['quick'] as $apprex_q ) : ?>

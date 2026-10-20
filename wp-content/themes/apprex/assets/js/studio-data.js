@@ -22,5 +22,70 @@ var FEAT=[
   {k:'gps',n:'位置情報で通知（1カ所）',d:'オプション 20,000円',t:'opt',p:20000},{k:'chatf',n:'チャット機能',d:'オプション 300,000円',t:'opt',p:300000},
   {k:'match',n:'マッチング（利用者どうし）',d:'オリジナル開発',t:'orig'},{k:'pay',n:'アプリ内決済・サブスク',d:'オリジナル開発',t:'orig'},{k:'pos',n:'POS・在庫システム連携',d:'オリジナル開発',t:'orig'},{k:'video',n:'動画配信・会員限定コンテンツ',d:'オリジナル開発',t:'orig'}
 ];
-window.APPREX_STUDIO_DATA={IND:IND,COLORS:COLORS,TONES:TONES,SCREENS:SCREENS,FEAT:FEAT};
+/*
+ * アプリの基盤（APPREX管理画面）で使えるページの種類。
+ * [キー, 管理画面での名前, グループ, デモの画面タイプ, 概算の機能キー, 管理画面での作り方, 準備するもの]
+ */
+var PAGE_LIST=[
+  ['homepage','HP','basic','web','','ページ作成 → HP','ホームページのURL'],
+  ['company','会社概要','basic','page','','ページ作成 → 会社概要','会社名・所在地・設立・事業内容'],
+  ['ceo','代表挨拶','basic','page','','ページ作成 → 代表挨拶','代表者の写真・あいさつ文'],
+  ['employee','スタッフ','basic','staff','','ページ作成 → スタッフ','スタッフの写真・名前・紹介文'],
+  ['philo','企業理念','basic','page','','ページ作成 → 企業理念','理念・大切にしていること'],
+  ['intro','事業紹介','basic','page','','ページ作成 → 事業紹介','事業・サービスの説明と写真'],
+  ['fee','料金','basic','menu','menu','ページ作成 → 料金','料金表（項目・金額）'],
+  ['pedi','沿革','basic','history','','ページ作成 → 沿革','年表（年・出来事）'],
+  ['store','店舗情報','basic','page','','ページ作成 → 店舗情報','営業時間・定休日・設備'],
+  ['business','営業所','basic','page','','ページ作成 → 営業所','営業所の名前・住所・電話'],
+  ['access','アクセス','basic','access','access','ページ作成 → アクセス（最大5か所）','住所・地図・行き方'],
+  ['newcoupon','NEWクーポン','promo','coupon','coupon','ページ作成 → NEWクーポン','クーポンの内容・期間・利用回数'],
+  ['stamp','スタンプ','promo','card','stamp','ページ作成 → スタンプ','スタンプの数と特典'],
+  ['stamprally','スタンプラリー','promo','rally','stamp','ページ作成 → スタンプラリー','対象スポットと特典'],
+  ['point','POINT','promo','card','stamp','ページ作成 → POINT','ポイントの付け方と交換特典'],
+  ['membership','会員証','promo','card','card','会員機能 → 会員証','会員証のデザイン・ランク'],
+  ['sns','友達紹介','promo','friend','','ページ作成 → 友達紹介','紹介した人・された人の特典'],
+  ['registration','会員登録','promo','form','card','会員機能 → 会員登録','登録してもらう項目'],
+  ['survey','アンケート','promo','form','','アンケート','質問と回答の選択肢'],
+  ['reser','予約','sales','reserve','reserve','予約管理','予約できるメニュー・時間・枠数'],
+  ['shop','SHOP','sales','shop','ec','ページ作成 → SHOP','商品の写真・名前・価格'],
+  ['shopping_mall','ネットショップ','sales','shop','ec','ページ作成 → ネットショップ','ネットショップのURL・商品'],
+  ['cart','買い物カゴ','sales','shop','ec','ページ作成 → 買い物カゴ','（SHOPと一緒に使います）'],
+  ['takeout','テイクアウト','sales','menu','ec','ページ作成 → テイクアウト','テイクアウトの商品・受け取り時間'],
+  ['application','申し込みフォーム','sales','form','contact','ページ作成 → 申し込みフォーム','申し込みの項目'],
+  ['bookmark','お気に入り','sales','fav','','ページ作成 → お気に入り','（商品・記事をお気に入り登録）'],
+  ['imgMenu','メニュー','content','menu','menu','ページ作成 → メニュー','メニューの写真・名前・価格'],
+  ['news','ニュース','content','news','news','ページ作成 → ニュース','お知らせの記事'],
+  ['blog','BLOG','content','news','news','ページ作成 → BLOG','ブログ記事'],
+  ['movie','動画','content','movie','','ページ作成 → 動画','YouTubeなどの動画URL'],
+  ['gallery','フォトギャラリー','content','gallery','','ページ作成 → フォトギャラリー','写真（10〜30枚）'],
+  ['catalog','カタログ','content','catalog','catalog','カタログ → カタログ制作','カタログのPDF・画像'],
+  ['html','HTMLページ','content','page','','ページ作成 → HTML1〜10','自由に作るページの内容'],
+  ['webview','ウェブビュー','content','web','','ページ作成 → ウェブビュー1〜6','表示したいWebページのURL'],
+  ['tel','電話','contact','tel','','ページ作成 → 電話','電話番号'],
+  ['email','メール','contact','mail','contact','ページ作成 → メール','受け付けるメールアドレス'],
+  ['inquiry','お問合せ','contact','form','contact','ページ作成 → お問合せ','問い合わせの項目・通知先'],
+  ['instagram','INSTAGRAM','contact','sns','','ページ作成 → INSTAGRAM','InstagramのURL'],
+  ['facebook','FACEBOOK','contact','sns','','ページ作成 → FACEBOOK','FacebookのURL'],
+  ['twitter','X（旧Twitter）','contact','sns','','ページ作成 → TWITTER','XのURL'],
+  ['chat','チャット','contact','chat','chatf','チャット','（お客様と個別にやり取り）'],
+  ['attendance','出勤一覧','biz','schedule','','出勤一覧','スタッフの出勤予定'],
+  ['schedule','週間スケジュール','biz','schedule','','週間スケジュール','1週間の予定・レッスン枠'],
+  ['skill','スキルマーケット','biz','skill','match','スキルマーケット','提供するスキル・価格'],
+  ['location','位置情報','biz','info','gps','位置情報','通知するエリア']
+];
+var GROUPS={basic:'基本ページ',promo:'集客・販促',sales:'予約・販売',content:'コンテンツ',contact:'連絡・SNS',biz:'業務・その他'};
+var PAGES={}; PAGE_LIST.forEach(function(p){ PAGES[p[0]]={k:p[0],l:p[1],g:p[2],type:p[3],feat:p[4],admin:p[5],prep:p[6]}; });
+/* 業種ごとのおすすめ構成（フッター横メニュー4つ・縦メニュー）。'home' はホーム。 */
+var PRESET={
+  food:{footer:['home','reser','newcoupon','membership'],menu:['reser','imgMenu','newcoupon','stamp','news','access','membership','takeout','gallery','tel','instagram']},
+  beauty:{footer:['home','reser','newcoupon','membership'],menu:['reser','fee','gallery','newcoupon','membership','employee','news','access','instagram']},
+  golf:{footer:['home','reser','point','news'],menu:['reser','fee','news','schedule','point','access','movie','inquiry']},
+  clinic:{footer:['home','reser','news','access'],menu:['reser','store','news','application','access','tel','company']},
+  school:{footer:['home','reser','news','membership'],menu:['reser','fee','employee','news','application','membership','movie','access']},
+  retail:{footer:['home','shopping_mall','newcoupon','membership'],menu:['shopping_mall','newcoupon','membership','catalog','point','news','store','instagram']}
+};
+function defaultApp(ind){ var p=PRESET[ind]||PRESET.food; return {footer:p.footer.slice(),menu:p.menu.slice(),names:{}}; }
+/* 表示名（会員が付けた名前 → 管理画面の名前）。 */
+function pageName(app,k){ if(k==='home') return 'ホーム'; return (app&&app.names&&app.names[k])||(PAGES[k]?PAGES[k].l:k); }
+window.APPREX_STUDIO_DATA={IND:IND,COLORS:COLORS,TONES:TONES,SCREENS:SCREENS,FEAT:FEAT,PAGES:PAGES,PAGE_LIST:PAGE_LIST,GROUPS:GROUPS,PRESET:PRESET,defaultApp:defaultApp,pageName:pageName};
 })();
