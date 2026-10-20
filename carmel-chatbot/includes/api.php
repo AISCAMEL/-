@@ -132,6 +132,9 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
 	// 管理者(manage_options)本人からのリクエストのみ有効。
 	$is_test = ! empty( $body['test'] ) && current_user_can( 'manage_options' );
 
+	// 再打診モード：会話が止まったとき、直前の話題を深掘りして会話に戻すための短い問いかけを生成する。
+	$is_nudge = ! empty( $body['nudge'] );
+
 	// 最新のユーザー発話
 	$last_user = '';
 	for ( $i = count( $history ) - 1; $i >= 0; $i-- ) {
@@ -251,18 +254,24 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
 		. $repeat_block
 		. carmel_cb_protocol_instruction();
 
+	if ( $is_nudge ) {
+		$system .= "\n\n【再打診モード（最優先）】お客様の返信が少し止まっています。直前までの会話内容を具体的に踏まえ、話題を“一歩だけ深掘り”する短い問いかけ（1〜2文）で、さりげなく会話に戻すこと。"
+			. "直前にお客様が触れていた点（例：債務整理・就労・頭金・気になる車 など）に具体的に触れて、続きを引き出す。一般論や『その後いかがですか？』だけの定型文にしない。"
+			. "急かさない・売り込まない・新しい情報を一度に聞きすぎない。action は必ず空文字、car_ids も空配列。suggestions にはお客様が一言で返せる候補を1〜3個入れる。";
+	}
+
 	$messages = array_merge(
 		array( array( 'role' => 'system', 'content' => $system ) ),
 		carmel_cb_sanitize_history( $history )
 	);
 
-	// ログ：ユーザー発話（テストモードでは記録しない）
-	if ( $last_user !== '' && ! $is_test ) {
+	// ログ：ユーザー発話（テストモード・再打診では記録しない＝重複防止）
+	if ( $last_user !== '' && ! $is_test && ! $is_nudge ) {
 		carmel_cb_log( $session_id, 'user', $last_user );
 	}
 
-	// 新規チャット開始の通知（初回のみ）。テストモードでは通知しない。
-	if ( ! $is_test ) {
+	// 新規チャット開始の通知（初回のみ）。テスト・再打診では通知しない。
+	if ( ! $is_test && ! $is_nudge ) {
 		$user_turns = 0;
 		foreach ( $history as $h ) { if ( isset( $h['role'] ) && $h['role'] === 'user' ) { $user_turns++; } }
 		// お名前・メール確認（intake）が有効で、すでにお客様情報を登録済みのときは
@@ -350,6 +359,13 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
 	// 条件で絞れる候補を補って“追い方”が甘くならないようにする。
 	if ( ! empty( $cars ) && empty( $parsed['suggestions'] ) ) {
 		$parsed['suggestions'] = array( '無料で仮審査する', '頭金なしでも大丈夫？', 'もっと在庫を見たい' );
+	}
+
+	// 再打診モードは「会話に戻す問いかけ」だけ。ボタン・カードは出さない。
+	if ( $is_nudge ) {
+		$parsed['action'] = '';
+		$parsed['cta']    = false;
+		$cars = array();
 	}
 
 	return new WP_REST_Response( array(

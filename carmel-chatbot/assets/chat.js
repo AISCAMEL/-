@@ -662,21 +662,56 @@
 		idle.timer = setTimeout(function () {
 			if (!opened || convo.engaged || ho.live) { return; }
 			idle.count++;
-			if (idle.count === 1) {
-				// 1回目：軽く。一言だけでも返しやすいように、具体例とワンタップを用意。
-				addBubble("bot", "ご覧いただきありがとうございます。一言だけでも、今のお気持ちやご希望を教えてください。ぴったりのご案内をします。（例：「審査が不安」「頭金なし」「月々いくら」）");
-				renderChoices(["審査が不安", "頭金なしで買える？", "月々いくら？", "在庫を見たい"]);
-				if (cfg.shinsaOn) { renderActionChips([{ label: "無料で審査診断する", fn: openShindanCheck }]); }
-			} else {
-				// 2回目：急かさず、選択肢を広げる（診断・担当者・LINE・やり直し）。
-				addBubble("bot", "お時間のあるときで大丈夫です。無料の審査診断なら数問で通る見込みがわかります。LINEや担当者へのご相談も承れますので、お気軽にどうぞ。");
-				renderChoices(["担当者に相談したい", "もう少し会話で相談したい"]);
-				var acts = [];
-				if (cfg.shinsaOn) { acts.push({ label: "無料で審査診断する", fn: openShindanCheck }); }
-				acts.push({ label: "↻ 最初からやり直す", fn: restartChat });
-				renderActionChips(acts);
-			}
+			doNudge(idle.count);
 		}, wait);
+	}
+
+	// 会話が止まったとき：直前の話題をAIが深掘りし、文脈に合わせた問いかけで会話に戻す（固定文ではない）
+	function doNudge(count) {
+		var hasConvo = false;
+		for (var i = 0; i < history.length; i++) { if (history[i].role === "user") { hasConvo = true; break; } }
+		if (!hasConvo || !cfg.endpoint) { staticNudge(count); return; }
+		showTyping();
+		var done = false;
+		var finish = function (fn) { if (done) { return; } done = true; hideTyping(); fn(); };
+		var to = setTimeout(function () { finish(function () { staticNudge(count); }); }, 20000);
+		fetch(cfg.endpoint, {
+			method: "POST", headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ messages: history, session_id: sessionId, page: location.href, nudge: true })
+		})
+			.then(function (r) { return r.ok ? r.json() : null; })
+			.then(function (data) {
+				clearTimeout(to);
+				finish(function () {
+					var reply = (data && data.reply) ? data.reply : "";
+					if (!reply) { staticNudge(count); return; }
+					addBubble("bot", reply);
+					history.push({ role: "assistant", content: reply });
+					saveState();
+					if (data.suggestions && data.suggestions.length) { renderChoices(data.suggestions); }
+					if (count >= 2) { nudgeWidenOptions(); }
+				});
+			})
+			.catch(function () { clearTimeout(to); finish(function () { staticNudge(count); }); });
+	}
+
+	// 文脈が取れない／通信失敗時の固定文（段階打診）
+	function staticNudge(count) {
+		if (count === 1) {
+			addBubble("bot", "ご覧いただきありがとうございます。一言だけでも、今のお気持ちやご希望を教えてください。ぴったりのご案内をします。（例：「審査が不安」「頭金なし」「月々いくら」）");
+			renderChoices(["審査が不安", "頭金なしで買える？", "月々いくら？", "在庫を見たい"]);
+			if (cfg.shinsaOn) { renderActionChips([{ label: "無料で審査診断する", fn: openShindanCheck }]); }
+		} else {
+			addBubble("bot", "お時間のあるときで大丈夫です。無料の審査診断なら数問で通る見込みがわかります。LINEや担当者へのご相談も承れますので、お気軽にどうぞ。");
+			nudgeWidenOptions();
+		}
+	}
+	function nudgeWidenOptions() {
+		renderChoices(["担当者に相談したい", "もう少し会話で相談したい"]);
+		var acts = [];
+		if (cfg.shinsaOn) { acts.push({ label: "無料で審査診断する", fn: openShindanCheck }); }
+		acts.push({ label: "↻ 最初からやり直す", fn: restartChat });
+		renderActionChips(acts);
 	}
 
 	// 任意の動作を実行するチップ（送信ではなく関数呼び出し）
