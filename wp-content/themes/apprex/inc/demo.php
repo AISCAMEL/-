@@ -193,6 +193,7 @@ function apprex_demo_config( $token ) {
 		'app'       => is_array( $state ) && isset( $state['app'] ) ? apprex_demo_clean_app( $state['app'] ) : null,
 		'preview'   => apprex_preview_app_links(),
 		'proto'     => $proto ? apprex_orig_sanitize( json_decode( (string) get_user_meta( $user->ID, 'apprex_orig_spec', true ), true ) ) : null,
+		'protoImages' => $proto && function_exists( 'apprex_orig_images_out' ) ? apprex_orig_images_out( $user->ID ) : null,
 	);
 	if ( $proto ) {
 		$cfg['url'] = apprex_demo_url( $token, array( 'v' => 'orig' ) );

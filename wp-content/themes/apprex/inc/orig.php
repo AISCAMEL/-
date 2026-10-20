@@ -376,7 +376,7 @@ function apprex_orig_rest( WP_REST_Request $request ) {
 		$user = $cur
 			? "今の企画：" . wp_json_encode( $cur, JSON_UNESCAPED_UNICODE ) . "\n\n修正の指示：" . ( $instr ? $instr : '全体をより良くしてください' ) . "\n（指示に関係しない部分はなるべく変えない）"
 			: "お客様の希望：" . $idea . ( $name ? "\nアプリ名の希望：" . $name : '' );
-		$res = apprex_openrouter_complete(
+		$res = apprex_studio_complete(
 			array( array( 'role' => 'system', 'content' => $system ), array( 'role' => 'user', 'content' => $user ) ),
 			array( 'temperature' => 0.5, 'max_tokens' => 3800, 'timeout' => 90 )
 		);
@@ -399,4 +399,131 @@ function apprex_orig_rest( WP_REST_Request $request ) {
 	}
 	update_user_meta( $uid, 'apprex_orig_spec', wp_slash( wp_json_encode( $spec, JSON_UNESCAPED_UNICODE ) ) );
 	return rest_ensure_response( array( 'ok' => true, 'spec' => $spec, 'source' => $source, 'demo' => apprex_demo_url( apprex_demo_token( $uid ), array( 'v' => 'orig' ) ) ) );
+}
+
+/* -------------------------------------------------------------------------
+ * 試作に写真を入れる（OpenRouter の画像モデル。文字は入れず、写真・イラストだけ）
+ * ---------------------------------------------------------------------- */
+
+/**
+ * 写真を入れる場所（画面ID_部品番号[_項目番号]）。app-demo.js と同じ並び。
+ *
+ * @param array $spec 企画。
+ * @param int   $max  最大数。
+ * @return array<int,array{key:string,label:string,wide:bool}>
+ */
+function apprex_orig_image_slots( $spec, $max = 4 ) {
+	$out = array();
+	foreach ( $spec['screens'] as $sc ) {
+		foreach ( $sc['parts'] as $pi => $pt ) {
+			if ( in_array( $pt['t'], array( 'hero', 'image' ), true ) ) {
+				$out[] = array( 'key' => $sc['id'] . '_' . $pi, 'label' => preg_replace( '/^▶\s*/u', '', $pt['label'] ), 'wide' => true );
+			} elseif ( 'cards' === $pt['t'] ) {
+				foreach ( array_slice( $pt['items'], 0, 3 ) as $ii => $it ) {
+					$out[] = array( 'key' => $sc['id'] . '_' . $pi . '_' . $ii, 'label' => $it, 'wide' => false );
+				}
+			}
+			if ( count( $out ) >= $max ) {
+				return array_slice( $out, 0, $max );
+			}
+		}
+	}
+	return $out;
+}
+
+/** 試作に入れた写真（キー => URL）。 */
+function apprex_orig_images_out( $user_id ) {
+	$m   = get_user_meta( $user_id, 'apprex_orig_images', true );
+	$out = array();
+	foreach ( is_array( $m ) ? $m : array() as $k => $id ) {
+		$url = wp_get_attachment_url( (int) $id );
+		if ( $url ) {
+			$out[ $k ] = $url;
+		}
+	}
+	return (object) $out;
+}
+
+add_action( 'rest_api_init', function () {
+	register_rest_route(
+		'apprex/v1',
+		'/studio/orig-image',
+		array(
+			'methods'             => 'POST',
+			'callback'            => 'apprex_orig_image_rest',
+			'permission_callback' => function () {
+				return is_user_logged_in();
+			},
+		)
+	);
+} );
+
+/**
+ * slot が空なら写真を入れる場所の一覧を返し、指定があればその1枚を作る（1回の通信で1枚）。
+ *
+ * @param WP_REST_Request $request Request.
+ * @return WP_REST_Response|WP_Error
+ */
+function apprex_orig_image_rest( WP_REST_Request $request ) {
+	if ( ! apprex_studio_check_nonce( $request ) ) {
+		return new WP_Error( 'forbidden', '再読み込みしてください。', array( 'status' => 403 ) );
+	}
+	$uid  = get_current_user_id();
+	$spec = apprex_orig_sanitize( json_decode( (string) get_user_meta( $uid, 'apprex_orig_spec', true ), true ) );
+	if ( ! $spec ) {
+		return new WP_Error( 'bad_request', '先にアプリの試作を作ってください。', array( 'status' => 400 ) );
+	}
+	$slots = apprex_orig_image_slots( $spec );
+	$use   = get_user_meta( $uid, 'apprex_orig_img_usage', true );
+	$n     = ( is_array( $use ) && isset( $use['d'] ) && wp_date( 'Ymd' ) === $use['d'] ) ? (int) $use['n'] : 0;
+	$limit = (int) apply_filters( 'apprex_orig_image_daily_limit', 12 );
+	$key   = sanitize_text_field( (string) $request->get_param( 'slot' ) );
+	if ( '' === $key ) {
+		return rest_ensure_response( array( 'ok' => true, 'slots' => $slots, 'left' => max( 0, $limit - $n ), 'ready' => '' !== apprex_openrouter_key() ) );
+	}
+	if ( '' === apprex_openrouter_key() ) {
+		return new WP_Error( 'not_configured', '写真の生成は準備中です。担当者が設定すると使えるようになります。', array( 'status' => 503 ) );
+	}
+	$slot = null;
+	foreach ( $slots as $s ) {
+		if ( $s['key'] === $key ) {
+			$slot = $s;
+		}
+	}
+	if ( ! $slot ) {
+		return new WP_Error( 'bad_request', '写真を入れる場所が見つかりません。', array( 'status' => 400 ) );
+	}
+	if ( $n >= $limit ) {
+		return new WP_Error( 'limit', '本日の写真の生成回数の上限に達しました。明日またお試しください。', array( 'status' => 429 ) );
+	}
+	update_user_meta( $uid, 'apprex_orig_img_usage', array( 'd' => wp_date( 'Ymd' ), 'n' => $n + 1 ) );
+
+	$prompt = sprintf(
+		'High-quality %1$s for a Japanese mobile app (%2$s: %3$s). Subject: "%4$s". Clean, modern, natural light, realistic Japanese setting where people appear. %5$s. Absolutely no text, letters, numbers, logos, watermarks or UI elements in the image.',
+		'photograph or polished illustration',
+		$spec['name'],
+		$spec['summary'],
+		$slot['label'],
+		$slot['wide'] ? 'Landscape 16:9 composition' : 'Square 1:1 composition, subject centered'
+	);
+	$img = apprex_openrouter_image( $prompt, array( 'model' => apprex_bulk_image_model() ) );
+	if ( is_wp_error( $img ) && apprex_bulk_image_model() !== apprex_image_model() ) {
+		$img = apprex_openrouter_image( $prompt ); // 予備：通常の画像モデルでやり直す。
+	}
+	if ( is_wp_error( $img ) ) {
+		return new WP_Error( 'failed', '写真を作れませんでした。少し時間をおいてお試しください。', array( 'status' => 502 ) );
+	}
+	$att = apprex_save_generated_image( $img, 'AIスタジオ-' . $uid . '-試作-' . $key );
+	if ( is_wp_error( $att ) ) {
+		return new WP_Error( 'failed', '写真を保存できませんでした。', array( 'status' => 500 ) );
+	}
+	update_post_meta( $att, '_apprex_studio_user', $uid );
+	$map = get_user_meta( $uid, 'apprex_orig_images', true );
+	$map = is_array( $map ) ? $map : array();
+	if ( ! empty( $map[ $key ] ) ) {
+		wp_delete_attachment( (int) $map[ $key ], true );
+	}
+	$map[ $key ] = $att;
+	update_user_meta( $uid, 'apprex_orig_images', $map );
+	return rest_ensure_response( array( 'ok' => true, 'images' => apprex_orig_images_out( $uid ), 'left' => max( 0, $limit - $n - 1 ) ) );
 }

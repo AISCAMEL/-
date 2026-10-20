@@ -304,7 +304,7 @@ function docSheet(){
 
 
 /* ---------- オリジナルアプリをAIで（イメージの試作＋仕様定義書） ---------- */
-var ORIG=CFG.orig||null, ORIG_BUSY=false;
+var ORIG=CFG.orig||null, ORIG_BUSY=false, OIMG=CFG.origImages||{}, PHOTO={busy:false,done:0,total:0,msg:''};
 function estOrig(P){
   var R=CFG.est||{day_rate:60000,size_days:{S:3,M:8,L:18},base_days:1,fixed:[['要件定義・画面設計・デザイン',12],['管理画面（基本）',6],['テスト・ストア申請',8]],range:[0.85,1.3],floor:{},team:2};
   var rows=R.fixed.map(function(f){return [f[0],+f[1]];}), later=0;
@@ -331,7 +331,8 @@ function vOrig(){
   var P=ORIG, E=estOrig(P), mvp=P.features.filter(function(f){return f.phase==='MVP';});
   var screens=P.screens.map(function(x){return '<div class="osc"><b>'+esc(x.name)+'</b><small>'+esc(x.role)+'</small><span>'+esc(x.purpose)+'</span><em>'+x.parts.map(function(pt){return esc(PART_NAME[pt.t]||pt.t);}).join('・')+'</em></div>';}).join('');
   var feats=tbl(['機能','フェーズ','規模','実現方法'],P.features.map(function(f){return ['<b>'+esc(f.name)+'</b><br><small>'+esc(f.desc)+'</small>',f.phase,f.size,f.base?'APPREXの基盤':'個別開発'];}));
-  return head+'<div class="grid2 demo-g"><div class="card demo-stage"><div class="demo-ph"><iframe id="origFrame" src="'+esc(CFG.origDemo)+'" title="オリジナルアプリの試作"></iframe></div><a class="btn btn--line btn--sm" href="'+esc(CFG.origDemo)+'" target="_blank" rel="noopener">新しいタブで開く・スマホで開く</a></div>'
+  return head+'<div class="grid2 demo-g"><div class="card demo-stage"><div class="demo-ph"><iframe id="origFrame" src="'+esc(CFG.origDemo)+'" title="オリジナルアプリの試作"></iframe></div><a class="btn btn--line btn--sm" href="'+esc(CFG.origDemo)+'" target="_blank" rel="noopener">新しいタブで開く・スマホで開く</a>'
+    +'<div class="photo-box"><button type="button" class="btn btn--cta btn--sm" data-go="origPhotos"'+(PHOTO.busy?' disabled':'')+'>'+(PHOTO.busy?'写真を作っています… '+PHOTO.done+' / '+PHOTO.total:(Object.keys(OIMG).length?'写真を作り直す（AI）':'試作に写真を入れる（AI）'))+'</button><small id="photoMsg">'+esc(PHOTO.msg||'メイン画像とカードの写真を、AIが4枚まで作ります（1枚30〜60秒）。')+'</small></div></div>'
     +'<div class="card"><span class="aid-tag">AIの試作</span><h3 class="orig-name">'+esc(P.name)+'</h3><p class="orig-sum">'+esc(P.summary)+'</p>'
     +'<dl class="kv"><dt>カテゴリー</dt><dd>'+esc(P.category)+'</dd><dt>使う人</dt><dd>'+P.roles.map(function(r){return esc(r.name);}).join('・')+'</dd><dt>画面</dt><dd>'+P.screens.length+'画面</dd><dt>最初に作る機能</dt><dd>'+mvp.length+'個（将来：'+(P.features.length-mvp.length)+'個）</dd></dl>'
     +'<div class="orig-est"><small>概算の目安（MVP・税抜）</small><b>'+esc(E.man(E.lo))+'〜'+esc(E.man(E.hi))+'</b><span>期間の目安：約'+E.weeks+'週間（ストア審査を含む）</span></div>'
@@ -364,7 +365,7 @@ function docReq(){
     var p2=sec('機能一覧')+tbl(['No','機能','説明','フェーズ','規模','実現方法'],P.features.map(function(f,i){return [String(i+1),'<b>'+esc(f.name)+'</b>',esc(f.desc),f.phase,f.size,f.base?'APPREXの基盤':'個別開発'];}))
       +sec('画面一覧と遷移')+tbl(['ID','画面','使う人','目的','次の画面'],P.screens.map(function(x){return ['<code>'+esc(x.id)+'</code>','<b>'+esc(x.name)+'</b>',esc(x.role),esc(x.purpose),x.to.map(function(t){var y=P.screens.filter(function(z){return z.id===t;})[0];return y?esc(y.name):'';}).join('、')];}))
       +'<p class="dnote">下のタブ：'+P.tabs.map(function(t){var y=P.screens.filter(function(z){return z.id===t;})[0];return y?esc(y.name):'';}).join('／')+'</p>';
-    var p3=sec('画面ごとの仕様')+P.screens.map(function(x){return '<div class="rq-sc"><b>'+esc(x.name)+'</b><small>（'+esc(x.id)+'・'+esc(x.role)+'）</small><p>'+esc(x.purpose)+'</p>'+tbl(['部品','見出し','表示する内容（例）'],x.parts.map(function(pt){return [esc(PART_NAME[pt.t]||pt.t),esc(pt.label),esc(pt.items.join('、'))];}))+'</div>';}).join('');
+    var p3=sec('画面ごとの仕様')+P.screens.map(function(x){ var th=Object.keys(OIMG).filter(function(k){return k.indexOf(x.id+'_')===0;}).map(function(k){return '<img src="'+esc(OIMG[k])+'" alt="">';}).join(''); return '<div class="rq-sc"><b>'+esc(x.name)+'</b><small>（'+esc(x.id)+'・'+esc(x.role)+'）</small><p>'+esc(x.purpose)+'</p>'+(th?'<div class="rq-img">'+th+'<span>イメージ（AI生成）</span></div>':'')+tbl(['部品','見出し','表示する内容（例）'],x.parts.map(function(pt){return [esc(PART_NAME[pt.t]||pt.t),esc(pt.label),esc(pt.items.join('、'))];}))+'</div>';}).join('');
     var p4=sec('データ項目')+tbl(['データ','主な項目'],P.data.map(function(d){return ['<b>'+esc(d.entity)+'</b>',esc(d.fields.join('、'))];}))
       +sec('管理画面')+'<ul class="dl">'+P.admin.map(function(a){return '<li>'+esc(a)+'</li>';}).join('')+'</ul>'
       +sec('外部連携')+'<ul class="dl">'+P.integrations.map(function(a){return '<li>'+esc(a)+'</li>';}).join('')+'</ul>'
@@ -656,6 +657,23 @@ document.addEventListener('click',function(e){
     return;
   }
   if(g==='origOff'){ S.origPlan=false; S.plan='full'; render(); return; }
+  if(g==='origPhotos'){
+    if(PHOTO.busy) return;
+    PHOTO={busy:true,done:0,total:0,msg:'写真を入れる場所を確認しています…'}; render();
+    var fail=function(x){ PHOTO.busy=false; PHOTO.msg=x.message; render(); };
+    api('studio/orig-image',{slot:''}).then(function(b){
+      if(!b.ready){ fail({message:'写真の生成は準備中です。担当者が設定すると使えるようになります。'}); return; }
+      var slots=(b.slots||[]).slice(0,Math.max(0,b.left||0));
+      if(!slots.length){ fail({message:b.left?'この試作には写真を入れる場所がありません。':'本日の写真の生成回数の上限に達しました。'}); return; }
+      PHOTO.total=slots.length; PHOTO.msg='AIが写真を作っています。この画面のままお待ちください。'; render();
+      var i=0, next=function(){
+        if(i>=slots.length){ PHOTO.busy=false; PHOTO.msg='写真を'+PHOTO.done+'枚入れました。試作と仕様定義書に反映されています。'; S.vers.push({n:S.vers.length+1,note:'AIが試作の写真を'+PHOTO.done+'枚作成'}); save(); render(); return; }
+        api('studio/orig-image',{slot:slots[i].key}).then(function(r){ OIMG=r.images||OIMG; PHOTO.done++; i++; var b2=document.querySelector('[data-go=origPhotos]'); if(b2){ b2.textContent='写真を作っています… '+PHOTO.done+' / '+PHOTO.total; } next(); }).catch(fail);
+      };
+      next();
+    }).catch(fail);
+    return;
+  }
   if(g==='origNew'){ if(!window.confirm('今の試作はそのままに、新しいアプリを作る画面に戻ります。')) return; ORIG=null; render(); return; }
   if(g==='origDoc'){ S._doc='req'; S._reqMode='orig'; go('docs'); return; }
   if(g==='origConsult'){ S.origPlan=true; S.plan='orig'; S.prog=Math.max(S.prog,3); go('consult'); return; }

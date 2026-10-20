@@ -388,6 +388,8 @@ add_action( 'admin_init', function () {
 	register_setting( 'apprex_chat', 'apprex_openrouter_model', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 	register_setting( 'apprex_chat', 'apprex_chat_knowledge', array( 'sanitize_callback' => 'sanitize_textarea_field' ) );
 	register_setting( 'apprex_chat', 'apprex_chat_sdr', array( 'sanitize_callback' => 'absint', 'default' => 1 ) );
+	register_setting( 'apprex_chat', 'apprex_studio_model', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+	register_setting( 'apprex_chat', 'apprex_bulk_image_model', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 } );
 
 /**
@@ -416,10 +418,25 @@ function apprex_chat_settings_page() {
 					</td>
 				</tr>
 				<tr>
-					<th scope="row"><?php esc_html_e( 'モデル', 'apprex' ); ?></th>
+					<th scope="row"><?php esc_html_e( 'チャット用モデル', 'apprex' ); ?></th>
 					<td>
 						<input type="text" name="apprex_openrouter_model" value="<?php echo esc_attr( get_option( 'apprex_openrouter_model', '' ) ); ?>" class="regular-text" placeholder="<?php echo esc_attr( APPREX_OPENROUTER_DEFAULT_MODEL ); ?>">
 						<p class="description"><?php printf( esc_html__( '未入力時は %s。任意の OpenRouter モデルID（例：google/gemini-flash-1.5、deepseek/deepseek-chat 等）を指定できます。', 'apprex' ), esc_html( APPREX_OPENROUTER_DEFAULT_MODEL ) ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'AIスタジオ用モデル（文章）', 'apprex' ); ?></th>
+					<td>
+						<input type="text" name="apprex_studio_model" value="<?php echo esc_attr( get_option( 'apprex_studio_model', '' ) ); ?>" class="regular-text" placeholder="<?php echo esc_attr( APPREX_STUDIO_DEFAULT_MODEL ); ?>">
+						<p class="description"><?php printf( esc_html__( 'AIデザイナー・オリジナルアプリの試作・仕様定義書・AI企画書に使います。未入力時は %s。うまく動かないときはチャット用モデルで自動的にやり直します。', 'apprex' ), esc_html( APPREX_STUDIO_DEFAULT_MODEL ) ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( '画像モデル', 'apprex' ); ?></th>
+					<td>
+						<p style="margin-top:0"><?php echo esc_html( '通常（メインビジュアル・アイコン・画面デザイン・ブログ）：' . apprex_image_model() ); ?><br><span class="description"><?php esc_html_e( '変更は「投稿 > AI記事生成」の画像モデル欄で行えます。', 'apprex' ); ?></span></p>
+						<input type="text" name="apprex_bulk_image_model" value="<?php echo esc_attr( get_option( 'apprex_bulk_image_model', '' ) ); ?>" class="regular-text" placeholder="<?php echo esc_attr( APPREX_BULK_IMAGE_DEFAULT_MODEL ); ?>">
+						<p class="description"><?php printf( esc_html__( '枚数の多い画像（オリジナルアプリの試作に入れる写真）に使うモデル。未入力時は %s。', 'apprex' ), esc_html( APPREX_BULK_IMAGE_DEFAULT_MODEL ) ); ?></p>
 					</td>
 				</tr>
 				<tr>
@@ -439,9 +456,65 @@ function apprex_chat_settings_page() {
 			</table>
 			<?php submit_button(); ?>
 		</form>
+
+		<hr>
+		<h2 id="apprex-image-compare"><?php esc_html_e( '画像モデルの比較テスト', 'apprex' ); ?></h2>
+		<p><?php esc_html_e( '同じお題で、指定したモデルそれぞれに1枚ずつ画像を作り、仕上がりと実際の請求額（OpenRouterの応答に含まれる金額）を並べて表示します。1回のテストで、モデルの数だけ費用がかかります。', 'apprex' ); ?></p>
+		<?php $apprex_cmp = get_transient( 'apprex_image_compare_' . get_current_user_id() ); ?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<input type="hidden" name="action" value="apprex_image_compare">
+			<?php wp_nonce_field( 'apprex_image_compare' ); ?>
+			<table class="form-table" role="presentation">
+				<tr><th scope="row"><?php esc_html_e( 'お題', 'apprex' ); ?></th><td><textarea name="prompt" rows="3" class="large-text"><?php echo esc_textarea( $apprex_cmp ? $apprex_cmp['prompt'] : '日本の焼肉店のアプリのメインビジュアル。炭火で焼ける上質な和牛、落ち着いた高級感のある店内、写真風、横長16:9、文字は入れない。' ); ?></textarea></td></tr>
+				<tr><th scope="row"><?php esc_html_e( 'モデル（1行に1つ）', 'apprex' ); ?></th><td><textarea name="models" rows="3" class="large-text code"><?php echo esc_textarea( $apprex_cmp ? implode( "\n", wp_list_pluck( $apprex_cmp['rows'], 'model' ) ) : APPREX_IMAGE_DEFAULT_MODEL . "\n" . APPREX_BULK_IMAGE_DEFAULT_MODEL ); ?></textarea></td></tr>
+			</table>
+			<?php submit_button( __( '比較テストを実行', 'apprex' ), 'secondary' ); ?>
+		</form>
+		<?php if ( $apprex_cmp ) : ?>
+			<div style="display:flex;flex-wrap:wrap;gap:16px">
+				<?php foreach ( $apprex_cmp['rows'] as $r ) : ?>
+					<div style="width:300px;background:#fff;border:1px solid #dcdcde;padding:10px">
+						<strong><?php echo esc_html( $r['model'] ); ?></strong><br>
+						<?php if ( ! empty( $r['url'] ) ) : ?>
+							<a href="<?php echo esc_url( $r['url'] ); ?>" target="_blank" rel="noopener"><img src="<?php echo esc_url( $r['url'] ); ?>" alt="" style="width:100%;height:auto;margin:6px 0"></a>
+							<?php echo esc_html( sprintf( '時間：%.1f秒／請求額：%s', $r['sec'], null === $r['cost'] ? '（応答に金額なし）' : '$' . number_format( $r['cost'], 4 ) ) ); ?>
+						<?php else : ?>
+							<p style="color:#b32d2e"><?php echo esc_html( $r['error'] ); ?></p>
+						<?php endif; ?>
+					</div>
+				<?php endforeach; ?>
+			</div>
+		<?php endif; ?>
 	</div>
 	<?php
 }
+
+/* 画像モデルの比較テスト（管理者のみ）。 */
+add_action( 'admin_post_apprex_image_compare', function () {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( esc_html__( '権限がありません。', 'apprex' ) );
+	}
+	check_admin_referer( 'apprex_image_compare' );
+	$prompt = sanitize_textarea_field( wp_unslash( isset( $_POST['prompt'] ) ? $_POST['prompt'] : '' ) );
+	$models = array_slice( array_filter( array_map( 'trim', explode( "\n", sanitize_textarea_field( wp_unslash( isset( $_POST['models'] ) ? $_POST['models'] : '' ) ) ) ) ), 0, 4 );
+	$rows   = array();
+	foreach ( $models as $model ) {
+		$t0  = microtime( true );
+		$img = apprex_openrouter_image( $prompt, array( 'model' => $model ) );
+		$row = array( 'model' => $model, 'sec' => microtime( true ) - $t0, 'cost' => null, 'url' => '', 'error' => '' );
+		if ( is_wp_error( $img ) ) {
+			$row['error'] = $img->get_error_message();
+		} else {
+			$att = apprex_save_generated_image( $img, '画像モデル比較-' . sanitize_title( $model ) );
+			$row['url']  = is_wp_error( $att ) ? '' : wp_get_attachment_url( $att );
+			$row['cost'] = $img['cost'];
+		}
+		$rows[] = $row;
+	}
+	set_transient( 'apprex_image_compare_' . get_current_user_id(), array( 'prompt' => $prompt, 'rows' => $rows ), DAY_IN_SECONDS );
+	wp_safe_redirect( admin_url( 'options-general.php?page=apprex-chat#apprex-image-compare' ) );
+	exit;
+} );
 
 /**
  * 画像生成モデル（既定：Gemini Image「Nano Banana」）。
@@ -450,7 +523,39 @@ function apprex_chat_settings_page() {
  */
 function apprex_image_model() {
 	$opt = get_option( 'apprex_image_model', '' );
-	return $opt ? (string) $opt : 'google/gemini-2.5-flash-image';
+	return $opt ? (string) $opt : APPREX_IMAGE_DEFAULT_MODEL;
+}
+
+/* 用途別の既定モデル（OpenRouter のモデルID）。設定 > APPREX チャット で変更できる。 */
+const APPREX_IMAGE_DEFAULT_MODEL      = 'google/gemini-3.1-flash-image'; // Nano Banana 2：メインビジュアル・アイコンなど。
+const APPREX_BULK_IMAGE_DEFAULT_MODEL = 'openai/gpt-image-2';            // 枚数の多い画像（試作の写真など）。
+const APPREX_STUDIO_DEFAULT_MODEL     = 'anthropic/claude-sonnet-5.5';   // AIデザイナー・試作・仕様定義書。
+
+/** 枚数の多い画像に使うモデル。 */
+function apprex_bulk_image_model() {
+	$opt = trim( (string) get_option( 'apprex_bulk_image_model', '' ) );
+	return $opt ? $opt : APPREX_BULK_IMAGE_DEFAULT_MODEL;
+}
+
+/** AIスタジオ（AIデザイナー・試作・仕様定義書）に使う文章モデル。 */
+function apprex_studio_text_model() {
+	$opt = trim( (string) get_option( 'apprex_studio_model', '' ) );
+	return $opt ? $opt : APPREX_STUDIO_DEFAULT_MODEL;
+}
+
+/**
+ * AIスタジオ用の文章生成。スタジオ用モデルで失敗したら、チャット用モデルで再試行する。
+ *
+ * @param array $messages メッセージ。
+ * @param array $args     temperature / max_tokens / timeout。
+ * @return string|WP_Error
+ */
+function apprex_studio_complete( $messages, $args = array() ) {
+	$res = apprex_openrouter_complete( $messages, array_merge( $args, array( 'model' => apprex_studio_text_model() ) ) );
+	if ( is_wp_error( $res ) && apprex_studio_text_model() !== apprex_openrouter_model() ) {
+		$res = apprex_openrouter_complete( $messages, $args );
+	}
+	return $res;
 }
 
 /**
@@ -514,6 +619,7 @@ function apprex_openrouter_image( $prompt, $args = array() ) {
 		'model'      => isset( $args['model'] ) ? $args['model'] : apprex_image_model(),
 		'messages'   => array( array( 'role' => 'user', 'content' => $prompt ) ),
 		'modalities' => array( 'image', 'text' ),
+		'usage'      => array( 'include' => true ), // 実際の請求額を応答に含める。
 	);
 	$resp = wp_remote_post(
 		APPREX_OPENROUTER_ENDPOINT,
@@ -554,7 +660,7 @@ function apprex_openrouter_image( $prompt, $args = array() ) {
 		if ( '' === $bin ) {
 			return new WP_Error( 'no_image', '画像URLを取得できませんでした。' );
 		}
-		return array( 'mime' => 'image/png', 'data' => $bin );
+		return array( 'mime' => 'image/png', 'data' => $bin, 'cost' => isset( $body['usage']['cost'] ) ? (float) $body['usage']['cost'] : null, 'model' => $payload['model'] );
 	}
 	if ( ! preg_match( '#^data:(image/[a-zA-Z0-9.+-]+);base64,(.+)$#s', $url, $m ) ) {
 		return new WP_Error( 'bad_image', '画像データの形式が不正です。' );
@@ -563,7 +669,7 @@ function apprex_openrouter_image( $prompt, $args = array() ) {
 	if ( false === $bin ) {
 		return new WP_Error( 'bad_image', '画像データをデコードできませんでした。' );
 	}
-	return array( 'mime' => $m[1], 'data' => $bin );
+	return array( 'mime' => $m[1], 'data' => $bin, 'cost' => isset( $body['usage']['cost'] ) ? (float) $body['usage']['cost'] : null, 'model' => $payload['model'] );
 }
 
 /**

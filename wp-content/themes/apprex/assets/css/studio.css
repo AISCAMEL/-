@@ -395,3 +395,8 @@
 .rn-studio .rq-sc p{margin:2px 0 6px;font-size:.86rem}
 .rn-studio .paper code{font-size:.78rem;background:#f1f4fa;border-radius:4px;padding:1px 5px}
 .rn-studio .linkbtn{border:0;background:none;color:var(--blue-d);text-decoration:underline;cursor:pointer;padding:0;font:inherit}
+.rn-studio .photo-box{display:grid;gap:6px;justify-items:center;text-align:center;max-width:360px}
+.rn-studio .photo-box small{font-size:.76rem;color:var(--muted)}
+.rn-studio .rq-img{display:flex;flex-wrap:wrap;gap:6px;align-items:flex-end;margin:4px 0 8px}
+.rn-studio .rq-img img{width:96px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
+.rn-studio .rq-img span{font-size:.72rem;color:var(--muted)}

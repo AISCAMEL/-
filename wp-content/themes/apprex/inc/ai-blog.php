@@ -371,7 +371,7 @@ function apprex_ai_blog_page() {
 					<td><textarea name="apprex_autopost_topics" rows="8" class="large-text" placeholder="ノーコードアプリ開発のメリット&#10;飲食店アプリで再来店を増やす方法&#10;補助金を活用したアプリ導入&#10;アプリとホームページの使い分け"><?php echo esc_textarea( get_option( 'apprex_autopost_topics', apprex_default_autopost_topics() ) ); ?></textarea>
 					<p class="description"><?php esc_html_e( '上から順に1記事ずつ自動生成します（一巡したら先頭へ戻ります）。', 'apprex' ); ?></p></td></tr>
 				<tr><th><?php esc_html_e( '画像モデル', 'apprex' ); ?></th>
-					<td><input type="text" name="apprex_image_model" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_image_model', '' ) ); ?>" placeholder="google/gemini-2.5-flash-image">
+					<td><input type="text" name="apprex_image_model" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_image_model', '' ) ); ?>" placeholder="<?php echo esc_attr( APPREX_IMAGE_DEFAULT_MODEL ); ?>">
 					<p class="description"><?php esc_html_e( '未入力時は Gemini Image（通称 Nano Banana / google/gemini-2.5-flash-image）。OpenRouterの画像対応モデルIDを指定できます。', 'apprex' ); ?></p></td></tr>
 			</table>
 			<?php submit_button( '保存', 'secondary' ); ?>

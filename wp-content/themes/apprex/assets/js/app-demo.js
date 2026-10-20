@@ -357,6 +357,9 @@
 		var tabs = (P.tabs && P.tabs.length ? P.tabs : P.screens.slice(0, 4).map(function (x) { return x.id; })).filter(function (k) { return SC[k]; }).slice(0, 5);
 		var cur = tabs[0] || P.screens[0].id, stack = [], chatAdd = {};
 		var grad = function (i) { return 'linear-gradient(' + (135 + (i || 0) * 30) + 'deg,' + c1 + ',' + c2 + ')'; };
+		var PI = CFG.protoImages || {};
+		// AIが作った写真があれば使い、無ければブランドカラーのグラデーション。
+		var bg = function (key, i, shade) { return PI[key] ? (shade ? 'linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.55)),' : '') + 'url(' + esc(PI[key]) + ') center/cover' : grad(i); };
 		function head(sc, back) {
 			return '<header class="ah">' + (back ? '<button type="button" class="ah-back" data-act="back" aria-label="戻る">‹</button>' : '<button type="button" class="ah-menu" data-act="drawer" aria-label="画面一覧">☰</button><span class="ah-logo">' + esc((P.name || 'A').charAt(0)) + '</span>')
 				+ '<b>' + esc(back ? sc.name : P.name) + '</b><span class="ah-demo">試作</span></header>';
@@ -365,12 +368,12 @@
 			var to = sc.to || [], go1 = to[0] ? ' data-go="' + to[0] + '"' : ' data-act="nolink"';
 			var it = pt.items || [], L = esc(pt.label);
 			switch (pt.t) {
-				case 'hero': return '<div class="hero" style="background:' + grad(idx) + '"><small>' + esc(P.name) + '</small><b>' + L + '</b></div>';
-				case 'image': return '<div class="pimg" style="background:' + grad(idx) + '">' + (/^▶/.test(pt.label) ? '<i>▶</i>' : '') + '<b>' + esc(String(pt.label).replace(/^▶\s*/, '')) + '</b></div>';
+				case 'hero': return '<div class="hero" style="background:' + bg(sc.id + '_' + idx, idx, true) + '"><small>' + esc(P.name) + '</small><b>' + L + '</b></div>';
+				case 'image': return '<div class="pimg" style="background:' + bg(sc.id + '_' + idx, idx, true) + '">' + (/^▶/.test(pt.label) ? '<i>▶</i>' : '') + '<b>' + esc(String(pt.label).replace(/^▶\s*/, '')) + '</b></div>';
 				case 'search': return '<form class="psearch" data-psearch="' + (to[0] || '') + '"><span>🔍</span><input type="search" placeholder="' + L + '" aria-label="' + L + '"></form>';
 				case 'tabs': return '<div class="ptabs">' + it.map(function (x, i) { return '<button type="button" class="' + (i ? '' : 'on') + '" data-seg="1">' + esc(x) + '</button>'; }).join('') + '</div>';
 				case 'list': return (L ? '<div class="sec-h">' + L + '</div>' : '') + '<div class="plist">' + it.map(function (x) { return '<button type="button" class="pli"' + go1 + ' data-label="' + esc(x) + '"><span>' + esc(x) + '</span><em>›</em></button>'; }).join('') + '</div>';
-				case 'cards': return (L ? '<div class="sec-h">' + L + '</div>' : '') + '<div class="pcards">' + it.map(function (x, i) { return '<button type="button" class="pcard"' + go1 + ' data-label="' + esc(x) + '"><i style="background:' + grad(i + idx) + '"></i><span>' + esc(x) + '</span></button>'; }).join('') + '</div>';
+				case 'cards': return (L ? '<div class="sec-h">' + L + '</div>' : '') + '<div class="pcards">' + it.map(function (x, i) { return '<button type="button" class="pcard"' + go1 + ' data-label="' + esc(x) + '"><i style="background:' + bg(sc.id + '_' + idx + '_' + i, i + idx) + '"></i><span>' + esc(x) + '</span></button>'; }).join('') + '</div>';
 				case 'form': return '<form class="dform" data-pform="' + (to[0] || '') + '">' + (L ? '<div class="sec-h">' + L + '</div>' : '') + it.map(function (x) { return '<label class="fl"><span>' + esc(x) + '</span>' + (/内容|説明|ご意見|本文/.test(x) ? '<textarea rows="3"></textarea>' : '<input type="text">') + '</label>'; }).join('') + '<button type="submit" class="cta">送信する</button></form>';
 				case 'button': { var tgt = to[bi] || to[0]; return '<button type="button" class="cta' + (bi ? ' ghost' : '') + '"' + (tgt ? ' data-go="' + tgt + '"' : ' data-act="done" data-label="' + L + '"') + '>' + L + '</button>'; }
 				case 'chat': { var msgs = it.map(function (x, i) { return [i % 2 ? 'staff' : 'me', x]; }).concat(chatAdd[sc.id] || []); return (L ? '<div class="sec-h">' + L + '</div>' : '') + '<div class="chat">' + msgs.map(function (m) { return '<div class="cm ' + m[0] + '">' + esc(m[1]) + '</div>'; }).join('') + '</div><form class="cin" data-pchat="' + sc.id + '"><input type="text" placeholder="メッセージを入力" aria-label="メッセージ"><button type="submit">送信</button></form>'; }

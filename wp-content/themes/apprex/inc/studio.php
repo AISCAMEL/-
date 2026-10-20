@@ -365,6 +365,7 @@ add_action( 'wp_enqueue_scripts', function () {
 		$cfg['preview'] = apprex_preview_app_links();
 		$cfg['orig']    = function_exists( 'apprex_orig_sanitize' ) ? apprex_orig_sanitize( json_decode( (string) get_user_meta( $u->ID, 'apprex_orig_spec', true ), true ) ) : null;
 		$cfg['origDemo'] = apprex_demo_url( apprex_demo_token( $u->ID ), array( 'v' => 'orig' ) );
+		$cfg['origImages'] = function_exists( 'apprex_orig_images_out' ) ? apprex_orig_images_out( $u->ID ) : null;
 		$cfg['est']     = function_exists( 'apprex_orig_estimate_rules' ) ? apprex_orig_estimate_rules() : null;
 	}
 	wp_enqueue_script( 'apprex-studio-data', APPREX_URI . '/assets/js/studio-data.js', array(), APPREX_VERSION, true );
@@ -608,7 +609,7 @@ function apprex_studio_rest_ai_design( WP_REST_Request $request ) {
 		. "必ずJSONだけを出力してください（説明文やコードブロックは不要）。形式：\n"
 		. '{"reply":"変更内容を日本語で1〜2文","note":"自動で反映できない要望の要約（無ければ空）","changes":{"color":"#RRGGBB または null","tone":"luxury|pop|natural|sporty|trust または null","variant":"A(グリッド)|B(リスト)|C(大きな写真) または null","cols":"2|3 または null","fontScale":"1|1.15 または null","bigPhoto":"true|false|null","bigReserve":"true|false|null","catch":"ホームのキャッチコピー（全角24字以内）または null","menus":"ホームのボタン6個の表示名（各8字以内）の配列。pages の同じ順番のページの役割を変えずに、その店らしい言い方にする。または null"}}' . "\n"
 		. "要望に関係しない項目は null。色は業種と雰囲気に合う具体的なHEXを選ぶ。キャッチコピーやボタン名は、その店らしい自然な日本語にする。";
-	$res = apprex_openrouter_complete(
+	$res = apprex_studio_complete(
 		array(
 			array( 'role' => 'system', 'content' => $system ),
 			array( 'role' => 'user', 'content' => '現在のデザイン：' . wp_json_encode( $brief, JSON_UNESCAPED_UNICODE ) ),
@@ -795,7 +796,7 @@ function apprex_studio_rest_ai_plan( WP_REST_Request $request ) {
 	}
 	$brief = apprex_studio_brief( $request );
 	$feats = array_slice( array_map( 'sanitize_text_field', (array) $request->get_param( 'features' ) ), 0, 20 );
-	$res   = apprex_openrouter_complete(
+	$res   = apprex_studio_complete(
 		array(
 			array(
 				'role'    => 'system',
