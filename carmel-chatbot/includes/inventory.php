@@ -83,7 +83,7 @@ function carmel_cb_fetch_stock( $query = '', $limit = 20 ) {
 		$sq = new WP_Query( array(
 			'post_type'      => 'portfolio',
 			'post_status'    => 'publish',
-			'posts_per_page' => 12,
+			'posts_per_page' => 24,
 			's'              => $query,
 			'no_found_rows'  => true,
 		) );
@@ -121,7 +121,7 @@ function carmel_cb_match_stock_by_text( $text, $limit = 20 ) {
 	$q = new WP_Query( array(
 		'post_type'              => 'portfolio',
 		'post_status'            => 'publish',
-		'posts_per_page'         => 150,
+		'posts_per_page'         => 600,
 		'orderby'                => 'date',
 		'order'                  => 'DESC',
 		'no_found_rows'          => true,

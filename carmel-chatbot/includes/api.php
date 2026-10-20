@@ -160,7 +160,7 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
 	$car_ctx = carmel_cb_is_car_intent( $context );
 
 	// 発話に在庫の車種名・メーカー名が含まれるか直接照合（「プリウス」等の単体でも拾う）
-	$direct_hits = carmel_cb_match_stock_by_text( $last_user, 20 );
+	$direct_hits = carmel_cb_match_stock_by_text( $last_user, 40 );
 	if ( ! empty( $direct_hits ) ) { $car_ctx = true; }
 
 	// お客様が今ご覧になっている車（在庫ページ）を把握し、その車について答えられるようにする
@@ -179,7 +179,7 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
 	$inventory_block = '';
 	if ( $car_ctx ) {
 		// 車種名がヒットしていればそれを優先。無ければ通常検索＋新着補完。
-		$stock_items     = ! empty( $direct_hits ) ? $direct_hits : carmel_cb_fetch_stock( $last_user, 20 );
+		$stock_items     = ! empty( $direct_hits ) ? $direct_hits : carmel_cb_fetch_stock( $last_user, 40 );
 		// 見ている車を在庫リストの先頭に入れる（car_ids で参照できるように）
 		if ( $page_car ) {
 			$exists = false;

@@ -961,14 +961,26 @@ function carmel_cb_view_testchat() {
 		$pt_exists = post_type_exists( 'portfolio' );
 		$pf_pub    = 0;
 		if ( $pt_exists ) { $cnt = wp_count_posts( 'portfolio' ); $pf_pub = isset( $cnt->publish ) ? (int) $cnt->publish : 0; }
-		$stock_preview = function_exists( 'carmel_cb_fetch_stock' ) ? carmel_cb_fetch_stock( '', 20 ) : array();
+		$stock_preview = function_exists( 'carmel_cb_fetch_stock' ) ? carmel_cb_fetch_stock( '', 500 ) : array();
 		$stock_count   = count( $stock_preview );
 		if ( $stock_count > 0 ) {
-			$titles = array();
-			foreach ( array_slice( $stock_preview, 0, 5 ) as $it ) { $titles[] = esc_html( $it['title'] ); }
 			echo '<div style="border:1px solid #bfe6cb;background:#eefaf2;border-radius:8px;padding:12px 14px;margin:0 0 10px">';
 			echo '<strong style="color:#1e7e45">✅ 在庫を ' . $stock_count . ' 台 認識しています</strong>（チャットはこの在庫から提案します）';
-			echo '<div style="font-size:12px;color:#555;margin-top:6px">例：' . implode( ' ／ ', $titles ) . '</div>';
+			if ( $pf_pub > $stock_count ) {
+				echo '<div style="font-size:12px;color:#8a6d00;margin-top:4px">※ 公開中の portfolio は ' . $pf_pub . ' 件。差（' . ( $pf_pub - $stock_count ) . ' 件）は「売約・商談・終了」等で販売中のみに絞られています。</div>';
+			}
+			// 認識している在庫を全件一覧（スクロール表示）
+			echo '<div style="margin-top:8px;max-height:360px;overflow-y:auto;border:1px solid #cfe6d5;border-radius:6px;background:#fff">';
+			echo '<table class="widefat striped" style="margin:0"><thead><tr><th style="width:44px">#</th><th>車名</th><th style="width:120px">月々/価格</th><th style="width:90px">走行</th></tr></thead><tbody>';
+			$n = 0;
+			foreach ( $stock_preview as $it ) {
+				$n++;
+				$money = ! empty( $it['monthly'] ) ? ( '月々' . number_format( $it['monthly'] ) . '円' ) : ( ! empty( $it['price'] ) ? ( number_format( $it['price'] ) . '円' ) : '応談' );
+				$mile  = ! empty( $it['mileage'] ) ? ( number_format( $it['mileage'] ) . 'km' ) : '—';
+				echo '<tr><td>' . $n . '</td><td>' . esc_html( $it['title'] ) . '</td><td>' . esc_html( $money ) . '</td><td>' . esc_html( $mile ) . '</td></tr>';
+			}
+			echo '</tbody></table></div>';
+			echo '<p style="font-size:11.5px;color:#777;margin:6px 0 0">※ チャットがAIに渡す提案候補は会話ごとに最大20台ですが、車種名で指定された場合は全件から検索して見つけます。</p>';
 			echo '</div>';
 		} else {
 			echo '<div style="border:1px solid #f0c0c0;background:#fdeeee;border-radius:8px;padding:12px 14px;margin:0 0 10px">';
