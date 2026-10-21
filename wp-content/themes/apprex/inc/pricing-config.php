@@ -4,10 +4,10 @@
  * 見積もり計算・料金ページ・チャット回答・GAS連携が全てここを参照。
  *
  * 方針：
- * - アプリ開発の初期設定費は、1年契約で 0円（セルフで始められる）。
- * - 制作をおまかせする場合は制作代行：AIスタジオで作った内容から 150,000円〜／1からヒアリングして 300,000円〜。
+ * - アプリ開発の初期費用は作り方で3つ（AIスタジオと同じ）：
+ *   セルフ 0円（1年契約・通常の初期設定費が0円）／おまかせ（AIスタジオで作った内容から）150,000円〜／おまかせ（1からヒアリング）300,000円〜。
  * - AIスタジオ（デザイン・試作・仕様定義書）は無料。
- * - 制作代行・チャット・GPS等は一回限りのオプション。
+ * - チャット・GPS等は一回限りのオプション。
  * - マッチング/カスタム/オンプレミスは個別見積（要相談）として別掲。
  *
  * @package APPREX
@@ -41,8 +41,8 @@ function apprex_pricing_config() {
 	$config = array(
 		'currency' => 'JPY',
 		'campaign' => array(
-			'label'           => '1年契約で初期設定費0円',
-			'initial_to_zero' => true, // 初期設定費を0円に（1年契約）。
+			'label'           => '初期費用0円から（セルフ・1年契約）',
+			'initial_to_zero' => true, // セルフは初期設定費を0円に（1年契約）。
 		),
 		'services' => array(
 			'app' => array(
@@ -59,7 +59,7 @@ function apprex_pricing_config() {
 						'monthly_regular' => 19800,
 						'initial'         => 100000,
 						'desc'            => '基本機能・1年契約。まずはここから。',
-						'note'            => '制作をおまかせする場合は制作代行（AIスタジオで作った内容から 15万円〜／1から 30万円〜）。自社で登録する場合は不要。',
+						'note'            => '',
 					),
 					'start'    => array(
 						'label'           => 'スタート（電子カタログ）',
@@ -67,7 +67,7 @@ function apprex_pricing_config() {
 						'monthly_regular' => 39800,
 						'initial'         => 200000,
 						'desc'            => 'トライアル＋電子カタログ機能。',
-						'note'            => '制作をおまかせする場合は制作代行（AIスタジオで作った内容から 15万円〜／1から 30万円〜）。自社で登録する場合は不要。電子カタログ11冊以上は別途。',
+						'note'            => '電子カタログ11冊以上は別途。',
 					),
 					'business' => array(
 						'label'           => 'ビジネス（多店舗）',
@@ -75,13 +75,17 @@ function apprex_pricing_config() {
 						'monthly_regular' => 59800,
 						'initial'         => 300000,
 						'desc'            => 'スタート＋多店舗機能（店舗数無制限）。',
-						'note'            => '制作をおまかせする場合は制作代行（AIスタジオで作った内容から 15万円〜／1から 30万円〜）。自社で登録する場合は不要。21店舗以上は1店舗ごと+1万円。',
+						'note'            => '21店舗以上は1店舗ごと+1万円。',
 					),
+				),
+				// 初期費用（作り方で選ぶ。AIスタジオのセルフ／おまかせと同じ）。
+				'setup'      => array(
+					'self' => array( 'label' => 'セルフ：自分で設定', 'price' => 0, 'desc' => '管理画面への登録はご自身で。APPREXが仕上がりをチェックします。1年契約で0円。' ),
+					'ai'   => array( 'label' => 'おまかせ：AIスタジオで作った内容から', 'price' => 150000, 'desc' => 'AIスタジオのデザイン・仕様書をもとに、APPREXが制作・登録まで行います。' ),
+					'full' => array( 'label' => 'おまかせ：1からヒアリング', 'price' => 300000, 'desc' => 'AIスタジオを使わず、打ち合わせで1から決めて制作します。' ),
 				),
 				// 一回限りのオプション（金額あり）。
 				'options'    => array(
-					'seisaku_ai' => array( 'label' => '制作代行（AIスタジオで作った内容から）', 'price' => 150000, 'excludes' => 'seisaku' ),
-					'seisaku'    => array( 'label' => '制作代行（1からヒアリングして制作）', 'price' => 300000, 'excludes' => 'seisaku_ai' ),
 					'chat'    => array( 'label' => 'チャット機能', 'price' => 300000 ),
 					'gps'     => array( 'label' => 'GPSプッシュ（1カ所）', 'price' => 20000 ),
 				),
@@ -200,9 +204,10 @@ function apprex_campaign_initial( $regular ) {
  * @param string   $service Service key.
  * @param string   $plan    Plan key.
  * @param string[] $options Option keys.
+ * @param string   $setup   初期費用の種類（self|ai|full）。
  * @return array|WP_Error
  */
-function apprex_calculate_estimate( $service, $plan, $options = array() ) {
+function apprex_calculate_estimate( $service, $plan, $options = array(), $setup = '' ) {
 	$config = apprex_pricing_config();
 	if ( empty( $config['services'][ $service ] ) ) {
 		return new WP_Error( 'invalid_service', 'サービスの指定が正しくありません。' );
@@ -216,15 +221,28 @@ function apprex_calculate_estimate( $service, $plan, $options = array() ) {
 	$monthly         = (int) $p['monthly'];
 	$monthly_regular = (int) ( $p['monthly_regular'] ?? $p['monthly'] );
 	$initial_regular = (int) ( $p['initial'] ?? 0 );
-	$initial         = apprex_campaign_initial( $initial_regular );
+
+	$options = array_values( array_unique( (array) $options ) );
+	// 以前の形式（制作代行をオプションで送る）も受け付ける。
+	if ( '' === $setup ) {
+		$setup = in_array( 'seisaku_ai', $options, true ) ? 'ai' : ( in_array( 'seisaku', $options, true ) ? 'full' : 'self' );
+	}
+	$options = array_values( array_diff( $options, array( 'seisaku_ai', 'seisaku' ) ) );
+
+	// 初期費用：セルフは1年契約で初期設定費0円、おまかせは制作を含めた金額。
+	$setups = isset( $svc['setup'] ) ? $svc['setup'] : array();
+	if ( $setups ) {
+		$setup       = isset( $setups[ $setup ] ) ? $setup : 'self';
+		$setup_label = $setups[ $setup ]['label'];
+		$initial     = 'self' === $setup ? apprex_campaign_initial( $initial_regular ) : (int) $setups[ $setup ]['price'];
+	} else {
+		$setup       = '';
+		$setup_label = '';
+		$initial     = apprex_campaign_initial( $initial_regular );
+	}
 
 	$opt_total = 0;
 	$opt_lines = array();
-	$options   = array_values( array_unique( (array) $options ) );
-	// 制作代行は「AIスタジオから」と「1から」のどちらか一方（両方ならAIスタジオからを優先）。
-	if ( in_array( 'seisaku_ai', $options, true ) ) {
-		$options = array_values( array_diff( $options, array( 'seisaku' ) ) );
-	}
 	foreach ( $options as $opt_key ) {
 		if ( ! empty( $svc['options'][ $opt_key ] ) ) {
 			$opt_total  += (int) $svc['options'][ $opt_key ]['price'];
@@ -255,6 +273,8 @@ function apprex_calculate_estimate( $service, $plan, $options = array() ) {
 		'monthly_regular'    => $monthly_regular,
 		'initial'            => $initial,
 		'initial_regular'    => $initial_regular,
+		'setup'              => $setup,
+		'setup_label'        => $setup_label,
 		'registration'       => $registration,
 		'registration_label' => $registration_label,
 		'options'            => $opt_lines,
@@ -275,12 +295,12 @@ function apprex_pricing_summary_text() {
 	$lines = array();
 
 	$app = $c['services']['app'];
-	$lines[] = '【アプリ開発（月額制・1年契約で初期設定費0円）】';
+	$lines[] = '【アプリ開発（月額制・1年契約）】';
 	$lines[] = '- AIスタジオ（無料会員登録）でのデザイン・試作・仕様定義書づくりと相談は無料。';
-	$lines[] = '- 自分で管理画面に登録する「セルフ」なら初期費用0円。制作をおまかせする場合の制作代行は、AIスタジオで作った内容から150,000円〜、1からヒアリングして作る場合は300,000円〜。';
+	$lines[] = '- 初期費用は作り方で3つ：セルフ（自分で管理画面に登録）0円／おまかせ（AIスタジオで作った内容から制作）150,000円〜／おまかせ（1からヒアリングして制作）300,000円〜。「制作代行費」ではなく「初期費用」と呼ぶ。';
 	foreach ( $app['plans'] as $p ) {
 		$lines[] = sprintf(
-			'- %s：月額%s円／初期設定費 通常%s円→1年契約で0円',
+			'- %s：月額%s円（セルフの初期費用は1年契約で0円。通常%s円）',
 			$p['label'],
 			number_format( $p['monthly'] ),
 			number_format( $p['initial'] )
@@ -304,4 +324,24 @@ function apprex_pricing_summary_text() {
 	$lines[] = 'マッチングアプリ開発：開発費 300万円〜、月額保守7万円〜、Flutterスクラッチ、最短1ヶ月〜。';
 	$lines[] = '30日間の管理画面体験は無料。詳しい見積りは /estimate、上位プランはお問い合わせへ。';
 	return implode( "\n", $lines );
+}
+
+/**
+ * 見積りの初期費用の説明（メール・画面で共通）。
+ *
+ * @param array $e Estimate.
+ * @return string 例：「150,000円（おまかせ：AIスタジオで作った内容から）」
+ */
+function apprex_estimate_initial_text( $e ) {
+	$yen = number_format( (int) $e['initial'] ) . '円';
+	if ( ! empty( $e['setup_label'] ) ) {
+		if ( 'self' === $e['setup'] && (int) $e['initial_regular'] > (int) $e['initial'] ) {
+			return $yen . '（' . $e['setup_label'] . '・1年契約で0円／通常 ' . number_format( (int) $e['initial_regular'] ) . '円）';
+		}
+		return $yen . '（' . $e['setup_label'] . '）';
+	}
+	if ( (int) $e['initial_regular'] > (int) $e['initial'] ) {
+		return $yen . '（通常 ' . number_format( (int) $e['initial_regular'] ) . '円→1年契約で0円）';
+	}
+	return $yen;
 }

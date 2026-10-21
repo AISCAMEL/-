@@ -33,7 +33,7 @@ function apprex_campaign_messages() {
 	$base    = '初期費用30万円 → 0円／月額19,800円〜 業界最安水準';
 	// 新デザイン時は新しい料金体系に合わせる（apprex_campaign_text で期限・先着の表記なしで表示）。
 	if ( function_exists( 'apprex_rn_enabled' ) && apprex_rn_enabled() ) {
-		$base = 'AIスタジオでデザイン・試作・仕様書は無料。作った内容から制作すると制作費15万円〜（1からは30万円〜）';
+		$base = 'AIスタジオでデザイン・試作・仕様書は無料。作った内容から制作すると初期費用15万円〜（1からは30万円〜）';
 	}
 	$default = array(
 		1  => '新春スタート応援キャンペーン｜' . $base,
@@ -66,7 +66,7 @@ function apprex_campaign_text() {
 	$end   = apprex_campaign_end_label();
 	if ( function_exists( 'apprex_rn_enabled' ) && apprex_rn_enabled() ) {
 		// 新しい料金体系は期間限定ではないため、期限・先着の表記なしで「AIスタジオ特典」として表示。
-		$text = 'AIスタジオ特典 ｜ デザイン・試作・仕様書は無料。作った内容から制作すると制作費15万円〜（1からは30万円〜）';
+		$text = 'AIスタジオ特典 ｜ デザイン・試作・仕様書は無料。作った内容から制作すると初期費用15万円〜（1からは30万円〜）';
 	} else {
 		$text = sprintf( '%sまで限定！%s ｜ %s', $end, '先着5名様', $body );
 	}

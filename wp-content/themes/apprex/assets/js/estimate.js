@@ -1,7 +1,7 @@
 /**
  * APPREX 見積もり → 発注 calculator（APPREX仕様）。
- * 初期設定費は1年契約で0円、月額は通常価格を取り消し線で表示、
- * オプションは一回費用として加算。
+ * 初期費用は作り方で選ぶ（セルフ0円・1年契約／おまかせ：AIスタジオから・1から）。
+ * 月額は通常価格を取り消し線で表示、オプションは一回費用として加算。
  */
 (function () {
 	'use strict';
@@ -20,11 +20,14 @@
 		var elServices = document.getElementById('est-services');
 		var elPlans = document.getElementById('est-plans');
 		var elOptions = document.getElementById('est-options');
+		var elSetup = document.getElementById('est-setup');
 		var elTotal = document.getElementById('est-total');
 		var orderForm = document.getElementById('est-order');
 		var doneBox = document.getElementById('est-done');
 
-		var state = { service: null, plan: null, options: [], quote: null };
+		// ?setup=ai でAIスタジオからの依頼を選んだ状態で開く。
+		var qsSetup = (new URLSearchParams(location.search)).get('setup');
+		var state = { service: null, plan: null, options: [], quote: null, setup: (qsSetup === 'ai' || qsSetup === 'full') ? qsSetup : 'self' };
 		function yen(n) { return '¥' + Number(n).toLocaleString('ja-JP'); }
 		function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
@@ -40,10 +43,10 @@
 			elServices.innerHTML = '';
 			Object.keys(services).forEach(function (key) {
 				var svc = services[key];
-				var b = chip(svc.label, state.service === key && !state.quote, '月額制・初期設定費0円（1年契約）');
+				var b = chip(svc.label, state.service === key && !state.quote, (svc.setup ? '月額制・初期費用0円から（1年契約）' : '月額制・初期費用0円（1年契約）'));
 				b.addEventListener('click', function () {
 					state.service = key; state.plan = null; state.options = []; state.quote = null;
-					renderServices(); renderPlans(); renderOptions(); renderTotal();
+					renderServices(); renderPlans(); renderSetup(); renderOptions(); renderTotal();
 				});
 				elServices.appendChild(b);
 			});
@@ -54,7 +57,7 @@
 				b.classList.add('est-chip--quote');
 				b.addEventListener('click', function () {
 					state.quote = qkey; state.service = null; state.plan = null; state.options = [];
-					renderServices(); renderPlans(); renderOptions(); renderTotal();
+					renderServices(); renderPlans(); renderSetup(); renderOptions(); renderTotal();
 				});
 				elServices.appendChild(b);
 			});
@@ -73,6 +76,20 @@
 			});
 		}
 
+		function renderSetup() {
+			if (!elSetup) { return; }
+			elSetup.innerHTML = '';
+			if (state.quote || !state.service) { elSetup.innerHTML = '<p class="estimate__hint">—</p>'; return; }
+			var setups = services[state.service].setup;
+			if (!setups) { elSetup.innerHTML = '<p class="estimate__hint">初期費用は0円です（1年契約）。</p>'; return; }
+			Object.keys(setups).forEach(function (key) {
+				var st = setups[key];
+				var b = chip(st.label + '　' + (st.price ? Number(st.price).toLocaleString('ja-JP') + '円〜' : '0円'), state.setup === key, st.desc || '');
+				b.addEventListener('click', function () { state.setup = key; renderSetup(); renderTotal(); });
+				elSetup.appendChild(b);
+			});
+		}
+
 		function renderOptions() {
 			elOptions.innerHTML = '';
 			if (state.quote) { elOptions.innerHTML = '<p class="estimate__hint">—</p>'; return; }
@@ -86,15 +103,7 @@
 				wrap.className = 'est-opt';
 				wrap.innerHTML = '<input type="checkbox" value="' + key + '"><span>' + o.label + '</span><b>+' + Number(o.price).toLocaleString('ja-JP') + '円（一回）</b>';
 				wrap.querySelector('input').addEventListener('change', function (e) {
-					if (e.target.checked) {
-						// 制作代行は「AIスタジオから」と「1から」のどちらか一方。
-						if (o.excludes) {
-							state.options = state.options.filter(function (k) { return k !== o.excludes; });
-							var other = elOptions.querySelector('input[value="' + o.excludes + '"]');
-							if (other) { other.checked = false; }
-						}
-						state.options.push(key);
-					}
+					if (e.target.checked) { state.options.push(key); }
 					else { state.options = state.options.filter(function (k) { return k !== key; }); }
 					renderTotal();
 				});
@@ -111,14 +120,17 @@
 				if (svc.options && svc.options[k]) { optTotal += svc.options[k].price; optLines.push(svc.options[k]); }
 			});
 			var initialRegular = p.initial || 0;
-			var initial = toZero ? 0 : initialRegular;
+			var st = svc.setup && svc.setup[state.setup] ? svc.setup[state.setup] : null;
+			var initial = (st && state.setup !== 'self') ? st.price : (toZero ? 0 : initialRegular);
 			return {
+				setupKey: st ? state.setup : '', setupLabel: st ? st.label : '',
 				svcLabel: svc.label, planLabel: p.label,
 				monthly: p.monthly, monthlyRegular: p.monthly_regular || p.monthly,
 				initialRegular: initialRegular, initial: initial,
 				optLines: optLines, optTotal: optTotal,
-				initialTotal: initial + optTotal,
-				annual: p.monthly * 12 + initial + optTotal
+				registration: svc.registration_fee || 0, registrationLabel: svc.registration_label || 'アプリ登録費',
+				initialTotal: initial + optTotal + (svc.registration_fee || 0),
+				annual: p.monthly * 12 + initial + optTotal + (svc.registration_fee || 0)
 			};
 		}
 
@@ -152,8 +164,10 @@
 			html += '<div class="estimate__big">' + yen(e.monthly) + '<small> / 月（税抜）</small></div>';
 			html += '<ul class="estimate__sub">';
 			if (e.monthlyRegular > e.monthly) { html += '<li>月額：<s>' + yen(e.monthlyRegular) + '</s> → <b>' + yen(e.monthly) + '</b> <em>キャンペーン</em></li>'; }
-			if (e.initialRegular > e.initial) { html += '<li>初期設定費：<s>' + yen(e.initialRegular) + '</s> → <b>' + yen(e.initial) + '</b> <em>1年契約で0円</em></li>'; }
-			else { html += '<li>初期設定費：' + yen(e.initial) + '</li>'; }
+			if (e.setupKey && e.setupKey !== 'self') { html += '<li>初期費用：<b>' + yen(e.initial) + '〜</b>（' + esc(e.setupLabel) + '）</li>'; }
+			else if (e.initialRegular > e.initial) { html += '<li>初期費用：<b>' + yen(e.initial) + '</b>' + (e.setupLabel ? '（' + esc(e.setupLabel) + '）' : '') + ' <em>1年契約で0円（通常 <s>' + yen(e.initialRegular) + '</s>）</em></li>'; }
+			else { html += '<li>初期費用：' + yen(e.initial) + '</li>'; }
+			if (e.registration) { html += '<li>' + esc(e.registrationLabel) + '：' + yen(e.registration) + '（一律）</li>'; }
 			if (e.optTotal) { html += '<li>一回オプション：' + yen(e.optTotal) + '</li>'; }
 			html += '<li>初期お支払い目安：<b>' + yen(e.initialTotal) + '</b></li>';
 			html += '<li>初年度概算：' + yen(e.annual) + '</li>';
@@ -170,7 +184,7 @@
 			btn.disabled = true; btn.textContent = '送信中…';
 			var fd = new FormData(orderForm);
 			var payload = {
-				service: state.service, plan: state.plan, options: state.options,
+				service: state.service, plan: state.plan, options: state.options, setup: state.setup,
 				name: fd.get('name'), company: fd.get('company'), email: fd.get('email'),
 				message: fd.get('message'), source_url: location.href
 			};
@@ -193,6 +207,6 @@
 				.catch(function () { alert('通信エラーが発生しました。'); btn.disabled = false; btn.textContent = 'この内容で発注する'; });
 		});
 
-		renderServices(); renderPlans(); renderOptions(); renderTotal();
+		renderServices(); renderPlans(); renderSetup(); renderOptions(); renderTotal();
 	});
 })();

@@ -25,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) {
         <span class="badge">いちばん人気</span>
         <span class="who">忙しい方・初めての方へ</span>
         <h3>おまかせプラン</h3>
-        <div class="fees"><div><small>初期費用（制作代行）</small><b>150,000<span>円〜</span></b><em class="alt">AIスタジオで作った内容から制作<br>1からヒアリングして作る場合は 300,000円〜</em></div><div><small>月額（税抜）</small><b>19,800<span>円〜</span></b></div></div>
+        <div class="fees"><div><small>初期費用（おまかせ）</small><b>150,000<span>円〜</span></b><em class="alt">AIスタジオで作った内容から制作<br>1からヒアリングして作る場合は 300,000円〜</em></div><div><small>月額（税抜）</small><b>19,800<span>円〜</span></b></div></div>
         <div class="steps-mini">AIスタジオでデザイン・仕様書（無料） → ミーティング → ご入金 → 制作・ストア申請 → 3ヶ月の運用サポート</div>
         <ul><li>企画・要件整理、画面デザイン、文章・バナー作成をまとめて代行</li><li>管理画面への登録と、App Store・Google Play の申請を代行</li><li>ストア掲載文の最適化（検索で見つけてもらいやすく）</li><li>公開後3ヶ月の運用サポート（お知らせ・プッシュ通知の作成と配信）</li><li>AIスタジオで要件が固まっているので、1から作るより安く・早く</li></ul>
         <a class="btn btn--cta btn--lg" href="#lead">おまかせで相談する</a>

@@ -48,7 +48,7 @@ function apprex_dash_count( $post_type, $status, $meta = array(), $month = false
 	return (int) $q->found_posts;
 }
 
-/** 今月の発注による初期売上合計（初期設定費＋登録費＋一回オプション）。 */
+/** 今月の発注による初期売上合計（初期費用＋登録費＋一回オプション）。 */
 function apprex_dash_order_initial_this_month() {
 	$ids = get_posts(
 		array(
@@ -381,7 +381,7 @@ function apprex_dashboard_page() {
 			<?php
 			$card( 'MRR（月次経常収益）', $yen( $mrr ), '契約中の月額合計', '#16a34a' );
 			$card( 'ARR（年換算）', $yen( $arr ), 'MRR×12', '#16a34a' );
-			$card( '今月の初期売上（発注）', $yen( $init_month ), '初期設定費＋登録費＋一回OP' );
+			$card( '今月の初期売上（発注）', $yen( $init_month ), '初期費用＋登録費＋一回OP' );
 			$card( '粗利（MRR−固定費）', $yen( $gross ), '固定費 ' . $yen( $fixed ) . '/月', $gross >= 0 ? '#16a34a' : '#dc2626' );
 			?>
 		</div>

@@ -79,6 +79,7 @@ function apprex_rest_order( WP_REST_Request $request ) {
 	$service = sanitize_key( $request->get_param( 'service' ) );
 	$plan    = sanitize_key( $request->get_param( 'plan' ) );
 	$options = array_map( 'sanitize_key', (array) $request->get_param( 'options' ) );
+	$setup   = sanitize_key( (string) $request->get_param( 'setup' ) );
 
 	$name    = sanitize_text_field( (string) $request->get_param( 'name' ) );
 	$company = sanitize_text_field( (string) $request->get_param( 'company' ) );
@@ -90,7 +91,7 @@ function apprex_rest_order( WP_REST_Request $request ) {
 	}
 
 	// Recompute server-side — never trust client totals.
-	$estimate = apprex_calculate_estimate( $service, $plan, $options );
+	$estimate = apprex_calculate_estimate( $service, $plan, $options, $setup );
 	if ( is_wp_error( $estimate ) ) {
 		return $estimate;
 	}
@@ -189,7 +190,7 @@ function apprex_notify_order( $post_id, $estimate, $meta ) {
 		$lines[] = 'オプション: ' . $o['label'] . '（+' . number_format( $o['price'] ) . '円）';
 	}
 	$lines[] = '月額: ' . number_format( $estimate['monthly'] ) . '円（通常 ' . number_format( $estimate['monthly_regular'] ) . '円・税抜）';
-	$lines[] = '初期設定費: ' . number_format( $estimate['initial'] ) . '円（通常 ' . number_format( $estimate['initial_regular'] ) . '円→1年契約で0円）';
+	$lines[] = '初期費用: ' . apprex_estimate_initial_text( $estimate );
 	if ( ! empty( $estimate['registration'] ) ) {
 		$lines[] = $estimate['registration_label'] . ': ' . number_format( $estimate['registration'] ) . '円（一律・別途必要）';
 	}
@@ -226,11 +227,11 @@ function apprex_send_order_autoreply( $estimate, $meta ) {
 		$lines[] = 'オプション: ' . $o['label'] . '（+' . number_format( $o['price'] ) . '円）';
 	}
 	$lines[] = '月額: ' . number_format( $estimate['monthly'] ) . '円（通常 ' . number_format( $estimate['monthly_regular'] ) . '円・税抜）';
-	$lines[] = '初期設定費: ' . number_format( $estimate['initial'] ) . '円（通常 ' . number_format( $estimate['initial_regular'] ) . '円→1年契約で0円）';
+	$lines[] = '初期費用: ' . apprex_estimate_initial_text( $estimate );
 	if ( ! empty( $estimate['registration'] ) ) {
 		$lines[] = $estimate['registration_label'] . ': ' . number_format( $estimate['registration'] ) . '円（一律・別途必要）';
 	}
-	$lines[] = '初期お支払い目安: ' . number_format( $estimate['initial_total'] ) . '円（初期設定費＋アプリ登録費＋一回オプション）';
+	$lines[] = '初期お支払い目安: ' . number_format( $estimate['initial_total'] ) . '円（初期費用＋アプリ登録費＋一回オプション）';
 	$lines[] = '初年度概算: ' . number_format( $estimate['annual_est'] ) . '円';
 
 	$html = apprex_render_email(
@@ -263,14 +264,11 @@ function apprex_estimate_summary_html( $estimate ) {
 			<?php if ( $estimate['monthly_regular'] > $estimate['monthly'] ) : ?>
 				<small>（通常 ¥<?php echo esc_html( number_format( $estimate['monthly_regular'] ) ); ?>）</small>
 			<?php endif; ?>（税抜）</li>
-		<li><strong><?php esc_html_e( '初期設定費', 'apprex' ); ?></strong>：¥<?php echo esc_html( number_format( $estimate['initial'] ) ); ?>
-			<?php if ( $estimate['initial_regular'] > $estimate['initial'] ) : ?>
-				<small>（通常 ¥<?php echo esc_html( number_format( $estimate['initial_regular'] ) ); ?> → 今月キャンペーン）</small>
-			<?php endif; ?></li>
+		<li><strong><?php esc_html_e( '初期費用', 'apprex' ); ?></strong>：<?php echo esc_html( apprex_estimate_initial_text( $estimate ) ); ?></li>
 		<?php if ( ! empty( $estimate['registration'] ) ) : ?>
 			<li><strong><?php echo esc_html( $estimate['registration_label'] ); ?></strong>：¥<?php echo esc_html( number_format( $estimate['registration'] ) ); ?><small>（一律・別途必要）</small></li>
 		<?php endif; ?>
-		<li><strong><?php esc_html_e( '初期お支払い目安', 'apprex' ); ?></strong>：¥<?php echo esc_html( number_format( $estimate['initial_total'] ) ); ?>（初期設定費＋アプリ登録費＋一回オプション）</li>
+		<li><strong><?php esc_html_e( '初期お支払い目安', 'apprex' ); ?></strong>：¥<?php echo esc_html( number_format( $estimate['initial_total'] ) ); ?>（初期費用＋アプリ登録費＋一回オプション）</li>
 		<li><strong><?php esc_html_e( '初年度概算', 'apprex' ); ?></strong>：¥<?php echo esc_html( number_format( $estimate['annual_est'] ) ); ?></li>
 	</ul>
 	<?php

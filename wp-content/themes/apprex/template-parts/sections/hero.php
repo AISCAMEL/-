@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<div class="hero__content is-reveal">
 			<span class="eyebrow"><?php esc_html_e( 'APPREX（アプリックス）', 'apprex' ); ?></span>
 			<h1 class="hero__title"><?php echo wp_kses_post( __( 'プログラミング不要！<br><em>誰でも簡単にアプリ開発</em>', 'apprex' ) ); ?></h1>
-			<p class="hero__lead"><?php esc_html_e( 'クラウド型ノーコードアプリ開発プラットフォーム。高性能・低価格・スピード開発で、自社アプリを今すぐ。制作代行も承ります。', 'apprex' ); ?></p>
+			<p class="hero__lead"><?php esc_html_e( 'クラウド型ノーコードアプリ開発プラットフォーム。高性能・低価格・スピード開発で、自社アプリを今すぐ。制作のおまかせも承ります。', 'apprex' ); ?></p>
 
 			<div class="hero__kpis">
 				<div class="hero__kpi"><strong>8,000<small>+</small></strong><span><?php esc_html_e( '導入実績', 'apprex' ); ?></span></div>
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 			<div class="hero__badges">
 				<span class="hero__badge"><?php esc_html_e( 'iOS / Android 対応', 'apprex' ); ?></span>
-				<span class="hero__badge"><?php esc_html_e( '初期設定費0円（1年契約）', 'apprex' ); ?></span>
+				<span class="hero__badge"><?php esc_html_e( '初期費用0円から（1年契約）', 'apprex' ); ?></span>
 			</div>
 
 			<div class="hero__cta">
