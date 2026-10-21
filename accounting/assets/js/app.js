@@ -28,6 +28,7 @@ A.app = (function () {
     { group: '取引' },
     { path: 'journal', label: '仕訳帳', icon: '📒' },
     { path: 'expenses', label: '経費・入出金', icon: '💴' },
+    { path: 'receipts', label: '領収書まとめて取込', icon: '📷' },
     { path: 'import', label: '銀行明細取込', icon: '🏦' },
     { path: 'invoices', label: '請求書', icon: '📄' },
     { path: 'estimates', label: '見積書', icon: '📝' },
@@ -156,6 +157,11 @@ A.app = (function () {
 
   return { init, period, setPeriod };
 })();
+
+// PWA：オフライン対応（http/https配信時のみ。file:// では何もしない）
+if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   A.app.init().catch((e) => {

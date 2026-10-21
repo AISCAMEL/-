@@ -96,7 +96,7 @@ window.A = window.A || {};
 
     // 領収書OCR（AI連携が設定されているとき）
     const aiConfigured = !!(S.settings.get().syncUrl && S.settings.get().syncWorkspace);
-    const ocrFile = el('input', { type: 'file', accept: 'image/*' });
+    const ocrFile = el('input', { type: 'file', accept: 'image/*' }); ocrFile.setAttribute('capture', 'environment');
     const ocrStatus = el('span.muted.small');
     const runOcr = async () => {
       const f = ocrFile.files[0]; if (!f) return;
