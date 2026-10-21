@@ -336,9 +336,12 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
 		if ( function_exists( 'carmel_cb_convo_fu_touch' ) ) { carmel_cb_convo_fu_touch( $session_id ); }
 
 		// 会話ミラー：Slackのスレッドに「お客様🙋 / AI🤖」を流す（スタッフが会話を見て割り込める）
+		// 再打診(nudge)では、直前のお客様発言を再投稿しない（＝会話が重複して見える不具合を防ぐ）。
 		if ( function_exists( 'carmel_cb_convo_mirror' ) && function_exists( 'carmel_cb_slack_live_on' ) && carmel_cb_slack_live_on( $s ) ) {
 			$within_lbl = carmel_cb_within_hours( $s ) ? '（営業時間内）' : '（時間外・AI自動対応中）';
-			carmel_cb_convo_mirror( $s, $session_id, $last_user, $parsed['reply'], isset( $body['page'] ) ? esc_url_raw( $body['page'] ) : '', $within_lbl );
+			$mirror_user  = $is_nudge ? '' : $last_user;
+			$mirror_reply = $is_nudge ? ( '（自動の再打診）' . $parsed['reply'] ) : $parsed['reply'];
+			carmel_cb_convo_mirror( $s, $session_id, $mirror_user, $mirror_reply, isset( $body['page'] ) ? esc_url_raw( $body['page'] ) : '', $within_lbl );
 		}
 	}
 
