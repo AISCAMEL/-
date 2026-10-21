@@ -207,10 +207,16 @@ function apprex_rn_skin() {
 /** ページ上部に出す画像（固定ページのアイキャッチ画像）。 */
 function apprex_rn_hero_image() {
 	$id = is_home() ? (int) get_option( 'page_for_posts' ) : ( is_page() ? get_queried_object_id() : 0 );
-	if ( ! $id || ! has_post_thumbnail( $id ) ) {
+	if ( ! $id ) {
 		return '';
 	}
-	return (string) get_the_post_thumbnail_url( $id, 'large' );
+	if ( has_post_thumbnail( $id ) ) {
+		return (string) get_the_post_thumbnail_url( $id, 'large' );
+	}
+	// アイキャッチが無いときは、テーマ同梱の画像（assets/images/pages/{スラッグ}.webp）。
+	$slug = is_home() ? 'blog' : (string) get_post_field( 'post_name', $id );
+	$file = '/assets/images/pages/' . sanitize_file_name( $slug ) . '.webp';
+	return ( '' !== $slug && file_exists( APPREX_DIR . $file ) ) ? APPREX_URI . $file . '?ver=' . APPREX_VERSION : '';
 }
 
 add_action( 'wp_enqueue_scripts', function () {
