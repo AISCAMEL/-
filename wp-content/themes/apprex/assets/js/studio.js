@@ -414,16 +414,16 @@ function vSpec(){
   var mats=[[!!IMG.logo,'ロゴ画像'],[!!IMG.photo,'メイン写真'],[true,'メニュー・商品の情報（AIのたたき台あり）'],[true,'店舗情報（住所・営業時間）'],[false,'アプリの説明文（ストア掲載用）'],[false,'Apple・Googleの開発者アカウント（おまかせなら代行）']];
   var matsH='<ul class="mats">'+mats.map(function(m){return '<li class="'+(m[0]?'ok':'')+'"><b>'+(m[0]?'✓':'')+'</b>'+m[1]+'</li>';}).join('')+'</ul>';
   var rows=SCREENS.map(function(s){return '<tr><td>'+s[1]+'</td><td>'+({home:'メインビジュアル、メニュー、クーポン案内',menu:'商品の写真・名前・価格',coupon:'配布中のクーポン一覧',reserve:'日付と時間を選んで予約',card:'会員番号・ポイント'}[s[0]])+'</td></tr>';}).join('');
-  var self=(e.orig.length?'—':'0円'), full='150,000円〜（AIスタジオで作った内容から。1からは300,000円〜）';
+  var self=(e.orig.length?'—':'0円'), full='150,000円〜<small>制作代行費。AIスタジオで作った内容から（1からは300,000円〜）</small>';
   var est='<div class="est">'
     +'<div class="estc'+(e.rec==='self'?' recm':'')+'">'+(e.rec==='self'?'<span class="bd">おすすめ</span>':'')+'<h4>セルフプラン</h4><div class="big">初期 '+self+'</div><p>月額 '+YEN(e.monthly)+'（'+e.tierName+'）'+(e.opt?'＋オプション '+YEN(e.opt):'')+'</p><p>公開まで：最短2週間</p></div>'
-    +'<div class="estc'+(e.rec==='full'?' recm':'')+'">'+(e.rec==='full'?'<span class="bd">おすすめ</span>':'')+'<h4>おまかせプラン</h4><div class="big" style="font-size:1.05rem">制作代行 '+full+'</div><p>月額 '+YEN(e.monthly)+'（'+e.tierName+'）'+(e.opt?'＋オプション '+YEN(e.opt):'')+'</p><p>公開まで：3〜4週間</p></div>'
+    +'<div class="estc'+(e.rec==='full'?' recm':'')+'">'+(e.rec==='full'?'<span class="bd">おすすめ</span>':'')+'<h4>おまかせプラン</h4><div class="big">'+full+'</div><p>月額 '+YEN(e.monthly)+'（'+e.tierName+'）'+(e.opt?'＋オプション '+YEN(e.opt):'')+'</p><p>公開まで：3〜4週間</p></div>'
     +'<div class="estc'+(e.rec==='orig'?' recm':'')+'">'+(e.rec==='orig'?'<span class="bd">おすすめ</span>':'')+'<h4>オリジナル開発</h4><div class="big">'+(e.match?'300万円〜':'個別見積り')+'</div><p>'+(e.match?'月額保守 7万円〜':'ミーティングで正式にお見積り')+'</p><p>公開まで：最短1ヶ月〜</p></div>'
     +'</div><p style="font-size:.78rem;color:var(--muted);margin:8px 0 0">税抜。アプリストア登録費（一律55,000円）が別途かかります。正式な金額はオンラインミーティングでお出しします。</p>';
   var note=e.orig.length?'<div class="warn" style="margin-top:12px">「'+e.orig.map(function(f){return f.n;}).join('」「')+'」はオリジナル開発になります。ミーティングで最適な作り方をご提案します。</div>':'';
   return '<div class="vh"><div><h2>AI仕様書</h2><p>デザインから、AIが仕様書と概算を作りました。機能のオン・オフで概算が変わります。</p></div><div class="acts" style="margin:0"><button type="button" class="btn btn--pri" data-view="docs">企画書・仕様書を見る</button><button type="button" class="btn btn--line" id="copySpec" data-label="仕様書をコピー">仕様書をコピー</button><button type="button" class="btn btn--cta" data-go="confirmSpec">この内容で開発を相談する</button></div></div>'
   +'<div class="grid2"><div class="card"><div class="sec-t">概要</div><dl class="kv"><dt>アプリ名</dt><dd>'+esc(storeName())+'</dd><dt>業種</dt><dd>'+D().l+'</dd><dt>目的</dt><dd>'+esc(S.d.goal)+'</dd><dt>お客様</dt><dd>'+esc(S.d.target)+'</dd><dt>デザイン</dt><dd>'+TONES[S.d.tone].n+'／'+esc(palette()[2])+'／案'+S.d.variant+'（版'+S.vers.length+'）</dd></dl>'
-  +'<div class="sec-t" style="margin-top:16px">画面一覧</div><div class="tbl"><table><thead><tr><th>画面</th><th>内容</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'
+  +'<div class="sec-t" style="margin-top:16px">画面一覧</div><div class="tbl fit"><table><thead><tr><th>画面</th><th>内容</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'
   +'<div class="card"><div class="sec-t">用意するもの</div>'+matsH+'<div class="sec-t" style="margin-top:16px">概算</div>'+est+note+'</div></div>'
   +'<div class="card" style="margin-top:18px"><div class="sec-t">機能一覧</div>'+feats+'</div>';
 }
