@@ -128,6 +128,34 @@ add_action( 'carmel_cb_lead_submitted', function ( $type, $data ) {
 	}
 }, 10, 2 );
 
+/**
+ * 外部の審査フォーム（/shinsa-2 等）が送信されたら、その宛先の後追いメールを確実に止める。
+ * 主要なフォームプラグインの「送信完了」アクションで $_POST 内のメールアドレスを拾い、完了にする。
+ * これにより「申し込み済みなのに“また審査して”メールが届く」問題を防ぐ。
+ */
+function carmel_cb_followup_complete_from_submission() {
+	if ( empty( $_POST ) || ! is_array( $_POST ) ) { return; }
+	$emails = array();
+	array_walk_recursive( $_POST, function ( $v ) use ( &$emails ) {
+		if ( is_string( $v ) ) {
+			$v = trim( wp_unslash( $v ) );
+			if ( $v !== '' && is_email( $v ) ) { $emails[ strtolower( $v ) ] = 1; }
+		}
+	} );
+	foreach ( array_keys( $emails ) as $em ) {
+		if ( function_exists( 'carmel_cb_apply_mark_complete' ) ) { carmel_cb_apply_mark_complete( $em ); }
+		if ( function_exists( 'carmel_cb_convo_fu_resolve' ) )  { carmel_cb_convo_fu_resolve( '', $em ); }
+	}
+}
+// 主要フォームプラグインの送信完了フック（入っていないものは無視されるだけ）
+add_action( 'wpcf7_mail_sent',                 'carmel_cb_followup_complete_from_submission', 20 ); // Contact Form 7
+add_action( 'wpforms_process_complete',        'carmel_cb_followup_complete_from_submission', 20 ); // WPForms
+add_action( 'gform_after_submission',          'carmel_cb_followup_complete_from_submission', 20 ); // Gravity Forms
+add_action( 'elementor_pro/forms/new_record',  'carmel_cb_followup_complete_from_submission', 20 ); // Elementor Pro Forms
+add_action( 'frm_after_create_entry',          'carmel_cb_followup_complete_from_submission', 20 ); // Formidable
+add_action( 'forminator_form_after_save_entry','carmel_cb_followup_complete_from_submission', 20 ); // Forminator
+add_action( 'fluentform_submission_inserted',  'carmel_cb_followup_complete_from_submission', 20 ); // Fluent Forms
+
 /* ========================= 配信停止（オプトアウト） ========================= */
 
 function carmel_cb_optout_list() {
