@@ -353,7 +353,7 @@ function apprex_dashboard_page() {
 		'document' => '資料請求',
 		'trial'    => '無料体験',
 		'meeting'  => 'ミーティング',
-		'partner'  => 'パートナー',
+		'partner'  => '代理店',
 	);
 
 	$yen = function ( $n ) {

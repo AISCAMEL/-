@@ -480,7 +480,7 @@ function apprex_mail_types() {
 		'document' => '資料請求',
 		'trial'    => '無料体験',
 		'meeting'  => 'ミーティング予約',
-		'partner'  => 'パートナー',
+		'partner'  => '代理店',
 		'estimate' => '見積もり・発注',
 	);
 }

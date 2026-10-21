@@ -1,8 +1,9 @@
 <?php
 /**
- * Template Name: パートナー募集ページ (Partner)
+ * Template Name: 代理店募集ページ (Partner)
  *
- * 取次販売・紹介パートナー / OEM販売パートナー募集。
+ * 紹介代理店・販売代理店・OEM代理店の募集。報酬率はページに出さず、面談で案内する。
+ * 代理店コード（?ref=）から来たお問い合わせ・会員登録・発注には紹介元が記録される（inc/agency.php）。
  *
  * @package APPREX
  */
@@ -13,6 +14,81 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 get_header();
 
+$apprex_types = array(
+	array(
+		'name' => '紹介代理店',
+		'who'  => 'お客様を紹介するだけ',
+		'desc' => '見込みのお客様をAPPREXにご紹介ください。商談・契約・制作・サポートはAPPREXが行います。営業の経験がなくても始められます。',
+		'fit'  => '顧客を持つ士業・コンサル・地域の事業者、SNSで発信している方',
+	),
+	array(
+		'name' => '販売代理店',
+		'who'  => '商談から契約まで',
+		'desc' => '代理店がお客様と商談し、契約まで進めます。制作・ストア申請・公開後のサポートはAPPREXが担当します。紹介代理店より報酬が大きくなります。',
+		'fit'  => 'Web制作会社・広告代理店・IT販売店・営業会社',
+	),
+	array(
+		'name' => 'OEM代理店',
+		'who'  => '自社ブランドで販売',
+		'desc' => '代理店の名前で、アプリ制作サービスとして販売できます。制作はAPPREXの基盤で行います。条件は事業内容に合わせて個別にご相談します。',
+		'fit'  => '自社サービスにアプリ制作を加えたい制作会社・システム会社',
+	),
+);
+
+$apprex_roles = array(
+	array( '見込み客のご紹介', '代理店', '代理店', '代理店' ),
+	array( '商談・お見積り', 'APPREX', '代理店（APPREXが同席も可）', '代理店' ),
+	array( '契約・請求', 'APPREX', 'APPREX', '代理店' ),
+	array( '制作・ストア申請', 'APPREX', 'APPREX', 'APPREX' ),
+	array( '公開後のサポート', 'APPREX', 'APPREX', '代理店（APPREXが後方支援）' ),
+	array( '報酬', '成約に応じて', '成約に応じて（紹介より大きい）', '仕入れ価格で個別に決定' ),
+);
+
+$apprex_why = array(
+	array( '01', 'その場で「アプリの形」を見せられる', 'AIスタジオ（無料）で、お客様の業種と店名を入れるだけで画面デザインと仕様書ができます。スマホで触れるデモアプリも出せるので、説明より早く伝わります。' ),
+	array( '02', '料金がわかりやすい', 'AIスタジオで作った内容から制作して、初期費用15万円〜・月額19,800円〜。見積もりページで概算がすぐ出せます。' ),
+	array( '03', '続くほど積み上がる報酬', '初期費用だけでなく、月額利用料からも報酬をお支払いするストック型です。お客様が使い続けるほど積み上がります。' ),
+	array( '04', 'ホームページ・オプションも提案できる', '仕様書ができると、ホームページ制作やオプション、集客の施策もAIスタジオが提案します。1件の商談で提案の幅が広がります。' ),
+	array( '05', '補助金の案内ができる', '持続化補助金や自治体の補助金など、使える制度の案内ページがあります。お客様の「費用が心配」に答えやすくなります。' ),
+	array( '06', '制作とサポートはAPPREXが担当', '代理店は開発の知識がなくても大丈夫です。制作・ストア申請・公開後の運用はAPPREXが行います。' ),
+);
+
+$apprex_give = array(
+	array( '代理店コード', 'あなた専用のURL（?ref=コード）をお渡しします。そのURLから届いたお問い合わせ・会員登録・発注は、あなたの紹介として記録されます。' ),
+	array( '営業資料・料金表', 'サービス資料、料金表、業種別の提案例をお渡しします。' ),
+	array( 'デモの見せ方', 'AIスタジオとデモアプリを使った商談の進め方を、オンラインでご説明します。' ),
+	array( '商談の同席', '販売代理店の大きな商談には、APPREXの担当者がオンラインで同席できます。' ),
+);
+
+$apprex_flow = array(
+	array( 'STEP 1', 'お申し込み', '下のフォームから、希望する代理店の種類を選んでお申し込みください（無料）。' ),
+	array( 'STEP 2', 'オンライン面談', '事業内容とお客様層を伺い、合う代理店の種類と報酬の条件をご案内します。' ),
+	array( 'STEP 3', '代理店契約', '条件に合意いただけたら、代理店契約を結びます。' ),
+	array( 'STEP 4', '代理店コード・資料のお渡し', '専用URL・営業資料・デモの見せ方をお渡しします。' ),
+	array( 'STEP 5', 'ご紹介・商談', 'お客様にAIスタジオを見せながらご提案ください。' ),
+	array( 'STEP 6', '成約・報酬のお支払い', '成約に応じて、初期費用と月額利用料から報酬をお支払いします。' ),
+);
+
+$apprex_terms = array(
+	array( '代理店の種類', '紹介代理店／販売代理店／OEM代理店' ),
+	array( '報酬', '成約したお客様の初期費用と月額利用料に応じてお支払いします（ストック型）。報酬率は代理店の種類と取扱い内容に合わせて、面談でご案内します。' ),
+	array( '報酬の支払い', '月末締め・翌月末払い（銀行振込）。詳しくは代理店契約書に定めます。' ),
+	array( '契約期間', '1年単位（自動更新）。' ),
+	array( '費用・ノルマ', '加盟金・月額費用・販売ノルマはありません。' ),
+	array( '取扱い商品', 'ノーコードアプリ（AIスタジオから制作）、ホームページ制作、オプション、オリジナル開発・マッチングアプリ（APPREXが見積り）。' ),
+	array( '禁止事項', '事実と違う説明・誇大な広告、APPREXの名前や信用を傷つける行為など。' ),
+);
+
+$apprex_faqs = array(
+	array( 'q' => '個人でも代理店になれますか？', 'a' => 'はい。紹介代理店は、個人事業主やSNSで発信している方も歓迎です。販売代理店・OEM代理店は、面談で事業内容を伺ってからご案内します。' ),
+	array( 'q' => '営業やアプリの知識がなくても大丈夫ですか？', 'a' => '大丈夫です。紹介代理店はお客様をつなぐだけで、商談はAPPREXが行います。AIスタジオを見せるだけでアプリの形が伝わるので、専門知識がなくても紹介しやすくなっています。' ),
+	array( 'q' => '報酬率はいくらですか？', 'a' => '代理店の種類と取扱い内容によって変わるため、オンライン面談でご案内しています。初期費用と月額利用料の両方から報酬をお支払いするストック型です。' ),
+	array( 'q' => '報酬はいつまで受け取れますか？', 'a' => 'ご紹介したお客様が契約を続けているあいだ、月額利用料に応じた報酬をお支払いします。詳しくは代理店契約書に定めます。' ),
+	array( 'q' => '紹介したことはどうやって記録されますか？', 'a' => '代理店ごとに専用のURL（代理店コード）をお渡しします。そのURLから届いたお問い合わせ・AIスタジオの会員登録・発注は、紹介元として記録されます。' ),
+	array( 'q' => 'お客様に補助金の説明はできますか？', 'a' => '補助金のご案内ページを用意しています。使える制度の確認や申請の進め方は、APPREXがお客様に直接ご案内します。' ),
+	array( 'q' => '費用はかかりますか？', 'a' => '加盟金・月額費用・販売ノルマはありません。' ),
+);
+
 while ( have_posts() ) :
 	the_post();
 	?>
@@ -21,115 +97,109 @@ while ( have_posts() ) :
 			<nav class="breadcrumbs">
 				<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'ホーム', 'apprex' ); ?></a>
 			</nav>
-			<h1><?php the_title(); ?></h1>
-			<p><?php esc_html_e( 'アプリ市場の拡大を、紹介ビジネスの機会に。紹介するだけで継続収益が積み上がる、APPREXのパートナー制度です。', 'apprex' ); ?></p>
+			<h1><?php esc_html_e( '代理店募集', 'apprex' ); ?></h1>
+			<p><?php esc_html_e( 'AIスタジオで、お客様のアプリの形をその場で見せられるから売りやすい。アプリとホームページの代理店（紹介・販売・OEM）を募集しています。加盟金・ノルマはありません。', 'apprex' ); ?></p>
 		</div>
 	</section>
 
 	<section class="section">
 		<div class="container">
-			<?php apprex_section_head( 'Partner', __( 'パートナー（取次販売・紹介）とは', 'apprex' ) ); ?>
-			<div class="content-prose">
-				<p><?php esc_html_e( 'APPREXを必要とするお客様をご紹介・お取次ぎいただくと、成約に応じて継続的な報酬をお受け取りいただけます。在庫・開発・サポートは当社が担うため、リスクなく始められます。', 'apprex' ); ?></p>
+			<?php apprex_section_head( 'Types', __( '3つの代理店から選べます', 'apprex' ), __( 'どこまで関わるかで選べます。迷ったら、面談でいっしょに決めましょう。', 'apprex' ) ); ?>
+			<div class="grid grid--3">
+				<?php foreach ( $apprex_types as $t ) : ?>
+					<div class="feature-card agency-type is-reveal">
+						<span class="eyebrow"><?php echo esc_html( $t['who'] ); ?></span>
+						<h3><?php echo esc_html( $t['name'] ); ?></h3>
+						<p><?php echo esc_html( $t['desc'] ); ?></p>
+						<p class="agency-fit"><b><?php esc_html_e( '向いている方', 'apprex' ); ?></b><?php echo esc_html( $t['fit'] ); ?></p>
+					</div>
+				<?php endforeach; ?>
 			</div>
 
-			<?php apprex_section_head( '', __( '報酬について', 'apprex' ) ); ?>
-			<div class="partner-reward">
-				<div class="partner-reward__item">
-					<div class="partner-reward__num">10<small>%</small></div>
-					<div class="partner-reward__label"><?php esc_html_e( '取次報酬', 'apprex' ); ?></div>
-					<p style="font-size:.85rem;color:var(--color-muted)"><?php esc_html_e( '成約時の初期費用に対して', 'apprex' ); ?></p>
-				</div>
-				<div class="partner-reward__item">
-					<div class="partner-reward__num">10<small>%</small></div>
-					<div class="partner-reward__label"><?php esc_html_e( '継続報酬', 'apprex' ); ?></div>
-					<p style="font-size:.85rem;color:var(--color-muted)"><?php esc_html_e( '月額利用料に対して継続的に', 'apprex' ); ?></p>
-				</div>
+			<div class="compare-wrap mt-32">
+				<table class="compare-table agency-roles">
+					<thead>
+						<tr><th><?php esc_html_e( 'だれが担当するか', 'apprex' ); ?></th><th><?php esc_html_e( '紹介代理店', 'apprex' ); ?></th><th class="is-feat"><?php esc_html_e( '販売代理店', 'apprex' ); ?></th><th><?php esc_html_e( 'OEM代理店', 'apprex' ); ?></th></tr>
+					</thead>
+					<tbody>
+						<?php foreach ( $apprex_roles as $r ) : ?>
+							<tr><th><?php echo esc_html( $r[0] ); ?></th><td><?php echo esc_html( $r[1] ); ?></td><td class="is-feat"><?php echo esc_html( $r[2] ); ?></td><td><?php echo esc_html( $r[3] ); ?></td></tr>
+						<?php endforeach; ?>
+					</tbody>
+				</table>
 			</div>
-			<p class="plan-note"><?php esc_html_e( '※ 報酬率・条件はプラン・取次形態により異なります。詳細はお申し込み後にご案内します。', 'apprex' ); ?></p>
 		</div>
 	</section>
 
 	<section class="section section--soft">
 		<div class="container">
-			<?php apprex_section_head( 'For You', __( 'こんな方におすすめ', 'apprex' ) ); ?>
+			<?php apprex_section_head( 'Why APPREX', __( 'APPREXが売りやすい理由', 'apprex' ) ); ?>
 			<div class="grid grid--3">
-				<?php
-				$apprex_for = array(
-					array( '🤝', '代理店・紹介ビジネス', '既存の顧客基盤を活かして、紹介報酬を得たい方。' ),
-					array( '💻', 'Web制作・広告会社', '制作メニューにアプリを加え、提案の幅を広げたい方。' ),
-					array( '📣', 'SNS集客・インフルエンサー', '発信力を活かして、継続収益を作りたい方。' ),
-				);
-				foreach ( $apprex_for as $f ) :
-					?>
+				<?php foreach ( $apprex_why as $w ) : ?>
 					<div class="feature-card is-reveal">
-						<div class="icon" aria-hidden="true"><?php echo esc_html( $f[0] ); ?></div>
-						<h3><?php echo esc_html( $f[1] ); ?></h3>
-						<p><?php echo esc_html( $f[2] ); ?></p>
+						<span class="eyebrow"><?php echo esc_html( $w[0] ); ?></span>
+						<h3><?php echo esc_html( $w[1] ); ?></h3>
+						<p><?php echo esc_html( $w[2] ); ?></p>
 					</div>
-					<?php
-				endforeach;
-				?>
+				<?php endforeach; ?>
 			</div>
 		</div>
 	</section>
 
 	<section class="section">
 		<div class="container">
-			<?php apprex_section_head( 'Flow', __( '取次販売の流れ', 'apprex' ) ); ?>
+			<?php apprex_section_head( 'Support', __( '代理店にお渡しするもの', 'apprex' ) ); ?>
+			<div class="grid grid--2">
+				<?php foreach ( $apprex_give as $g ) : ?>
+					<div class="feature-card is-reveal">
+						<h3><?php echo esc_html( $g[0] ); ?></h3>
+						<p><?php echo esc_html( $g[1] ); ?></p>
+					</div>
+				<?php endforeach; ?>
+			</div>
+		</div>
+	</section>
+
+	<section class="section section--soft">
+		<div class="container">
+			<?php apprex_section_head( 'Flow', __( '代理店になるまでの流れ', 'apprex' ) ); ?>
 			<div class="grid grid--3">
-				<?php
-				$apprex_pflow = array(
-					array( 'STEP 1', 'パートナー登録', '下記フォームから登録（無料）。' ),
-					array( 'STEP 2', 'ご紹介・お取次ぎ', '見込み客をご紹介。商談は当社が対応も可能。' ),
-					array( 'STEP 3', '成約・報酬', '成約に応じて取次・継続報酬をお支払い。' ),
-				);
-				foreach ( $apprex_pflow as $p ) :
-					?>
+				<?php foreach ( $apprex_flow as $p ) : ?>
 					<div class="feature-card is-reveal">
 						<span class="eyebrow"><?php echo esc_html( $p[0] ); ?></span>
 						<h3><?php echo esc_html( $p[1] ); ?></h3>
 						<p><?php echo esc_html( $p[2] ); ?></p>
 					</div>
-					<?php
-				endforeach;
-				?>
+				<?php endforeach; ?>
 			</div>
 		</div>
 	</section>
 
 	<section class="section">
 		<div class="container">
-			<?php apprex_section_head( 'Terms', __( 'パートナー契約の概要', 'apprex' ), __( '主な契約条件です。詳細はお申し込み後に契約書でご案内します。', 'apprex' ) ); ?>
+			<?php apprex_section_head( 'Terms', __( '代理店契約の概要', 'apprex' ), __( '主な条件です。報酬率などの具体的な条件は、面談のうえ代理店契約書でお決めします。', 'apprex' ) ); ?>
 			<div class="partner-terms">
 				<table>
 					<tbody>
-						<?php
-						$apprex_terms = array(
-							array( '契約形態', '取次・紹介パートナー（販売代理）。OEM販売パートナーも別途ご相談可能。' ),
-							array( '取次報酬', '成約時の初期費用に対して10%（目安・プランにより変動）。' ),
-							array( '継続報酬', '月額利用料に対して継続的に10%（目安・契約継続中）。' ),
-							array( '報酬の支払い', '月末締め・翌月末払い（銀行振込）。※条件は契約書に準ずる。' ),
-							array( '契約期間', '1年単位（自動更新）。中途解約は事前通知により可。' ),
-							array( 'パートナーの役割', '見込み客のご紹介・お取次ぎ。商談・サポートは当社が対応も可能。' ),
-							array( '当社の役割', '開発・サポート・請求管理・成約後の運用を担当。' ),
-							array( '禁止事項', '虚偽説明・誇大広告・当社ブランドを毀損する行為等。' ),
-							array( '費用・ノルマ', '加盟金・月額費用・販売ノルマなし（無料で開始）。' ),
-						);
-						foreach ( $apprex_terms as $t ) :
-							?>
+						<?php foreach ( $apprex_terms as $t ) : ?>
 							<tr><th><?php echo esc_html( $t[0] ); ?></th><td><?php echo esc_html( $t[1] ); ?></td></tr>
 						<?php endforeach; ?>
 					</tbody>
 				</table>
-				<p class="plan-note"><?php esc_html_e( '※ 報酬率・支払い条件・契約期間などの具体的条件は、事業形態に応じて個別にご案内します（要確認事項）。', 'apprex' ); ?></p>
 			</div>
 		</div>
 	</section>
 
 	<section class="section section--soft">
+		<div class="container">
+			<?php apprex_section_head( 'FAQ', __( '代理店についてのよくある質問', 'apprex' ) ); ?>
+			<?php get_template_part( 'template-parts/faq-list', null, array( 'faqs' => $apprex_faqs ) ); ?>
+		</div>
+	</section>
+
+	<section class="section" id="apply">
 		<div class="container content-prose">
-			<?php apprex_section_head( 'Apply', __( 'パートナー登録（無料）', 'apprex' ) ); ?>
+			<?php apprex_section_head( 'Apply', __( '代理店のお申し込み（無料）', 'apprex' ), __( 'お申し込みのあと、オンライン面談で条件をご案内します。', 'apprex' ) ); ?>
 			<?php if ( trim( get_the_content() ) ) : ?>
 				<?php the_content(); ?>
 			<?php endif; ?>

@@ -545,6 +545,7 @@ function proposals(){
   if(shop||ind==='clinic') out.push({k:'meo',cat:'quote',name:'MEO（Googleマップ対策）',price:'お見積り',why:'「近くの'+D().l+'」と検索した人に見つけてもらい、アプリの登録につなげます。',rec:/新しい/.test(g)});
   if(['food','beauty','retail','school'].indexOf(ind)>-1) out.push({k:'line',cat:'quote',name:'LINE公式アカウント構築',price:'お見積り',why:'新しいお客様はLINEで広く集めて、常連のお客様はアプリで育てる、という使い分けができます。',rec:false});
   out.push({k:'llmo',cat:'quote',name:'LLMO（AI検索対策）',price:'お見積り',why:'ChatGPTなどのAIに「おすすめの'+D().l+'」と聞かれたとき、紹介されやすくします。',rec:false});
+  out.push({k:'subsidy',cat:'quote',name:'補助金の活用（ご案内）',price:'相談無料',why:'持続化補助金や自治体の補助金が使える場合があります。この企画書・仕様書を申請の材料にでき、見積書もご用意します。',rec:false});
   if(S.tier!=='trial'||menu.indexOf('newcoupon')>-1) out.push({k:'banner',cat:'quote',name:'バナー制作',price:'お見積り',why:'クーポンやキャンペーンの告知画像をプロが作り、アプリとホームページで使えます。',rec:false});
   return out;
 }

@@ -298,7 +298,7 @@ function apprex_form_meta( $type ) {
 		'document' => array( 'submit' => '資料をダウンロードする', 'msg_label' => 'ご質問・ご要望（任意）', 'msg_required' => false, 'datetime' => false ),
 		'trial'    => array( 'submit' => '30日間 無料体験を申し込む', 'msg_label' => 'ご要望（任意）', 'msg_required' => false, 'datetime' => false ),
 		'meeting'  => array( 'submit' => 'この日時で予約する', 'msg_label' => '相談したい内容（任意）', 'msg_required' => false, 'datetime' => true ),
-		'partner'  => array( 'submit' => 'パートナー登録を申し込む', 'msg_label' => '事業内容・ご質問（任意）', 'msg_required' => false, 'datetime' => false ),
+		'partner'  => array( 'submit' => '代理店に申し込む', 'msg_label' => '事業内容・お客様層・ご質問（任意）', 'msg_required' => false, 'datetime' => false ),
 	);
 	return isset( $map[ $type ] ) ? $map[ $type ] : $map['contact'];
 }
@@ -324,7 +324,7 @@ function apprex_type_label( $type ) {
 		'document' => '資料請求',
 		'trial'    => '無料体験申込',
 		'meeting'  => 'ミーティング予約',
-		'partner'  => 'パートナー応募',
+		'partner'  => '代理店の申し込み',
 		'estimate' => '見積もり・発注',
 		'signup'   => 'AIスタジオ会員登録',
 		'studio'   => 'AIスタジオから開発相談',
@@ -360,6 +360,17 @@ function apprex_render_form( $type = 'contact' ) {
 			<span class="apprex-form__lbl"><?php esc_html_e( '電話番号（任意）', 'apprex' ); ?></span>
 			<input type="tel" name="phone" autocomplete="tel" inputmode="tel">
 		</label>
+		<?php if ( 'partner' === $type ) : ?>
+			<label>
+				<span class="apprex-form__lbl"><?php esc_html_e( '希望する代理店の種類', 'apprex' ); ?> <span class="req">*</span></span>
+				<select name="agency_type" required>
+					<option value=""><?php esc_html_e( '選んでください', 'apprex' ); ?></option>
+					<?php foreach ( array( '紹介代理店', '販売代理店', 'OEM代理店', '面談で相談して決めたい' ) as $apprex_at ) : ?>
+						<option><?php echo esc_html( $apprex_at ); ?></option>
+					<?php endforeach; ?>
+				</select>
+			</label>
+		<?php endif; ?>
 		<?php if ( ! empty( $meta['datetime'] ) ) : ?>
 			<label>
 				<span class="apprex-form__lbl"><?php esc_html_e( 'ご希望日時', 'apprex' ); ?> <span class="req">*</span></span>
@@ -442,6 +453,17 @@ function apprex_rest_inquiry( WP_REST_Request $request ) {
 	$phone   = sanitize_text_field( (string) $request->get_param( 'phone' ) );
 	$message = sanitize_textarea_field( (string) $request->get_param( 'message' ) );
 
+	// 代理店の申し込み：希望する種類を本文の先頭に。
+	$agency_type = sanitize_text_field( (string) $request->get_param( 'agency_type' ) );
+	if ( 'partner' === $type && '' !== $agency_type ) {
+		$message = '【希望する代理店】' . mb_substr( $agency_type, 0, 40 ) . ( '' !== $message ? "\n" . $message : '' );
+	}
+	// 代理店の紹介URL（?ref=）から来た場合は、紹介元を本文の最後に記録。
+	$ref = function_exists( 'apprex_agency_ref' ) ? apprex_agency_ref() : '';
+	if ( '' !== $ref ) {
+		$message .= ( '' !== $message ? "\n\n" : '' ) . '【紹介元の代理店コード】' . $ref;
+	}
+
 	// Meeting preferred datetime (meeting type only).
 	// datetime-local の値はサイトのタイムゾーンで解釈する（UTC解釈による時刻ズレ防止）。
 	$meeting_raw = sanitize_text_field( (string) $request->get_param( 'meeting_at' ) );
@@ -476,6 +498,9 @@ function apprex_rest_inquiry( WP_REST_Request $request ) {
 		update_post_meta( $post_id, 'apprex_' . $k, $v );
 	}
 	update_post_meta( $post_id, 'apprex_submitted_at', current_time( 'mysql' ) );
+	if ( '' !== $ref ) {
+		update_post_meta( $post_id, 'apprex_ref', $ref );
+	}
 	if ( $meeting_at ) {
 		update_post_meta( $post_id, 'apprex_meeting_at', $meeting_at );
 		$fields['meeting_at'] = $meeting_at;
@@ -557,7 +582,7 @@ function apprex_autoreply_onscreen( $type ) {
 		case 'meeting':
 			return 'ミーティングのご予約を受け付けました。確認のうえ、確定のご連絡を差し上げます。リマインダーもお送りします。';
 		case 'partner':
-			return 'パートナー登録のお申し込みを受け付けました。担当者より詳細をご案内します。下のボタンから、Webミーティングのご予約もできます。';
+			return '代理店のお申し込みを受け付けました。担当者より面談のご案内をお送りします。下のボタンから、オンライン面談のご予約もできます。';
 		case 'signup':
 			return 'AIスタジオへの登録が完了しました。さっそくアプリのデザインを作ってみましょう。';
 		case 'studio':
@@ -635,8 +660,8 @@ function apprex_autoreply_message( $type, $fields ) {
 			}
 			break;
 		case 'partner':
-			$subject = '【APPREX】パートナー登録のお申し込みありがとうございます';
-			$body    = "{$name} 様\n\nこの度はAPPREXパートナー（取次販売・紹介）にお申し込みいただきありがとうございます。\n担当者より制度の詳細・報酬・進め方をご案内いたします。\n";
+			$subject = '【APPREX】代理店のお申し込みありがとうございます';
+			$body    = "{$name} 様\n\nこの度はAPPREXの代理店にお申し込みいただきありがとうございます。\n担当者より、オンライン面談で代理店の種類・報酬の条件・進め方をご案内いたします。\n";
 			break;
 		case 'signup':
 			$studio  = function_exists( 'apprex_studio_url' ) ? apprex_studio_url() : home_url( '/studio/' );

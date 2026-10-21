@@ -9,7 +9,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$apprex_faqs = apprex_default_faqs();
+// 呼び出し側から質問を渡せる（get_template_part の第3引数 array( 'faqs' => ... )）。
+$apprex_faqs = ! empty( $args['faqs'] ) ? $args['faqs'] : apprex_default_faqs();
 ?>
 <div class="faq-list" data-accordion>
 	<?php foreach ( $apprex_faqs as $i => $faq ) : ?>

@@ -36,9 +36,9 @@ while ( have_posts() ) :
 			<?php endif; ?>
 
 			<div class="callout is-reveal" style="margin-bottom:28px">
-				<h3><?php esc_html_e( 'パートナー（取次販売・紹介）も募集中', 'apprex' ); ?></h3>
-				<p><?php esc_html_e( '紹介するだけで継続報酬。代理店・Web制作・SNS集客の方を歓迎します。', 'apprex' ); ?></p>
-				<a class="btn btn--light" href="<?php echo esc_url( apprex_page_url( 'partner' ) ); ?>"><?php esc_html_e( 'パートナー制度を見る', 'apprex' ); ?></a>
+				<h3><?php esc_html_e( '代理店（紹介・販売・OEM）も募集中', 'apprex' ); ?></h3>
+				<p><?php esc_html_e( '加盟金・ノルマなし。Web制作会社・広告代理店・SNSで発信している方を歓迎します。', 'apprex' ); ?></p>
+				<a class="btn btn--light" href="<?php echo esc_url( apprex_page_url( 'partner' ) ); ?>"><?php esc_html_e( '代理店募集を見る', 'apprex' ); ?></a>
 			</div>
 
 			<?php apprex_render_form( 'contact' ); ?>

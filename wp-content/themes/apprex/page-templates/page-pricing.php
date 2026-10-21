@@ -105,6 +105,9 @@ while ( have_posts() ) :
 				<p><?php esc_html_e( '（注1）初期費用には、制作・ストア申請と、サーバー利用料・管理画面（コントロールパネル）の設定費用を含みます。アプリ登録時の費用（iOS・Android 一律 55,000円）は別途必要です。', 'apprex' ); ?></p>
 				<p><?php esc_html_e( '（注2）初期費用は、AIスタジオ（無料）で作ったデザイン・仕様書から制作する場合 15万円〜、AIスタジオを使わず1からヒアリングして制作する場合 30万円〜。ページ数・内容により変わります。', 'apprex' ); ?></p>
 				<p><?php esc_html_e( '（注3）基本機能＝スタートの電子カタログ機能・ビジネスの多店舗機能を除く全機能。', 'apprex' ); ?></p>
+				<?php if ( function_exists( 'apprex_rn_enabled' ) && apprex_rn_enabled() ) : ?>
+					<p><?php esc_html_e( '補助金を使った導入もご相談いただけます。', 'apprex' ); ?> <a href="<?php echo esc_url( apprex_page_url( 'subsidy' ) ); ?>"><?php esc_html_e( '補助金で導入', 'apprex' ); ?></a></p>
+				<?php endif; ?>
 				<p><?php esc_html_e( '店舗業に限らずどんな業種・どんなアプリでも開発可能。ダウンロード数による制限・課金なし、プッシュ通知無制限、多店舗追加も無制限・無課金。', 'apprex' ); ?></p>
 			</div>
 		</div>

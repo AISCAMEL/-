@@ -65,6 +65,18 @@ function apprex_rn_templates() {
 	return wp_list_pluck( array_values( apprex_rn_pages() ), 1 );
 }
 
+/** リニューアルで追加した、今までのページと同じ作りの固定ページ（新デザインの見た目は rn-skin で当てる）。 */
+function apprex_rn_extra_pages() {
+	return array(
+		'subsidy' => array( '補助金で導入', 'page-templates/page-subsidy.php' ),
+	);
+}
+
+/** 公開前は訪問者に見せないテンプレート。 */
+function apprex_rn_hidden_templates() {
+	return array_merge( apprex_rn_templates(), wp_list_pluck( array_values( apprex_rn_extra_pages() ), 1 ) );
+}
+
 /** 新デザインのCSSを読み込むページか。 */
 function apprex_rn_is_page() {
 	if ( is_front_page() && apprex_rn_enabled() ) {
@@ -131,7 +143,7 @@ add_action( 'template_redirect', function () {
 	if ( apprex_rn_public() || current_user_can( 'edit_posts' ) || ! is_page() ) {
 		return;
 	}
-	if ( is_page_template( apprex_rn_templates() ) ) {
+	if ( is_page_template( apprex_rn_hidden_templates() ) ) {
 		// 会員ログインの送信（POST）は通す。
 		if ( 'POST' === ( isset( $_SERVER['REQUEST_METHOD'] ) ? $_SERVER['REQUEST_METHOD'] : '' ) ) {
 			return;
@@ -143,7 +155,7 @@ add_action( 'template_redirect', function () {
 
 /* 公開前は、新しいページを検索エンジンに登録させない。 */
 add_filter( 'wp_robots', function ( $robots ) {
-	if ( ! apprex_rn_public() && is_page_template( apprex_rn_templates() ) ) {
+	if ( ! apprex_rn_public() && is_page_template( apprex_rn_hidden_templates() ) ) {
 		$robots['noindex'] = true;
 	}
 	return $robots;
@@ -151,7 +163,7 @@ add_filter( 'wp_robots', function ( $robots ) {
 add_filter( 'wp_sitemaps_posts_query_args', function ( $args, $post_type ) {
 	if ( 'page' === $post_type && ! apprex_rn_public() ) {
 		$ids = array();
-		foreach ( array_keys( apprex_rn_pages() ) as $slug ) {
+		foreach ( array_keys( apprex_rn_pages() + apprex_rn_extra_pages() ) as $slug ) {
 			$p = get_page_by_path( $slug );
 			if ( $p ) {
 				$ids[] = $p->ID;
@@ -240,10 +252,10 @@ add_action( 'wp_enqueue_scripts', function () {
  * 固定ページの自動作成（AIスタジオ／マッチングアプリ開発／作り方マニュアル）
  * ---------------------------------------------------------------------- */
 add_action( 'init', function () {
-	if ( (int) get_option( 'apprex_rn_pages_created' ) >= 2 ) {
+	if ( (int) get_option( 'apprex_rn_pages_created' ) >= 3 ) {
 		return;
 	}
-	$defs = apprex_rn_pages();
+	$defs = apprex_rn_pages() + apprex_rn_extra_pages();
 	foreach ( $defs as $slug => $def ) {
 		if ( get_page_by_path( $slug ) ) {
 			continue;
@@ -264,7 +276,7 @@ add_action( 'init', function () {
 	if ( ! term_exists( 'news', 'category' ) ) {
 		wp_insert_term( 'お知らせ', 'category', array( 'slug' => 'news' ) );
 	}
-	update_option( 'apprex_rn_pages_created', 2 );
+	update_option( 'apprex_rn_pages_created', 3 );
 } );
 
 /* -------------------------------------------------------------------------
@@ -290,7 +302,7 @@ function apprex_rn_faqs() {
 			array( 'q' => '作ったアプリのソースコードはもらえますか？', 'a' => 'ソースコード買取のプランがあります。自社で改修を続けたい場合にお選びください。' ),
 			array( 'q' => 'LINE公式アカウントとアプリ、どちらがいいですか？', 'a' => '新しいお客様に広く知らせるならLINE、常連化やリピートを増やすならアプリが得意です。LINEで集めてアプリで常連化する併用がおすすめです。' ),
 			array( 'q' => '地方の会社でも依頼できますか？', 'a' => 'はい。打ち合わせから公開まですべてオンラインで、全国47都道府県から依頼いただけます。' ),
-			array( 'q' => '補助金は使えますか？', 'a' => 'IT導入補助金などが使える場合があります。条件を確認してご案内します。' ),
+			array( 'q' => '補助金は使えますか？', 'a' => '小規模事業者持続化補助金や、都道府県・市区町村の補助金が使える場合があります。使える制度の確認、申請に使う企画書・見積書のご用意、交付決定に合わせた制作スケジュールまでサポートします。なお、APPREXはIT導入補助金の支援事業者ではないため、IT導入補助金は対象外です。' ),
 		)
 	);
 }

@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'APPREX_VERSION', '1.56.0' );
+define( 'APPREX_VERSION', '1.57.0' );
 define( 'APPREX_DIR', get_template_directory() );
 define( 'APPREX_URI', get_template_directory_uri() );
 
@@ -64,6 +64,7 @@ require_once APPREX_DIR . '/inc/member-portal.php';
 require_once APPREX_DIR . '/inc/dashboard.php';
 require_once APPREX_DIR . '/inc/email.php';
 require_once APPREX_DIR . '/inc/forms.php';
+require_once APPREX_DIR . '/inc/agency.php';
 require_once APPREX_DIR . '/inc/crm-notes.php';
 require_once APPREX_DIR . '/inc/drive-sync.php';
 require_once APPREX_DIR . '/inc/smtp.php';
@@ -104,7 +105,7 @@ function apprex_primary_menu_fallback() {
 		'/estimate'    => __( '見積もり', 'apprex' ),
 		'/hp-creation' => __( 'HP制作', 'apprex' ),
 		'/blog'        => __( 'ブログ', 'apprex' ),
-		'/partner'     => __( 'パートナー募集', 'apprex' ),
+		'/partner'     => __( '代理店募集', 'apprex' ),
 		'/company'     => __( '会社概要', 'apprex' ),
 		'/faq'         => __( 'FAQ', 'apprex' ),
 	);

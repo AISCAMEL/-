@@ -377,7 +377,7 @@ function apprex_pipeline_render() {
 			<tbody>
 			<?php
 			$type_label = function ( $t ) {
-				$m = array( 'estimate' => '見積もり', 'meeting' => 'ミーティング', 'trial' => '無料体験', 'partner' => 'パートナー', 'contact' => 'お問い合わせ', 'document' => '資料請求' );
+				$m = array( 'estimate' => '見積もり', 'meeting' => 'ミーティング', 'trial' => '無料体験', 'partner' => '代理店', 'contact' => 'お問い合わせ', 'document' => '資料請求' );
 				return isset( $m[ $t ] ) ? $m[ $t ] : $t;
 			};
 			foreach ( $hot as $r ) :
