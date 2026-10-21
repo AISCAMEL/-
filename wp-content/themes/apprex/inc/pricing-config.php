@@ -117,7 +117,7 @@ function apprex_pricing_config() {
 				// HPの追加項目はすべて別途見積もり（要相談）。
 				'options'       => array(),
 				'quote_options' => array(
-					'バナー制作', '構造化（SEO）', 'LINE構築', 'MEO構築', 'LLMO構築',
+					'バナー制作', '構造化（SEO）', 'LINE構築', 'AIMEO（AIで運用するMEO）', 'LLMO構築',
 				),
 			),
 		),
@@ -297,7 +297,8 @@ function apprex_pricing_summary_text() {
 	$lines[] = '【アプリ開発（月額制・1年契約）】';
 	$lines[] = '- AIスタジオ（無料会員登録）でのデザイン・試作・仕様定義書づくりと相談は無料。';
 	$lines[] = '- 初期費用：AIスタジオで作った内容から制作 150,000円〜（基本）／AIスタジオを使わず1からヒアリングして制作 300,000円〜。初期設定・制作・ストア申請を含む。自分で設定する0円のプランはない。「制作代行費」ではなく「初期費用」と呼ぶ。';
-	$lines[] = '- 仕様書ができたら、ホームページ制作・オプション・集客施策（LINE構築・MEOなど）もあわせて提案する。';
+	$lines[] = '- 仕様書ができたら、ホームページ制作・オプション・集客施策（LINE構築・AIMEOなど）もあわせて提案する。';
+	$lines[] = '- AIMEO：AIで運用するMEO（Googleマップ対策）。投稿・口コミ返信・ビジネスの説明文の下書きをAIが作り、担当者が確認してGoogleビジネスプロフィールに載せる。ライト月15,000円／スタンダード月30,000円（毎週の投稿運用）／プロ月50,000円（複数店舗）。順位の保証はしない。';
 	$lines[] = '- 補助金：小規模事業者持続化補助金や自治体の補助金を案内し、申請に使う企画書・見積書の用意と、交付決定に合わせたスケジュールをサポート。APPREXはIT導入補助金の支援事業者ではないので、IT導入補助金は対象外。申請書の作成代行はしない（作成・提出はお客様、必要なら商工会・商工会議所や行政書士に相談）。補助率・上限は回ごとに変わるので断定しない。' . ( function_exists( 'apprex_rn_public' ) && apprex_rn_public() ? '案内ページ：' . home_url( '/subsidy/' ) : '' );
 	foreach ( $app['plans'] as $p ) {
 		$lines[] = sprintf( '- %s：月額%s円', $p['label'], number_format( $p['monthly'] ) );
@@ -311,7 +312,7 @@ function apprex_pricing_summary_text() {
 		$lines[] = '  ' . $app['registration_label'] . '：一律' . number_format( $app['registration_fee'] ) . '円（iOS/Android、アプリ登録時に別途必要）。';
 	}
 
-	$lines[] = '【ホームページ制作（初期費用0円・月額）】Light 9,800円／Standard 19,800円／Premium 39,800円。プラン毎にサポート範囲あり。追加項目（バナー制作・構造化・LINE構築・MEO構築・LLMO構築）はすべて別途見積もり。';
+	$lines[] = '【ホームページ制作（初期費用0円・月額）】Light 9,800円／Standard 19,800円／Premium 39,800円。プラン毎にサポート範囲あり。追加項目（バナー制作・構造化・LINE構築・AIMEO（AIで運用するMEO）・LLMO構築）はすべて別途見積もり。';
 
 	$lines[] = '【個別見積（要相談）】';
 	foreach ( apprex_quote_plans() as $q ) {

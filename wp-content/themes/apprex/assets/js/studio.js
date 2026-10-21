@@ -542,7 +542,7 @@ function proposals(){
   out.push({k:'hp',cat:'hp',name:H[0],price:'月額 '+YEN(H[1])+'（初期費用0円）',why:(menu.indexOf('homepage')>-1?'アプリの「HP」ボタンの行き先と、':'')+'検索から来る新しいお客様の入口になります。'+H[2]+'。アプリのダウンロード案内ページも作れます。',rec:true});
   if(shop) out.push({k:'gps',cat:'opt',feat:'gps',name:'位置情報プッシュ（1カ所）',price:'20,000円（一回）',why:'お店の近くに来たお客様のスマホにお知らせが届きます。「'+name+'」に立ち寄るきっかけに。',rec:ind!=='retail'});
   if(['beauty','clinic','school'].indexOf(ind)>-1||/電話/.test(g)) out.push({k:'chat',cat:'opt',feat:'chatf',name:'チャット機能',price:'300,000円（一回）',why:'予約前の質問や相談に、アプリの中で個別に答えられます。'+(/電話/.test(g)?'電話対応を減らしたいという目的に合います。':'問い合わせの取りこぼしを防げます。'),rec:/電話/.test(g)});
-  if(shop||ind==='clinic') out.push({k:'meo',cat:'quote',name:'MEO（Googleマップ対策）',price:'お見積り',why:'「近くの'+D().l+'」と検索した人に見つけてもらい、アプリの登録につなげます。',rec:/新しい/.test(g)});
+  if(shop||ind==='clinic') out.push({k:'meo',cat:'quote',name:'AIMEO（AIで運用するGoogleマップ対策）',price:'月額15,000円〜',why:'「近くの'+D().l+'」と検索した人に見つけてもらい、アプリの登録につなげます。投稿や口コミ返信の文章はAIが下書きするので、運用の手間がかかりません。',rec:/新しい/.test(g)});
   if(['food','beauty','retail','school'].indexOf(ind)>-1) out.push({k:'line',cat:'quote',name:'LINE公式アカウント構築',price:'お見積り',why:'新しいお客様はLINEで広く集めて、常連のお客様はアプリで育てる、という使い分けができます。',rec:false});
   out.push({k:'llmo',cat:'quote',name:'LLMO（AI検索対策）',price:'お見積り',why:'ChatGPTなどのAIに「おすすめの'+D().l+'」と聞かれたとき、紹介されやすくします。',rec:false});
   out.push({k:'subsidy',cat:'quote',name:'補助金の活用（ご案内）',price:'相談無料',why:'持続化補助金や自治体の補助金が使える場合があります。この企画書・仕様書を申請の材料にでき、見積書もご用意します。',rec:false});

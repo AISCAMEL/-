@@ -157,11 +157,11 @@ while ( have_posts() ) :
 			<?php
 			$apprex_options = array(
 				array(
-					'name' => 'MEO対策',
-					'desc' => 'Googleマップ・ローカル検索で上位表示を狙う集客施策。',
+					'name' => 'AIMEO（AIで運用するMEO対策）',
+					'desc' => 'Googleマップ・ローカル検索の集客を、AIで簡単運用。投稿・口コミ返信・説明文の下書きをAIが作り、担当者が確認して運用します。',
 					'rows' => array(
-						array( 'ライト', '15,000円 / 月', '口コミ返信・基本情報最適化' ),
-						array( 'スタンダード', '30,000円 / 月', '投稿運用・写真追加・順位レポート' ),
+						array( 'ライト', '15,000円 / 月', 'AIで口コミ返信・基本情報の最適化' ),
+						array( 'スタンダード', '30,000円 / 月', 'AIで毎週の投稿運用・写真追加・順位レポート' ),
 						array( 'プロ', '50,000円 / 月', '複数店舗・競合分析・改善提案' ),
 					),
 				),
@@ -222,7 +222,7 @@ while ( have_posts() ) :
 					<h3><?php esc_html_e( '集客強化セット', 'apprex' ); ?></h3>
 					<div class="price">49,800<small><?php esc_html_e( '円 / 月（税抜）', 'apprex' ); ?></small></div>
 					<ul class="feats">
-						<li><?php esc_html_e( 'MEO対策（スタンダード）', 'apprex' ); ?></li>
+						<li><?php esc_html_e( 'AIMEO（スタンダード）', 'apprex' ); ?></li>
 						<li><?php esc_html_e( 'バナー制作（毎月5点）', 'apprex' ); ?></li>
 						<li><?php esc_html_e( '月次レポート', 'apprex' ); ?></li>
 					</ul>
@@ -233,7 +233,7 @@ while ( have_posts() ) :
 					<h3><?php esc_html_e( 'AI時代の集客フルセット', 'apprex' ); ?></h3>
 					<div class="price">79,800<small><?php esc_html_e( '円 / 月（税抜）', 'apprex' ); ?></small></div>
 					<ul class="feats">
-						<li><?php esc_html_e( 'MEO対策（プロ）', 'apprex' ); ?></li>
+						<li><?php esc_html_e( 'AIMEO（プロ）', 'apprex' ); ?></li>
 						<li><?php esc_html_e( 'LLMO対策（継続）', 'apprex' ); ?></li>
 						<li><?php esc_html_e( '構造化データSEO', 'apprex' ); ?></li>
 						<li><?php esc_html_e( 'バナー制作（毎月10点）', 'apprex' ); ?></li>
@@ -245,7 +245,7 @@ while ( have_posts() ) :
 					<div class="price">99,800<small><?php esc_html_e( '円 / 月（税抜）', 'apprex' ); ?></small></div>
 					<ul class="feats">
 						<li><?php esc_html_e( 'サブスク制作（スタンダード）', 'apprex' ); ?></li>
-						<li><?php esc_html_e( 'MEO対策（スタンダード）', 'apprex' ); ?></li>
+						<li><?php esc_html_e( 'AIMEO（スタンダード）', 'apprex' ); ?></li>
 						<li><?php esc_html_e( 'バナー制作（毎月5点）', 'apprex' ); ?></li>
 					</ul>
 					<a class="btn btn--ghost" href="<?php echo esc_url( $apprex_contact_url ); ?>"><?php esc_html_e( 'このセットで相談する', 'apprex' ); ?></a>

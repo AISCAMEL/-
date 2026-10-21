@@ -27,7 +27,7 @@ if ( ! defined( 'ABSPATH' ) ) {
         <h3>あわせて使うと効果が上がるもの</h3>
         <div class="fees"><div><small>ホームページ制作</small><b>9,800<span>円〜/月</span></b><em class="alt">初期費用0円</em></div><div><small>オプション</small><b>20,000<span>円〜</span></b><em class="alt">位置情報・チャットなど</em></div></div>
         <div class="steps-mini">AIスタジオの仕様書をもとに、業種と目的に合うものだけをご提案します</div>
-        <ul><li>ホームページ：アプリのダウンロード先と、検索からの集客の入口に</li><li>位置情報プッシュ（20,000円）：お店の近くでお知らせ</li><li>チャット機能（300,000円）：予約や質問にアプリ内で個別に対応</li><li>LINE構築・MEO（Googleマップ対策）・LLMO（AI検索対策）・バナー制作：お見積り</li></ul>
+        <ul><li>ホームページ：アプリのダウンロード先と、検索からの集客の入口に</li><li>位置情報プッシュ（20,000円）：お店の近くでお知らせ</li><li>チャット機能（300,000円）：予約や質問にアプリ内で個別に対応</li><li>AIMEO（AIで運用するGoogleマップ対策）月15,000円〜／LINE構築・LLMO（AI検索対策）・バナー制作：お見積り</li></ul>
         <a class="btn btn--line btn--lg" href="<?php echo esc_url( home_url( '/pricing/' ) ); ?>">料金の詳細を見る</a>
       </div>
       <div class="plan plan-wide">
