@@ -183,8 +183,52 @@ add_filter( 'body_class', function ( $classes ) {
 	if ( apprex_rn_is_page() ) {
 		$classes[] = 'is-renewal';
 	}
+	if ( apprex_rn_skin() ) {
+		$classes[] = 'rn-skin';
+		if ( apprex_rn_hero_image() ) {
+			$classes[] = 'rn-hasimg';
+		}
+	}
 	return $classes;
 } );
+
+/* -------------------------------------------------------------------------
+ * トップ以外のページ（特徴・料金・会社概要・フォーム・ブログなど）も新デザインの見た目に
+ * ---------------------------------------------------------------------- */
+
+/** 新デザインの見た目を当てるページか（専用デザインのLPは除く）。 */
+function apprex_rn_skin() {
+	if ( ! apprex_rn_enabled() || is_front_page() || apprex_rn_is_page() ) {
+		return false;
+	}
+	return ! is_page_template( array( 'page-templates/page-lp.php', 'page-templates/page-lp-canvas.php', 'page-templates/page-nationwide-lp.php' ) );
+}
+
+/** ページ上部に出す画像（固定ページのアイキャッチ画像）。 */
+function apprex_rn_hero_image() {
+	$id = is_home() ? (int) get_option( 'page_for_posts' ) : ( is_page() ? get_queried_object_id() : 0 );
+	if ( ! $id || ! has_post_thumbnail( $id ) ) {
+		return '';
+	}
+	return (string) get_the_post_thumbnail_url( $id, 'large' );
+}
+
+add_action( 'wp_enqueue_scripts', function () {
+	if ( ! apprex_rn_skin() ) {
+		return;
+	}
+	wp_enqueue_style(
+		'apprex-rn-fonts',
+		'https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Outfit:wght@600;800&display=swap',
+		array(),
+		null
+	);
+	wp_enqueue_style( 'apprex-renewal-pages', APPREX_URI . '/assets/css/renewal-pages.css', array( 'apprex-style' ), APPREX_VERSION );
+	$img = apprex_rn_hero_image();
+	if ( $img ) {
+		wp_add_inline_style( 'apprex-renewal-pages', 'body.rn-skin{--rn-hero-img:url("' . esc_url_raw( $img ) . '")}' );
+	}
+}, 20 );
 
 /* -------------------------------------------------------------------------
  * 固定ページの自動作成（AIスタジオ／マッチングアプリ開発／作り方マニュアル）
