@@ -105,10 +105,30 @@ A.util = (function () {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 
+  // 適格請求書発行事業者 登録番号（T＋法人番号13桁）の検証。
+  // 国税庁の法人番号チェックディジット方式で妥当性を確認する。
+  const checkInvoiceRegNo = (raw) => {
+    const s = String(raw == null ? '' : raw).trim().toUpperCase().replace(/[\s-]/g, '');
+    if (!s) return { empty: true, valid: false, msg: '未入力' };
+    const m = s.match(/^T(\d{13})$/);
+    if (!m) return { empty: false, valid: false, format: false, msg: '形式が不正です（T＋数字13桁）' };
+    const num = m[1];
+    const check = Number(num[0]);
+    const base = num.slice(1); // 12桁（左端=最上位）
+    let sum = 0;
+    for (let i = 0; i < 12; i++) {
+      const n = 12 - i;                 // 右端からの位置（1始まり）
+      sum += Number(base[i]) * (n % 2 === 1 ? 1 : 2);
+    }
+    const calc = 9 - (sum % 9);
+    const ok = calc === check;
+    return { empty: false, valid: ok, format: true, checkDigit: ok, normalized: s, msg: ok ? '有効な登録番号です' : 'チェックデジットが一致しません（入力ミスの可能性）' };
+  };
+
   return {
     yen, yenSigned, parseYen,
     taxIncludedPortion, taxFromNet,
     today, fmtDate, fiscalRange, inRange,
-    uid, el, esc,
+    uid, el, esc, checkInvoiceRegNo,
   };
 })();

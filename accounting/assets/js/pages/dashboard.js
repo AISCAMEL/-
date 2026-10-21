@@ -48,6 +48,13 @@ window.A = window.A || {};
     else if (unpaid.length) alerts.push({ level: 'warn', text: `未入金の請求書が ${unpaid.length} 件（¥${U.yen(unpaidTotal)}）あります。`, to: 'invoices' });
     const draftInv = invoices.filter((i) => i.type === 'invoice' && !i.posted);
     if (draftInv.length) alerts.push({ level: 'info', text: `売上未計上の請求書が ${draftInv.length} 件あります。`, to: 'invoices' });
+    // バックアップ推奨（データはブラウザ内保存のため）
+    if (journals.length || invoices.length) {
+      const last = s.lastBackupAt;
+      const daysSince = last ? Math.round((new Date(today + 'T00:00:00') - new Date(last + 'T00:00:00')) / 86400000) : null;
+      if (daysSince === null) alerts.push({ level: 'warn', text: 'まだバックアップがありません。設定からデータを書き出して保管してください。', to: 'settings' });
+      else if (daysSince >= 14) alerts.push({ level: 'warn', text: `最後のバックアップから ${daysSince} 日経過しました。データの書き出しをおすすめします。`, to: 'settings' });
+    }
     // 在庫車アラート（長期在庫）
     if (vehicles.length) {
       const thr = s.stockAlertDays || 45;

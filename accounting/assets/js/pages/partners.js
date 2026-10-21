@@ -25,6 +25,12 @@ window.A = window.A || {};
       field('email', 'メール'),
       field('note', '備考'),
     ]);
+    // 登録番号のライブ検証
+    const regStatus = el('div.small');
+    const updReg = () => { const r = U.checkInvoiceRegNo(f.regNo.value); regStatus.textContent = (!f.regNo.value) ? '' : r.msg; regStatus.className = 'small ' + (r.valid ? 'ok' : 'ng'); };
+    f.regNo.addEventListener('input', updReg);
+    f.regNo.parentNode.appendChild(regStatus); updReg();
+
     const save = async () => {
       if (!f.name.value) return ui.toast('取引先名を入力してください', 'err');
       await S.partners.save({ ...p, name: f.name.value, kind: kind.value, regNo: f.regNo.value, address: f.address.value, tel: f.tel.value, email: f.email.value, note: f.note.value });
@@ -45,7 +51,7 @@ window.A = window.A || {};
     card.appendChild(ui.table([
       { key: 'name', label: '取引先名', render: (r) => r.name },
       { key: 'kind', label: '区分', render: (r) => KIND[r.kind] || '—' },
-      { key: 'regNo', label: '登録番号', render: (r) => r.regNo || '—' },
+      { key: 'regNo', label: '登録番号', render: (r) => { if (!r.regNo) return '—'; const v = U.checkInvoiceRegNo(r.regNo); return el('span.' + (v.valid ? 'ok' : 'ng'), { text: r.regNo + (v.valid ? ' ✓' : ' ⚠'), title: v.msg }); } },
       { key: 'tel', label: '電話', render: (r) => r.tel || '—' },
       {
         key: 'act', label: '', align: 'right', render: (r) => el('div.row-actions', {}, [

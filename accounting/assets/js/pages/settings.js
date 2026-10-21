@@ -60,6 +60,11 @@ window.A = window.A || {};
       }),
     ]);
     wrap.appendChild(companyCard);
+    // 登録番号（T＋13桁）のライブ検証表示
+    const regStatus = el('div.small');
+    const updReg = () => { const r = U.checkInvoiceRegNo(f.invoiceRegNo.value); regStatus.textContent = (r.empty || !f.invoiceRegNo.value) ? '' : r.msg; regStatus.className = 'small ' + (r.valid ? 'ok' : 'ng'); };
+    f.invoiceRegNo.addEventListener('input', updReg);
+    f.invoiceRegNo.parentNode.appendChild(regStatus); updReg();
 
     /* --- 勘定科目マスタ --- */
     const accCard = el('div.card', {}, [
@@ -80,9 +85,12 @@ window.A = window.A || {};
     wrap.appendChild(accCard);
 
     /* --- バックアップ --- */
+    const lastBk = s.lastBackupAt;
+    const lastBkText = el('p.muted.small', { text: lastBk ? `前回のバックアップ：${U.fmtDate(lastBk)}` : 'まだ一度もバックアップしていません。' });
     const backupCard = el('div.card', {}, [
       el('h2', { text: 'バックアップ・データ管理' }),
-      el('p.muted.small', { text: 'データはこのブラウザ内にのみ保存されます。定期的に書き出して保管してください。' }),
+      el('p.muted.small', { text: 'データはこのブラウザ内にのみ保存されます。定期的に書き出して保管してください（ブラウザのデータ消去で失われます）。' }),
+      lastBkText,
       el('div.quick-row', {}, [
         el('button.btn.primary', {
           text: '⬇ バックアップを書き出す', onclick: async () => {
@@ -90,6 +98,8 @@ window.A = window.A || {};
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const a = el('a', { href: URL.createObjectURL(blob), download: `kaikei-backup-${U.today()}.json` });
             document.body.appendChild(a); a.click(); a.remove();
+            await S.settings.save({ lastBackupAt: U.today() });
+            lastBkText.textContent = `前回のバックアップ：${U.fmtDate(U.today())}`;
             ui.toast('バックアップを書き出しました', 'ok');
           },
         }),
