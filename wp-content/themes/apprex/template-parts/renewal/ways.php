@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
         <span class="tag">自社専用・独自機能</span>
         <h3>オリジナルアプリ開発</h3>
         <div class="price num">格安<small> ／ 個別見積り（目安は資料に掲載）</small></div>
-        <dl><dt>期間</dt><dd>最短1ヶ月〜</dd><dt>向き</dt><dd>マッチング・業務・独自サービス</dd><dt>技術</dt><dd>Flutterで両OS同時開発</dd></dl>
+        <dl><dt>期間</dt><dd>3ヶ月〜</dd><dt>向き</dt><dd>マッチング・業務・独自サービス</dd><dt>技術</dt><dd>Flutterで両OS同時開発</dd></dl>
         <ul><li>APPREX基盤＋必要な機能だけ開発するので低コスト</li><li>ソースコード買取プランもあり</li></ul>
       </div>
     </div>

@@ -45,7 +45,7 @@ if ( ! defined( 'ABSPATH' ) ) {
         <div class="roles"><div class="role you"><b>お客様</b>内容に同意して支払う</div><div class="role us"><b>APPREX</b>入金を確認して制作開始</div></div>
       </div></div>
       <div class="step has-img"><div class="no">7</div><div>
-        <div class="hdr"><h3>制作</h3><span class="when">ノーコード2週間〜／オリジナル1ヶ月〜</span></div>
+        <div class="hdr"><h3>制作</h3><span class="when">ノーコード2週間〜／オリジナル3ヶ月〜</span></div>
         <p>デザインを仕上げて開発し、テスト版をお手元のスマホで確認していただきます。進み具合はスタジオでいつでも見られます。</p>
         <div class="roles"><div class="role you"><b>お客様</b>テスト版を確認して意見を伝える</div><div class="role us"><b>APPREX</b>開発・テスト・修正</div></div>
       </div><img class="sthumb" src="<?php echo esc_url( apprex_rn_img( '11_flow-test.jpg' ) ); ?>" alt="テスト版のアプリを確認する様子" width="1376" height="768" decoding="async" loading="lazy"></div>
@@ -56,6 +56,6 @@ if ( ! defined( 'ABSPATH' ) ) {
       </div><img class="sthumb" src="<?php echo esc_url( apprex_rn_img( '12_flow-launch.jpg' ) ); ?>" alt="アプリの公開" width="1376" height="768" decoding="async" loading="lazy"></div>
     </div>
     <p class="manual-link"><a href="<?php echo esc_url( apprex_manual_url() ); ?>">画面ごとの操作は「アプリの作り方マニュアル」へ →</a></p>
-    <div class="total"><span>公開までの目安：ノーコード <b>最短2週間</b></span><span>オリジナル開発 <b>最短1ヶ月〜</b></span><span>（ストア審査期間を含む）</span></div>
+    <div class="total"><span>公開までの目安：ノーコード <b>最短2週間</b></span><span>オリジナル開発・マッチングアプリ <b>3ヶ月〜</b></span><span>（ストア審査期間を含む）</span></div>
   </div>
 </section>

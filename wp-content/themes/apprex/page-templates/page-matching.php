@@ -20,7 +20,7 @@ get_header();
   <div class="wrap">
     <div>
       <span class="badge-top rise">オリジナル開発 ／ iOS・Android同時開発</span>
-      <h1 class="rise d1">マッチングアプリを、<br><em>格安・最短1ヶ月</em>で。</h1>
+      <h1 class="rise d1">マッチングアプリを、<br><em>格安・3ヶ月〜</em>で。</h1>
       <div class="price-big rise d2"><b>300</b><span>万円〜</span><small>開発費（税抜）。一般的なフルスクラッチ開発では数百万〜数千万円かかることもあります。</small></div>
       <p class="lead rise d2">スキル・ビジネス・人材・フリマなど、人と人、会社と会社をつなぐアプリを開発します。APPREXの開発基盤とFlutterを使うので、管理画面までそろったアプリを低価格で作れます。</p>
       <div class="chips rise d3"><span class="chip">管理画面つき</span><span class="chip">iOS・Android同時</span><span class="chip">月額保守 7万円〜</span><span class="chip">ソース買取も可</span></div>
@@ -50,7 +50,7 @@ get_header();
         <thead><tr><th>比べること</th><th>一般的なフルスクラッチ開発</th><th class="app">APPREX</th></tr></thead>
         <tbody>
           <tr><td><b>開発費</b></td><td>数百万〜数千万円</td><td class="app">300万円〜</td></tr>
-          <tr><td><b>公開までの期間</b></td><td>半年〜1年程度</td><td class="app">最短1ヶ月〜</td></tr>
+          <tr><td><b>公開までの期間</b></td><td>半年〜1年程度</td><td class="app">3ヶ月〜</td></tr>
           <tr><td><b>iOS・Android</b></td><td>2本を別々に開発することも</td><td class="app">Flutterで同時に開発</td></tr>
           <tr><td><b>管理画面</b></td><td>別途見積りになりやすい</td><td class="app">会員・取引・売上の管理画面つき</td></tr>
           <tr><td><b>公開後の保守</b></td><td>開発費の年10〜20%程度が目安</td><td class="app">月額 7万円〜</td></tr>
@@ -199,7 +199,7 @@ get_header();
     <div class="sh"><span class="eyebrow">FAQ</span><h2>よくあるご質問</h2></div>
     <div class="faq">
       <details open><summary>本当に300万円で作れますか？</summary><p>登録・プロフィール・検索・メッセージ・通知・管理画面など、マッチングの基本の機能であれば300万円からお作りできます。決済やビデオ通話などを加える場合は、内容に合わせてお見積りします。</p></details>
-      <details><summary>どのくらいで公開できますか？</summary><p>最短1ヶ月からです。機能の数とストアの審査期間によって変わります。ミーティングでスケジュールをお出しします。</p></details>
+      <details><summary>どのくらいで公開できますか？</summary><p>3ヶ月〜が目安です。機能の数とストアの審査期間によって変わります。ミーティングでスケジュールをお出しします。</p></details>
       <details><summary>アイデアだけでも相談できますか？</summary><p>はい。AIスタジオで機能を選ぶと仕様書のたたき台ができるので、それをもとにミーティングで一緒に固めていきます。</p></details>
       <details><summary>公開後に機能を追加できますか？</summary><p>できます。小さく公開して、利用者の反応を見ながら追加していく進め方をおすすめしています。</p></details>
       <details><summary>ソースコードはもらえますか？</summary><p>ソースコード買い取りのプランがあります。将来、自社で改修を続けたい場合にお選びください。</p></details>

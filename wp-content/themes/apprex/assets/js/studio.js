@@ -351,7 +351,7 @@ function estOrig(P){
   var days=rows.reduce(function(a,r){return a+r[1];},0), yen=days*R.day_rate;
   var lo=Math.round(yen*R.range[0]/100000)*100000, hi=Math.round(yen*R.range[1]/100000)*100000, fl=(R.floor||{})[P.category]||0;
   if(fl){ lo=Math.max(lo,fl); hi=Math.max(hi,Math.round(fl*1.3/100000)*100000); }
-  var weeks=Math.ceil(days/((R.team||2)*5))+2, man=function(n){return (n/10000).toLocaleString('ja-JP')+'万円';};
+  var weeks=Math.max(13,Math.ceil(days/((R.team||2)*5))+2), man=function(n){return (n/10000).toLocaleString('ja-JP')+'万円';};
   return {rows:rows,days:days,lo:lo,hi:hi,weeks:weeks,later:later,laterYen:later*R.day_rate,label:man(lo)+'〜'+man(hi)+'・約'+weeks+'週間',man:man,rate:R.day_rate};
 }
 function vOrig(){
@@ -456,7 +456,7 @@ function vSpec(){
   var full='初期 150,000円〜<small>AIスタジオで作った内容から制作（1からは300,000円〜）</small>';
   var est='<div class="est">'
     +'<div class="estc'+(e.rec==='full'?' recm':'')+'">'+(e.rec==='full'?'<span class="bd">おすすめ</span>':'')+'<h4>ノーコード（AIスタジオから制作）</h4><div class="big">'+full+'</div><p>月額 '+YEN(e.monthly)+'（'+e.tierName+'）'+(e.opt?'＋オプション '+YEN(e.opt):'')+'</p><p>公開まで：3〜4週間</p></div>'
-    +'<div class="estc'+(e.rec==='orig'?' recm':'')+'">'+(e.rec==='orig'?'<span class="bd">おすすめ</span>':'')+'<h4>オリジナル開発</h4><div class="big">'+(e.match?'300万円〜':'個別見積り')+'</div><p>'+(e.match?'月額保守 7万円〜':'ミーティングで正式にお見積り')+'</p><p>公開まで：最短1ヶ月〜</p></div>'
+    +'<div class="estc'+(e.rec==='orig'?' recm':'')+'">'+(e.rec==='orig'?'<span class="bd">おすすめ</span>':'')+'<h4>オリジナル開発</h4><div class="big">'+(e.match?'300万円〜':'個別見積り')+'</div><p>'+(e.match?'月額保守 7万円〜':'ミーティングで正式にお見積り')+'</p><p>公開まで：3ヶ月〜</p></div>'
     +'</div><p style="font-size:.78rem;color:var(--muted);margin:8px 0 0">税抜。アプリストア登録費（一律55,000円）が別途かかります。正式な金額はオンラインミーティングでお出しします。</p>';
   var note=e.orig.length?'<div class="warn" style="margin-top:12px">「'+e.orig.map(function(f){return f.n;}).join('」「')+'」はオリジナル開発になります。ミーティングで最適な作り方をご提案します。</div>':'';
   return '<div class="vh"><div><h2>AI仕様書</h2><p>デザインから、AIが仕様書と概算を作りました。機能のオン・オフで概算が変わります。</p></div><div class="acts" style="margin:0"><button type="button" class="btn btn--pri" data-view="docs">企画書・仕様書を見る</button><button type="button" class="btn btn--line" id="copySpec" data-label="仕様書をコピー">仕様書をコピー</button><button type="button" class="btn btn--cta" data-go="confirmSpec">この内容で開発を相談する</button></div></div>'
@@ -475,7 +475,7 @@ function onFeat(){ return FEAT.filter(function(f){return S.feat[f.k];}); }
 function paper(inner,no,total,cls){ return '<section class="paper'+(cls?' '+cls:'')+'">'+inner+'<div class="pgno">'+no+' / '+total+'</div></section>'; }
 function sched(){
   var e=estimate();
-  if(e.orig.length) return [['1〜2週目','要件定義・画面設計（動く試作で確認）'],['3〜6週目','開発（アプリ・管理画面・サーバー）'],['7〜8週目','テスト・修正・ストア申請'],['9週目〜','公開・運営と改善']];
+  if(e.orig.length) return [['1ヶ月目','要件定義・画面設計（動く試作で確認）'],['2ヶ月目','開発（アプリ・管理画面・サーバー）'],['3ヶ月目','テスト・修正・ストア申請'],['3ヶ月目以降','公開・運営と改善']];
   return [['1週目','キックオフ・デザインの確定'],['2〜3週目','制作と登録'],['3〜4週目','テスト版の確認・ストア申請'],['4週目〜','公開・3ヶ月の運用サポート']];
 }
 function costRows(){

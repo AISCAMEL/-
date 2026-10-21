@@ -26,7 +26,7 @@ if ( ! defined( 'ABSPATH' ) ) {
         <dl>
           <dt>対応OS</dt><dd>iOS・Android（Flutterで同時開発）</dd>
           <dt>開発範囲</dt><dd>アプリ本体・管理画面・サーバー</dd>
-          <dt>期間</dt><dd>最短1ヶ月〜（内容による）</dd>
+          <dt>期間</dt><dd>3ヶ月〜（内容による）</dd>
           <dt>保守</dt><dd>月額保守でOS更新・不具合に対応</dd>
           <dt>契約</dt><dd>秘密保持契約（NDA）に対応</dd>
           <dt>買い取り</dt><dd>ソースコード買い取りプランあり</dd>
