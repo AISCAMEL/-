@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
           <tr><td><b>使える機能</b></td><td>メッセージ、クーポン、ショップカードなど決まった機能</td><td class="app">予約・EC・会員証・独自機能まで自由に組める</td></tr>
           <tr><td><b>顧客データ</b></td><td>LINEの仕組みの中で管理</td><td class="app">自社で会員情報や利用履歴を持てる</td></tr>
           <tr><td><b>ブロック・埋もれ</b></td><td><span class="bad">ブロックされやすく、通知が他社に埋もれやすい</span></td><td class="app">自社アプリの通知として届く</td></tr>
-          <tr><td><b>始めやすさ</b></td><td>無料プランから当日始められる</td><td class="app">初期0円・最短2週間で公開</td></tr>
+          <tr><td><b>始めやすさ</b></td><td>無料プランから当日始められる</td><td class="app">AIスタジオで無料で設計・最短2週間で公開</td></tr>
         </tbody>
       </table>
     </div>

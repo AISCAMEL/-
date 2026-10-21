@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			<p class="hero__lead"><?php esc_html_e( 'クラウド型ノーコードアプリ開発プラットフォーム。高性能・低価格・スピード開発で、自社アプリを今すぐ。制作のおまかせも承ります。', 'apprex' ); ?></p>
 
 			<div class="hero__kpis">
-				<div class="hero__kpi"><strong>8,000<small>+</small></strong><span><?php esc_html_e( '導入実績', 'apprex' ); ?></span></div>
+				<div class="hero__kpi"><strong>0<small>円</small></strong><span><?php esc_html_e( 'AIスタジオで設計', 'apprex' ); ?></span></div>
 				<div class="hero__kpi"><strong>1/10</strong><span><?php esc_html_e( '従来コスト', 'apprex' ); ?></span></div>
 				<div class="hero__kpi"><strong><?php esc_html_e( '最短2', 'apprex' ); ?><small><?php esc_html_e( '週間', 'apprex' ); ?></small></strong><span><?php esc_html_e( 'スピード公開', 'apprex' ); ?></span></div>
 			</div>

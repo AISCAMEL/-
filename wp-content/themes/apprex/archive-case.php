@@ -25,7 +25,7 @@ $apprex_current = get_queried_object();
 			<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'ホーム', 'apprex' ); ?></a>
 		</nav>
 		<h1><?php esc_html_e( '導入事例', 'apprex' ); ?></h1>
-		<p><?php esc_html_e( '9業種8,000社以上。業種別の成果につながった APPREX の活用事例をご紹介します。', 'apprex' ); ?></p>
+		<p><?php esc_html_e( '業種別に、成果につながった APPREX の活用事例をご紹介します。', 'apprex' ); ?></p>
 	</div>
 </section>
 

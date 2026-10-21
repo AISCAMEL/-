@@ -11,9 +11,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $apprex_stats = array(
 	array(
-		'value'  => '8,000',
-		'suffix' => '+',
-		'label'  => __( '導入実績', 'apprex' ),
+		'value'  => '0',
+		'suffix' => __( '円', 'apprex' ),
+		'label'  => __( 'AIスタジオ（デザイン・仕様書）', 'apprex' ),
 	),
 	array(
 		'value'  => '1/10',
