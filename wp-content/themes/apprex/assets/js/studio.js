@@ -386,7 +386,7 @@ function docReq(){
   var b3=sec2('画面ごとの仕様')+tbl(['画面','内容','準備するもの'],pages.map(function(p){return ['<b>'+esc(pageName(A,p.k))+'</b>',esc(p.l)+'（'+esc(GROUPS[p.g])+'）',esc(p.prep)];}))
     +sec2('デザイン')+tbl(['項目','内容'],[['レイアウト','案'+S.d.variant],['雰囲気',TONES[S.d.tone].n],['メインカラー',esc(palette()[1])],['ロゴ・写真',IMG.logo||IMG.photo?'AIスタジオでアップロード済み':'ご用意ください']])
     +sec2('非機能要件')+'<ul class="dl"><li>iOS・Android 両対応、App Store・Google Play で公開</li><li>プッシュ通知は回数無制限</li><li>管理画面（Web）から内容を更新</li><li>プレビューアプリで公開前に実機確認</li></ul>'
-    +sec2('スケジュールと費用（目安）')+tbl(['項目','内容'],[['公開まで','最短2週間（ストア審査を含む）'],['月額','（'+esc(e.tierName)+'プラン）'+YEN(e.monthly)+(e.opt?'＋オプション '+YEN(e.opt):'')],['初期','セルフ0円／おまかせ300,000円〜（AIスタジオから相談で150,000円〜）'],['アプリ登録費','55,000円']])
+    +sec2('スケジュールと費用（目安）')+tbl(['項目','内容'],[['公開まで','最短2週間（ストア審査を含む）'],['月額','（'+esc(e.tierName)+'プラン）'+YEN(e.monthly)+(e.opt?'＋オプション '+YEN(e.opt):'')],['初期','セルフ0円／おまかせ：AIスタジオで作った内容から150,000円〜（1からは300,000円〜）'],['アプリ登録費','55,000円']])
     +sec2('確認事項')+'<ul class="dl"><li>ロゴ・写真・文章などの素材</li><li>ストアの開発者アカウント</li><li>公開したい日</li></ul>'+note;
   return (ORIG?'<div class="acts" style="margin:0 0 10px"><button type="button" class="btn btn--line btn--sm" data-reqmode="orig">オリジナルアプリの仕様定義書を見る</button></div>':'')+paper(b1,1,3,'cover')+paper(b2,2,3)+paper(b3,3,3);
 }
@@ -414,7 +414,7 @@ function vSpec(){
   var mats=[[!!IMG.logo,'ロゴ画像'],[!!IMG.photo,'メイン写真'],[true,'メニュー・商品の情報（AIのたたき台あり）'],[true,'店舗情報（住所・営業時間）'],[false,'アプリの説明文（ストア掲載用）'],[false,'Apple・Googleの開発者アカウント（おまかせなら代行）']];
   var matsH='<ul class="mats">'+mats.map(function(m){return '<li class="'+(m[0]?'ok':'')+'"><b>'+(m[0]?'✓':'')+'</b>'+m[1]+'</li>';}).join('')+'</ul>';
   var rows=SCREENS.map(function(s){return '<tr><td>'+s[1]+'</td><td>'+({home:'メインビジュアル、メニュー、クーポン案内',menu:'商品の写真・名前・価格',coupon:'配布中のクーポン一覧',reserve:'日付と時間を選んで予約',card:'会員番号・ポイント'}[s[0]])+'</td></tr>';}).join('');
-  var self=(e.orig.length?'—':'0円'), full='300,000円〜（キャンペーン150,000円〜）';
+  var self=(e.orig.length?'—':'0円'), full='150,000円〜（AIスタジオで作った内容から。1からは300,000円〜）';
   var est='<div class="est">'
     +'<div class="estc'+(e.rec==='self'?' recm':'')+'">'+(e.rec==='self'?'<span class="bd">おすすめ</span>':'')+'<h4>セルフプラン</h4><div class="big">初期 '+self+'</div><p>月額 '+YEN(e.monthly)+'（'+e.tierName+'）'+(e.opt?'＋オプション '+YEN(e.opt):'')+'</p><p>公開まで：最短2週間</p></div>'
     +'<div class="estc'+(e.rec==='full'?' recm':'')+'">'+(e.rec==='full'?'<span class="bd">おすすめ</span>':'')+'<h4>おまかせプラン</h4><div class="big" style="font-size:1.05rem">制作代行 '+full+'</div><p>月額 '+YEN(e.monthly)+'（'+e.tierName+'）'+(e.opt?'＋オプション '+YEN(e.opt):'')+'</p><p>公開まで：3〜4週間</p></div>'
@@ -444,7 +444,7 @@ function sched(){
 function costRows(){
   var e=estimate();
   if(e.orig.length) return [['開発費',e.match?'300万円〜':'ミーティングで確定'],['月額保守',e.match?'7万円〜':'ミーティングで確定'],['アプリストア登録費','55,000円']];
-  var r=[[S.plan==='self'?'初期費用':'制作代行費',S.plan==='self'?'0円':'300,000円〜（キャンペーン150,000円〜）'],['月額利用料（'+e.tierName+'）',YEN(e.monthly)+'〜']];
+  var r=[[S.plan==='self'?'初期費用':'制作代行費',S.plan==='self'?'0円':'150,000円〜（AIスタジオで作った内容から。1からは300,000円〜）'],['月額利用料（'+e.tierName+'）',YEN(e.monthly)+'〜']];
   if(e.opt) r.push(['オプション',YEN(e.opt)]); r.push(['アプリストア登録費','55,000円']); return r;
 }
 function tbl(head,rows){ return '<table class="dt"><thead><tr>'+head.map(function(h){return '<th>'+h+'</th>';}).join('')+'</tr></thead><tbody>'+rows.map(function(r){return '<tr>'+r.map(function(c){return '<td>'+c+'</td>';}).join('')+'</tr>';}).join('')+'</tbody></table>'; }
@@ -499,7 +499,7 @@ function vDocs(){
 function vConsult(){
   var e=estimate(), orig=e.orig.length>0||!!(ORIG&&S.origPlan);
   if(orig) S.plan='orig'; else if(S.plan==='orig') S.plan='full';
-  var pl=[['self','セルフプラン','初期0円。登録は自分で、APPREXがチェック',orig],['full','おまかせプラン','制作代行300,000円〜（キャンペーン150,000円〜）',orig],['orig','オリジナル開発','独自機能を開発。ミーティングで見積り',!orig]];
+  var pl=[['self','セルフプラン','初期0円。登録は自分で、APPREXがチェック',orig],['full','おまかせプラン','制作代行150,000円〜（AIスタジオで作った内容から）',orig],['orig','オリジナル開発','独自機能を開発。ミーティングで見積り',!orig]];
   var back=(ORIG&&S.origPlan)?'<p class="hint" style="margin-top:8px">基盤（ノーコード）で相談する場合は <button type="button" class="linkbtn" data-go="origOff">こちら</button></p>':'';
   var plH=pl.map(function(p){return '<label class="pl"><input type="radio" name="plan" value="'+p[0]+'"'+(S.plan===p[0]?' checked':'')+(p[3]?' disabled':'')+'><b>'+p[1]+'</b><span>'+p[2]+'</span></label>';}).join('');
   return '<div class="vh"><div><h2>開発を相談</h2><p>作ったデザインと仕様書を、そのまま担当者に送ります。次にオンラインミーティングの日時を選びます。</p></div></div>'
@@ -534,7 +534,7 @@ function vMeeting(){
 function quoteItems(){
   var e=estimate(), it=[];
   if(S.plan==='orig'){ var dev=e.match?3000000:1000000; it.push(['オリジナル開発 着手金（開発費の50%）'+(e.match?'':'　※金額は例'),dev/2]); it.push(['アプリストア登録費',55000]); }
-  else{ if(S.plan==='full'){it.push(['制作代行費（キャンペーン適用：300,000円→150,000円）',150000]);} else {it.push(['初期設定費（キャンペーンで0円）',0]);} it.push(['アプリストア登録費',55000]); it.push(['初月利用料（'+e.tierName+'プラン）',e.monthly]); if(e.opt) it.push(['オプション',e.opt]); }
+  else{ if(S.plan==='full'){it.push(['制作代行費（AIスタジオで作った内容から）',150000]);} else {it.push(['初期設定費（1年契約で0円）',0]);} it.push(['アプリストア登録費',55000]); it.push(['初月利用料（'+e.tierName+'プラン）',e.monthly]); if(e.opt) it.push(['オプション',e.opt]); }
   return it;
 }
 function vQuote(){

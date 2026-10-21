@@ -1,6 +1,6 @@
 /**
  * APPREX 見積もり → 発注 calculator（APPREX仕様）。
- * 初期設定費は今月キャンペーンで0円、月額は通常価格を取り消し線で表示、
+ * 初期設定費は1年契約で0円、月額は通常価格を取り消し線で表示、
  * オプションは一回費用として加算。
  */
 (function () {
@@ -40,7 +40,7 @@
 			elServices.innerHTML = '';
 			Object.keys(services).forEach(function (key) {
 				var svc = services[key];
-				var b = chip(svc.label, state.service === key && !state.quote, '月額制・初期費用0円キャンペーン');
+				var b = chip(svc.label, state.service === key && !state.quote, '月額制・初期設定費0円（1年契約）');
 				b.addEventListener('click', function () {
 					state.service = key; state.plan = null; state.options = []; state.quote = null;
 					renderServices(); renderPlans(); renderOptions(); renderTotal();
@@ -86,7 +86,15 @@
 				wrap.className = 'est-opt';
 				wrap.innerHTML = '<input type="checkbox" value="' + key + '"><span>' + o.label + '</span><b>+' + Number(o.price).toLocaleString('ja-JP') + '円（一回）</b>';
 				wrap.querySelector('input').addEventListener('change', function (e) {
-					if (e.target.checked) { state.options.push(key); }
+					if (e.target.checked) {
+						// 制作代行は「AIスタジオから」と「1から」のどちらか一方。
+						if (o.excludes) {
+							state.options = state.options.filter(function (k) { return k !== o.excludes; });
+							var other = elOptions.querySelector('input[value="' + o.excludes + '"]');
+							if (other) { other.checked = false; }
+						}
+						state.options.push(key);
+					}
 					else { state.options = state.options.filter(function (k) { return k !== key; }); }
 					renderTotal();
 				});
@@ -144,7 +152,7 @@
 			html += '<div class="estimate__big">' + yen(e.monthly) + '<small> / 月（税抜）</small></div>';
 			html += '<ul class="estimate__sub">';
 			if (e.monthlyRegular > e.monthly) { html += '<li>月額：<s>' + yen(e.monthlyRegular) + '</s> → <b>' + yen(e.monthly) + '</b> <em>キャンペーン</em></li>'; }
-			if (e.initialRegular > e.initial) { html += '<li>初期設定費：<s>' + yen(e.initialRegular) + '</s> → <b>' + yen(e.initial) + '</b> <em>今月0円</em></li>'; }
+			if (e.initialRegular > e.initial) { html += '<li>初期設定費：<s>' + yen(e.initialRegular) + '</s> → <b>' + yen(e.initial) + '</b> <em>1年契約で0円</em></li>'; }
 			else { html += '<li>初期設定費：' + yen(e.initial) + '</li>'; }
 			if (e.optTotal) { html += '<li>一回オプション：' + yen(e.optTotal) + '</li>'; }
 			html += '<li>初期お支払い目安：<b>' + yen(e.initialTotal) + '</b></li>';

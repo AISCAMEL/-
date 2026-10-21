@@ -592,3 +592,4 @@
 .rn .proto-links{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .rn .proto-links a:not(.btn){color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:5px 12px;font-size:.84rem;font-weight:700;text-decoration:none}
 .rn .proto-links .btn{padding:10px 18px}
+.rn .fees em.alt{display:block;font-style:normal;font-size:.72rem;color:var(--muted);line-height:1.5;margin-top:4px;font-weight:500}

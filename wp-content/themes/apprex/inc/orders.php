@@ -189,7 +189,7 @@ function apprex_notify_order( $post_id, $estimate, $meta ) {
 		$lines[] = 'オプション: ' . $o['label'] . '（+' . number_format( $o['price'] ) . '円）';
 	}
 	$lines[] = '月額: ' . number_format( $estimate['monthly'] ) . '円（通常 ' . number_format( $estimate['monthly_regular'] ) . '円・税抜）';
-	$lines[] = '初期設定費: ' . number_format( $estimate['initial'] ) . '円（通常 ' . number_format( $estimate['initial_regular'] ) . '円→今月キャンペーン）';
+	$lines[] = '初期設定費: ' . number_format( $estimate['initial'] ) . '円（通常 ' . number_format( $estimate['initial_regular'] ) . '円→1年契約で0円）';
 	if ( ! empty( $estimate['registration'] ) ) {
 		$lines[] = $estimate['registration_label'] . ': ' . number_format( $estimate['registration'] ) . '円（一律・別途必要）';
 	}
@@ -226,7 +226,7 @@ function apprex_send_order_autoreply( $estimate, $meta ) {
 		$lines[] = 'オプション: ' . $o['label'] . '（+' . number_format( $o['price'] ) . '円）';
 	}
 	$lines[] = '月額: ' . number_format( $estimate['monthly'] ) . '円（通常 ' . number_format( $estimate['monthly_regular'] ) . '円・税抜）';
-	$lines[] = '初期設定費: ' . number_format( $estimate['initial'] ) . '円（通常 ' . number_format( $estimate['initial_regular'] ) . '円→今月キャンペーンで0円）';
+	$lines[] = '初期設定費: ' . number_format( $estimate['initial'] ) . '円（通常 ' . number_format( $estimate['initial_regular'] ) . '円→1年契約で0円）';
 	if ( ! empty( $estimate['registration'] ) ) {
 		$lines[] = $estimate['registration_label'] . ': ' . number_format( $estimate['registration'] ) . '円（一律・別途必要）';
 	}

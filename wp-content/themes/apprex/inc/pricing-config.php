@@ -4,8 +4,9 @@
  * 見積もり計算・料金ページ・チャット回答・GAS連携が全てここを参照。
  *
  * 方針：
- * - アプリ開発は「初期設定費」を提示し、今月キャンペーンで 0円 に自動反映。
- * - 月額は通常価格（取り消し線）＋キャンペーン価格を表示。
+ * - アプリ開発の初期設定費は、1年契約で 0円（セルフで始められる）。
+ * - 制作をおまかせする場合は制作代行：AIスタジオで作った内容から 150,000円〜／1からヒアリングして 300,000円〜。
+ * - AIスタジオ（デザイン・試作・仕様定義書）は無料。
  * - 制作代行・チャット・GPS等は一回限りのオプション。
  * - マッチング/カスタム/オンプレミスは個別見積（要相談）として別掲。
  *
@@ -40,8 +41,8 @@ function apprex_pricing_config() {
 	$config = array(
 		'currency' => 'JPY',
 		'campaign' => array(
-			'label'           => '今月末まで限定キャンペーン（先着10社）',
-			'initial_to_zero' => true, // 初期設定費を0円に。
+			'label'           => '1年契約で初期設定費0円',
+			'initial_to_zero' => true, // 初期設定費を0円に（1年契約）。
 		),
 		'services' => array(
 			'app' => array(
@@ -58,7 +59,7 @@ function apprex_pricing_config() {
 						'monthly_regular' => 19800,
 						'initial'         => 100000,
 						'desc'            => '基本機能・1年契約。まずはここから。',
-						'note'            => '制作代行（オプション）10万円。自社で制作する場合は不要。',
+						'note'            => '制作をおまかせする場合は制作代行（AIスタジオで作った内容から 15万円〜／1から 30万円〜）。自社で登録する場合は不要。',
 					),
 					'start'    => array(
 						'label'           => 'スタート（電子カタログ）',
@@ -66,7 +67,7 @@ function apprex_pricing_config() {
 						'monthly_regular' => 39800,
 						'initial'         => 200000,
 						'desc'            => 'トライアル＋電子カタログ機能。',
-						'note'            => '制作代行（オプション）10万円（電子カタログ10冊まで）。10冊以上は別途。自社制作は不要。',
+						'note'            => '制作をおまかせする場合は制作代行（AIスタジオで作った内容から 15万円〜／1から 30万円〜）。自社で登録する場合は不要。電子カタログ11冊以上は別途。',
 					),
 					'business' => array(
 						'label'           => 'ビジネス（多店舗）',
@@ -74,12 +75,13 @@ function apprex_pricing_config() {
 						'monthly_regular' => 59800,
 						'initial'         => 300000,
 						'desc'            => 'スタート＋多店舗機能（店舗数無制限）。',
-						'note'            => '制作代行（オプション）20万円（20店舗まで込み）。20店舗以上は1店舗ごと+1万円。自社制作は不要。',
+						'note'            => '制作をおまかせする場合は制作代行（AIスタジオで作った内容から 15万円〜／1から 30万円〜）。自社で登録する場合は不要。21店舗以上は1店舗ごと+1万円。',
 					),
 				),
 				// 一回限りのオプション（金額あり）。
 				'options'    => array(
-					'seisaku' => array( 'label' => '制作代行（10メニューまで）', 'price' => 100000 ),
+					'seisaku_ai' => array( 'label' => '制作代行（AIスタジオで作った内容から）', 'price' => 150000, 'excludes' => 'seisaku' ),
+					'seisaku'    => array( 'label' => '制作代行（1からヒアリングして制作）', 'price' => 300000, 'excludes' => 'seisaku_ai' ),
 					'chat'    => array( 'label' => 'チャット機能', 'price' => 300000 ),
 					'gps'     => array( 'label' => 'GPSプッシュ（1カ所）', 'price' => 20000 ),
 				),
@@ -218,7 +220,12 @@ function apprex_calculate_estimate( $service, $plan, $options = array() ) {
 
 	$opt_total = 0;
 	$opt_lines = array();
-	foreach ( (array) $options as $opt_key ) {
+	$options   = array_values( array_unique( (array) $options ) );
+	// 制作代行は「AIスタジオから」と「1から」のどちらか一方（両方ならAIスタジオからを優先）。
+	if ( in_array( 'seisaku_ai', $options, true ) ) {
+		$options = array_values( array_diff( $options, array( 'seisaku' ) ) );
+	}
+	foreach ( $options as $opt_key ) {
 		if ( ! empty( $svc['options'][ $opt_key ] ) ) {
 			$opt_total  += (int) $svc['options'][ $opt_key ]['price'];
 			$opt_lines[] = array(
@@ -268,10 +275,12 @@ function apprex_pricing_summary_text() {
 	$lines = array();
 
 	$app = $c['services']['app'];
-	$lines[] = '【アプリ開発（月額・初期設定費は今月キャンペーンで0円）】';
+	$lines[] = '【アプリ開発（月額制・1年契約で初期設定費0円）】';
+	$lines[] = '- AIスタジオ（無料会員登録）でのデザイン・試作・仕様定義書づくりと相談は無料。';
+	$lines[] = '- 自分で管理画面に登録する「セルフ」なら初期費用0円。制作をおまかせする場合の制作代行は、AIスタジオで作った内容から150,000円〜、1からヒアリングして作る場合は300,000円〜。';
 	foreach ( $app['plans'] as $p ) {
 		$lines[] = sprintf(
-			'- %s：月額%s円／初期設定費 通常%s円→今月0円',
+			'- %s：月額%s円／初期設定費 通常%s円→1年契約で0円',
 			$p['label'],
 			number_format( $p['monthly'] ),
 			number_format( $p['initial'] )
@@ -283,7 +292,7 @@ function apprex_pricing_summary_text() {
 	}
 	$lines[] = '  オプション：' . implode( ' / ', $opts ) . '。1年契約・DL課金なし・プッシュ無制限。';
 	if ( ! empty( $app['registration_fee'] ) ) {
-		$lines[] = '  ' . $app['registration_label'] . '：一律' . number_format( $app['registration_fee'] ) . '円（iOS/Android、アプリ登録時に別途必要・キャンペーン対象外）。';
+		$lines[] = '  ' . $app['registration_label'] . '：一律' . number_format( $app['registration_fee'] ) . '円（iOS/Android、アプリ登録時に別途必要）。';
 	}
 
 	$lines[] = '【ホームページ制作（初期費用0円・月額）】Light 9,800円／Standard 19,800円／Premium 39,800円。プラン毎にサポート範囲あり。追加項目（バナー制作・構造化・LINE構築・MEO構築・LLMO構築）はすべて別途見積もり。';

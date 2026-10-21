@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 			<div class="hero__badges">
 				<span class="hero__badge"><?php esc_html_e( 'iOS / Android 対応', 'apprex' ); ?></span>
-				<span class="hero__badge"><?php esc_html_e( '初期費用0円キャンペーン中', 'apprex' ); ?></span>
+				<span class="hero__badge"><?php esc_html_e( '初期設定費0円（1年契約）', 'apprex' ); ?></span>
 			</div>
 
 			<div class="hero__cta">
