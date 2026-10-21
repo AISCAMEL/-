@@ -84,8 +84,24 @@ var PRESET={
   school:{footer:['home','reser','news','membership'],menu:['reser','fee','employee','news','application','membership','movie','access']},
   retail:{footer:['home','shopping_mall','newcoupon','membership'],menu:['shopping_mall','newcoupon','membership','catalog','point','news','store','instagram']}
 };
-function defaultApp(ind){ var p=PRESET[ind]||PRESET.food; return {footer:p.footer.slice(),menu:p.menu.slice(),names:{}}; }
+/* 月額プラン（ノーコード）。上のプランは下のプランの機能をすべて含む。add＝選んだときにメニューへ足すページ。 */
+var PLANS={
+  trial:{l:'トライアル',m:19800,days:'最短2週間',fit:'まず小さく始めたい',add:[]},
+  start:{l:'スタート',m:39800,days:'最短2週間',fit:'カタログ・クーポンで集客',add:['catalog']},
+  biz:{l:'ビジネス',m:59800,days:'最短1ヶ月',fit:'多店舗・ECまで',add:['shopping_mall','business'],names:{business:'店舗一覧'}}
+};
+var PLAN_ORDER=['trial','start','biz'];
+/* 機能・ページに必要なもの：'trial'|'start'|'biz'（プラン）、'opt'（オプション）、'orig'（オリジナル開発）。 */
+function featNeed(fk){ if(!fk) return 'trial'; for(var i=0;i<FEAT.length;i++){ var f=FEAT[i]; if(f.k===fk){ return f.t==='std'?(f.tier||'trial'):f.t; } } return 'trial'; }
+function pageNeed(k){ return PAGES[k]?featNeed(PAGES[k].feat):'trial'; }
+/* そのプランで追加料金なしに使えるか。 */
+function inPlan(need,tier){ var a=PLAN_ORDER.indexOf(need); return a>-1&&a<=PLAN_ORDER.indexOf(tier||'trial'); }
+function defaultApp(ind,tier){ var p=PRESET[ind]||PRESET.food, t=tier||'trial', ok=function(k){return k==='home'||inPlan(pageNeed(k),t);};
+  var menu=p.menu.filter(ok);
+  return {footer:fixFooter(p.footer,menu),menu:menu,names:{}}; }
+/* フッター4つ：縦メニューにないページは、まだフッターにない縦メニューのページに入れ替える（ホームは1つだけ）。 */
+function fixFooter(foot,menu){ var out=[]; foot.forEach(function(k,i){ if(i===0&&k==='home'){ out.push(k); return; } if(k!=='home'&&menu.indexOf(k)>-1&&out.indexOf(k)<0){ out.push(k); return; } var r=menu.filter(function(m){return out.indexOf(m)<0&&foot.indexOf(m)<0;})[0]; out.push(r||'home'); }); return out; }
 /* 表示名（会員が付けた名前 → 管理画面の名前）。 */
 function pageName(app,k){ if(k==='home') return 'ホーム'; return (app&&app.names&&app.names[k])||(PAGES[k]?PAGES[k].l:k); }
-window.APPREX_STUDIO_DATA={IND:IND,COLORS:COLORS,TONES:TONES,SCREENS:SCREENS,FEAT:FEAT,PAGES:PAGES,PAGE_LIST:PAGE_LIST,GROUPS:GROUPS,PRESET:PRESET,defaultApp:defaultApp,pageName:pageName};
+window.APPREX_STUDIO_DATA={IND:IND,COLORS:COLORS,TONES:TONES,SCREENS:SCREENS,FEAT:FEAT,PAGES:PAGES,PAGE_LIST:PAGE_LIST,GROUPS:GROUPS,PRESET:PRESET,PLANS:PLANS,PLAN_ORDER:PLAN_ORDER,featNeed:featNeed,pageNeed:pageNeed,inPlan:inPlan,fixFooter:fixFooter,defaultApp:defaultApp,pageName:pageName};
 })();

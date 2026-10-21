@@ -578,7 +578,7 @@ function apprex_studio_json( $text ) {
 /** デザインの要約（AIに渡す現在の設定）。 */
 function apprex_studio_brief( WP_REST_Request $request ) {
 	$b    = (array) $request->get_param( 'brief' );
-	$keep = array( 'industry', 'name', 'goal', 'target', 'tone', 'color', 'dark', 'catch', 'menus', 'pages', 'variant', 'request' );
+	$keep = array( 'industry', 'name', 'goal', 'target', 'tone', 'color', 'dark', 'catch', 'menus', 'pages', 'variant', 'plan', 'request' );
 	$out  = array();
 	foreach ( $keep as $k ) {
 		if ( ! isset( $b[ $k ] ) ) {
@@ -587,6 +587,9 @@ function apprex_studio_brief( WP_REST_Request $request ) {
 		$out[ $k ] = is_array( $b[ $k ] )
 			? array_slice( array_map( 'sanitize_text_field', $b[ $k ] ), 0, 8 )
 			: mb_substr( sanitize_text_field( (string) $b[ $k ] ), 0, 'request' === $k ? 400 : 80 );
+	}
+	if ( isset( $out['plan'] ) && ! in_array( $out['plan'], array( 'trial', 'start', 'biz' ), true ) ) {
+		unset( $out['plan'] );
 	}
 	return $out;
 }
@@ -704,7 +707,13 @@ function apprex_studio_image_prompt( $kind, $brief ) {
 	if ( 'hero' === $kind ) {
 		return 'Create a photorealistic, high-end key visual for the top banner of this mobile app (landscape 16:9, no text, no UI, appetizing/attractive product or interior photography matching the business). ' . $base . $req;
 	}
-	return 'Create a professional, high-fidelity mobile app UI design presentation: five iPhone screens side by side in front view on a light neutral background — 1) home with hero image, catch copy and 6 large menu buttons (' . $menus . '), 2) menu/price list, 3) coupons, 4) reservation calendar with time slots, 5) digital membership card with points. Japanese UI text, consistent design system, polished like a top Dribbble shot, crisp typography, bottom tab bar. ' . $base . $req;
+	// 2画面目は選んだプランに合わせる（スタート＝電子カタログ、ビジネス＝ネットショップと店舗切り替え）。
+	$second = array(
+		'start' => 'digital catalog shelf with brochure covers to flip through',
+		'biz'   => 'online shop product list with add-to-cart buttons and a store switcher for multiple branches',
+	);
+	$second = isset( $second[ $g( 'plan' ) ] ) ? $second[ $g( 'plan' ) ] : 'menu/price list';
+	return 'Create a professional, high-fidelity mobile app UI design presentation: five iPhone screens side by side in front view on a light neutral background — 1) home with hero image, catch copy and 6 large menu buttons (' . $menus . '), 2) ' . $second . ', 3) coupons, 4) reservation calendar with time slots, 5) digital membership card with points. Japanese UI text, consistent design system, polished like a top Dribbble shot, crisp typography, bottom tab bar. ' . $base . $req;
 }
 
 /**

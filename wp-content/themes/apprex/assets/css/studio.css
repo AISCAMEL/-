@@ -401,3 +401,21 @@
 .rn-studio .rq-img{display:flex;flex-wrap:wrap;gap:6px;align-items:flex-end;margin:4px 0 8px}
 .rn-studio .rq-img img{width:96px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
 .rn-studio .rq-img span{font-size:.72rem;color:var(--muted)}
+/* プラン選択と、プラン外の機能・ページ */
+.rn-studio .tiers{margin-bottom:6px}
+.rn-studio .tiers .pl{position:relative}
+.rn-studio .tiers .pl .pm{color:var(--navy);font-family:var(--f-num);font-weight:800;font-size:.95rem}
+.rn-studio .tiers .pl small{color:var(--muted);font-size:.74rem}
+.rn-studio .fitem.lock{opacity:.55;cursor:not-allowed}
+.rn-studio .chip.lock{opacity:.45;cursor:not-allowed;border-style:dashed}
+.rn-studio .chip small{margin-left:4px;font-size:.68rem;color:var(--muted);font-weight:700}
+.rn-studio .s-cats{display:grid;grid-template-columns:1fr 1fr;gap:.6em;padding:0 .9em .6em}
+.rn-studio .s-cat{background:#fff;border-radius:var(--r);padding:.5em;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.rn-studio .s-cat i{display:flex;align-items:flex-end;aspect-ratio:3/4;border-radius:calc(var(--r)*.6);background:linear-gradient(160deg,var(--c2),var(--c1)) center/cover;padding:.4em;margin-bottom:.35em}
+.rn-studio .s-cat i em{font-style:normal;color:#fff;font-size:.72em;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+.rn-studio .s-cat b{display:block;font-size:.9em}
+.rn-studio .s-cat small{color:var(--c2);font-size:.75em;font-weight:700}
+.rn-studio .s-stores{display:flex;gap:.4em;padding:0 .9em .6em}
+.rn-studio .s-stores span{border:1px solid var(--c2);color:var(--c2);border-radius:999px;padding:.2em .8em;font-size:.8em;font-weight:700}
+.rn-studio .s-stores span.on{background:var(--c2);color:#fff}
+.rn-studio .s-cart{margin-left:auto;font-style:normal;background:var(--c2);color:#fff;border-radius:999px;padding:.3em .8em;font-size:.78em;font-weight:800;flex:0 0 auto}

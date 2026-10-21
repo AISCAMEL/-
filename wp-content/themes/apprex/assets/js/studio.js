@@ -36,15 +36,19 @@ var KEY='apprex-studio-v2-'+(CFG.uid||0);
 var DATA=window.APPREX_STUDIO_DATA||{}, IND=DATA.IND, COLORS=DATA.COLORS, TONES=DATA.TONES, SCREENS=DATA.SCREENS, FEAT=DATA.FEAT, PAGES=DATA.PAGES, PAGE_LIST=DATA.PAGE_LIST, GROUPS=DATA.GROUPS, pageName=DATA.pageName;
 var STEPS=['会員登録','AIデザイン','AI仕様書','開発を相談','オンラインミーティング','お見積り・入金','制作','公開'];
 var VIEWS=[['design','AIデザイン',1],['appmenu','アプリのメニュー',1],['demo','デモアプリで試す',1],['orig','オリジナルアプリをAIで',1],['spec','AI仕様書',2],['docs','企画書・仕様書',2],['consult','開発を相談',3],['meeting','ミーティング予約',4],['quote','お見積り・入金',5],['prod','制作の進捗',6]];
-var TIERS={trial:['トライアル',19800],start:['スタート',39800],biz:['ビジネス',59800]};
+var PLANS=DATA.PLANS, inPlan=DATA.inPlan, featNeed=DATA.featNeed, pageNeed=DATA.pageNeed;
+var TIERS={}; Object.keys(PLANS).forEach(function(k){ TIERS[k]=[PLANS[k].l,PLANS[k].m]; });
+/* 業種のおすすめ機能のうち、そのプランで追加料金なしに使えるものだけ（オプション・独自開発は自分で選んだときだけ）。 */
+function indFeat(ind,tier){ var f={}; IND[ind].feat.forEach(function(k){ if(inPlan(featNeed(k),tier)){ f[k]=true; } }); return f; }
+function needLabel(n){ return n==='opt'?'オプション':n==='orig'?'独自開発':PLANS[n]?PLANS[n].l+'プラン〜':''; }
 var YEN=function(n){return n.toLocaleString('ja-JP')+'円';};
 var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});};
 
 function def(){
-  var f={}; IND.food.feat.forEach(function(k){f[k]=true;});
-  return {prog:1,view:'design',d:{ind:'food',name:'',goal:'常連のお客様の来店回数を増やしたい',target:'30〜50代の会社員・ご家族',tone:'luxury',color:1,custom:null,variant:'A',screen:'home',all:false,cols:3,fs:1,tall:false,resBig:false},
+  var f=indFeat('food','trial');
+  return {prog:1,tier:'trial',view:'design',d:{ind:'food',name:'',goal:'常連のお客様の来店回数を増やしたい',target:'30〜50代の会社員・ご家族',tone:'luxury',color:1,custom:null,variant:'A',screen:'home',all:false,cols:3,fs:1,tall:false,resBig:false},
     vers:[{n:1,note:'AIが最初のデザインを作りました'}],feat:f,plan:'full',notes:'',meeting:null,met:false,payMethod:'card',paid:false,prod:0,msgs:[],
-    reg:true,app:DATA.defaultApp('food')};
+    reg:true,app:DATA.defaultApp('food','trial')};
 }
 var S=def(), IMG={logo:null,photo:null};
 (function(){
@@ -68,12 +72,15 @@ S.prod=STAGE>=5?6:(STAGE>=4?Math.min(CFG.prod||0,6):0);
 if(S.met){S.prog=Math.max(S.prog,5);} if(S.paid){S.prog=Math.max(S.prog,6);} if(S.prod>=6){S.prog=8;}
 S.msgs=(CFG.msgs||[]).map(function(m){return [m[0],m[1],m[2]];});
 if(S.view==='register'){S.view='design';}
-if(!S.app||!S.app.menu){S.app=DATA.defaultApp(S.d.ind);} if(!S.app.names){S.app.names={};}
+// プランを選ぶ前の保存データは、選んでいた機能からプランを決める（概算が変わらないように）。
+if(!PLANS[S.tier]){ S.tier='trial'; FEAT.forEach(function(f){ if(S.feat&&S.feat[f.k]&&f.t==='std'&&f.tier&&PLAN_IDX(f.tier)>PLAN_IDX(S.tier)){ S.tier=f.tier; } }); }
+if(!S.app||!S.app.menu){S.app=DATA.defaultApp(S.d.ind,S.tier);} if(!S.app.names){S.app.names={};}
 // 以前の形式（位置で保存したボタン名）は、ページとずれるため使わない。
 if(S.d.ov&&S.d.ov.menus){ delete S.d.ov.menus; }
 // フッターは縦メニューにあるページ（またはホーム）だけ。
 S.app.footer=S.app.footer.map(function(k){ return k==='home'||S.app.menu.indexOf(k)>-1?k:'home'; });
 
+function PLAN_IDX(t){ return DATA.PLAN_ORDER.indexOf(t); }
 function fmtMeeting(v){ var m=String(v).match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}:\d{2})/); if(!m) return v; var d=new Date(+m[1],+m[2]-1,+m[3]); return (+m[2])+'月'+(+m[3])+'日('+'日月火水木金土'.charAt(d.getDay())+') '+m[4]; }
 var saveTimer=null;
 function save(){
@@ -91,14 +98,35 @@ function D(){var b=IND[S.d.ind], o={}; for(var k in b){o[k]=b[k];} if(S.d.ov&&S.
   // ホームのボタン＝縦メニューの上から6つ（アプリの基盤のTOPアイコンと同じ並び）。
   if(S.app&&S.app.menu&&S.app.menu.length){ o.menus=S.app.menu.slice(0,6).map(function(k){return pageName(S.app,k);}); }
   return o;}
-function syncFeat(){ (S.app.menu||[]).forEach(function(k){ var p=PAGES[k]; if(p&&p.feat){ S.feat[p.feat]=true; } }); }
+/* プランを変える。上げたときはそのプランのページ（カタログ・ネットショップ等）をメニューに足し、下げたときは使えなくなるページと機能を外す。 */
+function setTier(t){
+  if(!PLANS[t]||t===S.tier) return;
+  var up=PLAN_IDX(t)>PLAN_IDX(S.tier), added=[];
+  S.tier=t;
+  if(up){
+    DATA.PLAN_ORDER.slice(1,PLAN_IDX(t)+1).forEach(function(pk){ var P=PLANS[pk];
+      P.add.forEach(function(k){ if(S.app.menu.indexOf(k)<0){ S.app.menu.splice(Math.min(3,S.app.menu.length),0,k); if(P.names&&P.names[k]&&!S.app.names[k]){ S.app.names[k]=P.names[k]; } added.push(pageName(S.app,k)); } if(PAGES[k].feat){ S.feat[PAGES[k].feat]=true; } });
+    });
+  }else{
+    var drop=[]; DATA.PLAN_ORDER.slice(PLAN_IDX(t)+1).forEach(function(pk){ drop=drop.concat(PLANS[pk].add); });
+    S.app.menu=S.app.menu.filter(function(k){ var n=pageNeed(k); return drop.indexOf(k)<0&&(n==='opt'||n==='orig'||inPlan(n,t)); });
+    drop.forEach(function(k){ delete S.app.names[k]; });
+    if(S.app.menu.length<4){ DATA.defaultApp(S.d.ind,t).menu.forEach(function(k){ if(S.app.menu.length<4&&S.app.menu.indexOf(k)<0){ S.app.menu.push(k); } }); }
+    S.app.footer=DATA.fixFooter(S.app.footer,S.app.menu);
+    FEAT.forEach(function(f){ if(f.t==='std'&&!inPlan(f.tier||'trial',t)){ delete S.feat[f.k]; } });
+  }
+  S.vers.push({n:S.vers.length+1,note:'プランを「'+PLANS[t].l+'」に変更'+(added.length?'（'+added.join('・')+'を追加）':'')});
+}
+function planPick(){
+  return '<div class="plans tiers" role="radiogroup" aria-label="プラン">'+DATA.PLAN_ORDER.map(function(k){ var P=PLANS[k]; return '<label class="pl"><input type="radio" name="tier" data-tier="'+k+'"'+(S.tier===k?' checked':'')+'><b>'+P.l+'</b><span class="pm">月額 '+YEN(P.m)+'</span><span>初期 0円・'+P.days+'</span><small>'+P.fit+'</small></label>'; }).join('')+'</div>';
+}
 
 /* ---------- AIデザイナー（サーバーのAIと連携） ---------- */
 var AI=CFG.ai||{text:false,image:false,left:0,limit:0}, IMGS=CFG.images||[], GEN={busy:false,kind:''};
 var KINDS=[['screens','画面デザイン（5画面）'],['icon','アプリアイコン'],['hero','メインビジュアル']];
 function brief(req){
   var d=D(), p=palette();
-  return {industry:d.l,name:storeName(),goal:S.d.goal,target:S.d.target,tone:S.d.tone,color:p[1],dark:p[0],catch:d.catch,menus:d.menus,pages:S.app.menu.slice(0,6).map(function(k){return PAGES[k].l;}),variant:S.d.variant,request:req||S.d.brief||''};
+  return {industry:d.l,name:storeName(),goal:S.d.goal,target:S.d.target,tone:S.d.tone,color:p[1],dark:p[0],catch:d.catch,menus:d.menus,pages:S.app.menu.slice(0,6).map(function(k){return PAGES[k].l;}),variant:S.d.variant,plan:S.tier,request:req||S.d.brief||''};
 }
 function applyAi(c){
   var ch=[];
@@ -172,6 +200,8 @@ function genImage(kind){
     S._aiMsg='AI：デザイン画像ができました。気に入った案は「この案を採用」を押してください。'; save(); render();
   }).catch(function(x){ GEN={busy:false,kind:''}; S._aiMsg=x.message; render(); });
 }
+/* 5画面。2画面目はプランに合わせる（スタート＝カタログ、ビジネス＝ネットショップ）。 */
+function scr(){ return SCREENS.map(function(s){ return s[0]==='menu'?['menu',S.tier==='biz'?'ネットショップ':S.tier==='start'?'カタログ':s[1]]:s; }); }
 function storeName(){return (S.d.name||'').trim()||D().name;}
 function shade(hex,k){var n=parseInt(hex.slice(1),16),r=n>>16,g=n>>8&255,b=n&255;r=Math.round(r*k);g=Math.round(g*k);b=Math.round(b*k);return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);}
 function palette(){ if(S.d.custom){return [shade(S.d.custom,.45),S.d.custom,'カスタム（'+S.d.custom+'）'];} var c=COLORS[S.d.color]; return [c[1],c[2],c[0]]; }
@@ -196,7 +226,13 @@ function phone(screen,small){
     }
     body+=tabs(0);
   }else if(screen==='menu'){
-    body='<div class="s-h">メニュー</div>'+d.items.map(function(it){return '<div class="s-item"><i></i><div><b>'+esc(it[0])+'</b><span>'+esc(it[1])+'</span></div></div>';}).join('')+tabs(-1);
+    if(S.tier==='start'){
+      body='<div class="s-h">カタログ</div><div class="s-cats">'+['最新号','おすすめ特集','季節の限定','総合カタログ'].map(function(c,i){return '<div class="s-cat"><i'+(i===0&&IMG.photo?' style="background-image:url('+IMG.photo+')"':'')+'><em>'+esc(storeName())+'</em></i><b>'+c+'</b><small>'+(12+i*8)+'ページ</small></div>';}).join('')+'</div>'+tabs(-1);
+    }else if(S.tier==='biz'){
+      body='<div class="s-h">ネットショップ</div><div class="s-stores">'+['本店','駅前店','オンライン'].map(function(x,i){return '<span'+(i===0?' class="on"':'')+'>'+x+'</span>';}).join('')+'</div>'+d.items.slice(0,3).map(function(it){return '<div class="s-item"><i></i><div><b>'+esc(it[0])+'</b><span>'+esc(it[1])+'</span></div><em class="s-cart">カート</em></div>';}).join('')+tabs(-1);
+    }else{
+      body='<div class="s-h">メニュー</div>'+d.items.map(function(it){return '<div class="s-item"><i></i><div><b>'+esc(it[0])+'</b><span>'+esc(it[1])+'</span></div></div>';}).join('')+tabs(-1);
+    }
   }else if(screen==='coupon'){
     body='<div class="s-h">クーポン</div>'+d.cps.map(function(c){return '<div class="s-coupon"><div><b>'+esc(c[0])+'</b><small>'+esc(c[1])+'</small></div><em>使う</em></div>';}).join('')+'<div class="s-cpn">新しいクーポンはプッシュ通知でお知らせ</div>'+tabs(1);
   }else if(screen==='reserve'){
@@ -228,9 +264,9 @@ function revise(text){
 
 /* ---------- estimate ---------- */
 function estimate(){
-  var tier='trial', opt=0, orig=[], std=0;
+  var tier=PLANS[S.tier]?S.tier:'trial', opt=0, orig=[], std=0;
   FEAT.forEach(function(f){ if(!S.feat[f.k]) return;
-    if(f.t==='orig'){orig.push(f);} else if(f.t==='opt'){opt+=f.p;} else {std++; if(f.tier==='biz') tier='biz'; else if(f.tier==='start'&&tier!=='biz') tier='start';}
+    if(f.t==='orig'){orig.push(f);} else if(f.t==='opt'){opt+=f.p;} else if(inPlan(f.tier||'trial',tier)){std++;}
   });
   var match=!!S.feat.match;
   return {tier:tier,monthly:TIERS[tier][1],tierName:TIERS[tier][0],opt:opt,orig:orig,match:match,std:std,rec:orig.length?'orig':S.plan==='self'?'self':'full'};
@@ -243,8 +279,8 @@ function vDesign(){
   var tones=Object.keys(TONES).map(function(k){return '<button type="button" class="chip" data-tone="'+k+'" aria-pressed="'+(S.d.tone===k)+'">'+TONES[k].n+'</button>';}).join('');
   var inds=Object.keys(IND).map(function(k){return '<option value="'+k+'"'+(S.d.ind===k?' selected':'')+'>'+IND[k].l+'</option>';}).join('');
   var goals=['常連のお客様の来店回数を増やしたい','予約を増やしたい','電話対応を減らしたい','新しいお客様を増やしたい','会員を増やして囲い込みたい'].map(function(g){return '<option'+(S.d.goal===g?' selected':'')+'>'+g+'</option>';}).join('');
-  var stabs=SCREENS.map(function(s){return '<button type="button" class="stab" role="tab" data-screen="'+s[0]+'" aria-selected="'+(!S.d.all&&S.d.screen===s[0])+'">'+s[1]+'</button>';}).join('')+'<button type="button" class="stab" data-screen="all" aria-selected="'+S.d.all+'">全画面を並べる</button>';
-  var phones=S.d.all?SCREENS.map(function(s){return phone(s[0],true);}).join(''):phone(S.d.screen,false);
+  var stabs=scr().map(function(s){return '<button type="button" class="stab" role="tab" data-screen="'+s[0]+'" aria-selected="'+(!S.d.all&&S.d.screen===s[0])+'">'+s[1]+'</button>';}).join('')+'<button type="button" class="stab" data-screen="all" aria-selected="'+S.d.all+'">全画面を並べる</button>';
+  var phones=S.d.all?scr().map(function(s){return phone(s[0],true);}).join(''):phone(S.d.screen,false);
   var vers=S.vers.slice().reverse().map(function(v){return '<div class="ver"><b>版'+v.n+'</b><span>'+esc(v.note)+'</span></div>';}).join('');
   return '<div class="vh"><div><h2>AIデザイン</h2><p>AIデザイナーに要望を書くと、画面の設定とデザイン画像を作ります。下で細かい調整もできます（すぐにプレビューへ反映）。</p></div><div class="acts" style="margin:0"><button type="button" class="btn btn--line" data-view="demo">デモアプリで触ってみる</button><button type="button" class="btn btn--cta" data-go="confirmDesign">このデザインで決定して仕様書へ</button></div></div>'
   +aiPanel()
@@ -253,12 +289,13 @@ function vDesign(){
     +'<div class="sec-t"><i>1</i>お店の情報</div>'
     +'<div class="row2"><div class="field"><label for="f-ind">業種</label><select id="f-ind">'+inds+'</select></div><div class="field"><label for="f-name">店名・サービス名</label><input type="text" id="f-name" maxlength="24" value="'+esc(S.d.name)+'" placeholder="例：'+esc(d.name)+'"></div></div>'
     +'<div class="row2"><div class="field"><label for="f-goal">目的</label><select id="f-goal">'+goals+'</select></div><div class="field"><label for="f-target">お客様の層</label><input type="text" id="f-target" value="'+esc(S.d.target)+'"></div></div>'
-    +'<div class="sec-t"><i>2</i>雰囲気と色</div>'
+    +'<div class="sec-t"><i>2</i>プラン</div><p class="hint">選んだプランの機能だけで画面を作ります。上のプランにすると、カタログやネットショップの画面が増えます。</p>'+planPick()
+    +'<div class="sec-t"><i>3</i>雰囲気と色</div>'
     +'<div class="field"><div class="chips">'+tones+'</div></div>'
     +'<div class="field"><div class="chips" style="align-items:center">'+col+'<span class="colorpick"><input type="color" id="f-custom" value="'+(S.d.custom||p[1])+'" aria-label="好きな色を選ぶ">好きな色</span></div><span style="font-weight:500">選択中：'+esc(p[2])+'</span></div>'
-    +'<div class="sec-t"><i>3</i>ロゴと写真（任意）</div>'
+    +'<div class="sec-t"><i>4</i>ロゴと写真（任意）</div>'
     +'<div class="up field"><label class="upbox">'+(IMG.logo?'<img src="'+IMG.logo+'" alt="ロゴ">':'<b>ロゴをのせる</b>')+'<span>PNG・JPG</span><input type="file" accept="image/*" id="f-logo"></label><label class="upbox">'+(IMG.photo?'<img src="'+IMG.photo+'" alt="写真">':'<b>メイン写真をのせる</b>')+'<span>お店や商品の写真</span><input type="file" accept="image/*" id="f-photo"></label></div>'
-    +'<div class="sec-t"><i>4</i>修正の履歴</div>'
+    +'<div class="sec-t"><i>5</i>修正の履歴</div>'
     +'<div class="vers" aria-label="修正の履歴">'+vers+'</div>'
   +'</div>'
   +'<div class="card">'
@@ -280,16 +317,16 @@ function vAppMenu(){
   var A=S.app, opts=function(sel){ return ['home'].concat(A.menu).map(function(k){return '<option value="'+k+'"'+(sel===k?' selected':'')+'>'+esc(pageName(A,k))+'</option>';}).join(''); };
   var foot=A.footer.map(function(k,i){return '<label class="fslot"><span>'+(i+1)+'</span><select data-foot="'+i+'" aria-label="フッター'+(i+1)+'番目">'+opts(k)+'</select></label>';}).join('');
   var rows=A.menu.map(function(k,i){ var p=PAGES[k]; return '<li class="mrow'+(i<6?' top':'')+'"><span class="mno">'+(i+1)+'</span><input type="text" value="'+esc(pageName(A,k))+'" data-name="'+k+'" aria-label="表示名" maxlength="10"><small>'+esc(p.l)+'・'+esc(GROUPS[p.g])+'</small><span class="mops"><button type="button" data-mv="'+i+'" data-dir="-1" aria-label="上へ"'+(i?'':' disabled')+'>↑</button><button type="button" data-mv="'+i+'" data-dir="1" aria-label="下へ"'+(i<A.menu.length-1?'':' disabled')+'>↓</button><button type="button" data-rm="'+k+'" aria-label="外す">✕</button></span></li>'; }).join('');
-  var add=Object.keys(GROUPS).map(function(g){ var items=PAGE_LIST.filter(function(p){return p[2]===g&&A.menu.indexOf(p[0])<0;}); if(!items.length) return ''; return '<div class="addg"><b>'+GROUPS[g]+'</b><div class="chips">'+items.map(function(p){return '<button type="button" class="chip" data-add="'+p[0]+'">＋ '+esc(p[1])+'</button>';}).join('')+'</div></div>'; }).join('');
+  var add=Object.keys(GROUPS).map(function(g){ var items=PAGE_LIST.filter(function(p){return p[2]===g&&A.menu.indexOf(p[0])<0;}); if(!items.length) return ''; return '<div class="addg"><b>'+GROUPS[g]+'</b><div class="chips">'+items.map(function(p){ var n=pageNeed(p[0]), lock=n!=='opt'&&n!=='orig'&&!inPlan(n,S.tier), tag=(n==='trial'||(!lock&&n!=='opt'&&n!=='orig'))?'':'<small>'+needLabel(n)+'</small>'; return '<button type="button" class="chip'+(lock?' lock':'')+'" data-add="'+p[0]+'"'+(lock?' disabled title="'+needLabel(n)+'で使えます"':'')+'>＋ '+esc(p[1])+tag+'</button>';}).join('')+'</div></div>'; }).join('');
   return '<div class="vh"><div><h2>アプリのメニュー</h2><p>アプリの基盤（APPREX管理画面）の「メニュー設定」と同じ構成で、下のタブ（フッター横メニュー）と縦メニューを決めます。縦メニューの上から6つがホームのボタンになります。</p></div><div class="acts" style="margin:0"><button type="button" class="btn btn--line" data-go="resetMenu">業種のおすすめに戻す</button><button type="button" class="btn btn--cta" data-view="demo">デモアプリで試す</button></div></div>'
   +'<div class="grid2"><div class="card"><div class="sec-t"><i>1</i>フッター横メニュー（下のタブ・4つ）</div><div class="fslots">'+foot+'</div>'
   +'<div class="sec-t" style="margin-top:16px"><i>2</i>縦メニュー（表示順・'+A.menu.length+'ページ）</div><p class="hint">名前は変えられます（10文字まで）。上から6つがホームのボタンです。</p><ol class="mrows">'+rows+'</ol>'
-  +'<div class="sec-t" style="margin-top:16px"><i>3</i>ページを追加</div>'+add+'</div>'
+  +'<div class="sec-t" style="margin-top:16px"><i>3</i>ページを追加</div><p class="hint">いまのプラン：<b>'+PLANS[S.tier].l+'</b>（月額 '+YEN(PLANS[S.tier].m)+'）。グレーのページは上のプランで使えます。「オプション」「独自開発」のページは、追加すると概算に入ります。<button type="button" class="linkbtn" data-view="design">プランを変える</button></p>'+add+'</div>'
   +'<div class="card"><div class="prev-top"><b style="color:var(--navy)">ホームのプレビュー</b></div><div class="stage">'+phone('home',false)+'</div><p class="hint">追加したページは、デモアプリの各画面と「設定シート」に反映されます。</p></div></div>';
 }
 function docSheet(){
   var A=S.app, p=palette(), t=TONES[S.d.tone], e=estimate(), pk=pickedImg('hero'), ic=pickedImg('icon');
-  var basic=tbl(['項目','設定する内容'],[['アプリ名',esc(storeName())],['業種',esc(D().l)],['プラン（目安）',e.orig.length?'オリジナル開発':esc(e.tierName)+'プラン']]);
+  var basic=tbl(['項目','設定する内容'],[['アプリ名',esc(storeName())],['業種',esc(D().l)],['プラン',e.orig.length?'オリジナル開発':esc(e.tierName)+'プラン（月額 '+YEN(e.monthly)+'）']]);
   var design=tbl(['管理画面','設定する内容'],[['デザイン → TOP デザイン','レイアウト：案'+S.d.variant+'（'+(S.d.variant==='B'?'リスト':S.d.variant==='C'?'大きな写真':'グリッド'+S.d.cols+'列')+'）／雰囲気：'+t.n],['デザイン → デザイン','メインカラー '+esc(p[1])+'／濃い色 '+esc(p[0])],['デザイン → ロゴ設定',IMG.logo?'AIスタジオでアップロードしたロゴ':'ロゴ画像（背景透過PNG）'],['TOP画像',(IMG.photo||pk)?'AIスタジオの写真'+(pk?'（AI生成・採用案）':''):'メイン写真（横長）'],['アプリアイコン',ic?'AI生成・採用案をもとに1024×1024で作成':'1024×1024の正方形']]);
   var foot=tbl(['順番','フッター横メニュー'],A.footer.map(function(k,i){return [String(i+1),esc(pageName(A,k))];}));
   var menu=tbl(['順番','縦メニュー（表示名）','管理画面のページ','表示'],A.menu.map(function(k,i){return [String(i+1),esc(pageName(A,k)),esc(PAGES[k].l),i<6?'ON（ホームのボタン）':'ON'];}));
@@ -409,11 +446,11 @@ function vDemo(){
 
 function vSpec(){
   var e=estimate();
-  var groups=[['std','標準機能（ノーコードで対応）'],['opt','オプション'],['orig','オリジナル開発が必要な機能']];
-  var feats=groups.map(function(g){return '<div class="sec-t" style="margin-top:12px">'+g[1]+'</div><div class="feat">'+FEAT.filter(function(f){return f.t===g[0];}).map(function(f){return '<label class="fitem"><input type="checkbox" data-feat="'+f.k+'"'+(S.feat[f.k]?' checked':'')+'><span>'+esc(f.n)+'<span class="tag t-'+f.t+'">'+(f.t==='std'?'標準':f.t==='opt'?'オプション':'独自開発')+'</span><small>'+esc(f.d)+'</small></span></label>';}).join('')+'</div>';}).join('');
+  var groups=[['std','標準機能（プランに含まれます）'],['opt','オプション'],['orig','オリジナル開発が必要な機能']];
+  var feats=groups.map(function(g){return '<div class="sec-t" style="margin-top:12px">'+g[1]+'</div><div class="feat">'+FEAT.filter(function(f){return f.t===g[0];}).map(function(f){var lock=f.t==='std'&&!inPlan(f.tier||'trial',S.tier); return '<label class="fitem'+(lock?' lock':'')+'"><input type="checkbox" data-feat="'+f.k+'"'+(S.feat[f.k]&&!lock?' checked':'')+(lock?' disabled':'')+'><span>'+esc(f.n)+'<span class="tag t-'+f.t+'">'+(f.t==='std'?'標準':f.t==='opt'?'オプション':'独自開発')+'</span><small>'+(lock?'「'+PLANS[f.tier].l+'」プランにすると使えます':esc(f.d))+'</small></span></label>';}).join('')+'</div>';}).join('');
   var mats=[[!!IMG.logo,'ロゴ画像'],[!!IMG.photo,'メイン写真'],[true,'メニュー・商品の情報（AIのたたき台あり）'],[true,'店舗情報（住所・営業時間）'],[false,'アプリの説明文（ストア掲載用）'],[false,'Apple・Googleの開発者アカウント（おまかせなら代行）']];
   var matsH='<ul class="mats">'+mats.map(function(m){return '<li class="'+(m[0]?'ok':'')+'"><b>'+(m[0]?'✓':'')+'</b>'+m[1]+'</li>';}).join('')+'</ul>';
-  var rows=SCREENS.map(function(s){return '<tr><td>'+s[1]+'</td><td>'+({home:'メインビジュアル、メニュー、クーポン案内',menu:'商品の写真・名前・価格',coupon:'配布中のクーポン一覧',reserve:'日付と時間を選んで予約',card:'会員番号・ポイント'}[s[0]])+'</td></tr>';}).join('');
+  var rows=scr().map(function(s){return '<tr><td>'+s[1]+'</td><td>'+({home:'メインビジュアル、メニュー、クーポン案内',menu:S.tier==='biz'?'店舗の切り替え、商品とカート':S.tier==='start'?'電子カタログ（冊子をめくって読める）':'商品の写真・名前・価格',coupon:'配布中のクーポン一覧',reserve:'日付と時間を選んで予約',card:'会員番号・ポイント'}[s[0]])+'</td></tr>';}).join('');
   var self=(e.orig.length?'—':'0円'), full='150,000円〜<small>制作代行費。AIスタジオで作った内容から（1からは300,000円〜）</small>';
   var est='<div class="est">'
     +'<div class="estc'+(e.rec==='self'?' recm':'')+'">'+(e.rec==='self'?'<span class="bd">おすすめ</span>':'')+'<h4>セルフプラン</h4><div class="big">初期 '+self+'</div><p>月額 '+YEN(e.monthly)+'（'+e.tierName+'）'+(e.opt?'＋オプション '+YEN(e.opt):'')+'</p><p>公開まで：最短2週間</p></div>'
@@ -425,7 +462,7 @@ function vSpec(){
   +'<div class="grid2"><div class="card"><div class="sec-t">概要</div><dl class="kv"><dt>アプリ名</dt><dd>'+esc(storeName())+'</dd><dt>業種</dt><dd>'+D().l+'</dd><dt>目的</dt><dd>'+esc(S.d.goal)+'</dd><dt>お客様</dt><dd>'+esc(S.d.target)+'</dd><dt>デザイン</dt><dd>'+TONES[S.d.tone].n+'／'+esc(palette()[2])+'／案'+S.d.variant+'（版'+S.vers.length+'）</dd></dl>'
   +'<div class="sec-t" style="margin-top:16px">画面一覧</div><div class="tbl fit"><table><thead><tr><th>画面</th><th>内容</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'
   +'<div class="card"><div class="sec-t">用意するもの</div>'+matsH+'<div class="sec-t" style="margin-top:16px">概算</div>'+est+note+'</div></div>'
-  +'<div class="card" style="margin-top:18px"><div class="sec-t">機能一覧</div>'+feats+'</div>';
+  +'<div class="card" style="margin-top:18px"><div class="sec-t">プラン</div><p class="hint">月額のプランを選びます。オプションと独自開発の機能は、チェックしたときだけ概算に入ります。</p>'+planPick()+'<div class="sec-t" style="margin-top:16px">機能一覧</div>'+feats+'</div>';
 }
 
 
@@ -457,7 +494,7 @@ function docPlan(){
     +'<h2 class="dh"><span>2</span>対象とするお客様</h2><p>'+(A&&A.target?esc(A.target):esc(S.d.target)+'。日常的にスマートフォンを使い、お得な情報や手軽な予約を求めている層を想定します。')+'</p>'
     +'<h2 class="dh"><span>3</span>アプリのコンセプト</h2><div class="concept"><b>「'+esc(d.catch)+'」</b><span>'+(A&&A.concept?esc(A.concept)+'<br>':'')+'雰囲気：'+TONES[S.d.tone].n+'　／　メインカラー：'+esc(palette()[2])+'</span></div>'
     +'<h2 class="dh"><span>4</span>主な機能と期待する効果</h2>'+tbl(['機能','期待する効果'],(A&&A.effects&&A.effects.length)?A.effects.map(function(e){return ['<b>'+esc(e[0])+'</b>',esc(e[1])];}):feats.map(function(f){return ['<b>'+esc(f.n)+'</b>',EFFECT[f.k]||''];}));
-  var shots='<div class="shots">'+SCREENS.map(function(sc){return '<figure>'+phone(sc[0],true)+'<figcaption>'+sc[1]+'</figcaption></figure>';}).join('')+'</div>';
+  var shots='<div class="shots">'+scr().map(function(sc){return '<figure>'+phone(sc[0],true)+'<figcaption>'+sc[1]+'</figcaption></figure>';}).join('')+'</div>';
   var comp=pickedImg('screens')||null, icon=pickedImg('icon'), hero=pickedImg('hero');
   if(comp){ shots='<figure class="comp"><img src="'+esc(comp.url)+'" alt="AIが生成した画面デザイン"><figcaption>AIが生成したデザインカンプ（採用案）</figcaption></figure>'+shots; }
   if(icon||hero){ shots+='<div class="comp2">'+(icon?'<figure><img src="'+esc(icon.url)+'" alt=""><figcaption>アプリアイコン（AI生成）</figcaption></figure>':'')+(hero?'<figure><img src="'+esc(hero.url)+'" alt=""><figcaption>メインビジュアル（AI生成）</figcaption></figure>':'')+'</div>'; }
@@ -482,7 +519,7 @@ function docSpec(){
   return paper(p1,1,2)+paper(p2,2,2);
 }
 function docFlow(){
-  var nodes=SCREENS.slice(1).map(function(sc,i){return '<div class="tn"><span class="tid">S-0'+(i+2)+'</span>'+phone(sc[0],true)+'<b>'+sc[1]+'</b><small>'+(['ホームのボタンから','下部タブから','下部タブ・ホームのボタンから','下部タブから'][i])+'</small></div>';}).join('');
+  var nodes=scr().slice(1).map(function(sc,i){return '<div class="tn"><span class="tid">S-0'+(i+2)+'</span>'+phone(sc[0],true)+'<b>'+sc[1]+'</b><small>'+(['ホームのボタンから','下部タブから','下部タブ・ホームのボタンから','下部タブから'][i])+'</small></div>';}).join('');
   var inner='<h2 class="dh" style="margin-top:0"><span>図</span>画面構成図</h2><p>アプリを開いてから、どの画面にどう移動するかを示した図です。</p>'
     +'<div class="tree"><div class="tn root"><span class="tid">S-01</span>'+phone('home',true)+'<b>ホーム</b><small>アプリを開くと最初に表示</small></div><div class="tlink" aria-hidden="true"></div><div class="trow">'+nodes+'</div></div>'
     +'<div class="legend"><b>下部タブ</b>ホーム／クーポン／予約／会員証 は、どの画面からでも1タップで移動できます。<br><b>プッシュ通知</b>通知をタップすると、該当するお知らせ・クーポンの画面が開きます。</div>';
@@ -605,7 +642,7 @@ function copyText(text,btn){
 function bind(){
   var m=$('stMain');
   var on=function(id,ev,fn){var el=$(id); if(el) el.addEventListener(ev,fn);};
-  on('f-ind','change',function(e){ S.d.ind=e.target.value; S.app=DATA.defaultApp(S.d.ind); if(S.d.ov){delete S.d.ov.catch;} var f={}; IND[S.d.ind].feat.forEach(function(k){f[k]=true;}); S.feat=f; S.vers.push({n:S.vers.length+1,note:IND[S.d.ind].l+'向けに作り直し'}); render(); });
+  on('f-ind','change',function(e){ S.d.ind=e.target.value; S.app=DATA.defaultApp(S.d.ind,S.tier); if(S.d.ov){delete S.d.ov.catch;} S.feat=indFeat(S.d.ind,S.tier); S.vers.push({n:S.vers.length+1,note:IND[S.d.ind].l+'向けに作り直し'}); render(); });
   on('f-name','input',function(e){ S.d.name=e.target.value; save(); m.querySelectorAll('.s-top b').forEach(function(b){b.textContent=storeName();}); });
   on('f-name','change',function(){ render(); });
   on('f-goal','change',function(e){ S.d.goal=e.target.value; save(); });
@@ -640,10 +677,10 @@ document.addEventListener('click',function(e){
   if(t.dataset.time){ S._time=t.dataset.time; render(); return; }
   var g=t.dataset.go;
   if(g==='askGuide'){ try{ document.dispatchEvent(new CustomEvent('apprex:chat-open')); }catch(e){} return; }
-  if(t.dataset.add){ S.app.menu.push(t.dataset.add); syncFeat(); S.vers.push({n:S.vers.length+1,note:'メニューに「'+PAGES[t.dataset.add].l+'」を追加'}); render(); return; }
-  if(t.dataset.rm){ if(S.app.menu.length<=4){ alert('縦メニューは4ページ以上にしてください。'); return; } S.app.menu=S.app.menu.filter(function(k){return k!==t.dataset.rm;}); S.app.footer=S.app.footer.map(function(k){return S.app.menu.indexOf(k)>-1||k==='home'?k:'home';}); render(); return; }
+  if(t.dataset.add){ S.app.menu.push(t.dataset.add); var af=PAGES[t.dataset.add].feat; if(af){ S.feat[af]=true; } S.vers.push({n:S.vers.length+1,note:'メニューに「'+PAGES[t.dataset.add].l+'」を追加'}); render(); return; }
+  if(t.dataset.rm){ if(S.app.menu.length<=4){ alert('縦メニューは4ページ以上にしてください。'); return; } S.app.menu=S.app.menu.filter(function(k){return k!==t.dataset.rm;}); var rf=PAGES[t.dataset.rm].feat, rn=pageNeed(t.dataset.rm); if((rn==='opt'||rn==='orig')&&!S.app.menu.some(function(k){return PAGES[k].feat===rf;})){ delete S.feat[rf]; } S.app.footer=S.app.footer.map(function(k){return S.app.menu.indexOf(k)>-1||k==='home'?k:'home';}); render(); return; }
   if(t.dataset.mv){ var i=+t.dataset.mv, j=i+(+t.dataset.dir), m=S.app.menu; if(j<0||j>=m.length) return; var x=m[i]; m[i]=m[j]; m[j]=x; render(); return; }
-  if(g==='resetMenu'){ if(!window.confirm('縦メニューとフッターを、業種のおすすめ構成に戻します。')) return; S.app=DATA.defaultApp(S.d.ind); render(); return; }
+  if(g==='resetMenu'){ if(!window.confirm('縦メニューとフッターを、業種のおすすめ構成に戻します。')) return; S.app=DATA.defaultApp(S.d.ind,S.tier); render(); return; }
   if(t.dataset.oex){ var ta=$('origIdea'); if(ta){ ta.value=t.dataset.oex; S.origIdea=ta.value; } return; }
   if(t.dataset.oins){ var ti=$('origInstr'); if(ti){ ti.value=t.dataset.oins; ti.focus(); } return; }
   if(t.dataset.reqmode){ S._reqMode=t.dataset.reqmode; render(); return; }
@@ -705,6 +742,7 @@ document.addEventListener('change',function(e){
   if(e.target.dataset&&e.target.dataset.foot){ S.app.footer[+e.target.dataset.foot]=e.target.value; save(); return; }
   if(e.target.dataset&&e.target.dataset.name){ var v=e.target.value.trim(), k=e.target.dataset.name; if(v&&v!==PAGES[k].l){ S.app.names[k]=v.slice(0,10); } else { delete S.app.names[k]; } render(); return; }
   if(e.target.name==='plan'){ S.plan=e.target.value; save(); }
+  if(e.target.dataset&&e.target.dataset.tier){ setTier(e.target.dataset.tier); render(); return; }
   if(e.target.dataset&&e.target.dataset.feat){ S.feat[e.target.dataset.feat]=e.target.checked; render(); }
 });
 $('reset').addEventListener('click',function(){
