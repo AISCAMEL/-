@@ -16,7 +16,7 @@ get_header();
 $apprex_secs   = apprex_manual_sections();
 $apprex_groups = array(
 	'studio' => array( 'AIスタジオの使い方', '無料会員登録から公開まで、画面ごとの操作をまとめました。' ),
-	'guide'  => array( 'アプリづくりのガイド', '準備するもの、セルフプランの進め方、公開後の運用のコツ。' ),
+	'guide'  => array( 'アプリづくりのガイド', '準備するもの、公開後の運用のコツ、困ったときの対処。' ),
 );
 ?>
 <div class="rn">
@@ -81,7 +81,7 @@ $apprex_groups = array(
             <?php endif; ?>
             <?php
             $apprex_pv = function_exists( 'apprex_preview_app_links' ) ? array_filter( apprex_preview_app_links() ) : array();
-            if ( $apprex_pv && in_array( $apprex_s['id'], array( 'self', 'prod' ), true ) ) :
+            if ( $apprex_pv && in_array( $apprex_s['id'], array( 'prod' ), true ) ) :
               ?>
               <p class="man-pv"><b>プレビューアプリ（実機確認）：</b>
                 <?php if ( ! empty( $apprex_pv['ios'] ) ) : ?><a href="<?php echo esc_url( $apprex_pv['ios'] ); ?>" target="_blank" rel="noopener">App Store</a><?php endif; ?>

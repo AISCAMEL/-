@@ -1,6 +1,6 @@
 /**
  * APPREX 見積もり → 発注 calculator（APPREX仕様）。
- * 初期費用は作り方で選ぶ（セルフ0円・1年契約／おまかせ：AIスタジオから・1から）。
+ * 初期費用は作り方で選ぶ（AIスタジオで作った内容から制作／1からヒアリングして制作）。
  * 月額は通常価格を取り消し線で表示、オプションは一回費用として加算。
  */
 (function () {
@@ -27,7 +27,7 @@
 
 		// ?setup=ai でAIスタジオからの依頼を選んだ状態で開く。
 		var qsSetup = (new URLSearchParams(location.search)).get('setup');
-		var state = { service: null, plan: null, options: [], quote: null, setup: (qsSetup === 'ai' || qsSetup === 'full') ? qsSetup : 'self' };
+		var state = { service: null, plan: null, options: [], quote: null, setup: qsSetup === 'full' ? 'full' : 'ai' };
 		function yen(n) { return '¥' + Number(n).toLocaleString('ja-JP'); }
 		function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
@@ -43,7 +43,7 @@
 			elServices.innerHTML = '';
 			Object.keys(services).forEach(function (key) {
 				var svc = services[key];
-				var b = chip(svc.label, state.service === key && !state.quote, (svc.setup ? '月額制・初期費用0円から（1年契約）' : '月額制・初期費用0円（1年契約）'));
+				var b = chip(svc.label, state.service === key && !state.quote, (svc.setup ? '月額制・初期費用15万円〜（AIスタジオから）' : '月額制・初期費用0円（1年契約）'));
 				b.addEventListener('click', function () {
 					state.service = key; state.plan = null; state.options = []; state.quote = null;
 					renderServices(); renderPlans(); renderSetup(); renderOptions(); renderTotal();
@@ -121,7 +121,7 @@
 			});
 			var initialRegular = p.initial || 0;
 			var st = svc.setup && svc.setup[state.setup] ? svc.setup[state.setup] : null;
-			var initial = (st && state.setup !== 'self') ? st.price : (toZero ? 0 : initialRegular);
+			var initial = st ? st.price : (toZero ? 0 : initialRegular);
 			return {
 				setupKey: st ? state.setup : '', setupLabel: st ? st.label : '',
 				svcLabel: svc.label, planLabel: p.label,
@@ -164,8 +164,7 @@
 			html += '<div class="estimate__big">' + yen(e.monthly) + '<small> / 月（税抜）</small></div>';
 			html += '<ul class="estimate__sub">';
 			if (e.monthlyRegular > e.monthly) { html += '<li>月額：<s>' + yen(e.monthlyRegular) + '</s> → <b>' + yen(e.monthly) + '</b> <em>キャンペーン</em></li>'; }
-			if (e.setupKey && e.setupKey !== 'self') { html += '<li>初期費用：<b>' + yen(e.initial) + '〜</b>（' + esc(e.setupLabel) + '）</li>'; }
-			else if (e.initialRegular > e.initial) { html += '<li>初期費用：<b>' + yen(e.initial) + '</b>' + (e.setupLabel ? '（' + esc(e.setupLabel) + '）' : '') + ' <em>1年契約で0円（通常 <s>' + yen(e.initialRegular) + '</s>）</em></li>'; }
+			if (e.setupKey) { html += '<li>初期費用：<b>' + yen(e.initial) + '〜</b>（' + esc(e.setupLabel) + '）</li>'; }
 			else { html += '<li>初期費用：' + yen(e.initial) + '</li>'; }
 			if (e.registration) { html += '<li>' + esc(e.registrationLabel) + '：' + yen(e.registration) + '（一律）</li>'; }
 			if (e.optTotal) { html += '<li>一回オプション：' + yen(e.optTotal) + '</li>'; }

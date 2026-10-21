@@ -4,9 +4,9 @@
  * 見積もり計算・料金ページ・チャット回答・GAS連携が全てここを参照。
  *
  * 方針：
- * - アプリ開発の初期費用は作り方で3つ（AIスタジオと同じ）：
- *   セルフ 0円（1年契約・通常の初期設定費が0円）／おまかせ（AIスタジオで作った内容から）150,000円〜／おまかせ（1からヒアリング）300,000円〜。
- * - AIスタジオ（デザイン・試作・仕様定義書）は無料。
+ * - アプリはAIスタジオ（無料）でデザイン・仕様書を作り、その内容から制作する。初期費用 150,000円〜。
+ *   AIスタジオを使わず1からヒアリングして作る場合は 300,000円〜。（自分で設定する0円のプランはなし）
+ * - 仕様書ができたら、ホームページ制作やオプションもあわせて提案する（AIスタジオの「ご提案」）。
  * - チャット・GPS等は一回限りのオプション。
  * - マッチング/カスタム/オンプレミスは個別見積（要相談）として別掲。
  *
@@ -41,8 +41,8 @@ function apprex_pricing_config() {
 	$config = array(
 		'currency' => 'JPY',
 		'campaign' => array(
-			'label'           => '初期費用0円から（セルフ・1年契約）',
-			'initial_to_zero' => true, // セルフは初期設定費を0円に（1年契約）。
+			'label'           => 'AIスタジオは無料。作った内容から制作で初期費用15万円〜',
+			'initial_to_zero' => true, // ホームページ制作の初期費用0円。
 		),
 		'services' => array(
 			'app' => array(
@@ -78,11 +78,10 @@ function apprex_pricing_config() {
 						'note'            => '21店舗以上は1店舗ごと+1万円。',
 					),
 				),
-				// 初期費用（作り方で選ぶ。AIスタジオのセルフ／おまかせと同じ）。
+				// 初期費用（作り方で選ぶ。AIスタジオから作るのが基本）。
 				'setup'      => array(
-					'self' => array( 'label' => 'セルフ：自分で設定', 'price' => 0, 'desc' => '管理画面への登録はご自身で。APPREXが仕上がりをチェックします。1年契約で0円。' ),
-					'ai'   => array( 'label' => 'おまかせ：AIスタジオで作った内容から', 'price' => 150000, 'desc' => 'AIスタジオのデザイン・仕様書をもとに、APPREXが制作・登録まで行います。' ),
-					'full' => array( 'label' => 'おまかせ：1からヒアリング', 'price' => 300000, 'desc' => 'AIスタジオを使わず、打ち合わせで1から決めて制作します。' ),
+					'ai'   => array( 'label' => 'AIスタジオで作った内容から制作', 'price' => 150000, 'desc' => 'AIスタジオ（無料）で作ったデザイン・仕様書をもとに、APPREXが制作・ストア申請まで行います。初期設定・サーバー設定を含みます。' ),
+					'full' => array( 'label' => '1からヒアリングして制作', 'price' => 300000, 'desc' => 'AIスタジオを使わず、打ち合わせで1から決めて制作します。初期設定・サーバー設定を含みます。' ),
 				),
 				// 一回限りのオプション（金額あり）。
 				'options'    => array(
@@ -225,16 +224,16 @@ function apprex_calculate_estimate( $service, $plan, $options = array(), $setup 
 	$options = array_values( array_unique( (array) $options ) );
 	// 以前の形式（制作代行をオプションで送る）も受け付ける。
 	if ( '' === $setup ) {
-		$setup = in_array( 'seisaku_ai', $options, true ) ? 'ai' : ( in_array( 'seisaku', $options, true ) ? 'full' : 'self' );
+		$setup = in_array( 'seisaku', $options, true ) ? 'full' : 'ai';
 	}
 	$options = array_values( array_diff( $options, array( 'seisaku_ai', 'seisaku' ) ) );
 
-	// 初期費用：セルフは1年契約で初期設定費0円、おまかせは制作を含めた金額。
+	// 初期費用：作り方ごとの金額（初期設定・制作を含む）。
 	$setups = isset( $svc['setup'] ) ? $svc['setup'] : array();
 	if ( $setups ) {
-		$setup       = isset( $setups[ $setup ] ) ? $setup : 'self';
+		$setup       = isset( $setups[ $setup ] ) ? $setup : 'ai';
 		$setup_label = $setups[ $setup ]['label'];
-		$initial     = 'self' === $setup ? apprex_campaign_initial( $initial_regular ) : (int) $setups[ $setup ]['price'];
+		$initial     = (int) $setups[ $setup ]['price'];
 	} else {
 		$setup       = '';
 		$setup_label = '';
@@ -297,14 +296,10 @@ function apprex_pricing_summary_text() {
 	$app = $c['services']['app'];
 	$lines[] = '【アプリ開発（月額制・1年契約）】';
 	$lines[] = '- AIスタジオ（無料会員登録）でのデザイン・試作・仕様定義書づくりと相談は無料。';
-	$lines[] = '- 初期費用は作り方で3つ：セルフ（自分で管理画面に登録）0円／おまかせ（AIスタジオで作った内容から制作）150,000円〜／おまかせ（1からヒアリングして制作）300,000円〜。「制作代行費」ではなく「初期費用」と呼ぶ。';
+	$lines[] = '- 初期費用：AIスタジオで作った内容から制作 150,000円〜（基本）／AIスタジオを使わず1からヒアリングして制作 300,000円〜。初期設定・制作・ストア申請を含む。自分で設定する0円のプランはない。「制作代行費」ではなく「初期費用」と呼ぶ。';
+	$lines[] = '- 仕様書ができたら、ホームページ制作・オプション・集客施策（LINE構築・MEOなど）もあわせて提案する。';
 	foreach ( $app['plans'] as $p ) {
-		$lines[] = sprintf(
-			'- %s：月額%s円（セルフの初期費用は1年契約で0円。通常%s円）',
-			$p['label'],
-			number_format( $p['monthly'] ),
-			number_format( $p['initial'] )
-		);
+		$lines[] = sprintf( '- %s：月額%s円', $p['label'], number_format( $p['monthly'] ) );
 	}
 	$opts = array();
 	foreach ( $app['options'] as $o ) {
@@ -330,14 +325,11 @@ function apprex_pricing_summary_text() {
  * 見積りの初期費用の説明（メール・画面で共通）。
  *
  * @param array $e Estimate.
- * @return string 例：「150,000円（おまかせ：AIスタジオで作った内容から）」
+ * @return string 例：「150,000円（AIスタジオで作った内容から制作）」
  */
 function apprex_estimate_initial_text( $e ) {
 	$yen = number_format( (int) $e['initial'] ) . '円';
 	if ( ! empty( $e['setup_label'] ) ) {
-		if ( 'self' === $e['setup'] && (int) $e['initial_regular'] > (int) $e['initial'] ) {
-			return $yen . '（' . $e['setup_label'] . '・1年契約で0円／通常 ' . number_format( (int) $e['initial_regular'] ) . '円）';
-		}
 		return $yen . '（' . $e['setup_label'] . '）';
 	}
 	if ( (int) $e['initial_regular'] > (int) $e['initial'] ) {
