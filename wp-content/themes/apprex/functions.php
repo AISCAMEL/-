@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'APPREX_VERSION', '1.59.0' );
+define( 'APPREX_VERSION', '1.60.0' );
 define( 'APPREX_DIR', get_template_directory() );
 define( 'APPREX_URI', get_template_directory_uri() );
 
@@ -66,6 +66,7 @@ require_once APPREX_DIR . '/inc/email.php';
 require_once APPREX_DIR . '/inc/forms.php';
 require_once APPREX_DIR . '/inc/agency.php';
 require_once APPREX_DIR . '/inc/aimeo.php';
+require_once APPREX_DIR . '/inc/migrate.php';
 require_once APPREX_DIR . '/inc/crm-notes.php';
 require_once APPREX_DIR . '/inc/drive-sync.php';
 require_once APPREX_DIR . '/inc/smtp.php';

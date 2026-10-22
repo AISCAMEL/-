@@ -605,23 +605,114 @@ function apprex_enroll_drip( $post_id, $type, $email, $name, $meeting_at = 0 ) {
 	if ( ! get_option( 'apprex_drip_enabled', 1 ) ) {
 		return;
 	}
+	if ( $meeting_at ) {
+		update_post_meta( $post_id, 'apprex_meeting_at', $meeting_at );
+	}
+	update_post_meta( $post_id, 'apprex_email', $email );
+	update_post_meta( $post_id, 'apprex_name', $name );
+
+	// 1人1本：同じメールアドレスで進行中のシリーズと比べ、先に進んだ段階を優先する。
+	$track = apprex_drip_track( $type );
+	$rank  = apprex_drip_rank( $type );
+	foreach ( apprex_drip_active_for( $email, $post_id ) as $other ) {
+		$otype = get_post_meta( $other, 'apprex_drip_type', true );
+		if ( apprex_drip_track( $otype ) !== $track ) {
+			continue;
+		}
+		if ( apprex_drip_rank( $otype ) > $rank ) {
+			// もっと先に進んだシリーズが動いているので、今回は始めない。
+			update_post_meta( $post_id, 'apprex_drip_stopped', 'later:' . $otype );
+			return;
+		}
+		update_post_meta( $other, 'apprex_drip_active', 0 );
+		update_post_meta( $other, 'apprex_drip_stopped', 'next:' . $type );
+	}
+
 	// ミーティングは原則 Google カレンダーがリマインダーを送るため、WordPress 側は既定で送らない。
 	if ( 'meeting' === $type && ! get_option( 'apprex_wp_meeting_reminders', 0 ) ) {
-		if ( $meeting_at ) {
-			update_post_meta( $post_id, 'apprex_meeting_at', $meeting_at );
-		}
+		return;
+	}
+	// 配信停止した人には、案内のシリーズを送らない（ミーティングのリマインダーは除く）。
+	if ( 'meeting' !== $type && apprex_drip_unsubscribed( $email ) ) {
+		update_post_meta( $post_id, 'apprex_drip_stopped', 'unsubscribed' );
 		return;
 	}
 	update_post_meta( $post_id, 'apprex_drip_active', 1 );
 	update_post_meta( $post_id, 'apprex_drip_type', $type );
 	update_post_meta( $post_id, 'apprex_drip_start', time() );
 	update_post_meta( $post_id, 'apprex_drip_sent', array() );
-	// Cron reads these standardized keys across both CPTs.
-	update_post_meta( $post_id, 'apprex_email', $email );
-	update_post_meta( $post_id, 'apprex_name', $name );
-	if ( $meeting_at ) {
-		update_post_meta( $post_id, 'apprex_meeting_at', $meeting_at );
+}
+
+/**
+ * ステップメールの系統。お客様向け（customer）と代理店向け（agency）は別々に数える。
+ *
+ * @param string $type 種類。
+ * @return string
+ */
+function apprex_drip_track( $type ) {
+	return 'partner' === $type ? 'agency' : 'customer';
+}
+
+/**
+ * 段階の順番（大きいほど先に進んでいる）。
+ * お問い合わせ < 資料請求 < AIスタジオ登録 < 無料体験 < AIスタジオから相談 < 見積り・発注 < ミーティング予約。
+ *
+ * @param string $type 種類。
+ * @return int
+ */
+function apprex_drip_rank( $type ) {
+	$r = array( 'contact' => 1, 'document' => 2, 'signup' => 3, 'trial' => 4, 'studio' => 5, 'estimate' => 6, 'meeting' => 7, 'partner' => 1 );
+	return isset( $r[ $type ] ) ? $r[ $type ] : 1;
+}
+
+/**
+ * 同じメールアドレスで、ステップメールが進行中の受付ID。
+ *
+ * @param string $email   メールアドレス。
+ * @param int    $exclude 除くID。
+ * @return int[]
+ */
+function apprex_drip_active_for( $email, $exclude = 0 ) {
+	if ( ! is_email( $email ) ) {
+		return array();
 	}
+	return get_posts(
+		array(
+			'post_type'      => array( 'apprex_inquiry', 'apprex_order' ),
+			'post_status'    => array( 'publish', 'apprex_new' ),
+			'posts_per_page' => 20,
+			'fields'         => 'ids',
+			'post__not_in'   => $exclude ? array( (int) $exclude ) : array(),
+			'meta_query'     => array(
+				array( 'key' => 'apprex_drip_active', 'value' => '1' ),
+				array( 'key' => 'apprex_email', 'value' => $email ),
+			),
+		)
+	);
+}
+
+/** 配信停止したメールアドレスか。 */
+function apprex_drip_unsubscribed( $email ) {
+	$list = (array) get_option( 'apprex_drip_unsub_list', array() );
+	return in_array( wp_hash( strtolower( (string) $email ) ), $list, true );
+}
+
+/**
+ * もう契約・入金に進んだお客様か（案内のステップメールを止める）。
+ * 契約がある、または AIスタジオでお見積りを送った（段階3以上）会員。
+ *
+ * @param string $email メールアドレス。
+ * @return bool
+ */
+function apprex_drip_is_client( $email ) {
+	if ( post_type_exists( 'apprex_contract' ) ) {
+		$c = get_posts( array( 'post_type' => 'apprex_contract', 'post_status' => 'any', 'posts_per_page' => 1, 'fields' => 'ids', 'meta_key' => 'apprex_c_email', 'meta_value' => $email ) );
+		if ( $c ) {
+			return true;
+		}
+	}
+	$u = get_user_by( 'email', $email );
+	return $u && (int) get_user_meta( $u->ID, 'apprex_studio_stage', true ) >= 3;
 }
 
 /* -------------------------------------------------------------------------
@@ -764,16 +855,23 @@ function apprex_step_mails( $type = 'contact' ) {
 	$cases = home_url( '/cases/' );
 	$hp    = home_url( '/hp-creation/' );
 	$home  = home_url( '/' );
+	$meet  = home_url( '/meeting/' );
+	// AIスタジオを訪問者に公開しているときだけ、AIスタジオへ案内する（公開前は無料体験へ）。
+	$pub    = function_exists( 'apprex_rn_public' ) && apprex_rn_public();
+	$studio = function_exists( 'apprex_studio_url' ) ? apprex_studio_url() : $home;
+	$try    = $pub
+		? "AIスタジオ（無料）なら、業種と店名を入れるだけで、あなたのお店のアプリの画面と仕様書がその場でできあがります。\n{$studio}\n"
+		: "30日間の無料体験で、実際の管理画面を触っていただけます（クレジットカード登録不要）。\n{$ft}\n";
 
 	// 文面は PASONA の法則（問題→共感→解決→限定→行動）で構成。
 	$sequences = array(
 		// 資料請求後：資料活用 → 事例 → 料金 → 体験 → 相談.
 		'document' => array(
-			1440  => array( 'subject' => '【APPREX】その資料、“積ん読”になっていませんか？', 'body' => "{name} 様\n\n先日は資料をご請求いただき、ありがとうございました。\n\n実は、資料請求された方の多くが「あとでじっくり読もう」と思ったまま、気づけば1週間…というのがよくあるパターンです。お忙しい毎日では当然のことだと思います。\n\nでもAPPREXの本当の価値は、“読む”より“触る”と一瞬で伝わります。プログラミング不要で、画面をドラッグするだけでアプリの形ができていく——その手応えは資料だけでは伝わりきりません。\n\n気になる点が1つでもあれば、このメールにそのままご返信ください。担当が分かりやすくお答えします。\n" ),
+			1440  => array( 'subject' => '【APPREX】その資料、“積ん読”になっていませんか？', 'body' => "{name} 様\n\n先日は資料をご請求いただき、ありがとうございました。\n\n資料請求された方の多くが「あとでじっくり読もう」と思ったまま、気づけば1週間…というのがよくあるパターンです。お忙しい毎日では当然のことだと思います。\n\nAPPREXの良さは、“読む”より“見る”と早く伝わります。\n{$try}\n気になる点が1つでもあれば、このメールにそのままご返信ください。担当が分かりやすくお答えします。\n" ),
 			4320  => array( 'subject' => '【APPREX】「自社でも本当にできる？」を消す9つの実例', 'body' => "{name} 様\n\n「ノーコードと言っても、結局むずかしいのでは？」——資料を見て、そう感じた方もいらっしゃるかもしれません。\n\nそのお気持ち、よく分かります。だからこそ、実際に“自社で運用している”企業の事例をまとめました。不動産・士業・教育・店舗・コミュニティまで、9業種の生きた使い方が見られます。\n\nきっと、貴社に近いケースが見つかるはずです。\n{$cases}\n" ),
 			10080 => array( 'subject' => '【APPREX】アプリ開発に数百万円は、もう過去の話です', 'body' => "{name} 様\n\nアプリ開発と聞くと「300万円〜」「数ヶ月待ち」——そんなイメージが、導入をためらわせる最大の壁でした。\n\nAPPREXは、その常識を覆します。デザインと仕様書はAIスタジオで無料、初期費用15万円〜・月額19,800円〜。従来の開発コストの“約1/10”で、しかも公開後の運用まで含まれています。\n\n「自社の場合はいくら？」は、1分で分かります。下のページで条件を選ぶだけです。\n{$est}\n" ),
 			20160 => array( 'subject' => '【APPREX】30日間、まるごと無料で“自分の手”で', 'body' => "{name} 様\n\nここまで資料・事例・料金をご覧いただきました。最後に残るのは、たった1つ——「実際の使い心地」です。\n\n百の説明より、一度の操作。APPREXは30日間、すべての機能を無料でお試しいただけます。クレジットカード登録も不要です。\n\nまずは触れてみて、「これなら自社でできる」を体感してください。\n{$ft}\n" ),
-			43200 => array( 'subject' => '【APPREX】最後に、あなたの“あと一歩”を後押しさせてください', 'body' => "{name} 様\n\n資料請求から1ヶ月。ご検討の状況はいかがでしょうか。\n\n「やりたい気持ちはあるけれど、何から始めれば…」という段階でしたら、それを整理するお手伝いをさせてください。チャットでもLINEでも、お電話でも構いません。\n\nアプリのデザインと仕様書は、AIスタジオで無料で作れます。まず形にしてみてから、お気軽にご相談ください。このメールへのご返信でも結構です。\n" ),
+			43200 => array( 'subject' => '【APPREX】最後に、あなたの“あと一歩”を後押しさせてください', 'body' => "{name} 様\n\n資料請求から1ヶ月。ご検討の状況はいかがでしょうか。\n\n「やりたい気持ちはあるけれど、何から始めれば…」という段階でしたら、それを整理するお手伝いをさせてください。チャット・LINE・オンライン相談（無料）のどれでも構いません。このメールへのご返信でも結構です。\n{$meet}\n" ),
 		),
 		// 30日お試し：開始 → 使い方 → 公開 → 事例 → 終了前リマインド → 継続.
 		'trial'    => array(
@@ -804,15 +902,16 @@ function apprex_step_mails( $type = 'contact' ) {
 		),
 		// 汎用（お問い合わせ）：10分後にお礼の1通目 → 翌日以降に長期ナーチャ.
 		'contact'  => array(
-			10     => array( 'subject' => '【APPREX】お問い合わせありがとうございます（30秒で読めます）', 'body' => "{name} 様\n\nお問い合わせ、ありがとうございます。担当者より改めてご連絡いたしますが、その前に少しだけ。\n\n「アプリを作りたい。でも開発会社に頼むと数百万円、ノーコードは不安…」——もし今そんな板挟みでしたら、それはあなただけの悩みではありません。多くの経営者が“費用”と“運用の難しさ”で立ち止まっています。\n\nAPPREXは、その両方を壊すために生まれました。デザインと仕様書はAIスタジオで無料、月額19,800円〜、プログラミング不要。最短2週間でアプリを公開できます。\n\nまずは“何ができるか”を、実例でご覧ください。\n{$cases}\n\nお急ぎなら、このメールへのご返信でもすぐ対応します。\n{$ft}\n" ),
-			1440   => array( 'subject' => '【APPREX】「うちの業種でも作れる？」への答え', 'body' => "{name} 様\n\n昨日はありがとうございました。今日は、よくいただく不安に1つお答えします。\n\n「アプリは飲食や美容みたいな“店舗系”のもの」——もしそうお考えなら、それは大きな機会損失かもしれません。\n\n実際のAPPREXは、不動産・士業・教育・BtoB・コミュニティまで、業種を問わず動いています。会員管理・予約・プッシュ通知・電子カタログ…必要な機能が最初から揃っているからです。\n\n論より証拠。30日間の無料体験で、あなたの業種に当てはめて触ってみてください。\n{$ft}\n" ),
-			4320   => array( 'subject' => '【APPREX】数字で見る、9業種のリアルな成果', 'body' => "{name} 様\n\n「本当に効果が出るの？」——一番気になるところだと思います。\n\nそこで、きれいな宣伝文句ではなく“数字”でお見せします。会員登録200%増、再来店率アップ、問い合わせ増——9業種の導入事例を、成果とあわせてまとめました。\n\n貴社に近いケースが、きっと見つかります。\n{$cases}\n" ),
-			10080  => array( 'subject' => '【APPREX】アプリに数百万円は、もう要りません', 'body' => "{name} 様\n\n導入を止める最大の壁は、いつも“費用”でした。アプリ開発に300万円——多くの企業がここで諦めてきました。\n\nAPPREXは、その常識を覆します。初期費用15万円〜・月額19,800円〜、開発費の約1/10。さらに、アプリのデザインと仕様書はAIスタジオで無料で作れます。\n\n「自社ならいくら？」は1分で分かります。\n{$est}\n" ),
-			20160  => array( 'subject' => '【APPREX】アプリだけじゃない。HPも月額9,800円〜', 'body' => "{name} 様\n\n「まずはホームページから整えたい」——そんな段階の方にも、APPREXはお応えできます。\n\nホームページ制作も、初期費用0円・月額9,800円〜。SSL・SEO・問い合わせフォームまで標準で、公開後の更新サポートも込み。アプリと合わせて、集客の入口から出口まで一気通貫で整えられます。\n{$hp}\n" ),
-			43200  => array( 'subject' => '【APPREX】迷ったら、チャット1本で大丈夫です', 'body' => "{name} 様\n\nここまでお付き合いいただき、ありがとうございます。\n\n「興味はあるけど、何から聞けばいいか分からない」——それで止まってしまうのは、本当にもったいないことです。\n\nAPPREXは、チャットでもLINEでも、ひと言からご相談いただけます。「自社の場合どう？」だけでも構いません。あなたの“あと一歩”を、私たちが一緒に踏み出します。\n" ),
-			129600 => array( 'subject' => '【APPREX】3ヶ月ぶりに、改めてのご提案です', 'body' => "{name} 様\n\nその後、ご状況はいかがでしょうか。\n\n「あのときはタイミングが合わなかった」——それでも全く問題ありません。事業のフェーズが変われば、アプリの価値も変わります。\n\n条件面のご相談も、以前より柔軟に承れます。改めて、最適なプランを一緒に考えさせてください。\n{$est}\n" ),
-			259200 => array( 'subject' => '【APPREX】半年で進化したAPPREXを見てください', 'body' => "{name} 様\n\nご無沙汰しております。この半年で、APPREXはさらに進化しました。\n\n新機能の追加、事例の蓄積、サポート体制の強化——“今のAPPREX”は、あなたが最初に見たときより、ずっと頼れる存在になっています。\n\n最新の事例・機能を、ぜひのぞいてみてください。\n{$home}\n" ),
-			525600 => array( 'subject' => '【APPREX】1年間、ありがとうございました', 'body' => "{name} 様\n\nお問い合わせから、ちょうど1年が経ちました。\n\nその節は、APPREXに目を留めていただきありがとうございました。あなたのビジネスが、この1年でさらに前進していることを願っています。\n\nもし「そろそろアプリを」と思うことがあれば、いつでもお声がけください。1年後も、変わらずここでお待ちしています。\n" ),
+			1440  => array( 'subject' => '【APPREX】「うちの業種でも作れる？」への答え', 'body' => "{name} 様\n\nお問い合わせありがとうございました。担当者からのご連絡とは別に、よくいただく疑問に1つお答えします。\n\n「アプリは飲食や美容みたいな“店舗系”のもの」と思われがちですが、APPREXは不動産・士業・教育・BtoB・コミュニティまで、業種を問わずお使いいただけます。会員管理・予約・プッシュ通知・電子カタログなど、必要な機能が最初からそろっているからです。\n\n{$try}" ),
+			4320  => array( 'subject' => '【APPREX】数字で見る、業種別のリアルな成果', 'body' => "{name} 様\n\n「本当に効果が出るの？」——一番気になるところだと思います。\n\n会員登録の増加、再来店率アップ、問い合わせ増など、導入事例を成果とあわせてまとめました。貴社に近いケースが、きっと見つかります。\n{$cases}\n" ),
+			10080 => array( 'subject' => '【APPREX】アプリの費用、ここまで下げられます', 'body' => "{name} 様\n\nアプリ開発といえば数百万円——そう思って諦めてきた方は少なくありません。\n\nAPPREXなら、デザインと仕様書はAIスタジオで無料。その内容から制作して、初期費用15万円〜・月額19,800円〜で公開できます。ホームページも初期費用0円・月額9,800円〜です。補助金のご相談もお受けしています。\n\n「自社の場合はいくら？」は、下のページで条件を選ぶだけで分かります。\n{$est}\n" ),
+			43200 => array( 'subject' => '【APPREX】迷ったら、ひと言だけでも大丈夫です', 'body' => "{name} 様\n\nお問い合わせから1ヶ月。その後いかがでしょうか。\n\n「興味はあるけど、何から聞けばいいか分からない」——それで止まってしまうのは、もったいないことです。チャット・LINE・オンライン相談（無料）のどれでも、「自社の場合どう？」のひと言からご相談いただけます。\n{$meet}\n\nこのメールで、お問い合わせ後のご案内は最後です。ありがとうございました。\n" ),
+		),
+		// 代理店の申し込み後：面談 → 売りやすい理由 → 代理店コード.
+		'partner'  => array(
+			1440  => array( 'subject' => '【APPREX】代理店の面談のご予約はお済みですか？', 'body' => "{name} 様\n\n代理店へのお申し込みありがとうございます。\n\nオンライン面談（無料）で、事業内容とお客様層を伺い、合う代理店の種類（紹介・販売・OEM）と報酬の条件をご案内します。まだの方は、ご都合の良い日時をお選びください。\n{$meet}\n" ),
+			4320  => array( 'subject' => '【APPREX】APPREXが売りやすい3つの理由', 'body' => "{name} 様\n\n代理店として紹介しやすい理由を3つお伝えします。\n\n1. その場で「アプリの形」を見せられる：AIスタジオ（無料）で、お客様の業種と店名から画面と仕様書がすぐにできます。\n2. 料金がわかりやすい：AIスタジオで作った内容から制作して、初期費用15万円〜・月額19,800円〜。\n3. 報酬が積み上がる：初期費用だけでなく、月額利用料からも報酬をお支払いするストック型です。\n\n詳しくは代理店募集のページをご覧ください。\n" . home_url( '/partner/' ) . "\n" ),
+			10080 => array( 'subject' => '【APPREX】代理店コードで、ご紹介がきちんと記録されます', 'body' => "{name} 様\n\n代理店契約のあと、あなた専用のURL（代理店コード）をお渡しします。そのURLから届いたお問い合わせ・AIスタジオの会員登録は、あなたのご紹介として記録されます。\n\nあわせて、営業資料・料金表と、AIスタジオを使った商談の進め方もご用意しています。面談がまだの方は、こちらからご予約ください。\n{$meet}\n" ),
 		),
 	);
 
@@ -841,7 +940,7 @@ function apprex_meeting_reminders() {
 		'after_1d'  => array(
 			'offset'  => DAY_IN_SECONDS,
 			'subject' => '【APPREX】先日はありがとうございました',
-			'body'    => "{name} 様\n\n先日はお時間をいただきありがとうございました。お見積りや無料体験のご用意がございます。\n見積り：" . home_url( '/estimate/' ) . "\n無料体験：" . home_url( '/free-trial/' ) . "\n",
+			'body'    => "{name} 様\n\n先日はお時間をいただきありがとうございました。正式なお見積りは、担当者からお送りします。ご不明な点は、このメールにご返信ください。\n",
 		),
 	);
 	return apply_filters( 'apprex_meeting_reminders', $reminders );
@@ -915,6 +1014,13 @@ function apprex_process_dripmail() {
 
 		if ( 'meeting' === $type ) {
 			apprex_run_meeting_reminders( $id, $email, $name, $sent, $now );
+			continue;
+		}
+
+		// 契約・お見積りまで進んだお客様、配信停止した人には案内を送らない（代理店向けは除く）。
+		if ( 'partner' !== $type && ( apprex_drip_is_client( $email ) || apprex_drip_unsubscribed( $email ) ) ) {
+			update_post_meta( $id, 'apprex_drip_active', 0 );
+			update_post_meta( $id, 'apprex_drip_stopped', 'client_or_unsub' );
 			continue;
 		}
 
@@ -1027,7 +1133,14 @@ add_action( 'template_redirect', function () {
 	$email = get_post_meta( $id, 'apprex_email', true );
 	$token = sanitize_text_field( wp_unslash( $_GET['token'] ) );
 	if ( $email && hash_equals( wp_hash( $id . '|' . $email ), $token ) ) {
+		// このメールアドレス宛ての案内をすべて止め、今後も送らない。
 		update_post_meta( $id, 'apprex_drip_active', 0 );
+		foreach ( apprex_drip_active_for( $email ) as $other ) {
+			update_post_meta( $other, 'apprex_drip_active', 0 );
+		}
+		$list   = (array) get_option( 'apprex_drip_unsub_list', array() );
+		$list[] = wp_hash( strtolower( (string) $email ) );
+		update_option( 'apprex_drip_unsub_list', array_values( array_unique( $list ) ), false );
 		wp_die( 'メール配信を停止しました。ご利用ありがとうございました。', '配信停止', array( 'response' => 200 ) );
 	}
 	wp_die( 'リンクが無効です。', '配信停止', array( 'response' => 400 ) );

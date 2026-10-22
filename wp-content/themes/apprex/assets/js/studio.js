@@ -120,7 +120,7 @@ function setTier(t){
   S.vers.push({n:S.vers.length+1,note:'プランを「'+PLANS[t].l+'」に変更'+(added.length?'（'+added.join('・')+'を追加）':'')});
 }
 function planPick(){
-  return '<div class="plans tiers" role="radiogroup" aria-label="プラン">'+DATA.PLAN_ORDER.map(function(k){ var P=PLANS[k]; return '<label class="pl"><input type="radio" name="tier" data-tier="'+k+'"'+(S.tier===k?' checked':'')+'><b>'+P.l+'</b><span class="pm">月額 '+YEN(P.m)+'</span><span>初期 0円・'+P.days+'</span><small>'+P.fit+'</small></label>'; }).join('')+'</div>';
+  return '<div class="plans tiers" role="radiogroup" aria-label="プラン">'+DATA.PLAN_ORDER.map(function(k){ var P=PLANS[k]; return '<label class="pl"><input type="radio" name="tier" data-tier="'+k+'"'+(S.tier===k?' checked':'')+'><b>'+P.l+'</b><span class="pm">月額 '+YEN(P.m)+'</span><span>初期費用15万円〜・'+P.days+'</span><small>'+P.fit+'</small></label>'; }).join('')+'</div>';
 }
 
 /* ---------- AIデザイナー（サーバーのAIと連携） ---------- */

@@ -247,6 +247,10 @@ function apprex_mail_overrides() {
  * @return array|null { subject, body }
  */
 function apprex_mail_override( $key ) {
+	// 初期文面を調べるあいだは、上書きを使わない（保存時の比較用）。
+	if ( ! empty( $GLOBALS['apprex_mail_defaults_only'] ) ) {
+		return null;
+	}
 	$o = apprex_mail_overrides();
 	return ( isset( $o[ $key ] ) && is_array( $o[ $key ] ) ) ? $o[ $key ] : null;
 }
@@ -314,6 +318,9 @@ add_action( 'admin_post_apprex_save_mail_content', function () {
 
 	$in  = ( isset( $_POST['m'] ) && is_array( $_POST['m'] ) ) ? wp_unslash( $_POST['m'] ) : array();
 	$out = array();
+	$norm = function ( $t ) {
+		return trim( str_replace( "\r\n", "\n", (string) $t ) );
+	};
 	foreach ( $in as $key => $pair ) {
 		$key = (string) $key;
 		if ( ! apprex_mail_key_allowed( $key ) || ! is_array( $pair ) ) {
@@ -321,14 +328,44 @@ add_action( 'admin_post_apprex_save_mail_content', function () {
 		}
 		$subject = isset( $pair['subject'] ) ? sanitize_text_field( $pair['subject'] ) : '';
 		$body    = isset( $pair['body'] ) ? sanitize_textarea_field( $pair['body'] ) : '';
-		if ( '' !== $subject || '' !== $body ) {
-			$out[ $key ] = array( 'subject' => $subject, 'body' => $body );
+		if ( '' === $subject && '' === $body ) {
+			continue;
 		}
+		// 初期文面のままの項目は保存しない（テーマの文面を直したときに、ちゃんと反映されるように）。
+		$def = apprex_mail_default( $key );
+		if ( $def && $norm( $def['subject'] ) === $norm( $subject ) && $norm( $def['body'] ) === $norm( $body ) ) {
+			continue;
+		}
+		$out[ $key ] = array( 'subject' => $subject, 'body' => $body );
 	}
 	update_option( 'apprex_mail_overrides', $out );
 	wp_safe_redirect( add_query_arg( 'apprex_saved', '1', admin_url( 'options-general.php?page=apprex-mail-content' ) ) );
 	exit;
 } );
+
+/**
+ * テーマの初期文面（上書きなし）。
+ *
+ * @param string $key autoreply.contact / step.contact.1440 / reminder.after_1d など。
+ * @return array|null { subject, body }
+ */
+function apprex_mail_default( $key ) {
+	$GLOBALS['apprex_mail_defaults_only'] = true;
+	$out = null;
+	$p   = explode( '.', $key );
+	if ( 'autoreply' === $p[0] && isset( $p[1] ) && function_exists( 'apprex_autoreply_message' ) ) {
+		list( $s, $b ) = apprex_autoreply_message( $p[1], array( 'name' => '{name}' ) );
+		$out = array( 'subject' => $s, 'body' => $b );
+	} elseif ( 'step' === $p[0] && isset( $p[2] ) && function_exists( 'apprex_step_mails' ) ) {
+		$steps = apprex_step_mails( $p[1] );
+		$out   = isset( $steps[ (int) $p[2] ] ) ? $steps[ (int) $p[2] ] : null;
+	} elseif ( 'reminder' === $p[0] && isset( $p[1] ) && function_exists( 'apprex_meeting_reminders' ) ) {
+		$r   = apprex_meeting_reminders();
+		$out = isset( $r[ $p[1] ] ) ? $r[ $p[1] ] : null;
+	}
+	unset( $GLOBALS['apprex_mail_defaults_only'] );
+	return $out;
+}
 
 /** 全文面を初期状態に戻す。 */
 add_action( 'admin_post_apprex_reset_mail_content', function () {
@@ -401,6 +438,9 @@ function apprex_mail_content_page() {
 				'document' => '資料請求',
 				'trial'    => '無料体験',
 				'estimate' => '見積・発注',
+				'signup'   => 'AIスタジオ会員登録',
+				'studio'   => 'AIスタジオから開発相談',
+				'partner'  => '代理店の申し込み',
 			);
 			foreach ( $drip as $k => $lbl ) {
 				echo '<h3 style="border-left:4px solid #2563eb;padding-left:8px;">' . esc_html( $lbl ) . '</h3>';
