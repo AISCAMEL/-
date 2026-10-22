@@ -1,0 +1,251 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="2980" viewBox="0 0 960 2980" font-family="'Noto Sans CJK JP','IPAGothic',sans-serif">
+  <defs>
+    <linearGradient id="hero" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0e1b33"/><stop offset="0.7" stop-color="#16294a"/><stop offset="1" stop-color="#1f3a66"/>
+    </linearGradient>
+    <linearGradient id="dark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#16294a"/><stop offset="1" stop-color="#0e1b33"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e0bd6a"/><stop offset="1" stop-color="#c9a14a"/>
+    </linearGradient>
+    <linearGradient id="imgph" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#23344f"/><stop offset="1" stop-color="#1c2c44"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="960" height="2980" fill="#f6f8fc"/>
+
+  <!-- ===== Header ===== -->
+  <rect width="960" height="60" fill="#0e1b33"/>
+  <rect x="32" y="16" width="28" height="28" rx="7" fill="url(#gold)"/>
+  <text x="40" y="35" fill="#0e1b33" font-size="16" font-weight="900">A</text>
+  <text x="70" y="32" fill="#fff" font-size="16" font-weight="800">AUC-AGENT</text>
+  <text x="70" y="46" fill="#e0bd6a" font-size="9" letter-spacing="2">CAR AUCTION AGENT</text>
+  <text x="540" y="36" fill="#d8deea" font-size="12">購入代行</text>
+  <text x="600" y="36" fill="#d8deea" font-size="12">出品代行</text>
+  <text x="662" y="36" fill="#d8deea" font-size="12">陸送シミュ</text>
+  <text x="730" y="36" fill="#ec6e6a" font-size="12" font-weight="700">コーティング</text>
+  <rect x="800" y="16" width="128" height="28" rx="14" fill="url(#gold)"/>
+  <text x="864" y="35" fill="#0e1b33" font-size="12" font-weight="700" text-anchor="middle">無料会員登録</text>
+
+  <!-- ===== Hero ===== -->
+  <rect x="0" y="60" width="960" height="410" fill="url(#hero)"/>
+  <text x="480" y="150" fill="#e0bd6a" font-size="12" font-weight="800" letter-spacing="3" text-anchor="middle">BODY COATING</text>
+  <text x="480" y="210" fill="#fff" font-size="46" font-weight="900" text-anchor="middle">ボディ<tspan fill="#ec6e6a">コーティング</tspan></text>
+  <text x="480" y="262" fill="#d8deea" font-size="15" text-anchor="middle">愛車の美しさを長く保つ、高品質なボディコーティング。</text>
+  <text x="480" y="286" fill="#d8deea" font-size="15" text-anchor="middle">紫外線や雨から塗装面を守り、輝きを維持します。</text>
+  <rect x="338" y="322" width="150" height="42" rx="21" fill="url(#gold)"/>
+  <text x="413" y="348" fill="#0e1b33" font-size="13" font-weight="700" text-anchor="middle">▶ 料金を見る</text>
+  <rect x="500" y="322" width="124" height="42" rx="21" fill="none" stroke="#7d89a8"/>
+  <text x="562" y="348" fill="#cfd6e6" font-size="13" font-weight="700" text-anchor="middle">相談・お見積り</text>
+
+  <!-- ===== Dark sections background (hero下〜料金表まで) ===== -->
+  <rect x="0" y="470" width="960" height="2120" fill="url(#dark)"/>
+
+  <!-- 特徴.1 -->
+  <text x="480" y="528" fill="#e0bd6a" font-size="11" font-weight="800" letter-spacing="3" text-anchor="middle">FEATURES 01</text>
+  <text x="480" y="560" fill="#fff" font-size="26" font-weight="900" text-anchor="middle">CARMELコートの特徴.1</text>
+  <!-- 3 strength cards -->
+  <g>
+    <rect x="40" y="596" width="280" height="140" rx="12" fill="#ffffff0a" stroke="#ffffff1a"/>
+    <text x="64" y="636" fill="#ec6e6a" font-size="26">🏆</text>
+    <text x="64" y="672" fill="#fff" font-size="15" font-weight="800">高純度ガラスコーティング剤</text>
+    <text x="64" y="698" fill="#c8d2e2" font-size="11.5">最高級の光沢を実現する高純度</text>
+    <text x="64" y="716" fill="#c8d2e2" font-size="11.5">コーティング剤を使用。</text>
+
+    <rect x="340" y="596" width="280" height="140" rx="12" fill="#ffffff0a" stroke="#ffffff1a"/>
+    <text x="364" y="636" fill="#ec6e6a" font-size="26">🛡️</text>
+    <text x="364" y="672" fill="#fff" font-size="15" font-weight="800">優れた耐久性</text>
+    <text x="364" y="698" fill="#c8d2e2" font-size="11.5">硬度の高いシリカ被膜が長期間</text>
+    <text x="364" y="716" fill="#c8d2e2" font-size="11.5">塗装面を美しく保ちます。</text>
+
+    <rect x="640" y="596" width="280" height="140" rx="12" fill="#ffffff0a" stroke="#ffffff1a"/>
+    <text x="664" y="636" fill="#ec6e6a" font-size="26">✨</text>
+    <text x="664" y="672" fill="#fff" font-size="15" font-weight="800">抜群の光沢感</text>
+    <text x="664" y="698" fill="#c8d2e2" font-size="11.5">塗装面に圧倒的な光沢を与え、</text>
+    <text x="664" y="716" fill="#c8d2e2" font-size="11.5">劣化せず輝き続けます。</text>
+  </g>
+  <!-- 4 numbered features -->
+  <g>
+    <rect x="60" y="768" width="46" height="46" rx="10" fill="#2a3a59"/>
+    <text x="83" y="800" fill="#ec6e6a" font-size="20" font-weight="900" text-anchor="middle">1</text>
+    <text x="122" y="790" fill="#ec6e6a" font-size="16" font-weight="800">高含有量シリカ</text>
+    <text x="122" y="812" fill="#e7ebf3" font-size="12.5">95%以上のシリカ含有量で、高い硬度と光沢感を実現。</text>
+
+    <rect x="500" y="768" width="46" height="46" rx="10" fill="#2a3a59"/>
+    <text x="523" y="800" fill="#ec6e6a" font-size="20" font-weight="900" text-anchor="middle">2</text>
+    <text x="562" y="790" fill="#ec6e6a" font-size="16" font-weight="800">完全硬化</text>
+    <text x="562" y="812" fill="#e7ebf3" font-size="12.5">完全に硬化した膜が長期的な輝きを維持します。</text>
+
+    <rect x="60" y="836" width="46" height="46" rx="10" fill="#2a3a59"/>
+    <text x="83" y="868" fill="#ec6e6a" font-size="20" font-weight="900" text-anchor="middle">3</text>
+    <text x="122" y="858" fill="#ec6e6a" font-size="16" font-weight="800">優れた防汚性</text>
+    <text x="122" y="880" fill="#e7ebf3" font-size="12.5">汚れが付きにくく、洗車も簡単。美しさを長く保てます。</text>
+
+    <rect x="500" y="836" width="46" height="46" rx="10" fill="#2a3a59"/>
+    <text x="523" y="868" fill="#ec6e6a" font-size="20" font-weight="900" text-anchor="middle">4</text>
+    <text x="562" y="858" fill="#ec6e6a" font-size="16" font-weight="800">環境に優しい</text>
+    <text x="562" y="880" fill="#e7ebf3" font-size="12.5">有害な化学物質を含まない安全な製品です。</text>
+  </g>
+
+  <!-- divider -->
+  <rect x="0" y="928" width="960" height="1" fill="#ffffff14"/>
+
+  <!-- 特徴.2 -->
+  <text x="480" y="982" fill="#e0bd6a" font-size="11" font-weight="800" letter-spacing="3" text-anchor="middle">FEATURES 02</text>
+  <text x="480" y="1014" fill="#fff" font-size="26" font-weight="900" text-anchor="middle">CARMELコートの特徴.2</text>
+  <rect x="100" y="1050" width="360" height="120" rx="12" fill="#ffffff0a" stroke="#ffffff1a"/>
+  <text x="124" y="1090" fill="#ec6e6a" font-size="24">✔️</text>
+  <text x="124" y="1124" fill="#fff" font-size="15" font-weight="800">汚れを防ぐ撥水力</text>
+  <text x="124" y="1148" fill="#c8d2e2" font-size="12">優れた撥水性で汚れが固着しにくく、洗車の手間を削減。</text>
+  <rect x="500" y="1050" width="360" height="120" rx="12" fill="#ffffff0a" stroke="#ffffff1a"/>
+  <text x="524" y="1090" fill="#ec6e6a" font-size="24">🔧</text>
+  <text x="524" y="1124" fill="#fff" font-size="15" font-weight="800">確かな技術力</text>
+  <text x="524" y="1148" fill="#c8d2e2" font-size="12">経験豊富なプロの技術者が担当し、最高の仕上がりを実現。</text>
+
+  <!-- divider -->
+  <rect x="0" y="1210" width="960" height="1" fill="#ffffff14"/>
+
+  <!-- 施工工程 -->
+  <text x="480" y="1264" fill="#e0bd6a" font-size="11" font-weight="800" letter-spacing="3" text-anchor="middle">PROCESS</text>
+  <text x="480" y="1296" fill="#fff" font-size="26" font-weight="900" text-anchor="middle">施工工程</text>
+  <g>
+    <rect x="40" y="1332" width="280" height="120" rx="12" fill="#ffffff0a" stroke="#ffffff1a"/>
+    <rect x="64" y="1352" width="40" height="40" rx="9" fill="#2a3a59"/><text x="84" y="1380" fill="#ec6e6a" font-size="18" font-weight="900" text-anchor="middle">1</text>
+    <text x="64" y="1414" fill="#ec6e6a" font-size="15" font-weight="800">洗車</text>
+    <text x="64" y="1436" fill="#d6deec" font-size="11.5">鉄粉や油分、汚れを除去。</text>
+
+    <rect x="340" y="1332" width="280" height="120" rx="12" fill="#ffffff0a" stroke="#ffffff1a"/>
+    <rect x="364" y="1352" width="40" height="40" rx="9" fill="#2a3a59"/><text x="384" y="1380" fill="#ec6e6a" font-size="18" font-weight="900" text-anchor="middle">2</text>
+    <text x="364" y="1414" fill="#ec6e6a" font-size="15" font-weight="800">研磨</text>
+    <text x="364" y="1436" fill="#d6deec" font-size="11.5">下地を整え鏡面状態に仕上げ。</text>
+
+    <rect x="640" y="1332" width="280" height="120" rx="12" fill="#ffffff0a" stroke="#ffffff1a"/>
+    <rect x="664" y="1352" width="40" height="40" rx="9" fill="#2a3a59"/><text x="684" y="1380" fill="#ec6e6a" font-size="18" font-weight="900" text-anchor="middle">3</text>
+    <text x="664" y="1414" fill="#ec6e6a" font-size="15" font-weight="800">塗り込み</text>
+    <text x="664" y="1436" fill="#d6deec" font-size="11.5">特殊技術でコーティング剤を塗布。</text>
+
+    <rect x="190" y="1468" width="280" height="120" rx="12" fill="#ffffff0a" stroke="#ffffff1a"/>
+    <rect x="214" y="1488" width="40" height="40" rx="9" fill="#2a3a59"/><text x="234" y="1516" fill="#ec6e6a" font-size="18" font-weight="900" text-anchor="middle">4</text>
+    <text x="214" y="1550" fill="#ec6e6a" font-size="15" font-weight="800">仕上げ</text>
+    <text x="214" y="1572" fill="#d6deec" font-size="11.5">独自の仕上げ剤で表面を整える。</text>
+
+    <rect x="490" y="1468" width="280" height="120" rx="12" fill="#ffffff0a" stroke="#ffffff1a"/>
+    <rect x="514" y="1488" width="40" height="40" rx="9" fill="#2a3a59"/><text x="534" y="1516" fill="#ec6e6a" font-size="18" font-weight="900" text-anchor="middle">5</text>
+    <text x="514" y="1550" fill="#ec6e6a" font-size="15" font-weight="800">施工完了</text>
+    <text x="514" y="1572" fill="#d6deec" font-size="11.5">高い光沢と水切れを実現。</text>
+  </g>
+
+  <!-- divider -->
+  <rect x="0" y="1620" width="960" height="1" fill="#ffffff14"/>
+
+  <!-- 比較表 -->
+  <text x="480" y="1674" fill="#e0bd6a" font-size="11" font-weight="800" letter-spacing="3" text-anchor="middle">COMPARISON</text>
+  <text x="480" y="1706" fill="#fff" font-size="26" font-weight="900" text-anchor="middle">一般的なコーティングとの比較</text>
+  <g>
+    <rect x="80" y="1736" width="800" height="44" fill="#ec6e6a2e"/>
+    <text x="100" y="1764" fill="#fff" font-size="13" font-weight="800">コーティング種類</text>
+    <text x="360" y="1764" fill="#fff" font-size="13" font-weight="800">持続期間目安</text>
+    <text x="560" y="1764" fill="#fff" font-size="13" font-weight="800">耐久性/耐候性</text>
+    <text x="740" y="1764" fill="#fff" font-size="13" font-weight="800">汚れ/付着物</text>
+
+    <rect x="80" y="1780" width="800" height="44" fill="#ec6e6a1f"/>
+    <text x="100" y="1808" fill="#ec6e6a" font-size="13" font-weight="700">CARMELコート</text>
+    <text x="360" y="1808" fill="#e7ebf3" font-size="13" font-weight="700">約3年</text>
+    <text x="560" y="1808" fill="#e7ebf3" font-size="13" font-weight="700">非常に高い</text>
+    <text x="740" y="1808" fill="#e7ebf3" font-size="13" font-weight="700">付着しづらい</text>
+
+    <rect x="80" y="1824" width="800" height="44" fill="#ffffff08"/>
+    <text x="100" y="1852" fill="#e7ebf3" font-size="13">ガラス系コーティング</text>
+    <text x="360" y="1852" fill="#e7ebf3" font-size="13">2年程度</text>
+    <text x="560" y="1852" fill="#e7ebf3" font-size="13">やや高い</text>
+    <text x="740" y="1852" fill="#e7ebf3" font-size="13">防汚性能に優れる</text>
+
+    <rect x="80" y="1868" width="800" height="44" fill="#ffffff08"/>
+    <text x="100" y="1896" fill="#e7ebf3" font-size="13">ポリマー系コーティング</text>
+    <text x="360" y="1896" fill="#e7ebf3" font-size="13">半年〜1年</text>
+    <text x="560" y="1896" fill="#e7ebf3" font-size="13">低い</text>
+    <text x="740" y="1896" fill="#e7ebf3" font-size="13">油汚れが付きやすい</text>
+    <rect x="80" y="1736" width="800" height="176" rx="12" fill="none" stroke="#ffffff1f"/>
+  </g>
+
+  <!-- divider -->
+  <rect x="0" y="1948" width="960" height="1" fill="#ffffff14"/>
+
+  <!-- 評価 -->
+  <text x="480" y="2002" fill="#e0bd6a" font-size="11" font-weight="800" letter-spacing="3" text-anchor="middle">EVALUATION</text>
+  <text x="480" y="2034" fill="#fff" font-size="26" font-weight="900" text-anchor="middle">CARMELコートの評価</text>
+  <g>
+    <text x="40" y="2088" fill="#ec6e6a" font-size="15" font-weight="800">① 持続性</text>
+    <text x="440" y="2088" fill="#e0bd6a" font-size="14" text-anchor="end">★★★★★</text>
+    <text x="40" y="2110" fill="#e7ebf3" font-size="12.5">約3年間の長期持続が可能です。</text>
+
+    <text x="40" y="2146" fill="#ec6e6a" font-size="15" font-weight="800">② 艶</text>
+    <text x="440" y="2146" fill="#e0bd6a" font-size="14" text-anchor="end">★★★★★</text>
+    <text x="40" y="2168" fill="#e7ebf3" font-size="12.5">高純度ガラスコーティング剤による抜群の光沢。</text>
+
+    <text x="40" y="2204" fill="#ec6e6a" font-size="15" font-weight="800">③ 耐候性</text>
+    <text x="440" y="2204" fill="#e0bd6a" font-size="14" text-anchor="end">★★★★★</text>
+    <text x="40" y="2226" fill="#e7ebf3" font-size="12.5">紫外線や酸性雨による劣化に強い耐久性。</text>
+  </g>
+  <rect x="500" y="2064" width="420" height="180" rx="12" fill="url(#imgph)" stroke="#ffffff3f" stroke-dasharray="5 5"/>
+  <text x="710" y="2158" fill="#9fb0cc" font-size="12" text-anchor="middle">施工後の光沢イメージ画像</text>
+  <text x="710" y="2178" fill="#9fb0cc" font-size="11" text-anchor="middle">（実写真に差し替え）</text>
+
+  <!-- divider -->
+  <rect x="0" y="2280" width="960" height="1" fill="#ffffff14"/>
+
+  <!-- 料金表 -->
+  <text x="480" y="2334" fill="#e0bd6a" font-size="11" font-weight="800" letter-spacing="3" text-anchor="middle">PRICING</text>
+  <text x="480" y="2366" fill="#fff" font-size="26" font-weight="900" text-anchor="middle">CARMELコート料金表</text>
+  <g>
+    <rect x="80" y="2392" width="800" height="44" fill="#ec6e6a2e"/>
+    <text x="100" y="2420" fill="#fff" font-size="13" font-weight="800">コーティング名</text>
+    <text x="470" y="2420" fill="#fff" font-size="13" font-weight="800">軽自動車・コンパクト</text>
+    <text x="700" y="2420" fill="#fff" font-size="13" font-weight="800">セダン/ミニバン/SUV</text>
+
+    <rect x="80" y="2436" width="800" height="44" fill="#ec6e6a1f"/>
+    <text x="100" y="2464" fill="#ec6e6a" font-size="13" font-weight="700">カーメルコート70（光沢持続3年）</text>
+    <text x="470" y="2464" fill="#e7ebf3" font-size="13" font-weight="700">49,800円（税込）</text>
+    <text x="700" y="2464" fill="#e7ebf3" font-size="13" font-weight="700">59,800円（税込）</text>
+
+    <rect x="80" y="2480" width="800" height="44" fill="#ffffff08"/>
+    <text x="100" y="2508" fill="#e7ebf3" font-size="13">カーメルコート85（光沢持続5年）</text>
+    <text x="470" y="2508" fill="#e7ebf3" font-size="13">69,800円（税込）</text>
+    <text x="700" y="2508" fill="#e7ebf3" font-size="13">79,800円（税込）</text>
+    <rect x="80" y="2392" width="800" height="132" rx="12" fill="none" stroke="#ffffff1f"/>
+  </g>
+  <text x="480" y="2552" fill="#9fb0cc" font-size="11" text-anchor="middle">※ 価格には下地処理の費用は含まれません。メンテナンスキット（4,800円税抜）は別売り。</text>
+
+  <!-- ===== メンテナンス（light）===== -->
+  <rect x="0" y="2390" width="0" height="0" fill="none"/>
+  <text x="480" y="2634" fill="#ec6e6a" font-size="11" font-weight="800" letter-spacing="3" text-anchor="middle">MAINTENANCE</text>
+  <text x="480" y="2666" fill="#1a2233" font-size="26" font-weight="900" text-anchor="middle">メンテナンス方法</text>
+  <g>
+    <rect x="40" y="2700" width="210" height="120" rx="12" fill="#eef2f9" stroke="#e2e8f2"/>
+    <text x="145" y="2748" fill="#5a6675" font-size="11" text-anchor="middle">日々の洗車</text>
+    <text x="145" y="2768" fill="#9aa6b6" font-size="10" text-anchor="middle">（画像差し替え）</text>
+    <text x="145" y="2802" fill="#1a2233" font-size="12" font-weight="800" text-anchor="middle">日々の洗車</text>
+
+    <rect x="276" y="2700" width="210" height="120" rx="12" fill="#eef2f9" stroke="#e2e8f2"/>
+    <text x="381" y="2748" fill="#5a6675" font-size="11" text-anchor="middle">撥水イメージ</text>
+    <text x="381" y="2768" fill="#9aa6b6" font-size="10" text-anchor="middle">（画像差し替え）</text>
+    <text x="381" y="2802" fill="#1a2233" font-size="12" font-weight="800" text-anchor="middle">撥水性能の復活</text>
+
+    <rect x="512" y="2700" width="210" height="120" rx="12" fill="#eef2f9" stroke="#e2e8f2"/>
+    <text x="617" y="2748" fill="#5a6675" font-size="11" text-anchor="middle">汚れ除去</text>
+    <text x="617" y="2768" fill="#9aa6b6" font-size="10" text-anchor="middle">（画像差し替え）</text>
+    <text x="617" y="2802" fill="#1a2233" font-size="12" font-weight="800" text-anchor="middle">汚れの除去</text>
+
+    <rect x="748" y="2700" width="172" height="120" rx="12" fill="#eef2f9" stroke="#e2e8f2"/>
+    <text x="834" y="2748" fill="#5a6675" font-size="11" text-anchor="middle">洗車機</text>
+    <text x="834" y="2768" fill="#9aa6b6" font-size="10" text-anchor="middle">（画像差し替え）</text>
+    <text x="834" y="2802" fill="#1a2233" font-size="12" font-weight="800" text-anchor="middle">機械式洗車機</text>
+  </g>
+
+  <!-- ===== CTA gold band ===== -->
+  <rect x="0" y="2880" width="960" height="100" fill="url(#gold)"/>
+  <text x="480" y="2925" fill="#0e1b33" font-size="20" font-weight="900" text-anchor="middle">愛車の輝きを、約3年キープ。</text>
+  <text x="480" y="2952" fill="#0e1b33" font-size="12" text-anchor="middle">車種・状態に合わせて最適なコーティングをご提案します。</text>
+</svg>
