@@ -217,6 +217,29 @@ node server/connectors/stock-alert.js
 - 前提：会計アプリでクラウド同期を有効化していること（スナップショットに車両・仕訳が含まれます）。
 - cron 例（毎朝8時）：`0 8 * * * cd /path/to/app && SYNC_URL=... WORKSPACE=... TOKEN=... ALERT_TO=... GMAIL_CLIENT_ID=... GMAIL_CLIENT_SECRET=... GMAIL_REFRESH_TOKEN=... node server/connectors/stock-alert.js >> /var/log/kaikei-stock.log 2>&1`
 
+## 月次レポート自動メール（`monthly-report.js`）
+
+同期スナップショットから対象月（既定：先月）の **売上・費用・利益・現預金・
+売掛/買掛** を集計し、メールで自動送信します。サーバーにAI連携（`AI_API_KEY`）が
+あれば一言コメントも添えます（無ければ数値のみ）。
+
+```bash
+SYNC_URL=http://localhost:8787 WORKSPACE=aizu-2026 TOKEN=合言葉 \
+ALERT_TO=owner@example.com MONTH=2026-09 \
+GMAIL_CLIENT_ID=xxx GMAIL_CLIENT_SECRET=yyy GMAIL_REFRESH_TOKEN=zzz \
+node server/connectors/monthly-report.js
+```
+
+| 変数 | 説明 |
+|------|------|
+| `SYNC_URL` / `WORKSPACE` / `TOKEN` | 会計アプリと同じ同期設定 |
+| `GMAIL_CLIENT_ID` / `_SECRET` / `_REFRESH_TOKEN` | Gmail送信用 OAuth（`gmail.send`） |
+| `ALERT_TO` | 通知先（省略時は会社設定 email） |
+| `MONTH` | 対象月 `YYYY-MM`（省略時は先月） |
+| `DRY_RUN=1` | 送信せず内容のみ表示 |
+
+- cron 例（毎月1日 午前8時に先月分）：`0 8 1 * * cd /path/to/app && SYNC_URL=... WORKSPACE=... TOKEN=... ALERT_TO=... GMAIL_CLIENT_ID=... GMAIL_CLIENT_SECRET=... GMAIL_REFRESH_TOKEN=... node server/connectors/monthly-report.js >> /var/log/kaikei-monthly.log 2>&1`
+
 ## 共通ライブラリ（`_lib.js` / `pdfextract.js`）
 
 - `_lib.js`：HTTP・金額換算（ゼロデシマル通貨対応）・金額推定（`guessAmount`）・

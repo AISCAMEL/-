@@ -25,6 +25,7 @@ A.app = (function () {
   const NAV = [
     { path: 'dashboard', label: 'ダッシュボード', icon: '🏠' },
     { path: 'assistant', label: 'AI会計アシスタント', icon: '🤖' },
+    { path: 'search', label: '検索', icon: '🔍' },
     { group: '取引' },
     { path: 'journal', label: '仕訳帳', icon: '📒' },
     { path: 'expenses', label: '経費・入出金', icon: '💴' },
@@ -132,9 +133,12 @@ A.app = (function () {
     ui.setOutlet(outlet);
 
     // モバイル用メニュートグル
+    const searchBox = el('input.topbar-search', { type: 'search', placeholder: '🔍 検索（摘要・金額・取引先・番号…）' });
+    searchBox.addEventListener('keydown', (e) => { if (e.key === 'Enter') { const v = searchBox.value.trim(); ui.go('search?q=' + encodeURIComponent(v)); searchBox.value = ''; } });
     const topbar = el('header.topbar.no-print', {}, [
       el('button.icon-btn.menu-btn', { text: '☰', onclick: () => document.body.classList.toggle('nav-open') }),
       el('div.topbar-title', { text: 'クラウド会計' }),
+      searchBox,
     ]);
 
     app.appendChild(el('div.layout', {}, [sidebar, el('div.main-col', {}, [topbar, outlet])]));
