@@ -25,6 +25,16 @@ window.A = window.A || {};
       }),
     ]));
 
+    // 売上総利益（粗利）の推移
+    wrap.appendChild(el('div.card', {}, [
+      el('h2', { text: '売上総利益（粗利）の月次推移' }),
+      ui.barChart(tr.months, {
+        labelKey: 'ym', labelFmt: (ym) => ym.slice(5) + '月', height: 180,
+        keys: [{ key: 'gross', label: '売上総利益', color: '#16a34a' }],
+      }),
+      el('p.muted.small', { text: '売上総利益＝売上高 − 売上原価（仕入高・外注費）。' }),
+    ]));
+
     // 利益の推移
     wrap.appendChild(el('div.card', {}, [
       el('h2', { text: '利益の月次推移' }),
@@ -32,6 +42,17 @@ window.A = window.A || {};
         labelKey: 'ym', labelFmt: (ym) => ym.slice(5) + '月', height: 180,
         keys: [{ key: 'net', label: '当期純利益', color: '#0d9488' }],
       }),
+    ]));
+
+    // 現預金残高の推移（資金繰り）
+    const ct = R.cashTrend(journals, fy.start, fsMonth);
+    wrap.appendChild(el('div.card', {}, [
+      el('h2', { text: '現預金残高の推移' }),
+      ui.barChart(ct.months, {
+        labelKey: 'ym', labelFmt: (ym) => ym.slice(5) + '月', height: 180,
+        keys: [{ key: 'cash', label: '現預金残高（月末）', color: '#0ea5e9' }],
+      }),
+      el('p.muted.small', { text: '各月末時点の現金・普通預金・当座預金の合計残高です。' }),
     ]));
 
     // 表（行クリックでその月の仕訳へドリルダウン）

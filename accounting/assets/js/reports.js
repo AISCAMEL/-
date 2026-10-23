@@ -506,7 +506,7 @@ A.reports = (function () {
     for (let i = 0; i < 12; i++) {
       const m0 = (startM - 1 + i) % 12;
       const y = startY + Math.floor((startM - 1 + i) / 12);
-      months.push({ ym: `${y}-${String(m0 + 1).padStart(2, '0')}`, revenue: 0, expense: 0, net: 0 });
+      months.push({ ym: `${y}-${String(m0 + 1).padStart(2, '0')}`, revenue: 0, expense: 0, net: 0, cogs: 0, gross: 0 });
     }
     const idx = {}; months.forEach((m, i) => (idx[m.ym] = i));
     journals.forEach((j) => {
@@ -517,12 +517,35 @@ A.reports = (function () {
       (j.lines || []).forEach((l) => {
         const cat = S.accounts.category(l.account);
         if (cat === 'revenue') m.revenue += (l.side === 'credit' ? 1 : -1) * l.amount;
-        else if (cat === 'expense') m.expense += (l.side === 'debit' ? 1 : -1) * l.amount;
+        else if (cat === 'expense') { m.expense += (l.side === 'debit' ? 1 : -1) * l.amount; if (l.account === '500' || l.account === '510') m.cogs += (l.side === 'debit' ? 1 : -1) * l.amount; }
       });
     });
-    months.forEach((m) => { m.net = m.revenue - m.expense; });
-    const total = months.reduce((s, m) => { s.revenue += m.revenue; s.expense += m.expense; s.net += m.net; return s; }, { revenue: 0, expense: 0, net: 0 });
+    months.forEach((m) => { m.net = m.revenue - m.expense; m.gross = m.revenue - m.cogs; });
+    const total = months.reduce((s, m) => { s.revenue += m.revenue; s.expense += m.expense; s.net += m.net; s.cogs += m.cogs; s.gross += m.gross; return s; }, { revenue: 0, expense: 0, net: 0, cogs: 0, gross: 0 });
     return { months, total };
+  };
+
+  /* ---- 現預金残高の月次推移（資金繰りの可視化） ------------------------
+   * 各月末時点の現預金残高（現金・普通預金・当座等の累計）を返す。
+   * ------------------------------------------------------------------- */
+  const cashTrend = (journals, fyStart, fsMonth) => {
+    const codes = S.accounts.all().filter((a) => a.category === 'asset' && (['100', '110'].includes(a.code) || /預金|当座/.test(a.name))).map((a) => a.code);
+    const codeSet = new Set(codes);
+    const startY = Number(fyStart.slice(0, 4)), startM = fsMonth;
+    const months = [];
+    for (let i = 0; i < 12; i++) {
+      const m0 = (startM - 1 + i) % 12;
+      const y = startY + Math.floor((startM - 1 + i) / 12);
+      const endD = new Date(y, m0 + 1, 0);
+      const p = (x) => String(x).padStart(2, '0');
+      months.push({ ym: `${y}-${p(m0 + 1)}`, end: `${endD.getFullYear()}-${p(endD.getMonth() + 1)}-${p(endD.getDate())}`, cash: 0 });
+    }
+    months.forEach((m) => {
+      let bal = 0;
+      journals.forEach((j) => { if ((j.date || '') > m.end) return; (j.lines || []).forEach((l) => { if (!codeSet.has(l.account)) return; bal += (l.side === 'debit' ? 1 : -1) * l.amount; }); });
+      m.cash = bal;
+    });
+    return { months };
   };
 
   /* ---- 取引先元帳（売掛金：請求＝借方、入金＝貸方） --------------------
@@ -583,5 +606,5 @@ A.reports = (function () {
     return { net, dep, dAR, dInv, dAP, operating, investing, financing, adjust, cashChange, cashOpen, cashClose };
   };
 
-  return { flatLines, ledger, trialBalance, statements, taxSummary, dashboard, depSchedule, depForFiscalYear, bookValueAt, breakdown, learnAccount, vehiclePL, DEEMED_RATES, taxPayable, deptSummary, taxReturnCalc, advisor, monthlyTrend, partnerLedger, cashflow };
+  return { flatLines, ledger, trialBalance, statements, taxSummary, dashboard, depSchedule, depForFiscalYear, bookValueAt, breakdown, learnAccount, vehiclePL, cashTrend, DEEMED_RATES, taxPayable, deptSummary, taxReturnCalc, advisor, monthlyTrend, partnerLedger, cashflow };
 })();

@@ -97,6 +97,16 @@ window.A = window.A || {};
       }),
     ]));
 
+    // 現預金残高の推移（資金繰りの可視化）
+    const ct = R.cashTrend(journals, fy.start, s.fiscalStartMonth || 4);
+    wrap.appendChild(el('div.card', {}, [
+      el('div.card-head', {}, [el('h3', { text: '現預金残高の推移' }), el('button.btn.sm', { text: '月次推移へ', onclick: () => ui.go('monthly') })]),
+      ui.barChart(ct.months, {
+        labelKey: 'ym', labelFmt: (ym) => ym.slice(5), height: 170,
+        keys: [{ key: 'cash', label: '現預金残高（月末）', color: '#0ea5e9' }],
+      }),
+    ]));
+
     wrap.appendChild(el('div.two-col', {}, [
       // 最近の仕訳
       (() => {
