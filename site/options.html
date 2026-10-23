@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>オプションサービス｜AUC-AGENT・合同会社アイズ</title>
+<meta name="description" content="購入・納車にあわせて追加できるオプションサービス一覧。保証・陸送・カーナビ・アンダーコート・ドライブレコーダーなど、愛車をより安心・快適にするメニューをご用意しています。" />
+
+<!-- favicon -->
+<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon-32.png" />
+<link rel="apple-touch-icon" href="assets/img/favicon-180.png" />
+
+<!-- OGP -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="AUC-AGENT｜合同会社アイズ" />
+<meta property="og:title" content="オプションサービス｜AUC-AGENT" />
+<meta property="og:description" content="保証・陸送・カーナビ・アンダーコート・ドライブレコーダーなど、愛車をより安心・快適にする追加メニュー。" />
+<meta property="og:image" content="assets/img/ogp.png" />
+<meta property="og:url" content="" />
+<meta name="twitter:card" content="summary_large_image" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet" href="assets/css/style.css" />
+
+<!-- オプションページ専用の追加スタイル -->
+<style>
+  /* ヒーロー（暗背景） */
+  .opt-hero {
+    background:
+      linear-gradient(rgba(14,27,51,.80), rgba(14,27,51,.88)),
+      linear-gradient(135deg, #16294a, #0e1b33);
+    color: #fff;
+    text-align: center;
+  }
+  .opt-hero .eyebrow { color: var(--gold-2); font-weight: 800; letter-spacing: .16em; font-size: 13px; }
+  .opt-hero h1 { font-size: 46px; font-weight: 900; margin: 10px 0 16px; letter-spacing: .04em; }
+  .opt-hero h1 .hl { color: var(--gold-2); }
+  .opt-hero p.lead { max-width: 680px; margin: 0 auto; color: #d8deea; font-size: 18px; }
+
+  /* 5枚のオプションカード（grid-3 を5枚でも自然に折り返す） */
+  .opt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .opt-grid .card { display: block; text-decoration: none; color: inherit; transition: transform .15s, box-shadow .15s; }
+  .opt-grid .card:hover { transform: translateY(-3px); box-shadow: 0 16px 36px rgba(14,27,51,.14); }
+  .opt-grid .card .more { display: inline-block; margin-top: 12px; color: var(--navy-2); font-weight: 700; font-size: 14px; }
+
+  /* 詳細セクション（交互レイアウト） */
+  .opt-row { display: grid; grid-template-columns: 96px 1fr; gap: 24px; align-items: start;
+    padding: 30px 0; border-bottom: 1px solid var(--line); }
+  .opt-row:last-child { border-bottom: none; }
+  .opt-row .badge { width: 88px; height: 88px; border-radius: 18px;
+    background: linear-gradient(135deg, #fdf3da, #f3e2b4); display: grid; place-items: center; font-size: 42px; }
+  .opt-row h3 { margin: 2px 0 8px; font-size: 22px; font-weight: 900; }
+  .opt-row p { margin: 0 0 12px; color: var(--muted); font-size: 15.5px; line-height: 1.85; }
+  .opt-row ul { margin: 0; padding-left: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px 10px; }
+  .opt-row ul li { background: #eef2f9; color: var(--navy-2); font-size: 13px; font-weight: 700;
+    padding: 6px 12px; border-radius: 999px; }
+  .opt-row .price { display: inline-block; margin-top: 14px; color: var(--navy);
+    font-weight: 800; font-size: 15px; background: #fff7e6; border: 1px solid #f0dca6;
+    padding: 8px 14px; border-radius: 10px; }
+
+  @media (max-width: 860px) {
+    .opt-hero h1 { font-size: 34px; }
+    .opt-grid { grid-template-columns: 1fr; }
+    .opt-row { grid-template-columns: 64px 1fr; gap: 16px; }
+    .opt-row .badge { width: 60px; height: 60px; font-size: 30px; border-radius: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== Header ===== -->
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <span class="logo">A</span>
+      <span>AUC-AGENT<small>CAR AUCTION AGENT</small></span>
+    </a>
+    <nav class="nav">
+      <a class="nav-link" href="index.html">購入代行</a>
+      <a class="nav-link" href="sell.html">出品代行</a>
+      <a class="nav-link" href="shipping.html">陸送シミュ</a>
+      <a class="nav-link" href="coating.html">コーティング</a>
+      <a class="nav-link" href="options.html">オプション</a>
+      <a class="btn btn-gold btn-sm" href="login.html">無料会員登録</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ===== Hero ===== -->
+<section class="opt-hero">
+  <div class="wrap">
+    <div class="eyebrow">OPTIONS</div>
+    <h1>オプション<span class="hl">サービス</span></h1>
+    <p class="lead">ご購入・納車にあわせて追加できるサービス一覧。<br />保証から快適装備の取り付けまで、愛車をより安心・快適に。</p>
+    <div class="cta-row" style="justify-content:center;margin-top:26px;">
+      <a class="btn btn-gold" href="#list">▶ オプション一覧を見る</a>
+      <a class="btn btn-ghost" href="#contact">相談・お見積り</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 一覧（カード）===== -->
+<section id="list">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">LINE UP</div>
+      <h2>オプションメニュー</h2>
+      <p>必要なものだけを、まとめてご依頼いただけます。気になる項目をタップすると詳細へ移動します。</p>
+    </div>
+    <div class="opt-grid">
+      <a class="card" href="#warranty">
+        <div class="ico">🛡️</div>
+        <h3>保証</h3>
+        <p>ご購入後の故障に備える安心の保証プラン。</p>
+        <span class="more">詳しく見る →</span>
+      </a>
+      <a class="card" href="#transport">
+        <div class="ico">🚚</div>
+        <h3>陸送</h3>
+        <p>全国どこでも、ご自宅まで安全にお届け。</p>
+        <span class="more">詳しく見る →</span>
+      </a>
+      <a class="card" href="#navi">
+        <div class="ico">🧭</div>
+        <h3>ナビ</h3>
+        <p>カーナビ・オーディオの選定から取り付けまで。</p>
+        <span class="more">詳しく見る →</span>
+      </a>
+      <a class="card" href="#undercoat">
+        <div class="ico">🛢️</div>
+        <h3>アンダーコート</h3>
+        <p>下回りの防錆処理で、車体を長持ちさせます。</p>
+        <span class="more">詳しく見る →</span>
+      </a>
+      <a class="card" href="#dashcam">
+        <div class="ico">🎥</div>
+        <h3>ドライブレコーダー</h3>
+        <p>万一の記録に。前後カメラの取り付けに対応。</p>
+        <span class="more">詳しく見る →</span>
+      </a>
+      <a class="card" href="#contact">
+        <div class="ico">＋</div>
+        <h3>その他のご要望</h3>
+        <p>記載のない取り付け・加工もお気軽にご相談を。</p>
+        <span class="more">相談する →</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 詳細 ===== -->
+<section style="background:#f6f8fc;">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">DETAILS</div>
+      <h2>各オプションの詳細</h2>
+    </div>
+    <div class="card" style="padding:8px 28px;">
+
+      <div class="opt-row" id="warranty">
+        <div class="badge">🛡️</div>
+        <div>
+          <h3>保証</h3>
+          <p>ご購入後の予期せぬ故障に備える保証プランです。エンジンやミッションなどの主要機構を対象に、万一のトラブル時の修理費用負担をやわらげます。走行距離・年式・プラン期間に応じて最適なものをご案内します。</p>
+          <ul><li>主要機構の保証</li><li>期間・プラン選択可</li><li>全国の提携工場で対応</li></ul>
+          <div class="price">料金：車種・プランによりお見積り</div>
+        </div>
+      </div>
+
+      <div class="opt-row" id="transport">
+        <div class="badge">🚚</div>
+        <div>
+          <h3>陸送</h3>
+          <p>落札した車両を、全国のご指定場所まで安全にお届けします。費用は地域・車種によって変わります。目安はシミュレーションでその場に確認いただけます。</p>
+          <ul><li>全国対応</li><li>積載車で安全搬送</li><li>日程調整可</li></ul>
+          <div class="price"><a href="shipping.html" style="color:inherit;text-decoration:underline;">▶ 陸送費用シミュレーションを試す</a></div>
+        </div>
+      </div>
+
+      <div class="opt-row" id="navi">
+        <div class="badge">🧭</div>
+        <div>
+          <h3>ナビ</h3>
+          <p>カーナビ・ディスプレイオーディオの選定から取り付けまで対応します。最新地図・フルセグ・スマホ連携（CarPlay / Android Auto）対応機種など、ご予算とご希望にあわせてご提案します。</p>
+          <ul><li>機種の選定サポート</li><li>スマホ連携対応</li><li>バックカメラ同時取付可</li></ul>
+          <div class="price">料金：機種代＋取付工賃（お見積り）</div>
+        </div>
+      </div>
+
+      <div class="opt-row" id="undercoat">
+        <div class="badge">🛢️</div>
+        <div>
+          <h3>アンダーコート</h3>
+          <p>車体下回りに防錆・防音塗装を施し、融雪剤や飛び石による錆・傷みから保護します。降雪地域・海沿いにお住まいの方や、長く大切に乗りたい方におすすめです。</p>
+          <ul><li>防錆・防音</li><li>融雪剤対策</li><li>納車前施工が可能</li></ul>
+          <div class="price">料金：車種・サイズによりお見積り</div>
+        </div>
+      </div>
+
+      <div class="opt-row" id="dashcam">
+        <div class="badge">🎥</div>
+        <div>
+          <h3>ドライブレコーダー</h3>
+          <p>事故やあおり運転など、万一のときの記録に。前方のみ／前後2カメラ／360度タイプなど、ご希望にあわせて取り付けます。駐車監視機能付き機種にも対応します。</p>
+          <ul><li>前後2カメラ対応</li><li>駐車監視機能</li><li>配線もきれいに施工</li></ul>
+          <div class="price">料金：機種代＋取付工賃（お見積り）</div>
+        </div>
+      </div>
+
+    </div>
+    <p class="center" style="margin-top:18px;color:var(--muted);font-size:13px;">
+      ※ 料金は車種・グレード・選択機種により異なります。正確な金額はお見積りにてご案内します。
+    </p>
+  </div>
+</section>
+
+<!-- ===== CTA band ===== -->
+<section class="cta-band">
+  <div class="wrap">
+    <h2>必要なオプションだけ、まとめて。</h2>
+    <p>ご購入手続きとあわせてご依頼いただけます。まずはお気軽にご相談ください。</p>
+    <a class="btn btn-navy" href="#contact">オプションを相談する</a>
+  </div>
+</section>
+
+<!-- ===== Contact ===== -->
+<section id="contact" style="background:#eef2f9;">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">CONTACT</div>
+      <h2>ご相談・お見積り</h2>
+      <p>ご希望のオプション・車種をお知らせください。<strong>メール・チャットは24時間受付</strong>（お電話は平日 8:00〜17:00）。</p>
+    </div>
+    <div class="card" style="max-width:640px;margin:0 auto;">
+      <form id="optForm" class="contact-form">
+        <div class="field"><label>お名前</label><input type="text" id="oName" placeholder="山田 太郎" required /></div>
+        <div class="row-2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div class="field"><label>メール</label><input type="email" id="oEmail" placeholder="you@example.com" required /></div>
+          <div class="field"><label>電話（任意）</label><input type="tel" id="oPhone" placeholder="090-0000-0000" /></div>
+        </div>
+        <div class="field"><label>ご希望のオプション</label><textarea id="oMsg" rows="3" placeholder="例）保証＋ドライブレコーダー（前後）＋アンダーコートを検討中" required></textarea></div>
+        <div class="alert alert-ok" id="oDone" style="display:none;">✓ 送信しました。担当より折り返しご連絡します。</div>
+        <button class="btn btn-navy btn-block" type="submit">送信する</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Footer ===== -->
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <a class="brand" href="index.html" style="color:#fff;margin-bottom:12px;"><span class="logo">A</span><span>AUC-AGENT</span></a>
+        <p style="max-width:340px;">購入も売却もコーティングも、愛車のことをまるごとサポート。相場価格で、安心・かんたんに。</p>
+      </div>
+      <div>
+        <h4>サービス</h4>
+        <a href="index.html">購入代行</a>
+        <a href="sell.html">出品代行</a>
+        <a href="shipping.html">陸送シミュレーション</a>
+        <a href="coating.html">ボディコーティング</a>
+        <a href="options.html">オプション</a>
+      </div>
+      <div>
+        <h4>会員</h4>
+        <a href="login.html">会員登録 / ログイン</a>
+        <a href="mypage.html">マイページ</a>
+        <a href="index.html#company">特定商取引法に基づく表記</a>
+        <a href="privacy.html">プライバシーポリシー</a>
+      </div>
+    </div>
+    <div class="copy">© 2026 合同会社アイズ（AUC-AGENT）. いわき市／福島拠点. これはデモ用ランディングページです。</div>
+  </div>
+</footer>
+
+<script src="assets/js/app.js"></script>
+<script>
+  // お問い合わせフォーム送信（GAS未設定でもデモとして完了表示）
+  document.getElementById("optForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (window.AucConfig && AucConfig.send) {
+      AucConfig.send({
+        type: "options",
+        name: document.getElementById("oName").value,
+        email: document.getElementById("oEmail").value,
+        phone: document.getElementById("oPhone").value,
+        message: document.getElementById("oMsg").value
+      });
+    }
+    document.getElementById("oDone").style.display = "block";
+    this.reset();
+  });
+</script>
+</body>
+</html>
