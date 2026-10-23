@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>クラウド会計（自社版） | 合同会社アイズ</title>
+  <meta name="description" content="サーバー不要・ブラウザ単体で動く自社会計ソフト。複式簿記・請求書・経費・消費税集計に対応。">
+  <meta name="theme-color" content="#2563eb">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="アイズ会計">
+  <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+  <div id="app">
+    <div style="padding:3rem;text-align:center;color:#667">読み込み中…</div>
+  </div>
+
+  <!-- 依存の順に読み込む（ビルド不要・ES モジュール不使用） -->
+  <script src="assets/js/util.js"></script>
+  <script src="assets/js/accounts.js"></script>
+  <script src="assets/js/db.js"></script>
+  <script src="assets/js/audit.js"></script>
+  <script src="assets/js/store.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/reports.js"></script>
+  <script src="assets/js/ui.js"></script>
+  <script src="assets/js/sync.js"></script>
+  <script src="assets/js/payrolltax.js"></script>
+  <script src="assets/js/zip.js"></script>
+  <script src="assets/js/demo.js"></script>
+  <!-- 画面（自身でルート登録） -->
+  <script src="assets/js/pages/dashboard.js"></script>
+  <script src="assets/js/pages/assistant.js"></script>
+  <script src="assets/js/pages/search.js"></script>
+  <script src="assets/js/pages/monthly.js"></script>
+  <script src="assets/js/pages/journal.js"></script>
+  <script src="assets/js/pages/ledger.js"></script>
+  <script src="assets/js/pages/partnerledger.js"></script>
+  <script src="assets/js/pages/reports-page.js"></script>
+  <script src="assets/js/pages/cashflow.js"></script>
+  <script src="assets/js/pages/cashforecast.js"></script>
+  <script src="assets/js/pages/invoices.js"></script>
+  <script src="assets/js/pages/recurring.js"></script>
+  <script src="assets/js/pages/expenses.js"></script>
+  <script src="assets/js/pages/receipts.js"></script>
+  <script src="assets/js/pages/import.js"></script>
+  <script src="assets/js/pages/assets.js"></script>
+  <script src="assets/js/pages/vehicles.js"></script>
+  <script src="assets/js/pages/inventory.js"></script>
+  <script src="assets/js/pages/payroll.js"></script>
+  <script src="assets/js/pages/departments.js"></script>
+  <script src="assets/js/pages/budget.js"></script>
+  <script src="assets/js/pages/vouchers.js"></script>
+  <script src="assets/js/pages/opening.js"></script>
+  <script src="assets/js/pages/closing.js"></script>
+  <script src="assets/js/pages/tax.js"></script>
+  <script src="assets/js/pages/filing.js"></script>
+  <script src="assets/js/pages/efile.js"></script>
+  <script src="assets/js/pages/kessan-package.js"></script>
+  <script src="assets/js/pages/audit.js"></script>
+  <script src="assets/js/pages/partners.js"></script>
+  <script src="assets/js/pages/settings.js"></script>
+  <!-- ブートストラップ（最後） -->
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

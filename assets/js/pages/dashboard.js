@@ -1,0 +1,150 @@
+/* dashboard.js ― ダッシュボード（当期サマリ・最近の仕訳・未処理請求書） */
+window.A = window.A || {};
+(function () {
+  'use strict';
+  const U = A.util, el = U.el, ui = A.ui, S = A.store, R = A.reports;
+
+  const stat = (label, value, cls, delta) =>
+    el('div.stat.' + (cls || ''), {}, [
+      el('div.stat-label', { text: label }),
+      el('div.stat-value', { text: '¥' + U.yenSigned(value) }),
+      delta ? el('div.stat-delta.' + (delta.up ? 'up' : 'down'), { text: `前期比 ${delta.up ? '▲' : '▼'} ${delta.text}` }) : null,
+    ]);
+  const deltaOf = (cur, prev) => {
+    if (!prev) return null;
+    const d = cur - prev; const rate = Math.round(d / Math.abs(prev) * 1000) / 10;
+    return { up: d >= 0, text: `¥${U.yen(Math.abs(d))}（${rate >= 0 ? '+' : ''}${rate}%）` };
+  };
+
+  ui.register('dashboard', async () => {
+    const p = A.app.period();
+    const journals = await S.journals.loadAll();
+    const invoices = await S.invoices.loadAll();
+    const assets = await S.assets.loadAll();
+    const vehicles = await S.vehicles.loadAll();
+    const d = R.dashboard(journals, p.start, p.end);
+    const st = R.statements(journals, p.start, p.end);
+    const s = S.settings.get();
+
+    const unpaid = invoices.filter((i) => i.type === 'invoice' && !i.paid);
+    const unpaidTotal = unpaid.reduce((sum, i) => sum + S.invoices.calc(i).total, 0);
+
+    const wrap = el('div');
+    wrap.appendChild(ui.pageHead('ダッシュボード', [
+      el('span.muted', { text: s.name }),
+    ]));
+    wrap.appendChild(el('div.card', {}, [ui.periodBar(p, (np) => { A.app.setPeriod(np); ui.renderRoute(); })]));
+
+    // やることリスト（アラート）
+    const fy = U.fiscalRange(p.start || U.today(), s.fiscalStartMonth || 4);
+    const today = U.today();
+    const alerts = [];
+    if (!st.bs.balanced) alerts.push({ level: 'bad', text: '貸借対照表が一致していません。仕訳をご確認ください。', to: 'statements' });
+    const depPending = assets.filter((a) => !a.disposed && R.depForFiscalYear(a, s.fiscalStartMonth || 4, fy.start) &&
+      !journals.some((j) => j.source === 'depreciation' && j.refId === a.id && U.inRange(j.date, fy.start, fy.end)));
+    if (depPending.length) alerts.push({ level: 'warn', text: `当期の減価償却が未計上の固定資産が ${depPending.length} 件あります。`, to: 'assets' });
+    const overdue = unpaid.filter((i) => i.dueDate && i.dueDate < today);
+    if (overdue.length) alerts.push({ level: 'bad', text: `支払期限を過ぎた未入金の請求書が ${overdue.length} 件あります。`, to: 'invoices' });
+    else if (unpaid.length) alerts.push({ level: 'warn', text: `未入金の請求書が ${unpaid.length} 件（¥${U.yen(unpaidTotal)}）あります。`, to: 'invoices' });
+    const draftInv = invoices.filter((i) => i.type === 'invoice' && !i.posted);
+    if (draftInv.length) alerts.push({ level: 'info', text: `売上未計上の請求書が ${draftInv.length} 件あります。`, to: 'invoices' });
+    // バックアップ推奨（データはブラウザ内保存のため）
+    if (journals.length || invoices.length) {
+      const last = s.lastBackupAt;
+      const daysSince = last ? Math.round((new Date(today + 'T00:00:00') - new Date(last + 'T00:00:00')) / 86400000) : null;
+      if (daysSince === null) alerts.push({ level: 'warn', text: 'まだバックアップがありません。設定からデータを書き出して保管してください。', to: 'settings' });
+      else if (daysSince >= 14) alerts.push({ level: 'warn', text: `最後のバックアップから ${daysSince} 日経過しました。データの書き出しをおすすめします。`, to: 'settings' });
+    }
+    // 在庫車アラート（長期在庫）
+    if (vehicles.length) {
+      const thr = s.stockAlertDays || 45;
+      const vpl = R.vehiclePL(journals, vehicles);
+      const longStock = vpl.rows.filter((r) => !r.sold && r.holdingDays != null && r.holdingDays > thr)
+        .sort((a, b) => b.holdingDays - a.holdingDays);
+      if (longStock.length) {
+        const top = longStock[0];
+        alerts.push({ level: 'warn', text: `長期在庫の車両が ${longStock.length} 台あります（最長：${top.v.name} ${top.holdingDays}日）。販売・値下げの検討を。`, to: 'vehicles' });
+      }
+    }
+
+    if (alerts.length) {
+      wrap.appendChild(el('div.card.todo-card', {}, [
+        el('h3', { text: '📌 やることリスト' }),
+        el('div.todo-list', {}, alerts.map((a) => el('div.todo-item.' + a.level, {
+          onclick: () => ui.go(a.to),
+        }, [el('span.todo-dot'), el('span', { text: a.text }), el('span.todo-go', { text: '→' })]))),
+      ]));
+    }
+
+    // 月次売上グラフ
+    const tr = R.monthlyTrend(journals, fy.start, s.fiscalStartMonth || 4);
+    // 前期実績（前期比KPI用）
+    const prevRef = new Date(new Date(fy.start + 'T00:00:00').getTime() - 86400000).toISOString().slice(0, 10);
+    const prevFy = U.fiscalRange(prevRef, s.fiscalStartMonth || 4);
+    const stPrev = R.statements(journals, prevFy.start, prevFy.end);
+
+    wrap.appendChild(el('div.stat-grid', {}, [
+      stat('当期売上（収益）', d.revenue, 'good', deltaOf(d.revenue, stPrev.pl.revenue.total)),
+      stat('当期費用', d.expense, 'warn', deltaOf(d.expense, stPrev.pl.expense.total)),
+      stat('当期純利益', d.netIncome, d.netIncome >= 0 ? 'good' : 'bad', deltaOf(d.netIncome, stPrev.pl.netIncome)),
+      stat('現預金残高', d.cash, ''),
+    ]));
+    wrap.appendChild(el('div.card', {}, [
+      el('div.card-head', {}, [el('h3', { text: '月次の売上・費用' }), el('button.btn.sm', { text: '月次推移へ', onclick: () => ui.go('monthly') })]),
+      ui.barChart(tr.months, {
+        labelKey: 'ym', labelFmt: (ym) => ym.slice(5), height: 170,
+        keys: [{ key: 'revenue', label: '売上', color: '#2563eb' }, { key: 'expense', label: '費用', color: '#f59e0b' }],
+      }),
+    ]));
+
+    // 現預金残高の推移（資金繰りの可視化）
+    const ct = R.cashTrend(journals, fy.start, s.fiscalStartMonth || 4);
+    wrap.appendChild(el('div.card', {}, [
+      el('div.card-head', {}, [el('h3', { text: '現預金残高の推移' }), el('button.btn.sm', { text: '月次推移へ', onclick: () => ui.go('monthly') })]),
+      ui.barChart(ct.months, {
+        labelKey: 'ym', labelFmt: (ym) => ym.slice(5), height: 170,
+        keys: [{ key: 'cash', label: '現預金残高（月末）', color: '#0ea5e9' }],
+      }),
+    ]));
+
+    wrap.appendChild(el('div.two-col', {}, [
+      // 最近の仕訳
+      (() => {
+        const recent = [...journals].sort((a, b) =>
+          (a.date === b.date ? b.no - a.no : b.date.localeCompare(a.date))).slice(0, 8);
+        const card = el('div.card', {}, [
+          el('div.card-head', {}, [el('h3', { text: '最近の仕訳' }),
+            el('button.btn.sm', { text: '一覧へ', onclick: () => ui.go('journal') })]),
+        ]);
+        card.appendChild(ui.table([
+          { key: 'date', label: '日付', render: (r) => U.fmtDate(r.date) },
+          { key: 'desc', label: '摘要', render: (r) => r.description || '—' },
+          { key: 'amt', label: '金額', align: 'right', render: (r) => '¥' + U.yen(S.journals.totals(r).debit) },
+        ], recent, { empty: 'まだ仕訳がありません' }));
+        return card;
+      })(),
+      // 未入金請求書
+      (() => {
+        const card = el('div.card', {}, [
+          el('div.card-head', {}, [el('h3', { text: '未入金の請求書' }),
+            el('button.btn.sm', { text: '請求書へ', onclick: () => ui.go('invoices') })]),
+        ]);
+        card.appendChild(el('div.big-num', { text: '¥' + U.yen(unpaidTotal), title: '未入金合計' }));
+        card.appendChild(ui.table([
+          { key: 'no', label: '番号', render: (r) => S.invoices.displayNo(r) },
+          { key: 'pn', label: '取引先', render: (r) => r.partnerName || '—' },
+          { key: 'amt', label: '金額', align: 'right', render: (r) => '¥' + U.yen(S.invoices.calc(r).total) },
+        ], unpaid.slice(0, 6), { empty: '未入金はありません' }));
+        return card;
+      })(),
+    ]));
+
+    // クイックアクション
+    wrap.appendChild(el('div.quick-row', {}, [
+      el('button.btn.primary', { text: '＋ 仕訳を入力', onclick: () => ui.go('journal?new=1') }),
+      el('button.btn', { text: '＋ 経費を登録', onclick: () => ui.go('expenses?new=1') }),
+      el('button.btn', { text: '＋ 請求書を作成', onclick: () => ui.go('invoices?new=invoice') }),
+    ]));
+    return wrap;
+  });
+})();
