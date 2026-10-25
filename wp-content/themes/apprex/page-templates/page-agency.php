@@ -88,6 +88,7 @@ get_header();
 					<tr><th><?php esc_html_e( '初期費用', 'apprex' ); ?></th><td><?php echo esc_html( $v['rate_initial'] ); ?>%</td></tr>
 					<tr><th><?php esc_html_e( '月額利用料', 'apprex' ); ?></th><td><?php echo esc_html( $v['rate_monthly'] ); ?>%<?php echo $v['months'] ? esc_html( '（契約開始から' . $v['months'] . 'か月）' ) : esc_html__( '（契約が続くあいだ）', 'apprex' ); ?></td></tr>
 					<tr><th><?php esc_html_e( 'お支払い', 'apprex' ); ?></th><td><?php esc_html_e( '月末締め・翌月末払い（銀行振込）', 'apprex' ); ?></td></tr>
+					<tr><th><?php esc_html_e( '加盟金', 'apprex' ); ?></th><td><?php echo (int) $v['fee'] > 0 ? esc_html( number_format( (int) $v['fee'] ) . '円（税抜）・' . ( $v['fee_paid'] ? '入金済み（' . $v['fee_paid'] . '）' : 'お支払い待ち' ) ) : esc_html__( 'なし', 'apprex' ); ?></td></tr>
 				</table>
 				<p class="agp-small"><?php esc_html_e( '条件は代理店契約書に定めた内容が優先されます。振込先は、このページの下の「振込先」から登録・変更できます。', 'apprex' ); ?></p>
 			</div>

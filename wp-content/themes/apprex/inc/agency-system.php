@@ -25,6 +25,26 @@ function apprex_agency_types() {
 	return array( 'introducer' => '紹介代理店', 'reseller' => '販売代理店', 'oem' => 'OEM代理店' );
 }
 
+/**
+ * 代理店の種類ごとの標準の条件（代理店募集ページ・本部の登録画面・代理店専用ページで共通）。
+ * fee：加盟金（税抜）。ri / rm：報酬率（初期費用・月額、%）。null は個別に決める。
+ */
+function apprex_agency_plans() {
+	return apply_filters(
+		'apprex_agency_plans',
+		array(
+			'introducer' => array( 'fee' => 0, 'ri' => 20, 'rm' => 10 ),
+			'reseller'   => array( 'fee' => 100000, 'ri' => 30, 'rm' => 15 ),
+			'oem'        => array( 'fee' => 300000, 'ri' => null, 'rm' => null ),
+		)
+	);
+}
+
+/** 加盟金に含まれるもの。 */
+function apprex_agency_fee_includes() {
+	return array( '導入研修（商品知識・AIスタジオの見せ方・商談の進め方をオンラインで）', '営業ツール一式（営業資料・料金表・提案書のひな形・デモ用アカウント）', '代理店専用ページ・代理店コード（紹介URL・QR・報酬の明細）' );
+}
+
 /** 代理店の状態。 */
 function apprex_agency_statuses() {
 	return array( 'pending' => '審査中', 'active' => '有効', 'suspended' => '停止' );
@@ -43,6 +63,8 @@ function apprex_agency_fields() {
 		'rate_initial' => array( '報酬率：初期費用（%）', 'rate' ),
 		'rate_monthly' => array( '報酬率：月額（%）', 'rate' ),
 		'months'       => array( '月額の報酬を払う月数（0＝契約が続くあいだ）', 'int' ),
+		'fee'          => array( '加盟金（円・税抜）', 'yen' ),
+		'fee_paid'     => array( '加盟金の入金日', 'date' ),
 		'bank'         => array( '振込先（銀行・支店・種別・口座番号・名義）', 'textarea' ),
 		'note'         => array( '本部メモ（代理店には見えません）', 'textarea' ),
 	);
@@ -52,7 +74,7 @@ function apprex_agency_fields() {
 function apprex_agency_get( $id ) {
 	$v = get_post_meta( $id, 'apprex_ag', true );
 	$v = is_array( $v ) ? $v : array();
-	return wp_parse_args( $v, array( 'company' => '', 'contact' => '', 'email' => '', 'phone' => '', 'type' => 'introducer', 'status' => 'pending', 'code' => '', 'rate_initial' => 0, 'rate_monthly' => 0, 'months' => 0, 'bank' => '', 'note' => '', 'user_id' => 0 ) );
+	return wp_parse_args( $v, array( 'company' => '', 'contact' => '', 'email' => '', 'phone' => '', 'type' => 'introducer', 'status' => 'pending', 'code' => '', 'rate_initial' => 0, 'rate_monthly' => 0, 'months' => 0, 'fee' => 0, 'fee_paid' => '', 'bank' => '', 'note' => '', 'user_id' => 0 ) );
 }
 
 /** 代理店コードから代理店ID。 */
@@ -189,6 +211,12 @@ function apprex_agency_info_box( $post ) {
 			case 'int':
 				echo '<input type="number" id="ag-' . esc_attr( $k ) . '" name="apprex_ag[' . esc_attr( $k ) . ']" value="' . esc_attr( $val ) . '" min="0" max="' . ( 'rate' === $f[1] ? '100' : '120' ) . '" step="' . ( 'rate' === $f[1] ? '0.5' : '1' ) . '" style="width:100px">';
 				break;
+			case 'yen':
+				echo '<input type="number" id="ag-' . esc_attr( $k ) . '" name="apprex_ag[' . esc_attr( $k ) . ']" value="' . esc_attr( $val ) . '" min="0" step="1000" style="width:140px"> 円';
+				break;
+			case 'date':
+				echo '<input type="date" id="ag-' . esc_attr( $k ) . '" name="apprex_ag[' . esc_attr( $k ) . ']" value="' . esc_attr( $val ) . '"> <span class="description">入金を確認したら日付を入れてください（空＝未入金）。</span>';
+				break;
 			case 'code':
 				echo '<input type="text" id="ag-code" name="apprex_ag[code]" value="' . esc_attr( $val ) . '" class="regular-text" pattern="[A-Za-z0-9_-]{2,32}" placeholder="空なら自動で作ります">';
 				if ( $val ) {
@@ -200,7 +228,11 @@ function apprex_agency_info_box( $post ) {
 		}
 		echo '</td></tr>';
 	}
-	echo '</table><p class="description">報酬率は代理店には「あなたの報酬率」として表示されます。ほかの代理店の率は見えません。</p>';
+	$std = array();
+	foreach ( apprex_agency_plans() as $tk => $pl ) {
+		$std[] = apprex_agency_types()[ $tk ] . '：加盟金 ' . number_format( $pl['fee'] ) . '円・報酬 ' . ( null === $pl['ri'] ? '個別' : '初期費用' . $pl['ri'] . '%＋月額' . $pl['rm'] . '%' );
+	}
+	echo '</table><p class="description">報酬率・加盟金を空欄で保存すると、代理店の種類の標準の条件が入ります。<br>標準：' . esc_html( implode( '／', $std ) ) . '<br>報酬率は代理店には「あなたの報酬率」として表示されます。ほかの代理店の率は見えません。</p>';
 }
 
 add_action( 'save_post_apprex_agency', function ( $post_id ) {
@@ -223,7 +255,13 @@ add_action( 'save_post_apprex_agency', function ( $post_id ) {
 				$v[ $k ] = isset( apprex_agency_statuses()[ $raw ] ) ? $raw : 'pending';
 				break;
 			case 'rate':
-				$v[ $k ] = max( 0, min( 100, round( (float) $raw, 1 ) ) );
+				$v[ $k ] = '' === trim( (string) $raw ) ? '' : max( 0, min( 100, round( (float) $raw, 1 ) ) );
+				break;
+			case 'yen':
+				$v[ $k ] = '' === trim( (string) $raw ) ? '' : max( 0, (int) $raw );
+				break;
+			case 'date':
+				$v[ $k ] = preg_match( '/^\d{4}-\d{2}-\d{2}$/', (string) $raw ) ? (string) $raw : '';
 				break;
 			case 'int':
 				$v[ $k ] = max( 0, (int) $raw );
@@ -242,6 +280,14 @@ add_action( 'save_post_apprex_agency', function ( $post_id ) {
 				$v[ $k ] = sanitize_text_field( $raw );
 		}
 	}
+	// 空欄の報酬率・加盟金は、代理店の種類の標準の条件（個別のものは0）。
+	$pl = apprex_agency_plans();
+	$pl = isset( $pl[ $v['type'] ] ) ? $pl[ $v['type'] ] : array( 'fee' => 0, 'ri' => 0, 'rm' => 0 );
+	foreach ( array( 'rate_initial' => 'ri', 'rate_monthly' => 'rm', 'fee' => 'fee' ) as $fk => $pk ) {
+		if ( '' === $v[ $fk ] ) {
+			$v[ $fk ] = null === $pl[ $pk ] ? 0 : $pl[ $pk ];
+		}
+	}
 	// 代理店コード：空なら作る。ほかの代理店と同じなら作り直す。
 	$code = $v['code'];
 	if ( strlen( $code ) < 2 ) {
@@ -257,7 +303,7 @@ add_action( 'save_post_apprex_agency', function ( $post_id ) {
 	update_post_meta( $post_id, 'apprex_ag_code', $code );
 	// 有効になったら代理店にお知らせ。
 	if ( 'active' === $v['status'] && 'active' !== $old['status'] && is_email( $v['email'] ) ) {
-		apprex_agency_mail( $v['email'], '【APPREX】代理店の登録が完了しました', ( $v['contact'] ? $v['contact'] : $v['company'] ) . " 様\n\nAPPREXの代理店としての登録が完了しました。\n\nあなたの紹介URL：\n" . add_query_arg( 'ref', $code, home_url( '/' ) ) . "\n\nこのURLから届いたお問い合わせ・会員登録・ご契約は、あなたのご紹介として記録されます。ご紹介の状況と報酬は、代理店専用ページで確認できます。\n" . apprex_agency_portal_url() . "\n" );
+		apprex_agency_mail( $v['email'], '【APPREX】代理店の登録が完了しました', ( $v['contact'] ? $v['contact'] : $v['company'] ) . " 様\n\nAPPREXの代理店としての登録が完了しました。\n\nあなたの紹介URL：\n" . add_query_arg( 'ref', $code, home_url( '/' ) ) . "\n\nこのURLから届いたお問い合わせ・会員登録・ご契約は、あなたのご紹介として記録されます。ご紹介の状況と報酬は、代理店専用ページで確認できます。\n" . apprex_agency_portal_url() . "\n" . ( (int) $v['fee'] > 0 && '' === $v['fee_paid'] ? "\n加盟金（" . number_format( (int) $v['fee'] ) . "円・税抜）のお支払いをお願いいたします。お支払い方法は担当者からご案内します。\n" : '' ) );
 	}
 }, 10 );
 
@@ -356,7 +402,7 @@ add_action( 'admin_post_apprex_agency_from_inquiry', function () {
 		wp_die( '登録できませんでした。' );
 	}
 	$code = 'ag' . strtolower( wp_generate_password( 6, false, false ) );
-	update_post_meta( $id, 'apprex_ag', array( 'company' => $company, 'contact' => $name, 'email' => (string) get_post_meta( $iid, 'apprex_email', true ), 'phone' => (string) get_post_meta( $iid, 'apprex_phone', true ), 'type' => $type, 'status' => 'pending', 'code' => $code, 'rate_initial' => 0, 'rate_monthly' => 0, 'months' => 0, 'bank' => '', 'note' => '申し込み内容：' . $msg ) );
+	update_post_meta( $id, 'apprex_ag', array( 'company' => $company, 'contact' => $name, 'email' => (string) get_post_meta( $iid, 'apprex_email', true ), 'phone' => (string) get_post_meta( $iid, 'apprex_phone', true ), 'type' => $type, 'status' => 'pending', 'code' => $code, 'rate_initial' => (float) apprex_agency_plans()[ $type ]['ri'], 'rate_monthly' => (float) apprex_agency_plans()[ $type ]['rm'], 'months' => 0, 'fee' => (int) apprex_agency_plans()[ $type ]['fee'], 'fee_paid' => '', 'bank' => '', 'note' => '申し込み内容：' . $msg ) );
 	update_post_meta( $id, 'apprex_ag_code', $code );
 	update_post_meta( $iid, 'apprex_ag_created', $id );
 	wp_safe_redirect( admin_url( 'post.php?post=' . $id . '&action=edit' ) );
@@ -599,7 +645,7 @@ function apprex_agency_sum_box( $post ) {
 
 /* 一覧の列。 */
 add_filter( 'manage_apprex_agency_posts_columns', function ( $cols ) {
-	return array( 'cb' => $cols['cb'], 'title' => '代理店', 'ag_type' => '種類', 'ag_status' => '状態', 'ag_code' => 'コード', 'ag_refs' => '紹介／契約', 'ag_month' => '今月の報酬' );
+	return array( 'cb' => $cols['cb'], 'title' => '代理店', 'ag_type' => '種類', 'ag_status' => '状態', 'ag_code' => 'コード', 'ag_refs' => '紹介／契約', 'ag_fee' => '加盟金', 'ag_month' => '今月の報酬' );
 } );
 add_action( 'manage_apprex_agency_posts_custom_column', function ( $col, $id ) {
 	$v = apprex_agency_get( $id );
@@ -618,6 +664,9 @@ add_action( 'manage_apprex_agency_posts_custom_column', function ( $col, $id ) {
 			echo count( $refs ) . '／' . count( array_filter( $refs, function ( $r ) {
 				return 'contract' === $r['stage'];
 			} ) );
+			break;
+		case 'ag_fee':
+			echo (int) $v['fee'] > 0 ? esc_html( number_format( (int) $v['fee'] ) . '円' ) . '<br><small>' . ( $v['fee_paid'] ? '入金済み ' . esc_html( $v['fee_paid'] ) : '<span style="color:#b45309">未入金</span>' ) . '</small>' : 'なし';
 			break;
 		case 'ag_month':
 			echo esc_html( number_format( apprex_agency_commission( $id, current_time( 'Y-m' ) )['total'] ) ) . '円';
