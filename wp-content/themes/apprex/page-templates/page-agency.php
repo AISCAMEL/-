@@ -89,7 +89,7 @@ get_header();
 					<tr><th><?php esc_html_e( '月額利用料', 'apprex' ); ?></th><td><?php echo esc_html( $v['rate_monthly'] ); ?>%<?php echo $v['months'] ? esc_html( '（契約開始から' . $v['months'] . 'か月）' ) : esc_html__( '（契約が続くあいだ）', 'apprex' ); ?></td></tr>
 					<tr><th><?php esc_html_e( 'お支払い', 'apprex' ); ?></th><td><?php esc_html_e( '月末締め・翌月末払い（銀行振込）', 'apprex' ); ?></td></tr>
 				</table>
-				<p class="agp-small"><?php esc_html_e( '条件は代理店契約書に定めた内容が優先されます。振込先の変更は本部へご連絡ください。', 'apprex' ); ?></p>
+				<p class="agp-small"><?php esc_html_e( '条件は代理店契約書に定めた内容が優先されます。振込先は、このページの下の「振込先」から登録・変更できます。', 'apprex' ); ?></p>
 			</div>
 		</div>
 
@@ -181,6 +181,42 @@ get_header();
 				<p class="agp-small"><b><?php esc_html_e( 'お願い', 'apprex' ); ?></b><br><?php esc_html_e( '事実と違う説明や、「必ず儲かる」「No.1」などの表現はお控えください。', 'apprex' ); ?></p>
 			</div>
 		</div>
+		<div class="agp-card" id="bank">
+			<h2><?php esc_html_e( '振込先', 'apprex' ); ?></h2>
+			<?php
+			$bcur  = apprex_agency_bank_current( $apprex_aid );
+			$bpend = apprex_agency_bank_pending( $apprex_aid );
+			$bmsg  = isset( $_GET['bank'] ) ? sanitize_key( $_GET['bank'] ) : '';
+			$bmsgs = array(
+				'ok'      => array( 'agp-ok', '受け付けました。本部で確認したあとに反映します。反映するまでは、今の振込先にお振り込みします。' ),
+				'pass'    => array( 'agp-warn', 'パスワードが違います。もう一度入れてください。' ),
+				'invalid' => array( 'agp-warn', '銀行名・支店名・口座番号（6〜8桁の数字）・口座名義を入れてください。' ),
+			);
+			if ( isset( $bmsgs[ $bmsg ] ) ) {
+				echo '<p class="' . esc_attr( $bmsgs[ $bmsg ][0] ) . '">' . esc_html( $bmsgs[ $bmsg ][1] ) . '</p>';
+			}
+			?>
+			<p><b><?php esc_html_e( '今の振込先', 'apprex' ); ?></b>：<?php echo esc_html( $bcur ? apprex_agency_bank_masked( $bcur ) : ( $v['bank'] ? '登録済み（本部で登録）' : '未登録' ) ); ?></p>
+			<?php if ( $bpend ) : ?>
+				<p class="agp-warn"><?php echo esc_html( '確認中の変更：' . apprex_agency_bank_masked( $bpend ) . '（' . wp_date( 'n月j日', (int) $bpend['t'] ) . ' 受付）' ); ?></p>
+			<?php endif; ?>
+			<details<?php echo ( $bcur || $v['bank'] ) ? '' : ' open'; ?>>
+				<summary><?php echo esc_html( ( $bcur || $v['bank'] ) ? '振込先を変更する' : '振込先を登録する' ); ?></summary>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="agp-form agp-bank" autocomplete="off">
+					<input type="hidden" name="action" value="apprex_agency_bank">
+					<?php wp_nonce_field( 'apprex_agency_bank' ); ?>
+					<label><?php esc_html_e( '銀行名', 'apprex' ); ?><input type="text" name="bank" required placeholder="例：東邦銀行"></label>
+					<label><?php esc_html_e( '支店名', 'apprex' ); ?><input type="text" name="branch" required placeholder="例：平支店"></label>
+					<label><?php esc_html_e( '口座の種類', 'apprex' ); ?><select name="kind"><option>普通</option><option>当座</option><option>貯蓄</option></select></label>
+					<label><?php esc_html_e( '口座番号', 'apprex' ); ?><input type="text" name="number" required inputmode="numeric" pattern="[0-9０-９]{6,8}" placeholder="例：1234567"></label>
+					<label><?php esc_html_e( '口座名義（カタカナ）', 'apprex' ); ?><input type="text" name="holder" required placeholder="例：カ）タナカウェブ"></label>
+					<label><?php esc_html_e( 'ログインのパスワード（確認のため）', 'apprex' ); ?><input type="password" name="pass" required autocomplete="current-password"></label>
+					<button type="submit" class="btn btn--primary"<?php echo isset( $_GET['as'] ) ? ' disabled' : ''; ?>><?php esc_html_e( '本部に送る', 'apprex' ); ?></button>
+				</form>
+				<p class="agp-small"><?php esc_html_e( '送った内容は、本部が確認してから反映します。変更すると、あなたのメールアドレスにもお知らせが届きます。お心当たりのない変更のお知らせが届いたら、すぐに本部へご連絡ください。', 'apprex' ); ?></p>
+			</details>
+		</div>
+
 		<p class="agp-small" style="text-align:center"><a href="<?php echo esc_url( wp_logout_url( apprex_agency_portal_url() ) ); ?>"><?php esc_html_e( 'ログアウト', 'apprex' ); ?></a></p>
 
 		<script src="<?php echo esc_url( APPREX_URI . '/assets/js/vendor/qrcode.js?ver=2.0.4' ); ?>"></script>
@@ -219,13 +255,15 @@ get_header();
 .agp .agp-stage--cancelled{background:#f3f4f6;color:#6b7280}
 .agp .agp-form{display:grid;gap:10px}
 .agp .agp-form label{display:grid;gap:4px;font-size:.85rem;font-weight:700;color:#0b1d3f}
-.agp .agp-form input,.agp .agp-form textarea{padding:10px 12px;border:1.5px solid #d6deec;border-radius:10px;font-size:.95rem;font-weight:400}
+.agp .agp-form input,.agp .agp-form textarea,.agp .agp-form select{padding:10px 12px;border:1.5px solid #d6deec;border-radius:10px;font-size:.95rem;font-weight:400}
 .agp .agp-docs{margin:0 0 12px;padding-left:1.2em;list-style:disc}
 .agp .agp-docs li{margin:6px 0}
 .agp .agp-ok{background:#e7f7ee;color:#13994a;padding:10px 12px;border-radius:10px}
 .agp .agp-warn{background:#fff8ed;color:#9a3412;padding:10px 12px;border-radius:10px}
 .agp .agp-note{background:#eef3ff;padding:8px 12px;border-radius:10px;font-size:.85rem}
 .agp .agp-login{max-width:520px;margin:0 auto}
+.agp .agp-bank{max-width:520px;margin-top:12px}
+.agp details summary{cursor:pointer;font-weight:700;color:#1c47c4}
 .agp .agp-login input[type=text],.agp .agp-login input[type=password]{width:100%;padding:10px 12px;border:1.5px solid #d6deec;border-radius:10px}
 .agp .agp-login .button{background:#ff6b1f;color:#fff;border:0;border-radius:999px;padding:12px 24px;font-weight:700;cursor:pointer}
 </style>

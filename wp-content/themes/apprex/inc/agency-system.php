@@ -656,7 +656,8 @@ function apprex_agency_pay_page() {
 		$paid = apprex_agency_paid( $a->ID );
 		$done = isset( $paid[ $ym ] ) ? $paid[ $ym ] : '';
 		$url  = wp_nonce_url( admin_url( 'admin-post.php?action=apprex_agency_pay&id=' . $a->ID . '&ym=' . $ym . '&on=' . ( $done ? 0 : 1 ) ), 'apprex_agency_pay_' . $a->ID );
-		echo '<tr><td><a href="' . esc_url( get_edit_post_link( $a->ID ) ) . '">' . esc_html( $a->post_title ) . '</a></td><td>' . esc_html( apprex_agency_types()[ $v['type'] ] ) . '</td><td>' . count( $cm['rows'] ) . '</td><td style="text-align:right"><b>' . esc_html( number_format( $cm['total'] ) ) . '円</b></td>';
+		$bk  = function_exists( 'apprex_agency_bank_pending' ) && apprex_agency_bank_pending( $a->ID ) ? '<br><span style="color:#b45309">振込先の変更確認待ち</span>' : '';
+		echo '<tr><td><a href="' . esc_url( get_edit_post_link( $a->ID ) ) . '">' . esc_html( $a->post_title ) . '</a>' . $bk . '</td><td>' . esc_html( apprex_agency_types()[ $v['type'] ] ) . '</td><td>' . count( $cm['rows'] ) . '</td><td style="text-align:right"><b>' . esc_html( number_format( $cm['total'] ) ) . '円</b></td>';
 		echo '<td>' . ( $done ? '支払い済み（' . esc_html( $done ) . '）<br><a href="' . esc_url( $url ) . '">取り消す</a>' : ( $cm['total'] > 0 ? '<a class="button button-small" href="' . esc_url( $url ) . '">支払い済みにする</a>' : '—' ) ) . '</td><td>';
 		if ( $cm['rows'] ) {
 			echo '<details><summary>' . count( $cm['rows'] ) . '件</summary><ul style="margin:6px 0">';
@@ -699,12 +700,12 @@ add_action( 'admin_post_apprex_agency_csv', function () {
 	header( 'Content-Disposition: attachment; filename="agency-commission-' . $ym . '.csv"' );
 	$out = fopen( 'php://output', 'w' );
 	fwrite( $out, "\xEF\xBB\xBF" );
-	fputcsv( $out, array( '対象月', '代理店', '代理店コード', 'お客様', '種別', '金額（税抜）', '報酬率(%)', '報酬（税抜）', '支払い' ) );
+	fputcsv( $out, array( '対象月', '代理店', '代理店コード', 'お客様', '種別', '金額（税抜）', '報酬率(%)', '報酬（税抜）', '支払い', '振込先' ) );
 	foreach ( get_posts( array( 'post_type' => 'apprex_agency', 'post_status' => 'any', 'numberposts' => 500 ) ) as $a ) {
 		$v    = apprex_agency_get( $a->ID );
 		$paid = apprex_agency_paid( $a->ID );
 		foreach ( apprex_agency_commission( $a->ID, $ym )['rows'] as $r ) {
-			fputcsv( $out, array( $ym, $a->post_title, $v['code'], $r['label'], $r['kind'], $r['base'], $r['rate'], $r['amount'], isset( $paid[ $ym ] ) ? '支払い済み ' . $paid[ $ym ] : '未払い' ) );
+			fputcsv( $out, array( $ym, $a->post_title, $v['code'], $r['label'], $r['kind'], $r['base'], $r['rate'], $r['amount'], isset( $paid[ $ym ] ) ? '支払い済み ' . $paid[ $ym ] : '未払い', $v['bank'] ) );
 		}
 	}
 	fclose( $out );
@@ -771,3 +772,122 @@ function apprex_agency_lead_submit() {
 	wp_safe_redirect( add_query_arg( 'lead', $clash ? 'clash' : 'ok', apprex_agency_portal_url() ) . '#lead' );
 	exit;
 }
+
+/* -------------------------------------------------------------------------
+ * 振込先：代理店が自分で入力 → 本部が確認して反映
+ * パスワードの再入力が必要。反映するまでは、今の振込先のまま。
+ * ---------------------------------------------------------------------- */
+
+/** 振込先の項目。 */
+function apprex_agency_bank_fields() {
+	return array(
+		'bank'   => '銀行名',
+		'branch' => '支店名',
+		'kind'   => '口座の種類',
+		'number' => '口座番号',
+		'holder' => '口座名義（カタカナ）',
+	);
+}
+
+/** 振込先を1行の文字に。 */
+function apprex_agency_bank_text( $b ) {
+	return trim( $b['bank'] . ' ' . $b['branch'] . ' ' . $b['kind'] . ' ' . $b['number'] . ' ' . $b['holder'] );
+}
+
+/** 口座番号の下3桁だけ見せる。 */
+function apprex_agency_bank_masked( $b ) {
+	$n = (string) ( isset( $b['number'] ) ? $b['number'] : '' );
+	return trim( $b['bank'] . ' ' . $b['branch'] . ' ' . $b['kind'] . ' ' . ( strlen( $n ) > 3 ? str_repeat( '＊', strlen( $n ) - 3 ) . substr( $n, -3 ) : $n ) . ' ' . $b['holder'] );
+}
+
+/** 確認待ちの振込先（無ければ空配列）。 */
+function apprex_agency_bank_pending( $aid ) {
+	$p = get_post_meta( $aid, 'apprex_ag_bank_pending', true );
+	return is_array( $p ) ? $p : array();
+}
+
+/** 反映済みの振込先（項目ごと）。 */
+function apprex_agency_bank_current( $aid ) {
+	$b = get_post_meta( $aid, 'apprex_ag_bank', true );
+	return is_array( $b ) ? $b : array();
+}
+
+/* 代理店：振込先の変更を受け付ける。 */
+add_action( 'admin_post_apprex_agency_bank', function () {
+	$aid = apprex_agency_for_user();
+	if ( ! $aid || ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'apprex_agency_bank' ) ) {
+		wp_die( '再読み込みしてからお試しください。' );
+	}
+	$back = apprex_agency_portal_url() . '#bank';
+	$user = wp_get_current_user();
+	$pass = isset( $_POST['pass'] ) ? (string) wp_unslash( $_POST['pass'] ) : '';
+	if ( ! wp_check_password( $pass, $user->user_pass, $user->ID ) ) {
+		wp_safe_redirect( add_query_arg( 'bank', 'pass', apprex_agency_portal_url() ) . '#bank' );
+		exit;
+	}
+	$b = array();
+	foreach ( apprex_agency_bank_fields() as $k => $l ) {
+		$b[ $k ] = isset( $_POST[ $k ] ) ? sanitize_text_field( wp_unslash( $_POST[ $k ] ) ) : '';
+	}
+	$b['kind']   = in_array( $b['kind'], array( '普通', '当座', '貯蓄' ), true ) ? $b['kind'] : '普通';
+	$b['number'] = preg_replace( '/\D/', '', mb_convert_kana( $b['number'], 'n' ) );
+	if ( '' === $b['bank'] || '' === $b['branch'] || '' === $b['holder'] || ! preg_match( '/^\d{6,8}$/', $b['number'] ) ) {
+		wp_safe_redirect( add_query_arg( 'bank', 'invalid', apprex_agency_portal_url() ) . '#bank' );
+		exit;
+	}
+	update_post_meta( $aid, 'apprex_ag_bank_pending', array_merge( $b, array( 't' => time(), 'ip' => isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '' ) ) );
+	$v  = apprex_agency_get( $aid );
+	$to = function_exists( 'apprex_notify_to' ) ? apprex_notify_to() : get_option( 'admin_email' );
+	apprex_agency_mail( $to, '[APPREX] 代理店の振込先の変更申請 — ' . $v['company'], "代理店「{$v['company']}（{$v['code']}）」から振込先の変更申請がありました。\n\n新しい振込先：" . apprex_agency_bank_masked( $b ) . "\n\n管理画面で内容を確認し、問題なければ「承認して反映」を押してください。念のため、代理店にお電話などで本人確認をしてから承認すると安全です。\n" . admin_url( 'post.php?post=' . $aid . '&action=edit' ) . "\n" );
+	if ( is_email( $v['email'] ) ) {
+		apprex_agency_mail( $v['email'], '【APPREX】振込先の変更を受け付けました', ( $v['contact'] ? $v['contact'] : $v['company'] ) . " 様\n\n振込先の変更を受け付けました。本部で確認したあとに反映します。反映するまでは、今の振込先にお振り込みします。\n\n新しい振込先：" . apprex_agency_bank_masked( $b ) . "\n\nお心当たりがない場合は、すぐに本部へご連絡ください。\n" );
+	}
+	wp_safe_redirect( add_query_arg( 'bank', 'ok', apprex_agency_portal_url() ) . '#bank' );
+	exit;
+} );
+
+/* 本部：振込先の変更を承認・却下。 */
+add_action( 'add_meta_boxes', function () {
+	add_meta_box( 'apprex_agency_bank', '振込先', function ( $post ) {
+		$cur = apprex_agency_bank_current( $post->ID );
+		$p   = apprex_agency_bank_pending( $post->ID );
+		$v   = apprex_agency_get( $post->ID );
+		echo '<p><b>今の振込先</b><br>' . esc_html( $cur ? apprex_agency_bank_text( $cur ) : ( $v['bank'] ? $v['bank'] : '（未登録）' ) ) . '</p>';
+		if ( $p ) {
+			echo '<div style="background:#fff8ed;border:1px solid #fed7aa;padding:8px 10px;border-radius:6px"><b>変更の申請（' . esc_html( wp_date( 'n/j H:i', (int) $p['t'] ) ) . '）</b><br>' . esc_html( apprex_agency_bank_text( $p ) ) . '</div>';
+			$ok = wp_nonce_url( admin_url( 'admin-post.php?action=apprex_agency_bank_review&id=' . $post->ID . '&do=approve' ), 'apprex_agency_bank_review_' . $post->ID );
+			$ng = wp_nonce_url( admin_url( 'admin-post.php?action=apprex_agency_bank_review&id=' . $post->ID . '&do=reject' ), 'apprex_agency_bank_review_' . $post->ID );
+			echo '<p><a class="button button-primary" href="' . esc_url( $ok ) . '">承認して反映</a> <a class="button" href="' . esc_url( $ng ) . '" onclick="return confirm(\'この申請を却下しますか？\')">却下</a></p>';
+			echo '<p class="description">口座の変更は、なりすましで報酬をだまし取る手口に使われることがあります。代理店に電話などで確認してから承認すると安全です。</p>';
+		} else {
+			echo '<p class="description">代理店が代理店専用ページで入力・変更します。変更の申請があると、ここで承認できます。上の「振込先」欄に本部が直接書くこともできます。</p>';
+		}
+	}, 'apprex_agency', 'side', 'default' );
+} );
+
+add_action( 'admin_post_apprex_agency_bank_review', function () {
+	$id = isset( $_GET['id'] ) ? absint( $_GET['id'] ) : 0;
+	if ( ! $id || ! current_user_can( 'edit_post', $id ) ) {
+		wp_die( '権限がありません。' );
+	}
+	check_admin_referer( 'apprex_agency_bank_review_' . $id );
+	$p = apprex_agency_bank_pending( $id );
+	$v = apprex_agency_get( $id );
+	if ( $p ) {
+		$name = $v['contact'] ? $v['contact'] : $v['company'];
+		if ( isset( $_GET['do'] ) && 'approve' === $_GET['do'] ) {
+			$b = array_intersect_key( $p, apprex_agency_bank_fields() );
+			update_post_meta( $id, 'apprex_ag_bank', $b );
+			$v['bank'] = apprex_agency_bank_text( $b );
+			update_post_meta( $id, 'apprex_ag', $v );
+			if ( is_email( $v['email'] ) ) {
+				apprex_agency_mail( $v['email'], '【APPREX】振込先の変更を反映しました', $name . " 様\n\n振込先の変更を反映しました。次回のお支払いから、新しい振込先にお振り込みします。\n\n振込先：" . apprex_agency_bank_masked( $b ) . "\n" );
+			}
+		} elseif ( is_email( $v['email'] ) ) {
+			apprex_agency_mail( $v['email'], '【APPREX】振込先の変更について', $name . " 様\n\n振込先の変更の申請を確認できなかったため、今回は反映していません。お手数ですが、本部までご連絡ください。今の振込先は変わっていません。\n" );
+		}
+		delete_post_meta( $id, 'apprex_ag_bank_pending' );
+	}
+	wp_safe_redirect( admin_url( 'post.php?post=' . $id . '&action=edit' ) );
+	exit;
+} );
