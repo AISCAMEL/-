@@ -26,8 +26,9 @@ add_action( 'init', function () {
 		apprex_migrate_lp_161();
 		apprex_migrate_posts_161();
 	}
-	if ( $v < 161 ) {
-		update_option( 'apprex_migrated', 161 );
+	if ( $v < 162 ) {
+		apprex_migrate_partner_page_162();
+		update_option( 'apprex_migrated', 162 );
 	}
 }, 20 );
 
@@ -205,5 +206,30 @@ function apprex_migrate_posts_161() {
 			$c .= $note;
 		}
 		apprex_migrate_save_content( $post, $c, '161' );
+	}
+}
+
+/* -------------------------------------------------------------------------
+ * v1.62.0：代理店募集ページ（/partner/）が無いサイトに作る
+ * ---------------------------------------------------------------------- */
+function apprex_migrate_partner_page_162() {
+	$page = get_page_by_path( 'partner' );
+	if ( $page && 'trash' !== $page->post_status ) {
+		if ( 'publish' !== $page->post_status ) {
+			wp_update_post( array( 'ID' => $page->ID, 'post_status' => 'publish' ) );
+		}
+		update_post_meta( $page->ID, '_wp_page_template', 'page-templates/page-partner.php' );
+		return;
+	}
+	$id = wp_insert_post(
+		array(
+			'post_type'   => 'page',
+			'post_status' => 'publish',
+			'post_title'  => '代理店募集',
+			'post_name'   => 'partner',
+		)
+	);
+	if ( $id && ! is_wp_error( $id ) ) {
+		update_post_meta( $id, '_wp_page_template', 'page-templates/page-partner.php' );
 	}
 }
