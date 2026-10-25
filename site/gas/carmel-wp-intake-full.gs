@@ -529,3 +529,9 @@ function sendGuarantorMail_(cfg, to, subject, body, fromName) {
   if (cfg.MAIL_FROM) options.from = cfg.MAIL_FROM;
   GmailApp.sendEmail(to, subject, body, options);
 }
+function TEST_thankyou() {
+  var cfg = getWpConfig_();
+  var rec = { name: 'テスト 太郎', email: 'carmelbuzzzzz@aisjaltd.com', store: resolveStore_('') };
+  sendApplicantThankYou_(cfg, rec);
+  Logger.log('送信しました → ' + rec.email + ' ／ MYPAGE_URL = ' + cfg.MYPAGE_URL);
+}
