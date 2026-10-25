@@ -37,6 +37,7 @@ var PAGE_LIST=[
   ['pedi','沿革','basic','history','','ページ作成 → 沿革','年表（年・出来事）'],
   ['store','店舗情報','basic','page','','ページ作成 → 店舗情報','営業時間・定休日・設備'],
   ['business','営業所','basic','page','','ページ作成 → 営業所','営業所の名前・住所・電話'],
+  ['shops','店舗一覧','basic','stores','multi','多店舗 → 店舗の登録（ビジネスプラン）','店舗ごとの名前・住所・営業時間・電話・写真'],
   ['access','アクセス','basic','access','access','ページ作成 → アクセス（最大5か所）','住所・地図・行き方'],
   ['newcoupon','NEWクーポン','promo','coupon','coupon','ページ作成 → NEWクーポン','クーポンの内容・期間・利用回数'],
   ['stamp','スタンプ','promo','card','stamp','ページ作成 → スタンプ','スタンプの数と特典'],
@@ -88,7 +89,7 @@ var PRESET={
 var PLANS={
   trial:{l:'トライアル',m:19800,days:'最短2週間',fit:'まず小さく始めたい',add:[]},
   start:{l:'スタート',m:39800,days:'最短2週間',fit:'カタログ・クーポンで集客',add:['catalog']},
-  biz:{l:'ビジネス',m:59800,days:'最短1ヶ月',fit:'多店舗・ECまで',add:['shopping_mall','business'],names:{business:'店舗一覧'}}
+  biz:{l:'ビジネス',m:59800,days:'最短1ヶ月',fit:'多店舗の展開・運用',add:['shops','shopping_mall']}
 };
 var PLAN_ORDER=['trial','start','biz'];
 /* 機能・ページに必要なもの：'trial'|'start'|'biz'（プラン）、'opt'（オプション）、'orig'（オリジナル開発）。 */

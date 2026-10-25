@@ -191,6 +191,12 @@ function apprex_demo_config( $token ) {
 		'url'       => apprex_demo_url( $token ),
 		'owner'     => get_current_user_id() === (int) $user->ID,
 		'app'       => is_array( $state ) && isset( $state['app'] ) ? apprex_demo_clean_app( $state['app'] ) : null,
+		'stores'    => is_array( $state ) && ! empty( $state['stores'] ) && 'biz' === ( isset( $state['tier'] ) ? $state['tier'] : '' ) ? array_map(
+			function ( $x ) {
+				return array( 'n' => mb_substr( sanitize_text_field( isset( $x['n'] ) ? (string) $x['n'] : '' ), 0, 20 ), 'a' => mb_substr( sanitize_text_field( isset( $x['a'] ) ? (string) $x['a'] : '' ), 0, 30 ) );
+			},
+			array_slice( (array) $state['stores'], 0, 60 )
+		) : null,
 		'preview'   => apprex_preview_app_links(),
 		'proto'     => $proto ? apprex_orig_sanitize( json_decode( (string) get_user_meta( $user->ID, 'apprex_orig_spec', true ), true ) ) : null,
 		'protoImages' => $proto && function_exists( 'apprex_orig_images_out' ) ? apprex_orig_images_out( $user->ID ) : null,

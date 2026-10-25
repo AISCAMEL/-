@@ -451,3 +451,14 @@
 .rn-studio .st-switch a:hover{background:var(--sky);color:var(--blue-d)}
 .rn-studio .st-switch span.on{background:var(--navy);color:#fff}
 @media(max-width:900px){.rn-studio .st-switch{display:flex;flex-wrap:nowrap;align-items:center;margin-top:0;padding:6px 8px;flex:0 0 auto}.rn-studio .st-switch b{display:none}.rn-studio .st-switch a,.rn-studio .st-switch span{white-space:nowrap}}
+/* 多店舗（ビジネスプラン） */
+.rn-studio .st-rows{display:grid;gap:6px}
+.rn-studio .st-row{display:grid;grid-template-columns:24px minmax(0,1fr) minmax(0,1.2fr) 30px;gap:6px;align-items:center}
+.rn-studio .st-row input{padding:8px 10px;border:1.5px solid var(--line);border-radius:10px;font-size:.88rem;min-width:0}
+.rn-studio .st-row button{border:1px solid var(--line);background:#fff;border-radius:8px;height:32px;cursor:pointer;color:var(--muted)}
+.rn-studio .st-row button:disabled{opacity:.4;cursor:not-allowed}
+.rn-studio .st-no{font-family:var(--f-num);font-weight:800;color:var(--muted);text-align:center;font-size:.85rem}
+@media(max-width:560px){.rn-studio .st-row{grid-template-columns:22px minmax(0,1fr) 30px}.rn-studio .st-row input[data-sf=a]{grid-column:2/3}}
+.rn-studio .s-mystore{margin:.6em .9em 0;background:#fff;border-radius:var(--r);padding:.55em .8em;font-size:.82em;display:flex;align-items:center;gap:.4em;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.rn-studio .s-mystore b{color:var(--c1)}
+.rn-studio .s-mystore span{margin-left:auto;color:var(--c2);font-weight:700;font-size:.9em}

@@ -127,7 +127,45 @@ function setTier(t){
     S.app.footer=DATA.fixFooter(S.app.footer,S.app.menu);
     FEAT.forEach(function(f){ if(f.t==='std'&&!inPlan(f.tier||'trial',t)){ delete S.feat[f.k]; } });
   }
+  if(t==='biz'){ storesInit(); }
   S.vers.push({n:S.vers.length+1,note:'プランを「'+PLANS[t].l+'」に変更'+(added.length?'（'+added.join('・')+'を追加）':'')});
+}
+/* ---------- 多店舗（ビジネスプラン） ---------- */
+var STORE_FREE=20, STORE_FEE=10000;
+function storesInit(){ if(!S.stores||!S.stores.length){ S.stores=[{n:'本店',a:''},{n:'駅前店',a:''},{n:'〇〇店',a:''}]; } if(!S.storeOps){ S.storeOps={pt:'common'}; } }
+function storeNames(){ return (S.stores||[]).map(function(x){return (x.n||'').trim();}).filter(Boolean); }
+function storeCount(){ return Math.max(1,storeNames().length); }
+function storeBox(){
+  if(S.tier!=='biz') return '';
+  storesInit();
+  var n=storeCount(), extra=Math.max(0,n-STORE_FREE);
+  var rows=S.stores.map(function(x,i){return '<div class="st-row"><span class="st-no">'+(i+1)+'</span><input type="text" data-store="'+i+'" data-sf="n" value="'+esc(x.n)+'" maxlength="20" placeholder="店舗名" aria-label="店舗名"><input type="text" data-store="'+i+'" data-sf="a" value="'+esc(x.a||'')+'" maxlength="30" placeholder="エリア・住所（任意）" aria-label="エリア"><button type="button" data-store-rm="'+i+'" aria-label="この店舗を外す"'+(S.stores.length<=2?' disabled':'')+'>✕</button></div>';}).join('');
+  return '<div class="st-box"><div class="sec-t" style="margin-top:14px">店舗（ビジネスプラン・'+n+'店舗）</div><p class="hint">アプリに載せる店舗を入れてください。店舗一覧・店舗ごとの配信・本部と店舗の管理アカウントを、この店舗数で作ります。</p>'
+    +'<div class="st-rows">'+rows+'</div><div class="acts" style="margin-top:8px"><button type="button" class="btn btn--line btn--sm" data-store-add="1"'+(S.stores.length>=60?' disabled':'')+'>＋ 店舗を追加</button></div>'
+    +'<div class="field" style="margin-top:10px"><label for="storePt">ポイント・スタンプ・会員証</label><select id="storePt"><option value="common"'+(S.storeOps.pt==='common'?' selected':'')+'>全店共通（どの店舗でも貯まる・使える）</option><option value="each"'+(S.storeOps.pt==='each'?' selected':'')+'>店舗ごと（店舗別に貯める）</option></select></div>'
+    +(extra?'<p class="warn" style="margin-top:8px">'+STORE_FREE+'店舗までは月額に含まれます。'+(STORE_FREE+1)+'店舗目からは1店舗ごとに月額'+YEN(STORE_FEE)+'かかります（今は+'+YEN(extra*STORE_FEE)+'）。</p>':'<p class="hint">'+STORE_FREE+'店舗まで月額に含まれます（'+(STORE_FREE+1)+'店舗目からは1店舗ごとに月額+'+YEN(STORE_FEE)+'）。</p>')+'</div>';
+}
+/* ビジネスプランで制作する項目（多店舗の運用）。 */
+function bizItems(){
+  var n=storeCount(), has=function(k){return S.app.menu.indexOf(k)>-1;};
+  var out=[
+    ['店舗一覧・店舗ページ',n+'店舗分。住所・営業時間・電話・地図・写真を店舗ごとに掲載'],
+    ['いつもの店舗（お気に入り）','お客様が選んだ店舗のお知らせ・クーポンをホームで優先して表示'],
+    ['店舗ごとの配信','お知らせ・クーポン・プッシュ通知を、全店／店舗／エリアを選んで配信'],
+    ['会員証・ポイント・スタンプ',S.storeOps&&S.storeOps.pt==='each'?'店舗ごとに貯める（店舗別の特典）':'全店共通で貯まる・使える']
+  ];
+  if(has('reser')) out.push(['予約','店舗を選んでから日時を予約。予約の枠は店舗ごとに設定']);
+  if(has('shopping_mall')||has('shop')||has('takeout')) out.push(['ネットショップ・モバイルオーダー','受け取る店舗を選んで注文']);
+  out.push(['本部と店舗の管理アカウント','本部は全店、店舗スタッフは自分の店舗だけを更新できるように分ける']);
+  out.push(['店舗別の集計','会員数・クーポン利用・予約などを店舗ごとに確認']);
+  out.push(['新店舗の追加・運用マニュアル','開店・閉店のときに本部で店舗を追加・非公開にする手順書と、店舗スタッフ向けの使い方の説明']);
+  return out;
+}
+function bizCard(){
+  if(S.tier!=='biz') return '';
+  storesInit();
+  return '<div class="card" style="margin-top:18px"><div class="sec-t">多店舗の運用（ビジネスプランで制作する項目）</div>'+tbl(['制作する項目','内容'],bizItems().map(function(r){return ['<b>'+esc(r[0])+'</b>',esc(r[1])];}))
+    +'<p class="hint" style="margin-top:8px">店舗：'+storeNames().map(esc).join('・')+'　<button type="button" class="linkbtn" data-view="design">店舗を編集</button><br>管理画面での具体的な設定方法と、店舗数が多い場合の登録作業は、ミーティングで確認してお見積りします。</p></div>';
 }
 function planPick(){
   return '<div class="plans tiers" role="radiogroup" aria-label="プラン">'+DATA.PLAN_ORDER.map(function(k){ var P=PLANS[k]; return '<label class="pl"><input type="radio" name="tier" data-tier="'+k+'"'+(S.tier===k?' checked':'')+'><b>'+P.l+'</b><span class="pm">月額 '+YEN(P.m)+'</span><span>初期費用15万円〜・'+P.days+'</span><small>'+P.fit+'</small></label>'; }).join('')+'</div>';
@@ -228,7 +266,7 @@ function phone(screen,small){
   var tabs=function(on){var a=(S.app&&S.app.footer&&S.app.footer.length)?S.app.footer.slice(0,4).map(function(k){return pageName(S.app,k);}):['ホーム','クーポン','予約','会員証']; on=on===0?0:-1;return '<div class="s-tab">'+a.map(function(x,i){return '<span'+(i===on?' class="on"':'')+'>'+x+'</span>';}).join('')+'</div>';};
   var body='';
   if(screen==='home'){
-    var res=S.d.resBig?'<div class="s-res">今すぐ予約する</div>':'';
+    var res=(S.d.resBig?'<div class="s-res">今すぐ予約する</div>':'')+(S.tier==='biz'?'<div class="s-mystore">いつもの店舗：<b>'+esc(storeNames()[0]||'本店')+'</b><span>店舗を変える ›</span></div>':'');
     if(S.d.variant==='B'){
       body=hero+res+'<div class="s-list">'+d.menus.map(function(m){return '<div class="s-li"><i>'+esc(m.charAt(0))+'</i>'+esc(m)+'<span>›</span></div>';}).join('')+'</div>';
     }else if(S.d.variant==='C'){
@@ -241,7 +279,7 @@ function phone(screen,small){
     if(S.tier==='start'){
       body='<div class="s-h">カタログ</div><div class="s-cats">'+['最新号','おすすめ特集','季節の限定','総合カタログ'].map(function(c,i){return '<div class="s-cat"><i'+(i===0&&IMG.photo?' style="background-image:url('+IMG.photo+')"':'')+'><em>'+esc(storeName())+'</em></i><b>'+c+'</b><small>'+(12+i*8)+'ページ</small></div>';}).join('')+'</div>'+tabs(-1);
     }else if(S.tier==='biz'){
-      body='<div class="s-h">ネットショップ</div><div class="s-stores">'+['本店','駅前店','オンライン'].map(function(x,i){return '<span'+(i===0?' class="on"':'')+'>'+x+'</span>';}).join('')+'</div>'+d.items.slice(0,3).map(function(it){return '<div class="s-item"><i></i><div><b>'+esc(it[0])+'</b><span>'+esc(it[1])+'</span></div><em class="s-cart">カート</em></div>';}).join('')+tabs(-1);
+      body='<div class="s-h">ネットショップ</div><div class="s-stores">'+storeNames().slice(0,2).concat(['オンライン']).map(function(x,i){return '<span'+(i===0?' class="on"':'')+'>'+x+'</span>';}).join('')+'</div>'+d.items.slice(0,3).map(function(it){return '<div class="s-item"><i></i><div><b>'+esc(it[0])+'</b><span>'+esc(it[1])+'</span></div><em class="s-cart">カート</em></div>';}).join('')+tabs(-1);
     }else{
       body='<div class="s-h">メニュー</div>'+d.items.map(function(it){return '<div class="s-item"><i></i><div><b>'+esc(it[0])+'</b><span>'+esc(it[1])+'</span></div></div>';}).join('')+tabs(-1);
     }
@@ -281,7 +319,8 @@ function estimate(){
     if(f.t==='orig'){orig.push(f);} else if(f.t==='opt'){opt+=f.p;} else if(inPlan(f.tier||'trial',tier)){std++;}
   });
   var match=!!S.feat.match;
-  return {tier:tier,monthly:TIERS[tier][1],tierName:TIERS[tier][0],opt:opt,orig:orig,match:match,std:std,rec:orig.length?'orig':'full'};
+  var nst=tier==='biz'?(S.stores?storeCount():3):0, sfee=tier==='biz'?Math.max(0,nst-STORE_FREE)*STORE_FEE:0;
+  return {stores:nst,storeFee:sfee,tier:tier,monthly:TIERS[tier][1]+sfee,tierName:TIERS[tier][0]+(tier==='biz'?'・'+nst+'店舗':''),opt:opt,orig:orig,match:match,std:std,rec:orig.length?'orig':'full'};
 }
 
 /* ---------- views ---------- */
@@ -301,7 +340,7 @@ function vDesign(){
     +'<div class="sec-t"><i>1</i>お店の情報</div>'
     +'<div class="row2"><div class="field"><label for="f-ind">業種</label><select id="f-ind">'+inds+'</select></div><div class="field"><label for="f-name">店名・サービス名</label><input type="text" id="f-name" maxlength="24" value="'+esc(S.d.name)+'" placeholder="例：'+esc(d.name)+'"></div></div>'
     +'<div class="row2"><div class="field"><label for="f-goal">目的</label><select id="f-goal">'+goals+'</select></div><div class="field"><label for="f-target">お客様の層</label><input type="text" id="f-target" value="'+esc(S.d.target)+'"></div></div>'
-    +'<div class="sec-t"><i>2</i>プラン</div><p class="hint">選んだプランの機能だけで画面を作ります。上のプランにすると、カタログやネットショップの画面が増えます。</p>'+planPick()
+    +'<div class="sec-t"><i>2</i>プラン</div><p class="hint">選んだプランの機能だけで画面を作ります。上のプランにすると、カタログや店舗一覧・ネットショップの画面が増えます。</p>'+planPick()+storeBox()
     +'<div class="sec-t"><i>3</i>雰囲気と色</div>'
     +'<div class="field"><div class="chips">'+tones+'</div></div>'
     +'<div class="field"><div class="chips" style="align-items:center">'+col+'<span class="colorpick"><input type="color" id="f-custom" value="'+(S.d.custom||p[1])+'" aria-label="好きな色を選ぶ">好きな色</span></div><span style="font-weight:500">選択中：'+esc(p[2])+'</span></div>'
@@ -321,7 +360,8 @@ function vDesign(){
 function specText(){
   var e=estimate(), d=D();
   var on=FEAT.filter(function(f){return S.feat[f.k];}).map(function(f){return '・'+f.n+(f.t==='orig'?'（オリジナル開発）':f.t==='opt'?'（オプション）':'');}).join('\n');
-  return '【アプリ仕様書（AI作成）】\nアプリ名：'+storeName()+'\n業種：'+d.l+'\n目的：'+S.d.goal+'\nお客様の層：'+S.d.target+'\nデザイン：'+TONES[S.d.tone].n+' / '+palette()[2]+' / 案'+S.d.variant+'\nフッター横メニュー：'+S.app.footer.map(function(k){return pageName(S.app,k);}).join('／')+'\n縦メニュー（表示順）：'+S.app.menu.map(function(k){return pageName(S.app,k)+(S.app.names[k]?'（'+PAGES[k].l+'）':'');}).join('、')+'\n機能：\n'+on+'\n想定プラン：'+(e.orig.length?'オリジナル開発（個別見積り）':e.tierName+'プラン 月額'+YEN(e.monthly))+propText();
+  var bzt=S.tier==='biz'?'\n店舗（'+e.stores+'店舗）：'+storeNames().join('、')+'\nポイント・スタンプ：'+(S.storeOps&&S.storeOps.pt==='each'?'店舗ごと':'全店共通')+'\n多店舗で制作する項目：\n'+bizItems().map(function(r){return '・'+r[0]+'：'+r[1];}).join('\n'):'';
+  return '【アプリ仕様書（AI作成）】\nアプリ名：'+storeName()+'\n業種：'+d.l+'\n目的：'+S.d.goal+'\nお客様の層：'+S.d.target+'\nデザイン：'+TONES[S.d.tone].n+' / '+palette()[2]+' / 案'+S.d.variant+'\nフッター横メニュー：'+S.app.footer.map(function(k){return pageName(S.app,k);}).join('／')+'\n縦メニュー（表示順）：'+S.app.menu.map(function(k){return pageName(S.app,k)+(S.app.names[k]?'（'+PAGES[k].l+'）':'');}).join('、')+'\n機能：\n'+on+'\n想定プラン：'+(e.orig.length?'オリジナル開発（個別見積り）':e.tierName+'プラン 月額'+YEN(e.monthly))+propText()+bzt;
 }
 
 /* ---------- アプリのメニュー（基盤のメニュー設定と同じ構成） ---------- */
@@ -347,7 +387,8 @@ function docSheet(){
   var push=tbl(['管理画面','最初の設定'],[['プッシュ通知','公開日に「'+esc(storeName())+'のアプリができました」、翌週に「'+esc(cp[0])+'」のお知らせ'],['ポップアップ','初回起動時に「'+esc(cp[0])+'（'+esc(cp[1])+'）」を表示']].concat(A.menu.indexOf('reser')>-1?[['予約管理','予約メニュー・受付時間・枠数を登録']]:[]));
   var store=tbl(['管理画面','内容'],[['アプリ申請','アプリ名「'+esc(storeName())+'」、カテゴリ、スクリーンショット、プライバシーポリシーURL'],['ASO（ストア掲載文）','「'+esc(D().catch)+'」を軸に、'+esc(D().l)+'・地域名・主な機能（'+A.menu.slice(0,4).map(function(k){return esc(pageName(A,k));}).join('・')+'）を入れて作成']]);
   var body='<h2 class="dh"><span>1</span>基本設定</h2>'+basic+'<h2 class="dh"><span>2</span>デザイン</h2>'+design+'<h2 class="dh"><span>3</span>メニュー設定</h2><div class="two-doc">'+foot+'<div></div></div>'+menu;
-  var body2='<h2 class="dh"><span>4</span>ページ作成</h2>'+pages+'<h2 class="dh"><span>5</span>配信・予約</h2>'+push+'<h2 class="dh"><span>6</span>アプリ申請・ASO</h2>'+store+'<p class="dnote">この設定シートは、APPREX管理画面のメニュー名に合わせています。制作では担当者がこのシートをもとに設定します。</p>';
+  var shopsH=S.tier==='biz'?'<h2 class="dh"><span>7</span>多店舗 → 店舗の登録（'+storeCount()+'店舗）</h2>'+tbl(['No','店舗名','エリア・住所','準備するもの'],S.stores.filter(function(x){return (x.n||'').trim();}).map(function(x,i){return [String(i+1),esc(x.n),esc(x.a||''),'住所・営業時間・電話・写真'];}))+tbl(['管理画面','設定する内容'],[['管理アカウント','本部（全店）と、店舗ごとのスタッフ用アカウント'],['配信の対象','お知らせ・クーポン・プッシュ通知の配信先（全店／店舗／エリア）'],['ポイント・スタンプ',S.storeOps.pt==='each'?'店舗ごとに設定':'全店共通で設定']]):'';
+  var body2='<h2 class="dh"><span>4</span>ページ作成</h2>'+pages+'<h2 class="dh"><span>5</span>配信・予約</h2>'+push+'<h2 class="dh"><span>6</span>アプリ申請・ASO</h2>'+store+shopsH+'<p class="dnote">この設定シートは、APPREX管理画面のメニュー名に合わせています。制作では担当者がこのシートをもとに設定します。</p>';
   return paper('<span class="kind">設定シート（APPREX管理画面）</span><h1 class="sheet-h">'+esc(storeName())+'</h1>'+body,1,2)+paper(body2,2,2);
 }
 
@@ -449,7 +490,7 @@ function origText(){
 function docReq(){
   var today2=today(), cover=function(name,kind){ return '<span class="kind">アプリ仕様定義書</span><h1 class="sheet-h">'+esc(name)+'</h1><dl class="dkv"><dt>種別</dt><dd>'+kind+'</dd><dt>作成日</dt><dd>'+today2+'</dd><dt>作成</dt><dd>APPREX AIスタジオ（AI作成・たたき台）</dd></dl>'; };
   var note='<p class="dnote">この仕様定義書はAIが作成したたたき台です。内容・金額・期間は、オンラインミーティングで確認して確定します。</p>';
-  if(ORIG&&(S._reqMode!=='base')){
+  if(ORIG&&MODE!=='app'){
     var P=ORIG, E=estOrig(P), n=0, sec=function(t){ n++; return '<h2 class="dh"><span>'+n+'</span>'+t+'</h2>'; };
     var p1=cover(P.name,'オリジナルアプリ（iOS・Android）')+sec('概要')+'<p>'+esc(P.summary)+'</p>'+(P.idea?'<p class="dnote">ご希望：'+esc(P.idea)+'</p>':'')
       +sec('目的と指標')+'<div class="two-doc">'+tbl(['目的'],P.goals.map(function(g){return [esc(g)];}))+tbl(['効果を測る指標'],P.kpi.map(function(g){return [esc(g)];}))+'</div>'
@@ -465,22 +506,23 @@ function docReq(){
     var p5=sec('進め方とスケジュール（目安）')+tbl(['工程','内容'],[['1. 要件確定','ミーティングで仕様定義書を確定（1〜2週間）'],['2. 設計・デザイン','画面デザインとデータ設計'],['3. 開発','MVPの機能を開発（iOS・Android同時）'],['4. テスト','テスト版をお手元のスマホで確認'],['5. 申請・公開','App Store・Google Play の審査（1〜2週間）']])+'<p class="dnote">期間の目安：約'+E.weeks+'週間</p>'
       +sec('概算の目安（MVP・税抜）')+tbl(['作業','人日'],E.rows.map(function(r){return [esc(r[0]),String(r[1])];}).concat([['<b>合計</b>','<b>'+E.days+'人日</b>']]))+'<p><b>'+esc(E.man(E.lo))+'〜'+esc(E.man(E.hi))+'</b>'+(E.later?'　／　将来の機能（参考）：約'+esc(E.man(Math.round(E.laterYen/100000)*100000)):'')+'</p>'
       +sec('確認事項（見積りの前に）')+'<ul class="dl">'+P.questions.map(function(q){return '<li>'+esc(q)+'</li>';}).join('')+'</ul>'+note;
-    return '<div class="acts" style="margin:0 0 10px"><button type="button" class="btn btn--line btn--sm" data-reqmode="base">基盤（ノーコード）の仕様定義書を見る</button></div>'+paper(p1,1,5,'cover')+paper(p2,2,5)+paper(p3,3,5)+paper(p4,4,5)+paper(p5,5,5);
+    return paper(p1,1,5,'cover')+paper(p2,2,5)+paper(p3,3,5)+paper(p4,4,5)+paper(p5,5,5);
   }
   // 基盤（ノーコード）版
   var A=S.app, e=estimate(), m=0, sec2=function(t){ m++; return '<h2 class="dh"><span>'+m+'</span>'+t+'</h2>'; };
   var pages=A.menu.map(function(k){return PAGES[k];});
   var b1=cover(storeName(),'APPREXの基盤（ノーコード）・iOS・Android')+sec2('概要')+'<p>'+esc(storeName())+'（'+esc(D().l)+'）の公式アプリ。「'+esc(D().catch)+'」</p>'
     +sec2('目的と対象')+tbl(['項目','内容'],[['目的',esc(S.d.goal)],['お客様の層',esc(S.d.target)]])
-    +sec2('利用者と権限')+tbl(['利用者','できること'],[['<b>お客様</b>','アプリでクーポン・予約・会員証などを使う'],['<b>店舗スタッフ</b>','管理画面でお知らせ・クーポン・予約を管理する'],['<b>APPREX</b>','制作・ストア申請・保守']]);
-  var b2=sec2('機能一覧')+tbl(['No','ページ（表示名）','管理画面','実現方法'],pages.map(function(p,i){return [String(i+1),'<b>'+esc(pageName(A,p.k))+'</b>',esc(p.admin),'APPREXの基盤'];}).concat(FEAT.filter(function(f){return S.feat[f.k]&&f.t!=='std';}).map(function(f){return ['＋','<b>'+esc(f.n)+'</b>',f.t==='opt'?'オプション':'個別開発',esc(f.d)];})))
+    +sec2('利用者と権限')+tbl(['利用者','できること'],[['<b>お客様</b>','アプリでクーポン・予約・会員証などを使う'],(S.tier==='biz'?['<b>本部</b>','全店舗のお知らせ・クーポン・配信・集計を管理し、店舗を追加する']:null),['<b>店舗スタッフ</b>',S.tier==='biz'?'自分の店舗のお知らせ・クーポン・予約だけを管理する':'管理画面でお知らせ・クーポン・予約を管理する'],['<b>APPREX</b>','制作・ストア申請・保守']].filter(Boolean));
+  var bz=S.tier==='biz'?sec2('多店舗の運用（'+e.stores+'店舗）')+tbl(['制作する項目','内容'],bizItems().map(function(r){return ['<b>'+esc(r[0])+'</b>',esc(r[1])];}))+tbl(['No','店舗名','エリア・住所'],S.stores.filter(function(x){return (x.n||'').trim();}).map(function(x,i){return [String(i+1),esc(x.n),esc(x.a||'（制作時に確認）')];})):'';
+  var b2=bz+sec2('機能一覧')+tbl(['No','ページ（表示名）','管理画面','実現方法'],pages.map(function(p,i){return [String(i+1),'<b>'+esc(pageName(A,p.k))+'</b>',esc(p.admin),'APPREXの基盤'];}).concat(FEAT.filter(function(f){return S.feat[f.k]&&f.t!=='std';}).map(function(f){return ['＋','<b>'+esc(f.n)+'</b>',f.t==='opt'?'オプション':'個別開発',esc(f.d)];})))
     +sec2('画面一覧と遷移')+tbl(['画面','開き方'],[['<b>ホーム</b>','起動時・下のタブ']].concat(pages.map(function(p,i){return ['<b>'+esc(pageName(A,p.k))+'</b>',(i<6?'ホームのボタン・':'')+(A.footer.indexOf(p.k)>-1?'下のタブ・':'')+'☰ の縦メニュー'];})));
   var b3=sec2('画面ごとの仕様')+tbl(['画面','内容','準備するもの'],pages.map(function(p){return ['<b>'+esc(pageName(A,p.k))+'</b>',esc(p.l)+'（'+esc(GROUPS[p.g])+'）',esc(p.prep)];}))
     +sec2('デザイン')+tbl(['項目','内容'],[['レイアウト','案'+S.d.variant],['雰囲気',TONES[S.d.tone].n],['メインカラー',esc(palette()[1])],['ロゴ・写真',IMG.logo||IMG.photo?'AIスタジオでアップロード済み':'ご用意ください']])
     +sec2('非機能要件')+'<ul class="dl"><li>iOS・Android 両対応、App Store・Google Play で公開</li><li>プッシュ通知は回数無制限</li><li>管理画面（Web）から内容を更新</li><li>プレビューアプリで公開前に実機確認</li></ul>'
     +sec2('スケジュールと費用（目安）')+tbl(['項目','内容'],[['公開まで','最短2週間（ストア審査を含む）'],['月額','（'+esc(e.tierName)+'プラン）'+YEN(e.monthly)+(e.opt?'＋オプション '+YEN(e.opt):'')],['初期費用','150,000円〜（AIスタジオで作った内容から制作。1からは300,000円〜）'],['アプリ登録費','55,000円']])
     +sec2('確認事項')+'<ul class="dl"><li>ロゴ・写真・文章などの素材</li><li>ストアの開発者アカウント</li><li>公開したい日</li></ul>'+note;
-  return (ORIG?'<div class="acts" style="margin:0 0 10px"><button type="button" class="btn btn--line btn--sm" data-reqmode="orig">オリジナルアプリの仕様定義書を見る</button></div>':'')+paper(b1,1,3,'cover')+paper(b2,2,3)+paper(b3,3,3);
+  return paper(b1,1,3,'cover')+paper(b2,2,3)+paper(b3,3,3);
 }
 
 /* ---------- デモアプリ（実際に触れる） ---------- */
@@ -503,12 +545,12 @@ function vSpec(){
   var e=estimate();
   var groups=[['std','標準機能（プランに含まれます）'],['opt','オプション'],['orig','オリジナル開発が必要な機能']];
   var feats=groups.map(function(g){return '<div class="sec-t" style="margin-top:12px">'+g[1]+'</div><div class="feat">'+FEAT.filter(function(f){return f.t===g[0];}).map(function(f){var lock=f.t==='std'&&!inPlan(f.tier||'trial',S.tier); return '<label class="fitem'+(lock?' lock':'')+'"><input type="checkbox" data-feat="'+f.k+'"'+(S.feat[f.k]&&!lock?' checked':'')+(lock?' disabled':'')+'><span>'+esc(f.n)+'<span class="tag t-'+f.t+'">'+(f.t==='std'?'標準':f.t==='opt'?'オプション':'独自開発')+'</span><small>'+(lock?'「'+PLANS[f.tier].l+'」プランにすると使えます':esc(f.d))+'</small></span></label>';}).join('')+'</div>';}).join('');
-  var mats=[[!!IMG.logo,'ロゴ画像'],[!!IMG.photo,'メイン写真'],[true,'メニュー・商品の情報（AIのたたき台あり）'],[true,'店舗情報（住所・営業時間）'],[false,'アプリの説明文（ストア掲載用）'],[false,'Apple・Googleの開発者アカウント（取得はAPPREXがサポート）']];
+  var mats=(S.tier==='biz'?[[false,'店舗ごとの情報（'+e.stores+'店舗分：住所・営業時間・電話・写真）'],[false,'本部と店舗の担当者（管理アカウントを作る人）']]:[]).concat([[!!IMG.logo,'ロゴ画像'],[!!IMG.photo,'メイン写真'],[true,'メニュー・商品の情報（AIのたたき台あり）'],[true,'店舗情報（住所・営業時間）'],[false,'アプリの説明文（ストア掲載用）'],[false,'Apple・Googleの開発者アカウント（取得はAPPREXがサポート）']]);
   var matsH='<ul class="mats">'+mats.map(function(m){return '<li class="'+(m[0]?'ok':'')+'"><b>'+(m[0]?'✓':'')+'</b>'+m[1]+'</li>';}).join('')+'</ul>';
   var rows=scr().map(function(s){return '<tr><td>'+s[1]+'</td><td>'+({home:'メインビジュアル、メニュー、クーポン案内',menu:S.tier==='biz'?'店舗の切り替え、商品とカート':S.tier==='start'?'電子カタログ（冊子をめくって読める）':'商品の写真・名前・価格',coupon:'配布中のクーポン一覧',reserve:'日付と時間を選んで予約',card:'会員番号・ポイント'}[s[0]])+'</td></tr>';}).join('');
   var full='初期 150,000円〜<small>AIスタジオで作った内容から制作（1からは300,000円〜）</small>';
   var est='<div class="est">'
-    +'<div class="estc'+(e.rec==='full'?' recm':'')+'">'+(e.rec==='full'?'<span class="bd">おすすめ</span>':'')+'<h4>ノーコード（AIスタジオから制作）</h4><div class="big">'+full+'</div><p>月額 '+YEN(e.monthly)+'（'+e.tierName+'）'+(e.opt?'＋オプション '+YEN(e.opt):'')+'</p><p>公開まで：3〜4週間</p></div>'
+    +'<div class="estc'+(e.rec==='full'?' recm':'')+'">'+(e.rec==='full'?'<span class="bd">おすすめ</span>':'')+'<h4>ノーコード（AIスタジオから制作）</h4><div class="big">'+full+'</div><p>月額 '+YEN(e.monthly)+'（'+e.tierName+'）'+(e.opt?'＋オプション '+YEN(e.opt):'')+'</p><p>公開まで：'+(e.tier==='biz'?'4週間〜（店舗数による）':'3〜4週間')+'</p></div>'
     +'<div class="estc'+(e.rec==='orig'?' recm':'')+'">'+(e.rec==='orig'?'<span class="bd">おすすめ</span>':'')+'<h4>オリジナル開発</h4><div class="big">'+(e.match?'300万円〜':'個別見積り')+'</div><p>'+(e.match?'月額保守 7万円〜':'ミーティングで正式にお見積り')+'</p><p>公開まで：3ヶ月〜</p></div>'
     +'</div><p style="font-size:.78rem;color:var(--muted);margin:8px 0 0">税抜。アプリストア登録費（一律55,000円）が別途かかります。正式な金額はオンラインミーティングでお出しします。</p>';
   var note=e.orig.length?'<div class="warn" style="margin-top:12px">「'+e.orig.map(function(f){return f.n;}).join('」「')+'」はオリジナル開発になります。ミーティングで最適な作り方をご提案します。</div>':'';
@@ -516,7 +558,7 @@ function vSpec(){
   +'<div class="grid2"><div class="card"><div class="sec-t">概要</div><dl class="kv"><dt>アプリ名</dt><dd>'+esc(storeName())+'</dd><dt>業種</dt><dd>'+D().l+'</dd><dt>目的</dt><dd>'+esc(S.d.goal)+'</dd><dt>お客様</dt><dd>'+esc(S.d.target)+'</dd><dt>デザイン</dt><dd>'+TONES[S.d.tone].n+'／'+esc(palette()[2])+'／案'+S.d.variant+'（版'+S.vers.length+'）</dd></dl>'
   +'<div class="sec-t" style="margin-top:16px">画面一覧</div><div class="tbl fit"><table><thead><tr><th>画面</th><th>内容</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'
   +'<div class="card"><div class="sec-t">用意するもの</div>'+matsH+'<div class="sec-t" style="margin-top:16px">概算</div>'+est+note+'</div></div>'
-  +'<div class="card" style="margin-top:18px"><div class="sec-t">プラン</div><p class="hint">月額のプランを選びます。オプションと独自開発の機能は、チェックしたときだけ概算に入ります。</p>'+planPick()+'<div class="sec-t" style="margin-top:16px">機能一覧</div>'+feats+'</div>';
+  +'<div class="card" style="margin-top:18px"><div class="sec-t">プラン</div><p class="hint">月額のプランを選びます。オプションと独自開発の機能は、チェックしたときだけ概算に入ります。</p>'+planPick()+'<div class="sec-t" style="margin-top:16px">機能一覧</div>'+feats+'</div>'+bizCard();
 }
 
 
@@ -529,6 +571,7 @@ function paper(inner,no,total,cls){ return '<section class="paper'+(cls?' '+cls:
 function sched(){
   var e=estimate();
   if(e.orig.length) return [['1ヶ月目','要件定義・画面設計（動く試作で確認）'],['2ヶ月目','開発（アプリ・管理画面・サーバー）'],['3ヶ月目','テスト・修正・ストア申請'],['3ヶ月目以降','公開・運営と改善']];
+  if(e.tier==='biz') return [['1週目','キックオフ・デザインと店舗情報の確定'],['2〜3週目','制作と全店舗の登録'],['3〜4週目','本部・店舗アカウントの設定、テスト版の確認・ストア申請'],['4週目〜','公開・店舗スタッフ向けの使い方説明・3ヶ月の運用サポート']];
   return [['1週目','キックオフ・デザインの確定'],['2〜3週目','制作と登録'],['3〜4週目','テスト版の確認・ストア申請'],['4週目〜','公開・3ヶ月の運用サポート']];
 }
 function costRows(){
@@ -595,7 +638,7 @@ function proposals(){
   out.push({k:'hp',cat:'hp',name:H[0],price:'月額 '+YEN(H[1])+'（初期費用0円）',why:(menu.indexOf('homepage')>-1?'アプリの「HP」ボタンの行き先と、':'')+'検索から来る新しいお客様の入口になります。'+H[2]+'。アプリのダウンロード案内ページも作れます。'+(HP?'（AIで作った試作「'+HP.name+'」があります）':'AIスタジオ（ホームページ）で試作を無料で作れます。'),rec:true});
   if(shop) out.push({k:'gps',cat:'opt',feat:'gps',name:'位置情報プッシュ（1カ所）',price:'20,000円（一回）',why:'お店の近くに来たお客様のスマホにお知らせが届きます。「'+name+'」に立ち寄るきっかけに。',rec:ind!=='retail'});
   if(['beauty','clinic','school'].indexOf(ind)>-1||/電話/.test(g)) out.push({k:'chat',cat:'opt',feat:'chatf',name:'チャット機能',price:'300,000円（一回）',why:'予約前の質問や相談に、アプリの中で個別に答えられます。'+(/電話/.test(g)?'電話対応を減らしたいという目的に合います。':'問い合わせの取りこぼしを防げます。'),rec:/電話/.test(g)});
-  if(shop||ind==='clinic') out.push({k:'meo',cat:'quote',name:'AIMEO（AIで運用するGoogleマップ対策）',price:'月額15,000円〜',why:'「近くの'+D().l+'」と検索した人に見つけてもらい、アプリの登録につなげます。投稿や口コミ返信の文章はAIが下書きするので、運用の手間がかかりません。',rec:/新しい/.test(g)});
+  if(shop||ind==='clinic'||S.tier==='biz') out.push(S.tier==='biz'?{k:'meo',cat:'quote',name:'AIMEO プロ（複数店舗のGoogleマップ対策）',price:'月額50,000円',why:'全'+storeCount()+'店舗のGoogleマップの投稿・口コミ返信をAIが下書きし、店舗ごとに見つけてもらいやすくします。',rec:true}:{k:'meo',cat:'quote',name:'AIMEO（AIで運用するGoogleマップ対策）',price:'月額15,000円〜',why:'「近くの'+D().l+'」と検索した人に見つけてもらい、アプリの登録につなげます。投稿や口コミ返信の文章はAIが下書きするので、運用の手間がかかりません。',rec:/新しい/.test(g)});
   if(['food','beauty','retail','school'].indexOf(ind)>-1) out.push({k:'line',cat:'quote',name:'LINE公式アカウント構築',price:'お見積り',why:'新しいお客様はLINEで広く集めて、常連のお客様はアプリで育てる、という使い分けができます。',rec:false});
   out.push({k:'llmo',cat:'quote',name:'LLMO（AI検索対策）',price:'お見積り',why:'ChatGPTなどのAIに「おすすめの'+D().l+'」と聞かれたとき、紹介されやすくします。',rec:false});
   out.push({k:'subsidy',cat:'quote',name:'補助金の活用（ご案内）',price:'相談無料',why:'持続化補助金や自治体の補助金が使える場合があります。この企画書・仕様書を申請の材料にでき、見積書もご用意します。',rec:false});
@@ -753,6 +796,8 @@ function bind(){
 }
 
 document.addEventListener('click',function(e){
+  var sa=e.target.closest&&e.target.closest('[data-store-add],[data-store-rm]');
+  if(sa){ storesInit(); if(sa.dataset.storeAdd){ S.stores.push({n:'',a:''}); } else { S.stores.splice(+sa.dataset.storeRm,1); } S.vers.push({n:S.vers.length+1,note:'店舗を'+storeCount()+'店舗に変更'}); render(); var ins=document.querySelectorAll('[data-sf=n]'); if(sa.dataset.storeAdd&&ins.length) ins[ins.length-1].focus(); return; }
   var t=e.target.closest('button,[data-view]'); if(!t) return;
   if(t.dataset.view){ go(t.dataset.view); return; }
   if(t.dataset.color){ S.d.color=+t.dataset.color; S.d.custom=null; S.vers.push({n:S.vers.length+1,note:'色を'+COLORS[S.d.color][0]+'に'}); render(); return; }
@@ -848,6 +893,8 @@ document.addEventListener('click',function(e){
   }
 });
 document.addEventListener('change',function(e){
+  if(e.target.dataset&&e.target.dataset.store!=null&&e.target.dataset.sf){ storesInit(); var si=+e.target.dataset.store; if(S.stores[si]){ S.stores[si][e.target.dataset.sf]=e.target.value.trim().slice(0,30); } render(); return; }
+  if(e.target.id==='storePt'){ storesInit(); S.storeOps.pt=e.target.value==='each'?'each':'common'; render(); return; }
   if(e.target.dataset&&e.target.dataset.foot){ S.app.footer[+e.target.dataset.foot]=e.target.value; save(); return; }
   if(e.target.dataset&&e.target.dataset.name){ var v=e.target.value.trim(), k=e.target.dataset.name; if(v&&v!==PAGES[k].l){ S.app.names[k]=v.slice(0,10); } else { delete S.app.names[k]; } render(); return; }
   if(e.target.name==='plan'){ S.plan=e.target.value; save(); render(); return; }

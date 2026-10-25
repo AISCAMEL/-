@@ -160,6 +160,14 @@
 	};
 	T.staff = function (k) { return wrap(k, STAFF.map(function (s) { return '<div class="staff"><span class="ava">' + s[1].charAt(0) + '</span><div><small>' + s[0] + '</small><b>' + s[1] + '</b><span>' + s[2] + '</span></div>' + (has('reser') ? '<button type="button" data-go="reser">指名</button>' : '') + '</div>'; }).join('')); };
 	T.history = function (k) { return wrap(k, '<ol class="tline">' + [['2015', '創業'], ['2018', 'リニューアル'], ['2022', '2号店オープン'], [String(new Date().getFullYear()), '公式アプリ公開']].map(function (r) { return '<li><b>' + r[0] + '</b><span>' + r[1] + '</span></li>'; }).join('') + '</ol>'); };
+	/* 店舗一覧（ビジネスプラン）：いつもの店舗を選べる。 */
+	var STORES = (CFG.stores && CFG.stores.length ? CFG.stores : [{ n: '本店', a: '' }, { n: '駅前店', a: '' }, { n: '〇〇店', a: '' }]);
+	T.stores = function (k) {
+		var my = st.store == null ? 0 : st.store;
+		return wrap(k, '<p class="lead">いつもの店舗を選ぶと、その店舗のお知らせとクーポンが先に表示されます。</p>' + STORES.map(function (x, i) {
+			return '<div class="resv"><div><b>' + esc(x.n || ('店舗' + (i + 1))) + (i === my ? '　★いつもの店舗' : '') + '</b><small>' + esc(x.a || '住所・営業時間（デモ）') + '</small></div>' + (i === my ? '<em>選択中</em>' : '<button type="button" data-store="' + i + '">選ぶ</button>') + '</div>';
+		}).join('') + '<p class="note">店舗ごとの住所・営業時間・地図・電話は、管理画面で店舗ごとに登録します。</p>');
+	};
 	T.access = function (k) { return wrap(k, '<div class="map" aria-hidden="true"><span class="pin">📍</span></div><div class="kv"><b>' + esc(info.name) + '</b><span>〒000-0000 （デモの住所です）</span><span>営業時間 11:00〜22:00</span></div><button type="button" class="cta ghost" data-act="soon">地図アプリで開く</button>'); };
 	T.rally = function (k) {
 		var spots = ['本店', '駅前店', '公園前', 'イベント会場', 'パートナー店'], done = spots.filter(function (s, i) { return st.rally['s' + i]; }).length;
@@ -289,6 +297,7 @@
 		if (ds.day) { R.day = +ds.day; R.time = ''; render(); return; }
 		if (ds.time) { R.time = ds.time; render(); return; }
 		if (ds.cancel) { st.res.splice(+ds.cancel, 1); save(); render(); return; }
+		if (ds.store != null && PAGES[cur] && PAGES[cur].type === 'stores') { st.store = +ds.store; save(); render(); return; }
 		if (ds.fav) { st.fav[ds.fav] = !st.fav[ds.fav]; save(); render(); return; }
 		if (ds.cart) { st.cart.push(+ds.cart); save(); render(); toast(info.name, info.items[+ds.cart][0] + 'を追加しました'); return; }
 		if (ds.uncart) { st.cart.splice(+ds.uncart, 1); save(); render(); return; }
