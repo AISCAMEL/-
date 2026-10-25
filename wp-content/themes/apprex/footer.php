@@ -26,7 +26,7 @@ $apprex_cols  = array(
 			array( '料金プラン', apprex_page_url( 'pricing' ) ),
 			array( '導入事例', home_url( '/cases/' ) ),
 			$apprex_rn ? array( 'AIスタジオ（アプリ）', apprex_studio_url() ) : null,
-			$apprex_rn ? array( 'AIスタジオ（ホームページ）', apprex_studio_url( 'hp' ) ) : null,
+			$apprex_rn ? array( 'AIプランナー（ホームページ）', apprex_studio_url( 'hp' ) ) : null,
 			$apprex_rn ? array( 'AIスタジオ（マッチングアプリ）', apprex_studio_url( 'matching' ) ) : null,
 			$apprex_rn ? array( 'マッチングアプリ開発', apprex_page_url( 'matching-app' ) ) : null,
 			array( 'ホームページ制作', apprex_page_url( 'hp-creation' ) ),

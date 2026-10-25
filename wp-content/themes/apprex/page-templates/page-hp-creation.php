@@ -35,9 +35,9 @@ while ( have_posts() ) :
 				<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'ホーム', 'apprex' ); ?></a>
 			</nav>
 			<h1><?php the_title(); ?></h1>
-			<p><?php esc_html_e( '初期費用0円・月額制。AI技術を活用した効率的な制作プロセスで、高品質サイトをスピード公開します。', 'apprex' ); ?></p>
+			<p><?php esc_html_e( 'AIプランナーを使えば制作費0円。月々の費用（月額9,800円〜）だけで、高品質なホームページを持てます。', 'apprex' ); ?></p>
 			<?php if ( function_exists( 'apprex_rn_enabled' ) && apprex_rn_enabled() ) : ?>
-				<p style="margin-top:18px"><a class="btn btn--primary" href="<?php echo esc_url( apprex_studio_url( 'hp' ) ); ?>"><?php esc_html_e( 'AIでホームページの試作を作る（無料）', 'apprex' ); ?></a></p>
+				<p style="margin-top:18px"><a class="btn btn--primary" href="<?php echo esc_url( apprex_studio_url( 'hp' ) ); ?>"><?php esc_html_e( 'AIプランナーで作る（制作費0円）', 'apprex' ); ?></a></p>
 			<?php endif; ?>
 		</div>
 	</section>

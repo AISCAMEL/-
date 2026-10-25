@@ -63,7 +63,7 @@ function apprex_studio_mode() {
 function apprex_rn_pages() {
 	return array(
 		'studio'          => array( 'AIスタジオ', 'page-templates/page-studio.php' ),
-		'hp-studio'       => array( 'AIスタジオ（ホームページ）', 'page-templates/page-studio.php' ),
+		'hp-studio'       => array( 'AIプランナー（ホームページ）', 'page-templates/page-studio.php' ),
 		'matching-studio' => array( 'AIスタジオ（マッチングアプリ）', 'page-templates/page-studio.php' ),
 		'matching-app' => array( 'マッチングアプリ開発', 'page-templates/page-matching.php' ),
 		'manual'       => array( 'アプリの作り方マニュアル', 'page-templates/page-manual.php' ),

@@ -462,3 +462,16 @@
 .rn-studio .s-mystore{margin:.6em .9em 0;background:#fff;border-radius:var(--r);padding:.55em .8em;font-size:.82em;display:flex;align-items:center;gap:.4em;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .rn-studio .s-mystore b{color:var(--c1)}
 .rn-studio .s-mystore span{margin-left:auto;color:var(--c2);font-weight:700;font-size:.9em}
+/* はじめてのガイド */
+.tour-hole{position:fixed;z-index:9998;border-radius:14px;box-shadow:0 0 0 4px #ffcf6e,0 0 0 9999px rgba(11,29,63,.55);pointer-events:none;transition:all .25s ease}
+.tour-tip{position:fixed;z-index:9999;width:min(340px,calc(100vw - 24px));background:#fff;color:#0e1830;border-radius:16px;padding:16px 18px;box-shadow:0 20px 50px rgba(0,0,0,.35);font-family:"Noto Sans JP",sans-serif;line-height:1.7}
+.tour-tip.sp{left:12px;right:12px;bottom:12px;width:auto}
+.tour-tip .tour-n{font-size:.72rem;font-weight:800;color:#2f66f5;letter-spacing:.04em}
+.tour-tip b{display:block;font-size:1.05rem;margin:4px 0 4px;color:#0b1d3f}
+.tour-tip p{margin:0;font-size:.88rem;color:#4a5672}
+.tour-tip .tour-act{margin-top:8px;background:#fff6ef;color:#c2410c;border-radius:10px;padding:6px 10px;font-weight:700;font-size:.82rem}
+.tour-tip .tour-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
+.tour-tip button{border:0;border-radius:999px;padding:8px 16px;font-weight:700;cursor:pointer;font-size:.85rem}
+.tour-tip .tour-skip{background:none;color:#8a95ad;margin-right:auto;padding-left:0}
+.tour-tip .tour-back{background:#eef3ff;color:#1c47c4}
+.tour-tip .tour-next{background:#ff6b1f;color:#fff}
