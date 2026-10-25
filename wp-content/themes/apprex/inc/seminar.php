@@ -909,6 +909,7 @@ function apprex_seminar_rest_entry( WP_REST_Request $req ) {
 		);
 	}
 	do_action( 'apprex_inquiry_submitted', $id, $type, $fields );
+	do_action( 'apprex_seminar_registered', $id, $uid, $sid );
 
 	return new WP_REST_Response(
 		array(

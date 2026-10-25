@@ -238,7 +238,7 @@ while ( have_posts() ) :
 		</div>
 	</section>
 
-	<section class="section section--soft">
+	<section class="section section--soft" id="faq">
 		<div class="container">
 			<?php apprex_section_head( 'FAQ', __( '代理店についてのよくある質問', 'apprex' ) ); ?>
 			<?php get_template_part( 'template-parts/faq-list', null, array( 'faqs' => $apprex_faqs ) ); ?>
