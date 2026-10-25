@@ -30,6 +30,10 @@ add_action( 'init', function () {
 		apprex_migrate_partner_page_162();
 		update_option( 'apprex_migrated', 162 );
 	}
+	if ( $v < 163 ) {
+		apprex_migrate_agency_page_163();
+		update_option( 'apprex_migrated', 163 );
+	}
 }, 20 );
 
 /** メール文面の上書きを整理する。 */
@@ -231,5 +235,20 @@ function apprex_migrate_partner_page_162() {
 	);
 	if ( $id && ! is_wp_error( $id ) ) {
 		update_post_meta( $id, '_wp_page_template', 'page-templates/page-partner.php' );
+	}
+}
+
+/* -------------------------------------------------------------------------
+ * v1.63.0：代理店専用ページ（/agency/）を作る
+ * ---------------------------------------------------------------------- */
+function apprex_migrate_agency_page_163() {
+	$page = get_page_by_path( 'agency' );
+	if ( $page && 'trash' !== $page->post_status ) {
+		update_post_meta( $page->ID, '_wp_page_template', 'page-templates/page-agency.php' );
+		return;
+	}
+	$id = wp_insert_post( array( 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => '代理店専用ページ', 'post_name' => 'agency' ) );
+	if ( $id && ! is_wp_error( $id ) ) {
+		update_post_meta( $id, '_wp_page_template', 'page-templates/page-agency.php' );
 	}
 }

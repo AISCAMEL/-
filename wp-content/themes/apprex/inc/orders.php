@@ -117,6 +117,7 @@ function apprex_rest_order( WP_REST_Request $request ) {
 		'estimate'         => $estimate,
 		'submitted_at'     => current_time( 'mysql' ),
 		'source_url'       => esc_url_raw( (string) $request->get_param( 'source_url' ) ),
+		'ref'              => function_exists( 'apprex_agency_ref' ) ? apprex_agency_ref() : '',
 	);
 	foreach ( $meta as $k => $v ) {
 		update_post_meta( $post_id, 'apprex_' . $k, $v );

@@ -131,9 +131,14 @@ add_action( 'admin_init', function () {
 	if ( wp_doing_ajax() || ! is_user_logged_in() ) {
 		return;
 	}
+	// フォームの送信（admin-post.php）は通す。
+	if ( isset( $GLOBALS['pagenow'] ) && 'admin-post.php' === $GLOBALS['pagenow'] ) {
+		return;
+	}
 	$user = wp_get_current_user();
 	$roles = (array) $user->roles;
-	if ( in_array( 'administrator', $roles, true ) || in_array( 'editor', $roles, true ) || current_user_can( 'edit_posts' ) ) {
+	// 代理店は代理店専用ページへ（inc/agency-system.php）。
+	if ( in_array( 'administrator', $roles, true ) || in_array( 'editor', $roles, true ) || in_array( 'apprex_agency', $roles, true ) || current_user_can( 'edit_posts' ) ) {
 		return;
 	}
 	wp_safe_redirect( apprex_mypage_url() );
