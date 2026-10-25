@@ -106,22 +106,37 @@ function doGet() {
     .setMimeType(ContentService.MimeType.TEXT);
 }
 
+// 「車種を直接ご記入ください」等のプルダウン案内文が、自由入力されないまま
+// 値として送られてきた場合は無効化し、代わりにメーカー名を使う（空なら空）。
+// これで Asana タスク名・スプレッドシート・店舗メール・Slack の「希望車」が
+// 案内文言になってしまうのを防ぐ。
+function cleanCar_(carVal, makerVal) {
+  var s = String(carVal == null ? '' : carVal).trim();
+  var guide = /ご記入ください|ご入力ください|直接.*記入|直接入力|選択してください|お選びください|指定なし|^未定$|^未選択$|^-$|^ー$/;
+  if (!s || guide.test(s)) {
+    var mk = String(makerVal == null ? '' : makerVal).trim();
+    return (mk && !guide.test(mk) && !/その他で入力/.test(mk)) ? mk : '';
+  }
+  return s;
+}
+
 function buildWpRecord_(cfg, payload) {
   var m = payload.meta || {};
   var fields = payload.fields || [];
   var now = new Date();
   var stamp = Utilities.formatDate(now, cfg.TZ, 'yyyy/MM/dd HH:mm:ss');
   var uid = 'WP-' + now.getTime() + '-' + Math.random().toString(36).slice(2, 7).toUpperCase();
-  var lines = [], sec = '';
+  var lines = [], sec = '', makerVal = '';
   fields.forEach(function(f) {
     if (f.section && f.section !== sec) { sec = f.section; lines.push('■ ' + sec); }
     lines.push('　' + (f.label || '') + '：' + (f.value || ''));
+    if (/メーカー/.test(f.label || '')) makerVal = f.value || makerVal;  // 車種フォールバック用
   });
   return {
     uid: uid, stamp: stamp, source: cfg.SOURCE_LABEL,
     store: resolveStore_(m.storeKey || m.store),
     name:  m.name  || '', kana:  m.kana  || '', phone: m.phone || '',
-    email: m.email || '', car:   m.car   || '',
+    email: m.email || '', car:   cleanCar_(m.car, makerVal),
     fields: fields, body: lines.join('\n'), fileLinks: []
   };
 }
@@ -237,7 +252,7 @@ function createWpAsana_(cfg, rec) {
   var res = UrlFetchApp.fetch('https://app.asana.com/api/1.0/tasks', {
     method: 'post', headers: headers,
     payload: JSON.stringify({ data: {
-      name: '【WP新規' + (rec.store ? '／' + rec.store.short : '') + '】' + (rec.name || '名前未設定') + '　様　' + (rec.car || ''),
+      name: '【WP新規' + (rec.store ? '／' + rec.store.short : '') + '】' + (rec.name || '名前未設定') + '　様' + (rec.car ? '　' + rec.car : ''),
       notes: notes, projects: [projectId]
     }}),
     muteHttpExceptions: true
