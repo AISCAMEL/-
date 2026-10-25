@@ -4,7 +4,7 @@ Theme URI: https://site.aiscompany.jp/
 Author: AIS Company
 Author URI: https://site.aiscompany.jp/
 Description: クラウド型アプリ開発プラットフォーム「APPREX」公式サイト用テーマ。Hello Elementor の思想を踏襲したライセンス非依存の自作テーマ。固定ページ構成＋カスタム投稿タイプ cases によるリニューアル実装。モバイルファースト・WebP・Lazy Load 対応。
-Version: 1.66.0
+Version: 1.67.0
 Requires at least: 6.0
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -1182,3 +1182,39 @@ a:focus-visible, button:focus-visible, .btn:focus-visible, summary:focus-visible
 .callout-note { background: #fff8ed; border: 1px solid #fed7aa; border-radius: var(--radius); padding: 18px 22px; }
 .callout-note b { color: #9a3412; }
 .callout-note p { margin: 6px 0 0; color: var(--color-body); font-size: .92rem; }
+
+/* フッター（v1.67.0） */
+.site-footer { padding-block: clamp(48px, 7vw, 72px) 28px; }
+.site-footer__grid { gap: 36px 28px; }
+@media (min-width: 760px) { .site-footer__grid { grid-template-columns: 1fr 1fr; } .site-footer__brand { grid-column: 1 / -1; } }
+@media (min-width: 1040px) { .site-footer__grid { grid-template-columns: 1.5fr 1fr 1fr 1fr; } .site-footer__brand { grid-column: auto; } }
+@media (max-width: 759px) { .site-footer__grid { grid-template-columns: 1fr 1fr; } .site-footer__brand { grid-column: 1 / -1; } }
+.site-footer__logo { display: inline-block; margin-bottom: 14px; }
+.site-footer .logo-image { height: 34px; filter: brightness(0) invert(1); }
+.site-footer__lead { font-size: .9rem; line-height: 1.85; color: #b8c2db; margin: 0 0 16px; max-width: 34em; }
+.site-footer__info { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0 0 18px; font-size: .85rem; color: #b8c2db; }
+.site-footer__info dt { color: #fff; font-weight: 700; }
+.site-footer__info dd { margin: 0; }
+.site-footer__info a { font-size: inherit; }
+.site-footer__sns { display: flex; flex-wrap: wrap; gap: 8px; }
+.site-footer__sns a { display: inline-flex; align-items: center; padding: 8px 16px; border: 1px solid rgba(255,255,255,.28); border-radius: 999px; font-size: .82rem; font-weight: 700; color: #fff; }
+.site-footer__sns a:hover { background: rgba(255,255,255,.08); }
+.site-footer__sns a.is-cta { background: var(--color-cta, #f97316); border-color: transparent; }
+.site-footer__sns a.is-cta:hover { filter: brightness(1.06); background: var(--color-cta, #f97316); }
+.site-footer h4 { position: relative; font-size: .95rem; padding-bottom: 10px; margin-bottom: 14px; letter-spacing: .04em; }
+.site-footer h4::after { content: ""; position: absolute; left: 0; bottom: 0; width: 24px; height: 2px; border-radius: 2px; background: var(--color-cta, #f97316); }
+.site-footer__nav ul { gap: 10px; }
+.site-footer__nav a { font-size: .88rem; color: #c7cee0; }
+.site-footer__nav a:hover { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
+.site-footer__bottom { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 20px; text-align: left; color: #8f9bb8; }
+.site-footer__bottom p { margin: 0; }
+.site-footer__legal a { font-size: .8rem; color: #8f9bb8; }
+@media (max-width: 759px) { .site-footer__bottom { justify-content: center; text-align: center; } .site-footer { padding-bottom: 96px; } }
+.site-footer .logo-image { height: 40px; }
+@media (max-width: 759px) {
+  .site-footer__grid { gap: 28px 16px; }
+  .site-footer__nav ul { gap: 8px; }
+  .site-footer__nav a { font-size: .85rem; }
+  .site-footer__nav:last-child { grid-column: 1 / -1; }
+  .site-footer__nav:last-child ul { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; }
+}
