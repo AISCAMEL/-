@@ -25,7 +25,7 @@ if(!CFG.loggedIn){
       var fd=new FormData(rf), label=btn.textContent;
       btn.disabled=true; btn.textContent='登録しています…'; err.hidden=true;
       api('studio/register',{name:fd.get('name'),company:fd.get('company'),email:fd.get('email'),password:fd.get('password'),website:fd.get('website')})
-        .then(function(b){ if(b.lead){ lead(b.lead); } location.href=b.redirect||CFG.studioUrl; })
+        .then(function(b){ if(b.lead){ lead(b.lead); } location.href=CFG.studioUrl||b.redirect; })
         .catch(function(x){ err.textContent=x.message; err.hidden=false; btn.disabled=false; btn.textContent=label; });
     });
   }
@@ -36,6 +36,13 @@ var KEY='apprex-studio-v2-'+(CFG.uid||0);
 var DATA=window.APPREX_STUDIO_DATA||{}, IND=DATA.IND, COLORS=DATA.COLORS, TONES=DATA.TONES, SCREENS=DATA.SCREENS, FEAT=DATA.FEAT, PAGES=DATA.PAGES, PAGE_LIST=DATA.PAGE_LIST, GROUPS=DATA.GROUPS, pageName=DATA.pageName;
 var STEPS=['会員登録','AIデザイン','AI仕様書','開発を相談','オンラインミーティング','お見積り・入金','制作','公開'];
 var VIEWS=[['design','AIデザイン',1],['appmenu','アプリのメニュー',1],['demo','デモアプリで試す',1],['orig','オリジナルアプリをAIで',1],['hp','ホームページをAIで',1],['spec','AI仕様書',2],['docs','企画書・仕様書',2],['propose','ご提案（HP・オプション）',2],['consult','開発を相談',3],['meeting','ミーティング予約',4],['quote','お見積り・入金',5],['prod','制作の進捗',6]];
+/* ページごとのスタジオ：app（アプリ）／hp（ホームページ）／matching（マッチングアプリ）。相談からあとは共通。 */
+var MODE=CFG.mode||'app';
+var MODE_VIEWS={app:['design','appmenu','demo','spec','docs','propose'],hp:['hp'],matching:['orig']};
+VIEWS=VIEWS.filter(function(v){ return (MODE_VIEWS[MODE]||MODE_VIEWS.app).indexOf(v[0])>-1||['consult','meeting','quote','prod'].indexOf(v[0])>-1; });
+if(MODE==='hp'){ STEPS=['会員登録','AIでホームページ','サイトマップ・仕様書','制作を相談','オンラインミーティング','お見積り・ご契約','制作','公開']; VIEWS.forEach(function(v){ if(v[0]==='consult') v[1]='制作を相談'; }); }
+if(MODE==='matching'){ STEPS=['会員登録','AIで試作','仕様定義書・概算','開発を相談','オンラインミーティング','お見積り・ご契約','開発','公開']; VIEWS.forEach(function(v){ if(v[0]==='orig') v[1]='マッチングアプリをAIで'; }); }
+var STUDIOS=[['app','アプリ（ノーコード）'],['hp','ホームページ'],['matching','マッチングアプリ']];
 var PLANS=DATA.PLANS, inPlan=DATA.inPlan, featNeed=DATA.featNeed, pageNeed=DATA.pageNeed;
 var TIERS={}; Object.keys(PLANS).forEach(function(k){ TIERS[k]=[PLANS[k].l,PLANS[k].m]; });
 /* 業種のおすすめ機能のうち、そのプランで追加料金なしに使えるものだけ（オプション・独自開発は自分で選んだときだけ）。 */
@@ -72,6 +79,9 @@ S.prod=STAGE>=5?6:(STAGE>=4?Math.min(CFG.prod||0,6):0);
 if(S.met){S.prog=Math.max(S.prog,5);} if(S.paid){S.prog=Math.max(S.prog,6);} if(S.prod>=6){S.prog=8;}
 S.msgs=(CFG.msgs||[]).map(function(m){return [m[0],m[1],m[2]];});
 if(S.view==='register'){S.view='design';}
+// このページで前に見ていた画面に戻す（ページにない画面なら最初の画面）。
+if(!S.mv){S.mv={};} S.view=S.mv[MODE]||(MODE==='app'&&S.view)||VIEWS[0][0];
+if(!VIEWS.some(function(v){return v[0]===S.view;})){ S.view=VIEWS[0][0]; }
 // 自分で設定する0円のプランは無くなったので、AIスタジオから制作に。
 if(S.plan==='self'||!S.plan){S.plan='full';} if(!S.prop){S.prop={};}
 // プランを選ぶ前の保存データは、選んでいた機能からプランを決める（概算が変わらないように）。
@@ -355,8 +365,8 @@ function estOrig(P){
   return {rows:rows,days:days,lo:lo,hi:hi,weeks:weeks,later:later,laterYen:later*R.day_rate,label:man(lo)+'〜'+man(hi)+'・約'+weeks+'週間',man:man,rate:R.day_rate};
 }
 function vOrig(){
-  var ex=['スキルを売り買いできるマッチングアプリ。依頼・メッセージ・決済まで','社内の日報と在庫をスマホで記録して、本部が確認できる業務アプリ','動画レッスンを月額で見放題にする学習アプリ','地域のイベントを探して予約し、当日はQRチケットで受付'];
-  var head='<div class="vh"><div><h2>オリジナルアプリをAIで作る</h2><p>作りたいアプリを自由に書くと、AIが画面・機能・データまで考えて、<b>触れる試作</b>と<b>仕様定義書</b>を作ります。イメージを先に共有できるので、相談がすぐ具体的になります。</p></div></div>';
+  var ex=MODE==='matching'?['スキルを売り買いできるマッチングアプリ。依頼・メッセージ・決済まで','発注したい会社と受注したい会社をつなぐビジネスマッチング','家事代行やペットシッターをお願いできる地域のマッチングアプリ','社内の日報と在庫をスマホで記録して、本部が確認できる業務アプリ']:['スキルを売り買いできるマッチングアプリ。依頼・メッセージ・決済まで','社内の日報と在庫をスマホで記録して、本部が確認できる業務アプリ','動画レッスンを月額で見放題にする学習アプリ','地域のイベントを探して予約し、当日はQRチケットで受付'];
+  var head='<div class="vh"><div><h2>'+(MODE==='matching'?'マッチングアプリをAIで作る':'オリジナルアプリをAIで作る')+'</h2><p>'+(MODE==='matching'?'マッチング以外のオリジナルアプリも作れます。':'')+'作りたいアプリを自由に書くと、AIが画面・機能・データまで考えて、<b>触れる試作</b>と<b>仕様定義書</b>を作ります。イメージを先に共有できるので、相談がすぐ具体的になります。</p></div></div>';
   if(!ORIG){
     return head+'<div class="grid2"><div class="card"><div class="sec-t"><i>1</i>どんなアプリを作りたいですか？</div>'
       +'<textarea id="origIdea" class="orig-ta" rows="6" placeholder="例：ヨガ講師と生徒をつなぐアプリ。講師がレッスンを登録し、生徒が予約・支払い。レッスン後に評価できる。">'+esc(S.origIdea||'')+'</textarea>'
@@ -582,7 +592,7 @@ function proposals(){
   var ind=S.d.ind, g=S.d.goal||'', menu=(S.app&&S.app.menu)||[], name=storeName(), out=[];
   var shop=['food','beauty','golf','retail'].indexOf(ind)>-1;
   var hp=(ind==='retail'||S.tier==='biz')?'premium':(ind==='clinic'?'light':'standard'), H=HP_PLANS[hp];
-  out.push({k:'hp',cat:'hp',name:H[0],price:'月額 '+YEN(H[1])+'（初期費用0円）',why:(menu.indexOf('homepage')>-1?'アプリの「HP」ボタンの行き先と、':'')+'検索から来る新しいお客様の入口になります。'+H[2]+'。アプリのダウンロード案内ページも作れます。'+(HP?'（AIで作った試作「'+HP.name+'」があります）':'「ホームページをAIで」で試作を無料で作れます。'),rec:true});
+  out.push({k:'hp',cat:'hp',name:H[0],price:'月額 '+YEN(H[1])+'（初期費用0円）',why:(menu.indexOf('homepage')>-1?'アプリの「HP」ボタンの行き先と、':'')+'検索から来る新しいお客様の入口になります。'+H[2]+'。アプリのダウンロード案内ページも作れます。'+(HP?'（AIで作った試作「'+HP.name+'」があります）':'AIスタジオ（ホームページ）で試作を無料で作れます。'),rec:true});
   if(shop) out.push({k:'gps',cat:'opt',feat:'gps',name:'位置情報プッシュ（1カ所）',price:'20,000円（一回）',why:'お店の近くに来たお客様のスマホにお知らせが届きます。「'+name+'」に立ち寄るきっかけに。',rec:ind!=='retail'});
   if(['beauty','clinic','school'].indexOf(ind)>-1||/電話/.test(g)) out.push({k:'chat',cat:'opt',feat:'chatf',name:'チャット機能',price:'300,000円（一回）',why:'予約前の質問や相談に、アプリの中で個別に答えられます。'+(/電話/.test(g)?'電話対応を減らしたいという目的に合います。':'問い合わせの取りこぼしを防げます。'),rec:/電話/.test(g)});
   if(shop||ind==='clinic') out.push({k:'meo',cat:'quote',name:'AIMEO（AIで運用するGoogleマップ対策）',price:'月額15,000円〜',why:'「近くの'+D().l+'」と検索した人に見つけてもらい、アプリの登録につなげます。投稿や口コミ返信の文章はAIが下書きするので、運用の手間がかかりません。',rec:/新しい/.test(g)});
@@ -609,15 +619,19 @@ function vPropose(){
   +'<div class="sec-t" style="margin-top:16px">アプリ本体</div><dl class="kv"><dt>初期費用</dt><dd>150,000円〜（AIスタジオで作った内容から制作）</dd><dt>月額</dt><dd>'+YEN(estimate().monthly)+'（'+estimate().tierName+'）</dd></dl></div></div>';
 }
 function vConsult(){
+  if(MODE==='hp'&&!HP) return gate('先にホームページの試作を作ってください。','hp','ホームページをAIで作る');
+  if(MODE==='matching'&&!ORIG) return gate('先にアプリの試作を作ってください。','orig','マッチングアプリをAIで作る');
+  if(MODE==='hp'){ S.plan='hp'; } else if(MODE==='matching'){ S.origPlan=true; S.plan='orig'; } else { S.origPlan=false; if(S.plan==='hp') S.plan='full'; }
   var e=estimate(), orig=e.orig.length>0||!!(ORIG&&S.origPlan);
-  if(S.plan==='hp'&&!HP) S.plan='full';
-  if(S.plan!=='hp'){ if(orig) S.plan='orig'; else if(S.plan==='orig') S.plan='full'; }
-  var pl=[['full','ノーコード（AIスタジオから制作）','初期費用150,000円〜・月額'+YEN(e.monthly)+'〜。作った内容のまま制作します',orig],['orig','オリジナル開発','独自機能を開発。ミーティングで見積り',!orig]].concat(HP?[['hp','ホームページだけ','月額9,800円〜・初期費用0円。アプリは作らない',false]]:[]);
-  var back=(ORIG&&S.origPlan)?'<p class="hint" style="margin-top:8px">基盤（ノーコード）で相談する場合は <button type="button" class="linkbtn" data-go="origOff">こちら</button></p>':'';
+  if(MODE==='app'){ if(orig) S.plan='orig'; else if(S.plan==='orig') S.plan='full'; }
+  var pl=[['full','ノーコード（AIスタジオから制作）','初期費用150,000円〜・月額'+YEN(e.monthly)+'〜。作った内容のまま制作します',orig],['orig','オリジナル開発','独自機能を開発。ミーティングで見積り',!orig]];
+  if(MODE==='hp') pl=[['hp','ホームページ制作','初期費用0円・月額9,800円〜。AIの試作をもとに制作します',false]];
+  if(MODE==='matching') pl=[['orig','オリジナル開発（マッチングアプリ）','AIの試作と仕様定義書をもとにお見積りします',false]];
+  var back=(ORIG&&S.origPlan&&MODE==='app')?'<p class="hint" style="margin-top:8px">基盤（ノーコード）で相談する場合は <button type="button" class="linkbtn" data-go="origOff">こちら</button></p>':'';
   var plH=pl.map(function(p){return '<label class="pl"><input type="radio" name="plan" value="'+p[0]+'"'+(S.plan===p[0]?' checked':'')+(p[3]?' disabled':'')+'><b>'+p[1]+'</b><span>'+p[2]+'</span></label>';}).join('');
-  return '<div class="vh"><div><h2>開発を相談</h2><p>作ったデザインと仕様書を、そのまま担当者に送ります。次にオンラインミーティングの日時を選びます。</p></div></div>'
-  +'<div class="card"><div class="sum">'+((ORIG&&S.origPlan)?'<div class="orig-est" style="align-self:start"><small>オリジナルアプリ（AI試作）</small><b>'+esc(ORIG.name)+'</b><span>'+ORIG.screens.length+'画面・機能'+ORIG.features.length+'</span></div>':phone('home',true))+'<div><div class="sec-t">送る内容</div><dl class="kv"><dt>アプリ名</dt><dd>'+((ORIG&&S.origPlan)?esc(ORIG.name)+'（オリジナルアプリ・AI試作'+ORIG.screens.length+'画面）':esc(storeName())+'（'+D().l+'）')+'</dd>'+((ORIG&&S.origPlan)?'<dt>最初に作る機能</dt><dd>'+ORIG.features.filter(function(f){return f.phase==='MVP';}).map(function(f){return esc(f.name);}).join('、')+'</dd><dt>画面</dt><dd>'+ORIG.screens.map(function(x){return esc(x.name);}).join('・')+'</dd>':'<dt>デザイン</dt><dd>5画面・版'+S.vers.length+'（'+TONES[S.d.tone].n+'／案'+S.d.variant+'）</dd><dt>機能</dt><dd>'+FEAT.filter(function(f){return S.feat[f.k];}).map(function(f){return esc(f.n);}).join('、')+'</dd>')+'<dt>添付</dt><dd>仕様定義書・企画書・仕様書・画面構成図（AI作成）'+((ORIG&&S.origPlan)?'、オリジナルアプリの試作':'')+''+(IMGS.length?'、AIデザイン画像（'+(IMGS.filter(function(i){return i.picked;}).length?'採用案':'最新3枚')+'）':'')+'</dd><dt>概算</dt><dd>'+((ORIG&&S.origPlan)?'オリジナル開発 '+esc(estOrig(ORIG).label)+'（AIの目安）':orig?(e.match?'オリジナル開発 300万円〜':'オリジナル開発 個別見積り'):'月額 '+YEN(e.monthly)+'（'+e.tierName+'）')+'</dd></dl></div></div>'
-  +'<div class="sec-t" style="margin-top:18px">進め方</div><div class="plans">'+plH+'</div>'+back+(HP?'<label class="aid-chk" style="margin-top:10px"><input type="checkbox" id="hpInc"'+((S.hpInclude||S.plan==='hp')?' checked':'')+(S.plan==='hp'?' disabled':'')+'> AIで作ったホームページ「'+esc(HP.name)+'」も一緒に相談する</label>':'')+propSummary()
+  return '<div class="vh"><div><h2>'+(MODE==='hp'?'制作を相談':'開発を相談')+'</h2><p>作ったデザインと仕様書を、そのまま担当者に送ります。次にオンラインミーティングの日時を選びます。</p></div></div>'
+  +'<div class="card"><div class="sum">'+(MODE==='hp'?'<div class="orig-est" style="align-self:start"><small>ホームページ（AI試作）</small><b>'+esc(HP.name)+'</b><span>'+HP.pages.length+'ページ</span></div>':(ORIG&&S.origPlan)?'<div class="orig-est" style="align-self:start"><small>オリジナルアプリ（AI試作）</small><b>'+esc(ORIG.name)+'</b><span>'+ORIG.screens.length+'画面・機能'+ORIG.features.length+'</span></div>':phone('home',true))+'<div><div class="sec-t">送る内容</div><dl class="kv"><dt>アプリ名</dt><dd>'+((ORIG&&S.origPlan)?esc(ORIG.name)+'（オリジナルアプリ・AI試作'+ORIG.screens.length+'画面）':esc(storeName())+'（'+D().l+'）')+'</dd>'+((ORIG&&S.origPlan)?'<dt>最初に作る機能</dt><dd>'+ORIG.features.filter(function(f){return f.phase==='MVP';}).map(function(f){return esc(f.name);}).join('、')+'</dd><dt>画面</dt><dd>'+ORIG.screens.map(function(x){return esc(x.name);}).join('・')+'</dd>':'<dt>デザイン</dt><dd>5画面・版'+S.vers.length+'（'+TONES[S.d.tone].n+'／案'+S.d.variant+'）</dd><dt>機能</dt><dd>'+FEAT.filter(function(f){return S.feat[f.k];}).map(function(f){return esc(f.n);}).join('、')+'</dd>')+'<dt>添付</dt><dd>仕様定義書・企画書・仕様書・画面構成図（AI作成）'+((ORIG&&S.origPlan)?'、オリジナルアプリの試作':'')+''+(IMGS.length?'、AIデザイン画像（'+(IMGS.filter(function(i){return i.picked;}).length?'採用案':'最新3枚')+'）':'')+'</dd><dt>概算</dt><dd>'+((ORIG&&S.origPlan)?'オリジナル開発 '+esc(estOrig(ORIG).label)+'（AIの目安）':orig?(e.match?'オリジナル開発 300万円〜':'オリジナル開発 個別見積り'):'月額 '+YEN(e.monthly)+'（'+e.tierName+'）')+'</dd></dl></div></div>'
+  +'<div class="sec-t" style="margin-top:18px">進め方</div><div class="plans">'+plH+'</div>'+back+((HP&&MODE!=='hp')?'<label class="aid-chk" style="margin-top:10px"><input type="checkbox" id="hpInc"'+((S.hpInclude||S.plan==='hp')?' checked':'')+(S.plan==='hp'?' disabled':'')+'> AIで作ったホームページ「'+esc(HP.name)+'」も一緒に相談する</label>':'')+propSummary()
   +'<div class="field" style="margin-top:14px"><label for="f-notes">担当者に伝えたいこと（任意）</label><textarea id="f-notes" placeholder="例：来年3月のリニューアルオープンに合わせて公開したい">'+esc(S.notes)+'</textarea></div>'
   +'<div class="acts"><button type="button" class="btn btn--cta" data-go="sendConsult">相談を送ってミーティングを予約する</button></div></div>';
 }
@@ -685,9 +699,10 @@ function renderProg(){
 var MANUAL_ANCHOR={orig:'orig',appmenu:'appmenu',demo:'demo',design:'design',spec:'spec',docs:'docs',consult:'consult',meeting:'meeting',quote:'quote',prod:'prod'};
 function renderSide(){
   $('side').innerHTML=VIEWS.map(function(v,i){var done=S.prog>v[2]||(v[0]==='prod'&&S.prod>=PROD.length);return '<button type="button" class="nav" data-view="'+v[0]+'"'+(S.view===v[0]?' aria-current="page"':'')+'><i>'+(i+1)+'</i>'+v[1]+(done?'<span class="st">完了</span>':'')+'</button>';}).join('')
-  +'<div class="help"><b style="color:var(--navy)">困ったときは</b><br>今の画面の使い方を、AIガイドがその場で案内します。<div class="help-acts"><button type="button" class="btn btn--pri btn--sm" data-go="askGuide">AIガイドに聞く</button>'+(CFG.manual?'<a class="btn btn--line btn--sm" href="'+esc(CFG.manual+'#'+(MANUAL_ANCHOR[S.view]||''))+'" target="_blank" rel="noopener">この画面の使い方</a>':'')+'</div></div>';
+  +'<div class="st-switch"><b>AIスタジオ</b>'+STUDIOS.map(function(x){return x[0]===MODE?'<span class="on">'+x[1]+'</span>':'<a href="'+esc((CFG.studios||{})[x[0]]||'#')+'">'+x[1]+'</a>';}).join('')+'</div>'+'<div class="help"><b style="color:var(--navy)">困ったときは</b><br>今の画面の使い方を、AIガイドがその場で案内します。<div class="help-acts"><button type="button" class="btn btn--pri btn--sm" data-go="askGuide">AIガイドに聞く</button>'+(CFG.manual?'<a class="btn btn--line btn--sm" href="'+esc(CFG.manual+'#'+(MANUAL_ANCHOR[S.view]||''))+'" target="_blank" rel="noopener">この画面の使い方</a>':'')+'</div></div>';
 }
 function render(){
+  S.mv=S.mv||{}; S.mv[MODE]=S.view;
   renderProg(); renderSide();
   var v=S.view, h='';
   if(v==='design') h=vDesign(); else if(v==='demo') h=vDemo(); else if(v==='appmenu') h=vAppMenu(); else if(v==='orig') h=vOrig(); else if(v==='hp') h=vHp(); else if(v==='spec') h=vSpec(); else if(v==='docs') h=vDocs(); else if(v==='propose') h=vPropose(); else if(v==='consult') h=vConsult(); else if(v==='meeting') h=vMeeting(); else if(v==='quote') h=vQuote(); else h=vProd();
@@ -777,7 +792,7 @@ document.addEventListener('click',function(e){
   }
   if(g==='hpPhoto'){ HPIMG_BUSY=true; render(); api('studio/hp-image',{}).then(function(b){ HPIMG=b.image; HPIMG_BUSY=false; S._hpT=Date.now(); render(); }).catch(function(x){ HPIMG_BUSY=false; render(); var he4=$('hpErr'); if(he4){ he4.textContent=x.message; he4.hidden=false; } }); return; }
   if(g==='hpReset'){ if(!window.confirm('今の試作を残したまま、最初の入力画面に戻ります。新しく作ると今の試作は置き換わります。')) return; HP=null; render(); return; }
-  if(g==='hpConsult'){ S.hpInclude=true; if(!ORIG||!S.origPlan){ S.plan=S.plan==='orig'?'orig':(S.plan||'full'); } S.prog=Math.max(S.prog,3); go('consult'); return; }
+  if(g==='hpConsult'){ S.plan='hp'; S.prog=Math.max(S.prog,3); go('consult'); return; }
   if(g==='origMake'||g==='origRevise'){
     var idea=($('origIdea')||{}).value||'', ins=($('origInstr')||{}).value||'', nm=($('origName')||{}).value||'';
     if(g==='origMake'&&!idea.trim()){ var oe=$('origErr'); if(oe){oe.textContent='作りたいアプリの内容を書いてください。';oe.hidden=false;} return; }
@@ -841,7 +856,7 @@ document.addEventListener('change',function(e){
   if(e.target.dataset&&e.target.dataset.tier){ setTier(e.target.dataset.tier); render(); return; }
   if(e.target.dataset&&e.target.dataset.feat){ S.feat[e.target.dataset.feat]=e.target.checked; render(); }
 });
-$('reset').addEventListener('click',function(){
+if($('reset')) $('reset').addEventListener('click',function(){
   if(!window.confirm('デザインと仕様の内容を最初の状態に戻します。よろしいですか？（相談・予約の記録は残ります）')) return;
   var keep={prog:S.prog,meeting:S.meeting,met:S.met,paid:S.paid,prod:S.prod,msgs:S.msgs,consulted:S.consulted};
   S=def(); Object.keys(keep).forEach(function(k){ S[k]=keep[k]; }); IMG={logo:null,photo:null}; saveImg(); render();

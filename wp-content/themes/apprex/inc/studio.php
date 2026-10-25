@@ -335,8 +335,10 @@ add_action( 'wp_enqueue_scripts', function () {
 		'nonce'     => wp_create_nonce( 'wp_rest' ),
 		'loggedIn'  => is_user_logged_in(),
 		'mypage'    => apprex_mypage_url(),
-		'studioUrl' => apprex_studio_url(),
+		'studioUrl' => apprex_studio_url( apprex_studio_mode() ),
 		'manual'    => function_exists( 'apprex_manual_url' ) ? apprex_manual_url() : '',
+		'mode'      => apprex_studio_mode(),
+		'studios'   => array( 'app' => apprex_studio_url( 'app' ), 'hp' => apprex_studio_url( 'hp' ), 'matching' => apprex_studio_url( 'matching' ) ),
 	);
 	if ( is_user_logged_in() ) {
 		$u          = wp_get_current_user();
@@ -352,7 +354,7 @@ add_action( 'wp_enqueue_scripts', function () {
 			'note' => (string) get_user_meta( $u->ID, 'apprex_studio_quote_note', true ),
 		);
 		$cfg['msgs']    = apprex_studio_messages_out( $u->ID );
-		$cfg['logout']  = wp_logout_url( apprex_studio_url() );
+		$cfg['logout']  = wp_logout_url( apprex_studio_url( apprex_studio_mode() ) );
 		$cfg['ai']      = array(
 			'text'  => '' !== apprex_openrouter_key(),
 			'image' => '' !== apprex_openrouter_key(),

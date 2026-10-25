@@ -13,6 +13,39 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 get_header();
 
+$apprex_mode = function_exists( 'apprex_studio_mode' ) ? apprex_studio_mode() : 'app';
+$apprex_here = apprex_studio_url( $apprex_mode );
+$apprex_copy = array(
+	'app'      => array(
+		'badge' => '無料会員登録で使える／相談まで費用0円',
+		'h1'    => 'AIが、あなたのアプリの<br><em>デザインと仕様書</em>を作ります。',
+		'lead'  => '業種と店名を入れるだけで、アプリの画面を5つデザイン。機能を選べば、企画書・仕様書・画面構成図と概算費用までその場でできあがります。満足したら、そのまま開発の相談とオンラインミーティングへ。',
+		'pts'   => array( 'アプリの画面デザインを5画面まとめて作成。言葉で頼むだけで何度でも修正', '企画書・仕様書・画面構成図と概算費用を自動で作成', 'スマホで触れるデモアプリで、動きを確かめられる', '相談・ミーティング予約・お見積り・制作の進捗まで、ここで完結', '作った内容をそのまま形にすると、初期費用は15万円〜（1から作る場合の半分）' ),
+		'btn'   => '無料で登録してAIスタジオを使う',
+		'flow'  => array( '無料会員登録', 'AIでデザイン', 'AIで仕様書・概算', '開発を相談', 'オンラインミーティング', 'お見積り・ご入金', '制作', '公開' ),
+		'brand' => 'AIスタジオ',
+	),
+	'hp'       => array(
+		'badge' => 'ホームページ版／無料会員登録で使える',
+		'h1'    => 'AIが、あなたの<br><em>ホームページの試作</em>を作ります。',
+		'lead'  => '店名・業種・要望を書くだけで、AIがページ構成・文章・色を考えて、実際に見られるホームページの試作を作ります。サイトマップと仕様書もできるので、そのまま制作の相談へ。',
+		'pts'   => array( 'トップ・サービス・会社概要・お問い合わせまで、見られる試作をすぐに作成', 'キャッチコピー・紹介文・よくある質問まで、業種に合わせて文章を作成', '「スタッフ紹介を追加」のように頼むだけで作り直し。写真もAIで作れる', 'サイトマップ・必要な機能・検索で見つけてほしい言葉をまとめた仕様書つき', 'ホームページ制作は初期費用0円・月額9,800円〜' ),
+		'btn'   => '無料で登録してホームページを作る',
+		'flow'  => array( '無料会員登録', 'AIでホームページ', 'サイトマップ・仕様書', '制作を相談', 'オンラインミーティング', 'お見積り・ご契約', '制作', '公開' ),
+		'brand' => 'AIスタジオ ホームページ',
+	),
+	'matching' => array(
+		'badge' => 'マッチングアプリ版／無料会員登録で使える',
+		'h1'    => 'AIが、あなたの<br><em>マッチングアプリの試作</em>を作ります。',
+		'lead'  => '作りたいサービスを書くだけで、AIが画面・機能・データまで考えて、スマホで触れる試作と仕様定義書を作ります。マッチング以外のオリジナルアプリも作れます。',
+		'pts'   => array( '画面をタップして流れを確かめられる試作を作成（スマホでも）', '機能一覧・画面ごとの仕様・データ項目をまとめた仕様定義書つき', '「決済を入れて」「管理者の画面を追加」のように頼むだけで作り直し', '概算の目安（費用・期間）もその場でわかる', 'マッチングアプリは開発費300万円〜・3ヶ月〜' ),
+		'btn'   => '無料で登録してアプリの試作を作る',
+		'flow'  => array( '無料会員登録', 'AIで試作', '仕様定義書・概算', '開発を相談', 'オンラインミーティング', 'お見積り・ご契約', '開発', '公開' ),
+		'brand' => 'AIスタジオ マッチングアプリ',
+	),
+);
+$apprex_c = $apprex_copy[ $apprex_mode ];
+
 if ( ! is_user_logged_in() ) :
 	$apprex_err = isset( $GLOBALS['apprex_login_error'] ) ? $GLOBALS['apprex_login_error'] : '';
 	?>
@@ -20,16 +53,13 @@ if ( ! is_user_logged_in() ) :
 <section class="hero studio-entry">
   <div class="wrap">
     <div>
-      <span class="badge-top">無料会員登録で使える／相談まで費用0円</span>
-      <h1>AIが、あなたのアプリの<br><em>デザインと仕様書</em>を作ります。</h1>
-      <p class="lead">業種と店名を入れるだけで、アプリの画面を5つデザイン。機能を選べば、企画書・仕様書・画面構成図と概算費用までその場でできあがります。満足したら、そのまま開発の相談とオンラインミーティングへ。</p>
+      <span class="badge-top"><?php echo esc_html( $apprex_c['badge'] ); ?></span>
+      <h1><?php echo wp_kses( $apprex_c['h1'], array( 'br' => array(), 'em' => array() ) ); ?></h1>
+      <p class="lead"><?php echo esc_html( $apprex_c['lead'] ); ?></p>
       <ul class="entry-pts">
-        <li>アプリの画面デザインを5画面まとめて作成。言葉で頼むだけで何度でも修正</li>
-        <li>企画書・仕様書・画面構成図と概算費用を自動で作成</li>
-        <li>ホームページもAIで試作。ページ構成と文章まで作ります</li>
-        <li>相談・ミーティング予約・お見積り・制作の進捗まで、ここで完結</li>
-        <li>作った内容をそのまま形にすると、初期費用は15万円〜（1から作る場合の半分）</li>
+        <?php foreach ( $apprex_c['pts'] as $apprex_pt ) : ?><li><?php echo esc_html( $apprex_pt ); ?></li><?php endforeach; ?>
       </ul>
+      <p class="studio-switch">ほかのAIスタジオ：<?php foreach ( array( 'app' => 'アプリ', 'hp' => 'ホームページ', 'matching' => 'マッチングアプリ' ) as $apprex_k => $apprex_l ) : ?><?php if ( $apprex_k !== $apprex_mode ) : ?><a href="<?php echo esc_url( apprex_studio_url( $apprex_k ) ); ?>"><?php echo esc_html( $apprex_l ); ?></a><?php endif; ?><?php endforeach; ?></p>
     </div>
     <div class="entry-forms">
       <form class="formcard" id="studioReg" novalidate>
@@ -43,24 +73,24 @@ if ( ! is_user_logged_in() ) :
           <input type="password" name="password" autocomplete="new-password" placeholder="パスワード（8文字以上）" aria-label="パスワード（8文字以上）" minlength="8" required>
         </div>
         <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp-field">
-        <button class="btn btn--cta btn--lg" type="submit">無料で登録してAIスタジオを使う</button>
+        <button class="btn btn--cta btn--lg" type="submit"><?php echo esc_html( $apprex_c['btn'] ); ?></button>
         <p class="fnote">登録・デザイン・相談・ミーティングまで無料です。<?php if ( get_privacy_policy_url() ) : ?><br>登録により<a href="<?php echo esc_url( get_privacy_policy_url() ); ?>">プライバシーポリシー</a>に同意したものとします。<?php endif; ?></p>
         <div class="reg-err" role="alert" hidden></div>
       </form>
       <details class="loginbox"<?php echo $apprex_err ? ' open' : ''; ?>>
         <summary>登録済みの方はこちら（ログイン）</summary>
         <?php if ( $apprex_err ) : ?><p class="reg-err"><?php echo esc_html( $apprex_err ); ?></p><?php endif; ?>
-        <form method="post" action="<?php echo esc_url( apprex_studio_url() ); ?>">
+        <form method="post" action="<?php echo esc_url( $apprex_here ); ?>">
           <input type="hidden" name="apprex_member_login" value="1">
           <input type="hidden" name="apprex_login_nonce" value="<?php echo esc_attr( wp_create_nonce( 'apprex_member_login' ) ); ?>">
-          <input type="hidden" name="apprex_redirect" value="<?php echo esc_url( apprex_studio_url() ); ?>">
+          <input type="hidden" name="apprex_redirect" value="<?php echo esc_url( $apprex_here ); ?>">
           <input type="hidden" name="rememberme" value="1">
           <div class="fgrid">
             <input type="text" name="log" autocomplete="username" placeholder="メールアドレス" aria-label="メールアドレス" required>
             <input type="password" name="pwd" autocomplete="current-password" placeholder="パスワード" aria-label="パスワード" required>
           </div>
           <button class="btn btn--line btn--lg" type="submit">ログイン</button>
-          <p class="fnote"><a href="<?php echo esc_url( wp_lostpassword_url( apprex_studio_url() ) ); ?>">パスワードをお忘れの方</a></p>
+          <p class="fnote"><a href="<?php echo esc_url( wp_lostpassword_url( $apprex_here ) ); ?>">パスワードをお忘れの方</a></p>
         </form>
       </details>
     </div>
@@ -69,7 +99,7 @@ if ( ! is_user_logged_in() ) :
 <section class="sec">
   <div class="wrap">
     <div class="sh"><span class="eyebrow">How it works</span><h2>相談から公開までの流れ</h2></div>
-    <ol class="st-flow" aria-label="相談から公開までの流れ"><li><span>1</span>無料会員登録</li><li><span>2</span>AIでデザイン</li><li><span>3</span>AIで仕様書・概算</li><li><span>4</span>開発を相談</li><li><span>5</span>オンラインミーティング</li><li><span>6</span>お見積り・ご入金</li><li><span>7</span>制作</li><li><span>8</span>公開</li></ol>
+    <ol class="st-flow" aria-label="相談から公開までの流れ"><?php foreach ( $apprex_c['flow'] as $apprex_i => $apprex_f ) : ?><li><span><?php echo (int) $apprex_i + 1; ?></span><?php echo esc_html( $apprex_f ); ?></li><?php endforeach; ?></ol>
   </div>
 </section>
 </div>
@@ -79,13 +109,13 @@ else :
 	?>
 <div class="rn-studio">
   <header class="top"><div class="top-in">
-    <div class="brand">APP<b>REX</b><small>AIスタジオ</small></div>
+    <div class="brand">APP<b>REX</b><small><?php echo esc_html( $apprex_c['brand'] ); ?></small></div>
     <div class="top-r">
       <span class="saved" id="savedAt" aria-live="polite"></span>
       <span class="user"><?php echo esc_html( $apprex_user->display_name ); ?> 様（無料会員）</span>
-      <button type="button" id="reset">デザインを最初から</button>
+      <?php if ( 'app' === $apprex_mode ) : ?><button type="button" id="reset">デザインを最初から</button><?php endif; ?>
       <a href="<?php echo esc_url( apprex_mypage_url() ); ?>">マイページ</a>
-      <a href="<?php echo esc_url( wp_logout_url( apprex_studio_url() ) ); ?>">ログアウト</a>
+      <a href="<?php echo esc_url( wp_logout_url( $apprex_here ) ); ?>">ログアウト</a>
     </div>
   </div></header>
   <nav class="prog" aria-label="進み具合"><ol id="prog"></ol></nav>

@@ -444,3 +444,10 @@
 .rn-studio .hp-node b{color:var(--navy);font-size:.92rem}
 .rn-studio .hp-node small{color:var(--muted);font-size:.74rem}
 .rn-studio .hp-node em{font-style:normal;color:var(--body);font-size:.76rem;line-height:1.6}
+/* スタジオの切り替え */
+.rn-studio .st-switch{margin-top:10px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;display:grid;gap:4px;font-size:.82rem}
+.rn-studio .st-switch b{color:var(--navy);font-size:.78rem;margin-bottom:2px}
+.rn-studio .st-switch a,.rn-studio .st-switch span{display:block;padding:6px 10px;border-radius:9px;text-decoration:none;color:var(--body);font-weight:700}
+.rn-studio .st-switch a:hover{background:var(--sky);color:var(--blue-d)}
+.rn-studio .st-switch span.on{background:var(--navy);color:#fff}
+@media(max-width:900px){.rn-studio .st-switch{display:flex;flex-wrap:nowrap;align-items:center;margin-top:0;padding:6px 8px;flex:0 0 auto}.rn-studio .st-switch b{display:none}.rn-studio .st-switch a,.rn-studio .st-switch span{white-space:nowrap}}

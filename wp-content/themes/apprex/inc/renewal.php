@@ -46,15 +46,25 @@ function apprex_rn_img( $file ) {
 	return APPREX_URI . '/assets/images/rn/' . ltrim( $file, '/' );
 }
 
-/** AIスタジオ（会員システム）のURL。 */
-function apprex_studio_url() {
-	return apprex_page_url( 'studio' );
+/** AIスタジオ（会員システム）のURL。$mode：app（アプリ）／hp（ホームページ）／matching（マッチングアプリ）。 */
+function apprex_studio_url( $mode = 'app' ) {
+	$slugs = array( 'app' => 'studio', 'hp' => 'hp-studio', 'matching' => 'matching-studio' );
+	return apprex_page_url( isset( $slugs[ $mode ] ) ? $slugs[ $mode ] : 'studio' );
+}
+
+/** 今のAIスタジオのページの種類（app／hp／matching）。 */
+function apprex_studio_mode() {
+	$slug = is_page() ? (string) get_post_field( 'post_name', get_queried_object_id() ) : '';
+	$map  = array( 'hp-studio' => 'hp', 'matching-studio' => 'matching' );
+	return isset( $map[ $slug ] ) ? $map[ $slug ] : 'app';
 }
 
 /** リニューアルで追加した固定ページ（slug => [タイトル, テンプレート]）。 */
 function apprex_rn_pages() {
 	return array(
-		'studio'       => array( 'AIスタジオ', 'page-templates/page-studio.php' ),
+		'studio'          => array( 'AIスタジオ', 'page-templates/page-studio.php' ),
+		'hp-studio'       => array( 'AIスタジオ（ホームページ）', 'page-templates/page-studio.php' ),
+		'matching-studio' => array( 'AIスタジオ（マッチングアプリ）', 'page-templates/page-studio.php' ),
 		'matching-app' => array( 'マッチングアプリ開発', 'page-templates/page-matching.php' ),
 		'manual'       => array( 'アプリの作り方マニュアル', 'page-templates/page-manual.php' ),
 	);
@@ -257,7 +267,7 @@ add_action( 'wp_enqueue_scripts', function () {
  * 固定ページの自動作成（AIスタジオ／マッチングアプリ開発／作り方マニュアル）
  * ---------------------------------------------------------------------- */
 add_action( 'init', function () {
-	if ( (int) get_option( 'apprex_rn_pages_created' ) >= 3 ) {
+	if ( (int) get_option( 'apprex_rn_pages_created' ) >= 4 ) {
 		return;
 	}
 	$defs = apprex_rn_pages() + apprex_rn_extra_pages();
@@ -281,7 +291,7 @@ add_action( 'init', function () {
 	if ( ! term_exists( 'news', 'category' ) ) {
 		wp_insert_term( 'お知らせ', 'category', array( 'slug' => 'news' ) );
 	}
-	update_option( 'apprex_rn_pages_created', 3 );
+	update_option( 'apprex_rn_pages_created', 4 );
 } );
 
 /* -------------------------------------------------------------------------
