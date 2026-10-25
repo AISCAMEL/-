@@ -328,6 +328,7 @@ function apprex_type_label( $type ) {
 		'estimate' => '見積もり・発注',
 		'signup'   => 'AIスタジオ会員登録',
 		'studio'   => 'AIスタジオから開発相談',
+		'seminar'  => '説明会の予約',
 	);
 	return isset( $labels[ $type ] ) ? $labels[ $type ] : 'お問い合わせ';
 }
@@ -553,6 +554,10 @@ function apprex_rest_inquiry( WP_REST_Request $request ) {
 			$result['download'] = esc_url_raw( $doc );
 		}
 	}
+	// 代理店の申し込みは、説明会（LINEで予約）へ誘導。
+	if ( 'partner' === $type && function_exists( 'apprex_seminar_url' ) ) {
+		$result['seminar'] = esc_url_raw( apprex_seminar_url() );
+	}
 	// お問い合わせ・パートナーはミーティング（Web面談）予約へ誘導。
 	if ( in_array( $type, array( 'contact', 'partner' ), true ) ) {
 		$meet = apprex_meeting_url();
@@ -582,7 +587,7 @@ function apprex_autoreply_onscreen( $type ) {
 		case 'meeting':
 			return 'ミーティングのご予約を受け付けました。確認のうえ、確定のご連絡を差し上げます。リマインダーもお送りします。';
 		case 'partner':
-			return '代理店のお申し込みを受け付けました。担当者より面談のご案内をお送りします。下のボタンから、オンライン面談のご予約もできます。';
+			return '代理店のお申し込みを受け付けました。担当者よりご連絡します。報酬・加盟金は説明会でご説明しますので、まだの方はLINEから説明会をご予約ください。';
 		case 'signup':
 			return 'AIスタジオへの登録が完了しました。さっそくアプリのデザインを作ってみましょう。';
 		case 'studio':
@@ -752,7 +757,8 @@ function apprex_autoreply_message( $type, $fields ) {
 			break;
 		case 'partner':
 			$subject = '【APPREX】代理店のお申し込みありがとうございます';
-			$body    = "{$name} 様\n\nこの度はAPPREXの代理店にお申し込みいただきありがとうございます。\n担当者より、オンライン面談で代理店の種類・報酬の条件・進め方をご案内いたします。\n";
+			$sem     = function_exists( 'apprex_seminar_url' ) ? apprex_seminar_url() : home_url( '/partner/' );
+			$body    = "{$name} 様\n\nこの度はAPPREXの代理店にお申し込みいただきありがとうございます。\n担当者より、代理店の種類と進め方についてご連絡いたします。\n\n報酬のしくみ・加盟金は、無料のオンライン説明会でご説明しています。まだの方は、LINEから日程をお選びください。\n{$sem}\n";
 			break;
 		case 'signup':
 			$studio  = function_exists( 'apprex_studio_url' ) ? apprex_studio_url() : home_url( '/studio/' );
@@ -856,6 +862,7 @@ function apprex_step_mails( $type = 'contact' ) {
 	$hp    = home_url( '/hp-creation/' );
 	$home  = home_url( '/' );
 	$meet  = home_url( '/meeting/' );
+	$sem   = function_exists( 'apprex_seminar_url' ) ? apprex_seminar_url() : home_url( '/partner/' );
 	// AIスタジオを訪問者に公開しているときだけ、AIスタジオへ案内する（公開前は無料体験へ）。
 	$pub    = function_exists( 'apprex_rn_public' ) && apprex_rn_public();
 	$studio = function_exists( 'apprex_studio_url' ) ? apprex_studio_url() : $home;
@@ -907,11 +914,11 @@ function apprex_step_mails( $type = 'contact' ) {
 			10080 => array( 'subject' => '【APPREX】アプリの費用、ここまで下げられます', 'body' => "{name} 様\n\nアプリ開発といえば数百万円——そう思って諦めてきた方は少なくありません。\n\nAPPREXなら、デザインと仕様書はAIスタジオで無料。その内容から制作して、初期費用15万円〜・月額19,800円〜で公開できます。ホームページも初期費用0円・月額9,800円〜です。補助金のご相談もお受けしています。\n\n「自社の場合はいくら？」は、下のページで条件を選ぶだけで分かります。\n{$est}\n" ),
 			43200 => array( 'subject' => '【APPREX】迷ったら、ひと言だけでも大丈夫です', 'body' => "{name} 様\n\nお問い合わせから1ヶ月。その後いかがでしょうか。\n\n「興味はあるけど、何から聞けばいいか分からない」——それで止まってしまうのは、もったいないことです。チャット・LINE・オンライン相談（無料）のどれでも、「自社の場合どう？」のひと言からご相談いただけます。\n{$meet}\n\nこのメールで、お問い合わせ後のご案内は最後です。ありがとうございました。\n" ),
 		),
-		// 代理店の申し込み後：面談 → 売りやすい理由 → 代理店コード.
+		// 代理店の申し込み後：説明会 → 売りやすい理由 → 代理店コード（金額は説明会でご説明する）.
 		'partner'  => array(
-			1440  => array( 'subject' => '【APPREX】代理店の面談のご予約はお済みですか？', 'body' => "{name} 様\n\n代理店へのお申し込みありがとうございます。\n\nオンライン面談（無料）で、事業内容とお客様層を伺い、合う代理店の種類（紹介・販売・OEM）と報酬の条件をご案内します。まだの方は、ご都合の良い日時をお選びください。\n{$meet}\n" ),
-			4320  => array( 'subject' => '【APPREX】APPREXが売りやすい3つの理由', 'body' => "{name} 様\n\n代理店として紹介しやすい理由を3つお伝えします。\n\n1. その場で「アプリの形」を見せられる：AIスタジオ（無料）で、お客様の業種と店名から画面と仕様書がすぐにできます。\n2. 料金がわかりやすい：AIスタジオで作った内容から制作して、初期費用15万円〜・月額19,800円〜。\n3. 報酬が積み上がる：初期費用だけでなく、月額利用料からも、お客様が契約を続けるかぎり毎月お支払いするストック型です（紹介代理店：初期費用20%＋月額10%／販売代理店：初期費用30%＋月額15%）。\n\n加盟金は紹介代理店0円・販売代理店10万円・OEM代理店30万円（税抜）で、導入研修・営業ツール一式・代理店専用ページを含みます。\n\n詳しくは代理店募集のページをご覧ください。\n" . home_url( '/partner/' ) . "\n" ),
-			10080 => array( 'subject' => '【APPREX】代理店コードで、ご紹介がきちんと記録されます', 'body' => "{name} 様\n\n代理店契約のあと、あなた専用のURL（代理店コード）をお渡しします。そのURLから届いたお問い合わせ・AIスタジオの会員登録は、あなたのご紹介として記録されます。\n\nご紹介の状況と毎月の報酬は、代理店専用ページでいつでも確認できます。あわせて、営業資料・料金表と、AIスタジオを使った商談の進め方もご用意しています。面談がまだの方は、こちらからご予約ください。\n{$meet}\n" ),
+			1440  => array( 'subject' => '【APPREX】代理店説明会のご予約はお済みですか？', 'body' => "{name} 様\n\n代理店へのお申し込みありがとうございます。\n\n報酬のしくみ・加盟金・代理店の始め方は、無料のオンライン説明会でくわしくご説明しています。LINEで日程を選ぶだけで予約でき、参加URLもLINEに届きます。\n{$sem}\n" ),
+			4320  => array( 'subject' => '【APPREX】APPREXが売りやすい3つの理由', 'body' => "{name} 様\n\n代理店として紹介しやすい理由を3つお伝えします。\n\n1. その場で「アプリの形」を見せられる：AIスタジオ（無料）で、お客様の業種と店名から画面と仕様書がすぐにできます。\n2. 料金がわかりやすい：AIスタジオで作った内容から制作して、初期費用15万円〜・月額19,800円〜。\n3. 報酬が積み上がる：初期費用だけでなく、月額利用料からも、お客様が契約を続けるかぎり毎月お支払いするストック型です。\n\n報酬率と加盟金は、説明会でご説明します。\n{$sem}\n" ),
+			10080 => array( 'subject' => '【APPREX】代理店コードで、ご紹介がきちんと記録されます', 'body' => "{name} 様\n\n代理店契約のあと、あなた専用のURL（代理店コード）をお渡しします。そのURLから届いたお問い合わせ・AIスタジオの会員登録は、あなたのご紹介として記録されます。\n\nご紹介の状況と毎月の報酬は、代理店専用ページでいつでも確認できます。あわせて、営業資料・料金表と、AIスタジオを使った商談の進め方もご用意しています。説明会がまだの方は、LINEからご予約ください。\n{$sem}\n" ),
 		),
 	);
 

@@ -37,7 +37,7 @@ while ( have_posts() ) :
 
 			<div class="callout is-reveal" style="margin-bottom:28px">
 				<h3><?php esc_html_e( '代理店（紹介・販売・OEM）も募集中', 'apprex' ); ?></h3>
-				<p><?php esc_html_e( '加盟金・ノルマなし。Web制作会社・広告代理店・SNSで発信している方を歓迎します。', 'apprex' ); ?></p>
+				<p><?php esc_html_e( 'Web制作会社・広告代理店・SNSで発信している方を歓迎します。報酬・加盟金は、LINEで予約できる説明会（無料・オンライン）でご説明します。', 'apprex' ); ?></p>
 				<a class="btn btn--light" href="<?php echo esc_url( apprex_page_url( 'partner' ) ); ?>"><?php esc_html_e( '代理店募集を見る', 'apprex' ); ?></a>
 			</div>
 

@@ -4,7 +4,7 @@ Theme URI: https://site.aiscompany.jp/
 Author: AIS Company
 Author URI: https://site.aiscompany.jp/
 Description: クラウド型アプリ開発プラットフォーム「APPREX」公式サイト用テーマ。Hello Elementor の思想を踏襲したライセンス非依存の自作テーマ。固定ページ構成＋カスタム投稿タイプ cases によるリニューアル実装。モバイルファースト・WebP・Lazy Load 対応。
-Version: 1.72.0
+Version: 1.73.0
 Requires at least: 6.0
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -1222,3 +1222,14 @@ a:focus-visible, button:focus-visible, .btn:focus-visible, summary:focus-visible
 .agency-terms dt { font-weight: 700; color: var(--color-ink); }
 .agency-terms dd { margin: 0; color: var(--color-primary-dark); font-weight: 700; }
 .agency-list { list-style: disc; padding-left: 1.2em; margin: 0; display: grid; gap: 6px; font-size: .92rem; color: var(--color-body); }
+/* 代理店説明会（v1.73） */
+.partner-hero-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 22px; }
+.seminar-card { border: 2px solid #06c755; }
+.seminar-dates { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 8px; }
+.seminar-dates li { display: grid; gap: 2px; padding: 10px 12px; background: var(--color-bg-soft); border-radius: 10px; }
+.seminar-dates b { color: var(--color-ink); font-size: .98rem; }
+.seminar-dates span { font-size: .82rem; color: var(--color-muted); }
+.seminar-meta { font-size: .85rem; color: var(--color-muted); margin: 0 0 12px !important; }
+.seminar-callout { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 24px; }
+.seminar-callout p { margin: 0; flex: 1 1 260px; }
+.seminar-callout .btn { margin-top: 0; }

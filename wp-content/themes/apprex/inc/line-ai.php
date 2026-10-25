@@ -60,8 +60,8 @@ add_action( 'apprex_line_event', function ( $ev, $uid, $type ) {
 	if ( 'message' !== $type ) {
 		return;
 	}
-	if ( ! apprex_line_ai_enabled() ) {
-		return;
+	if ( ! apprex_line_ai_enabled() || ! empty( $GLOBALS['apprex_line_replied'] ) ) {
+		return; // ほかの機能（説明会の案内など）がすでに返信した。
 	}
 	if ( empty( $ev['message']['type'] ) || 'text' !== $ev['message']['type'] ) {
 		return; // テキスト以外（画像・スタンプ等）は対象外。
