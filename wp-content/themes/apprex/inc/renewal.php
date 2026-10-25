@@ -218,6 +218,11 @@ function apprex_rn_skin() {
 
 /** ページ上部に出す画像（固定ページのアイキャッチ画像）。 */
 function apprex_rn_hero_image() {
+	// 導入事例の一覧は、テーマ同梱の cases.webp。
+	if ( is_post_type_archive( 'case' ) ) {
+		$file = '/assets/images/pages/cases.webp';
+		return file_exists( APPREX_DIR . $file ) ? APPREX_URI . $file . '?ver=' . APPREX_VERSION : '';
+	}
 	$id = is_home() ? (int) get_option( 'page_for_posts' ) : ( is_page() ? get_queried_object_id() : 0 );
 	if ( ! $id ) {
 		return '';
