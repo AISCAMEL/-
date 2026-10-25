@@ -38,6 +38,10 @@ add_action( 'init', function () {
 		apprex_migrate_lp_167();
 		update_option( 'apprex_migrated', 167 );
 	}
+	if ( $v < 174 ) {
+		apprex_migrate_privacy_174();
+		update_option( 'apprex_migrated', 174 );
+	}
 }, 20 );
 
 /** メール文面の上書きを整理する。 */
@@ -221,5 +225,50 @@ function apprex_migrate_agency_page_163() {
 	$id = wp_insert_post( array( 'post_type' => 'page', 'post_status' => 'publish', 'post_title' => '代理店専用ページ', 'post_name' => 'agency' ) );
 	if ( $id && ! is_wp_error( $id ) ) {
 		update_post_meta( $id, '_wp_page_template', 'page-templates/page-agency.php' );
+	}
+}
+
+/* -------------------------------------------------------------------------
+ * v1.75.0：プライバシーポリシーのページを公開する（下書きのままのサイト向け）
+ * ---------------------------------------------------------------------- */
+function apprex_migrate_privacy_174() {
+	$id   = (int) get_option( 'wp_page_for_privacy_policy', 0 );
+	$page = $id ? get_post( $id ) : null;
+	if ( ! $page || 'page' !== $page->post_type || 'trash' === $page->post_status ) {
+		$page = get_page_by_path( 'privacy-policy' );
+	}
+	// すでに公開しているページはそのまま（URLだけそろえる）。
+	if ( $page && 'publish' === $page->post_status ) {
+		update_option( 'wp_page_for_privacy_policy', $page->ID );
+		return;
+	}
+	if ( $page ) {
+		// WordPressが最初に作る下書き（見本の文章）は控えに残して、テーマの標準の文面を表示する。
+		if ( '' !== trim( $page->post_content ) ) {
+			add_post_meta( $page->ID, '_apprex_content_backup_174', $page->post_content, true );
+		}
+		wp_update_post(
+			array(
+				'ID'           => $page->ID,
+				'post_status'  => 'publish',
+				'post_name'    => 'privacy-policy',
+				'post_title'   => 'プライバシーポリシー',
+				'post_content' => '',
+			)
+		);
+		$id = $page->ID;
+	} else {
+		$id = wp_insert_post(
+			array(
+				'post_type'   => 'page',
+				'post_status' => 'publish',
+				'post_title'  => 'プライバシーポリシー',
+				'post_name'   => 'privacy-policy',
+			)
+		);
+	}
+	if ( $id && ! is_wp_error( $id ) ) {
+		update_post_meta( $id, '_wp_page_template', 'page-templates/page-privacy.php' );
+		update_option( 'wp_page_for_privacy_policy', (int) $id );
 	}
 }

@@ -384,7 +384,8 @@ function apprex_render_form( $type = 'contact' ) {
 		</label>
 		<label class="apprex-form__consent">
 			<input type="checkbox" name="consent" value="1" required>
-			<span><?php esc_html_e( 'プライバシーポリシーに同意します', 'apprex' ); ?></span>
+			<?php $apprex_pp_url = function_exists( 'get_privacy_policy_url' ) ? get_privacy_policy_url() : ''; ?>
+			<span><?php if ( $apprex_pp_url ) : ?><a href="<?php echo esc_url( $apprex_pp_url ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'プライバシーポリシー', 'apprex' ); ?></a><?php esc_html_e( 'に同意します', 'apprex' ); ?><?php else : ?><?php esc_html_e( 'プライバシーポリシーに同意します', 'apprex' ); ?><?php endif; ?></span>
 		</label>
 		<button type="submit" class="btn btn--primary btn--block"><?php echo esc_html( $meta['submit'] ); ?></button>
 		<div class="apprex-form__result" hidden></div>
