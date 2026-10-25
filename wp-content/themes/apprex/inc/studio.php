@@ -367,6 +367,10 @@ add_action( 'wp_enqueue_scripts', function () {
 		$cfg['origDemo'] = apprex_demo_url( apprex_demo_token( $u->ID ), array( 'v' => 'orig' ) );
 		$cfg['origImages'] = function_exists( 'apprex_orig_images_out' ) ? apprex_orig_images_out( $u->ID ) : null;
 		$cfg['est']     = function_exists( 'apprex_orig_estimate_rules' ) ? apprex_orig_estimate_rules() : null;
+		$cfg['hp']       = function_exists( 'apprex_hp_get' ) ? apprex_hp_get( $u->ID ) : null;
+		$cfg['hpDemo']   = function_exists( 'apprex_hp_demo_url' ) ? apprex_hp_demo_url( $u->ID ) : '';
+		$cfg['hpImage']  = function_exists( 'apprex_hp_image_url' ) ? apprex_hp_image_url( $u->ID ) : '';
+		$cfg['hpSample'] = apprex_demo_url( 'sample', array( 'v' => 'hp' ) );
 	}
 	wp_enqueue_script( 'apprex-studio-data', APPREX_URI . '/assets/js/studio-data.js', array(), APPREX_VERSION, true );
 	wp_enqueue_script( 'apprex-qrcode', APPREX_URI . '/assets/js/vendor/qrcode.js', array(), '2.0.4', true );

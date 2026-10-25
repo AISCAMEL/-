@@ -148,6 +148,20 @@ function apprex_manual_sections() {
 			'quick' => array( '企画書をAIで作るには？', '書類はどう使う？' ),
 		),
 		array(
+			'id'    => 'hp',
+			'group' => 'studio',
+			'title' => 'ホームページをAIで作る',
+			'lead'  => '業種と要望を書くと、AIがページ構成・文章・色を考えて、見られるホームページの試作とサイトマップ・仕様書を作ります。',
+			'steps' => array(
+				array( '店名・業種・要望を書く', '強み・お客様・目的（予約を増やしたい など）を書くと、狙いどおりになりやすくなります。プラン（Light／Standard／Premium）も選びます。' ),
+				array( '「AIでホームページを作る」を押す', '30秒ほどで、トップ・サービス・会社概要・お問い合わせなどのページができます。ページを行き来して確かめられます。' ),
+				array( '直す・写真を入れる', '「スタッフ紹介を追加」「もっと高級感を」のように頼むと作り直します。メインビジュアルの写真もAIで作れます。' ),
+				array( '制作を相談する', '「このホームページで制作を相談する」で、アプリと一緒に、またはホームページだけで相談できます。' ),
+			),
+			'tips'  => array( 'AIが作るのはイメージです。写真と文章は、制作のときにお店の本物に差し替えます。', 'ホームページ制作は初期費用0円・月額9,800円〜です。' ),
+			'quick' => array( 'ホームページだけでも頼める？', 'ページはいくつ作れる？' ),
+		),
+		array(
 			'id'    => 'propose',
 			'group' => 'studio',
 			'title' => 'ご提案（ホームページ・オプション）',
@@ -297,6 +311,7 @@ function apprex_studio_step_sections() {
 		'appmenu' => array( 'appmenu' ),
 		'demo'    => array( 'demo' ),
 		'orig'    => array( 'orig' ),
+		'hp'      => array( 'hp' ),
 		'spec'    => array( 'spec' ),
 		'docs'    => array( 'docs' ),
 		'propose' => array( 'propose' ),
