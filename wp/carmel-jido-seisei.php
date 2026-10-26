@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 10.7
+ * Version: 10.8
  * Author: CARMEL
  */
 
@@ -75,6 +75,11 @@ function carmel3_auto_get_settings() {
         'gr_tone'         => '',        // 返信の文体・口調
         'gr_mode'         => 'approve', // approve=すべて手動確認 / hybrid=高評価は自動 / auto=全自動
         'text_model'   => '',        // 文章生成モデルの上書き（空=本体まかせ。無料モデル指定で残高不足回避）
+        // 文章生成エンジン: core=本体(OpenRouter) / claude=Claude API（高品質）
+        'text_engine'    => 'core',
+        'claude_api_key' => '',       // Anthropic APIキー（sk-ant-...）
+        'claude_model'   => 'claude-opus-5-5',
+        'claude_max_tokens' => 8000,
         'publish'      => 0,
         'gen_images'   => 0,
         'gen_section_images' => 0,   // 既定OFF＝画像はアイキャッチ＋バナーの2枚のみ（低コスト運用）
@@ -1876,8 +1881,79 @@ function carmel3_ai_slug_meta($title, $kw) {
     return $out;
 }
 
+/* ===== Claude API（Anthropic）で文章生成（高品質エンジン） ===== */
+
+// Anthropic Messages API を直接呼ぶ（WordPressのHTTPで。SDK不要）
+function carmel3_claude_messages($key, $system, $user, $model, $max_tokens, $timeout = 120) {
+    $key = trim((string)$key);
+    if ($key === '') return array('error' => 'Claude APIキーが未設定です');
+    $body = array(
+        'model'      => $model !== '' ? $model : 'claude-opus-5-5',
+        'max_tokens' => max(512, (int)$max_tokens),
+        'messages'   => array(array('role' => 'user', 'content' => (string)$user)),
+    );
+    if (trim((string)$system) !== '') $body['system'] = (string)$system;
+
+    $r = wp_remote_post('https://api.anthropic.com/v1/messages', array(
+        'headers' => array(
+            'x-api-key'         => $key,
+            'anthropic-version' => '2023-06-01',
+            'content-type'      => 'application/json',
+        ),
+        'body'    => wp_json_encode($body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        'timeout' => max(120, (int)$timeout),
+    ));
+    if (is_wp_error($r)) return array('error' => 'Claude接続エラー: ' . $r->get_error_message());
+    $code = (int) wp_remote_retrieve_response_code($r);
+    $data = json_decode((string) wp_remote_retrieve_body($r), true);
+    if ($code < 200 || $code >= 300) {
+        $m = isset($data['error']['message']) ? $data['error']['message'] : ('HTTP ' . $code);
+        return array('error' => 'Claude API: ' . mb_substr((string)$m, 0, 200));
+    }
+    if (isset($data['stop_reason']) && $data['stop_reason'] === 'refusal') {
+        return array('error' => 'Claudeが応答を拒否しました（内容をご確認ください）');
+    }
+    $text = '';
+    if (isset($data['content']) && is_array($data['content'])) {
+        foreach ($data['content'] as $blk) {
+            if (isset($blk['type']) && $blk['type'] === 'text' && isset($blk['text'])) $text .= $blk['text'];
+        }
+    }
+    if (trim($text) === '') return array('error' => 'Claudeの応答が空でした');
+    return array('content' => $text);
+}
+
+// 文章生成の共通入口。設定でClaude APIが選ばれていればClaude、なければ本体(OpenRouter)。
+// carmel_call_openrouter_chat と同じ呼び出し形（messages配列）で差し替え可能。
+function carmel3_llm_chat($messages, $model = '', $temp = 0.7, $timeout = 90) {
+    $s = carmel3_auto_get_settings();
+    $engine = isset($s['text_engine']) ? $s['text_engine'] : 'core';
+    $key    = isset($s['claude_api_key']) ? trim((string)$s['claude_api_key']) : '';
+
+    if ($engine === 'claude' && $key !== '') {
+        $system = ''; $userparts = array();
+        foreach ((array)$messages as $m) {
+            if (!is_array($m) || !isset($m['content'])) continue;
+            if (isset($m['role']) && $m['role'] === 'system') {
+                $system .= ($system !== '' ? "\n" : '') . $m['content'];
+            } else {
+                $userparts[] = $m['content'];
+            }
+        }
+        $cmodel = isset($s['claude_model']) ? trim((string)$s['claude_model']) : '';
+        $maxtok = isset($s['claude_max_tokens']) ? (int)$s['claude_max_tokens'] : 8000;
+        return carmel3_claude_messages($key, $system, implode("\n\n", $userparts), $cmodel, $maxtok, $timeout);
+    }
+
+    if (function_exists('carmel_call_openrouter_chat')) {
+        return carmel_call_openrouter_chat($messages, $model, $temp, $timeout);
+    }
+    return array('error' => '本体のAI関数が見つかりません');
+}
+
 function carmel3_gen_post($post_type, $item, $s, $existing_id = 0) {
-    if (!function_exists('carmel_call_openrouter_chat')) {
+    $use_claude = (isset($s['text_engine']) && $s['text_engine'] === 'claude' && trim((string)($s['claude_api_key'] ?? '')) !== '');
+    if (!$use_claude && !function_exists('carmel_call_openrouter_chat')) {
         return new WP_Error('no_engine', '本体のAI関数(carmel_call_openrouter_chat)が見つかりません');
     }
     $kw    = ($item['keyword'] !== '') ? $item['keyword'] : $item['title'];
@@ -1937,7 +2013,7 @@ function carmel3_gen_post($post_type, $item, $s, $existing_id = 0) {
         . "注意: 自然な日本語 / 本文はHTML / 誇大表現は避ける / slugは必ず英語 / 伏字（〇〇店・XXX等）は禁止 / 上の『書き方』『文章量』があれば最優先で従う。";
 
     $text_model = isset($s['text_model']) ? trim((string)$s['text_model']) : '';
-    $res = carmel_call_openrouter_chat(array(
+    $res = carmel3_llm_chat(array(
         array('role' => 'system', 'content' => $system),
         array('role' => 'user',   'content' => $user),
     ), $text_model, 0.7, 90);
@@ -2879,6 +2955,17 @@ add_action('admin_post_carmel3_auto_save', function () {
     $ql = isset($_POST['quality_level']) ? sanitize_key($_POST['quality_level']) : 'standard';
     $s['quality_level'] = in_array($ql, array('standard', 'high', 'max'), true) ? $ql : 'standard';
     $s['text_model'] = isset($_POST['text_model']) ? sanitize_text_field(wp_unslash($_POST['text_model'])) : '';
+    // 文章エンジン（本体OpenRouter / Claude API）
+    $te = isset($_POST['text_engine']) ? sanitize_key($_POST['text_engine']) : 'core';
+    $s['text_engine'] = in_array($te, array('core', 'claude'), true) ? $te : 'core';
+    if (isset($_POST['claude_api_key'])) {
+        $ck = trim((string) wp_unslash($_POST['claude_api_key']));
+        if ($ck !== '' && strpos($ck, '●') === false) $s['claude_api_key'] = sanitize_text_field($ck);
+        if ($ck === '') $s['claude_api_key'] = '';
+    }
+    $s['claude_model'] = isset($_POST['claude_model']) ? sanitize_text_field(wp_unslash($_POST['claude_model'])) : 'claude-opus-5-5';
+    if ($s['claude_model'] === '') $s['claude_model'] = 'claude-opus-5-5';
+    $s['claude_max_tokens'] = isset($_POST['claude_max_tokens']) ? max(512, min(64000, (int)$_POST['claude_max_tokens'])) : 8000;
 
     $im = isset($_POST['image_model']) ? sanitize_text_field(wp_unslash($_POST['image_model'])) : '';
     $s['image_model'] = $im !== '' ? $im : CARMEL3_IMG_DEFAULT_MODEL;
@@ -3624,7 +3711,7 @@ function carmel3_slack_generate_proposals($s, $count, $kind = 'news') {
         . "{\"items\":[{\"title\":\"記事タイトル案\",\"keyword\":\"主要キーワード\",\"brief\":\"何をどう書くか・訴求点を1〜2文で\"}]}\n"
         . "注意: 事実を勝手に断定しない（金額・日付は例示にとどめる）。タイトルは具体的で読みたくなるもの。";
 
-    $res = carmel_call_openrouter_chat(array(
+    $res = carmel3_llm_chat(array(
         array('role' => 'system', 'content' => $sys),
         array('role' => 'user',   'content' => $user),
     ), isset($s['text_model']) ? $s['text_model'] : '', 0.8, 90);
@@ -4646,7 +4733,7 @@ function carmel3_repurpose_generate($base, $tone, $media) {
         . "{\"items\":{" . implode(',', array_map(function ($m) { return "\"{$m}\":\"その媒体用の本文\""; }, $media)) . "}}";
 
     $settings = carmel3_auto_get_settings();
-    $res = carmel_call_openrouter_chat(array(
+    $res = carmel3_llm_chat(array(
         array('role' => 'system', 'content' => $sys),
         array('role' => 'user',   'content' => $user),
     ), isset($settings['text_model']) ? $settings['text_model'] : '', 0.7, 120);
@@ -4683,7 +4770,7 @@ function carmel3_repurpose_refine($text, $label, $instruction, $tone) {
     $user .= "元ネタに無い事実は足さない。{$label}に適した長さ・体裁を保つ。整えた本文のみを返す。";
 
     $settings = carmel3_auto_get_settings();
-    $res = carmel_call_openrouter_chat(array(
+    $res = carmel3_llm_chat(array(
         array('role' => 'system', 'content' => $sys),
         array('role' => 'user',   'content' => $user),
     ), isset($settings['text_model']) ? $settings['text_model'] : '', 0.7, 90);
@@ -5171,7 +5258,7 @@ function carmel3_gr_draft($stars, $author, $text, $tone) {
     $user .= "\n注意：事実を創作しない。過度な宣伝はしない。投稿者名があれば自然に一言添える。返信本文のみを返す。";
 
     $s = carmel3_auto_get_settings();
-    $res = carmel_call_openrouter_chat(array(
+    $res = carmel3_llm_chat(array(
         array('role' => 'system', 'content' => $sys),
         array('role' => 'user',   'content' => $user),
     ), isset($s['text_model']) ? $s['text_model'] : '', 0.7, 90);
@@ -5444,6 +5531,24 @@ function carmel3_lower_max_tokens_deep(&$data, $cap) {
 }
 
 // 本体が保存している max_tokens を安全値まで下げる（クレジット不要・本体コードは無改変）
+// Claude API 接続テスト
+add_action('admin_post_carmel3_claude_test', function () {
+    if (!current_user_can('manage_options')) wp_die('権限がありません');
+    check_admin_referer('carmel3_claude_test');
+    $s = carmel3_auto_get_settings();
+    $key = isset($s['claude_api_key']) ? $s['claude_api_key'] : '';
+    $model = isset($s['claude_model']) ? $s['claude_model'] : 'claude-opus-5-5';
+    $r = carmel3_claude_messages($key, '返答は日本語で短く。', 'テスト。「接続OK」とだけ返してください。', $model, 64, 60);
+    if (!empty($r['error'])) {
+        $msg = '接続失敗：' . $r['error'];
+    } else {
+        $msg = '接続OK（' . $model . '）／応答：' . mb_substr(trim((string)$r['content']), 0, 40);
+    }
+    set_transient('carmel3_claude_test_msg', $msg, 120);
+    wp_safe_redirect(admin_url('admin.php?page=carmel3-auto&claudetest=1'));
+    exit;
+});
+
 add_action('admin_post_carmel3_fix_tokens', function () {
     if (!current_user_can('manage_options')) wp_die('権限がありません');
     check_admin_referer('carmel3_fix_tokens');
@@ -5740,6 +5845,38 @@ function carmel3_auto_settings_page() {
                     残高がほぼ0でも、<strong>料金$0の無料モデル</strong>を指定すれば生成できます（文章のみ。画像は別）。おすすめ：<br>
                     <code>deepseek/deepseek-chat-v3-0324:free</code> ／ <code>google/gemini-2.0-flash-exp:free</code> ／ <code>meta-llama/llama-3.3-70b-instruct:free</code><br>
                     ※ 無料モデルの利用には <a href="https://openrouter.ai/settings/privacy" target="_blank" rel="noopener">OpenRouterのプライバシー設定</a> で許可が必要な場合があります。空欄に戻すと元のモデルに戻ります。
+                </p>
+            </div>
+
+            <div style="border:1px solid #c4b5fd;background:#f5f3ff;border-radius:10px;padding:14px 16px;margin-bottom:12px">
+                <?php $eng = isset($s['text_engine']) ? $s['text_engine'] : 'core'; $has_ck = trim((string)($s['claude_api_key'] ?? '')) !== ''; ?>
+                <p style="margin:0 0 8px;font-weight:800;color:#5b21b6">🤖 文章生成エンジン（高品質化）</p>
+                <label style="font-weight:700;font-size:13px">エンジン：
+                    <select name="text_engine" style="padding:5px;font-weight:400;min-width:300px">
+                        <option value="core"   <?php selected($eng, 'core'); ?>>本体エンジン（OpenRouter）従来どおり</option>
+                        <option value="claude" <?php selected($eng, 'claude'); ?>>Claude API（Anthropic）高品質・おすすめ</option>
+                    </select>
+                </label>
+                <p style="margin:10px 0 4px;font-weight:700;font-size:13px">Claude APIキー（<code>sk-ant-...</code>）</p>
+                <input type="text" name="claude_api_key" value="<?php echo esc_attr($has_ck ? '●●●●●●●●（設定済み・変更時のみ入力）' : ''); ?>" style="width:100%;padding:8px" placeholder="sk-ant-...">
+                <p style="margin:4px 0 0;color:#6b7280;font-size:12px"><a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a> で発行。ここに貼るだけ（チャットには貼らないでください）。</p>
+                <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px">
+                    <label style="font-size:13px;font-weight:700">モデル<br>
+                        <?php $cm = isset($s['claude_model']) ? $s['claude_model'] : 'claude-opus-5-5'; ?>
+                        <select name="claude_model" style="padding:6px;font-weight:400;min-width:260px">
+                            <option value="claude-opus-5-5"   <?php selected($cm, 'claude-opus-5-5'); ?>>Claude Opus 5.5（最高品質・やや高コスト）</option>
+                            <option value="claude-sonnet-5-5" <?php selected($cm, 'claude-sonnet-5-5'); ?>>Claude Sonnet 5.5（高品質・低コスト・おすすめ）</option>
+                            <option value="claude-haiku-5-5"  <?php selected($cm, 'claude-haiku-5-5'); ?>>Claude Haiku 5.5（高速・最安）</option>
+                        </select>
+                    </label>
+                    <label style="font-size:13px;font-weight:700">最大トークン<br>
+                        <input type="number" name="claude_max_tokens" value="<?php echo esc_attr(isset($s['claude_max_tokens']) ? (int)$s['claude_max_tokens'] : 8000); ?>" min="512" max="64000" step="500" style="width:120px;font-weight:400">
+                    </label>
+                </div>
+                <p style="margin:8px 0 0;color:#6b7280;font-size:12px">ニュース・加盟店ブログ・「ニュースを作る」・「元ネタから展開」・口コミ返信の<strong>文章</strong>に適用されます（画像は画像モデル／メディア記事の自動生成は本体エンジンのまま）。<strong>Anthropicの残高で課金</strong>されます。コスト重視なら <strong>Sonnet 5.5</strong> がおすすめ。</p>
+                <p style="margin:10px 0 0">
+                    <a href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=carmel3_claude_test'), 'carmel3_claude_test')); ?>" class="button button-secondary">Claude API 接続テスト</a>
+                    <?php $ctmsg = get_transient('carmel3_claude_test_msg'); if ($ctmsg) { delete_transient('carmel3_claude_test_msg'); echo ' <span style="font-size:12px;color:#5b21b6">' . esc_html($ctmsg) . '</span>'; } ?>
                 </p>
             </div>
 
