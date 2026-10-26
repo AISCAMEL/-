@@ -436,7 +436,49 @@ var PART_NAME={hero:'メイン画像',search:'検索',list:'一覧',cards:'カ�
 var HP=CFG.hp||null, HP_BUSY=false, HPIMG=CFG.hpImage||'', HPIMG_BUSY=false;
 var HP_SEC={hero:'メインビジュアル',about:'紹介文',features:'強み・特徴',services:'サービス・メニュー',price:'料金',flow:'ご利用の流れ',voice:'お客様の声',staff:'スタッフ',gallery:'ギャラリー',news:'お知らせ',faq:'よくある質問',company:'会社・店舗情報',access:'アクセス',contact:'お問い合わせ',cta:'行動の呼びかけ'};
 var HP_PLANS={light:['Light',9800,5,'〜5ページ・お問い合わせフォーム・月1回の更新'],standard:['Standard',19800,10,'〜10ページ＋LP1本・予約／問い合わせ強化・月2回の更新'],premium:['Premium',39800,20,'〜20ページ・EC／会員機能・月3回の更新']};
-function hpUrl(){ return (CFG.hpDemo||'')+(HPIMG?'&i='+encodeURIComponent(HPIMG.slice(-12)):'')+'&t='+(S._hpT||0); }
+function hpDz(){ var d=(HP&&HP.design)||{}; return {style:d.style||'A',palette:d.palette||'ai',font:d.font||'trust',photo:d.photo||'bright'}; }
+function hpUrl(ex){ var d=hpDz(), o=ex||{}; return (CFG.hpDemo||'')+'&d='+(o.style||d.style)+'&pal='+(o.palette||d.palette)+'&font='+(o.font||d.font)+'&photo='+(o.photo||d.photo)+(o.thumb?'&thumb=1':'')+(HPIMG?'&i='+encodeURIComponent(HPIMG.slice(-12)):'')+'&t='+(S._hpT||0); }
+var HP_OPTS=CFG.hpOpts||{styles:{},palettes:{},fonts:{},photos:{}};
+/* デザインを選ぶ（デザイン案・色・文字・写真の雰囲気） */
+function vHpDesign(){
+  var d=hpDz(), O=HP_OPTS;
+  var st=Object.keys(O.styles).map(function(k){var x=O.styles[k];return '<button type="button" class="hp-thumb'+(d.style===k?' on':'')+'" data-hpd="'+k+'"><span class="hp-tw"><iframe src="'+esc(hpUrl({style:k,thumb:1}))+'" tabindex="-1" loading="lazy" title="デザイン案'+k+'"></iframe></span><b>案'+k+'　'+esc(x[0])+'</b><small>'+esc(x[1])+'</small><em>'+(d.style===k?'選んでいます':'この案にする')+'</em></button>';}).join('');
+  var pal=Object.keys(O.palettes).map(function(k){var x=O.palettes[k];return '<button type="button" class="hp-chip'+(d.palette===k?' on':'')+'" data-hppal="'+k+'"><i style="background:'+esc(x[1]||HP.color)+'"></i><i style="background:'+esc(x[2])+'"></i><span>'+esc(x[0])+'</span></button>';}).join('');
+  var fon=Object.keys(O.fonts).map(function(k){var x=O.fonts[k];return '<button type="button" class="hp-font'+(d.font===k?' on':'')+'" data-hpfont="'+k+'"><b style="font-family:'+esc(x[1])+'">'+esc(HP.name.slice(0,6))+'</b><span>'+esc(x[0])+'・'+esc(x[2])+'</span></button>';}).join('');
+  var bg=HPIMG?'background-image:url('+esc(HPIMG)+')':'background:linear-gradient(140deg,'+esc(HP.color)+',#e8d5a8)';
+  var pho=Object.keys(O.photos).map(function(k){var x=O.photos[k];return '<button type="button" class="hp-mood'+(d.photo===k?' on':'')+'" data-hpphoto="'+k+'"><i style="'+bg+';filter:'+esc(x[2])+'"></i><span>'+esc(x[0])+'</span></button>';}).join('');
+  return '<div class="card hp-dz" id="hpDz"><div class="sec-t">デザインを選ぶ</div><p class="demo-note" style="margin-top:0">押すとすぐ上の試作に反映されます。文章やページ構成はそのままです。</p>'
+    +'<div class="hp-dz-h">デザイン案（3つを見比べ）</div><div class="hp-thumbs">'+st+'</div>'
+    +'<div class="hp-dz-h">色</div><div class="hp-chips">'+pal+'</div>'
+    +'<div class="hp-dz-h">文字</div><div class="hp-fonts">'+fon+'</div>'
+    +'<div class="hp-dz-h">写真の雰囲気</div><div class="hp-moods">'+pho+'</div><p class="demo-note">'+(HPIMG?'今の写真に雰囲気を重ねて見せています。':'メインビジュアルの写真をAIで作ると、選んだ雰囲気で作ります。')+'</p></div>';
+}
+/* 小さな見本の大きさを合わせる */
+function hpFit(){ Array.prototype.forEach.call(document.querySelectorAll('.hp-tw'),function(el){ el.style.setProperty('--k',(el.clientWidth/1280).toFixed(4)); }); }
+window.addEventListener('resize',hpFit);
+/* 選んだデザインを画面に反映して保存（試作を作り直さない） */
+function hpSetDesign(k,v){
+  HP.design=HP.design||{}; if(HP.design[k]===v) return; HP.design[k]=v;
+  var map={style:'hpd',palette:'hppal',font:'hpfont',photo:'hpphoto'};
+  Array.prototype.forEach.call(document.querySelectorAll('[data-'+map[k]+']'),function(b){ var on=b.getAttribute('data-'+map[k])===v; b.classList.toggle('on',on); if(k==='style'){ var em=b.querySelector('em'); if(em) em.textContent=on?'選んでいます':'この案にする'; } });
+  var f=$('hpFrame'); if(f) f.src=hpUrl();
+  var fs=$('hpFullFrame'); if(fs) fs.src=hpUrl();
+  if(k!=='style') Array.prototype.forEach.call(document.querySelectorAll('[data-hpd]'),function(b){ var fr=b.querySelector('iframe'); if(fr) fr.src=hpUrl({style:b.getAttribute('data-hpd'),thumb:1}); });
+  var names={style:'デザイン案',palette:'色',font:'文字',photo:'写真の雰囲気'}, O=HP_OPTS[{style:'styles',palette:'palettes',font:'fonts',photo:'photos'}[k]]||{};
+  S.vers.push({n:S.vers.length+1,note:'ホームページの'+names[k]+'を「'+((O[v]||[v])[0])+'」に'}); save();
+  var body={}; body[k]=v; api('studio/hp-design',body).catch(function(x){ var he=$('hpErr'); if(he){ he.textContent=x.message; he.hidden=false; } });
+}
+/* 全画面で見る */
+function hpFull(){
+  var o=document.createElement('div'); o.className='hp-full'+(S.hpDev==='sp'?' is-sp':'');
+  o.innerHTML='<div class="hp-full-bar"><b>'+esc(HP.name)+'（試作）</b><div class="hp-seg"><button type="button" data-fdev="pc"'+(S.hpDev!=='sp'?' class="on"':'')+'>PC</button><button type="button" data-fdev="sp"'+(S.hpDev==='sp'?' class="on"':'')+'>スマホ</button></div><button type="button" class="hp-x" aria-label="閉じる">閉じる ✕</button></div><div class="hp-full-stage"><iframe id="hpFullFrame" src="'+esc(hpUrl())+'" title="ホームページの試作（全画面）"></iframe></div>';
+  function close(){ document.removeEventListener('keydown',key); o.remove(); document.body.style.overflow=''; }
+  function key(e){ if(e.key==='Escape') close(); }
+  o.addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; if(b.classList.contains('hp-x')){ close(); return; } if(b.dataset.fdev){ o.classList.toggle('is-sp',b.dataset.fdev==='sp'); Array.prototype.forEach.call(o.querySelectorAll('[data-fdev]'),function(x){ x.classList.toggle('on',x===b); }); } });
+  document.addEventListener('keydown',key); document.body.appendChild(o); document.body.style.overflow='hidden';
+}
+/* 試作の文字（ゴシック・明朝など）をスタジオの画面でも見られるように */
+(function(){ if(!HP_OPTS||document.getElementById('hpFonts')) return; var l=document.createElement('link'); l.id='hpFonts'; l.rel='stylesheet'; l.href='https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@700&family=Zen+Maru+Gothic:wght@700&family=M+PLUS+Rounded+1c:wght@800&family=Zen+Kaku+Gothic+New:wght@900&display=swap'; document.head.appendChild(l); })();
 function hpText(){
   if(!HP) return ''; var pl=HP_PLANS[HP.plan||'standard'];
   return '【ホームページ（AI試作）】\nサイト名：'+HP.name+'\n業種：'+(HP.industry||'')+'\nご希望：'+(HP.idea||'')+'\nキャッチコピー：'+HP.catch+'\n想定するお客様：'+(HP.target||'')+'\n目的：'+HP.goals.join('、')
@@ -463,8 +505,9 @@ function vHp(){
   }
   var pl=HP_PLANS[HP.plan||'standard'];
   var map='<div class="hp-map">'+HP.pages.map(function(p,i){return '<div class="hp-node'+(i===0?' top':'')+'"><b>'+esc(p.name)+'</b><small>'+esc(p.purpose||'')+'</small><em>'+p.sections.map(function(x){return esc(HP_SEC[x.t]||x.t);}).join('・')+'</em></div>';}).join('')+'</div>';
-  return head+'<div class="grid2 demo-g"><div class="card demo-stage"><div class="hp-frame"><iframe id="hpFrame" src="'+esc(hpUrl())+'" title="ホームページの試作"></iframe></div>'
-    +'<div class="acts" style="margin-top:8px"><a class="btn btn--line btn--sm" href="'+esc(CFG.hpDemo)+'" target="_blank" rel="noopener">新しいタブで開く・スマホで開く</a><button type="button" class="btn btn--line btn--sm" data-go="hpPhoto"'+(HPIMG_BUSY?' disabled':'')+'>'+(HPIMG_BUSY?'写真を作っています…':(HPIMG?'写真を作り直す（AI）':'メインビジュアルの写真を作る（AI）'))+'</button></div>'
+  return head+'<div class="grid2 demo-g"><div class="card demo-stage"><div class="hp-bar"><div class="hp-seg"><button type="button" data-hpdev="pc"'+(S.hpDev!=='sp'?' class="on"':'')+'>PC</button><button type="button" data-hpdev="sp"'+(S.hpDev==='sp'?' class="on"':'')+'>スマホ</button></div><button type="button" class="btn btn--line btn--sm" data-go="hpFull">全画面で見る</button></div>'
+    +'<div class="hp-frame'+(S.hpDev==='sp'?' is-sp':'')+'"><iframe id="hpFrame" src="'+esc(hpUrl())+'" title="ホームページの試作"></iframe></div>'
+    +'<div class="acts" style="margin-top:8px"><a class="btn btn--line btn--sm" href="'+esc(hpUrl())+'" target="_blank" rel="noopener">新しいタブで開く・スマホで開く</a><button type="button" class="btn btn--line btn--sm" data-go="hpPhoto"'+(HPIMG_BUSY?' disabled':'')+'>'+(HPIMG_BUSY?'写真を作っています…':(HPIMG?'写真を作り直す（AI）':'メインビジュアルの写真を作る（AI）'))+'</button></div>'
     +'<p class="demo-note">AIが作ったイメージです。写真・文章は、制作のときにお店の本物に差し替えます。</p></div>'
     +'<div class="card"><span class="aid-tag">AIの試作</span><h3 class="orig-name">'+esc(HP.name)+'</h3><p class="orig-sum">'+esc(HP.catch)+'</p>'
     +'<dl class="kv"><dt>業種</dt><dd>'+esc(HP.industry||'')+'</dd><dt>ページ</dt><dd>'+HP.pages.length+'ページ</dd><dt>目的</dt><dd>'+HP.goals.map(esc).join('、')+'</dd><dt>費用</dt><dd><b>制作費0円</b>・月額'+YEN(pl[1])+'（'+pl[0]+'）</dd></dl>'
@@ -473,7 +516,8 @@ function vHp(){
     +'<div class="acts"><button type="button" class="btn btn--line" id="copyHp" data-label="仕様書をコピー">仕様書をコピー</button><button type="button" class="btn btn--cta" data-go="hpConsult">このホームページで制作を相談する</button></div>'
     +'<div class="sec-t" style="margin-top:16px">AIに修正を頼む</div><textarea id="hpInstr" class="orig-ta" rows="3" placeholder="例：もっと高級感を出して。スタッフ紹介のページを追加して"></textarea>'
     +'<div class="ai-sug light">'+['もっと高級感のある雰囲気に','スタッフ紹介のページを追加','料金表をくわしく','採用情報のページを追加','ページを少なくシンプルに'].map(function(x){return '<button type="button" data-hpins="'+esc(x)+'">'+esc(x)+'</button>';}).join('')+'</div>'
-    +'<div class="acts"><button type="button" class="btn btn--pri" data-go="hpRevise"'+(HP_BUSY?' disabled':'')+'>'+(HP_BUSY?'AIが作り直しています…':'AIで作り直す')+'</button><button type="button" class="btn btn--line" data-go="hpReset">最初から作る</button></div><div class="err" id="hpErr" hidden></div></div></div>';
+    +'<div class="acts"><button type="button" class="btn btn--pri" data-go="hpRevise"'+(HP_BUSY?' disabled':'')+'>'+(HP_BUSY?'AIが作り直しています…':'AIで作り直す')+'</button><button type="button" class="btn btn--line" data-go="hpReset">最初から作る</button></div><div class="err" id="hpErr" hidden></div></div></div>'
+    +vHpDesign();
 }
 function origText(){
   var P=ORIG, E=estOrig(P);
@@ -748,7 +792,7 @@ function render(){
   renderProg(); renderSide();
   var v=S.view, h='';
   if(v==='design') h=vDesign(); else if(v==='demo') h=vDemo(); else if(v==='appmenu') h=vAppMenu(); else if(v==='orig') h=vOrig(); else if(v==='hp') h=vHp(); else if(v==='spec') h=vSpec(); else if(v==='docs') h=vDocs(); else if(v==='propose') h=vPropose(); else if(v==='consult') h=vConsult(); else if(v==='meeting') h=vMeeting(); else if(v==='quote') h=vQuote(); else h=vProd();
-  $('stMain').innerHTML=h; bind(); save();
+  $('stMain').innerHTML=h; bind(); save(); if(v==='hp') hpFit();
   setTimeout(function(){ if(typeof tourAuto==='function') tourAuto(); },60);
   try{ document.dispatchEvent(new CustomEvent('apprex:studio-step',{detail:{view:S.view}})); }catch(e){}
   var ms=$('msgs'); if(ms) ms.scrollTop=ms.scrollHeight;
@@ -819,6 +863,12 @@ document.addEventListener('click',function(e){
   if(t.dataset.rm){ if(S.app.menu.length<=4){ alert('縦メニューは4ページ以上にしてください。'); return; } S.app.menu=S.app.menu.filter(function(k){return k!==t.dataset.rm;}); var rf=PAGES[t.dataset.rm].feat, rn=pageNeed(t.dataset.rm); if((rn==='opt'||rn==='orig')&&!S.app.menu.some(function(k){return PAGES[k].feat===rf;})){ delete S.feat[rf]; } S.app.footer=S.app.footer.map(function(k){return S.app.menu.indexOf(k)>-1||k==='home'?k:'home';}); render(); return; }
   if(t.dataset.mv){ var i=+t.dataset.mv, j=i+(+t.dataset.dir), m=S.app.menu; if(j<0||j>=m.length) return; var x=m[i]; m[i]=m[j]; m[j]=x; render(); return; }
   if(g==='resetMenu'){ if(!window.confirm('縦メニューとフッターを、業種のおすすめ構成に戻します。')) return; S.app=DATA.defaultApp(S.d.ind,S.tier); render(); return; }
+  if(t.dataset.hpd){ hpSetDesign('style',t.dataset.hpd); return; }
+  if(t.dataset.hppal){ hpSetDesign('palette',t.dataset.hppal); return; }
+  if(t.dataset.hpfont){ hpSetDesign('font',t.dataset.hpfont); return; }
+  if(t.dataset.hpphoto){ hpSetDesign('photo',t.dataset.hpphoto); return; }
+  if(t.dataset.hpdev){ S.hpDev=t.dataset.hpdev; save(); var hf=document.querySelector('.hp-frame'); if(hf) hf.classList.toggle('is-sp',S.hpDev==='sp'); Array.prototype.forEach.call(document.querySelectorAll('[data-hpdev]'),function(x){ x.classList.toggle('on',x===t); }); return; }
+  if(g==='hpFull'){ hpFull(); return; }
   if(t.dataset.hpex){ var hta=$('hpIdea'); if(hta){ hta.value=t.dataset.hpex; S.hpIdea=hta.value; } return; }
   if(t.dataset.hpins){ var hi=$('hpInstr'); if(hi){ hi.value=t.dataset.hpins; } return; }
   if(t.dataset.oex){ var ta=$('origIdea'); if(ta){ ta.value=t.dataset.oex; S.origIdea=ta.value; } return; }

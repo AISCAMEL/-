@@ -46,6 +46,92 @@ function apprex_hp_plans() {
 }
 
 /**
+ * デザインの選択肢（デザイン案・色・文字・写真の雰囲気）。スタジオの画面と試作の表示で使う。
+ *
+ * @return array
+ */
+function apprex_hp_design_options() {
+	return array(
+		'styles'   => array(
+			'A' => array( 'スタンダード', '見出しを中央にそろえた、すっきり読みやすいデザイン' ),
+			'B' => array( 'エレガント', '写真と文字を左右に並べた、雑誌のように上品なデザイン' ),
+			'C' => array( 'インパクト', '大きな写真と太い文字で、ひと目で印象に残るデザイン' ),
+		),
+		'palettes' => array(
+			'ai'     => array( 'AIのおすすめ', '', '#c9a227' ),
+			'navy'   => array( '信頼のネイビー', '#1f3a68', '#c9a227' ),
+			'red'    => array( '和の赤', '#8a1c1c', '#d4a24c' ),
+			'green'  => array( 'ナチュラルグリーン', '#2f6b4f', '#e0b45a' ),
+			'blue'   => array( '清潔感のブルー', '#0e7490', '#22c55e' ),
+			'pink'   => array( 'やさしいピンク', '#c2577a', '#f2c94c' ),
+			'orange' => array( '元気なオレンジ', '#e8590c', '#1f6feb' ),
+			'purple' => array( '上品なパープル', '#5b3f8c', '#e5b567' ),
+			'mono'   => array( 'モノトーン', '#1f2328', '#b08d57' ),
+		),
+		'fonts'    => array(
+			'trust'   => array( 'ゴシック', '"Noto Sans JP",sans-serif', 'まじめで読みやすい' ),
+			'luxury'  => array( '明朝', '"Zen Old Mincho","Noto Serif JP",serif', '上品・高級感' ),
+			'natural' => array( '丸ゴシック', '"Zen Maru Gothic","Noto Sans JP",sans-serif', 'やさしい・親しみ' ),
+			'pop'     => array( 'まるもじ', '"M PLUS Rounded 1c","Noto Sans JP",sans-serif', '明るく元気' ),
+			'sporty'  => array( '角ゴシック', '"Zen Kaku Gothic New","Noto Sans JP",sans-serif', '力強い・シャープ' ),
+		),
+		'photos'   => array(
+			'bright'  => array( '明るい自然光', 'bright, airy, natural daylight, clean and fresh', 'brightness(1.06) saturate(1.05)' ),
+			'luxury'  => array( '落ち着いた高級感', 'moody, warm low-key lighting, premium and calm atmosphere', 'brightness(.88) contrast(1.08)' ),
+			'natural' => array( 'ナチュラル', 'soft natural light, warm earthy tones, cozy and gentle', 'saturate(.85) sepia(.12)' ),
+			'vivid'   => array( '元気・カラフル', 'vivid, colorful, energetic, lively', 'saturate(1.3) contrast(1.05)' ),
+			'mono'    => array( 'モノトーン', 'monochrome, stylish, minimal, black and white', 'grayscale(1) contrast(1.05)' ),
+		),
+	);
+}
+
+/** トーンに合う、最初のデザイン。 */
+function apprex_hp_design_default( $tone ) {
+	$style = array( 'luxury' => 'B', 'natural' => 'B', 'pop' => 'C', 'sporty' => 'C' );
+	$photo = array( 'luxury' => 'luxury', 'natural' => 'natural', 'pop' => 'vivid', 'sporty' => 'vivid' );
+	return array(
+		'style'   => isset( $style[ $tone ] ) ? $style[ $tone ] : 'A',
+		'palette' => 'ai',
+		'font'    => $tone ? $tone : 'trust',
+		'photo'   => isset( $photo[ $tone ] ) ? $photo[ $tone ] : 'bright',
+	);
+}
+
+/** デザインの値をそろえる（知らない値は既定に）。 */
+function apprex_hp_sanitize_design( $in, $tone = 'trust' ) {
+	$o   = apprex_hp_design_options();
+	$def = apprex_hp_design_default( $tone );
+	$in  = is_array( $in ) ? $in : array();
+	$out = array();
+	foreach ( array( 'style' => 'styles', 'palette' => 'palettes', 'font' => 'fonts', 'photo' => 'photos' ) as $k => $list ) {
+		$v         = isset( $in[ $k ] ) ? (string) $in[ $k ] : '';
+		$out[ $k ] = isset( $o[ $list ][ $v ] ) ? $v : $def[ $k ];
+	}
+	return $out;
+}
+
+/**
+ * 表示に使うデザイン（色の値・文字の指定まで）。
+ *
+ * @param array $spec     試作。
+ * @param array $override 試しに見るときの上書き（style/palette/font/photo）。
+ * @return array
+ */
+function apprex_hp_design( $spec, $override = array() ) {
+	$d = apprex_hp_sanitize_design( array_merge( isset( $spec['design'] ) ? (array) $spec['design'] : array(), array_filter( (array) $override ) ), $spec['tone'] );
+	$o = apprex_hp_design_options();
+	$p = $o['palettes'][ $d['palette'] ];
+	$d['c']      = $p[1] ? $p[1] : $spec['color'];
+	$d['a']      = $p[2];
+	$d['ff']     = $o['fonts'][ $d['font'] ][1];
+	$d['filter'] = $o['photos'][ $d['photo'] ][2];
+	// アクセント色の上の文字色（明るい色なら黒、暗い色なら白）。
+	$rgb     = sscanf( $d['a'], '#%02x%02x%02x' );
+	$d['at'] = ( 0.299 * $rgb[0] + 0.587 * $rgb[1] + 0.114 * $rgb[2] ) > 150 ? '#111' : '#fff';
+	return $d;
+}
+
+/**
  * AIの出力を、決まった形にそろえる。
  *
  * @param mixed $in AIの出力（配列）。
@@ -123,6 +209,7 @@ function apprex_hp_sanitize( $in ) {
 			'sections' => $secs,
 		);
 	}
+	$out['design'] = apprex_hp_sanitize_design( isset( $in['design'] ) ? $in['design'] : array(), $out['tone'] );
 	return $out['pages'] ? $out : null;
 }
 
@@ -227,6 +314,7 @@ add_action( 'rest_api_init', function () {
 	};
 	register_rest_route( 'apprex/v1', '/studio/ai-hp', array( 'methods' => 'POST', 'callback' => 'apprex_hp_rest', 'permission_callback' => $member ) );
 	register_rest_route( 'apprex/v1', '/studio/hp-image', array( 'methods' => 'POST', 'callback' => 'apprex_hp_image_rest', 'permission_callback' => $member ) );
+	register_rest_route( 'apprex/v1', '/studio/hp-design', array( 'methods' => 'POST', 'callback' => 'apprex_hp_design_rest', 'permission_callback' => $member ) );
 } );
 
 /** 1日の回数（使った回数を1増やし、上限なら false）。 */
@@ -297,6 +385,8 @@ function apprex_hp_rest( WP_REST_Request $request ) {
 		}
 	}
 	$spec['idea'] = $cur ? $cur['idea'] : $idea;
+	// 作り直しても、選んだデザインはそのまま。新しく作ったときは雰囲気に合うデザインから。
+	$spec['design'] = $cur ? $cur['design'] : apprex_hp_design_default( $spec['tone'] );
 	$spec['plan'] = $cur && isset( $cur['plan'] ) ? $cur['plan'] : $plan;
 	if ( $name && ! $cur ) {
 		$spec['name'] = $name;
@@ -304,6 +394,28 @@ function apprex_hp_rest( WP_REST_Request $request ) {
 	$spec['pages'] = array_slice( $spec['pages'], 0, $max );
 	update_user_meta( $uid, 'apprex_hp_spec', wp_slash( wp_json_encode( $spec, JSON_UNESCAPED_UNICODE ) ) );
 	return rest_ensure_response( array( 'ok' => true, 'spec' => $spec, 'source' => $source, 'demo' => apprex_hp_demo_url( $uid ) ) );
+}
+
+/** デザイン（案・色・文字・写真の雰囲気）を保存する。 */
+function apprex_hp_design_rest( WP_REST_Request $request ) {
+	if ( ! apprex_studio_check_nonce( $request ) ) {
+		return new WP_Error( 'forbidden', '再読み込みしてください。', array( 'status' => 403 ) );
+	}
+	$uid  = get_current_user_id();
+	$spec = apprex_hp_get( $uid );
+	if ( ! $spec ) {
+		return new WP_Error( 'bad_request', '先にホームページの試作を作ってください。', array( 'status' => 400 ) );
+	}
+	$in = array();
+	foreach ( array( 'style', 'palette', 'font', 'photo' ) as $k ) {
+		$v = sanitize_key( (string) $request->get_param( $k ) );
+		if ( '' !== $v ) {
+			$in[ $k ] = 'style' === $k ? strtoupper( $v ) : $v;
+		}
+	}
+	$spec['design'] = apprex_hp_sanitize_design( array_merge( $spec['design'], $in ), $spec['tone'] );
+	update_user_meta( $uid, 'apprex_hp_spec', wp_slash( wp_json_encode( $spec, JSON_UNESCAPED_UNICODE ) ) );
+	return rest_ensure_response( array( 'ok' => true, 'design' => $spec['design'] ) );
 }
 
 /** メインビジュアルの写真をAIで作る。 */
@@ -322,7 +434,9 @@ function apprex_hp_image_rest( WP_REST_Request $request ) {
 	if ( false === apprex_hp_count( $uid, 'apprex_hp_img_usage', (int) apply_filters( 'apprex_hp_image_daily_limit', 6 ) ) ) {
 		return new WP_Error( 'limit', '本日の写真の生成回数の上限に達しました。明日またお試しください。', array( 'status' => 429 ) );
 	}
-	$prompt = sprintf( 'Photorealistic hero image for the top of a Japanese small business website. Business: %1$s (%2$s). Mood: %3$s. Main color accent %4$s. Landscape 16:9, wide composition with calm space on the left for a headline, natural light, realistic Japanese setting. Absolutely no text, letters, numbers, logos or watermarks.', $spec['name'], $spec['industry'] ? $spec['industry'] : $spec['catch'], $spec['tone'], $spec['color'] );
+	$dz     = apprex_hp_design( $spec );
+	$ops    = apprex_hp_design_options();
+	$prompt = sprintf( 'Photorealistic hero image for the top of a Japanese small business website. Business: %1$s (%2$s). Mood: %3$s. Main color accent %4$s. Landscape 16:9, wide composition with calm space on the left for a headline, natural light, realistic Japanese setting. Absolutely no text, letters, numbers, logos or watermarks.', $spec['name'], $spec['industry'] ? $spec['industry'] : $spec['catch'], $ops['photos'][ $dz['photo'] ][1], $dz['c'] );
 	$img    = apprex_openrouter_image( $prompt );
 	if ( is_wp_error( $img ) ) {
 		return new WP_Error( 'failed', '写真を作れませんでした。少し時間をおいてお試しください。', array( 'status' => 502 ) );
@@ -365,19 +479,33 @@ add_action( 'template_redirect', function () {
 		exit;
 	}
 	$page = isset( $_GET['p'] ) ? sanitize_key( wp_unslash( $_GET['p'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
-	apprex_hp_render( $spec, $page, $user ? apprex_hp_image_url( $user->ID ) : '', apprex_demo_url( sanitize_key( $token ), array( 'v' => 'hp' ) ) );
+	// デザインを試しに見るときの上書き（保存はしない）。&d=A|B|C&pal=色&font=文字&photo=写真&thumb=1
+	$try = array();
+	foreach ( array( 'd' => 'style', 'pal' => 'palette', 'font' => 'font', 'photo' => 'photo' ) as $q => $k ) {
+		if ( isset( $_GET[ $q ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$v         = sanitize_key( wp_unslash( $_GET[ $q ] ) ); // phpcs:ignore WordPress.Security.NonceVerification
+			$try[ $k ] = 'style' === $k ? strtoupper( $v ) : $v;
+		}
+	}
+	$thumb = ! empty( $_GET['thumb'] ); // phpcs:ignore WordPress.Security.NonceVerification
+	apprex_hp_render( $spec, $page, $user ? apprex_hp_image_url( $user->ID ) : '', apprex_demo_url( sanitize_key( $token ), array( 'v' => 'hp' ) ), $try, $thumb );
 	exit;
 }, 0 );
 
 /**
  * 試作のHTMLを出す。
  *
- * @param array  $spec 試作。
- * @param string $pid  表示するページID。
- * @param string $img  メインビジュアルの写真。
- * @param string $base 試作のURL。
+ * デザイン案 A（スタンダード）・B（エレガント）・C（インパクト）を body のクラスで切り替え、
+ * 色・文字・写真の雰囲気は CSS の変数で切り替える。
+ *
+ * @param array  $spec  試作。
+ * @param string $pid   表示するページID。
+ * @param string $img   メインビジュアルの写真。
+ * @param string $base  試作のURL。
+ * @param array  $try   試しに見るデザイン（保存はしない）。
+ * @param bool   $thumb 一覧の小さな見本として出す（試作の帯を出さない）。
  */
-function apprex_hp_render( $spec, $pid, $img, $base ) {
+function apprex_hp_render( $spec, $pid, $img, $base, $try = array(), $thumb = false ) {
 	$pages = $spec['pages'];
 	$cur   = $pages[0];
 	foreach ( $pages as $p ) {
@@ -385,54 +513,82 @@ function apprex_hp_render( $spec, $pid, $img, $base ) {
 			$cur = $p;
 		}
 	}
-	$c     = $spec['color'];
-	$fonts = array(
-		'trust'   => '"Noto Sans JP",sans-serif',
-		'luxury'  => '"Zen Old Mincho","Noto Serif JP",serif',
-		'natural' => '"Zen Maru Gothic","Noto Sans JP",sans-serif',
-		'pop'     => '"M PLUS Rounded 1c","Noto Sans JP",sans-serif',
-		'sporty'  => '"Zen Kaku Gothic New","Noto Sans JP",sans-serif',
-	);
-	$ff    = isset( $fonts[ $spec['tone'] ] ) ? $fonts[ $spec['tone'] ] : $fonts['trust'];
+	$d     = apprex_hp_design( $spec, $try );
+	$ff    = $d['ff'];
 	$split = function ( $s ) {
 		$p = explode( '｜', $s, 2 );
 		return array( $p[0], isset( $p[1] ) ? $p[1] : '' );
 	};
-	$url   = function ( $id ) use ( $base ) {
-		return add_query_arg( 'p', $id, $base );
+	// ページを移っても、試しているデザインはそのまま。
+	$keep = array_filter(
+		array(
+			'd'     => isset( $try['style'] ) ? $try['style'] : '',
+			'pal'   => isset( $try['palette'] ) ? $try['palette'] : '',
+			'font'  => isset( $try['font'] ) ? $try['font'] : '',
+			'photo' => isset( $try['photo'] ) ? $try['photo'] : '',
+			'thumb' => $thumb ? '1' : '',
+		)
+	);
+	$url  = function ( $id ) use ( $base, $keep ) {
+		return add_query_arg( array_merge( $keep, array( 'p' => $id ) ), $base );
 	};
-	$last  = end( $pages );
+	$last = end( $pages );
+	$eb   = array(
+		'about'    => 'ABOUT',
+		'features' => 'FEATURES',
+		'services' => 'SERVICE',
+		'price'    => 'PRICE',
+		'flow'     => 'FLOW',
+		'voice'    => 'VOICE',
+		'staff'    => 'STAFF',
+		'gallery'  => 'GALLERY',
+		'news'     => 'NEWS',
+		'faq'      => 'FAQ',
+		'company'  => 'COMPANY',
+		'access'   => 'ACCESS',
+		'contact'  => 'CONTACT',
+		'cta'      => 'CONTACT',
+	);
 	?>
 <!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title><?php echo esc_html( $cur['name'] . '｜' . $spec['name'] ); ?>（ホームページの試作）</title>
 <meta name="robots" content="noindex,nofollow">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Old+Mincho:wght@700&family=Zen+Maru+Gothic:wght@500;700&family=M+PLUS+Rounded+1c:wght@700;800&family=Zen+Kaku+Gothic+New:wght@700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Old+Mincho:wght@500;700&family=Zen+Maru+Gothic:wght@500;700&family=M+PLUS+Rounded+1c:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Cormorant+Garamond:wght@500;600&family=Montserrat:wght@700;800&display=swap">
 <style>
-:root{--c:<?php echo esc_html( $c ); ?>;--ink:#1d2433;--body:#4b5563;--line:#e7e9ef;--soft:#f6f7fb}
+:root{--c:<?php echo esc_html( $d['c'] ); ?>;--a:<?php echo esc_html( $d['a'] ); ?>;--at:<?php echo esc_html( $d['at'] ); ?>;--ff:<?php echo $ff; // phpcs:ignore ?>;--ink:#1d2433;--body:#4b5563;--line:#e7e9ef;--soft:#f6f7fb;--pf:<?php echo esc_html( $d['filter'] ); ?>}
 *{box-sizing:border-box}body{margin:0;font-family:"Noto Sans JP",sans-serif;color:var(--ink);line-height:1.85;background:#fff}
-a{color:inherit}img{max-width:100%}
-.demo-bar{background:#111827;color:#e5e7eb;font-size:12px;text-align:center;padding:6px 10px}
-.demo-bar b{color:#fbbf24}
+a{color:inherit}img{max-width:100%;display:block}
+.demo-bar{background:#111827;color:#e5e7eb;font-size:12px;text-align:center;padding:6px 10px}.demo-bar b{color:#fbbf24}
 .hd{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.thumb .hd{position:relative}
 .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
 .hd .wrap{display:flex;align-items:center;gap:20px;min-height:64px}
-.logo{font-family:<?php echo $ff; // phpcs:ignore ?>;font-weight:900;font-size:20px;color:var(--c);text-decoration:none;white-space:nowrap}
+.logo{font-family:var(--ff);font-weight:900;font-size:20px;color:var(--c);text-decoration:none;white-space:nowrap}
 .nav{display:flex;gap:18px;margin-left:auto;font-size:14px;font-weight:700;overflow-x:auto}
 .nav a{text-decoration:none;white-space:nowrap;padding:4px 0;border-bottom:2px solid transparent}
 .nav a.on{border-color:var(--c);color:var(--c)}
 .hbtn{background:var(--c);color:#fff;text-decoration:none;border-radius:999px;padding:9px 18px;font-size:13px;font-weight:700;white-space:nowrap}
 @media(max-width:760px){.hd .wrap{flex-wrap:wrap;gap:6px 12px;padding-block:10px}.nav{order:3;width:100%;margin:0;gap:14px}.hbtn{margin-left:auto}}
-h1,h2,h3{font-family:<?php echo $ff; // phpcs:ignore ?>;line-height:1.4;margin:0}
-.hero{position:relative;color:#fff;background:linear-gradient(120deg,color-mix(in srgb,var(--c) 92%,#000) 0%,color-mix(in srgb,var(--c) 65%,#000) 100%)<?php echo $img ? ',url(' . esc_url( $img ) . ') center/cover' : ''; ?>;background-blend-mode:<?php echo $img ? 'multiply' : 'normal'; ?>}
-.hero .wrap{padding-block:clamp(70px,12vw,130px)}
-.hero h1{font-size:clamp(28px,5.4vw,50px);font-weight:900;max-width:16em}
-.hero p{font-size:clamp(15px,2.2vw,18px);max-width:34em;opacity:.92;margin:18px 0 28px}
+h1,h2,h3{font-family:var(--ff);line-height:1.4;margin:0}
 .btn{display:inline-block;background:#fff;color:var(--c);text-decoration:none;font-weight:800;border-radius:999px;padding:14px 30px}
 .btn.solid{background:var(--c);color:#fff}
+/* メインビジュアル */
+.hero{position:relative;color:#fff;overflow:hidden;background:linear-gradient(120deg,color-mix(in srgb,var(--c) 92%,#000) 0%,color-mix(in srgb,var(--c) 62%,#000) 100%)}
+.hero .bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:var(--pf);opacity:.42}
+.hero-in{position:relative;padding-block:clamp(70px,12vw,130px)}
+.hero h1{font-size:clamp(28px,5.4vw,50px);font-weight:900;max-width:16em}
+.hero p{font-size:clamp(15px,2.2vw,18px);max-width:34em;opacity:.92;margin:18px 0 28px}
+.hero-tag{display:none}.hero-vis{display:none}
+.deco{position:relative;width:100%;height:100%;min-height:280px;border-radius:24px;overflow:hidden;background:linear-gradient(140deg,color-mix(in srgb,var(--c) 70%,#fff),color-mix(in srgb,var(--a) 60%,#fff))}
+.deco:before,.deco:after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.35)}
+.deco:before{width:60%;aspect-ratio:1;right:-12%;top:-18%}.deco:after{width:38%;aspect-ratio:1;left:8%;bottom:-10%;background:rgba(255,255,255,.22)}
+.deco span{position:absolute;left:18px;bottom:14px;font-size:12px;font-weight:700;color:#fff;opacity:.9}
+/* セクション */
 .ph{background:var(--soft);border-bottom:1px solid var(--line)}.ph .wrap{padding-block:46px}.ph h1{font-size:clamp(24px,4vw,34px);color:var(--c)}.ph p{margin:6px 0 0;color:var(--body)}
-.sec{padding-block:clamp(48px,8vw,80px)}.sec:nth-of-type(even){background:var(--soft)}
+.sec{padding-block:clamp(48px,8vw,84px)}.sec:nth-of-type(even){background:var(--soft)}
 .sec h2{font-size:clamp(22px,3.4vw,30px);text-align:center;margin-bottom:10px}
+.sec h2 .eb{display:none}
 .sec h2:after{content:"";display:block;width:40px;height:3px;background:var(--c);border-radius:3px;margin:14px auto 0}
 .lead{text-align:center;color:var(--body);max-width:40em;margin:0 auto 28px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:16px}
@@ -441,7 +597,7 @@ h1,h2,h3{font-family:<?php echo $ff; // phpcs:ignore ?>;line-height:1.4;margin:0
 .card .n{display:inline-flex;width:34px;height:34px;border-radius:50%;background:var(--c);color:#fff;align-items:center;justify-content:center;font-weight:800;margin-bottom:10px}
 .price{max-width:640px;margin:0 auto;border-top:1px solid var(--line)}.price div{display:flex;justify-content:space-between;gap:12px;padding:14px 4px;border-bottom:1px solid var(--line)}.price b{color:var(--c);white-space:nowrap}
 .faq{max-width:760px;margin:0 auto}.faq details{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:10px}.faq summary{font-weight:700;cursor:pointer}.faq summary:before{content:"Q. ";color:var(--c)}.faq p{margin:8px 0 0;color:var(--body)}
-.gal{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.gal div{aspect-ratio:4/3;border-radius:12px;background:linear-gradient(135deg,color-mix(in srgb,var(--c) 25%,#fff),color-mix(in srgb,var(--c) 55%,#fff));display:flex;align-items:flex-end;padding:10px;font-size:12px;font-weight:700;color:#fff}
+.gal{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.gal div{aspect-ratio:4/3;border-radius:12px;background:linear-gradient(135deg,color-mix(in srgb,var(--c) 30%,#fff),color-mix(in srgb,var(--a) 45%,#fff));display:flex;align-items:flex-end;padding:10px;font-size:12px;font-weight:700;color:#fff;filter:var(--pf)}
 .tbl{max-width:720px;margin:0 auto;border-collapse:collapse;width:100%;background:#fff}.tbl th,.tbl td{border:1px solid var(--line);padding:12px 14px;text-align:left;font-size:14.5px}.tbl th{background:var(--soft);width:32%;white-space:nowrap}
 .map{max-width:720px;margin:16px auto 0;aspect-ratio:16/7;border-radius:14px;background:repeating-linear-gradient(45deg,#eef0f5 0 12px,#e6e9f0 12px 24px);display:flex;align-items:center;justify-content:center;color:#6b7280;font-weight:700}
 .form{max-width:620px;margin:0 auto;display:grid;gap:12px}.form label{display:grid;gap:4px;font-size:14px;font-weight:700}.form span{border:1.5px solid var(--line);border-radius:10px;padding:12px;background:#fff;color:#9ca3af;font-weight:400}
@@ -449,8 +605,60 @@ h1,h2,h3{font-family:<?php echo $ff; // phpcs:ignore ?>;line-height:1.4;margin:0
 .news{max-width:760px;margin:0 auto}.news div{display:flex;gap:16px;padding:14px 4px;border-bottom:1px solid var(--line)}.news time{color:var(--c);font-weight:700;white-space:nowrap}
 .cta{background:var(--c)!important;color:#fff;text-align:center}.cta h2{color:#fff}.cta h2:after{background:#fff}.cta .lead{color:rgba(255,255,255,.9)}
 .ft{background:#111827;color:#9ca3af;font-size:13px}.ft .wrap{padding-block:36px;display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-between}.ft a{text-decoration:none;margin-right:14px}
-</style></head><body>
+
+/* ===== B：エレガント（写真と文字を左右に・雑誌風） ===== */
+.st-B{--soft:#faf8f4}
+.st-B .hd{background:rgba(255,255,255,.97)}
+.st-B .hbtn{border-radius:2px;background:transparent;color:var(--c);border:1px solid var(--c)}
+.st-B .hero{background:var(--soft);color:var(--ink)}
+.st-B .hero .bg{display:none}
+.st-B .hero-in{display:grid;grid-template-columns:1.05fr 1fr;gap:clamp(24px,5vw,56px);align-items:center;padding-block:clamp(48px,8vw,90px)}
+.st-B .hero-tag{display:block;font-family:"Cormorant Garamond",serif;font-size:15px;letter-spacing:.3em;color:var(--a);text-transform:uppercase;margin-bottom:14px}
+.st-B .hero h1{font-weight:700;color:var(--ink);letter-spacing:.04em}
+.st-B .hero p{color:var(--body)}
+.st-B .hero .btn{background:var(--c);color:#fff;border-radius:2px;letter-spacing:.1em}
+.st-B .hero-vis{display:block;aspect-ratio:4/5;max-height:520px}
+.st-B .hero-vis img{width:100%;height:100%;object-fit:cover;border-radius:2px;filter:var(--pf);box-shadow:24px 24px 0 color-mix(in srgb,var(--a) 35%,transparent)}
+.st-B .hero-vis .deco{border-radius:2px;box-shadow:24px 24px 0 color-mix(in srgb,var(--a) 35%,transparent)}
+@media(max-width:760px){.st-B .hero-in{grid-template-columns:1fr}.st-B .hero-vis{aspect-ratio:16/10}}
+.st-B .sec h2{text-align:left;font-weight:600;letter-spacing:.06em;max-width:1040px;margin-inline:auto}
+.st-B .sec h2 .eb{display:block;font-family:"Cormorant Garamond",serif;font-size:14px;letter-spacing:.3em;color:var(--a);margin-bottom:6px;font-weight:600}
+.st-B .sec h2:after{width:100%;height:1px;background:var(--line);margin:18px 0 0}
+.st-B .lead{text-align:left;margin:18px 0 30px}
+.st-B .card{border:0;border-top:2px solid var(--c);border-radius:0;background:#fff;padding:24px 4px 6px}
+.st-B .sec:nth-of-type(even) .card{background:transparent}
+.st-B .card h3{color:var(--ink);font-weight:600}
+.st-B .card .n{border-radius:0;background:transparent;color:var(--a);font-family:"Cormorant Garamond",serif;font-size:30px;width:auto;height:auto;justify-content:flex-start}
+.st-B .price,.st-B .faq,.st-B .news,.st-B .tbl,.st-B .form{max-width:none}
+.st-B .faq details{border-radius:0;border-width:0 0 1px;background:transparent;padding-inline:4px}
+.st-B .gal div{border-radius:2px}
+.st-B .btn{border-radius:2px}
+.st-B .cta{background:color-mix(in srgb,var(--c) 85%,#000)!important}.st-B .cta h2{text-align:center}.st-B .cta h2 .eb{color:var(--a)}.st-B .cta h2:after{display:none}.st-B .cta .lead{text-align:center;margin-inline:auto}
+
+/* ===== C：インパクト（大きな写真と太い文字） ===== */
+.st-C .hd{background:#fff}
+.st-C .hbtn{background:var(--a);color:var(--at)}
+.st-C .hero{min-height:min(78vh,640px);display:flex;align-items:center;background:linear-gradient(115deg,color-mix(in srgb,var(--c) 96%,#000) 0%,color-mix(in srgb,var(--c) 70%,#000) 55%,color-mix(in srgb,var(--a) 70%,#000) 100%)}
+.st-C .hero .bg{opacity:.55}
+.st-C .hero:after{content:"";position:absolute;right:-8%;bottom:-30%;width:55%;aspect-ratio:1;border-radius:50%;background:var(--a);opacity:.25}
+.st-C .hero-in{z-index:1;width:100%}
+.st-C .hero-tag{display:inline-block;background:var(--a);color:var(--at);font-weight:800;font-size:13px;border-radius:999px;padding:4px 14px;margin-bottom:16px}
+.st-C .hero h1{font-size:clamp(34px,7vw,68px);font-weight:900;letter-spacing:-.01em;line-height:1.2;text-shadow:0 4px 24px rgba(0,0,0,.25)}
+.st-C .hero .btn{background:var(--a);color:var(--at);padding:16px 34px;box-shadow:0 10px 24px rgba(0,0,0,.25)}
+.st-C .sec:nth-of-type(even){background:color-mix(in srgb,var(--c) 6%,#fff)}
+.st-C .sec h2{font-size:clamp(26px,4.2vw,40px);font-weight:900;position:relative}
+.st-C .sec h2 .eb{display:block;font-family:Montserrat,sans-serif;font-weight:800;font-size:clamp(34px,7vw,64px);line-height:1;letter-spacing:.02em;color:color-mix(in srgb,var(--c) 12%,transparent);margin-bottom:-.45em}
+.st-C .sec h2:after{width:56px;height:6px;background:var(--a)}
+.st-C .card{border:0;border-radius:20px;box-shadow:0 12px 32px rgba(17,24,39,.08);border-top:6px solid var(--c)}
+.st-C .card .n{background:var(--a);color:var(--at)}
+.st-C .price b,.st-C .news time{color:var(--c)}
+.st-C .gal div{border-radius:18px}
+.st-C .cta{background:linear-gradient(120deg,var(--c),color-mix(in srgb,var(--c) 55%,var(--a)))!important}
+.st-C .cta h2 .eb{color:rgba(255,255,255,.18)}.st-C .cta .btn{background:var(--a);color:var(--at)}
+</style></head><body class="st-<?php echo esc_attr( $d['style'] ); ?><?php echo $thumb ? ' thumb' : ''; ?>">
+<?php if ( ! $thumb ) : ?>
 <div class="demo-bar"><b>AIが作ったホームページの試作</b>（イメージです。実際の内容・デザインは制作時に決めます）</div>
+<?php endif; ?>
 <header class="hd"><div class="wrap"><a class="logo" href="<?php echo esc_url( $url( $pages[0]['id'] ) ); ?>"><?php echo esc_html( $spec['name'] ); ?></a>
 <nav class="nav"><?php foreach ( $pages as $p ) : ?><a href="<?php echo esc_url( $url( $p['id'] ) ); ?>"<?php echo $p['id'] === $cur['id'] ? ' class="on"' : ''; ?>><?php echo esc_html( $p['name'] ); ?></a><?php endforeach; ?></nav>
 <a class="hbtn" href="<?php echo esc_url( $url( $last['id'] ) ); ?>"><?php echo esc_html( $spec['cta'] ); ?></a></div></header>
@@ -463,13 +671,14 @@ foreach ( $cur['sections'] as $i => $s ) :
 	$t = $s['t'];
 	if ( 'hero' === $t ) :
 		?>
-<section class="hero"><div class="wrap"><h1><?php echo esc_html( $spec['catch'] ? $spec['catch'] : $s['title'] ); ?></h1><p><?php echo esc_html( $spec['sub'] ? $spec['sub'] : $s['body'] ); ?></p><a class="btn" href="<?php echo esc_url( $url( $last['id'] ) ); ?>"><?php echo esc_html( $spec['cta'] ); ?></a></div></section>
+<section class="hero"><?php if ( $img ) : ?><div class="bg" style="background-image:url(<?php echo esc_url( $img ); ?>)"></div><?php endif; ?><div class="wrap hero-in"><div class="hero-txt"><span class="hero-tag"><?php echo esc_html( $spec['industry'] ? $spec['industry'] : $spec['name'] ); ?></span><h1><?php echo esc_html( $spec['catch'] ? $spec['catch'] : $s['title'] ); ?></h1><p><?php echo esc_html( $spec['sub'] ? $spec['sub'] : $s['body'] ); ?></p><a class="btn" href="<?php echo esc_url( $url( $last['id'] ) ); ?>"><?php echo esc_html( $spec['cta'] ); ?></a></div>
+<div class="hero-vis"><?php if ( $img ) : ?><img src="<?php echo esc_url( $img ); ?>" alt=""><?php else : ?><div class="deco"><span>写真が入ります</span></div><?php endif; ?></div></div></section>
 		<?php
 		continue;
 	endif;
 	?>
 <section class="sec<?php echo 'cta' === $t ? ' cta' : ( 'voice' === $t ? ' voice' : '' ); ?>"><div class="wrap">
-<h2><?php echo esc_html( $s['title'] ); ?></h2>
+<h2><span class="eb"><?php echo esc_html( isset( $eb[ $t ] ) ? $eb[ $t ] : '' ); ?></span><?php echo esc_html( $s['title'] ); ?></h2>
 	<?php if ( $s['body'] ) : ?><p class="lead"><?php echo nl2br( esc_html( $s['body'] ) ); ?></p><?php endif; ?>
 	<?php
 	switch ( $t ) {

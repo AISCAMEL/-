@@ -373,6 +373,7 @@ add_action( 'wp_enqueue_scripts', function () {
 		$cfg['hpDemo']   = function_exists( 'apprex_hp_demo_url' ) ? apprex_hp_demo_url( $u->ID ) : '';
 		$cfg['hpImage']  = function_exists( 'apprex_hp_image_url' ) ? apprex_hp_image_url( $u->ID ) : '';
 		$cfg['hpSample'] = apprex_demo_url( 'sample', array( 'v' => 'hp' ) );
+		$cfg['hpOpts']   = function_exists( 'apprex_hp_design_options' ) ? apprex_hp_design_options() : null;
 	}
 	wp_enqueue_script( 'apprex-studio-data', APPREX_URI . '/assets/js/studio-data.js', array(), APPREX_VERSION, true );
 	wp_enqueue_script( 'apprex-qrcode', APPREX_URI . '/assets/js/vendor/qrcode.js', array(), '2.0.4', true );
