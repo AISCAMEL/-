@@ -1209,14 +1209,40 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
       lineName:    (window.CARMEL_LINE&&window.CARMEL_LINE.name)||''
     };
 
-    /* ---- 添付ファイルを base64 で読む ---- */
+    /* ---- 添付ファイルを読む（画像は送信前に縮小＋JPEG圧縮して、確実に添付が乗るようにする） ---- */
     function readFile(file, label){
       return new Promise(function(res){
-        var r=new FileReader();
-        r.onload=function(){ var s=String(r.result||''); var b64=s.indexOf(',')>=0?s.slice(s.indexOf(',')+1):s;
-          res({label:label, name:file.name, mime:file.type||'application/octet-stream', size:file.size, dataBase64:b64}); };
-        r.onerror=function(){ res(null); };
-        r.readAsDataURL(file);
+        function rawRead(){
+          var r=new FileReader();
+          r.onload=function(){ var s=String(r.result||''); var b64=s.indexOf(',')>=0?s.slice(s.indexOf(',')+1):s;
+            res({label:label, name:file.name, mime:file.type||'application/octet-stream', size:file.size, dataBase64:b64}); };
+          r.onerror=function(){ res(null); };
+          r.readAsDataURL(file);
+        }
+        /* 画像以外（PDF等）とGIF/SVGはそのまま。画像はcanvasで最大1600px・JPEG(0.72)に圧縮（数MB→数百KB）。
+           失敗時は必ず元ファイルのまま読み込みにフォールバックする（添付を落とさない）。 */
+        if(!/^image\//i.test(file.type||'') || /image\/(gif|svg)/i.test(file.type||'')){ rawRead(); return; }
+        try{
+          var url=URL.createObjectURL(file), img=new Image();
+          img.onload=function(){
+            try{
+              var MAX=1600, w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+              if(!w||!h){ URL.revokeObjectURL(url); rawRead(); return; }
+              var sc=Math.min(1, MAX/Math.max(w,h));
+              var cw=Math.max(1,Math.round(w*sc)), ch=Math.max(1,Math.round(h*sc));
+              var cv=document.createElement('canvas'); cv.width=cw; cv.height=ch;
+              cv.getContext('2d').drawImage(img,0,0,cw,ch);
+              var durl=cv.toDataURL('image/jpeg',0.72);
+              URL.revokeObjectURL(url);
+              var b64=durl.indexOf(',')>=0?durl.slice(durl.indexOf(',')+1):durl;
+              if(!b64){ rawRead(); return; }
+              var nm=(file.name||'image').replace(/\.[^.]+$/,'')+'.jpg';
+              res({label:label, name:nm, mime:'image/jpeg', size:Math.round(b64.length*0.75), dataBase64:b64});
+            }catch(e){ try{URL.revokeObjectURL(url);}catch(_){} rawRead(); }
+          };
+          img.onerror=function(){ try{URL.revokeObjectURL(url);}catch(_){} rawRead(); };
+          img.src=url;
+        }catch(e){ rawRead(); }
       });
     }
     var fileJobs=[];
@@ -1232,7 +1258,7 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
     var settled=false, optimistic=null;
     /* ★送信ボタンを押した直後からタイマー開始：画像読み込みが重い/通信が遅い場合でも、
        必ず数秒で完了画面へ切り替わる（「送信中…」のまま固まらないようにする） */
-    optimistic=setTimeout(showDone, 3500);
+    optimistic=setTimeout(showDone, 30000); /* 安全網：万一ハングしても必ず完了表示（通常は送信開始後に張り直す） */
     function showDone(){
       if(settled)return; settled=true;
       if(optimistic){clearTimeout(optimistic);optimistic=null;}
@@ -1248,6 +1274,9 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
 
     Promise.all(fileJobs).then(function(files){
       files=files.filter(Boolean);
+      /* 画像の読込・圧縮が終わり、ここから実際に送信する。完了表示のタイマーを「送信開始後」から数秒に張り直す
+         （ボタン押下時点だと、画像のアップロードが終わる前に完了表示になり添付が落ちることがあるため）。 */
+      if(optimistic){ clearTimeout(optimistic); } optimistic=setTimeout(showDone, 6000);
       var hp=form.querySelector('[name=hp]');
 
       /* --- WordPress優先（ページ内設置時） --- */
