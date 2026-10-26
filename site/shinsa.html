@@ -582,20 +582,15 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
   <h4>🚗 下取り・買取のご案内</h4>
   <p style="margin:0 0 10px;font-size:.9rem;color:var(--gray-600);line-height:1.6;">今お乗りのお車は<b>下取り・買取</b>で、車両価格と相殺してお支払いを軽くできます。下取り車の情報をいただくと査定がスムーズです。<b>分かる範囲でOK</b>。</p>
   <p>お車の詳細を今お送りしますか？<br><select id="trade-detail"><option>選択してください</option><option>はい、詳しく送る（査定がスムーズ）</option><option>いいえ（あとで相談する）</option></select></p>
-  <div class="caf-cond2 hide" id="grp-tradein-detail"><h4>お車の情報（分かる範囲でOK）</h4>
+  <div class="caf-cond2 hide" id="grp-tradein-detail"><h4>査定に役立つ追加情報（任意）</h4>
+    <p class="caf-up-note">上の「現在のお車」の内容に加えて、分かる範囲でお知らせください（同じ項目を重ねて入力する必要はありません）。</p>
     <div class="caf-half">
-    <p>メーカー<br><select><option>選択してください</option><option>トヨタ</option><option>ホンダ</option><option>日産</option><option>スズキ</option><option>ダイハツ</option><option>マツダ</option><option>スバル</option><option>三菱</option><option>レクサス</option><option>いすゞ</option><option>輸入車</option><option>その他</option></select></p>
-    <p>車名<br><input type="text" placeholder="例 アルファード"></p>
-    <p>年式<br><select><option>選択してください</option><option>2026年</option><option>2025年</option><option>2024年</option><option>2023年</option><option>2022年</option><option>2021年</option><option>2020年</option><option>2019年</option><option>2018年</option><option>2017年</option><option>2016年</option><option>2015年</option><option>2014年</option><option>2013年</option><option>2012年</option><option>2011年</option><option>2010年</option><option>2009年</option><option>2008年</option><option>2007年以前</option><option>不明</option></select></p>
-    <p>走行距離<br><select><option>選択してください</option><option>1万km未満</option><option>1〜3万km</option><option>3〜5万km</option><option>5〜7万km</option><option>7〜10万km</option><option>10〜13万km</option><option>13〜15万km</option><option>15万km以上</option><option>不明</option></select></p>
     <p>ミッション<br><select><option>選択してください</option><option>AT（オートマ）</option><option>MT（マニュアル）</option><option>不明</option></select></p>
-    <p>車検<br><select><option>選択してください</option><option>車検あり</option><option>車検切れ</option><option>不明</option></select></p>
     <p>お車の名義<br><select><option>選択してください</option><option>本人名義</option><option>家族名義</option><option>ローン・リース会社</option><option>その他/不明</option></select></p>
-    <p>ローン残債<br><select><option>選択してください</option><option>残債なし</option><option>残債あり</option><option>不明</option></select></p>
     <p>修復歴<br><select><option>選択してください</option><option>なし</option><option>あり</option><option>不明</option></select></p>
     </div>
-    <label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">下取り車 車検証</span><span class="caf-up-sub">任意・全体が鮮明に</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
-    <label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">下取り車 写真</span><span class="caf-up-sub">任意・外装/内装/メーター</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+    <label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">お車の車検証</span><span class="caf-up-sub">任意・全体が鮮明に</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
+    <label class="caf-up"><input type="file" hidden multiple accept="image/*,application/pdf"><span class="caf-up-ttl">お車の写真</span><span class="caf-up-sub">任意・外装/内装/メーター</span><span class="caf-up-btn">ファイルを選択</span><span class="caf-up-name"></span></label>
   </div>
 </div>
 </div>
