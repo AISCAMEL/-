@@ -269,12 +269,7 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
   <div id="store-badge" style="display:none;margin-top:14px;"></div>
 </header>
 
-<!-- 買取査定フォームへの導線（今のお車の売却をご希望の方） -->
-<a id="kaitori-cta" href="https://new-repository-livid-one.vercel.app/kaitori"
-   style="display:flex;align-items:center;justify-content:center;gap:8px;max-width:680px;margin:14px auto 0;padding:12px 16px;background:#065f46;color:#fff;font-weight:800;font-size:.92rem;text-decoration:none;border-radius:12px;box-shadow:0 6px 18px -8px rgba(6,95,70,.6);">
-  🚗 今のお車の「売却・買取査定」をご希望の方はこちら（無料）
-</a>
-<script>(function(){try{var p=new URLSearchParams(location.search);var s=p.get('store')||p.get('storeKey');if(s){var a=document.getElementById('kaitori-cta');if(a)a.href+='?store='+encodeURIComponent(s);}}catch(e){}})();</script>
+<!-- 買取査定フォームへの導線バナーは、下取り・買取をフォーム内で選べるようにしたため削除 -->
 
 <!-- 店舗切替（?store=fukushima / chiba / odawara / yamanashi） -->
 <script>
@@ -582,12 +577,12 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 <p>車検満了日<br><input type="date"></p>
 <p>現在のローン残債<br><select><option>選択してください</option><option>なし</option><option>〜20万円</option><option>〜50万円</option><option>〜80万円</option><option>〜100万円</option><option>〜150万円</option><option>150万円以上</option></select></p>
 </div>
-<p>下取りのご希望<br><select id="trade-in"><option>選択してください</option><option>下取りあり</option><option>下取りなし</option><option>検討中</option></select></p>
+<p>下取り・買取のご希望<br><select id="trade-in"><option>選択してください</option><option>下取りあり</option><option>買取希望（現金化）</option><option>下取りなし</option><option>検討中</option></select></p>
 <div class="caf-cond2 hide" id="grp-tradein">
   <h4>🚗 下取り・買取のご案内</h4>
   <p style="margin:0 0 10px;font-size:.9rem;color:var(--gray-600);line-height:1.6;">今お乗りのお車は<b>下取り・買取</b>で、車両価格と相殺してお支払いを軽くできます。下取り車の情報をいただくと査定がスムーズです。<b>分かる範囲でOK</b>。</p>
-  <p>下取り車の詳細を今お送りしますか？<br><select id="trade-detail"><option>選択してください</option><option>はい、詳しく送る（査定がスムーズ）</option><option>いいえ（あとで相談する）</option></select></p>
-  <div class="caf-cond2 hide" id="grp-tradein-detail"><h4>下取り車の情報（分かる範囲でOK）</h4>
+  <p>お車の詳細を今お送りしますか？<br><select id="trade-detail"><option>選択してください</option><option>はい、詳しく送る（査定がスムーズ）</option><option>いいえ（あとで相談する）</option></select></p>
+  <div class="caf-cond2 hide" id="grp-tradein-detail"><h4>お車の情報（分かる範囲でOK）</h4>
     <div class="caf-half">
     <p>メーカー<br><select><option>選択してください</option><option>トヨタ</option><option>ホンダ</option><option>日産</option><option>スズキ</option><option>ダイハツ</option><option>マツダ</option><option>スバル</option><option>三菱</option><option>レクサス</option><option>いすゞ</option><option>輸入車</option><option>その他</option></select></p>
     <p>車名<br><input type="text" placeholder="例 アルファード"></p>
@@ -919,7 +914,7 @@ document.querySelectorAll('.caf .num-only').forEach(function(el){
   }
   el.addEventListener('input',norm); el.addEventListener('blur',norm);
 });
-document.getElementById('trade-in').addEventListener('change',function(){tg('grp-tradein',this.value==='下取りあり');});
+document.getElementById('trade-in').addEventListener('change',function(){tg('grp-tradein',this.value==='下取りあり'||this.value==='買取希望（現金化）');});
 (function(){var td=document.getElementById('trade-detail');if(td)td.addEventListener('change',function(){tg('grp-tradein-detail',this.value==='はい、詳しく送る（査定がスムーズ）');});})();
 document.getElementById('payment-type').addEventListener('change',function(){tg('grp-bonus',this.value==='ボーナス併用');});
 document.getElementById('has-guarantor').addEventListener('change',function(){tg('grp-guarantor',this.value==='はい');});
