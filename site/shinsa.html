@@ -1146,6 +1146,10 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
     var lic=[]; form.querySelectorAll('.caf-up').forEach(function(l){var t=l.querySelector('.caf-up-ttl'); if(t&&/運転免許証（[表裏]）/.test(t.textContent)){var f=l.querySelector('input[type=file]'); lic.push(!!(f&&f.files&&f.files.length));}});
     if(lic.length && lic.some(function(x){return !x;})){ errs.push('運転免許証（表・裏）の添付は必須です'); if(!firstBad)firstBad=form.querySelector('.caf-up'); }
 
+    /* メールアドレス（確認用）の一致チェック：不一致のまま送信させない */
+    var _em=(document.getElementById('email-main')||{}).value||'', _ec=(document.getElementById('email-confirm')||{}).value||'';
+    if((_em||_ec) && _em.trim()!==_ec.trim()){ errs.push('メールアドレス（確認用）が一致しません'); if(!firstBad)firstBad=document.getElementById('email-confirm'); }
+
     if(errs.length){
       alert('未入力の必須項目があります：\n・'+errs.slice(0,10).join('\n・')+(errs.length>10?'\n・ ほか '+(errs.length-10)+'件':'')+'\n\n入力してから、もう一度お進みください。');
       /* エラー項目のあるステップへ戻し、その項目を目立たせる */
