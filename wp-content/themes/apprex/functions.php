@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'APPREX_VERSION', '1.75.0' );
+define( 'APPREX_VERSION', '1.76.0' );
 define( 'APPREX_DIR', get_template_directory() );
 define( 'APPREX_URI', get_template_directory_uri() );
 
@@ -52,6 +52,7 @@ require_once APPREX_DIR . '/inc/template-helpers.php';
 require_once APPREX_DIR . '/inc/campaign.php';
 require_once APPREX_DIR . '/inc/pricing-config.php';
 require_once APPREX_DIR . '/inc/openrouter-chat.php';
+require_once APPREX_DIR . '/inc/claude-api.php';
 require_once APPREX_DIR . '/inc/chat-enhance.php';
 require_once APPREX_DIR . '/inc/chat-operator.php';
 require_once APPREX_DIR . '/inc/integrations.php';

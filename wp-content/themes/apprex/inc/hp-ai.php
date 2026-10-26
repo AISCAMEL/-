@@ -263,7 +263,7 @@ function apprex_hp_rest( WP_REST_Request $request ) {
 	$max    = $plans[ $plan ][2];
 	$spec   = null;
 	$source = 'template';
-	if ( '' !== apprex_openrouter_key() ) {
+	if ( apprex_ai_text_ready() ) {
 		$types  = implode( '|', array_keys( apprex_hp_section_types() ) );
 		$schema = '{"name":"サイト名・店名","industry":"業種","catch":"トップの大見出し（24字以内）","sub":"サブコピー（60字以内）","color":"#RRGGBB（業種と雰囲気に合うメインカラー）","tone":"trust|luxury|natural|pop|sporty","cta":"一番押してほしいボタンの文字（例：予約する）",'
 			. '"target":"想定するお客様","goals":["ホームページの目的（2〜3個）"],"keywords":["検索で見つけてほしい言葉（3〜5個）"],"seo_desc":"検索結果に出る説明文（100字以内）","features":["必要な機能（フォーム・予約・地図など）"],'

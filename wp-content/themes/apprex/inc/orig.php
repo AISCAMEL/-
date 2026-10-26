@@ -360,7 +360,7 @@ function apprex_orig_rest( WP_REST_Request $request ) {
 
 	$spec   = null;
 	$source = 'template';
-	if ( '' !== apprex_openrouter_key() ) {
+	if ( apprex_ai_text_ready() ) {
 		$schema = '{"name":"アプリ名（20字以内）","summary":"一言の説明（60字以内）","category":"マッチング|EC|予約|業務|コミュニティ|学習|メディア|その他",'
 			. '"goals":["目的（3〜4個）"],"kpi":["指標（3〜4個）"],"roles":[{"name":"利用者の種類","desc":"役割"}],'
 			. '"features":[{"name":"機能名","desc":"説明（40字以内）","phase":"MVP|将来","size":"S|M|L","base":true/false}],'

@@ -56,7 +56,7 @@ function apprex_openrouter_model() {
  * @return bool
  */
 function apprex_chat_enabled() {
-	return ( defined( 'APPREX_CHAT_MOCK' ) && APPREX_CHAT_MOCK ) || '' !== apprex_openrouter_key();
+	return ( defined( 'APPREX_CHAT_MOCK' ) && APPREX_CHAT_MOCK ) || apprex_ai_text_ready();
 }
 
 /**
@@ -67,6 +67,14 @@ function apprex_chat_enabled() {
  * @return string|WP_Error Assistant content or error.
  */
 function apprex_openrouter_complete( $messages, $args = array() ) {
+	// Claude のキーがあれば、文章は Claude で作る（失敗したら OpenRouter でやり直す）。
+	if ( function_exists( 'apprex_ai_use_claude' ) && apprex_ai_use_claude() ) {
+		$claude = apprex_claude_complete( $messages, $args );
+		if ( ! is_wp_error( $claude ) || 'refusal' === $claude->get_error_code() || '' === apprex_openrouter_key() ) {
+			return $claude;
+		}
+		unset( $args['model'], $args['effort'] );
+	}
 	$api_key = apprex_openrouter_key();
 	if ( '' === $api_key ) {
 		return new WP_Error( 'not_configured', 'OpenRouter APIキーが未設定です（設定 > APPREX チャット）。' );
@@ -292,7 +300,7 @@ function apprex_rest_chat( WP_REST_Request $request ) {
 		);
 	}
 
-	if ( '' === apprex_openrouter_key() ) {
+	if ( ! apprex_ai_text_ready() ) {
 		return new WP_Error( 'not_configured', 'チャットは現在準備中です。お問い合わせフォームをご利用ください。', array( 'status' => 503 ) );
 	}
 
@@ -402,10 +410,11 @@ function apprex_chat_settings_page() {
 	$key_from_const = defined( 'APPREX_OPENROUTER_API_KEY' ) && APPREX_OPENROUTER_API_KEY;
 	?>
 	<div class="wrap">
-		<h1><?php esc_html_e( 'APPREX チャット（OpenRouter）設定', 'apprex' ); ?></h1>
+		<h1><?php esc_html_e( 'APPREX チャット・AI設定', 'apprex' ); ?></h1>
 		<form method="post" action="options.php">
 			<?php settings_fields( 'apprex_chat' ); ?>
 			<table class="form-table" role="presentation">
+				<?php if ( function_exists( 'apprex_claude_settings_rows' ) ) { apprex_claude_settings_rows(); } ?>
 				<tr>
 					<th scope="row"><?php esc_html_e( 'OpenRouter APIキー', 'apprex' ); ?></th>
 					<td>
@@ -456,6 +465,7 @@ function apprex_chat_settings_page() {
 			</table>
 			<?php submit_button(); ?>
 		</form>
+		<?php if ( function_exists( 'apprex_claude_test_box' ) ) { apprex_claude_test_box(); } ?>
 
 		<hr>
 		<h2 id="apprex-image-compare"><?php esc_html_e( '画像モデルの比較テスト', 'apprex' ); ?></h2>
@@ -551,6 +561,9 @@ function apprex_studio_text_model() {
  * @return string|WP_Error
  */
 function apprex_studio_complete( $messages, $args = array() ) {
+	if ( function_exists( 'apprex_ai_use_claude' ) && apprex_ai_use_claude() ) {
+		return apprex_openrouter_complete( $messages, array_merge( $args, array( 'model' => apprex_claude_studio_model(), 'effort' => 'medium' ) ) );
+	}
 	$res = apprex_openrouter_complete( $messages, array_merge( $args, array( 'model' => apprex_studio_text_model() ) ) );
 	if ( is_wp_error( $res ) && apprex_studio_text_model() !== apprex_openrouter_model() ) {
 		$res = apprex_openrouter_complete( $messages, $args );

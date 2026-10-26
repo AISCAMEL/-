@@ -356,7 +356,7 @@ add_action( 'wp_enqueue_scripts', function () {
 		$cfg['msgs']    = apprex_studio_messages_out( $u->ID );
 		$cfg['logout']  = wp_logout_url( apprex_studio_url( apprex_studio_mode() ) );
 		$cfg['ai']      = array(
-			'text'  => '' !== apprex_openrouter_key(),
+			'text'  => apprex_ai_text_ready(),
 			'image' => '' !== apprex_openrouter_key(),
 			'left'  => apprex_studio_image_left( $u->ID ),
 			'limit' => apprex_studio_image_limit(),
@@ -610,7 +610,7 @@ function apprex_studio_rest_ai_design( WP_REST_Request $request ) {
 	if ( ! apprex_studio_check_nonce( $request ) ) {
 		return new WP_Error( 'forbidden', '再読み込みしてください。', array( 'status' => 403 ) );
 	}
-	if ( '' === apprex_openrouter_key() ) {
+	if ( ! apprex_ai_text_ready() ) {
 		return rest_ensure_response( array( 'ok' => true, 'fallback' => true ) );
 	}
 	$brief  = apprex_studio_brief( $request );
@@ -806,7 +806,7 @@ function apprex_studio_rest_ai_plan( WP_REST_Request $request ) {
 	if ( ! apprex_studio_check_nonce( $request ) ) {
 		return new WP_Error( 'forbidden', '再読み込みしてください。', array( 'status' => 403 ) );
 	}
-	if ( '' === apprex_openrouter_key() ) {
+	if ( ! apprex_ai_text_ready() ) {
 		return new WP_Error( 'not_configured', 'AIによる文章作成は準備中です。', array( 'status' => 503 ) );
 	}
 	$brief = apprex_studio_brief( $request );

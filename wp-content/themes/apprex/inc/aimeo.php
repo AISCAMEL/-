@@ -163,7 +163,7 @@ function apprex_aimeo_ai_box( $post ) {
 	$tasks = apprex_aimeo_tasks();
 	$log   = get_post_meta( $post->ID, 'apprex_meo_log', true );
 	$log   = is_array( $log ) ? $log : array();
-	$ready = '' !== apprex_openrouter_key();
+	$ready = apprex_ai_text_ready();
 	?>
 	<div id="aimeo" data-id="<?php echo esc_attr( $post->ID ); ?>" data-rest="<?php echo esc_url( rest_url( 'apprex/v1/aimeo' ) ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>">
 		<?php if ( ! $ready ) : ?>
@@ -324,8 +324,8 @@ function apprex_aimeo_generate( $id, $task, $extra = array() ) {
 	if ( empty( $v['name'] ) ) {
 		return new WP_Error( 'no_info', '先に「お店の情報」の店名を入れて保存してください。' );
 	}
-	if ( '' === apprex_openrouter_key() ) {
-		return new WP_Error( 'no_key', 'OpenRouterのAPIキーが未設定です（設定 → APPREX チャット）。' );
+	if ( ! apprex_ai_text_ready() ) {
+		return new WP_Error( 'no_key', 'AIのAPIキーが未設定です（設定 → APPREX チャット）。' );
 	}
 	$tones = array( 'polite' => 'ていねいで誠実', 'friendly' => '親しみやすく明るい', 'calm' => '落ち着いた上品な' );
 	$tone  = isset( $tones[ isset( $v['tone'] ) ? $v['tone'] : '' ] ) ? $tones[ $v['tone'] ] : $tones['polite'];

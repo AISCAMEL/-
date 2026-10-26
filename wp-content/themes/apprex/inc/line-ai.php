@@ -71,8 +71,8 @@ add_action( 'apprex_line_event', function ( $ev, $uid, $type ) {
 	if ( '' === $reply_token || '' === $user_text ) {
 		return;
 	}
-	if ( ! function_exists( 'apprex_openrouter_complete' ) || '' === apprex_openrouter_key() ) {
-		update_option( 'apprex_line_ai_last', array( 't' => time(), 's' => 'err', 'n' => 'OpenRouter APIキーが未設定（APPREX チャット）' ), false );
+	if ( ! function_exists( 'apprex_openrouter_complete' ) || ! apprex_ai_text_ready() ) {
+		update_option( 'apprex_line_ai_last', array( 't' => time(), 's' => 'err', 'n' => 'AIのAPIキーが未設定（APPREX チャット）' ), false );
 		return;
 	}
 
@@ -116,15 +116,15 @@ add_action( 'admin_post_apprex_line_ai_test', function () {
 	check_admin_referer( 'apprex_line_ai_test' );
 	$back = admin_url( 'options-general.php?page=apprex-line' );
 
-	if ( ! function_exists( 'apprex_openrouter_complete' ) || '' === apprex_openrouter_key() ) {
-		wp_safe_redirect( add_query_arg( 'apprex_ai_test', rawurlencode( 'OpenRouter APIキーが未設定です（APPREX チャット）' ), $back ) );
+	if ( ! function_exists( 'apprex_openrouter_complete' ) || ! apprex_ai_text_ready() ) {
+		wp_safe_redirect( add_query_arg( 'apprex_ai_test', rawurlencode( 'AIのAPIキーが未設定です（APPREX チャット）' ), $back ) );
 		exit;
 	}
 	$msgs = array(
 		array( 'role' => 'system', 'content' => 'あなたはテスト用アシスタントです。1文で短く挨拶してください。' ),
 		array( 'role' => 'user', 'content' => 'こんにちは' ),
 	);
-	$model = apprex_openrouter_model();
+	$model = function_exists( 'apprex_ai_text_label' ) ? apprex_ai_text_label() : apprex_openrouter_model();
 	$r = apprex_openrouter_complete( $msgs, array( 'max_tokens' => 60, 'timeout' => 25 ) );
 	if ( is_wp_error( $r ) && $model !== APPREX_OPENROUTER_DEFAULT_MODEL ) {
 		$r = apprex_openrouter_complete( $msgs, array( 'model' => APPREX_OPENROUTER_DEFAULT_MODEL, 'max_tokens' => 60, 'timeout' => 25 ) );

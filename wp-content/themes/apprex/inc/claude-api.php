@@ -1,0 +1,269 @@
+<?php
+/**
+ * Claude API（Anthropic）で文章を作る。
+ *
+ * - Claude のAPIキーを入れると、文章の生成（サイトのAIチャット・LINEのAI自動返信・AIスタジオ・
+ *   ホームページのAI・AIMEO・AI記事）はすべて Claude で行う。
+ * - 画像の生成は Claude ではできないため、これまでどおり OpenRouter のキーで行う。
+ * - Claude で失敗したときは、OpenRouter のキーがあれば OpenRouter でやり直す。
+ *
+ * 設定：設定 → APPREX チャット（Claude APIキー・モデル）
+ * キーは wp-config.php の定数 APPREX_CLAUDE_API_KEY でも設定できる（こちらが優先）。
+ *
+ * WordPress のテーマとして zip で入れるため、SDK（Composer）を同梱せず、
+ * ほかの外部連携と同じく wp_remote_post で Messages API を呼ぶ。
+ *
+ * @package APPREX
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+const APPREX_CLAUDE_ENDPOINT      = 'https://api.anthropic.com/v1/messages';
+const APPREX_CLAUDE_API_VERSION   = '2026-10-21';
+const APPREX_CLAUDE_DEFAULT_MODEL = 'claude-opus-5-5';
+
+/** Claude APIキー（定数 → 設定の順）。 */
+function apprex_claude_key() {
+	if ( defined( 'APPREX_CLAUDE_API_KEY' ) && APPREX_CLAUDE_API_KEY ) {
+		return (string) APPREX_CLAUDE_API_KEY;
+	}
+	return trim( (string) get_option( 'apprex_claude_api_key', '' ) );
+}
+
+/** チャット・LINE・記事などに使う Claude のモデル。 */
+function apprex_claude_model() {
+	$m = trim( (string) get_option( 'apprex_claude_model', '' ) );
+	return $m ? $m : APPREX_CLAUDE_DEFAULT_MODEL;
+}
+
+/** AIスタジオ（デザイン・試作・仕様書）に使う Claude のモデル。 */
+function apprex_claude_studio_model() {
+	$m = trim( (string) get_option( 'apprex_claude_studio_model', '' ) );
+	return $m ? $m : APPREX_CLAUDE_DEFAULT_MODEL;
+}
+
+/** 文章を Claude で作るか（Claude のキーがあれば Claude）。 */
+function apprex_ai_use_claude() {
+	return '' !== apprex_claude_key();
+}
+
+/** 文章のAIが使えるか（Claude か OpenRouter のどちらかのキーがある）。 */
+function apprex_ai_text_ready() {
+	return apprex_ai_use_claude() || ( function_exists( 'apprex_openrouter_key' ) && '' !== apprex_openrouter_key() );
+}
+
+/** いま文章に使っているAIの表示名（管理画面用）。 */
+function apprex_ai_text_label() {
+	if ( apprex_ai_use_claude() ) {
+		return 'Claude（' . apprex_claude_model() . '）';
+	}
+	return function_exists( 'apprex_openrouter_model' ) ? 'OpenRouter（' . apprex_openrouter_model() . '）' : '未設定';
+}
+
+/**
+ * OpenRouter 形式のメッセージ（role: system/user/assistant）を Claude の形に変える。
+ *
+ * @param array $messages [{role, content}, ...]。
+ * @return array { system: string, messages: array }
+ */
+function apprex_claude_convert( $messages ) {
+	$system = array();
+	$out    = array();
+	foreach ( (array) $messages as $m ) {
+		$role = isset( $m['role'] ) ? $m['role'] : 'user';
+		$text = isset( $m['content'] ) ? $m['content'] : '';
+		if ( is_array( $text ) ) {
+			// [{type:text,text}] の形にも対応（文章だけ取り出す）。
+			$parts = array();
+			foreach ( $text as $p ) {
+				if ( is_array( $p ) && isset( $p['text'] ) ) {
+					$parts[] = (string) $p['text'];
+				}
+			}
+			$text = implode( "\n", $parts );
+		}
+		$text = (string) $text;
+		if ( 'system' === $role ) {
+			if ( '' !== trim( $text ) ) {
+				$system[] = $text;
+			}
+			continue;
+		}
+		$role = 'assistant' === $role ? 'assistant' : 'user';
+		if ( '' === trim( $text ) ) {
+			continue;
+		}
+		// 最初はお客様の発言から始める（チャット画面の最初のあいさつなどは除く）。
+		if ( ! $out && 'assistant' === $role ) {
+			continue;
+		}
+		// 同じ話し手が続いたら1つにまとめる。
+		$last = count( $out ) - 1;
+		if ( $last >= 0 && $out[ $last ]['role'] === $role ) {
+			$out[ $last ]['content'] .= "\n\n" . $text;
+			continue;
+		}
+		$out[] = array( 'role' => $role, 'content' => $text );
+	}
+	// 最後がAIの発言だと続きを書かせる形になり使えないので、外す。
+	while ( $out && 'assistant' === $out[ count( $out ) - 1 ]['role'] ) {
+		array_pop( $out );
+	}
+	return array(
+		'system'   => implode( "\n\n", $system ),
+		'messages' => $out,
+	);
+}
+
+/**
+ * Claude で文章を作る。
+ *
+ * @param array $messages [{role, content}, ...]（system を含めてよい）。
+ * @param array $args     model / max_tokens / timeout / effort（low|medium|high）。
+ * @return string|WP_Error 生成した文章。
+ */
+function apprex_claude_complete( $messages, $args = array() ) {
+	$key = apprex_claude_key();
+	if ( '' === $key ) {
+		return new WP_Error( 'not_configured', 'Claude APIキーが未設定です（設定 → APPREX チャット）。' );
+	}
+	$conv = apprex_claude_convert( $messages );
+	if ( ! $conv['messages'] ) {
+		return new WP_Error( 'bad_request', '送る内容がありません。' );
+	}
+	$model = ( isset( $args['model'] ) && 0 === strpos( (string) $args['model'], 'claude-' ) ) ? (string) $args['model'] : apprex_claude_model();
+	// 考える時間も出力の上限に含まれるので、呼び出し側の上限より余裕をもたせる（長さは指示文で決める）。
+	$want    = isset( $args['max_tokens'] ) ? (int) $args['max_tokens'] : 600;
+	$payload = array(
+		'model'         => $model,
+		'max_tokens'    => max( 4000, min( 16000, $want * 4 ) ),
+		'messages'      => $conv['messages'],
+		'output_config' => array( 'effort' => isset( $args['effort'] ) ? (string) $args['effort'] : 'low' ),
+		// 安全のための判定で断られたときは、Anthropic が勧めるモデルで自動的にやり直す。
+		'fallbacks'     => 'default',
+	);
+	if ( '' !== $conv['system'] ) {
+		$payload['system'] = $conv['system'];
+	}
+	$payload = apply_filters( 'apprex_claude_payload', $payload, $args );
+
+	$res = wp_remote_post(
+		APPREX_CLAUDE_ENDPOINT,
+		array(
+			'timeout' => isset( $args['timeout'] ) ? (int) $args['timeout'] : 60,
+			'headers' => array(
+				'x-api-key'         => $key,
+				'anthropic-version' => APPREX_CLAUDE_API_VERSION,
+				'anthropic-beta'    => 'server-side-fallback-2026-07-01',
+				'content-type'      => 'application/json',
+			),
+			'body'    => wp_json_encode( $payload ),
+		)
+	);
+	if ( is_wp_error( $res ) ) {
+		return new WP_Error( 'upstream_error', 'Claude に接続できませんでした（' . $res->get_error_message() . '）。' );
+	}
+	$code = (int) wp_remote_retrieve_response_code( $res );
+	$body = json_decode( wp_remote_retrieve_body( $res ), true );
+	if ( 200 !== $code || ! is_array( $body ) ) {
+		$msg = isset( $body['error']['message'] ) ? $body['error']['message'] : '';
+		return new WP_Error( 'upstream_error', 'Claude での生成に失敗しました（HTTP ' . $code . '）。' . ( $msg ? ' ' . $msg : '' ) );
+	}
+	$stop = isset( $body['stop_reason'] ) ? (string) $body['stop_reason'] : '';
+	if ( 'refusal' === $stop ) {
+		return new WP_Error( 'refusal', 'この内容にはお答えできませんでした。' );
+	}
+	$text = '';
+	foreach ( isset( $body['content'] ) ? (array) $body['content'] : array() as $block ) {
+		if ( isset( $block['type'] ) && 'text' === $block['type'] && isset( $block['text'] ) ) {
+			$text .= $block['text'];
+		}
+	}
+	$text = trim( $text );
+	if ( '' === $text ) {
+		return new WP_Error( 'upstream_error', 'Claude の返答が空でした（' . ( $stop ? $stop : 'unknown' ) . '）。' );
+	}
+	return $text;
+}
+
+/* =========================================================================
+ * 設定（設定 → APPREX チャット に入力欄を追加）
+ * ====================================================================== */
+add_action( 'admin_init', function () {
+	register_setting( 'apprex_chat', 'apprex_claude_api_key', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+	register_setting( 'apprex_chat', 'apprex_claude_model', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+	register_setting( 'apprex_chat', 'apprex_claude_studio_model', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+} );
+
+/** 設定画面の Claude の欄（apprex_chat_settings_page から呼ぶ）。 */
+function apprex_claude_settings_rows() {
+	$const = defined( 'APPREX_CLAUDE_API_KEY' ) && APPREX_CLAUDE_API_KEY;
+	?>
+	<tr>
+		<th scope="row">Claude APIキー</th>
+		<td>
+			<?php if ( $const ) : ?>
+				<p><em>wp-config.php の APPREX_CLAUDE_API_KEY で設定済みです（こちらが優先されます）。</em></p>
+			<?php else : ?>
+				<input type="password" name="apprex_claude_api_key" value="<?php echo esc_attr( get_option( 'apprex_claude_api_key', '' ) ); ?>" class="regular-text" autocomplete="off" placeholder="sk-ant-...">
+			<?php endif; ?>
+			<p class="description">入れると、文章のAI（サイトのチャット・LINEの自動返信・AIスタジオ・ホームページのAI・AIMEO・AI記事）はすべて Claude で動きます。画像の生成は OpenRouter のキーを使います。<br>いま文章に使っているAI：<strong><?php echo esc_html( apprex_ai_text_label() ); ?></strong></p>
+		</td>
+	</tr>
+	<tr>
+		<th scope="row">Claude のモデル（チャット・LINE・記事）</th>
+		<td>
+			<input type="text" name="apprex_claude_model" value="<?php echo esc_attr( get_option( 'apprex_claude_model', '' ) ); ?>" class="regular-text" placeholder="<?php echo esc_attr( APPREX_CLAUDE_DEFAULT_MODEL ); ?>">
+			<p class="description">未入力時は <?php echo esc_html( APPREX_CLAUDE_DEFAULT_MODEL ); ?>。費用を抑えたいときは claude-sonnet-5-5 や claude-haiku-5-5 も選べます。</p>
+		</td>
+	</tr>
+	<tr>
+		<th scope="row">Claude のモデル（AIスタジオ）</th>
+		<td>
+			<input type="text" name="apprex_claude_studio_model" value="<?php echo esc_attr( get_option( 'apprex_claude_studio_model', '' ) ); ?>" class="regular-text" placeholder="<?php echo esc_attr( APPREX_CLAUDE_DEFAULT_MODEL ); ?>">
+			<p class="description">AIデザイナー・試作・仕様定義書・ホームページのAIに使います。未入力時は <?php echo esc_html( APPREX_CLAUDE_DEFAULT_MODEL ); ?>。</p>
+		</td>
+	</tr>
+	<?php
+}
+
+/* 動作テスト：設定画面のボタンから1回だけ Claude を呼ぶ。 */
+add_action( 'admin_post_apprex_claude_test', function () {
+	if ( ! current_user_can( 'manage_options' ) || ! check_admin_referer( 'apprex_claude_test' ) ) {
+		wp_die( '権限がありません。' );
+	}
+	$t0 = microtime( true );
+	$r  = apprex_claude_complete(
+		array(
+			array( 'role' => 'system', 'content' => 'あなたはAPPREXのアシスタントです。1文で短くあいさつしてください。' ),
+			array( 'role' => 'user', 'content' => 'こんにちは' ),
+		),
+		array( 'max_tokens' => 100, 'timeout' => 40 )
+	);
+	$sec = round( microtime( true ) - $t0, 1 );
+	$msg = is_wp_error( $r ) ? 'NG：' . $r->get_error_message() : 'OK（' . apprex_claude_model() . '・' . $sec . '秒）：' . mb_substr( $r, 0, 80 );
+	set_transient( 'apprex_claude_test_' . get_current_user_id(), $msg, 120 );
+	wp_safe_redirect( admin_url( 'options-general.php?page=apprex-chat#apprex-claude-test' ) );
+	exit;
+} );
+
+/** 設定画面の「Claude の動作テスト」（フォームの外に出す）。 */
+function apprex_claude_test_box() {
+	$msg = get_transient( 'apprex_claude_test_' . get_current_user_id() );
+	delete_transient( 'apprex_claude_test_' . get_current_user_id() );
+	?>
+	<hr>
+	<h2 id="apprex-claude-test">Claude の動作テスト</h2>
+	<?php if ( $msg ) : ?>
+		<div class="notice <?php echo 0 === strpos( $msg, 'OK' ) ? 'notice-success' : 'notice-error'; ?> inline"><p><?php echo esc_html( $msg ); ?></p></div>
+	<?php endif; ?>
+	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+		<input type="hidden" name="action" value="apprex_claude_test">
+		<?php wp_nonce_field( 'apprex_claude_test' ); ?>
+		<p><button class="button" <?php disabled( ! apprex_ai_use_claude() ); ?>>Claude に「こんにちは」と送ってみる</button>
+		<?php if ( ! apprex_ai_use_claude() ) : ?><span class="description">先に Claude APIキーを入れて保存してください。</span><?php endif; ?></p>
+	</form>
+	<?php
+}

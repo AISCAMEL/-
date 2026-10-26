@@ -272,7 +272,7 @@ function apprex_line_settings_page() {
 		$diag_token  = '' !== apprex_line_channel_token();
 		$diag_secret = function_exists( 'apprex_line_channel_secret' ) && '' !== apprex_line_channel_secret();
 		$diag_ai     = (int) get_option( 'apprex_line_ai_enabled', 0 );
-		$diag_key    = function_exists( 'apprex_openrouter_key' ) && '' !== apprex_openrouter_key();
+		$diag_key    = function_exists( 'apprex_ai_text_ready' ) && apprex_ai_text_ready();
 		$hook_last   = (int) get_option( 'apprex_line_hook_last', 0 );
 		$hook_note   = (string) get_option( 'apprex_line_hook_note', '' );
 		$ai_last     = get_option( 'apprex_line_ai_last', array() );
@@ -284,7 +284,7 @@ function apprex_line_settings_page() {
 		<table class="widefat striped" style="max-width:760px;">
 			<tbody>
 				<tr><td style="width:280px;">AI自動応答スイッチ</td><td><?php echo $diag_ai ? '<span style="color:#15803d;font-weight:700;">✓ ON</span>' : '<span style="color:#b91c1c;font-weight:700;">✗ OFF（下でONにしてください）</span>'; ?></td></tr>
-				<tr><td>OpenRouter APIキー（AIの頭脳）</td><td><?php echo wp_kses_post( $ok( $diag_key ) ); ?> <span class="description">設定：APPREX チャット</span></td></tr>
+				<tr><td>AIのAPIキー（Claude または OpenRouter）</td><td><?php echo wp_kses_post( $ok( $diag_key ) ); ?> <span class="description">設定：APPREX チャット</span></td></tr>
 				<tr><td>チャネルアクセストークン（返信用）</td><td><?php echo wp_kses_post( $ok( $diag_token ) ); ?></td></tr>
 				<tr><td>チャネルシークレット（署名検証）</td><td><?php echo wp_kses_post( $ok( $diag_secret ) ); ?> <span class="description">設定：APPREX LINEステップ</span></td></tr>
 				<tr><td>Webhook 最終受信</td><td><?php
