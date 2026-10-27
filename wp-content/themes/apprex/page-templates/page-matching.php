@@ -2,7 +2,7 @@
 /**
  * Template Name: マッチングアプリ開発
  *
- * マッチングアプリ開発（開発費・保守は個別見積り、期間3ヶ月〜）の詳細ページ。
+ * マッチングアプリ開発（開発費300万円〜・保守7万円〜）の詳細ページ。
  * 見積り依頼は既存のフォーム基盤（REST /inquiry）で受け付ける。
  *
  * @package APPREX
@@ -21,9 +21,9 @@ get_header();
     <div>
       <span class="badge-top rise">オリジナル開発 ／ iOS・Android同時開発</span>
       <h1 class="rise d1">マッチングアプリを、<br><em>格安・3ヶ月〜</em>で。</h1>
-      <div class="price-big rise d2"><b>無料</b><span>でお見積り</span><small>開発費は、作りたい機能に合わせて個別にお見積りします。APPREXの開発基盤を使うので、一般的なフルスクラッチ開発より費用と期間を抑えられます。</small></div>
+      <div class="price-big rise d2"><b>300</b><span>万円〜</span><small>開発費（税抜）。一般的なフルスクラッチ開発では数百万〜数千万円かかることもあります。</small></div>
       <p class="lead rise d2">スキル・ビジネス・人材・フリマなど、人と人、会社と会社をつなぐアプリを開発します。APPREXの開発基盤とFlutterを使うので、管理画面までそろったアプリを低価格で作れます。</p>
-      <div class="chips rise d3"><span class="chip">管理画面つき</span><span class="chip">iOS・Android同時</span><span class="chip">公開後の保守まで対応</span><span class="chip">ソース買取も可</span></div>
+      <div class="chips rise d3"><span class="chip">管理画面つき</span><span class="chip">iOS・Android同時</span><span class="chip">月額保守 7万円〜</span><span class="chip">ソース買取も可</span></div>
       <div class="ctas rise d3">
         <a class="btn btn--cta btn--lg pulse" href="#lead">無料で見積りを依頼する</a>
         <a class="btn btn--line btn--lg" href="<?php echo esc_url( apprex_studio_url( 'matching' ) ); ?>">AIで試作を作る（無料）</a>
@@ -50,11 +50,11 @@ get_header();
       <table class="cmp2">
         <thead><tr><th>比べること</th><th>一般的なフルスクラッチ開発</th><th class="app">APPREX</th></tr></thead>
         <tbody>
-          <tr><td><b>開発費</b></td><td>数百万〜数千万円</td><td class="app">開発基盤を使って抑えた個別見積り</td></tr>
+          <tr><td><b>開発費</b></td><td>数百万〜数千万円</td><td class="app">300万円〜</td></tr>
           <tr><td><b>公開までの期間</b></td><td>半年〜1年程度</td><td class="app">3ヶ月〜</td></tr>
           <tr><td><b>iOS・Android</b></td><td>2本を別々に開発することも</td><td class="app">Flutterで同時に開発</td></tr>
           <tr><td><b>管理画面</b></td><td>別途見積りになりやすい</td><td class="app">会員・取引・売上の管理画面つき</td></tr>
-          <tr><td><b>公開後の保守</b></td><td>開発費の年10〜20%程度が目安</td><td class="app">月額の保守プラン（個別見積り）</td></tr>
+          <tr><td><b>公開後の保守</b></td><td>開発費の年10〜20%程度が目安</td><td class="app">月額 7万円〜</td></tr>
           <tr><td><b>ソースコード</b></td><td>契約による</td><td class="app">買い取りプランあり</td></tr>
         </tbody>
       </table>
@@ -81,7 +81,7 @@ get_header();
 
 <section class="sec" id="func">
   <div class="wrap">
-    <div class="sh"><span class="eyebrow">Features</span><h2>マッチングに必要な機能</h2><p>基本のプランで作れる機能の例です。内容に合わせて組み合わせます。</p></div>
+    <div class="sh"><span class="eyebrow">Features</span><h2>マッチングに必要な機能</h2><p>300万円〜のプランで作れる機能の例です。内容に合わせて組み合わせます。</p></div>
     <div class="funcs">
       <div class="fn"><i>01</i><div><b>会員登録・ログイン</b><small>メール、Apple・Googleアカウントで登録</small></div></div>
       <div class="fn"><i>02</i><div><b>プロフィール</b><small>写真・自己紹介・スキル・実績・料金</small></div></div>
@@ -105,7 +105,7 @@ get_header();
     <div class="mprice">
       <div class="mp-main">
         <h3>マッチングアプリ開発プラン</h3>
-        <div class="mp-row"><div><small>開発費</small><b>個別見積り</b></div><div><small>月額保守</small><b>個別見積り</b></div></div>
+        <div class="mp-row"><div><small>開発費（税抜）</small><b>300<span>万円〜</span></b></div><div><small>月額保守（税抜）</small><b>7<span>万円〜</span></b></div></div>
         <ul><li>iOS・Androidアプリ（Flutterで同時開発）</li><li>管理画面（会員・取引・売上・お知らせ）</li><li>デザイン、テスト、ストア申請の代行</li><li>保守：OS更新への対応、不具合の修正、サーバー管理</li><li>開発費のお支払いは着手時と納品時の2回に分けられます</li></ul>
       </div>
       <div class="mp-opt">
@@ -118,7 +118,7 @@ get_header();
           <tr><td>Web版（ブラウザで使える版）</td><td class="r">個別見積り</td></tr>
           <tr><td>ソースコード買い取り</td><td class="r">個別見積り</td></tr>
         </tbody></table></div>
-        <p class="cap">アプリストアの登録費用も、お見積りに含めてご案内します。</p>
+        <p class="cap">アプリストア登録費（一律55,000円）が別途かかります。</p>
       </div>
     </div>
   </div>
@@ -186,7 +186,7 @@ get_header();
       <div class="fgrid"><input type="email" name="email" autocomplete="email" inputmode="email" placeholder="メールアドレス" aria-label="メールアドレス" required>
         <select data-label="マッチングの種類" aria-label="マッチングの種類"><option value="">マッチングの種類</option><option>スキル</option><option>ビジネス</option><option>人材・求人</option><option>フリマ・売買</option><option>講師・習い事</option><option>スペース・シェア</option><option>地域・コミュニティ</option><option>恋活・婚活</option><option>その他・未定</option></select></div>
       <div class="fgrid"><select data-label="公開したい時期" aria-label="公開したい時期"><option value="">公開したい時期</option><option>3ヶ月以内</option><option>半年以内</option><option>1年以内</option><option>未定</option></select>
-        <select data-label="ご予算" aria-label="ご予算"><option value="">ご予算</option><option>〜300万円</option><option>300〜500万円</option><option>500〜1,000万円</option><option>1,000万円以上</option><option>相談したい</option></select></div>
+        <select data-label="ご予算" aria-label="ご予算"><option value="">ご予算</option><option>300〜500万円</option><option>500〜1,000万円</option><option>1,000万円以上</option><option>相談したい</option></select></div>
       <textarea name="message" hidden>【マッチングアプリ開発の見積り依頼】</textarea>
       <button class="btn btn--cta btn--lg" type="submit">見積りを依頼する</button>
       <p class="fnote">送信後、AIスタジオで仕様を作ると、より正確な見積りをお出しできます。<?php if ( get_privacy_policy_url() ) : ?><br>送信により<a href="<?php echo esc_url( get_privacy_policy_url() ); ?>">プライバシーポリシー</a>に同意したものとします。<?php endif; ?></p>
@@ -199,7 +199,7 @@ get_header();
   <div class="wrap">
     <div class="sh"><span class="eyebrow">FAQ</span><h2>よくあるご質問</h2></div>
     <div class="faq">
-      <details open><summary>費用はどのくらいかかりますか？</summary><p>登録・プロフィール・検索・メッセージ・通知・管理画面など、マッチングの基本の機能から作れます。機能の数と内容に合わせて個別にお見積りします。AIスタジオで試作と仕様を作っていただくと、より早く正確なお見積りをお出しできます（無料）。</p></details>
+      <details open><summary>本当に300万円で作れますか？</summary><p>登録・プロフィール・検索・メッセージ・通知・管理画面など、マッチングの基本の機能であれば300万円からお作りできます。決済やビデオ通話などを加える場合は、内容に合わせてお見積りします。</p></details>
       <details><summary>どのくらいで公開できますか？</summary><p>3ヶ月〜が目安です。機能の数とストアの審査期間によって変わります。ミーティングでスケジュールをお出しします。</p></details>
       <details><summary>アイデアだけでも相談できますか？</summary><p>はい。AIスタジオで機能を選ぶと仕様書のたたき台ができるので、それをもとにミーティングで一緒に固めていきます。</p></details>
       <details><summary>公開後に機能を追加できますか？</summary><p>できます。小さく公開して、利用者の反応を見ながら追加していく進め方をおすすめしています。</p></details>

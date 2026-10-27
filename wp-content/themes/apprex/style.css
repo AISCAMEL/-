@@ -4,7 +4,7 @@ Theme URI: https://site.aiscompany.jp/
 Author: AIS Company
 Author URI: https://site.aiscompany.jp/
 Description: クラウド型アプリ開発プラットフォーム「APPREX」公式サイト用テーマ。Hello Elementor の思想を踏襲したライセンス非依存の自作テーマ。固定ページ構成＋カスタム投稿タイプ cases によるリニューアル実装。モバイルファースト・WebP・Lazy Load 対応。
-Version: 1.79.0
+Version: 1.80.0
 Requires at least: 6.0
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -1286,3 +1286,15 @@ a:focus-visible, button:focus-visible, .btn:focus-visible, summary:focus-visible
 .ph-ask .ph-ghost:hover { background: rgba(255, 255, 255, .12); color: #fff; }
 .ph-ask .btn.ph-ghost { border: 1.5px solid rgba(255, 255, 255, .65) !important; background: transparent !important; color: #fff !important; }
 .setup-card ul { list-style: disc; }
+.ph-ask .btn.ph-ghost { border: 1.5px solid rgba(255, 255, 255, .65) !important; background: transparent !important; color: #fff !important; }
+.setup-card p { font-size: .9rem; color: var(--color-body); margin: 0 0 16px; }
+.setup-price { display: flex; align-items: baseline; gap: 4px; color: var(--color-navy); margin-bottom: 8px; }
+.setup-price b { font-size: 2.2rem; font-weight: 900; letter-spacing: -.02em; }
+.setup-card.is-feat .setup-price b { color: var(--color-cta-dark); }
+.setup-price span { font-weight: 700; font-size: .9rem; }
+.ph-plans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 14px 0 0; }
+.ph-plans div { background: var(--color-bg-soft); border-radius: 10px; padding: 8px 6px; text-align: center; }
+.ph-plans dt { font-size: .74rem; color: var(--color-muted); font-weight: 700; }
+.ph-plans dd { margin: 2px 0 0; font-weight: 900; color: var(--color-navy); font-size: .95rem; white-space: nowrap; }
+.ph-plans dd small { font-size: .7rem; font-weight: 700; color: var(--color-muted); }
+.ph-tile.is-feat .ph-plans div { background: #fff7ed; }

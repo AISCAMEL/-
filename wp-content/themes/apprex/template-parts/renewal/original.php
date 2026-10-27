@@ -45,7 +45,7 @@ if ( ! defined( 'ABSPATH' ) ) {
       </div>
     </div>
     <div class="oexamples">
-      <a class="oex oex-link" href="<?php echo esc_url( apprex_page_url( 'matching-app' ) ); ?>"><b>マッチングアプリ</b><div class="pr">個別見積り</div><small>スキル・ビジネス・フリマなど。会員登録・検索・メッセージ・決済まで。</small><span class="more">詳しく見る →</span></a>
+      <a class="oex oex-link" href="<?php echo esc_url( apprex_page_url( 'matching-app' ) ); ?>"><b>マッチングアプリ</b><div class="pr">開発費 300万円〜</div><small>スキル・ビジネス・フリマなど。会員登録・検索・メッセージ・決済まで。保守は月7万円〜。</small><span class="more">詳しく見る →</span></a>
       <div class="oex"><b>社内業務アプリ</b><div class="pr">個別見積り</div><small>日報・在庫・点検・勤怠など、現場の紙やExcelをスマホに置き換えます。</small></div>
       <div class="oex"><b>会員・サブスクアプリ</b><div class="pr">個別見積り</div><small>月額課金、会員限定コンテンツ、動画講座などの独自サービス。</small></div>
       <div class="oex"><b>予約・ECの独自機能</b><div class="pr">個別見積り</div><small>既存の予約・POS・在庫システムとつなぐなど、標準機能を超える仕組み。</small></div>

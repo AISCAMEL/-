@@ -22,11 +22,7 @@ $apprex_est     = apprex_page_url( 'estimate' );
  */
 $apprex_render_service = function ( $svc, $featured = '' ) use ( $apprex_est, $apprex_contact ) {
 	echo '<div class="pricing">';
-	// 金額は、いちばん安いプランの「〜」だけ見せる。ほかはお見積り。
-	$apprex_first = true;
 	foreach ( $svc['plans'] as $key => $p ) {
-		$apprex_show  = $apprex_first;
-		$apprex_first = false;
 		$is_feat   = ( $key === $featured );
 		$initial_r = (int) ( $p['initial'] ?? 0 );
 		$initial   = apprex_campaign_initial( $initial_r );
@@ -35,17 +31,16 @@ $apprex_render_service = function ( $svc, $featured = '' ) use ( $apprex_est, $a
 			<?php if ( $is_feat ) : ?><span class="ribbon"><?php esc_html_e( 'おすすめ', 'apprex' ); ?></span><?php endif; ?>
 			<h3><?php echo esc_html( $p['label'] ); ?></h3>
 			<div class="price">
-				<?php if ( $apprex_show ) : ?>
-					<small><?php esc_html_e( '月額', 'apprex' ); ?></small><?php echo esc_html( number_format( $p['monthly'] ) ); ?><small><?php esc_html_e( '円〜（税抜）', 'apprex' ); ?></small>
-				<?php else : ?>
-					<?php echo apprex_ask_pill( 'このプランを無料で見積り' ); // phpcs:ignore ?>
-				<?php endif; ?>
+				<?php echo esc_html( number_format( $p['monthly'] ) ); ?><small><?php esc_html_e( '円 / 月（税抜）', 'apprex' ); ?></small>
 			</div>
+			<?php if ( ! empty( $p['monthly_regular'] ) && $p['monthly_regular'] > $p['monthly'] ) : ?>
+				<p class="price-was">通常 <s><?php echo esc_html( number_format( $p['monthly_regular'] ) ); ?>円</s> → <b>キャンペーン</b></p>
+			<?php endif; ?>
 			<ul class="feats">
 				<?php if ( empty( $svc['setup'] ) ) : ?><li><?php esc_html_e( '開発費用 0円', 'apprex' ); ?></li><?php endif; ?>
 				<?php if ( ! empty( $svc['setup'] ) ) : ?>
+					<li><?php esc_html_e( '初期費用', 'apprex' ); ?> <strong>15万円〜</strong><?php esc_html_e( '（AIスタジオで作った内容から制作。1からは30万円〜）', 'apprex' ); ?></li>
 					<li><?php esc_html_e( 'デザイン・仕様書づくりはAIスタジオで無料', 'apprex' ); ?></li>
-					<li><?php esc_html_e( '初期費用はご要望を伺ってお見積り', 'apprex' ); ?></li>
 				<?php else : ?>
 					<li><?php esc_html_e( '初期費用', 'apprex' ); ?> <strong><?php echo esc_html( number_format( $initial ) ); ?>円</strong></li>
 				<?php endif; ?>
@@ -70,9 +65,9 @@ $apprex_render_service = function ( $svc, $featured = '' ) use ( $apprex_est, $a
 		echo '<p class="plan-note"><strong>オプション（一回）</strong>：';
 		$opts = array();
 		foreach ( $svc['options'] as $o ) {
-			$opts[] = esc_html( $o['label'] );
+			$opts[] = esc_html( $o['label'] ) . ' ' . number_format( $o['price'] ) . '円';
 		}
-		echo wp_kses_post( implode( '／', $opts ) ) . '（お見積り）</p>';
+		echo wp_kses_post( implode( '／', $opts ) ) . '</p>';
 	}
 	if ( ! empty( $svc['quote_options'] ) ) {
 		echo '<p class="plan-note"><strong>追加項目（すべて別途見積もり）</strong>：' . esc_html( implode( '／', $svc['quote_options'] ) ) . '</p>';
@@ -81,30 +76,27 @@ $apprex_render_service = function ( $svc, $featured = '' ) use ( $apprex_est, $a
 ?>
 
 <h3 class="plan-group-title"><?php esc_html_e( 'アプリ開発プラン（月額制・AIスタジオから制作）', 'apprex' ); ?></h3>
-<p class="plan-note"><?php esc_html_e( 'AIスタジオ（デザイン・試作・仕様定義書）は無料。月額19,800円〜。初期費用は、AIスタジオで作った内容をもとにお見積りします。ダウンロード数課金なし・プッシュ通知無制限。', 'apprex' ); ?></p>
+<p class="plan-note"><?php esc_html_e( 'AIスタジオ（デザイン・試作・仕様定義書）は無料。作った内容から制作して、初期費用15万円〜。ダウンロード数課金なし・プッシュ通知無制限。', 'apprex' ); ?></p>
 <?php $apprex_render_service( $apprex_cfg['services']['app'], 'start' ); ?>
-<div class="setup-compare">
-	<div class="setup-card is-feat">
-		<span class="setup-badge"><?php esc_html_e( 'おすすめ・初期費用がおトク', 'apprex' ); ?></span>
-		<h4><?php esc_html_e( 'AIスタジオで作った内容から制作', 'apprex' ); ?></h4>
-		<ul>
-			<li><?php esc_html_e( 'デザイン・仕様書づくりは0円（AIスタジオ）', 'apprex' ); ?></li>
-			<li><?php esc_html_e( '画面を見ながら決めるので、打ち合わせが少なく済む', 'apprex' ); ?></li>
-			<li><?php esc_html_e( 'そのまま見積り依頼まで、ボタンひとつ', 'apprex' ); ?></li>
-		</ul>
-		<a class="btn btn--cta btn--block" href="<?php echo esc_url( function_exists( 'apprex_studio_url' ) ? apprex_studio_url() : $apprex_est ); ?>"><?php esc_html_e( 'AIスタジオで無料で作る', 'apprex' ); ?></a>
+<?php if ( ! empty( $apprex_cfg['services']['app']['setup'] ) ) : ?>
+	<h3 class="plan-group-title"><?php esc_html_e( '初期費用（作り方で選べます）', 'apprex' ); ?></h3>
+	<div class="setup-compare">
+		<?php foreach ( $apprex_cfg['services']['app']['setup'] as $apprex_sk => $apprex_st ) : ?>
+			<div class="setup-card<?php echo 'ai' === $apprex_sk ? ' is-feat' : ''; ?>">
+				<?php if ( 'ai' === $apprex_sk ) : ?><span class="setup-badge"><?php esc_html_e( 'おすすめ・初期費用が半分', 'apprex' ); ?></span><?php endif; ?>
+				<h4><?php echo esc_html( $apprex_st['label'] ); ?></h4>
+				<div class="setup-price"><b><?php echo esc_html( number_format( $apprex_st['price'] ) ); ?></b><span><?php esc_html_e( '円〜（税抜）', 'apprex' ); ?></span></div>
+				<p><?php echo esc_html( $apprex_st['desc'] ); ?></p>
+				<?php if ( 'ai' === $apprex_sk ) : ?>
+					<a class="btn btn--cta btn--block" href="<?php echo esc_url( function_exists( 'apprex_studio_url' ) ? apprex_studio_url() : $apprex_est ); ?>"><?php esc_html_e( 'AIスタジオで無料で作る', 'apprex' ); ?></a>
+				<?php else : ?>
+					<a class="btn btn--ghost btn--block" href="<?php echo esc_url( apprex_page_url( 'meeting' ) ); ?>"><?php esc_html_e( 'オンラインで相談する', 'apprex' ); ?></a>
+				<?php endif; ?>
+			</div>
+		<?php endforeach; ?>
 	</div>
-	<div class="setup-card">
-		<h4><?php esc_html_e( '1からヒアリングして制作', 'apprex' ); ?></h4>
-		<ul>
-			<li><?php esc_html_e( '打ち合わせで、画面と機能を1から決めます', 'apprex' ); ?></li>
-			<li><?php esc_html_e( 'アイデアがまとまっていなくても大丈夫', 'apprex' ); ?></li>
-			<li><?php esc_html_e( '初期設定・サーバー設定・ストア申請まで対応', 'apprex' ); ?></li>
-		</ul>
-		<a class="btn btn--ghost btn--block" href="<?php echo esc_url( apprex_page_url( 'meeting' ) ); ?>"><?php esc_html_e( 'オンラインで相談する', 'apprex' ); ?></a>
-	</div>
-</div>
-<p class="plan-note"><?php esc_html_e( '※ 初期費用・アプリストアの登録費用は、作り方と内容に合わせて無料でお見積りします。', 'apprex' ); ?></p>
+<?php endif; ?>
+<p class="plan-note"><?php esc_html_e( '※ アプリ登録時の費用（iOS・Android 一律 55,000円）が別途必要です。', 'apprex' ); ?></p>
 
 <h3 class="plan-group-title"><?php esc_html_e( 'ホームページ制作（初期費用0円・月額制）', 'apprex' ); ?></h3>
 <?php $apprex_render_service( $apprex_cfg['services']['hp'], 'standard' ); ?>
@@ -123,6 +115,7 @@ $apprex_render_service = function ( $svc, $featured = '' ) use ( $apprex_est, $a
 		<tbody>
 			<?php
 			$apprex_hp_rows = array(
+				array( '月額（税抜）', '9,800円', '19,800円', '39,800円' ),
 				array( '初期費用', '0円', '0円', '0円' ),
 				array( 'ページ数', '〜5ページ', '〜10ページ＋LP1本', '〜20ページ' ),
 				array( '更新サポート', '月1回', '月2回', '月3回' ),
@@ -147,6 +140,6 @@ $apprex_render_service = function ( $svc, $featured = '' ) use ( $apprex_est, $a
 	</table>
 </div>
 
-<p class="plan-note"><?php esc_html_e( '※ 価格は税抜です。上位プラン・マッチングアプリなどは、ご要望を伺ってお見積りします。', 'apprex' ); ?>
+<p class="plan-note"><?php esc_html_e( '※ 価格はすべて税抜表示です。マッチングアプリ等の上位プランは個別見積（要相談）。', 'apprex' ); ?>
 	<a href="<?php echo esc_url( $apprex_contact ); ?>"><?php esc_html_e( 'お問い合わせ', 'apprex' ); ?></a>
 </p>

@@ -368,8 +368,7 @@ add_action( 'wp_enqueue_scripts', function () {
 		$cfg['orig']    = function_exists( 'apprex_orig_sanitize' ) ? apprex_orig_sanitize( json_decode( (string) get_user_meta( $u->ID, 'apprex_orig_spec', true ), true ) ) : null;
 		$cfg['origDemo'] = apprex_demo_url( apprex_demo_token( $u->ID ), array( 'v' => 'orig' ) );
 		$cfg['origImages'] = function_exists( 'apprex_orig_images_out' ) ? apprex_orig_images_out( $u->ID ) : null;
-		// 期間の目安だけに使う（1人日の単価や最低金額は画面に渡さない）。
-		$cfg['est']     = function_exists( 'apprex_orig_estimate_rules' ) ? array_diff_key( apprex_orig_estimate_rules(), array( 'day_rate' => 1, 'floor' => 1 ) ) : null;
+		$cfg['est']     = function_exists( 'apprex_orig_estimate_rules' ) ? apprex_orig_estimate_rules() : null;
 		$cfg['hp']       = function_exists( 'apprex_hp_get' ) ? apprex_hp_get( $u->ID ) : null;
 		$cfg['hpDemo']   = function_exists( 'apprex_hp_demo_url' ) ? apprex_hp_demo_url( $u->ID ) : '';
 		$cfg['hpImage']  = function_exists( 'apprex_hp_image_url' ) ? apprex_hp_image_url( $u->ID ) : '';

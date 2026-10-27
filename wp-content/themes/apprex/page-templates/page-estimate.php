@@ -23,7 +23,7 @@ while ( have_posts() ) :
 				<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'ホーム', 'apprex' ); ?></a>
 			</nav>
 			<h1><?php the_title(); ?></h1>
-			<p><?php esc_html_e( 'サービスとプランを選ぶと、月額の目安がわかります。初期費用やオプションは、選んだ内容をもとに担当者が無料でお見積りします。AIスタジオ（無料）でデザインと仕様書を作ると、より正確なお見積りをお出しできます。', 'apprex' ); ?></p>
+			<p><?php esc_html_e( 'サービス・プラン・作り方を選ぶだけで概算が表示され、そのままお見積り＆お申し込み（発注）まで完結できます。', 'apprex' ); ?></p>
 		</div>
 	</section>
 
@@ -46,7 +46,7 @@ while ( have_posts() ) :
 
 					<!-- Step 3: 初期費用（作り方） -->
 					<div class="estimate__block">
-						<h3 class="estimate__h"><span>3</span><?php esc_html_e( '作り方を選択', 'apprex' ); ?></h3>
+						<h3 class="estimate__h"><span>3</span><?php esc_html_e( '初期費用（作り方）を選択', 'apprex' ); ?></h3>
 						<div class="estimate__choices" id="est-setup"></div>
 					</div>
 
@@ -54,19 +54,19 @@ while ( have_posts() ) :
 					<div class="estimate__block">
 						<h3 class="estimate__h"><span>4</span><?php esc_html_e( 'オプション（任意）', 'apprex' ); ?></h3>
 						<div class="estimate__options" id="est-options"></div>
-						<p class="estimate__hint" style="margin-top:12px"><?php esc_html_e( '追加項目（バナー制作・構造化・AIMEO・LLMO・LINE構築・API連動・基幹連携・補助金サポート等）はすべて別途見積もりです。見積り依頼の「ご要望」欄にご記入いただくか、お問い合わせください。', 'apprex' ); ?></p>
+						<p class="estimate__hint" style="margin-top:12px"><?php esc_html_e( '追加項目（バナー制作・構造化・AIMEO・LLMO・LINE構築・API連動・基幹連携・補助金サポート等）はすべて別途見積もりです。発注時の「ご要望」欄にご記入いただくか、お問い合わせください。', 'apprex' ); ?></p>
 					</div>
 				</div>
 
 				<!-- Sticky summary + order -->
 				<aside class="estimate__summary" id="est-summary">
-					<h3><?php esc_html_e( 'お見積りの目安（税抜）', 'apprex' ); ?></h3>
+					<h3><?php esc_html_e( 'お見積り（概算・税抜）', 'apprex' ); ?></h3>
 					<div class="estimate__total" id="est-total">
 						<p class="estimate__hint"><?php esc_html_e( 'サービスとプランを選択してください。', 'apprex' ); ?></p>
 					</div>
 
 					<form class="estimate__order" id="est-order" hidden>
-						<h4><?php esc_html_e( 'この内容で見積りを依頼する', 'apprex' ); ?></h4>
+						<h4><?php esc_html_e( 'この内容で申し込む', 'apprex' ); ?></h4>
 						<label><?php esc_html_e( 'お名前', 'apprex' ); ?> <span>*</span>
 							<input type="text" name="name" required>
 						</label>
@@ -79,8 +79,8 @@ while ( have_posts() ) :
 						<label><?php esc_html_e( 'ご要望（任意）', 'apprex' ); ?>
 							<textarea name="message" rows="3"></textarea>
 						</label>
-						<button type="submit" class="btn btn--primary btn--block"><?php esc_html_e( 'この内容で見積りを依頼する', 'apprex' ); ?></button>
-						<p class="estimate__note"><?php esc_html_e( '※ 担当者より2営業日以内に、正式なお見積りをお送りします。ご依頼だけで料金がかかることはありません。', 'apprex' ); ?></p>
+						<button type="submit" class="btn btn--primary btn--block"><?php esc_html_e( 'この内容で発注する', 'apprex' ); ?></button>
+						<p class="estimate__note"><?php esc_html_e( '※ 発注後、担当者より2営業日以内にご連絡します。最低契約期間・初期費用などの条件は事前にご確認ください。', 'apprex' ); ?></p>
 					</form>
 
 					<div class="estimate__done" id="est-done" hidden></div>

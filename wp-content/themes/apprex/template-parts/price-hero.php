@@ -2,7 +2,7 @@
 /**
  * 料金の目安（見やすく・問い合わせにつながる形）。
  *
- * 金額は各サービスの「〜円から」だけ。あなたの場合の金額は、見積り依頼・AIスタジオ・LINEへ。
+ * 主な料金をひと目でわかるように並べ、あなたの場合の金額は見積り依頼・AIスタジオ・LINEへ。
  * 料金ページの先頭などで get_template_part( 'template-parts/price-hero' ) で使う。
  *
  * @package APPREX
@@ -22,8 +22,9 @@ $apprex_ph_tiles = array(
 		'tag'   => 'アプリ（ノーコード）',
 		'num'   => '19,800',
 		'unit'  => '円〜／月',
-		'badge' => 'デザイン・仕様書は0円',
-		'pts'   => array( 'AIスタジオで画面と仕様書を無料で作成', 'プッシュ通知は無制限', '最短2週間で公開' ),
+		'badge' => '初期費用 15万円〜（AIスタジオから）',
+		'pts'   => array( 'デザイン・仕様書はAIスタジオで0円', 'プッシュ通知は無制限・最短2週間で公開', '1からヒアリングして作る場合は初期費用30万円〜' ),
+		'plans' => array( array( 'トライアル', '19,800円' ), array( 'スタート', '39,800円' ), array( 'ビジネス', '59,800円' ) ),
 		'btn'   => array( 'AIスタジオで無料で作る', $apprex_ph_app ),
 		'feat'  => true,
 	),
@@ -31,17 +32,19 @@ $apprex_ph_tiles = array(
 		'tag'   => 'ホームページ',
 		'num'   => '9,800',
 		'unit'  => '円〜／月',
-		'badge' => 'AIプランナーで制作費0円',
+		'badge' => '初期費用0円（AIプランナーで制作費0円）',
 		'pts'   => array( 'ページ構成と文章をAIが提案', 'スマホ対応・更新サポートつき', '月々の費用だけで持てる' ),
+		'plans' => array( array( 'Light', '9,800円' ), array( 'Standard', '19,800円' ), array( 'Premium', '39,800円' ) ),
 		'btn'   => array( 'AIプランナーで作る', $apprex_ph_hp ),
 		'feat'  => false,
 	),
 	array(
-		'tag'   => 'オリジナル・マッチングアプリ',
-		'num'   => '無料',
-		'unit'  => 'でお見積り',
-		'badge' => 'iOS・Android同時開発',
-		'pts'   => array( 'APPREXの開発基盤で費用と期間を抑える', '管理画面つき・3ヶ月〜', 'アイデアの段階から相談できる' ),
+		'tag'   => 'マッチングアプリ（オリジナル開発）',
+		'num'   => '300',
+		'unit'  => '万円〜（開発費）',
+		'badge' => '月額保守 7万円〜・3ヶ月〜',
+		'pts'   => array( 'iOS・Android同時開発・管理画面つき', 'APPREXの開発基盤で費用と期間を抑える', 'その他のオリジナル開発は個別にお見積り' ),
+		'plans' => array(),
 		'btn'   => array( '見積りを依頼する', $apprex_ph_est ),
 		'feat'  => false,
 	),
@@ -49,13 +52,20 @@ $apprex_ph_tiles = array(
 ?>
 <section class="section ph-sec" id="price-summary">
 	<div class="container">
-		<?php apprex_section_head( 'Price', __( '料金の目安', 'apprex' ), __( 'まずは無料で、あなたのアプリ・ホームページの形を。金額は、作りたい内容を伺ってお見積りします（無料）。', 'apprex' ) ); ?>
+		<?php apprex_section_head( 'Price', __( '料金の目安', 'apprex' ), __( '主な料金をまとめました（税抜）。デザインと仕様書はAIスタジオで無料。あなたの場合の金額は、無料でお見積りします。', 'apprex' ) ); ?>
 		<div class="ph-tiles">
 			<?php foreach ( $apprex_ph_tiles as $t ) : ?>
 				<div class="ph-tile<?php echo $t['feat'] ? ' is-feat' : ''; ?> is-reveal">
 					<span class="ph-tag"><?php echo esc_html( $t['tag'] ); ?></span>
 					<div class="ph-price"><b><?php echo esc_html( $t['num'] ); ?></b><span><?php echo esc_html( $t['unit'] ); ?></span></div>
 					<span class="ph-badge"><?php echo esc_html( $t['badge'] ); ?></span>
+					<?php if ( $t['plans'] ) : ?>
+						<dl class="ph-plans">
+							<?php foreach ( $t['plans'] as $pl ) : ?>
+								<div><dt><?php echo esc_html( $pl[0] ); ?></dt><dd><?php echo esc_html( $pl[1] ); ?><small>／月</small></dd></div>
+							<?php endforeach; ?>
+						</dl>
+					<?php endif; ?>
 					<ul>
 						<?php foreach ( $t['pts'] as $pt ) : ?>
 							<li><?php echo esc_html( $pt ); ?></li>

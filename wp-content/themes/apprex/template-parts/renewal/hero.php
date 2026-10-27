@@ -14,10 +14,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     <div>
       <span class="badge-top rise">ノーコードからオリジナル開発まで ／ 全国オンライン対応</span>
       <h1 class="rise d1">アプリ開発を、<br><em>格安・短納期</em>で。<br>オリジナルアプリも。</h1>
-      <p class="lead rise d2">月額19,800円〜のノーコードアプリから、自社専用のオリジナルアプリ（iOS／Android同時開発）まで。APPREXの開発基盤を使うので、同じアプリを低コスト・短期間でつくれます。</p>
+      <p class="lead rise d2">月額19,800円のノーコードアプリから、自社専用のオリジナルアプリ（iOS／Android同時開発）まで。APPREXの開発基盤を使うので、同じアプリを低コスト・短期間でつくれます。</p>
       <div class="chips rise d3">
         <span class="chip">デザイン・仕様書はAIで無料</span>
-        <span class="chip">月額 19,800円〜</span>
+        <span class="chip">初期費用 15万円〜</span>
         <span class="chip">最短 2週間で公開</span>
         <span class="chip">ストア申請まで代行</span>
         <span class="chip">オリジナル開発に強い</span>

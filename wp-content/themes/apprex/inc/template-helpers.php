@@ -119,17 +119,7 @@ function apprex_default_faqs() {
 		),
 		array(
 			'q' => __( '初期費用はかかりますか？', 'apprex' ),
-			'a' => __( 'はい。AIスタジオ（無料）で作ったデザインと仕様書から制作するので、1から作るより初期費用を抑えられます。初期費用（制作・ストア申請・初期設定）はお見積りでご案内し、月額19,800円〜からご利用いただけます。', 'apprex' ),
+			'a' => __( 'はい。AIスタジオ（無料）で作ったデザインと仕様書から制作して、初期費用は15万円〜です（AIスタジオを使わず1から作る場合は30万円〜）。制作・ストア申請・初期設定を含みます。月額19,800円〜からご利用いただけます。', 'apprex' ),
 		),
 	);
-}
-
-/**
- * 「お見積り」を、押せる見積り依頼のボタンにして出す（料金表の中で使う）。
- *
- * @param string $label ボタンの文字。
- * @return string HTML。
- */
-function apprex_ask_pill( $label = '無料で見積り' ) {
-	return '<a class="ask-pill" href="' . esc_url( apprex_page_url( 'estimate' ) ) . '">' . esc_html( $label ) . '<i aria-hidden="true">→</i></a>';
 }

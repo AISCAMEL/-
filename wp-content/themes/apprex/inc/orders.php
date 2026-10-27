@@ -157,8 +157,8 @@ function apprex_rest_order( WP_REST_Request $request ) {
 		array(
 			'ok'       => true,
 			'order_id' => $post_id,
-			'summary'  => apprex_estimate_request_html( $estimate ),
-			'message'  => 'お見積りのご依頼を受け付けました。担当者より2営業日以内に、正式なお見積りをお送りします。',
+			'summary'  => apprex_estimate_summary_html( $estimate ),
+			'message'  => 'お申し込みを受け付けました。担当者より2営業日以内にご連絡いたします。',
 		)
 	);
 }
@@ -212,28 +212,28 @@ function apprex_notify_order( $post_id, $estimate, $meta ) {
  */
 function apprex_send_order_autoreply( $estimate, $meta ) {
 	$name    = $meta['customer_name'];
-	$subject = '【APPREX】お見積りのご依頼ありがとうございます';
+	$subject = '【APPREX】お見積り・お申し込みありがとうございます';
 
-	// 金額は担当者からの正式なお見積りでお伝えする（メールには出さない）。
 	$lines = array(
 		"{$name} 様",
 		'',
-		'この度はお見積りのご依頼をいただきありがとうございます。',
-		'以下の内容で受け付けました。担当者より2営業日以内に、正式なお見積りをお送りします。',
+		'この度はお見積り・お申し込みをいただきありがとうございます。',
+		'以下の内容で受け付けました。担当者より2営業日以内にご連絡いたします。',
 		'',
-		'■ ご依頼の内容',
+		'■ お見積り内容',
 		'サービス: ' . $estimate['service_label'],
 		'プラン: ' . $estimate['plan_label'],
 	);
-	if ( ! empty( $estimate['setup_label'] ) ) {
-		$lines[] = '作り方: ' . $estimate['setup_label'];
-	}
 	foreach ( $estimate['options'] as $o ) {
-		$lines[] = 'オプション: ' . $o['label'];
+		$lines[] = 'オプション: ' . $o['label'] . '（+' . number_format( $o['price'] ) . '円）';
 	}
-	$lines[] = '';
-	$lines[] = 'AIスタジオ（無料）でデザインと仕様書を作っていただくと、より正確なお見積りをお出しできます。';
-	$lines[] = function_exists( 'apprex_studio_url' ) ? apprex_studio_url() : home_url( '/studio/' );
+	$lines[] = '月額: ' . number_format( $estimate['monthly'] ) . '円（通常 ' . number_format( $estimate['monthly_regular'] ) . '円・税抜）';
+	$lines[] = '初期費用: ' . apprex_estimate_initial_text( $estimate );
+	if ( ! empty( $estimate['registration'] ) ) {
+		$lines[] = $estimate['registration_label'] . ': ' . number_format( $estimate['registration'] ) . '円（一律・別途必要）';
+	}
+	$lines[] = '初期お支払い目安: ' . number_format( $estimate['initial_total'] ) . '円（初期費用＋アプリ登録費＋一回オプション）';
+	$lines[] = '初年度概算: ' . number_format( $estimate['annual_est'] ) . '円';
 
 	$html = apprex_render_email(
 		$subject,
@@ -241,30 +241,6 @@ function apprex_send_order_autoreply( $estimate, $meta ) {
 		array( 'heading' => apprex_email_heading_from_subject( $subject ) )
 	);
 	wp_mail( $meta['customer_email'], $subject, $html, apprex_mail_headers() );
-}
-
-/**
- * お客様向けの受付内容（金額は出さない）。
- *
- * @param array $estimate Estimate.
- * @return string
- */
-function apprex_estimate_request_html( $estimate ) {
-	$rows = array(
-		'サービス' => $estimate['service_label'],
-		'プラン'   => $estimate['plan_label'],
-	);
-	if ( ! empty( $estimate['setup_label'] ) ) {
-		$rows['作り方'] = $estimate['setup_label'];
-	}
-	if ( ! empty( $estimate['options'] ) ) {
-		$rows['オプション'] = implode( '、', wp_list_pluck( $estimate['options'], 'label' ) );
-	}
-	$h = '<ul class="estimate-summary">';
-	foreach ( $rows as $k => $v ) {
-		$h .= '<li><strong>' . esc_html( $k ) . '</strong>：' . esc_html( $v ) . '</li>';
-	}
-	return $h . '<li>' . esc_html__( '金額は、担当者から正式なお見積りでお送りします。', 'apprex' ) . '</li></ul>';
 }
 
 /**

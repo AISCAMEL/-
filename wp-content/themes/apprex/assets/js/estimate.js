@@ -1,7 +1,7 @@
 /**
- * APPREX 見積もり依頼。
- * 画面に出す金額は、いちばん安いプランの「月額〜」だけ（APPREX_PRICING はサーバー側で金額を外して渡す）。
- * 初期費用・上位プラン・オプションは選んだ内容を送ってもらい、担当者が正式なお見積りを返す。
+ * APPREX 見積もり → 発注 calculator（APPREX仕様）。
+ * 初期費用は作り方で選ぶ（AIスタジオで作った内容から制作／1からヒアリングして制作）。
+ * 月額は通常価格を取り消し線で表示、オプションは一回費用として加算。
  */
 (function () {
 	'use strict';
@@ -12,6 +12,7 @@
 		var cfg = APPREX_PRICING.config;
 		var rest = APPREX_PRICING.rest || {};
 		var services = cfg.services;
+		var toZero = !!(cfg.campaign && cfg.campaign.initial_to_zero);
 		var quotePlans = APPREX_PRICING.quotePlans || {};
 		var meetingUrl = APPREX_PRICING.meetingUrl || '';
 		var contactUrl = APPREX_PRICING.contactUrl || '';
@@ -42,8 +43,7 @@
 			elServices.innerHTML = '';
 			Object.keys(services).forEach(function (key) {
 				var svc = services[key];
-				var from = fromMonthly(svc);
-				var b = chip(svc.label, state.service === key && !state.quote, (from ? '月額' + from.toLocaleString('ja-JP') + '円〜・' : '') + (svc.setup ? '初期費用はお見積り' : '初期費用0円（1年契約）'));
+				var b = chip(svc.label, state.service === key && !state.quote, (svc.setup ? '月額制・初期費用15万円〜（AIスタジオから）' : '月額制・初期費用0円（1年契約）'));
 				b.addEventListener('click', function () {
 					state.service = key; state.plan = null; state.options = []; state.quote = null;
 					renderServices(); renderPlans(); renderSetup(); renderOptions(); renderTotal();
@@ -70,7 +70,7 @@
 			var plans = services[state.service].plans;
 			Object.keys(plans).forEach(function (key) {
 				var p = plans[key];
-				var b = chip(p.label, state.plan === key, p.monthly ? '月額 ' + Number(p.monthly).toLocaleString('ja-JP') + '円〜' : '月額はお見積り');
+				var b = chip(p.label, state.plan === key, '月額 ' + Number(p.monthly).toLocaleString('ja-JP') + '円〜');
 				b.addEventListener('click', function () { state.plan = key; renderPlans(); renderTotal(); });
 				elPlans.appendChild(b);
 			});
@@ -84,7 +84,7 @@
 			if (!setups) { elSetup.innerHTML = '<p class="estimate__hint">初期費用は0円です（1年契約）。</p>'; return; }
 			Object.keys(setups).forEach(function (key) {
 				var st = setups[key];
-				var b = chip(st.label + (key === 'ai' ? '（おすすめ・費用を抑えられます）' : ''), state.setup === key, st.desc || '');
+				var b = chip(st.label + '　' + (st.price ? Number(st.price).toLocaleString('ja-JP') + '円〜' : '0円'), state.setup === key, st.desc || '');
 				b.addEventListener('click', function () { state.setup = key; renderSetup(); renderTotal(); });
 				elSetup.appendChild(b);
 			});
@@ -101,7 +101,7 @@
 				var o = opts[key];
 				var wrap = document.createElement('label');
 				wrap.className = 'est-opt';
-				wrap.innerHTML = '<input type="checkbox" value="' + key + '"><span>' + o.label + '</span><b>お見積り</b>';
+				wrap.innerHTML = '<input type="checkbox" value="' + key + '"><span>' + o.label + '</span><b>+' + Number(o.price).toLocaleString('ja-JP') + '円（一回）</b>';
 				wrap.querySelector('input').addEventListener('change', function (e) {
 					if (e.target.checked) { state.options.push(key); }
 					else { state.options = state.options.filter(function (k) { return k !== key; }); }
@@ -111,20 +111,27 @@
 			});
 		}
 
-		function fromMonthly(svc) {
-			var min = 0;
-			Object.keys(svc.plans || {}).forEach(function (k) { var m = svc.plans[k].monthly; if (m && (!min || m < min)) { min = m; } });
-			return min;
-		}
-
 		function compute() {
 			if (!state.service || !state.plan) { return null; }
 			var svc = services[state.service];
 			var p = svc.plans[state.plan];
+			var optTotal = 0, optLines = [];
+			state.options.forEach(function (k) {
+				if (svc.options && svc.options[k]) { optTotal += svc.options[k].price; optLines.push(svc.options[k]); }
+			});
+			var initialRegular = p.initial || 0;
 			var st = svc.setup && svc.setup[state.setup] ? svc.setup[state.setup] : null;
-			var optLines = [];
-			state.options.forEach(function (k) { if (svc.options && svc.options[k]) { optLines.push(svc.options[k]); } });
-			return { svc: svc, svcLabel: svc.label, planLabel: p.label, monthly: p.monthly || 0, from: fromMonthly(svc), setupLabel: st ? st.label : '', optLines: optLines };
+			var initial = st ? st.price : (toZero ? 0 : initialRegular);
+			return {
+				setupKey: st ? state.setup : '', setupLabel: st ? st.label : '',
+				svcLabel: svc.label, planLabel: p.label,
+				monthly: p.monthly, monthlyRegular: p.monthly_regular || p.monthly,
+				initialRegular: initialRegular, initial: initial,
+				optLines: optLines, optTotal: optTotal,
+				registration: svc.registration_fee || 0, registrationLabel: svc.registration_label || 'アプリ登録費',
+				initialTotal: initial + optTotal + (svc.registration_fee || 0),
+				annual: p.monthly * 12 + initial + optTotal + (svc.registration_fee || 0)
+			};
 		}
 
 		function renderTotal() {
@@ -134,7 +141,12 @@
 				var h = '<div class="estimate__quote">';
 				h += '<h4>' + esc(q.label || 'オリジナルアプリ開発') + '</h4>';
 				if (q.lead) { h += '<p>' + esc(q.lead) + '</p>'; }
-				h += '<p class="estimate__hint">機能に合わせて個別にお見積りします。まずは無料のオンライン相談で要件をお聞かせください。AIスタジオで試作と仕様を作っていただくと、より早く正確なお見積りをお出しできます。</p>';
+				if (q.rows) {
+					h += '<ul class="estimate__sub">';
+					Object.keys(q.rows).forEach(function (k) { h += '<li>' + esc(k) + '：<b>' + esc(q.rows[k]) + '</b></li>'; });
+					h += '</ul>';
+				}
+				h += '<p class="estimate__hint">内容により料金が異なるため、まずは無料のオンライン相談で要件をお聞かせください。</p>';
 				if (meetingUrl) { h += '<a class="btn btn--primary btn--block" href="' + meetingUrl + '">📅 ミーティングで相談（無料）</a>'; }
 				if (contactUrl) { h += '<a class="btn btn--ghost btn--block" href="' + contactUrl + '" style="margin-top:8px">メールで相談する</a>'; }
 				h += '</div>';
@@ -146,17 +158,19 @@
 			var e = compute();
 			if (!e) { elTotal.innerHTML = '<p class="estimate__hint">サービスとプランを選択してください。</p>'; orderForm.hidden = true; return; }
 			var html = '<ul class="estimate__lines">';
-			html += '<li><span>' + esc(e.svcLabel) + ' / ' + esc(e.planLabel) + '</span><b>' + (e.monthly ? yen(e.monthly) + '〜/月' : 'お見積り') + '</b></li>';
-			e.optLines.forEach(function (o) { html += '<li class="is-opt"><span>+ ' + esc(o.label) + '</span><b>お見積り</b></li>'; });
+			html += '<li><span>' + e.svcLabel + ' / ' + e.planLabel + '</span><b>' + yen(e.monthly) + '/月</b></li>';
+			e.optLines.forEach(function (o) { html += '<li class="is-opt"><span>+ ' + o.label + '（一回）</span><b>' + yen(o.price) + '</b></li>'; });
 			html += '</ul>';
-			html += '<div class="estimate__big">' + (e.monthly ? yen(e.monthly) + '<small> 〜 / 月（税抜）</small>' : '<small>月額 </small>お見積り') + '</div>';
+			html += '<div class="estimate__big">' + yen(e.monthly) + '<small> / 月（税抜）</small></div>';
 			html += '<ul class="estimate__sub">';
-			if (!e.monthly && e.from) { html += '<li>このサービスは月額' + yen(e.from) + '〜です</li>'; }
-			if (e.svc.setup) { html += '<li>初期費用：<b>お見積り</b>' + (e.setupLabel ? '（' + esc(e.setupLabel) + '）' : '') + '</li>'; }
-			else { html += '<li>初期費用：0円</li>'; }
-			if (e.optLines.length) { html += '<li>オプション：お見積り</li>'; }
+			if (e.monthlyRegular > e.monthly) { html += '<li>月額：<s>' + yen(e.monthlyRegular) + '</s> → <b>' + yen(e.monthly) + '</b> <em>キャンペーン</em></li>'; }
+			if (e.setupKey) { html += '<li>初期費用：<b>' + yen(e.initial) + '〜</b>（' + esc(e.setupLabel) + '）</li>'; }
+			else { html += '<li>初期費用：' + yen(e.initial) + '</li>'; }
+			if (e.registration) { html += '<li>' + esc(e.registrationLabel) + '：' + yen(e.registration) + '（一律）</li>'; }
+			if (e.optTotal) { html += '<li>一回オプション：' + yen(e.optTotal) + '</li>'; }
+			html += '<li>初期お支払い目安：<b>' + yen(e.initialTotal) + '</b></li>';
+			html += '<li>初年度概算：' + yen(e.annual) + '</li>';
 			html += '<li style="color:var(--color-muted)">最低利用期間：1年契約（12ヶ月）</li>';
-			html += '<li>正式なお見積りは、担当者から2営業日以内にお送りします（無料）。</li>';
 			html += '</ul>';
 			elTotal.innerHTML = html;
 			orderForm.hidden = false;
@@ -182,14 +196,14 @@
 				.then(function (res) {
 					if (res.ok && res.body && res.body.ok) {
 						orderForm.hidden = true; doneBox.hidden = false;
-						doneBox.innerHTML = '<div class="estimate__success"><h4>✅ お見積りのご依頼を受け付けました</h4><p>' + (res.body.message || '') + '</p>' + (res.body.summary || '') + '</div>';
+						doneBox.innerHTML = '<div class="estimate__success"><h4>✅ お申し込みを受け付けました</h4><p>' + (res.body.message || '') + '</p>' + (res.body.summary || '') + '</div>';
 						doneBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 					} else {
 						alert((res.body && res.body.message) ? res.body.message : '送信に失敗しました。');
-						btn.disabled = false; btn.textContent = 'この内容で見積りを依頼する';
+						btn.disabled = false; btn.textContent = 'この内容で発注する';
 					}
 				})
-				.catch(function () { alert('通信エラーが発生しました。'); btn.disabled = false; btn.textContent = 'この内容で見積りを依頼する'; });
+				.catch(function () { alert('通信エラーが発生しました。'); btn.disabled = false; btn.textContent = 'この内容で発注する'; });
 		});
 
 		renderServices(); renderPlans(); renderSetup(); renderOptions(); renderTotal();
