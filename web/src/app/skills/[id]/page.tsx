@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentMember } from "@/lib/auth";
 import { SKILL_CATEGORY_LABEL, priceLabel, type SkillCategory } from "@/lib/skills";
+import { DEMO, demoSkills } from "@/lib/demo";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -19,18 +20,34 @@ type SkillRow = {
 
 export default async function SkillDetail({ params }: Props) {
   const { id } = await params;
-  const supabase = await createClient();
   const member = await getCurrentMember();
 
-  const { data } = await supabase
-    .from("skills")
-    .select(
-      "id, owner_id, category, title, description, price, area, owner:members!skills_owner_id_fkey(display_name, role)",
-    )
-    .eq("id", id)
-    .single();
-
-  const skill = data as unknown as SkillRow | null;
+  let skill: SkillRow | null = null;
+  if (DEMO) {
+    const d = demoSkills.find((s) => s.id === id);
+    skill = d
+      ? {
+          id: d.id,
+          owner_id: "demo-owner",
+          category: d.category,
+          title: d.title,
+          description: d.description,
+          price: d.price,
+          area: d.area,
+          owner: d.owner,
+        }
+      : null;
+  } else {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("skills")
+      .select(
+        "id, owner_id, category, title, description, price, area, owner:members!skills_owner_id_fkey(display_name, role)",
+      )
+      .eq("id", id)
+      .single();
+    skill = data as unknown as SkillRow | null;
+  }
   if (!skill) notFound();
 
   const isOwner = member?.id === skill.owner_id;

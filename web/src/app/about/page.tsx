@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import type { Metadata } from "next";
 import { SitePage, Section } from "@/components/site-page";
@@ -10,6 +11,11 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <SitePage title="私たちについて" lead={SITE.tagline}>
+      <img
+        src="/hero.png"
+        alt={`${SITE.region.beach}の夜明け`}
+        className="mb-6 aspect-[16/9] w-full rounded-2xl object-cover shadow-sm"
+      />
       <div className="rounded-2xl bg-ocean-gradient p-6 text-foam">
         <p className="text-sm leading-relaxed text-sand/95">
           岩沢海岸は、福島県双葉郡広野町の、静かで懐の深いビーチブレイク。
