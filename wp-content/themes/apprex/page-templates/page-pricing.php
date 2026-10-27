@@ -24,6 +24,8 @@ while ( have_posts() ) :
 		</div>
 	</section>
 
+	<?php get_template_part( 'template-parts/price-hero' ); ?>
+
 	<section class="section">
 		<div class="container">
 			<?php get_template_part( 'template-parts/pricing-table' ); ?>
@@ -49,8 +51,6 @@ while ( have_posts() ) :
 					<tbody>
 						<?php
 						$apprex_rows = array(
-							array( '月額（税抜）', '19,800円〜', 'お見積り', 'お見積り' ),
-							array( '初期費用・アプリ登録費', 'お見積り', 'お見積り', 'お見積り' ),
 							array( '基本機能', '◯', '◯', '◯' ),
 							array( '電子カタログ機能', '—', '◯', '◯' ),
 							array( '多店舗の展開・運用（店舗一覧・店舗ごとの配信）', '—', '—', '◯（20店舗まで込み）' ),
@@ -84,9 +84,16 @@ while ( have_posts() ) :
 						<p class="quote-card__lead"><?php echo esc_html( $q['lead'] ); ?></p>
 						<table class="quote-card__table">
 							<?php foreach ( $q['rows'] as $k => $v ) : ?>
+								<?php
+								// 金額の行は表に並べず、下の見積りボタンにまとめる。
+								if ( preg_match( '/見積|相談/u', $v ) ) {
+									continue;
+								}
+								?>
 								<tr><th><?php echo esc_html( $k ); ?></th><td><?php echo esc_html( $v ); ?></td></tr>
 							<?php endforeach; ?>
 						</table>
+						<p class="quote-card__ask"><?php esc_html_e( '費用', 'apprex' ); ?> <?php echo apprex_ask_pill(); // phpcs:ignore ?></p>
 						<?php if ( ! empty( $q['examples'] ) ) : ?>
 							<div class="quote-card__tags">
 								<?php foreach ( $q['examples'] as $ex ) : ?>
@@ -134,7 +141,7 @@ while ( have_posts() ) :
 				<div class="price-card price-card--featured is-reveal">
 					<span class="ribbon"><?php esc_html_e( 'おすすめ', 'apprex' ); ?></span>
 					<h3><?php esc_html_e( 'スタンダード', 'apprex' ); ?></h3>
-					<div class="price"><small><?php esc_html_e( 'お見積り', 'apprex' ); ?></small></div>
+					<div class="price price--ask"><?php echo apprex_ask_pill(); // phpcs:ignore ?></div>
 					<ul class="feats">
 						<li><?php esc_html_e( 'ベーシックの全内容', 'apprex' ); ?></li>
 						<li><?php esc_html_e( 'コンテンツ追加（中規模・LP含む）', 'apprex' ); ?></li>
@@ -198,7 +205,7 @@ while ( have_posts() ) :
 							<?php foreach ( $opt['rows'] as $row ) : ?>
 								<tr>
 									<th><?php echo esc_html( $row[0] ); ?></th>
-									<td class="opt-price"><?php echo esc_html( $row[1] ); ?></td>
+									<td class="opt-price"><?php echo 'お見積り' === $row[1] ? apprex_ask_pill( '見積り' ) : esc_html( $row[1] ); // phpcs:ignore ?></td>
 									<td><?php echo esc_html( $row[2] ); ?></td>
 								</tr>
 							<?php endforeach; ?>
@@ -228,7 +235,7 @@ while ( have_posts() ) :
 				<div class="price-card price-card--featured is-reveal">
 					<span class="ribbon"><?php esc_html_e( 'おすすめ', 'apprex' ); ?></span>
 					<h3><?php esc_html_e( 'AI時代の集客フルセット', 'apprex' ); ?></h3>
-					<div class="price"><small><?php esc_html_e( 'お見積り', 'apprex' ); ?></small></div>
+					<div class="price price--ask"><?php echo apprex_ask_pill(); // phpcs:ignore ?></div>
 					<ul class="feats">
 						<li><?php esc_html_e( 'AIMEO（プロ）', 'apprex' ); ?></li>
 						<li><?php esc_html_e( 'LLMO対策（継続）', 'apprex' ); ?></li>
@@ -239,7 +246,7 @@ while ( have_posts() ) :
 				</div>
 				<div class="price-card is-reveal">
 					<h3><?php esc_html_e( '制作＋集客セット', 'apprex' ); ?></h3>
-					<div class="price"><small><?php esc_html_e( 'お見積り', 'apprex' ); ?></small></div>
+					<div class="price price--ask"><?php echo apprex_ask_pill(); // phpcs:ignore ?></div>
 					<ul class="feats">
 						<li><?php esc_html_e( 'サブスク制作（スタンダード）', 'apprex' ); ?></li>
 						<li><?php esc_html_e( 'AIMEO（スタンダード）', 'apprex' ); ?></li>
@@ -279,6 +286,8 @@ while ( have_posts() ) :
 			</div>
 		</div>
 	</section>
+
+	<?php get_template_part( 'template-parts/quote-steps' ); ?>
 
 	<section class="section">
 		<div class="container">

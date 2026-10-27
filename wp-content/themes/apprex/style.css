@@ -4,7 +4,7 @@ Theme URI: https://site.aiscompany.jp/
 Author: AIS Company
 Author URI: https://site.aiscompany.jp/
 Description: クラウド型アプリ開発プラットフォーム「APPREX」公式サイト用テーマ。Hello Elementor の思想を踏襲したライセンス非依存の自作テーマ。固定ページ構成＋カスタム投稿タイプ cases によるリニューアル実装。モバイルファースト・WebP・Lazy Load 対応。
-Version: 1.78.0
+Version: 1.79.0
 Requires at least: 6.0
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -1233,3 +1233,56 @@ a:focus-visible, button:focus-visible, .btn:focus-visible, summary:focus-visible
 .seminar-callout { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 24px; }
 .seminar-callout p { margin: 0; flex: 1 1 260px; }
 .seminar-callout .btn { margin-top: 0; }
+/* 料金：見やすく・問い合わせにつながる表示（v1.79） */
+.ask-pill { display: inline-flex; align-items: center; gap: 6px; background: #fff7ed; color: #c2410c; border: 1.5px solid #fdba74; border-radius: 999px; padding: 7px 16px; font-size: .92rem; font-weight: 800; line-height: 1.3; text-decoration: none; white-space: nowrap; transition: background .15s, color .15s, transform .15s; }
+.ask-pill i { font-style: normal; transition: transform .15s; }
+.ask-pill:hover { background: var(--color-cta); border-color: var(--color-cta); color: #fff; }
+.ask-pill:hover i { transform: translateX(3px); }
+.price-card .price--ask { font-size: 1rem; margin: 12px 0 4px; }
+.opt-table .ask-pill { padding: 4px 12px; font-size: .8rem; }
+.quote-card__ask { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 14px !important; padding: 10px 12px; background: #fff7ed; border-radius: 10px; font-weight: 700; color: var(--color-ink); font-size: .9rem; }
+.ph-sec { padding-bottom: 24px; }
+.ph-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 900px) { .ph-tiles { grid-template-columns: 1fr; } }
+.ph-tile { position: relative; background: #fff; border: 1px solid var(--color-line); border-radius: 18px; padding: 26px 22px 22px; display: flex; flex-direction: column; box-shadow: var(--shadow-sm); }
+.ph-tile.is-feat { border: 2px solid var(--color-cta); box-shadow: 0 16px 36px rgba(249, 115, 22, .16); }
+.ph-tag { font-weight: 800; color: var(--color-muted); font-size: .9rem; }
+.ph-price { display: flex; align-items: baseline; gap: 4px; margin: 6px 0 8px; color: var(--color-navy); }
+.ph-price b { font-size: clamp(2.4rem, 5vw, 3.2rem); font-weight: 900; letter-spacing: -.02em; line-height: 1.1; }
+.ph-tile.is-feat .ph-price b { color: var(--color-cta-dark); }
+.ph-price span { font-weight: 800; font-size: 1rem; }
+.ph-badge { align-self: flex-start; background: #ecfdf5; color: #047857; font-weight: 800; font-size: .8rem; border-radius: 999px; padding: 4px 12px; }
+.ph-tile ul { list-style: none; margin: 16px 0 20px; padding: 0; display: grid; gap: 8px; font-size: .92rem; color: var(--color-body); }
+.ph-tile ul li { padding-left: 24px; position: relative; }
+.ph-tile ul li::before { content: "✓"; position: absolute; left: 0; color: var(--color-success); font-weight: 900; }
+.ph-tile .btn { margin-top: auto; }
+.ph-trust { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 22px; margin: 22px 0 0; padding: 0; font-weight: 700; font-size: .92rem; color: var(--color-navy); }
+.ph-trust li::before { content: "✔"; color: var(--color-success); margin-right: 6px; }
+.ph-ask { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 24px; margin-top: 26px; padding: 22px 26px; border-radius: 18px; background: linear-gradient(120deg, #0b1f44, #1e3a8a); color: #fff; }
+.ph-ask-t { flex: 1 1 320px; display: grid; gap: 4px; }
+.ph-ask-t b { font-size: 1.25rem; }
+.ph-ask-t span { color: rgba(255, 255, 255, .85); font-size: .92rem; }
+.ph-ask-b { display: flex; flex-wrap: wrap; gap: 10px; }
+.ph-ask .btn--ghost { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .6); }
+.ph-ask .btn--ghost:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+.setup-compare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 8px; }
+@media (max-width: 760px) { .setup-compare { grid-template-columns: 1fr; } }
+.setup-card { position: relative; background: #fff; border: 1px solid var(--color-line); border-radius: 16px; padding: 24px 22px 20px; display: flex; flex-direction: column; }
+.setup-card.is-feat { border: 2px solid var(--color-primary); background: var(--color-primary-light); }
+.setup-badge { position: absolute; top: -12px; left: 20px; background: var(--color-primary); color: #fff; font-size: .78rem; font-weight: 800; border-radius: 999px; padding: 4px 12px; }
+.setup-card h4 { margin: 4px 0 10px; font-size: 1.1rem; color: var(--color-navy); }
+.setup-card ul { margin: 0 0 18px; padding-left: 1.2em; display: grid; gap: 6px; font-size: .92rem; }
+.setup-card .btn { margin-top: auto; }
+.qs-steps { list-style: none; counter-reset: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 0; padding: 0; }
+@media (max-width: 760px) { .qs-steps { grid-template-columns: 1fr; } }
+.qs-steps li { background: #fff; border-radius: 16px; padding: 22px; border: 1px solid var(--color-line); display: grid; gap: 6px; }
+.qs-steps span { width: 36px; height: 36px; border-radius: 50%; background: var(--color-cta); color: #fff; font-weight: 900; display: grid; place-items: center; }
+.qs-steps b { font-size: 1.05rem; color: var(--color-navy); }
+.qs-steps p { margin: 0; font-size: .9rem; color: var(--color-body); }
+.qs-acts { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 24px; }
+.cost-tbl .cost-p { font-weight: 700; white-space: nowrap; }
+.cost-tbl .cost-p small { display: block; font-size: .72rem; color: #047857; font-weight: 700; }
+.ph-ask .ph-ghost { background: transparent; color: #fff; border: 1.5px solid rgba(255, 255, 255, .65); }
+.ph-ask .ph-ghost:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+.ph-ask .btn.ph-ghost { border: 1.5px solid rgba(255, 255, 255, .65) !important; background: transparent !important; color: #fff !important; }
+.setup-card ul { list-style: disc; }

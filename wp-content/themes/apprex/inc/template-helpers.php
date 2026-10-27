@@ -123,3 +123,13 @@ function apprex_default_faqs() {
 		),
 	);
 }
+
+/**
+ * 「お見積り」を、押せる見積り依頼のボタンにして出す（料金表の中で使う）。
+ *
+ * @param string $label ボタンの文字。
+ * @return string HTML。
+ */
+function apprex_ask_pill( $label = '無料で見積り' ) {
+	return '<a class="ask-pill" href="' . esc_url( apprex_page_url( 'estimate' ) ) . '">' . esc_html( $label ) . '<i aria-hidden="true">→</i></a>';
+}
