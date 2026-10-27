@@ -15,8 +15,8 @@ get_header();
 
 $apprex_hp_plans = array(
 	array( 'name' => __( 'Light', 'apprex' ), 'price' => '9,800', 'desc' => __( '基本的なコーポレートサイト', 'apprex' ), 'featured' => false ),
-	array( 'name' => __( 'Standard', 'apprex' ), 'price' => '19,800', 'desc' => __( 'LP付き・問い合わせフォーム充実', 'apprex' ), 'featured' => true ),
-	array( 'name' => __( 'Premium', 'apprex' ), 'price' => '39,800', 'desc' => __( 'EC機能・会員機能付き', 'apprex' ), 'featured' => false ),
+	array( 'name' => __( 'Standard', 'apprex' ), 'price' => __( 'お見積り', 'apprex' ), 'desc' => __( 'LP付き・問い合わせフォーム充実', 'apprex' ), 'featured' => true ),
+	array( 'name' => __( 'Premium', 'apprex' ), 'price' => __( 'お見積り', 'apprex' ), 'desc' => __( 'EC機能・会員機能付き', 'apprex' ), 'featured' => false ),
 	array( 'name' => __( 'Enterprise', 'apprex' ), 'price' => __( '要相談', 'apprex' ), 'desc' => __( '大規模・カスタム開発対応', 'apprex' ), 'featured' => false ),
 );
 

@@ -20,7 +20,7 @@ while ( have_posts() ) :
 				<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'ホーム', 'apprex' ); ?></a>
 			</nav>
 			<h1><?php the_title(); ?></h1>
-			<p><?php esc_html_e( 'デザインと仕様書は、AIスタジオで無料で作れます。作った内容から制作して、初期費用15万円〜・月額19,800円〜。仕様書ができたら、ホームページやオプションもあわせてご提案します。', 'apprex' ); ?></p>
+			<p><?php esc_html_e( 'デザインと仕様書は、AIスタジオで無料で作れます。アプリは月額19,800円〜、ホームページは月額9,800円〜。初期費用やオプションは、AIスタジオで作った内容をもとにお見積りします。', 'apprex' ); ?></p>
 		</div>
 	</section>
 
@@ -49,10 +49,8 @@ while ( have_posts() ) :
 					<tbody>
 						<?php
 						$apprex_rows = array(
-							array( '月額（税抜）', '19,800円', '39,800円', '59,800円' ),
-							array( '初期費用（AIスタジオで作った内容から）', '15万円〜', '15万円〜', '15万円〜' ),
-							array( '初期費用（1からヒアリング）', '30万円〜', '30万円〜', '30万円〜' ),
-							array( 'アプリ登録費（iOS/Android）', '一律 55,000円', '一律 55,000円', '一律 55,000円' ),
+							array( '月額（税抜）', '19,800円〜', 'お見積り', 'お見積り' ),
+							array( '初期費用・アプリ登録費', 'お見積り', 'お見積り', 'お見積り' ),
 							array( '基本機能', '◯', '◯', '◯' ),
 							array( '電子カタログ機能', '—', '◯', '◯' ),
 							array( '多店舗の展開・運用（店舗一覧・店舗ごとの配信）', '—', '—', '◯（20店舗まで込み）' ),
@@ -102,13 +100,13 @@ while ( have_posts() ) :
 			</div>
 
 			<div class="content-prose mt-32" style="font-size:.85rem;color:var(--color-muted)">
-				<p><?php esc_html_e( '（注1）初期費用には、制作・ストア申請と、サーバー利用料・管理画面（コントロールパネル）の設定費用を含みます。アプリ登録時の費用（iOS・Android 一律 55,000円）は別途必要です。', 'apprex' ); ?></p>
-				<p><?php esc_html_e( '（注2）初期費用は、AIスタジオ（無料）で作ったデザイン・仕様書から制作する場合 15万円〜、AIスタジオを使わず1からヒアリングして制作する場合 30万円〜。ページ数・内容により変わります。', 'apprex' ); ?></p>
+				<p><?php esc_html_e( '（注1）初期費用には、制作・ストア申請と、サーバー・管理画面（コントロールパネル）の設定を含みます。アプリストアの登録費用もあわせてお見積りします。', 'apprex' ); ?></p>
+				<p><?php esc_html_e( '（注2）AIスタジオ（無料）で作ったデザイン・仕様書から制作すると、1からヒアリングして作るより初期費用を抑えられます。金額は内容に合わせてお見積りします。', 'apprex' ); ?></p>
 				<p><?php esc_html_e( '（注3）基本機能＝スタートの電子カタログ機能・ビジネスの多店舗機能を除く全機能。', 'apprex' ); ?></p>
 				<?php if ( function_exists( 'apprex_rn_enabled' ) && apprex_rn_enabled() ) : ?>
 					<p><?php esc_html_e( '補助金を使った導入もご相談いただけます。', 'apprex' ); ?> <a href="<?php echo esc_url( apprex_page_url( 'subsidy' ) ); ?>"><?php esc_html_e( '補助金で導入', 'apprex' ); ?></a></p>
 				<?php endif; ?>
-				<p><?php esc_html_e( '店舗業に限らずどんな業種・どんなアプリでも開発可能。ダウンロード数による制限・課金なし、プッシュ通知無制限、ビジネスプランは20店舗まで月額に含まれ、21店舗目からは1店舗ごとに月額+1万円です。', 'apprex' ); ?></p>
+				<p><?php esc_html_e( '店舗業に限らずどんな業種・どんなアプリでも開発可能。ダウンロード数による制限・課金なし、プッシュ通知無制限、ビジネスプランは20店舗まで月額に含まれます（21店舗目からはお見積り）。', 'apprex' ); ?></p>
 			</div>
 		</div>
 	</section>
@@ -124,7 +122,7 @@ while ( have_posts() ) :
 			<div class="grid grid--2" style="max-width:760px;margin-inline:auto">
 				<div class="price-card is-reveal">
 					<h3><?php esc_html_e( 'ベーシック', 'apprex' ); ?></h3>
-					<div class="price">50,000<small><?php esc_html_e( '円 / 月（税抜）', 'apprex' ); ?></small></div>
+					<div class="price"><small><?php esc_html_e( '月額', 'apprex' ); ?></small>50,000<small><?php esc_html_e( '円〜（税抜）', 'apprex' ); ?></small></div>
 					<ul class="feats">
 						<li><?php esc_html_e( '月次の更新・修正対応', 'apprex' ); ?></li>
 						<li><?php esc_html_e( 'コンテンツ追加（小規模）', 'apprex' ); ?></li>
@@ -136,7 +134,7 @@ while ( have_posts() ) :
 				<div class="price-card price-card--featured is-reveal">
 					<span class="ribbon"><?php esc_html_e( 'おすすめ', 'apprex' ); ?></span>
 					<h3><?php esc_html_e( 'スタンダード', 'apprex' ); ?></h3>
-					<div class="price">70,000<small><?php esc_html_e( '円 / 月（税抜）', 'apprex' ); ?></small></div>
+					<div class="price"><small><?php esc_html_e( 'お見積り', 'apprex' ); ?></small></div>
 					<ul class="feats">
 						<li><?php esc_html_e( 'ベーシックの全内容', 'apprex' ); ?></li>
 						<li><?php esc_html_e( 'コンテンツ追加（中規模・LP含む）', 'apprex' ); ?></li>
@@ -160,34 +158,33 @@ while ( have_posts() ) :
 					'name' => 'AIMEO（AIで運用するMEO対策）',
 					'desc' => 'Googleマップ・ローカル検索の集客を、AIで簡単運用。投稿・口コミ返信・説明文の下書きをAIが作り、担当者が確認して運用します。',
 					'rows' => array(
-						array( 'ライト', '15,000円 / 月', 'AIで口コミ返信・基本情報の最適化' ),
-						array( 'スタンダード', '30,000円 / 月', 'AIで毎週の投稿運用・写真追加・順位レポート' ),
-						array( 'プロ', '50,000円 / 月', '複数店舗・競合分析・改善提案' ),
+						array( 'ライト', '月額15,000円〜', 'AIで口コミ返信・基本情報の最適化' ),
+						array( 'スタンダード', 'お見積り', 'AIで毎週の投稿運用・写真追加・順位レポート' ),
+						array( 'プロ', 'お見積り', '複数店舗・競合分析・改善提案' ),
 					),
 				),
 				array(
 					'name' => 'LLMO対策（AI検索最適化）',
 					'desc' => 'ChatGPT等のAI検索に引用されやすい構造へ最適化。',
 					'rows' => array(
-						array( 'スポット', '50,000円', '初回診断＋最適化（一回）' ),
-						array( '継続', '20,000円 / 月', '月次の改善・追記運用' ),
+						array( '継続', '月額20,000円〜', '月次の改善・追記運用' ),
+						array( 'スポット', 'お見積り', '初回診断＋最適化（一回）' ),
 					),
 				),
 				array(
 					'name' => 'HP構造化データSEO',
 					'desc' => '検索エンジンに正しく伝わる構造化マークアップを実装。',
 					'rows' => array(
-						array( '基本実装', '30,000円', '主要ページの構造化データ実装（一回）' ),
-						array( 'フル実装', '60,000円', '全ページ＋リッチリザルト対応（一回）' ),
+						array( '基本実装', '30,000円〜', '主要ページの構造化データ実装（一回）' ),
+						array( 'フル実装', 'お見積り', '全ページ＋リッチリザルト対応（一回）' ),
 					),
 				),
 				array(
 					'name' => 'バナー制作',
 					'desc' => 'SNS・広告・サイト用のバナーをプロがデザイン。',
 					'rows' => array(
-						array( '1点', '5,000円', '通常バナー1点' ),
-						array( '5点セット', '20,000円', '1点あたり4,000円' ),
-						array( '10点セット', '35,000円', '1点あたり3,500円' ),
+						array( '1点', '5,000円〜', '通常バナー1点' ),
+						array( 'セット', 'お見積り', 'まとめてのご依頼はお得になります' ),
 					),
 				),
 			);
@@ -216,11 +213,11 @@ while ( have_posts() ) :
 
 	<section class="section section--soft">
 		<div class="container">
-			<?php apprex_section_head( 'Package', __( 'おすすめパッケージ', 'apprex' ), __( '人気の施策をまとめてお得に。単品より割安なセット価格です。', 'apprex' ) ); ?>
+			<?php apprex_section_head( 'Package', __( 'おすすめパッケージ', 'apprex' ), __( '人気の施策をまとめてお得に。月額49,800円〜。内容に合わせてお見積りします。', 'apprex' ) ); ?>
 			<div class="pricing">
 				<div class="price-card is-reveal">
 					<h3><?php esc_html_e( '集客強化セット', 'apprex' ); ?></h3>
-					<div class="price">49,800<small><?php esc_html_e( '円 / 月（税抜）', 'apprex' ); ?></small></div>
+					<div class="price"><small><?php esc_html_e( '月額', 'apprex' ); ?></small>49,800<small><?php esc_html_e( '円〜（税抜）', 'apprex' ); ?></small></div>
 					<ul class="feats">
 						<li><?php esc_html_e( 'AIMEO（スタンダード）', 'apprex' ); ?></li>
 						<li><?php esc_html_e( 'バナー制作（毎月5点）', 'apprex' ); ?></li>
@@ -231,7 +228,7 @@ while ( have_posts() ) :
 				<div class="price-card price-card--featured is-reveal">
 					<span class="ribbon"><?php esc_html_e( 'おすすめ', 'apprex' ); ?></span>
 					<h3><?php esc_html_e( 'AI時代の集客フルセット', 'apprex' ); ?></h3>
-					<div class="price">79,800<small><?php esc_html_e( '円 / 月（税抜）', 'apprex' ); ?></small></div>
+					<div class="price"><small><?php esc_html_e( 'お見積り', 'apprex' ); ?></small></div>
 					<ul class="feats">
 						<li><?php esc_html_e( 'AIMEO（プロ）', 'apprex' ); ?></li>
 						<li><?php esc_html_e( 'LLMO対策（継続）', 'apprex' ); ?></li>
@@ -242,7 +239,7 @@ while ( have_posts() ) :
 				</div>
 				<div class="price-card is-reveal">
 					<h3><?php esc_html_e( '制作＋集客セット', 'apprex' ); ?></h3>
-					<div class="price">99,800<small><?php esc_html_e( '円 / 月（税抜）', 'apprex' ); ?></small></div>
+					<div class="price"><small><?php esc_html_e( 'お見積り', 'apprex' ); ?></small></div>
 					<ul class="feats">
 						<li><?php esc_html_e( 'サブスク制作（スタンダード）', 'apprex' ); ?></li>
 						<li><?php esc_html_e( 'AIMEO（スタンダード）', 'apprex' ); ?></li>

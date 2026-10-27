@@ -19,7 +19,7 @@ var FEAT=[
   {k:'stamp',n:'スタンプ・ポイント',d:'来店で貯まる',t:'std'},{k:'card',n:'デジタル会員証',d:'バーコード表示',t:'std'},{k:'reserve',n:'予約',d:'標準の予約機能',t:'std'},
   {k:'menu',n:'メニュー・商品一覧',d:'写真と価格',t:'std'},{k:'access',n:'アクセス・地図',d:'',t:'std'},{k:'contact',n:'お問い合わせ',d:'',t:'std'},
   {k:'catalog',n:'電子カタログ',d:'スタートプラン以上',t:'std',tier:'start'},{k:'ec',n:'EC・モバイルオーダー',d:'ビジネスプラン',t:'std',tier:'biz'},{k:'multi',n:'多店舗対応',d:'ビジネスプラン',t:'std',tier:'biz'},
-  {k:'gps',n:'位置情報で通知（1カ所）',d:'オプション 20,000円',t:'opt',p:20000},{k:'chatf',n:'チャット機能',d:'オプション 300,000円',t:'opt',p:300000},
+  {k:'gps',n:'位置情報で通知（1カ所）',d:'オプション（お見積り）',t:'opt',p:0},{k:'chatf',n:'チャット機能',d:'オプション（お見積り）',t:'opt',p:0},
   {k:'match',n:'マッチング（利用者どうし）',d:'オリジナル開発',t:'orig'},{k:'pay',n:'アプリ内決済・サブスク',d:'オリジナル開発',t:'orig'},{k:'pos',n:'POS・在庫システム連携',d:'オリジナル開発',t:'orig'},{k:'video',n:'動画配信・会員限定コンテンツ',d:'オリジナル開発',t:'orig'}
 ];
 /*
@@ -88,8 +88,8 @@ var PRESET={
 /* 月額プラン（ノーコード）。上のプランは下のプランの機能をすべて含む。add＝選んだときにメニューへ足すページ。 */
 var PLANS={
   trial:{l:'トライアル',m:19800,days:'最短2週間',fit:'まず小さく始めたい',add:[]},
-  start:{l:'スタート',m:39800,days:'最短2週間',fit:'カタログ・クーポンで集客',add:['catalog']},
-  biz:{l:'ビジネス',m:59800,days:'最短1ヶ月',fit:'多店舗の展開・運用',add:['shops','shopping_mall']}
+  start:{l:'スタート',m:0,days:'最短2週間',fit:'カタログ・クーポンで集客',add:['catalog']},
+  biz:{l:'ビジネス',m:0,days:'最短1ヶ月',fit:'多店舗の展開・運用',add:['shops','shopping_mall']}
 };
 var PLAN_ORDER=['trial','start','biz'];
 /* 機能・ページに必要なもの：'trial'|'start'|'biz'（プラン）、'opt'（オプション）、'orig'（オリジナル開発）。 */

@@ -30,8 +30,8 @@ function apprex_campaign_end_label() {
  * @return array<int,string>
  */
 function apprex_campaign_messages() {
-	// 料金はどのデザインでも同じ（AIスタジオ無料・初期費用15万円〜）。
-	$base    = 'AIスタジオでデザイン・試作・仕様書は無料。作った内容から制作すると初期費用15万円〜（1からは30万円〜）';
+	// 料金はどのデザインでも同じ（AIスタジオ無料・月額19,800円〜。初期費用はお見積り）。
+	$base    = 'AIスタジオでデザイン・試作・仕様書は無料。アプリは月額19,800円〜';
 	$default = array(
 		1  => '新春スタート応援キャンペーン｜' . $base,
 		2  => '今だけ特典あり｜' . $base,
@@ -62,6 +62,6 @@ function apprex_campaign_text() {
 	$body  = isset( $msgs[ $month ] ) ? $msgs[ $month ] : reset( $msgs );
 	$end   = apprex_campaign_end_label();
 	// 料金は期間限定ではないため、期限・先着の表記なしで「AIスタジオ特典」として表示（どのデザインでも同じ）。
-	$text = 'AIスタジオ特典 ｜ デザイン・試作・仕様書は無料。作った内容から制作すると初期費用15万円〜（1からは30万円〜）';
+	$text = 'AIスタジオ特典 ｜ デザイン・試作・仕様書は無料。アプリは月額19,800円〜';
 	return apply_filters( 'apprex_campaign_text', $text, $end, $body, $month );
 }

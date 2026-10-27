@@ -42,6 +42,11 @@ add_action( 'init', function () {
 		apprex_migrate_privacy_174();
 		update_option( 'apprex_migrated', 174 );
 	}
+	if ( $v < 178 ) {
+		apprex_migrate_lp_178();
+		apprex_migrate_chat_knowledge_178();
+		update_option( 'apprex_migrated', 178 );
+	}
 }, 20 );
 
 /** メール文面の上書きを整理する。 */
@@ -271,4 +276,58 @@ function apprex_migrate_privacy_174() {
 		update_post_meta( $id, '_wp_page_template', 'page-templates/page-privacy.php' );
 		update_option( 'wp_page_for_privacy_policy', (int) $id );
 	}
+}
+
+/* -------------------------------------------------------------------------
+ * v1.78.0：金額は「〜円から」だけ見せ、ほかはお見積りに
+ * ---------------------------------------------------------------------- */
+
+/** 広告LPのスライド（金額入り）を、今の内容で作り直す。 */
+function apprex_migrate_lp_178() {
+	if ( ! post_type_exists( 'clp' ) ) {
+		return;
+	}
+	foreach ( apprex_lp_slide_defs() as $slug => $slides ) {
+		$post = get_page_by_path( $slug, OBJECT, 'clp' );
+		if ( ! $post ) {
+			continue;
+		}
+		$c = $post->post_content;
+		foreach ( $slides as $file => $def ) {
+			// いまのスライド（apx-s）を、見出しのラベルで見つけて差し替える。
+			$re = '#<!-- wp:html -->(?:(?!<!-- /wp:html -->).)*?<section class="apx-s"><p class="apx-lb">' . preg_quote( esc_html( $def[1]['label'] ), '#' ) . '</p>.*?<!-- /wp:html -->#s';
+			$c  = preg_replace_callback( $re, function () use ( $def ) {
+				return apprex_lp_slide_html( $def[1] );
+			}, $c, 1 );
+			// 画像のまま残っているスライドも差し替える（画像の中に金額が入っているため）。
+			if ( false !== strpos( $c, $file ) ) {
+				$c = apprex_replace_image_block( $c, $file, apprex_lp_slide_html( $def[1] ) );
+			}
+		}
+		apprex_migrate_save_content( $post, $c, '178' );
+	}
+}
+
+/** チャットの知識の料金を、「〜円から」とお見積りの案内に置き換える。 */
+function apprex_migrate_chat_knowledge_178() {
+	$k = (string) get_option( 'apprex_chat_knowledge', '' );
+	if ( '' === $k || ! preg_match( '/15万円|150,000円|300,000円|30万円|300万円|7万円|39,800円|59,800円|55,000円/u', $k ) ) {
+		return;
+	}
+	add_option( 'apprex_chat_knowledge_backup_178', $k, '', false );
+	$n     = str_replace( "\r\n", "\n", $k );
+	$price = "【料金（税抜）】\n"
+		. "・お客様に伝える金額は「アプリ 月額19,800円〜」「ホームページ 月額9,800円〜（AIプランナーなら制作費0円）」「AIスタジオは無料」だけ。\n"
+		. "・初期費用・上位プランの月額・オプション・アプリストア登録費・AIMEOの上位プラン・マッチングアプリやオリジナル開発の費用は、金額を言わず「ご要望を伺ってお見積りします」と答える。\n"
+		. "・AIスタジオ（無料）で作った内容から制作すると、1からヒアリングして作るより初期費用を抑えられる。概算はAIスタジオで、正式なお見積りは担当者から送る。\n"
+		. "・30日間無料体験あり（カード登録不要）。\n";
+	$n = preg_replace( '/【料金（税抜）】\n.*?(?=※基盤ベースのオリジナル化|【|\z)/su', $price, $n, 1 );
+	$n = strtr(
+		$n,
+		array(
+			'アプリは月額19,800円〜、初期費用15万円〜（AIスタジオで作った内容から制作）です。' => 'アプリは月額19,800円〜です（初期費用はお見積り）。',
+			'月額19,800円〜・初期費用15万円〜です。'                 => '月額19,800円〜です（初期費用はお見積り）。',
+		)
+	);
+	update_option( 'apprex_chat_knowledge', $n );
 }
