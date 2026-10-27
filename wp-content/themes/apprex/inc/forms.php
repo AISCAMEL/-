@@ -172,7 +172,8 @@ function apprex_line_url() {
  * @return string
  */
 function apprex_meeting_url() {
-	return (string) get_option( 'apprex_meeting_url', 'https://calendar.app.google/6xgkopT97tSwsHb76' );
+	// サイトで予約を受け付けるときは、サイトの予約ページ（inc/meeting-booking.php）。
+	return (string) apply_filters( 'apprex_meeting_url', (string) get_option( 'apprex_meeting_url', 'https://calendar.app.google/6xgkopT97tSwsHb76' ) );
 }
 
 /**
@@ -586,7 +587,7 @@ function apprex_autoreply_onscreen( $type ) {
 		case 'trial':
 			return '無料体験のお申し込みを受け付けました。担当者より2営業日以内にご案内します。';
 		case 'meeting':
-			return 'ミーティングのご予約を受け付けました。確認のうえ、確定のご連絡を差し上げます。リマインダーもお送りします。';
+			return ( function_exists( 'apprex_mb_enabled' ) && apprex_mb_enabled() ) ? 'ミーティングのご予約が確定しました。確認のメールをお送りしました。前日と1時間前にもお知らせします。' : 'ミーティングのご予約を受け付けました。確認のうえ、確定のご連絡を差し上げます。リマインダーもお送りします。';
 		case 'partner':
 			return '代理店のお申し込みを受け付けました。担当者よりご連絡します。報酬・加盟金は説明会でご説明しますので、まだの方はLINEから説明会をご予約ください。';
 		case 'signup':
@@ -635,7 +636,7 @@ function apprex_enroll_drip( $post_id, $type, $email, $name, $meeting_at = 0 ) {
 	}
 
 	// ミーティングは原則 Google カレンダーがリマインダーを送るため、WordPress 側は既定で送らない。
-	if ( 'meeting' === $type && ! get_option( 'apprex_wp_meeting_reminders', 0 ) ) {
+	if ( 'meeting' === $type && ! get_option( 'apprex_wp_meeting_reminders', 0 ) && ! ( function_exists( 'apprex_mb_enabled' ) && apprex_mb_enabled() ) ) {
 		return;
 	}
 	// 配信停止した人には、案内のシリーズを送らない（ミーティングのリマインダーは除く）。
@@ -749,11 +750,19 @@ function apprex_autoreply_message( $type, $fields ) {
 			$when    = ! empty( $fields['meeting_at'] ) ? wp_date( 'Y年n月j日(D) H:i', (int) $fields['meeting_at'] ) : '';
 			$subject = '【APPREX】ミーティングのご予約を受け付けました';
 			$body    = "{$name} 様\n\nオンラインミーティング（Google Meet）のご予約ありがとうございます。\n";
-			$body   .= $when ? "ご希望日時：{$when}\n" : '';
-			$body   .= "内容を確認のうえ、Google MeetのURLを含む確定のご連絡を差し上げます。\n確定後は、Googleカレンダーより開催前のリマインダーが自動で届きます。\n";
-			$meet    = apprex_meeting_url();
-			if ( $meet ) {
-				$body .= "\n▼ ご自身で今すぐ日時を確定したい方はこちら（Google Meet・URL自動発行）\n{$meet}\n";
+			if ( function_exists( 'apprex_mb_enabled' ) && apprex_mb_enabled() ) {
+				// サイトで受け付けた予約は、この時点で確定。
+				$murl  = (string) apprex_mb_settings()['url'];
+				$body .= $when ? "ご予約日時：{$when}（" . (int) apprex_mb_settings()['min'] . "分）\n" : '';
+				$body .= $murl ? "\n▼ 参加URL（Google Meet）\n{$murl}\n" : "\n参加URLは、担当者からあらためてお送りします。\n";
+				$body .= "\n前日と1時間前に、このメールアドレスにお知らせをお送りします。日時の変更は、このメールにご返信ください。\n";
+			} else {
+				$body .= $when ? "ご希望日時：{$when}\n" : '';
+				$body .= "内容を確認のうえ、Google MeetのURLを含む確定のご連絡を差し上げます。\n確定後は、Googleカレンダーより開催前のリマインダーが自動で届きます。\n";
+				$meet  = apprex_meeting_url();
+				if ( $meet ) {
+					$body .= "\n▼ ご自身で今すぐ日時を確定したい方はこちら（Google Meet・URL自動発行）\n{$meet}\n";
+				}
 			}
 			break;
 		case 'partner':
@@ -1075,8 +1084,9 @@ function apprex_process_dripmail() {
  * @param int    $now   Current timestamp.
  */
 function apprex_run_meeting_reminders( $id, $email, $name, $sent, $now ) {
-	// Google カレンダーに一本化している場合は WordPress からは送らない。
-	if ( ! get_option( 'apprex_wp_meeting_reminders', 0 ) ) {
+	// Google カレンダーに一本化している場合は WordPress からは送らない（サイトで予約を受け付けるときは送る）。
+	$apprex_mb = function_exists( 'apprex_mb_enabled' ) && apprex_mb_enabled();
+	if ( ! get_option( 'apprex_wp_meeting_reminders', 0 ) && ! $apprex_mb ) {
 		update_post_meta( $id, 'apprex_drip_active', 0 );
 		return;
 	}
@@ -1099,8 +1109,19 @@ function apprex_run_meeting_reminders( $id, $email, $name, $sent, $now ) {
 			continue;
 		}
 		if ( $now >= $meeting_at + (int) $r['offset'] ) {
+			if ( get_post_meta( $id, 'apprex_mb_cancel', true ) ) {
+				update_post_meta( $id, 'apprex_drip_active', 0 );
+				return;
+			}
 			$body = str_replace( array( '{name}', '{when}' ), array( $name, $when ), $r['body'] );
+			$murl = $apprex_mb ? (string) apprex_mb_settings()['url'] : '';
+			if ( $murl && $is_before ) {
+				$body = str_replace( '接続URLは別途ご案内いたします。', '', $body ) . "\n▼ 参加URL（Google Meet）\n{$murl}\n";
+			}
 			apprex_send_drip_mail( $id, $email, $r['subject'], $body, false );
+			if ( $apprex_mb ) {
+				apprex_mb_line( $id, $key );
+			}
 			$sent[] = $key;
 			update_post_meta( $id, 'apprex_drip_sent', $sent );
 		}

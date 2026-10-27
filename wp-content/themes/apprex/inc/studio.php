@@ -256,6 +256,13 @@ function apprex_studio_rest_meeting( WP_REST_Request $request ) {
 	}
 	$user = wp_get_current_user();
 	$at   = sanitize_text_field( (string) $request->get_param( 'meeting_at' ) );
+	// サイトで予約を受け付けるときは、空き枠かどうかを確かめる。
+	if ( function_exists( 'apprex_mb_enabled' ) && apprex_mb_enabled() ) {
+		$dt = date_create( $at, wp_timezone() );
+		if ( ! $dt || ! apprex_mb_is_open( $dt->getTimestamp() ) ) {
+			return new WP_Error( 'taken', 'その時間はご予約が入りました。ほかの時間をお選びください。', array( 'status' => 409 ) );
+		}
+	}
 	$res  = apprex_studio_inquiry(
 		array_merge(
 			apprex_studio_contact( $user ),
@@ -349,6 +356,7 @@ add_action( 'wp_enqueue_scripts', function () {
 		$cfg['stage']   = (int) get_user_meta( $u->ID, 'apprex_studio_stage', true );
 		$cfg['prod']    = (int) get_user_meta( $u->ID, 'apprex_studio_prod', true );
 		$cfg['meeting'] = (string) get_user_meta( $u->ID, 'apprex_studio_meeting', true );
+		$cfg['meetSlots'] = ( function_exists( 'apprex_mb_enabled' ) && apprex_mb_enabled() ) ? apprex_mb_slots() : null;
 		$cfg['quote']   = array(
 			'url'  => esc_url_raw( (string) get_user_meta( $u->ID, 'apprex_studio_quote_url', true ) ),
 			'note' => (string) get_user_meta( $u->ID, 'apprex_studio_quote_note', true ),

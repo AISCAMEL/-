@@ -1,0 +1,38 @@
+/* ミーティング予約（inc/meeting-booking.php） */
+.mb { display: grid; gap: 14px; max-width: 760px; margin: 0 auto; }
+.mb-card { background: #fff; border-radius: 16px; box-shadow: 0 6px 24px rgba(15, 23, 42, .08); padding: 20px; display: grid; gap: 10px; }
+.mb-h { display: flex; align-items: center; gap: 8px; font-weight: 800; color: #0b1d3f; font-size: 15px; margin-top: 4px; }
+.mb-h span { width: 24px; height: 24px; border-radius: 50%; background: #1d4ed8; color: #fff; font-size: 12px; display: grid; place-items: center; }
+.mb-days { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 8px; scroll-snap-type: x mandatory; }
+.mb-day { flex: 0 0 auto; scroll-snap-align: start; min-width: 74px; border: 2px solid #e2e8f0; background: #fff; border-radius: 12px; padding: 8px 6px; display: grid; gap: 1px; text-align: center; cursor: pointer; font-family: inherit; }
+.mb-day b { font-size: 14px; color: #0f172a; }
+.mb-day span { font-size: 12px; color: #64748b; }
+.mb-day em { font-style: normal; font-size: 11px; font-weight: 700; color: #16a34a; }
+.mb-day.on { border-color: #1d4ed8; background: #eff6ff; }
+.mb-day:disabled { opacity: .45; cursor: not-allowed; }
+.mb-day:disabled em { color: #b91c1c; }
+.mb-times { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+.mb-time { border: 2px solid #e2e8f0; background: #fff; border-radius: 10px; padding: 11px 6px; font-weight: 800; font-size: 15px; color: #0f172a; cursor: pointer; font-family: inherit; display: grid; gap: 1px; }
+.mb-time small { font-size: 10px; font-weight: 700; color: #94a3b8; }
+.mb-time.on { border-color: #1d4ed8; background: #1d4ed8; color: #fff; }
+.mb-time:disabled { background: #f8fafc; color: #cbd5e1; cursor: not-allowed; text-decoration: line-through; }
+.mb-sel { background: #f1f5f9; border-radius: 10px; padding: 10px 12px; font-size: 14px; color: #64748b; }
+.mb-sel.on { background: #eff6ff; color: #0b1d3f; }
+.mb-sel b { color: #1d4ed8; }
+.mb label { display: block; font-size: 13px; font-weight: 700; color: #0f172a; }
+.mb label em { color: #dc2626; font-style: normal; margin-left: 3px; }
+.mb label small { color: #64748b; font-weight: 400; }
+.mb input, .mb textarea { display: block; margin-top: 5px; width: 100%; box-sizing: border-box; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 16px; font-family: inherit; background: #fff; }
+.mb-btn { display: block; width: 100%; box-sizing: border-box; border: 0; border-radius: 12px; padding: 15px; font-size: 16px; font-weight: 800; text-align: center; text-decoration: none; cursor: pointer; background: #f97316; color: #fff; font-family: inherit; margin-top: 4px; }
+.mb-btn:disabled { opacity: .5; cursor: not-allowed; }
+.mb-btn.mb-sub { background: #fff; color: #0f172a; border: 1px solid #e2e8f0; }
+.mb-btn.mb-line { background: #06c755; }
+.mb-note { font-size: 12.5px; color: #64748b; margin: 0; }
+.mb-err { color: #b91c1c; font-size: 13px; margin: 0; }
+.mb-who { display: flex; align-items: center; gap: 10px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 10px 12px; font-size: 13px; }
+.mb-who img { width: 34px; height: 34px; border-radius: 50%; }
+.mb-done { text-align: center; padding: 26px 20px; }
+.mb-done h2 { font-size: 20px; margin: 0; color: #0b1d3f; }
+.mb-ok { width: 60px; height: 60px; border-radius: 50%; background: #dcfce7; color: #16a34a; font-size: 32px; display: grid; place-items: center; margin: 0 auto; }
+.mb-box { background: #f8fafc; border-radius: 10px; padding: 12px; font-size: 15px; }
+.mb-done p { font-size: 14px; margin: 0; }

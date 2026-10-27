@@ -11,6 +11,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+if ( function_exists( 'apprex_mb_enabled' ) && apprex_mb_enabled() ) {
+	wp_enqueue_style( 'apprex-meeting', APPREX_URI . '/assets/css/meeting.css', array(), APPREX_VERSION );
+}
 get_header();
 
 while ( have_posts() ) :
@@ -22,15 +25,28 @@ while ( have_posts() ) :
 				<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'ホーム', 'apprex' ); ?></a>
 			</nav>
 			<h1><?php the_title(); ?></h1>
-			<p><?php esc_html_e( 'Google Meet での無料オンライン相談をご予約いただけます。予約するとMeetの参加URL・招待・リマインダーが自動で届きます。', 'apprex' ); ?></p>
+			<p><?php esc_html_e( 'Google Meet での無料オンライン相談をご予約いただけます。空いている日時を選ぶだけで、その場で予約が確定します。', 'apprex' ); ?></p>
 		</div>
 	</section>
 
 	<section class="section">
 		<div class="container">
-			<?php $apprex_meet_url = function_exists( 'apprex_meeting_url' ) ? apprex_meeting_url() : ''; ?>
+			<?php $apprex_meet_url = (string) get_option( 'apprex_meeting_url', 'https://calendar.app.google/6xgkopT97tSwsHb76' ); ?>
 
-			<?php if ( $apprex_meet_url ) : ?>
+			<?php if ( function_exists( 'apprex_mb_enabled' ) && apprex_mb_enabled() ) : ?>
+				<?php apprex_mb_booking_ui(); ?>
+				<div class="content-prose" style="margin-top:28px">
+					<?php if ( trim( get_the_content() ) ) : ?>
+						<?php the_content(); ?>
+					<?php endif; ?>
+					<h2><?php esc_html_e( 'ご予約のあと', 'apprex' ); ?></h2>
+					<ol>
+						<li><?php esc_html_e( '確認のメール（LINEから予約した方はLINEにも）が届きます。', 'apprex' ); ?></li>
+						<li><?php esc_html_e( '前日と1時間前に、参加URLつきのお知らせが届きます。', 'apprex' ); ?></li>
+						<li><?php esc_html_e( '当日は、Google Meet の参加URLを押して参加してください。日時の変更は、確認メールへの返信でお知らせください。', 'apprex' ); ?></li>
+					</ol>
+				</div>
+			<?php elseif ( $apprex_meet_url ) : ?>
 				<div class="meet-book is-reveal">
 					<div class="meet-book__icon" aria-hidden="true">📅</div>
 					<h2 class="meet-book__title"><?php esc_html_e( 'Google Meet で無料オンライン相談', 'apprex' ); ?></h2>
@@ -46,6 +62,7 @@ while ( have_posts() ) :
 				</div>
 			<?php endif; ?>
 
+			<?php if ( ! ( function_exists( 'apprex_mb_enabled' ) && apprex_mb_enabled() ) ) : ?>
 			<div class="content-prose">
 				<?php if ( trim( get_the_content() ) ) : ?>
 					<?php the_content(); ?>
@@ -66,6 +83,7 @@ while ( have_posts() ) :
 					<?php endif; ?>
 				</p>
 			</div>
+			<?php endif; ?>
 		</div>
 	</section>
 	<?php

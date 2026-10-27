@@ -736,9 +736,14 @@ function vMeeting(){
     :'<p style="font-size:.84rem;color:var(--body);margin-top:12px">日時の変更は、下の「制作の進捗」のメッセージか、確認メールへの返信でお知らせください。</p>');
   }
   var days=weekdays(), sel=S._day==null?0:S._day;
-  var dH=days.map(function(d,i){return '<button type="button" class="day" data-day="'+i+'" aria-pressed="'+(sel===i)+'"><small>'+(d.getMonth()+1)+'月</small>'+d.getDate()+'日('+WD[d.getDay()]+')</button>';}).join('');
-  var times=['10:00','11:00','13:00','14:00','15:00','16:00','17:00'];
-  var tH=times.map(function(t,i){var busy=false;return '<button type="button" class="time" data-time="'+t+'"'+(busy?' disabled':'')+' aria-pressed="'+(S._time===t)+'">'+t+'</button>';}).join('');
+  // サイトの予約の空き枠（設定の曜日・時間・予約済みを反映）。無ければ平日の決まった時間。
+  var MS=CFG.meetSlots||null;
+  if(MS&&!MS.length) return '<div class="vh"><div><h2>オンラインミーティングを予約</h2></div></div><div class="card"><p>いま予約できる日時がありません。下の「制作の進捗」のメッセージから、ご都合のよい日時をお知らせください。</p></div>';
+  if(MS&&sel>=MS.length) sel=0;
+  var dH=MS?MS.map(function(d,i){var n=d.times.filter(function(t){return t.ok;}).length;return '<button type="button" class="day" data-day="'+i+'" aria-pressed="'+(sel===i)+'"'+(n?'':' disabled')+'>'+esc(d.label)+'</button>';}).join('')
+    :days.map(function(d,i){return '<button type="button" class="day" data-day="'+i+'" aria-pressed="'+(sel===i)+'"><small>'+(d.getMonth()+1)+'月</small>'+d.getDate()+'日('+WD[d.getDay()]+')</button>';}).join('');
+  var times=MS?MS[sel].times:['10:00','11:00','13:00','14:00','15:00','16:00','17:00'].map(function(t){return {t:t,ok:true};});
+  var tH=times.map(function(x){return '<button type="button" class="time" data-time="'+x.t+'"'+(x.ok?'':' disabled')+' aria-pressed="'+(S._time===x.t)+'">'+x.t+'</button>';}).join('');
   return '<div class="vh"><div><h2>オンラインミーティングを予約</h2><p>平日10時〜18時。60分ほどで、デザインと仕様書を見ながらお見積りまでご案内します。</p></div></div>'
   +'<div class="card"><div class="sec-t">日付</div><div class="days">'+dH+'</div><div class="sec-t" style="margin-top:14px">時間</div><div class="times">'+tH+'</div>'
   +'<div class="acts"><button type="button" class="btn btn--cta" data-go="book"'+(S._time?'':' disabled')+'>この日時で予約する</button></div><div class="err" id="bookErr" hidden></div></div>';
@@ -935,8 +940,9 @@ document.addEventListener('click',function(e){
       .catch(function(x){ t.disabled=false; t.textContent='相談を送ってミーティングを予約する'; alert(x.message); });
   }
   else if(g==='book'){
-    var d=weekdays()[S._day||0], pad=function(n){return ('0'+n).slice(-2);};
-    var iso=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+S._time;
+    var pad=function(n){return ('0'+n).slice(-2);}, iso;
+    if(CFG.meetSlots&&CFG.meetSlots[S._day||0]){ iso=CFG.meetSlots[S._day||0].date+'T'+S._time; }
+    else { var d=weekdays()[S._day||0]; iso=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+S._time; }
     t.disabled=true; t.textContent='予約しています…';
     api('studio/meeting',{meeting_at:iso})
       .then(function(){ S.meeting=fmtMeeting(iso); render(); })

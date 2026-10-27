@@ -63,6 +63,10 @@ function apprex_rm_target( $key ) {
 		case 'estimate':
 			return $page( 'estimate', '/estimate/' );
 		case 'meeting':
+			// サイトで予約を受け付けるときは、LINEの中で開く予約ページ（LINEに確認が届く）。
+			if ( function_exists( 'apprex_mb_enabled' ) && apprex_mb_enabled() && apprex_mb_liff_url() ) {
+				return apprex_mb_liff_url();
+			}
 			$m = function_exists( 'apprex_meeting_url' ) ? apprex_meeting_url() : '';
 			return $m ? $m : $page( 'meeting', '/meeting/' );
 		case 'cases':
