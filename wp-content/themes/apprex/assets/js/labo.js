@@ -20,34 +20,106 @@
 	function go(tab) { S.tab = tab; S.art = null; S.err = ''; render(); window.scrollTo(0, 0); }
 
 	/* ---------- 画面 ---------- */
-	function phone(a) {
-		return '<div class="lb-phone"><div class="lb-ph-top" style="background:' + esc(a.color) + '"><small>' + esc(a.label) + '</small><b>' + esc(a.shop || 'あなたのお店') + '</b><span>' + esc(a.catch) + '</span></div>'
-			+ '<div class="lb-ph-grid">' + a.menus.map(function (m) { return '<div style="background:' + esc(a.soft) + '"><i style="background:' + esc(a.color) + '"></i>' + esc(m) + '</div>'; }).join('') + '</div>'
-			+ '<div class="lb-ph-cpn">クーポン：次回10％オフ</div><div class="lb-ph-news"><b>お知らせ</b><span>' + esc(a.shop || 'お店') + 'のアプリができました</span></div><div class="lb-ph-tab"><span>ホーム</span><span>予約</span><span>会員証</span><span>お知らせ</span></div></div>';
+	// アイコン（線画）。ボタン名の言葉で選ぶ。
+	var IC = {
+		cal: '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M16 3v4M8 3v4M3 10h18M8 14h3"/>',
+		book: '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/>',
+		ticket: '<path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/><path d="M13 6v2M13 11v2M13 16v2"/>',
+		stamp: '<circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
+		bell: '<path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/>',
+		pin: '<path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/>',
+		card: '<rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20M6 15h4"/>',
+		cut: '<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.1 15.9M14.5 14.5 20 20M8.1 8.1 12 12"/>',
+		user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+		clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+		clip: '<rect x="5" y="4" width="14" height="18" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3"/>',
+		layers: '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/>',
+		bag: '<path d="M5 8h14l-1 13H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
+		spark: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 17l.7 1.8 1.8.7-1.8.7L19 22l-.7-1.8-1.8-.7 1.8-.7z"/>',
+		coin: '<circle cx="12" cy="12" r="9"/><path d="M9 9h4a2 2 0 0 1 0 4H9V9zM9 13v4M9 15h4"/>',
+		star: '<path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/>',
+		chat: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.4A8 8 0 1 1 21 12z"/>',
+		home: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+		gift: '<rect x="3" y="8" width="18" height="5" rx="1"/><path d="M5 13v8h14v-8M12 8v13M12 8S9.5 3 7.5 4.5 9 8 12 8zm0 0s2.5-5 4.5-3.5S15 8 12 8z"/>'
+	};
+	var IC_WORDS = [[/予約|レッスン/, 'cal'], [/メニュー|コース|カタログ/, 'book'], [/クーポン|特典/, 'ticket'], [/スタンプ/, 'stamp'], [/お知らせ|ニュース/, 'bell'], [/アクセス|店舗|地図/, 'pin'], [/会員|カード/, 'card'], [/スタイル|カット|ヘア/, 'cut'], [/スタッフ|講師|先生/, 'user'], [/順番|時間|待ち/, 'clock'], [/問診|欠席|申込|申し込み/, 'clip'], [/ストア|ショップ|商品|通販/, 'bag'], [/新/, 'spark'], [/ポイント/, 'coin'], [/事例|口コミ|レビュー/, 'star'], [/問い合わせ|相談|チャット/, 'chat']];
+	function ico(name) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + (IC[name] || IC.star) + '</svg>'; }
+	function icoFor(word) { for (var i = 0; i < IC_WORDS.length; i++) { if (IC_WORDS[i][0].test(word)) { return ico(IC_WORDS[i][1]); } } return ico('star'); }
+	function yen(p) { p = String(p || ''); return /^[\d,]+$/.test(p) ? '¥' + p : p; }
+	function initial(t) { t = String(t || 'A').replace(/\s/g, ''); return esc(t.charAt(0)); }
+	var STATUS = '<svg class="lp-sig" viewBox="0 0 18 12" aria-hidden="true"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>'
+		+ '<svg class="lp-wifi" viewBox="0 0 16 12" aria-hidden="true"><path d="M8 11.5 5.6 9a3.4 3.4 0 0 1 4.8 0z"/><path d="M3.6 7a6.3 6.3 0 0 1 8.8 0l-1.3 1.3a4.5 4.5 0 0 0-6.2 0z"/><path d="M1.4 4.8a9.4 9.4 0 0 1 13.2 0l-1.3 1.3a7.6 7.6 0 0 0-10.6 0z"/></svg>'
+		+ '<span class="lp-bat"><i></i></span>';
+
+	/** リアルなスマホのアプリ画面（作った画面・見本で共通）。 */
+	function phone(a, o) {
+		o = o || {};
+		var shop = a.shop || 'あなたのお店';
+		var ph = a.photo || o.photo || '';
+		var items = a.items || [];
+		var news = a.news || [];
+		var cpn = a.coupon || { tag: 'アプリ限定', title: '次回10%オフ' };
+		var heroBg = ph ? 'background-image:url(' + esc(ph) + ')' : '';
+		var pos = ['20% 45%', '55% 60%', '85% 40%'];
+		var tabs = [['home', 'ホーム'], ['cal', '予約'], ['card', '会員証'], ['ticket', 'クーポン'], ['user', 'マイページ']];
+		return '<div class="lp-wrap' + (o.mini ? ' mini' : '') + '">'
+			+ (o.notif !== false && news.length ? '<div class="lp-notif"><i style="background:' + esc(a.color) + '">' + initial(shop) + '</i><div><p><b>' + esc(shop) + '</b><small>今</small></p><span>' + esc(news[0]) + '</span></div></div>' : '')
+			+ '<div class="lp" style="--c:' + esc(a.color) + ';--s:' + esc(a.soft) + '"><span class="lp-k k1"></span><span class="lp-k k2"></span><span class="lp-k k3"></span>'
+			+ '<div class="lp-scr"><div class="lp-island"></div><div class="lp-status"><b>9:41</b><span>' + STATUS + '</span></div>'
+			+ '<div class="lp-scroll">'
+			+ '<div class="lp-hero' + (ph ? '' : ' nophoto') + (o.loading ? ' loading' : '') + '" style="' + heroBg + '">'
+			+ (ph ? '' : '<span class="lp-hero-ic">' + icoFor(a.menus && a.menus[1] || '') + '</span>')
+			+ '<div class="lp-appbar"><i>' + initial(shop) + '</i><b>' + esc(shop) + '</b><span class="lp-bell">' + ico('bell') + '<em></em></span></div>'
+			+ '<div class="lp-hero-t"><small>' + esc(a.label) + '</small><h3>' + esc(a.catch) + '</h3><span class="lp-cta">' + esc((a.menus && a.menus[0]) || '予約する') + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span></div>'
+			+ (o.loading ? '<div class="lp-gen"><span></span>写真をAIで作っています…</div>' : '')
+			+ '</div>'
+			+ '<div class="lp-body">'
+			+ '<div class="lp-mcard"><div><small>MEMBER\'S CARD</small><b>' + esc(shop) + '</b></div><div class="lp-pt"><b>1,280</b><small>pt</small></div><div class="lp-bar"><i></i></div><p>あと220ptで「' + esc(cpn.title) + '」</p></div>'
+			+ '<div class="lp-grid">' + (a.menus || []).slice(0, 6).map(function (m) { return '<div><i>' + icoFor(m) + '</i><span>' + esc(m) + '</span></div>'; }).join('') + '</div>'
+			+ '<div class="lp-cpn"><div><small>' + esc(cpn.tag) + '</small><b>' + esc(cpn.title) + '</b><em>有効期限：今月末まで</em></div><span>使う</span></div>'
+			+ (items.length ? '<div class="lp-sec"><b>おすすめ</b><span>すべて見る</span></div><div class="lp-items">' + items.map(function (it, k) { return '<div><i class="' + (ph ? '' : 'nophoto') + '" style="' + (ph ? 'background-image:url(' + esc(ph) + ');background-position:' + pos[k % 3] : '') + '">' + (ph ? '' : icoFor(it.name)) + '</i><b>' + esc(it.name) + '</b><span>' + esc(yen(it.price)) + '</span></div>'; }).join('') + '</div>' : '')
+			+ (news.length ? '<div class="lp-sec"><b>お知らせ</b><span>一覧</span></div><ul class="lp-news">' + news.map(function (n, k) { return '<li>' + (k === 0 ? '<em>NEW</em>' : '') + '<span>' + esc(n) + '</span><small>' + (k === 0 ? '今日' : '3日前') + '</small></li>'; }).join('') + '</ul>' : '')
+			+ '</div></div>'
+			+ '<div class="lp-tab">' + tabs.map(function (t, k) { return '<span class="' + (k === 0 ? 'on' : '') + '">' + ico(t[0]) + t[1] + '</span>'; }).join('') + '</div><div class="lp-home"></div>'
+			+ '</div></div></div>';
+	}
+	// 見本（まだ作っていない人向け）。
+	function sampleApp() {
+		return { label: '飲食店', shop: '炭火焼肉 はなび', color: '#9f1d1d', soft: '#fdf1f1', catch: '炭火で焼く、特別なひととき', menus: ['ネット予約', 'メニュー', 'クーポン', 'スタンプ', 'お知らせ', 'アクセス'], items: [{ name: '上カルビ', price: '1,480' }, { name: '厚切り牛タン', price: '1,680' }, { name: 'はなび盛り', price: '3,980' }], coupon: { tag: 'アプリ限定', title: 'ドリンク1杯サービス' }, news: ['今月の限定メニューが始まりました', '週末のご予約はお早めに'], photo: C.img ? C.img + 'rn/03_case-restaurant.jpg' : '' };
 	}
 	function card(p, big) {
 		return '<button type="button" class="lb-art' + (big ? ' big' : '') + '" data-art="' + p.id + '"><div class="lb-art-img"' + (p.thumb ? ' style="background-image:url(' + esc(p.thumb) + ')"' : '') + '>' + (p.video ? '<span class="lb-play" aria-hidden="true">▶</span>' : '') + '</div><div class="lb-art-t">' + (p.cat ? '<small>' + esc(p.cat) + (p.video ? '・動画' : '') + '</small>' : '') + '<b>' + esc(p.title) + '</b></div></button>';
 	}
+	var REAL = [['app-sample-golf-one.jpg', 'Golf One', 'ゴルフ・予約'], ['rn/real-zensin.webp', 'ZENSIN', '企業・社内'], ['app-sample-taka.jpg', 'TAKA', 'マッチング'], ['app-sample-legal-one.jpg', 'Legal One', '士業']];
 	function vHome() {
 		var nm = S.prof ? S.prof.displayName : (S.me.name || '');
 		var arts = (S.posts || []).slice(0, 3);
-		return '<div class="lb-hello">' + (S.prof && S.prof.pictureUrl ? '<img src="' + esc(S.prof.pictureUrl) + '" alt="">' : '<span class="lb-ava">L</span>') + '<div><small>ようこそ</small><b>' + (nm ? esc(nm) + ' さん' : 'APPREX LABOへ') + '</b></div></div>'
-			+ '<section class="lb-hero"><span class="lb-badge">友だち限定の特典</span><h1>AIで、あなたのお店の<br>アプリ画面を無料で作る</h1><p>業種と店名を入れるだけ。スマホで見られるアプリの画面ができます。</p><button type="button" class="lb-btn" data-go="make">' + (S.app ? '作った画面を見る' : 'いますぐ作ってみる') + '</button></section>'
-			+ '<div class="lb-quick"><button type="button" data-go="learn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h11a3 3 0 0 1 3 3v11H7a3 3 0 0 1-3-3z"/><path d="M8 9h6M8 13h4"/></svg>学ぶ</button><button type="button" data-go="book"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>無料相談</button><a href="' + esc(C.cases) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="M8.5 12.5 7 21l5-3 5 3-1.5-8.5"/></svg>導入事例</a></div>'
+		return '<div class="lb-hello">' + (S.prof && S.prof.pictureUrl ? '<img src="' + esc(S.prof.pictureUrl) + '" alt="">' : '<span class="lb-ava">' + ico('user') + '</span>') + '<div><small>ようこそ</small><b>' + (nm ? esc(nm) + ' さん' : 'APPREX LABOへ') + '</b></div></div>'
+			+ '<section class="lb-hero"><div class="lb-hero-t"><span class="lb-badge">友だち限定・無料</span><h1>あなたのお店の<br>アプリ画面を、<em>AIで。</em></h1><p>業種と店名を入れるだけ。写真入りの、本物そっくりのアプリ画面ができます。</p><button type="button" class="lb-btn" data-go="make">' + (S.app ? '作った画面を見る' : 'いますぐ作ってみる') + '</button></div>'
+			+ '<div class="lb-hero-ph">' + phone(S.app || sampleApp(), { mini: true, notif: false }) + '</div></section>'
+			+ '<div class="lb-quick"><button type="button" data-go="learn"><i>' + ico('book') + '</i>学ぶ</button><button type="button" data-go="book"><i>' + ico('cal') + '</i>無料相談</button><a href="' + esc(C.cases) + '"><i>' + ico('star') + '</i>導入事例</a></div>'
+			+ (C.img ? '<div class="lb-sh"><h2>APPREXで作ったアプリ</h2></div><div class="lb-real">' + REAL.map(function (r) { return '<figure><div class="lb-real-ph"><img src="' + esc(C.img + r[0]) + '" alt="' + esc(r[1]) + 'のアプリ画面" loading="lazy"></div><figcaption><b>' + esc(r[1]) + '</b><small>' + esc(r[2]) + '</small></figcaption></figure>'; }).join('') + '</div>' : '')
 			+ (arts.length ? '<div class="lb-sh"><h2>新着の記事・動画</h2><button type="button" data-go="learn">すべて見る</button></div><div class="lb-list">' + arts.map(function (p) { return card(p, false); }).join('') + '</div>' : '');
 	}
+	var IND_IC = { food: 'book', beauty: 'cut', clinic: 'clip', school: 'layers', retail: 'bag', other: 'star' };
+	var MSGS = ['お店の雰囲気を考えています…', 'メニューとクーポンを決めています…', 'アプリの画面をデザインしています…'];
 	function vMake() {
-		if (S.app && !S.remake) {
-			return '<div class="lb-sh"><h1>できました</h1><button type="button" data-act="remake">作り直す</button></div>' + phone(S.app)
-				+ '<div class="lb-card"><b>このアプリ、実際に作れます</b><p>作った画面のまま、担当者がオンラインでご説明します（無料）。</p><button type="button" class="lb-btn" data-go="book">この画面で無料相談する</button><a class="lb-btn sub" href="' + esc(C.studio) + '">AIスタジオで続きを作る</a><button type="button" class="lb-btn sub" data-go="learn">まずは事例を見る</button></div>';
+		if (S.busy) {
+			return '<div class="lb-making"><div class="lb-making-ph"><div class="lp-skel"></div></div><b id="lbMsg">' + MSGS[0] + '</b><p>20秒ほどかかります。このままお待ちください。</p></div>';
 		}
-		var inds = Object.keys(C.inds).map(function (k) { return '<button type="button" class="lb-chip' + (S.ind === k ? ' on' : '') + '" data-ind="' + k + '">' + esc(C.inds[k]) + '</button>'; }).join('');
+		if (S.app && !S.remake) {
+			return '<div class="lb-sh"><h1>' + esc(S.app.shop || 'あなたのお店') + 'のアプリ</h1><button type="button" data-act="remake">作り直す</button></div>'
+				+ '<p class="lb-sub">画面の中はスクロールできます。' + (S.photoLoading ? '写真ができると自動で入ります。' : '') + '</p>'
+				+ '<div class="lb-stage">' + phone(S.app, { loading: S.photoLoading }) + '</div>'
+				+ '<div class="lb-card"><b>このアプリ、実際に作れます</b><p>作った画面のまま、担当者がオンラインでご説明します（無料）。ノーコードなら初期費用15万円＋月額19,800円〜。</p><button type="button" class="lb-btn" data-go="book">この画面で無料相談する</button><a class="lb-btn sub" href="' + esc(C.studio) + '">AIスタジオで続きを作る</a><button type="button" class="lb-btn sub" data-go="learn">まずは事例を見る</button></div>';
+		}
+		var inds = Object.keys(C.inds).map(function (k) { return '<button type="button" class="lb-chip ind' + (S.ind === k ? ' on' : '') + '" data-ind="' + k + '">' + ico(IND_IC[k] || 'star') + esc(C.inds[k]) + '</button>'; }).join('');
 		var moods = ['高級感', 'かわいい', 'ナチュラル', '元気', '信頼感'].map(function (m) { return '<button type="button" class="lb-chip sm' + (S.mood === m ? ' on' : '') + '" data-mood="' + m + '">' + m + '</button>'; }).join('');
-		return '<div><small class="lb-kicker">特典</small><h1 class="lb-h1">AIでアプリ画面を作る</h1></div><div class="lb-card">'
-			+ '<b>1. 業種</b><div class="lb-chips three">' + inds + '</div>'
-			+ '<label class="lb-f"><b>2. 店名</b><input id="lbShop" value="' + esc(S.shop) + '" placeholder="例：炭火焼肉 はなび" maxlength="30"></label>'
-			+ '<b>3. 雰囲気<small>（任意）</small></b><div class="lb-chips">' + moods + '</div>'
-			+ '<button type="button" class="lb-btn" data-act="make"' + (S.busy ? ' disabled' : '') + '>' + (S.busy ? 'AIが作っています…' : 'AIで作る（無料）') + '</button>'
+		return '<div><small class="lb-kicker">友だち限定の特典</small><h1 class="lb-h1">AIでアプリ画面を作る</h1><p class="lb-sub">写真もお店に合わせてAIが作ります。</p></div><div class="lb-card">'
+			+ '<b><span class="lb-n">1</span>業種</b><div class="lb-chips three">' + inds + '</div>'
+			+ '<label class="lb-f"><b><span class="lb-n">2</span>店名</b><input id="lbShop" value="' + esc(S.shop) + '" placeholder="例：炭火焼肉 はなび" maxlength="30"></label>'
+			+ '<b><span class="lb-n">3</span>雰囲気<small>（任意）</small></b><div class="lb-chips">' + moods + '</div>'
+			+ '<button type="button" class="lb-btn" data-act="make">AIで作る（無料）</button>'
 			+ (S.err ? '<p class="lb-err">' + esc(S.err) + '</p>' : '') + '</div>';
 	}
 	function vLearn() {
@@ -98,6 +170,11 @@
 		var v = { home: vHome, make: vMake, learn: vLearn, book: vBook, my: vMy }[S.tab] || vHome;
 		main.innerHTML = v();
 		Array.prototype.forEach.call(document.querySelectorAll('#lbNav [data-tab]'), function (b) { b.classList.toggle('on', b.getAttribute('data-tab') === S.tab); });
+		// スマホ画面の中をスクロールしたら、上の時計・電波を白地に。
+		Array.prototype.forEach.call(main.querySelectorAll('.lp-scroll'), function (el) {
+			el.addEventListener('scroll', function () { el.parentNode.classList.toggle('scrolled', el.scrollTop > 120); }, { passive: true });
+		});
+		if (S.busy && S.tab === 'make') { var k = 0; clearInterval(S.msgT); S.msgT = setInterval(function () { var m = document.getElementById('lbMsg'); if (!m || !S.busy) { clearInterval(S.msgT); return; } k = Math.min(k + 1, MSGS.length - 1); m.textContent = MSGS[k]; }, 3500); }
 		if (S.tab === 'learn' && S.posts === null) { loadPosts(); }
 	}
 
@@ -136,10 +213,20 @@
 		if (act === 'make') {
 			keepShop(); S.busy = true; S.err = ''; render();
 			api('labo/make', { ind: S.ind, shop: S.shop, mood: S.mood }).then(function (r) {
-				S.busy = false; if (r && r.ok) { S.app = r.app; S.remake = false; } else { S.err = (r && r.message) || '作れませんでした。'; } render(); window.scrollTo(0, 0);
+				S.busy = false;
+				if (r && r.ok) { S.app = r.app; S.remake = false; S.photoLoading = !!r.photoToken; if (r.photoToken) { makePhoto(r.photoToken, r.app); } } else { S.err = (r && r.message) || '作れませんでした。'; }
+				render(); window.scrollTo(0, 0);
 			}).catch(function () { S.busy = false; S.err = '通信エラーが発生しました。'; render(); });
 		}
 	});
+	function makePhoto(tok, app) {
+		api('labo/photo', { token: tok }).then(function (r) {
+			if (S.app !== app) { return; } // 作り直したあと。
+			S.photoLoading = false;
+			if (r && r.ok && r.photo) { S.app.photo = r.photo; }
+			if (S.tab === 'make' || S.tab === 'home') { var y = window.scrollY; render(); window.scrollTo(0, y); }
+		}).catch(function () { if (S.app === app) { S.photoLoading = false; render(); } });
+	}
 	var draft = {};
 	function keepShop() { var i = document.getElementById('lbShop'); if (i) { S.shop = i.value.trim(); } }
 	function keepForm() { var f = document.getElementById('lbBook'); if (f) { ['name', 'email', 'company', 'message'].forEach(function (k) { draft[k] = f[k].value; }); } }

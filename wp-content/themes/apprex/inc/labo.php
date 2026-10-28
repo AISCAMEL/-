@@ -234,52 +234,172 @@ add_action( 'added_post_meta', function ( $mid, $post_id, $key, $value ) {
  * つくる（特典）：業種・店名 → アプリの画面案
  * ====================================================================== */
 function apprex_labo_presets() {
+	// 業種名, メインカラー, 薄い色, キャッチ, ホームのボタン, おすすめ（名前・価格）, クーポン, お知らせ, 写真に写すもの（英語）。
 	return array(
-		'food'   => array( '飲食店', '#b91c1c', '#fef2f2', 'ご来店ごとにポイントが貯まる', array( 'ネット予約', 'メニュー', 'クーポン', 'スタンプ', 'お知らせ', 'アクセス' ) ),
-		'beauty' => array( '美容サロン', '#be185d', '#fdf2f8', '次回のご予約もアプリでかんたん', array( '予約', 'メニュー', 'スタイル', 'クーポン', '会員証', 'スタッフ' ) ),
-		'clinic' => array( 'クリニック', '#0e7490', '#ecfeff', '診療予約と順番待ちをスマホで', array( '診療予約', '順番待ち', '診療時間', 'お知らせ', 'Web問診', 'アクセス' ) ),
-		'school' => array( '教室・スクール', '#c2410c', '#fff7ed', 'レッスン予約とお知らせを1つに', array( 'レッスン予約', 'コース', '講師紹介', 'お知らせ', '欠席連絡', '会員証' ) ),
-		'retail' => array( '小売・EC', '#1e3a8a', '#eff6ff', '会員限定セールをいち早く', array( 'ストア', 'クーポン', '会員証', '新商品', 'ポイント', 'お知らせ' ) ),
-		'other'  => array( 'その他', '#334155', '#f1f5f9', 'お客様とずっとつながる', array( 'お知らせ', '予約', '会員証', 'クーポン', '事例', 'お問い合わせ' ) ),
+		'food'   => array( '飲食店', '#b91c1c', '#fef2f2', 'ご来店ごとにポイントが貯まる', array( 'ネット予約', 'メニュー', 'クーポン', 'スタンプ', 'お知らせ', 'アクセス' ), array( array( '本日のおすすめ', '1,480' ), array( '季節の限定メニュー', '1,280' ), array( '人気のセット', '1,980' ) ), array( 'アプリ限定', 'ドリンク1杯サービス' ), array( '今月の限定メニューが始まりました', '週末のご予約はお早めに' ), 'a beautifully plated signature dish on a wooden counter of a cozy Japanese restaurant, warm evening light, steam rising' ),
+		'beauty' => array( '美容サロン', '#be185d', '#fdf2f8', '次回のご予約もアプリでかんたん', array( '予約', 'メニュー', 'スタイル', 'クーポン', '会員証', 'スタッフ' ), array( array( 'カット＋カラー', '8,800' ), array( '髪質改善トリートメント', '6,600' ), array( 'ヘッドスパ', '4,400' ) ), array( '初回限定', '全メニュー20%オフ' ), array( '秋の新色カラーのご案内', '平日限定ヘッドスパ割' ), 'a bright minimalist Japanese hair salon interior with styling chairs, mirrors, plants and soft natural daylight' ),
+		'clinic' => array( 'クリニック', '#0e7490', '#ecfeff', '診療予約と順番待ちをスマホで', array( '診療予約', '順番待ち', '診療時間', 'お知らせ', 'Web問診', 'アクセス' ), array( array( '一般内科', '予約制' ), array( '健康診断', '予約制' ), array( '予防接種', '予約制' ) ), array( 'お知らせ', '待ち時間をアプリで確認' ), array( 'インフルエンザ予防接種の予約開始', '年末年始の診療時間' ), 'a clean bright modern Japanese clinic reception and waiting area, calm atmosphere, soft daylight, plants' ),
+		'school' => array( '教室・スクール', '#c2410c', '#fff7ed', 'レッスン予約とお知らせを1つに', array( 'レッスン予約', 'コース', '講師紹介', 'お知らせ', '欠席連絡', '会員証' ), array( array( '体験レッスン', '無料' ), array( '月4回コース', '8,800' ), array( '集中講座', '15,000' ) ), array( '入会特典', '入会金0円' ), array( '春の体験レッスン受付中', '発表会のお知らせ' ), 'a bright cheerful classroom studio in Japan with desks, books and warm sunlight, inviting atmosphere' ),
+		'retail' => array( '小売・EC', '#1e3a8a', '#eff6ff', '会員限定セールをいち早く', array( 'ストア', 'クーポン', '会員証', '新商品', 'ポイント', 'お知らせ' ), array( array( '新作アイテム', '4,980' ), array( '定番の人気商品', '2,980' ), array( 'ギフトセット', '3,800' ) ), array( '会員限定', '500円オフクーポン' ), array( '新作が入荷しました', '会員限定セールのお知らせ' ), 'a stylish Japanese select shop interior with neatly displayed products on wooden shelves, soft warm lighting' ),
+		'other'  => array( 'その他', '#334155', '#f1f5f9', 'お客様とずっとつながる', array( 'お知らせ', '予約', '会員証', 'クーポン', '事例', 'お問い合わせ' ), array( array( '人気のサービス', '要相談' ), array( 'はじめての方へ', '無料' ), array( 'おすすめプラン', '要相談' ) ), array( 'アプリ限定', '初回特典あり' ), array( '新サービスのお知らせ', '営業日のご案内' ), 'a welcoming modern Japanese small business storefront interior, clean and bright, soft natural light' ),
+	);
+}
+
+/** AIに頼む前の、業種ごとの画面案。 */
+function apprex_labo_base_app( $ind, $shop ) {
+	$ps  = apprex_labo_presets();
+	$ind = isset( $ps[ $ind ] ) ? $ind : 'other';
+	$p   = $ps[ $ind ];
+	return array(
+		'ind'    => $ind,
+		'label'  => $p[0],
+		'color'  => $p[1],
+		'soft'   => $p[2],
+		'catch'  => $p[3],
+		'menus'  => $p[4],
+		'items'  => array_map(
+			function ( $x ) {
+				return array( 'name' => $x[0], 'price' => $x[1] );
+			},
+			$p[5]
+		),
+		'coupon' => array( 'tag' => $p[6][0], 'title' => $p[6][1] ),
+		'news'   => $p[7],
+		'scene'  => $p[8],
+		'shop'   => $shop,
+		'photo'  => '',
+		'ai'     => false,
 	);
 }
 
 function apprex_labo_make( $ind, $shop, $mood ) {
-	$ps  = apprex_labo_presets();
-	$ind = isset( $ps[ $ind ] ) ? $ind : 'other';
-	$p   = $ps[ $ind ];
-	$app = array( 'ind' => $ind, 'label' => $p[0], 'color' => $p[1], 'soft' => $p[2], 'catch' => $p[3], 'menus' => $p[4], 'shop' => $shop, 'ai' => false );
+	$app = apprex_labo_base_app( $ind, $shop );
 	if ( function_exists( 'apprex_ai_text_ready' ) && apprex_ai_text_ready() && function_exists( 'apprex_studio_complete' ) ) {
-		$sys = "あなたは日本のアプリ制作会社のUIデザイナーです。店舗アプリのトップ画面の案を作ります。必ずJSONだけを出力：\n"
-			. '{"catch":"トップのキャッチコピー（全角20字以内）","color":"#RRGGBB（業種と雰囲気に合うメインカラー。白文字が読める濃さ）","menus":["ホームのボタン6個（各7字以内）"]}' . "\n"
-			. '誇大表現（No.1、絶対など）は使わない。';
+		$sys = "あなたは日本のアプリ制作会社のUIデザイナーです。LABO用に、店舗アプリのトップ画面の案を作ります。必ずJSONだけを出力：\n"
+			. '{"catch":"トップのキャッチコピー（全角16字以内。読点で区切ると2行になる長さ）","color":"#RRGGBB（業種と雰囲気に合うメインカラー。白文字が読める濃さ）","menus":["ホームのボタン6個（各6字以内）"],'
+			. '"items":[{"name":"おすすめの商品・メニュー名（全角12字以内）","price":"税込の価格。数字とカンマだけ（例 1,480）。価格がない業種は「予約制」など"}×3],'
+			. '"coupon":{"tag":"クーポンの種類（全角6字以内）","title":"特典の内容（全角14字以内）"},"news":["お知らせの見出し（全角18字以内）"×2],'
+			. '"scene":"アプリのメイン写真に写すもの。英語で、店名と業種から想像できる具体的な料理・商品・店内の描写（25語以内。人の顔・文字・ロゴは入れない）"}' . "\n"
+			. '店名から想像できる具体的な内容にする（例：焼肉店なら上カルビ・厚切りタン）。誇大表現（No.1、絶対など）は使わない。';
 		$res = apprex_studio_complete(
 			array(
 				array( 'role' => 'system', 'content' => $sys ),
-				array( 'role' => 'user', 'content' => '業種：' . $p[0] . "\n店名：" . ( $shop ? $shop : '未定' ) . "\n雰囲気：" . ( $mood ? $mood : 'おまかせ' ) ),
+				array( 'role' => 'user', 'content' => '業種：' . $app['label'] . "\n店名：" . ( $shop ? $shop : '未定' ) . "\n雰囲気：" . ( $mood ? $mood : 'おまかせ' ) ),
 			),
-			array( 'max_tokens' => 300, 'timeout' => 40 )
+			array( 'max_tokens' => 700, 'timeout' => 45 )
 		);
 		$j = ( ! is_wp_error( $res ) && function_exists( 'apprex_studio_json' ) ) ? apprex_studio_json( $res ) : null;
-		if ( $j ) {
+		if ( is_array( $j ) ) {
+			$t = function ( $v, $n ) {
+				return mb_substr( sanitize_text_field( (string) $v ), 0, $n );
+			};
 			if ( ! empty( $j['catch'] ) ) {
-				$app['catch'] = mb_substr( sanitize_text_field( $j['catch'] ), 0, 24 );
+				$app['catch'] = $t( $j['catch'], 22 );
 			}
 			if ( ! empty( $j['color'] ) && preg_match( '/^#[0-9a-fA-F]{6}$/', $j['color'] ) ) {
 				$app['color'] = strtolower( $j['color'] );
+				$app['soft']  = apprex_labo_soft( $app['color'] );
 			}
 			if ( ! empty( $j['menus'] ) && is_array( $j['menus'] ) && count( $j['menus'] ) >= 4 ) {
 				$app['menus'] = array_map(
-					function ( $m ) {
-						return mb_substr( sanitize_text_field( (string) $m ), 0, 8 );
+					function ( $m ) use ( $t ) {
+						return $t( $m, 7 );
 					},
-					array_slice( $j['menus'], 0, 6 )
+					array_slice( array_values( $j['menus'] ), 0, 6 )
 				);
+			}
+			if ( ! empty( $j['items'] ) && is_array( $j['items'] ) ) {
+				$items = array();
+				foreach ( array_slice( array_values( $j['items'] ), 0, 3 ) as $it ) {
+					if ( is_array( $it ) && ! empty( $it['name'] ) ) {
+						$items[] = array( 'name' => $t( $it['name'], 14 ), 'price' => $t( isset( $it['price'] ) ? $it['price'] : '', 10 ) );
+					}
+				}
+				if ( 3 === count( $items ) ) {
+					$app['items'] = $items;
+				}
+			}
+			if ( ! empty( $j['coupon']['title'] ) ) {
+				$app['coupon'] = array( 'tag' => $t( isset( $j['coupon']['tag'] ) ? $j['coupon']['tag'] : $app['coupon']['tag'], 8 ), 'title' => $t( $j['coupon']['title'], 16 ) );
+			}
+			if ( ! empty( $j['news'] ) && is_array( $j['news'] ) && count( $j['news'] ) >= 2 ) {
+				$app['news'] = array( $t( $j['news'][0], 20 ), $t( $j['news'][1], 20 ) );
+			}
+			if ( ! empty( $j['scene'] ) && is_string( $j['scene'] ) ) {
+				$app['scene'] = mb_substr( preg_replace( '/[^\x20-\x7E]/', '', $j['scene'] ), 0, 220 );
 			}
 			$app['ai'] = true;
 		}
 	}
 	return $app;
+}
+
+/** メインカラーから、ボタンの下地に使う薄い色を作る。 */
+function apprex_labo_soft( $hex ) {
+	$c = sscanf( $hex, '#%02x%02x%02x' );
+	$m = function ( $v ) {
+		return (int) round( $v + ( 255 - $v ) * 0.9 );
+	};
+	return sprintf( '#%02x%02x%02x', $m( $c[0] ), $m( $c[1] ), $m( $c[2] ) );
+}
+
+/* =========================================================================
+ * つくる：アプリのメイン写真をAIで作る（作るたびに1枚）
+ * ====================================================================== */
+
+/** AIで写真を作るか（LABOの設定）。 */
+function apprex_labo_photo_on() {
+	return 'off' !== get_option( 'apprex_labo_photo', 'on' ) && function_exists( 'apprex_openrouter_image' ) && function_exists( 'apprex_openrouter_key' ) && '' !== apprex_openrouter_key();
+}
+
+/** 1日に作る写真の上限（サイト全体）。 */
+function apprex_labo_photo_cap() {
+	$n = (int) get_option( 'apprex_labo_photo_cap', 100 );
+	return $n > 0 ? $n : 100;
+}
+
+/** 今日作った枚数のキー。 */
+function apprex_labo_photo_day_key() {
+	return 'apprex_labo_photo_n_' . wp_date( 'Ymd' );
+}
+
+/** 写真の指示文。 */
+function apprex_labo_photo_prompt( $app ) {
+	return 'Photorealistic professional commercial photograph used as the hero banner of a Japanese '
+		. $app['label'] . ' smartphone app'
+		. ( '' !== $app['shop'] ? ' for a shop named "' . preg_replace( '/["\\\\]/', '', $app['shop'] ) . '"' : '' ) . '. '
+		. 'Scene: ' . $app['scene'] . '. '
+		. 'High-end magazine quality, natural lighting, shallow depth of field, rich but true-to-life colors, horizontal 4:3 composition with the main subject slightly right of center. '
+		. 'No text, no letters, no signs with writing, no logos, no watermark, no frames, no smartphone, no close-up faces.';
+}
+
+/** 写真を作って保存し、URLを返す。 */
+function apprex_labo_photo_make( $app ) {
+	$img = apprex_openrouter_image( apprex_labo_photo_prompt( $app ) );
+	if ( is_wp_error( $img ) ) {
+		return $img;
+	}
+	$up  = wp_upload_dir();
+	$dir = trailingslashit( $up['basedir'] ) . 'apprex-labo';
+	if ( ! wp_mkdir_p( $dir ) ) {
+		return new WP_Error( 'dir', '保存先を作れませんでした。' );
+	}
+	$name = wp_date( 'Ymd' ) . '-' . wp_generate_password( 10, false ) . '.jpg';
+	$tmp  = $dir . '/tmp-' . $name;
+	file_put_contents( $tmp, $img['data'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+	$ed = wp_get_image_editor( $tmp );
+	if ( is_wp_error( $ed ) ) {
+		wp_delete_file( $tmp );
+		return $ed;
+	}
+	$ed->resize( 960, 720, true );
+	$ed->set_quality( 80 );
+	$saved = $ed->save( $dir . '/' . $name, 'image/jpeg' );
+	wp_delete_file( $tmp );
+	if ( is_wp_error( $saved ) ) {
+		return $saved;
+	}
+	return trailingslashit( $up['baseurl'] ) . 'apprex-labo/' . $name;
 }
 
 /* =========================================================================
@@ -289,6 +409,7 @@ add_action( 'rest_api_init', function () {
 	$open = '__return_true';
 	register_rest_route( 'apprex/v1', '/labo/hello', array( 'methods' => 'POST', 'permission_callback' => $open, 'callback' => 'apprex_labo_rest_hello' ) );
 	register_rest_route( 'apprex/v1', '/labo/make', array( 'methods' => 'POST', 'permission_callback' => $open, 'callback' => 'apprex_labo_rest_make' ) );
+	register_rest_route( 'apprex/v1', '/labo/photo', array( 'methods' => 'POST', 'permission_callback' => $open, 'callback' => 'apprex_labo_rest_photo' ) );
 	register_rest_route( 'apprex/v1', '/labo/posts', array( 'methods' => 'GET', 'permission_callback' => $open, 'callback' => 'apprex_labo_rest_posts' ) );
 	register_rest_route( 'apprex/v1', '/labo/post', array( 'methods' => 'POST', 'permission_callback' => $open, 'callback' => 'apprex_labo_rest_post' ) );
 } );
@@ -358,7 +479,48 @@ function apprex_labo_rest_make( WP_REST_Request $req ) {
 		}
 		apprex_labo_log( $who['uid'], 'make', $app['label'] . ' ' . $shop );
 	}
-	return rest_ensure_response( array( 'ok' => true, 'app' => $app ) );
+	// 写真は次の呼び出しで作る（画面を先に見せる）。その1回だけ使える合言葉を渡す。
+	$out = array( 'ok' => true, 'app' => $app );
+	if ( apprex_labo_photo_on() && (int) get_option( apprex_labo_photo_day_key(), 0 ) < apprex_labo_photo_cap() ) {
+		$pkey = 'apprex_labo_pk_' . md5( $who ? $who['uid'] : $key );
+		if ( (int) get_transient( $pkey ) < 5 ) {
+			$tok = wp_generate_password( 20, false );
+			set_transient( 'apprex_labo_pt_' . $tok, array( 'app' => $app, 'uid' => $who ? $who['uid'] : '', 'pkey' => $pkey ), 10 * MINUTE_IN_SECONDS );
+			$out['photoToken'] = $tok;
+		}
+	}
+	return rest_ensure_response( $out );
+}
+
+/** つくる：メイン写真をAIで作る。 */
+function apprex_labo_rest_photo( WP_REST_Request $req ) {
+	$tok = preg_replace( '/[^A-Za-z0-9]/', '', (string) $req->get_param( 'token' ) );
+	$t   = '' !== $tok ? get_transient( 'apprex_labo_pt_' . $tok ) : false;
+	if ( ! is_array( $t ) ) {
+		return new WP_REST_Response( array( 'ok' => false, 'message' => '写真を作れませんでした。' ), 200 );
+	}
+	delete_transient( 'apprex_labo_pt_' . $tok );
+	$day = apprex_labo_photo_day_key();
+	$n   = (int) get_option( $day, 0 );
+	if ( ! apprex_labo_photo_on() || $n >= apprex_labo_photo_cap() ) {
+		return new WP_REST_Response( array( 'ok' => false, 'message' => '本日の写真づくりは終了しました。' ), 200 );
+	}
+	update_option( $day, $n + 1, false );
+	set_transient( $t['pkey'], (int) get_transient( $t['pkey'] ) + 1, DAY_IN_SECONDS );
+	$url = apprex_labo_photo_make( $t['app'] );
+	if ( is_wp_error( $url ) ) {
+		return new WP_REST_Response( array( 'ok' => false, 'message' => '写真を作れませんでした。' ), 200 );
+	}
+	if ( '' !== $t['uid'] ) {
+		$fid = apprex_labo_friend( $t['uid'] );
+		$cur = $fid ? get_post_meta( $fid, 'apprex_labo_app', true ) : null;
+		// 作ったあとに作り直していなければ、その画面に写真をつける。
+		if ( is_array( $cur ) && $cur['shop'] === $t['app']['shop'] && $cur['catch'] === $t['app']['catch'] ) {
+			$cur['photo'] = $url;
+			update_post_meta( $fid, 'apprex_labo_app', $cur );
+		}
+	}
+	return rest_ensure_response( array( 'ok' => true, 'photo' => $url ) );
 }
 
 function apprex_labo_rest_posts( WP_REST_Request $req ) {
@@ -402,6 +564,7 @@ add_action( 'template_redirect', function () {
 	$liff = apprex_labo_liff_id();
 	$cfg  = array(
 		'liff'     => $liff,
+		'img'      => APPREX_URI . '/assets/images/',
 		'rest'     => esc_url_raw( rest_url( 'apprex/v1/' ) ),
 		'nonce'    => wp_create_nonce( 'wp_rest' ),
 		'inds'     => array_map(
@@ -430,7 +593,7 @@ add_action( 'template_redirect', function () {
 <link rel="stylesheet" href="<?php echo esc_url( APPREX_URI . '/assets/css/meeting.css?v=' . APPREX_VERSION ); ?>">
 </head><body>
 <div class="lb" id="labo" data-cfg="<?php echo esc_attr( wp_json_encode( $cfg ) ); ?>">
-	<header class="lb-top"><div class="lb-logo">L</div><div><b>APPREX LABO</b><small>公式LINE ミニアプリ</small></div></header>
+	<header class="lb-top"><div class="lb-logo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg></div><div><b>APPREX <span>LABO</span></b><small>公式LINE ミニアプリ</small></div></header>
 	<main class="lb-main" id="lbMain"><div class="lb-loading"><span></span>読み込んでいます…</div></main>
 	<nav class="lb-nav" id="lbNav">
 		<button type="button" data-tab="home" class="on"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>ホーム</button>
@@ -456,6 +619,16 @@ add_action( 'admin_menu', function () {
 } );
 add_action( 'admin_init', function () {
 	register_setting( 'apprex_labo', 'apprex_labo_liff_id', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+	register_setting(
+		'apprex_labo',
+		'apprex_labo_photo',
+		array(
+			'sanitize_callback' => function ( $v ) {
+				return 'off' === $v ? 'off' : 'on';
+			},
+		)
+	);
+	register_setting( 'apprex_labo', 'apprex_labo_photo_cap', array( 'sanitize_callback' => 'absint' ) );
 	register_setting(
 		'apprex_labo_links',
 		'apprex_labo_srcs',
@@ -508,6 +681,15 @@ function apprex_labo_settings_page() {
 			<table class="form-table" role="presentation"><tbody>
 				<tr><th><label for="apprex_labo_liff_id">LABOのLIFF ID</label></th><td><input type="text" id="apprex_labo_liff_id" name="apprex_labo_liff_id" value="<?php echo esc_attr( apprex_labo_liff_id() ); ?>" class="regular-text" placeholder="2010460182-xxxxxxxx">
 				<p class="description">LABOのURL：<code><?php echo esc_html( apprex_labo_url() ); ?></code></p></td></tr>
+				<tr><th><label for="apprex_labo_photo">アプリ画面の写真</label></th><td>
+					<select id="apprex_labo_photo" name="apprex_labo_photo">
+						<option value="on" <?php selected( 'off' !== get_option( 'apprex_labo_photo', 'on' ) ); ?>>お店ごとにAIで作る</option>
+						<option value="off" <?php selected( 'off' === get_option( 'apprex_labo_photo', 'on' ) ); ?>>作らない（業種の色だけ）</option>
+					</select>
+					<p class="description">「つくる」のたびに、そのお店用のメイン写真を1枚AIで作ります（OpenRouterの画像モデル：<?php echo esc_html( function_exists( 'apprex_image_model' ) ? apprex_image_model() : '' ); ?>。1枚あたり約10円前後）。1人1日5枚まで。</p></td></tr>
+				<tr><th><label for="apprex_labo_photo_cap">1日に作る写真の上限</label></th><td>
+					<input type="number" min="1" id="apprex_labo_photo_cap" name="apprex_labo_photo_cap" value="<?php echo esc_attr( apprex_labo_photo_cap() ); ?>" class="small-text"> 枚（サイト全体）
+					<p class="description">今日作った枚数：<?php echo esc_html( (int) get_option( apprex_labo_photo_day_key(), 0 ) ); ?>枚。上限をこえると、その日は写真なしの画面になります。</p></td></tr>
 			</tbody></table>
 			<?php submit_button(); ?>
 		</form>
