@@ -516,3 +516,8 @@
 .hp-full-stage{flex:1;display:flex;justify-content:center;padding:0 16px 16px;min-height:0}
 .hp-full-stage iframe{width:100%;height:100%;border:0;border-radius:10px;background:#fff;transition:width .25s ease}
 .hp-full.is-sp .hp-full-stage iframe{width:390px;max-width:100%;border-radius:28px;border:10px solid #111827}
+/* AIデザイン：デザインの整理（削除・リセット） */
+.rn-studio .aid-clean{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px;padding:10px 12px;border:1px dashed rgba(255,255,255,.35);border-radius:12px;font-size:.82rem;color:#e2e8f0}
+.rn-studio .aid-clean span{font-weight:700;margin-right:auto}
+.rn-studio .aid-del{color:#b91c1c!important;border-color:#fecaca!important}
+.rn-studio .aid-del:hover{background:#fef2f2!important}

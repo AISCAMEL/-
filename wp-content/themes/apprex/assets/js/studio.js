@@ -197,11 +197,13 @@ function aiPanel(){
   if(GEN.busy){
     gal='<div class="aid-main loading" role="status"><div class="aid-spin"></div><b>AIがデザインしています…</b><span>'+esc((KINDS.filter(function(k){return k[0]===GEN.kind;})[0]||[])[1]||'')+'を作成中。30〜60秒ほどかかります。</span></div>';
   }else if(m){
-    gal='<figure class="aid-main"><button type="button" class="aid-zoom" data-zoom="'+esc(m.url)+'" aria-label="拡大して見る"><img src="'+esc(m.url)+'" alt="AIが生成した'+esc(m.label)+'"></button><figcaption><span class="aid-tag">'+esc(m.label)+(m.picked?'・採用中':'')+'</span><small>'+esc(m.time)+(m.note?'　'+esc(m.note):'')+'</small><button type="button" class="btn btn--sm '+(m.picked?'btn--line':'btn--pri')+'" data-pick="'+m.id+'" data-kind="'+m.kind+'">'+(m.picked?'採用を外す':'この案を採用')+'</button></figcaption></figure>';
+    gal='<figure class="aid-main"><button type="button" class="aid-zoom" data-zoom="'+esc(m.url)+'" aria-label="拡大して見る"><img src="'+esc(m.url)+'" alt="AIが生成した'+esc(m.label)+'"></button><figcaption><span class="aid-tag">'+esc(m.label)+(m.picked?'・採用中':'')+'</span><small>'+esc(m.time)+(m.note?'　'+esc(m.note):'')+'</small><button type="button" class="btn btn--sm '+(m.picked?'btn--line':'btn--pri')+'" data-pick="'+m.id+'" data-kind="'+m.kind+'">'+(m.picked?'採用を外す':'この案を採用')+'</button><button type="button" class="btn btn--sm btn--line aid-del" data-imgdel="'+m.id+'">このデザインを削除</button></figcaption></figure>';
   }else{
     gal='<div class="aid-main empty"><b>ここにAIのデザインが表示されます</b><span>左で要望を書いて「画面デザインを生成」を押すと、5画面のデザインカンプを本格的な画像で作ります。アイコンやメインビジュアルも作れます。</span></div>';
   }
   var th=IMGS.length>1?'<div class="aid-thumbs" aria-label="生成したデザイン">'+IMGS.map(function(im){return '<button type="button" class="aid-th'+(m&&im.id===m.id?' on':'')+'" data-show="'+im.id+'" title="'+esc(im.label+' '+im.time)+'"><img src="'+esc(im.url)+'" alt="">'+(im.picked?'<i>採用</i>':'')+'</button>';}).join('')+'</div>':'';
+  var nUn=IMGS.filter(function(im){return !im.picked;}).length;
+  if(IMGS.length&&!GEN.busy) th+='<div class="aid-clean"><span>デザインの整理（'+IMGS.length+'枚）</span>'+(nUn&&nUn<IMGS.length?'<button type="button" class="btn btn--sm btn--line" data-imgdel="unpicked">採用以外をまとめて削除（'+nUn+'枚）</button>':'')+'<button type="button" class="btn btn--sm btn--line aid-del" data-imgdel="all">すべて削除してリセット</button></div>';
   var gen=KINDS.map(function(k){return '<button type="button" class="btn '+(k[0]==='screens'?'btn--cta':'btn--line')+' btn--sm" data-gen="'+k[0]+'"'+(GEN.busy||!AI.image||AI.left<=0?' disabled':'')+'>'+k[1]+'を生成</button>';}).join('');
   var sug=['高級感のある和モダンにして、写真を大きく','20代女性向けにかわいく、予約を目立たせて','シニアにも読みやすく、ボタンを大きく','黒とゴールドで会員制の雰囲気に','ナチュラルで温かい雰囲気、緑を基調に'];
   return '<div class="card aid">'
@@ -858,6 +860,13 @@ document.addEventListener('click',function(e){
   if(t.dataset.gen){ genImage(t.dataset.gen); return; }
   if(t.dataset.zoom){ zoom(t.dataset.zoom); return; }
   if(t.dataset.show){ S._show=+t.dataset.show; render(); return; }
+  if(t.dataset.imgdel){
+    var dv=t.dataset.imgdel, msg=dv==='all'?'AIで作ったデザイン画像を、すべて削除します。元に戻せません。よろしいですか？':(dv==='unpicked'?'「採用」にしていないデザイン画像を、まとめて削除します。元に戻せません。よろしいですか？':'このデザイン画像を削除します。よろしいですか？');
+    if(!window.confirm(msg)) return;
+    t.disabled=true;
+    api('studio/ai-image',{remove:dv}).then(function(b){ IMGS=b.images||[]; S._show=0; S.vers.push({n:S.vers.length+1,note:'AIデザイン画像を'+(b.removed||0)+'枚削除'+(dv==='all'?'（リセット）':'')}); save(); render(); }).catch(function(x){ alert(x.message); t.disabled=false; });
+    return;
+  }
   if(t.dataset.pick){ t.disabled=true; api('studio/ai-image',{pick:+t.dataset.pick,kind:t.dataset.kind}).then(function(b){ IMGS=b.images||IMGS; save(); render(); }).catch(function(x){ alert(x.message); t.disabled=false; }); return; }
   if(t.dataset.day){ S._day=+t.dataset.day; S._time=null; render(); return; }
   if(t.dataset.time){ S._time=t.dataset.time; render(); return; }

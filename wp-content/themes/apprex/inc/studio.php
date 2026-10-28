@@ -744,6 +744,29 @@ function apprex_studio_rest_ai_image( WP_REST_Request $request ) {
 	$uid  = get_current_user_id();
 	$kind = sanitize_key( (string) $request->get_param( 'kind' ) );
 
+	// 削除（1枚・採用以外・すべて）。生成はしない。
+	$remove = $request->get_param( 'remove' );
+	if ( null !== $remove && '' !== $remove ) {
+		$list = apprex_studio_images( $uid );
+		$keep = array();
+		foreach ( $list as $im ) {
+			$id  = (int) $im['id'];
+			$del = ( 'all' === $remove )
+				|| ( 'unpicked' === $remove && empty( $im['picked'] ) )
+				|| ( is_numeric( $remove ) && (int) $remove === $id );
+			if ( $del ) {
+				// 自分が生成した画像だけ、メディアからも消す。
+				if ( (int) get_post_meta( $id, '_apprex_studio_user', true ) === $uid ) {
+					wp_delete_attachment( $id, true );
+				}
+				continue;
+			}
+			$keep[] = $im;
+		}
+		update_user_meta( $uid, 'apprex_studio_images', $keep );
+		return rest_ensure_response( array( 'ok' => true, 'images' => apprex_studio_images_out( $uid ), 'removed' => count( $list ) - count( $keep ) ) );
+	}
+
 	// 採用（生成はしない）。
 	$pick = (int) $request->get_param( 'pick' );
 	if ( $pick ) {
