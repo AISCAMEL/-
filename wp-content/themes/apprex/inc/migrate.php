@@ -46,7 +46,42 @@ add_action( 'init', function () {
 		apprex_migrate_restore_178();
 		update_option( 'apprex_migrated', 180 );
 	}
+	if ( $v < 185 ) {
+		apprex_migrate_fee_185();
+		update_option( 'apprex_migrated', 185 );
+	}
 }, 20 );
+
+/**
+ * v1.85.0：アプリの初期費用を3つの作り方に合わせる。
+ * ノーコード（APPREXの基盤で作れる範囲）15万円＋月額／カスタマイズは別途お見積もり／フルスクラッチは要相談。
+ * 「1からヒアリングして制作 30万円〜」はなくなった。チャットの知識と広告LPを直す（元は控えに保存）。
+ */
+function apprex_migrate_fee_185() {
+	$k = (string) get_option( 'apprex_chat_knowledge', '' );
+	if ( '' !== $k ) {
+		$map = array(
+			'・アプリの初期費用：AIスタジオで作った内容から制作 15万円〜／AIスタジオを使わず1からヒアリングして制作 30万円〜（制作・ストア申請・初期設定を含む）。自分で設定する0円のプランはない。' => '・アプリの初期費用は作り方で3つ。ノーコード（APPREXの基盤で作れる範囲）：初期費用15万円＋月額（制作・ストア申請・初期設定を含む）。カスタマイズ（基盤をカスタマイズ）：内容と最初のロットで変わるため別途お見積もり。フルスクラッチ：用途に応じて相談し、すべてお見積もり。自分で設定する0円のプランはない。',
+			'アプリは月額19,800円〜で、作った内容から制作する初期費用は15万円〜です。' => 'アプリはノーコードなら初期費用15万円＋月額19,800円〜です。',
+			'アプリは月額19,800円〜、初期費用15万円〜（AIスタジオで作った内容から制作）です。' => 'アプリはノーコードなら月額19,800円〜、初期費用15万円です。',
+			'月額19,800円〜・初期費用15万円〜です。' => '月額19,800円〜・初期費用15万円です。',
+		);
+		$n = strtr( str_replace( "\r\n", "\n", $k ), $map );
+		if ( $n !== $k ) {
+			add_option( 'apprex_chat_knowledge_backup_185', $k, '', false );
+			update_option( 'apprex_chat_knowledge', $n );
+		}
+	}
+	if ( post_type_exists( 'clp' ) ) {
+		global $wpdb;
+		$ids = $wpdb->get_col( "SELECT ID FROM {$wpdb->posts} WHERE post_type = 'clp' AND post_content LIKE '%15万<span>円〜</span>%'" );
+		foreach ( (array) $ids as $id ) {
+			$post = get_post( (int) $id );
+			$c    = str_replace( '<b>15万<span>円〜</span></b><em>制作・ストア申請まで</em>', '<b>15万<span>円</span></b><em>ノーコード・制作・ストア申請まで</em>', $post->post_content );
+			apprex_migrate_save_content( $post, $c, '185' );
+		}
+	}
+}
 
 /** メール文面の上書きを整理する。 */
 function apprex_migrate_mail_overrides_160() {

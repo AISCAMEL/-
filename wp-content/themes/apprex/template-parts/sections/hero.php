@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 			<div class="hero__badges">
 				<span class="hero__badge"><?php esc_html_e( 'iOS / Android 対応', 'apprex' ); ?></span>
-				<span class="hero__badge"><?php esc_html_e( 'AIスタジオ無料・初期費用15万円〜', 'apprex' ); ?></span>
+				<span class="hero__badge"><?php esc_html_e( 'AIスタジオ無料・初期費用15万円', 'apprex' ); ?></span>
 			</div>
 
 			<div class="hero__cta">

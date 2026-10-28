@@ -4,7 +4,7 @@ Theme URI: https://site.aiscompany.jp/
 Author: AIS Company
 Author URI: https://site.aiscompany.jp/
 Description: クラウド型アプリ開発プラットフォーム「APPREX」公式サイト用テーマ。Hello Elementor の思想を踏襲したライセンス非依存の自作テーマ。固定ページ構成＋カスタム投稿タイプ cases によるリニューアル実装。モバイルファースト・WebP・Lazy Load 対応。
-Version: 1.85.0
+Version: 1.86.0
 Requires at least: 6.0
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -1265,7 +1265,8 @@ a:focus-visible, button:focus-visible, .btn:focus-visible, summary:focus-visible
 .ph-ask-b { display: flex; flex-wrap: wrap; gap: 10px; }
 .ph-ask .btn--ghost { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .6); }
 .ph-ask .btn--ghost:hover { background: rgba(255, 255, 255, .12); color: #fff; }
-.setup-compare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 8px; }
+.setup-compare { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 8px; }
+@media (max-width: 960px) and (min-width: 761px) { .setup-compare { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 760px) { .setup-compare { grid-template-columns: 1fr; } }
 .setup-card { position: relative; background: #fff; border: 1px solid var(--color-line); border-radius: 16px; padding: 24px 22px 20px; display: flex; flex-direction: column; }
 .setup-card.is-feat { border: 2px solid var(--color-primary); background: var(--color-primary-light); }
@@ -1292,6 +1293,7 @@ a:focus-visible, button:focus-visible, .btn:focus-visible, summary:focus-visible
 .setup-price b { font-size: 2.2rem; font-weight: 900; letter-spacing: -.02em; }
 .setup-card.is-feat .setup-price b { color: var(--color-cta-dark); }
 .setup-price span { font-weight: 700; font-size: .9rem; }
+.setup-price.is-quote b { font-size: 1.7rem; letter-spacing: 0; }
 .ph-plans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 14px 0 0; }
 .ph-plans div { background: var(--color-bg-soft); border-radius: 10px; padding: 8px 6px; text-align: center; }
 .ph-plans dt { font-size: .74rem; color: var(--color-muted); font-weight: 700; }

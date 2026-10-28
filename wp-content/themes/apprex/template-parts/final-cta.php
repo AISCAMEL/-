@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 <section class="section final-cta" id="final-cta">
 	<div class="container">
 		<h2 class="is-reveal">アプリづくりは、無料のAIスタジオから。</h2>
-		<p class="is-reveal">会員登録だけで、AIがデザイン・試作・仕様書まで作ります。作った内容から制作する場合の初期費用は15万円〜（1からは30万円〜）。</p>
+		<p class="is-reveal">会員登録だけで、AIがデザイン・試作・仕様書まで作ります。ノーコードなら初期費用15万円＋月額。カスタマイズ・フルスクラッチはお見積もりです。</p>
 		<div class="final-cta__actions is-reveal">
 			<a class="btn btn--primary btn--lg" href="<?php echo esc_url( apprex_studio_url() ); ?>">AIスタジオを無料で使う</a>
 			<a class="btn btn--ghost btn--lg" href="<?php echo esc_url( apprex_page_url( 'meeting' ) ); ?>">オンラインで相談する</a>

@@ -39,7 +39,7 @@ $apprex_render_service = function ( $svc, $featured = '' ) use ( $apprex_est, $a
 			<ul class="feats">
 				<?php if ( empty( $svc['setup'] ) ) : ?><li><?php esc_html_e( '開発費用 0円', 'apprex' ); ?></li><?php endif; ?>
 				<?php if ( ! empty( $svc['setup'] ) ) : ?>
-					<li><?php esc_html_e( '初期費用', 'apprex' ); ?> <strong>15万円〜</strong><?php esc_html_e( '（AIスタジオで作った内容から制作。1からは30万円〜）', 'apprex' ); ?></li>
+					<li><?php esc_html_e( '初期費用', 'apprex' ); ?> <strong>15万円</strong><?php esc_html_e( '（ノーコード。カスタマイズ・フルスクラッチはお見積もり）', 'apprex' ); ?></li>
 					<li><?php esc_html_e( 'デザイン・仕様書づくりはAIスタジオで無料', 'apprex' ); ?></li>
 				<?php else : ?>
 					<li><?php esc_html_e( '初期費用', 'apprex' ); ?> <strong><?php echo esc_html( number_format( $initial ) ); ?>円</strong></li>
@@ -75,17 +75,21 @@ $apprex_render_service = function ( $svc, $featured = '' ) use ( $apprex_est, $a
 };
 ?>
 
-<h3 class="plan-group-title"><?php esc_html_e( 'アプリ開発プラン（月額制・AIスタジオから制作）', 'apprex' ); ?></h3>
-<p class="plan-note"><?php esc_html_e( 'AIスタジオ（デザイン・試作・仕様定義書）は無料。作った内容から制作して、初期費用15万円〜。ダウンロード数課金なし・プッシュ通知無制限。', 'apprex' ); ?></p>
+<h3 class="plan-group-title"><?php esc_html_e( 'アプリ開発プラン（ノーコード・月額制）', 'apprex' ); ?></h3>
+<p class="plan-note"><?php esc_html_e( 'APPREXの基盤で作れる範囲（ノーコード）なら、初期費用15万円＋月額。デザイン・試作・仕様定義書はAIスタジオで無料。ダウンロード数課金なし・プッシュ通知無制限。', 'apprex' ); ?></p>
 <?php $apprex_render_service( $apprex_cfg['services']['app'], 'start' ); ?>
 <?php if ( ! empty( $apprex_cfg['services']['app']['setup'] ) ) : ?>
-	<h3 class="plan-group-title"><?php esc_html_e( '初期費用（作り方で選べます）', 'apprex' ); ?></h3>
+	<h3 class="plan-group-title"><?php esc_html_e( '初期費用（作り方は3つ）', 'apprex' ); ?></h3>
 	<div class="setup-compare">
 		<?php foreach ( $apprex_cfg['services']['app']['setup'] as $apprex_sk => $apprex_st ) : ?>
 			<div class="setup-card<?php echo 'ai' === $apprex_sk ? ' is-feat' : ''; ?>">
-				<?php if ( 'ai' === $apprex_sk ) : ?><span class="setup-badge"><?php esc_html_e( 'おすすめ・初期費用が半分', 'apprex' ); ?></span><?php endif; ?>
+				<?php if ( 'ai' === $apprex_sk ) : ?><span class="setup-badge"><?php esc_html_e( 'いちばん手軽・おすすめ', 'apprex' ); ?></span><?php endif; ?>
 				<h4><?php echo esc_html( $apprex_st['label'] ); ?></h4>
-				<div class="setup-price"><b><?php echo esc_html( number_format( $apprex_st['price'] ) ); ?></b><span><?php esc_html_e( '円〜（税抜）', 'apprex' ); ?></span></div>
+				<?php if ( ! empty( $apprex_st['quote'] ) ) : ?>
+					<div class="setup-price is-quote"><b><?php echo esc_html( $apprex_st['price_label'] ); ?></b></div>
+				<?php else : ?>
+					<div class="setup-price"><b><?php echo esc_html( number_format( $apprex_st['price'] ) ); ?></b><span><?php esc_html_e( '円（税抜）＋月額', 'apprex' ); ?></span></div>
+				<?php endif; ?>
 				<p><?php echo esc_html( $apprex_st['desc'] ); ?></p>
 				<?php if ( 'ai' === $apprex_sk ) : ?>
 					<a class="btn btn--cta btn--block" href="<?php echo esc_url( function_exists( 'apprex_studio_url' ) ? apprex_studio_url() : $apprex_est ); ?>"><?php esc_html_e( 'AIスタジオで無料で作る', 'apprex' ); ?></a>
