@@ -80,6 +80,7 @@ add_action( 'rest_api_init', function () {
 	register_rest_route( 'apprex/v1', '/studio/message', array( 'methods' => 'POST', 'callback' => 'apprex_studio_rest_message', 'permission_callback' => $member ) );
 	register_rest_route( 'apprex/v1', '/studio/ai-design', array( 'methods' => 'POST', 'callback' => 'apprex_studio_rest_ai_design', 'permission_callback' => $member ) );
 	register_rest_route( 'apprex/v1', '/studio/ai-image', array( 'methods' => 'POST', 'callback' => 'apprex_studio_rest_ai_image', 'permission_callback' => $member ) );
+	register_rest_route( 'apprex/v1', '/studio/reset', array( 'methods' => 'POST', 'callback' => 'apprex_studio_rest_reset', 'permission_callback' => $member ) );
 	register_rest_route( 'apprex/v1', '/studio/ai-plan', array( 'methods' => 'POST', 'callback' => 'apprex_studio_rest_ai_plan', 'permission_callback' => $member ) );
 } );
 
@@ -542,6 +543,42 @@ function apprex_studio_image_left( $user_id ) {
 	$u = get_user_meta( $user_id, 'apprex_studio_img_usage', true );
 	$n = ( is_array( $u ) && isset( $u['d'] ) && wp_date( 'Ymd' ) === $u['d'] ) ? (int) $u['n'] : 0;
 	return max( 0, apprex_studio_image_limit() - $n );
+}
+
+/**
+ * アプリのAIスタジオを最初からやり直す（デザイン・AI画像・ロゴと写真・進み具合）。
+ * 担当者とのメッセージと、送った相談・予約の記録（お問い合わせ）は残す。ご契約後（入金済み）は進み具合を戻さない。
+ *
+ * @param WP_REST_Request $request Request.
+ * @return WP_REST_Response|WP_Error
+ */
+function apprex_studio_rest_reset( WP_REST_Request $request ) {
+	if ( ! apprex_studio_check_nonce( $request ) ) {
+		return new WP_Error( 'forbidden', '再読み込みしてください。', array( 'status' => 403 ) );
+	}
+	$uid = get_current_user_id();
+	if ( (int) get_user_meta( $uid, 'apprex_studio_stage', true ) >= 4 ) {
+		return new WP_Error( 'contracted', 'ご契約済みのため、進み具合は戻せません。デザインを変えたいときは、担当者にメッセージでお知らせください。', array( 'status' => 409 ) );
+	}
+	$own = function ( $id ) use ( $uid ) {
+		return $id && (int) get_post_meta( $id, '_apprex_studio_user', true ) === $uid;
+	};
+	foreach ( apprex_studio_images( $uid ) as $im ) {
+		if ( $own( (int) $im['id'] ) ) {
+			wp_delete_attachment( (int) $im['id'], true );
+		}
+	}
+	$assets = get_user_meta( $uid, 'apprex_studio_assets', true );
+	foreach ( is_array( $assets ) ? $assets : array() as $aid ) {
+		if ( is_numeric( $aid ) && $own( (int) $aid ) ) {
+			wp_delete_attachment( (int) $aid, true );
+		}
+	}
+	foreach ( array( 'apprex_studio_images', 'apprex_studio_assets', 'apprex_studio_state', 'apprex_studio_meeting' ) as $k ) {
+		delete_user_meta( $uid, $k );
+	}
+	update_user_meta( $uid, 'apprex_studio_stage', 0 );
+	return rest_ensure_response( array( 'ok' => true ) );
 }
 
 /** 生成画像の一覧（保存形式）。 */

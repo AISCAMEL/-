@@ -203,7 +203,7 @@ function aiPanel(){
   }
   var th=IMGS.length>1?'<div class="aid-thumbs" aria-label="生成したデザイン">'+IMGS.map(function(im){return '<button type="button" class="aid-th'+(m&&im.id===m.id?' on':'')+'" data-show="'+im.id+'" title="'+esc(im.label+' '+im.time)+'"><img src="'+esc(im.url)+'" alt="">'+(im.picked?'<i>採用</i>':'')+'</button>';}).join('')+'</div>':'';
   var nUn=IMGS.filter(function(im){return !im.picked;}).length;
-  if(IMGS.length&&!GEN.busy) th+='<div class="aid-clean"><span>デザインの整理（'+IMGS.length+'枚）</span>'+(nUn&&nUn<IMGS.length?'<button type="button" class="btn btn--sm btn--line" data-imgdel="unpicked">採用以外をまとめて削除（'+nUn+'枚）</button>':'')+'<button type="button" class="btn btn--sm btn--line aid-del" data-imgdel="all">すべて削除してリセット</button></div>';
+  if(IMGS.length&&!GEN.busy) th+='<div class="aid-clean"><span>デザインの整理（'+IMGS.length+'枚）</span>'+(nUn&&nUn<IMGS.length?'<button type="button" class="btn btn--sm btn--line" data-imgdel="unpicked">採用以外をまとめて削除（'+nUn+'枚）</button>':'')+'<button type="button" class="btn btn--sm btn--line aid-del" data-imgdel="all">最初から作り直す（すべてリセット）</button></div>';
   var gen=KINDS.map(function(k){return '<button type="button" class="btn '+(k[0]==='screens'?'btn--cta':'btn--line')+' btn--sm" data-gen="'+k[0]+'"'+(GEN.busy||!AI.image||AI.left<=0?' disabled':'')+'>'+k[1]+'を生成</button>';}).join('');
   var sug=['高級感のある和モダンにして、写真を大きく','20代女性向けにかわいく、予約を目立たせて','シニアにも読みやすく、ボタンを大きく','黒とゴールドで会員制の雰囲気に','ナチュラルで温かい雰囲気、緑を基調に'];
   return '<div class="card aid">'
@@ -860,6 +860,7 @@ document.addEventListener('click',function(e){
   if(t.dataset.gen){ genImage(t.dataset.gen); return; }
   if(t.dataset.zoom){ zoom(t.dataset.zoom); return; }
   if(t.dataset.show){ S._show=+t.dataset.show; render(); return; }
+  if(t.dataset.imgdel==='all'){ resetAll(t); return; }
   if(t.dataset.imgdel){
     var dv=t.dataset.imgdel, msg=dv==='all'?'AIで作ったデザイン画像を、すべて削除します。元に戻せません。よろしいですか？':(dv==='unpicked'?'「採用」にしていないデザイン画像を、まとめて削除します。元に戻せません。よろしいですか？':'このデザイン画像を削除します。よろしいですか？');
     if(!window.confirm(msg)) return;
@@ -1046,10 +1047,17 @@ document.addEventListener('click',function(e){
 window.addEventListener('resize',function(){ tourPlace(); });
 window.addEventListener('scroll',function(){ tourPlace(); },{passive:true});
 document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&TOUR){ tourClose(); } });
-if($('reset')) $('reset').addEventListener('click',function(){
-  if(!window.confirm('デザインと仕様の内容を最初の状態に戻します。よろしいですか？（相談・予約の記録は残ります）')) return;
-  var keep={prog:S.prog,meeting:S.meeting,met:S.met,paid:S.paid,prod:S.prod,msgs:S.msgs,consulted:S.consulted};
-  S=def(); Object.keys(keep).forEach(function(k){ S[k]=keep[k]; }); IMG={logo:null,photo:null}; saveImg(); render();
-});
+/* 最初から作り直す：デザイン・AI画像・ロゴと写真・進み具合（左メニューの「完了」）をすべて最初に戻す。 */
+function resetAll(btn){
+  if(S.paid){ alert('ご契約済みのため、進み具合は戻せません。デザインを変えたいときは、担当者にメッセージでお知らせください。'); return; }
+  if(!window.confirm('最初から作り直します。\n\nデザイン・仕様・AIで作った画像・ロゴと写真・進み具合（左メニューの「完了」）がすべて消え、AIデザインの最初の画面に戻ります。元に戻せません。\n\n担当者とのメッセージと、すでに送った相談・予約は担当者側に残ります。よろしいですか？')) return;
+  if(btn){ btn.disabled=true; }
+  api('studio/reset',{}).then(function(){
+    var msgs=S.msgs; S=def(); S.msgs=msgs; IMGS=[]; IMG={logo:null,photo:null}; GEN={busy:false,kind:''}; STAGE=0;
+    try{ localStorage.removeItem(KEY); localStorage.removeItem(KEY+'-img'); }catch(e){}
+    saveImg(); S.vers=[{n:1,note:'最初から作り直し'}]; save(); go('design');
+  }).catch(function(x){ alert(x.message); if(btn){ btn.disabled=false; } });
+}
+if($('reset')) $('reset').addEventListener('click',function(e){ resetAll(e.currentTarget); });
 render();
 })();

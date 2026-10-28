@@ -113,7 +113,7 @@ else :
     <div class="top-r">
       <span class="saved" id="savedAt" aria-live="polite"></span>
       <span class="user"><?php echo esc_html( $apprex_user->display_name ); ?> 様（無料会員）</span>
-      <?php if ( 'app' === $apprex_mode ) : ?><button type="button" id="reset">デザインを最初から</button><?php endif; ?>
+      <?php if ( 'app' === $apprex_mode ) : ?><button type="button" id="reset">最初から作り直す</button><?php endif; ?>
       <a href="<?php echo esc_url( apprex_mypage_url() ); ?>">マイページ</a>
       <a href="<?php echo esc_url( wp_logout_url( $apprex_here ) ); ?>">ログアウト</a>
     </div>
