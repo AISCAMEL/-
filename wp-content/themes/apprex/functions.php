@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'APPREX_VERSION', '1.83.0' );
+define( 'APPREX_VERSION', '1.84.0' );
 define( 'APPREX_DIR', get_template_directory() );
 define( 'APPREX_URI', get_template_directory_uri() );
 
@@ -70,6 +70,7 @@ require_once APPREX_DIR . '/inc/agency-system.php';
 require_once APPREX_DIR . '/inc/seminar.php';
 require_once APPREX_DIR . '/inc/meeting-booking.php';
 require_once APPREX_DIR . '/inc/richmenu.php';
+require_once APPREX_DIR . '/inc/labo.php';
 require_once APPREX_DIR . '/inc/aimeo.php';
 require_once APPREX_DIR . '/inc/hp-ai.php';
 require_once APPREX_DIR . '/inc/lp-slides.php';
