@@ -16,7 +16,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 <?php
 $apprex_rn    = function_exists( 'apprex_rn_enabled' ) && apprex_rn_enabled();
 $apprex_line  = apprex_line_url();
-$apprex_about = get_page_by_path( 'about' );
 $apprex_priv  = function_exists( 'get_privacy_policy_url' ) ? get_privacy_policy_url() : '';
 $apprex_cols  = array(
 	'サービス'           => array_filter(
@@ -46,7 +45,6 @@ $apprex_cols  = array(
 			$apprex_rn ? array( 'アプリの作り方マニュアル', apprex_manual_url() ) : null,
 			array( 'ブログ', home_url( '/blog/' ) ),
 			array( '会社概要', apprex_page_url( 'company' ) ),
-			( $apprex_about && 'publish' === $apprex_about->post_status ) ? array( '運営者情報', get_permalink( $apprex_about ) ) : null,
 			array( '代理店募集', apprex_page_url( 'partner' ) ),
 			array( '代理店ログイン', home_url( '/agency/' ) ),
 		)

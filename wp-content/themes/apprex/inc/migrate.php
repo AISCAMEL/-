@@ -50,7 +50,34 @@ add_action( 'init', function () {
 		apprex_migrate_fee_185();
 		update_option( 'apprex_migrated', 185 );
 	}
+	if ( $v < 187 ) {
+		apprex_migrate_about_187();
+		update_option( 'apprex_migrated', 187 );
+	}
 }, 20 );
+
+/**
+ * v1.87.0：「運営者情報」（/about/）は使わない。別のサイト（アフィリエイトのブログ）の内容が入っていたので、
+ * 下書きに戻す（消さない）。/about/ は会社概要へ転送する。
+ */
+function apprex_migrate_about_187() {
+	$p = get_page_by_path( 'about' );
+	if ( $p && 'publish' === $p->post_status && ( false !== strpos( $p->post_content, 'affiliate-start-lab' ) || false !== strpos( $p->post_content, 'アフィリエイト' ) ) ) {
+		wp_update_post( array( 'ID' => $p->ID, 'post_status' => 'draft' ) );
+	}
+}
+
+/* /about/ が公開されていなければ、会社概要へ。 */
+add_action( 'template_redirect', function () {
+	if ( ! is_404() ) {
+		return;
+	}
+	$path = trim( (string) wp_parse_url( isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '', PHP_URL_PATH ), '/' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+	if ( 'about' === $path ) {
+		wp_safe_redirect( apprex_page_url( 'company' ), 301 );
+		exit;
+	}
+} );
 
 /**
  * v1.85.0：アプリの初期費用を3つの作り方に合わせる。
