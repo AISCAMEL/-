@@ -485,6 +485,7 @@ function apprex_labo_srcs() {
 			'sns_ad'        => 'SNS広告',
 			'lp_app'        => 'LP（アプリ開発）',
 			'site'          => 'サイト',
+			'richmenu'      => 'LINEのメニュー',
 		);
 	}
 	return $o;

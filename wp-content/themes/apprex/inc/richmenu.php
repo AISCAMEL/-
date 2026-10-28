@@ -24,7 +24,9 @@ function apprex_rm_defs() {
 			'name'  => 'APPREX 一般向け',
 			'bar'   => 'メニュー',
 			'label' => '一般向け（全員）',
-			'keys'  => array( 'studio', 'estimate', 'meeting', 'cases', 'mypage', 'seminar' ),
+			// 左の大きいボタン（LABO）＋右に2×2。
+			'big'   => true,
+			'keys'  => array( 'labo', 'meeting', 'estimate', 'mypage', 'seminar' ),
 		),
 		'agency'  => array(
 			'name'  => 'APPREX 代理店向け',
@@ -38,6 +40,7 @@ function apprex_rm_defs() {
 /** ボタンの名前（LINEの読み上げなどに使う。20文字まで）。 */
 function apprex_rm_labels() {
 	return array(
+		'labo'     => 'APPREX LABO',
 		'studio'   => 'AIスタジオ',
 		'estimate' => '料金・見積もり',
 		'meeting'  => '無料相談を予約',
@@ -60,6 +63,8 @@ function apprex_rm_target( $key ) {
 			// 公開前（プレビュー中）はAIスタジオが見えないので、無料体験へ。
 			$pub = function_exists( 'apprex_rn_public' ) && apprex_rn_public();
 			return ( $pub && function_exists( 'apprex_studio_url' ) ) ? apprex_studio_url() : $page( 'free-trial', '/free-trial/' );
+		case 'labo':
+			return function_exists( 'apprex_labo_url' ) ? apprex_labo_url( 'richmenu' ) : home_url( '/labo' );
 		case 'estimate':
 			return $page( 'estimate', '/estimate/' );
 		case 'meeting':
@@ -180,13 +185,22 @@ function apprex_rm_create( $key ) {
 	$areas  = array();
 	$w      = array( 833, 834, 833 );
 	foreach ( $def['keys'] as $i => $k ) {
-		$col     = $i % 3;
+		if ( ! empty( $def['big'] ) ) {
+			// 0番目は左の列を上下まるごと、残りは右の2×2。
+			$col = 0 === $i ? 0 : 1 + ( ( $i - 1 ) % 2 );
+			$top = $i >= 3;
+			$tall = 0 === $i;
+		} else {
+			$col  = $i % 3;
+			$top  = $i >= 3;
+			$tall = false;
+		}
 		$areas[] = array(
 			'bounds' => array(
 				'x'      => array_sum( array_slice( $w, 0, $col ) ),
-				'y'      => $i < 3 ? 0 : 843,
+				'y'      => $top ? 843 : 0,
 				'width'  => $w[ $col ],
-				'height' => 843,
+				'height' => $tall ? 1686 : 843,
 			),
 			'action' => array(
 				'type'  => 'uri',
@@ -357,6 +371,7 @@ function apprex_rm_page() {
 			LINE公式アカウントの管理画面で作ったメニューより、ここで登録したメニューが優先されます。<br>
 			<?php if ( ! $token ) : ?><b style="color:#b91c1c">先に「APPREX 配信(LINE)」でチャネルアクセストークンを設定してください。</b><br><?php endif; ?>
 			<?php if ( function_exists( 'apprex_seminar_liff_id' ) && '' === apprex_seminar_liff_id() ) : ?><b style="color:#b45309">説明会のLIFF IDが未設定です。設定してから登録すると、「代理店説明会」のボタンがLINEの中で開きます。</b><br><?php endif; ?>
+			<?php if ( function_exists( 'apprex_labo_liff_id' ) && '' === apprex_labo_liff_id() ) : ?><b style="color:#b45309">LABOのLIFF IDが未設定です（LABO → LABOの設定）。設定してから登録すると、左の大きいボタンがLINEの中でLABOを開きます。</b><br><?php endif; ?>
 			状態：<strong><?php echo $ids ? '登録済み（' . esc_html( wp_date( 'Y/n/j H:i', (int) get_option( 'apprex_rm_published' ) ) ) . '）' : '未登録'; ?></strong>
 			／代理店メニューの人：<strong><?php echo count( apprex_rm_agency_uids() ); ?>人</strong>
 			<?php if ( $last ) : ?><br>最後のエラー：<?php echo esc_html( $last ); ?><?php endif; ?>
