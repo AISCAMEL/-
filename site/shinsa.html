@@ -1155,6 +1155,25 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
       },80);
       return;
     }
+
+    /* メールの打ち間違い検知（.com の誤り・代表的なドメイン誤記）：ブロックせず確認のみ */
+    var _emv=(_em||'').trim().toLowerCase();
+    if(_emv){
+      var _warn='';
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(_emv)) _warn='メールアドレスの形式が正しくないかもしれません';
+      else if(/\.(con|cmo|comm|co|om|c0m|ocm|cpm|vom|xom)$/.test(_emv)) _warn='「.com」の打ち間違いかもしれません';
+      else if(/@(gmial|gmai|gamil|gmil|gmaill)\./.test(_emv)) _warn='「gmail.com」の打ち間違いかもしれません';
+      else if(/@(yahooo|yaho|yahoomail)\./.test(_emv)) _warn='Yahooメールの綴りをご確認ください';
+      if(_warn){
+        if(!confirm('メールアドレス「'+_em.trim()+'」は'+_warn+'。\nこのまま送信してよろしいですか？\n\n（修正する場合は「キャンセル」を押してください）')){
+          var _ef=document.getElementById('email-main');
+          if(window.__cafGoToField) window.__cafGoToField(_ef);
+          setTimeout(function(){ if(_ef&&_ef.scrollIntoView)_ef.scrollIntoView({behavior:'smooth',block:'center'}); if(_ef&&_ef.focus)_ef.focus(); },80);
+          return;
+        }
+      }
+    }
+
     /* ---- 送信先の決定 ----
        ・window.SHINSA_ENDPOINT（GAS中継ハブのURL）が設定されていれば、そこへJSON送信
          → GAS側で スプレッドシート／Slack／Asana／WordPress へ自動配信
