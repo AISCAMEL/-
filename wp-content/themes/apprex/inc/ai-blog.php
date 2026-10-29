@@ -78,7 +78,8 @@ function apprex_ai_research_prompt( $tone, $length ) {
 		. "2. その中から、店舗や中小企業の経営者が「自分ごと」として読める話題を1つ選ぶ。下の既存記事と同じテーマは避ける。\n"
 		. "3. 何が起きたか（事実）→ 店舗・中小企業にとって何が変わるか → どう活かすか、の順で解説し、最後の章で APPREX（ノーコードのアプリ開発・AIスタジオ・LINEのLABOなど）でできることと自然につなげる。宣伝ばかりにしない。\n\n"
 		. "条件：トーンは{$tone}文体。本文は約{$length}字。調べて分からなかったことは書かない。日付や数字は調べた情報のとおりに書く。\n"
-		. "出力形式（厳守）：1行目に「TITLE: 記事タイトル（32字前後。検索されやすい言葉を入れる）」。2行目以降に本文を HTML（<h2>,<h3>,<p>,<ul><li> のみ、<h1>不可）で。前置きやあいさつは書かない。\n\n"
+		. "出力形式（厳守）：1行目に「TITLE: 記事タイトル（32字前後。検索されやすい言葉を入れる）」。2行目以降に本文を HTML（<h2>,<h3>,<p>,<ul><li> のみ、<h1>不可）で。前置きやあいさつは書かない。\n"
+		. "Web検索ができなかった・十分な情報が見つからなかったときは、記事を書かずに「ERROR: 理由」の1行だけを出力する。\n\n"
 		. "既存記事（同じテーマは避ける）：\n- " . implode( "\n- ", array_slice( array_filter( $titles ), 0, 40 ) );
 }
 
@@ -278,6 +279,9 @@ function apprex_ai_generate_post( $args ) {
 	$title = $title ? $title : $topic;
 	// 調べた記事：前置き（「調べました」など）を外し、出典を最後に。
 	if ( $research ) {
+		if ( ! preg_match( '/^\s*TITLE\s*[:：]/m', $result ) ) {
+			return new WP_Error( 'no_title', '記事の形で返ってこなかったため、作りませんでした。' );
+		}
 		$p = stripos( $body, '<h2' );
 		$q = stripos( $body, '<p' );
 		$s = min( false === $p ? PHP_INT_MAX : $p, false === $q ? PHP_INT_MAX : $q );

@@ -369,7 +369,7 @@ function apprex_claude_research( $system, $user, $args = array() ) {
 		array(
 			'type'          => $haiku ? 'web_search_20250305' : 'web_search_20260209',
 			'name'          => 'web_search',
-			'max_uses'      => isset( $args['searches'] ) ? (int) $args['searches'] : 5,
+			'max_uses'      => isset( $args['searches'] ) ? (int) $args['searches'] : 8,
 			'user_location' => array( 'type' => 'approximate', 'country' => 'JP', 'timezone' => 'Asia/Tokyo' ),
 		),
 		array(
@@ -381,6 +381,8 @@ function apprex_claude_research( $system, $user, $args = array() ) {
 	$messages = array( array( 'role' => 'user', 'content' => $user ) );
 	$sources  = array();
 	$text     = '';
+	$found    = 0;       // 見つかった検索結果・取得できたページの数。
+	$errors   = array(); // Web検索・取得のエラー（error_code）。
 	for ( $round = 0; $round < 4; $round++ ) {
 		$payload = array(
 			'model'         => $model,
@@ -422,6 +424,17 @@ function apprex_claude_research( $system, $user, $args = array() ) {
 		$content = isset( $body['content'] ) && is_array( $body['content'] ) ? $body['content'] : array();
 		foreach ( $content as $block ) {
 			$type = isset( $block['type'] ) ? $block['type'] : '';
+			// Web検索・取得の結果。失敗は HTTP 200 のまま、content が { error_code } の形で届く。
+			if ( 'web_search_tool_result' === $type || 'web_fetch_tool_result' === $type ) {
+				$c = isset( $block['content'] ) ? $block['content'] : null;
+				if ( is_array( $c ) && isset( $c['error_code'] ) ) {
+					$errors[] = (string) $c['error_code'];
+				} elseif ( 'web_search_tool_result' === $type && is_array( $c ) ) {
+					$found += count( $c );
+				} elseif ( is_array( $c ) ) {
+					$found++;
+				}
+			}
 			if ( 'text' === $type ) {
 				$text .= isset( $block['text'] ) ? $block['text'] : '';
 				// 本文が引用した出典。
@@ -440,6 +453,21 @@ function apprex_claude_research( $system, $user, $args = array() ) {
 		$text       = '';
 	}
 	$text = trim( $text );
+	// 調べられなかったときは記事にしない（「作れませんでした」という文章を記事にしない）。
+	if ( 0 === $found || preg_match( '/^\s*ERROR\s*[:：]/mu', $text ) ) {
+		$why = array(
+			'max_uses_exceeded' => '検索の回数の上限',
+			'too_many_requests' => '短い時間に検索が集中した（しばらく待つと直ります）',
+			'unavailable'       => 'Web検索が使えない状態（Console の組織の設定で Web検索 がオンかご確認ください）',
+			'query_too_long'    => '検索の言葉が長すぎた',
+			'invalid_input'     => '検索の指定が正しくない',
+		);
+		$msg = array();
+		foreach ( array_unique( $errors ) as $e ) {
+			$msg[] = isset( $why[ $e ] ) ? $why[ $e ] . '（' . $e . '）' : $e;
+		}
+		return new WP_Error( 'no_research', 'Web検索ができなかったため、記事は作りませんでした。' . ( $msg ? '理由：' . implode( '／', $msg ) . '。' : '' ) . 'Anthropic Console の設定（組織の Web検索 がオンか、利用上限）をご確認ください。' );
+	}
 	if ( '' === $text ) {
 		return new WP_Error( 'upstream_error', 'Claude の記事が空でした。' );
 	}
