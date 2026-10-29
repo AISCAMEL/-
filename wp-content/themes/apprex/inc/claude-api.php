@@ -454,7 +454,7 @@ function apprex_claude_research( $system, $user, $args = array() ) {
 	}
 	$text = trim( $text );
 	// 調べられなかったときは記事にしない（「作れませんでした」という文章を記事にしない）。
-	if ( 0 === $found || preg_match( '/^\s*ERROR\s*[:：]/mu', $text ) ) {
+	if ( ( 0 === $found && empty( $args['optional'] ) ) || preg_match( '/^\s*ERROR\s*[:：]/mu', $text ) ) {
 		$why = array(
 			'max_uses_exceeded' => '検索の回数の上限',
 			'too_many_requests' => '短い時間に検索が集中した（しばらく待つと直ります）',

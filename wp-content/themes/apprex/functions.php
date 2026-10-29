@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'APPREX_VERSION', '1.95.0' );
+define( 'APPREX_VERSION', '1.96.0' );
 define( 'APPREX_DIR', get_template_directory() );
 define( 'APPREX_URI', get_template_directory_uri() );
 
@@ -87,6 +87,7 @@ require_once APPREX_DIR . '/inc/invoice-pdf.php';
 require_once APPREX_DIR . '/inc/liff.php';
 require_once APPREX_DIR . '/inc/sns-direct.php';
 require_once APPREX_DIR . '/inc/ai-blog.php';
+require_once APPREX_DIR . '/inc/ai-brush.php';
 require_once APPREX_DIR . '/inc/blog.php';
 require_once APPREX_DIR . '/inc/line-banner.php';
 require_once APPREX_DIR . '/inc/seo.php';
