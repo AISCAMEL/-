@@ -145,7 +145,8 @@ function apprex_ai_body_images( $post_id, $title, $count ) {
 	for ( $k = 0; $k < $count && (int) floor( $k * $step ) < count( $cands ); $k++ ) {
 		$picks[] = $cands[ (int) floor( $k * $step ) ];
 	}
-	$model = function_exists( 'apprex_bulk_image_model' ) ? apprex_bulk_image_model() : '';
+	// 画質：標準＝安い画像モデル（約1円）／高画質＝通常の画像モデル（約10円）。
+	$model = 'high' === get_option( 'apprex_ai_body_img_quality', 'std' ) ? '' : ( function_exists( 'apprex_bulk_image_model' ) ? apprex_bulk_image_model() : '' );
 	$done  = 0;
 	// 後ろから入れると、前の位置がずれない。
 	foreach ( array_reverse( $picks ) as $pk ) {
@@ -478,6 +479,15 @@ add_action( 'admin_init', function () {
 	register_setting( 'apprex_aiblog', 'apprex_autopost_line', array( 'sanitize_callback' => 'absint' ) );
 	register_setting(
 		'apprex_aiblog',
+		'apprex_ai_body_img_quality',
+		array(
+			'sanitize_callback' => function ( $v ) {
+				return 'high' === $v ? 'high' : 'std';
+			},
+		)
+	);
+	register_setting(
+		'apprex_aiblog',
 		'apprex_autopost_per_day',
 		array(
 			'sanitize_callback' => function ( $v ) {
@@ -611,7 +621,11 @@ function apprex_ai_blog_page() {
 					<td><select name="apprex_autopost_body_images"><?php $apprex_bi = (int) get_option( 'apprex_autopost_body_images', 2 ); ?>
 						<?php foreach ( array( 0 => '入れない', 1 => '1枚', 2 => '2枚（おすすめ）', 3 => '3枚' ) as $apprex_k => $apprex_l ) : ?><option value="<?php echo esc_attr( $apprex_k ); ?>" <?php selected( $apprex_bi, $apprex_k ); ?>><?php echo esc_html( $apprex_l ); ?></option><?php endforeach; ?>
 					</select>
-					<p class="description"><?php echo esc_html( '見出しの下に、内容に合う写真をAIで作って入れます（安い画像モデル ' . ( function_exists( 'apprex_bulk_image_model' ) ? apprex_bulk_image_model() : '' ) . '・1枚約1円）。' ); ?></p></td></tr>
+					<select name="apprex_ai_body_img_quality" style="margin-left:8px"><?php $apprex_q = get_option( 'apprex_ai_body_img_quality', 'std' ); ?>
+						<option value="std" <?php selected( $apprex_q, 'std' ); ?>>標準（1枚約1円）</option>
+						<option value="high" <?php selected( $apprex_q, 'high' ); ?>>高画質（1枚約10円）</option>
+					</select>
+					<p class="description"><?php echo esc_html( '見出しの下に、内容に合う写真をAIで作って入れます。標準：' . ( function_exists( 'apprex_bulk_image_model' ) ? apprex_bulk_image_model() : '' ) . '／高画質：' . ( function_exists( 'apprex_image_model' ) ? apprex_image_model() : '' ) . '。画質は記事の見直し・「AIで写真を入れる」にも使います。' ); ?></p></td></tr>
 					<tr><th><?php esc_html_e( 'アイキャッチAI生成', 'apprex' ); ?></th>
 					<td><label><input type="checkbox" name="apprex_autopost_image" value="1" <?php checked( 1, (int) get_option( 'apprex_autopost_image', 0 ) ); ?>> <?php esc_html_e( '自動投稿でも画像を生成する', 'apprex' ); ?></label></td></tr>
 				<tr><th><?php esc_html_e( 'トーン', 'apprex' ); ?></th>

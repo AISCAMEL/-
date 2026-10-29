@@ -152,9 +152,18 @@ function apprex_brush_post( $id, $opts = array() ) {
 	delete_post_meta( $id, '_apprex_brush_queued' );
 	delete_post_meta( $id, '_apprex_brush_error' );
 
-	// 本文に写真がなければ入れる（安い画像モデル・1枚約1円）。
+	// 本文に写真がなければ入れる。アイキャッチがなければ作る（約10円）。
 	if ( ! empty( $opts['images'] ) && false === stripos( $body, '<img' ) && function_exists( 'apprex_ai_body_images' ) ) {
 		apprex_ai_body_images( $id, $title, 2 );
+	}
+	if ( ! empty( $opts['images'] ) && ! has_post_thumbnail( $id ) && function_exists( 'apprex_openrouter_image' ) ) {
+		$img = apprex_openrouter_image( 'Photorealistic hero image for a Japanese business blog article titled "' . $title . '". Clean, modern, bright, related to smartphones, apps and small shops in Japan. 16:9 horizontal. No text, no letters, no logos, no watermark.' );
+		if ( ! is_wp_error( $img ) ) {
+			$att = apprex_save_generated_image( $img, $title, $id );
+			if ( ! is_wp_error( $att ) ) {
+				set_post_thumbnail( $id, $att );
+			}
+		}
 	}
 	return array( 'title' => $title );
 }
@@ -292,7 +301,7 @@ function apprex_brush_page() {
 			<input type="hidden" name="action" value="apprex_brush">
 			<p>
 				<label><input type="checkbox" name="research" value="1" <?php checked( ! empty( $opts['research'] ) ); ?> <?php disabled( ! $claude ); ?>> Webで最新の情報を確かめて直す（Claude APIキーが必要）</label>
-				<label style="margin-left:16px"><input type="checkbox" name="images" value="1" <?php checked( ! empty( $opts['images'] ) ); ?>> 本文に写真がなければ2枚入れる（1枚約1円）</label>
+				<label style="margin-left:16px"><input type="checkbox" name="images" value="1" <?php checked( ! empty( $opts['images'] ) ); ?>> 写真がなければAIで作って入れる（本文2枚：1枚約1円〜／アイキャッチ：約10円）</label>
 			</p>
 			<table class="widefat striped"><thead><tr><td class="check-column"><input type="checkbox" onclick="document.querySelectorAll('.apb-c').forEach(function(c){c.checked=this.checked}.bind(this))"></td><th>記事</th><th>文字数</th><th>状態</th><th></th></tr></thead><tbody>
 			<?php foreach ( $posts as $p ) : ?>
