@@ -411,6 +411,94 @@ function apprex_sns_settings_page() {
 
 			<?php submit_button( '保存する' ); ?>
 		</form>
+
+		<hr>
+		<h2 id="ig-connect">Instagramをかんたん連携（トークンを貼るだけ）</h2>
+		<?php $apprex_ign = get_transient( 'apprex_ig_connect_notice' ); delete_transient( 'apprex_ig_connect_notice' ); ?>
+		<?php if ( is_array( $apprex_ign ) ) : ?><div class="notice notice-<?php echo esc_attr( $apprex_ign[0] ); ?>"><p><?php echo esc_html( $apprex_ign[1] ); ?></p></div><?php endif; ?>
+		<p>グラフAPIエクスプローラの「Generate Access Token」で出たトークンを貼ると、<b>長く使えるトークンへの切り替え・ページのトークンの取得・InstagramのIDの確認・上の欄への入力</b>まで、サイトが自動で行います。</p>
+		<ol>
+			<li>Meta for Developers →「APPREX 自動投稿」→ 左の「アプリの設定」→「ベーシック」で、<b>アプリID</b> と <b>app secret</b>（「表示」を押す）をコピーして下に貼ります。</li>
+			<li><a href="https://developers.facebook.com/tools/explorer" target="_blank" rel="noopener">グラフAPIエクスプローラ</a>で、Metaアプリ「APPREX 自動投稿」・許可（pages_show_list／instagram_basic／instagram_content_publish／pages_read_engagement／business_management）を選んで「Generate Access Token」→ ページ apprex とインスタ apprex1173 を許可 → 出たトークンをコピーして下に貼ります。</li>
+			<li>「連携する」を押します。</li>
+		</ol>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+			<?php wp_nonce_field( 'apprex_ig_connect' ); ?>
+			<input type="hidden" name="action" value="apprex_ig_connect">
+			<table class="form-table" role="presentation"><tbody>
+				<tr><th>アプリID</th><td><input type="text" name="app_id" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_meta_app_id', '' ) ); ?>" autocomplete="off"></td></tr>
+				<tr><th>app secret</th><td><input type="password" name="app_secret" class="regular-text" value="" placeholder="<?php echo get_option( 'apprex_meta_app_secret' ) ? '保存済み（変えるときだけ入力）' : ''; ?>" autocomplete="off"></td></tr>
+				<tr><th>エクスプローラのトークン</th><td><textarea name="token" rows="3" class="large-text" autocomplete="off" placeholder="EAA..."></textarea><p class="description">1〜2時間で切れる短いトークンで大丈夫です。</p></td></tr>
+			</tbody></table>
+			<?php submit_button( '連携する', 'primary', 'submit', false ); ?>
+		</form>
 	</div>
 	<?php
 }
+
+/* かんたん連携：短いトークン → 長いユーザートークン → ページのトークン（期限なし）と InstagramのID。 */
+add_action(
+	'admin_post_apprex_ig_connect',
+	function () {
+		if ( ! current_user_can( 'manage_options' ) || ! check_admin_referer( 'apprex_ig_connect' ) ) {
+			wp_die( '権限がありません。' );
+		}
+		$app_id = isset( $_POST['app_id'] ) ? preg_replace( '/\D/', '', wp_unslash( $_POST['app_id'] ) ) : '';
+		$secret = isset( $_POST['app_secret'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['app_secret'] ) ) ) : '';
+		$short  = isset( $_POST['token'] ) ? preg_replace( '/\s+/', '', wp_unslash( $_POST['token'] ) ) : '';
+		if ( '' !== $app_id ) {
+			update_option( 'apprex_meta_app_id', $app_id, false );
+		}
+		if ( '' !== $secret ) {
+			update_option( 'apprex_meta_app_secret', $secret, false );
+		}
+		$app_id = get_option( 'apprex_meta_app_id', '' );
+		$secret = get_option( 'apprex_meta_app_secret', '' );
+		$done   = function ( $type, $msg ) {
+			set_transient( 'apprex_ig_connect_notice', array( $type, $msg ), 120 );
+			wp_safe_redirect( admin_url( 'options-general.php?page=apprex-sns#ig-connect' ) );
+			exit;
+		};
+		if ( '' === $app_id || '' === $secret || '' === $short ) {
+			$done( 'error', 'アプリID・app secret・トークンの3つを入れてください。' );
+		}
+		$get = function ( $path, $q ) {
+			$r = wp_remote_get( 'https://graph.facebook.com/v23.0/' . $path . '?' . http_build_query( $q ), array( 'timeout' => 30 ) );
+			if ( is_wp_error( $r ) ) {
+				return new WP_Error( 'net', 'Metaに接続できませんでした（' . $r->get_error_message() . '）。' );
+			}
+			$b = json_decode( wp_remote_retrieve_body( $r ), true );
+			if ( ! is_array( $b ) || isset( $b['error'] ) ) {
+				return new WP_Error( 'api', isset( $b['error']['message'] ) ? $b['error']['message'] : 'Metaからの応答が読めませんでした。' );
+			}
+			return $b;
+		};
+		// 1) 長く使えるユーザートークンに。
+		$long = $get( 'oauth/access_token', array( 'grant_type' => 'fb_exchange_token', 'client_id' => $app_id, 'client_secret' => $secret, 'fb_exchange_token' => $short ) );
+		if ( is_wp_error( $long ) ) {
+			$done( 'error', 'トークンを切り替えられませんでした：' . $long->get_error_message() . '（アプリID・app secret が「APPREX 自動投稿」のものか、トークンが切れていないかご確認ください）' );
+		}
+		// 2) ページの一覧（ページのトークンと、つながっているInstagram）。
+		$pages = $get( 'me/accounts', array( 'fields' => 'name,access_token,instagram_business_account{id,username}', 'access_token' => $long['access_token'] ) );
+		if ( is_wp_error( $pages ) ) {
+			$done( 'error', 'ページを読み込めませんでした：' . $pages->get_error_message() );
+		}
+		$hit = null;
+		foreach ( isset( $pages['data'] ) ? (array) $pages['data'] : array() as $pg ) {
+			if ( ! empty( $pg['instagram_business_account']['id'] ) ) {
+				$hit = $pg;
+				if ( false !== stripos( (string) $pg['name'], 'apprex' ) ) {
+					break; // APPREX のページを優先。
+				}
+			}
+		}
+		if ( ! $hit ) {
+			$done( 'error', 'Instagramとつながったページが見つかりませんでした。トークンを作るときに、ページ「apprex」とインスタ「apprex1173」を選んで許可したかご確認ください。' );
+		}
+		update_option( 'apprex_ig_user_id', $hit['instagram_business_account']['id'] );
+		update_option( 'apprex_ig_token', $hit['access_token'] );
+		update_option( 'apprex_ig_enabled', 1 );
+		$name = isset( $hit['instagram_business_account']['username'] ) ? '@' . $hit['instagram_business_account']['username'] : $hit['instagram_business_account']['id'];
+		$done( 'success', 'Instagram（' . $name . '／ページ「' . $hit['name'] . '」）と連携しました。トークンは期限なしのページのトークンです。記事の編集画面の「インスタグラム」欄から試せます。' );
+	}
+);
