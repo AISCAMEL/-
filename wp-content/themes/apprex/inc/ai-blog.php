@@ -79,8 +79,95 @@ function apprex_ai_research_prompt( $tone, $length ) {
 		. "3. 何が起きたか（事実）→ 店舗・中小企業にとって何が変わるか → どう活かすか、の順で解説し、最後の章で APPREX（ノーコードのアプリ開発・AIスタジオ・LINEのLABOなど）でできることと自然につなげる。宣伝ばかりにしない。\n\n"
 		. "条件：トーンは{$tone}文体。本文は約{$length}字。調べて分からなかったことは書かない。日付や数字は調べた情報のとおりに書く。\n"
 		. "出力形式（厳守）：1行目に「TITLE: 記事タイトル（32字前後。検索されやすい言葉を入れる）」。2行目以降に本文を HTML（<h2>,<h3>,<p>,<ul><li> のみ、<h1>不可）で。前置きやあいさつは書かない。\n"
+		. "TITLE の行より前と本文の最初に、作業の説明（「調べました」「以下が記事です」「出力します」など）は一切書かない。\n"
 		. "Web検索ができなかった・十分な情報が見つからなかったときは、記事を書かずに「ERROR: 理由」の1行だけを出力する。\n\n"
 		. "既存記事（同じテーマは避ける）：\n- " . implode( "\n- ", array_slice( array_filter( $titles ), 0, 40 ) );
+}
+
+/**
+ * AIの本文から、記事ではない部分（作業の説明・前置き）を外す。
+ *
+ * @param string $body 本文（HTML）。
+ * @return string
+ */
+function apprex_ai_clean_body( $body ) {
+	// 最初のタグ（見出し・段落・リスト）より前の地の文を外す。
+	if ( preg_match( '/<(h2|h3|p|ul|ol)\b/i', $body, $m, PREG_OFFSET_CAPTURE ) && $m[0][1] > 0 ) {
+		$body = substr( $body, $m[0][1] );
+	}
+	// 先頭の短い段落が、作業の説明なら外す（2つまで）。
+	$meta = '/TITLE|出力|以下(が|に|の)|記事を(書|作|お届け|まとめ)|調べ(た|まし)|検索し|HTML|作成しました|お待たせ/u';
+	for ( $i = 0; $i < 2; $i++ ) {
+		if ( ! preg_match( '/^\s*<p[^>]*>(.*?)<\/p>\s*/su', $body, $m ) ) {
+			break;
+		}
+		$t = trim( wp_strip_all_tags( $m[1] ) );
+		if ( mb_strlen( $t ) > 140 || ! preg_match( $meta, $t ) ) {
+			break;
+		}
+		$body = substr( $body, strlen( $m[0] ) );
+	}
+	return trim( $body );
+}
+
+/**
+ * 本文の見出しの下に、AIで作った写真を入れる（安い画像モデル・1枚約1円）。
+ *
+ * @param int    $post_id 投稿ID。
+ * @param string $title   記事タイトル。
+ * @param int    $count   入れる枚数（0〜3）。
+ * @return int 入れた枚数。
+ */
+function apprex_ai_body_images( $post_id, $title, $count ) {
+	$count = max( 0, min( 3, (int) $count ) );
+	if ( ! $count || ! function_exists( 'apprex_openrouter_image' ) ) {
+		return 0;
+	}
+	$content = (string) get_post_field( 'post_content', $post_id );
+	if ( ! preg_match_all( '/<h2[^>]*>(.*?)<\/h2>/su', $content, $hs, PREG_OFFSET_CAPTURE ) ) {
+		return 0;
+	}
+	// 「参考」「まとめ」の見出しには入れない。残りの見出しから均等に選ぶ。
+	$cands = array();
+	foreach ( $hs[0] as $i => $h ) {
+		$text = trim( wp_strip_all_tags( $hs[1][ $i ][0] ) );
+		if ( preg_match( '/参考|まとめ|出典|おわりに/u', $text ) ) {
+			continue;
+		}
+		$cands[] = array( 'end' => $h[1] + strlen( $h[0] ), 'text' => $text );
+	}
+	if ( ! $cands ) {
+		return 0;
+	}
+	$picks = array();
+	$step  = max( 1, count( $cands ) / $count );
+	for ( $k = 0; $k < $count && (int) floor( $k * $step ) < count( $cands ); $k++ ) {
+		$picks[] = $cands[ (int) floor( $k * $step ) ];
+	}
+	$model = function_exists( 'apprex_bulk_image_model' ) ? apprex_bulk_image_model() : '';
+	$done  = 0;
+	// 後ろから入れると、前の位置がずれない。
+	foreach ( array_reverse( $picks ) as $pk ) {
+		$prompt = 'Photorealistic editorial photograph for a Japanese business blog article. Article: "' . $title . '". Section: "' . $pk['text'] . '". '
+			. 'Show a realistic scene that illustrates the section for small shop owners in Japan (shops, smartphones, apps, customers, staff). Natural light, clean and modern, 16:9 horizontal. No text, no letters, no logos, no watermark.';
+		$img = apprex_openrouter_image( $prompt, $model ? array( 'model' => $model ) : array() );
+		if ( is_wp_error( $img ) ) {
+			continue;
+		}
+		$att = apprex_save_generated_image( $img, $title . ' ' . $pk['text'], $post_id );
+		if ( is_wp_error( $att ) ) {
+			continue;
+		}
+		$src = wp_get_attachment_image_url( $att, 'large' );
+		$src = $src ? $src : wp_get_attachment_url( $att );
+		$fig = "\n" . '<figure class="wp-block-image size-large ap-body-img"><img src="' . esc_url( $src ) . '" alt="' . esc_attr( $pk['text'] ) . '" class="wp-image-' . (int) $att . '" loading="lazy"/></figure>' . "\n";
+		$content = substr( $content, 0, $pk['end'] ) . $fig . substr( $content, $pk['end'] );
+		$done++;
+	}
+	if ( $done ) {
+		wp_update_post( array( 'ID' => $post_id, 'post_content' => $content ) );
+	}
+	return $done;
 }
 
 /* -------------------------------------------------------------------------
@@ -272,21 +359,17 @@ function apprex_ai_generate_post( $args ) {
 
 	$title = '';
 	$body  = $result;
-	if ( preg_match( '/^\s*TITLE\s*[:：]\s*(.+)$/m', $result, $m ) ) {
-		$title = trim( $m[1] );
-		$body  = trim( preg_replace( '/^\s*TITLE\s*[:：].+$/m', '', $result, 1 ) );
+	if ( preg_match( '/^\s*TITLE\s*[:：]\s*(.+)$/m', $result, $m, PREG_OFFSET_CAPTURE ) ) {
+		$title = trim( $m[1][0] );
+		// TITLE の行より前（作業の説明など）は捨てて、その後ろだけを本文にする。
+		$body = trim( substr( $result, $m[0][1] + strlen( $m[0][0] ) ) );
 	}
+	$body = apprex_ai_clean_body( $body );
 	$title = $title ? $title : $topic;
 	// 調べた記事：前置き（「調べました」など）を外し、出典を最後に。
 	if ( $research ) {
 		if ( ! preg_match( '/^\s*TITLE\s*[:：]/m', $result ) ) {
 			return new WP_Error( 'no_title', '記事の形で返ってこなかったため、作りませんでした。' );
-		}
-		$p = stripos( $body, '<h2' );
-		$q = stripos( $body, '<p' );
-		$s = min( false === $p ? PHP_INT_MAX : $p, false === $q ? PHP_INT_MAX : $q );
-		if ( PHP_INT_MAX !== $s && $s > 0 ) {
-			$body = substr( $body, $s );
 		}
 		if ( $sources && false === mb_strpos( $body, '参考' ) ) {
 			$body .= "\n<h2>参考にした情報</h2>\n<ul>";
@@ -348,6 +431,12 @@ function apprex_ai_generate_post( $args ) {
 		}
 	}
 
+	// 本文の見出しの下に写真を入れる。
+	if ( ! empty( $args['body_images'] ) ) {
+		$n          = apprex_ai_body_images( $post_id, $title, (int) $args['body_images'] );
+		$image_note .= '（本文の写真 ' . $n . '枚）';
+	}
+
 	return array( 'post_id' => $post_id, 'title' => $title, 'image_note' => $image_note );
 }
 
@@ -377,6 +466,15 @@ add_action( 'admin_init', function () {
 	);
 	register_setting( 'apprex_aiblog', 'apprex_autopost_focus', array( 'sanitize_callback' => 'sanitize_textarea_field' ) );
 	register_setting( 'apprex_aiblog', 'apprex_autopost_line', array( 'sanitize_callback' => 'absint' ) );
+	register_setting(
+		'apprex_aiblog',
+		'apprex_autopost_body_images',
+		array(
+			'sanitize_callback' => function ( $v ) {
+				return max( 0, min( 3, absint( $v ) ) );
+			},
+		)
+	);
 } );
 
 /**
@@ -411,7 +509,8 @@ function apprex_ai_blog_page() {
 			<input type="hidden" name="tone" value="<?php echo esc_attr( get_option( 'apprex_autopost_tone', '専門的で信頼感のある' ) ); ?>">
 			<?php wp_nonce_field( 'apprex_generate_post' ); ?>
 			<p class="description"><?php esc_html_e( '「調べる分野」（下の自動投稿の設定）のニュースを Claude が Web で調べ、テーマを選んで書きます。下書きで保存するので、内容を確かめてから公開してください。1〜3分かかります。', 'apprex' ); ?></p>
-			<p><label><input type="checkbox" name="gen_image" value="1"> <?php esc_html_e( 'アイキャッチ画像もAIで作る', 'apprex' ); ?></label></p>
+			<p><label><input type="checkbox" name="gen_image" value="1"> <?php esc_html_e( 'アイキャッチ画像もAIで作る（約10円）', 'apprex' ); ?></label>
+				<label style="margin-left:16px"><?php esc_html_e( '本文の写真', 'apprex' ); ?> <select name="body_images"><option value="0">入れない</option><option value="1">1枚</option><option value="2" selected>2枚</option><option value="3">3枚</option></select> <?php esc_html_e( '（1枚約1円）', 'apprex' ); ?></label></p>
 			<?php submit_button( 'Claude に調べて書いてもらう（下書き）', 'primary', 'submit', false, ( function_exists( 'apprex_ai_use_claude' ) && apprex_ai_use_claude() ) ? array() : array( 'disabled' => 'disabled' ) ); ?>
 			<?php if ( ! ( function_exists( 'apprex_ai_use_claude' ) && apprex_ai_use_claude() ) ) : ?><span class="description" style="margin-left:8px"><?php esc_html_e( '先に Claude APIキーを入れて保存してください（設定 → APPREX チャット）。', 'apprex' ); ?></span><?php endif; ?>
 			<?php $apprex_lr = get_option( 'apprex_autopost_last_result', '' ); ?>
@@ -438,6 +537,8 @@ function apprex_ai_blog_page() {
 					<td><select name="length" id="ab-length"><option value="1200">約1,200字</option><option value="2000" selected>約2,000字</option><option value="3000">約3,000字</option></select></td></tr>
 				<tr><th><?php esc_html_e( 'アイキャッチ画像', 'apprex' ); ?></th>
 					<td><label><input type="checkbox" name="gen_image" value="1"> <?php esc_html_e( 'AIで自動生成する（Nano Banana 等の画像モデル）', 'apprex' ); ?></label></td></tr>
+				<tr><th><?php esc_html_e( '本文の写真', 'apprex' ); ?></th>
+					<td><select name="body_images"><option value="0">入れない</option><option value="1">1枚</option><option value="2" selected>2枚</option><option value="3">3枚</option></select> <span class="description"><?php esc_html_e( '見出しの下にAIの写真を入れます（1枚約1円）', 'apprex' ); ?></span></td></tr>
 				<tr><th><?php esc_html_e( '公開', 'apprex' ); ?></th>
 					<td><label><input type="checkbox" name="publish" value="1"> <?php esc_html_e( '生成後すぐ公開（既定は下書き）', 'apprex' ); ?></label></td></tr>
 				<tr><th><?php esc_html_e( '重複チェック', 'apprex' ); ?></th>
@@ -482,6 +583,11 @@ function apprex_ai_blog_page() {
 					<tr><th><?php esc_html_e( 'LINEへの配信', 'apprex' ); ?></th>
 					<td><label><input type="checkbox" name="apprex_autopost_line" value="1" <?php checked( 1, (int) get_option( 'apprex_autopost_line', 0 ) ); ?>> <?php esc_html_e( '自動投稿した記事も、公開時にLINEの友だちへ配信する', 'apprex' ); ?></label>
 					<p class="description"><?php esc_html_e( '毎日投稿で配信すると、友だちに毎日LINEが届き、LINEの無料メッセージ数も早く減ります。ふだんはOFFにして、選んだ記事だけ投稿の編集画面から配信するのがおすすめです。', 'apprex' ); ?></p></td></tr>
+					<tr><th><?php esc_html_e( '本文の写真', 'apprex' ); ?></th>
+					<td><select name="apprex_autopost_body_images"><?php $apprex_bi = (int) get_option( 'apprex_autopost_body_images', 2 ); ?>
+						<?php foreach ( array( 0 => '入れない', 1 => '1枚', 2 => '2枚（おすすめ）', 3 => '3枚' ) as $apprex_k => $apprex_l ) : ?><option value="<?php echo esc_attr( $apprex_k ); ?>" <?php selected( $apprex_bi, $apprex_k ); ?>><?php echo esc_html( $apprex_l ); ?></option><?php endforeach; ?>
+					</select>
+					<p class="description"><?php echo esc_html( '見出しの下に、内容に合う写真をAIで作って入れます（安い画像モデル ' . ( function_exists( 'apprex_bulk_image_model' ) ? apprex_bulk_image_model() : '' ) . '・1枚約1円）。' ); ?></p></td></tr>
 					<tr><th><?php esc_html_e( 'アイキャッチAI生成', 'apprex' ); ?></th>
 					<td><label><input type="checkbox" name="apprex_autopost_image" value="1" <?php checked( 1, (int) get_option( 'apprex_autopost_image', 0 ) ); ?>> <?php esc_html_e( '自動投稿でも画像を生成する', 'apprex' ); ?></label></td></tr>
 				<tr><th><?php esc_html_e( 'トーン', 'apprex' ); ?></th>
@@ -532,6 +638,43 @@ function apprex_ai_blog_page() {
 	<?php
 }
 
+/* 投稿一覧：AIの記事に「写真を入れる」（前置きの文も外す）。 */
+add_filter(
+	'post_row_actions',
+	function ( $actions, $post ) {
+		if ( 'post' === $post->post_type && current_user_can( 'edit_post', $post->ID ) && get_post_meta( $post->ID, '_apprex_ai_generated', true ) ) {
+			$url                        = wp_nonce_url( admin_url( 'admin-post.php?action=apprex_ai_add_images&post=' . $post->ID ), 'apprex_ai_add_images_' . $post->ID );
+			$actions['apprex_ai_images'] = '<a href="' . esc_url( $url ) . '" onclick="return confirm(\'見出しの下にAIの写真を2枚入れます（1枚約1円・30秒ほど）。よろしいですか？\')">AIで写真を入れる</a>';
+		}
+		return $actions;
+	},
+	10,
+	2
+);
+
+add_action(
+	'admin_post_apprex_ai_add_images',
+	function () {
+		$id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
+		if ( ! $id || ! current_user_can( 'edit_post', $id ) || ! check_admin_referer( 'apprex_ai_add_images_' . $id ) ) {
+			wp_die( '権限がありません。' );
+		}
+		if ( function_exists( 'set_time_limit' ) ) {
+			@set_time_limit( 600 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+		}
+		// 先頭の前置き（「〜を出力します」など）を外す。
+		$c = (string) get_post_field( 'post_content', $id );
+		$n = apprex_ai_clean_body( $c );
+		if ( $n !== $c ) {
+			wp_update_post( array( 'ID' => $id, 'post_content' => $n ) );
+		}
+		$done = apprex_ai_body_images( $id, get_the_title( $id ), 2 );
+		set_transient( 'apprex_ai_blog_notice_' . get_current_user_id(), array( 'type' => $done ? 'success' : 'warning', 'msg' => esc_html( '「' . get_the_title( $id ) . '」に写真を' . $done . '枚入れました。' . ( $n !== $c ? '先頭の前置きの文も外しました。' : '' ) ) . ' <a href="' . esc_url( get_permalink( $id ) ) . '" target="_blank">記事を見る</a>' ), 60 );
+		wp_safe_redirect( admin_url( 'edit.php?page=apprex-ai-blog' ) );
+		exit;
+	}
+);
+
 /**
  * 手動生成のハンドラ。
  */
@@ -565,6 +708,7 @@ add_action( 'admin_post_apprex_generate_post', function () {
 			'publish'   => ! empty( $_POST['publish'] ),
 			'gen_image' => ! empty( $_POST['gen_image'] ),
 			'force'     => ! empty( $_POST['force'] ),
+			'body_images' => isset( $_POST['body_images'] ) ? absint( $_POST['body_images'] ) : 0,
 		)
 	);
 	if ( is_wp_error( $res ) ) {
@@ -735,8 +879,9 @@ function apprex_run_autopost() {
 		}
 		$res = apprex_ai_generate_post(
 			array(
-				'research'  => true,
-				'auto'      => true,
+				'research'    => true,
+				'auto'        => true,
+				'body_images' => (int) get_option( 'apprex_autopost_body_images', 2 ),
 				'tone'      => get_option( 'apprex_autopost_tone', '専門的で信頼感のある' ),
 				'length'    => 2500,
 				'publish'   => true,
@@ -772,8 +917,9 @@ function apprex_run_autopost() {
 
 	$res = apprex_ai_generate_post(
 		array(
-			'topic'     => $topic,
-			'auto'      => true,
+			'topic'       => $topic,
+			'auto'        => true,
+			'body_images' => (int) get_option( 'apprex_autopost_body_images', 2 ),
 			'tone'      => get_option( 'apprex_autopost_tone', '専門的で信頼感のある' ),
 			'length'    => 2000,
 			'publish'   => true,
