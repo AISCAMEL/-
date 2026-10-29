@@ -257,17 +257,17 @@ function apprex_claude_settings_rows() {
 		</td>
 	</tr>
 	<tr>
-		<th scope="row">Claude のモデル（チャット・LINE・記事）</th>
+		<th scope="row">Claude のモデル（チャット・LINE）</th>
 		<td>
 			<input type="text" name="apprex_claude_model" value="<?php echo esc_attr( get_option( 'apprex_claude_model', '' ) ); ?>" class="regular-text" placeholder="<?php echo esc_attr( APPREX_CLAUDE_DEFAULT_MODEL ); ?>">
-			<p class="description">未入力時は <?php echo esc_html( APPREX_CLAUDE_DEFAULT_MODEL ); ?>。費用を抑えたいときは claude-sonnet-5-5 や claude-haiku-5-5 も選べます。</p>
+			<p class="description">未入力時は <?php echo esc_html( APPREX_CLAUDE_DEFAULT_MODEL ); ?>。チャットには claude-sonnet-5-5（おすすめ）や、さらに安い claude-haiku-5-5 も選べます。「文章すべて」のときは AI記事・AIMEO にも使います。</p>
 		</td>
 	</tr>
 	<tr>
 		<th scope="row">Claude のモデル（AIスタジオ）</th>
 		<td>
 			<input type="text" name="apprex_claude_studio_model" value="<?php echo esc_attr( get_option( 'apprex_claude_studio_model', '' ) ); ?>" class="regular-text" placeholder="<?php echo esc_attr( APPREX_CLAUDE_DEFAULT_MODEL ); ?>">
-			<p class="description">AIデザイナー・試作・仕様定義書・ホームページのAIに使います。未入力時は <?php echo esc_html( APPREX_CLAUDE_DEFAULT_MODEL ); ?>。</p>
+			<p class="description">「文章すべて」のときだけ使います（AIデザイナー・試作・仕様定義書・ホームページのAI・LABO）。未入力時は <?php echo esc_html( APPREX_CLAUDE_DEFAULT_MODEL ); ?>。</p>
 		</td>
 	</tr>
 	<?php
