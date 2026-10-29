@@ -36,6 +36,52 @@ function apprex_default_autopost_topics() {
 	);
 }
 
+/** 「調べて決める」で探す分野（既定）。 */
+function apprex_ai_research_focus() {
+	$v = trim( (string) get_option( 'apprex_autopost_focus', '' ) );
+	if ( '' !== $v ) {
+		return $v;
+	}
+	return implode(
+		"\n",
+		array(
+			'アプリ開発の技術・コード（AIによる開発、ノーコード・ローコード、Flutter など）',
+			'App Store・Google Play の新しいルールや動向',
+			'店舗・中小企業のアプリ活用（予約・会員証・ポイント・プッシュ通知）',
+			'LINE公式アカウント・LINEミニアプリの新機能',
+			'アプリと集客（SNS・MEO・AI検索）',
+		)
+	);
+}
+
+/**
+ * 「調べて決める」の依頼文。最近の記事タイトルを渡して、同じテーマを避ける。
+ *
+ * @param string $tone   トーン。
+ * @param int    $length 文字数。
+ * @return string
+ */
+function apprex_ai_research_prompt( $tone, $length ) {
+	$recent = get_posts(
+		array(
+			'post_type'      => 'post',
+			'post_status'    => array( 'publish', 'future', 'draft' ),
+			'posts_per_page' => 40,
+			'fields'         => 'ids',
+		)
+	);
+	$titles = array_map( 'get_the_title', $recent );
+	return "今日は" . wp_date( 'Y年n月j日' ) . "です。APPREXのブログに載せる記事を1本作ってください。\n\n"
+		. "手順：\n"
+		. "1. Web検索で、次の分野のここ1〜2週間ほどの新しいニュース・発表・話題を調べる（日本の情報を優先。公式発表や信頼できるメディアを使う）。\n"
+		. apprex_ai_research_focus() . "\n"
+		. "2. その中から、店舗や中小企業の経営者が「自分ごと」として読める話題を1つ選ぶ。下の既存記事と同じテーマは避ける。\n"
+		. "3. 何が起きたか（事実）→ 店舗・中小企業にとって何が変わるか → どう活かすか、の順で解説し、最後の章で APPREX（ノーコードのアプリ開発・AIスタジオ・LINEのLABOなど）でできることと自然につなげる。宣伝ばかりにしない。\n\n"
+		. "条件：トーンは{$tone}文体。本文は約{$length}字。調べて分からなかったことは書かない。日付や数字は調べた情報のとおりに書く。\n"
+		. "出力形式（厳守）：1行目に「TITLE: 記事タイトル（32字前後。検索されやすい言葉を入れる）」。2行目以降に本文を HTML（<h2>,<h3>,<p>,<ul><li> のみ、<h1>不可）で。前置きやあいさつは書かない。\n\n"
+		. "既存記事（同じテーマは避ける）：\n- " . implode( "\n- ", array_slice( array_filter( $titles ), 0, 40 ) );
+}
+
 /* -------------------------------------------------------------------------
  * 重複防止・自動301（SEO最適化）
  * ---------------------------------------------------------------------- */
@@ -173,13 +219,14 @@ function apprex_ai_generate_post( $args ) {
 	$publish  = ! empty( $args['publish'] );
 	$gen_img  = ! empty( $args['gen_image'] );
 	$force    = ! empty( $args['force'] );
+	$research = ! empty( $args['research'] );
 
-	if ( '' === $topic ) {
+	if ( '' === $topic && ! $research ) {
 		return new WP_Error( 'no_topic', 'テーマが空です。' );
 	}
 
 	// 重複防止（生成前）：類似トピックの記事が既にあれば作らない。
-	if ( ! $force ) {
+	if ( ! $force && ! $research ) {
 		$dup = apprex_ai_find_similar( $topic, 0, 80 );
 		if ( $dup ) {
 			return new WP_Error(
@@ -200,13 +247,24 @@ function apprex_ai_generate_post( $args ) {
 		. "文字数：約{$length}字\n\n"
 		. "出力形式（厳守）：1行目に「TITLE: 記事タイトル」。2行目以降に本文を HTML（<h2>,<h3>,<p>,<ul><li> のみ、<h1>不可）で。前置き不要。";
 
-	$result = apprex_openrouter_complete(
-		array(
-			array( 'role' => 'system', 'content' => $system ),
-			array( 'role' => 'user', 'content' => $user ),
-		),
-		array( 'temperature' => 0.7, 'max_tokens' => min( 4000, (int) round( $length * 2.2 ) ), 'timeout' => 90 )
-	);
+	$sources = array();
+	if ( $research ) {
+		// Claude が Web で最新の情報を調べて、テーマ選びから書く（毎日の自動投稿）。
+		$r = apprex_claude_research( $system, apprex_ai_research_prompt( $tone, $length ), array( 'timeout' => 300 ) );
+		if ( is_wp_error( $r ) ) {
+			return $r;
+		}
+		$result  = $r['text'];
+		$sources = $r['sources'];
+	} else {
+		$result = apprex_openrouter_complete(
+			array(
+				array( 'role' => 'system', 'content' => $system ),
+				array( 'role' => 'user', 'content' => $user ),
+			),
+			array( 'temperature' => 0.7, 'max_tokens' => min( 4000, (int) round( $length * 2.2 ) ), 'timeout' => 90, 'article' => true )
+		);
+	}
 	if ( is_wp_error( $result ) ) {
 		return $result;
 	}
@@ -218,6 +276,25 @@ function apprex_ai_generate_post( $args ) {
 		$body  = trim( preg_replace( '/^\s*TITLE\s*[:：].+$/m', '', $result, 1 ) );
 	}
 	$title = $title ? $title : $topic;
+	// 調べた記事：前置き（「調べました」など）を外し、出典を最後に。
+	if ( $research ) {
+		$p = stripos( $body, '<h2' );
+		$q = stripos( $body, '<p' );
+		$s = min( false === $p ? PHP_INT_MAX : $p, false === $q ? PHP_INT_MAX : $q );
+		if ( PHP_INT_MAX !== $s && $s > 0 ) {
+			$body = substr( $body, $s );
+		}
+		if ( $sources && false === mb_strpos( $body, '参考' ) ) {
+			$body .= "\n<h2>参考にした情報</h2>\n<ul>";
+			foreach ( $sources as $src ) {
+				$body .= '<li><a href="' . esc_url( $src[0] ) . '" target="_blank" rel="noopener nofollow">' . esc_html( $src[1] ) . '</a></li>';
+			}
+			$body .= "</ul>\n";
+		}
+	}
+	if ( '' === $title ) {
+		return new WP_Error( 'no_title', '記事のタイトルを作れませんでした。' );
+	}
 
 	// 重複防止（生成後）：出来上がったタイトルが既存と酷似していれば公開しない。
 	if ( ! $force ) {
@@ -237,6 +314,8 @@ function apprex_ai_generate_post( $args ) {
 			'post_status'  => $publish ? 'publish' : 'draft',
 			'post_title'   => wp_strip_all_tags( $title ),
 			'post_content' => wp_kses_post( $body ),
+			// 自動投稿は、LINEへの配信を設定に合わせる（毎日LINEが届かないよう、既定は配信しない）。
+			'meta_input'   => ! empty( $args['auto'] ) ? array( 'apprex_distribute_line' => get_option( 'apprex_autopost_line', 0 ) ? '1' : '0' ) : array(),
 		),
 		true
 	);
@@ -244,7 +323,10 @@ function apprex_ai_generate_post( $args ) {
 		return $post_id;
 	}
 	update_post_meta( $post_id, '_apprex_ai_generated', 1 );
-	update_post_meta( $post_id, '_apprex_ai_topic_key', apprex_ai_norm( $topic ) );
+	update_post_meta( $post_id, '_apprex_ai_topic_key', apprex_ai_norm( $topic ? $topic : $title ) );
+	if ( $research ) {
+		update_post_meta( $post_id, '_apprex_ai_research', 1 );
+	}
 
 	$image_note = '';
 	if ( $gen_img && function_exists( 'apprex_openrouter_image' ) ) {
@@ -280,6 +362,17 @@ add_action( 'admin_init', function () {
 	register_setting( 'apprex_aiblog', 'apprex_autopost_image', array( 'sanitize_callback' => 'absint' ) );
 	register_setting( 'apprex_aiblog', 'apprex_autopost_tone', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 	register_setting( 'apprex_aiblog', 'apprex_autopost_topics', array( 'sanitize_callback' => 'sanitize_textarea_field' ) );
+	register_setting(
+		'apprex_aiblog',
+		'apprex_autopost_mode',
+		array(
+			'sanitize_callback' => function ( $v ) {
+				return 'research' === $v ? 'research' : 'queue';
+			},
+		)
+	);
+	register_setting( 'apprex_aiblog', 'apprex_autopost_focus', array( 'sanitize_callback' => 'sanitize_textarea_field' ) );
+	register_setting( 'apprex_aiblog', 'apprex_autopost_line', array( 'sanitize_callback' => 'absint' ) );
 } );
 
 /**
@@ -296,7 +389,8 @@ function apprex_ai_blog_page() {
 	}
 	?>
 	<div class="wrap">
-		<h1><?php esc_html_e( 'AI記事生成（OpenRouter）', 'apprex' ); ?></h1>
+		<h1><?php esc_html_e( 'AI記事生成', 'apprex' ); ?></h1>
+		<p class="description"><?php echo esc_html( '記事に使うAI：' . ( function_exists( 'apprex_claude_for' ) && apprex_claude_for( 'article' ) ? 'Claude（' . apprex_claude_model() . '）' : 'OpenRouter（' . apprex_openrouter_model() . '）' ) . '。変更は 設定 → APPREX チャット の「Claude を使う範囲」。' ); ?></p>
 
 		<?php if ( ! apprex_chat_enabled() ) : ?>
 			<div class="notice notice-warning"><p><?php esc_html_e( 'OpenRouter APIキーが未設定です。設定 > APPREX チャット で登録してください。', 'apprex' ); ?></p></div>
@@ -305,7 +399,23 @@ function apprex_ai_blog_page() {
 			<div class="notice notice-<?php echo esc_attr( $notice['type'] ); ?> is-dismissible"><p><?php echo wp_kses_post( $notice['msg'] ); ?></p></div>
 		<?php endif; ?>
 
-		<h2><?php esc_html_e( '今すぐ1記事つくる', 'apprex' ); ?></h2>
+		<h2><?php esc_html_e( 'Claude に最新の情報を調べて1記事つくってもらう', 'apprex' ); ?></h2>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="max-width:720px">
+			<input type="hidden" name="action" value="apprex_generate_post">
+			<input type="hidden" name="research" value="1">
+			<input type="hidden" name="length" value="2500">
+			<input type="hidden" name="tone" value="<?php echo esc_attr( get_option( 'apprex_autopost_tone', '専門的で信頼感のある' ) ); ?>">
+			<?php wp_nonce_field( 'apprex_generate_post' ); ?>
+			<p class="description"><?php esc_html_e( '「調べる分野」（下の自動投稿の設定）のニュースを Claude が Web で調べ、テーマを選んで書きます。下書きで保存するので、内容を確かめてから公開してください。1〜3分かかります。', 'apprex' ); ?></p>
+			<p><label><input type="checkbox" name="gen_image" value="1"> <?php esc_html_e( 'アイキャッチ画像もAIで作る', 'apprex' ); ?></label></p>
+			<?php submit_button( 'Claude に調べて書いてもらう（下書き）', 'primary', 'submit', false, ( function_exists( 'apprex_ai_use_claude' ) && apprex_ai_use_claude() ) ? array() : array( 'disabled' => 'disabled' ) ); ?>
+			<?php if ( ! ( function_exists( 'apprex_ai_use_claude' ) && apprex_ai_use_claude() ) ) : ?><span class="description" style="margin-left:8px"><?php esc_html_e( '先に Claude APIキーを入れて保存してください（設定 → APPREX チャット）。', 'apprex' ); ?></span><?php endif; ?>
+			<?php $apprex_lr = get_option( 'apprex_autopost_last_result', '' ); ?>
+			<?php if ( $apprex_lr ) : ?><p class="description"><?php echo esc_html( '前回の自動投稿：' . $apprex_lr ); ?></p><?php endif; ?>
+		</form>
+
+		<hr>
+		<h2><?php esc_html_e( '今すぐ1記事つくる（テーマを指定）', 'apprex' ); ?></h2>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="max-width:720px">
 			<input type="hidden" name="action" value="apprex_generate_post">
 			<?php wp_nonce_field( 'apprex_generate_post' ); ?>
@@ -365,10 +475,21 @@ function apprex_ai_blog_page() {
 							<p class="description"><?php printf( esc_html__( '次回の自動実行予定：%s', 'apprex' ), esc_html( wp_date( 'Y年n月j日(D) H:i', $apprex_next ) ) ); ?></p>
 						<?php endif; ?>
 						</td></tr>
+					<tr><th><?php esc_html_e( 'LINEへの配信', 'apprex' ); ?></th>
+					<td><label><input type="checkbox" name="apprex_autopost_line" value="1" <?php checked( 1, (int) get_option( 'apprex_autopost_line', 0 ) ); ?>> <?php esc_html_e( '自動投稿した記事も、公開時にLINEの友だちへ配信する', 'apprex' ); ?></label>
+					<p class="description"><?php esc_html_e( '毎日投稿で配信すると、友だちに毎日LINEが届き、LINEの無料メッセージ数も早く減ります。ふだんはOFFにして、選んだ記事だけ投稿の編集画面から配信するのがおすすめです。', 'apprex' ); ?></p></td></tr>
 					<tr><th><?php esc_html_e( 'アイキャッチAI生成', 'apprex' ); ?></th>
 					<td><label><input type="checkbox" name="apprex_autopost_image" value="1" <?php checked( 1, (int) get_option( 'apprex_autopost_image', 0 ) ); ?>> <?php esc_html_e( '自動投稿でも画像を生成する', 'apprex' ); ?></label></td></tr>
 				<tr><th><?php esc_html_e( 'トーン', 'apprex' ); ?></th>
 					<td><input type="text" name="apprex_autopost_tone" class="regular-text" value="<?php echo esc_attr( get_option( 'apprex_autopost_tone', '専門的で信頼感のある' ) ); ?>"></td></tr>
+				<tr><th><?php esc_html_e( 'テーマの決め方', 'apprex' ); ?></th>
+					<td><?php $apprex_mode = get_option( 'apprex_autopost_mode', 'queue' ); ?>
+						<label><input type="radio" name="apprex_autopost_mode" value="research" <?php checked( 'research', $apprex_mode ); ?>> <?php esc_html_e( 'Claude が毎回Webで最新の情報を調べて決める（おすすめ）', 'apprex' ); ?></label><br>
+						<label><input type="radio" name="apprex_autopost_mode" value="queue" <?php checked( 'queue', $apprex_mode ); ?>> <?php esc_html_e( '下のトピック一覧から順番に', 'apprex' ); ?></label>
+						<p class="description"><?php esc_html_e( '「調べて決める」は Claude APIキーが必要です（設定 → APPREX チャット）。アプリ開発のニュース・技術・活用事例を調べ、APPREXの視点と組み合わせて書きます。参考にした記事へのリンクを最後に付けます。', 'apprex' ); ?><?php if ( 'research' === $apprex_mode && ! ( function_exists( 'apprex_ai_use_claude' ) && apprex_ai_use_claude() ) ) : ?><br><b style="color:#b91c1c"><?php esc_html_e( 'Claude APIキーが未設定のため、いまはトピック一覧から順番に作ります。', 'apprex' ); ?></b><?php endif; ?></p></td></tr>
+				<tr><th><?php esc_html_e( '調べる分野', 'apprex' ); ?></th>
+					<td><textarea name="apprex_autopost_focus" rows="4" class="large-text"><?php echo esc_textarea( apprex_ai_research_focus() ); ?></textarea>
+					<p class="description"><?php esc_html_e( '「調べて決める」で、どの分野のニュースを探すか（1行に1つ）。', 'apprex' ); ?></p></td></tr>
 				<tr><th><?php esc_html_e( 'トピック一覧（1行に1テーマ）', 'apprex' ); ?></th>
 					<td><textarea name="apprex_autopost_topics" rows="8" class="large-text" placeholder="ノーコードアプリ開発のメリット&#10;飲食店アプリで再来店を増やす方法&#10;補助金を活用したアプリ導入&#10;アプリとホームページの使い分け"><?php echo esc_textarea( get_option( 'apprex_autopost_topics', apprex_default_autopost_topics() ) ); ?></textarea>
 					<p class="description"><?php esc_html_e( '上から順に1記事ずつ自動生成します（一巡したら先頭へ戻ります）。', 'apprex' ); ?></p></td></tr>
@@ -421,9 +542,19 @@ add_action( 'admin_post_apprex_generate_post', function () {
 		exit;
 	};
 
+	$research = ! empty( $_POST['research'] );
+	if ( $research ) {
+		if ( ! ( function_exists( 'apprex_ai_use_claude' ) && apprex_ai_use_claude() ) ) {
+			$notify( 'error', 'Claude APIキーが未設定です（設定 → APPREX チャット）。' );
+		}
+		if ( function_exists( 'set_time_limit' ) ) {
+			@set_time_limit( 900 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+		}
+	}
 	$res = apprex_ai_generate_post(
 		array(
-			'topic'     => wp_unslash( $_POST['topic'] ?? '' ),
+			'research'  => $research,
+			'topic'     => $research ? '' : wp_unslash( $_POST['topic'] ?? '' ),
 			'keywords'  => wp_unslash( $_POST['keywords'] ?? '' ),
 			'tone'      => wp_unslash( $_POST['tone'] ?? '' ),
 			'length'    => $_POST['length'] ?? 2000,
@@ -580,7 +711,8 @@ function apprex_run_autopost() {
 		return;
 	}
 	$topics = array_filter( array_map( 'trim', preg_split( '/\r\n|\r|\n/', (string) get_option( 'apprex_autopost_topics', apprex_default_autopost_topics() ) ) ) );
-	if ( empty( $topics ) ) {
+	$research = 'research' === get_option( 'apprex_autopost_mode', 'queue' ) && function_exists( 'apprex_claude_research' ) && apprex_ai_use_claude();
+	if ( empty( $topics ) && ! $research ) {
 		return;
 	}
 
@@ -590,6 +722,27 @@ function apprex_run_autopost() {
 	$last      = (int) get_option( 'apprex_autopost_last', 0 );
 	if ( $last && ( time() - $last ) < $need - HOUR_IN_SECONDS ) {
 		return; // まだ時期ではない。
+	}
+
+	// Claude が調べてテーマから決める。
+	if ( $research ) {
+		if ( function_exists( 'set_time_limit' ) ) {
+			@set_time_limit( 900 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+		}
+		$res = apprex_ai_generate_post(
+			array(
+				'research'  => true,
+				'auto'      => true,
+				'tone'      => get_option( 'apprex_autopost_tone', '専門的で信頼感のある' ),
+				'length'    => 2500,
+				'publish'   => true,
+				'gen_image' => (bool) get_option( 'apprex_autopost_image', 0 ),
+			)
+		);
+		update_option( 'apprex_autopost_last', time() );
+		update_option( 'apprex_autopost_last_result', is_wp_error( $res ) ? '失敗：' . $res->get_error_message() : '公開：' . $res['title'], false );
+		apprex_ai_dedupe_scan();
+		return;
 	}
 
 	// 重複を作らないよう、既に類似記事があるトピックはスキップして未出のテーマを選ぶ。
@@ -616,6 +769,7 @@ function apprex_run_autopost() {
 	$res = apprex_ai_generate_post(
 		array(
 			'topic'     => $topic,
+			'auto'      => true,
 			'tone'      => get_option( 'apprex_autopost_tone', '専門的で信頼感のある' ),
 			'length'    => 2000,
 			'publish'   => true,

@@ -68,7 +68,7 @@ function apprex_chat_enabled() {
  */
 function apprex_openrouter_complete( $messages, $args = array() ) {
 	// Claude を使う文章なら Claude で作る（失敗したら OpenRouter でやり直す）。チャットは $args['chat'] = true。
-	if ( function_exists( 'apprex_claude_for' ) && apprex_claude_for( ! empty( $args['chat'] ) ) ) {
+	if ( function_exists( 'apprex_claude_for' ) && apprex_claude_for( ! empty( $args['chat'] ) ? 'chat' : ( ! empty( $args['article'] ) ? 'article' : false ) ) ) {
 		$claude = apprex_claude_complete( $messages, $args );
 		if ( ! is_wp_error( $claude ) || 'refusal' === $claude->get_error_code() || '' === apprex_openrouter_key() ) {
 			return $claude;

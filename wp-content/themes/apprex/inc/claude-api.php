@@ -4,6 +4,7 @@
  *
  * - Claude のAPIキーを入れると、Claude を使う範囲（設定）に応じて文章を Claude で作る。
  *   「チャットだけ」（既定）：サイトのAIチャットとLINEのAI自動返信だけ Claude、ほかは OpenRouter。
+ *   「チャットと記事」：上に加えて AI記事も Claude（毎日の自動投稿では、Claude が Web で最新情報を調べて書ける）。
  *   「文章すべて」：AIスタジオ・ホームページのAI・AIMEO・AI記事なども Claude。
  * - 画像の生成は Claude ではできないため、これまでどおり OpenRouter のキーで行う。
  * - Claude で失敗したときは、OpenRouter のキーがあれば OpenRouter でやり直す。
@@ -50,19 +51,30 @@ function apprex_ai_use_claude() {
 	return '' !== apprex_claude_key();
 }
 
-/** Claude を使う範囲：chat（サイトのAIチャット・LINEの自動返信だけ）／all（文章すべて）。 */
+/** Claude を使う範囲：chat（チャット・LINEだけ）／chat_article（チャットと記事）／all（文章すべて）。 */
 function apprex_claude_scope() {
-	return 'all' === get_option( 'apprex_claude_scope', 'chat' ) ? 'all' : 'chat';
+	$v = get_option( 'apprex_claude_scope', 'chat' );
+	return in_array( $v, array( 'chat', 'chat_article', 'all' ), true ) ? $v : 'chat';
 }
 
 /**
  * この文章を Claude で作るか。
  *
- * @param bool $chat サイトのAIチャット・LINEの自動返信なら true。
+ * @param bool|string $kind true または 'chat'＝チャット・LINE／'article'＝AI記事／false＝そのほか。
  * @return bool
  */
-function apprex_claude_for( $chat ) {
-	return apprex_ai_use_claude() && ( $chat || 'all' === apprex_claude_scope() );
+function apprex_claude_for( $kind ) {
+	if ( ! apprex_ai_use_claude() ) {
+		return false;
+	}
+	$scope = apprex_claude_scope();
+	if ( true === $kind || 'chat' === $kind ) {
+		return true;
+	}
+	if ( 'article' === $kind ) {
+		return 'all' === $scope || 'chat_article' === $scope;
+	}
+	return 'all' === $scope;
 }
 
 /**
@@ -84,7 +96,7 @@ function apprex_ai_text_label() {
 	if ( 'all' === apprex_claude_scope() ) {
 		return 'Claude（' . apprex_claude_model() . '）';
 	}
-	return 'チャット・LINE：Claude（' . apprex_claude_model() . '）／そのほか：' . $or;
+	return ( 'chat_article' === apprex_claude_scope() ? 'チャット・LINE・記事' : 'チャット・LINE' ) . '：Claude（' . apprex_claude_model() . '）／そのほか：' . $or;
 }
 
 /**
@@ -166,9 +178,11 @@ function apprex_claude_complete( $messages, $args = array() ) {
 		'max_tokens'    => max( 4000, min( 16000, $want * 4 ) ),
 		'messages'      => $conv['messages'],
 		'output_config' => array( 'effort' => isset( $args['effort'] ) ? (string) $args['effort'] : 'low' ),
-		// 安全のための判定で断られたときは、Anthropic が勧めるモデルで自動的にやり直す。
-		'fallbacks'     => 'default',
 	);
+	// 安全のための判定で断られたときは、Anthropic が勧めるモデルで自動的にやり直す（Haiku は対象外）。
+	if ( apprex_claude_has_fallback( $model ) ) {
+		$payload['fallbacks'] = 'default';
+	}
 	if ( '' !== $conv['system'] ) {
 		$payload['system'] = $conv['system'];
 	}
@@ -225,7 +239,7 @@ add_action( 'admin_init', function () {
 		'apprex_claude_scope',
 		array(
 			'sanitize_callback' => function ( $v ) {
-				return 'all' === $v ? 'all' : 'chat';
+				return in_array( $v, array( 'chat', 'chat_article', 'all' ), true ) ? $v : 'chat';
 			},
 		)
 	);
@@ -251,6 +265,7 @@ function apprex_claude_settings_rows() {
 		<td>
 			<select id="apprex_claude_scope" name="apprex_claude_scope">
 				<option value="chat" <?php selected( 'chat', apprex_claude_scope() ); ?>>チャットだけ（サイトのAIチャット・LINEの自動返信）</option>
+				<option value="chat_article" <?php selected( 'chat_article', apprex_claude_scope() ); ?>>チャットと記事（AI記事・毎日の自動投稿も Claude）</option>
 				<option value="all" <?php selected( 'all', apprex_claude_scope() ); ?>>文章すべて（AIスタジオ・ホームページのAI・AIMEO・AI記事・LABOも）</option>
 			</select>
 			<p class="description">「チャットだけ」なら、それ以外は今までどおり OpenRouter で動きます。Claude で失敗したときは OpenRouter でやり直します。</p>
@@ -310,4 +325,113 @@ function apprex_claude_test_box() {
 		<?php if ( ! apprex_ai_use_claude() ) : ?><span class="description">先に Claude APIキーを入れて保存してください。</span><?php endif; ?></p>
 	</form>
 	<?php
+}
+
+/** 断られたときの自動やり直し（fallbacks）に対応したモデルか。 */
+function apprex_claude_has_fallback( $model ) {
+	return 0 !== strpos( (string) $model, 'claude-haiku' );
+}
+
+/**
+ * Claude が Web で最新の情報を調べてから、記事を書く（毎日の自動投稿用）。
+ *
+ * Web 検索・Web 取得は Anthropic のサーバーで動く道具（server tools）なので、
+ * こちらは結果を受け取るだけ。長くかかったとき（pause_turn）は続きを頼む。
+ *
+ * @param string $system 指示（APPREXの説明・守ること）。
+ * @param string $user   依頼文。
+ * @param array  $args   model / timeout / searches。
+ * @return array|WP_Error { text, sources: [ [url, title], ... ] }
+ */
+function apprex_claude_research( $system, $user, $args = array() ) {
+	$key = apprex_claude_key();
+	if ( '' === $key ) {
+		return new WP_Error( 'not_configured', 'Claude APIキーが未設定です（設定 → APPREX チャット）。' );
+	}
+	$model = isset( $args['model'] ) && 0 === strpos( (string) $args['model'], 'claude-' ) ? (string) $args['model'] : apprex_claude_model();
+	// Haiku は基本の検索だけ。ほかは結果を絞り込める新しい版。
+	$haiku = 0 === strpos( $model, 'claude-haiku' );
+	$tools = array(
+		array(
+			'type'          => $haiku ? 'web_search_20250305' : 'web_search_20260209',
+			'name'          => 'web_search',
+			'max_uses'      => isset( $args['searches'] ) ? (int) $args['searches'] : 5,
+			'user_location' => array( 'type' => 'approximate', 'country' => 'JP', 'timezone' => 'Asia/Tokyo' ),
+		),
+		array(
+			'type'     => $haiku ? 'web_fetch_20250910' : 'web_fetch_20260209',
+			'name'     => 'web_fetch',
+			'max_uses' => 3,
+		),
+	);
+	$messages = array( array( 'role' => 'user', 'content' => $user ) );
+	$sources  = array();
+	$text     = '';
+	for ( $round = 0; $round < 4; $round++ ) {
+		$payload = array(
+			'model'         => $model,
+			'max_tokens'    => 16000,
+			'system'        => $system,
+			'messages'      => $messages,
+			'tools'         => $tools,
+			'output_config' => array( 'effort' => 'medium' ),
+		);
+		if ( apprex_claude_has_fallback( $model ) ) {
+			$payload['fallbacks'] = 'default';
+		}
+		$res = wp_remote_post(
+			APPREX_CLAUDE_ENDPOINT,
+			array(
+				'timeout' => isset( $args['timeout'] ) ? (int) $args['timeout'] : 300,
+				'headers' => array(
+					'x-api-key'         => $key,
+					'anthropic-version' => APPREX_CLAUDE_API_VERSION,
+					'anthropic-beta'    => 'server-side-fallback-2026-07-01',
+					'content-type'      => 'application/json',
+				),
+				'body'    => wp_json_encode( $payload ),
+			)
+		);
+		if ( is_wp_error( $res ) ) {
+			return new WP_Error( 'upstream_error', 'Claude に接続できませんでした（' . $res->get_error_message() . '）。' );
+		}
+		$code = (int) wp_remote_retrieve_response_code( $res );
+		$body = json_decode( wp_remote_retrieve_body( $res ), true );
+		if ( 200 !== $code || ! is_array( $body ) ) {
+			$msg = isset( $body['error']['message'] ) ? $body['error']['message'] : '';
+			return new WP_Error( 'upstream_error', 'Claude での記事づくりに失敗しました（HTTP ' . $code . '）。' . ( $msg ? ' ' . $msg : '' ) );
+		}
+		$stop = isset( $body['stop_reason'] ) ? (string) $body['stop_reason'] : '';
+		if ( 'refusal' === $stop ) {
+			return new WP_Error( 'refusal', 'この内容では記事を作れませんでした。' );
+		}
+		$content = isset( $body['content'] ) && is_array( $body['content'] ) ? $body['content'] : array();
+		foreach ( $content as $block ) {
+			$type = isset( $block['type'] ) ? $block['type'] : '';
+			if ( 'text' === $type ) {
+				$text .= isset( $block['text'] ) ? $block['text'] : '';
+				// 本文が引用した出典。
+				foreach ( isset( $block['citations'] ) ? (array) $block['citations'] : array() as $c ) {
+					if ( ! empty( $c['url'] ) ) {
+						$sources[ $c['url'] ] = isset( $c['title'] ) ? (string) $c['title'] : $c['url'];
+					}
+				}
+			}
+		}
+		if ( 'pause_turn' !== $stop ) {
+			break;
+		}
+		// 調べものの途中で区切られた：ここまでの返答を渡して続きを頼む。
+		$messages[] = array( 'role' => 'assistant', 'content' => $content );
+		$text       = '';
+	}
+	$text = trim( $text );
+	if ( '' === $text ) {
+		return new WP_Error( 'upstream_error', 'Claude の記事が空でした。' );
+	}
+	$list = array();
+	foreach ( $sources as $u => $t ) {
+		$list[] = array( $u, $t );
+	}
+	return array( 'text' => $text, 'sources' => array_slice( $list, 0, 6 ) );
 }

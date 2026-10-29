@@ -675,6 +675,15 @@ add_action( 'admin_init', function () {
 	);
 	register_setting( 'apprex_labo', 'apprex_labo_photo_cap', array( 'sanitize_callback' => 'absint' ) );
 	register_setting(
+		'apprex_labo',
+		'apprex_labo_blog_cta',
+		array(
+			'sanitize_callback' => function ( $v ) {
+				return 'off' === $v ? 'off' : 'on';
+			},
+		)
+	);
+	register_setting(
 		'apprex_labo_links',
 		'apprex_labo_srcs',
 		array(
@@ -706,8 +715,91 @@ function apprex_labo_srcs() {
 			'richmenu'      => 'LINEのメニュー',
 		);
 	}
-	return $o;
+	// サイトが自動で使う入口は、一覧を書き換えていても残す。
+	return $o + array(
+		'richmenu' => 'LINEのメニュー',
+		'blog'     => 'ブログ記事',
+		'web'      => 'ブラウザから',
+	);
 }
+
+/* =========================================================================
+ * ブログ記事 → LINE（友だち限定の特典へ）
+ * 記事の途中（2つ目の見出しの前）と最後に、LINEの友だち追加と特典の案内を入れる。
+ * ====================================================================== */
+
+/** 記事にLINEの案内を入れるか（LABOの設定）。 */
+function apprex_labo_blog_cta_on() {
+	return 'off' !== get_option( 'apprex_labo_blog_cta', 'on' );
+}
+
+/**
+ * 記事に入れる案内。
+ *
+ * @param string $kind mid（途中の短いもの）／end（最後の大きいもの）。
+ * @return string
+ */
+function apprex_labo_blog_cta( $kind ) {
+	$url  = apprex_labo_url( 'blog' );
+	$icon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3C6.5 3 2 6.6 2 11c0 3.9 3.5 7.2 8.3 7.9.3.1.8.2.9.5.1.3.1.7 0 1l-.1.9c0 .3-.2 1 .9.6 1.1-.5 6-3.5 8.2-6 1.5-1.6 2.3-3.3 2.3-5C22.5 6.6 17.9 3 12 3z"/></svg>';
+	if ( 'mid' === $kind ) {
+		return '<aside class="ap-line ap-line--mid"><span class="ap-line-ic">' . $icon . '</span><p><b>あなたのお店のアプリ画面、AIで無料で作れます。</b><span>APPREXのLINE友だち限定の特典です。</span></p><a class="ap-line-btn" href="' . esc_url( $url ) . '" rel="nofollow">LINEで受け取る</a></aside>';
+	}
+	return '<aside class="ap-line ap-line--end"><div class="ap-line-t"><span class="ap-line-tag">LINE友だち限定・無料</span><h3>この記事の内容、あなたのお店ならどうなる？</h3>'
+		. '<p>APPREXのLINEを友だち追加すると、業種と店名を入れるだけで、<b>写真入りのアプリ画面をAIが作ります</b>。アプリ集客の記事・動画や、無料のオンライン相談の予約もLINEの中でできます。</p>'
+		. '<ul><li>AIでお店のアプリ画面を作る</li><li>アプリ集客の記事・動画</li><li>無料相談をLINEで予約</li></ul>'
+		. '<a class="ap-line-btn" href="' . esc_url( $url ) . '" rel="nofollow">' . $icon . 'LINEで友だち追加して使う</a><small>友だち追加は無料です。いつでもブロックできます。</small></div></aside>';
+}
+
+add_filter(
+	'the_content',
+	function ( $content ) {
+		if ( is_admin() || is_feed() || ! is_singular( 'post' ) || ! in_the_loop() || ! is_main_query() || ! apprex_labo_blog_cta_on() ) {
+			return $content;
+		}
+		// 途中：2つ目の見出し（h2）の前。見出しが少ない記事は入れない。
+		$pos = 0;
+		$n   = 0;
+		while ( false !== ( $pos = stripos( $content, '<h2', $pos ) ) ) { // phpcs:ignore WordPress.CodeAnalysis.AssignmentInCondition.FoundInWhileCondition
+			$n++;
+			if ( 2 === $n ) {
+				$content = substr( $content, 0, $pos ) . apprex_labo_blog_cta( 'mid' ) . substr( $content, $pos );
+				break;
+			}
+			$pos += 3;
+		}
+		return $content . apprex_labo_blog_cta( 'end' );
+	},
+	15
+);
+
+/* 記事のLINE案内の見た目（記事ページだけ）。 */
+add_action(
+	'wp_head',
+	function () {
+		if ( ! is_singular( 'post' ) || ! apprex_labo_blog_cta_on() ) {
+			return;
+		}
+		echo '<style id="ap-line-css">'
+			. '.ap-line{--lg:#06c755;margin:2em 0;border-radius:16px;font-size:15px;line-height:1.7}'
+			. '.ap-line svg{width:22px;height:22px;fill:currentColor;flex:none}'
+			. '.ap-line-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 22px;border-radius:999px;background:var(--lg);color:#fff!important;font-weight:800;text-decoration:none!important;box-shadow:0 10px 22px -10px rgba(6,199,85,.8);white-space:nowrap}'
+			. '.ap-line-btn:hover{filter:brightness(1.05)}'
+			. '.ap-line--mid{display:flex;align-items:center;gap:14px;padding:14px 16px;background:#f0fdf4;border:1px solid #bbf7d0}'
+			. '.ap-line--mid p{flex:1;margin:0}.ap-line--mid p b{display:block;color:#14532d}.ap-line--mid p span{font-size:13px;color:#166534}'
+			. '.ap-line-ic{width:40px;height:40px;border-radius:12px;background:var(--lg);color:#fff;display:grid;place-items:center;flex:none}'
+			. '.ap-line--end{position:relative;overflow:hidden;padding:26px 24px;color:#fff;background:radial-gradient(90% 120% at 100% 0,rgba(255,255,255,.18),transparent 55%),linear-gradient(135deg,#06c755,#048a3c)}'
+			. '.ap-line--end h3{margin:.4em 0 .5em!important;padding:0!important;border:0!important;background:none!important;font-size:1.3em;color:#fff!important;line-height:1.45}.ap-line--end h3::before,.ap-line--end h3::after,.ap-line--end li::before{display:none!important;content:none!important}'
+			. '.ap-line--end p{margin:0 0 .8em}.ap-line--end b{background:linear-gradient(transparent 60%,rgba(255,255,255,.3) 60%)}'
+			. '.ap-line--end ul{margin:0 0 1.2em;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:6px}'
+			. '.ap-line--end li{margin:0!important;font-size:13px;font-weight:700;padding:4px 12px!important;border-radius:999px;background:rgba(255,255,255,.18);color:#fff}'
+			. '.ap-line--end .ap-line-btn{background:#fff;color:#048a3c!important;box-shadow:0 12px 24px -12px rgba(0,0,0,.4)}'
+			. '.ap-line--end small{display:block;margin-top:10px;font-size:12px;opacity:.85}'
+			. '.ap-line-tag{display:inline-block;font-size:12px;font-weight:800;padding:3px 10px;border-radius:999px;background:#fff;color:#048a3c}'
+			. '@media (max-width:600px){.ap-line--mid{flex-wrap:wrap}.ap-line--mid .ap-line-btn{width:100%}.ap-line--end .ap-line-btn{width:100%}}'
+			. '</style>';
+	}
+);
 
 function apprex_labo_settings_page() {
 	$ready = '' !== apprex_labo_liff_id();
@@ -732,6 +824,12 @@ function apprex_labo_settings_page() {
 						<option value="off" <?php selected( 'off' === get_option( 'apprex_labo_photo', 'on' ) ); ?>>作らない（業種の色だけ）</option>
 					</select>
 					<p class="description">「つくる」のたびに、そのお店用のメイン写真を1枚AIで作ります（OpenRouterの安い画像モデル：<?php echo esc_html( function_exists( 'apprex_bulk_image_model' ) ? apprex_bulk_image_model() : '' ); ?>。1枚あたり約1円。作れなかったときだけ通常のモデルで約10円）。1人1日5枚まで。</p></td></tr>
+				<tr><th><label for="apprex_labo_blog_cta">ブログ記事にLINEの案内</label></th><td>
+					<select id="apprex_labo_blog_cta" name="apprex_labo_blog_cta">
+						<option value="on" <?php selected( apprex_labo_blog_cta_on() ); ?>>入れる（記事の途中と最後）</option>
+						<option value="off" <?php selected( ! apprex_labo_blog_cta_on() ); ?>>入れない</option>
+					</select>
+					<p class="description">記事を読んだ人を、LINEの友だち追加と特典（AIでアプリ画面を作る）へ案内します。入口は「ブログ記事」として「成果」で数えます。</p></td></tr>
 				<tr><th><label for="apprex_labo_photo_cap">1日に作る写真の上限</label></th><td>
 					<input type="number" min="1" id="apprex_labo_photo_cap" name="apprex_labo_photo_cap" value="<?php echo esc_attr( apprex_labo_photo_cap() ); ?>" class="small-text"> 枚（サイト全体）
 					<p class="description">今日作った枚数：<?php echo esc_html( (int) get_option( apprex_labo_photo_day_key(), 0 ) ); ?>枚。上限をこえると、その日は写真なしの画面になります。</p></td></tr>
