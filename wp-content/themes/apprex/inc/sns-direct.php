@@ -57,7 +57,7 @@ function apprex_fb_post_article( $post ) {
 	$page = get_option( 'apprex_fb_page_id' );
 	$tok  = get_option( 'apprex_fb_token' );
 	$res  = wp_remote_post(
-		'https://graph.facebook.com/v19.0/' . rawurlencode( $page ) . '/feed',
+		'https://graph.facebook.com/v23.0/' . rawurlencode( $page ) . '/feed',
 		array(
 			'timeout' => 20,
 			'body'    => array(
@@ -149,7 +149,7 @@ function apprex_ig_post_article( $post ) {
 
 	// 1) メディアコンテナ作成
 	$c = wp_remote_post(
-		'https://graph.facebook.com/v19.0/' . rawurlencode( $igid ) . '/media',
+		'https://graph.facebook.com/v23.0/' . rawurlencode( $igid ) . '/media',
 		array(
 			'timeout' => 25,
 			'body'    => array(
@@ -169,7 +169,7 @@ function apprex_ig_post_article( $post ) {
 
 	// 2) 公開
 	$p = wp_remote_post(
-		'https://graph.facebook.com/v19.0/' . rawurlencode( $igid ) . '/media_publish',
+		'https://graph.facebook.com/v23.0/' . rawurlencode( $igid ) . '/media_publish',
 		array(
 			'timeout' => 25,
 			'body'    => array(
@@ -227,6 +227,11 @@ add_action( 'transition_post_status', function ( $new, $old, $post ) {
 		$flag = get_post_meta( $post->ID, 'apprex_dist_' . $net, true );
 		$on   = ( '' === $flag ) ? true : ( '1' === $flag ); // 既定ON（設定済み媒体のみ）。
 		if ( ! $on || get_post_meta( $post->ID, 'apprex_' . $net . '_sent', true ) ) {
+			continue;
+		}
+		// Instagram：記事から画像6枚（カルーセル）とキャプションを作って投稿（時間がかかるので2分後に別で）。
+		if ( 'ig' === $net && function_exists( 'apprex_ig_use_carousel' ) && apprex_ig_use_carousel() ) {
+			wp_schedule_single_event( time() + 2 * MINUTE_IN_SECONDS, 'apprex_ig_auto', array( $post->ID ) );
 			continue;
 		}
 		$r = apprex_sns_send( $post->ID, $net );
@@ -339,6 +344,13 @@ add_action( 'admin_init', function () {
 		'apprex_ig_enabled'    => 'absint',
 		'apprex_ig_user_id'    => 'sanitize_text_field',
 		'apprex_ig_token'      => 'sanitize_text_field',
+		'apprex_ig_per_day'    => 'absint',
+		'apprex_ig_carousel'   => function ( $v ) {
+			return 'off' === $v ? 'off' : 'on';
+		},
+		'apprex_ig_reel'       => function ( $v ) {
+			return 'off' === $v ? 'off' : 'on';
+		},
 	) as $opt => $cb ) {
 		register_setting( 'apprex_sns_dist', $opt, array( 'sanitize_callback' => $cb ) );
 	}
@@ -380,6 +392,21 @@ function apprex_sns_settings_page() {
 				<tr><th>有効化</th><td><label><input type="checkbox" name="apprex_ig_enabled" value="1" <?php checked( 1, (int) get_option( 'apprex_ig_enabled', 0 ) ); ?>> Instagramへ投稿する</label><p class="description">ビジネスアカウント＋アイキャッチ画像が必須です。</p></td></tr>
 				<tr><th>IGビジネスアカウントID</th><td><?php apprex_sns_field( 'apprex_ig_user_id' ); ?></td></tr>
 				<tr><th>アクセストークン</th><td><?php apprex_sns_field( 'apprex_ig_token' ); ?><p class="description">instagram_content_publish 権限付きのトークン（FBページ連携）。</p></td></tr>
+				<tr><th>投稿の形</th><td>
+					<select name="apprex_ig_carousel">
+						<option value="on" <?php selected( 'off' !== get_option( 'apprex_ig_carousel', 'on' ) ); ?>>記事から画像6枚（カルーセル）とキャプションをAIで作って投稿（おすすめ）</option>
+						<option value="off" <?php selected( 'off' === get_option( 'apprex_ig_carousel', 'on' ) ); ?>>アイキャッチ1枚とタイトルだけ（今まで）</option>
+					</select>
+					<?php if ( function_exists( 'apprex_ig_can_draw' ) && ! apprex_ig_can_draw() ) : ?><p class="description" style="color:#b91c1c">このサーバーでは画像に文字を入れられない（GD・FreeType がない）ため、1枚の投稿になります。</p><?php endif; ?>
+				</td></tr>
+				<tr><th>リール動画</th><td>
+					<select name="apprex_ig_reel">
+						<option value="on" <?php selected( 'off' !== get_option( 'apprex_ig_reel', 'on' ) ); ?>>カルーセルと一緒に、6枚をつないだリール動画も投稿する</option>
+						<option value="off" <?php selected( 'off' === get_option( 'apprex_ig_reel', 'on' ) ); ?>>投稿しない</option>
+					</select>
+					<p class="description"><?php echo function_exists( 'apprex_ig_ffmpeg' ) && '' !== apprex_ig_ffmpeg() ? 'このサーバーは動画を作れます（自動で投稿します）。' : 'このサーバーでは動画を自動で作れません。記事の編集画面の「インスタグラム」欄の「リール動画を作る」ボタンで、ブラウザが動画を作って投稿します。'; ?></p>
+				</td></tr>
+				<tr><th>1日の投稿数の上限</th><td><input type="number" min="1" max="10" name="apprex_ig_per_day" value="<?php echo esc_attr( max( 1, (int) get_option( 'apprex_ig_per_day', 2 ) ) ); ?>" class="small-text"> 件（記事の公開による自動投稿）</td></tr>
 			</tbody></table>
 
 			<?php submit_button( '保存する' ); ?>

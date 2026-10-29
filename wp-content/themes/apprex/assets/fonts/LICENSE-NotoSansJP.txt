@@ -1,0 +1,8 @@
+Noto Sans JP（NotoSansJP-Medium.ttf / NotoSansJP-Black.ttf）
+
+インスタグラム用の画像の文字に使うため、JIS第1・第2水準の文字だけに減らして同梱しています。
+
+Copyright 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'.
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+The full license text is available at: https://openfontlicense.org/open-font-license-official-text/
+Font source: https://fonts.google.com/noto/specimen/Noto+Sans+JP
