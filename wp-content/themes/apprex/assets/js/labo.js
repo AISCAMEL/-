@@ -17,7 +17,7 @@
 		var o = get ? { credentials: 'same-origin' } : { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': C.nonce }, body: JSON.stringify(Object.assign({ idt: S.idt }, body || {})) };
 		return fetch(C.rest + path, o).then(function (r) { return r.json(); });
 	}
-	function go(tab) { S.tab = tab; S.art = null; S.err = ''; render(); window.scrollTo(0, 0); }
+	function go(tab) { S.tab = tab; S.art = null; S.err = ''; S.gate = ''; render(); window.scrollTo(0, 0); }
 
 	/* ---------- 画面 ---------- */
 	// アイコン（線画）。ボタン名の言葉で選ぶ。
@@ -103,7 +103,26 @@
 	}
 	var IND_IC = { food: 'book', beauty: 'cut', clinic: 'clip', school: 'layers', retail: 'bag', other: 'star' };
 	var MSGS = ['お店の雰囲気を考えています…', 'メニューとクーポンを決めています…', 'アプリの画面をデザインしています…'];
+	// 友だち限定の案内（LINEの外で開いた／まだ友だちでない）。
+	function vGate(kind) {
+		if (kind === 'friend') {
+			return '<div class="lb-gate"><span class="lb-gate-ic">' + ico('gift') + '</span><small class="lb-kicker">友だち限定の特典</small><h1 class="lb-h1">APPREXを友だち追加すると<br>すぐに使えます</h1><p>友だち追加は無料です。追加したら、この画面に戻って「追加したので作る」を押してください。</p>'
+				+ (C.friend ? '<a class="lb-btn line" href="' + esc(C.friend) + '">LINEで友だち追加する</a>' : '') + '<button type="button" class="lb-btn sub" data-act="make">追加したので作る</button></div>';
+		}
+		return '<div class="lb-gate"><span class="lb-gate-ic">' + ico('gift') + '</span><small class="lb-kicker">友だち限定の特典</small><h1 class="lb-h1">AIでアプリ画面を作るのは、<br>LINEの友だち限定です</h1><p>LINEで開くと、友だち追加してすぐに使えます。</p>'
+			+ '<a class="lb-btn line" href="' + esc(C.open) + '">LINEで開く</a><div class="lb-qr" id="lbQr" hidden><div></div><small>パソコンの方は、スマホのカメラで読み取ってください</small></div>'
+			+ '<button type="button" class="lb-btn sub" data-go="learn">先に記事・事例を見る</button></div>';
+	}
+	function showQr() {
+		var box = document.getElementById('lbQr');
+		if (!box || window.matchMedia('(pointer:coarse)').matches) { return; }
+		var draw = function () { box.hidden = false; box.firstChild.innerHTML = ''; new window.QRCode(box.firstChild, { text: C.open, width: 150, height: 150 }); };
+		if (window.QRCode) { draw(); return; }
+		var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'; sc.onload = draw; document.head.appendChild(sc);
+	}
 	function vMake() {
+		if (S.gate) { return vGate(S.gate); }
+		if (!S.idt && !C.staff && !S.app && S.ready) { return vGate('line'); }
 		if (S.busy) {
 			return '<div class="lb-making"><div class="lb-making-ph"><div class="lp-skel"></div></div><b id="lbMsg">' + MSGS[0] + '</b><p>20秒ほどかかります。このままお待ちください。</p></div>';
 		}
@@ -174,6 +193,7 @@
 		Array.prototype.forEach.call(main.querySelectorAll('.lp-scroll'), function (el) {
 			el.addEventListener('scroll', function () { el.parentNode.classList.toggle('scrolled', el.scrollTop > 120); }, { passive: true });
 		});
+		if (S.tab === 'make' && document.getElementById('lbQr')) { showQr(); }
 		if (S.busy && S.tab === 'make') { var k = 0; clearInterval(S.msgT); S.msgT = setInterval(function () { var m = document.getElementById('lbMsg'); if (!m || !S.busy) { clearInterval(S.msgT); return; } k = Math.min(k + 1, MSGS.length - 1); m.textContent = MSGS[k]; }, 3500); }
 		if (S.tab === 'learn' && S.posts === null) { loadPosts(); }
 	}
@@ -211,10 +231,11 @@
 		if (act === 'back') { S.art = null; render(); return; }
 		if (act === 'remake') { S.remake = true; render(); return; }
 		if (act === 'make') {
-			keepShop(); S.busy = true; S.err = ''; render();
+			keepShop(); S.busy = true; S.err = ''; S.gate = ''; render();
 			api('labo/make', { ind: S.ind, shop: S.shop, mood: S.mood }).then(function (r) {
 				S.busy = false;
-				if (r && r.ok) { S.app = r.app; S.remake = false; S.photoLoading = !!r.photoToken; if (r.photoToken) { makePhoto(r.photoToken, r.app); } } else { S.err = (r && r.message) || '作れませんでした。'; }
+				S.gate = (r && r.need) || '';
+				if (r && r.ok) { S.app = r.app; S.remake = false; S.photoLoading = !!r.photoToken; if (r.photoToken) { makePhoto(r.photoToken, r.app); } } else if (!S.gate) { S.err = (r && r.message) || '作れませんでした。'; }
 				render(); window.scrollTo(0, 0);
 			}).catch(function () { S.busy = false; S.err = '通信エラーが発生しました。'; render(); });
 		}
@@ -244,7 +265,7 @@
 	});
 
 	/* ---------- はじめ：LINEログイン ---------- */
-	function start() { loadPosts(); hello(); render(); }
+	function start() { S.ready = true; loadPosts(); hello(); render(); }
 	if (C.liff && window.liff) {
 		liff.init({ liffId: C.liff }).then(function () {
 			if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return; }
