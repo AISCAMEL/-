@@ -430,7 +430,8 @@ function apprex_sns_settings_page() {
 				<tr><th>app secret</th><td><input type="password" name="app_secret" class="regular-text" value="" placeholder="<?php echo get_option( 'apprex_meta_app_secret' ) ? '保存済み（変えるときだけ入力）' : ''; ?>" autocomplete="off"></td></tr>
 				<tr><th>エクスプローラのトークン</th><td><textarea name="token" rows="3" class="large-text" autocomplete="off" placeholder="EAA..."></textarea><p class="description">1〜2時間で切れる短いトークンで大丈夫です。</p></td></tr>
 			</tbody></table>
-			<?php submit_button( '連携する', 'primary', 'submit', false ); ?>
+			<input type="hidden" name="ig_token_above" value="">
+			<?php submit_button( '連携する', 'primary', 'submit', false, array( 'onclick' => "var t=document.querySelector('input[name=apprex_ig_token]');this.form.ig_token_above.value=t?t.value:'';" ) ); ?>
 		</form>
 	</div>
 	<?php
@@ -459,8 +460,25 @@ add_action(
 			wp_safe_redirect( admin_url( 'options-general.php?page=apprex-sns#ig-connect' ) );
 			exit;
 		};
-		if ( '' === $app_id || '' === $secret || '' === $short ) {
-			$done( 'error', 'アプリID・app secret・トークンの3つを入れてください。' );
+		// 下の欄が空なら、上の「アクセストークン」欄に貼ったトークンを使う。
+		if ( '' === $short ) {
+			$short = isset( $_POST['ig_token_above'] ) ? preg_replace( '/\s+/', '', wp_unslash( $_POST['ig_token_above'] ) ) : '';
+		}
+		if ( '' === $short ) {
+			$short = preg_replace( '/\s+/', '', (string) get_option( 'apprex_ig_token', '' ) );
+		}
+		$miss = array();
+		if ( '' === $app_id ) {
+			$miss[] = 'アプリID';
+		}
+		if ( '' === $secret ) {
+			$miss[] = 'app secret';
+		}
+		if ( '' === $short ) {
+			$miss[] = 'エクスプローラのトークン';
+		}
+		if ( $miss ) {
+			$done( 'error', '「' . implode( '」「', $miss ) . '」が空です。入れてから「連携する」を押してください。' );
 		}
 		$get = function ( $path, $q ) {
 			$r = wp_remote_get( 'https://graph.facebook.com/v23.0/' . $path . '?' . http_build_query( $q ), array( 'timeout' => 30 ) );
