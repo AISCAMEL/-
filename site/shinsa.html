@@ -433,6 +433,7 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 <p>居住形態 (必須)<br><select><option>選択してください</option><option>持家（本人名義）</option><option>持家（家族名義）</option><option>賃貸アパート</option><option>賃貸マンション</option><option>賃貸戸建</option><option>社宅・寮</option><option>公営住宅</option><option>親と同居</option><option>その他</option></select></p>
 </div>
 <p>ご住所（自動入力） (必須)<br><input type="text" class="address to-hankaku" placeholder="都道府県・市区町村・番地"></p>
+<p class="caf-hint">※ 郵便番号では<b>町名まで</b>が自動入力されます。続けて<b>番地（例：1-2-3）</b>までご入力ください。</p>
 <p>建物名・部屋番号（任意）<br><input type="text" class="to-hankaku" placeholder="〇〇マンション 101号室"></p>
 <p>住所（フリガナ） (必須)<br><input type="text" class="address-kana" placeholder="市区町村までは自動／以降はご記入ください"></p>
 <p class="caf-hint hide" id="addr-kana-hint">番地・建物名を入力されました。<b>その部分のフリガナ</b>も、上の住所フリガナ欄に続けてご記入ください。</p>
@@ -1136,6 +1137,18 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
       /* セレクトの「選択してください」「← …」は未選択とみなす */
       if(!v || v==='選択してください' || v.charAt(0)==='←'){ errs.push(leadLabel(p)+'は必須です'); if(!firstBad)firstBad=el; }
     });
+    /* 現住所は番地まで（郵便番号で入るのは町名まで。番地＝半角数字 or 丁目/番/号 が必要） */
+    var _addr=document.querySelector('.address');
+    if(_addr && visible(_addr)){
+      var _av=String(_addr.value).trim();
+      var _auto=(_addr.dataset.auto||'').trim();
+      var _hasBanchi=/[0-9]/.test(_av) || /[〇一二三四五六七八九十百]+\s*(丁目|番地|番|号)/.test(_av);
+      if(_av && (!_hasBanchi || (_auto && _av===_auto))){
+        errs.push('ご住所は番地（例：1-2-3）まで入力してください');
+        if(!firstBad)firstBad=_addr;
+      }
+    }
+
     var consent=form.querySelectorAll('.caf-check input[type=checkbox]');
     if(!Array.prototype.every.call(consent,function(c){return c.checked;})){ errs.push('同意項目すべてにチェックが必要です'); if(!firstBad)firstBad=form.querySelector('.caf-check'); }
     var lic=[]; form.querySelectorAll('.caf-up').forEach(function(l){var t=l.querySelector('.caf-up-ttl'); if(t&&/運転免許証（[表裏]）/.test(t.textContent)){var f=l.querySelector('input[type=file]'); lic.push(!!(f&&f.files&&f.files.length));}});
