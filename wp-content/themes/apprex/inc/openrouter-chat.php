@@ -304,12 +304,14 @@ function apprex_rest_chat( WP_REST_Request $request ) {
 		return new WP_Error( 'not_configured', 'チャットは現在準備中です。お問い合わせフォームをご利用ください。', array( 'status' => 503 ) );
 	}
 
-	// 会員ログイン連携：ログイン中の契約者なら本人の契約情報を文脈に追加。
+	// 毎回同じ指示（$system）と、人・ページで変わる指示（$extra）を分けて渡す（Claude の使い回しのため）。
 	$system = apprex_chat_system_prompt();
+	$extra  = '';
+	// 会員ログイン連携：ログイン中の契約者なら本人の契約情報を文脈に追加。
 	if ( function_exists( 'apprex_chat_member_context' ) ) {
 		$member_ctx = apprex_chat_member_context();
 		if ( '' !== $member_ctx ) {
-			$system .= "\n\n# ログイン中の契約者情報（本人にのみ案内してよい）\n" . $member_ctx;
+			$extra .= "\n\n# ログイン中の契約者情報（本人にのみ案内してよい）\n" . $member_ctx;
 		}
 	}
 
@@ -318,12 +320,13 @@ function apprex_rest_chat( WP_REST_Request $request ) {
 		$page_key = sanitize_key( (string) $request->get_param( 'page' ) );
 		$page_ctx = apprex_chat_page_prompt( $page_key, sanitize_key( (string) $request->get_param( 'step' ) ), absint( $request->get_param( 'post' ) ) );
 		if ( '' !== $page_ctx ) {
-			$system .= "\n\n# このページでの案内（最優先で従う）\n" . $page_ctx;
+			$extra .= "\n\n# このページでの案内（最優先で従う）\n" . $page_ctx;
 		}
 	}
 
 	$payload_messages = array_merge(
 		array( array( 'role' => 'system', 'content' => $system ) ),
+		'' !== $extra ? array( array( 'role' => 'system', 'content' => trim( $extra ) ) ) : array(),
 		$messages
 	);
 	$reply = apprex_openrouter_complete(

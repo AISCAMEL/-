@@ -150,6 +150,7 @@ function apprex_claude_convert( $messages ) {
 	}
 	return array(
 		'system'   => implode( "\n\n", $system ),
+		'blocks'   => $system, // system ごと（1つ目＝毎回同じ部分。チャットでは使い回しの対象）。
 		'messages' => $out,
 	);
 }
@@ -185,6 +186,19 @@ function apprex_claude_complete( $messages, $args = array() ) {
 	}
 	if ( '' !== $conv['system'] ) {
 		$payload['system'] = $conv['system'];
+		// チャット：毎回同じ指示（ナレッジ・料金など）を使い回して、2回目からの読み込みを安くする（プロンプトキャッシュ）。
+		// 1つ目の system が毎回同じ部分、2つ目以降がページ・LINE向けなどの変わる部分。
+		if ( ! empty( $args['chat'] ) ) {
+			$blocks = array();
+			foreach ( $conv['blocks'] as $i => $t ) {
+				$b = array( 'type' => 'text', 'text' => $t );
+				if ( 0 === $i ) {
+					$b['cache_control'] = array( 'type' => 'ephemeral' );
+				}
+				$blocks[] = $b;
+			}
+			$payload['system'] = $blocks;
+		}
 	}
 	$payload = apply_filters( 'apprex_claude_payload', $payload, $args );
 

@@ -78,10 +78,12 @@ add_action( 'apprex_line_event', function ( $ev, $uid, $type ) {
 
 	// サイトのAIと同じ頭脳＋LINE向けの簡潔指示。
 	$system = function_exists( 'apprex_chat_system_prompt' ) ? apprex_chat_system_prompt() : 'あなたはAPPREXのアシスタントです。';
-	$system .= "\n\n# LINE応答ルール\n- LINEでの会話です。1〜3文で簡潔に、絵文字は控えめに。\n- 詳しい相談・見積もりは無料相談やフォームへ自然に誘導してよい。\n- 分からないことは無理に答えず、担当者へつなぐ旨を伝える。";
+	$line_rule = "# LINE応答ルール\n- LINEでの会話です。1〜3文で簡潔に、絵文字は控えめに。\n- 詳しい相談・見積もりは無料相談やフォームへ自然に誘導してよい。\n- 分からないことは無理に答えず、担当者へつなぐ旨を伝える。";
 
+	// 毎回同じ指示と、LINE向けの指示を分けて渡す（Claude の使い回しのため）。
 	$messages = array(
 		array( 'role' => 'system', 'content' => $system ),
+		array( 'role' => 'system', 'content' => $line_rule ),
 		array( 'role' => 'user', 'content' => mb_substr( $user_text, 0, 2000 ) ),
 	);
 	$reply = apprex_openrouter_complete( $messages, array( 'temperature' => 0.4, 'max_tokens' => 500, 'timeout' => 25, 'chat' => true ) );
