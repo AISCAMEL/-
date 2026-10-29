@@ -680,7 +680,7 @@ function apprex_ai_blog_page() {
 add_filter(
 	'post_row_actions',
 	function ( $actions, $post ) {
-		if ( 'post' === $post->post_type && current_user_can( 'edit_post', $post->ID ) && get_post_meta( $post->ID, '_apprex_ai_generated', true ) ) {
+		if ( 'post' === $post->post_type && current_user_can( 'edit_post', $post->ID ) ) {
 			$url                        = wp_nonce_url( admin_url( 'admin-post.php?action=apprex_ai_add_images&post=' . $post->ID ), 'apprex_ai_add_images_' . $post->ID );
 			$actions['apprex_ai_images'] = '<a href="' . esc_url( $url ) . '" onclick="return confirm(\'見出しの下にAIの写真を2枚入れます（1枚約1円・30秒ほど）。よろしいですか？\')">AIで写真を入れる</a>';
 		}
@@ -701,8 +701,9 @@ add_action(
 			@set_time_limit( 600 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
 		}
 		// 先頭の前置き（「〜を出力します」など）を外す。
+		// 前置きを外すのは、AIが書いた記事だけ（自分で書いた記事の書き出しは触らない）。
 		$c = (string) get_post_field( 'post_content', $id );
-		$n = apprex_ai_clean_body( $c );
+		$n = get_post_meta( $id, '_apprex_ai_generated', true ) ? apprex_ai_clean_body( $c ) : $c;
 		if ( $n !== $c ) {
 			wp_update_post( array( 'ID' => $id, 'post_content' => $n ) );
 		}
