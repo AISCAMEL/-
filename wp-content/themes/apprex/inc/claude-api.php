@@ -363,8 +363,8 @@ function apprex_claude_research( $system, $user, $args = array() ) {
 		return new WP_Error( 'not_configured', 'Claude APIキーが未設定です（設定 → APPREX チャット）。' );
 	}
 	$model = isset( $args['model'] ) && 0 === strpos( (string) $args['model'], 'claude-' ) ? (string) $args['model'] : apprex_claude_model();
-	// Haiku は基本の検索だけ。ほかは結果を絞り込める新しい版。
-	$haiku = 0 === strpos( $model, 'claude-haiku' );
+	// Haiku は基本の検索だけ。ほかは結果を絞り込める新しい版（うまくいかなければ基本の版でやり直す）。
+	$haiku = 0 === strpos( $model, 'claude-haiku' ) || ! empty( $args['basic'] );
 	$tools = array(
 		array(
 			'type'          => $haiku ? 'web_search_20250305' : 'web_search_20260209',
@@ -465,6 +465,10 @@ function apprex_claude_research( $system, $user, $args = array() ) {
 		$msg = array();
 		foreach ( array_unique( $errors ) as $e ) {
 			$msg[] = isset( $why[ $e ] ) ? $why[ $e ] . '（' . $e . '）' : $e;
+		}
+		// 新しい版の検索で1件も取れなかったときは、基本の版で1回だけやり直す。
+		if ( empty( $args['basic'] ) && 0 !== strpos( $model, 'claude-haiku' ) ) {
+			return apprex_claude_research( $system, $user, array_merge( $args, array( 'basic' => true ) ) );
 		}
 		return new WP_Error( 'no_research', 'Web検索ができなかったため、記事は作りませんでした。' . ( $msg ? '理由：' . implode( '／', $msg ) . '。' : '' ) . 'Anthropic Console の設定（組織の Web検索 がオンか、利用上限）をご確認ください。' );
 	}
