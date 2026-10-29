@@ -85,7 +85,7 @@ function apprex_brush_post( $id, $opts = array() ) {
 
 	$system = function_exists( 'apprex_ai_article_system' ) ? apprex_ai_article_system() : '';
 	if ( $research ) {
-		$r = apprex_claude_research( $system, $user, array( 'timeout' => 300, 'searches' => 4, 'optional' => true ) );
+		$r = apprex_claude_research( $system, $user, array( 'timeout' => 300, 'searches' => 4, 'optional' => true, 'model' => apprex_claude_article_model() ) );
 		$result = is_wp_error( $r ) ? $r : $r['text'];
 	} else {
 		$result = apprex_openrouter_complete(
@@ -93,7 +93,10 @@ function apprex_brush_post( $id, $opts = array() ) {
 				array( 'role' => 'system', 'content' => $system ),
 				array( 'role' => 'user', 'content' => $user ),
 			),
-			array( 'max_tokens' => 4000, 'timeout' => 180, 'article' => true )
+			array_merge(
+				array( 'max_tokens' => 4000, 'timeout' => 180, 'article' => true ),
+				function_exists( 'apprex_claude_for' ) && apprex_claude_for( 'article' ) ? array( 'model' => apprex_claude_article_model() ) : array()
+			)
 		);
 	}
 	if ( is_wp_error( $result ) ) {
@@ -281,7 +284,7 @@ function apprex_brush_page() {
 			公開済みの記事を、検索とAIの回答で見つけてもらえる形に書き直します。<b>URLとアイキャッチはそのまま</b>です。<br>
 			入るもの：検索されやすいタイトルと説明文／冒頭の「この記事でわかること」と結論／疑問の形の見出し／用語の説明／Googleマップ（MEO）との関係（テーマに合うとき）／よくある質問（検索結果用の構造化データも自動で付きます）／まとめ／APPREXのページへのリンク。<br>
 			元の内容は控えに残るので、各記事の「元に戻す」でいつでも戻せます。
-			記事に使うAI：<b><?php echo esc_html( function_exists( 'apprex_claude_for' ) && apprex_claude_for( 'article' ) ? 'Claude（' . apprex_claude_model() . '）' : 'OpenRouter（' . apprex_openrouter_model() . '）' ); ?></b>。
+			記事に使うAI：<b><?php echo esc_html( function_exists( 'apprex_claude_for' ) && apprex_claude_for( 'article' ) ? 'Claude（' . apprex_claude_article_model() . '）' : 'OpenRouter（' . apprex_openrouter_model() . '）' ); ?></b>。
 			費用の目安：1本 約30〜60円（Webで確かめる場合）。
 		</p></div>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">

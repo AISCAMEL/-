@@ -61,7 +61,7 @@ function apprex_ai_research_focus() {
  * @param int    $length 文字数。
  * @return string
  */
-function apprex_ai_research_prompt( $tone, $length ) {
+function apprex_ai_research_prompt( $tone, $length, $hint = '' ) {
 	$recent = get_posts(
 		array(
 			'post_type'      => 'post',
@@ -75,6 +75,7 @@ function apprex_ai_research_prompt( $tone, $length ) {
 		. "手順：\n"
 		. "1. Web検索で、次の分野のここ1〜2週間ほどの新しいニュース・発表・話題を調べる（日本の情報を優先。公式発表や信頼できるメディアを使う）。\n"
 		. apprex_ai_research_focus() . "\n"
+		. ( '' !== $hint ? "今回は特に「{$hint}」の分野から話題を選ぶ（同じ日のほかの記事と分野が重ならないように）。\n" : '' )
 		. "2. その中から、店舗や中小企業の経営者が「自分ごと」として読める話題を1つ選ぶ。下の既存記事と同じテーマは避ける。\n"
 		. "3. 何が起きたか（事実）→ 店舗・中小企業にとって何が変わるか → どう活かすか、の順で解説し、最後の章で APPREX（ノーコードのアプリ開発・AIスタジオ・LINEのLABOなど）でできることと自然につなげる。宣伝ばかりにしない。\n\n"
 		. "条件：トーンは{$tone}文体。本文は約{$length}字。調べて分からなかったことは書かない。日付や数字は調べた情報のとおりに書く。\n"
@@ -344,7 +345,7 @@ function apprex_ai_generate_post( $args ) {
 	$sources = array();
 	if ( $research ) {
 		// Claude が Web で最新の情報を調べて、テーマ選びから書く（毎日の自動投稿）。
-		$r = apprex_claude_research( $system, apprex_ai_research_prompt( $tone, $length ), array( 'timeout' => 300 ) );
+		$r = apprex_claude_research( $system, apprex_ai_research_prompt( $tone, $length, isset( $args['focus_hint'] ) ? (string) $args['focus_hint'] : '' ), array( 'timeout' => 300, 'model' => apprex_claude_article_model() ) );
 		if ( is_wp_error( $r ) ) {
 			return $r;
 		}
@@ -356,7 +357,10 @@ function apprex_ai_generate_post( $args ) {
 				array( 'role' => 'system', 'content' => $system ),
 				array( 'role' => 'user', 'content' => $user ),
 			),
-			array( 'temperature' => 0.7, 'max_tokens' => min( 4000, (int) round( $length * 2.2 ) ), 'timeout' => 90, 'article' => true )
+			array_merge(
+				array( 'temperature' => 0.7, 'max_tokens' => min( 4000, (int) round( $length * 2.2 ) ), 'timeout' => 90, 'article' => true ),
+				function_exists( 'apprex_claude_for' ) && apprex_claude_for( 'article' ) ? array( 'model' => apprex_claude_article_model() ) : array()
+			)
 		);
 	}
 	if ( is_wp_error( $result ) ) {
@@ -474,6 +478,15 @@ add_action( 'admin_init', function () {
 	register_setting( 'apprex_aiblog', 'apprex_autopost_line', array( 'sanitize_callback' => 'absint' ) );
 	register_setting(
 		'apprex_aiblog',
+		'apprex_autopost_per_day',
+		array(
+			'sanitize_callback' => function ( $v ) {
+				return max( 1, min( 3, absint( $v ) ) );
+			},
+		)
+	);
+	register_setting(
+		'apprex_aiblog',
 		'apprex_autopost_body_images',
 		array(
 			'sanitize_callback' => function ( $v ) {
@@ -498,7 +511,7 @@ function apprex_ai_blog_page() {
 	?>
 	<div class="wrap">
 		<h1><?php esc_html_e( 'AI記事生成', 'apprex' ); ?></h1>
-		<p class="description"><?php echo esc_html( '記事に使うAI：' . ( function_exists( 'apprex_claude_for' ) && apprex_claude_for( 'article' ) ? 'Claude（' . apprex_claude_model() . '）' : 'OpenRouter（' . apprex_openrouter_model() . '）' ) . '。変更は 設定 → APPREX チャット の「Claude を使う範囲」。' ); ?></p>
+		<p class="description"><?php echo esc_html( '記事に使うAI：' . ( function_exists( 'apprex_claude_for' ) && apprex_claude_for( 'article' ) ? 'Claude（' . apprex_claude_article_model() . '）' : 'OpenRouter（' . apprex_openrouter_model() . '）' ) . '。変更は 設定 → APPREX チャット の「Claude を使う範囲」「Claude のモデル（記事）」。' ); ?></p>
 
 		<?php if ( ! apprex_chat_enabled() ) : ?>
 			<div class="notice notice-warning"><p><?php esc_html_e( 'OpenRouter APIキーが未設定です。設定 > APPREX チャット で登録してください。', 'apprex' ); ?></p></div>
@@ -568,7 +581,12 @@ function apprex_ai_blog_page() {
 						<option value="daily" <?php selected( $f, 'daily' ); ?>>毎日</option>
 						<option value="weekly" <?php selected( $f, 'weekly' ); ?>>週1回</option>
 						<option value="biweekly" <?php selected( $f, 'biweekly' ); ?>>2週に1回</option>
-					</select></td></tr>
+					</select>
+					<label style="margin-left:12px"><?php esc_html_e( '毎日のとき1日に', 'apprex' ); ?>
+						<select name="apprex_autopost_per_day"><?php $apprex_pd = (int) get_option( 'apprex_autopost_per_day', 1 ); ?>
+							<?php foreach ( array( 1, 2, 3 ) as $apprex_n ) : ?><option value="<?php echo (int) $apprex_n; ?>" <?php selected( $apprex_pd, $apprex_n ); ?>><?php echo (int) $apprex_n; ?>本</option><?php endforeach; ?>
+						</select></label>
+					<p class="description"><?php esc_html_e( '2本以上のときは、投稿時刻から4時間おきに出します。「調べる分野」を順番に変えて、同じ日に似た記事が並ばないようにします。', 'apprex' ); ?></p></td></tr>
 				<tr><th><?php esc_html_e( '投稿時刻', 'apprex' ); ?></th>
 						<td><select name="apprex_autopost_hour">
 							<?php
@@ -874,9 +892,30 @@ function apprex_run_autopost() {
 	$interval  = array( 'daily' => DAY_IN_SECONDS, 'weekly' => 7 * DAY_IN_SECONDS, 'biweekly' => 14 * DAY_IN_SECONDS );
 	$need      = isset( $interval[ $freq ] ) ? $interval[ $freq ] : 7 * DAY_IN_SECONDS;
 	$last      = (int) get_option( 'apprex_autopost_last', 0 );
-	if ( $last && ( time() - $last ) < $need - HOUR_IN_SECONDS ) {
+	// 毎日：1日に何本出すか（2本目からは4時間おき）。
+	$per_day = 'daily' === $freq ? max( 1, min( 3, (int) get_option( 'apprex_autopost_per_day', 1 ) ) ) : 1;
+	$today   = wp_date( 'Ymd' );
+	$tc      = get_option( 'apprex_autopost_today', array( 'd' => '', 'n' => 0 ) );
+	$tc      = ( is_array( $tc ) && isset( $tc['d'] ) && $today === $tc['d'] ) ? $tc : array( 'd' => $today, 'n' => 0 );
+	if ( 'daily' === $freq ) {
+		if ( $tc['n'] >= $per_day || ( $tc['n'] > 0 && $last && time() - $last < 3 * HOUR_IN_SECONDS + 30 * MINUTE_IN_SECONDS ) ) {
+			return; // 今日の分は出した／前の記事から時間がたっていない。
+		}
+		if ( 0 === $tc['n'] && $last && wp_date( 'Ymd', $last ) === $today ) {
+			return;
+		}
+	} elseif ( $last && ( time() - $last ) < $need - HOUR_IN_SECONDS ) {
 		return; // まだ時期ではない。
 	}
+	// 今日の何本目か（分野を変えるため）。次の回を予約。
+	$slot = $tc['n'];
+	$tc['n']++;
+	update_option( 'apprex_autopost_today', $tc, false );
+	if ( $tc['n'] < $per_day ) {
+		wp_schedule_single_event( time() + 4 * HOUR_IN_SECONDS, 'apprex_autopost_cron' );
+	}
+	$focus = array_values( array_filter( array_map( 'trim', preg_split( '/\R/', apprex_ai_research_focus() ) ) ) );
+	$hint  = $focus ? $focus[ ( (int) wp_date( 'z' ) * $per_day + $slot ) % count( $focus ) ] : '';
 
 	// Claude が調べてテーマから決める。
 	if ( $research ) {
@@ -887,6 +926,7 @@ function apprex_run_autopost() {
 			array(
 				'research'    => true,
 				'auto'        => true,
+				'focus_hint'  => $hint,
 				'body_images' => (int) get_option( 'apprex_autopost_body_images', 2 ),
 				'tone'      => get_option( 'apprex_autopost_tone', '専門的で信頼感のある' ),
 				'length'    => 2500,

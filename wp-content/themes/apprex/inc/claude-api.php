@@ -40,6 +40,12 @@ function apprex_claude_model() {
 	return $m ? $m : APPREX_CLAUDE_DEFAULT_MODEL;
 }
 
+/** AI記事（毎日の記事・記事の見直し）に使う Claude のモデル。未入力ならチャットと同じ。 */
+function apprex_claude_article_model() {
+	$m = trim( (string) get_option( 'apprex_claude_article_model', '' ) );
+	return 0 === strpos( $m, 'claude-' ) ? $m : apprex_claude_model();
+}
+
 /** AIスタジオ（デザイン・試作・仕様書）に使う Claude のモデル。 */
 function apprex_claude_studio_model() {
 	$m = trim( (string) get_option( 'apprex_claude_studio_model', '' ) );
@@ -248,6 +254,7 @@ add_action( 'admin_init', function () {
 	register_setting( 'apprex_chat', 'apprex_claude_api_key', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 	register_setting( 'apprex_chat', 'apprex_claude_model', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 	register_setting( 'apprex_chat', 'apprex_claude_studio_model', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+	register_setting( 'apprex_chat', 'apprex_claude_article_model', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 	register_setting(
 		'apprex_chat',
 		'apprex_claude_scope',
@@ -290,6 +297,13 @@ function apprex_claude_settings_rows() {
 		<td>
 			<input type="text" name="apprex_claude_model" value="<?php echo esc_attr( get_option( 'apprex_claude_model', '' ) ); ?>" class="regular-text" placeholder="<?php echo esc_attr( APPREX_CLAUDE_DEFAULT_MODEL ); ?>">
 			<p class="description">未入力時は <?php echo esc_html( APPREX_CLAUDE_DEFAULT_MODEL ); ?>。チャットには claude-sonnet-5-5（おすすめ）や、さらに安い claude-haiku-5-5 も選べます。「文章すべて」のときは AI記事・AIMEO にも使います。</p>
+		</td>
+	</tr>
+	<tr>
+		<th scope="row">Claude のモデル（記事）</th>
+		<td>
+			<input type="text" name="apprex_claude_article_model" value="<?php echo esc_attr( get_option( 'apprex_claude_article_model', '' ) ); ?>" class="regular-text" placeholder="<?php echo esc_attr( apprex_claude_model() ); ?>">
+			<p class="description">毎日の記事・記事の見直しに使います（「チャットと記事」「文章すべて」のとき）。未入力ならチャットと同じモデル。質を上げたいときは claude-opus-5-5（費用はおよそ2倍）。</p>
 		</td>
 	</tr>
 	<tr>
