@@ -349,7 +349,7 @@ function apprex_labo_soft( $hex ) {
 
 /** AIで写真を作るか（LABOの設定）。 */
 function apprex_labo_photo_on() {
-	return 'off' !== get_option( 'apprex_labo_photo', 'on' ) && function_exists( 'apprex_openrouter_image' ) && function_exists( 'apprex_openrouter_key' ) && '' !== apprex_openrouter_key();
+	return 'off' !== get_option( 'apprex_labo_photo', 'on' ) && function_exists( 'apprex_openrouter_image' ) && function_exists( 'apprex_bulk_image_model' ) && function_exists( 'apprex_openrouter_key' ) && '' !== apprex_openrouter_key();
 }
 
 /** 1日に作る写真の上限（サイト全体）。 */
@@ -375,7 +375,12 @@ function apprex_labo_photo_prompt( $app ) {
 
 /** 写真を作って保存し、URLを返す。 */
 function apprex_labo_photo_make( $app ) {
-	$img = apprex_openrouter_image( apprex_labo_photo_prompt( $app ) );
+	// 費用を抑えるため、枚数の多い画像用の安いモデル（1枚約1円）で作る。失敗したときだけ通常のモデルで。
+	$prompt = apprex_labo_photo_prompt( $app );
+	$img    = apprex_openrouter_image( $prompt, array( 'model' => apprex_bulk_image_model() ) );
+	if ( is_wp_error( $img ) ) {
+		$img = apprex_openrouter_image( $prompt );
+	}
 	if ( is_wp_error( $img ) ) {
 		return $img;
 	}
@@ -686,7 +691,7 @@ function apprex_labo_settings_page() {
 						<option value="on" <?php selected( 'off' !== get_option( 'apprex_labo_photo', 'on' ) ); ?>>お店ごとにAIで作る</option>
 						<option value="off" <?php selected( 'off' === get_option( 'apprex_labo_photo', 'on' ) ); ?>>作らない（業種の色だけ）</option>
 					</select>
-					<p class="description">「つくる」のたびに、そのお店用のメイン写真を1枚AIで作ります（OpenRouterの画像モデル：<?php echo esc_html( function_exists( 'apprex_image_model' ) ? apprex_image_model() : '' ); ?>。1枚あたり約10円前後）。1人1日5枚まで。</p></td></tr>
+					<p class="description">「つくる」のたびに、そのお店用のメイン写真を1枚AIで作ります（OpenRouterの安い画像モデル：<?php echo esc_html( function_exists( 'apprex_bulk_image_model' ) ? apprex_bulk_image_model() : '' ); ?>。1枚あたり約1円。作れなかったときだけ通常のモデルで約10円）。1人1日5枚まで。</p></td></tr>
 				<tr><th><label for="apprex_labo_photo_cap">1日に作る写真の上限</label></th><td>
 					<input type="number" min="1" id="apprex_labo_photo_cap" name="apprex_labo_photo_cap" value="<?php echo esc_attr( apprex_labo_photo_cap() ); ?>" class="small-text"> 枚（サイト全体）
 					<p class="description">今日作った枚数：<?php echo esc_html( (int) get_option( apprex_labo_photo_day_key(), 0 ) ); ?>枚。上限をこえると、その日は写真なしの画面になります。</p></td></tr>
