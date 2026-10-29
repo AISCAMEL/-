@@ -8,6 +8,22 @@ import { Card, PageTitle } from '@/components/ui';
 function jstTime(iso: string) { return new Date(iso).toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' }); }
 function jstDateTime(iso: string) { return new Date(iso).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo', month: 'numeric', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit' }); }
 function todayYmd() { return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' }); } // YYYY-MM-DD
+// JSTでの ymd と 小数時（9.5=9:30）。カレンダーの列判定・配置に使う。
+function jstYmd(iso: string) { return new Date(iso).toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' }); }
+function jstHourFloat(iso: string) {
+  const s = new Date(iso).toLocaleTimeString('en-GB', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit', hour12: false });
+  const [h, m] = s.split(':').map(Number); return h + m / 60;
+}
+// ymd を純粋なカレンダー日付として扱い、日数加算や曜日判定をタイムゾーンの影響なく行う。
+function ymdAddDays(ymd: string, n: number) {
+  const [y, m, d] = ymd.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d)); dt.setUTCDate(dt.getUTCDate() + n);
+  return dt.toISOString().slice(0, 10);
+}
+function ymdWeekday(ymd: string) { const [y, m, d] = ymd.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)).getUTCDay(); } // 0=日
+const WEEKDAY_JP = ['日', '月', '火', '水', '木', '金', '土'];
+// カレンダー表示の営業時間帯（枠外の予約は端にクランプして表示）。
+const CAL_START = 8, CAL_END = 20, CAL_ROW_H = 44;
 
 const STATUS_LABEL: Record<string, string> = { tentative: '仮予約', confirmed: '確定', done: '完了', cancelled: '取消' };
 const STATUS_COLOR: Record<string, string> = { tentative: 'bg-amber-100 text-amber-800', confirmed: 'bg-green-100 text-green-800', done: 'bg-gray-100 text-gray-500', cancelled: 'bg-red-100 text-red-600' };
@@ -25,6 +41,8 @@ export default function AppointmentsPage() {
   const [cfg, setCfg] = useState({ google_calendar_id: '', google_refresh_token: '', appointment_duration_min: 45 });
   const [autoForm, setAutoForm] = useState({ customer_name: '', phone_number: '', type: '出張査定', date: '', preferredHHMM: '' });
   const [autoMsg, setAutoMsg] = useState('');
+  const [view, setView] = useState<'calendar' | 'list'>('calendar');
+  const [weekOffset, setWeekOffset] = useState(0); // 0=今週
 
   async function runAutoBook(e: React.FormEvent) {
     e.preventDefault();
@@ -221,8 +239,20 @@ export default function AppointmentsPage() {
         )}
       </Card>
 
-      {/* 予約一覧 */}
-      <h2 className="mb-3 text-lg font-semibold">予約一覧</h2>
+      {/* 予約（カレンダー / 一覧 切替） */}
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-lg font-semibold">予約</h2>
+        <div className="inline-flex overflow-hidden rounded-lg border text-sm">
+          <button onClick={() => setView('calendar')} className={`px-3 py-1.5 ${view === 'calendar' ? 'bg-brand text-white' : 'bg-white hover:bg-gray-50'}`}>📅 カレンダー</button>
+          <button onClick={() => setView('list')} className={`border-l px-3 py-1.5 ${view === 'list' ? 'bg-brand text-white' : 'bg-white hover:bg-gray-50'}`}>☰ 一覧</button>
+        </div>
+      </div>
+
+      {view === 'calendar' && (
+        <WeekCalendar list={list} weekOffset={weekOffset} setWeekOffset={setWeekOffset} />
+      )}
+
+      {view === 'list' && (
       <Card className="p-0">
         <table className="w-full text-sm">
           <thead className="border-b text-left text-xs text-gray-500">
@@ -246,6 +276,120 @@ export default function AppointmentsPage() {
           </tbody>
         </table>
       </Card>
+      )}
     </div>
   );
 }
+
+// 週カレンダー（JST・8:00–20:00）。予約を日×時刻のブロックで表示。重なりは横に分割。
+function WeekCalendar({ list, weekOffset, setWeekOffset }: { list: any[]; weekOffset: number; setWeekOffset: (n: number) => void }) {
+  const today = todayYmd();
+  const baseSunday = ymdAddDays(today, -ymdWeekday(today)); // 今週の日曜
+  const weekStart = ymdAddDays(baseSunday, weekOffset * 7);
+  const days = Array.from({ length: 7 }, (_, i) => ymdAddDays(weekStart, i));
+  const hours = Array.from({ length: CAL_END - CAL_START }, (_, i) => CAL_START + i);
+  const gridH = (CAL_END - CAL_START) * CAL_ROW_H;
+
+  // 日ごとに予約をまとめ、重なりをレーン分割
+  function dayLayout(ymd: string) {
+    const items = list
+      .filter((a) => jstYmd(a.start_at) === ymd)
+      .sort((a, b) => a.start_at.localeCompare(b.start_at));
+    const laneEnds: number[] = [];
+    const placed = items.map((a) => {
+      const s = jstHourFloat(a.start_at), e = Math.max(jstHourFloat(a.end_at), s + 0.25);
+      let lane = laneEnds.findIndex((end) => end <= s + 0.001);
+      if (lane === -1) { lane = laneEnds.length; laneEnds.push(e); } else laneEnds[lane] = e;
+      return { a, s, e, lane };
+    });
+    return { placed, lanes: Math.max(1, laneEnds.length) };
+  }
+
+  const fmtRange = () => {
+    const end = ymdAddDays(weekStart, 6);
+    const f = (y: string) => { const [, m, d] = y.split('-'); return `${Number(m)}/${Number(d)}`; };
+    return `${f(weekStart)} 〜 ${f(end)}`;
+  };
+
+  return (
+    <Card className="p-0">
+      {/* 週ナビ */}
+      <div className="flex items-center justify-between border-b px-4 py-2 text-sm">
+        <div className="flex gap-1">
+          <button onClick={() => setWeekOffset(weekOffset - 1)} className="rounded-lg border px-2 py-1 hover:bg-gray-50">‹ 前週</button>
+          <button onClick={() => setWeekOffset(0)} className={`rounded-lg border px-3 py-1 ${weekOffset === 0 ? 'bg-brand-light/50 text-brand' : 'hover:bg-gray-50'}`}>今週</button>
+          <button onClick={() => setWeekOffset(weekOffset + 1)} className="rounded-lg border px-2 py-1 hover:bg-gray-50">翌週 ›</button>
+        </div>
+        <div className="font-medium text-gray-600">{fmtRange()}</div>
+      </div>
+
+      {/* ヘッダ：曜日 */}
+      <div className="grid border-b" style={{ gridTemplateColumns: `48px repeat(7, 1fr)` }}>
+        <div />
+        {days.map((ymd) => {
+          const wd = ymdWeekday(ymd); const isToday = ymd === today;
+          const [, , d] = ymd.split('-');
+          return (
+            <div key={ymd} className={`border-l py-1.5 text-center text-xs ${isToday ? 'bg-brand-light/40' : ''}`}>
+              <div className={wd === 0 ? 'text-red-500' : wd === 6 ? 'text-blue-500' : 'text-gray-500'}>{WEEKDAY_JP[wd]}</div>
+              <div className={`text-sm font-semibold ${isToday ? 'text-brand' : 'text-gray-700'}`}>{Number(d)}</div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 本体：時刻 × 7日 */}
+      <div className="grid overflow-hidden" style={{ gridTemplateColumns: `48px repeat(7, 1fr)` }}>
+        {/* 時刻ラベル */}
+        <div className="relative" style={{ height: gridH }}>
+          {hours.map((h, i) => (
+            <div key={h} className="absolute right-1 -translate-y-1/2 text-[10px] text-gray-400" style={{ top: i * CAL_ROW_H }}>{h}:00</div>
+          ))}
+        </div>
+        {/* 各日の列 */}
+        {days.map((ymd) => {
+          const { placed, lanes } = dayLayout(ymd);
+          const isToday = ymd === today;
+          return (
+            <div key={ymd} className={`relative border-l ${isToday ? 'bg-brand-light/10' : ''}`} style={{ height: gridH }}>
+              {/* 時間の横線 */}
+              {hours.map((h, i) => (
+                <div key={h} className="absolute inset-x-0 border-t border-gray-100" style={{ top: i * CAL_ROW_H }} />
+              ))}
+              {/* 予約ブロック */}
+              {placed.map(({ a, s, e, lane }) => {
+                const top = (Math.max(s, CAL_START) - CAL_START) * CAL_ROW_H;
+                const bottom = (Math.min(e, CAL_END) - CAL_START) * CAL_ROW_H;
+                const h = Math.max(18, bottom - top);
+                const w = 100 / lanes;
+                const cls = CAL_BLOCK[a.status] ?? 'border-gray-400 bg-gray-50 text-gray-700';
+                return (
+                  <div key={a.id} title={`${jstTime(a.start_at)}〜${jstTime(a.end_at)} ${a.type}／${a.customer_name ?? ''}${a.note ? `\n${a.note}` : ''}`}
+                    className={`absolute overflow-hidden rounded border-l-2 px-1 py-0.5 text-[10px] leading-tight ${cls}`}
+                    style={{ top: top + 1, height: h - 2, left: `calc(${lane * w}% + 1px)`, width: `calc(${w}% - 2px)` }}>
+                    <div className="font-semibold">{jstTime(a.start_at)} {a.customer_name ?? ''}</div>
+                    <div className="truncate opacity-80">{a.type}{a.meet_url ? ' 🎥' : ''}</div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 凡例 */}
+      <div className="flex flex-wrap gap-3 border-t px-4 py-2 text-[11px] text-gray-500">
+        <span className="flex items-center gap-1"><i className="inline-block h-3 w-3 rounded-sm border-l-2 border-green-500 bg-green-50" />確定</span>
+        <span className="flex items-center gap-1"><i className="inline-block h-3 w-3 rounded-sm border-l-2 border-amber-500 bg-amber-50" />仮予約</span>
+        <span className="flex items-center gap-1"><i className="inline-block h-3 w-3 rounded-sm border-l-2 border-gray-400 bg-gray-100" />完了</span>
+        <span className="ml-auto">🎥＝オンライン</span>
+      </div>
+    </Card>
+  );
+}
+const CAL_BLOCK: Record<string, string> = {
+  confirmed: 'border-green-500 bg-green-50 text-green-800',
+  tentative: 'border-amber-500 bg-amber-50 text-amber-800',
+  done: 'border-gray-400 bg-gray-100 text-gray-500',
+  cancelled: 'border-red-400 bg-red-50 text-red-600',
+};

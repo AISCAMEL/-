@@ -311,9 +311,27 @@ export interface DemoAppointment {
 function todayAt(hour: number, min = 0): string {
   const d = new Date(); d.setHours(hour, min, 0, 0); return d.toISOString();
 }
+// n日後（nが負なら過去）の指定時刻を ISO で返すデモ用ヘルパー。カレンダー週ビューを自然に埋めるため。
+function dayAt(offsetDays: number, hour: number, min = 0): string {
+  const d = new Date(); d.setDate(d.getDate() + offsetDays); d.setHours(hour, min, 0, 0); return d.toISOString();
+}
 export const demoAppointments: DemoAppointment[] = [
+  // 本日
   { id: 'ap-1', tenant_id: TENANT, contact_id: 'ct-1', call_id: null, type: '出張査定', title: '田中様 出張査定', customer_name: '田中太郎', phone_number: '+819012340001', start_at: todayAt(11, 0), end_at: todayAt(11, 45), status: 'confirmed', source: 'ai_outbound', google_event_id: null, note: '車種：プリウス／年式2019／走行4万km', meet_url: null, created_at: iso(-60 * 24) },
   { id: 'ap-2', tenant_id: TENANT, contact_id: null, call_id: 'call-1002', type: 'オンライン査定', title: '佐藤様 オンライン査定（遠方）', customer_name: '佐藤健一', phone_number: '+819033334444', start_at: todayAt(14, 30), end_at: todayAt(15, 0), status: 'tentative', source: 'ai_inbound', google_event_id: null, note: 'ヴェルファイア2018／ローン残債あり／対応エリア外のため写真・ビデオで査定', meet_url: 'https://meet.google.com/demo-abc-defg', created_at: iso(-100) },
+  // 翌日
+  { id: 'ap-3', tenant_id: TENANT, contact_id: null, call_id: null, type: '出張査定', title: '鈴木様 出張査定', customer_name: '鈴木一郎', phone_number: '+819044445555', start_at: dayAt(1, 10, 0), end_at: dayAt(1, 10, 45), status: 'confirmed', source: 'ai_inbound', google_event_id: 'g-demo-3', note: 'アルファード2020／車検残1年／買い替え予定', meet_url: null, created_at: iso(-200) },
+  { id: 'ap-4', tenant_id: TENANT, contact_id: null, call_id: null, type: '来店商談', title: '高橋様 来店商談', customer_name: '高橋美咲', phone_number: '+819055556666', start_at: dayAt(1, 16, 0), end_at: dayAt(1, 17, 0), status: 'tentative', source: 'ai_inbound', google_event_id: null, note: 'ノート2017／査定後に商談希望', meet_url: null, created_at: iso(-180) },
+  // 2日後
+  { id: 'ap-5', tenant_id: TENANT, contact_id: null, call_id: null, type: '持込査定', title: '渡辺様 持込査定', customer_name: '渡辺大輔', phone_number: '+819066667777', start_at: dayAt(2, 13, 0), end_at: dayAt(2, 13, 45), status: 'confirmed', source: 'manual', google_event_id: 'g-demo-5', note: 'ハリアー2021／走行2万km／店舗持込', meet_url: null, created_at: iso(-150) },
+  // 3日後
+  { id: 'ap-6', tenant_id: TENANT, contact_id: null, call_id: null, type: '出張査定', title: '伊藤様 出張査定', customer_name: '伊藤さくら', phone_number: '+819077778888', start_at: dayAt(3, 9, 30), end_at: dayAt(3, 10, 15), status: 'confirmed', source: 'ai_outbound', google_event_id: 'g-demo-6', note: 'フィット2016／複数社相見積もり中', meet_url: null, created_at: iso(-120) },
+  { id: 'ap-7', tenant_id: TENANT, contact_id: null, call_id: null, type: '電話商談', title: '山本様 電話商談', customer_name: '山本陽子', phone_number: '+819088889999', start_at: dayAt(3, 15, 30), end_at: dayAt(3, 16, 0), status: 'tentative', source: 'ai_inbound', google_event_id: null, note: 'セレナ2018／金額次第で成約', meet_url: null, created_at: iso(-90) },
+  // 4日後
+  { id: 'ap-8', tenant_id: TENANT, contact_id: null, call_id: null, type: '出張査定', title: '中村様 出張査定', customer_name: '中村健', phone_number: '+819099990000', start_at: dayAt(4, 11, 0), end_at: dayAt(4, 11, 45), status: 'tentative', source: 'ai_inbound', google_event_id: null, note: 'ヤリス2022／納車待ちのため時期相談', meet_url: null, created_at: iso(-60) },
+  // 前日（完了済み）
+  { id: 'ap-9', tenant_id: TENANT, contact_id: null, call_id: null, type: '出張査定', title: '小林様 出張査定', customer_name: '小林直樹', phone_number: '+819012349999', start_at: dayAt(-1, 10, 0), end_at: dayAt(-1, 10, 45), status: 'done', source: 'ai_outbound', google_event_id: 'g-demo-9', note: 'タント2019／成約（¥680,000）', meet_url: null, created_at: iso(-60 * 24 * 2) },
+  { id: 'ap-10', tenant_id: TENANT, contact_id: null, call_id: null, type: '来店商談', title: '加藤様 来店商談', customer_name: '加藤優', phone_number: '+819023459999', start_at: dayAt(-1, 15, 0), end_at: dayAt(-1, 16, 0), status: 'done', source: 'manual', google_event_id: null, note: 'CX-5 2017／他社へ流れキャンセル', meet_url: null, created_at: iso(-60 * 24 * 2) },
 ];
 
 export interface DemoExpense { id: string; label: string; category: string; monthly_jpy: number; created_at: string; }
