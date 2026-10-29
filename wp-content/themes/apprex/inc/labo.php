@@ -719,6 +719,7 @@ function apprex_labo_srcs() {
 	return $o + array(
 		'richmenu' => 'LINEのメニュー',
 		'blog'     => 'ブログ記事',
+		'chat'     => 'AIチャット',
 		'web'      => 'ブラウザから',
 	);
 }
