@@ -56,7 +56,7 @@ function apprex_openrouter_model() {
  * @return bool
  */
 function apprex_chat_enabled() {
-	return ( defined( 'APPREX_CHAT_MOCK' ) && APPREX_CHAT_MOCK ) || apprex_ai_text_ready();
+	return ( defined( 'APPREX_CHAT_MOCK' ) && APPREX_CHAT_MOCK ) || apprex_ai_text_ready( true );
 }
 
 /**
@@ -67,8 +67,8 @@ function apprex_chat_enabled() {
  * @return string|WP_Error Assistant content or error.
  */
 function apprex_openrouter_complete( $messages, $args = array() ) {
-	// Claude のキーがあれば、文章は Claude で作る（失敗したら OpenRouter でやり直す）。
-	if ( function_exists( 'apprex_ai_use_claude' ) && apprex_ai_use_claude() ) {
+	// Claude を使う文章なら Claude で作る（失敗したら OpenRouter でやり直す）。チャットは $args['chat'] = true。
+	if ( function_exists( 'apprex_claude_for' ) && apprex_claude_for( ! empty( $args['chat'] ) ) ) {
 		$claude = apprex_claude_complete( $messages, $args );
 		if ( ! is_wp_error( $claude ) || 'refusal' === $claude->get_error_code() || '' === apprex_openrouter_key() ) {
 			return $claude;
@@ -300,7 +300,7 @@ function apprex_rest_chat( WP_REST_Request $request ) {
 		);
 	}
 
-	if ( ! apprex_ai_text_ready() ) {
+	if ( ! apprex_ai_text_ready( true ) ) {
 		return new WP_Error( 'not_configured', 'チャットは現在準備中です。お問い合わせフォームをご利用ください。', array( 'status' => 503 ) );
 	}
 
@@ -328,14 +328,14 @@ function apprex_rest_chat( WP_REST_Request $request ) {
 	);
 	$reply = apprex_openrouter_complete(
 		$payload_messages,
-		array( 'temperature' => 0.3, 'max_tokens' => 600, 'timeout' => 30 )
+		array( 'temperature' => 0.3, 'max_tokens' => 600, 'timeout' => 30, 'chat' => true )
 	);
 
 	// 設定モデルが利用不可などで失敗した場合、安全な既定モデルで自動再試行（全件フォーム誘導の回避）。
 	if ( is_wp_error( $reply ) && apprex_openrouter_model() !== APPREX_OPENROUTER_DEFAULT_MODEL ) {
 		$reply = apprex_openrouter_complete(
 			$payload_messages,
-			array( 'model' => APPREX_OPENROUTER_DEFAULT_MODEL, 'temperature' => 0.3, 'max_tokens' => 600, 'timeout' => 30 )
+			array( 'model' => APPREX_OPENROUTER_DEFAULT_MODEL, 'temperature' => 0.3, 'max_tokens' => 600, 'timeout' => 30, 'chat' => true )
 		);
 	}
 
@@ -561,7 +561,7 @@ function apprex_studio_text_model() {
  * @return string|WP_Error
  */
 function apprex_studio_complete( $messages, $args = array() ) {
-	if ( function_exists( 'apprex_ai_use_claude' ) && apprex_ai_use_claude() ) {
+	if ( function_exists( 'apprex_claude_for' ) && apprex_claude_for( false ) ) {
 		return apprex_openrouter_complete( $messages, array_merge( $args, array( 'model' => apprex_claude_studio_model(), 'effort' => 'medium' ) ) );
 	}
 	$res = apprex_openrouter_complete( $messages, array_merge( $args, array( 'model' => apprex_studio_text_model() ) ) );

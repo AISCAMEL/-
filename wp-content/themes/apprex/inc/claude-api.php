@@ -2,8 +2,9 @@
 /**
  * Claude API（Anthropic）で文章を作る。
  *
- * - Claude のAPIキーを入れると、文章の生成（サイトのAIチャット・LINEのAI自動返信・AIスタジオ・
- *   ホームページのAI・AIMEO・AI記事）はすべて Claude で行う。
+ * - Claude のAPIキーを入れると、Claude を使う範囲（設定）に応じて文章を Claude で作る。
+ *   「チャットだけ」（既定）：サイトのAIチャットとLINEのAI自動返信だけ Claude、ほかは OpenRouter。
+ *   「文章すべて」：AIスタジオ・ホームページのAI・AIMEO・AI記事なども Claude。
  * - 画像の生成は Claude ではできないため、これまでどおり OpenRouter のキーで行う。
  * - Claude で失敗したときは、OpenRouter のキーがあれば OpenRouter でやり直す。
  *
@@ -44,22 +45,46 @@ function apprex_claude_studio_model() {
 	return $m ? $m : APPREX_CLAUDE_DEFAULT_MODEL;
 }
 
-/** 文章を Claude で作るか（Claude のキーがあれば Claude）。 */
+/** Claude のキーがあるか。 */
 function apprex_ai_use_claude() {
 	return '' !== apprex_claude_key();
 }
 
-/** 文章のAIが使えるか（Claude か OpenRouter のどちらかのキーがある）。 */
-function apprex_ai_text_ready() {
-	return apprex_ai_use_claude() || ( function_exists( 'apprex_openrouter_key' ) && '' !== apprex_openrouter_key() );
+/** Claude を使う範囲：chat（サイトのAIチャット・LINEの自動返信だけ）／all（文章すべて）。 */
+function apprex_claude_scope() {
+	return 'all' === get_option( 'apprex_claude_scope', 'chat' ) ? 'all' : 'chat';
+}
+
+/**
+ * この文章を Claude で作るか。
+ *
+ * @param bool $chat サイトのAIチャット・LINEの自動返信なら true。
+ * @return bool
+ */
+function apprex_claude_for( $chat ) {
+	return apprex_ai_use_claude() && ( $chat || 'all' === apprex_claude_scope() );
+}
+
+/**
+ * 文章のAIが使えるか。
+ *
+ * @param bool $chat チャット（サイト・LINE）の確認なら true。
+ * @return bool
+ */
+function apprex_ai_text_ready( $chat = false ) {
+	return apprex_claude_for( $chat ) || ( function_exists( 'apprex_openrouter_key' ) && '' !== apprex_openrouter_key() );
 }
 
 /** いま文章に使っているAIの表示名（管理画面用）。 */
 function apprex_ai_text_label() {
-	if ( apprex_ai_use_claude() ) {
+	$or = function_exists( 'apprex_openrouter_model' ) && function_exists( 'apprex_openrouter_key' ) && '' !== apprex_openrouter_key() ? 'OpenRouter（' . apprex_openrouter_model() . '）' : '未設定';
+	if ( ! apprex_ai_use_claude() ) {
+		return $or;
+	}
+	if ( 'all' === apprex_claude_scope() ) {
 		return 'Claude（' . apprex_claude_model() . '）';
 	}
-	return function_exists( 'apprex_openrouter_model' ) ? 'OpenRouter（' . apprex_openrouter_model() . '）' : '未設定';
+	return 'チャット・LINE：Claude（' . apprex_claude_model() . '）／そのほか：' . $or;
 }
 
 /**
@@ -195,6 +220,15 @@ add_action( 'admin_init', function () {
 	register_setting( 'apprex_chat', 'apprex_claude_api_key', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 	register_setting( 'apprex_chat', 'apprex_claude_model', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 	register_setting( 'apprex_chat', 'apprex_claude_studio_model', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+	register_setting(
+		'apprex_chat',
+		'apprex_claude_scope',
+		array(
+			'sanitize_callback' => function ( $v ) {
+				return 'all' === $v ? 'all' : 'chat';
+			},
+		)
+	);
 } );
 
 /** 設定画面の Claude の欄（apprex_chat_settings_page から呼ぶ）。 */
@@ -209,7 +243,17 @@ function apprex_claude_settings_rows() {
 			<?php else : ?>
 				<input type="password" name="apprex_claude_api_key" value="<?php echo esc_attr( get_option( 'apprex_claude_api_key', '' ) ); ?>" class="regular-text" autocomplete="off" placeholder="sk-ant-...">
 			<?php endif; ?>
-			<p class="description">入れると、文章のAI（サイトのチャット・LINEの自動返信・AIスタジオ・ホームページのAI・AIMEO・AI記事）はすべて Claude で動きます。画像の生成は OpenRouter のキーを使います。<br>いま文章に使っているAI：<strong><?php echo esc_html( apprex_ai_text_label() ); ?></strong></p>
+			<p class="description">入れると、下の「Claude を使う範囲」で選んだ文章のAIが Claude で動きます。画像の生成は OpenRouter のキーを使います。<br>いま文章に使っているAI：<strong><?php echo esc_html( apprex_ai_text_label() ); ?></strong></p>
+		</td>
+	</tr>
+	<tr>
+		<th scope="row"><label for="apprex_claude_scope">Claude を使う範囲</label></th>
+		<td>
+			<select id="apprex_claude_scope" name="apprex_claude_scope">
+				<option value="chat" <?php selected( 'chat', apprex_claude_scope() ); ?>>チャットだけ（サイトのAIチャット・LINEの自動返信）</option>
+				<option value="all" <?php selected( 'all', apprex_claude_scope() ); ?>>文章すべて（AIスタジオ・ホームページのAI・AIMEO・AI記事・LABOも）</option>
+			</select>
+			<p class="description">「チャットだけ」なら、それ以外は今までどおり OpenRouter で動きます。Claude で失敗したときは OpenRouter でやり直します。</p>
 		</td>
 	</tr>
 	<tr>

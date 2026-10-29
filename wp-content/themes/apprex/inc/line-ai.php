@@ -71,7 +71,7 @@ add_action( 'apprex_line_event', function ( $ev, $uid, $type ) {
 	if ( '' === $reply_token || '' === $user_text ) {
 		return;
 	}
-	if ( ! function_exists( 'apprex_openrouter_complete' ) || ! apprex_ai_text_ready() ) {
+	if ( ! function_exists( 'apprex_openrouter_complete' ) || ! apprex_ai_text_ready( true ) ) {
 		update_option( 'apprex_line_ai_last', array( 't' => time(), 's' => 'err', 'n' => 'AIのAPIキーが未設定（APPREX チャット）' ), false );
 		return;
 	}
@@ -84,10 +84,10 @@ add_action( 'apprex_line_event', function ( $ev, $uid, $type ) {
 		array( 'role' => 'system', 'content' => $system ),
 		array( 'role' => 'user', 'content' => mb_substr( $user_text, 0, 2000 ) ),
 	);
-	$reply = apprex_openrouter_complete( $messages, array( 'temperature' => 0.4, 'max_tokens' => 500, 'timeout' => 25 ) );
+	$reply = apprex_openrouter_complete( $messages, array( 'temperature' => 0.4, 'max_tokens' => 500, 'timeout' => 25, 'chat' => true ) );
 	// 設定モデルが利用不可（404等）の場合、安全な既定モデルで自動再試行（サイトのAIチャットと同じ挙動）。
 	if ( is_wp_error( $reply ) && function_exists( 'apprex_openrouter_model' ) && apprex_openrouter_model() !== APPREX_OPENROUTER_DEFAULT_MODEL ) {
-		$reply = apprex_openrouter_complete( $messages, array( 'model' => APPREX_OPENROUTER_DEFAULT_MODEL, 'temperature' => 0.4, 'max_tokens' => 500, 'timeout' => 25 ) );
+		$reply = apprex_openrouter_complete( $messages, array( 'model' => APPREX_OPENROUTER_DEFAULT_MODEL, 'temperature' => 0.4, 'max_tokens' => 500, 'timeout' => 25, 'chat' => true ) );
 	}
 	if ( is_wp_error( $reply ) || '' === trim( (string) $reply ) ) {
 		$note = is_wp_error( $reply ) ? $reply->get_error_message() : 'AIの返答が空でした';
@@ -116,7 +116,7 @@ add_action( 'admin_post_apprex_line_ai_test', function () {
 	check_admin_referer( 'apprex_line_ai_test' );
 	$back = admin_url( 'options-general.php?page=apprex-line' );
 
-	if ( ! function_exists( 'apprex_openrouter_complete' ) || ! apprex_ai_text_ready() ) {
+	if ( ! function_exists( 'apprex_openrouter_complete' ) || ! apprex_ai_text_ready( true ) ) {
 		wp_safe_redirect( add_query_arg( 'apprex_ai_test', rawurlencode( 'AIのAPIキーが未設定です（APPREX チャット）' ), $back ) );
 		exit;
 	}
@@ -125,9 +125,9 @@ add_action( 'admin_post_apprex_line_ai_test', function () {
 		array( 'role' => 'user', 'content' => 'こんにちは' ),
 	);
 	$model = function_exists( 'apprex_ai_text_label' ) ? apprex_ai_text_label() : apprex_openrouter_model();
-	$r = apprex_openrouter_complete( $msgs, array( 'max_tokens' => 60, 'timeout' => 25 ) );
+	$r = apprex_openrouter_complete( $msgs, array( 'max_tokens' => 60, 'timeout' => 25, 'chat' => true ) );
 	if ( is_wp_error( $r ) && $model !== APPREX_OPENROUTER_DEFAULT_MODEL ) {
-		$r = apprex_openrouter_complete( $msgs, array( 'model' => APPREX_OPENROUTER_DEFAULT_MODEL, 'max_tokens' => 60, 'timeout' => 25 ) );
+		$r = apprex_openrouter_complete( $msgs, array( 'model' => APPREX_OPENROUTER_DEFAULT_MODEL, 'max_tokens' => 60, 'timeout' => 25, 'chat' => true ) );
 		if ( ! is_wp_error( $r ) ) {
 			$model = APPREX_OPENROUTER_DEFAULT_MODEL . '（フォールバック）';
 		}
