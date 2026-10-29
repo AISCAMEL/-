@@ -494,10 +494,10 @@ function apprex_labo_is_friend( $uid ) {
 
 function apprex_labo_rest_make( WP_REST_Request $req ) {
 	$who  = apprex_labo_who( $req->get_param( 'idt' ) );
-	// 特典は公式LINEの友だち限定（サイトの管理者・編集者は試せる）。
-	if ( ! current_user_can( 'edit_posts' ) ) {
+	// 特典は、LINEでは公式LINEの友だち、ブラウザではサイトの無料会員（ログイン中）が使える。
+	if ( ! is_user_logged_in() ) {
 		if ( ! $who ) {
-			return new WP_REST_Response( array( 'ok' => false, 'need' => 'line', 'message' => 'この特典はLINEの友だち限定です。LINEで開いてください。' ), 200 );
+			return new WP_REST_Response( array( 'ok' => false, 'need' => 'line', 'message' => 'LINEの友だち、または無料会員の特典です。' ), 200 );
 		}
 		if ( ! apprex_labo_is_friend( $who['uid'] ) ) {
 			return new WP_REST_Response( array( 'ok' => false, 'need' => 'friend', 'message' => 'APPREXの公式LINEを友だち追加すると使えます。' ), 200 );
@@ -506,7 +506,7 @@ function apprex_labo_rest_make( WP_REST_Request $req ) {
 	$shop = mb_substr( sanitize_text_field( (string) $req->get_param( 'shop' ) ), 0, 30 );
 	$mood = mb_substr( sanitize_text_field( (string) $req->get_param( 'mood' ) ), 0, 40 );
 	// 1日の回数（LINEの人ごと、無ければIPごと）。
-	$key = 'apprex_labo_mk_' . md5( $who ? $who['uid'] : ( isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '' ) );
+	$key = 'apprex_labo_mk_' . md5( $who ? $who['uid'] : ( is_user_logged_in() ? 'u' . get_current_user_id() : ( isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '' ) ) );
 	$n   = (int) get_transient( $key );
 	if ( $n >= 10 ) {
 		return new WP_REST_Response( array( 'ok' => false, 'message' => '本日の作成回数の上限です。明日またお試しください。' ), 200 );
@@ -608,7 +608,8 @@ add_action( 'template_redirect', function () {
 		'img'      => APPREX_URI . '/assets/images/',
 		'open'     => apprex_labo_url( 'web' ),
 		'friend'   => function_exists( 'apprex_line_url' ) ? apprex_line_url() : '',
-		'staff'    => current_user_can( 'edit_posts' ),
+		'member'   => is_user_logged_in(),
+		'login'    => wp_login_url( home_url( '/labo' ) ),
 		'rest'     => esc_url_raw( rest_url( 'apprex/v1/' ) ),
 		'nonce'    => wp_create_nonce( 'wp_rest' ),
 		'inds'     => array_map(

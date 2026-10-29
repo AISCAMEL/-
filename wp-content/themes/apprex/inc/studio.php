@@ -103,7 +103,8 @@ function apprex_studio_rest_register( WP_REST_Request $request ) {
 	if ( is_user_logged_in() ) {
 		return rest_ensure_response( array( 'ok' => true ) );
 	}
-	if ( function_exists( 'apprex_rn_public' ) && ! apprex_rn_public() ) {
+	// LABO（ブラウザで開いた人の会員登録）は、リニューアルの公開前でも受け付ける。
+	if ( function_exists( 'apprex_rn_public' ) && ! apprex_rn_public() && 'labo' !== $request->get_param( 'from' ) ) {
 		return new WP_Error( 'not_public', 'AIスタジオは公開準備中です。', array( 'status' => 403 ) );
 	}
 	// ボット対策：非表示の入力欄に値が入っていたら破棄。

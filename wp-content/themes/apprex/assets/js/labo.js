@@ -109,9 +109,12 @@
 			return '<div class="lb-gate"><span class="lb-gate-ic">' + ico('gift') + '</span><small class="lb-kicker">友だち限定の特典</small><h1 class="lb-h1">APPREXを友だち追加すると<br>すぐに使えます</h1><p>友だち追加は無料です。追加したら、この画面に戻って「追加したので作る」を押してください。</p>'
 				+ (C.friend ? '<a class="lb-btn line" href="' + esc(C.friend) + '">LINEで友だち追加する</a>' : '') + '<button type="button" class="lb-btn sub" data-act="make">追加したので作る</button></div>';
 		}
-		return '<div class="lb-gate"><span class="lb-gate-ic">' + ico('gift') + '</span><small class="lb-kicker">友だち限定の特典</small><h1 class="lb-h1">AIでアプリ画面を作るのは、<br>LINEの友だち限定です</h1><p>LINEで開くと、友だち追加してすぐに使えます。</p>'
+		return '<div class="lb-gate"><span class="lb-gate-ic">' + ico('gift') + '</span><small class="lb-kicker">無料の特典</small><h1 class="lb-h1">AIでアプリ画面を作るのは、<br>LINEの友だち・無料会員の特典です</h1><p>LINEで開くと、友だち追加してすぐに使えます。</p>'
 			+ '<a class="lb-btn line" href="' + esc(C.open) + '">LINEで開く</a><div class="lb-qr" id="lbQr" hidden><div></div><small>パソコンの方は、スマホのカメラで読み取ってください</small></div>'
-			+ '<button type="button" class="lb-btn sub" data-go="learn">先に記事・事例を見る</button></div>';
+			+ '<div class="lb-or"><span>LINEを使わない方は</span></div>'
+			+ '<form class="lb-reg" id="lbReg" novalidate><b>無料会員登録して使う</b><label>お名前<input name="name" autocomplete="name" required></label><label>メールアドレス<input type="email" name="email" inputmode="email" autocomplete="email" required></label><label>パスワード<small>（8文字以上）</small><input type="password" name="password" autocomplete="new-password" minlength="8" required></label><input class="lb-hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">'
+			+ '<button type="submit" class="lb-btn"' + (S.regBusy ? ' disabled' : '') + '>' + (S.regBusy ? '登録しています…' : '登録して作る（無料）') + '</button>' + (S.regErr ? '<p class="lb-err">' + esc(S.regErr) + '</p>' : '') + (C.pp ? '<p class="lb-note">登録すると<a href="' + esc(C.pp) + '" target="_blank" rel="noopener">プライバシーポリシー</a>に同意したものとします。</p>' : '') + '</form>'
+			+ '<a class="lb-link" href="' + esc(C.login) + '">登録済みの方はログイン →</a></div>';
 	}
 	function showQr() {
 		var box = document.getElementById('lbQr');
@@ -122,7 +125,7 @@
 	}
 	function vMake() {
 		if (S.gate) { return vGate(S.gate); }
-		if (!S.idt && !C.staff && !S.app && S.ready) { return vGate('line'); }
+		if (!S.idt && !C.member && !S.app && S.ready) { return vGate('line'); }
 		if (S.busy) {
 			return '<div class="lb-making"><div class="lb-making-ph"><div class="lp-skel"></div></div><b id="lbMsg">' + MSGS[0] + '</b><p>20秒ほどかかります。このままお待ちください。</p></div>';
 		}
@@ -248,11 +251,29 @@
 			if (S.tab === 'make' || S.tab === 'home') { var y = window.scrollY; render(); window.scrollTo(0, y); }
 		}).catch(function () { if (S.app === app) { S.photoLoading = false; render(); } });
 	}
+	// ブラウザ：無料会員登録 → ログインした状態で開き直して、入力した内容のまま作る。
+	function register(f) {
+		var d = { name: f.name.value.trim(), email: f.email.value.trim(), password: f.password.value, website: f.website.value, from: 'labo' };
+		if (!d.name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email) || d.password.length < 8) { S.regErr = 'お名前・メールアドレス・パスワード（8文字以上）をご入力ください。'; keepReg(f); render(); restoreReg(); return; }
+		keepReg(f); S.regBusy = true; S.regErr = ''; render(); restoreReg();
+		fetch(C.rest + 'studio/register', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': C.nonce }, body: JSON.stringify(d) })
+			.then(function (r) { return r.json(); })
+			.then(function (r) {
+				if (!r || !r.ok) { throw new Error((r && r.message) || '登録できませんでした。'); }
+				try { sessionStorage.setItem('labo_draft', JSON.stringify({ ind: S.ind, shop: S.shop, mood: S.mood, auto: 1 })); } catch (x) {}
+				location.reload();
+			})
+			.catch(function (x) { S.regBusy = false; S.regErr = x.message; render(); restoreReg(); });
+	}
+	var reg = {};
+	function keepReg(f) { reg = { name: f.name.value, email: f.email.value }; }
+	function restoreReg() { var f = document.getElementById('lbReg'); if (f) { f.name.value = reg.name || ''; f.email.value = reg.email || ''; } }
 	var draft = {};
 	function keepShop() { var i = document.getElementById('lbShop'); if (i) { S.shop = i.value.trim(); } }
 	function keepForm() { var f = document.getElementById('lbBook'); if (f) { ['name', 'email', 'company', 'message'].forEach(function (k) { draft[k] = f[k].value; }); } }
 	function restoreForm() { var f = document.getElementById('lbBook'); if (f) { ['name', 'email', 'company', 'message'].forEach(function (k) { if (draft[k] != null) { f[k].value = draft[k]; } }); } }
 	root.addEventListener('submit', function (e) {
+		if (e.target.id === 'lbReg') { e.preventDefault(); register(e.target); return; }
 		if (e.target.id !== 'lbBook') { return; }
 		e.preventDefault(); keepForm();
 		var f = e.target, d = { at: S.at, name: f.name.value.trim(), email: f.email.value.trim(), company: f.company.value.trim(), message: f.message.value.trim(), id_token: S.idt };
@@ -265,7 +286,13 @@
 	});
 
 	/* ---------- はじめ：LINEログイン ---------- */
-	function start() { S.ready = true; loadPosts(); hello(); render(); }
+	function start() {
+		S.ready = true;
+		var dr = null; try { dr = JSON.parse(sessionStorage.getItem('labo_draft') || 'null'); sessionStorage.removeItem('labo_draft'); } catch (x) {}
+		if (dr && C.member) { S.ind = dr.ind || S.ind; S.shop = dr.shop || ''; S.mood = dr.mood || ''; S.tab = 'make'; S.remake = true; }
+		loadPosts(); hello(); render();
+		if (dr && dr.auto && C.member && S.shop) { var b = main.querySelector('[data-act=make]'); if (b) { b.click(); } }
+	}
 	if (C.liff && window.liff) {
 		liff.init({ liffId: C.liff }).then(function () {
 			if (!liff.isLoggedIn()) { liff.login({ redirectUri: location.href }); return; }
