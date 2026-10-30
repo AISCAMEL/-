@@ -13,8 +13,10 @@ const WEEKDAY = ["日", "月", "火", "水", "木", "金", "土"];
 function dayLabel(date: string, i: number): string {
   if (i === 0) return "今日";
   if (i === 1) return "明日";
-  const d = new Date(`${date}T00:00:00+09:00`);
-  return `${d.getMonth() + 1}/${d.getDate()}（${WEEKDAY[d.getDay()]}）`;
+  // サーバーのタイムゾーン（Vercel は UTC）に左右されないよう日付文字列から直接計算
+  const [y, m, day] = date.split("-").map(Number);
+  const wd = new Date(Date.UTC(y, m - 1, day)).getUTCDay();
+  return `${m}/${day}（${WEEKDAY[wd]}）`;
 }
 
 function fmt(n: number | null, digits = 1): string {
