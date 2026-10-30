@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /** 画面の部品として使える種類（app-demo.js の試作表示と同じ）。 */
 function apprex_orig_part_types() {
-	return array( 'hero', 'search', 'list', 'cards', 'form', 'button', 'tabs', 'chat', 'map', 'calendar', 'text', 'profile', 'stats', 'image' );
+	return array( 'hero', 'search', 'list', 'cards', 'form', 'button', 'tabs', 'chat', 'map', 'calendar', 'text', 'profile', 'stats', 'image', 'swipe' );
 }
 
 /**
@@ -61,15 +61,16 @@ function apprex_orig_part( $t, $label = '', $items = array() ) {
 /**
  * 希望文から近いひな形を選んで、アプリの企画を作る。
  *
- * @param string $idea 希望。
- * @param string $name アプリ名（任意）。
+ * @param string $idea  希望。
+ * @param string $name  アプリ名（任意）。
+ * @param string $genre マッチングのジャンル（任意。inc/orig-genre.php）。
  * @return array
  */
-function apprex_orig_template( $idea, $name = '' ) {
+function apprex_orig_template( $idea, $name = '', $genre = '' ) {
 	$p = 'apprex_orig_part';
 	$s = 'apprex_orig_screen';
 	$kind = 'event';
-	if ( preg_match( '/マッチング|スキル|仲介|フリマ|売り買い|求人|人材|出品|依頼/u', $idea ) ) {
+	if ( ( $genre && 'other' !== $genre ) || preg_match( '/マッチング|スキル|仲介|フリマ|売り買い|求人|人材|出品|依頼|恋活|婚活|出会い/u', $idea ) ) {
 		$kind = 'matching';
 	} elseif ( preg_match( '/社内|業務|日報|在庫|点検|勤怠|現場|報告|管理アプリ/u', $idea ) ) {
 		$kind = 'business';
@@ -204,6 +205,14 @@ function apprex_orig_template( $idea, $name = '' ) {
 		),
 	);
 	$spec = $T[ $kind ];
+	if ( 'matching' === $kind && $genre && function_exists( 'apprex_orig_genre_template' ) ) {
+		$spec = apprex_orig_genre_template( $spec, $genre );
+	}
+	if ( $genre && function_exists( 'apprex_orig_genres' ) ) {
+		$all            = apprex_orig_genres();
+		$spec['genre']  = $genre;
+		$spec['design'] = array( 'key' => $genre ) + $all[ $genre ]['design'];
+	}
 	if ( $name ) {
 		$spec['name'] = $name;
 	}
@@ -242,6 +251,8 @@ function apprex_orig_sanitize( $in ) {
 		'name'     => $str( isset( $in['name'] ) ? $in['name'] : 'アプリ', 30 ),
 		'summary'  => $str( isset( $in['summary'] ) ? $in['summary'] : '', 120 ),
 		'category' => $str( isset( $in['category'] ) ? $in['category'] : 'その他', 20 ),
+		'genre'    => function_exists( 'apprex_orig_genre_key' ) ? apprex_orig_genre_key( isset( $in['genre'] ) ? $in['genre'] : '' ) : '',
+		'design'   => function_exists( 'apprex_orig_design_clean' ) ? apprex_orig_design_clean( isset( $in['design'] ) ? $in['design'] : null ) : null,
 		'idea'     => $str( isset( $in['idea'] ) ? $in['idea'] : '', 600 ),
 		'goals'    => $list( isset( $in['goals'] ) ? $in['goals'] : array(), 6, 80 ),
 		'kpi'      => $list( isset( $in['kpi'] ) ? $in['kpi'] : array(), 6, 60 ),
@@ -345,6 +356,10 @@ function apprex_orig_rest( WP_REST_Request $request ) {
 	$instr = mb_substr( sanitize_textarea_field( (string) $request->get_param( 'instruction' ) ), 0, 500 );
 	$name  = mb_substr( sanitize_text_field( (string) $request->get_param( 'name' ) ), 0, 30 );
 	$cur   = apprex_orig_sanitize( json_decode( (string) $request->get_param( 'current' ), true ) );
+	$genre = function_exists( 'apprex_orig_genre_key' ) ? apprex_orig_genre_key( $request->get_param( 'genre' ) ) : '';
+	if ( $cur && ! $genre ) {
+		$genre = $cur['genre'];
+	}
 	if ( '' === $idea && ! $cur ) {
 		return new WP_Error( 'bad_request', '作りたいアプリの内容を書いてください。', array( 'status' => 400 ) );
 	}
@@ -372,6 +387,8 @@ function apprex_orig_rest( WP_REST_Request $request ) {
 			. "ルール：画面は5〜9個。各画面の parts は2〜5個で、items には実際に表示されそうな具体的な例を入れる（金額・件数・名前など）。"
 			. "features の size は工数の目安（S=小、M=中、L=大）。会員登録・プッシュ通知・お知らせ・クーポン・予約・ポイントなど一般的な機能は base=true（APPREXの基盤で対応できる）。"
 			. "誇大な表現や法的な断定はしない。questions には見積り前に確認すべき点を入れる。\n"
+			. "swipe は、相手のプロフィールを1枚ずつ見て「いいね／スキップ」する部品（恋活・婚活など。items は「名前 年齢 地域・ひとこと」）。\n"
+			. ( function_exists( 'apprex_orig_genre_prompt' ) ? apprex_orig_genre_prompt( $genre ) : '' )
 			. "必ずJSONだけを出力（説明やコードブロックは不要）。形式：\n" . $schema;
 		$user = $cur
 			? "今の企画：" . wp_json_encode( $cur, JSON_UNESCAPED_UNICODE ) . "\n\n修正の指示：" . ( $instr ? $instr : '全体をより良くしてください' ) . "\n（指示に関係しない部分はなるべく変えない）"
@@ -394,8 +411,19 @@ function apprex_orig_rest( WP_REST_Request $request ) {
 			$spec                = $cur;
 			$spec['questions'][] = 'ご要望：' . mb_substr( $instr, 0, 90 );
 		} else {
-			$spec = apprex_orig_sanitize( apprex_orig_template( $idea ? $idea : $cur['idea'], $name ) );
+			$spec = apprex_orig_sanitize( apprex_orig_template( $idea ? $idea : $cur['idea'], $name, $genre ) );
 		}
+	}
+	// ジャンルとデザイン：作り直しでは今のデザインを残す。新しく作るときはジャンルのデザイン。
+	if ( $genre && function_exists( 'apprex_orig_genres' ) ) {
+		$all           = apprex_orig_genres();
+		$spec['genre'] = $genre;
+		if ( 'other' !== $genre ) {
+			$spec['category'] = 'マッチング';
+		}
+		$spec['design'] = ( $cur && $cur['design'] ) ? $cur['design'] : apprex_orig_design_clean( array( 'key' => $genre ) + $all[ $genre ]['design'] );
+	} elseif ( $cur && $cur['design'] ) {
+		$spec['design'] = $cur['design'];
 	}
 	update_user_meta( $uid, 'apprex_orig_spec', wp_slash( wp_json_encode( $spec, JSON_UNESCAPED_UNICODE ) ) );
 	return rest_ensure_response( array( 'ok' => true, 'spec' => $spec, 'source' => $source, 'demo' => apprex_demo_url( apprex_demo_token( $uid ), array( 'v' => 'orig' ) ) ) );
@@ -418,7 +446,7 @@ function apprex_orig_image_slots( $spec, $max = 4 ) {
 		foreach ( $sc['parts'] as $pi => $pt ) {
 			if ( in_array( $pt['t'], array( 'hero', 'image' ), true ) ) {
 				$out[] = array( 'key' => $sc['id'] . '_' . $pi, 'label' => preg_replace( '/^▶\s*/u', '', $pt['label'] ), 'wide' => true );
-			} elseif ( 'cards' === $pt['t'] ) {
+			} elseif ( in_array( $pt['t'], array( 'cards', 'swipe' ), true ) ) {
 				foreach ( array_slice( $pt['items'], 0, 3 ) as $ii => $it ) {
 					$out[] = array( 'key' => $sc['id'] . '_' . $pi . '_' . $ii, 'label' => $it, 'wide' => false );
 				}

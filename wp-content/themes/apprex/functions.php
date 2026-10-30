@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'APPREX_VERSION', '1.99.6' );
+define( 'APPREX_VERSION', '1.99.7' );
 define( 'APPREX_DIR', get_template_directory() );
 define( 'APPREX_URI', get_template_directory_uri() );
 
@@ -102,6 +102,7 @@ require_once APPREX_DIR . '/inc/studio.php';
 require_once APPREX_DIR . '/inc/manual.php';
 require_once APPREX_DIR . '/inc/demo.php';
 require_once APPREX_DIR . '/inc/orig.php';
+require_once APPREX_DIR . '/inc/orig-genre.php';
 require_once APPREX_DIR . '/inc/installer.php';
 
 /**

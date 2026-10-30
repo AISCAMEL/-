@@ -141,15 +141,25 @@ function apprex_demo_config( $token ) {
 		$t     = isset( $_GET['t'] ) ? sanitize_key( wp_unslash( $_GET['t'] ) ) : 'matching'; // phpcs:ignore WordPress.Security.NonceVerification
 		$ideas = array( 'matching' => 'スキルマッチング', 'business' => '社内の日報と在庫', 'learning' => '動画レッスンのサブスク', 'event' => '地域イベントの予約' );
 		$t     = isset( $ideas[ $t ] ) ? $t : 'matching';
+		// マッチングのジャンル（g=skill|business|dating|job|local|flea|hobby）。
+		$g = ( 'matching' === $t && isset( $_GET['g'] ) && function_exists( 'apprex_orig_genre_key' ) ) ? apprex_orig_genre_key( wp_unslash( $_GET['g'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification
+		$g = 'other' === $g ? '' : $g;
 		return array(
 			'sample'    => true,
 			'protoKinds' => $ideas,
 			'protoKind' => $t,
-			'proto'     => apprex_orig_sanitize( apprex_orig_template( $ideas[ $t ] ) ),
+			'protoGenres' => 'matching' === $t && function_exists( 'apprex_orig_genres' ) ? array_map(
+				function ( $x ) {
+					return $x['label'];
+				},
+				array_diff_key( apprex_orig_genres(), array( 'other' => 1 ) )
+			) : null,
+			'protoGenre' => $g ? $g : 'skill',
+			'proto'     => apprex_orig_sanitize( apprex_orig_template( $ideas[ $t ], '', $g ) ),
 			'd'         => null,
 			'images'    => array(),
 			'studioUrl' => apprex_studio_url(),
-			'url'       => apprex_demo_url( 'sample', array( 'v' => 'orig', 't' => $t ) ),
+			'url'       => apprex_demo_url( 'sample', array_filter( array( 'v' => 'orig', 't' => $t, 'g' => $g ) ) ),
 			'owner'     => false,
 			'preview'   => array(),
 		);

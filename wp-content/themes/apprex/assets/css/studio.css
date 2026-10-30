@@ -521,3 +521,16 @@
 .rn-studio .aid-clean span{font-weight:700;margin-right:auto}
 .rn-studio .aid-del{color:#b91c1c!important;border-color:#fecaca!important}
 .rn-studio .aid-del:hover{background:#fef2f2!important}
+/* マッチングのジャンル・デザイン */
+.rn-studio .gen-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:8px}
+.rn-studio .gen{position:relative;display:grid;gap:3px;text-align:left;padding:12px 12px 12px 14px;border:1.5px solid var(--line);border-radius:12px;background:#fff;cursor:pointer;font:inherit;color:var(--ink);overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.rn-studio .gen::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--g1),var(--g2))}
+.rn-studio .gen i{font-style:normal;font-size:1.3rem;line-height:1}
+.rn-studio .gen b{font-size:.92rem}
+.rn-studio .gen small{font-size:.74rem;color:var(--body);line-height:1.5}
+.rn-studio .gen:hover{border-color:var(--g2)}
+.rn-studio .gen.on{border-color:var(--g2);box-shadow:0 0 0 3px color-mix(in srgb,var(--g2) 22%,transparent)}
+.rn-studio .gen.on::after{content:"✓";position:absolute;top:8px;right:10px;width:20px;height:20px;border-radius:50%;background:var(--g2);color:#fff;font-size:.72rem;font-weight:700;display:grid;place-items:center}
+.rn-studio .gen:disabled{opacity:.6;cursor:wait}
+.rn-studio .gen-dz .gen{padding-top:10px}
+.rn-studio .gen .gsw{display:block;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--g1),var(--g2));margin-bottom:4px}

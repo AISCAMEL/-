@@ -364,7 +364,9 @@
 	function runProto(P) {
 		var SC = {}; P.screens.forEach(function (x) { SC[x.id] = x; });
 		var tabs = (P.tabs && P.tabs.length ? P.tabs : P.screens.slice(0, 4).map(function (x) { return x.id; })).filter(function (k) { return SC[k]; }).slice(0, 5);
-		var cur = tabs[0] || P.screens[0].id, stack = [], chatAdd = {};
+		var cur = tabs[0] || P.screens[0].id, stack = [], chatAdd = {}, swIdx = {};
+		// ジャンルのデザイン（色・文字・角の丸み）があれば、それで表示する。
+		if (P.design && P.design.c1) { c1 = P.design.c1; c2 = P.design.c2; tone = TONES[P.design.tone] || tone; }
 		var grad = function (i) { return 'linear-gradient(' + (135 + (i || 0) * 30) + 'deg,' + c1 + ',' + c2 + ')'; };
 		var PI = CFG.protoImages || {};
 		// AIが作った写真があれば使い、無ければブランドカラーのグラデーション。
@@ -390,6 +392,12 @@
 				case 'calendar': { var dd = [], t0 = new Date(); for (var i = 0; i < 7; i++) { var x = new Date(t0); x.setDate(t0.getDate() + i); dd.push(x); } return '<div class="sec-h">' + (L || '日時') + '</div><div class="days">' + dd.map(function (x, i) { return '<button type="button" class="day' + (i ? '' : ' on') + '" data-seg="1"><small>' + '日月火水木金土'.charAt(x.getDay()) + '</small>' + x.getDate() + '</button>'; }).join('') + '</div><div class="times">' + ['10:00', '13:00', '15:00', '18:00'].map(function (t, i) { return '<button type="button" class="time' + (i ? '' : ' on') + '" data-seg="1">' + t + '</button>'; }).join('') + '</div>'; }
 				case 'text': return '<p class="txt">' + L + (it.length ? '<br>' + it.map(esc).join('<br>') : '') + '</p>';
 				case 'profile': return '<div class="staff"><span class="ava" style="background:' + grad(idx) + '">' + esc(String(pt.label).charAt(0)) + '</span><div><b>' + L + '</b>' + it.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') + '</div></div>';
+				case 'swipe': {
+					if (!it.length) { return ''; }
+					var key = sc.id + '_' + idx, n = (swIdx[key] || 0) % it.length, m = String(it[n]).match(/^(\S+\s+\S+)\s*(.*)$/);
+					return (L ? '<div class="sec-h">' + L + '</div>' : '') + '<div class="pswipe"><div class="sw-card" style="background:' + bg(key + '_' + n, n + idx, true) + '"><span class="sw-n">' + (n + 1) + ' / ' + it.length + '</span><div class="sw-info"><b>' + esc(m ? m[1] : it[n]) + '</b>' + (m && m[2] ? '<span>' + esc(m[2]) + '</span>' : '') + '</div></div>'
+						+ '<div class="sw-acts"><button type="button" class="sw-no" data-act="swNo" data-sw="' + key + '" aria-label="スキップ">✕</button><button type="button" class="sw-yes" data-act="swYes" data-sw="' + key + '" data-to="' + (to[0] || '') + '" data-label="' + esc(m ? m[1].split(/\s/)[0] : it[n]) + '" aria-label="いいね">♥</button></div></div>';
+				}
 				case 'stats': return '<div class="pstats">' + it.map(function (x) { var m = String(x).match(/^(.*?)\s*([¥￥]?[\d,.]+.*)$/); return '<div><small>' + esc(m ? m[1] : x) + '</small><b>' + esc(m ? m[2] : '') + '</b></div>'; }).join('') + '</div>';
 			}
 			return '';
@@ -414,9 +422,10 @@
 		var appEl = '<div class="app" id="app" style="--c1:' + c1 + ';--c2:' + c2 + ';--r:' + tone.r + 'px;--ff:' + tone.ff + ';--fs:1"><div class="screen" id="screen"></div><nav class="tabs" aria-label="タブ">' + tabH + '</nav>' + drawer + '<div class="sheet" id="sheet" hidden></div></div>';
 		var side = '';
 		if (hostPhone) {
+			var gens = CFG.protoGenres ? '<div class="d-inds">' + Object.keys(CFG.protoGenres).map(function (k) { return '<a href="?v=orig&t=matching&g=' + k + '"' + (k === CFG.protoGenre ? ' aria-current="page"' : '') + '>' + esc(CFG.protoGenres[k]) + '</a>'; }).join('') + '</div>' : '';
 			var kinds = CFG.protoKinds ? '<div class="d-inds">' + Object.keys(CFG.protoKinds).map(function (k) { return '<a href="?v=orig&t=' + k + '"' + (k === CFG.protoKind ? ' aria-current="page"' : '') + '>' + esc(CFG.protoKinds[k]) + '</a>'; }).join('') + '</div>' : '';
 			var mvp = (P.features || []).filter(function (f) { return f.phase === 'MVP'; }).length;
-			side = '<aside class="dinfo"><span class="d-badge">オリジナルアプリの試作</span><h1>' + esc(P.name) + '</h1><p>' + esc(P.summary) + '</p>' + kinds
+			side = '<aside class="dinfo"><span class="d-badge">オリジナルアプリの試作</span><h1>' + esc(P.name) + '</h1><p>' + esc(P.summary) + '</p>' + kinds + gens
 				+ '<ul class="d-try"><li>画面：' + P.screens.length + '（☰ で一覧）</li><li>最初に作る機能（MVP）：' + mvp + '</li><li>使う人：' + (P.roles || []).map(function (r) { return esc(r.name); }).join('・') + '</li></ul>'
 				+ '<div class="d-qr"><div id="qr"></div><div><b>スマホで開く</b><span>QRコードを読み取ると、お手元のスマホで画面を触れます。</span></div></div>'
 				+ '<p class="d-note">AIが作ったイメージです。見た目と流れを共有するための試作で、実際の開発はミーティングで仕様を決めてから行います。</p>'
@@ -428,13 +437,15 @@
 			var t = e.target.closest('button,a[data-go]'); if (!t || !root.contains(t)) { return; }
 			var ds = t.dataset;
 			if (ds.tab) { stack = []; cur = ds.tab; closeDr(); render(); return; }
-			if (ds.go) { go(ds.go); return; }
+			if (ds.go) { closeSheet(); go(ds.go); return; }
 			if (ds.seg) { Array.prototype.forEach.call(t.parentNode.children, function (b) { b.classList.remove('on'); }); t.classList.add('on'); return; }
 			var a = ds.act;
 			if (a === 'back') { cur = stack.pop() || tabs[0]; render(); }
 			else if (a === 'drawer') { openDr(); }
 			else if (a === 'drawerClose') { closeDr(); }
 			else if (a === 'close') { closeSheet(); }
+			else if (a === 'swNo') { swIdx[ds.sw] = (swIdx[ds.sw] || 0) + 1; render(); }
+			else if (a === 'swYes') { swIdx[ds.sw] = (swIdx[ds.sw] || 0) + 1; render(); sheet('<div class="use"><span class="ok">♥</span><b>' + esc(ds.label || '') + 'さんとマッチングしました</b><span>おたがいに「いいね」すると、メッセージできます（試作）。</span>' + (ds.to ? '<button type="button" class="cta" data-go="' + ds.to + '">' + esc((SC[ds.to] || {}).name || 'つぎ') + 'へ</button>' : '') + '<button type="button" class="cta ghost" data-act="close">さがすに戻る</button></div>'); }
 			else if (a === 'nolink') { sheet('<div class="use"><b>' + esc(ds.label || '') + '</b><span>この先の画面は、ミーティングで内容を決めて作ります（試作）。</span><button type="button" class="cta" data-act="close">閉じる</button></div>'); }
 			else if (a === 'done') { sheet('<div class="use"><span class="ok">✓</span><b>' + esc(ds.label || '完了') + '</b><span>試作のため、実際の処理は行われません。</span><button type="button" class="cta" data-act="close">OK</button></div>'); }
 		});

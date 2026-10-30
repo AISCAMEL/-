@@ -348,6 +348,7 @@ add_action( 'wp_enqueue_scripts', function () {
 		'manual'    => function_exists( 'apprex_manual_url' ) ? apprex_manual_url() : '',
 		'mode'      => apprex_studio_mode(),
 		'studios'   => array( 'app' => apprex_studio_url( 'app' ), 'hp' => apprex_studio_url( 'hp' ), 'matching' => apprex_studio_url( 'matching' ) ),
+		'genres'    => function_exists( 'apprex_orig_genres_js' ) ? apprex_orig_genres_js() : array(),
 	);
 	if ( is_user_logged_in() ) {
 		$u          = wp_get_current_user();
