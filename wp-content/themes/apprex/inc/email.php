@@ -191,7 +191,32 @@ function apprex_email_wrap( $subject, $content_html, $args = array() ) {
  * @return string
  */
 function apprex_render_email( $subject, $plain_body, $args = array() ) {
-	return apprex_email_wrap( $subject, apprex_text_to_html( $plain_body ), $args );
+	return apprex_email_wrap( $subject, apprex_text_to_html( apprex_mail_fill_urls( $plain_body ) ), $args );
+}
+
+/**
+ * メール文面の差し込みURL（「APPREX メール文面」で書き換えた文面でも、いまの設定のURLが入る）。
+ *
+ * @return array タグ => URL
+ */
+function apprex_mail_url_vars() {
+	$pg = function ( $slug, $fb ) {
+		return function_exists( 'apprex_page_url' ) ? apprex_page_url( $slug ) : home_url( $fb );
+	};
+	return array(
+		'{meeting_url}'  => function_exists( 'apprex_meeting_url' ) && apprex_meeting_url() ? apprex_meeting_url() : home_url( '/meeting/' ),
+		'{estimate_url}' => $pg( 'estimate', '/estimate/' ),
+		'{studio_url}'   => function_exists( 'apprex_studio_url' ) ? apprex_studio_url() : home_url( '/studio/' ),
+		'{cases_url}'    => home_url( '/cases/' ),
+		'{line_url}'     => function_exists( 'apprex_line_url' ) ? apprex_line_url() : '',
+		'{labo_url}'     => function_exists( 'apprex_labo_url' ) ? apprex_labo_url( 'mail' ) : '',
+		'{seminar_url}'  => function_exists( 'apprex_seminar_url' ) ? apprex_seminar_url() : '',
+	);
+}
+
+/** 文面の差し込みURLを置き換える。 */
+function apprex_mail_fill_urls( $text ) {
+	return strtr( (string) $text, apprex_mail_url_vars() );
 }
 
 /**
@@ -405,7 +430,7 @@ function apprex_mail_content_page() {
 			</p></div>
 		<?php endif; ?>
 
-		<p>件名・本文を自由に編集できます。差し込みタグ <code>{name}</code> はお客様名に置き換わります。
+		<p>件名・本文を自由に編集できます。差し込みタグ <code>{name}</code> はお客様名に置き換わります。URLは <code>{meeting_url}</code>（無料相談の予約）<code>{estimate_url}</code>（見積もり）<code>{studio_url}</code>（AIスタジオ）<code>{labo_url}</code>（LINEのLABO）<code>{line_url}</code>（公式LINE）<code>{cases_url}</code>（導入事例）<code>{seminar_url}</code>（代理店説明会）と書くと、いまの設定のURLに置き換わります（URLが変わっても直さなくて済みます）。
 		編集後は「<strong>設定 &gt; APPREX メール</strong>」のプレビュー／テスト送信で見た目を確認できます。<br>
 		ある項目を<strong>空欄にして保存すると、その項目だけ初期文面に戻ります</strong>。</p>
 
