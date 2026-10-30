@@ -1,0 +1,203 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>SNS自動投稿イメージ</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap">
+<style>
+  /* Layout: 縦スクロールの説明ページ。上に「変換の流れ」、下にInstagram／GMBの実寸イメージ2枚を並べる */
+  :root{
+    --bg:#f3f1ec; --surface:#ffffff; --ink:#1d2430; --muted:#6a7180; --line:#e4e0d7;
+    --navy:#1b2a4a; --amber:#f0a023; --amber-deep:#d2840a; --green:#1a7f4b;
+    --ig1:#feda75; --ig2:#d62976; --ig3:#4f5bd5; /* instagramグラデ */
+    --shadow:0 10px 30px rgba(27,42,74,.12);
+    --sans:"Noto Sans JP",system-ui,sans-serif;
+    --disp:"Zen Kaku Gothic New","Noto Sans JP",system-ui,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#14171d; --surface:#1e232c; --ink:#eef1f6; --muted:#9aa2b1; --line:#2c333f;
+    --navy:#9fb4de; --amber:#f6b545; --amber-deep:#f0a023; --green:#54c48a;
+    --shadow:0 12px 34px rgba(0,0,0,.45); color-scheme:dark;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#14171d; --surface:#1e232c; --ink:#eef1f6; --muted:#9aa2b1; --line:#2c333f;
+    --navy:#9fb4de; --amber:#f6b545; --amber-deep:#f0a023; --green:#54c48a;
+    --shadow:0 12px 34px rgba(0,0,0,.45); color-scheme:dark;
+  }
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.7}
+  .wrap{max-width:1020px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:30px 60px}
+  h1{font-family:var(--disp);font-weight:900;font-size:clamp(1.5rem,4.5vw,2.3rem);line-height:1.25;letter-spacing:.01em;margin:.2em 0 .1em;text-wrap:balance}
+  .lead{color:var(--muted);max-width:60ch;margin:0 0 6px}
+  .eyebrow{font-weight:700;letter-spacing:.12em;font-size:.72rem;color:var(--amber-deep);text-transform:uppercase}
+  h2{font-family:var(--disp);font-weight:700;font-size:1.15rem;margin:34px 0 14px;display:flex;align-items:center;gap:9px}
+  h2 .dot{width:10px;height:10px;border-radius:3px;background:var(--amber)}
+
+  /* 変換の流れ */
+  .flow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
+  .flow .step{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0}
+  .flow figcaption{font-size:.74rem;color:var(--muted);text-align:center;line-height:1.45}
+  .flow .dim{font-weight:700;color:var(--ink)}
+  .arrow{color:var(--amber-deep);font-weight:700;font-size:1.3rem;flex:0 0 auto}
+  .arrow small{display:block;font-size:.6rem;color:var(--muted);font-weight:500;letter-spacing:.04em}
+  .frame{border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#000;position:relative}
+  .frame svg{display:block;width:100%;height:100%}
+  .f-src{width:150px;aspect-ratio:1200/630}
+  .f-ig{width:112px;aspect-ratio:1/1}
+  .f-gmb{width:132px;aspect-ratio:4/3}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;align-items:start}
+
+  /* Instagram カード */
+  .ig{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);max-width:400px}
+  .ig-top{display:flex;align-items:center;gap:10px;padding:11px 13px}
+  .ig-av{width:36px;height:36px;border-radius:50%;flex:0 0 auto;padding:2px;background:linear-gradient(45deg,var(--ig1),var(--ig2),var(--ig3))}
+  .ig-av span{display:flex;width:100%;height:100%;border-radius:50%;background:var(--navy);color:#fff;align-items:center;justify-content:center;font-family:var(--disp);font-weight:900;font-size:.8rem;border:2px solid var(--surface)}
+  .ig-name{font-weight:700;font-size:.9rem;line-height:1.1}
+  .ig-sub{font-size:.72rem;color:var(--muted)}
+  .ig-more{margin-left:auto;color:var(--muted);letter-spacing:.08em}
+  .ig-photo{width:100%;aspect-ratio:1/1;background:#000}
+  .ig-acts{display:flex;gap:15px;padding:10px 13px 2px;color:var(--ink);font-size:1.25rem}
+  .ig-acts .right{margin-left:auto}
+  .ig-likes{padding:2px 13px;font-weight:700;font-size:.86rem}
+  .ig-cap{padding:2px 13px 14px;font-size:.86rem;white-space:pre-wrap}
+  .ig-cap b{font-weight:700}
+  .tag{color:#2d6adb;font-weight:500}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tag{color:#7aa5ff}}
+  :root[data-theme="dark"] .tag{color:#7aa5ff}
+
+  /* Google マイビジネス カード */
+  .gmb{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);max-width:400px}
+  .gmb-top{display:flex;align-items:center;gap:10px;padding:12px 14px}
+  .g-dot{width:34px;height:34px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;background:#fff;border:1px solid var(--line);font-family:var(--disp);font-weight:900}
+  .g-g{background:conic-gradient(from -30deg,#ea4335,#fbbc05,#34a853,#4285f4,#ea4335);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .gmb-top .g-name{font-weight:700;font-size:.9rem;line-height:1.15}
+  .gmb-top .g-sub{font-size:.72rem;color:var(--muted)}
+  .pill{margin-left:auto;font-size:.68rem;font-weight:700;color:var(--green);border:1px solid var(--green);border-radius:999px;padding:3px 9px}
+  .gmb-photo{width:100%;aspect-ratio:4/3;background:#000}
+  .gmb-body{padding:13px 15px 6px;font-size:.9rem;white-space:pre-wrap}
+  .gmb-cta{display:inline-block;margin:10px 15px 16px;color:#1a73e8;font-weight:700;font-size:.9rem;text-decoration:none}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .gmb-cta{color:#8ab4f8}}
+  :root[data-theme="dark"] .gmb-cta{color:#8ab4f8}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .g-dot{background:#11151b}}
+  :root[data-theme="dark"] .g-dot{background:#11151b}
+
+  .cap{font-size:.76rem;color:var(--muted);margin:9px 2px 0;text-align:center}
+
+  /* 補足 */
+  .note{margin-top:34px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:12px;padding:16px 18px}
+  .note h3{margin:0 0 10px;font-family:var(--disp);font-size:1rem}
+  .note ul{margin:0;padding-left:1.1em}
+  .note li{margin:5px 0}
+  .ok{color:var(--green);font-weight:700}
+  .wait{color:var(--amber-deep);font-weight:700}
+</style>
+
+<!-- 再利用する「写真」= 中古車販売店の情景（文字なし・人物なし）。各枠でcoverトリミングされる -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="scene" viewBox="0 0 160 160" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#8fc3f0"/><stop offset="1" stop-color="#dcebf7"/>
+      </linearGradient>
+      <linearGradient id="car" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#cfd6de"/>
+      </linearGradient>
+    </defs>
+    <rect width="160" height="160" fill="url(#sky)"/>
+    <circle cx="128" cy="30" r="15" fill="#fff3c9" opacity=".9"/>
+    <!-- 遠景のショールーム -->
+    <rect x="8" y="60" width="144" height="34" fill="#20304f" opacity=".16"/>
+    <!-- 地面（アスファルト） -->
+    <rect x="0" y="92" width="160" height="68" fill="#4a5360"/>
+    <rect x="0" y="92" width="160" height="6" fill="#5b6472"/>
+    <!-- 駐車ライン -->
+    <path d="M26 150 L40 100 M80 152 L80 100 M134 150 L120 100" stroke="#eef1f4" stroke-width="2.4" opacity=".5"/>
+    <!-- のぼり旗（販売店らしさ） -->
+    <rect x="14" y="54" width="2.4" height="40" fill="#9aa3af"/>
+    <path d="M16 56 q12 3 0 10 q12 3 0 10 Z" fill="#f0a023"/>
+    <!-- 車体 -->
+    <g>
+      <ellipse cx="82" cy="123" rx="52" ry="7" fill="#000" opacity=".18"/>
+      <path d="M40 118 q4 -20 18 -22 q10 -8 28 -7 q16 1 24 14 l12 3 q8 2 8 10 l0 4 q0 3 -4 3 l-104 0 q-4 0 -4 -4 l0 -3 q0 -9 10 -11 Z" fill="url(#car)" stroke="#aab2bd" stroke-width="1"/>
+      <path d="M58 98 q8 -6 24 -5 q13 1 20 10 l-6 2 l-40 0 Z" fill="#bcd6ef"/>
+      <circle cx="60" cy="123" r="11" fill="#21262d"/><circle cx="60" cy="123" r="5" fill="#9aa3af"/>
+      <circle cx="108" cy="123" r="11" fill="#21262d"/><circle cx="108" cy="123" r="5" fill="#9aa3af"/>
+      <rect x="112" y="110" width="8" height="6" rx="2" fill="#f7d14a"/>
+    </g>
+  </symbol>
+</svg>
+
+<div class="wrap">
+  <p class="eyebrow">カーメル SNS自動投稿</p>
+  <h1>記事が、そのままSNS投稿になる</h1>
+  <p class="lead">記事のアイキャッチ画像を各SNSの形に自動変換し、キャプションとハッシュタグをAIが媒体別に作成します。これは出来上がりの<strong>イメージ</strong>です（実際の投稿前に内容を確認できます）。</p>
+
+  <h2><span class="dot"></span>画像の自動変換</h2>
+  <div class="flow">
+    <figure class="step">
+      <div class="frame f-src"><svg viewBox="0 0 160 160" preserveAspectRatio="xMidYMid slice"><use href="#scene"/></svg></div>
+      <figcaption>元記事のアイキャッチ<br><span class="dim">1200 × 630</span></figcaption>
+    </figure>
+    <div class="arrow">→<small>AI変換</small></div>
+    <figure class="step">
+      <div class="frame f-ig"><svg viewBox="0 0 160 160" preserveAspectRatio="xMidYMid slice"><use href="#scene"/></svg></div>
+      <figcaption>Instagram用<br><span class="dim">正方形 1:1</span></figcaption>
+    </figure>
+    <figure class="step">
+      <div class="frame f-gmb"><svg viewBox="0 0 160 160" preserveAspectRatio="xMidYMid slice"><use href="#scene"/></svg></div>
+      <figcaption>Googleマイビジネス用<br><span class="dim">横長 4:3</span></figcaption>
+    </figure>
+  </div>
+
+  <h2><span class="dot"></span>出来上がりイメージ</h2>
+  <div class="grid">
+
+    <div>
+      <div class="ig">
+        <div class="ig-top">
+          <div class="ig-av"><span>C</span></div>
+          <div>
+            <div class="ig-name">carmel_official</div>
+            <div class="ig-sub">カーメル中古車センター</div>
+          </div>
+          <div class="ig-more">···</div>
+        </div>
+        <div class="ig-photo"><svg viewBox="0 0 160 160" preserveAspectRatio="xMidYMid slice"><use href="#scene"/></svg></div>
+        <div class="ig-acts"><span>♡</span><span>💬</span><span>➤</span><span class="right">🔖</span></div>
+        <div class="ig-likes">いいね！ 128件</div>
+        <div class="ig-cap"><b>carmel_official</b> 今週末、在庫ぞくぞく入荷中です🚗✨
+自社ローンOK・全国納車対応。気になる車種はDMかお電話で、スタッフがていねいにご案内します。まずはお気軽にご相談ください！
+
+<span class="tag">#中古車</span> <span class="tag">#カーメル</span> <span class="tag">#自社ローン</span> <span class="tag">#車のある暮らし</span> <span class="tag">#中古車販売</span> <span class="tag">#carmel</span></div>
+      </div>
+      <p class="cap">Instagram ― 正方形画像＋ハッシュタグ付きキャプション</p>
+    </div>
+
+    <div>
+      <div class="gmb">
+        <div class="gmb-top">
+          <div class="g-dot"><span class="g-g">C</span></div>
+          <div>
+            <div class="g-name">カーメル中古車センター</div>
+            <div class="g-sub">最新情報・お知らせ</div>
+          </div>
+          <span class="pill">最新情報</span>
+        </div>
+        <div class="gmb-photo"><svg viewBox="0 0 160 160" preserveAspectRatio="xMidYMid slice"><use href="#scene"/></svg></div>
+        <div class="gmb-body">【今週末 在庫入荷のお知らせ】
+人気の軽自動車・コンパクトカーを多数入荷しました。自社ローン取り扱い、全国への納車にも対応しております。現車のご確認・お見積りはお気軽にどうぞ。スタッフ一同ご来店をお待ちしております。</div>
+        <a class="gmb-cta" href="#">詳細 ›</a>
+      </div>
+      <p class="cap">Googleマイビジネス ― 横長画像＋お知らせ文（ハッシュタグなし）</p>
+    </div>
+
+  </div>
+
+  <div class="note">
+    <h3>この仕組みのポイント</h3>
+    <ul>
+      <li><span class="ok">自動：</span>画像サイズ変換／媒体別キャプション・ハッシュタグ生成</li>
+      <li><span class="ok">安全：</span>まず「下書きを作る」で確認 → よければ「投稿する」（いきなり自動投稿はしません）</li>
+      <li><span class="ok">Instagram：</span>設定を入れればすぐ投稿できます</li>
+      <li><span class="wait">Googleマイビジネス：</span>Google APIの審査・認証が済み次第、投稿が有効になります</li>
+      <li>画像は記事用に作ったものを再利用（追加の画像生成費はかかりません）／画像に文字は入れません</li>
+    </ul>
+  </div>
+</div>
