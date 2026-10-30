@@ -144,18 +144,20 @@ export function hhmm(iso: string | null): string {
  * 天気予報＋波を取得。失敗時（ネットワーク制限・APIダウン等）は null を返し、
  * UI 側はローカルの声などにフォールバックする。30分キャッシュ。
  */
-export async function getWaveReport(): Promise<WaveReport | null> {
+export async function getWaveReport(
+  at: { lat: number; lon: number } = IWASAWA,
+): Promise<WaveReport | null> {
   const marineUrl =
-    `https://marine-api.open-meteo.com/v1/marine?latitude=${IWASAWA.lat}` +
-    `&longitude=${IWASAWA.lon}` +
+    `https://marine-api.open-meteo.com/v1/marine?latitude=${at.lat}` +
+    `&longitude=${at.lon}` +
     `&current=wave_height,wave_period,wave_direction,sea_surface_temperature` +
     `&hourly=wave_height` +
     `&daily=wave_height_max,wave_direction_dominant` +
     `&timezone=${encodeURIComponent(TZ)}&forecast_days=4`;
 
   const weatherUrl =
-    `https://api.open-meteo.com/v1/forecast?latitude=${IWASAWA.lat}` +
-    `&longitude=${IWASAWA.lon}` +
+    `https://api.open-meteo.com/v1/forecast?latitude=${at.lat}` +
+    `&longitude=${at.lon}` +
     `&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,precipitation` +
     `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,sunrise,sunset` +
     `&timezone=${encodeURIComponent(TZ)}&forecast_days=4`;
