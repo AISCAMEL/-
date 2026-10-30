@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 10.8
+ * Version: 11.0
  * Author: CARMEL
  */
 
@@ -93,6 +93,10 @@ function carmel3_auto_get_settings() {
         'image_model'  => CARMEL3_IMG_DEFAULT_MODEL,
         'banner_field' => 'hero_image',
         'gmb_post'     => 0,
+        // SNS自動投稿（Instagram / Googleマイビジネス）※承認優先の手動投稿ツール
+        'autopost_ig_user'  => '',                       // Instagram ビジネスアカウントID（数字）
+        'autopost_ig_token' => '',                       // Meta（Instagram Graph API）アクセストークン
+        'autopost_ig_tags'  => '#中古車 #カーメル #carmel', // IG投稿の末尾に付ける既定ハッシュタグ
         // 追加で自動生成する投稿タイプ（メディア記事は常に本体エンジンで生成。ここは“追加分”）
         'extra_types'  => array(),
         // 投稿タイプごとの「書き方（AI指示プロンプト）」 array(post_type => 指示文)
@@ -2182,6 +2186,7 @@ function carmel3_auto_register_menu() {
         add_submenu_page($parent, '元ネタから各媒体へ展開', '元ネタから展開', 'manage_options', 'carmel3-repurpose', 'carmel3_repurpose_page');
         add_submenu_page($parent, 'Slackでニュース提案・投稿', 'Slack連携', 'manage_options', 'carmel3-slack', 'carmel3_slack_page');
         add_submenu_page($parent, 'Google口コミ AI返信', '口コミ返信', 'manage_options', 'carmel3-reviews', 'carmel3_reviews_page');
+        add_submenu_page($parent, 'SNS自動投稿（Instagram / Googleマイビジネス）', 'SNS自動投稿', 'manage_options', 'carmel3-autopost', 'carmel3_autopost_page');
         add_submenu_page($parent, '店舗・担当者（記事に差し込み）', '店舗・担当者', 'manage_options', 'carmel3-stores', 'carmel3_stores_page');
         add_submenu_page($parent, 'その他掲載ページ（MEO対策）', 'その他掲載ページ（MEO対策）', 'manage_options', 'carmel3-meo', 'carmel3_meo_page');
     } else {
@@ -2192,6 +2197,7 @@ function carmel3_auto_register_menu() {
         add_menu_page('元ネタから各媒体へ展開', '元ネタから展開', 'manage_options', 'carmel3-repurpose', 'carmel3_repurpose_page', 'dashicons-share', 6);
         add_menu_page('Slackでニュース提案・投稿', 'Slack連携', 'manage_options', 'carmel3-slack', 'carmel3_slack_page', 'dashicons-format-chat', 7);
         add_menu_page('Google口コミ AI返信', '口コミ返信', 'manage_options', 'carmel3-reviews', 'carmel3_reviews_page', 'dashicons-star-filled', 8);
+        add_menu_page('SNS自動投稿', 'SNS自動投稿', 'manage_options', 'carmel3-autopost', 'carmel3_autopost_page', 'dashicons-instagram', 8);
         add_menu_page('店舗・担当者', '店舗・担当者', 'manage_options', 'carmel3-stores', 'carmel3_stores_page', 'dashicons-store', 9);
         add_menu_page('その他掲載ページ（MEO対策）', 'その他掲載ページ(MEO)', 'manage_options', 'carmel3-meo', 'carmel3_meo_page', 'dashicons-location-alt', 10);
     }
@@ -5528,6 +5534,384 @@ function carmel3_lower_max_tokens_deep(&$data, $cap) {
     }
     unset($v);
     return $count;
+}
+
+/* =========================================================================
+ *  SNS自動投稿（Instagram / Googleマイビジネス）  v11.0
+ *  - 本体v5.7は無改変。画像は記事のアイキャッチを各媒体サイズへ変換（＝OpenRouterで作った画像を再利用）
+ *  - キャプション／ハッシュタグはAI（元ネタ展開エンジン）が媒体別に作成
+ *  - 承認優先：まず「下書きを作る」で画像・文章を確認してから「投稿する」
+ * ========================================================================= */
+
+// 媒体ごとの画像サイズ（幅,高さ）
+function carmel3_autopost_dims($platform) {
+    if ($platform === 'instagram') return array(1080, 1080); // 正方形 1:1
+    if ($platform === 'gmb')       return array(1200, 900);  // 横長 4:3
+    return array(1200, 630);
+}
+
+function carmel3_autopost_platforms() {
+    return array(
+        'instagram' => 'Instagram',
+        'gmb'       => 'Googleマイビジネス',
+    );
+}
+
+// 記事のアイキャッチを指定媒体サイズのJPEGに変換して新規添付を作る → 添付ID
+function carmel3_autopost_make_variant($post_id, $platform) {
+    require_once ABSPATH . 'wp-admin/includes/image.php';
+    $thumb_id = get_post_thumbnail_id($post_id);
+    if (!$thumb_id) return new WP_Error('noimg', 'この記事にアイキャッチ画像がありません。先に画像を作成してください。');
+    $src = get_attached_file($thumb_id);
+    if (!$src || !file_exists($src)) return new WP_Error('nofile', '元画像ファイルが見つかりません');
+
+    list($w, $h) = carmel3_autopost_dims($platform);
+    $editor = wp_get_image_editor($src);
+    if (is_wp_error($editor)) return $editor;
+    $editor->resize($w, $h, true); // 中央クロップで指定寸法ぴったり
+
+    $up = wp_upload_dir();
+    if (!empty($up['error'])) return new WP_Error('updir', $up['error']);
+    $fname = 'sns-' . $platform . '-' . $post_id . '-' . wp_generate_password(6, false, false) . '.jpg';
+    $dest  = trailingslashit($up['path']) . $fname;
+    $saved = $editor->save($dest, 'image/jpeg'); // IG/GMB向けにJPEG固定
+    if (is_wp_error($saved)) return $saved;
+
+    $attachment = array(
+        'post_mime_type' => 'image/jpeg',
+        'post_title'     => 'SNS ' . $platform . ' ' . $post_id,
+        'post_status'    => 'inherit',
+    );
+    $att_id = wp_insert_attachment($attachment, $saved['path'], $post_id);
+    if (is_wp_error($att_id)) return $att_id;
+    $meta = wp_generate_attachment_metadata($att_id, $saved['path']);
+    wp_update_attachment_metadata($att_id, $meta);
+    return $att_id;
+}
+
+// 記事から元ネタ文を組み立てる
+function carmel3_autopost_build_base($post_id) {
+    $title = get_the_title($post_id);
+    $lead  = (string) get_post_meta($post_id, 'lead_text', true);
+    if (trim($lead) === '') $lead = (string) get_post_meta($post_id, '_carmel_generated_excerpt', true);
+    if (trim($lead) === '') $lead = (string) get_the_excerpt($post_id);
+    $content = wp_strip_all_tags((string) get_post_field('post_content', $post_id));
+    $content = trim(preg_replace('/\s+/u', ' ', $content));
+    $content = mb_substr($content, 0, 600);
+    $base = trim($title . "\n" . $lead . "\n" . $content);
+    if (get_post_status($post_id) === 'publish') {
+        $url = get_permalink($post_id);
+        if ($url) $base .= "\n参考URL: " . $url;
+    }
+    return $base;
+}
+
+// 選んだ媒体のキャプションをAIでまとめて生成（instagram / gmb）
+function carmel3_autopost_captions($post_id, $platforms, $instruction = '') {
+    $base = carmel3_autopost_build_base($post_id);
+    if (trim($base) === '') return array('error' => '記事から文章の元になる情報を取得できませんでした');
+    $s = carmel3_auto_get_settings();
+    $tone = isset($s['repurpose_tone']) ? (string) $s['repurpose_tone'] : '';
+    if (trim($instruction) !== '') $tone = trim($tone . "\n" . $instruction);
+
+    // autopostの媒体キーはrepurposeの媒体キーと同じ（instagram / gmb）
+    $media = array_values(array_intersect($platforms, array('instagram', 'gmb')));
+    if (empty($media)) return array('error' => '媒体が選ばれていません');
+
+    $res = carmel3_repurpose_generate($base, $tone, $media);
+    if (!empty($res['error'])) return array('error' => $res['error']);
+    $items = isset($res['items']) ? $res['items'] : array();
+
+    // Instagramに既定ハッシュタグを付加（重複回避）
+    if (isset($items['instagram']) && trim((string) $s['autopost_ig_tags']) !== '') {
+        $tags = trim((string) $s['autopost_ig_tags']);
+        if (mb_strpos($items['instagram'], $tags) === false) {
+            $items['instagram'] = rtrim($items['instagram']) . "\n\n" . $tags;
+        }
+    }
+    return array('items' => $items);
+}
+
+// Instagram Graph API で画像投稿（コンテナ作成→公開）
+function carmel3_ig_publish($ig_user, $token, $image_url, $caption) {
+    $ig_user = trim((string) $ig_user);
+    $token   = trim((string) $token);
+    if ($ig_user === '' || $token === '') return array('success' => false, 'message' => 'InstagramのアカウントIDまたはアクセストークンが未設定です');
+    if (trim((string) $image_url) === '')  return array('success' => false, 'message' => '画像URLが空です');
+    $ver = 'v21.0';
+
+    $r1 = wp_remote_post("https://graph.facebook.com/{$ver}/{$ig_user}/media", array(
+        'timeout' => 60,
+        'body'    => array('image_url' => $image_url, 'caption' => $caption, 'access_token' => $token),
+    ));
+    if (is_wp_error($r1)) return array('success' => false, 'message' => '通信失敗(1): ' . $r1->get_error_message());
+    $b1 = json_decode((string) wp_remote_retrieve_body($r1), true);
+    $c1 = (int) wp_remote_retrieve_response_code($r1);
+    if ($c1 < 200 || $c1 >= 300 || empty($b1['id'])) {
+        $err = isset($b1['error']['message']) ? $b1['error']['message'] : ('HTTP ' . $c1);
+        return array('success' => false, 'message' => 'コンテナ作成失敗: ' . $err);
+    }
+    $creation_id = $b1['id'];
+
+    $r2 = wp_remote_post("https://graph.facebook.com/{$ver}/{$ig_user}/media_publish", array(
+        'timeout' => 60,
+        'body'    => array('creation_id' => $creation_id, 'access_token' => $token),
+    ));
+    if (is_wp_error($r2)) return array('success' => false, 'message' => '通信失敗(2): ' . $r2->get_error_message());
+    $b2 = json_decode((string) wp_remote_retrieve_body($r2), true);
+    $c2 = (int) wp_remote_retrieve_response_code($r2);
+    if ($c2 < 200 || $c2 >= 300 || empty($b2['id'])) {
+        $err = isset($b2['error']['message']) ? $b2['error']['message'] : ('HTTP ' . $c2);
+        return array('success' => false, 'message' => '公開失敗: ' . $err);
+    }
+    return array('success' => true, 'message' => '投稿成功', 'id' => (string) $b2['id']);
+}
+
+// Googleマイビジネス投稿（本体v5.7のGoogle投稿関数を使用。審査・認証後に有効）
+function carmel3_autopost_gmb_post($text, $image_url) {
+    if (!function_exists('carmel_post_to_google') || !function_exists('carmel_get_sns_credentials')) {
+        return array('success' => false, 'message' => '本体v5.7のGoogle投稿機能が見つかりません（Google API審査・認証後に有効になります）');
+    }
+    $all   = carmel_get_sns_credentials();
+    $creds = isset($all['main']) ? $all['main'] : ((is_array($all) && !empty($all)) ? reset($all) : array());
+    $r = carmel_post_to_google($text, $image_url, $creds);
+    return array('success' => !empty($r['success']), 'message' => !empty($r['success']) ? '投稿成功' : ('投稿失敗: ' . (isset($r['message']) ? $r['message'] : '不明')));
+}
+
+/* ----- 設定の保存 ----- */
+add_action('admin_post_carmel3_autopost_save', function () {
+    if (!current_user_can('manage_options')) wp_die('権限がありません');
+    check_admin_referer('carmel3_autopost_save');
+    $s = carmel3_auto_get_settings();
+    $s['autopost_ig_user'] = isset($_POST['autopost_ig_user']) ? preg_replace('/[^0-9]/', '', (string) wp_unslash($_POST['autopost_ig_user'])) : '';
+    if (isset($_POST['autopost_ig_token'])) {
+        $t = trim((string) wp_unslash($_POST['autopost_ig_token']));
+        if ($t !== '' && strpos($t, '●') === false) $s['autopost_ig_token'] = sanitize_text_field($t);
+        if ($t === '') $s['autopost_ig_token'] = '';
+    }
+    $s['autopost_ig_tags'] = isset($_POST['autopost_ig_tags']) ? sanitize_text_field(wp_unslash($_POST['autopost_ig_tags'])) : '';
+    carmel3_auto_save_settings($s);
+    wp_safe_redirect(admin_url('admin.php?page=carmel3-autopost&saved=1'));
+    exit;
+});
+
+/* ----- 下書きを作る（画像変換＋キャプション生成） ----- */
+add_action('wp_ajax_carmel3_autopost_prepare', function () {
+    if (!current_user_can('manage_options')) wp_send_json_error(array('message' => '権限がありません'));
+    check_ajax_referer('carmel3_autopost', 'nonce');
+    $post_id   = isset($_POST['post_id']) ? (int) $_POST['post_id'] : 0;
+    $platforms = (isset($_POST['platforms']) && is_array($_POST['platforms'])) ? array_map('sanitize_key', $_POST['platforms']) : array();
+    $platforms = array_values(array_intersect($platforms, array('instagram', 'gmb')));
+    $instruction = isset($_POST['instruction']) ? sanitize_textarea_field(wp_unslash($_POST['instruction'])) : '';
+    if (!$post_id || !get_post($post_id)) wp_send_json_error(array('message' => '記事が選ばれていません'));
+    if (empty($platforms)) wp_send_json_error(array('message' => '投稿先（Instagram / Googleマイビジネス）を選んでください'));
+
+    // キャプション
+    $cap = carmel3_autopost_captions($post_id, $platforms, $instruction);
+    if (!empty($cap['error'])) wp_send_json_error(array('message' => $cap['error']));
+    $items = $cap['items'];
+
+    $out = array();
+    foreach ($platforms as $p) {
+        $caption = isset($items[$p]) ? $items[$p] : '';
+        // 画像変換
+        $att = carmel3_autopost_make_variant($post_id, $p);
+        if (is_wp_error($att)) {
+            $out[$p] = array('ok' => false, 'message' => $att->get_error_message(), 'caption' => $caption, 'image' => '');
+            continue;
+        }
+        $url = wp_get_attachment_url($att);
+        update_post_meta($post_id, '_carmel3_ap_caption_' . $p, $caption);
+        update_post_meta($post_id, '_carmel3_ap_img_' . $p, (int) $att);
+        $out[$p] = array('ok' => true, 'message' => '', 'caption' => $caption, 'image' => $url, 'att' => (int) $att);
+    }
+    wp_send_json_success(array('platforms' => $out, 'title' => get_the_title($post_id)));
+});
+
+/* ----- 投稿する ----- */
+add_action('wp_ajax_carmel3_autopost_publish', function () {
+    if (!current_user_can('manage_options')) wp_send_json_error(array('message' => '権限がありません'));
+    check_ajax_referer('carmel3_autopost', 'nonce');
+    $post_id  = isset($_POST['post_id']) ? (int) $_POST['post_id'] : 0;
+    $platform = isset($_POST['platform']) ? sanitize_key($_POST['platform']) : '';
+    $caption  = isset($_POST['caption']) ? trim((string) wp_unslash($_POST['caption'])) : '';
+    if (!$post_id || !get_post($post_id)) wp_send_json_error(array('message' => '記事がありません'));
+    if (!in_array($platform, array('instagram', 'gmb'), true)) wp_send_json_error(array('message' => '投稿先が不正です'));
+
+    $att = (int) get_post_meta($post_id, '_carmel3_ap_img_' . $platform, true);
+    $image_url = $att ? wp_get_attachment_url($att) : '';
+    if ($caption === '') $caption = (string) get_post_meta($post_id, '_carmel3_ap_caption_' . $platform, true);
+    if ($image_url === '') wp_send_json_error(array('message' => '変換済み画像が見つかりません。先に「下書きを作る」を押してください。'));
+    if ($caption === '')   wp_send_json_error(array('message' => 'キャプションが空です'));
+
+    $s = carmel3_auto_get_settings();
+    if ($platform === 'instagram') {
+        $r = carmel3_ig_publish($s['autopost_ig_user'], $s['autopost_ig_token'], $image_url, $caption);
+    } else {
+        $r = carmel3_autopost_gmb_post($caption, $image_url);
+    }
+
+    if (!empty($r['success'])) {
+        update_post_meta($post_id, '_carmel3_ap_posted_' . $platform, current_time('mysql'));
+        update_post_meta($post_id, '_carmel3_ap_caption_' . $platform, $caption);
+        if (function_exists('carmel_history_add')) {
+            carmel_history_add('sns_posted', get_the_title($post_id), $post_id, array('platforms' => $platform, 'all_ok' => true));
+        }
+        wp_send_json_success(array('message' => carmel3_autopost_platforms()[$platform] . '：投稿成功' . (!empty($r['id']) ? '（ID: ' . $r['id'] . '）' : '')));
+    }
+    wp_send_json_error(array('message' => (isset(carmel3_autopost_platforms()[$platform]) ? carmel3_autopost_platforms()[$platform] : $platform) . '：' . $r['message']));
+});
+
+/* ----- 管理ページ ----- */
+function carmel3_autopost_page() {
+    if (!current_user_can('manage_options')) return;
+    $s = carmel3_auto_get_settings();
+    $has_token = (isset($s['autopost_ig_token']) && trim((string) $s['autopost_ig_token']) !== '');
+    $ig_ready  = ($has_token && trim((string) $s['autopost_ig_user']) !== '');
+    $gmb_ready = (function_exists('carmel_post_to_google') && function_exists('carmel_get_sns_credentials'));
+    $nonce = wp_create_nonce('carmel3_autopost');
+
+    // 投稿候補の記事（最近のもの）
+    $pts = array_values(array_filter(array('media_article', 'news', 'shop_blog', 'post'), 'post_type_exists'));
+    $q = new WP_Query(array(
+        'post_type'      => $pts,
+        'post_status'    => array('publish', 'draft', 'pending', 'future'),
+        'posts_per_page' => 40,
+        'orderby'        => 'date',
+        'order'          => 'DESC',
+        'no_found_rows'  => true,
+    ));
+    ?>
+    <div class="wrap">
+      <h1>📣 SNS自動投稿（Instagram / Googleマイビジネス）</h1>
+      <p style="max-width:860px">記事の<strong>アイキャッチ画像を各媒体サイズに変換</strong>し、<strong>キャプション（Instagramはハッシュタグ付き）をAIが媒体別に作成</strong>します。まず「下書きを作る」で画像と文章を確認し、よければ「投稿する」。安全のため<strong>確認してから投稿</strong>する方式です。</p>
+
+      <?php if (isset($_GET['saved'])): ?><div class="notice notice-success is-dismissible"><p>設定を保存しました。</p></div><?php endif; ?>
+
+      <h2>① 接続設定</h2>
+      <table class="widefat" style="max-width:860px;margin-bottom:8px"><tbody>
+        <tr><td style="width:170px">Instagram</td><td><?php echo $ig_ready ? '✅ 設定済み（すぐ投稿できます）' : '⚠️ 未設定（下で設定してください）'; ?></td></tr>
+        <tr><td>Googleマイビジネス</td><td><?php echo $gmb_ready ? '✅ 本体のGoogle投稿機能あり（Google API審査・認証が済んでいれば投稿できます）' : '⏳ 本体のGoogle投稿機能が未検出（Google API審査・認証の完了後に有効）'; ?></td></tr>
+      </tbody></table>
+
+      <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="max-width:860px;background:#fff;border:1px solid #ccd0d4;padding:14px;margin-bottom:22px">
+        <?php wp_nonce_field('carmel3_autopost_save'); ?>
+        <input type="hidden" name="action" value="carmel3_autopost_save">
+        <p><label><strong>Instagram ビジネスアカウントID</strong>（数字）<br>
+          <input type="text" name="autopost_ig_user" value="<?php echo esc_attr($s['autopost_ig_user']); ?>" style="width:100%;padding:8px" placeholder="17841400000000000"></label></p>
+        <p><label><strong>Meta アクセストークン</strong>（Instagram投稿用の長期トークン）<br>
+          <input type="text" name="autopost_ig_token" value="<?php echo esc_attr($has_token ? '●●●●●●●●（設定済み・変更時のみ入力）' : ''); ?>" style="width:100%;padding:8px" placeholder="EAAB..."></label></p>
+        <p><label><strong>既定のハッシュタグ</strong>（Instagram投稿の末尾に自動で付けます）<br>
+          <input type="text" name="autopost_ig_tags" value="<?php echo esc_attr($s['autopost_ig_tags']); ?>" style="width:100%;padding:8px" placeholder="#中古車 #カーメル #地域名"></label></p>
+        <p style="color:#666;font-size:12px;margin:4px 0 10px">※ トークンはこの設定欄にだけ入れてください（チャット等に貼らないでください）。Instagramビジネスアカウント＋Facebookページの連携が必要です。</p>
+        <p><button class="button button-primary">設定を保存</button></p>
+      </form>
+
+      <h2>② 記事を選んで投稿</h2>
+      <table class="form-table" style="max-width:860px"><tbody>
+        <tr><th style="width:150px">記事</th><td>
+          <select id="ap_post" style="width:100%;max-width:560px;padding:6px">
+            <option value="">— 記事を選んでください —</option>
+            <?php while ($q->have_posts()): $q->the_post(); $pid = get_the_ID();
+              $st = get_post_status($pid); $stl = ($st === 'publish') ? '公開' : '下書き';
+              $pted = get_post_meta($pid, '_carmel3_ap_posted_instagram', true) || get_post_meta($pid, '_carmel3_ap_posted_gmb', true);
+            ?>
+              <option value="<?php echo (int) $pid; ?>"><?php echo esc_html(($pted ? '✓ ' : '') . get_the_title() . '（' . $stl . '）'); ?></option>
+            <?php endwhile; wp_reset_postdata(); ?>
+          </select>
+        </td></tr>
+        <tr><th>投稿先</th><td>
+          <label style="margin-right:16px"><input type="checkbox" class="ap_pf" value="instagram" <?php echo $ig_ready ? 'checked' : ''; ?>> Instagram</label>
+          <label><input type="checkbox" class="ap_pf" value="gmb" <?php echo $gmb_ready ? 'checked' : ''; ?>> Googleマイビジネス</label>
+        </td></tr>
+        <tr><th>追加の指示（任意）</th><td>
+          <textarea id="ap_inst" rows="2" style="width:100%;max-width:560px;padding:6px" placeholder="例）明るく元気な口調で。来店予約を促す。"></textarea>
+        </td></tr>
+      </tbody></table>
+      <p><button class="button button-primary" id="ap_prepare">下書きを作る（画像変換＋文章生成）</button>
+         <span id="ap_prep_msg" style="margin-left:10px;color:#555"></span></p>
+
+      <div id="ap_results" style="max-width:860px"></div>
+    </div>
+
+    <script>
+    (function(){
+      var ajax = '<?php echo esc_js(admin_url('admin-ajax.php')); ?>';
+      var nonce = '<?php echo esc_js($nonce); ?>';
+      var LAB = {instagram:'Instagram', gmb:'Googleマイビジネス'};
+      function esc(t){ var d=document.createElement('div'); d.textContent=t||''; return d.innerHTML; }
+
+      document.getElementById('ap_prepare').addEventListener('click', function(){
+        var pid = document.getElementById('ap_post').value;
+        var pfs = Array.prototype.slice.call(document.querySelectorAll('.ap_pf:checked')).map(function(c){return c.value;});
+        var inst = document.getElementById('ap_inst').value;
+        var msg = document.getElementById('ap_prep_msg');
+        if(!pid){ msg.textContent='記事を選んでください'; return; }
+        if(pfs.length===0){ msg.textContent='投稿先を選んでください'; return; }
+        msg.textContent='作成中…（画像変換とAI文章生成に数十秒かかることがあります）';
+        this.disabled = true;
+        var self = this;
+        var body = new URLSearchParams();
+        body.append('action','carmel3_autopost_prepare'); body.append('nonce',nonce);
+        body.append('post_id',pid); body.append('instruction',inst);
+        pfs.forEach(function(p){ body.append('platforms[]',p); });
+        fetch(ajax,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body.toString()})
+          .then(function(r){return r.json();})
+          .then(function(j){
+            self.disabled=false;
+            if(!j.success){ msg.textContent='エラー：'+(j.data&&j.data.message||'失敗'); return; }
+            msg.textContent='下書きができました。内容を確認して「投稿する」を押してください。';
+            render(pid, j.data.platforms);
+          })
+          .catch(function(e){ self.disabled=false; msg.textContent='通信エラー：'+e; });
+      });
+
+      function render(pid, pf){
+        var box = document.getElementById('ap_results'); box.innerHTML='';
+        Object.keys(pf).forEach(function(p){
+          var d = pf[p];
+          var card = document.createElement('div');
+          card.style.cssText='background:#fff;border:1px solid #ccd0d4;border-radius:8px;padding:14px;margin:12px 0';
+          var head = '<h3 style="margin:0 0 8px">'+esc(LAB[p]||p)+'</h3>';
+          if(!d.ok){
+            card.innerHTML = head + '<p style="color:#b32d2e">画像の準備に失敗：'+esc(d.message)+'</p>';
+            box.appendChild(card); return;
+          }
+          card.innerHTML = head +
+            '<div style="display:flex;gap:14px;flex-wrap:wrap">'+
+              '<img src="'+esc(d.image)+'" style="width:200px;height:auto;border:1px solid #eee;border-radius:6px">'+
+              '<div style="flex:1;min-width:280px">'+
+                '<textarea class="ap_cap" data-p="'+esc(p)+'" rows="8" style="width:100%;padding:8px">'+esc(d.caption)+'</textarea>'+
+                '<p style="margin:8px 0 0"><button class="button button-primary ap_post_btn" data-p="'+esc(p)+'">'+esc(LAB[p]||p)+'に投稿する</button>'+
+                '<span class="ap_post_msg" data-p="'+esc(p)+'" style="margin-left:10px;color:#555"></span></p>'+
+              '</div>'+
+            '</div>';
+          box.appendChild(card);
+        });
+        box.querySelectorAll('.ap_post_btn').forEach(function(btn){
+          btn.addEventListener('click', function(){
+            var p = this.getAttribute('data-p');
+            var cap = box.querySelector('.ap_cap[data-p="'+p+'"]').value;
+            var sm = box.querySelector('.ap_post_msg[data-p="'+p+'"]');
+            if(!confirm(LAB[p]+'に投稿します。よろしいですか？')) return;
+            this.disabled=true; sm.textContent='投稿中…';
+            var self=this;
+            var body=new URLSearchParams();
+            body.append('action','carmel3_autopost_publish'); body.append('nonce',nonce);
+            body.append('post_id',pid); body.append('platform',p); body.append('caption',cap);
+            fetch(ajax,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body.toString()})
+              .then(function(r){return r.json();})
+              .then(function(j){
+                if(j.success){ sm.style.color='#1a7f37'; sm.textContent='✅ '+(j.data&&j.data.message||'成功'); }
+                else { self.disabled=false; sm.style.color='#b32d2e'; sm.textContent='⚠️ '+(j.data&&j.data.message||'失敗'); }
+              })
+              .catch(function(e){ self.disabled=false; sm.style.color='#b32d2e'; sm.textContent='通信エラー：'+e; });
+          });
+        });
+      }
+    })();
+    </script>
+    <?php
 }
 
 // 本体が保存している max_tokens を安全値まで下げる（クレジット不要・本体コードは無改変）
