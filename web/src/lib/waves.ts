@@ -40,10 +40,29 @@ export type WaveHour = {
   waveHeight: number | null;
 };
 
+/** 時間帯別の詳細（気象予報＋うねり） */
+export type WaveHourDetail = {
+  time: string;
+  waveHeight: number | null; // m（合成波高）
+  wavePeriod: number | null; // s
+  waveDirection: number | null; // deg
+  swellHeight: number | null; // m（うねり成分）
+  swellPeriod: number | null; // s
+  windWaveHeight: number | null; // m（風波成分）
+  windSpeed: number | null; // km/h
+  windGust: number | null; // km/h
+  windDirection: number | null; // deg
+  weatherCode: number | null;
+  precipProb: number | null; // %
+  temperature: number | null; // ℃
+};
+
 export type WaveReport = {
   now: WaveNow;
   today: WaveHour[]; // 今日の時間帯別（波高）
   days: WaveDay[];
+  /** 現在時刻以降の時間帯別予報（最大48時間）。古いキャッシュ・デモでは無いことがある */
+  hours?: WaveHourDetail[];
   fetchedAt: string;
 };
 
@@ -151,16 +170,17 @@ export async function getWaveReport(
     `https://marine-api.open-meteo.com/v1/marine?latitude=${at.lat}` +
     `&longitude=${at.lon}` +
     `&current=wave_height,wave_period,wave_direction,sea_surface_temperature` +
-    `&hourly=wave_height` +
+    `&hourly=wave_height,wave_period,wave_direction,swell_wave_height,swell_wave_period,wind_wave_height` +
     `&daily=wave_height_max,wave_direction_dominant` +
-    `&timezone=${encodeURIComponent(TZ)}&forecast_days=4`;
+    `&timezone=${encodeURIComponent(TZ)}&forecast_days=7`;
 
   const weatherUrl =
     `https://api.open-meteo.com/v1/forecast?latitude=${at.lat}` +
     `&longitude=${at.lon}` +
     `&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,precipitation` +
+    `&hourly=temperature_2m,weather_code,precipitation_probability,wind_speed_10m,wind_gusts_10m,wind_direction_10m` +
     `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,sunrise,sunset` +
-    `&timezone=${encodeURIComponent(TZ)}&forecast_days=4`;
+    `&timezone=${encodeURIComponent(TZ)}&forecast_days=7`;
 
   try {
     const [marineRes, weatherRes] = await Promise.all([
@@ -206,7 +226,37 @@ export async function getWaveReport(
       sunset: pick(weather?.daily?.sunset, i),
     }));
 
-    return { now, today, days, fetchedAt: new Date().toISOString() };
+    // 気象（weather）と波（marine）の時間帯別を時刻で突き合わせる
+    const wh = weather?.hourly ?? {};
+    const wIndex = new Map<string, number>(
+      ((wh.time ?? []) as string[]).map((t, i) => [t, i]),
+    );
+    const mh = marine?.hourly ?? {};
+    const num = (arr: unknown, i: number) => pick(arr as (number | null)[] | undefined, i);
+    const nowHour = (now.time || "").slice(0, 13); // "YYYY-MM-DDTHH"
+    const hours: WaveHourDetail[] = hTimes
+      .map((t, i) => {
+        const j = wIndex.get(t);
+        return {
+          time: t,
+          waveHeight: num(mh.wave_height, i),
+          wavePeriod: num(mh.wave_period, i),
+          waveDirection: num(mh.wave_direction, i),
+          swellHeight: num(mh.swell_wave_height, i),
+          swellPeriod: num(mh.swell_wave_period, i),
+          windWaveHeight: num(mh.wind_wave_height, i),
+          windSpeed: j == null ? null : num(wh.wind_speed_10m, j),
+          windGust: j == null ? null : num(wh.wind_gusts_10m, j),
+          windDirection: j == null ? null : num(wh.wind_direction_10m, j),
+          weatherCode: j == null ? null : num(wh.weather_code, j),
+          precipProb: j == null ? null : num(wh.precipitation_probability, j),
+          temperature: j == null ? null : num(wh.temperature_2m, j),
+        };
+      })
+      .filter((h) => !nowHour || h.time.slice(0, 13) >= nowHour)
+      .slice(0, 48);
+
+    return { now, today, days, hours, fetchedAt: new Date().toISOString() };
   } catch {
     return null;
   }

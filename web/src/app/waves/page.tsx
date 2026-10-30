@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { AiWaveAdvice, AiWaveAdviceSkeleton } from "@/components/spots/ai-wave-advice";
 import type { Metadata } from "next";
 import { CommunityHeader } from "@/components/community/community-header";
 import { createClient } from "@/lib/supabase/server";
@@ -35,7 +37,8 @@ function dayLabel(iso: string) {
 }
 
 export default async function WavesPage() {
-  const report = DEMO ? demoWaveReport : await getWaveReport();
+  // デモ環境でも実際の予報を優先し、取得できない時だけサンプルを表示
+  const report = (await getWaveReport()) ?? (DEMO ? demoWaveReport : null);
 
   let localWaves: LocalWave[] = [];
   if (DEMO) {
@@ -122,6 +125,13 @@ export default async function WavesPage() {
               ) : null}
             </section>
 
+            {/* AI波解説（Claude） */}
+            <div className="mt-6">
+              <Suspense fallback={<AiWaveAdviceSkeleton />}>
+                <AiWaveAdvice placeId="iwasawa" />
+              </Suspense>
+            </div>
+
             {report.today.length > 0 ? (
               <section className="mt-6">
                 <h2 className="text-sm font-semibold text-navy/70">今日の波の推移</h2>
@@ -134,7 +144,7 @@ export default async function WavesPage() {
             <section className="mt-6">
               <h2 className="text-sm font-semibold text-navy/70">これからの数日</h2>
               <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {report.days.map((d, i) => {
+                {report.days.slice(0, 4).map((d, i) => {
                   const dw = weatherLabel(d.weatherCode);
                   return (
                     <div

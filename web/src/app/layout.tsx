@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { PwaRegister } from "@/components/pwa-register";
+import { ChatWidget } from "@/components/chat/chat-widget";
 import { SITE } from "@/lib/site";
 
 const geistSans = Geist({
@@ -45,6 +46,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         {children}
         <PwaRegister />
+        <ChatWidget />
       </body>
     </html>
   );

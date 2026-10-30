@@ -13,7 +13,9 @@ import {
   compass8,
   offshoreWindLabel,
 } from "@/lib/spots";
+import { Suspense } from "react";
 import { LiveForecast } from "@/components/spots/live-forecast";
+import { AiWaveAdvice, AiWaveAdviceSkeleton } from "@/components/spots/ai-wave-advice";
 
 export const revalidate = 1800;
 
@@ -66,6 +68,13 @@ export default async function AreaDetailPage({ params }: Props) {
       <p className="mt-4 rounded-xl border border-ocean/20 bg-white px-4 py-3 text-sm leading-relaxed text-navy/75">
         💡 {area.tips}
       </p>
+
+      {/* AI波解説（Claude） */}
+      <div className="mt-6">
+        <Suspense fallback={<AiWaveAdviceSkeleton />}>
+          <AiWaveAdvice placeId={area.id} />
+        </Suspense>
+      </div>
 
       {/* ライブ波予報 */}
       <div className="mt-6">

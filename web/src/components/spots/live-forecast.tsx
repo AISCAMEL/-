@@ -19,6 +19,12 @@ function dayLabel(date: string, i: number): string {
   return `${m}/${day}（${WEEKDAY[wd]}）`;
 }
 
+/** "2026-10-30T15:00" → "15時"（日付が変わったら "翌3時"） */
+function hourLabel(time: string, first: string): string {
+  const hour = Number(time.slice(11, 13));
+  return time.slice(0, 10) === first.slice(0, 10) ? `${hour}時` : `翌${hour}時`;
+}
+
 function fmt(n: number | null, digits = 1): string {
   return n == null ? "—" : n.toFixed(digits);
 }
@@ -52,6 +58,7 @@ export async function LiveForecast({
   }
 
   const { now, days } = report;
+  const hours = (report.hours ?? []).filter((_, i) => i % 3 === 0).slice(0, 9);
   const relation = now.windDirection == null ? null : windRelation(now.windDirection, facingDeg);
   const rel = relation ? WIND_RELATION_META[relation] : null;
   const weather = weatherLabel(now.weatherCode);
@@ -93,6 +100,36 @@ export async function LiveForecast({
         </span>
       </div>
 
+      {hours.length > 0 ? (
+        <div className="mt-4">
+          <p className="text-xs font-medium text-navy/60">時間帯別（3時間ごと）</p>
+          <div className="mt-1.5 flex gap-2 overflow-x-auto pb-1">
+            {hours.map((h) => {
+              const r = h.windDirection == null ? null : windRelation(h.windDirection, facingDeg);
+              return (
+                <div key={h.time} className="w-[4.6rem] shrink-0 rounded-xl bg-foam p-2 text-center">
+                  <p className="text-[0.65rem] text-navy/50">{hourLabel(h.time, hours[0].time)}</p>
+                  <p className="mt-0.5 text-base">{weatherLabel(h.weatherCode).icon}</p>
+                  <p className="text-xs font-semibold text-navy">{fmt(h.waveHeight)}m</p>
+                  <p className="text-[0.65rem] text-navy/60">{fmt(h.wavePeriod, 0)}秒</p>
+                  <p className="mt-0.5 text-[0.65rem] text-navy/70">
+                    {compass(h.windDirection)} {fmt(h.windSpeed == null ? null : h.windSpeed / 3.6, 0)}m
+                  </p>
+                  {r ? (
+                    <p className={`mt-1 rounded-full px-1 text-[0.6rem] font-medium ${WIND_RELATION_META[r].style}`}>
+                      {WIND_RELATION_META[r].label.replace("ショア", "")}
+                    </p>
+                  ) : null}
+                  {h.precipProb != null && h.precipProb >= 30 ? (
+                    <p className="mt-0.5 text-[0.6rem] text-ocean">☔{h.precipProb}%</p>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
       {days.length > 0 ? (
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[22rem] text-left text-xs">
@@ -106,7 +143,7 @@ export async function LiveForecast({
               </tr>
             </thead>
             <tbody className="text-navy/80">
-              {days.slice(0, 4).map((d, i) => {
+              {days.slice(0, 5).map((d, i) => {
                 const w = weatherLabel(d.weatherCode);
                 return (
                   <tr key={d.date} className="border-t border-navy/5">

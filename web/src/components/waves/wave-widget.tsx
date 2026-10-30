@@ -12,7 +12,7 @@ import { SITE } from "@/lib/site";
 
 /** WV-01: コンパクトな波情報ウィジェット（フィード上部などに置く） */
 export async function WaveWidget() {
-  const report = DEMO ? demoWaveReport : await getWaveReport();
+  const report = (await getWaveReport()) ?? (DEMO ? demoWaveReport : null);
 
   if (!report) {
     return (
