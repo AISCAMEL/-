@@ -19,9 +19,10 @@ import {
 import { Suspense } from "react";
 import { LiveForecast } from "@/components/spots/live-forecast";
 import { AiWaveAdvice, AiWaveAdviceSkeleton } from "@/components/spots/ai-wave-advice";
+import { JmaWarnings } from "@/components/spots/jma-warnings";
 
-// 波予報は30分ごとに再生成（ビルド時に全ポイント分を一斉取得しない）
-export const revalidate = 1800;
+// 警報・注意報（10分）と波予報（30分）に合わせて10分ごとに再生成（ビルド時に全ポイント分を一斉取得しない）
+export const revalidate = 600;
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -89,6 +90,11 @@ export default async function SpotDetailPage({ params }: Props) {
         <Stat label="混雑度" value={CROWD_LABEL[spot.crowd]} />
         <Stat label="海の向き" value={`${compass8(facing)}向き`} />
       </dl>
+
+      {/* 気象庁の警報・注意報 */}
+      <div className="mt-6">
+        <JmaWarnings spotIds={[spot.id]} />
+      </div>
 
       {/* AI波解説（Claude） */}
       <div className="mt-6">

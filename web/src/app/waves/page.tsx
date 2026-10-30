@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { AiWaveAdvice, AiWaveAdviceSkeleton } from "@/components/spots/ai-wave-advice";
+import { JmaWarnings } from "@/components/spots/jma-warnings";
 import type { Metadata } from "next";
 import { CommunityHeader } from "@/components/community/community-header";
 import { createClient } from "@/lib/supabase/server";
@@ -124,6 +125,11 @@ export default async function WavesPage() {
                 </p>
               ) : null}
             </section>
+
+            {/* 気象庁の警報・注意報 */}
+            <div className="mt-6">
+              <JmaWarnings spotIds={["iwasawa"]} />
+            </div>
 
             {/* AI波解説（Claude） */}
             <div className="mt-6">

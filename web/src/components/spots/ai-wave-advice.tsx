@@ -2,6 +2,7 @@ import { getWaveReport, vibe, waveSizeLabel, compass } from "@/lib/waves";
 import { windRelation, WIND_RELATION_META } from "@/lib/spots";
 import { resolvePlace } from "@/lib/ai/forecast-digest";
 import { getWaveAdvice } from "@/lib/ai/wave-advice";
+import { getJmaWarnings, jmaAreasForSpots } from "@/lib/jma";
 
 /**
  * AI波解説（Claude）。予報モデルの数値 → サーファー向けのコメントに。
@@ -13,11 +14,18 @@ export async function AiWaveAdvice({ placeId }: { placeId: string }) {
   const report = await getWaveReport({ lat: place.lat, lon: place.lon });
   if (!report) return null;
 
-  const advice = await getWaveAdvice(place, report);
+  const warnings = await getJmaWarnings(jmaAreasForSpots(place.spotIds));
+  const advice = await getWaveAdvice(place, report, warnings);
 
   if (!advice) {
     // フォールバック：数値からのかんたんコメント
-    const v = vibe(report.now);
+    const marine = (warnings ?? []).flatMap((w) => w.warnings.filter((x) => x.marine));
+    const serious = marine.some((x) => x.level >= 30);
+    const v = serious
+      ? { text: "気象庁の警報が出ています。今日は海に入らないでください。" }
+      : marine.length > 0
+        ? { text: `${marine[0].name}が出ています。初心者は入水を控え、経験者も無理をしないで。` }
+        : vibe(report.now);
     const rel =
       report.now.windDirection == null
         ? null

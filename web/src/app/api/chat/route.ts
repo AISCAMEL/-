@@ -4,6 +4,7 @@ import { anthropic, AI_ENABLED, AI_MODEL, FALLBACK_BETA } from "@/lib/ai/client"
 import { CHAT_SYSTEM } from "@/lib/ai/chat-knowledge";
 import { resolvePlace, forecastDigest } from "@/lib/ai/forecast-digest";
 import { getWaveReport } from "@/lib/waves";
+import { getJmaWarnings, jmaAreasForSpots } from "@/lib/jma";
 
 // ============================================================
 // AIチャット（Claude）— ストリーミング応答
@@ -52,7 +53,7 @@ const TOOLS: Anthropic.Beta.BetaTool[] = [
   {
     name: "get_wave_forecast",
     description:
-      "サーフポイントまたはエリアの最新の波・風・天気の予報（現在値、今後24時間の3時間ごと、数日先）を取得する。place_id はシステムプロンプトの全国サーフポイント一覧にある id（例: iwasawa, shonan, ichinomiya）。",
+      "サーフポイントまたはエリアの最新の波・風・天気の予報（現在値、今後24時間の3時間ごと、数日先）と、気象庁の警報・注意報を取得する。place_id はシステムプロンプトの全国サーフポイント一覧にある id（例: iwasawa, shonan, ichinomiya）。",
     input_schema: {
       type: "object",
       properties: {
@@ -78,11 +79,14 @@ async function runForecastTool(input: unknown): Promise<{ content: string; isErr
       label: "予報",
     };
   }
-  const report = await getWaveReport({ lat: place.lat, lon: place.lon });
+  const [report, warnings] = await Promise.all([
+    getWaveReport({ lat: place.lat, lon: place.lon }),
+    getJmaWarnings(jmaAreasForSpots(place.spotIds)),
+  ]);
   if (!report) {
     return { content: "予報を取得できませんでした。時間をおいて確認するよう伝えてください。", isError: true, label: place.name };
   }
-  return { content: JSON.stringify(forecastDigest(place, report)), isError: false, label: place.name };
+  return { content: JSON.stringify(forecastDigest(place, report, warnings)), isError: false, label: place.name };
 }
 
 function line(obj: { t: "text" | "status" | "error"; v: string }): Uint8Array {

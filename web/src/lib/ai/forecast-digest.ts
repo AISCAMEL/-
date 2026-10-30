@@ -1,5 +1,6 @@
 import {
   getSpotById,
+  spotsInArea,
   getAreaById,
   facingOf,
   bottomOf,
@@ -14,6 +15,7 @@ import {
   SPOT_REGION_LABEL,
 } from "@/lib/spots";
 import { compass, waveSizeLabel, weatherLabel, type WaveReport } from "@/lib/waves";
+import { warningsDigest, type JmaAreaWarnings } from "@/lib/jma";
 
 /** 波予報・AI解説の対象（ポイント or エリア） */
 export type ForecastPlace = {
@@ -29,6 +31,8 @@ export type ForecastPlace = {
   tips: string | null;
   lat: number;
   lon: number;
+  /** 気象庁の警報を見る対象のポイント（エリアなら所属ポイント全部） */
+  spotIds: string[];
   profile: Record<string, string>;
 };
 
@@ -50,6 +54,7 @@ export function resolvePlace(id: string): ForecastPlace | null {
       tips: area?.tips ?? null,
       lat: spot.lat,
       lon: spot.lon,
+      spotIds: [spot.id],
       profile: {
         タイプ: SPOT_TYPE_LABEL[spot.type],
         レベル: SPOT_LEVEL_LABEL[spot.level],
@@ -74,6 +79,7 @@ export function resolvePlace(id: string): ForecastPlace | null {
       tips: area.tips,
       lat: area.lat,
       lon: area.lon,
+      spotIds: spotsInArea(area.id).map((s) => s.id),
       profile: { 概要: area.summary },
     };
   }
@@ -87,7 +93,11 @@ const ms = (kmh: number | null | undefined) => (kmh == null ? null : Math.round(
  * AI に渡すための、場所＋予報のコンパクトな要約（JSON化して渡す）。
  * 予報モデルの数値をそのまま、サーファーが読む単位（m・秒・m/s）に揃える。
  */
-export function forecastDigest(place: ForecastPlace, report: WaveReport) {
+export function forecastDigest(
+  place: ForecastPlace,
+  report: WaveReport,
+  warnings?: JmaAreaWarnings[] | null,
+) {
   const rel = (deg: number | null) =>
     deg == null ? null : WIND_RELATION_META[windRelation(deg, place.facingDeg)].label;
 
@@ -136,6 +146,7 @@ export function forecastDigest(place: ForecastPlace, report: WaveReport) {
       風の当たり方: rel(report.now.windDirection),
       天気: weatherLabel(report.now.weatherCode).text,
     },
+    気象庁の警報注意報: warnings === undefined ? "未確認" : warningsDigest(warnings),
     時間帯別予報_3時間ごと: hours,
     日別予報: report.days.slice(0, 5).map((d) => ({
       日付: d.date,
