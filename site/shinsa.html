@@ -511,6 +511,7 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 </div>
 <p>会社の郵便番号 (必須)<br><input type="text" inputmode="numeric" maxlength="7" class="company-zipcode" placeholder="1234567"></p>
 <p>会社の所在地（任意・郵便番号で自動入力）<br><input type="text" class="company-address to-hankaku" placeholder="郵便番号を入れると自動で入ります"></p>
+<p class="caf-hint">※ ご入力の場合は、郵便番号で町名まで自動入力後、<b>番地（例：1-2-3）</b>までご記入ください。</p>
 <p>会社の所在地（フリガナ・自動）<br><input type="text" class="company-address-kana" placeholder="市区町村までは自動／以降はご記入"></p>
 <p>会社の建物名・階・号室（任意）<br><input type="text" class="to-hankaku" placeholder="〇〇ビル 5F／〇〇マンション 302 など"></p>
 <p>会社概要・ホームページURL（任意）<br><input type="url" placeholder="https://example.co.jp"></p>
@@ -539,6 +540,7 @@ body{font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(
 </div>
 <p>事業所の郵便番号 (必須)<br><input type="text" inputmode="numeric" maxlength="7" class="biz-zipcode" placeholder="1234567"></p>
 <p>事業所の所在地（郵便番号で自動入力） (必須)<br><input type="text" class="biz-address to-hankaku" placeholder="郵便番号を入れると自動で入ります"></p>
+<p class="caf-hint">※ 郵便番号で町名まで自動入力後、<b>番地（例：1-2-3）</b>までご記入ください。</p>
 <p>事業所の所在地（フリガナ・自動） (必須)<br><input type="text" class="biz-address-kana" placeholder="市区町村までは自動／以降はご記入"></p>
 <p>事業所の建物名・階・号室（任意）<br><input type="text" class="to-hankaku" placeholder="〇〇ビル 2F／自宅兼事務所 など"></p>
 </div>
@@ -1148,6 +1150,17 @@ document.querySelectorAll('.caf-up input[type=file]').forEach(function(inp){
         if(!firstBad)firstBad=_addr;
       }
     }
+
+    /* 会社・事業所の所在地も番地まで（表示されていて入力がある場合） */
+    [['.company-address','会社の所在地'],['.biz-address','事業所の所在地']].forEach(function(pair){
+      var el=document.querySelector(pair[0]);
+      if(!el || !visible(el)) return;
+      var v=String(el.value).trim();
+      if(!v) return;  /* 空欄は既存の必須チェックに任せる（任意欄はスキップ） */
+      var auto=(el.dataset.auto||'').trim();
+      var hasB=/[0-9]/.test(v)||/[〇一二三四五六七八九十百]+\s*(丁目|番地|番|号)/.test(v);
+      if(!hasB || (auto && v===auto)){ errs.push(pair[1]+'は番地（例：1-2-3）まで入力してください'); if(!firstBad)firstBad=el; }
+    });
 
     var consent=form.querySelectorAll('.caf-check input[type=checkbox]');
     if(!Array.prototype.every.call(consent,function(c){return c.checked;})){ errs.push('同意項目すべてにチェックが必要です'); if(!firstBad)firstBad=form.querySelector('.caf-check'); }
