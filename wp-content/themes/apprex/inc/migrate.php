@@ -67,17 +67,24 @@ function apprex_migrate_about_187() {
 	}
 }
 
-/* /about/ が公開されていなければ、会社概要へ。 */
+/*
+ * /about/ が公開されていなければ、会社概要へ。
+ * WordPress の「似たURLへの自動転送」（about-〇〇 の記事など）より先に動かす。
+ * ページを削除（ゴミ箱）したとき・下書きのとき・似た記事があるときも、必ず会社概要へ。
+ */
 add_action( 'template_redirect', function () {
-	if ( ! is_404() ) {
+	$path = trim( (string) wp_parse_url( isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '', PHP_URL_PATH ), '/' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+	if ( 'about' !== strtolower( rawurldecode( $path ) ) || is_preview() ) {
 		return;
 	}
-	$path = trim( (string) wp_parse_url( isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '', PHP_URL_PATH ), '/' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-	if ( 'about' === $path ) {
-		wp_safe_redirect( apprex_page_url( 'company' ), 301 );
-		exit;
+	$p = get_page_by_path( 'about' );
+	if ( $p && 'publish' === $p->post_status ) {
+		return;
 	}
-} );
+	nocache_headers();
+	wp_safe_redirect( apprex_page_url( 'company' ), 301 );
+	exit;
+}, 0 );
 
 /**
  * v1.85.0：アプリの初期費用を3つの作り方に合わせる。
