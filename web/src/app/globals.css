@@ -42,3 +42,109 @@ body {
 .bg-ocean-gradient {
   background-image: linear-gradient(150deg, #0a5f9c 0%, #1a8fcb 48%, #1fc0b0 100%);
 }
+
+/* ============================================================
+   なみすけ（AIアシスタントのキャラクター）のアニメーション
+   ============================================================ */
+.nm g, .nm path, .nm ellipse, .nm circle { transform-box: fill-box; }
+
+/* ふわふわ浮かぶ（波に揺られる） */
+.nm .nm-float { transform-origin: 50% 100%; animation: nm-float 3.2s ease-in-out infinite; }
+@keyframes nm-float {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-5px) rotate(2deg); }
+}
+.nm .nm-shadow { transform-origin: center; animation: nm-shadow 3.2s ease-in-out infinite; }
+@keyframes nm-shadow {
+  0%, 100% { transform: scaleX(1); opacity: 0.12; }
+  50% { transform: scaleX(0.82); opacity: 0.07; }
+}
+
+/* 波しぶきの髪がなびく */
+.nm .nm-crest { transform-origin: 20% 100%; animation: nm-crest 2.4s ease-in-out infinite; }
+@keyframes nm-crest {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-6deg); }
+}
+
+/* まばたき */
+.nm .nm-eyes { transform-origin: center; animation: nm-blink 4.5s infinite; }
+@keyframes nm-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.1); }
+}
+
+/* あいさつ：手をふる */
+.nm-wave .nm-arm, .nm-happy .nm-arm { transform-origin: 0% 100%; animation: nm-wave 0.9s ease-in-out infinite; }
+@keyframes nm-wave {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-28deg); }
+}
+
+/* 話し中：口がぱくぱく、体が小さく弾む */
+.nm-talking .nm-mouth { transform-origin: 50% 0%; animation: nm-talk 0.28s ease-in-out infinite alternate; }
+@keyframes nm-talk {
+  from { transform: scaleY(1); }
+  to { transform: scaleY(0.35); }
+}
+.nm-talking .nm-float { animation-duration: 1.6s; }
+
+/* 考え中：泡がのぼる、体をかしげる */
+.nm-thinking .nm-bubbles circle { animation: nm-bubble 1.8s ease-in infinite; }
+.nm-thinking .nm-bubbles circle:nth-child(2) { animation-delay: 0.3s; }
+.nm-thinking .nm-bubbles circle:nth-child(3) { animation-delay: 0.6s; }
+@keyframes nm-bubble {
+  0% { transform: translateY(6px) scale(0.6); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translateY(-8px) scale(1.1); opacity: 0; }
+}
+.nm-thinking .nm-body { transform-origin: 50% 100%; animation: nm-tilt 2s ease-in-out infinite; }
+@keyframes nm-tilt {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+
+/* ごきげん：ぴょんと跳ねる */
+.nm-happy .nm-float { animation: nm-hop 0.9s cubic-bezier(.3,1.6,.5,1) infinite; }
+@keyframes nm-hop {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  30% { transform: translateY(-10px) scale(0.96, 1.05); }
+  60% { transform: translateY(0) scale(1.05, 0.95); }
+}
+
+/* サーフボードが波に乗る */
+.nm .nm-board { transform-origin: center; animation: nm-board 3.2s ease-in-out infinite; }
+@keyframes nm-board {
+  0%, 100% { transform: rotate(2deg); }
+  50% { transform: rotate(-3deg); }
+}
+
+/* チャットの登場・吹き出し */
+@keyframes chat-pop {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.chat-pop { animation: chat-pop 0.28s cubic-bezier(.2,.9,.3,1.2) both; }
+@keyframes msg-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.msg-in { animation: msg-in 0.22s ease-out both; }
+@keyframes bubble-in {
+  0% { opacity: 0; transform: translateY(6px) scale(0.9); }
+  12%, 85% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-4px) scale(0.95); }
+}
+.launcher-bubble { animation: bubble-in 6s ease-in-out infinite; }
+/* 入力中の波ドット */
+@keyframes dot-wave {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-5px); opacity: 1; }
+}
+.dot-wave span { display: inline-block; animation: dot-wave 1.2s ease-in-out infinite; }
+.dot-wave span:nth-child(2) { animation-delay: 0.15s; }
+.dot-wave span:nth-child(3) { animation-delay: 0.3s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .nm *, .chat-pop, .msg-in, .launcher-bubble, .dot-wave span { animation: none !important; }
+}

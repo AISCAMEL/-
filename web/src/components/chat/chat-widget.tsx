@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Namisuke, type NamisukeMood } from "@/components/chat/namisuke";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
 const GREETING: Msg = {
   role: "assistant",
   content:
-    "こんにちは、サーフアシスタントの「なみすけ」です🏄\n今日の波、ポイント選び、はじめてのサーフィンのことなど、気軽に聞いてください。",
+    "やあ！波の妖精「なみすけ」だよ🏄\n今日の波や潮回り、ポイント選び、はじめてのサーフィンのことなど、気軽に聞いてね！",
 };
 
 const SUGGESTIONS = [
@@ -49,6 +50,8 @@ export function ChatWidget() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [cheer, setCheer] = useState(false);
+  const [hoverLauncher, setHoverLauncher] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -147,6 +150,9 @@ export function ChatWidget() {
     } finally {
       setBusy(false);
       setStatus(null);
+      // 答え終わったら少しのあいだ、ごきげん
+      setCheer(true);
+      window.setTimeout(() => setCheer(false), 1800);
     }
   }
 
@@ -163,39 +169,64 @@ export function ChatWidget() {
   }
 
   const showSuggestions = messages.length === 1 && !busy;
+  const lastMsg = messages[messages.length - 1];
+  const waiting = busy && lastMsg?.role === "assistant" && lastMsg.content === "";
+  const mood: NamisukeMood = waiting ? "thinking" : busy ? "talking" : cheer ? "happy" : "idle";
 
   return (
     <>
       {!open ? (
-        <button
-          type="button"
-          onClick={openChat}
-          className="fixed right-4 z-40 flex items-center gap-2 rounded-full bg-ocean px-4 py-3 text-sm font-semibold text-foam shadow-lg transition hover:bg-navy"
-          style={{ bottom: "calc(1rem + env(safe-area-inset-bottom))" }}
-          aria-label="AIサーフアシスタントに質問する"
+        <div
+          className="fixed right-3 z-40 flex flex-col items-end"
+          style={{ bottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
         >
-          <span className="text-lg leading-none">🏄</span>
-          AIに聞く
-        </button>
+          <div className="launcher-bubble pointer-events-none mb-1 mr-2 rounded-2xl rounded-br-sm bg-white px-3 py-1.5 text-xs font-medium text-navy shadow-md">
+            波のこと、聞いて！🌊
+          </div>
+          <button
+            type="button"
+            onClick={openChat}
+            onMouseEnter={() => setHoverLauncher(true)}
+            onMouseLeave={() => setHoverLauncher(false)}
+            onFocus={() => setHoverLauncher(true)}
+            onBlur={() => setHoverLauncher(false)}
+            className="group flex items-center gap-1 rounded-full bg-white/90 py-1 pl-1 pr-4 shadow-lg ring-1 ring-ocean/20 backdrop-blur transition hover:scale-105 hover:ring-ocean/50"
+            aria-label="AIサーフアシスタント「なみすけ」に質問する"
+          >
+            <Namisuke mood={hoverLauncher ? "wave" : "idle"} size={56} />
+            <span className="text-sm font-semibold text-ocean">AIに聞く</span>
+          </button>
+        </div>
       ) : null}
 
       {open ? (
         <div
           role="dialog"
           aria-label="AIサーフアシスタント"
-          className="fixed inset-x-0 bottom-0 z-50 flex h-[85dvh] flex-col overflow-hidden rounded-t-2xl border border-navy/10 bg-white shadow-2xl sm:inset-x-auto sm:right-4 sm:bottom-4 sm:h-[600px] sm:w-[380px] sm:rounded-2xl"
+          className="chat-pop fixed inset-x-0 bottom-0 z-50 flex h-[85dvh] flex-col overflow-hidden rounded-t-2xl border border-navy/10 bg-white shadow-2xl sm:inset-x-auto sm:right-4 sm:bottom-4 sm:h-[600px] sm:w-[380px] sm:rounded-2xl"
         >
           {/* ヘッダー */}
           <div className="flex items-center justify-between bg-ocean-gradient px-4 py-3 text-foam">
-            <div>
-              <p className="text-sm font-semibold">なみすけ｜AIサーフアシスタント</p>
-              <p className="text-[0.65rem] text-sand/80">波予報を見ながらお答えします</p>
+            <div className="flex items-center gap-2">
+              <div className="rounded-full bg-white/15 p-0.5">
+                <Namisuke mood={mood} size={44} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold">なみすけ</p>
+                <p className="text-[0.65rem] text-sand/85">
+                  {mood === "thinking"
+                    ? status ?? "波を読んでいます…"
+                    : mood === "talking"
+                      ? "お話し中…"
+                      : "波・潮・警報を見て答えるよ"}
+                </p>
+              </div>
             </div>
             <div className="flex items-center gap-1">
               <button
                 type="button"
                 onClick={reset}
-                className="rounded-full px-2.5 py-1 text-xs text-sand/90 hover:bg-white/15"
+                className="whitespace-nowrap rounded-full px-2.5 py-1 text-xs text-sand/90 hover:bg-white/15"
               >
                 リセット
               </button>
@@ -214,7 +245,17 @@ export function ChatWidget() {
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto bg-foam px-3 py-4">
             {messages.map((m, i) =>
               m.role === "assistant" && m.content === "" ? null : (
-                <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div
+                  key={i}
+                  className={`msg-in flex items-end gap-1.5 ${m.role === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  {m.role === "assistant" ? (
+                    <Namisuke
+                      mood={i === messages.length - 1 && busy ? "talking" : "idle"}
+                      size={30}
+                      className="shrink-0"
+                    />
+                  ) : null}
                   <div
                     className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
                       m.role === "user"
@@ -228,10 +269,15 @@ export function ChatWidget() {
               ),
             )}
             {busy && messages[messages.length - 1]?.content === "" ? (
-              <div className="flex justify-start">
-                <div className="rounded-2xl rounded-bl-sm border border-navy/10 bg-white px-3.5 py-2.5 text-sm text-navy/50">
-                  {status ?? "考えています…"}
-                  <span className="ml-1 inline-block animate-pulse">●</span>
+              <div className="msg-in flex items-end gap-1.5">
+                <Namisuke mood="thinking" size={30} className="shrink-0" />
+                <div className="rounded-2xl rounded-bl-sm border border-navy/10 bg-white px-3.5 py-2.5 text-sm text-navy/55">
+                  {status ?? "考えています"}
+                  <span className="dot-wave ml-1 text-ocean" aria-hidden="true">
+                    <span>●</span>
+                    <span>●</span>
+                    <span>●</span>
+                  </span>
                 </div>
               </div>
             ) : status ? (
@@ -239,7 +285,7 @@ export function ChatWidget() {
             ) : null}
 
             {showSuggestions ? (
-              <div className="flex flex-wrap gap-2 pt-1">
+              <div className="msg-in flex flex-wrap gap-2 pl-9 pt-1">
                 {SUGGESTIONS.map((s) => (
                   <button
                     key={s}

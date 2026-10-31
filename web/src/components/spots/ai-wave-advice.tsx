@@ -3,6 +3,7 @@ import { windRelation, WIND_RELATION_META } from "@/lib/spots";
 import { resolvePlace } from "@/lib/ai/forecast-digest";
 import { getWaveAdvice } from "@/lib/ai/wave-advice";
 import { getJmaWarnings, jmaAreasForSpots } from "@/lib/jma";
+import { getTideReport } from "@/lib/tide";
 
 /**
  * AI波解説（Claude）。予報モデルの数値 → サーファー向けのコメントに。
@@ -14,8 +15,11 @@ export async function AiWaveAdvice({ placeId }: { placeId: string }) {
   const report = await getWaveReport({ lat: place.lat, lon: place.lon });
   if (!report) return null;
 
-  const warnings = await getJmaWarnings(jmaAreasForSpots(place.spotIds));
-  const advice = await getWaveAdvice(place, report, warnings);
+  const [warnings, tide] = await Promise.all([
+    getJmaWarnings(jmaAreasForSpots(place.spotIds)),
+    place.spotIds[0] ? getTideReport(place.spotIds[0]) : Promise.resolve(null),
+  ]);
+  const advice = await getWaveAdvice(place, report, warnings, tide);
 
   if (!advice) {
     // フォールバック：数値からのかんたんコメント

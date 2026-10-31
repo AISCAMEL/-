@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { AiWaveAdvice, AiWaveAdviceSkeleton } from "@/components/spots/ai-wave-advice";
 import { JmaWarnings } from "@/components/spots/jma-warnings";
+import { TideCard } from "@/components/spots/tide-card";
 import type { Metadata } from "next";
 import { CommunityHeader } from "@/components/community/community-header";
 import { createClient } from "@/lib/supabase/server";
@@ -136,6 +137,11 @@ export default async function WavesPage() {
               <Suspense fallback={<AiWaveAdviceSkeleton />}>
                 <AiWaveAdvice placeId="iwasawa" />
               </Suspense>
+            </div>
+
+            {/* 潮回り */}
+            <div className="mt-6">
+              <TideCard spotId="iwasawa" />
             </div>
 
             {report.today.length > 0 ? (

@@ -17,6 +17,7 @@ import { Suspense } from "react";
 import { LiveForecast } from "@/components/spots/live-forecast";
 import { AiWaveAdvice, AiWaveAdviceSkeleton } from "@/components/spots/ai-wave-advice";
 import { JmaWarnings } from "@/components/spots/jma-warnings";
+import { TideCard } from "@/components/spots/tide-card";
 
 export const revalidate = 600;
 
@@ -91,6 +92,13 @@ export default async function AreaDetailPage({ params }: Props) {
           title={`${area.name}のいまの波・風`}
         />
       </div>
+
+      {/* 潮回り（エリア代表ポイントの潮位表） */}
+      {spots[0] ? (
+        <div className="mt-6">
+          <TideCard spotId={spots[0].id} title={`潮回り（${spots[0].name}付近）`} />
+        </div>
+      ) : null}
 
       {/* ポイント一覧 */}
       <section className="mt-8">

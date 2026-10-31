@@ -16,6 +16,7 @@ import {
 } from "@/lib/spots";
 import { compass, waveSizeLabel, weatherLabel, type WaveReport } from "@/lib/waves";
 import { warningsDigest, type JmaAreaWarnings } from "@/lib/jma";
+import { tideDigest, type TideReport } from "@/lib/tide";
 
 /** 波予報・AI解説の対象（ポイント or エリア） */
 export type ForecastPlace = {
@@ -97,6 +98,7 @@ export function forecastDigest(
   place: ForecastPlace,
   report: WaveReport,
   warnings?: JmaAreaWarnings[] | null,
+  tide?: TideReport | null,
 ) {
   const rel = (deg: number | null) =>
     deg == null ? null : WIND_RELATION_META[windRelation(deg, place.facingDeg)].label;
@@ -147,6 +149,7 @@ export function forecastDigest(
       天気: weatherLabel(report.now.weatherCode).text,
     },
     気象庁の警報注意報: warnings === undefined ? "未確認" : warningsDigest(warnings),
+    潮回り: tide === undefined ? "未確認" : tideDigest(tide),
     時間帯別予報_3時間ごと: hours,
     日別予報: report.days.slice(0, 5).map((d) => ({
       日付: d.date,

@@ -20,6 +20,7 @@ import { Suspense } from "react";
 import { LiveForecast } from "@/components/spots/live-forecast";
 import { AiWaveAdvice, AiWaveAdviceSkeleton } from "@/components/spots/ai-wave-advice";
 import { JmaWarnings } from "@/components/spots/jma-warnings";
+import { TideCard } from "@/components/spots/tide-card";
 
 // 警報・注意報（10分）と波予報（30分）に合わせて10分ごとに再生成（ビルド時に全ポイント分を一斉取得しない）
 export const revalidate = 600;
@@ -106,6 +107,11 @@ export default async function SpotDetailPage({ params }: Props) {
       {/* ライブ波予報 */}
       <div className="mt-6">
         <LiveForecast lat={spot.lat} lon={spot.lon} facingDeg={facing} />
+      </div>
+
+      {/* 潮回り */}
+      <div className="mt-6">
+        <TideCard spotId={spot.id} />
       </div>
 
       {/* 波が良くなる条件 */}

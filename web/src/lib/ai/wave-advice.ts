@@ -5,6 +5,7 @@ import { anthropic, AI_ENABLED, AI_MODEL, FALLBACK_BETA } from "@/lib/ai/client"
 import { forecastDigest, type ForecastPlace } from "@/lib/ai/forecast-digest";
 import type { WaveReport } from "@/lib/waves";
 import type { JmaAreaWarnings } from "@/lib/jma";
+import type { TideReport } from "@/lib/tide";
 
 const WaveAdviceSchema = z.object({
   headline: z.string().describe("今日のコンディションを一言で（20文字前後）"),
@@ -29,6 +30,7 @@ const SYSTEM = `あなたは日本のサーフィン事情に詳しいベテラ�
 - 周期が長い（10秒以上）うねり成分はパワーとまとまりがあり、風波成分が大きく周期が短い（7秒未満）ときは波がまとまりにくい。
 - 「風の当たり方」はオフショア（面が整う）／サイドショア／オンショア（面が乱れる）。風速5m/s以上のオンショアは面が荒れやすい。8m/s以上の強風は初心者には危険。
 - 「良いうねり」の向きと今のうねりの向きが合っているかを考慮する。
+- 「潮回り」（潮名・満潮/干潮の時刻・いまの上げ/下げ）も使い、おすすめの時間帯に反映する。ビーチは干潮前後に地形が出て割れやすくなる日が多い一方、リーフ・岩のポイントは干潮時に浅くなり危険。潮位は天文潮位の推算値。
 - 「気象庁の警報注意報」が発表中なら、何よりも優先して触れる。波浪・暴風・高潮の警報以上（警報・危険警報・特別警報）が出ていれば、全員に海に入らないよう明確に伝え、評価は1にする。波浪注意報・強風注意報が出ていれば、初心者には入水を控えるよう伝え、評価は最大でも2〜3にする。雷注意報なら雷鳴が聞こえたらすぐ海から上がるよう伝える。
 - 予報は沖合のモデル値で、実際の波は地形・潮で変わる。数値にないこと（潮汐・混雑の実況・地形）を事実のように書かない。
 - 初心者の安全を最優先にする。危ない日は、はっきり「やめておこう」と伝える。
@@ -38,8 +40,9 @@ export async function generateWaveAdvice(
   place: ForecastPlace,
   report: WaveReport,
   warnings: JmaAreaWarnings[] | null,
+  tide: TideReport | null,
 ): Promise<WaveAdvice> {
-  const digest = forecastDigest(place, report, warnings);
+  const digest = forecastDigest(place, report, warnings, tide);
   const res = await anthropic().beta.messages.parse({
     model: AI_MODEL,
     max_tokens: 16000,
@@ -75,14 +78,15 @@ export async function getWaveAdvice(
   place: ForecastPlace,
   report: WaveReport,
   warnings: JmaAreaWarnings[] | null,
+  tide: TideReport | null,
 ): Promise<WaveAdvice | null> {
   if (!AI_ENABLED) return null;
   const t = report.now.time || report.fetchedAt;
   const bucket = `${t.slice(0, 10)}-${Math.floor(Number(t.slice(11, 13) || 0) / 3)}`;
   const cached = unstable_cache(
-    () => generateWaveAdvice(place, report, warnings),
+    () => generateWaveAdvice(place, report, warnings, tide),
     // 警報・注意報の発表/解除で作り直す
-    ["ai-wave-advice-v2", place.id, bucket, warningKey(warnings)],
+    ["ai-wave-advice-v3", place.id, bucket, warningKey(warnings)],
     { revalidate: 3 * 3600, tags: ["ai-wave-advice"] },
   );
   try {
