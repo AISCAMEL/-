@@ -150,8 +150,12 @@ function carmel_cb_default_settings() {
 	return array(
 		'enabled'    => 1,
 		'api_key'    => '',
-		'model'     => 'google/gemini-2.0-flash-001', // コスト最優先の既定
+		'model'     => 'google/gemini-2.0-flash-001', // OpenRouter既定（フォールバック用）
 		'max_tokens'   => 1200,
+		// AIの頭脳：claude=Anthropic直接 / openrouter=従来。claude時はOpenRouterがフォールバック。
+		'ai_provider'  => 'openrouter',
+		'claude_api_key' => '',
+		'claude_model' => 'claude-sonnet-5-5',
 		'system_prompt' => carmel_cb_default_prompt(),
 		'welcome_msg'  => 'こんにちは！カーメルの みほ です ローン審査・お支払い・車選びなど、なんでもお気軽にご相談くださいね。',
 		'primary_color' => '#0b5cab',

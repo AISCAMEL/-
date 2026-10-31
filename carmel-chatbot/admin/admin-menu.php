@@ -126,7 +126,10 @@ function carmel_cb_handle_post() {
 				'enabled'         => isset( $_POST['enabled'] ) ? 1 : 0,
 				'api_key'         => sanitize_text_field( wp_unslash( $_POST['api_key'] ?? '' ) ),
 				'model'           => sanitize_text_field( wp_unslash( $_POST['model'] ?? '' ) ),
-				'max_tokens'      => max( 100, min( 2000, (int) ( $_POST['max_tokens'] ?? 500 ) ) ),
+				'max_tokens'      => max( 100, min( 4000, (int) ( $_POST['max_tokens'] ?? 1200 ) ) ),
+				'ai_provider'     => ( ( $_POST['ai_provider'] ?? 'openrouter' ) === 'claude' ) ? 'claude' : 'openrouter',
+				'claude_api_key'  => sanitize_text_field( wp_unslash( $_POST['claude_api_key'] ?? '' ) ),
+				'claude_model'    => sanitize_text_field( wp_unslash( $_POST['claude_model'] ?? 'claude-sonnet-5-5' ) ),
 				'log_enabled'     => isset( $_POST['log_enabled'] ) ? 1 : 0,
 				'handoff_enabled' => isset( $_POST['handoff_enabled'] ) ? 1 : 0,
 				'biz_start'       => max( 0, min( 23, (int) ( $_POST['biz_start'] ?? 10 ) ) ),
@@ -640,10 +643,35 @@ function carmel_cb_view_general() {
 				<td><label><input type="checkbox" name="enabled" <?php checked( $s['enabled'], 1 ); ?>> サイトに表示する</label></td>
 			</tr>
 			<tr>
-				<th>OpenRouter APIキー</th>
+				<th>AIの頭脳（プロバイダ）</th>
+				<td>
+					<?php $prov = ( ( $s['ai_provider'] ?? 'openrouter' ) === 'claude' ) ? 'claude' : 'openrouter'; ?>
+					<p style="margin-top:0"><label><input type="radio" name="ai_provider" value="claude" <?php checked( $prov, 'claude' ); ?>> <strong>Claude（Anthropic）直接（推奨）</strong>：高品質・安定。下のClaude APIキーが必要。OpenRouterは障害時のフォールバックとして自動利用。</label></p>
+					<p><label><input type="radio" name="ai_provider" value="openrouter" <?php checked( $prov, 'openrouter' ); ?>> <strong>OpenRouter（従来）</strong></label></p>
+					<hr style="margin:12px 0">
+					<p style="margin:0 0 4px"><strong>Claude APIキー</strong>（Claude直接を使う場合）</p>
+					<input type="password" name="claude_api_key" value="<?php echo esc_attr( $s['claude_api_key'] ?? '' ); ?>" class="regular-text" autocomplete="off" placeholder="sk-ant-...">
+					<p class="description">console.anthropic.com → API Keys で発行したキー（sk-ant-…）を貼り付けてください。</p>
+					<p style="margin:10px 0 4px"><strong>Claudeモデル</strong></p>
+					<?php $cmodels = array(
+						'claude-sonnet-5-5' => 'Claude Sonnet 5.5（推奨・高品質とコストのバランス）',
+						'claude-haiku-5-5'  => 'Claude Haiku 5.5（最安・高速）',
+						'claude-haiku-4-5'  => 'Claude Haiku 4.5',
+						'claude-opus-5-5'   => 'Claude Opus 5.5（最高品質・高コスト）',
+					); $cm = $s['claude_model'] ?? 'claude-sonnet-5-5'; ?>
+					<select name="claude_model">
+						<?php foreach ( $cmodels as $val => $label ) : ?>
+							<option value="<?php echo esc_attr( $val ); ?>" <?php selected( $cm, $val ); ?>><?php echo esc_html( $label ); ?></option>
+						<?php endforeach; ?>
+					</select>
+					<p class="description">長い指示文はキャッシュしてコストを抑えています。</p>
+				</td>
+			</tr>
+			<tr>
+				<th>OpenRouter APIキー（フォールバック）</th>
 				<td>
 					<input type="password" name="api_key" value="<?php echo esc_attr( $s['api_key'] ); ?>" class="regular-text" autocomplete="off" placeholder="sk-or-v1-...">
-					<p class="description">openrouter.ai の Keys ページで発行したキーを貼り付けてください。</p>
+					<p class="description">Claude直接が落ちた時の保険、またはOpenRouterを使う場合のキー。openrouter.ai の Keys ページで発行。</p>
 				</td>
 			</tr>
 			<tr>
@@ -659,7 +687,7 @@ function carmel_cb_view_general() {
 			</tr>
 			<tr>
 				<th>最大応答トークン</th>
-				<td><input type="number" name="max_tokens" value="<?php echo esc_attr( $s['max_tokens'] ); ?>" min="100" max="2000" step="50"> <span class="description">短いほど安く速い（目安500）</span></td>
+				<td><input type="number" name="max_tokens" value="<?php echo esc_attr( $s['max_tokens'] ); ?>" min="100" max="4000" step="50"> <span class="description">短いほど安く速い（目安1200）</span></td>
 			</tr>
 			<tr>
 				<th>会話ログを保存</th>

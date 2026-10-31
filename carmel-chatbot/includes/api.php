@@ -120,7 +120,8 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
 	if ( empty( $s['enabled'] ) ) {
 		return new WP_REST_Response( array( 'reply' => '現在チャットはご利用いただけません。' ), 200 );
 	}
-	if ( empty( $s['api_key'] ) ) {
+	$use_claude = ( ( $s['ai_provider'] ?? 'openrouter' ) === 'claude' ) && ! empty( $s['claude_api_key'] );
+	if ( empty( $s['api_key'] ) && ! $use_claude ) {
 		return new WP_REST_Response( array( 'reply' => '設定が未完了です（APIキー未登録）。管理者にお問い合わせください。' ), 200 );
 	}
 
@@ -284,16 +285,24 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
 		}
 	}
 
-	// OpenRouter 呼び出し（モデルを順に試すフォールバック付き）
+	// AI呼び出し：① Claude直接（設定ON）→ ② OpenRouterフォールバック
 	$reply    = '';
 	$last_err = '';
-	foreach ( carmel_cb_model_fallback_chain( $s['model'] ) as $model ) {
-		$result = carmel_cb_call_openrouter( $s, $messages, $model );
-		if ( $result['ok'] ) {
-			$reply = $result['reply'];
-			break;
+	if ( $use_claude ) {
+		$cres = carmel_cb_call_claude( $s, $messages, (string) ( $s['claude_model'] ?? 'claude-sonnet-5-5' ) );
+		if ( ! empty( $cres['ok'] ) ) { $reply = $cres['reply']; }
+		else { $last_err = 'Claude: ' . ( $cres['error'] ?? '不明' ); }
+	}
+	// ② OpenRouter（Claude未使用、またはClaude失敗時の保険）
+	if ( $reply === '' && ! empty( $s['api_key'] ) ) {
+		foreach ( carmel_cb_model_fallback_chain( $s['model'] ) as $model ) {
+			$result = carmel_cb_call_openrouter( $s, $messages, $model );
+			if ( $result['ok'] ) {
+				$reply = $result['reply'];
+				break;
+			}
+			$last_err = $result['error'];
 		}
-		$last_err = $result['error'];
 	}
 
 	if ( $reply === '' ) {
@@ -686,6 +695,71 @@ function carmel_cb_model_fallback_chain( $primary ) {
 /**
  * OpenRouter を1モデルで呼ぶ。成功なら ['ok'=>true,'reply'=>...]、失敗なら ['ok'=>false,'error'=>...]。
  */
+/**
+ * Claude（Anthropic Messages API）直接呼び出し。システムプロンプトはキャッシュしてコスト圧縮。
+ * $messages は [system, user, assistant, ...] 形式。Anthropic 形式（system文字列＋user/assistant交互）へ変換する。
+ */
+function carmel_cb_call_claude( $s, $messages, $model ) {
+	$system = '';
+	$turns  = array();
+	foreach ( $messages as $m ) {
+		if ( ! isset( $m['role'], $m['content'] ) ) { continue; }
+		if ( $m['role'] === 'system' ) { $system .= (string) $m['content']; continue; }
+		if ( in_array( $m['role'], array( 'user', 'assistant' ), true ) ) {
+			$turns[] = array( 'role' => $m['role'], 'content' => (string) $m['content'] );
+		}
+	}
+	// 先頭は user から。user/assistant が交互になるよう、連続する同role は結合。
+	while ( ! empty( $turns ) && $turns[0]['role'] !== 'user' ) { array_shift( $turns ); }
+	$norm = array();
+	foreach ( $turns as $t ) {
+		$n = count( $norm );
+		if ( $n > 0 && $norm[ $n - 1 ]['role'] === $t['role'] ) { $norm[ $n - 1 ]['content'] .= "\n" . $t['content']; }
+		else { $norm[] = $t; }
+	}
+	$turns = $norm;
+	if ( empty( $turns ) ) { $turns[] = array( 'role' => 'user', 'content' => 'こんにちは' ); }
+	// 末尾が assistant だと prefill 扱いで弾かれるため、user を一つ補う（再打診など）。
+	if ( $turns[ count( $turns ) - 1 ]['role'] === 'assistant' ) {
+		$turns[] = array( 'role' => 'user', 'content' => '（会話を続けてください）' );
+	}
+
+	$max = max( 1100, (int) $s['max_tokens'] );
+	$body = array(
+		'model'      => $model !== '' ? $model : 'claude-sonnet-5-5',
+		'max_tokens' => $max,
+		'system'     => array(
+			array( 'type' => 'text', 'text' => $system, 'cache_control' => array( 'type' => 'ephemeral' ) ),
+		),
+		'messages'   => $turns,
+	);
+	$response = wp_remote_post( 'https://api.anthropic.com/v1/messages', array(
+		'timeout' => 30,
+		'headers' => array(
+			'x-api-key'         => $s['claude_api_key'],
+			'anthropic-version' => '2023-06-01',
+			'content-type'      => 'application/json',
+		),
+		'body' => wp_json_encode( $body ),
+	) );
+	if ( is_wp_error( $response ) ) {
+		return array( 'ok' => false, 'error' => $response->get_error_message() );
+	}
+	$code = (int) wp_remote_retrieve_response_code( $response );
+	$data = json_decode( wp_remote_retrieve_body( $response ), true );
+	if ( $code !== 200 || empty( $data['content'] ) || ! is_array( $data['content'] ) ) {
+		$err = isset( $data['error']['message'] ) ? $data['error']['message'] : ( 'HTTP ' . $code );
+		return array( 'ok' => false, 'error' => $err );
+	}
+	$text = '';
+	foreach ( $data['content'] as $blk ) {
+		if ( isset( $blk['type'], $blk['text'] ) && $blk['type'] === 'text' ) { $text .= $blk['text']; }
+	}
+	$text = trim( $text );
+	if ( $text === '' ) { return array( 'ok' => false, 'error' => 'empty' ); }
+	return array( 'ok' => true, 'reply' => $text );
+}
+
 function carmel_cb_call_openrouter( $s, $messages, $model ) {
 	// タイムアウト短縮（45s → 20s）: 遅いモデルで止まらず次のフォールバックへ素早く切り替え、
 	// 全体でユーザー側に「通信エラー」が出るのを防ぐ。
