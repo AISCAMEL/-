@@ -413,6 +413,57 @@ function carmel_cb_handle_post() {
 			$r = carmel_cb_handle_site_import();
 			carmel_cb_notice( sprintf( 'サイト取り込み：%dページから%d件の学習データを追加しました。', $r['pages'], $r['added'] ) );
 			break;
+
+		case 'faq_suggest_generate':
+			if ( ! function_exists( 'carmel_cb_generate_faq_suggestions' ) ) {
+				carmel_cb_notice( '学習機能が読み込まれていません。', 'error' );
+				break;
+			}
+			$r = carmel_cb_generate_faq_suggestions();
+			if ( empty( $r['ok'] ) ) {
+				$why = array(
+					'no_convo'  => 'まだ学習できる会話がありません。お客様とのやり取りが増えてからお試しください。',
+					'no_logs'   => '会話ログ機能が無効です。',
+					'ai_failed' => 'AIの呼び出しに失敗しました。AI設定（APIキー）をご確認ください。',
+				);
+				carmel_cb_notice( '学習候補を作れませんでした：' . ( $why[ $r['reason'] ?? '' ] ?? '原因不明のエラー' ), 'warning' );
+				break;
+			}
+			if ( (int) $r['added'] === 0 ) {
+				carmel_cb_notice( '会話を分析しましたが、今回は新しい学習候補はありませんでした（既存FAQと重複・良質なものが無いなど）。', 'warning' );
+			} else {
+				carmel_cb_notice( sprintf( '✅ 会話から学習候補を <strong>%d件</strong> 抽出しました。下の「承認待ち」で内容を確認し、よければ「FAQに追加」してください。', (int) $r['added'] ) );
+			}
+			break;
+
+		case 'faq_suggest_accept':
+			$idx     = (int) ( $_POST['sg_index'] ?? -1 );
+			$pending = carmel_cb_faq_suggestions_get();
+			if ( ! isset( $pending[ $idx ] ) ) { carmel_cb_notice( '対象の候補が見つかりませんでした（既に処理済みの可能性があります）。', 'warning' ); break; }
+			$q = sanitize_textarea_field( wp_unslash( $_POST['sg_q'] ?? $pending[ $idx ]['q'] ) );
+			$a = sanitize_textarea_field( wp_unslash( $_POST['sg_a'] ?? $pending[ $idx ]['a'] ) );
+			$k = sanitize_text_field( wp_unslash( $_POST['sg_k'] ?? ( $pending[ $idx ]['k'] ?? '' ) ) );
+			if ( $q === '' || $a === '' ) { carmel_cb_notice( '質問・回答が空のため追加しませんでした。', 'warning' ); break; }
+			carmel_cb_save_faq( array( 'question' => $q, 'answer' => $a, 'keywords' => $k, 'enabled' => true ) );
+			array_splice( $pending, $idx, 1 );
+			carmel_cb_faq_suggestions_save( $pending );
+			carmel_cb_notice( '✅ 学習データ(FAQ)に追加しました。これ以降の会話で活用されます。' );
+			break;
+
+		case 'faq_suggest_reject':
+			$idx     = (int) ( $_POST['sg_index'] ?? -1 );
+			$pending = carmel_cb_faq_suggestions_get();
+			if ( isset( $pending[ $idx ] ) ) {
+				array_splice( $pending, $idx, 1 );
+				carmel_cb_faq_suggestions_save( $pending );
+				carmel_cb_notice( '候補を却下しました。' );
+			}
+			break;
+
+		case 'faq_suggest_clear':
+			carmel_cb_faq_suggestions_save( array() );
+			carmel_cb_notice( '承認待ちの候補をすべてクリアしました。' );
+			break;
 	}
 }
 
@@ -1217,7 +1268,45 @@ function carmel_cb_view_faq() {
 	if ( isset( $_GET['edit'] ) ) {
 		foreach ( $faqs as $f ) { if ( (int) $f->id === (int) $_GET['edit'] ) { $edit = $f; } }
 	}
+	$suggestions = function_exists( 'carmel_cb_faq_suggestions_get' ) ? carmel_cb_faq_suggestions_get() : array();
 	?>
+	<div class="ccb-card" style="border-left:4px solid #6d28d9">
+		<h2>🧠 会話から学習する（AI自動抽出）</h2>
+		<p class="description">
+			実際のお客様との会話をAIが読み、<strong>「よくある質問とその理想的な回答」</strong>を自動で抽出します。<br>
+			抽出された内容は下の「承認待ち」に並びます。あなたが内容を確認し、よいものだけ「FAQに追加」すると、ボットの知識になります（<strong>承認制</strong>なので勝手に学習しすぎる心配はありません）。
+		</p>
+		<?php carmel_cb_form_open( 'faq_suggest_generate' ); ?>
+			<button type="submit" class="button button-primary button-hero">🤖 直近の会話から学習候補を生成する</button>
+			<p class="description" style="margin-top:6px">直近の会話（最大15件）を分析します。会話が増えるほど精度が上がります。</p>
+		</form>
+
+		<?php if ( ! empty( $suggestions ) ) : ?>
+			<h3 style="margin-top:20px">承認待ちの候補（<?php echo count( $suggestions ); ?>件）</h3>
+			<?php foreach ( array_reverse( $suggestions, true ) as $i => $sg ) : ?>
+				<div style="border:1px solid #dcdcde;border-radius:8px;padding:12px;margin:10px 0;background:#faf9ff">
+					<?php carmel_cb_form_open( 'faq_suggest_accept' ); ?>
+						<input type="hidden" name="sg_index" value="<?php echo esc_attr( $i ); ?>">
+						<p style="margin:0 0 4px"><strong>質問</strong></p>
+						<textarea name="sg_q" rows="2" class="large-text"><?php echo esc_textarea( $sg['q'] ?? '' ); ?></textarea>
+						<p style="margin:8px 0 4px"><strong>回答</strong></p>
+						<textarea name="sg_a" rows="4" class="large-text"><?php echo esc_textarea( $sg['a'] ?? '' ); ?></textarea>
+						<p style="margin:8px 0 4px"><strong>キーワード</strong>（任意）</p>
+						<input type="text" name="sg_k" value="<?php echo esc_attr( $sg['k'] ?? '' ); ?>" class="large-text" placeholder="審査, 頭金（カンマ区切り）">
+						<p style="margin:10px 0 0">
+							<button type="submit" class="button button-primary">✅ この内容でFAQに追加</button>
+							<button type="submit" name="carmel_cb_action" value="faq_suggest_reject" class="button" style="margin-left:6px">却下</button>
+							<?php if ( ! empty( $sg['ts'] ) ) : ?><span class="description" style="margin-left:10px"><?php echo esc_html( $sg['ts'] ); ?> 抽出</span><?php endif; ?>
+						</p>
+					</form>
+				</div>
+			<?php endforeach; ?>
+			<?php carmel_cb_form_open( 'faq_suggest_clear' ); ?>
+				<button type="submit" class="button button-link-delete" onclick="return confirm('承認待ちの候補をすべて削除します。よろしいですか？');">承認待ちをすべてクリア</button>
+			</form>
+		<?php endif; ?>
+	</div>
+
 	<div class="ccb-card">
 		<h2><?php echo $edit ? 'FAQを編集' : 'FAQを追加'; ?></h2>
 		<p class="description">ここに追加した内容がボットの「知識」になります。質問に近いFAQが自動で参照され、回答の根拠になります。</p>
