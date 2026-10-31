@@ -157,6 +157,7 @@ function carmel_cb_default_settings() {
 		'claude_api_key' => '',
 		'claude_model' => 'claude-sonnet-5-5',
 		'system_prompt' => carmel_cb_default_prompt(),
+		'ng_rules'      => '', // AIに事前に守らせる「できないこと・NG・言ってはいけないこと」（1行1項目）
 		'welcome_msg'  => 'こんにちは！カーメルの みほ です ローン審査・お支払い・車選びなど、なんでもお気軽にご相談くださいね。',
 		'primary_color' => '#0b5cab',
 		'bot_name'    => 'カーメル みほ',

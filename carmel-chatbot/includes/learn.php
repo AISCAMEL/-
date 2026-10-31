@@ -76,6 +76,11 @@ function carmel_cb_generate_faq_suggestions( $max_sessions = 15 ) {
 		. "- 既存FAQと重複する質問は出さない。\n"
 		. "- 本当に良いものだけ、最大8件。無ければ空配列。\n"
 		. "出力は次のJSONのみ（前後に文章・コードブロックを付けない）：{\"faqs\":[{\"q\":\"質問\",\"a\":\"回答\",\"k\":\"キーワード（カンマ区切り・任意）\"}]}";
+
+	$ng_raw = trim( (string) ( $s['ng_rules'] ?? '' ) );
+	if ( $ng_raw !== '' ) {
+		$sys .= "\n\n【絶対に守る禁止事項（これに反するQ&Aは生成しない）】\n" . $ng_raw;
+	}
 	$user = "【既存FAQの質問（重複回避の参考）】\n" . ( $existing ? implode( "\n", array_slice( $existing, 0, 60 ) ) : '(なし)' )
 		. "\n\n【実際の会話（複数）】\n----\n" . implode( "\n----\n", $transcripts );
 

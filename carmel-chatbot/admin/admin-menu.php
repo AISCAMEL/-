@@ -178,8 +178,9 @@ function carmel_cb_handle_post() {
 		case 'save_prompt':
 			carmel_cb_update_settings( array(
 				'system_prompt' => sanitize_textarea_field( wp_unslash( $_POST['system_prompt'] ?? '' ) ),
+				'ng_rules'      => sanitize_textarea_field( wp_unslash( $_POST['ng_rules'] ?? '' ) ),
 			) );
-			carmel_cb_notice( '応答・人格を保存しました。' );
+			carmel_cb_notice( '応答・人格／禁止事項を保存しました。' );
 			break;
 
 		case 'save_appearance':
@@ -1109,6 +1110,22 @@ function carmel_cb_view_prompt() {
 		<?php endif; ?>
 
 		<?php carmel_cb_form_open( 'save_prompt' ); ?>
+
+		<div style="background:#fff5f5;border:1px solid #f0b7b7;border-left:4px solid #dc2626;border-radius:6px;padding:12px 14px;margin:0 0 18px">
+			<label style="font-weight:700;font-size:14px;display:block;margin-bottom:4px">🚫 できないこと・NG・言ってはいけないこと（事前に覚えさせる）</label>
+			<p class="description" style="margin:0 0 8px">
+				<strong>1行に1つ</strong>ずつ書いてください。ここに書いた内容は<strong>最優先の禁止ルール</strong>としてAIに毎回読み込まれ、該当する質問には「できない旨を正直に伝えて代替案を出す」よう動きます。<br>
+				例：<br>
+				<code>他社ローンの借り換え・おまとめはできない</code><br>
+				<code>必ず審査に通るとは言わない（審査次第と伝える）</code><br>
+				<code>金利や総額を具体的な数字で約束しない</code><br>
+				<code>現金一括のみの販売はしていない</code><br>
+				<code>当社で扱っていない車種（例：大型トラック）は仕入れできないと伝える</code>
+			</p>
+			<textarea name="ng_rules" rows="7" class="large-text code" style="font-family:'Menlo','Consolas',monospace;font-size:12.5px" placeholder="1行に1つ、できないこと・NGを書く"><?php echo esc_textarea( $s['ng_rules'] ?? '' ); ?></textarea>
+		</div>
+
+		<label style="font-weight:700;font-size:14px;display:block;margin-bottom:4px">性格・話し方・基本ルール（プロンプト）</label>
 		<textarea name="system_prompt" rows="24" class="large-text code" style="font-family:'Menlo','Consolas',monospace;font-size:12.5px"><?php echo esc_textarea( $s['system_prompt'] ); ?></textarea>
 		<p class="description">※ 金利や審査可否を断定させない指示は、コンプライアンス上そのまま残すことを推奨します。</p>
 		<?php submit_button( '保存する' ); ?>

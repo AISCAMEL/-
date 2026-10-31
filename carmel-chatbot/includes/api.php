@@ -247,7 +247,24 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
 		}
 	}
 
-	$system = $s['system_prompt'] . $faq_block
+	// 管理者が事前に登録した「できないこと・NG・言ってはいけないこと」（最優先の禁止ルール）
+	$ng_block = '';
+	$ng_raw = trim( (string) ( $s['ng_rules'] ?? '' ) );
+	if ( $ng_raw !== '' ) {
+		$ng_lines = array();
+		foreach ( preg_split( '/\r\n|\r|\n/', $ng_raw ) as $ln ) {
+			$ln = trim( $ln );
+			if ( $ln === '' ) { continue; }
+			$ng_lines[] = '- ' . ltrim( $ln, "-・*　 " );
+		}
+		if ( $ng_lines ) {
+			$ng_block = "\n\n【絶対に守る禁止事項・できないこと（最優先。以下に反する発言は絶対にしない）】\n"
+				. implode( "\n", $ng_lines )
+				. "\nこれらに該当する内容を約束・断定・回答してはいけない。該当する質問には、できない旨を正直かつ丁寧に伝え、可能な代替案（仮審査で個別確認・担当者にお繋ぎ 等）を1つ添える。無理に話を合わせて事実と異なる案内をしない。";
+		}
+	}
+
+	$system = $s['system_prompt'] . $ng_block . $faq_block
 		. "\n\n【LINE相談リンク】" . $s['line_url']
 		. "\n【在庫一覧ページ】" . $stock_page
 		. $inventory_block

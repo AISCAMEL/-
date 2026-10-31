@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CARMEL_CB_VERSION', '2.12.0' );
+define( 'CARMEL_CB_VERSION', '2.13.0' );
 define( 'CARMEL_CB_PATH', plugin_dir_path( __FILE__ ) );
 define( 'CARMEL_CB_URL', plugin_dir_url( __FILE__ ) );
 define( 'CARMEL_CB_FAQ_TABLE', 'carmel_cb_faq' );
