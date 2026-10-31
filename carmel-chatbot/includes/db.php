@@ -274,6 +274,10 @@ function carmel_cb_default_settings() {
 		'lw_private_key'   => '',   // PEM秘密鍵
 		'lw_bot_id'     => '',
 		'lw_channel_id'   => '',   // 送信先トークルームID
+		// LINE公式アカウント（Messaging API）＝お客様側連携
+		'line_oa_enabled'    => 0,
+		'line_channel_token' => '', // チャネルアクセストークン（長期）
+		'line_channel_secret' => '', // チャネルシークレット（署名検証用）
 		'log_enabled'  => 1,
 	);
 }

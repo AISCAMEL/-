@@ -162,6 +162,9 @@ function carmel_cb_handle_post() {
 				'lw_private_key'     => trim( (string) wp_unslash( $_POST['lw_private_key'] ?? '' ) ),
 				'lw_bot_id'          => sanitize_text_field( wp_unslash( $_POST['lw_bot_id'] ?? '' ) ),
 				'lw_channel_id'      => sanitize_text_field( wp_unslash( $_POST['lw_channel_id'] ?? '' ) ),
+				'line_oa_enabled'     => isset( $_POST['line_oa_enabled'] ) ? 1 : 0,
+				'line_channel_token'  => trim( (string) wp_unslash( $_POST['line_channel_token'] ?? '' ) ),
+				'line_channel_secret' => sanitize_text_field( wp_unslash( $_POST['line_channel_secret'] ?? '' ) ),
 			) );
 			carmel_cb_notice( '基本設定を保存しました。' );
 			break;
@@ -1059,7 +1062,33 @@ function carmel_cb_view_general() {
 				</td>
 			</tr>
 
-			<tr><th colspan="2"><hr><strong>LINE WORKS 通知（任意）</strong></th></tr>
+			<tr><th colspan="2"><hr><strong>📱 LINE公式アカウント連携（お客様がLINEから相談・申込できる）</strong></th></tr>
+			<tr>
+				<th>LINE連携を有効化</th>
+				<td><label><input type="checkbox" name="line_oa_enabled" value="1" <?php checked( $s['line_oa_enabled'] ?? 0, 1 ); ?>> LINE公式アカウントでボットを動かす</label>
+				<p class="description">有効にすると、友だち追加したお客様がLINE上で「みほ」と会話できます（会話はSlack／会話ログにも残ります）。</p></td>
+			</tr>
+			<tr>
+				<th>チャネルアクセストークン</th>
+				<td><textarea name="line_channel_token" rows="3" class="large-text code" autocomplete="off" placeholder="（LINE Developers → Messaging API設定 → チャネルアクセストークン（長期）を発行して貼り付け）"><?php echo esc_textarea( $s['line_channel_token'] ?? '' ); ?></textarea></td>
+			</tr>
+			<tr>
+				<th>チャネルシークレット</th>
+				<td><input type="password" name="line_channel_secret" value="<?php echo esc_attr( $s['line_channel_secret'] ?? '' ); ?>" class="regular-text" autocomplete="off" placeholder="（LINE Developers → チャネル基本設定 → チャネルシークレット）">
+				<p class="description">署名検証に使います。必須です。</p></td>
+			</tr>
+			<tr>
+				<th>Webhook URL</th>
+				<td>
+					<input type="text" readonly onclick="this.select()" value="<?php echo esc_attr( carmel_cb_line_webhook_url() ); ?>" class="large-text code" style="background:#f6f7f7">
+					<p class="description">
+						この<strong>Webhook URL</strong>を、LINE Developers の「Messaging API設定 → Webhook URL」に貼り付け、<strong>「Webhookの利用」をON</strong>にしてください。<br>
+						あわせて同画面で「<strong>応答メッセージ</strong>」をOFF、「<strong>あいさつメッセージ</strong>」は任意、で、ボットが返信できるようになります。
+					</p>
+				</td>
+			</tr>
+
+			<tr><th colspan="2"><hr><strong>LINE WORKS 通知（任意／担当者側）</strong></th></tr>
 			<tr><th>Client ID</th><td><input type="text" name="lw_client_id" value="<?php echo esc_attr( $s['lw_client_id'] ?? '' ); ?>" class="regular-text"></td></tr>
 			<tr><th>Client Secret</th><td><input type="password" name="lw_client_secret" value="<?php echo esc_attr( $s['lw_client_secret'] ?? '' ); ?>" class="regular-text" autocomplete="off"></td></tr>
 			<tr><th>Service Account</th><td><input type="text" name="lw_service_account" value="<?php echo esc_attr( $s['lw_service_account'] ?? '' ); ?>" class="regular-text" placeholder="xxxx.serviceaccount@example"></td></tr>
