@@ -432,7 +432,7 @@ function vOrig(){
     +'<div class="acts"><button type="button" class="btn btn--pri" data-go="origDoc">仕様定義書を見る</button><button type="button" class="btn btn--cta" data-go="origConsult">この内容で開発を相談する</button></div>'
     +'<div class="sec-t" style="margin-top:16px">AIに修正を頼む</div><textarea id="origInstr" class="orig-ta" rows="3" placeholder="例：決済はなくしてシンプルに。管理者が会員を承認する画面を追加して"></textarea>'
     +'<div class="ai-sug light">'+['画面をもっと少なくシンプルに','管理者向けの画面を追加','チャット機能を入れて','決済を入れて有料にしたい'].map(function(x){return '<button type="button" data-oins="'+esc(x)+'">'+esc(x)+'</button>';}).join('')+'</div>'
-    +'<div class="acts"><button type="button" class="btn btn--cta btn--sm" data-go="origRevise"'+(ORIG_BUSY?' disabled':'')+'>'+(ORIG_BUSY?'AIが作り直しています…':'AIで作り直す')+'</button><button type="button" class="btn btn--line btn--sm" data-go="origNew">別のアプリを作る</button></div><div class="err" id="origErr" hidden></div></div></div>'
+    +'<div class="acts"><button type="button" class="btn btn--cta btn--sm" data-go="origRevise"'+(ORIG_BUSY?' disabled':'')+'>'+(ORIG_BUSY?'AIが作り直しています…':'AIで作り直す')+'</button><button type="button" class="btn btn--line btn--sm" data-go="origNew">別のアプリを作る</button><button type="button" class="btn btn--line btn--sm" data-go="origReset">リセット</button></div><div class="err" id="origErr" hidden></div></div></div>'
     +(GEN.length&&(MODE==='matching'||P.genre)?'<div class="card" style="margin-top:18px"><div class="sec-t">デザインを選ぶ</div><p class="demo-note" style="margin-top:0">押すとすぐ試作の色・文字が変わります。画面や機能はそのままです。</p><div class="gen-grid gen-dz">'+GEN.map(function(g){var on=P.design&&P.design.key===g.k;return '<button type="button" class="gen'+(on?' on':'')+'" data-gdz="'+g.k+'" style="--g1:'+esc(g.design.c1)+';--g2:'+esc(g.design.c2)+'"'+(ORIG_BUSY?' disabled':'')+'><span class="gsw"></span><b>'+esc(g.design.name)+'</b><small>'+esc(g.label)+'向け</small></button>';}).join('')+'</div></div>':'')
     +'<div class="card" style="margin-top:18px"><div class="sec-t">画面（'+P.screens.length+'）</div><div class="osc-grid">'+screens+'</div><div class="sec-t" style="margin-top:16px">機能</div>'+feats+'</div>';
 }
@@ -921,7 +921,7 @@ document.addEventListener('click',function(e){
     if(g==='origMake'&&!idea.trim()){ var oe=$('origErr'); if(oe){oe.textContent='作りたいアプリの内容を書いてください。';oe.hidden=false;} return; }
     S.origIdea=idea||S.origIdea; S.origName=nm||S.origName; ORIG_BUSY=true; render();
     api('studio/ai-orig',g==='origMake'?{idea:idea,name:nm,genre:MODE==='matching'?(S.origGenre||''):''}:{current:JSON.stringify(ORIG),instruction:ins})
-      .then(function(b){ ORIG=b.spec; ORIG_BUSY=false; S.vers.push({n:S.vers.length+1,note:(g==='origMake'?'AIがオリジナルアプリ「':'AIが「')+ORIG.name+(g==='origMake'?'」の試作を作成':'」を作り直し')+(b.source==='template'?'（ひな形から）':'')}); save(); render(); })
+      .then(function(b){ ORIG=b.spec; ORIG_BUSY=false; if(g==='origMake') OIMG={}; S.vers.push({n:S.vers.length+1,note:(g==='origMake'?'AIがオリジナルアプリ「':'AIが「')+ORIG.name+(g==='origMake'?'」の試作を作成':'」を作り直し')+(b.source==='template'?'（ひな形から）':'')}); save(); render(); })
       .catch(function(x){ ORIG_BUSY=false; render(); var oe=$('origErr'); if(oe){ oe.textContent=x.message; oe.hidden=false; } });
     return;
   }
@@ -943,6 +943,9 @@ document.addEventListener('click',function(e){
     }).catch(fail);
     return;
   }
+  if(g==='origReset'){ if(!window.confirm('今の試作・写真・仕様定義書を消して、最初（ジャンルを選ぶ画面）からやり直します。元には戻せません。よろしいですか？')) return;
+    t.disabled=true; api('studio/orig-reset',{}).then(function(){ ORIG=null; OIMG={}; S.origGenre=''; S.origIdea=''; S.origName=''; S.vers.push({n:S.vers.length+1,note:'試作をリセット'}); save(); render(); window.scrollTo(0,0); })
+      .catch(function(x){ t.disabled=false; var oe=$('origErr'); if(oe){ oe.textContent=x.message; oe.hidden=false; } }); return; }
   if(g==='origNew'){ if(!window.confirm('今の試作はそのままに、新しいアプリを作る画面に戻ります。')) return; ORIG=null; render(); return; }
   if(g==='origDoc'){ S._doc='req'; S._reqMode='orig'; go('docs'); return; }
   if(g==='origConsult'){ S.origPlan=true; S.plan='orig'; S.prog=Math.max(S.prog,3); go('consult'); return; }

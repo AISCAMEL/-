@@ -425,6 +425,16 @@ function apprex_orig_rest( WP_REST_Request $request ) {
 	} elseif ( $cur && $cur['design'] ) {
 		$spec['design'] = $cur['design'];
 	}
+	// 新しく作ったときは、前の試作の写真を外す（別の画面に入らないように）。
+	if ( ! $cur ) {
+		$old = get_user_meta( $uid, 'apprex_orig_images', true );
+		foreach ( is_array( $old ) ? $old : array() as $att ) {
+			if ( (int) get_post_meta( (int) $att, '_apprex_studio_user', true ) === $uid ) {
+				wp_delete_attachment( (int) $att, true );
+			}
+		}
+		delete_user_meta( $uid, 'apprex_orig_images' );
+	}
 	update_user_meta( $uid, 'apprex_orig_spec', wp_slash( wp_json_encode( $spec, JSON_UNESCAPED_UNICODE ) ) );
 	return rest_ensure_response( array( 'ok' => true, 'spec' => $spec, 'source' => $source, 'demo' => apprex_demo_url( apprex_demo_token( $uid ), array( 'v' => 'orig' ) ) ) );
 }
@@ -555,3 +565,34 @@ function apprex_orig_image_rest( WP_REST_Request $request ) {
 	update_user_meta( $uid, 'apprex_orig_images', $map );
 	return rest_ensure_response( array( 'ok' => true, 'images' => apprex_orig_images_out( $uid ), 'left' => max( 0, $limit - $n - 1 ) ) );
 }
+
+/* -------------------------------------------------------------------------
+ * 試作をリセット（企画・写真を消して、最初の入力画面に戻る）
+ * ---------------------------------------------------------------------- */
+add_action( 'rest_api_init', function () {
+	register_rest_route(
+		'apprex/v1',
+		'/studio/orig-reset',
+		array(
+			'methods'             => 'POST',
+			'callback'            => function ( WP_REST_Request $request ) {
+				if ( ! apprex_studio_check_nonce( $request ) ) {
+					return new WP_Error( 'forbidden', '再読み込みしてください。', array( 'status' => 403 ) );
+				}
+				$uid = get_current_user_id();
+				$map = get_user_meta( $uid, 'apprex_orig_images', true );
+				foreach ( is_array( $map ) ? $map : array() as $att ) {
+					if ( (int) get_post_meta( (int) $att, '_apprex_studio_user', true ) === $uid ) {
+						wp_delete_attachment( (int) $att, true );
+					}
+				}
+				delete_user_meta( $uid, 'apprex_orig_images' );
+				delete_user_meta( $uid, 'apprex_orig_spec' );
+				return rest_ensure_response( array( 'ok' => true ) );
+			},
+			'permission_callback' => function () {
+				return is_user_logged_in();
+			},
+		)
+	);
+} );
