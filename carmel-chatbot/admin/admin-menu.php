@@ -44,7 +44,8 @@ function carmel_cb_admin_menu() {
 		'dashicons-format-chat',
 		58
 	);
-	add_submenu_page( 'carmel-cb', '基本設定', '基本設定', 'manage_options', 'carmel-cb', 'carmel_cb_page_router' );
+	add_submenu_page( 'carmel-cb', 'ホーム', '🏠 ホーム', 'manage_options', 'carmel-cb', 'carmel_cb_page_router' );
+	add_submenu_page( 'carmel-cb', '基本設定', '基本設定', 'manage_options', 'carmel-cb&tab=general', 'carmel_cb_page_router' );
 	add_submenu_page( 'carmel-cb', '応答・人格', '応答・人格', 'manage_options', 'carmel-cb&tab=prompt', 'carmel_cb_page_router' );
 	add_submenu_page( 'carmel-cb', 'テスト会話', '🧪 テスト会話', 'manage_options', 'carmel-cb&tab=testchat', 'carmel_cb_page_router' );
 	add_submenu_page( 'carmel-cb', '分析', '📊 分析', 'manage_options', 'carmel-cb&tab=analytics', 'carmel_cb_page_router' );
@@ -68,13 +69,14 @@ function carmel_cb_page_router() {
 	if ( ! current_user_can( 'manage_options' ) ) { return; }
 	carmel_cb_handle_post();
 
-	$tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'general';
+	$tab = isset( $_GET['tab'] ) ? sanitize_key( $_GET['tab'] ) : 'home';
 	echo '<div class="wrap carmel-cb-wrap">';
 	echo '<h1>🤖 カーメル AIチャットボット</h1>';
 	carmel_cb_render_notices();
 	carmel_cb_render_tabs( $tab );
 
 	switch ( $tab ) {
+		case 'general':    carmel_cb_view_general(); break;
 		case 'prompt':     carmel_cb_view_prompt(); break;
 		case 'testchat':   carmel_cb_view_testchat(); break;
 		case 'analytics':  carmel_cb_view_analytics(); break;
@@ -83,13 +85,14 @@ function carmel_cb_page_router() {
 		case 'leads':      carmel_cb_view_leads(); break;
 		case 'logs':       carmel_cb_view_logs(); break;
 		case 'appearance': carmel_cb_view_appearance(); break;
-		default:           carmel_cb_view_general();
+		default:           carmel_cb_view_home();
 	}
 	echo '</div>';
 }
 
 function carmel_cb_render_tabs( $active ) {
 	$tabs = array(
+		'home'       => '🏠 ホーム',
 		'general'    => '基本設定',
 		'prompt'     => '応答・人格',
 		'testchat'   => '🧪 テスト会話',
@@ -102,7 +105,7 @@ function carmel_cb_render_tabs( $active ) {
 	);
 	echo '<nav class="nav-tab-wrapper">';
 	foreach ( $tabs as $key => $label ) {
-		$url = admin_url( 'admin.php?page=carmel-cb' . ( $key === 'general' ? '' : '&tab=' . $key ) );
+		$url = admin_url( 'admin.php?page=carmel-cb' . ( $key === 'home' ? '' : '&tab=' . $key ) );
 		$cls = ( $active === $key ) ? ' nav-tab-active' : '';
 		printf( '<a href="%s" class="nav-tab%s">%s</a>', esc_url( $url ), esc_attr( $cls ), esc_html( $label ) );
 	}
@@ -631,6 +634,107 @@ function carmel_cb_form_open( $action ) {
  * ========================================================= */
 
 /** 基本設定 */
+/**
+ * 🏠 ホーム（ダッシュボード）：状態・健康チェック・主要数字・よく使う操作を1枚に凝縮。
+ */
+function carmel_cb_view_home() {
+	global $wpdb;
+	$s = carmel_cb_get_settings();
+	$link = function ( $tab ) { return esc_url( admin_url( 'admin.php?page=carmel-cb' . ( $tab ? '&tab=' . $tab : '' ) ) ); };
+
+	// 直近7日の数字
+	$log_t  = $wpdb->prefix . CARMEL_CB_LOG_TABLE;
+	$lead_t = $wpdb->prefix . 'carmel_cb_leads';
+	$has    = function ( $t ) use ( $wpdb ) { return $wpdb->get_var( "SHOW TABLES LIKE '" . esc_sql( $t ) . "'" ) === $t; };
+	$since  = "DATE_SUB(NOW(), INTERVAL 7 DAY)";
+	$sessions7 = $has( $log_t )  ? (int) $wpdb->get_var( "SELECT COUNT(DISTINCT session_id) FROM $log_t WHERE created_at >= $since" ) : 0;
+	$apply7    = $has( $lead_t ) ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM $lead_t WHERE type='apply' AND created_at >= $since" ) : 0;
+	$contact7  = $has( $lead_t ) ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM $lead_t WHERE (type='contact' OR type='' OR type IS NULL) AND created_at >= $since" ) : 0;
+	$shinsa7   = $has( $lead_t ) ? (int) $wpdb->get_var( "SELECT COUNT(*) FROM $lead_t WHERE type='shinsa' AND created_at >= $since" ) : 0;
+
+	// 健康チェック
+	$prov      = ( ( $s['ai_provider'] ?? 'openrouter' ) === 'claude' ) ? 'claude' : 'openrouter';
+	$ai_ok     = ( $prov === 'claude' ) ? ! empty( $s['claude_api_key'] ) : ! empty( $s['api_key'] );
+	$ai_label  = ( $prov === 'claude' ) ? ( 'Claude直接（' . esc_html( $s['claude_model'] ?? 'claude-sonnet-5-5' ) . '）' ) : 'OpenRouter';
+	$stock_n   = function_exists( 'carmel_cb_fetch_stock' ) ? count( carmel_cb_fetch_stock( '', 60 ) ) : 0;
+	$notify_to = trim( (string) ( $s['admin_notify_email'] ?? '' ) ) !== '' || trim( (string) ( $s['notify_email'] ?? '' ) ) !== '' || ! empty( $s['slack_bot_token'] ) || ! empty( $s['slack_webhook'] );
+	$slack_ok  = ! empty( $s['slack_bot_token'] ) && ! empty( $s['slack_channel'] );
+	$fu_on     = ! empty( $s['apply_followup_on'] ) || ! empty( $s['convo_followup_on'] );
+
+	$chk = function ( $ok, $okmsg, $ngmsg, $tab ) use ( $link ) {
+		echo '<li style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px">';
+		echo $ok ? '<span style="color:#1e7e45;font-weight:700">✅</span>' : '<span style="color:#c0392b;font-weight:700">⚠️</span>';
+		echo '<span style="flex:1">' . ( $ok ? $okmsg : $ngmsg );
+		if ( $tab !== null ) { echo ' <a href="' . $link( $tab ) . '">設定へ →</a>'; }
+		echo '</span></li>';
+	};
+	?>
+	<div class="ccb-card">
+		<h2 style="margin-top:0">ようこそ 👋 — チャットボットの状態</h2>
+		<div style="display:flex;flex-wrap:wrap;gap:12px;margin:10px 0">
+			<div style="flex:1 1 180px;min-width:160px;border:1px solid #e2e4e7;border-radius:10px;padding:14px;background:#fafbfc">
+				<div style="font-size:12px;color:#666">稼働状態</div>
+				<div style="font-size:18px;font-weight:800;color:<?php echo ! empty( $s['enabled'] ) ? '#1e7e45' : '#c0392b'; ?>"><?php echo ! empty( $s['enabled'] ) ? '● 稼働中' : '○ 停止中'; ?></div>
+			</div>
+			<div style="flex:1 1 180px;min-width:160px;border:1px solid #e2e4e7;border-radius:10px;padding:14px;background:#fafbfc">
+				<div style="font-size:12px;color:#666">AIの頭脳</div>
+				<div style="font-size:15px;font-weight:700"><?php echo $ai_label; ?></div>
+			</div>
+			<div style="flex:1 1 180px;min-width:160px;border:1px solid #e2e4e7;border-radius:10px;padding:14px;background:#fafbfc">
+				<div style="font-size:12px;color:#666">認識中の在庫</div>
+				<div style="font-size:18px;font-weight:800;color:<?php echo $stock_n > 0 ? '#1e7e45' : '#c0392b'; ?>"><?php echo $stock_n; ?> 台<?php echo $stock_n >= 60 ? '+' : ''; ?></div>
+			</div>
+		</div>
+	</div>
+
+	<div style="display:flex;flex-wrap:wrap;gap:14px">
+		<div class="ccb-card" style="flex:1 1 320px;min-width:280px">
+			<h2 style="margin-top:0">セットアップ健康チェック</h2>
+			<ul style="margin:0;list-style:none;padding:0">
+				<?php
+				$chk( $ai_ok, 'AIに接続できます（' . $ai_label . '）', 'AIのAPIキーが未設定です。チャットが動きません', 'general' );
+				$chk( $stock_n > 0, '在庫を ' . $stock_n . ' 台 認識しています', '在庫を認識できていません（車の提案ができません）', 'testchat' );
+				$chk( $notify_to, '通知先が設定されています（新規・申込を受け取れます）', '通知先（Slack/メール）が未設定です', 'general' );
+				$chk( $fu_on, '後追いメールが有効です', '後追いメールがOFFです（離脱の取りこぼし）', 'leads' );
+				$chk( $slack_ok, 'Slack双方向（有人対応）が設定済み', 'Slack双方向は未設定（任意）', 'general' );
+				?>
+			</ul>
+		</div>
+
+		<div class="ccb-card" style="flex:1 1 320px;min-width:280px">
+			<h2 style="margin-top:0">直近7日の動き</h2>
+			<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
+				<?php
+				$tile = function ( $label, $n, $color ) {
+					echo '<div style="border:1px solid #e2e4e7;border-radius:10px;padding:12px;text-align:center">';
+					echo '<div style="font-size:24px;font-weight:800;color:' . $color . '">' . (int) $n . '</div>';
+					echo '<div style="font-size:12px;color:#555">' . esc_html( $label ) . '</div></div>';
+				};
+				$tile( '会話した人', $sessions7, '#0a66c2' );
+				$tile( '審査申込', $apply7, '#e8730a' );
+				$tile( '審査診断', $shinsa7, '#1e9e5a' );
+				$tile( 'お問い合わせ', $contact7, '#0b5cab' );
+				?>
+			</div>
+			<p style="margin:10px 0 0"><a href="<?php echo $link( 'analytics' ); ?>">📊 くわしい分析を見る →</a></p>
+		</div>
+	</div>
+
+	<div class="ccb-card">
+		<h2 style="margin-top:0">よく使う操作</h2>
+		<div style="display:flex;flex-wrap:wrap;gap:8px">
+			<a class="button button-primary" href="<?php echo $link( 'testchat' ); ?>">🧪 テスト会話で動作確認</a>
+			<a class="button" href="<?php echo $link( 'logs' ); ?>">会話ログを見る</a>
+			<a class="button" href="<?php echo $link( 'leads' ); ?>">申込・問い合わせ</a>
+			<a class="button" href="<?php echo $link( 'prompt' ); ?>">応答・人格を編集</a>
+			<a class="button" href="<?php echo $link( 'faq' ); ?>">学習データ(FAQ)</a>
+			<a class="button" href="<?php echo $link( 'appearance' ); ?>">見た目・会話の始め方</a>
+			<a class="button" href="<?php echo $link( 'general' ); ?>">基本設定（AI・通知）</a>
+		</div>
+	</div>
+	<?php
+}
+
 function carmel_cb_view_general() {
 	$s = carmel_cb_get_settings();
 	$models = carmel_cb_model_choices();
