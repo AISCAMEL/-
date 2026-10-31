@@ -534,3 +534,7 @@
 .rn-studio .gen:disabled{opacity:.6;cursor:wait}
 .rn-studio .gen-dz .gen{padding-top:10px}
 .rn-studio .gen .gsw{display:block;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--g1),var(--g2));margin-bottom:4px}
+/* 試作の画面ごとの見本 */
+.rn-studio .osc .osc-ph{display:block;width:156px;height:300px;margin:0 auto 8px;overflow:hidden;border-radius:16px;border:5px solid #11151f;background:#f3f5fa;box-shadow:0 6px 16px rgba(15,23,42,.12)}
+.rn-studio .osc .osc-ph iframe{width:390px;height:750px;border:0;transform:scale(.375);transform-origin:0 0;pointer-events:none;display:block}
+.rn-studio .orig-note{margin:8px 0 0;padding:8px 10px;border-radius:8px;background:#fff7e6;border:1px solid #f5d38a;color:#8a5a00;font-size:.8rem;line-height:1.6}

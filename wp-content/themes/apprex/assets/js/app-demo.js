@@ -364,7 +364,9 @@
 	function runProto(P) {
 		var SC = {}; P.screens.forEach(function (x) { SC[x.id] = x; });
 		var tabs = (P.tabs && P.tabs.length ? P.tabs : P.screens.slice(0, 4).map(function (x) { return x.id; })).filter(function (k) { return SC[k]; }).slice(0, 5);
-		var cur = tabs[0] || P.screens[0].id, stack = [], chatAdd = {}, swIdx = {};
+		// ?s=画面ID で最初の画面を指定、&thumb=1 は小さな見本（スマホの枠と説明なし）。
+		var QS = {}; location.search.replace(/[?&]([^=&]+)=([^&]*)/g, function (m, k, v) { QS[k] = decodeURIComponent(v); });
+		var cur = (QS.s && SC[QS.s]) ? QS.s : (tabs[0] || P.screens[0].id), stack = [], chatAdd = {}, swIdx = {};
 		// ジャンルのデザイン（色・文字・角の丸み）があれば、それで表示する。
 		if (P.design && P.design.c1) { c1 = P.design.c1; c2 = P.design.c2; tone = TONES[P.design.tone] || tone; }
 		var grad = function (i) { return 'linear-gradient(' + (135 + (i || 0) * 30) + 'deg,' + c1 + ',' + c2 + ')'; };
@@ -413,7 +415,7 @@
 		function closeSheet() { var sh = document.getElementById('sheet'); sh.hidden = true; sh.innerHTML = ''; }
 		function openDr() { var dr = document.getElementById('drawer'); dr.hidden = false; void dr.offsetWidth; dr.classList.add('in'); }
 		function closeDr() { var dr = document.getElementById('drawer'); if (!dr || dr.hidden) { return; } dr.classList.remove('in'); setTimeout(function () { dr.hidden = true; }, 250); }
-		var hostPhone = window.innerWidth >= 760;
+		var hostPhone = !QS.thumb && window.innerWidth >= 760;
 		var tabH = tabs.map(function (k, i) { return '<button type="button" class="tab" data-tab="' + k + '"><i>' + ['⌂', '🔍', '💬', '👤', '☰'][i] + '</i>' + esc(SC[k].name) + '</button>'; }).join('');
 		var roles = {}; P.screens.forEach(function (x) { (roles[x.role || '共通'] = roles[x.role || '共通'] || []).push(x); });
 		var drawer = '<div class="drawer" id="drawer" hidden><div class="dr-bg" data-act="drawerClose"></div><nav class="dr-body" aria-label="画面一覧"><div class="dr-h"><b>画面一覧（' + P.screens.length + '）</b><button type="button" data-act="drawerClose" aria-label="閉じる">×</button></div>'

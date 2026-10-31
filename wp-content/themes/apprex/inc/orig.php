@@ -393,16 +393,36 @@ function apprex_orig_rest( WP_REST_Request $request ) {
 		$user = $cur
 			? "今の企画：" . wp_json_encode( $cur, JSON_UNESCAPED_UNICODE ) . "\n\n修正の指示：" . ( $instr ? $instr : '全体をより良くしてください' ) . "\n（指示に関係しない部分はなるべく変えない）"
 			: "お客様の希望：" . $idea . ( $name ? "\nアプリ名の希望：" . $name : '' );
-		$res = apprex_studio_complete(
-			array( array( 'role' => 'system', 'content' => $system ), array( 'role' => 'user', 'content' => $user ) ),
-			array( 'temperature' => 0.5, 'max_tokens' => 3800, 'timeout' => 90 )
+		if ( function_exists( 'set_time_limit' ) ) {
+			@set_time_limit( 300 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+		}
+		// 企画のJSONは長いので、出力の上限を大きくする（途中で切れると読めずにひな形になるため）。
+		// 1回目で読めなければ、画面と例を少なめにしてもう一度。
+		$tries = array(
+			array( 'max_tokens' => 12000, 'timeout' => 150, 'extra' => '' ),
+			array( 'max_tokens' => 8000, 'timeout' => 120, 'extra' => "\n短めに：画面は5〜6個、各部品の items は3個まで、説明は短く。" ),
 		);
-		if ( ! is_wp_error( $res ) ) {
+		$why = array();
+		foreach ( $tries as $tr ) {
+			$res = apprex_studio_complete(
+				array( array( 'role' => 'system', 'content' => $system . $tr['extra'] ), array( 'role' => 'user', 'content' => $user ) ),
+				array( 'temperature' => 0.5, 'max_tokens' => $tr['max_tokens'], 'timeout' => $tr['timeout'] )
+			);
+			if ( is_wp_error( $res ) ) {
+				$why[] = $res->get_error_message();
+				continue;
+			}
 			$spec = apprex_orig_sanitize( apprex_studio_json( $res ) );
 			if ( $spec ) {
 				$source       = 'ai';
 				$spec['idea'] = $cur ? $cur['idea'] : $idea;
+				break;
 			}
+			$why[] = 'JSONを読めませんでした（' . mb_strlen( (string) $res ) . '字・末尾：' . mb_substr( (string) $res, -60 ) . '）';
+		}
+		if ( 'ai' !== $source ) {
+			// 管理画面（AIスタジオの設定）で原因を見られるように残す。
+			update_option( 'apprex_orig_last_error', array( 't' => current_time( 'mysql' ), 'why' => implode( ' ／ ', $why ) ), false );
 		}
 	}
 	if ( ! $spec ) {
@@ -436,7 +456,7 @@ function apprex_orig_rest( WP_REST_Request $request ) {
 		delete_user_meta( $uid, 'apprex_orig_images' );
 	}
 	update_user_meta( $uid, 'apprex_orig_spec', wp_slash( wp_json_encode( $spec, JSON_UNESCAPED_UNICODE ) ) );
-	return rest_ensure_response( array( 'ok' => true, 'spec' => $spec, 'source' => $source, 'demo' => apprex_demo_url( apprex_demo_token( $uid ), array( 'v' => 'orig' ) ) ) );
+	return rest_ensure_response( array( 'ok' => true, 'spec' => $spec, 'source' => $source, 'note' => 'template' === $source ? ( apprex_ai_text_ready() ? 'AIの応答をうまく受け取れなかったため、ジャンルのひな形から作りました。もう一度「AIでアプリを作る」を押すと、AIで作り直せます。' : 'AIが未設定のため、ひな形から作りました。' ) : '', 'demo' => apprex_demo_url( apprex_demo_token( $uid ), array( 'v' => 'orig' ) ) ) );
 }
 
 /* -------------------------------------------------------------------------
@@ -450,15 +470,15 @@ function apprex_orig_rest( WP_REST_Request $request ) {
  * @param int   $max  最大数。
  * @return array<int,array{key:string,label:string,wide:bool}>
  */
-function apprex_orig_image_slots( $spec, $max = 4 ) {
+function apprex_orig_image_slots( $spec, $max = 6 ) {
 	$out = array();
 	foreach ( $spec['screens'] as $sc ) {
 		foreach ( $sc['parts'] as $pi => $pt ) {
 			if ( in_array( $pt['t'], array( 'hero', 'image' ), true ) ) {
-				$out[] = array( 'key' => $sc['id'] . '_' . $pi, 'label' => preg_replace( '/^▶\s*/u', '', $pt['label'] ), 'wide' => true );
+				$out[] = array( 'key' => $sc['id'] . '_' . $pi, 'label' => preg_replace( '/^▶\s*/u', '', $pt['label'] ), 'wide' => true, 'kind' => 'wide' );
 			} elseif ( in_array( $pt['t'], array( 'cards', 'swipe' ), true ) ) {
 				foreach ( array_slice( $pt['items'], 0, 3 ) as $ii => $it ) {
-					$out[] = array( 'key' => $sc['id'] . '_' . $pi . '_' . $ii, 'label' => $it, 'wide' => false );
+					$out[] = array( 'key' => $sc['id'] . '_' . $pi . '_' . $ii, 'label' => $it, 'wide' => false, 'kind' => $pt['t'] );
 				}
 			}
 			if ( count( $out ) >= $max ) {
@@ -514,7 +534,7 @@ function apprex_orig_image_rest( WP_REST_Request $request ) {
 	$slots = apprex_orig_image_slots( $spec );
 	$use   = get_user_meta( $uid, 'apprex_orig_img_usage', true );
 	$n     = ( is_array( $use ) && isset( $use['d'] ) && wp_date( 'Ymd' ) === $use['d'] ) ? (int) $use['n'] : 0;
-	$limit = (int) apply_filters( 'apprex_orig_image_daily_limit', 12 );
+	$limit = (int) apply_filters( 'apprex_orig_image_daily_limit', 24 );
 	$key   = sanitize_text_field( (string) $request->get_param( 'slot' ) );
 	if ( '' === $key ) {
 		return rest_ensure_response( array( 'ok' => true, 'slots' => $slots, 'left' => max( 0, $limit - $n ), 'ready' => '' !== apprex_openrouter_key() ) );
@@ -536,14 +556,24 @@ function apprex_orig_image_rest( WP_REST_Request $request ) {
 	}
 	update_user_meta( $uid, 'apprex_orig_img_usage', array( 'd' => wp_date( 'Ymd' ), 'n' => $n + 1 ) );
 
-	$prompt = sprintf(
-		'High-quality %1$s for a Japanese mobile app (%2$s: %3$s). Subject: "%4$s". Clean, modern, natural light, realistic Japanese setting where people appear. %5$s. Absolutely no text, letters, numbers, logos, watermarks or UI elements in the image.',
-		'photograph or polished illustration',
-		$spec['name'],
-		$spec['summary'],
-		$slot['label'],
-		$slot['wide'] ? 'Landscape 16:9 composition' : 'Square 1:1 composition, subject centered'
-	);
+	$kind = isset( $slot['kind'] ) ? $slot['kind'] : ( $slot['wide'] ? 'wide' : 'cards' );
+	if ( 'swipe' === $kind ) {
+		// 恋活・婚活などのプロフィール写真。必ず大人。
+		$prompt = sprintf(
+			'Natural, friendly profile photo for a Japanese dating/matching app (%1$s). Person described as: "%2$s". A clearly adult Japanese person (25-40 years old), casually dressed, warm smile, everyday setting such as a cafe, park or street in Japan, soft natural light, shallow depth of field, looks like a real smartphone photo. Vertical 3:4 portrait, upper body. Absolutely no text, letters, numbers, logos, watermarks or UI elements.',
+			$spec['summary'],
+			$slot['label']
+		);
+	} else {
+		$prompt = sprintf(
+			'High-quality %1$s for a Japanese mobile app (%2$s: %3$s). Subject: "%4$s". Clean, modern, natural light, realistic Japanese setting. If the subject is a product, show the product itself clearly; if it is a service or job, show adult people doing it. %5$s. Absolutely no text, letters, numbers, logos, watermarks or UI elements in the image.',
+			'photograph',
+			$spec['name'],
+			$spec['summary'],
+			$slot['label'],
+			'wide' === $kind ? 'Landscape 16:9 composition' : 'Square 1:1 composition, subject centered'
+		);
+	}
 	$img = apprex_openrouter_image( $prompt, array( 'model' => apprex_bulk_image_model() ) );
 	if ( is_wp_error( $img ) && apprex_bulk_image_model() !== apprex_image_model() ) {
 		$img = apprex_openrouter_image( $prompt ); // 予備：通常の画像モデルでやり直す。

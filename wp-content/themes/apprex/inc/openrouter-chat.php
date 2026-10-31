@@ -482,6 +482,10 @@ function apprex_chat_settings_page() {
 					<td>
 						<input type="text" name="apprex_studio_model" value="<?php echo esc_attr( get_option( 'apprex_studio_model', '' ) ); ?>" class="regular-text" placeholder="<?php echo esc_attr( APPREX_STUDIO_DEFAULT_MODEL ); ?>">
 						<p class="description"><?php printf( esc_html__( 'AIデザイナー・オリジナルアプリの試作・仕様定義書・AI企画書に使います。未入力時は %s。うまく動かないときはチャット用モデルで自動的にやり直します。', 'apprex' ), esc_html( APPREX_STUDIO_DEFAULT_MODEL ) ); ?></p>
+						<?php $apprex_oe = get_option( 'apprex_orig_last_error' ); ?>
+						<?php if ( is_array( $apprex_oe ) && ! empty( $apprex_oe['why'] ) ) : ?>
+							<p class="description" style="color:#b32d2e"><?php echo esc_html( '最後にマッチング・オリジナルの試作をAIで作れなかったとき（' . $apprex_oe['t'] . '）：' . $apprex_oe['why'] ); ?></p>
+						<?php endif; ?>
 					</td>
 				</tr>
 				<tr>

@@ -395,7 +395,7 @@ function docSheet(){
 
 
 /* ---------- オリジナルアプリをAIで（イメージの試作＋仕様定義書） ---------- */
-var ORIG=CFG.orig||null, ORIG_BUSY=false, OIMG=CFG.origImages||{}, PHOTO={busy:false,done:0,total:0,msg:''};
+var ORIG=CFG.orig||null, ORIG_NOTE='', ORIG_BUSY=false, OIMG=CFG.origImages||{}, PHOTO={busy:false,done:0,total:0,msg:''};
 function estOrig(P){
   var R=CFG.est||{day_rate:60000,size_days:{S:3,M:8,L:18},base_days:1,fixed:[['要件定義・画面設計・デザイン',12],['管理画面（基本）',6],['テスト・ストア申請',8]],range:[0.85,1.3],floor:{},team:2};
   var rows=R.fixed.map(function(f){return [f[0],+f[1]];}), later=0;
@@ -422,11 +422,12 @@ function vOrig(){
       +'<p class="demo-note">AIが作るのはイメージです。実際の仕様・金額はミーティングで決めます。</p></div></div>';
   }
   var P=ORIG, E=estOrig(P), mvp=P.features.filter(function(f){return f.phase==='MVP';});
-  var screens=P.screens.map(function(x){return '<div class="osc"><b>'+esc(x.name)+'</b><small>'+esc(x.role)+'</small><span>'+esc(x.purpose)+'</span><em>'+x.parts.map(function(pt){return esc(PART_NAME[pt.t]||pt.t);}).join('・')+'</em></div>';}).join('');
+  var thumbUrl=function(id){ return CFG.origDemo+(CFG.origDemo.indexOf('?')>-1?'&':'?')+'s='+encodeURIComponent(id)+'&thumb=1&t='+(S._oT||0); };
+  var screens=P.screens.map(function(x){return '<div class="osc"><span class="osc-ph"><iframe src="'+esc(thumbUrl(x.id))+'" loading="lazy" tabindex="-1" title="'+esc(x.name)+'の画面"></iframe></span><b>'+esc(x.name)+'</b><small>'+esc(x.role)+'</small><span>'+esc(x.purpose)+'</span><em>'+x.parts.map(function(pt){return esc(PART_NAME[pt.t]||pt.t);}).join('・')+'</em></div>';}).join('');
   var feats=tbl(['機能','フェーズ','規模','実現方法'],P.features.map(function(f){return ['<b>'+esc(f.name)+'</b><br><small>'+esc(f.desc)+'</small>',f.phase,f.size,f.base?'APPREXの基盤':'個別開発'];}));
   return head+'<div class="grid2 demo-g"><div class="card demo-stage"><div class="demo-ph"><iframe id="origFrame" src="'+esc(CFG.origDemo)+'" title="オリジナルアプリの試作"></iframe></div><a class="btn btn--line btn--sm" href="'+esc(CFG.origDemo)+'" target="_blank" rel="noopener">新しいタブで開く・スマホで開く</a>'
-    +'<div class="photo-box"><button type="button" class="btn btn--cta btn--sm" data-go="origPhotos"'+(PHOTO.busy?' disabled':'')+'>'+(PHOTO.busy?'写真を作っています… '+PHOTO.done+' / '+PHOTO.total:(Object.keys(OIMG).length?'写真を作り直す（AI）':'試作に写真を入れる（AI）'))+'</button><small id="photoMsg">'+esc(PHOTO.msg||'メイン画像とカードの写真を、AIが4枚まで作ります（1枚30〜60秒）。')+'</small></div></div>'
-    +'<div class="card"><span class="aid-tag">AIの試作</span><h3 class="orig-name">'+esc(P.name)+'</h3><p class="orig-sum">'+esc(P.summary)+'</p>'
+    +'<div class="photo-box"><button type="button" class="btn btn--cta btn--sm" data-go="origPhotos"'+(PHOTO.busy?' disabled':'')+'>'+(PHOTO.busy?'写真を作っています… '+PHOTO.done+' / '+PHOTO.total:(Object.keys(OIMG).length?'写真を作り直す（AI）':'試作に写真を入れる（AI）'))+'</button><small id="photoMsg">'+esc(PHOTO.msg||'メイン画像・カード・プロフィールの写真を、AIが6枚まで作ります（1枚30〜60秒）。')+'</small></div></div>'
+    +'<div class="card"><span class="aid-tag">AIの試作</span><h3 class="orig-name">'+esc(P.name)+'</h3><p class="orig-sum">'+esc(P.summary)+'</p>'+(ORIG_NOTE?'<p class="orig-note">'+esc(ORIG_NOTE)+'</p>':'')
     +'<dl class="kv"><dt>カテゴリー</dt><dd>'+esc(P.category)+(P.genre&&genName(P.genre)?'（'+esc(genName(P.genre))+'）':'')+'</dd>'+(P.design&&P.design.name?'<dt>デザイン</dt><dd>'+esc(P.design.name)+'</dd>':'')+'<dt>使う人</dt><dd>'+P.roles.map(function(r){return esc(r.name);}).join('・')+'</dd><dt>画面</dt><dd>'+P.screens.length+'画面</dd><dt>最初に作る機能</dt><dd>'+mvp.length+'個（将来：'+(P.features.length-mvp.length)+'個）</dd></dl>'
     +'<div class="orig-est"><small>概算の目安（MVP・税抜）</small><b>'+esc(E.man(E.lo))+'〜'+esc(E.man(E.hi))+'</b><span>期間の目安：約'+E.weeks+'週間（ストア審査を含む）</span></div>'
     +'<div class="acts"><button type="button" class="btn btn--pri" data-go="origDoc">仕様定義書を見る</button><button type="button" class="btn btn--cta" data-go="origConsult">この内容で開発を相談する</button></div>'
@@ -895,7 +896,7 @@ document.addEventListener('click',function(e){
     Array.prototype.forEach.call(document.querySelectorAll('[data-ogen]'),function(b){ b.classList.toggle('on',b===t); }); save(); if(ta2&&gk==='other') ta2.focus(); return; }
   if(t.dataset.gdz){ var dk=t.dataset.gdz; if(ORIG&&ORIG.design&&ORIG.design.key===dk) return;
     Array.prototype.forEach.call(document.querySelectorAll('[data-gdz]'),function(b){ b.classList.toggle('on',b===t); b.disabled=true; });
-    api('studio/orig-design',{genre:dk}).then(function(b){ ORIG=b.spec; S.vers.push({n:S.vers.length+1,note:'試作のデザインを「'+(ORIG.design&&ORIG.design.name||'')+'」に'}); save(); render(); var fr=$('origFrame'); if(fr){ fr.src=CFG.origDemo+(CFG.origDemo.indexOf('?')>-1?'&':'?')+'t='+Date.now(); } })
+    api('studio/orig-design',{genre:dk}).then(function(b){ ORIG=b.spec; S._oT=Date.now(); S.vers.push({n:S.vers.length+1,note:'試作のデザインを「'+(ORIG.design&&ORIG.design.name||'')+'」に'}); save(); render(); var fr=$('origFrame'); if(fr){ fr.src=CFG.origDemo+(CFG.origDemo.indexOf('?')>-1?'&':'?')+'t='+Date.now(); } })
       .catch(function(x){ render(); var oe=$('origErr'); if(oe){ oe.textContent=x.message; oe.hidden=false; } }); return; }
   if(t.dataset.oex){ var ta=$('origIdea'); if(ta){ ta.value=t.dataset.oex; S.origIdea=ta.value; } return; }
   if(t.dataset.oins){ var ti=$('origInstr'); if(ti){ ti.value=t.dataset.oins; ti.focus(); } return; }
@@ -921,7 +922,7 @@ document.addEventListener('click',function(e){
     if(g==='origMake'&&!idea.trim()){ var oe=$('origErr'); if(oe){oe.textContent='作りたいアプリの内容を書いてください。';oe.hidden=false;} return; }
     S.origIdea=idea||S.origIdea; S.origName=nm||S.origName; ORIG_BUSY=true; render();
     api('studio/ai-orig',g==='origMake'?{idea:idea,name:nm,genre:MODE==='matching'?(S.origGenre||''):''}:{current:JSON.stringify(ORIG),instruction:ins})
-      .then(function(b){ ORIG=b.spec; ORIG_BUSY=false; if(g==='origMake') OIMG={}; S.vers.push({n:S.vers.length+1,note:(g==='origMake'?'AIがオリジナルアプリ「':'AIが「')+ORIG.name+(g==='origMake'?'」の試作を作成':'」を作り直し')+(b.source==='template'?'（ひな形から）':'')}); save(); render(); })
+      .then(function(b){ ORIG=b.spec; ORIG_BUSY=false; S._oT=Date.now(); if(g==='origMake') OIMG={}; ORIG_NOTE=b.note||''; S.vers.push({n:S.vers.length+1,note:(g==='origMake'?'AIがオリジナルアプリ「':'AIが「')+ORIG.name+(g==='origMake'?'」の試作を作成':'」を作り直し')+(b.source==='template'?'（ひな形から）':'')}); save(); render(); if(g==='origMake'){ setTimeout(function(){ var pb=document.querySelector('[data-go=origPhotos]'); if(pb&&!PHOTO.busy) pb.click(); },400); } })
       .catch(function(x){ ORIG_BUSY=false; render(); var oe=$('origErr'); if(oe){ oe.textContent=x.message; oe.hidden=false; } });
     return;
   }
@@ -936,7 +937,7 @@ document.addEventListener('click',function(e){
       if(!slots.length){ fail({message:b.left?'この試作には写真を入れる場所がありません。':'本日の写真の生成回数の上限に達しました。'}); return; }
       PHOTO.total=slots.length; PHOTO.msg='AIが写真を作っています。この画面のままお待ちください。'; render();
       var i=0, next=function(){
-        if(i>=slots.length){ PHOTO.busy=false; PHOTO.msg='写真を'+PHOTO.done+'枚入れました。試作と仕様定義書に反映されています。'; S.vers.push({n:S.vers.length+1,note:'AIが試作の写真を'+PHOTO.done+'枚作成'}); save(); render(); return; }
+        if(i>=slots.length){ PHOTO.busy=false; S._oT=Date.now(); PHOTO.msg='写真を'+PHOTO.done+'枚入れました。試作と仕様定義書に反映されています。'; S.vers.push({n:S.vers.length+1,note:'AIが試作の写真を'+PHOTO.done+'枚作成'}); save(); render(); return; }
         api('studio/orig-image',{slot:slots[i].key}).then(function(r){ OIMG=r.images||OIMG; PHOTO.done++; i++; var b2=document.querySelector('[data-go=origPhotos]'); if(b2){ b2.textContent='写真を作っています… '+PHOTO.done+' / '+PHOTO.total; } next(); }).catch(fail);
       };
       next();
