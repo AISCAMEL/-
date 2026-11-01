@@ -60,6 +60,25 @@ window.A = window.A || {};
       }),
     ]);
     wrap.appendChild(companyCard);
+
+    // ロゴ（請求書・見積書に表示）
+    const shrinkLogo = (file, maxDim) => new Promise((resolve) => {
+      const rd = new FileReader();
+      rd.onload = () => { const img = new Image(); img.onload = () => { const sc = Math.min(1, maxDim / Math.max(img.width, img.height)); const w = Math.round(img.width * sc), h = Math.round(img.height * sc); const cv = el('canvas'); cv.width = w; cv.height = h; cv.getContext('2d').drawImage(img, 0, 0, w, h); try { resolve(cv.toDataURL('image/png')); } catch (e) { resolve(rd.result); } }; img.onerror = () => resolve(rd.result); img.src = rd.result; };
+      rd.readAsDataURL(file);
+    });
+    const logoImg = el('img', { style: 'max-height:64px;max-width:220px;object-fit:contain;border:1px solid var(--line);border-radius:6px;padding:4px;display:' + (s.logo ? 'inline-block' : 'none') });
+    if (s.logo) logoImg.src = s.logo;
+    const logoFile = el('input', { type: 'file', accept: 'image/*' });
+    logoFile.addEventListener('change', async () => { const f = logoFile.files[0]; if (!f) return; const url = await shrinkLogo(f, 300); await S.settings.save({ logo: url }); logoImg.src = url; logoImg.style.display = 'inline-block'; ui.toast('ロゴを保存しました', 'ok'); });
+    const logoRm = el('button.btn.sm', { text: 'ロゴを削除', onclick: async () => { await S.settings.save({ logo: '' }); logoImg.removeAttribute('src'); logoImg.style.display = 'none'; ui.toast('ロゴを削除しました', 'ok'); } });
+    wrap.appendChild(el('div.card', {}, [
+      el('h2', { text: 'ロゴ（請求書・見積書に表示）' }),
+      logoImg,
+      el('div.form-row', {}, [el('label.grow', {}, [el('span', { text: '画像を選択（PNG/JPG）' }), logoFile]), logoRm]),
+      el('p.muted.small', { text: 'アップロードしたロゴは請求書・見積書のPDFヘッダーに表示されます。' }),
+    ]));
+
     // 登録番号（T＋13桁）のライブ検証表示
     const regStatus = el('div.small');
     const updReg = () => { const r = U.checkInvoiceRegNo(f.invoiceRegNo.value); regStatus.textContent = (r.empty || !f.invoiceRegNo.value) ? '' : r.msg; regStatus.className = 'small ' + (r.valid ? 'ok' : 'ng'); };

@@ -118,9 +118,10 @@ window.A = window.A || {};
       .filter((r) => Number(r) > 0)
       .map((r) => `<tr><td>${r}%対象</td><td class="r">¥${U.yen(c.buckets[r].net)}</td><td class="r">¥${U.yen(c.buckets[r].tax)}</td></tr>`).join('');
 
+    const hasReduced = (inv.items || []).some((it) => Number(it.taxRate) === 8);
     const itemRows = inv.items.map((it) => `
       <tr>
-        <td>${U.esc(it.name)}</td>
+        <td>${U.esc(it.name)}${Number(it.taxRate) === 8 ? ' <span class="reduced-mark">※</span>' : ''}</td>
         <td class="r">${it.qty}</td>
         <td class="r">¥${U.yen(it.unitPrice)}</td>
         <td class="c">${it.taxRate ? it.taxRate + '%' : '—'}</td>
@@ -140,6 +141,7 @@ window.A = window.A || {};
             </table>
           </div>
           <div class="doc-from">
+            ${s.logo ? `<img class="doc-logo" src="${s.logo}" alt="logo">` : ''}
             <div class="from-name">${U.esc(s.name)}</div>
             ${s.address ? `<div>${U.esc(s.address)}</div>` : ''}
             ${s.tel ? `<div>TEL: ${U.esc(s.tel)}</div>` : ''}
@@ -152,6 +154,7 @@ window.A = window.A || {};
           <thead><tr><th>品目</th><th class="r">数量</th><th class="r">単価</th><th class="c">税率</th><th class="r">金額</th></tr></thead>
           <tbody>${itemRows}</tbody>
         </table>
+        ${hasReduced ? '<div class="reduced-note">※印は軽減税率（8%）対象品目です。</div>' : ''}
         <div class="doc-bottom">
           <div class="tax-break">
             <table><thead><tr><th>区分</th><th class="r">対象額(税抜)</th><th class="r">消費税</th></tr></thead>

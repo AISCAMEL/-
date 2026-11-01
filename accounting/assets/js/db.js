@@ -89,6 +89,7 @@ A.db = (function () {
     autoRules: [],                         // CSV自動仕訳ルール [{keyword,account,tax}]
     stockAlertDays: 45,                    // 在庫車アラートのしきい値（在庫日数）
     lastBackupAt: '',                      // 最後にバックアップを書き出した日
+    logo: '',                              // 会社ロゴ（dataURL・請求書/見積書に表示）
     syncUrl: '',                           // クラウド同期サーバーURL
     syncWorkspace: '',                     // ワークスペースID（共有単位）
     syncToken: '',                         // 認証トークン
