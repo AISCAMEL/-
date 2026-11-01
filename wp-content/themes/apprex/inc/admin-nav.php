@@ -195,6 +195,55 @@ function apprex_nav_todo() {
 }
 
 /* -------------------------------------------------------------------------
+ * システムの状態（止まっていないか）
+ * ---------------------------------------------------------------------- */
+function apprex_nav_health() {
+	$out = array();
+	$now = time();
+	// 自動処理：予定の時刻を2時間以上過ぎても動いていなければ、止まっている。
+	$stuck = array();
+	$names = function_exists( 'apprex_cron_hooks' ) ? apprex_cron_hooks() : array( 'apprex_contract_cron' => '契約・月次請求' );
+	foreach ( $names as $hook => $label ) {
+		$next = wp_next_scheduled( $hook );
+		if ( ! $next || $next < $now - 2 * HOUR_IN_SECONDS ) {
+			$stuck[] = $label;
+		}
+	}
+	$out[] = $stuck
+		? array( '自動処理', false, '予定より遅れています：' . implode( '・', $stuck ) . '（数字を見る画面のいちばん下で確認）', 'admin.php?page=apprex-dashboard' )
+		: array( '自動処理', true, '毎日の請求・お知らせ・配信は予定どおり動いています', 'admin.php?page=apprex-dashboard' );
+	// AI。
+	$ai = function_exists( 'apprex_ai_text_ready' ) && apprex_ai_text_ready();
+	$er = get_option( 'apprex_orig_last_error', array() );
+	if ( ! $ai ) {
+		$out[] = array( 'AI', false, 'AIのキーが入っていません', 'options-general.php?page=apprex-chat' );
+	} elseif ( is_array( $er ) && ! empty( $er['t'] ) && $now - (int) $er['t'] < DAY_IN_SECONDS ) {
+		$out[] = array( 'AI', false, '24時間以内にAIの失敗がありました（' . wp_date( 'n/j G:i', (int) $er['t'] ) . '）。続く場合は残高を確認', 'options-general.php?page=apprex-chat' );
+	} else {
+		$out[] = array( 'AI', true, 'チャット・AIスタジオのAIは使える状態です', 'options-general.php?page=apprex-chat' );
+	}
+	// LINE。
+	$line = function_exists( 'apprex_line_direct_ready' ) && apprex_line_direct_ready();
+	$hook = (int) get_option( 'apprex_line_hook_last', 0 );
+	$last = get_option( 'apprex_line_ai_last', array() );
+	if ( ! $line ) {
+		$out[] = array( 'LINE', false, 'LINEのトークンが入っていません', 'options-general.php?page=apprex-line' );
+	} elseif ( is_array( $last ) && ! empty( $last['t'] ) && 'ok' !== $last['s'] && $now - (int) $last['t'] < DAY_IN_SECONDS ) {
+		$out[] = array( 'LINE', false, 'LINEのAIの返信に失敗しました（' . wp_date( 'n/j G:i', (int) $last['t'] ) . '）', 'options-general.php?page=apprex-line' );
+	} else {
+		$out[] = array( 'LINE', true, $hook ? 'つながっています（最後に受信 ' . wp_date( 'n/j G:i', $hook ) . '）' : 'つながっています', 'options-general.php?page=apprex-line' );
+	}
+	// お支払い。
+	$sq = function_exists( 'apprex_square_enabled' ) && apprex_square_enabled();
+	$mf = function_exists( 'apprex_mf_ready' ) && apprex_mf_ready();
+	$out[] = array( 'お支払い', $sq || $mf, ( $sq ? 'Square（カード）：つながっています' : 'Square：未設定' ) . '／' . ( $mf ? 'マネーフォワード：つながっています' : 'マネーフォワード：未設定' ), 'admin.php?page=apprex-nav-settings' );
+	// メール。
+	$smtp  = function_exists( 'apprex_smtp_ready' ) && apprex_smtp_ready();
+	$out[] = array( 'メール', $smtp, $smtp ? 'メール送信（SMTP）が設定されています' : 'メール送信（SMTP）が未設定です。届きにくいことがあります', 'options-general.php?page=apprex-smtp' );
+	return $out;
+}
+
+/* -------------------------------------------------------------------------
  * メニュー
  * ---------------------------------------------------------------------- */
 add_action( 'admin_menu', function () {
@@ -215,7 +264,7 @@ add_action( 'admin_menu', function () {
 		$slug  = isset( $item[2] ) ? $item[2] : '';
 		$title = isset( $item[0] ) ? wp_strip_all_tags( $item[0] ) : '';
 		if ( in_array( $slug, $hide, true ) || preg_match( '/LPtools|LPを作る|テンプレートを作/u', $title ) ) {
-			unset( $menu[ $i ] );
+			$menu[ $i ][4] = ( isset( $item[4] ) ? $item[4] . ' ' : '' ) . 'apprex-hide'; // 見えなくするだけ（画面の題名などは残す）。
 		}
 	}
 	// 設定の下の APPREX の設定は「業務ナビ → 設定の一覧」にまとめる。
@@ -224,11 +273,18 @@ add_action( 'admin_menu', function () {
 			$slug  = isset( $item[2] ) ? $item[2] : '';
 			$title = isset( $item[0] ) ? wp_strip_all_tags( $item[0] ) : '';
 			if ( 0 === strpos( $slug, 'apprex-' ) || false !== strpos( $slug, 'apprex_line_friend' ) || preg_match( '/^(APPREX|LINE)/u', $title ) ) {
-				unset( $submenu['options-general.php'][ $i ] );
+				$submenu['options-general.php'][ $i ][4] = 'apprex-hide';
 			}
 		}
 	}
 }, 9999 );
+
+/* 見えなくした項目（いま開いている画面のものは、迷わないよう表示する）。 */
+add_action( 'admin_head', function () {
+	if ( apprex_nav_simple() ) {
+		echo '<style>#adminmenu li.apprex-hide:not(.current):not(.wp-has-current-submenu):not(.wp-menu-open){display:none}</style>';
+	}
+} );
 
 /* 左のメニューの並び：業務の流れの順。 */
 add_filter( 'custom_menu_order', function ( $on ) {
@@ -303,6 +359,12 @@ function apprex_nav_css() {
 	.anav-todo .is-red{border-top-color:#dc2626}.anav-todo .is-red b{color:#b91c1c}
 	.anav-todo .is-gray b{color:#9ca3af}
 	.anav h2{font-size:18px;margin:0 0 10px}
+	.anav-health{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:8px;margin:0 0 26px}
+	.anav-health a{display:grid;grid-template-columns:24px 76px 1fr;gap:8px;align-items:center;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:9px 12px;text-decoration:none;color:inherit}
+	.anav-health i{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:700;font-size:12px;color:#fff;background:#16a34a}
+	.anav-health a.ng{border-color:#fecaca;background:#fef2f2}
+	.anav-health a.ng i{background:#dc2626}
+	.anav-health span{font-size:12px;color:#4b5563;line-height:1.5}
 	.anav-flows{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
 	.anav-flow{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:16px 16px 8px}
 	.anav-flow header{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
@@ -349,6 +411,13 @@ function apprex_nav_page() {
 		<div class="anav-todo">
 			<?php foreach ( apprex_nav_todo() as $t ) : ?>
 				<a class="is-<?php echo esc_attr( $t[4] ); ?>" href="<?php echo esc_url( apprex_nav_url( $t[3] ) ); ?>"><small><?php echo esc_html( $t[0] ); ?></small><b><?php echo (int) $t[1]; ?><span style="font-size:13px;font-weight:600"> 件</span></b><em><?php echo esc_html( $t[2] ); ?></em></a>
+			<?php endforeach; ?>
+		</div>
+
+		<h2>システムの状態</h2>
+		<div class="anav-health">
+			<?php foreach ( apprex_nav_health() as $h ) : ?>
+				<a class="<?php echo $h[1] ? 'ok' : 'ng'; ?>" href="<?php echo esc_url( apprex_nav_url( $h[3] ) ); ?>"><i><?php echo $h[1] ? '✓' : '!'; ?></i><b><?php echo esc_html( $h[0] ); ?></b><span><?php echo esc_html( $h[2] ); ?></span></a>
 			<?php endforeach; ?>
 		</div>
 
