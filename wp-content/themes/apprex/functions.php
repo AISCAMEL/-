@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'APPREX_VERSION', '1.100.0' );
+define( 'APPREX_VERSION', '1.101.0' );
 define( 'APPREX_DIR', get_template_directory() );
 define( 'APPREX_URI', get_template_directory_uri() );
 
@@ -62,6 +62,7 @@ require_once APPREX_DIR . '/inc/contract-doc.php';
 require_once APPREX_DIR . '/inc/contracts-lifecycle.php';
 require_once APPREX_DIR . '/inc/square-billing.php';
 require_once APPREX_DIR . '/inc/member-portal.php';
+require_once APPREX_DIR . '/inc/mypage-app.php';
 require_once APPREX_DIR . '/inc/dashboard.php';
 require_once APPREX_DIR . '/inc/email.php';
 require_once APPREX_DIR . '/inc/forms.php';

@@ -10,7 +10,7 @@
  * - 担当者が必要な依頼（変更・解約・請求書の再発行など）は、AIが受け付けて担当者へメールで知らせる
  * - お客様あてのメールを送ったら、LINEにも「メールをお送りしました」とためておく
  * - ミーティング・説明会の自動のお知らせ（push）は、設定で「ためておく」にできる（既定）
- * - マイページに「LINEと連携する」ボタン
+ * - マイページの「LINE連携」から連携できる（inc/mypage-app.php）
  *
  * 設定：設定 > APPREX 配信(LINE) の「LINEと会員の連動」。
  *
@@ -307,27 +307,6 @@ add_action( 'apprex_line_event', function ( $ev, $uid, $type ) {
 		$GLOBALS['apprex_line_replied'] = true;
 	}
 }, 30, 3 );
-
-/* -------------------------------------------------------------------------
- * マイページ：LINEと連携
- * ---------------------------------------------------------------------- */
-add_filter( 'the_content', function ( $content ) {
-	if ( ! is_user_logged_in() || ! function_exists( 'apprex_mypage_url' ) || ! is_page( 'mypage' ) || ! in_the_loop() ) {
-		return $content;
-	}
-	$linked = '' !== (string) get_user_meta( get_current_user_id(), 'apprex_line_uid', true );
-	$box    = '<div class="apx-line-link" style="border:1px solid #c9ecd5;background:#f2fbf5;border-radius:12px;padding:16px 18px;margin:0 0 18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">'
-		. '<span style="background:#06c755;color:#fff;font-weight:700;border-radius:8px;padding:4px 10px;font-size:13px">LINE</span>';
-	if ( $linked ) {
-		$box .= '<div style="flex:1;min-width:220px"><b>LINEと連携しています</b><br><small style="color:#4b5563">契約・お支払い・予約のことは、公式LINEで聞くとAIがすぐお答えします。お知らせもLINEで確認できます。</small></div>';
-	} elseif ( function_exists( 'apprex_liff_ready' ) && apprex_liff_ready() ) {
-		$box .= '<div style="flex:1;min-width:220px"><b>LINEと連携しませんか？</b><br><small style="color:#4b5563">連携すると、契約・お支払い・予約の確認やご依頼をLINEでできます（スマホで押してください）。</small></div>'
-			. '<a href="' . esc_url( apprex_line_mypage_link() ) . '" style="background:#06c755;color:#fff;text-decoration:none;font-weight:700;border-radius:999px;padding:10px 20px">LINEと連携する</a>';
-	} else {
-		return $content;
-	}
-	return $box . '</div>' . $content;
-}, 5 );
 
 /* -------------------------------------------------------------------------
  * 設定（APPREX 配信(LINE) に相乗り）
