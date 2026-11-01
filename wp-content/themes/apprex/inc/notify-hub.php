@@ -158,7 +158,7 @@ function apprex_notify( $cat, $text, $blocks = array(), $opt = array() ) {
 	if ( apprex_nh_on( $cat, 's' ) && empty( $opt['no_slack'] ) ) {
 		$sent = apprex_slack_send_raw( $text, $blocks ) || $sent;
 	}
-	if ( apprex_nh_on( $cat, 'l' ) ) {
+	if ( apprex_nh_on( $cat, 'l' ) && empty( $opt['no_lw'] ) ) {
 		$sent = apprex_lw_send( apprex_nh_plain( $text ) ) || $sent;
 	}
 	if ( $sent ) {
@@ -214,6 +214,11 @@ add_action(
  * チャット（サイト）・LINE のやりとり
  * ====================================================================== */
 
+/** LINE WORKS の個別ルームを使っているか。 */
+function apprex_nh_lw_rooms() {
+	return function_exists( 'apprex_lwb_ready' ) && apprex_lwb_ready();
+}
+
 /** 1つの会話から送る数の上限（いたずら対策）。 */
 function apprex_nh_chat_ok( $key ) {
 	$k = 'apprex_nh_c_' . md5( $key );
@@ -239,12 +244,12 @@ add_action(
 		}
 		$head = 1 === (int) $count ? '💬 *サイトのチャット：新しい会話*' : '💬 サイトのチャット';
 		// 有人対応の Slack 連携が動いていれば、Slack には別のスレッドで届いているので重ねない。
-		$op = function_exists( 'apprex_chat_op_enabled' ) && apprex_chat_op_enabled();
+		$op = function_exists( 'apprex_chat_op_slack_enabled' ) && apprex_chat_op_slack_enabled();
 		apprex_notify(
 			'chat',
 			$head . $who . "\n「" . mb_substr( (string) $text, 0, 300 ) . "」\n会話ID " . substr( (string) $session, 0, 10 ) . "\n" . admin_url( 'edit.php?post_type=apprex_chatlog' ),
 			array(),
-			array( 'no_slack' => $op )
+			array( 'no_slack' => $op, 'no_lw' => apprex_nh_lw_rooms() )
 		);
 	},
 	10,
@@ -253,6 +258,18 @@ add_action(
 
 /** LINE のお客様の名前（会員ならその名前、ちがえばLINEの表示名）。 */
 function apprex_nh_line_name( $uid ) {
+	$ck = 'apprex_nh_ln_' . md5( (string) $uid );
+	$c  = get_transient( $ck );
+	if ( is_string( $c ) && '' !== $c ) {
+		return $c;
+	}
+	$n = apprex_nh_line_name_get( $uid );
+	set_transient( $ck, $n, false === strpos( $n, 'LINEのお客様（' ) ? DAY_IN_SECONDS : 10 * MINUTE_IN_SECONDS );
+	return $n;
+}
+
+/** LINE のお客様の名前を調べる（apprex_nh_line_name から）。 */
+function apprex_nh_line_name_get( $uid ) {
 	if ( function_exists( 'apprex_line_member' ) ) {
 		$u = apprex_line_member( $uid );
 		if ( $u ) {
@@ -297,7 +314,8 @@ add_action(
 			if ( ! apprex_nh_chat_ok( 'line' . $uid ) ) {
 				return;
 			}
-			apprex_notify( 'chat', '🟩 *LINE：' . apprex_nh_line_name( $uid ) . "*\n「" . mb_substr( $body, 0, 300 ) . '」' );
+			// 個別ルームを使うときは、LINE WORKS にはお客様ごとのルームに届くので、通知のルームには送らない。
+			apprex_notify( 'chat', '🟩 *LINE：' . apprex_nh_line_name( $uid ) . "*\n「" . mb_substr( $body, 0, 300 ) . '」', array(), array( 'no_lw' => apprex_nh_lw_rooms() ) );
 		} elseif ( 'follow' === $type ) {
 			apprex_notify( 'action', '🟩 LINEの友だちが増えました：' . apprex_nh_line_name( $uid ) );
 		} elseif ( 'unfollow' === $type ) {
@@ -461,11 +479,11 @@ function apprex_nh_page() {
 				<?php endforeach; ?>
 				</tbody>
 			</table>
-			<p class="description">お客様へのお返事は、これまでどおり LINE公式アカウント・サイトのチャット（Slackのスレッドから返信）で行います。LINE WORKS は受け取り専用です。</p>
+			<p class="description">ここで設定する LINE WORKS のURLは、社内へのお知らせを1つのルームに送るためのものです。お客様とのやりとりは、下の「お客様ごとの個別ルーム」を設定すると、お客様ごとのルームに分かれます（そのルームから返事もできます）。</p>
 			<?php submit_button( '保存する' ); ?>
 		</form>
 
-		<h2 id="test">テスト送信</h2>
+		<h2 id="test">テスト送信（通知のルーム）</h2>
 		<?php if ( is_array( $res ) ) : ?>
 			<div class="notice notice-info inline"><p>Slack：<?php echo esc_html( $res['s'] ); ?>　／　LINE WORKS：<?php echo esc_html( $res['l'] ); ?></p></div>
 		<?php endif; ?>
@@ -475,6 +493,13 @@ function apprex_nh_page() {
 			<?php submit_button( 'Slack と LINE WORKS にテストを送る', 'secondary', 'submit', false ); ?>
 		</form>
 
+		<hr>
+		<?php
+		if ( function_exists( 'apprex_lwb_settings_box' ) ) {
+			apprex_lwb_settings_box();
+		}
+		?>
+		<hr>
 		<h2>最近送ったお知らせ</h2>
 		<?php
 		$log = array_reverse( (array) get_option( 'apprex_nh_log', array() ) );

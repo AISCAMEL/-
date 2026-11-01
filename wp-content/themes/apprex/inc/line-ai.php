@@ -63,6 +63,9 @@ add_action( 'apprex_line_event', function ( $ev, $uid, $type ) {
 	if ( ! apprex_line_ai_enabled() || ! empty( $GLOBALS['apprex_line_replied'] ) ) {
 		return; // ほかの機能（説明会の案内など）がすでに返信した。
 	}
+	if ( apply_filters( 'apprex_line_ai_paused', false, $uid ) ) {
+		return; // 担当者が LINE WORKS で対応中（inc/lineworks-bot.php）。
+	}
 	if ( empty( $ev['message']['type'] ) || 'text' !== $ev['message']['type'] ) {
 		return; // テキスト以外（画像・スタンプ等）は対象外。
 	}
@@ -120,6 +123,7 @@ add_action( 'apprex_line_event', function ( $ev, $uid, $type ) {
 	$sent  = apprex_line_reply( $reply_token, $out );
 	if ( ! is_wp_error( $sent ) ) {
 		$GLOBALS['apprex_line_replied'] = true;
+		do_action( 'apprex_line_ai_replied', $uid_, $user_text, (string) $reply );
 		if ( $notice ) {
 			apprex_line_queue_clear( $uid_ );
 		}

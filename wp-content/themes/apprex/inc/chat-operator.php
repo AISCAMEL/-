@@ -42,6 +42,12 @@ function apprex_slack_signing_secret() {
 
 /** オペレーター連携が有効か（必要な設定が揃っているか）。 */
 function apprex_chat_op_enabled() {
+	// Slack のほか、LINE WORKS の個別ルーム（inc/lineworks-bot.php）でも担当者が返事できる。
+	return apprex_chat_op_slack_enabled() || (bool) apply_filters( 'apprex_chat_op_extra', false );
+}
+
+/** Slack で担当者が返事できる設定か。 */
+function apprex_chat_op_slack_enabled() {
 	return '' !== apprex_slack_bot_token() && '' !== apprex_slack_channel() && '' !== apprex_slack_signing_secret();
 }
 
@@ -213,6 +219,7 @@ function apprex_chat_op_ingest( $session, $messages ) {
 			}
 		}
 		apprex_slack_post_to_thread( $session, "👤 " . $last_user, $meta );
+		do_action( 'apprex_chat_op_customer_msg', $session, $last_user, $meta );
 	}
 
 	$data = apprex_chat_op_get( $session );
@@ -224,6 +231,7 @@ function apprex_chat_op_log_ai_reply( $session, $reply ) {
 	if ( ! apprex_chat_op_enabled() || '' === $session || '' === $reply ) {
 		return;
 	}
+	do_action( 'apprex_chat_op_ai_reply', $session, $reply );
 	$data = apprex_chat_op_get( $session );
 	if ( '' === $data['thread_ts'] ) {
 		return; // スレッド未作成なら記録しない。
@@ -320,6 +328,7 @@ function apprex_rest_chat_operator( WP_REST_Request $request ) {
 		}
 	}
 	apprex_slack_post_to_thread( $session, "🙋 *お客様が担当者との対応を希望しています* <!here>", $meta );
+	do_action( 'apprex_chat_op_requested', $session, $meta );
 
 	$data              = apprex_chat_op_get( $session );
 	$data['requested'] = true;
@@ -558,7 +567,7 @@ function apprex_operator_settings_page() {
 		</ol>
 		<p><strong>返信方法</strong>：通知スレッドへ返信／チャンネルに直接書き込み、どちらでもお客様に届きます。
 		<br>※ 直接書き込みは「直近のお客様」へ送られます。複数のお客様を同時対応する場合や、社内の雑談が混ざる場合は<strong>スレッド返信</strong>を推奨（このチャットは専用チャンネルでの運用を推奨します）。</p>
-		<p>現在の状態：<strong><?php echo apprex_chat_op_enabled() ? '✅ 有効' : '⛔ 未設定（3項目すべて入力で有効になります）'; ?></strong></p>
+		<p>現在の状態：<strong><?php echo apprex_chat_op_slack_enabled() ? '✅ 有効' : '⛔ 未設定（3項目すべて入力で有効になります）'; ?></strong></p>
 	</div>
 	<?php
 }
