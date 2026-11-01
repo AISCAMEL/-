@@ -3,19 +3,20 @@
  * カーメル：月々の下に出す「ローン概算目安＋シミュレーションスライダー」
  * ショートコード [carmel_loan_guide]
  * ---------------------------------------------------------------------------
+ * v4.0 変更点（デザイン刷新：案A 信頼グリーン）
+ *   ・緑グラデーションのヘッダー帯に価格を表示。
+ *   ・3パターンを横並びの「早見チップ」に変更（旧：縦積みの行）。
+ *   ・シミュレーションの月々を大きく「円/月」で表示。
+ *   ・カードに角丸＋やわらかい影。
+ *   ・バッジ注入先 .carmel-lg__warranty-slots は維持（car-detail-ui と連携）。
+ *
  * v3.2 変更点
  *   ・金利を「固定 13.6%（実質年率）」に統一。est_nenritsu は参照しない。
- *     3パターン表示・返済回数スライダー・注記すべて 13.6% で計算する。
  *
  * v3.1 変更点（確実版）
  *   ・関数名を固有名（*_v2 / *_render）にして他スニペットとの衝突を回避。
- *     旧版は先頭の function_exists ガードで囲っていたため、別スニペットが
- *     同名関数を先に定義していると add_shortcode ごとスキップされ、
- *     [carmel_loan_guide] が文字のまま表示される事故があった。
- *   ・ショートコードと style を「無条件で」登録し直すので、
- *     どのスニペットが何を定義していても必ず carmel_loan_guide が動く。
- *   ・月々計算を内蔵（carmel_plan_monthly 非依存）。
- *   ・est_total が空でも本体価格などから概算（フォールバック）。
+ *   ・ショートコードと style を「無条件で」登録し直すので必ず動く。
+ *   ・月々計算を内蔵。est_total が空でも本体価格などから概算（フォールバック）。
  * ---------------------------------------------------------------------------
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -61,17 +62,26 @@ if ( ! function_exists( 'carmelx_loan_guide_render' ) ) {
 
 		$principal = max( 0, $total - $atama );
 
+		// ヘッダーに出す価格：本体価格があれば本体、無ければ総額。
+		if ( $honntai > 0 ) {
+			$disp_price = $honntai;
+			$disp_label = '車両本体価格';
+		} else {
+			$disp_price = $total;
+			$disp_label = 'お支払総額';
+		}
+
 		$counts = array_filter( array_map( 'intval', explode( ',', $atts['counts'] ) ), function ( $c ) { return $c > 0; } );
 		sort( $counts );
 
-		// 3パターン静的表示
-		$rows = '';
+		// 3パターン早見チップ
+		$chips = '';
 		foreach ( $counts as $c ) {
 			$m = carmelx_lg_monthly_v2( $principal, $nen, $c );
 			if ( $m <= 0 ) { continue; }
-			$rows .= '<span class="carmel-lg__row"><b>' . (int) $c . '回</b>月々' . number_format( $m ) . '円</span>';
+			$chips .= '<div class="carmel-lg__chip"><span class="carmel-lg__chip-c">' . (int) $c . '回</span><span class="carmel-lg__chip-m">' . number_format( $m ) . '円</span></div>';
 		}
-		if ( '' === $rows ) { return ''; }
+		if ( '' === $chips ) { return ''; }
 
 		$note = 'ボーナス払い無し';
 		if ( $nen > 0 ) { $note .= '・実質年率' . rtrim( rtrim( number_format( $nen, 1 ), '0' ), '.' ) . '%'; }
@@ -97,32 +107,32 @@ if ( ! function_exists( 'carmelx_loan_guide_render' ) ) {
 		?>
 		<div class="carmel-lg" id="<?php echo esc_attr( $uid ); ?>">
 
-			<?php if ( $honntai > 0 ) : ?>
-			<div class="carmel-lg__price">
-				<span class="carmel-lg__price-label">車両本体価格</span>
-				<span class="carmel-lg__price-val"><?php echo number_format( $honntai / 10000, 1 ); ?><small>万円</small></span>
+			<div class="carmel-lg__hd">
+				<span class="carmel-lg__hd-label"><?php echo esc_html( $disp_label ); ?></span>
+				<span class="carmel-lg__hd-price"><?php echo number_format( $disp_price / 10000, 1 ); ?><i>万円</i></span>
 			</div>
-			<?php endif; ?>
 
-			<div class="carmel-lg__t">ローン概算目安（頭金<?php echo number_format( $atama ); ?>円）</div>
-			<div class="carmel-lg__rows"><?php echo $rows; ?></div>
-			<div class="carmel-lg__note">※<?php echo esc_html( $note ); ?>の目安です</div>
+			<div class="carmel-lg__bd">
+				<div class="carmel-lg__t">ローン概算目安（頭金<?php echo number_format( $atama ); ?>円）</div>
+				<div class="carmel-lg__chips"><?php echo $chips; ?></div>
+				<div class="carmel-lg__note">※<?php echo esc_html( $note ); ?>の目安です</div>
 
-			<!-- 保証・点検バッジ（JS で注入） -->
-			<div class="carmel-lg__warranty-slots"></div>
+				<!-- 保証・点検バッジ（car-detail-ui が JS で注入） -->
+				<div class="carmel-lg__warranty-slots"></div>
 
-			<!-- シミュレーションスライダー -->
-			<div class="carmel-lg__sim">
-				<div class="carmel-lg__sim-title">返済回数シミュレーション</div>
-				<div class="carmel-lg__sim-result">
-					<span class="carmel-lg__sim-badge"><span id="<?php echo esc_attr( $uid ); ?>-count"><?php echo (int) $default_count; ?></span>回払い</span>
-					<div class="carmel-lg__sim-amount">月々&nbsp;<b id="<?php echo esc_attr( $uid ); ?>-amount">—</b><span class="carmel-lg__sim-en">円</span></div>
-				</div>
-				<div class="carmel-lg__slider-wrap">
-					<span class="carmel-lg__sim-lab">12回</span>
-					<input type="range" class="carmel-lg__slider" id="<?php echo esc_attr( $uid ); ?>-slider"
-						min="12" max="120" step="6" value="<?php echo (int) $default_count; ?>">
-					<span class="carmel-lg__sim-lab">120回</span>
+				<!-- シミュレーションスライダー -->
+				<div class="carmel-lg__sim">
+					<div class="carmel-lg__sim-title">返済回数シミュレーション</div>
+					<div class="carmel-lg__big">
+						<span class="carmel-lg__big-lab"><span id="<?php echo esc_attr( $uid ); ?>-count"><?php echo (int) $default_count; ?></span>回払い</span>
+						<span class="carmel-lg__big-v"><b id="<?php echo esc_attr( $uid ); ?>-amount">—</b><em>円/月</em></span>
+					</div>
+					<div class="carmel-lg__slider-wrap">
+						<span class="carmel-lg__sim-lab">12回</span>
+						<input type="range" class="carmel-lg__slider" id="<?php echo esc_attr( $uid ); ?>-slider"
+							min="12" max="120" step="6" value="<?php echo (int) $default_count; ?>">
+						<span class="carmel-lg__sim-lab">120回</span>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -192,38 +202,44 @@ add_action( 'init', function () {
 	add_shortcode( 'carmel_loan_guide', 'carmelx_loan_guide_render' );
 }, 99 );
 
-/* スタイル（固有名・無条件で登録） */
+/* スタイル（固有名・無条件で登録）／案A 信頼グリーン */
 if ( ! function_exists( 'carmelx_lg_styles_v2' ) ) {
 	function carmelx_lg_styles_v2() {
 		static $done = false;
 		if ( $done ) { return; }
 		$done = true;
 		echo '<style>
-		.carmel-lg{margin:8px 0 4px;padding:14px 16px;background:#f3faf5;border:1px solid #cfe7d8;border-radius:12px;font-family:inherit;box-sizing:border-box;width:100%;}
-		/* 車両本体価格 */
-		.carmel-lg__price{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;}
-		.carmel-lg__price-label{font-size:12px;font-weight:700;color:#1c7a3a;background:#fff;border:1px solid #cfe7d8;border-radius:6px;padding:2px 8px;white-space:nowrap;}
-		.carmel-lg__price-val{font-size:24px;font-weight:900;color:#333;line-height:1;}
-		.carmel-lg__price-val small{font-size:14px;font-weight:700;margin-left:2px;color:#555;}
-		/* 3パターン */
-		.carmel-lg__t{font-size:12px;font-weight:700;color:#1c7a3a;margin-bottom:6px;}
-		.carmel-lg__rows{display:flex;flex-direction:column;gap:4px;}
-		.carmel-lg__row{display:flex;align-items:center;background:#fff;border:1px solid #e1efe6;border-radius:7px;padding:7px 12px;font-size:13px;color:#333;white-space:nowrap;box-sizing:border-box;}
-		.carmel-lg__row b{color:#2cac44;font-weight:800;min-width:3.2em;flex-shrink:0;}
-		.carmel-lg__note{margin-top:6px;font-size:11px;color:#8a8f96;}
+		.carmel-lg{margin:8px 0 4px;background:#fff;border:1px solid #d3e6d9;border-radius:16px;overflow:hidden;
+			font-family:inherit;box-sizing:border-box;width:100%;color:#243029;box-shadow:0 6px 20px -12px rgba(28,122,58,.4);}
+		/* ヘッダー帯（価格） */
+		.carmel-lg__hd{background:linear-gradient(135deg,#1c7a3a,#2cac44);color:#fff;padding:14px 18px;
+			display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
+		.carmel-lg__hd-label{font-size:11px;font-weight:700;opacity:.9;letter-spacing:.06em;white-space:nowrap;}
+		.carmel-lg__hd-price{font-size:30px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;}
+		.carmel-lg__hd-price i{font-size:14px;font-style:normal;margin-left:2px;font-weight:700;opacity:.9;}
+		/* 本体 */
+		.carmel-lg__bd{padding:14px 18px 18px;}
+		.carmel-lg__t{font-size:12px;font-weight:700;color:#1c7a3a;margin-bottom:8px;}
+		/* 3パターン早見チップ */
+		.carmel-lg__chips{display:flex;gap:7px;flex-wrap:wrap;}
+		.carmel-lg__chip{flex:1 1 auto;min-width:90px;background:#f3faf5;border:1px solid #d3e6d9;border-radius:10px;
+			padding:8px 10px;text-align:center;box-sizing:border-box;}
+		.carmel-lg__chip-c{display:block;font-size:11px;color:#1c7a3a;font-weight:800;}
+		.carmel-lg__chip-m{display:block;font-size:15px;font-weight:900;color:#243029;font-variant-numeric:tabular-nums;}
+		.carmel-lg__note{margin-top:8px;font-size:11px;color:#8a8f96;}
 		/* 保証・点検バッジ */
 		.carmel-lg__warranty-slots{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0 0;}
 		.carmel-lg__warranty-badge{display:inline-flex;align-items:center;gap:5px;background:#e8f5ee;border:1px solid #a8d5bc;border-radius:20px;padding:5px 11px;font-size:12px;color:#1c7a3a;font-weight:700;white-space:nowrap;}
 		.carmel-lg__warranty-badge svg{flex-shrink:0;}
 		/* シミュレーション */
-		.carmel-lg__sim{margin-top:14px;padding-top:12px;border-top:1px solid #d8eddf;}
+		.carmel-lg__sim{margin-top:14px;padding-top:13px;border-top:1px dashed #cfe2d6;}
 		.carmel-lg__sim-title{font-size:12px;font-weight:700;color:#1c7a3a;margin-bottom:10px;letter-spacing:.03em;}
-		.carmel-lg__sim-result{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
-		.carmel-lg__sim-badge{display:inline-flex;align-items:center;background:#2cac44;color:#fff;font-size:13px;font-weight:800;border-radius:20px;padding:6px 16px;white-space:nowrap;line-height:1.4;}
-		.carmel-lg__sim-badge span{font-size:26px;font-weight:900;margin-right:2px;line-height:1;}
-		.carmel-lg__sim-amount{font-size:16px;font-weight:700;color:#333;text-align:right;white-space:nowrap;}
-		.carmel-lg__sim-amount b{font-size:36px;font-weight:900;color:#2cac44;line-height:1;}
-		.carmel-lg__sim-en{font-size:16px;font-weight:700;color:#555;margin-left:1px;}
+		.carmel-lg__big{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:10px;}
+		.carmel-lg__big-lab{display:inline-flex;align-items:center;background:#2cac44;color:#fff;font-size:13px;font-weight:800;border-radius:20px;padding:6px 16px;white-space:nowrap;line-height:1.4;}
+		.carmel-lg__big-lab span{font-size:24px;font-weight:900;margin-right:2px;line-height:1;font-variant-numeric:tabular-nums;}
+		.carmel-lg__big-v{font-size:16px;font-weight:700;color:#5a6b60;text-align:right;white-space:nowrap;}
+		.carmel-lg__big-v b{font-size:40px;font-weight:900;color:#2cac44;line-height:.95;font-variant-numeric:tabular-nums;}
+		.carmel-lg__big-v em{font-size:15px;font-style:normal;color:#5a6b60;margin-left:1px;}
 		/* スライダー */
 		.carmel-lg__slider-wrap{display:flex;align-items:center;gap:8px;}
 		.carmel-lg__sim-lab{font-size:11px;color:#8a8f96;white-space:nowrap;flex-shrink:0;}
@@ -233,22 +249,20 @@ if ( ! function_exists( 'carmelx_lg_styles_v2' ) ) {
 		.carmel-lg__slider::-webkit-slider-thumb{-webkit-appearance:none!important;width:26px!important;height:26px!important;border-radius:50%!important;background:#2cac44!important;cursor:pointer!important;border:3px solid #fff!important;box-shadow:0 2px 6px rgba(0,0,0,.25)!important;margin-top:-9px!important;}
 		.carmel-lg__slider::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:#2cac44;cursor:pointer;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25);}
 		/* CTA */
-		.carmel-lg__cta{margin-top:8px;padding-top:0;display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%;box-sizing:border-box;}
-		.carmel-lg__btn{display:inline-block;font-size:14px;font-weight:800;text-decoration:none;padding:13px 0;border-radius:8px;text-align:center;flex:1 1 140px;cursor:pointer;transition:opacity .15s;white-space:nowrap;}
+		.carmel-lg__cta{margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%;box-sizing:border-box;}
+		.carmel-lg__btn{display:inline-block;font-size:14px;font-weight:800;text-decoration:none;padding:13px 0;border-radius:10px;text-align:center;flex:1 1 140px;cursor:pointer;transition:opacity .15s;white-space:nowrap;}
 		.carmel-lg__btn:hover{opacity:.88;}
 		.carmel-lg__btn--shinsa{background:#e8500a;color:#fff!important;}
 		.carmel-lg__btn--line{background:#06c755;color:#fff!important;}
 		.carmel-lg__cta-sub{width:100%;margin:4px 0 0;font-size:11px;color:#8a8f96;text-align:center;}
 		@media(max-width:767px){
-			.carmel-lg{padding-left:12px;padding-right:12px;}
 			.carmel-lg__btn{flex:1 1 100%;}
 		}
 		@media(max-width:480px){
-			.carmel-lg{padding:12px;}
-			.carmel-lg__sim-result{flex-direction:column;align-items:flex-start;gap:4px;}
-			.carmel-lg__sim-amount{text-align:left;}
-			.carmel-lg__sim-amount b{font-size:20px;}
-			.carmel-lg__sim-badge span{font-size:19px;}
+			.carmel-lg__hd-price{font-size:26px;}
+			.carmel-lg__big{flex-direction:column;align-items:flex-start;gap:4px;}
+			.carmel-lg__big-v{text-align:left;}
+			.carmel-lg__big-v b{font-size:30px;}
 		}
 		</style>';
 	}
