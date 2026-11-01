@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { SITE } from "@/lib/site";
+import { SponsorStrip } from "@/components/ads/ad-banner";
 
 /** 全ページ共通フッター（規約・情報・サービスへの導線） */
 export function SiteFooter() {
   return (
-    <footer className="bg-navy px-6 py-12 text-sand/70">
-      <div className="mx-auto grid max-w-4xl gap-8 sm:grid-cols-4">
+    <footer className="bg-navy pb-12 text-sand/70">
+      <SponsorStrip />
+      <div className="mx-auto mt-10 grid max-w-4xl gap-8 px-6 sm:grid-cols-4">
         <div>
           <p className="text-sm font-semibold tracking-[0.18em] text-foam">{SITE.wordmark.line1}</p>
           <p className="mt-1 text-xs tracking-[0.35em] text-teal">{SITE.wordmark.line2}</p>
@@ -32,6 +34,7 @@ export function SiteFooter() {
           { href: "/faq", label: "よくある質問" },
           { href: "/articles", label: "プロのブログ" },
           { href: "/contact", label: "お問い合わせ" },
+          { href: "/ads", label: "広告掲載・スポンサー" },
         ]} />
 
         <FooterCol title="規約・法務" links={[
@@ -41,7 +44,7 @@ export function SiteFooter() {
         ]} />
       </div>
 
-      <div className="mx-auto mt-10 max-w-4xl border-t border-white/10 pt-6 text-center text-xs text-sand/50">
+      <div className="mx-6 mt-10 max-w-4xl border-t border-white/10 pt-6 text-center text-xs text-sand/50 sm:mx-auto">
         © {SITE.name}
       </div>
     </footer>

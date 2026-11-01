@@ -1,3 +1,4 @@
+import { AdBanner } from "@/components/ads/ad-banner";
 import Link from "next/link";
 import { Brand } from "@/components/brand";
 import { SiteFooter } from "@/components/site-footer";
@@ -137,6 +138,11 @@ export default function Home() {
             </Link>
           </div>
         </div>
+      </section>
+
+      {/* スポンサー広告 */}
+      <section className="bg-foam px-6 pb-12">
+        <AdBanner placement="top" className="mx-auto max-w-3xl" />
       </section>
 
       {/* サーフィンスクール（プロ講師）*/}

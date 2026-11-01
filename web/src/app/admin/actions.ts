@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireStaff } from "@/lib/admin";
 import type { Category } from "@/lib/community";
+import { isAdPlacement } from "@/lib/ads";
 
 /** 操作ログを最小記録（失敗してもメイン操作は止めない） */
 async function audit(
@@ -327,6 +328,47 @@ export async function toggleAd(formData: FormData) {
   const supabase = await createClient();
   await supabase.from("ad_banners").update({ is_active: active }).eq("id", id);
   await audit(staff.id, "ad.active", "ad", id, { active });
+  revalidatePath("/admin/ads");
+}
+
+export async function createAd(formData: FormData) {
+  const staff = await requireStaff();
+  const str = (k: string) => String(formData.get(k) ?? "").trim();
+  const advertiser = str("advertiser").slice(0, 80);
+  const imageUrl = str("image_url");
+  const href = str("href");
+  const placement = str("placement");
+  const startsAt = str("starts_at");
+  const endsAt = str("ends_at");
+  if (!advertiser || !isAdPlacement(placement)) return;
+  // 画像はサイト内パス（/ads/...）か https、リンク先は https/http のみ
+  if (!/^(https:\/\/|\/)/.test(imageUrl) || !/^https?:\/\//.test(href)) return;
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("ad_banners")
+    .insert({
+      advertiser,
+      title: str("title").slice(0, 120) || null,
+      image_url: imageUrl,
+      href,
+      placement,
+      sort_order: Number(str("sort_order")) || 0,
+      starts_at: startsAt ? new Date(`${startsAt}T00:00:00+09:00`).toISOString() : null,
+      ends_at: endsAt ? new Date(`${endsAt}T23:59:59+09:00`).toISOString() : null,
+      is_active: true,
+    })
+    .select("id")
+    .single();
+  if (data) await audit(staff.id, "ad.create", "ad", data.id, { placement });
+  revalidatePath("/admin/ads");
+}
+
+export async function deleteAd(formData: FormData) {
+  const staff = await requireStaff();
+  const id = String(formData.get("id"));
+  const supabase = await createClient();
+  await supabase.from("ad_banners").delete().eq("id", id);
+  await audit(staff.id, "ad.delete", "ad", id);
   revalidatePath("/admin/ads");
 }
 

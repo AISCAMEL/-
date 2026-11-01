@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import { AdBanner } from "@/components/ads/ad-banner";
 import Link from "next/link";
 import type { Metadata } from "next";
 import {
@@ -61,6 +62,9 @@ export default async function PartnersPage({ searchParams }: Props) {
         <span className="font-medium text-navy/80">会員はタイアップ特典</span>
         （割引やサービス）を受けられます。掲載内容・特典は各事業者の提供によるものです。
       </p>
+
+      {/* スポンサー広告 */}
+      <AdBanner placement="partners" className="mt-6" />
 
       {/* カテゴリ */}
       <nav className="mt-6 flex flex-wrap gap-2">

@@ -1,3 +1,4 @@
+import { AdBanner } from "@/components/ads/ad-banner";
 import Link from "next/link";
 import type { Metadata } from "next";
 import {
@@ -54,6 +55,9 @@ export default async function SpotsPage({ searchParams }: Props) {
         各エリア・ポイントのページで、予報モデルによる<span className="font-medium text-navy/80">ライブの波・風・水温</span>を確認できます。
         実際のコンディション・アクセス・ローカルルールは現地でご確認ください。
       </p>
+
+      {/* スポンサー広告 */}
+      <AdBanner placement="spots" className="mt-6" />
 
       {/* 地方の絞り込み */}
       <nav className="mt-6 flex flex-wrap gap-2">

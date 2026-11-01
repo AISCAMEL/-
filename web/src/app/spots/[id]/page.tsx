@@ -1,3 +1,4 @@
+import { AdBanner } from "@/components/ads/ad-banner";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -113,6 +114,9 @@ export default async function SpotDetailPage({ params }: Props) {
       <div className="mt-6">
         <TideCard spotId={spot.id} />
       </div>
+
+      {/* スポンサー広告 */}
+      <AdBanner placement="spot" className="mt-6" />
 
       {/* 波が良くなる条件 */}
       <section className="mt-6 rounded-2xl border border-navy/10 bg-white p-5 shadow-sm">

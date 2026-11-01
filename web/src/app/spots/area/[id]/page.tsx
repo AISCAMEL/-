@@ -1,3 +1,4 @@
+import { AdBanner } from "@/components/ads/ad-banner";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -99,6 +100,9 @@ export default async function AreaDetailPage({ params }: Props) {
           <TideCard spotId={spots[0].id} title={`潮回り（${spots[0].name}付近）`} />
         </div>
       ) : null}
+
+      {/* スポンサー広告 */}
+      <AdBanner placement="area" className="mt-6" />
 
       {/* ポイント一覧 */}
       <section className="mt-8">
