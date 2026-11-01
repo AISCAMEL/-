@@ -52,10 +52,25 @@ window.A = window.A || {};
       });
     }
 
-    // 予定の集約（未入金請求書＝自動の入金予定 ＋ 手入力の予定）
+    // 予定の集約（未入金請求書＝自動の入金予定 ＋ 定期請求の将来見込み ＋ 手入力の予定）
+    const pad = (x) => String(x).padStart(2, '0');
+    const addDays = (ds, n) => { const d = new Date(ds + 'T00:00:00'); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
     const items = [];
     invoices.filter((iv) => iv.type === 'invoice' && iv.posted && !iv.paid).forEach((iv) => {
       items.push({ date: iv.dueDate || iv.date, label: `入金予定：${iv.partnerName || ''}`, amount: S.invoices.calc(iv).total, auto: true });
+    });
+    // 定期請求テンプレートから、今後4か月の発行予定を入金見込みとして投影（既発行月は除く）
+    (S.settings.get().recurringInvoices || []).forEach((t) => {
+      const amt = S.invoices.calc({ items: t.items || [] }).total; if (!amt) return;
+      const day = Math.min(28, Math.max(1, Number(t.day) || 1));
+      const base = new Date(today + 'T00:00:00');
+      for (let k = 0; k < 4; k++) {
+        const d = new Date(base.getFullYear(), base.getMonth() + k, day);
+        const ds = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(day)}`;
+        if (ds < today) continue;
+        if (t.lastGenerated && ds.slice(0, 7) <= t.lastGenerated) continue; // 既発行分は請求書側に計上済み
+        items.push({ date: ds, label: `定期請求予定：${t.partnerName || ''}`, amount: amt, auto: true });
+      }
     });
     plans().forEach((p) => items.push({ id: p.id, date: p.date, label: p.label, amount: p.amount }));
     const future = items.filter((i) => (i.date || '') >= today).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
@@ -63,9 +78,28 @@ window.A = window.A || {};
     let bal = startCash;
     const rows = future.map((i) => { bal += i.amount; return { ...i, balance: bal }; });
 
+    // 週次の残高見通し（12週）
+    const weeks = [];
+    for (let i = 0; i < 12; i++) {
+      const end = addDays(today, (i + 1) * 7);
+      const b = startCash + future.filter((f) => f.date <= end).reduce((s, f) => s + f.amount, 0);
+      weeks.push({ label: end.slice(5).replace('-', '/'), value: b, end });
+    }
+    const minW = weeks.reduce((m, w) => (w.value < m.value ? w : m), { value: startCash, end: today });
+    const minBal = Math.min(startCash, minW.value);
+
     wrap.appendChild(el('div.card', {}, [
       el('div.big-num', { text: '現在の現預金 ¥' + U.yen(startCash) }),
-      el('p.muted.small', { text: '未入金の請求書（入金予定）と、手入力した入出金予定から、今後の現預金残高の見込みを表示します。' }),
+      el('p.muted.small', { text: '未入金の請求書・定期請求の見込み・手入力の予定から、今後12週間の現預金残高を見通します。' }),
+    ]));
+
+    // 残高見通しグラフ
+    wrap.appendChild(el('div.card', {}, [
+      el('h2', { text: '残高見通し（今後12週）' }),
+      ui.lineChart(weeks, { height: 210, color: '#0ea5e9', labelFmt: (l) => l }),
+      el('p.result-line.' + (minBal < 0 ? 'bad' : 'muted'), { text: minBal < 0
+        ? `⚠ 最低残高見込は ¥${U.yenSigned(minBal)}（${U.fmtDate(minW.end)}頃）。資金手当てをご検討ください。`
+        : `最低残高見込：¥${U.yen(minBal)}（${U.fmtDate(minW.end)}頃）` }),
     ]));
 
     const card = el('div.card');

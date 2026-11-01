@@ -188,8 +188,38 @@ A.ui = (function () {
     return wrap;
   };
 
+  // 折れ線グラフ（インラインSVG）。points=[{label,value}]。負値・ゼロ基線に対応。
+  const lineChart = (points, opts) => {
+    opts = opts || {};
+    const W = opts.width || 720, H = opts.height || 220, padL = 10, padR = 10, padB = 22, padT = 12;
+    const color = opts.color || '#0ea5e9';
+    const vals = points.map((p) => Number(p.value) || 0);
+    let max = Math.max(0, ...vals), min = Math.min(0, ...vals);
+    if (max === min) { max += 1; min -= 1; }
+    const chartH = H - padB - padT, chartW = W - padL - padR, n = points.length;
+    const x = (i) => (n <= 1 ? padL + chartW / 2 : padL + i * (chartW / (n - 1)));
+    const y = (v) => padT + (max - v) / (max - min) * chartH;
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const mk = (tag, attrs) => { const e = document.createElementNS(svgNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('class', 'line-chart'); svg.setAttribute('width', '100%');
+    // ゼロ基線
+    svg.appendChild(mk('line', { x1: padL, y1: y(0), x2: W - padR, y2: y(0), stroke: 'var(--line)', 'stroke-width': 1, 'stroke-dasharray': '3 3' }));
+    // 折れ線
+    if (n > 1) svg.appendChild(mk('polyline', { points: points.map((p, i) => `${x(i)},${y(vals[i])}`).join(' '), fill: 'none', stroke: color, 'stroke-width': 2 }));
+    points.forEach((p, i) => {
+      svg.appendChild(mk('circle', { cx: x(i), cy: y(vals[i]), r: 3, fill: vals[i] < 0 ? '#dc2626' : color }));
+      const lb = mk('text', { x: x(i), y: H - 7, 'text-anchor': 'middle', 'font-size': 10, fill: 'var(--muted)' });
+      lb.textContent = opts.labelFmt ? opts.labelFmt(p.label) : p.label;
+      svg.appendChild(lb);
+    });
+    const wrap = el('div.chart-wrap');
+    wrap.appendChild(svg);
+    return wrap;
+  };
+
   return {
     register, go, start, setOutlet, renderRoute, currentPath, queryParams,
-    toast, modal, confirm, pageHead, table, periodBar, money, barChart,
+    toast, modal, confirm, pageHead, table, periodBar, money, barChart, lineChart,
   };
 })();
