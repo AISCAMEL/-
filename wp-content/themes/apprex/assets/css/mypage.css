@@ -185,3 +185,4 @@
 .mp-policy summary{cursor:pointer;font-weight:700}
 .mp-policy p{font-size:.88rem;line-height:1.8;margin:10px 0 0}
 @media (max-width:600px){.mp-alert{flex-direction:column;align-items:stretch}}
+.mp-bank{margin:6px 0 0;padding:12px 14px;border-radius:10px;background:var(--bg);font-size:.92rem;line-height:1.8}

@@ -92,11 +92,19 @@ function apprex_bn_state( $id ) {
 		$s['url']   = $m( 'apprex_c_sq_invoice_url' );
 		$s['raw']   = $st;
 	} else {
-		// 振込：今月の支払い日。入金の確認（消し込み）が一度もない方は、期日を過ぎたかどうか分からないので、期日前の案内だけにする。
+		// 請求書（振込）：今月の支払い日。
 		$s['month'] = current_time( 'Y-m' );
 		$s['due']   = $s['month'] . '-' . sprintf( '%02d', $day );
 		$last       = $m( 'apprex_c_last_paid' );
-		$s['paid']  = $last ? ( strtotime( $last ) >= strtotime( $s['due'] ) - 25 * DAY_IN_SECONDS ) : null;
+		$recent     = $last && strtotime( $last ) >= strtotime( $s['due'] ) - 25 * DAY_IN_SECONDS;
+		if ( $m( 'apprex_c_mf_billing_id' ) && $m( 'apprex_c_mf_billing_month' ) === $s['month'] ) {
+			// MFクラウド請求書で今月分を発行済み：入金の状態が分かる。
+			$s['paid'] = $recent || ( function_exists( 'apprex_mf_is_paid' ) && apprex_mf_is_paid( $m( 'apprex_c_mf_billing_status' ) ) );
+			$s['mf']   = true;
+		} else {
+			// 入金の確認（消し込み）が一度もない方は、期日を過ぎたかどうか分からないので、期日前の案内だけにする。
+			$s['paid'] = $last ? $recent : null;
+		}
 	}
 	$today     = strtotime( current_time( 'Y-m-d' ) );
 	$s['days'] = (int) floor( ( $today - strtotime( $s['due'] ) ) / DAY_IN_SECONDS ); // 期日からの日数（前ならマイナス）。
@@ -136,6 +144,19 @@ function apprex_bn_month( $ym ) {
 	return preg_match( '/^(\d{4})-(\d{2})$/', (string) $ym, $m ) ? $m[1] . '年' . (int) $m[2] . '月' : (string) $ym;
 }
 
+/** お支払いのしかた（支払い方法で変わる）。 */
+function apprex_bn_how( $s ) {
+	if ( 'square' === $s['method'] ) {
+		return $s['url'] ? "こちらからカードでお支払いいただけます（Squareのお支払いページが開きます）。\n" . $s['url'] : 'ご登録のカードでのお支払いをお願いいたします。';
+	}
+	$bank = function_exists( 'apprex_inv_opt' ) ? trim( (string) apprex_inv_opt( 'apprex_inv_bank' ) ) : trim( (string) get_option( 'apprex_inv_bank', '' ) );
+	$t    = 'お振込をお願いいたします。請求書はメールでお送りしています。';
+	if ( '' !== $bank ) {
+		$t .= "\n\n【お振込先】\n" . $bank . "\n※ 振込手数料はお客様のご負担でお願いいたします。";
+	}
+	return $t;
+}
+
 /** 状態の短い説明（AI・管理画面・マイページ用）。 */
 function apprex_bn_state_text( $s ) {
 	$due = wp_date( 'n月j日', strtotime( $s['due'] ) );
@@ -169,9 +190,7 @@ function apprex_bn_message( $s, $stage ) {
 	$who  = $s['name'] ? $s['name'] . ' 様' : 'お客様';
 	$what = ( $s['title'] ? $s['title'] : 'ご利用料金' ) . ( isset( $s['month'] ) ? 'の' . apprex_bn_month( $s['month'] ) . '分' : '' ) . ( $s['amount'] ? '（月額 ' . number_format( $s['amount'] ) . '円・税抜）' : '' );
 	$due  = isset( $s['due'] ) ? wp_date( 'n月j日', strtotime( $s['due'] ) ) : '';
-	$how  = ( 'square' === $s['method'] && $s['url'] )
-		? "こちらからカードでお支払いいただけます。\n" . $s['url']
-		: 'お振込をお願いいたします（請求書はメールでお送りしています）。';
+	$how  = apprex_bn_how( $s );
 	$help = "ご事情でお支払いが難しい場合は、LINEで「支払いの相談」と送るか、このメールにご返信ください。担当者がご相談に応じます。\n行き違いでお支払い済みの場合は、ご容赦ください。";
 	$rule = "【お支払いが遅れた場合について】\n" . apprex_bn_policy();
 	switch ( $stage ) {
@@ -292,8 +311,12 @@ function apprex_bn_run() {
 		if ( $s ) {
 			$stage = apprex_bn_stage( $s );
 			// 期日を過ぎた案内の前に、Squareの最新の状態を確かめる（今朝払った方に送らないため）。
-			if ( isset( $order[ $stage ] ) && $order[ $stage ] >= 2 && 'square' === $s['method'] && function_exists( 'apprex_square_refresh_invoice' ) ) {
-				apprex_square_refresh_invoice( $id );
+			if ( isset( $order[ $stage ] ) && $order[ $stage ] >= 2 && ( 'square' === $s['method'] ? function_exists( 'apprex_square_refresh_invoice' ) : ! empty( $s['mf'] ) && function_exists( 'apprex_mf_refresh_invoice' ) ) ) {
+				if ( 'square' === $s['method'] ) {
+					apprex_square_refresh_invoice( $id );
+				} else {
+					apprex_mf_refresh_invoice( $id );
+				}
 				$s     = apprex_bn_state( $id );
 				$stage = $s ? apprex_bn_stage( $s ) : '';
 			}
@@ -365,8 +388,12 @@ function apprex_bn_ai_context( $ids ) {
 			continue;
 		}
 		$t = '- お支払いの状況（' . ( $s['title'] ? $s['title'] : '契約' ) . '）：' . apprex_bn_state_text( $s );
+		$t .= '・支払い方法 ' . ( 'square' === $s['method'] ? 'カード（Square）' : '請求書（振込）' );
 		if ( false === $s['paid'] && $s['url'] && 'square' === $s['method'] ) {
 			$t .= '・お支払いページ ' . $s['url'];
+		}
+		if ( 'invoice' === $s['method'] && true !== $s['paid'] && function_exists( 'apprex_inv_opt' ) && '' !== trim( (string) apprex_inv_opt( 'apprex_inv_bank' ) ) ) {
+			$t .= '・振込先 ' . preg_replace( '/\s+/u', ' ', trim( (string) apprex_inv_opt( 'apprex_inv_bank' ) ) );
 		}
 		if ( false === $s['paid'] && $s['days'] >= 0 ) {
 			$late = true;
@@ -443,7 +470,7 @@ function apprex_bn_settings() {
 
 	<h3>いまの状況</h3>
 	<?php if ( ! $rows ) : ?>
-		<p class="description">対象のご契約はまだありません（契約中で、Squareの請求書があるか、振込のご契約が対象です）。</p>
+		<p class="description">対象のご契約はまだありません（契約中で、Squareの請求書があるカード払いか、請求書（振込）のご契約が対象です）。</p>
 	<?php else : ?>
 		<table class="widefat striped" style="max-width:980px">
 			<thead><tr><th>お客様</th><th>支払い方法</th><th>状態</th><th>次の案内</th><th>LINE</th></tr></thead>
@@ -463,7 +490,7 @@ function apprex_bn_settings() {
 				?>
 				<tr>
 					<td><a href="<?php echo esc_url( admin_url( 'post.php?post=' . $s['id'] . '&action=edit' ) ); ?>"><?php echo esc_html( $s['name'] ? $s['name'] : '契約#' . $s['id'] ); ?></a></td>
-					<td><?php echo 'square' === $s['method'] ? 'Square（カード）' : '振込'; ?></td>
+					<td><?php echo 'square' === $s['method'] ? 'カード（Square）' : '請求書（振込）'; ?></td>
 					<td><?php echo esc_html( apprex_bn_state_text( $s ) ); ?></td>
 					<td><?php echo esc_html( $next ); ?><?php if ( $b ) : ?><details><summary style="cursor:pointer;color:#2271b1">文面を見る</summary><pre style="white-space:pre-wrap;font-size:12px;background:#f6f7f7;padding:8px;max-width:520px"><?php echo esc_html( $t . "\n\n" . $b ); ?></pre></details><?php endif; ?></td>
 					<td><?php echo '' !== apprex_bn_line_uid( $s['id'] ) ? '連携済み' : '—'; ?></td>
@@ -517,6 +544,7 @@ add_action( 'admin_post_apprex_bn_test', function () {
 	$uid  = isset( $_POST['uid_manual'] ) ? sanitize_text_field( wp_unslash( $_POST['uid_manual'] ) ) : '';
 	$uid  = '' !== $uid ? $uid : ( isset( $_POST['uid'] ) ? sanitize_text_field( wp_unslash( $_POST['uid'] ) ) : '' );
 	$kind = isset( $_POST['kind'] ) ? sanitize_key( wp_unslash( $_POST['kind'] ) ) : 'all';
+	$how  = ( isset( $_POST['how'] ) && 'invoice' === $_POST['how'] ) ? 'invoice' : 'square';
 	$back = admin_url( 'options-general.php?page=apprex-line' );
 	set_transient( 'apprex_bn_test_uid_' . get_current_user_id(), $uid, DAY_IN_SECONDS );
 	if ( '' === $uid || ! function_exists( 'apprex_line_push' ) ) {
@@ -526,12 +554,12 @@ add_action( 'admin_post_apprex_bn_test', function () {
 	$me     = wp_get_current_user();
 	$sample = array(
 		'id'        => 0,
-		'method'    => 'square',
+		'method'    => $how,
 		'title'     => 'アプリ スタート',
 		'name'      => $me->display_name ? $me->display_name : 'テスト',
 		'email'     => '',
 		'amount'    => 39800,
-		'url'       => function_exists( 'apprex_mypage_url' ) ? apprex_mypage_url() : home_url( '/mypage/' ),
+		'url'       => 'square' === $how ? '［ここに、お客様ごとのSquareのお支払いページのURLが入ります］' : '',
 		'month'     => wp_date( 'Y-m' ),
 		'renewal'   => wp_date( 'Y-m-d', strtotime( '+30 days', current_time( 'timestamp' ) ) ),
 		'left'      => 30,
@@ -556,7 +584,11 @@ add_action( 'admin_post_apprex_bn_test', function () {
 		}
 		$texts = array( $q, '（ここにAIの答えが続きます）' );
 	}
-	$msgs = array( array( 'type' => 'text', 'text' => '【テスト送信】お支払い・契約の自動案内の見本です。金額・日付は見本です。' ) );
+	$intro = '【テスト送信】お支払い・契約の自動案内の見本です（' . ( 'square' === $how ? 'カード払い' : '請求書（振込）払い' ) . '）。金額・日付は見本です。';
+	if ( 'square' === $how ) {
+		$intro .= "\n\n本番では「お支払いページ」のところに、お客様ごとのSquareのお支払いページのURLが入ります。押すと、カード番号を入れる画面がそのまま開きます。";
+	}
+	$msgs = array( array( 'type' => 'text', 'text' => $intro ) );
 	foreach ( $texts as $t ) {
 		$msgs[] = array( 'type' => 'text', 'text' => mb_substr( $t, 0, 4900 ) );
 	}
@@ -613,6 +645,11 @@ function apprex_bn_test_box() {
 				</select>
 				<p class="description">ご自分のLINEで公式アカウントを友だち追加し、何か話しかけると「友だち」に出てきます。名前が分からないときは、いちばん新しい日付のものがご自分です。</p>
 				<details style="margin-top:6px"><summary style="cursor:pointer;color:#2271b1">userId を直接入れる</summary><input type="text" name="uid_manual" class="regular-text" placeholder="U××××…" style="margin-top:6px"></details>
+			</td></tr>
+			<tr><th scope="row">支払い方法</th><td>
+				<label style="margin-right:14px"><input type="radio" name="how" value="square" checked> カード払い（Square）</label>
+				<label><input type="radio" name="how" value="invoice"> 請求書（振込）払い</label>
+				<p class="description">ご契約の「支払い方法」に合わせて、案内の文面が自動で変わります。</p>
 			</td></tr>
 			<tr><th scope="row">送る案内</th><td>
 				<select name="kind">

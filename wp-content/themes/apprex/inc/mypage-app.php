@@ -241,7 +241,7 @@ function apprex_mypage_app() {
         <div class="mp-alert">
           <div><b><?php echo esc_html( 0 === $p['days'] ? '本日がお支払い期日です' : 'お支払いが確認できていません（期日から' . $p['days'] . '日）' ); ?></b>
           <span><?php echo esc_html( $p['plan'] . '・' . $p['month'] . '分' . ( $p['amount'] ? '・¥' . number_format( $p['amount'] ) . '（税抜）' : '' ) ); ?>。ご事情でお支払いが難しい場合は、早めにご相談ください。</span></div>
-          <?php if ( $p['url'] && 'square' === $p['method'] ) : ?><a class="mp-btn is-pri" href="<?php echo esc_url( $p['url'] ); ?>" target="_blank" rel="noopener">カードで支払う</a><?php else : ?><a class="mp-btn" href="#billing">お支払いを見る</a><?php endif; ?>
+          <?php if ( $p['url'] && 'square' === $p['method'] ) : ?><a class="mp-btn is-pri" href="<?php echo esc_url( $p['url'] ); ?>" target="_blank" rel="noopener">カードで支払う</a><?php else : ?><a class="mp-btn" href="#billing">振込先を見る</a><?php endif; ?>
         </div>
       <?php endforeach; ?>
       <div class="mp-kpis">
@@ -382,6 +382,8 @@ function apprex_mypage_app() {
           <div class="mp-card-h"><h2>お支払いの状況</h2><?php echo apprex_mp_badge( $pl[0], $pl[1] ); // phpcs:ignore ?></div>
           <?php echo apprex_mp_dl( array( array( '内容', $p['plan'] ), array( '対象月', $p['month'] ), array( '金額（税抜）', $p['amount'] ? '¥' . number_format( $p['amount'] ) : '' ), array( 'お支払い期日', wp_date( 'Y年n月j日', strtotime( $p['due'] ) ) ), array( '状況', apprex_bn_state_text( $p ) ) ) ); // phpcs:ignore ?>
           <?php if ( false === $p['paid'] && $p['url'] && 'square' === $p['method'] ) : ?><div class="mp-row-acts"><a class="mp-btn is-pri" href="<?php echo esc_url( $p['url'] ); ?>" target="_blank" rel="noopener">カードで支払う</a></div><?php endif; ?>
+          <?php $bank = 'invoice' === $p['method'] && function_exists( 'apprex_inv_opt' ) ? trim( (string) apprex_inv_opt( 'apprex_inv_bank' ) ) : ''; ?>
+          <?php if ( '' !== $bank && true !== $p['paid'] ) : ?><h3 class="mp-sub">お振込先</h3><p class="mp-bank"><?php echo nl2br( esc_html( $bank ) ); ?></p><p class="mp-note">請求書はメールでお送りしています。振込手数料はお客様のご負担でお願いいたします。</p><?php endif; ?>
         </div>
       <?php endforeach; ?>
       <?php if ( $d['pay'] && function_exists( 'apprex_bn_policy' ) ) : ?>
