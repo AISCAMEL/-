@@ -61,6 +61,7 @@ export const api = {
   notifications: () => request<any[]>('/api/notifications'),
   saveNotificationSettings: (body: any) =>
     request<any>('/api/settings/notification', { method: 'PUT', body: JSON.stringify(body) }),
+  testNotification: () => request<any>('/api/settings/notification/test', { method: 'POST' }),
 
   callerRules: () => request<any[]>('/api/caller-rules'),
   createCallerRule: (body: any) => request<any>('/api/caller-rules', { method: 'POST', body: JSON.stringify(body) }),

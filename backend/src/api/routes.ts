@@ -419,6 +419,30 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
     if (err) return reply.code(400).send({ error: err });
     return q.updateSettings(p.tenantId, body);
   });
+  // メール本番化の動作確認用：保存済みの通知先へテストメールを1通送る。
+  app.post('/api/settings/notification/test', { preHandler: authenticate }, async (req, reply) => {
+    const p = req.principal!;
+    if (!needTenant(p.tenantId)) return reply.code(400).send({ error: 'tenant required' });
+    const s = await q.getSettings(p.tenantId);
+    const to = (s?.notification_email ?? '').trim();
+    if (!to) return reply.code(400).send({ error: '通知先メールアドレスが未設定です。先に保存してください。' });
+    const from = (s?.mail_from && String(s.mail_from).trim()) ? String(s.mail_from).trim() : undefined;
+    const subject = '【AIオペレーター24】テスト送信';
+    const text = [
+      'これはメール通知の送信テストです。',
+      'このメールが届いていれば、メール通知は正常に動作しています。',
+      '',
+      `送信元: ${from ?? '（全体の既定）'}`,
+      `宛先: ${to}`,
+    ].join('\n');
+    const r = await sendEmail(to, subject, text, from);
+    await q.addNotification({
+      tenantId: p.tenantId, callId: null, type: 'email', destination: to,
+      status: r.ok ? 'sent' : 'failed', subject, error: r.error ?? null,
+    }).catch(() => {});
+    if (!r.ok) return reply.code(502).send({ error: r.error ?? '送信に失敗しました。' });
+    return { ok: true, destination: to };
+  });
 
   // ---- 発信者ルール（ブロック/専用アナウンス） ----
   app.get('/api/caller-rules', { preHandler: authenticate }, async (req, reply) => {

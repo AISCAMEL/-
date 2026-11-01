@@ -34,6 +34,19 @@ export default function NotificationSettingsPage() {
     }
   }
 
+  async function testSend() {
+    setMsg('テスト送信中…');
+    try {
+      const r = await api.testNotification();
+      setMsg(`✅ テストメールを送信しました（宛先: ${r.destination}）。受信トレイをご確認ください。`);
+      api.notifications().then(setLogs).catch(() => {});
+    } catch (err: any) {
+      const m = String(err?.message ?? err);
+      const i = m.indexOf('{');
+      setMsg(`エラー: ${i >= 0 ? (() => { try { return JSON.parse(m.slice(i)).error ?? m; } catch { return m; } })() : m}`);
+    }
+  }
+
   return (
     <div>
       <PageTitle title="通知設定" sub="通話終了後の通知先とタイミングを設定します。" />
@@ -63,10 +76,12 @@ export default function NotificationSettingsPage() {
             <Toggle label="担当者転送があった時" checked={!!s.notify_on_transfer} onChange={(v) => field('notify_on_transfer', v)} />
           </div>
 
-          <div className="flex items-center gap-3 pt-2">
+          <div className="flex flex-wrap items-center gap-3 pt-2">
             <button className="rounded-lg bg-brand px-5 py-2 text-sm font-medium text-white hover:bg-brand-dark">保存</button>
+            <button type="button" onClick={testSend} className="rounded-lg border border-brand/40 bg-brand-light/40 px-4 py-2 text-sm font-medium text-brand hover:bg-brand-light">テスト送信</button>
             {msg && <span className="text-sm text-brand">{msg}</span>}
           </div>
+          <p className="text-xs text-gray-400">「テスト送信」は、上の<strong>通知先メールアドレス</strong>宛てに確認メールを1通送ります（先に保存してください）。</p>
         </form>
       </Card>
 
