@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 11.0
+ * Version: 11.1
  * Author: CARMEL
  */
 
@@ -97,6 +97,22 @@ function carmel3_auto_get_settings() {
         'autopost_ig_user'  => '',                       // Instagram ビジネスアカウントID（数字）
         'autopost_ig_token' => '',                       // Meta（Instagram Graph API）アクセストークン
         'autopost_ig_tags'  => '#中古車 #カーメル #carmel', // IG投稿の末尾に付ける既定ハッシュタグ
+        // 毎日記事エンジン（Claudeでネタ出し→記事→画像→自動投稿）
+        'daily_enabled'   => 0,
+        'daily_time'      => '10:00',
+        'daily_post_type' => 'media_article',
+        'daily_themes'    => "お役立ち情報（中古車の選び方・購入のコツ）\n信用回復ローン（審査が不安な方向けの情報）\n自社ローン（仕組み・メリット・注意点）\n車の維持費・節約・税金・保険\n車検・メンテナンス・故障の予防\n乗り換え・下取り・買取のコツ\nローン審査に通りやすくするための準備",
+        'daily_notes'     => '',        // AIに読ませる補足情報（店の強み・キャンペーン・対応エリア等）
+        'daily_area'      => '',        // 対象地域（任意）
+        'daily_publish'   => 0,         // 0=下書き保存 / 1=公開
+        'daily_images'    => 1,         // アイキャッチ（メディア記事はバナーも）をOpenRouterで生成
+        'daily_autopost'  => array(),   // 生成後に自動投稿する先（instagram / gmb）
+        // 既存記事の作り直し（Claudeリライト＋画像作り直し）
+        'rewrite_enabled'   => 0,
+        'rewrite_post_type' => 'media_article',
+        'rewrite_mode'      => 'both',  // both=文章＋画像 / text=文章のみ / image=画像のみ
+        'rewrite_per_day'   => 1,
+        'rewrite_time'      => '14:00',
         // 追加で自動生成する投稿タイプ（メディア記事は常に本体エンジンで生成。ここは“追加分”）
         'extra_types'  => array(),
         // 投稿タイプごとの「書き方（AI指示プロンプト）」 array(post_type => 指示文)
@@ -1917,6 +1933,9 @@ function carmel3_claude_messages($key, $system, $user, $model, $max_tokens, $tim
     if (isset($data['stop_reason']) && $data['stop_reason'] === 'refusal') {
         return array('error' => 'Claudeが応答を拒否しました（内容をご確認ください）');
     }
+    if (isset($data['stop_reason']) && $data['stop_reason'] === 'max_tokens') {
+        return array('error' => '文章が長すぎて途中で切れました（「最大トークン」を増やすか、記事の長さを短めにしてください）');
+    }
     $text = '';
     if (isset($data['content']) && is_array($data['content'])) {
         foreach ($data['content'] as $blk) {
@@ -1933,6 +1952,11 @@ function carmel3_llm_chat($messages, $model = '', $temp = 0.7, $timeout = 90) {
     $s = carmel3_auto_get_settings();
     $engine = isset($s['text_engine']) ? $s['text_engine'] : 'core';
     $key    = isset($s['claude_api_key']) ? trim((string)$s['claude_api_key']) : '';
+    // 毎日記事・作り直しエンジンはClaudeを強制（キーがあれば）。裏側実行なので長文でも切れないよう待ち時間を延ばす
+    if (!empty($GLOBALS['carmel3_force_claude'])) {
+        $engine  = 'claude';
+        $timeout = max((int) $timeout, 300);
+    }
 
     if ($engine === 'claude' && $key !== '') {
         $system = ''; $userparts = array();
@@ -1946,6 +1970,7 @@ function carmel3_llm_chat($messages, $model = '', $temp = 0.7, $timeout = 90) {
         }
         $cmodel = isset($s['claude_model']) ? trim((string)$s['claude_model']) : '';
         $maxtok = isset($s['claude_max_tokens']) ? (int)$s['claude_max_tokens'] : 8000;
+        if (!empty($GLOBALS['carmel3_force_claude'])) $maxtok = max($maxtok, 8000); // 長文記事が途中で切れないように
         return carmel3_claude_messages($key, $system, implode("\n\n", $userparts), $cmodel, $maxtok, $timeout);
     }
 
@@ -2025,7 +2050,7 @@ function carmel3_gen_post($post_type, $item, $s, $existing_id = 0) {
     if (!empty($res['error'])) return new WP_Error('api', $res['error']);
 
     $content = isset($res['content']) ? (string)$res['content'] : '';
-    $json = function_exists('carmel_extract_json_from_text') ? carmel_extract_json_from_text($content) : json_decode(trim($content), true);
+    $json = carmel3_parse_json_loose($content);
     if (!is_array($json)) return new WP_Error('parse', 'AI応答の解析に失敗');
 
     $t  = sanitize_text_field(isset($json['title']) && $json['title'] !== '' ? $json['title'] : $title);
@@ -2182,6 +2207,7 @@ function carmel3_auto_register_menu() {
         // 「カーメル管理」の中にサブメニューとして入れる
         add_submenu_page($parent, 'かんたんホーム', 'かんたんホーム', 'manage_options', 'carmel3-home', 'carmel3_home_page');
         add_submenu_page($parent, 'CARMEL 自動生成', '自動生成', 'manage_options', 'carmel3-auto', 'carmel3_auto_settings_page');
+        add_submenu_page($parent, '毎日記事（Claude）・既存記事の作り直し', '毎日記事（Claude）', 'manage_options', 'carmel3-daily', 'carmel3_daily_page');
         add_submenu_page($parent, 'ニュースを作る（指示して生成）', 'ニュースを作る', 'manage_options', 'carmel3-news', 'carmel3_news_page');
         add_submenu_page($parent, '元ネタから各媒体へ展開', '元ネタから展開', 'manage_options', 'carmel3-repurpose', 'carmel3_repurpose_page');
         add_submenu_page($parent, 'Slackでニュース提案・投稿', 'Slack連携', 'manage_options', 'carmel3-slack', 'carmel3_slack_page');
@@ -2193,6 +2219,7 @@ function carmel3_auto_register_menu() {
         // 親が見つからない場合は従来どおりトップに出す（消えない保険）
         add_menu_page('かんたんホーム', 'かんたんホーム', 'manage_options', 'carmel3-home', 'carmel3_home_page', 'dashicons-admin-home', 3);
         add_menu_page('CARMEL 自動生成', 'CARMEL自動生成', 'manage_options', 'carmel3-auto', 'carmel3_auto_settings_page', 'dashicons-update', 4);
+        add_menu_page('毎日記事（Claude）', '毎日記事（Claude）', 'manage_options', 'carmel3-daily', 'carmel3_daily_page', 'dashicons-edit-page', 4);
         add_menu_page('ニュースを作る（指示して生成）', 'ニュースを作る', 'manage_options', 'carmel3-news', 'carmel3_news_page', 'dashicons-megaphone', 5);
         add_menu_page('元ネタから各媒体へ展開', '元ネタから展開', 'manage_options', 'carmel3-repurpose', 'carmel3_repurpose_page', 'dashicons-share', 6);
         add_menu_page('Slackでニュース提案・投稿', 'Slack連携', 'manage_options', 'carmel3-slack', 'carmel3_slack_page', 'dashicons-format-chat', 7);
@@ -5911,6 +5938,727 @@ function carmel3_autopost_page() {
       }
     })();
     </script>
+    <?php
+}
+
+/* =========================================================================
+ *  毎日記事エンジン（Claude）＋自動投稿 ／ 既存記事の作り直し  v11.1
+ *  - 毎日1本：テーマをローテーション → Claudeが既存記事と重ならない企画を立案 → Claudeで本文
+ *    → OpenRouterで画像（Claude APIは画像生成不可のため）→ GMB/Instagramへ自動投稿 → Slack通知
+ *  - 作り直し：古い記事から1日N本ずつClaudeでリライト＋画像作り直し。URL（スラッグ）は変えない。
+ *    作り直し前の内容は自動バックアップし「元に戻す」が可能。
+ * ========================================================================= */
+
+if (!defined('CARMEL3_DAILY_HOOK'))   define('CARMEL3_DAILY_HOOK', 'carmel3_daily_tick');
+if (!defined('CARMEL3_DAILY_NOW'))    define('CARMEL3_DAILY_NOW', 'carmel3_daily_now');
+if (!defined('CARMEL3_REWRITE_HOOK')) define('CARMEL3_REWRITE_HOOK', 'carmel3_rewrite_tick');
+if (!defined('CARMEL3_REWRITE_NOW'))  define('CARMEL3_REWRITE_NOW', 'carmel3_rewrite_now');
+
+add_action(CARMEL3_DAILY_HOOK, function () { carmel3_daily_run(false); });
+add_action(CARMEL3_DAILY_NOW, function () { carmel3_daily_run(true); });
+add_action(CARMEL3_REWRITE_HOOK, function () { carmel3_rewrite_run(false, 0); });
+add_action(CARMEL3_REWRITE_NOW, function ($post_id = 0) { carmel3_rewrite_run(true, (int) $post_id); }, 10, 1);
+
+// ON/OFFと時刻に合わせて毎日の予約を作り直す
+function carmel3_daily_reschedule($s = null) {
+    if ($s === null) $s = carmel3_auto_get_settings();
+    $plan = array(
+        CARMEL3_DAILY_HOOK   => array(!empty($s['daily_enabled']),   $s['daily_time']),
+        CARMEL3_REWRITE_HOOK => array(!empty($s['rewrite_enabled']), $s['rewrite_time']),
+    );
+    foreach ($plan as $hook => $p) {
+        $ts = wp_next_scheduled($hook);
+        if ($ts) wp_unschedule_event($ts, $hook);
+        if ($p[0]) wp_schedule_event(carmel3_next_run_ts($p[1]), 'daily', $hook);
+    }
+}
+
+add_action('init', function () {
+    $s = carmel3_auto_get_settings();
+    if ((!empty($s['daily_enabled']) && !wp_next_scheduled(CARMEL3_DAILY_HOOK))
+        || (!empty($s['rewrite_enabled']) && !wp_next_scheduled(CARMEL3_REWRITE_HOOK))) {
+        carmel3_daily_reschedule($s);
+    }
+});
+
+function carmel3_state_get($opt) {
+    $v = get_option($opt, array());
+    return is_array($v) ? $v : array();
+}
+
+// 実行ログ（新しい順に30件）
+function carmel3_state_log($opt, $msg, $ok = true, $post_id = 0) {
+    $st  = carmel3_state_get($opt);
+    $log = (isset($st['log']) && is_array($st['log'])) ? $st['log'] : array();
+    array_unshift($log, array('t' => current_time('mysql'), 'msg' => (string) $msg, 'ok' => $ok ? 1 : 0, 'post_id' => (int) $post_id));
+    $st['log'] = array_slice($log, 0, 30);
+    update_option($opt, $st, false);
+}
+
+function carmel3_claude_ready($s) {
+    return trim((string) (isset($s['claude_api_key']) ? $s['claude_api_key'] : '')) !== '';
+}
+
+function carmel3_image_ready() {
+    if (!function_exists('carmel3_img_generate_openrouter')) return false;
+    if (function_exists('carmel3_img_api_key') && carmel3_img_api_key() !== '') return true;
+    return function_exists('carmel_openrouter_is_ready') && carmel_openrouter_is_ready();
+}
+
+// AIの応答からJSONを取り出す（コードブロック・前後の説明があっても読む）
+function carmel3_parse_json_loose($text) {
+    $text = (string) $text;
+    if (function_exists('carmel_extract_json_from_text')) {
+        $j = carmel_extract_json_from_text($text);
+        if (is_array($j)) return $j;
+    }
+    $raw = trim(preg_replace('/^```(?:json)?|```$/im', '', trim($text)));
+    $j = json_decode($raw, true);
+    if (is_array($j)) return $j;
+    $a = strpos($raw, '{');
+    $b = strrpos($raw, '}');
+    if ($a !== false && $b !== false && $b > $a) {
+        $j = json_decode(substr($raw, $a, $b - $a + 1), true);
+        if (is_array($j)) return $j;
+    }
+    return null;
+}
+
+// ローン・審査の話題で守る表現ルール（誇大・断定表現の防止）
+function carmel3_loan_compliance_text() {
+    return "【表現ルール（ローン・審査の話題では必ず守る）】\n"
+        . "・「審査なし」「誰でも必ず通る」「ブラックでも100%OK」など、審査通過を断定・保証する表現は禁止\n"
+        . "・自社ローン／信用回復ローンにも審査や条件があることを正しく伝え、金利・手数料・総支払額を確認する大切さに触れる\n"
+        . "・借りすぎを勧めない。無理のない返済計画の大切さに触れる\n"
+        . "・金額・金利・実績・キャンペーン条件など、与えられていない具体的な事実は作らない\n";
+}
+
+// 記事の長さ指示（設定 article_length に応じる）
+function carmel3_length_directive($s) {
+    $len = isset($s['article_length']) ? $s['article_length'] : 'standard';
+    if ($len === 'short')    { $cmin = 800;  $cmax = 1200; $hmin = 3; $hmax = 4; }
+    elseif ($len === 'long') { $cmin = 2500; $cmax = 3500; $hmin = 5; $hmax = 7; }
+    else                     { $cmin = 1500; $cmax = 2200; $hmin = 4; $hmax = 5; }
+    return "\n【文章量（重要・必ず守る）】\n"
+        . "・本文 content_html は日本語で合計 {$cmin}〜{$cmax}文字。短くしないこと。\n"
+        . "・<h2>見出しを {$hmin}〜{$hmax}個作り、各見出しの下に2〜4段落（<p>）を書く。\n"
+        . "・具体例・手順・チェックリスト（<ul><li>）・数字を入れ、読み応えのある内容にする。\n";
+}
+
+/* ----- 今日の企画（ネタ出し）をClaudeが立てる ----- */
+function carmel3_daily_pick_topic($s) {
+    $themes = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', (string) $s['daily_themes']))));
+    if (empty($themes)) $themes = array('中古車購入のお役立ち情報');
+    $st     = carmel3_state_get('carmel3_daily_state');
+    $cursor = isset($st['cursor']) ? (int) $st['cursor'] : 0;
+    $theme  = $themes[$cursor % count($themes)];
+
+    // 既存記事のタイトル（重複を避けるために読ませる）
+    $ids = get_posts(array(
+        'post_type'   => $s['daily_post_type'],
+        'post_status' => array('publish', 'draft', 'pending', 'future'),
+        'numberposts' => 60,
+        'fields'      => 'ids',
+        'orderby'     => 'date',
+        'order'       => 'DESC',
+    ));
+    $titles = array();
+    foreach ($ids as $id) $titles[] = get_the_title($id);
+    $recent = (isset($st['recent']) && is_array($st['recent'])) ? $st['recent'] : array();
+    $titles = array_slice(array_values(array_unique(array_filter(array_merge($recent, $titles)))), 0, 70);
+
+    $month = (int) current_time('n');
+    $today = current_time('Y年n月j日');
+    $sys = 'あなたは中古車販売店カーメル（合同会社アイズ）のWebメディア編集長です。集客につながるSEO記事の企画を立てます。日本語で、JSONのみ返します。';
+    $user = "今日（{$today}）公開する記事を1本だけ企画してください。\n"
+        . "【今日のテーマ】{$theme}\n";
+    if (trim((string) $s['daily_area']) !== '') $user .= "【対象地域】" . trim((string) $s['daily_area']) . "\n";
+    if (trim((string) $s['daily_notes']) !== '') {
+        $user .= "【お店の情報・強み・最新トピック（参考にする。事実として使えるのはこの範囲だけ）】\n" . trim((string) $s['daily_notes']) . "\n";
+    }
+    $user .= "【既存記事のタイトル（これらと内容・切り口が重ならないこと）】\n- " . (empty($titles) ? '（まだありません）' : implode("\n- ", $titles)) . "\n\n"
+        . "企画の条件:\n"
+        . "・検索する人の悩み（検索意図）が明確で、読むと来店・相談・問い合わせにつながるもの\n"
+        . "・{$month}月の季節やタイミングを活かせるなら活かす（無理にこじつけない）\n"
+        . "・タイトルは32文字前後。具体的で、対象読者や得られることが分かるもの。煽りや誇大表現はしない\n"
+        . carmel3_loan_compliance_text()
+        . "次のJSONだけを返す:\n"
+        . "{\"title\":\"\",\"keyword\":\"メインの検索キーワード（2〜4語）\",\"target\":\"想定読者\",\"angle\":\"この記事ならではの切り口・読者が得られること\",\"outline\":[\"h2見出し案1\",\"h2見出し案2\",\"h2見出し案3\",\"h2見出し案4\"]}";
+
+    $res = carmel3_llm_chat(array(
+        array('role' => 'system', 'content' => $sys),
+        array('role' => 'user',   'content' => $user),
+    ), '', 0.8, 120);
+    if (!empty($res['error'])) return new WP_Error('topic', '企画の作成に失敗（' . $res['error'] . '）');
+    $json = carmel3_parse_json_loose(isset($res['content']) ? $res['content'] : '');
+    if (!is_array($json) || empty($json['title'])) return new WP_Error('topic', '企画のJSONを読み取れませんでした');
+
+    $outline = (isset($json['outline']) && is_array($json['outline'])) ? array_map('sanitize_text_field', $json['outline']) : array();
+    return array(
+        'theme'   => $theme,
+        'title'   => sanitize_text_field($json['title']),
+        'keyword' => sanitize_text_field(isset($json['keyword']) ? $json['keyword'] : ''),
+        'target'  => sanitize_text_field(isset($json['target']) ? $json['target'] : ''),
+        'angle'   => sanitize_text_field(isset($json['angle']) ? $json['angle'] : ''),
+        'outline' => $outline,
+    );
+}
+
+/* ----- 生成した記事を各SNSへ自動投稿（画像変換＋キャプション＋投稿） ----- */
+function carmel3_autopost_auto($post_id, $platforms) {
+    $cap = carmel3_autopost_captions($post_id, $platforms, '');
+    if (!empty($cap['error'])) return 'SNS: 文章の作成に失敗（' . $cap['error'] . '）';
+    $s     = carmel3_auto_get_settings();
+    $names = carmel3_autopost_platforms();
+    $out   = array();
+    foreach ($platforms as $p) {
+        $caption = isset($cap['items'][$p]) ? $cap['items'][$p] : '';
+        if ($caption === '') { $out[] = $names[$p] . ': 文章なし'; continue; }
+        $att = carmel3_autopost_make_variant($post_id, $p);
+        if (is_wp_error($att)) { $out[] = $names[$p] . ': 画像の準備に失敗（' . $att->get_error_message() . '）'; continue; }
+        $url = wp_get_attachment_url($att);
+        update_post_meta($post_id, '_carmel3_ap_caption_' . $p, $caption);
+        update_post_meta($post_id, '_carmel3_ap_img_' . $p, (int) $att);
+        $r = ($p === 'instagram')
+            ? carmel3_ig_publish($s['autopost_ig_user'], $s['autopost_ig_token'], $url, $caption)
+            : carmel3_autopost_gmb_post($caption, $url);
+        if (!empty($r['success'])) update_post_meta($post_id, '_carmel3_ap_posted_' . $p, current_time('mysql'));
+        $out[] = $names[$p] . ': ' . $r['message'];
+    }
+    return implode(' / ', $out);
+}
+
+/* ----- 毎日記事：1本作る ----- */
+function carmel3_daily_run($manual = false) {
+    $s = carmel3_auto_get_settings();
+    if (!$manual && empty($s['daily_enabled'])) return;
+    $opt   = 'carmel3_daily_state';
+    $today = current_time('Y-m-d');
+    if (!$manual) {
+        $st = carmel3_state_get($opt);
+        if (isset($st['last_date']) && $st['last_date'] === $today) return; // 1日1本
+        $st['last_date'] = $today; // 失敗しても同じ日に連続で再試行しない
+        update_option($opt, $st, false);
+    }
+    if (get_transient('carmel3_daily_lock')) return;
+    set_transient('carmel3_daily_lock', 1, 15 * MINUTE_IN_SECONDS);
+    @set_time_limit(900);
+    $GLOBALS['carmel3_force_claude'] = true;
+
+    try {
+        if (!carmel3_claude_ready($s)) {
+            carmel3_state_log($opt, '中止: Claude APIキーが未設定です（このページの「Claude API」欄で設定してください）', false);
+            return;
+        }
+        $pt = post_type_exists($s['daily_post_type']) ? $s['daily_post_type'] : 'post';
+
+        $topic = carmel3_daily_pick_topic($s);
+        if (is_wp_error($topic)) {
+            carmel3_state_log($opt, '失敗: ' . $topic->get_error_message(), false);
+            return;
+        }
+        $st = carmel3_state_get($opt);
+        $st['cursor'] = (isset($st['cursor']) ? (int) $st['cursor'] : 0) + 1; // 次回は次のテーマ
+        update_option($opt, $st, false);
+
+        $brief = '';
+        if ($topic['target'] !== '') $brief .= "【想定読者】{$topic['target']}\n";
+        if ($topic['angle'] !== '')  $brief .= "【切り口・読者が得られること】{$topic['angle']}\n";
+        if (!empty($topic['outline'])) $brief .= "【見出し構成の案（参考。より良くしてよい）】\n- " . implode("\n- ", $topic['outline']) . "\n";
+        if (trim((string) $s['daily_notes']) !== '') {
+            $brief .= "【お店の情報（事実として使ってよいのはこの範囲）】\n" . trim((string) $s['daily_notes']) . "\n";
+        }
+        $brief .= carmel3_loan_compliance_text();
+
+        $item = array(
+            'title'      => $topic['title'],
+            'keyword'    => $topic['keyword'] !== '' ? $topic['keyword'] : $topic['title'],
+            'category'   => $topic['theme'],
+            'account'    => 'main',
+            'prefecture' => '',
+            'city'       => trim((string) $s['daily_area']),
+            'brief'      => $brief,
+        );
+
+        // 本文はClaude。画像・公開はこの後で（画像が揃ってから公開するため）
+        $s2 = $s;
+        $s2['text_engine'] = 'claude';
+        $s2['publish']     = 0;
+        $s2['gen_images']  = 0;
+        $pid = carmel3_gen_post($pt, $item, $s2);
+        if (is_wp_error($pid)) {
+            carmel3_state_log($opt, '失敗: 記事の生成（' . $pid->get_error_message() . '）／企画「' . $topic['title'] . '」', false);
+            return;
+        }
+        update_post_meta($pid, '_carmel3_daily', $today);
+
+        if ($pt === 'media_article') {
+            // メディア記事のリード文（テーマのヘッダーに出る）
+            $ex = (string) get_post_field('post_excerpt', $pid);
+            if ($ex !== '') {
+                if (function_exists('update_field')) update_field('lead_text', $ex, $pid);
+                update_post_meta($pid, 'lead_text', $ex);
+            }
+            if (!empty($s['fix_cta'])) carmel3_auto_fix_cta($pid, $s);
+        }
+
+        $img_msg = '';
+        if (!empty($s['daily_images'])) {
+            $img_msg = ($pt === 'media_article') ? carmel3_img_attach_to_post($pid) : carmel3_img_set_featured($pid, $s, false);
+        }
+
+        if (!empty($s['daily_publish'])) {
+            wp_update_post(array('ID' => $pid, 'post_status' => 'publish'));
+        }
+
+        $ap_msg = '';
+        $pfs = array_values(array_intersect((array) $s['daily_autopost'], array('instagram', 'gmb')));
+        if (!empty($pfs)) $ap_msg = carmel3_autopost_auto($pid, $pfs);
+
+        $title  = get_the_title($pid);
+        $status = (get_post_status($pid) === 'publish') ? '公開' : '下書き保存';
+        $msg = '「' . $title . '」を' . $status . '（テーマ: ' . $topic['theme'] . '）'
+            . ($img_msg !== '' ? ' | 画像: ' . $img_msg : '')
+            . ($ap_msg !== '' ? ' | ' . $ap_msg : '');
+        carmel3_state_log($opt, $msg, true, $pid);
+
+        $st = carmel3_state_get($opt);
+        $recent = (isset($st['recent']) && is_array($st['recent'])) ? $st['recent'] : array();
+        array_unshift($recent, $title);
+        $st['recent'] = array_slice($recent, 0, 60);
+        update_option($opt, $st, false);
+
+        if (function_exists('carmel_history_add')) {
+            carmel_history_add('article_generated', $title, $pid, array('engine' => 'claude_daily'));
+        }
+        if (!empty($s['slack_enabled']) && trim((string) $s['slack_webhook']) !== '') {
+            $link = ($status === '公開') ? get_permalink($pid) : get_edit_post_link($pid, 'raw');
+            carmel3_notify_slack($s, '📝 毎日記事: ' . $msg . "\n" . $link);
+        }
+    } finally {
+        unset($GLOBALS['carmel3_force_claude']);
+        delete_transient('carmel3_daily_lock');
+    }
+}
+
+/* ----- 既存記事の作り直し ----- */
+
+// まだ作り直していない記事（古い順）
+function carmel3_rewrite_candidates($s, $limit) {
+    $pt = post_type_exists($s['rewrite_post_type']) ? $s['rewrite_post_type'] : 'post';
+    return get_posts(array(
+        'post_type'   => $pt,
+        'post_status' => array('publish', 'draft'),
+        'numberposts' => $limit,
+        'fields'      => 'ids',
+        'orderby'     => 'date',
+        'order'       => 'ASC',
+        'meta_query'  => array(array('key' => '_carmel3_rewritten', 'compare' => 'NOT EXISTS')),
+    ));
+}
+
+function carmel3_rewrite_remaining($s) {
+    $pt = post_type_exists($s['rewrite_post_type']) ? $s['rewrite_post_type'] : 'post';
+    $q = new WP_Query(array(
+        'post_type'      => $pt,
+        'post_status'    => array('publish', 'draft'),
+        'posts_per_page' => 1,
+        'fields'         => 'ids',
+        'meta_query'     => array(array('key' => '_carmel3_rewritten', 'compare' => 'NOT EXISTS')),
+    ));
+    return (int) $q->found_posts;
+}
+
+// 1記事を作り直す → array('ok'=>bool, 'msg'=>string)
+function carmel3_rewrite_one($post_id, $mode, $s) {
+    $post = get_post($post_id);
+    if (!$post) return array('ok' => false, 'msg' => '記事が見つかりません #' . $post_id);
+    $title0 = $post->post_title;
+
+    // 作り直し前の内容を保存（初回のみ）→「元に戻す」に使う
+    if (!get_post_meta($post_id, '_carmel3_backup', true)) {
+        update_post_meta($post_id, '_carmel3_backup', wp_slash(array(
+            'title'   => $post->post_title,
+            'content' => $post->post_content,
+            'excerpt' => $post->post_excerpt,
+            'thumb'   => (int) get_post_thumbnail_id($post_id),
+            'lead'    => (string) get_post_meta($post_id, 'lead_text', true),
+            'time'    => current_time('mysql'),
+        )));
+    }
+
+    $parts = array();
+    $any_ok = false;
+
+    if ($mode === 'both' || $mode === 'text') {
+        $html = (string) $post->post_content;
+        // 末尾の店舗カードは原本のまま残す（AIに書き換えさせない）
+        $pos  = strpos($html, '<div class="carmel-store-card"');
+        $card = ($pos !== false) ? substr($html, $pos) : '';
+        $body = ($pos !== false) ? substr($html, 0, $pos) : $html;
+        $allowed = array('h2' => array(), 'h3' => array(), 'p' => array(), 'ul' => array(), 'ol' => array(), 'li' => array(),
+            'strong' => array(), 'b' => array(), 'table' => array(), 'tr' => array(), 'th' => array(), 'td' => array());
+        $body_ai = mb_substr(trim(preg_replace('/\n{3,}/', "\n\n", wp_kses($body, $allowed))), 0, 12000);
+        $kw = (string) get_post_meta($post_id, '_carmel_keyword', true);
+        if ($kw === '') $kw = $title0;
+
+        $sys = 'あなたは中古車販売店カーメルのWebメディア編集者です。既存記事を、読者にとってより役立ち、集客につながる記事へリライトします。日本語で、JSONのみ返します。';
+        $user = "次の既存記事をリライトしてください。\n"
+            . "【現在のタイトル】{$title0}\n"
+            . "【メインキーワード】{$kw}\n"
+            . "【現在の本文（HTML）】\n{$body_ai}\n\n"
+            . "リライトの方針:\n"
+            . "・テーマ（何についての記事か）とメインキーワードは変えない\n"
+            . "・冒頭で読者の悩みに寄り添い、結論を先に示す\n"
+            . "・見出し構成を整理し、具体例・手順・チェックリスト・注意点で中身を厚くする\n"
+            . "・最後に、相談・来店・問い合わせにつながる自然なまとめを書く（押し売りしない）\n"
+            . "・本文にある正しい事実は保ち、誤り・古い情報・不自然な表現は直す\n"
+            . "・店舗の住所・電話番号などの店舗情報は本文に書かない（別の枠で表示されるため）\n"
+            . carmel3_loan_compliance_text()
+            . carmel3_length_directive($s)
+            . carmel3_quality_text_directive(carmel3_quality_level($s))
+            . "\n次のJSONだけを返す:\n"
+            . "{\"title\":\"32文字前後・内容に合う魅力的なタイトル（テーマは変えない）\",\"excerpt\":\"120〜160文字\",\"content_html\":\"<h2>..</h2><p>..</p> 形式\",\"meta_description\":\"110〜140文字\"}";
+
+        $res = carmel3_llm_chat(array(
+            array('role' => 'system', 'content' => $sys),
+            array('role' => 'user',   'content' => $user),
+        ), '', 0.7, 240);
+
+        $json = empty($res['error']) ? carmel3_parse_json_loose(isset($res['content']) ? $res['content'] : '') : null;
+        $new  = (is_array($json) && isset($json['content_html'])) ? wp_kses_post((string) $json['content_html']) : '';
+        if (!empty($res['error'])) {
+            $parts[] = '文章失敗（' . $res['error'] . '）';
+        } elseif (mb_strlen(wp_strip_all_tags($new)) < 300) {
+            $parts[] = '文章失敗（AIの応答が短すぎる／読み取れない）';
+        } else {
+            $new = carmel3_strip_store_footer($new);
+            if ($card !== '') $new .= "\n" . $card;
+            $upd = array('ID' => $post_id, 'post_content' => $new); // スラッグ（URL）は変えない
+            $nt = isset($json['title']) ? sanitize_text_field($json['title']) : '';
+            if ($nt !== '') $upd['post_title'] = function_exists('carmel_normalize_ja_text') ? carmel_normalize_ja_text($nt) : $nt;
+            $ex = isset($json['excerpt']) ? sanitize_textarea_field($json['excerpt']) : '';
+            if ($ex !== '') $upd['post_excerpt'] = $ex;
+            $r = wp_update_post(wp_slash($upd), true);
+            if (is_wp_error($r)) {
+                $parts[] = '文章の保存に失敗（' . $r->get_error_message() . '）';
+            } else {
+                $any_ok = true;
+                $md = isset($json['meta_description']) ? (string) $json['meta_description'] : '';
+                if (!empty($s['auto_slug_meta']) && ($md !== '' || $ex !== '')) carmel3_write_meta_description($post_id, $md !== '' ? $md : $ex);
+                if ($ex !== '' && (string) get_post_meta($post_id, 'lead_text', true) !== '') {
+                    if (function_exists('update_field')) update_field('lead_text', $ex, $post_id);
+                    update_post_meta($post_id, 'lead_text', $ex);
+                }
+                $parts[] = '文章OK';
+            }
+        }
+    }
+
+    if ($mode === 'both' || $mode === 'image') {
+        if (!carmel3_image_ready()) {
+            $parts[] = '画像: 画像生成のAPIキーが未設定';
+        } else {
+            $r = carmel3_img_set_featured($post_id, $s, true);
+            $r = is_string($r) ? $r : '不明';
+            if (strpos($r, 'OK') !== false) $any_ok = true;
+            $parts[] = '画像: ' . $r;
+        }
+    }
+
+    if ($any_ok) {
+        update_post_meta($post_id, '_carmel3_rewritten', current_time('mysql'));
+    } else {
+        // 2回失敗したら対象から外す（毎日同じ記事で失敗し続けないように）
+        $fails = (int) get_post_meta($post_id, '_carmel3_rewrite_fail', true) + 1;
+        update_post_meta($post_id, '_carmel3_rewrite_fail', $fails);
+        if ($fails >= 2) update_post_meta($post_id, '_carmel3_rewritten', 'skipped');
+    }
+    $label = get_the_title($post_id);
+    return array('ok' => $any_ok, 'msg' => '作り直し「' . $label . '」: ' . implode(' / ', $parts));
+}
+
+function carmel3_rewrite_run($manual = false, $only_id = 0) {
+    $s = carmel3_auto_get_settings();
+    if (!$manual && empty($s['rewrite_enabled'])) return;
+    $opt   = 'carmel3_rewrite_state';
+    $today = current_time('Y-m-d');
+    if (!$manual) {
+        $st = carmel3_state_get($opt);
+        if (isset($st['last_date']) && $st['last_date'] === $today) return;
+        $st['last_date'] = $today;
+        update_option($opt, $st, false);
+    }
+    if (get_transient('carmel3_rewrite_lock')) return;
+    set_transient('carmel3_rewrite_lock', 1, 20 * MINUTE_IN_SECONDS);
+    @set_time_limit(1200);
+    $GLOBALS['carmel3_force_claude'] = true;
+
+    try {
+        $mode = in_array($s['rewrite_mode'], array('both', 'text', 'image'), true) ? $s['rewrite_mode'] : 'both';
+        if ($mode !== 'image' && !carmel3_claude_ready($s)) {
+            carmel3_state_log($opt, '中止: Claude APIキーが未設定です', false);
+            return;
+        }
+        $ids = $only_id ? array($only_id) : carmel3_rewrite_candidates($s, max(1, min(5, (int) $s['rewrite_per_day'])));
+        if (empty($ids)) {
+            carmel3_state_log($opt, 'すべての記事を作り直し済みです', true);
+            return;
+        }
+        foreach ($ids as $pid) {
+            $r = carmel3_rewrite_one((int) $pid, $mode, $s);
+            carmel3_state_log($opt, $r['msg'], $r['ok'], (int) $pid);
+        }
+    } finally {
+        unset($GLOBALS['carmel3_force_claude']);
+        delete_transient('carmel3_rewrite_lock');
+    }
+}
+
+/* ----- 保存・実行・元に戻す ----- */
+add_action('admin_post_carmel3_daily_save', function () {
+    if (!current_user_can('manage_options')) wp_die('権限がありません');
+    check_admin_referer('carmel3_daily_save');
+    $s = carmel3_auto_get_settings();
+
+    // Claude API（自動生成ページと同じ設定値）
+    if (isset($_POST['claude_api_key'])) {
+        $ck = trim((string) wp_unslash($_POST['claude_api_key']));
+        if ($ck !== '' && strpos($ck, '●') === false) $s['claude_api_key'] = sanitize_text_field($ck);
+        if ($ck === '') $s['claude_api_key'] = '';
+    }
+    if (isset($_POST['claude_model'])) {
+        $cm = sanitize_text_field(wp_unslash($_POST['claude_model']));
+        $s['claude_model'] = $cm !== '' ? $cm : 'claude-opus-5-5';
+    }
+
+    $s['daily_enabled'] = isset($_POST['daily_enabled']) ? 1 : 0;
+    $dt = isset($_POST['daily_time']) ? trim((string) wp_unslash($_POST['daily_time'])) : '10:00';
+    $s['daily_time'] = preg_match('/^\d{1,2}:\d{2}$/', $dt) ? $dt : '10:00';
+    $pt = isset($_POST['daily_post_type']) ? sanitize_key($_POST['daily_post_type']) : 'media_article';
+    $s['daily_post_type'] = post_type_exists($pt) ? $pt : 'media_article';
+    $s['daily_themes']  = isset($_POST['daily_themes']) ? sanitize_textarea_field(wp_unslash($_POST['daily_themes'])) : '';
+    $s['daily_notes']   = isset($_POST['daily_notes']) ? sanitize_textarea_field(wp_unslash($_POST['daily_notes'])) : '';
+    $s['daily_area']    = isset($_POST['daily_area']) ? sanitize_text_field(wp_unslash($_POST['daily_area'])) : '';
+    $s['daily_publish'] = isset($_POST['daily_publish']) ? 1 : 0;
+    $s['daily_images']  = isset($_POST['daily_images']) ? 1 : 0;
+    $ap = (isset($_POST['daily_autopost']) && is_array($_POST['daily_autopost'])) ? array_map('sanitize_key', $_POST['daily_autopost']) : array();
+    $s['daily_autopost'] = array_values(array_intersect($ap, array('instagram', 'gmb')));
+
+    $s['rewrite_enabled'] = isset($_POST['rewrite_enabled']) ? 1 : 0;
+    $rp = isset($_POST['rewrite_post_type']) ? sanitize_key($_POST['rewrite_post_type']) : 'media_article';
+    $s['rewrite_post_type'] = post_type_exists($rp) ? $rp : 'media_article';
+    $rm = isset($_POST['rewrite_mode']) ? sanitize_key($_POST['rewrite_mode']) : 'both';
+    $s['rewrite_mode'] = in_array($rm, array('both', 'text', 'image'), true) ? $rm : 'both';
+    $s['rewrite_per_day'] = isset($_POST['rewrite_per_day']) ? max(1, min(5, (int) $_POST['rewrite_per_day'])) : 1;
+    $rt = isset($_POST['rewrite_time']) ? trim((string) wp_unslash($_POST['rewrite_time'])) : '14:00';
+    $s['rewrite_time'] = preg_match('/^\d{1,2}:\d{2}$/', $rt) ? $rt : '14:00';
+
+    carmel3_auto_save_settings($s);
+    carmel3_daily_reschedule($s);
+    wp_safe_redirect(admin_url('admin.php?page=carmel3-daily&saved=1'));
+    exit;
+});
+
+add_action('admin_post_carmel3_daily_now', function () {
+    if (!current_user_can('manage_options')) wp_die('権限がありません');
+    check_admin_referer('carmel3_daily_now');
+    wp_schedule_single_event(time(), CARMEL3_DAILY_NOW);
+    if (function_exists('spawn_cron')) spawn_cron();
+    wp_safe_redirect(admin_url('admin.php?page=carmel3-daily&started=daily'));
+    exit;
+});
+
+add_action('admin_post_carmel3_rewrite_now', function () {
+    if (!current_user_can('manage_options')) wp_die('権限がありません');
+    check_admin_referer('carmel3_rewrite_now');
+    $pid = isset($_POST['rewrite_post']) ? (int) $_POST['rewrite_post'] : 0;
+    wp_schedule_single_event(time(), CARMEL3_REWRITE_NOW, array($pid));
+    if (function_exists('spawn_cron')) spawn_cron();
+    wp_safe_redirect(admin_url('admin.php?page=carmel3-daily&started=rewrite'));
+    exit;
+});
+
+add_action('admin_post_carmel3_rewrite_restore', function () {
+    if (!current_user_can('manage_options')) wp_die('権限がありません');
+    $pid = isset($_GET['post']) ? (int) $_GET['post'] : 0;
+    check_admin_referer('carmel3_rewrite_restore_' . $pid);
+    $b = get_post_meta($pid, '_carmel3_backup', true);
+    if (!$pid || !is_array($b)) wp_die('この記事のバックアップが見つかりません');
+    wp_update_post(wp_slash(array(
+        'ID'           => $pid,
+        'post_title'   => (string) $b['title'],
+        'post_content' => (string) $b['content'],
+        'post_excerpt' => (string) $b['excerpt'],
+    )));
+    if (!empty($b['thumb']) && get_post($b['thumb'])) set_post_thumbnail($pid, (int) $b['thumb']);
+    if (isset($b['lead']) && $b['lead'] !== '') update_post_meta($pid, 'lead_text', $b['lead']);
+    update_post_meta($pid, '_carmel3_rewritten', 'restored'); // 元に戻した記事は再び作り直さない
+    carmel3_state_log('carmel3_rewrite_state', '元に戻しました「' . get_the_title($pid) . '」', true, $pid);
+    wp_safe_redirect(admin_url('admin.php?page=carmel3-daily&restored=1'));
+    exit;
+});
+
+/* ----- 管理ページ ----- */
+function carmel3_daily_next_label($hook) {
+    $ts = wp_next_scheduled($hook);
+    if (!$ts) return '予約なし';
+    return function_exists('wp_date') ? wp_date('n月j日 H:i', $ts) : date_i18n('n月j日 H:i', $ts + (int) (get_option('gmt_offset') * HOUR_IN_SECONDS));
+}
+
+function carmel3_daily_log_html($opt, $with_restore = false) {
+    $st  = carmel3_state_get($opt);
+    $log = (isset($st['log']) && is_array($st['log'])) ? $st['log'] : array();
+    if (empty($log)) return '<p style="color:#666">まだ実行記録はありません。</p>';
+    $h = '<table class="widefat striped" style="max-width:980px"><tbody>';
+    foreach ($log as $row) {
+        $pid  = (int) $row['post_id'];
+        $act  = '';
+        if ($pid && get_post($pid)) {
+            $act .= ' <a href="' . esc_url(get_edit_post_link($pid)) . '">編集</a>';
+            if (get_post_status($pid) === 'publish') $act .= ' ｜ <a href="' . esc_url(get_permalink($pid)) . '" target="_blank" rel="noopener">表示</a>';
+            if ($with_restore && is_array(get_post_meta($pid, '_carmel3_backup', true)) && get_post_meta($pid, '_carmel3_rewritten', true) !== 'restored') {
+                $url = wp_nonce_url(admin_url('admin-post.php?action=carmel3_rewrite_restore&post=' . $pid), 'carmel3_rewrite_restore_' . $pid);
+                $act .= ' ｜ <a href="' . esc_url($url) . '" onclick="return window.confirm(\'作り直し前の内容に戻します。よろしいですか？\');">元に戻す</a>';
+            }
+        }
+        $h .= '<tr><td style="width:130px;white-space:nowrap;color:#555">' . esc_html(mysql2date('n/j H:i', $row['t'])) . '</td>'
+            . '<td style="width:24px">' . ($row['ok'] ? '✅' : '⚠️') . '</td>'
+            . '<td>' . esc_html($row['msg']) . $act . '</td></tr>';
+    }
+    return $h . '</tbody></table>';
+}
+
+function carmel3_daily_page() {
+    if (!current_user_can('manage_options')) return;
+    $s = carmel3_auto_get_settings();
+    $claude_ok = carmel3_claude_ready($s);
+    $img_ok    = carmel3_image_ready();
+    $ig_ok     = (trim((string) $s['autopost_ig_user']) !== '' && trim((string) $s['autopost_ig_token']) !== '');
+    $gmb_ok    = function_exists('carmel_post_to_google');
+    $types     = carmel3_selectable_post_types();
+    if (post_type_exists('media_article')) $types = array('media_article' => 'メディア記事') + $types;
+    $remaining = carmel3_rewrite_remaining($s);
+    $models = array(
+        'claude-opus-5-5'   => 'Claude Opus 5.5（最高品質）',
+        'claude-sonnet-5-5' => 'Claude Sonnet 5.5（品質と費用のバランス・おすすめ）',
+        'claude-haiku-5-5'  => 'Claude Haiku 5.5（低コスト）',
+    );
+    $cands = get_posts(array(
+        'post_type'   => post_type_exists($s['rewrite_post_type']) ? $s['rewrite_post_type'] : 'post',
+        'post_status' => array('publish', 'draft'),
+        'numberposts' => 60,
+        'orderby'     => 'date',
+        'order'       => 'DESC',
+    ));
+    ?>
+    <div class="wrap">
+      <h1>毎日記事（Claude）・既存記事の作り直し</h1>
+      <p style="max-width:900px">毎日決まった時刻に、<strong>Claudeがテーマに沿って既存記事と重ならない企画を立て</strong>、記事を1本書きます。画像はOpenRouterで作り（Claude APIは画像を作れないため）、設定した先（Googleマイビジネス・Instagram）へ自動投稿します。あわせて、<strong>既存の記事を古い順に少しずつ作り直す</strong>こともできます。</p>
+
+      <?php if (isset($_GET['saved'])): ?><div class="notice notice-success is-dismissible"><p>設定を保存しました。</p></div><?php endif; ?>
+      <?php if (isset($_GET['started']) && $_GET['started'] === 'daily'): ?><div class="notice notice-info is-dismissible"><p>裏側で記事の作成を始めました。2〜4分後にこのページを再読み込みすると、下の「実行記録」に結果が出ます。</p></div><?php endif; ?>
+      <?php if (isset($_GET['started']) && $_GET['started'] === 'rewrite'): ?><div class="notice notice-info is-dismissible"><p>裏側で作り直しを始めました。2〜4分後にこのページを再読み込みしてください。</p></div><?php endif; ?>
+      <?php if (isset($_GET['restored'])): ?><div class="notice notice-success is-dismissible"><p>作り直し前の内容に戻しました。</p></div><?php endif; ?>
+      <?php if (!empty($s['enabled'])): ?><div class="notice notice-warning"><p>旧来の「自動生成（本体エンジン・テーマキュー）」もONです。1日1本にしたい場合は「自動生成」ページで旧エンジンをOFFにしてください。</p></div><?php endif; ?>
+
+      <h2>いまの状態</h2>
+      <table class="widefat" style="max-width:900px"><tbody>
+        <tr><td style="width:200px">Claude API（文章）</td><td><?php echo $claude_ok ? '✅ 設定済み' : '⚠️ 未設定（下の欄にAPIキーを入れてください）'; ?></td></tr>
+        <tr><td>画像生成（OpenRouter）</td><td><?php echo $img_ok ? '✅ 使えます' : '⚠️ 使えません（OpenRouterのAPIキー・残高をご確認ください）'; ?></td></tr>
+        <tr><td>毎日記事</td><td><?php echo !empty($s['daily_enabled']) ? '✅ ON（次回: ' . esc_html(carmel3_daily_next_label(CARMEL3_DAILY_HOOK)) . '）' : 'OFF'; ?></td></tr>
+        <tr><td>既存記事の作り直し</td><td><?php echo (!empty($s['rewrite_enabled']) ? '✅ ON（次回: ' . esc_html(carmel3_daily_next_label(CARMEL3_REWRITE_HOOK)) . '）' : 'OFF') . ' ／ 未作り直し: ' . (int) $remaining . '本'; ?></td></tr>
+        <tr><td>自動投稿先</td><td>Instagram <?php echo $ig_ok ? '✅' : '⚠️未設定'; ?> ／ Googleマイビジネス <?php echo $gmb_ok ? '✅（Google側の審査・認証が必要）' : '⏳未検出'; ?>（設定は「SNS自動投稿」ページ）</td></tr>
+      </tbody></table>
+
+      <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="max-width:900px">
+        <?php wp_nonce_field('carmel3_daily_save'); ?>
+        <input type="hidden" name="action" value="carmel3_daily_save">
+
+        <h2>① Claude API</h2>
+        <table class="form-table"><tbody>
+          <tr><th>APIキー</th><td>
+            <input type="text" name="claude_api_key" value="<?php echo esc_attr($claude_ok ? '●●●●●●●●（設定済み・変更時のみ入力）' : ''); ?>" style="width:100%;max-width:520px" placeholder="sk-ant-...">
+            <p class="description">Anthropic Console で発行したキー。ここにだけ入力してください（チャット等には貼らない）。</p>
+          </td></tr>
+          <tr><th>モデル</th><td><select name="claude_model">
+            <?php foreach ($models as $k => $l): ?><option value="<?php echo esc_attr($k); ?>" <?php selected($s['claude_model'], $k); ?>><?php echo esc_html($l); ?></option><?php endforeach; ?>
+          </select></td></tr>
+        </tbody></table>
+
+        <h2>② 毎日記事</h2>
+        <table class="form-table"><tbody>
+          <tr><th>毎日つくる</th><td><label><input type="checkbox" name="daily_enabled" value="1" <?php checked(!empty($s['daily_enabled'])); ?>> ON（1日1本）</label>
+            ／ 時刻 <input type="time" name="daily_time" value="<?php echo esc_attr($s['daily_time']); ?>"></td></tr>
+          <tr><th>保存先</th><td><select name="daily_post_type">
+            <?php foreach ($types as $k => $l): ?><option value="<?php echo esc_attr($k); ?>" <?php selected($s['daily_post_type'], $k); ?>><?php echo esc_html($l); ?></option><?php endforeach; ?>
+          </select></td></tr>
+          <tr><th>テーマ（1行に1つ）</th><td>
+            <textarea name="daily_themes" rows="8" style="width:100%"><?php echo esc_textarea($s['daily_themes']); ?></textarea>
+            <p class="description">毎日、上から順番に1テーマずつ使います。テーマの中の具体的な切り口はClaudeが既存記事と重ならないように考えます。</p>
+          </td></tr>
+          <tr><th>お店の情報・強み</th><td>
+            <textarea name="daily_notes" rows="5" style="width:100%" placeholder="例）自社ローン取り扱い歴10年。全国納車対応。軽自動車・ミニバンの在庫が多い。今月は車検費用10%オフキャンペーン中。"><?php echo esc_textarea($s['daily_notes']); ?></textarea>
+            <p class="description">AIはここに書いた事実だけを使います（書いていない金額・実績は作りません）。キャンペーンが変わったら更新してください。</p>
+          </td></tr>
+          <tr><th>対象地域（任意）</th><td><input type="text" name="daily_area" value="<?php echo esc_attr($s['daily_area']); ?>" style="width:100%;max-width:360px" placeholder="例）埼玉県・東京都"></td></tr>
+          <tr><th>公開</th><td><label><input type="checkbox" name="daily_publish" value="1" <?php checked(!empty($s['daily_publish'])); ?>> 作ったらすぐ公開する</label>
+            <p class="description">OFFなら下書き保存（内容を確認してから公開）。慣れるまではOFFがおすすめです。</p></td></tr>
+          <tr><th>画像</th><td><label><input type="checkbox" name="daily_images" value="1" <?php checked(!empty($s['daily_images'])); ?>> アイキャッチを作る（メディア記事はトップバナーも）</label></td></tr>
+          <tr><th>作成後に自動投稿</th><td>
+            <label style="margin-right:16px"><input type="checkbox" name="daily_autopost[]" value="instagram" <?php checked(in_array('instagram', (array) $s['daily_autopost'], true)); ?>> Instagram</label>
+            <label><input type="checkbox" name="daily_autopost[]" value="gmb" <?php checked(in_array('gmb', (array) $s['daily_autopost'], true)); ?>> Googleマイビジネス</label>
+            <p class="description">記事の画像を各SNSの形に変換し、キャプションをAIが作って投稿します。下書き保存のときは記事URLを付けずに投稿します。</p>
+          </td></tr>
+        </tbody></table>
+
+        <h2>③ 既存記事の作り直し</h2>
+        <table class="form-table"><tbody>
+          <tr><th>毎日少しずつ作り直す</th><td><label><input type="checkbox" name="rewrite_enabled" value="1" <?php checked(!empty($s['rewrite_enabled'])); ?>> ON</label>
+            ／ 1日 <input type="number" name="rewrite_per_day" value="<?php echo (int) $s['rewrite_per_day']; ?>" min="1" max="5" style="width:60px"> 本
+            ／ 時刻 <input type="time" name="rewrite_time" value="<?php echo esc_attr($s['rewrite_time']); ?>"></td></tr>
+          <tr><th>対象</th><td><select name="rewrite_post_type">
+            <?php foreach ($types as $k => $l): ?><option value="<?php echo esc_attr($k); ?>" <?php selected($s['rewrite_post_type'], $k); ?>><?php echo esc_html($l); ?></option><?php endforeach; ?>
+          </select> （古い記事から順番に）</td></tr>
+          <tr><th>作り直す内容</th><td><select name="rewrite_mode">
+            <option value="both" <?php selected($s['rewrite_mode'], 'both'); ?>>文章＋アイキャッチ画像</option>
+            <option value="text" <?php selected($s['rewrite_mode'], 'text'); ?>>文章のみ</option>
+            <option value="image" <?php selected($s['rewrite_mode'], 'image'); ?>>アイキャッチ画像のみ</option>
+          </select>
+            <p class="description">URL（スラッグ）は変えません。末尾の店舗情報カードもそのまま残します。作り直し前の内容は自動で保存され、下の記録から「元に戻す」ができます。</p></td></tr>
+        </tbody></table>
+
+        <p><button class="button button-primary button-large">設定を保存</button></p>
+      </form>
+
+      <h2>今すぐ試す</h2>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;max-width:900px">
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="background:#fff;border:1px solid #ccd0d4;padding:14px;flex:1;min-width:260px">
+          <?php wp_nonce_field('carmel3_daily_now'); ?>
+          <input type="hidden" name="action" value="carmel3_daily_now">
+          <p style="margin-top:0"><strong>毎日記事を今すぐ1本つくる</strong><br><span style="color:#666">保存済みの設定で、企画→記事→画像→自動投稿まで行います。</span></p>
+          <button class="button button-primary" <?php disabled(!$claude_ok); ?>>今すぐ1本つくる</button>
+        </form>
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="background:#fff;border:1px solid #ccd0d4;padding:14px;flex:1;min-width:260px">
+          <?php wp_nonce_field('carmel3_rewrite_now'); ?>
+          <input type="hidden" name="action" value="carmel3_rewrite_now">
+          <p style="margin-top:0"><strong>記事を選んで作り直す</strong></p>
+          <select name="rewrite_post" style="width:100%;margin-bottom:8px">
+            <option value="0">（未作り直しの一番古い記事）</option>
+            <?php foreach ($cands as $c): $done = get_post_meta($c->ID, '_carmel3_rewritten', true); ?>
+              <option value="<?php echo (int) $c->ID; ?>"><?php echo esc_html(($done ? '✓ ' : '') . get_the_title($c)); ?></option>
+            <?php endforeach; ?>
+          </select>
+          <button class="button button-primary">今すぐ作り直す</button>
+        </form>
+      </div>
+
+      <h2>実行記録：毎日記事</h2>
+      <?php echo carmel3_daily_log_html('carmel3_daily_state', false); ?>
+
+      <h2>実行記録：作り直し</h2>
+      <?php echo carmel3_daily_log_html('carmel3_rewrite_state', true); ?>
+    </div>
     <?php
 }
 
