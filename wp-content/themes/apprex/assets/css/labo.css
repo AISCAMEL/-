@@ -215,3 +215,20 @@ body{background:linear-gradient(180deg,#eef2fb 0,#f6f7fb 320px)}
 .lb-reg input:focus{outline:2px solid #bfdbfe;border-color:#1d4ed8}
 .lb-hp{position:absolute!important;left:-9999px;width:1px;height:1px;opacity:0}
 .lb-gate .lb-link{margin-top:4px}
+
+/* ===== v1.104 学ぶ：画像のない記事カード・本文 ===== */
+.lb-art-img.noimg{background:linear-gradient(135deg,#1d4ed8,#6366f1);color:#fff}
+.lb-art-img.noimg.c1{background:linear-gradient(135deg,#2563eb,#7c3aed)}
+.lb-art-img.noimg.c2{background:linear-gradient(135deg,#f97316,#ec4899)}
+.lb-art-img.noimg.c3{background:linear-gradient(135deg,#059669,#0ea5e9)}
+.lb-art-img.noimg.c4{background:linear-gradient(135deg,#0f172a,#475569)}
+.lb-art-img.noimg i{display:grid;place-items:center;width:30px;height:30px;opacity:.95}
+.lb-art.big .lb-art-img.noimg{height:110px}
+.lb-art.big .lb-art-img.noimg i{width:44px;height:44px}
+.lb-art-img.noimg svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.lb-art-img.noimg .lb-play{display:none}
+.lb-body p{margin:0 0 1em}
+.lb-body ul,.lb-body ol{margin:0 0 1em;padding-left:1.3em}
+.lb-body li{margin:.25em 0}
+.lb-body h2{padding-left:10px;border-left:4px solid #1d4ed8;line-height:1.5}
+.lb-body b{color:#0f172a}

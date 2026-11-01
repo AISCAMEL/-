@@ -87,8 +87,10 @@
 	function sampleApp() {
 		return { label: '飲食店', shop: '炭火焼肉 はなび', color: '#9f1d1d', soft: '#fdf1f1', catch: '炭火で焼く、特別なひととき', menus: ['ネット予約', 'メニュー', 'クーポン', 'スタンプ', 'お知らせ', 'アクセス'], items: [{ name: '上カルビ', price: '1,480' }, { name: '厚切り牛タン', price: '1,680' }, { name: 'はなび盛り', price: '3,980' }], coupon: { tag: 'アプリ限定', title: 'ドリンク1杯サービス' }, news: ['今月の限定メニューが始まりました', '週末のご予約はお早めに'], photo: C.img ? C.img + 'rn/03_case-restaurant.jpg' : '' };
 	}
+	function catNo(c) { return { 'アプリ集客の基本': 1, '業種別の事例': 2, '費用と補助金': 3, '作り方の流れ': 4 }[c] || 0; }
+	function catIco(c) { return ['spark', 'bell', 'home', 'coin', 'layers'][catNo(c)]; }
 	function card(p, big) {
-		return '<button type="button" class="lb-art' + (big ? ' big' : '') + '" data-art="' + p.id + '"><div class="lb-art-img"' + (p.thumb ? ' style="background-image:url(' + esc(p.thumb) + ')"' : '') + '>' + (p.video ? '<span class="lb-play" aria-hidden="true">▶</span>' : '') + '</div><div class="lb-art-t">' + (p.cat ? '<small>' + esc(p.cat) + (p.video ? '・動画' : '') + '</small>' : '') + '<b>' + esc(p.title) + '</b></div></button>';
+		return '<button type="button" class="lb-art' + (big ? ' big' : '') + '" data-art="' + p.id + '"><div class="lb-art-img' + (p.thumb ? '' : ' noimg c' + catNo(p.cat)) + '"' + (p.thumb ? ' style="background-image:url(' + esc(p.thumb) + ')"' : '') + '>' + (p.thumb ? '' : '<i>' + ico(catIco(p.cat)) + '</i>') + (p.video ? '<span class="lb-play" aria-hidden="true">▶</span>' : '') + '</div><div class="lb-art-t">' + (p.cat ? '<small>' + esc(p.cat) + (p.video ? '・動画' : '') + '</small>' : '') + '<b>' + esc(p.title) + '</b></div></button>';
 	}
 	var REAL = [['app-sample-golf-one.jpg', 'Golf One', 'ゴルフ・予約'], ['rn/real-zensin.webp', 'ZENSIN', '企業・社内'], ['app-sample-taka.jpg', 'TAKA', 'マッチング'], ['app-sample-legal-one.jpg', 'Legal One', '士業']];
 	function vHome() {
