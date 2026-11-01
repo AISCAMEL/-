@@ -56,6 +56,7 @@ create table if not exists tenant_settings (
   human_transfer_enabled   boolean default true,
   transfer_phone_number    text,
   notification_email       text,
+  mail_from                text,   -- 送信元メール（テナントごと。未設定なら MAIL_FROM の既定）
   slack_webhook_url        text,
   notify_on_call_end       boolean default true,
   notify_on_callback       boolean default true,

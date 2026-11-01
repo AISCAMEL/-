@@ -83,6 +83,7 @@ export const demoSettings = {
   // 再起動・スリープ復帰でリセットされる。Renderの環境変数を初期値にしておけば
   // 再起動しても通知先/Slackが保持され、実運用の確認がしやすい。
   notification_email: process.env.DEMO_NOTIFICATION_EMAIL ?? 'owner@example.com',
+  mail_from: process.env.DEMO_MAIL_FROM ?? '',   // 送信元メール（テナントごと。空なら全体の既定）
   slack_webhook_url: process.env.DEMO_SLACK_WEBHOOK_URL ?? '',
   notify_on_call_end: true,
   notify_on_callback: true,

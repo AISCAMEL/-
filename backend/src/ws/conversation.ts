@@ -21,7 +21,7 @@ function demoContext(): TenantContext {
     greetingMessage: config.defaultGreeting, aiTone: 'polite',
     businessHours: {}, holidaySettings: {},
     humanTransferEnabled: true, transferPhoneNumber: '+810000000000',
-    notificationEmail: null, slackWebhookUrl: null,
+    notificationEmail: null, mailFrom: null, slackWebhookUrl: null,
     notifyOnCallEnd: true, notifyOnCallback: true, notifyOnTransfer: true,
     fallbackMessage: null,
     aiInstructions: null, receptionTypes: [], salesCallReply: null, onlineBookingUrl: null,

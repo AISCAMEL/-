@@ -59,6 +59,7 @@ export interface TenantContext {
   humanTransferEnabled: boolean;
   transferPhoneNumber: string | null;
   notificationEmail: string | null;
+  mailFrom: string | null;         // 送信元メール（テナントごと。未設定なら全体の既定）
   slackWebhookUrl: string | null;
   notifyOnCallEnd: boolean;
   notifyOnCallback: boolean;

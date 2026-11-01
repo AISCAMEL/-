@@ -9,17 +9,21 @@ export interface CallNotificationInput {
 
 const SUBJECT = '【AIオペレーター24】新しい電話受付がありました';
 
-/** 汎用メール送信。Resend 未設定時はコンソール出力（デモ用）。 */
-export async function sendEmail(to: string, subject: string, text: string): Promise<{ ok: boolean; error?: string }> {
+/**
+ * 汎用メール送信。Resend 未設定時はコンソール出力（デモ用）。
+ * from を渡すとその送信元を使う（テナントごとの送信元）。未指定なら全体の既定(config.mail.from)。
+ */
+export async function sendEmail(to: string, subject: string, text: string, from?: string): Promise<{ ok: boolean; error?: string }> {
+  const fromAddr = (from && from.trim()) ? from.trim() : config.mail.from;
   if (!config.mail.resendApiKey) {
-    console.log(`[email] (dry-run) to=${to}\n件名: ${subject}\n${text}\n---`);
+    console.log(`[email] (dry-run) from=${fromAddr} to=${to}\n件名: ${subject}\n${text}\n---`);
     return { ok: true };
   }
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${config.mail.resendApiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: config.mail.from, to: [to], subject, text }),
+      body: JSON.stringify({ from: fromAddr, to: [to], subject, text }),
     });
     if (!res.ok) return { ok: false, error: `Resend ${res.status}: ${await res.text()}` };
     return { ok: true };
@@ -28,12 +32,13 @@ export async function sendEmail(to: string, subject: string, text: string): Prom
   }
 }
 
-/** 通話終了メールを送る。 */
+/** 通話終了メールを送る。from でテナントごとの送信元を指定可。 */
 export async function sendCallNotification(
   to: string,
   input: CallNotificationInput,
+  from?: string,
 ): Promise<{ ok: boolean; error?: string }> {
-  return sendEmail(to, SUBJECT, renderBody(input));
+  return sendEmail(to, SUBJECT, renderBody(input), from);
 }
 
 // docs/api.md の本文項目に準拠。

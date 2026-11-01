@@ -21,7 +21,7 @@ export async function sendWeeklyDigest(tenantId: string): Promise<{ ok: boolean;
     '',
     '管理画面で詳細を確認できます。',
   ].join('\n');
-  const result = await sendEmail(dest, '【AIオペレーター24】今週の電話サマリー', body);
+  const result = await sendEmail(dest, '【AIオペレーター24】今週の電話サマリー', body, settings?.mail_from ?? undefined);
   return { ok: result.ok, destination: dest, summary: d, error: result.error };
 }
 

@@ -60,6 +60,14 @@ function validateSettingsPatch(patch: Record<string, unknown>): string | null {
   if (typeof email === 'string' && email.trim() && !EMAIL_RE.test(email.trim())) {
     return '通知先メールアドレスの形式が正しくありません。';
   }
+  const mailFrom = patch.mail_from;
+  if (typeof mailFrom === 'string' && mailFrom.trim()) {
+    const m = mailFrom.trim();
+    const addr = m.includes('<') ? (m.match(/<([^>]+)>/)?.[1] ?? '') : m;
+    if (!EMAIL_RE.test(addr.trim())) {
+      return '送信元メールの形式が正しくありません（例：BUYMO <noreply@send.buymo.me>）。';
+    }
+  }
   const phone = patch.transfer_phone_number;
   if (typeof phone === 'string' && phone.trim()) {
     const digits = phone.replace(/[\s-]/g, '');
@@ -323,7 +331,7 @@ export async function registerApiRoutes(app: FastifyInstance): Promise<void> {
       sentiment: call.sentiment ?? 'neutral', callback_requested: call.status === 'callback_requested',
       should_follow_up: false,
     } as const;
-    const result = await sendCallNotification(dest, { fromNumber: call.from_number ?? '', summary, statusLabel: '再通知' });
+    const result = await sendCallNotification(dest, { fromNumber: call.from_number ?? '', summary, statusLabel: '再通知' }, settings?.mail_from ?? undefined);
     await q.addNotification({
       tenantId: p.tenantId, callId: call.id, type: 'email', destination: dest,
       status: result.ok ? 'sent' : 'failed', subject: '【AIオペレーター24】通知の再送', error: result.error ?? null,

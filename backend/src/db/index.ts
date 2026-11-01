@@ -22,6 +22,20 @@ export async function query<T = any>(text: string, params: unknown[] = []): Prom
   return res.rows as T[];
 }
 
+// 起動時の軽量マイグレーション。既存DBに後から追加した列を冪等に足す
+// （schema.sql の `create table if not exists` では既存テーブルに列は追加されないため）。
+// すべて `if not exists` で安全。失敗しても起動は止めない。
+export async function ensureSchema(): Promise<void> {
+  if (!pool) return;
+  const stmts = [
+    `alter table tenant_settings add column if not exists mail_from text`,
+  ];
+  for (const sql of stmts) {
+    try { await pool.query(sql); }
+    catch (err) { console.error('[ensureSchema] failed:', sql, err); }
+  }
+}
+
 /** 着信先番号(E.164)からテナントを解決し、設定・FAQをまとめて返す。 */
 export async function resolveTenantByPhone(toNumber: string): Promise<TenantContext | null> {
   if (!pool) return null;
@@ -29,8 +43,9 @@ export async function resolveTenantByPhone(toNumber: string): Promise<TenantCont
     `select t.id as tenant_id, t.company_name, t.industry,
             s.greeting_message, s.ai_tone, s.business_hours, s.holiday_settings,
             s.human_transfer_enabled, s.transfer_phone_number, s.fallback_message,
-            s.notification_email, s.slack_webhook_url,
-            s.notify_on_call_end, s.notify_on_callback, s.notify_on_transfer
+            s.notification_email, s.mail_from, s.slack_webhook_url,
+            s.notify_on_call_end, s.notify_on_callback, s.notify_on_transfer,
+            s.ai_instructions, s.reception_types, s.sales_call_reply, s.online_booking_url
        from phone_numbers p
        join tenants t        on t.id = p.tenant_id
        left join tenant_settings s on s.tenant_id = t.id
@@ -56,6 +71,7 @@ export async function resolveTenantByPhone(toNumber: string): Promise<TenantCont
     humanTransferEnabled: r.human_transfer_enabled ?? true,
     transferPhoneNumber: r.transfer_phone_number,
     notificationEmail: r.notification_email,
+    mailFrom: r.mail_from ?? null,
     slackWebhookUrl: r.slack_webhook_url,
     notifyOnCallEnd: r.notify_on_call_end ?? true,
     notifyOnCallback: r.notify_on_callback ?? true,

@@ -374,7 +374,7 @@ export async function getSettings(tenantId: string) {
 
 const SETTING_FIELDS = [
   'business_hours', 'holiday_settings', 'greeting_message', 'ai_tone', 'default_language',
-  'recording_enabled', 'human_transfer_enabled', 'transfer_phone_number', 'notification_email',
+  'recording_enabled', 'human_transfer_enabled', 'transfer_phone_number', 'notification_email', 'mail_from',
   'slack_webhook_url', 'notify_on_call_end', 'notify_on_callback', 'notify_on_transfer', 'fallback_message',
   'google_calendar_id', 'google_refresh_token', 'appointment_duration_min',
   'ai_instructions', 'reception_types', 'sales_call_reply', 'online_booking_url', 'appraisal_form_url',
@@ -421,6 +421,7 @@ export async function getTenantAiContext(tenantId: string): Promise<TenantContex
     humanTransferEnabled: s?.human_transfer_enabled ?? true,
     transferPhoneNumber: s?.transfer_phone_number ?? null,
     notificationEmail: s?.notification_email ?? null,
+    mailFrom: s?.mail_from ?? null,
     slackWebhookUrl: s?.slack_webhook_url ?? null,
     notifyOnCallEnd: s?.notify_on_call_end ?? true,
     notifyOnCallback: s?.notify_on_callback ?? true,

@@ -22,7 +22,7 @@ export default function NotificationSettingsPage() {
     setMsg('保存中…');
     try {
       await api.saveNotificationSettings({
-        notification_email: s.notification_email, slack_webhook_url: s.slack_webhook_url,
+        notification_email: s.notification_email, mail_from: s.mail_from, slack_webhook_url: s.slack_webhook_url,
         notify_on_call_end: s.notify_on_call_end, notify_on_callback: s.notify_on_callback,
         notify_on_transfer: s.notify_on_transfer,
       });
@@ -43,6 +43,12 @@ export default function NotificationSettingsPage() {
             <label className="block text-sm font-medium text-gray-700">通知先メールアドレス</label>
             <input value={s.notification_email ?? ''} onChange={(e) => field('notification_email', e.target.value)}
               className="mt-1 w-full rounded-lg border px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">送信元メール（任意）</label>
+            <input value={s.mail_from ?? ''} onChange={(e) => field('mail_from', e.target.value)}
+              placeholder="例：BUYMO &lt;noreply@send.buymo.me&gt;" className="mt-1 w-full rounded-lg border px-3 py-2 text-sm" />
+            <p className="mt-1 text-xs text-gray-400">お客様・スタッフに届くメールの差出人。認証済みドメインのアドレスを指定します。空欄なら全体の既定を使用。</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Slack Webhook URL（任意）</label>

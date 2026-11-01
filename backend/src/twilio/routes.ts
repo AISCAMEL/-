@@ -152,7 +152,7 @@ async function finalizeAndNotify(app: FastifyInstance, callSid: string): Promise
   if (shouldNotify) {
     // --- メール通知 ---
     const dest = tenant?.notificationEmail ?? 'owner@example.com';
-    const mail = await sendCallNotification(dest, { fromNumber: session.from, summary, statusLabel });
+    const mail = await sendCallNotification(dest, { fromNumber: session.from, summary, statusLabel }, tenant?.mailFrom ?? undefined);
     await recordNotification({
       tenantId: session.tenantId, callId: session.callId, type: 'email', destination: dest,
       status: mail.ok ? 'sent' : 'failed',

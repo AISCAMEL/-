@@ -4,7 +4,7 @@ import websocket from '@fastify/websocket';
 import cors from '@fastify/cors';
 import { pathToFileURL } from 'node:url';
 import { config } from './config.js';
-import { dbEnabled } from './db/index.js';
+import { dbEnabled, ensureSchema } from './db/index.js';
 import { llmEnabled } from './ai/llm.js';
 import { registerTwilioRoutes } from './twilio/routes.js';
 import { registerConversationWs } from './ws/conversation.js';
@@ -17,6 +17,9 @@ import { runWeeklyDigests } from './notify/digest.js';
 // アプリ本体を組み立てて返す（listen はしない）。テストから inject で利用する。
 export async function buildApp(opts: { logger?: boolean } = {}): Promise<FastifyInstance> {
   const app = Fastify({ logger: opts.logger ?? true });
+
+  // 起動時マイグレーション（既存DBへの列追加を冪等に適用）。DB未接続なら何もしない。
+  await ensureSchema();
 
   // 本文なしのPOST（通知再送など）で Content-Type: application/json が付いても
   // エラーにせず空オブジェクトとして扱う（FST_ERR_CTP_EMPTY_JSON_BODY 回避）。
