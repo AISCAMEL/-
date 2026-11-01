@@ -89,8 +89,13 @@ add_action( 'apprex_line_event', function ( $ev, $uid, $type ) {
 	$messages = array(
 		array( 'role' => 'system', 'content' => $system ),
 		array( 'role' => 'system', 'content' => $line_rule ),
-		array( 'role' => 'user', 'content' => mb_substr( $user_text, 0, 2000 ) ),
 	);
+	// 会員・予約のお客様には、その人の情報を渡して合わせて答える（inc/line-member.php）。
+	$uid_ = isset( $ev['source']['userId'] ) ? sanitize_text_field( $ev['source']['userId'] ) : '';
+	if ( function_exists( 'apprex_line_member_ai' ) && apprex_line_member_ai() && '' !== $uid_ ) {
+		$messages[] = array( 'role' => 'system', 'content' => apprex_line_member_rules() . "\n\n# このお客様の情報\n" . apprex_line_member_context( $uid_ ) );
+	}
+	$messages[] = array( 'role' => 'user', 'content' => mb_substr( $user_text, 0, 2000 ) );
 	$reply = apprex_openrouter_complete( $messages, array( 'temperature' => 0.4, 'max_tokens' => 500, 'timeout' => 25, 'chat' => true ) );
 	// 設定モデルが利用不可（404等）の場合、安全な既定モデルで自動再試行（サイトのAIチャットと同じ挙動）。
 	if ( is_wp_error( $reply ) && function_exists( 'apprex_openrouter_model' ) && apprex_openrouter_model() !== APPREX_OPENROUTER_DEFAULT_MODEL ) {
@@ -102,7 +107,23 @@ add_action( 'apprex_line_event', function ( $ev, $uid, $type ) {
 		error_log( '[APPREX LINE AI] ' . $note ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		return;
 	}
-	$sent = apprex_line_reply( $reply_token, array( array( 'type' => 'text', 'text' => mb_substr( (string) $reply, 0, 4900 ) ) ) );
+	if ( function_exists( 'apprex_line_take_request' ) && '' !== $uid_ ) {
+		$reply = apprex_line_take_request( $reply, $uid_, $user_text );
+	}
+	// たまっているお知らせがあれば、AIの返事の前に一緒に届ける（返信なのでLINEの送信数に数えられない）。
+	$out    = array();
+	$notice = ( function_exists( 'apprex_line_queue_message' ) && '' !== $uid_ ) ? apprex_line_queue_message( $uid_ ) : null;
+	if ( $notice ) {
+		$out[] = $notice;
+	}
+	$out[] = array( 'type' => 'text', 'text' => mb_substr( (string) $reply, 0, 4900 ) );
+	$sent  = apprex_line_reply( $reply_token, $out );
+	if ( ! is_wp_error( $sent ) ) {
+		$GLOBALS['apprex_line_replied'] = true;
+		if ( $notice ) {
+			apprex_line_queue_clear( $uid_ );
+		}
+	}
 	if ( is_wp_error( $sent ) ) {
 		update_option( 'apprex_line_ai_last', array( 't' => time(), 's' => 'err', 'n' => 'LINE返信エラー：' . $sent->get_error_message() ), false );
 	} else {

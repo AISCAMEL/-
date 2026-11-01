@@ -356,6 +356,7 @@ function apprex_line_settings_page() {
 					<p class="description">「APPREX 連携設定」のSlack Webhookが必要です。</p></td>
 				</tr>
 			</tbody></table>
+			<?php if ( function_exists( 'apprex_line_member_settings' ) ) { apprex_line_member_settings(); } ?>
 			<?php submit_button( '保存する' ); ?>
 		</form>
 

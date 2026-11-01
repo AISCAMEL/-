@@ -334,11 +334,13 @@ function apprex_seminar_send( $entry_id, $key, $s = null ) {
 	}
 	$uid = (string) get_post_meta( $entry_id, 'apprex_line_uid', true );
 	if ( '' !== $uid && function_exists( 'apprex_line_push' ) ) {
-		$r = apprex_line_push( $uid, array( array( 'type' => 'text', 'text' => mb_substr( $text, 0, 4900 ) ) ) );
+		$r = function_exists( 'apprex_line_notice' ) ? apprex_line_notice( $uid, $text, 'sem_' . $key ) : apprex_line_push( $uid, array( array( 'type' => 'text', 'text' => mb_substr( $text, 0, 4900 ) ) ) );
 		if ( ! is_wp_error( $r ) ) {
 			return true;
 		}
-		update_post_meta( $entry_id, 'apprex_sem_line_err', $r->get_error_message() );
+		if ( 'apprex_line_queued' !== $r->get_error_code() ) {
+			update_post_meta( $entry_id, 'apprex_sem_line_err', $r->get_error_message() );
+		}
 	}
 	$email = (string) get_post_meta( $entry_id, 'apprex_email', true );
 	if ( is_email( $email ) && function_exists( 'apprex_render_email' ) ) {

@@ -257,7 +257,7 @@ function apprex_mb_line( $id, $key ) {
 	$when = apprex_mb_when( $at );
 	$u    = $url ? "\n▼ 参加URL（Google Meet）\n" . $url : "\n参加URLは、メールでお送りします。";
 	$msgs = array(
-		'confirm'   => "{$name} 様\n\nオンライン相談のご予約ありがとうございます。\n\n■ {$when}\n■ オンライン（Google Meet）{$u}\n\n前日と1時間前にも、このLINEでお知らせします。",
+		'confirm'   => "{$name} 様\n\nオンライン相談のご予約ありがとうございます。\n\n■ {$when}\n■ オンライン（Google Meet）{$u}\n\n" . ( ! function_exists( 'apprex_line_save_mode' ) || ! apprex_line_save_mode() ? '前日と1時間前にも、このLINEでお知らせします。' : ( get_option( 'apprex_line_save_keep_1h', 1 ) ? '1時間前に、このLINEでお知らせします。' : 'ご不明な点は、このLINEでお気軽にどうぞ。' ) ),
 		'before_1d' => "{$name} 様\n\n明日はオンライン相談のお約束です。\n■ {$when}{$u}",
 		'before_1h' => "{$name} 様\n\nまもなくオンライン相談のお時間です（{$when}）。{$u}",
 		'after_1d'  => "{$name} 様\n\n先日はお時間をいただき、ありがとうございました。正式なお見積りは担当者からお送りします。ご不明な点は、このLINEでお気軽にどうぞ。",
@@ -265,7 +265,8 @@ function apprex_mb_line( $id, $key ) {
 	if ( empty( $msgs[ $key ] ) ) {
 		return false;
 	}
-	$r = apprex_line_push( $uid, array( array( 'type' => 'text', 'text' => $msgs[ $key ] ) ) );
+	// 送信数を使わない設定なら、次にお客様が話しかけたときの返信でお知らせする（inc/line-member.php）。
+	$r = function_exists( 'apprex_line_notice' ) ? apprex_line_notice( $uid, $msgs[ $key ], 'mb_' . $key ) : apprex_line_push( $uid, array( array( 'type' => 'text', 'text' => $msgs[ $key ] ) ) );
 	return ! is_wp_error( $r );
 }
 
