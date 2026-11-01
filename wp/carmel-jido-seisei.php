@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CARMEL 自動生成（毎日自動）
  * Description: 本体「CARMEL統合管理 v5.7」を使って記事を自動生成・自動投稿するアドオン（WP-Cron）。カーメル管理メニューの中に表示。
- * Version: 11.1
+ * Version: 11.2
  * Author: CARMEL
  */
 
@@ -1425,11 +1425,14 @@ function carmel3_store_key($store) {
     return $slug;
 }
 
-// 店舗別タクソノミーを登録（加盟店ブログに付ける。一覧に絞り込み列も出る）
+// 店舗別タクソノミーを登録（加盟店ブログ・ニュースに付ける。一覧に絞り込み列も出る）
+// ニュースにも付けることで、ポータルから投稿した加盟店のニュースがその店舗のページ（/store/店舗/）に並ぶ
 add_action('init', 'carmel3_register_store_taxonomy', 20);
 function carmel3_register_store_taxonomy() {
     $objects = array();
-    foreach (array('shop_blog') as $pt) {
+    $types = array('shop_blog', 'news');
+    if (function_exists('carmel3_news_post_type')) $types[] = carmel3_news_post_type();
+    foreach (array_unique($types) as $pt) {
         if (post_type_exists($pt)) $objects[] = $pt;
     }
     if (empty($objects)) $objects = array('shop_blog'); // 後から登録されても紐づくよう指定
