@@ -208,6 +208,7 @@ function apprex_square_send_invoice( $id ) {
 
 	update_post_meta( $id, 'apprex_c_sq_invoice_id', $pub['id'] );
 	update_post_meta( $id, 'apprex_c_sq_invoice_month', current_time( 'Y-m' ) );
+	update_post_meta( $id, 'apprex_c_sq_invoice_due', $due );
 	update_post_meta( $id, 'apprex_c_sq_invoice_status', isset( $pub['status'] ) ? $pub['status'] : '' );
 	if ( ! empty( $pub['public_url'] ) ) {
 		update_post_meta( $id, 'apprex_c_sq_invoice_url', $pub['public_url'] );

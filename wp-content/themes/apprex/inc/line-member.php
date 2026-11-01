@@ -97,8 +97,8 @@ function apprex_line_notice( $uid, $text, $kind = '' ) {
 
 /* お客様あてのメールを送ったら、LINEにも「メールをお送りしました」とためておく。 */
 add_filter( 'wp_mail', function ( $args ) {
-	if ( ! function_exists( 'apprex_line_friend_get' ) || empty( $args['to'] ) ) {
-		return $args;
+	if ( ! function_exists( 'apprex_line_friend_get' ) || empty( $args['to'] ) || ! empty( $GLOBALS['apprex_bn_mailing'] ) ) {
+		return $args; // お支払いの案内は、LINEにも本文を送っているので重ねない。
 	}
 	$subject = isset( $args['subject'] ) ? wp_strip_all_tags( (string) $args['subject'] ) : '';
 	if ( preg_match( '/パスワード|password|ログイン用|認証コード/iu', $subject ) ) {
@@ -184,10 +184,12 @@ function apprex_line_member_context( $uid ) {
 	$user  = apprex_line_member( $uid );
 	$lines = array();
 	$email = '';
+	$cids  = array();
 	if ( $user ) {
 		$email   = strtolower( (string) $user->user_email );
 		$lines[] = '会員：' . $user->display_name . ' 様（LINE連携済み・メール ' . $user->user_email . '）';
-		foreach ( function_exists( 'apprex_member_contracts' ) ? apprex_member_contracts( $user ) : array() as $cid ) {
+		$cids = function_exists( 'apprex_member_contracts' ) ? apprex_member_contracts( $user ) : array();
+		foreach ( $cids as $cid ) {
 			$m      = function ( $k ) use ( $cid ) {
 				return (string) get_post_meta( $cid, $k, true );
 			};
@@ -250,7 +252,8 @@ function apprex_line_member_context( $uid ) {
 			. '契約・お支払いのことを聞かれたら、トーク画面下のメニューの「会員マイページ」を開くと会員情報とつながり、LINEで確認できるようになると案内する（' . apprex_line_mypage_link() . '）。';
 	}
 	$lines[] = 'マイページ（LINEで開く）：' . apprex_line_mypage_link();
-	return implode( "\n", $lines );
+	$pay     = ( $cids && function_exists( 'apprex_bn_ai_context' ) ) ? apprex_bn_ai_context( $cids ) : '';
+	return implode( "\n", $lines ) . ( '' !== $pay ? "\n\n" . $pay : '' );
 }
 
 /** AIへの指示（会員に合わせた対応と、担当者への依頼）。 */
@@ -258,6 +261,7 @@ function apprex_line_member_rules() {
 	return "# このお客様への対応\n"
 		. "- 下の「このお客様の情報」だけを根拠に、契約・お支払い・予約のことを答える。書かれていないことは推測しない。\n"
 		. "- お支払いを聞かれたら、未払いの請求書があればそのお支払いページのURLを伝える（カードで支払える）。支払済みならそう伝える。\n"
+		. "- 「支払いの相談」「払えない」「支払いを待ってほしい」などは、責めずに受け止め、担当者の対応が必要な依頼として受け付ける。\n"
 		. "- プラン変更・解約・請求書の再発行・予約の変更・アプリの不具合など、担当者の対応が必要な依頼は「担当者に伝えました。平日10:00〜18:00に、このLINEかメールでご連絡します」と答え、"
 		. "返答のいちばん最後の行に「##依頼：（依頼の内容を40字以内で）」と1行だけ書く（この行はお客様には表示されない）。\n"
 		. "- 個人情報（メールアドレスなど）は、本人の情報でも必要なとき以外は書かない。";

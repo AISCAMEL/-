@@ -164,3 +164,24 @@
   .mp-table.is-wide th:nth-child(2),.mp-table.is-wide td:nth-child(2){display:none}
   .mp-dl div{grid-template-columns:100px minmax(0,1fr)}
 }
+
+/* お支払いの注意・お知らせ */
+.mp-alert{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 16px;margin:0 0 14px;border-radius:12px;background:var(--red-bg);border:1px solid #fecaca;border-left:4px solid var(--red)}
+.mp-alert b{display:block;color:var(--red);margin-bottom:2px}
+.mp-alert span{font-size:.86rem;color:#7f1d1d}
+.mp-alert .mp-btn{flex:none}
+.mp-notices{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.mp-notices li{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.mp-notices summary{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;list-style:none}
+.mp-notices summary::-webkit-details-marker{display:none}
+.mp-notices summary i{width:8px;height:8px;border-radius:50%;background:var(--blue);flex:none}
+.mp-notices li.is-red summary i{background:var(--red)}
+.mp-notices li.is-amber summary i{background:var(--amber)}
+.mp-notices li.is-green summary i{background:var(--green)}
+.mp-notices summary b{font-size:.9rem;font-weight:600;flex:1;min-width:0}
+.mp-notices summary time{font-size:.78rem;color:var(--muted,#6b7280);flex:none}
+.mp-notices p{margin:0;padding:0 12px 10px 30px;font-size:.86rem;line-height:1.75;color:#374151;word-break:break-all}
+.mp-notices .mp-btn{margin:0 12px 12px 30px}
+.mp-policy summary{cursor:pointer;font-weight:700}
+.mp-policy p{font-size:.88rem;line-height:1.8;margin:10px 0 0}
+@media (max-width:600px){.mp-alert{flex-direction:column;align-items:stretch}}

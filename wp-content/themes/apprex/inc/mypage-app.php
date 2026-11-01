@@ -41,6 +41,8 @@ function apprex_mp_data( $user ) {
 		'meetings'  => array(),
 		'requests'  => array(),
 		'todo'      => array(),
+		'notices'   => array(),
+		'pay'       => array(),
 	);
 	foreach ( function_exists( 'apprex_member_contracts' ) ? apprex_member_contracts( $user ) : array() as $id ) {
 		$m = function ( $k ) use ( $id ) {
@@ -69,6 +71,17 @@ function apprex_mp_data( $user ) {
 			'doc'      => function_exists( 'apprex_contract_doc_url' ) ? apprex_contract_doc_url( $id ) : '',
 		);
 		$d['contracts'][] = $c;
+		// お知らせ（お支払い・更新の自動案内）と、お支払いの状態。
+		foreach ( (array) get_post_meta( $id, 'apprex_c_notices', true ) as $n ) {
+			if ( is_array( $n ) && ! empty( $n['title'] ) ) {
+				$d['notices'][] = $n;
+			}
+		}
+		$ps = function_exists( 'apprex_bn_state' ) ? apprex_bn_state( $id ) : null;
+		if ( $ps ) {
+			$ps['plan']  = $c['title'];
+			$d['pay'][]  = $ps;
+		}
 		if ( $m( 'apprex_c_sq_invoice_id' ) ) {
 			$d['invoices'][] = array(
 				'month'  => $m( 'apprex_c_sq_invoice_month' ),
@@ -109,6 +122,9 @@ function apprex_mp_data( $user ) {
 			$d['requests'][] = $r;
 		}
 	}
+	usort( $d['notices'], function ( $a, $b ) {
+		return (int) $b['t'] - (int) $a['t'];
+	} );
 	if ( '' === $uid && function_exists( 'apprex_liff_ready' ) && apprex_liff_ready() ) {
 		$d['todo'][] = array( 'LINEと連携しませんか', '契約・お支払い・予約の確認やご依頼が、LINEでできるようになります', '#line', '連携のしかた', 'info' );
 	}
@@ -188,6 +204,12 @@ function apprex_mypage_app() {
 	$unpaid = count( array_filter( $d['invoices'], function ( $i ) {
 		return in_array( $i['status'], array( 'UNPAID', 'PARTIALLY_PAID', 'FAILED' ), true );
 	} ) );
+	$late   = array_values( array_filter( $d['pay'], function ( $p ) {
+		return false === $p['paid'] && $p['days'] >= 0;
+	} ) );
+	if ( $late && ! $unpaid ) {
+		$unpaid = count( $late );
+	}
 
 	ob_start();
 	?>
@@ -215,6 +237,13 @@ function apprex_mypage_app() {
 
     <section class="mp-panel" id="mp-home" data-panel="home">
       <div class="mp-head"><div><p class="mp-eyebrow"><?php echo esc_html( wp_date( 'Y年n月j日（' ) . mb_substr( '日月火水木金土', (int) wp_date( 'w' ), 1 ) . '）' ); ?></p><h1>こんにちは、<?php echo esc_html( $user->display_name ); ?> 様</h1></div></div>
+      <?php foreach ( $late as $p ) : ?>
+        <div class="mp-alert">
+          <div><b><?php echo esc_html( 0 === $p['days'] ? '本日がお支払い期日です' : 'お支払いが確認できていません（期日から' . $p['days'] . '日）' ); ?></b>
+          <span><?php echo esc_html( $p['plan'] . '・' . $p['month'] . '分' . ( $p['amount'] ? '・¥' . number_format( $p['amount'] ) . '（税抜）' : '' ) ); ?>。ご事情でお支払いが難しい場合は、早めにご相談ください。</span></div>
+          <?php if ( $p['url'] && 'square' === $p['method'] ) : ?><a class="mp-btn is-pri" href="<?php echo esc_url( $p['url'] ); ?>" target="_blank" rel="noopener">カードで支払う</a><?php else : ?><a class="mp-btn" href="#billing">お支払いを見る</a><?php endif; ?>
+        </div>
+      <?php endforeach; ?>
       <div class="mp-kpis">
         <div class="mp-kpi"><small>ご契約</small><b><?php echo esc_html( $c0 ? ( $c0['title'] ? $c0['title'] : 'ご契約中' ) : ( $studio ? '契約前' : '—' ) ); ?></b><?php echo $c0 ? apprex_mp_badge( $c_label[ $c0['status'] ][0] ?? '契約中', $c_label[ $c0['status'] ][1] ?? 'green' ) : '<em>AIスタジオで相談できます</em>'; // phpcs:ignore ?></div>
         <div class="mp-kpi"><small>月額（税抜）</small><b class="num"><?php echo $c0 && $c0['monthly'] ? '¥' . esc_html( number_format( $c0['monthly'] ) ) : '—'; ?></b><em><?php echo $c0 && $c0['renewal'] ? '次回更新 ' . esc_html( $c0['renewal'] ) : '&nbsp;'; ?></em></div>
@@ -263,6 +292,21 @@ function apprex_mypage_app() {
           <a class="mp-btn" href="<?php echo esc_url( $sturl ); ?>">AIスタジオを開く</a>
         </div>
       </div>
+      <?php if ( $d['notices'] ) : ?>
+        <div class="mp-card">
+          <div class="mp-card-h"><h2>お知らせ</h2><span class="mp-muted">マイページ・LINE・メールでお送りしたもの</span></div>
+          <ul class="mp-notices">
+          <?php foreach ( array_slice( $d['notices'], 0, 6 ) as $n ) : ?>
+            <li class="is-<?php echo esc_attr( $n['tone'] ); ?>">
+              <details><summary><i></i><b><?php echo esc_html( $n['title'] ); ?></b><time><?php echo esc_html( wp_date( 'n/j', (int) $n['t'] ) ); ?></time></summary>
+              <p><?php echo nl2br( esc_html( preg_replace( '/^.*様\n\n/u', '', (string) $n['body'] ) ) ); ?></p>
+              <?php if ( ! empty( $n['url'] ) ) : ?><a class="mp-btn is-pri is-sm" href="<?php echo esc_url( $n['url'] ); ?>" target="_blank" rel="noopener">カードで支払う</a><?php endif; ?>
+              </details>
+            </li>
+          <?php endforeach; ?>
+          </ul>
+        </div>
+      <?php endif; ?>
       <?php if ( $d['requests'] ) : ?>
         <div class="mp-card">
           <div class="mp-card-h"><h2>LINEでいただいたご依頼</h2></div>
@@ -333,6 +377,16 @@ function apprex_mypage_app() {
           <p class="mp-empty">ご請求はまだありません。</p>
         <?php endif; ?>
       </div>
+      <?php foreach ( $d['pay'] as $p ) : $pl = true === $p['paid'] ? array( '支払済み', 'green' ) : ( null === $p['paid'] ? array( '確認中', 'gray' ) : ( $p['days'] >= 0 ? array( '期日を過ぎています', 'red' ) : array( '未払い', 'amber' ) ) ); ?>
+        <div class="mp-card">
+          <div class="mp-card-h"><h2>お支払いの状況</h2><?php echo apprex_mp_badge( $pl[0], $pl[1] ); // phpcs:ignore ?></div>
+          <?php echo apprex_mp_dl( array( array( '内容', $p['plan'] ), array( '対象月', $p['month'] ), array( '金額（税抜）', $p['amount'] ? '¥' . number_format( $p['amount'] ) : '' ), array( 'お支払い期日', wp_date( 'Y年n月j日', strtotime( $p['due'] ) ) ), array( '状況', apprex_bn_state_text( $p ) ) ) ); // phpcs:ignore ?>
+          <?php if ( false === $p['paid'] && $p['url'] && 'square' === $p['method'] ) : ?><div class="mp-row-acts"><a class="mp-btn is-pri" href="<?php echo esc_url( $p['url'] ); ?>" target="_blank" rel="noopener">カードで支払う</a></div><?php endif; ?>
+        </div>
+      <?php endforeach; ?>
+      <?php if ( $d['pay'] && function_exists( 'apprex_bn_policy' ) ) : ?>
+        <details class="mp-card mp-policy"><summary>お支払いが遅れた場合について</summary><p><?php echo nl2br( esc_html( apprex_bn_policy() ) ); ?></p><p class="mp-note">お支払いのご相談は、LINEで「支払いの相談」と送るか、担当者までご連絡ください。</p></details>
+      <?php endif; ?>
       <?php foreach ( $active as $c ) : ?>
         <div class="mp-card">
           <div class="mp-card-h"><h2>お支払い方法</h2><span class="mp-muted"><?php echo esc_html( $c['title'] ); ?></span></div>

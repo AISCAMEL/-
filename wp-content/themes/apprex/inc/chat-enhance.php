@@ -345,6 +345,12 @@ function apprex_chat_member_context() {
 			. '／支払い期日：' . ( $g( 'apprex_c_payment_day' ) ? '毎月' . $g( 'apprex_c_payment_day' ) . '日' : '不明' )
 			. '／最終入金確認：' . ( $g( 'apprex_c_last_paid' ) ? $g( 'apprex_c_last_paid' ) : 'なし' );
 	}
+	if ( function_exists( 'apprex_bn_ai_context' ) ) {
+		$pay = apprex_bn_ai_context( $ids );
+		if ( '' !== $pay ) {
+			$ctx .= "\n\n" . $pay . "\n（お支払いの相談は、担当者が対応する旨を伝え、マイページ・お問い合わせ・LINEへ案内する）";
+		}
+	}
 	return $ctx;
 }
 

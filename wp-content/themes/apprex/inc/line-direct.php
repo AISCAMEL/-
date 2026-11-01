@@ -357,6 +357,7 @@ function apprex_line_settings_page() {
 				</tr>
 			</tbody></table>
 			<?php if ( function_exists( 'apprex_line_member_settings' ) ) { apprex_line_member_settings(); } ?>
+			<?php if ( function_exists( 'apprex_bn_settings' ) ) { apprex_bn_settings(); } ?>
 			<?php submit_button( '保存する' ); ?>
 		</form>
 

@@ -284,11 +284,19 @@ function apprex_process_contracts() {
 				if ( function_exists( 'apprex_slack_notify' ) ) {
 					apprex_slack_notify( ":rotating_light: 入金未確認（延滞の可能性）：{$name} ／ 最終入金確認 {$last_paid}。消し込み確認をお願いします。 " . admin_url( 'post.php?post=' . $id . '&action=edit' ) );
 				}
+				if ( function_exists( 'apprex_bn_on' ) && apprex_bn_on() ) {
+					continue; // お客様へのお知らせは「お支払い・契約の自動案内」が段階に合わせて送る。
+				}
 				$body = "{$name} 様\n\n恐れ入ります。今月分のご入金が確認できておりません。\nお手続きがお済みでない場合は、ご確認をお願いいたします。行き違いの場合は何卒ご容赦ください。\n";
 				$html = apprex_render_email( '【APPREX】お支払い確認のお願い', $body, array( 'heading' => 'お支払い確認のお願い' ) );
 				wp_mail( $email, '【APPREX】お支払い確認のお願い', $html, apprex_mail_headers() );
 			}
 		}
+	}
+
+	// お支払い・契約の自動案内（マイページ・LINE・メール）。
+	if ( function_exists( 'apprex_bn_run' ) ) {
+		apprex_bn_run();
 	}
 }
 
