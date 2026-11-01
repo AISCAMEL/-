@@ -279,7 +279,7 @@ function apprex_bn_send( $s, $stage ) {
 
 	// 担当者へ。
 	if ( in_array( $stage, array( 'od7', 'od14' ), true ) && function_exists( 'apprex_slack_notify' ) ) {
-		apprex_slack_notify( ( 'od14' === $stage ? ':rotating_light:' : ':warning:' ) . ' お支払い' . $s['days'] . '日超過：' . $s['name'] . '（' . $s['title'] . '・' . $s['month'] . '分）お客様へ「' . $title . '」を送りました。 ' . admin_url( 'post.php?post=' . $id . '&action=edit' ) );
+		apprex_slack_notify( ( 'od14' === $stage ? ':rotating_light:' : ':warning:' ) . ' お支払い' . $s['days'] . '日超過：' . $s['name'] . '（' . $s['title'] . '・' . $s['month'] . '分）お客様へ「' . $title . '」を送りました。 ' . admin_url( 'post.php?post=' . $id . '&action=edit' ), array(), 'billing' );
 		$sent[] = '担当者';
 	}
 

@@ -951,6 +951,9 @@ function apprex_run_autopost() {
 		);
 		update_option( 'apprex_autopost_last', time() );
 		update_option( 'apprex_autopost_last_result', is_wp_error( $res ) ? '失敗：' . $res->get_error_message() : '公開：' . $res['title'], false );
+		if ( is_wp_error( $res ) && function_exists( 'apprex_notify' ) ) {
+			apprex_notify( 'post', ':warning: 記事の自動投稿に失敗しました：' . $res->get_error_message() . "\n" . admin_url( 'edit.php?page=apprex-ai-blog' ) );
+		}
 		apprex_ai_dedupe_scan();
 		return;
 	}
@@ -990,6 +993,10 @@ function apprex_run_autopost() {
 
 	update_option( 'apprex_autopost_last', time() );
 	update_option( 'apprex_autopost_index', $picked + 1 );
+	update_option( 'apprex_autopost_last_result', is_wp_error( $res ) ? '失敗：' . $res->get_error_message() : '公開：' . $res['title'], false );
+	if ( is_wp_error( $res ) && function_exists( 'apprex_notify' ) ) {
+		apprex_notify( 'post', ':warning: 記事の自動投稿に失敗しました（テーマ「' . $topic . '」）：' . $res->get_error_message() . "\n" . admin_url( 'edit.php?page=apprex-ai-blog' ) );
+	}
 
 	// 公開後、既存の重複があれば自動で301に整理（SEO最適化）。
 	apprex_ai_dedupe_scan();

@@ -98,7 +98,7 @@ function apprex_contract_do_renew( $id, $by = 'system' ) {
 
 	$name = get_post_meta( $id, 'apprex_c_name', true );
 	if ( function_exists( 'apprex_slack_notify' ) ) {
-		apprex_slack_notify( ":white_check_mark: 契約更新（{$by}）：{$name} → 次回更新 {$new}" );
+		apprex_slack_notify( ":white_check_mark: 契約更新（{$by}）：{$name} → 次回更新 {$new}", array(), 'contract' );
 	}
 	$email = get_post_meta( $id, 'apprex_c_email', true );
 	if ( is_email( $email ) ) {
@@ -115,7 +115,7 @@ function apprex_contract_do_cancel( $id, $by = 'system' ) {
 
 	$name = get_post_meta( $id, 'apprex_c_name', true );
 	if ( function_exists( 'apprex_slack_notify' ) ) {
-		apprex_slack_notify( ":warning: 解約申請（{$by}）：{$name} 対応をお願いします。 " . admin_url( 'post.php?post=' . $id . '&action=edit' ) );
+		apprex_slack_notify( ":warning: 解約申請（{$by}）：{$name} 対応をお願いします。 " . admin_url( 'post.php?post=' . $id . '&action=edit' ), array(), 'contract' );
 	}
 	$email = get_post_meta( $id, 'apprex_c_email', true );
 	if ( is_email( $email ) ) {
@@ -257,7 +257,7 @@ function apprex_process_contracts() {
 					update_post_meta( $id, 'apprex_c_status', 'pending' );
 					apprex_sync_contract_to_gas( $id );
 					if ( function_exists( 'apprex_slack_notify' ) ) {
-						apprex_slack_notify( ':hourglass: 契約期限到来（自動継続OFF）：' . get_post_meta( $id, 'apprex_c_name', true ) . ' 対応要 ' . admin_url( 'post.php?post=' . $id . '&action=edit' ) );
+						apprex_slack_notify( ':hourglass: 契約期限到来（自動継続OFF）：' . get_post_meta( $id, 'apprex_c_name', true ) . ' 対応要 ' . admin_url( 'post.php?post=' . $id . '&action=edit' ), array(), 'contract' );
 					}
 					$status = 'pending';
 				}
@@ -282,7 +282,7 @@ function apprex_process_contracts() {
 				update_post_meta( $id, 'apprex_c_overdue_month', $ym );
 				$name = get_post_meta( $id, 'apprex_c_name', true );
 				if ( function_exists( 'apprex_slack_notify' ) ) {
-					apprex_slack_notify( ":rotating_light: 入金未確認（延滞の可能性）：{$name} ／ 最終入金確認 {$last_paid}。消し込み確認をお願いします。 " . admin_url( 'post.php?post=' . $id . '&action=edit' ) );
+					apprex_slack_notify( ":rotating_light: 入金未確認（延滞の可能性）：{$name} ／ 最終入金確認 {$last_paid}。消し込み確認をお願いします。 " . admin_url( 'post.php?post=' . $id . '&action=edit' ), array(), 'billing' );
 				}
 				if ( function_exists( 'apprex_bn_on' ) && apprex_bn_on() ) {
 					continue; // お客様へのお知らせは「お支払い・契約の自動案内」が段階に合わせて送る。

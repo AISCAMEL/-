@@ -321,6 +321,13 @@ function apprex_rest_chat( WP_REST_Request $request ) {
 			apprex_chat_log_append( $session, 'お客様', $last_user['content'] );
 		}
 	}
+	// 社内への通知（inc/notify-hub.php）。
+	$apprex_lu = end( $messages );
+	reset( $messages );
+	if ( $apprex_lu && 'user' === $apprex_lu['role'] ) {
+		$apprex_nu = count( array_filter( $messages, function ( $m ) { return 'user' === $m['role']; } ) );
+		do_action( 'apprex_chat_user_message', $session, $apprex_lu['content'], $apprex_nu );
+	}
 
 	// オペレーター連携：発言を Slack へ転送。有人対応中ならAI応答を止める。
 	if ( function_exists( 'apprex_chat_op_ingest' ) ) {

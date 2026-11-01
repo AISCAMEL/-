@@ -294,7 +294,7 @@ function apprex_line_take_request( $reply, $uid, $asked ) {
 		"LINEでお客様から依頼がありました。\n\nお客様：{$who}\n依頼：{$what}\n\nお客様のメッセージ：\n{$asked}\n\n一覧：" . admin_url( 'options-general.php?page=apprex-line#apprex-line-requests' )
 	);
 	if ( function_exists( 'apprex_slack_notify' ) ) {
-		apprex_slack_notify( ':speech_balloon: LINEでご依頼：' . $what . '（' . $who . '）' );
+		apprex_slack_notify( ':speech_balloon: LINEでご依頼：' . $what . '（' . $who . '）', array(), 'chat' );
 	}
 	return $body;
 }

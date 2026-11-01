@@ -114,6 +114,7 @@ function apprex_nav_settings() {
 			array( 'メールの文面', 'お客様に届く自動メールの文章を直す', 'options-general.php?page=apprex-mail-content' ),
 			array( 'メールのテスト・見本', '届くメールを自分に送って確かめる', 'options-general.php?page=apprex-mail' ),
 			array( 'メールの送信（SMTP）', 'メールが届かないときの設定', 'options-general.php?page=apprex-smtp' ),
+			array( '社内への通知（Slack・LINE WORKS）', '記事の公開・お客様とのやりとり・請求などを社内に知らせる', 'options-general.php?page=apprex-notify' ),
 		),
 		'お支払い・契約'    => array(
 			array( 'Square（カード払い）', 'カード払いの請求書と、Squareとのつなぎ方', 'options-general.php?page=apprex-square' ),
@@ -240,7 +241,7 @@ function apprex_nav_health() {
 	// メール。
 	$smtp  = function_exists( 'apprex_smtp_ready' ) && apprex_smtp_ready();
 	$out[] = array( 'メール', $smtp, $smtp ? 'メール送信（SMTP）が設定されています' : 'メール送信（SMTP）が未設定です。届きにくいことがあります', 'options-general.php?page=apprex-smtp' );
-	return $out;
+	return apply_filters( 'apprex_nav_health', $out );
 }
 
 /* -------------------------------------------------------------------------

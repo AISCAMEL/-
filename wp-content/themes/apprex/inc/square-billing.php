@@ -236,12 +236,12 @@ add_filter( 'apprex_send_payment_via_square', function ( $handled, $id ) {
 	$res = apprex_square_send_invoice( $id );
 	if ( is_wp_error( $res ) ) {
 		if ( function_exists( 'apprex_slack_notify' ) ) {
-			apprex_slack_notify( ':x: Square請求書の発行に失敗：' . get_post_meta( $id, 'apprex_c_name', true ) . ' / ' . $res->get_error_message() );
+			apprex_slack_notify( ':x: Square請求書の発行に失敗：' . get_post_meta( $id, 'apprex_c_name', true ) . ' / ' . $res->get_error_message(), array(), 'billing' );
 		}
 		return false; // 失敗時は通常の支払い通知メールにフォールバック。
 	}
 	if ( function_exists( 'apprex_slack_notify' ) ) {
-		apprex_slack_notify( ':money_with_wings: Square請求書を送信：' . get_post_meta( $id, 'apprex_c_name', true ) );
+		apprex_slack_notify( ':money_with_wings: Square請求書を送信：' . get_post_meta( $id, 'apprex_c_name', true ), array(), 'billing' );
 	}
 	return true; // 成功時は通常メールを抑止（Squareがメール送信するため）。
 }, 10, 2 );
@@ -485,6 +485,7 @@ function apprex_square_refresh_invoice( $id ) {
 	if ( in_array( $status, array( 'PAID', 'PARTIALLY_PAID' ), true ) ) {
 		if ( ! get_post_meta( $id, 'apprex_c_sq_paid_at', true ) ) {
 			update_post_meta( $id, 'apprex_c_sq_paid_at', current_time( 'mysql' ) );
+			do_action( 'apprex_payment_confirmed', $id, 'Squareカード' );
 		}
 		update_post_meta( $id, 'apprex_c_last_paid', current_time( 'Y-m-d' ) ); // 自動消し込み。
 	}

@@ -346,7 +346,7 @@ add_filter( 'apprex_send_payment_via_mf', function ( $handled, $id ) {
 	$res = apprex_mf_issue_invoice( $id );
 	if ( is_wp_error( $res ) ) {
 		if ( function_exists( 'apprex_slack_notify' ) ) {
-			apprex_slack_notify( ':x: MF請求書の発行に失敗：' . get_post_meta( $id, 'apprex_c_name', true ) . ' / ' . $res->get_error_message() );
+			apprex_slack_notify( ':x: MF請求書の発行に失敗：' . get_post_meta( $id, 'apprex_c_name', true ) . ' / ' . $res->get_error_message(), array(), 'billing' );
 		}
 		return false; // 失敗時は通常メールにフォールバック。
 	}
@@ -375,7 +375,11 @@ function apprex_mf_refresh_invoice( $id ) {
 	}
 	$iv     = isset( $r['data']['data'] ) && is_array( $r['data']['data'] ) ? $r['data']['data'] : $r['data'];
 	$status = isset( $iv['payment_status'] ) ? $iv['payment_status'] : ( isset( $iv['posting_status'] ) ? $iv['posting_status'] : '' );
+	$was = (string) get_post_meta( $id, 'apprex_c_mf_billing_status', true );
 	update_post_meta( $id, 'apprex_c_mf_billing_status', $status );
+	if ( apprex_mf_is_paid( $status ) && ! apprex_mf_is_paid( $was ) ) {
+		do_action( 'apprex_payment_confirmed', $id, '振込' );
+	}
 	if ( apprex_mf_is_paid( $status ) ) {
 		update_post_meta( $id, 'apprex_c_last_paid', current_time( 'Y-m-d' ) ); // 自動消し込み。
 	}

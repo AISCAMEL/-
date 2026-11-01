@@ -258,7 +258,7 @@ function apprex_chat_register_lead( $email, $transcript, $session ) {
 		apprex_notify_inquiry( $post_id, 'チャット問い合わせ', $fields );
 	}
 	// Slack（任意）。
-	if ( function_exists( 'apprex_slack_notify' ) ) {
+	if ( ! function_exists( 'apprex_notify' ) && function_exists( 'apprex_slack_notify' ) ) { // 社内通知はお問い合わせとしてまとめて送る。
 		apprex_slack_notify( ":speech_balloon: チャットから新規リード：{$email} " . admin_url( 'post.php?post=' . $post_id . '&action=edit' ) );
 	}
 	// 共通フック：ホットリード即通知・Meta Conversions API（Lead）などが発火。

@@ -198,7 +198,7 @@ function apprex_overdue_daily_summary() {
 	if ( empty( $list ) || ! function_exists( 'apprex_slack_notify' ) ) {
 		return;
 	}
-	apprex_slack_notify( apprex_overdue_slack_text( $list ) );
+	apprex_slack_notify( apprex_overdue_slack_text( $list ), array(), 'billing' );
 }
 
 /** ダッシュボードから手動で Slack に延滞リストを送信。 */
@@ -211,7 +211,7 @@ add_action( 'admin_post_apprex_send_overdue_slack', function () {
 	$sent = 0;
 	if ( function_exists( 'apprex_slack_notify' ) ) {
 		$text = empty( $list ) ? ':white_check_mark: 現在、延滞はありません。' : apprex_overdue_slack_text( $list );
-		$sent = apprex_slack_notify( $text ) ? 1 : 0;
+		$sent = apprex_slack_notify( $text, array(), 'billing' ) ? 1 : 0;
 	}
 	wp_safe_redirect( admin_url( 'admin.php?page=apprex-dashboard&overdue_slack=' . $sent ) );
 	exit;

@@ -202,6 +202,7 @@ function apprex_labo_log( $uid, $type, $data = '' ) {
 	$ev   = is_array( $ev ) ? $ev : array();
 	$ev[] = array( $type, time(), mb_substr( (string) $data, 0, 80 ) );
 	update_post_meta( $fid, 'apprex_labo_events', array_slice( $ev, -200 ) );
+	do_action( 'apprex_labo_logged', $uid, $type, (string) $data );
 	if ( 'make' === $type ) {
 		update_post_meta( $fid, 'apprex_labo_made', time() );
 	} elseif ( 'view' === $type ) {

@@ -72,7 +72,7 @@ function apprex_hotlead_notify( $post_id, $type, $fields ) {
 		$message ? '「' . mb_substr( wp_strip_all_tags( $message ), 0, 80 ) . '」' : '',
 		admin_url( 'post.php?post=' . $post_id . '&action=edit' )
 	);
-	apprex_slack_notify( $text );
+	apprex_slack_notify( $text, array(), 'inquiry' );
 }
 
 /** 年間目標額（既定：1億円）。 */

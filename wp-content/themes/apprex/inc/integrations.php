@@ -80,7 +80,10 @@ function apprex_slack_webhook_url() {
  * @param array  $blocks Block Kit（任意）。
  * @return bool 送信を試みたか。
  */
-function apprex_slack_notify( $text, $blocks = array() ) {
+function apprex_slack_notify( $text, $blocks = array(), $cat = 'other' ) {
+	if ( function_exists( 'apprex_notify' ) ) {
+		return apprex_notify( $cat, $text, $blocks );
+	}
 	$url = apprex_slack_webhook_url();
 	if ( ! $url ) {
 		return false;
@@ -132,5 +135,5 @@ function apprex_slack_notify_post( $data ) {
 			),
 		),
 	);
-	apprex_slack_notify( "🆕 新着記事: {$title} {$url}", $blocks );
+	apprex_slack_notify( "🆕 新着記事: {$title} {$url}", $blocks, 'post' );
 }

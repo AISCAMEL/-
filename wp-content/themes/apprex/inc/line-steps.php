@@ -267,7 +267,7 @@ add_action( 'template_redirect', function () {
 					update_post_meta( $fid, 'apprex_active', 0 );
 					update_post_meta( $fid, 'apprex_blocked_at', time() );
 				}
-				if ( get_option( 'apprex_line_block_notify', 0 ) && function_exists( 'apprex_slack_notify' ) ) {
+				if ( ! function_exists( 'apprex_notify' ) && get_option( 'apprex_line_block_notify', 0 ) && function_exists( 'apprex_slack_notify' ) ) {
 					apprex_slack_notify( ':no_entry: LINEをブロックされました（userId: ' . substr( $uid, 0, 12 ) . '…）' );
 				}
 			}
