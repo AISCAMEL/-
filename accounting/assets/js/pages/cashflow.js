@@ -75,6 +75,25 @@ window.A = window.A || {};
       { key: 'rate', label: '増減率', align: 'right', render: (r) => r.p ? (Math.round((r.c - r.p) / Math.abs(r.p) * 1000) / 10) + '%' : '—' },
     ], rows));
     wrap.appendChild(card);
+
+    // 前年同月比（月別）グラフ
+    const trC = R.monthlyTrend(journals, cur.start, fsMonth);
+    const trP = R.monthlyTrend(journals, prev.start, fsMonth);
+    const mrows = trC.months.map((m, i) => ({ ym: m.ym, curRev: m.revenue, prevRev: (trP.months[i] || {}).revenue || 0, curNet: m.net, prevNet: (trP.months[i] || {}).net || 0 }));
+    wrap.appendChild(el('div.card', {}, [
+      el('h2', { text: '売上の前年同月比' }),
+      ui.barChart(mrows, {
+        labelKey: 'ym', labelFmt: (ym) => ym.slice(5) + '月', height: 220,
+        keys: [{ key: 'prevRev', label: '前期', color: '#cbd5e1' }, { key: 'curRev', label: '当期', color: '#2563eb' }],
+      }),
+    ]));
+    wrap.appendChild(el('div.card', {}, [
+      el('h2', { text: '利益の前年同月比' }),
+      ui.barChart(mrows, {
+        labelKey: 'ym', labelFmt: (ym) => ym.slice(5) + '月', height: 200,
+        keys: [{ key: 'prevNet', label: '前期', color: '#cbd5e1' }, { key: 'curNet', label: '当期', color: '#0d9488' }],
+      }),
+    ]));
     return wrap;
   });
 })();
