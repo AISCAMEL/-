@@ -3,6 +3,10 @@
  * カーメル：月々の下に出す「ローン概算目安＋シミュレーションスライダー」
  * ショートコード [carmel_loan_guide]
  * ---------------------------------------------------------------------------
+ * v3.2 変更点
+ *   ・金利を「固定 13.6%（実質年率）」に統一。est_nenritsu は参照しない。
+ *     3パターン表示・返済回数スライダー・注記すべて 13.6% で計算する。
+ *
  * v3.1 変更点（確実版）
  *   ・関数名を固有名（*_v2 / *_render）にして他スニペットとの衝突を回避。
  *     旧版は先頭の function_exists ガードで囲っていたため、別スニペットが
@@ -46,7 +50,8 @@ if ( ! function_exists( 'carmelx_loan_guide_render' ) ) {
 		$honntai = $num( 'est_honntai' );
 		$total   = $num( 'est_total' );
 		$atama   = $num( 'est_atamakin' );
-		$nen     = $num( 'est_nenritsu' );
+		// 金利は固定 13.6%（実質年率）。est_nenritsu の値は使わない。
+		$nen     = 13.6;
 
 		// est_total が空でも本体価格などから概算できるようフォールバック。
 		if ( $total <= 0 ) { $total = $honntai; }
