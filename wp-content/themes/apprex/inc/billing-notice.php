@@ -131,6 +131,11 @@ function apprex_bn_stage( $s ) {
 	return $s['days'] >= 3 ? 'od3' : 'due';
 }
 
+/** 「2026-11」→「2026年11月」。 */
+function apprex_bn_month( $ym ) {
+	return preg_match( '/^(\d{4})-(\d{2})$/', (string) $ym, $m ) ? $m[1] . '年' . (int) $m[2] . '月' : (string) $ym;
+}
+
 /** 状態の短い説明（AI・管理画面・マイページ用）。 */
 function apprex_bn_state_text( $s ) {
 	$due = wp_date( 'n月j日', strtotime( $s['due'] ) );
@@ -162,7 +167,7 @@ function apprex_bn_state_text( $s ) {
  */
 function apprex_bn_message( $s, $stage ) {
 	$who  = $s['name'] ? $s['name'] . ' 様' : 'お客様';
-	$what = ( $s['title'] ? $s['title'] : 'ご利用料金' ) . ( isset( $s['month'] ) ? 'の' . $s['month'] . '分' : '' ) . ( $s['amount'] ? '（月額 ' . number_format( $s['amount'] ) . '円・税抜）' : '' );
+	$what = ( $s['title'] ? $s['title'] : 'ご利用料金' ) . ( isset( $s['month'] ) ? 'の' . apprex_bn_month( $s['month'] ) . '分' : '' ) . ( $s['amount'] ? '（月額 ' . number_format( $s['amount'] ) . '円・税抜）' : '' );
 	$due  = isset( $s['due'] ) ? wp_date( 'n月j日', strtotime( $s['due'] ) ) : '';
 	$how  = ( 'square' === $s['method'] && $s['url'] )
 		? "こちらからカードでお支払いいただけます。\n" . $s['url']
@@ -233,10 +238,7 @@ function apprex_bn_send( $s, $stage ) {
 	// LINE。
 	$uid = apprex_bn_line_uid( $id );
 	if ( '' !== $uid ) {
-		$icon = array( 'pre' => '📅', 'due' => '⏰', 'od3' => '⚠️', 'od7' => '⚠️', 'od14' => '🚨', 'paid' => '✅', 'rn30' => '📄', 'rn7' => '📄' );
-		$text = ( isset( $icon[ $stage ] ) ? $icon[ $stage ] . ' ' : '' ) . $title . "\n\n" . preg_replace( '/^.*様\n\n/u', '', $body );
-		$text = str_replace( 'このメールにご返信ください', 'このLINEでご返信ください', $text );
-		$text .= "\n\nマイページ：" . ( function_exists( 'apprex_line_mypage_link' ) ? apprex_line_mypage_link() : home_url( '/mypage/' ) );
+		$text = apprex_bn_line_text( $title, $body, $stage );
 		if ( $overdue && apprex_bn_push() && function_exists( 'apprex_line_push' ) ) {
 			$r      = apprex_line_push( $uid, array( array( 'type' => 'text', 'text' => mb_substr( $text, 0, 4900 ) ) ) );
 			$sent[] = true === $r ? 'LINE（送信）' : 'LINE（失敗）';
@@ -267,6 +269,14 @@ function apprex_bn_send( $s, $stage ) {
 	array_unshift( $log, array( 't' => time(), 'id' => $id, 'name' => $s['name'], 'title' => $title, 'to' => implode( '・', $sent ) ) );
 	update_option( 'apprex_bn_log', array_slice( $log, 0, 150 ), false );
 	return $sent;
+}
+
+/** LINEで送る文面。 */
+function apprex_bn_line_text( $title, $body, $stage ) {
+	$icon = array( 'pre' => '📅', 'due' => '⏰', 'od3' => '⚠️', 'od7' => '⚠️', 'od14' => '🚨', 'paid' => '✅', 'rn30' => '📄', 'rn7' => '📄' );
+	$text = ( isset( $icon[ $stage ] ) ? $icon[ $stage ] . ' ' : '' ) . $title . "\n\n" . preg_replace( '/^.*様\n\n/u', '', $body );
+	$text = str_replace( 'LINEで「支払いの相談」と送るか、このメールにご返信ください', 'このLINEで「支払いの相談」と送ってください', $text );
+	return $text . "\n\nマイページ：" . ( function_exists( 'apprex_line_mypage_link' ) ? apprex_line_mypage_link() : home_url( '/mypage/' ) );
 }
 
 /** 毎日の処理（契約の日次バッチから呼ぶ）。 */
@@ -477,5 +487,143 @@ function apprex_bn_settings() {
 			</tbody>
 		</table>
 	<?php endif; ?>
+	<?php
+}
+
+/* -------------------------------------------------------------------------
+ * LINEへのテスト送信（見本の内容で、指定した人にだけ送る）
+ * ---------------------------------------------------------------------- */
+
+/** テスト送信の種類。 */
+function apprex_bn_test_kinds() {
+	return array(
+		'all'   => 'すべて（7種類をまとめて）',
+		'pre'   => '期日の3日前',
+		'due'   => '期日当日',
+		'od3'   => '3日後：確認のお願い',
+		'od7'   => '7日後：重要なお願い',
+		'od14'  => '14日後：最終のお願い',
+		'paid'  => 'お礼（入金確認）',
+		'rn30'  => '契約の更新日が近い',
+		'queue' => '次の返信でまとめて届く形',
+	);
+}
+
+add_action( 'admin_post_apprex_bn_test', function () {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( '権限がありません。' );
+	}
+	check_admin_referer( 'apprex_bn_test' );
+	$uid  = isset( $_POST['uid_manual'] ) ? sanitize_text_field( wp_unslash( $_POST['uid_manual'] ) ) : '';
+	$uid  = '' !== $uid ? $uid : ( isset( $_POST['uid'] ) ? sanitize_text_field( wp_unslash( $_POST['uid'] ) ) : '' );
+	$kind = isset( $_POST['kind'] ) ? sanitize_key( wp_unslash( $_POST['kind'] ) ) : 'all';
+	$back = admin_url( 'options-general.php?page=apprex-line' );
+	set_transient( 'apprex_bn_test_uid_' . get_current_user_id(), $uid, DAY_IN_SECONDS );
+	if ( '' === $uid || ! function_exists( 'apprex_line_push' ) ) {
+		wp_safe_redirect( add_query_arg( 'apprex_bnt', rawurlencode( 'NG：送信先を選んでください。' ), $back ) . '#apprex-bn-test' );
+		exit;
+	}
+	$me     = wp_get_current_user();
+	$sample = array(
+		'id'        => 0,
+		'method'    => 'square',
+		'title'     => 'アプリ スタート',
+		'name'      => $me->display_name ? $me->display_name : 'テスト',
+		'email'     => '',
+		'amount'    => 39800,
+		'url'       => function_exists( 'apprex_mypage_url' ) ? apprex_mypage_url() : home_url( '/mypage/' ),
+		'month'     => wp_date( 'Y-m' ),
+		'renewal'   => wp_date( 'Y-m-d', strtotime( '+30 days', current_time( 'timestamp' ) ) ),
+		'left'      => 30,
+		'autorenew' => 1,
+	);
+	$offset = array( 'pre' => 3, 'due' => 0, 'od3' => -3, 'od7' => -7, 'od14' => -14, 'paid' => 0 );
+	$stages = 'all' === $kind ? array( 'pre', 'due', 'od3', 'od7', 'od14', 'paid', 'rn30' ) : ( 'queue' === $kind ? array( 'pre', 'rn30' ) : array( $kind ) );
+	$texts  = array();
+	foreach ( $stages as $st ) {
+		$s        = $sample;
+		$s['due'] = wp_date( 'Y-m-d', strtotime( ( isset( $offset[ $st ] ) ? $offset[ $st ] : 0 ) . ' days', current_time( 'timestamp' ) ) );
+		list( $t, $b ) = apprex_bn_message( $s, $st );
+		if ( '' !== $t ) {
+			$texts[] = apprex_bn_line_text( $t, $b, $st );
+		}
+	}
+	if ( 'queue' === $kind ) {
+		// お客様が話しかけたときの返信の形（AIの答えの前に、ためていたお知らせが付く）。
+		$q = '🔔 お知らせ（' . count( $texts ) . '件）';
+		foreach ( $texts as $t ) {
+			$q .= "\n\n" . wp_date( 'n/j G:i' ) . "\n" . $t;
+		}
+		$texts = array( $q, '（ここにAIの答えが続きます）' );
+	}
+	$msgs = array( array( 'type' => 'text', 'text' => '【テスト送信】お支払い・契約の自動案内の見本です。金額・日付は見本です。' ) );
+	foreach ( $texts as $t ) {
+		$msgs[] = array( 'type' => 'text', 'text' => mb_substr( $t, 0, 4900 ) );
+	}
+	$ok = true;
+	foreach ( array_chunk( $msgs, 5 ) as $chunk ) { // LINEは1回に5通まで。
+		$r = apprex_line_push( $uid, $chunk );
+		if ( true !== $r ) {
+			$ok = is_wp_error( $r ) ? $r->get_error_message() : '送信できませんでした。';
+			break;
+		}
+	}
+	$msg = true === $ok ? 'OK：テスト送信しました（' . ( count( $msgs ) - 1 ) . '件）。LINEをご確認ください。' : 'NG：' . $ok;
+	wp_safe_redirect( add_query_arg( 'apprex_bnt', rawurlencode( $msg ), $back ) . '#apprex-bn-test' );
+	exit;
+} );
+
+/** テスト送信の欄（設定フォームの外に出す）。 */
+function apprex_bn_test_box() {
+	$opts = array();
+	foreach ( get_users( array( 'meta_key' => 'apprex_line_uid', 'number' => 50 ) ) as $u ) {
+		$v = (string) get_user_meta( $u->ID, 'apprex_line_uid', true );
+		if ( '' !== $v ) {
+			$opts[ $v ] = '会員：' . $u->display_name . ( get_current_user_id() === $u->ID ? '（あなた）' : '' );
+		}
+	}
+	foreach ( get_posts( array( 'post_type' => 'apprex_line_friend', 'post_status' => 'any', 'posts_per_page' => 30, 'meta_key' => 'apprex_uid' ) ) as $f ) {
+		$v = (string) get_post_meta( $f->ID, 'apprex_uid', true );
+		if ( '' !== $v && ! isset( $opts[ $v ] ) ) {
+			$opts[ $v ] = '友だち：' . $f->post_title . '（' . wp_date( 'n/j', strtotime( $f->post_date ) ) . '）';
+		}
+	}
+	$last = (string) get_transient( 'apprex_bn_test_uid_' . get_current_user_id() );
+	$mine = (string) get_user_meta( get_current_user_id(), 'apprex_line_uid', true );
+	$sel  = '' !== $last ? $last : $mine;
+	?>
+	<hr>
+	<h2 id="apprex-bn-test">お支払いの案内をLINEでテスト送信</h2>
+	<?php if ( isset( $_GET['apprex_bnt'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$m = sanitize_text_field( wp_unslash( $_GET['apprex_bnt'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		?>
+		<div class="notice notice-<?php echo 0 === strpos( $m, 'OK' ) ? 'success' : 'error'; ?> inline"><p><?php echo esc_html( $m ); ?></p></div>
+	<?php endif; ?>
+	<p class="description">見本の内容（アプリ スタート・月額39,800円）で、選んだ人のLINEにだけ送ります。お客様には届きません。自動案内がオフのままでも送れます。</p>
+	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+		<input type="hidden" name="action" value="apprex_bn_test">
+		<?php wp_nonce_field( 'apprex_bn_test' ); ?>
+		<table class="form-table">
+			<tr><th scope="row">送る先</th><td>
+				<select name="uid" style="min-width:320px">
+					<option value="">選んでください</option>
+					<?php foreach ( $opts as $v => $label ) : ?>
+						<option value="<?php echo esc_attr( $v ); ?>" <?php selected( $sel, $v ); ?>><?php echo esc_html( $label ); ?></option>
+					<?php endforeach; ?>
+				</select>
+				<p class="description">ご自分のLINEで公式アカウントを友だち追加し、何か話しかけると「友だち」に出てきます。名前が分からないときは、いちばん新しい日付のものがご自分です。</p>
+				<details style="margin-top:6px"><summary style="cursor:pointer;color:#2271b1">userId を直接入れる</summary><input type="text" name="uid_manual" class="regular-text" placeholder="U××××…" style="margin-top:6px"></details>
+			</td></tr>
+			<tr><th scope="row">送る案内</th><td>
+				<select name="kind">
+					<?php foreach ( apprex_bn_test_kinds() as $k => $label ) : ?>
+						<option value="<?php echo esc_attr( $k ); ?>"><?php echo esc_html( $label ); ?></option>
+					<?php endforeach; ?>
+				</select>
+				<p class="description">「すべて」は8通（説明1通＋7種類）届きます。「次の返信でまとめて届く形」は、送信数を使わない設定のときに、お客様が話しかけたあとの返信で届く形です。</p>
+			</td></tr>
+		</table>
+		<?php submit_button( 'LINEにテスト送信', 'primary', 'submit', false ); ?>
+	</form>
 	<?php
 }

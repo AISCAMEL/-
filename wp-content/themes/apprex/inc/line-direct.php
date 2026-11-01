@@ -360,6 +360,7 @@ function apprex_line_settings_page() {
 			<?php if ( function_exists( 'apprex_bn_settings' ) ) { apprex_bn_settings(); } ?>
 			<?php submit_button( '保存する' ); ?>
 		</form>
+		<?php if ( function_exists( 'apprex_bn_test_box' ) ) { apprex_bn_test_box(); } ?>
 
 		<hr>
 		<h2>接続確認</h2>
