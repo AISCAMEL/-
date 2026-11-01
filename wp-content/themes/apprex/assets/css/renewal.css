@@ -474,6 +474,7 @@
 .rn .fnote a{color:inherit}
 /* マッチングアプリ開発ページ */
 .rn .mhero .wrap{grid-template-columns:1.1fr .9fr}
+@media(max-width:940px){.rn .mhero .wrap{grid-template-columns:1fr}}
 .rn .price-big{display:flex;align-items:baseline;gap:6px;margin:6px 0 18px;flex-wrap:wrap}
 .rn .price-big b{font-family:var(--f-num);font-weight:800;font-size:clamp(2.6rem,6vw,3.8rem);color:#fff;line-height:1}
 .rn .price-big span{font-size:1.1rem;font-weight:700;color:var(--gold)}

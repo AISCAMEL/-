@@ -4,7 +4,7 @@ Theme URI: https://site.aiscompany.jp/
 Author: AIS Company
 Author URI: https://site.aiscompany.jp/
 Description: クラウド型アプリ開発プラットフォーム「APPREX」公式サイト用テーマ。Hello Elementor の思想を踏襲したライセンス非依存の自作テーマ。固定ページ構成＋カスタム投稿タイプ cases によるリニューアル実装。モバイルファースト・WebP・Lazy Load 対応。
-Version: 1.103.1
+Version: 1.103.2
 Requires at least: 6.0
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -1303,3 +1303,18 @@ a:focus-visible, button:focus-visible, .btn:focus-visible, summary:focus-visible
 /* AI記事の本文の写真 */
 .ap-body-img { margin: 1.2em 0 1.6em; }
 .ap-body-img img { display: block; width: 100%; height: auto; border-radius: 14px; aspect-ratio: 16 / 9; object-fit: cover; }
+
+/* -------------------------------------------------------------------------
+ * 読みやすさの調整（v1.103.2）
+ * ---------------------------------------------------------------------- */
+/* 日本語：言葉の途中で改行しない（対応ブラウザ）。最後の1〜2文字だけの行を作らない。 */
+/* 見出しと、セクションの説明文だけ（本文・表・カードの中は広がらないよう、ふつうの折り返しのまま）。 */
+html:lang(ja) :is(h1, h2, h3, .section-head p, .page-hero p, .final-cta p, .campaign-bar) { word-break: auto-phrase; }
+p, li, dd, td, th, figcaption, summary, label { text-wrap: pretty; }
+h1, h2, h3, h4 { text-wrap: balance; }
+/* 文のまとまりで折り返す。 */
+.nb { display: inline-block; }
+/* 3ステップのカード：見出しの高さをそろえる。 */
+.qs-steps li { align-content: start; }
+/* 右下のチャットの吹き出しと、フッターの文字が重ならないように。 */
+@media (min-width: 769px) { .site-footer__bottom { padding-bottom: 72px; } }

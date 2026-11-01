@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'APPREX_VERSION', '1.103.1' );
+define( 'APPREX_VERSION', '1.103.2' );
 define( 'APPREX_DIR', get_template_directory() );
 define( 'APPREX_URI', get_template_directory_uri() );
 
