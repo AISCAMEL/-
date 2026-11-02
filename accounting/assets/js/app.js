@@ -60,6 +60,7 @@ A.app = (function () {
     { path: 'audit', label: '訂正・削除履歴', icon: '📋' },
     { group: '' },
     { path: 'settings', label: '設定', icon: '⚙️' },
+    { path: 'help', label: 'ヘルプ / 使い方', icon: '❓' },
   ];
 
   // 折りたたみ状態を localStorage に保持

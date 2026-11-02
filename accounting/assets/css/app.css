@@ -353,3 +353,10 @@ table.sum .grand td { font-weight: 800; font-size: 16px; background: var(--brand
 .doc .doc-from .doc-logo{margin-left:auto}
 .doc .reduced-mark{color:#d97706;font-weight:700}
 .doc .reduced-note{font-size:11px;color:#555;margin:4px 0 0}
+
+/* ヘルプ */
+.help-row{display:flex;align-items:center;gap:12px;padding:9px 2px;border-bottom:1px solid var(--line,#eef2f7)}
+.help-row:last-child{border-bottom:none}
+.help-ico{font-size:1.3rem;width:1.8rem;text-align:center;flex:none}
+.help-body{flex:1;min-width:0}
+.help-title{font-weight:600}
