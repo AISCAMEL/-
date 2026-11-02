@@ -391,6 +391,24 @@ A.reports = (function () {
     return { rows, totals, inventoryValue, soldProfit, inStock };
   };
 
+  /* ---- 会場別（仕入先別）収益ランキング --------------------------------
+   * 車両を auctionSite（会場・仕入先）でグループ化し、台数・売上・粗利・
+   * 平均粗利率・平均在庫日数を集計。粗利の多い順に並べる。
+   * ------------------------------------------------------------------- */
+  const venueRanking = (journals, vehicles) => {
+    const pl = vehiclePL(journals, vehicles);
+    const g = {};
+    pl.rows.forEach((r) => {
+      const site = (r.v.auctionSite || '（未設定）').trim() || '（未設定）';
+      const b = g[site] || (g[site] = { site, count: 0, sold: 0, sales: 0, cost: 0, profit: 0, daysSum: 0, daysN: 0, marginSum: 0, marginN: 0 });
+      b.count += 1; b.sales += r.sales; b.cost += r.cost; b.profit += r.profit;
+      if (r.sold) { b.sold += 1; if (r.holdingDays != null) { b.daysSum += r.holdingDays; b.daysN += 1; } if (r.marginPct != null) { b.marginSum += r.marginPct; b.marginN += 1; } }
+    });
+    const rows = Object.keys(g).map((k) => { const b = g[k]; return Object.assign(b, { avgDays: b.daysN ? Math.round(b.daysSum / b.daysN) : null, avgMargin: b.marginN ? Math.round(b.marginSum / b.marginN * 10) / 10 : null }); });
+    rows.sort((a, b) => b.profit - a.profit);
+    return rows;
+  };
+
   /* ---- 過去の仕訳から勘定科目を自動学習 --------------------------------
    * 摘要（text）に関連する過去の仕訳を探し、方向(dir)に合う相手科目のうち
    * 最も多く使われた科目を返す。ルール未登録でも「前回と同じ科目」を提案。
@@ -606,5 +624,5 @@ A.reports = (function () {
     return { net, dep, dAR, dInv, dAP, operating, investing, financing, adjust, cashChange, cashOpen, cashClose };
   };
 
-  return { flatLines, ledger, trialBalance, statements, taxSummary, dashboard, depSchedule, depForFiscalYear, bookValueAt, breakdown, learnAccount, vehiclePL, cashTrend, DEEMED_RATES, taxPayable, deptSummary, taxReturnCalc, advisor, monthlyTrend, partnerLedger, cashflow };
+  return { flatLines, ledger, trialBalance, statements, taxSummary, dashboard, depSchedule, depForFiscalYear, bookValueAt, breakdown, learnAccount, vehiclePL, venueRanking, cashTrend, DEEMED_RATES, taxPayable, deptSummary, taxReturnCalc, advisor, monthlyTrend, partnerLedger, cashflow };
 })();

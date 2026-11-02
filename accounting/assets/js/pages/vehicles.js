@@ -182,6 +182,27 @@ window.A = window.A || {};
       return wrap;
     }
 
+    // 会場別（仕入先別）収益ランキング
+    const vr = R.venueRanking(journals, vehicles);
+    if (vr.length) {
+      const rank = el('div.card', {}, [el('h2', { text: '会場別 収益ランキング' })]);
+      rank.appendChild(ui.barChart(vr, {
+        labelKey: 'site', height: 180, legend: false,
+        keys: [{ key: 'profit', label: '粗利', color: '#2563eb' }],
+      }));
+      rank.appendChild(ui.table([
+        { key: 'rk', label: '順位', render: (r) => String(vr.indexOf(r) + 1) },
+        { key: 'site', label: '会場・仕入先', render: (r) => r.site },
+        { key: 'count', label: '台数', align: 'right', render: (r) => `${r.count}台（販売${r.sold}）` },
+        { key: 'sales', label: '売上', align: 'right', render: (r) => '¥' + U.yen(r.sales) },
+        { key: 'profit', label: '粗利', align: 'right', render: (r) => el('span' + (r.profit < 0 ? '.neg' : ''), { text: '¥' + U.yenSigned(r.profit) }) },
+        { key: 'avgMargin', label: '平均粗利率', align: 'right', render: (r) => r.avgMargin != null ? r.avgMargin + '%' : '—' },
+        { key: 'avgDays', label: '平均在庫日数', align: 'right', render: (r) => r.avgDays != null ? r.avgDays + '日' : '—' },
+      ], vr));
+      rank.appendChild(el('p.muted.small', { text: '販売済み車両の粗利が多い会場・仕入先ほど上位です。平均粗利率・在庫日数は販売済みのみで集計しています。' }));
+      wrap.appendChild(rank);
+    }
+
     const card = el('div.card', {}, [el('h2', { text: '車両一覧（クリックで明細）' })]);
     card.appendChild(ui.table([
       { key: 'name', label: '車両', render: (r) => r.v.name + (r.v.auctionSite ? `（${r.v.auctionSite}）` : '') },
