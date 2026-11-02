@@ -1,0 +1,103 @@
+# クラウド会計 同期サーバー
+
+複数人・複数端末で同じ帳簿を共有するための、**依存ゼロ**の最小同期サーバーです。
+Node.js（v18以降）だけで動きます。追加パッケージのインストールは不要です。
+
+## 起動
+
+```bash
+node server/server.js
+# ポートを変える場合
+PORT=9000 node server/server.js
+```
+
+起動すると `http://localhost:8787` で待ち受けます。
+データは `server/data/<ワークスペース>.json` に保存されます。
+
+社内LANや社内サーバー上で起動し、各自のブラウザから同じURLに接続すれば共有できます。
+（インターネット公開する場合は、リバースプロキシでHTTPS化し、トークンを必ず設定してください。）
+
+## アプリ側の設定
+
+会計アプリの **設定 → クラウド同期** で以下を入力します。
+
+| 項目 | 例 | 説明 |
+|------|----|------|
+| サーバーURL | `http://localhost:8787` | このサーバーのアドレス |
+| ワークスペース | `aizu-2026` | 共有の単位（同じ値の人どうしで共有） |
+| トークン | 任意の合言葉 | 初回アップロード時に登録され、以降の認証に使う |
+
+- **アップロード（push）**：今の端末のデータをサーバーへ送ります。
+- **ダウンロード（pull）**：サーバーのデータを取り込み、今の端末を上書きします。
+
+## しくみ・注意
+
+- データは「ワークスペース単位のスナップショット（全データ）」として同期します。
+- 楽観ロック（version）により、他の人が更新した後に古いデータで上書きしようとすると
+  **409（衝突）** を返します。その場合は一度ダウンロードしてから、再度アップロードしてください。
+- 同時編集のリアルタイムマージには対応していません（最後に保存した内容が有効）。
+  運用は「作業前にダウンロード → 作業後にアップロード」を基本にしてください。
+
+## API
+
+| メソッド | パス | ボディ | 説明 |
+|----------|------|--------|------|
+| GET | `/api/health` | — | 稼働確認 |
+| POST | `/api/pull` | `{workspace, token}` | データ取得 `{version, data}` |
+| POST | `/api/push` | `{workspace, token, baseVersion, data}` | データ保存 `{version}`（衝突時409） |
+| POST | `/api/inbox` | `{workspace, token, items:[…]}` | 取込Webhook。取引データを受信キューに追加 |
+| POST | `/api/inbox/pull` | `{workspace, token}` | 受信キューを取得して空にする `{items}` |
+| POST | `/api/ai` | `{workspace, token, question, context}` | AI会計相談。LLM に問い合わせて `{answer}` を返す |
+| POST | `/api/ocr` | `{workspace, token, image, mime}` | 領収書OCR。Vision LLM で `{date, amount, vendor, taxRatePercent, summary}` を抽出 |
+
+## AI会計相談（LLM連携）
+
+`/api/ai` は、会計アプリの「AI会計アシスタント」からの質問を LLM に中継します。
+APIキーは**このサーバーの環境変数**でのみ保持し、ブラウザには置きません。
+
+```bash
+AI_API_KEY=sk-xxx AI_PROVIDER=anthropic AI_MODEL=claude-3-5-haiku-latest \
+PORT=8787 node server/server.js
+```
+
+| 変数 | 既定 | 説明 |
+|------|------|------|
+| `AI_API_KEY` | （必須） | LLM のAPIキー。未設定なら `/api/ai` は 501 |
+| `AI_PROVIDER` | `anthropic` | `anthropic` または `openai` |
+| `AI_MODEL` | provider既定 | 使用モデル |
+| `AI_API_BASE` | 各社標準 | テスト用に差し替え可 |
+
+会計データの要約（売上・利益・現預金・課税売上・検出事項）を文脈として送信し、
+日本語で簡潔な助言を返します（重要事項は「税理士等にご確認ください」を付記）。
+
+## 取込Webhook（外部連携）
+
+外部システム（Google Apps Script、決済/カードのwebhook、ICカードリーダーの
+スクリプト等）から取引データをPOSTしておき、会計アプリの「明細の取込」ページで
+取り込めます。`items` の各要素は次の形式です（`account`・`tax`・`dir` は任意）。
+
+```json
+{
+  "workspace": "aizu-2026",
+  "token": "共有の合言葉",
+  "items": [
+    { "date": "2026-06-05", "description": "AMAZON", "amount": 5400, "dir": "out",
+      "account": "560", "tax": "purchase10" },
+    { "date": "2026-06-15", "description": "売上入金", "amount": 110000, "dir": "in" }
+  ]
+}
+```
+
+- `dir` を省略すると `amount` の符号（マイナス＝出金）で判定します。
+- `account`（勘定科目コード）・`tax`（税区分）を指定すると、取込画面で相手科目が
+  埋まった状態で表示されます。未指定でも取込画面で選べます。
+- クレジットカードや決済サービスのAPIキーは**このサーバー側**で保持し、サーバーが
+  各APIを叩いて `/api/inbox` に流し込む構成にすると、ブラウザに鍵を置かずに連携できます。
+
+### 例：curl で受信キューへ投入
+
+```bash
+curl -X POST http://localhost:8787/api/inbox \
+  -H 'Content-Type: application/json' \
+  -d '{"workspace":"aizu-2026","token":"合言葉","items":[{"date":"2026-06-05","description":"AMAZON","amount":5400,"dir":"out"}]}'
+```
