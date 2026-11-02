@@ -107,6 +107,9 @@ A.app = (function () {
     await S.settings.load();
     await S.accounts.loadAll();
 
+    // 初回セットアップ・ウィザード（未完了かつデータ空のときのみ）
+    if (A.setup) { try { await A.setup.maybeRun(); } catch (e) { console.warn('setup:', e); } }
+
     const s = S.settings.get();
     const app = document.getElementById('app');
     app.innerHTML = '';

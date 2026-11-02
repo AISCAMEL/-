@@ -90,6 +90,7 @@ A.db = (function () {
     stockAlertDays: 45,                    // 在庫車アラートのしきい値（在庫日数）
     lastBackupAt: '',                      // 最後にバックアップを書き出した日
     logo: '',                              // 会社ロゴ（dataURL・請求書/見積書に表示）
+    setupDone: false,                      // 初期セットアップ完了フラグ
     syncUrl: '',                           // クラウド同期サーバーURL
     syncWorkspace: '',                     // ワークスペースID（共有単位）
     syncToken: '',                         // 認証トークン

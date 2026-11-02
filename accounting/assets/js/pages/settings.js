@@ -79,6 +79,12 @@ window.A = window.A || {};
       el('p.muted.small', { text: 'アップロードしたロゴは請求書・見積書のPDFヘッダーに表示されます。' }),
     ]));
 
+    // セットアップウィザードを再実行
+    if (A.setup) wrap.appendChild(el('div.card', {}, [
+      el('div.card-head', {}, [el('h2', { text: '初期セットアップ' }), el('button.btn', { text: '🧭 セットアップをやり直す', onclick: async () => { await A.setup.show(); ui.renderRoute(); } })]),
+      el('p.muted.small', { text: '会社名・期首月・登録番号・ロゴ・パスコードをまとめて設定できます。' }),
+    ]));
+
     // 登録番号（T＋13桁）のライブ検証表示
     const regStatus = el('div.small');
     const updReg = () => { const r = U.checkInvoiceRegNo(f.invoiceRegNo.value); regStatus.textContent = (r.empty || !f.invoiceRegNo.value) ? '' : r.msg; regStatus.className = 'small ' + (r.valid ? 'ok' : 'ng'); };
