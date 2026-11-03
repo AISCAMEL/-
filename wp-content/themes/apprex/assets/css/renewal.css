@@ -597,3 +597,16 @@
 .rn .studio-switch{margin:18px 0 0;font-size:.85rem;color:#cbd7f2}
 .rn .studio-switch a{display:inline-block;margin:4px 6px 0 0;padding:5px 12px;border:1px solid rgba(255,255,255,.35);border-radius:999px;color:#fff;text-decoration:none;font-weight:700}
 .rn .studio-switch a:hover{background:rgba(255,255,255,.1)}
+
+/* ===== v1.107.2 トップのブログ・コラム：カードを横に並べる ===== */
+.rn .nwrap{grid-template-columns:1fr;gap:40px}
+.rn .ncards{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.rn .ncard{grid-template-columns:1fr;gap:0;align-content:start}
+.rn .ncard .nth{aspect-ratio:16/9;background:var(--sky)}
+.rn .ncard .nbd{padding:14px 16px 16px;align-content:start}
+.rn .ncard .nbd b{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+@media(max-width:900px){.rn .ncards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){
+  .rn .ncards{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:78%;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+  .rn .ncard{scroll-snap-align:start}
+}

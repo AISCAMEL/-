@@ -49,7 +49,7 @@ $apprex_blog_url = apprex_page_url( 'blog' );
             $apprex_news->the_post();
             $apprex_c = get_the_category();
             ?>
-          <li><time datetime="<?php echo esc_attr( get_the_date( 'c' ) ); ?>"><?php echo esc_html( get_the_date( 'Y.m.d' ) ); ?></time><span class="ncat"><?php echo esc_html( $apprex_c ? $apprex_c[0]->name : 'お知らせ' ); ?></span><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></li>
+          <li><time datetime="<?php echo esc_attr( get_the_date( 'c' ) ); ?>"><?php echo esc_html( get_the_date( 'Y.m.d' ) ); ?></time><span class="ncat"><?php echo esc_html( ( $apprex_c && (int) get_option( 'default_category' ) !== (int) $apprex_c[0]->term_id ) ? $apprex_c[0]->name : 'お知らせ' ); ?></span><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></li>
             <?php
           endwhile;
           wp_reset_postdata();
@@ -75,7 +75,7 @@ $apprex_blog_url = apprex_page_url( 'blog' );
                 <img src="<?php echo esc_url( apprex_rn_img( $apprex_fallback[ $apprex_i % 3 ] ) ); ?>" alt="" width="1200" height="670" loading="lazy" decoding="async">
               <?php endif; ?>
             </span>
-            <span class="nbd"><span class="ncat"><?php echo esc_html( $apprex_c ? $apprex_c[0]->name : 'コラム' ); ?></span><b><?php the_title(); ?></b><time datetime="<?php echo esc_attr( get_the_date( 'c' ) ); ?>"><?php echo esc_html( get_the_date( 'Y.m.d' ) ); ?></time></span>
+            <span class="nbd"><span class="ncat"><?php echo esc_html( ( $apprex_c && (int) get_option( 'default_category' ) !== (int) $apprex_c[0]->term_id ) ? $apprex_c[0]->name : 'コラム' ); ?></span><b><?php the_title(); ?></b><time datetime="<?php echo esc_attr( get_the_date( 'c' ) ); ?>"><?php echo esc_html( get_the_date( 'Y.m.d' ) ); ?></time></span>
           </a>
             <?php
             $apprex_i++;
