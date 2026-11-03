@@ -915,7 +915,7 @@ function apprex_labo_report_page() {
 		<table class="widefat striped" style="max-width:1000px"><thead><tr><th>入口</th><th>LABOを開いた人</th><th>特典を使った</th><th>記事・動画を見た</th><th>予約した</th><th>予約まで進んだ割合</th></tr></thead><tbody>
 		<?php if ( ! $rows ) : ?><tr><td colspan="6">まだ記録がありません。</td></tr><?php endif; ?>
 		<?php foreach ( $rows as $s => $r ) : ?>
-			<tr><td><b><?php echo esc_html( isset( $srcs[ $s ] ) ? $srcs[ $s ] : $s ); ?></b></td><td><?php echo (int) $r[0]; ?></td><td><?php echo (int) $r[1]; ?>（<?php echo esc_html( $pct( $r[1], $r[0] ) ); ?>）</td><td><?php echo (int) $r[2]; ?>（<?php echo esc_html( $pct( $r[2], $r[0] ) ); ?>）</td><td><?php echo (int) $r[3]; ?></td><td><b><?php echo esc_html( $pct( $r[3], $r[0] ) ); ?></b></td></tr>
+			<tr><td><b><?php echo esc_html( function_exists( 'apprex_trk_src_label' ) ? apprex_trk_src_label( $s ) : ( isset( $srcs[ $s ] ) ? $srcs[ $s ] : $s ) ); ?></b></td><td><?php echo (int) $r[0]; ?></td><td><?php echo (int) $r[1]; ?>（<?php echo esc_html( $pct( $r[1], $r[0] ) ); ?>）</td><td><?php echo (int) $r[2]; ?>（<?php echo esc_html( $pct( $r[2], $r[0] ) ); ?>）</td><td><?php echo (int) $r[3]; ?></td><td><b><?php echo esc_html( $pct( $r[3], $r[0] ) ); ?></b></td></tr>
 		<?php endforeach; ?>
 		<?php if ( $rows ) : ?><tr><td><b>合計</b></td><td><b><?php echo (int) $tot[0]; ?></b></td><td><b><?php echo (int) $tot[1]; ?></b></td><td><b><?php echo (int) $tot[2]; ?></b></td><td><b><?php echo (int) $tot[3]; ?></b></td><td><b><?php echo esc_html( $pct( $tot[3], $tot[0] ) ); ?></b></td></tr><?php endif; ?>
 		</tbody></table>

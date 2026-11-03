@@ -546,6 +546,7 @@ function apprex_ig_publish( $post_id, $reel = null ) {
 		return $c;
 	}
 	$out['carousel'] = $c;
+	do_action( 'apprex_ig_published', $post_id, 'carousel', $c );
 	update_post_meta( $post_id, 'apprex_ig_sent', current_time( 'mysql' ) );
 	apprex_ig_today_count( 1 );
 
@@ -563,6 +564,7 @@ function apprex_ig_publish( $post_id, $reel = null ) {
 			$out['reel'] = is_wp_error( $rr ) ? $rr->get_error_message() : $rr;
 			if ( ! is_wp_error( $rr ) ) {
 				update_post_meta( $post_id, 'apprex_ig_reel_sent', current_time( 'mysql' ) );
+				do_action( 'apprex_ig_published', $post_id, 'reel', $rr );
 			}
 		} else {
 			$out['reel'] = is_wp_error( $video ) ? $video->get_error_message() : '';

@@ -14,12 +14,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 /** 監視対象cronフック（hook => ラベル）。 */
 function apprex_cron_hooks() {
-	return array(
+	return apply_filters( 'apprex_cron_hooks', array(
 		'apprex_contract_cron'    => '契約・月次自動請求',
 		'apprex_dripmail_cron'    => 'ステップメール / リマインダー',
 		'apprex_square_sync_cron' => 'Square入金ステータス同期',
 		'apprex_line_steps_cron'  => 'LINEステップ配信',
-	);
+	) );
 }
 
 /** 各cron実行時に「最終実行時刻」を記録。 */

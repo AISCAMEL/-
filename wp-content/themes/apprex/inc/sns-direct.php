@@ -32,9 +32,10 @@ function apprex_ig_ready() {
 }
 
 /** 投稿テキスト（タイトル＋短縮URL、必要なら抜粋）。$max でX用に制限。 */
-function apprex_sns_text( $post, $max = 0, $with_url = true ) {
+function apprex_sns_text( $post, $max = 0, $with_url = true, $net = '' ) {
 	$title = trim( wp_strip_all_tags( get_the_title( $post ) ) );
-	$url   = wp_get_shortlink( $post->ID );
+	// 媒体ごとの専用リンク（クリックと、その後 LINE・予約まで進んだかを数える。inc/sns-track.php）。
+	$url = ( '' !== $net && function_exists( 'apprex_trk_url' ) ) ? apprex_trk_url( $net, $post->ID ) : wp_get_shortlink( $post->ID );
 	if ( ! $url ) {
 		$url = get_permalink( $post );
 	}
@@ -62,7 +63,7 @@ function apprex_fb_post_article( $post ) {
 			'timeout' => 20,
 			'body'    => array(
 				'message'      => apprex_sns_text( $post, 0, false ) . "\n" . wp_trim_words( wp_strip_all_tags( $post->post_content ), 40 ),
-				'link'         => get_permalink( $post ),
+				'link'         => function_exists( 'apprex_trk_url' ) ? apprex_trk_url( 'fb', $post->ID ) : get_permalink( $post ),
 				'access_token' => $tok,
 			),
 		)
@@ -109,7 +110,7 @@ function apprex_x_oauth_header( $url, $params ) {
 
 function apprex_x_post_article( $post ) {
 	$url  = 'https://api.twitter.com/2/tweets';
-	$text = apprex_sns_text( $post, 270, true );
+	$text = apprex_sns_text( $post, 120, true, 'x' ); // 日本語は1文字を2と数えるため、140文字以内に。
 	// /2/tweets は JSON ボディ。OAuth1.0a 署名はボディを含めない（クエリ無し）。
 	$auth = apprex_x_oauth_header( $url, array() );
 	$res  = wp_remote_post(
@@ -419,7 +420,7 @@ function apprex_sns_settings_page() {
 		<p>グラフAPIエクスプローラの「Generate Access Token」で出たトークンを貼ると、<b>長く使えるトークンへの切り替え・ページのトークンの取得・InstagramのIDの確認・上の欄への入力</b>まで、サイトが自動で行います。</p>
 		<ol>
 			<li>Meta for Developers →「APPREX 自動投稿」→ 左の「アプリの設定」→「ベーシック」で、<b>アプリID</b> と <b>app secret</b>（「表示」を押す）をコピーして下に貼ります。</li>
-			<li><a href="https://developers.facebook.com/tools/explorer" target="_blank" rel="noopener">グラフAPIエクスプローラ</a>で、Metaアプリ「APPREX 自動投稿」・許可（pages_show_list／instagram_basic／instagram_content_publish／pages_read_engagement／business_management）を選んで「Generate Access Token」→ ページ apprex とインスタ apprex1173 を許可 → 出たトークンをコピーして下に貼ります。</li>
+			<li><a href="https://developers.facebook.com/tools/explorer" target="_blank" rel="noopener">グラフAPIエクスプローラ</a>で、Metaアプリ「APPREX 自動投稿」・許可（pages_show_list／instagram_basic／instagram_content_publish／instagram_manage_insights／pages_read_engagement／business_management）を選んで「Generate Access Token」→ ページ apprex とインスタ apprex1173 を許可 → 出たトークンをコピーして下に貼ります。</li>
 			<li>「連携する」を押します。</li>
 		</ol>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
