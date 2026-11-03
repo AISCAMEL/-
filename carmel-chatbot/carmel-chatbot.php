@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CARMEL_CB_VERSION', '2.15.0' );
+define( 'CARMEL_CB_VERSION', '2.16.0' );
 define( 'CARMEL_CB_PATH', plugin_dir_path( __FILE__ ) );
 define( 'CARMEL_CB_URL', plugin_dir_url( __FILE__ ) );
 define( 'CARMEL_CB_FAQ_TABLE', 'carmel_cb_faq' );
@@ -25,6 +25,7 @@ require_once CARMEL_CB_PATH . 'includes/db.php';
 require_once CARMEL_CB_PATH . 'includes/settings.php';
 require_once CARMEL_CB_PATH . 'includes/inventory.php';
 require_once CARMEL_CB_PATH . 'includes/handoff.php';
+require_once CARMEL_CB_PATH . 'includes/lineworks-live.php';
 require_once CARMEL_CB_PATH . 'includes/convo.php';
 require_once CARMEL_CB_PATH . 'includes/leads.php';
 require_once CARMEL_CB_PATH . 'includes/apply-followup.php';

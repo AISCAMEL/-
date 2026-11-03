@@ -162,6 +162,8 @@ function carmel_cb_handle_post() {
 				'lw_private_key'     => trim( (string) wp_unslash( $_POST['lw_private_key'] ?? '' ) ),
 				'lw_bot_id'          => sanitize_text_field( wp_unslash( $_POST['lw_bot_id'] ?? '' ) ),
 				'lw_channel_id'      => sanitize_text_field( wp_unslash( $_POST['lw_channel_id'] ?? '' ) ),
+				'lw_bot_secret'      => sanitize_text_field( wp_unslash( $_POST['lw_bot_secret'] ?? '' ) ),
+				'handoff_channel'    => ( ( $_POST['handoff_channel'] ?? 'slack' ) === 'lineworks' ) ? 'lineworks' : 'slack',
 				'line_oa_enabled'     => isset( $_POST['line_oa_enabled'] ) ? 1 : 0,
 				'line_channel_token'  => trim( (string) wp_unslash( $_POST['line_channel_token'] ?? '' ) ),
 				'line_channel_secret' => sanitize_text_field( wp_unslash( $_POST['line_channel_secret'] ?? '' ) ),
@@ -1143,6 +1145,31 @@ function carmel_cb_view_general() {
 				<td>
 					<textarea name="lw_private_key" rows="4" class="large-text code" placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"><?php echo esc_textarea( $s['lw_private_key'] ?? '' ); ?></textarea>
 					<p class="description">LINE WORKS Developer Console で発行したサービスアカウントの秘密鍵。全項目を入れると、担当者希望時にLINE WORKSへ通知します。</p>
+				</td>
+			</tr>
+
+			<tr><th colspan="2"><hr><strong>🤝 有人対応（担当者がチャットで返信）の経路</strong></th></tr>
+			<tr>
+				<th>対応に使うツール</th>
+				<td>
+					<p style="margin:2px 0"><label><input type="radio" name="handoff_channel" value="slack" <?php checked( ( $s['handoff_channel'] ?? 'slack' ), 'slack' ); ?>> <strong>Slack</strong>（上のSlack双方向を使う）</label></p>
+					<p style="margin:2px 0"><label><input type="radio" name="handoff_channel" value="lineworks" <?php checked( ( $s['handoff_channel'] ?? 'slack' ), 'lineworks' ); ?>> <strong>LINE WORKS</strong>（お客様の会話をLINE WORKSに流し、担当者がLINE WORKSで返信→お客様へ届く）</label></p>
+					<p class="description">「LINE WORKS」を選ぶと、Slackの代わりにLINE WORKSで有人対応します。下の2項目（Bot Secret・Webhook）の設定が必要です。</p>
+				</td>
+			</tr>
+			<tr>
+				<th>Bot Secret（受信の署名検証）</th>
+				<td><input type="password" name="lw_bot_secret" value="<?php echo esc_attr( $s['lw_bot_secret'] ?? '' ); ?>" class="regular-text" autocomplete="off">
+				<p class="description">LINE WORKS Developer Console の Bot 詳細画面にある「Bot Secret」。担当者の返信を安全に受け取るために使います。</p></td>
+			</tr>
+			<tr>
+				<th>Callback（Webhook）URL</th>
+				<td>
+					<input type="text" readonly onclick="this.select()" value="<?php echo esc_attr( function_exists( 'carmel_cb_lw_callback_url' ) ? carmel_cb_lw_callback_url() : '' ); ?>" class="large-text code" style="background:#f6f7f7">
+					<p class="description">
+						このURLを LINE WORKS Developer Console → Bot設定の「<strong>Callback URL</strong>」に登録し、<strong>Callbackを有効化</strong>、受信イベントで「<strong>メッセージ（message）</strong>」にチェックしてください。<br>
+						これで、担当者がLINE WORKSで送った返信がお客様のチャットに届きます。
+					</p>
 				</td>
 			</tr>
 		</table>

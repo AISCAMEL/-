@@ -453,7 +453,8 @@ function carmel_cb_handle_handoff_upload( WP_REST_Request $request ) {
 	// 旧handoffスレッド or 会話ミラースレッドのどちらでも受け付ける
 	$sess = $sid ? get_transient( carmel_cb_ho_key( $sid ) ) : false;
 	if ( ! $sess && $sid && function_exists( 'carmel_cb_convo_key' ) ) { $sess = get_transient( carmel_cb_convo_key( $sid ) ); }
-	if ( ! $sess ) { return new WP_REST_Response( array( 'ok' => false, 'error' => 'no_session' ), 200 ); }
+	$lw_sess = ( ! $sess && $sid && function_exists( 'carmel_cb_lw_ho_key' ) ) ? get_transient( carmel_cb_lw_ho_key( $sid ) ) : false;
+	if ( ! $sess && ! $lw_sess ) { return new WP_REST_Response( array( 'ok' => false, 'error' => 'no_session' ), 200 ); }
 
 	$files = $request->get_file_params();
 	if ( empty( $files['file'] ) || ! is_array( $files['file'] ) ) {
@@ -481,13 +482,15 @@ function carmel_cb_handle_handoff_upload( WP_REST_Request $request ) {
 		carmel_cb_log_media( $sid, 'user', $saved['url'], $saved['name'], carmel_cb_is_image_name( $saved['name'] ) );
 	}
 
-	// Slackスレッドへリンク共有（画像はSlackが自動プレビュー）
-	if ( carmel_cb_slack_live_on( $s ) ) {
+	// 担当者チャネルへリンク共有
+	if ( $sess && carmel_cb_slack_live_on( $s ) ) {
 		carmel_cb_slack_api( 'chat.postMessage', $s['slack_bot_token'], array(
 			'channel'   => $sess['channel'],
 			'thread_ts' => $sess['thread'],
 			'text'      => '🙋 お客様からの添付：' . $saved['name'] . "\n" . $saved['url'],
 		) );
+	} elseif ( $lw_sess && function_exists( 'carmel_cb_lineworks_send_text' ) ) {
+		carmel_cb_lineworks_send_text( $s, '🙋 お客様【#' . ( $lw_sess['code'] ?? '' ) . '】からの添付：' . $saved['name'] . "\n" . $saved['url'] );
 	}
 
 	return new WP_REST_Response( array(
@@ -542,13 +545,13 @@ function carmel_cb_handle_handoff_start( WP_REST_Request $request ) {
 			'msg'  => (string) ( $s['handoff_offhours_msg'] ?? '' ),
 		), 200 );
 	}
-	if ( ! carmel_cb_slack_live_on( $s ) ) { return new WP_REST_Response( array( 'mode' => 'notify' ), 200 ); }
+	if ( ! carmel_cb_live_on( $s ) ) { return new WP_REST_Response( array( 'mode' => 'notify' ), 200 ); }
 
 	$b   = $request->get_json_params();
 	$sid = sanitize_text_field( $b['session_id'] ?? wp_generate_uuid4() );
 	$q   = sanitize_textarea_field( $b['question'] ?? '' );
-	if ( ! carmel_cb_slack_start( $s, $sid, $q ) ) {
-		return new WP_REST_Response( array( 'mode' => 'notify' ), 200 ); // Slack失敗時はフォームへ
+	if ( ! carmel_cb_live_start( $s, $sid, $q ) ) {
+		return new WP_REST_Response( array( 'mode' => 'notify' ), 200 ); // 失敗時はフォームへ
 	}
 	$busy_sec = max( 3, min( 120, (int) ( $s['handoff_busy_sec'] ?? 15 ) ) );
 	$wait_sec = max( $busy_sec + 2, min( 300, (int) ( $s['handoff_wait_sec'] ?? 45 ) ) );
@@ -567,13 +570,13 @@ function carmel_cb_handle_handoff_send( WP_REST_Request $request ) {
 	$b = $request->get_json_params();
 	$sid  = sanitize_text_field( $b['session_id'] ?? '' );
 	$text = sanitize_textarea_field( $b['text'] ?? '' );
-	$okv  = carmel_cb_slack_live_on( $s ) ? carmel_cb_slack_send( $s, $sid, $text ) : false;
+	$okv  = carmel_cb_live_on( $s ) ? carmel_cb_live_send( $s, $sid, $text ) : false;
 	return new WP_REST_Response( array( 'ok' => (bool) $okv ), 200 );
 }
 
 function carmel_cb_handle_handoff_poll( WP_REST_Request $request ) {
 	$s   = carmel_cb_get_settings();
 	$sid = sanitize_text_field( $request->get_param( 'session_id' ) );
-	$msgs = carmel_cb_slack_live_on( $s ) ? carmel_cb_slack_poll( $s, $sid ) : array();
+	$msgs = carmel_cb_live_on( $s ) ? carmel_cb_live_poll( $s, $sid ) : array();
 	return new WP_REST_Response( array( 'messages' => $msgs ), 200 );
 }

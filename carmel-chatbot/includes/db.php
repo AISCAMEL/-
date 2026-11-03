@@ -274,6 +274,8 @@ function carmel_cb_default_settings() {
 		'lw_private_key'   => '',   // PEM秘密鍵
 		'lw_bot_id'     => '',
 		'lw_channel_id'   => '',   // 送信先トークルームID
+		'lw_bot_secret'   => '',   // コールバック署名検証用（Bot Secret）
+		'handoff_channel' => 'slack', // 有人対応の経路：slack / lineworks
 		// LINE公式アカウント（Messaging API）＝お客様側連携
 		'line_oa_enabled'    => 0,
 		'line_channel_token' => '', // チャネルアクセストークン（長期）
