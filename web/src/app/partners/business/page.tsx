@@ -6,7 +6,7 @@ import { SITE } from "@/lib/site";
 export const metadata: Metadata = {
   title: "事業者の方へ｜掲載無料",
   description:
-    "レンタカー・宿泊・飲食店の方へ。岩沢まわりガイドへの掲載は無料。事業者ログインから掲載・管理できます。",
+    "レンタカー・宿泊・飲食店の方へ。周辺ガイドへの掲載は無料。事業者ログインから掲載・管理できます。",
 };
 
 const BENEFITS = [
@@ -42,7 +42,7 @@ export default function PartnersBusinessPage() {
           海の“ついで”に、あなたのお店を。
         </h1>
         <p className="mt-1 text-sm text-sand/90">
-          レンタカー・宿泊・飲食店の方へ。「岩沢まわり」への掲載は無料です。
+          レンタカー・宿泊・飲食店の方へ。「周辺ガイド」への掲載は無料です。
         </p>
       </div>
 
@@ -79,7 +79,7 @@ export default function PartnersBusinessPage() {
           <p className="mt-4 text-xs text-navy/50">
             掲載中の一覧は{" "}
             <Link href="/partners" className="text-ocean hover:underline">
-              岩沢まわり
+              周辺ガイド
             </Link>{" "}
             からご覧いただけます。
           </p>

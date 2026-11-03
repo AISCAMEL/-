@@ -120,7 +120,7 @@ export default function Home() {
               href="/partners"
               className="rounded-full border border-ocean/30 px-5 py-2 font-medium text-ocean transition hover:bg-ocean hover:text-foam"
             >
-              岩沢まわり 🚗🏨🍽
+              周辺ガイド 🚗🏨🍽
             </Link>
           </div>
           <div className="mt-8 rounded-2xl border border-teal/30 bg-teal/5 p-5 text-center">

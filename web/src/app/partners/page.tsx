@@ -13,9 +13,9 @@ import { demoPartners, type DemoPartner } from "@/lib/demo";
 import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "岩沢まわり｜レンタカー・宿泊・食べる",
+  title: "周辺ガイド｜レンタカー・宿泊・食べる",
   description:
-    "海の一日を、まちごと楽しむ。岩沢海岸まわりのレンタカー・宿泊・食べるところと提携。掲載は無料です。",
+    "海の一日を、まちごと楽しむ。岩沢海岸周辺のレンタカー・宿泊・食べるところと提携。掲載は無料です。",
 };
 
 type Props = { searchParams: Promise<{ category?: string }> };
@@ -34,7 +34,7 @@ export default async function PartnersPage({ searchParams }: Props) {
       {/* Hero */}
       <div className="rounded-2xl bg-ocean-gradient p-6 text-foam">
         <p className="text-xs tracking-[0.3em] text-teal">IWASAWA AREA GUIDE</p>
-        <h1 className="mt-2 text-2xl font-semibold">岩沢まわり</h1>
+        <h1 className="mt-2 text-2xl font-semibold">岩沢海岸 周辺ガイド</h1>
         <p className="mt-1 text-sm text-sand/90">
           泊まる・借りる・食べる。海の一日を、まちごと楽しむ。
         </p>
@@ -58,7 +58,7 @@ export default async function PartnersPage({ searchParams }: Props) {
 
       {/* 説明（会員特典） */}
       <p className="mt-4 rounded-xl border border-ocean/20 bg-white px-4 py-3 text-xs text-navy/60">
-        ℹ️ {SITE.region.beach}まわりの提携スポットです。
+        ℹ️ {SITE.region.beach}周辺の提携スポットです。
         <span className="font-medium text-navy/80">会員はタイアップ特典</span>
         （割引やサービス）を受けられます。掲載内容・特典は各事業者の提供によるものです。
       </p>

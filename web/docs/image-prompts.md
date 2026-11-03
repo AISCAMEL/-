@@ -63,7 +63,7 @@ text, letters, typography, watermark, logo, signage text, distorted hands, extra
 
 ---
 
-## C. パートナー（岩沢まわり）  `public/partners/`  ／ 1200×675（16:9）※要配線
+## C. パートナー（周辺ガイド）  `public/partners/`  ／ 1200×675（16:9）※要配線
 
 > 生成後、ファイルを置いたら教えてください。`demoPartners` の `image_url` を配線します
 > （未設定の間はカテゴリ帯グラデ＋絵文字で表示されます）。

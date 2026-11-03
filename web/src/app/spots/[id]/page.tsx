@@ -177,7 +177,7 @@ export default async function SpotDetailPage({ params }: Props) {
             className="flex items-center justify-between rounded-2xl border border-ocean/20 bg-white px-5 py-4 transition hover:border-ocean/40"
           >
             <div>
-              <p className="text-sm font-semibold text-navy">岩沢まわり</p>
+              <p className="text-sm font-semibold text-navy">周辺ガイド</p>
               <p className="mt-0.5 text-xs text-navy/60">レンタカー・宿泊・食べる</p>
             </div>
             <span className="text-ocean">→</span>

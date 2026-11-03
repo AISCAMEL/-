@@ -25,7 +25,7 @@ export function SiteFooter() {
           { href: "/skills", label: "スキル掲示板" },
           { href: "/waves", label: "波情報" },
           { href: "/spots", label: "全国サーフポイント" },
-          { href: "/partners", label: "岩沢まわり（周辺ガイド）" },
+          { href: "/partners", label: "周辺ガイド（宿・ごはん・レンタカー）" },
         ]} />
 
         <FooterCol title="情報" links={[

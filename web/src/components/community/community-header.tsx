@@ -29,7 +29,7 @@ export async function CommunityHeader() {
             全国ポイント
           </Link>
           <Link href="/partners" className="hidden text-navy/70 hover:text-ocean sm:inline">
-            岩沢まわり
+            周辺ガイド
           </Link>
           {member ? (
             <>

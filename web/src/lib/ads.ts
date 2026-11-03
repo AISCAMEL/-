@@ -34,7 +34,7 @@ export const AD_SLOTS: AdSlot[] = [
   { key: "spots", label: "全国ポイント一覧", where: "全国サーフポイントガイドの一覧", size: "1600×680", note: "全国のサーファーが旅先を探すページ" },
   { key: "spot", label: "ポイント詳細", where: "各サーフポイントのページ（全50）", size: "1600×680", note: "波予報・潮回りと一緒に見られる枠" },
   { key: "area", label: "エリア詳細", where: "各エリアのページ（全26）", size: "1600×680", note: "エリアの旅行・宿泊・ショップ向け" },
-  { key: "partners", label: "岩沢まわり", where: "周辺ガイド（レンタカー・宿・食事）", size: "1600×680", note: "来訪前の人が見る地域ガイド" },
+  { key: "partners", label: "周辺ガイド", where: "岩沢海岸周辺のレンタカー・宿・食事のページ", size: "1600×680", note: "来訪前の人が見る地域ガイド" },
   { key: "feed", label: "コミュニティ", where: "コミュニティのフィード", size: "1600×680", note: "地元・常連メンバー向け" },
   { key: "blog", label: "ブログ", where: "プロのブログ一覧", size: "1600×680", note: "読み物を楽しむ人向け" },
   { key: "footer", label: "スポンサー（全ページ）", where: "全ページ下部のスポンサー欄（最大4社）", size: "1600×680", note: "サイト全体で表示される協賛枠" },

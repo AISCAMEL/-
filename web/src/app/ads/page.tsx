@@ -21,7 +21,7 @@ export default function AdsPage() {
         <ul className="mt-3 space-y-1 text-sm text-sand/95">
           <li>・毎日の波情報・潮回り・AI波解説を見に来るサーファー</li>
           <li>・全国のサーフポイントから旅先を探す人</li>
-          <li>・岩沢まわりのレンタカー・宿・食事を調べる来訪者</li>
+          <li>・周辺ガイドでレンタカー・宿・食事を調べる来訪者</li>
         </ul>
       </div>
 
@@ -96,7 +96,7 @@ export default function AdsPage() {
           href="/partners/business"
           className="rounded-full border border-navy/15 px-6 py-2.5 text-sm font-medium text-navy/70 transition hover:border-ocean hover:text-ocean"
         >
-          無料の店舗掲載（岩沢まわり）はこちら
+          無料の店舗掲載（周辺ガイド）はこちら
         </Link>
       </div>
     </SitePage>
