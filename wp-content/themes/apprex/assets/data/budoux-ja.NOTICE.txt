@@ -1,0 +1,4 @@
+budoux-ja.json is the Japanese model from BudouX (https://github.com/google/budoux),
+Copyright Google LLC, licensed under the Apache License, Version 2.0
+(https://www.apache.org/licenses/LICENSE-2.0). The model data is unmodified;
+it was converted from the npm package budoux@0.10.2 (dist/data/models/ja.js) to JSON.

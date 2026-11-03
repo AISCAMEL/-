@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'APPREX_VERSION', '1.107.2' );
+define( 'APPREX_VERSION', '1.108.0' );
 define( 'APPREX_DIR', get_template_directory() );
 define( 'APPREX_URI', get_template_directory_uri() );
 
@@ -90,6 +90,7 @@ require_once APPREX_DIR . '/inc/rewrite-guard.php';
 require_once APPREX_DIR . '/inc/notify-hub.php';
 require_once APPREX_DIR . '/inc/lineworks-bot.php';
 require_once APPREX_DIR . '/inc/sns-track.php';
+require_once APPREX_DIR . '/inc/jp-linebreak.php';
 require_once APPREX_DIR . '/inc/cron-health.php';
 require_once APPREX_DIR . '/inc/mf-invoice.php';
 require_once APPREX_DIR . '/inc/invoice-pdf.php';

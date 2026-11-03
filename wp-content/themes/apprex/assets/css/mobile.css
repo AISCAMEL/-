@@ -1,0 +1,60 @@
+/* =========================================================================
+ * スマホの見え方を整える（すべてのページ・最後に読み込む）
+ * ====================================================================== */
+
+/* 日本語の見出し・ボタン：サーバーで入れた <wbr>（文節の切れ目）だけで折り返す。長すぎるときは途中でも折り返す。 */
+.bx { word-break: keep-all; overflow-wrap: anywhere; line-break: strict; }
+
+/* 閉じているメニューの影が、画面の右端にうっすら出ないように。 */
+.mobile-drawer { visibility: hidden; box-shadow: none; transition: transform .3s ease, visibility 0s linear .3s, box-shadow 0s linear .3s; }
+.mobile-drawer.is-open { visibility: visible; box-shadow: -10px 0 30px rgba(0, 0, 0, .18); transition: transform .3s ease; }
+
+/* 上の帯：スマホでは短い文にする。 */
+.campaign-bar .cb-short { display: none; }
+@media (max-width: 600px) {
+  .campaign-bar { font-size: .8rem; padding: 7px 12px; }
+  .campaign-bar .cb-full { display: none; }
+  .campaign-bar .cb-short { display: inline; }
+}
+
+@media (max-width: 600px) {
+  /* 区切りの余白を詰める（上下で2倍にならないように）。 */
+  .rn .sec { padding-block: 46px; }
+  .rn .sh { margin-bottom: 22px; }
+  .rn .sh h2 { font-size: clamp(1.35rem, 6vw, 1.7rem); line-height: 1.4; }
+  .rn .sh p { font-size: .94rem; }
+
+  /* ボタン：大きすぎる文字と余白を少し小さく。主なボタンは横幅いっぱいに。 */
+  .rn .btn { padding: 13px 18px; font-size: .94rem; line-height: 1.45; text-align: center; }
+  .rn .btn--lg { padding: 15px 20px; font-size: 1rem; }
+  .rn .hero .ctas .btn, .rn .fcta .ctas .btn { width: 100%; }
+
+  /* 上のバッジ。 */
+  .rn .badge-top { font-size: .74rem; line-height: 1.5; }
+
+  /* 表：スマホでは1行ずつカードにして、横にはみ出さない。 */
+  .rn .tbl.mfit { overflow: visible; box-shadow: none; border-radius: 0; }
+  .rn .tbl.mfit table { min-width: 0; background: transparent; }
+  .rn .tbl.mfit thead { display: none; }
+  .rn .tbl.mfit tr { display: block; background: #fff; border: 1px solid var(--line, #e5e7eb); border-radius: 14px; margin-bottom: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(15, 23, 42, .05); }
+  .rn .tbl.mfit td, .rn .tbl.mfit th { display: block; border-bottom: 1px solid var(--line, #eef0f4); padding: 10px 14px; font-size: .9rem; }
+  .rn .tbl.mfit tr > :first-child { background: #f6f8fc; font-weight: 800; color: var(--navy, #0e1830); }
+  .rn .tbl.mfit tr > :last-child { border-bottom: 0; }
+  .rn .tbl.mfit td[data-label]:not(:first-child)::before { content: attr(data-label); display: block; font-size: .72rem; font-weight: 700; color: #64748b; margin-bottom: 2px; }
+  .rn .tbl.mfit td.app[data-label]::before { color: inherit; opacity: .8; }
+  /* 項目が多い表（料金など）は、2つずつ横に並べて短くする。 */
+  .rn .tbl.mgrid tr { display: grid; grid-template-columns: 1fr 1fr; }
+  .rn .tbl.mgrid tr > :first-child { grid-column: 1 / -1; }
+  .rn .tbl.mgrid tr > :not(:first-child):nth-child(even) { border-right: 1px solid var(--line, #eef0f4); }
+  .rn .tbl.mgrid tr > :nth-last-child(-n+2):not(:first-child) { border-bottom: 0; }
+  .rn .tbl.mgrid tr > :last-child:nth-child(even) { grid-column: 1 / -1; border-right: 0; }
+
+  /* 下に固定されるボタンと、チャットのボタンに、ページの最後が隠れないように。 */
+  body { padding-bottom: env(safe-area-inset-bottom); }
+}
+
+/* とても狭い画面（iPhone SE など）。 */
+@media (max-width: 374px) {
+  .rn .hero h1 { font-size: 1.6rem; }
+  .rn .btn--lg { font-size: .94rem; }
+}

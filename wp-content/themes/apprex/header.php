@@ -21,8 +21,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 <?php wp_body_open(); ?>
 <a class="screen-reader-text" href="#main"><?php esc_html_e( 'コンテンツへスキップ', 'apprex' ); ?></a>
 
+<?php
+$apprex_cb = apprex_campaign_text();
+// スマホでは「。」までの短い文にする。
+$apprex_cb_short = false !== mb_strpos( $apprex_cb, '。' ) ? mb_substr( $apprex_cb, 0, mb_strpos( $apprex_cb, '。' ) + 1 ) : $apprex_cb;
+?>
 <div class="campaign-bar">
-	<?php echo esc_html( apprex_campaign_text() ); ?>
+	<span class="cb-full"><?php echo esc_html( $apprex_cb ); ?></span><span class="cb-short"><?php echo esc_html( $apprex_cb_short ); ?></span>
 </div>
 
 <header class="site-header">
