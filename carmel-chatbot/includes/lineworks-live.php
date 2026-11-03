@@ -137,6 +137,11 @@ function carmel_cb_lw_callback( WP_REST_Request $request ) {
 	// 単一イベント or events[] の両方に対応
 	$events = isset( $data['events'] ) && is_array( $data['events'] ) ? $data['events'] : array( $data );
 	foreach ( $events as $ev ) {
+		// トークルームID（channelId）を検出したら保存（管理画面でコピーできるように）
+		$ch = $ev['source']['channelId'] ?? '';
+		if ( $ch !== '' ) {
+			update_option( 'carmel_cb_lw_seen_channel', array( 'id' => $ch, 'at' => current_time( 'mysql' ) ), false );
+		}
 		if ( ( $ev['type'] ?? '' ) !== 'message' ) { continue; }
 		$ctype = $ev['content']['type'] ?? '';
 		if ( $ctype !== 'text' ) { continue; } // v1はテキストのみ中継

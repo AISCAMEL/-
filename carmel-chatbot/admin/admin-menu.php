@@ -1139,7 +1139,18 @@ function carmel_cb_view_general() {
 			<tr><th>Client Secret</th><td><input type="password" name="lw_client_secret" value="<?php echo esc_attr( $s['lw_client_secret'] ?? '' ); ?>" class="regular-text" autocomplete="off"></td></tr>
 			<tr><th>Service Account</th><td><input type="text" name="lw_service_account" value="<?php echo esc_attr( $s['lw_service_account'] ?? '' ); ?>" class="regular-text" placeholder="xxxx.serviceaccount@example"></td></tr>
 			<tr><th>Bot ID</th><td><input type="text" name="lw_bot_id" value="<?php echo esc_attr( $s['lw_bot_id'] ?? '' ); ?>" class="regular-text"></td></tr>
-			<tr><th>送信先トークルームID</th><td><input type="text" name="lw_channel_id" value="<?php echo esc_attr( $s['lw_channel_id'] ?? '' ); ?>" class="regular-text"></td></tr>
+			<tr><th>送信先トークルームID</th><td>
+				<input type="text" name="lw_channel_id" value="<?php echo esc_attr( $s['lw_channel_id'] ?? '' ); ?>" class="regular-text">
+				<?php $seen = get_option( 'carmel_cb_lw_seen_channel', array() ); if ( ! empty( $seen['id'] ) ) : ?>
+					<p class="description" style="background:#e6f4ec;border:1px solid #9fd9bb;border-radius:6px;padding:8px 12px;margin-top:6px">
+						💡 <strong>自動検出したトークルームID：</strong>
+						<code style="font-size:13px"><?php echo esc_html( $seen['id'] ); ?></code>
+						<br>（Botが最後にメッセージを受け取った部屋。最終：<?php echo esc_html( $seen['at'] ?? '' ); ?>）これを上の欄にコピーして保存してください。
+					</p>
+				<?php else : ?>
+					<p class="description">Botを担当者のトークルームに招待し、その部屋で誰かが一言メッセージを送ると、ここに<strong>トークルームIDが自動表示</strong>されます（Callback設定後）。その値をコピーして入力してください。</p>
+				<?php endif; ?>
+			</td></tr>
 			<tr>
 				<th>秘密鍵(PEM)</th>
 				<td>
