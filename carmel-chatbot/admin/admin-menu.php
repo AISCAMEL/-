@@ -788,6 +788,70 @@ function carmel_cb_view_home() {
 		</div>
 	</div>
 
+	<div class="ccb-card" style="border-left:4px solid #1e7e45">
+		<h2 style="margin-top:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+			🟢 いま来ている人（ライブ）
+			<span id="ccb-live-dot" style="font-size:12px;font-weight:600;color:#1e7e45">●自動更新</span>
+			<span id="ccb-live-now" style="font-size:12px;color:#888;font-weight:400"></span>
+		</h2>
+		<p class="description" style="margin:0 0 10px">直近30分に会話のあったお客様です。15秒ごとに自動更新。<strong>🙋対応中</strong>は有人対応（LINE WORKS/Slack）に流れている方です。</p>
+		<div style="overflow-x:auto">
+			<table class="widefat striped" style="min-width:680px">
+				<thead><tr>
+					<th style="width:70px">状態</th>
+					<th style="width:150px">お客様</th>
+					<th>直近の発言</th>
+					<th style="width:70px">件数</th>
+					<th style="width:120px">開始/最終</th>
+					<th style="width:70px"></th>
+				</tr></thead>
+				<tbody id="ccb-live-rows">
+					<tr><td colspan="6" style="text-align:center;color:#888;padding:18px">読み込み中…</td></tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+	<script>
+	(function(){
+		var url = <?php echo wp_json_encode( esc_url_raw( rest_url( 'carmel-cb/v1/live' ) ) ); ?>;
+		var nonce = <?php echo wp_json_encode( wp_create_nonce( 'wp_rest' ) ); ?>;
+		var logsBase = <?php echo wp_json_encode( admin_url( 'admin.php?page=carmel-cb&tab=logs&session=' ) ); ?>;
+		var rowsEl = document.getElementById('ccb-live-rows');
+		var nowEl  = document.getElementById('ccb-live-now');
+		var dotEl  = document.getElementById('ccb-live-dot');
+		function esc(s){ var d=document.createElement('div'); d.textContent=(s==null?'':String(s)); return d.innerHTML; }
+		function roleLabel(r){ return r==='user'?'お客様':(r==='assistant'?'みほ':(r==='operator'?'担当者':r||'')); }
+		function render(data){
+			var ss = (data&&data.sessions)||[];
+			if(nowEl) nowEl.textContent = data&&data.now ? '（'+data.now+'時点）' : '';
+			if(!ss.length){ rowsEl.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888;padding:18px">いまは会話中のお客様はいません。</td></tr>'; return; }
+			var html='';
+			ss.forEach(function(x){
+				var ho = x.handoff ? '<span style="background:#fde7cf;color:#8a4b00;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:700">🙋対応中 #'+esc(x.handoff)+'</span>' : '<span style="color:#1e7e45;font-size:12px">会話中</span>';
+				var who = esc(x.name||'（匿名）') + (x.email?'<br><span style="font-size:11px;color:#888">'+esc(x.email)+'</span>':'');
+				var msg = '<span style="color:#666;font-size:11px">'+roleLabel(x.lastRole)+'：</span>'+esc(x.lastMsg||'');
+				html += '<tr>'
+					+ '<td>'+ho+'</td>'
+					+ '<td>'+who+'</td>'
+					+ '<td style="max-width:360px">'+msg+'</td>'
+					+ '<td>'+esc(x.cnt)+'</td>'
+					+ '<td style="font-size:12px">'+esc(x.started)+' 〜 '+esc(x.last)+'<br><span style="color:#888">'+esc(x.ago)+'</span></td>'
+					+ '<td><a class="button button-small" href="'+logsBase+encodeURIComponent(x.sid)+'">詳細</a></td>'
+					+ '</tr>';
+			});
+			rowsEl.innerHTML = html;
+		}
+		function poll(){
+			fetch(url, { headers:{'X-WP-Nonce':nonce}, credentials:'same-origin' })
+				.then(function(r){ return r.json(); })
+				.then(function(d){ if(dotEl){dotEl.style.color='#1e7e45';dotEl.textContent='●自動更新';} render(d); })
+				.catch(function(){ if(dotEl){dotEl.style.color='#c0392b';dotEl.textContent='●更新エラー';} });
+		}
+		poll();
+		setInterval(poll, 15000);
+	})();
+	</script>
+
 	<div style="display:flex;flex-wrap:wrap;gap:14px">
 		<div class="ccb-card" style="flex:1 1 320px;min-width:280px">
 			<h2 style="margin-top:0">セットアップ健康チェック</h2>

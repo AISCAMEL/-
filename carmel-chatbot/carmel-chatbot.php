@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'CARMEL_CB_VERSION', '2.16.1' );
+define( 'CARMEL_CB_VERSION', '2.17.0' );
 define( 'CARMEL_CB_PATH', plugin_dir_path( __FILE__ ) );
 define( 'CARMEL_CB_URL', plugin_dir_url( __FILE__ ) );
 define( 'CARMEL_CB_FAQ_TABLE', 'carmel_cb_faq' );
@@ -35,6 +35,7 @@ require_once CARMEL_CB_PATH . 'includes/campaign.php';
 require_once CARMEL_CB_PATH . 'includes/shinsa.php';
 require_once CARMEL_CB_PATH . 'includes/api.php';
 require_once CARMEL_CB_PATH . 'includes/learn.php';
+require_once CARMEL_CB_PATH . 'includes/live.php';
 require_once CARMEL_CB_PATH . 'includes/line.php';
 require_once CARMEL_CB_PATH . 'includes/frontend.php';
 require_once CARMEL_CB_PATH . 'includes/embed.php';
