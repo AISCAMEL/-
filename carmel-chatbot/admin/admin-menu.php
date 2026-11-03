@@ -418,6 +418,50 @@ function carmel_cb_handle_post() {
 			carmel_cb_notice( sprintf( 'サイト取り込み：%dページから%d件の学習データを追加しました。', $r['pages'], $r['added'] ) );
 			break;
 
+		/* ===== 後追い配信の手動停止 ===== */
+		case 'fu_stop_apply':
+			if ( function_exists( 'carmel_cb_apply_stop_one' ) && carmel_cb_apply_stop_one( (int) ( $_POST['fu_id'] ?? 0 ) ) ) {
+				carmel_cb_notice( '✅ この方への「審査離脱」後追いメールを停止しました（以降は送信されません）。' );
+			} else {
+				carmel_cb_notice( '対象が見つかりませんでした（既に停止済みの可能性があります）。', 'warning' );
+			}
+			break;
+
+		case 'fu_stop_convo':
+			if ( function_exists( 'carmel_cb_convo_fu_stop_one' ) && carmel_cb_convo_fu_stop_one( (int) ( $_POST['fu_id'] ?? 0 ) ) ) {
+				carmel_cb_notice( '✅ この方への「会話離脱」後追いメールを停止しました（以降は送信されません）。' );
+			} else {
+				carmel_cb_notice( '対象が見つかりませんでした（既に停止済みの可能性があります）。', 'warning' );
+			}
+			break;
+
+		case 'fu_stop_email':
+			$em = sanitize_email( wp_unslash( $_POST['fu_email'] ?? '' ) );
+			if ( is_email( $em ) ) {
+				if ( function_exists( 'carmel_cb_apply_mark_complete' ) ) { carmel_cb_apply_mark_complete( $em ); }
+				if ( function_exists( 'carmel_cb_convo_fu_resolve' ) )  { carmel_cb_convo_fu_resolve( '', $em ); }
+				carmel_cb_notice( '✅ ' . esc_html( $em ) . ' への後追いメール（審査離脱・会話離脱の両方）を停止しました。' );
+			} else {
+				carmel_cb_notice( 'メールアドレスをご確認ください。', 'warning' );
+			}
+			break;
+
+		case 'fu_optout_email':
+			$em = sanitize_email( wp_unslash( $_POST['fu_email'] ?? '' ) );
+			if ( is_email( $em ) && function_exists( 'carmel_cb_opt_out' ) ) {
+				carmel_cb_opt_out( $em );
+				carmel_cb_notice( '🚫 ' . esc_html( $em ) . ' を配信停止リストに追加しました。今後この方には後追いメールを一切送りません。' );
+			} else {
+				carmel_cb_notice( 'メールアドレスをご確認ください。', 'warning' );
+			}
+			break;
+
+		case 'fu_stop_all':
+			$a = function_exists( 'carmel_cb_apply_stop_all' ) ? carmel_cb_apply_stop_all() : 0;
+			$c = function_exists( 'carmel_cb_convo_fu_stop_all' ) ? carmel_cb_convo_fu_stop_all() : 0;
+			carmel_cb_notice( sprintf( '🛑 配信中の後追いをすべて停止しました（審査離脱 %d件・会話離脱 %d件）。', (int) $a, (int) $c ) );
+			break;
+
 		case 'faq_suggest_generate':
 			if ( ! function_exists( 'carmel_cb_generate_faq_suggestions' ) ) {
 				carmel_cb_notice( '学習機能が読み込まれていません。', 'error' );
@@ -1455,7 +1499,88 @@ function carmel_cb_view_faq() {
 /** 申込・お問い合わせ（チャット内フォームの受付一覧） */
 function carmel_cb_view_leads() {
 	$leads = carmel_cb_get_leads( 200 );
+
+	// 後追い配信：手動停止セクション
+	$fu_apply = function_exists( 'carmel_cb_apply_active_rows' ) ? carmel_cb_apply_active_rows( 300 ) : array();
+	$fu_convo = function_exists( 'carmel_cb_convo_fu_active_rows' ) ? carmel_cb_convo_fu_active_rows( 300 ) : array();
+	$fu_total = count( $fu_apply ) + count( $fu_convo );
 	?>
+	<div class="ccb-card" style="border-left:4px solid #c0392b">
+		<h2 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+			📮 後追いメールの配信状況・手動停止
+			<span style="font-size:13px;font-weight:600;background:#fdecea;color:#b02a16;border-radius:999px;padding:3px 12px">配信中 <?php echo (int) $fu_total; ?>件</span>
+		</h2>
+		<p class="description">
+			自動で送られる「後追いメール」は、電話やLINEで対応済みになった方などに、ここから<strong>いつでも手動で止められます</strong>。
+			止めると<strong>それ以降のメールは送られません</strong>（すでに届いたメールは取り消せません）。
+		</p>
+
+		<?php if ( $fu_total === 0 ) : ?>
+			<p style="margin:10px 0 0">現在、配信中の後追いはありません。</p>
+		<?php else : ?>
+			<details style="margin:6px 0 14px">
+				<summary style="cursor:pointer;color:#b02a16;font-weight:600">⚠ すべての後追いを今すぐ止める（緊急停止）</summary>
+				<div style="background:#fdf3f2;border:1px solid #f0c7c0;border-radius:6px;padding:10px 14px;margin-top:8px">
+					<p style="margin:0 0 8px">配信中の後追いメール（審査離脱・会話離脱）を<strong>全員ぶん一括で停止</strong>します。元に戻せません。</p>
+					<?php carmel_cb_form_open( 'fu_stop_all' ); ?>
+						<button type="submit" class="button button-link-delete" onclick="return confirm('配信中の後追いをすべて停止します。よろしいですか？');">すべて停止する</button>
+					</form>
+				</div>
+			</details>
+
+			<?php
+			// メール単位でまとめる（審査/会話の両方を1行に）
+			$byemail = array();
+			foreach ( $fu_apply as $r ) {
+				$k = strtolower( (string) $r->email );
+				if ( ! isset( $byemail[ $k ] ) ) { $byemail[ $k ] = array( 'email' => $r->email, 'name' => $r->name, 'apply' => null, 'convo' => null, 'when' => $r->clicked_at ); }
+				$byemail[ $k ]['apply'] = $r;
+				if ( empty( $byemail[ $k ]['name'] ) && ! empty( $r->name ) ) { $byemail[ $k ]['name'] = $r->name; }
+			}
+			foreach ( $fu_convo as $r ) {
+				$k = strtolower( (string) $r->email );
+				if ( ! isset( $byemail[ $k ] ) ) { $byemail[ $k ] = array( 'email' => $r->email, 'name' => $r->name, 'apply' => null, 'convo' => null, 'when' => $r->last_message_at ); }
+				$byemail[ $k ]['convo'] = $r;
+				if ( empty( $byemail[ $k ]['name'] ) && ! empty( $r->name ) ) { $byemail[ $k ]['name'] = $r->name; }
+			}
+			?>
+			<table class="widefat striped" style="margin-top:6px">
+				<thead>
+					<tr>
+						<th>お名前</th>
+						<th>メール</th>
+						<th style="width:160px">配信中の種類（送信済み通数）</th>
+						<th style="width:230px">停止操作</th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $byemail as $row ) :
+						$kinds = array();
+						if ( $row['apply'] ) { $kinds[] = '審査離脱（' . (int) $row['apply']->stage . '通）'; }
+						if ( $row['convo'] ) { $kinds[] = '会話離脱（' . (int) $row['convo']->stage . '通）'; }
+					?>
+						<tr>
+							<td><?php echo esc_html( $row['name'] ?: '（お名前なし）' ); ?></td>
+							<td style="word-break:break-all"><?php echo esc_html( $row['email'] ); ?></td>
+							<td><?php echo esc_html( implode( ' / ', $kinds ) ); ?></td>
+							<td>
+								<?php carmel_cb_form_open( 'fu_stop_email' ); ?>
+									<input type="hidden" name="fu_email" value="<?php echo esc_attr( $row['email'] ); ?>">
+									<button type="submit" class="button button-small button-primary">この方への後追いを停止</button>
+								</form>
+								<?php carmel_cb_form_open( 'fu_optout_email' ); ?>
+									<input type="hidden" name="fu_email" value="<?php echo esc_attr( $row['email'] ); ?>">
+									<button type="submit" class="button button-small" style="margin-top:4px" onclick="return confirm('今後この方には後追いメールを一切送らなくなります。よろしいですか？');">停止＋今後も送らない</button>
+								</form>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+			<p class="description" style="margin-top:8px">「<strong>この方への後追いを停止</strong>」＝現在の配信を止めます（後日また会話や申込があれば再び対象になります）。「<strong>停止＋今後も送らない</strong>」＝配信停止リストに登録し、以後ずっと送りません。</p>
+		<?php endif; ?>
+	</div>
+
 	<div class="ccb-card">
 		<h2>申込・お問い合わせ</h2>
 		<p class="description">チャット内フォーム（かんたん審査・お問い合わせ）から届いたお客様の連絡先です。届いた内容はメール／Slack／LINE WORKS にも自動通知されます。</p>

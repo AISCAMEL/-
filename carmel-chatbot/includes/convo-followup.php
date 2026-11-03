@@ -101,6 +101,27 @@ function carmel_cb_convo_fu_touch( $sid ) {
 /**
  * セッション or メールで完了にする（審査申込/問い合わせ送信/担当者接続時）。
  */
+/* ===== 手動停止（管理画面から会話後追いを止める） ===== */
+/** 配信中（未解決）の会話後追い行を取得 */
+function carmel_cb_convo_fu_active_rows( $limit = 300 ) {
+	global $wpdb;
+	if ( ! carmel_cb_convo_fu_table_exists() ) { return array(); }
+	$t = carmel_cb_convo_fu_table();
+	return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE resolved=0 ORDER BY last_message_at DESC LIMIT %d", (int) $limit ) );
+}
+/** 1件停止（id指定） */
+function carmel_cb_convo_fu_stop_one( $id ) {
+	global $wpdb;
+	return (int) $wpdb->update( carmel_cb_convo_fu_table(), array( 'resolved' => 1 ), array( 'id' => (int) $id, 'resolved' => 0 ) );
+}
+/** 全件停止 */
+function carmel_cb_convo_fu_stop_all() {
+	global $wpdb;
+	if ( ! carmel_cb_convo_fu_table_exists() ) { return 0; }
+	$t = carmel_cb_convo_fu_table();
+	return (int) $wpdb->query( "UPDATE $t SET resolved=1 WHERE resolved=0" );
+}
+
 function carmel_cb_convo_fu_resolve( $sid = '', $email = '' ) {
 	global $wpdb;
 	if ( ! carmel_cb_convo_fu_table_exists() ) { return 0; }

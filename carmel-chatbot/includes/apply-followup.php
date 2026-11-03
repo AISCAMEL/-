@@ -65,6 +65,27 @@ function carmel_cb_apply_record_click( $email, $name = '', $sid = '', $page = ''
 	) );
 }
 
+/* ===== 手動停止（管理画面から後追いを止める） ===== */
+/** 配信中（未完了）の申込後追い行を取得 */
+function carmel_cb_apply_active_rows( $limit = 300 ) {
+	global $wpdb;
+	if ( ! carmel_cb_apply_table_exists() ) { return array(); }
+	$t = carmel_cb_apply_table();
+	return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM $t WHERE completed=0 ORDER BY clicked_at DESC LIMIT %d", (int) $limit ) );
+}
+/** 1件停止（id指定） */
+function carmel_cb_apply_stop_one( $id ) {
+	global $wpdb;
+	return (int) $wpdb->update( carmel_cb_apply_table(), array( 'completed' => 1 ), array( 'id' => (int) $id, 'completed' => 0 ) );
+}
+/** 全件停止 */
+function carmel_cb_apply_stop_all() {
+	global $wpdb;
+	if ( ! carmel_cb_apply_table_exists() ) { return 0; }
+	$t = carmel_cb_apply_table();
+	return (int) $wpdb->query( "UPDATE $t SET completed=1 WHERE completed=0" );
+}
+
 function carmel_cb_apply_mark_complete( $email ) {
 	global $wpdb;
 	$email = strtolower( trim( (string) $email ) );
