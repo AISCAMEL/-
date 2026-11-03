@@ -358,7 +358,9 @@ add_action( 'admin_init', function () {
 } );
 
 function apprex_sns_field( $opt, $ph = '' ) {
-	echo '<input type="text" name="' . esc_attr( $opt ) . '" class="regular-text" value="' . esc_attr( get_option( $opt, '' ) ) . '" placeholder="' . esc_attr( $ph ) . '" autocomplete="off">';
+	// トークン・秘密の値は、画面では伏せ字にする（スクリーンショットに写らないように）。
+	$secret = (bool) preg_match( '/token|secret|api_key/', $opt );
+	echo '<input type="' . ( $secret ? 'password' : 'text' ) . '" name="' . esc_attr( $opt ) . '" class="regular-text" value="' . esc_attr( get_option( $opt, '' ) ) . '" placeholder="' . esc_attr( $ph ) . '" autocomplete="off"' . ( $secret ? ' onfocus="this.type=\'text\'" onblur="this.type=\'password\'"' : '' ) . '>';
 }
 
 function apprex_sns_settings_page() {
@@ -376,12 +378,12 @@ function apprex_sns_settings_page() {
 			<table class="form-table" role="presentation"><tbody>
 				<tr><th>有効化</th><td><label><input type="checkbox" name="apprex_fb_enabled" value="1" <?php checked( 1, (int) get_option( 'apprex_fb_enabled', 0 ) ); ?>> Facebookページへ投稿する</label></td></tr>
 				<tr><th>ページID</th><td><?php apprex_sns_field( 'apprex_fb_page_id', '例）1234567890' ); ?></td></tr>
-				<tr><th>ページアクセストークン（長期）</th><td><?php apprex_sns_field( 'apprex_fb_token' ); ?><p class="description">Meta for Developers → Graph API → ページの長期トークン。</p></td></tr>
+				<tr><th>ページアクセストークン（長期）</th><td><?php apprex_sns_field( 'apprex_fb_token' ); ?><p class="description">下の「Instagramをかんたん連携」をすると、ページIDとトークンも自動で入ります。</p></td></tr>
 			</tbody></table>
 
 			<h2>X（Twitter）</h2>
 			<table class="form-table" role="presentation"><tbody>
-				<tr><th>有効化</th><td><label><input type="checkbox" name="apprex_x_enabled" value="1" <?php checked( 1, (int) get_option( 'apprex_x_enabled', 0 ) ); ?>> Xへ投稿する</label><p class="description">投稿には有料API（Basic以上）が必要です。</p></td></tr>
+				<tr><th>有効化</th><td><label><input type="checkbox" name="apprex_x_enabled" value="1" <?php checked( 1, (int) get_option( 'apprex_x_enabled', 0 ) ); ?>> Xへ投稿する</label><p class="description">X の API は使った分だけの支払い（前払いのクレジット）です。1投稿あたり数円〜数十円ほど（リンク付きは高め）。X の開発者ポータルでクレジットを入れ、使いすぎ防止の上限も決めておきます。</p></td></tr>
 				<tr><th>API Key</th><td><?php apprex_sns_field( 'apprex_x_api_key' ); ?></td></tr>
 				<tr><th>API Secret</th><td><?php apprex_sns_field( 'apprex_x_api_secret' ); ?></td></tr>
 				<tr><th>Access Token</th><td><?php apprex_sns_field( 'apprex_x_token' ); ?></td></tr>
@@ -420,7 +422,7 @@ function apprex_sns_settings_page() {
 		<p>グラフAPIエクスプローラの「Generate Access Token」で出たトークンを貼ると、<b>長く使えるトークンへの切り替え・ページのトークンの取得・InstagramのIDの確認・上の欄への入力</b>まで、サイトが自動で行います。</p>
 		<ol>
 			<li>Meta for Developers →「APPREX 自動投稿」→ 左の「アプリの設定」→「ベーシック」で、<b>アプリID</b> と <b>app secret</b>（「表示」を押す）をコピーして下に貼ります。</li>
-			<li><a href="https://developers.facebook.com/tools/explorer" target="_blank" rel="noopener">グラフAPIエクスプローラ</a>で、Metaアプリ「APPREX 自動投稿」・許可（pages_show_list／instagram_basic／instagram_content_publish／instagram_manage_insights／pages_read_engagement／business_management）を選んで「Generate Access Token」→ ページ apprex とインスタ apprex1173 を許可 → 出たトークンをコピーして下に貼ります。</li>
+			<li><a href="https://developers.facebook.com/tools/explorer" target="_blank" rel="noopener">グラフAPIエクスプローラ</a>で、Metaアプリ「APPREX 自動投稿」・許可（pages_show_list／instagram_basic／instagram_content_publish／instagram_manage_insights／pages_manage_posts／pages_read_engagement／business_management）を選んで「Generate Access Token」→ ページ apprex とインスタ apprex1173 を許可 → 出たトークンをコピーして下に貼ります。</li>
 			<li>「連携する」を押します。</li>
 		</ol>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
@@ -498,7 +500,7 @@ add_action(
 			$done( 'error', 'トークンを切り替えられませんでした：' . $long->get_error_message() . '（アプリID・app secret が「APPREX 自動投稿」のものか、トークンが切れていないかご確認ください）' );
 		}
 		// 2) ページの一覧（ページのトークンと、つながっているInstagram）。
-		$pages = $get( 'me/accounts', array( 'fields' => 'name,access_token,instagram_business_account{id,username}', 'access_token' => $long['access_token'] ) );
+		$pages = $get( 'me/accounts', array( 'fields' => 'id,name,access_token,instagram_business_account{id,username}', 'access_token' => $long['access_token'] ) );
 		if ( is_wp_error( $pages ) ) {
 			$done( 'error', 'ページを読み込めませんでした：' . $pages->get_error_message() );
 		}
@@ -517,7 +519,13 @@ add_action(
 		update_option( 'apprex_ig_user_id', $hit['instagram_business_account']['id'] );
 		update_option( 'apprex_ig_token', $hit['access_token'] );
 		update_option( 'apprex_ig_enabled', 1 );
+		// 同じページのトークンで、Facebookページにも投稿できる（pages_manage_posts の許可が必要）。
+		if ( ! empty( $hit['id'] ) ) {
+			update_option( 'apprex_fb_page_id', (string) $hit['id'] );
+			update_option( 'apprex_fb_token', $hit['access_token'] );
+			update_option( 'apprex_fb_enabled', 1 );
+		}
 		$name = isset( $hit['instagram_business_account']['username'] ) ? '@' . $hit['instagram_business_account']['username'] : $hit['instagram_business_account']['id'];
-		$done( 'success', 'Instagram（' . $name . '／ページ「' . $hit['name'] . '」）と連携しました。トークンは期限なしのページのトークンです。記事の編集画面の「インスタグラム」欄から試せます。' );
+		$done( 'success', 'Instagram（' . $name . '／ページ「' . $hit['name'] . '」）と連携しました。Facebookページ「' . $hit['name'] . '」への投稿もオンにしました。トークンは期限なしのページのトークンです。記事の編集画面の「インスタグラム」「SNS配信」欄から試せます。' );
 	}
 );
