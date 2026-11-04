@@ -166,6 +166,7 @@ function carmel_cb_handle_post() {
 				'handoff_channel'    => ( ( $_POST['handoff_channel'] ?? 'slack' ) === 'lineworks' ) ? 'lineworks' : 'slack',
 				'lw_room_per_customer' => isset( $_POST['lw_room_per_customer'] ) ? 1 : 0,
 				'lw_operators'       => sanitize_textarea_field( wp_unslash( $_POST['lw_operators'] ?? '' ) ),
+				'lw_mirror_all'      => isset( $_POST['lw_mirror_all'] ) ? 1 : 0,
 				'line_oa_enabled'     => isset( $_POST['line_oa_enabled'] ) ? 1 : 0,
 				'line_channel_token'  => trim( (string) wp_unslash( $_POST['line_channel_token'] ?? '' ) ),
 				'line_channel_secret' => sanitize_text_field( wp_unslash( $_POST['line_channel_secret'] ?? '' ) ),
@@ -1280,6 +1281,18 @@ function carmel_cb_view_general() {
 					<p class="description">
 						小部屋に招待する担当者の<strong>アカウントID</strong>を<strong>カンマ区切り</strong>で入力（LINE WORKSのメンバーのID。例：<code>uketsuke@works-1845</code>）。<br>
 						「お客様ごとに小部屋を分ける」をONにする場合は必須です。ここに入れた全員が各小部屋に招待されます。
+					</p>
+				</td>
+			</tr>
+			<tr>
+				<th>すべての会話を流して追う</th>
+				<td>
+					<label><input type="checkbox" name="lw_mirror_all" value="1" <?php checked( ! empty( $s['lw_mirror_all'] ) ); ?>> <strong>担当者に相談を押さなくても、チャットに来た全員の会話をLINE WORKSに流す</strong></label>
+					<p class="description">
+						ONにすると、お客様がチャットを始めた時点で<strong>LINE WORKSに通知</strong>し、その後の<strong>お客様↔みほの会話をリアルタイムで部屋に転記</strong>します（＝入室の検知＋会話を追える）。<br>
+						担当者はその部屋に書き込めば、いつでも会話に<strong>割り込んで返信</strong>できます（お客様のチャットに届きます）。<br>
+						「小部屋を分ける」も一緒にONにすると、<strong>お客様ごとに1部屋</strong>で追えます。<br>
+						<span style="color:#b26a00">※ 来訪者ごとに部屋/通知が増えます。アクセスが多いサイトでは通知量にご注意ください。</span>
 					</p>
 				</td>
 			</tr>

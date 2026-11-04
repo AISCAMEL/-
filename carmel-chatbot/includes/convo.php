@@ -245,6 +245,10 @@ function carmel_cb_handle_convo_poll( WP_REST_Request $request ) {
 	$s  = carmel_cb_get_settings();
 	$sid = sanitize_text_field( $request->get_param( 'session_id' ) );
 	$msgs = carmel_cb_slack_live_on( $s ) ? carmel_cb_convo_poll( $s, $sid ) : array();
+	// LINE WORKSで担当者が送った返信も取り込む（担当者希望でなくても割り込める）
+	if ( function_exists( 'carmel_cb_lw_live_on' ) && carmel_cb_lw_live_on( $s ) ) {
+		$msgs = array_merge( $msgs, carmel_cb_lw_poll( $s, $sid ) );
+	}
 	return new WP_REST_Response( array( 'messages' => $msgs ), 200 );
 }
 
@@ -256,6 +260,10 @@ function carmel_cb_handle_convo_send( WP_REST_Request $request ) {
 	// 担当者対応中のお客様発言も履歴に残す（AI経由ではないためここでログ）
 	if ( $text !== '' && function_exists( 'carmel_cb_log' ) ) { carmel_cb_log( $sid, 'user', $text ); }
 	$ok  = carmel_cb_slack_live_on( $s ) ? carmel_cb_convo_relay( $s, $sid, $text ) : false;
+	// LINE WORKSの対応ルームへもお客様発言を中継
+	if ( function_exists( 'carmel_cb_lw_live_on' ) && carmel_cb_lw_live_on( $s ) && function_exists( 'carmel_cb_lw_send' ) ) {
+		$ok = carmel_cb_lw_send( $s, $sid, $text ) || $ok;
+	}
 	return new WP_REST_Response( array( 'ok' => (bool) $ok ), 200 );
 }
 

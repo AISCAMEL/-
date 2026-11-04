@@ -108,36 +108,62 @@ function carmel_cb_lw_active_remove( $code ) {
 	carmel_cb_lw_active_set( $m );
 }
 
-/** 有人対応の開始：（小部屋モードなら専用ルーム作成→）打診を投稿し、合図を発行。 */
-function carmel_cb_lw_start( $s, $sid, $question ) {
-	$code = strtoupper( substr( md5( $sid . '|' . microtime() ), 0, 4 ) );
+/**
+ * LINE WORKSの対応ルームを用意（無ければ作成）。
+ * 小部屋モードなら専用ルームを作成して担当者を招待。$intro は新規作成時の冒頭文。
+ * 戻り値：セッション配列 {code, channel, msgs} / 失敗は false
+ */
+function carmel_cb_lw_ensure( $s, $sid, $intro, $question = '' ) {
+	$sess = get_transient( carmel_cb_lw_ho_key( $sid ) );
+	if ( $sess ) { return $sess; }
 
-	// 小部屋モード：お客様ごとに専用ルームを作成し担当者を招待
-	$channel  = '';
-	$room_mode = carmel_cb_lw_room_mode( $s );
-	if ( $room_mode ) {
-		$vis   = function_exists( 'carmel_cb_visitor_line' ) ? carmel_cb_visitor_line( $sid ) : '';
-		$title = 'カーメル相談 ' . date_i18n( 'n/j H:i' ) . ' #' . $code;
+	$code    = strtoupper( substr( md5( $sid . '|' . microtime() ), 0, 4 ) );
+	$channel = '';
+	if ( carmel_cb_lw_room_mode( $s ) ) {
+		$title   = 'カーメル相談 ' . date_i18n( 'n/j H:i' ) . ' #' . $code;
 		$channel = carmel_cb_lineworks_create_channel( $s, $title, carmel_cb_lw_operators( $s ) );
-		// 小部屋作成に失敗したら共有ルームにフォールバック
+		// 失敗時は共有ルームへフォールバック（$channel='' のまま）
 	}
 
-	if ( $room_mode && $channel !== '' ) {
-		$text = "🆕 お客様がチャットでお待ちです（この部屋はこのお客様専用）\n"
-			. '▼ご相談：' . mb_substr( (string) $question, 0, 500 ) . "\n\n"
-			. 'この部屋にそのまま返信すれば、お客様のチャットに届きます。';
-	} else {
-		$channel = ''; // 共有ルーム
-		$text = "🆕【担当者希望】お客様がチャットでお待ちです  合図 【#{$code}】\n"
-			. '▼ご相談：' . mb_substr( (string) $question, 0, 500 ) . "\n\n"
-			. "👉 返信するには、メッセージの先頭に 【#{$code}】 を付けて送ってください。\n"
-			. '（対応中のお客様が1人だけなら、合図なしでも届きます）';
-	}
+	$vline = function_exists( 'carmel_cb_visitor_line' ) ? carmel_cb_visitor_line( $sid ) : '';
+	$head  = $intro;
+	if ( $vline !== '' ) { $head .= "\n" . $vline; }
+	if ( $question !== '' ) { $head .= "\n▼ご相談：" . mb_substr( (string) $question, 0, 500 ); }
+	$head .= ( $channel !== '' )
+		? "\nこの部屋はこのお客様専用です。そのまま返信すればお客様のチャットに届きます。"
+		: "\n合図【#{$code}】（返信の先頭に付けてください。対応中が1人なら不要）";
 
-	if ( ! carmel_cb_lineworks_send_text( $s, $text, $channel ) ) { return false; }
+	if ( ! carmel_cb_lineworks_send_text( $s, $head, $channel ) ) { return false; }
 
-	set_transient( carmel_cb_lw_ho_key( $sid ), array( 'code' => $code, 'channel' => $channel, 'msgs' => array() ), HOUR_IN_SECONDS );
+	$sess = array( 'code' => $code, 'channel' => $channel, 'msgs' => array() );
+	set_transient( carmel_cb_lw_ho_key( $sid ), $sess, 3 * HOUR_IN_SECONDS );
 	carmel_cb_lw_active_add( $code, $sid, $channel );
+	return $sess;
+}
+
+/** 有人対応の開始：対応ルームを用意（ミラー中なら既存ルームを使う）。 */
+function carmel_cb_lw_start( $s, $sid, $question ) {
+	$existed = (bool) get_transient( carmel_cb_lw_ho_key( $sid ) );
+	$sess    = carmel_cb_lw_ensure( $s, $sid, '🆕【担当者希望】お客様がチャットでお待ちです', $question );
+	if ( ! $sess ) { return false; }
+	if ( $existed ) {
+		// 既に部屋がある（会話ミラー中）→ 担当者希望だけ知らせる
+		carmel_cb_lineworks_send_text( $s, '🙋 お客様が『担当者に相談』を希望されました。この部屋で対応できます。', (string) ( $sess['channel'] ?? '' ) );
+	}
+	return true;
+}
+
+/**
+ * 会話ミラー：担当者希望でなくても、全会話をLINE WORKSの（小）部屋に流す。
+ * 入室＝部屋作成（通知）、以降の お客様↔みほ を部屋に転記して追える。
+ */
+function carmel_cb_lw_mirror( $s, $sid, $user_msg, $ai_reply ) {
+	if ( ! carmel_cb_lw_live_on( $s ) || empty( $s['lw_mirror_all'] ) || $sid === '' ) { return false; }
+	$sess = carmel_cb_lw_ensure( $s, $sid, '🗨️ 新しいお客様が会話を始めました（この部屋で会話を追えます）' );
+	if ( ! $sess ) { return false; }
+	$ch = (string) ( $sess['channel'] ?? '' );
+	if ( $user_msg !== '' ) { carmel_cb_lineworks_send_text( $s, '🙋 お客様: ' . mb_substr( (string) $user_msg, 0, 1500 ), $ch ); }
+	if ( $ai_reply !== '' ) { carmel_cb_lineworks_send_text( $s, '🤖 みほ: ' . mb_substr( (string) $ai_reply, 0, 1500 ), $ch ); }
 	return true;
 }
 
