@@ -276,6 +276,8 @@ function carmel_cb_default_settings() {
 		'lw_channel_id'   => '',   // 送信先トークルームID
 		'lw_bot_secret'   => '',   // コールバック署名検証用（Bot Secret）
 		'handoff_channel' => 'slack', // 有人対応の経路：slack / lineworks
+		'lw_room_per_customer' => 0,  // お客様ごとに専用小部屋を自動作成
+		'lw_operators'    => '',   // 小部屋に招待する担当者アカウント（カンマ区切り）
 		// LINE公式アカウント（Messaging API）＝お客様側連携
 		'line_oa_enabled'    => 0,
 		'line_channel_token' => '', // チャネルアクセストークン（長期）

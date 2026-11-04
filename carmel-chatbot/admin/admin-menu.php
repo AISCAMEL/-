@@ -164,6 +164,8 @@ function carmel_cb_handle_post() {
 				'lw_channel_id'      => sanitize_text_field( wp_unslash( $_POST['lw_channel_id'] ?? '' ) ),
 				'lw_bot_secret'      => sanitize_text_field( wp_unslash( $_POST['lw_bot_secret'] ?? '' ) ),
 				'handoff_channel'    => ( ( $_POST['handoff_channel'] ?? 'slack' ) === 'lineworks' ) ? 'lineworks' : 'slack',
+				'lw_room_per_customer' => isset( $_POST['lw_room_per_customer'] ) ? 1 : 0,
+				'lw_operators'       => sanitize_textarea_field( wp_unslash( $_POST['lw_operators'] ?? '' ) ),
 				'line_oa_enabled'     => isset( $_POST['line_oa_enabled'] ) ? 1 : 0,
 				'line_channel_token'  => trim( (string) wp_unslash( $_POST['line_channel_token'] ?? '' ) ),
 				'line_channel_secret' => sanitize_text_field( wp_unslash( $_POST['line_channel_secret'] ?? '' ) ),
@@ -1257,6 +1259,27 @@ function carmel_cb_view_general() {
 					<p class="description">
 						このURLを LINE WORKS Developer Console → Bot設定の「<strong>Callback URL</strong>」に登録し、<strong>Callbackを有効化</strong>、受信イベントで「<strong>メッセージ（message）</strong>」にチェックしてください。<br>
 						これで、担当者がLINE WORKSで送った返信がお客様のチャットに届きます。
+					</p>
+				</td>
+			</tr>
+			<tr>
+				<th>お客様ごとに小部屋を分ける</th>
+				<td>
+					<label><input type="checkbox" name="lw_room_per_customer" value="1" <?php checked( ! empty( $s['lw_room_per_customer'] ) ); ?>> <strong>有人対応ごとに専用のトークルームを自動作成する</strong></label>
+					<p class="description">
+						ONにすると、お客様が「担当者に相談」するたびに、<strong>そのお客様専用の小部屋をBotが自動で作成</strong>し、下の担当者を招待します。<br>
+						部屋ごとに1人のお客様なので<strong>取り違えゼロ・合figなしで返信</strong>できます（会話の流れを部屋別に監視できます）。<br>
+						OFFの場合は、1つの共有トークルームに合図【#XXXX】を付けて区別します。
+					</p>
+				</td>
+			</tr>
+			<tr>
+				<th>小部屋に招待する担当者</th>
+				<td>
+					<textarea name="lw_operators" rows="2" class="large-text code" placeholder="uketsuke@works-1845, yoshida@works-1845"><?php echo esc_textarea( $s['lw_operators'] ?? '' ); ?></textarea>
+					<p class="description">
+						小部屋に招待する担当者の<strong>アカウントID</strong>を<strong>カンマ区切り</strong>で入力（LINE WORKSのメンバーのID。例：<code>uketsuke@works-1845</code>）。<br>
+						「お客様ごとに小部屋を分ける」をONにする場合は必須です。ここに入れた全員が各小部屋に招待されます。
 					</p>
 				</td>
 			</tr>

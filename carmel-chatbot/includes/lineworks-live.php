@@ -10,23 +10,39 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
  * 担当者は返信の先頭にその合図を付ける（対応中が1件だけなら合図なしでもOK）。
  */
 
+/** お客様ごとに専用の小部屋を作るモードか？ */
+function carmel_cb_lw_room_mode( $s ) {
+	return ! empty( $s['lw_room_per_customer'] ) && trim( (string) ( $s['lw_operators'] ?? '' ) ) !== '';
+}
+
+/** 担当者アカウントID配列（小部屋に招待する人）。 */
+function carmel_cb_lw_operators( $s ) {
+	$raw = (string) ( $s['lw_operators'] ?? '' );
+	$ids = preg_split( '/[\s,、]+/u', $raw, -1, PREG_SPLIT_NO_EMPTY );
+	return array_values( array_filter( array_map( 'trim', (array) $ids ) ) );
+}
+
 /** この経路（LINE WORKS）で有人対応するか？ */
 function carmel_cb_lw_live_on( $s ) {
 	if ( ( $s['handoff_channel'] ?? 'slack' ) !== 'lineworks' ) { return false; }
-	return ! empty( $s['lw_bot_id'] ) && ! empty( $s['lw_channel_id'] )
-		&& ! empty( $s['lw_client_id'] ) && ! empty( $s['lw_client_secret'] )
+	$core = ! empty( $s['lw_bot_id'] ) && ! empty( $s['lw_client_id'] ) && ! empty( $s['lw_client_secret'] )
 		&& ! empty( $s['lw_service_account'] ) && ! empty( $s['lw_private_key'] );
+	if ( ! $core ) { return false; }
+	// 送信先：共有トークルームID、または 小部屋モード（担当者ID指定）のどちらかがあればOK
+	return ! empty( $s['lw_channel_id'] ) || carmel_cb_lw_room_mode( $s );
 }
 
 function carmel_cb_lw_ho_key( $sid )  { return 'carmel_cb_lwho_' . md5( (string) $sid ); }
 
-/** LINE WORKSトークルームへテキスト送信（成功で true）。 */
-function carmel_cb_lineworks_send_text( $s, $text ) {
-	if ( empty( $s['lw_bot_id'] ) || empty( $s['lw_channel_id'] ) ) { return false; }
+/** LINE WORKSトークルームへテキスト送信（$channel 未指定なら共有トークルーム）。成功で true。 */
+function carmel_cb_lineworks_send_text( $s, $text, $channel = '' ) {
+	if ( empty( $s['lw_bot_id'] ) ) { return false; }
+	$channel = $channel !== '' ? $channel : (string) ( $s['lw_channel_id'] ?? '' );
+	if ( $channel === '' ) { return false; }
 	$token = carmel_cb_lineworks_token( $s );
 	if ( ! $token ) { return false; }
 	$res = wp_remote_post(
-		'https://www.worksapis.com/v1.0/bots/' . rawurlencode( $s['lw_bot_id'] ) . '/channels/' . rawurlencode( $s['lw_channel_id'] ) . '/messages',
+		'https://www.worksapis.com/v1.0/bots/' . rawurlencode( $s['lw_bot_id'] ) . '/channels/' . rawurlencode( $channel ) . '/messages',
 		array(
 			'timeout' => 20,
 			'headers' => array( 'Authorization' => 'Bearer ' . $token, 'Content-Type' => 'application/json' ),
@@ -35,6 +51,31 @@ function carmel_cb_lineworks_send_text( $s, $text ) {
 	);
 	if ( is_wp_error( $res ) ) { return false; }
 	return (int) wp_remote_retrieve_response_code( $res ) < 300;
+}
+
+/** お客様専用の小部屋を作成し、担当者を招待。成功すると channelId を返す（失敗は ''）。 */
+function carmel_cb_lineworks_create_channel( $s, $title, $members ) {
+	if ( empty( $s['lw_bot_id'] ) || empty( $members ) ) { return ''; }
+	$token = carmel_cb_lineworks_token( $s );
+	if ( ! $token ) { return ''; }
+	$res = wp_remote_post(
+		'https://www.worksapis.com/v1.0/bots/' . rawurlencode( $s['lw_bot_id'] ) . '/channels',
+		array(
+			'timeout' => 20,
+			'headers' => array( 'Authorization' => 'Bearer ' . $token, 'Content-Type' => 'application/json' ),
+			'body'    => wp_json_encode( array(
+				'title'   => mb_substr( (string) $title, 0, 100 ),
+				'members' => array_values( (array) $members ),
+			) ),
+		)
+	);
+	if ( is_wp_error( $res ) ) { return ''; }
+	if ( (int) wp_remote_retrieve_response_code( $res ) >= 300 ) {
+		error_log( 'Carmel CB LW create channel failed: ' . wp_remote_retrieve_body( $res ) );
+		return '';
+	}
+	$d = json_decode( wp_remote_retrieve_body( $res ), true );
+	return (string) ( $d['channelId'] ?? '' );
 }
 
 /** 対応中セッションの索引（合図コード→sid）を保持（取り違え防止＆合図なし返信のため）。 */
@@ -48,10 +89,18 @@ function carmel_cb_lw_active_get() {
 	return $m;
 }
 function carmel_cb_lw_active_set( $m ) { update_option( 'carmel_cb_lw_active', $m, false ); }
-function carmel_cb_lw_active_add( $code, $sid ) {
+function carmel_cb_lw_active_add( $code, $sid, $channel = '' ) {
 	$m = carmel_cb_lw_active_get();
-	$m[ $code ] = array( 'sid' => $sid, 'exp' => time() + 2 * HOUR_IN_SECONDS );
+	$m[ $code ] = array( 'sid' => $sid, 'channel' => (string) $channel, 'exp' => time() + 2 * HOUR_IN_SECONDS );
 	carmel_cb_lw_active_set( $m );
+}
+/** channelId から対応中セッションを探す（小部屋モードの返信ルーティング用）。 */
+function carmel_cb_lw_sid_by_channel( $channel ) {
+	if ( $channel === '' ) { return ''; }
+	foreach ( carmel_cb_lw_active_get() as $row ) {
+		if ( ! empty( $row['channel'] ) && $row['channel'] === $channel ) { return $row['sid']; }
+	}
+	return '';
 }
 function carmel_cb_lw_active_remove( $code ) {
 	$m = carmel_cb_lw_active_get();
@@ -59,17 +108,36 @@ function carmel_cb_lw_active_remove( $code ) {
 	carmel_cb_lw_active_set( $m );
 }
 
-/** 有人対応の開始：トークルームへ打診を投稿し、合図を発行。 */
+/** 有人対応の開始：（小部屋モードなら専用ルーム作成→）打診を投稿し、合図を発行。 */
 function carmel_cb_lw_start( $s, $sid, $question ) {
 	$code = strtoupper( substr( md5( $sid . '|' . microtime() ), 0, 4 ) );
-	$text = "🆕【担当者希望】お客様がチャットでお待ちです  合図 【#{$code}】\n"
-		. '▼ご相談：' . mb_substr( (string) $question, 0, 500 ) . "\n\n"
-		. "👉 返信するには、メッセージの先頭に 【#{$code}】 を付けて送ってください。\n"
-		. '（対応中のお客様が1人だけなら、合図なしでも届きます）';
-	if ( ! carmel_cb_lineworks_send_text( $s, $text ) ) { return false; }
 
-	set_transient( carmel_cb_lw_ho_key( $sid ), array( 'code' => $code, 'msgs' => array() ), HOUR_IN_SECONDS );
-	carmel_cb_lw_active_add( $code, $sid );
+	// 小部屋モード：お客様ごとに専用ルームを作成し担当者を招待
+	$channel  = '';
+	$room_mode = carmel_cb_lw_room_mode( $s );
+	if ( $room_mode ) {
+		$vis   = function_exists( 'carmel_cb_visitor_line' ) ? carmel_cb_visitor_line( $sid ) : '';
+		$title = 'カーメル相談 ' . date_i18n( 'n/j H:i' ) . ' #' . $code;
+		$channel = carmel_cb_lineworks_create_channel( $s, $title, carmel_cb_lw_operators( $s ) );
+		// 小部屋作成に失敗したら共有ルームにフォールバック
+	}
+
+	if ( $room_mode && $channel !== '' ) {
+		$text = "🆕 お客様がチャットでお待ちです（この部屋はこのお客様専用）\n"
+			. '▼ご相談：' . mb_substr( (string) $question, 0, 500 ) . "\n\n"
+			. 'この部屋にそのまま返信すれば、お客様のチャットに届きます。';
+	} else {
+		$channel = ''; // 共有ルーム
+		$text = "🆕【担当者希望】お客様がチャットでお待ちです  合図 【#{$code}】\n"
+			. '▼ご相談：' . mb_substr( (string) $question, 0, 500 ) . "\n\n"
+			. "👉 返信するには、メッセージの先頭に 【#{$code}】 を付けて送ってください。\n"
+			. '（対応中のお客様が1人だけなら、合図なしでも届きます）';
+	}
+
+	if ( ! carmel_cb_lineworks_send_text( $s, $text, $channel ) ) { return false; }
+
+	set_transient( carmel_cb_lw_ho_key( $sid ), array( 'code' => $code, 'channel' => $channel, 'msgs' => array() ), HOUR_IN_SECONDS );
+	carmel_cb_lw_active_add( $code, $sid, $channel );
 	return true;
 }
 
@@ -77,7 +145,10 @@ function carmel_cb_lw_start( $s, $sid, $question ) {
 function carmel_cb_lw_send( $s, $sid, $text ) {
 	$sess = get_transient( carmel_cb_lw_ho_key( $sid ) );
 	if ( ! $sess ) { return false; }
-	return carmel_cb_lineworks_send_text( $s, '🙋 お客様【#' . $sess['code'] . '】: ' . mb_substr( (string) $text, 0, 1000 ) );
+	$channel = (string) ( $sess['channel'] ?? '' );
+	// 小部屋モードは合図不要。共有ルームのみ合図を付ける
+	$prefix = $channel !== '' ? '🙋 お客様: ' : ( '🙋 お客様【#' . $sess['code'] . '】: ' );
+	return carmel_cb_lineworks_send_text( $s, $prefix . mb_substr( (string) $text, 0, 1000 ), $channel );
 }
 
 /** 担当者返信の取り出し（コールバックで貯まったものを返して空にする）。 */
@@ -148,16 +219,22 @@ function carmel_cb_lw_callback( WP_REST_Request $request ) {
 		$text = trim( (string) ( $ev['content']['text'] ?? '' ) );
 		if ( $text === '' ) { continue; }
 
-		// 合図【#XXXX】でセッション特定。無ければ対応中が1件の時だけ自動判定。
-		$sid = '';
-		if ( preg_match( '/[【\[]\s*#?\s*([A-Za-z0-9]{4})\s*[】\]]/u', $text, $mm ) ) {
-			$code = strtoupper( $mm[1] );
-			$map  = carmel_cb_lw_active_get();
-			if ( isset( $map[ $code ]['sid'] ) ) { $sid = $map[ $code ]['sid']; }
-			$text = trim( preg_replace( '/[【\[]\s*#?\s*[A-Za-z0-9]{4}\s*[】\]]/u', '', $text, 1 ) );
-		} else {
-			$map = carmel_cb_lw_active_get();
-			if ( count( $map ) === 1 ) { $row = reset( $map ); $sid = $row['sid']; }
+		// ①小部屋モード：この部屋(channelId)に紐づくお客様へ直接ルーティング（合図不要）
+		$sid = carmel_cb_lw_sid_by_channel( $ch );
+
+		// ②共有ルーム：合図【#XXXX】で特定。無ければ対応中が1件の時だけ自動判定
+		if ( $sid === '' ) {
+			if ( preg_match( '/[【\[]\s*#?\s*([A-Za-z0-9]{4})\s*[】\]]/u', $text, $mm ) ) {
+				$code = strtoupper( $mm[1] );
+				$map  = carmel_cb_lw_active_get();
+				if ( isset( $map[ $code ]['sid'] ) ) { $sid = $map[ $code ]['sid']; }
+				$text = trim( preg_replace( '/[【\[]\s*#?\s*[A-Za-z0-9]{4}\s*[】\]]/u', '', $text, 1 ) );
+			} else {
+				$map = carmel_cb_lw_active_get();
+				// 小部屋を持たない（共有ルーム運用の）対応中が1件だけなら自動判定
+				$shared = array_filter( $map, function ( $r ) { return empty( $r['channel'] ); } );
+				if ( count( $shared ) === 1 ) { $row = reset( $shared ); $sid = $row['sid']; }
+			}
 		}
 		if ( $sid !== '' && $text !== '' ) {
 			carmel_cb_lw_push_operator_msg( $sid, $text );
