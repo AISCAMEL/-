@@ -166,6 +166,98 @@ function carmel_cb_lw_callback( WP_REST_Request $request ) {
 	return new WP_REST_Response( array( 'ok' => true ), 200 );
 }
 
+/* ============================ 接続テスト（診断） ============================ */
+
+/** LINE WORKS連携を段階的に診断。各ステップ array(ok(bool), メッセージ) の配列を返す。 */
+function carmel_cb_lw_diagnose() {
+	$s   = carmel_cb_get_settings();
+	$res = array();
+
+	// 1) 設定の有無
+	$need = array(
+		'lw_client_id' => 'Client ID', 'lw_client_secret' => 'Client Secret',
+		'lw_service_account' => 'Service Account', 'lw_private_key' => '秘密鍵(PEM)',
+		'lw_bot_id' => 'Bot ID', 'lw_channel_id' => '送信先トークルームID', 'lw_bot_secret' => 'Bot Secret',
+	);
+	$miss = array();
+	foreach ( $need as $k => $l ) { if ( trim( (string) ( $s[ $k ] ?? '' ) ) === '' ) { $miss[] = $l; } }
+	$res[] = $miss ? array( false, '未入力の項目があります：' . implode( '・', $miss ) ) : array( true, 'LINE WORKS設定は全項目入力済み' );
+
+	// 2) 経路
+	$res[] = ( ( $s['handoff_channel'] ?? 'slack' ) === 'lineworks' )
+		? array( true, '有人対応の経路 = LINE WORKS' )
+		: array( false, '有人対応の経路がLINE WORKSになっていません（現在：' . esc_html( $s['handoff_channel'] ?? 'slack' ) . '）→ 基本設定で「LINE WORKS」を選択' );
+
+	// 3) 営業時間
+	$within = function_exists( 'carmel_cb_within_hours' ) ? carmel_cb_within_hours( $s ) : true;
+	$res[] = $within
+		? array( true, '現在は営業時間内' )
+		: array( false, '現在は営業時間外です。実際の「担当者に相談」は営業時間外だと起動しません（※このテスト送信は時間に関係なく実行します）' );
+
+	// 4) 秘密鍵の体裁
+	$pk = (string) ( $s['lw_private_key'] ?? '' );
+	if ( strpos( $pk, 'BEGIN' ) === false ) {
+		$res[] = array( false, '秘密鍵の形式が不正の可能性（「-----BEGIN PRIVATE KEY-----」が見当たりません）。鍵の中身を貼り直してください' );
+	}
+	if ( empty( $s['lw_client_id'] ) || empty( $s['lw_service_account'] ) || $pk === '' ) {
+		return $res; // これ以上は進めない
+	}
+
+	// 5) アクセストークン取得（キャッシュを消して実リクエスト）
+	delete_transient( 'carmel_cb_lw_token' );
+	if ( ! function_exists( 'openssl_sign' ) ) { $res[] = array( false, 'サーバに openssl 関数がありません（ホスティングに確認が必要）' ); return $res; }
+	$now    = time();
+	$header = carmel_cb_b64url( wp_json_encode( array( 'alg' => 'RS256', 'typ' => 'JWT' ) ) );
+	$claim  = carmel_cb_b64url( wp_json_encode( array( 'iss' => $s['lw_client_id'], 'sub' => $s['lw_service_account'], 'iat' => $now, 'exp' => $now + 3600 ) ) );
+	$sig    = '';
+	if ( ! openssl_sign( $header . '.' . $claim, $sig, $pk, 'SHA256' ) ) {
+		$res[] = array( false, 'JWT署名に失敗（秘密鍵が正しくない可能性）：' . esc_html( (string) openssl_error_string() ) );
+		return $res;
+	}
+	$jwt = $header . '.' . $claim . '.' . carmel_cb_b64url( $sig );
+	$tr  = wp_remote_post( 'https://auth.worksmobile.com/oauth2/v2.0/token', array(
+		'timeout' => 20,
+		'body'    => array(
+			'assertion'     => $jwt,
+			'grant_type'    => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+			'client_id'     => $s['lw_client_id'],
+			'client_secret' => $s['lw_client_secret'],
+			'scope'         => 'bot',
+		),
+	) );
+	if ( is_wp_error( $tr ) ) { $res[] = array( false, 'トークン取得の通信エラー：' . esc_html( $tr->get_error_message() ) ); return $res; }
+	$tcode = (int) wp_remote_retrieve_response_code( $tr );
+	$tbody = (string) wp_remote_retrieve_body( $tr );
+	$td    = json_decode( $tbody, true );
+	if ( empty( $td['access_token'] ) ) {
+		$hint = ( strpos( $tbody, 'scope' ) !== false ) ? '（スコープ「bot」がAppに付いているか確認）' : '';
+		$res[] = array( false, 'アクセストークン取得に失敗 (HTTP ' . $tcode . ')：' . esc_html( mb_substr( $tbody, 0, 300 ) ) . $hint );
+		return $res;
+	}
+	$res[] = array( true, 'アクセストークン取得 OK' );
+
+	// 6) テスト送信
+	$sr = wp_remote_post(
+		'https://www.worksapis.com/v1.0/bots/' . rawurlencode( $s['lw_bot_id'] ) . '/channels/' . rawurlencode( $s['lw_channel_id'] ) . '/messages',
+		array(
+			'timeout' => 20,
+			'headers' => array( 'Authorization' => 'Bearer ' . $td['access_token'], 'Content-Type' => 'application/json' ),
+			'body'    => wp_json_encode( array( 'content' => array( 'type' => 'text', 'text' => '✅ カーメル接続テスト：このトークルームに通知できています。' ) ) ),
+		)
+	);
+	if ( is_wp_error( $sr ) ) { $res[] = array( false, '送信の通信エラー：' . esc_html( $sr->get_error_message() ) ); return $res; }
+	$scode = (int) wp_remote_retrieve_response_code( $sr );
+	$sbody = (string) wp_remote_retrieve_body( $sr );
+	if ( $scode < 300 ) {
+		$res[] = array( true, 'テスト送信 OK → LINE WORKSのトークルームに「✅カーメル接続テスト」が届いていれば成功です' );
+	} else {
+		$hint = '';
+		if ( $scode === 403 || $scode === 404 ) { $hint = '（Bot IDかトークルームID、またはBotが部屋に居るかを確認）'; }
+		$res[] = array( false, 'テスト送信に失敗 (HTTP ' . $scode . ')：' . esc_html( mb_substr( $sbody, 0, 300 ) ) . $hint );
+	}
+	return $res;
+}
+
 /* ============================ 共通ディスパッチ（Slack / LINE WORKS） ============================ */
 
 /** 現在有効な有人対応の経路：'slack' | 'lineworks' | ''（なし）。 */

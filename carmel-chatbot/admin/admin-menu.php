@@ -175,6 +175,19 @@ function carmel_cb_handle_post() {
 			carmel_cb_run_slack_test();
 			break;
 
+		case 'lw_test':
+			if ( ! function_exists( 'carmel_cb_lw_diagnose' ) ) { carmel_cb_notice( 'LINE WORKS機能が読み込まれていません。', 'error' ); break; }
+			$steps = carmel_cb_lw_diagnose();
+			$html  = '<strong>LINE WORKS接続テスト結果</strong><ul style="margin:8px 0 0;list-style:none;padding:0">';
+			$all_ok = true;
+			foreach ( $steps as $st ) {
+				if ( empty( $st[0] ) ) { $all_ok = false; }
+				$html .= '<li style="margin:4px 0">' . ( ! empty( $st[0] ) ? '✅ ' : '⚠️ ' ) . $st[1] . '</li>';
+			}
+			$html .= '</ul>';
+			carmel_cb_notice( $html, $all_ok ? 'success' : 'error' );
+			break;
+
 		case 'reset_prompt_to_default':
 			carmel_cb_update_settings( array( 'system_prompt' => carmel_cb_default_prompt() ) );
 			carmel_cb_notice( '✅ 応答・人格プロンプトを最新テンプレートに更新しました。（自己破産・信用回復ローン説明・繰り返し防止・人らしい話し方を含む）' );
@@ -1258,6 +1271,15 @@ function carmel_cb_view_general() {
 			<?php wp_nonce_field( 'carmel_cb_nonce' ); ?>
 			<input type="hidden" name="carmel_cb_action" value="slack_test">
 			<?php submit_button( 'Slack接続をテスト', 'secondary', 'submit', false ); ?>
+		</form>
+
+		<hr>
+		<h3 style="margin:8px 0">📱 LINE WORKS接続テスト</h3>
+		<p class="description" style="margin:0 0 8px">保存済みの設定で、トークン取得→トークルームへテスト送信を実行し、<strong>どこで失敗しているか</strong>を表示します。「LINEに通知が来ない」時はまずこれを押してください。</p>
+		<form method="post">
+			<?php wp_nonce_field( 'carmel_cb_nonce' ); ?>
+			<input type="hidden" name="carmel_cb_action" value="lw_test">
+			<?php submit_button( 'LINE WORKS接続をテスト', 'secondary', 'submit', false ); ?>
 		</form>
 	</div>
 	<?php
