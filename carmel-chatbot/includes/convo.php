@@ -288,7 +288,9 @@ function carmel_cb_handle_convo_handoff( WP_REST_Request $request ) {
 		do_action( 'carmel_cb_handoff_requested', 'offhours', $sid, $q, $email );
 		return new WP_REST_Response( array( 'mode' => 'offhours', 'msg' => (string) ( $s['handoff_offhours_msg'] ?? '' ) ), 200 );
 	}
-	if ( ! carmel_cb_slack_live_on( $s ) ) {
+	// 有人対応の経路（Slack / LINE WORKS）が1つも有効でなければフォーム案内へ
+	$live_ch = function_exists( 'carmel_cb_live_channel' ) ? carmel_cb_live_channel( $s ) : ( carmel_cb_slack_live_on( $s ) ? 'slack' : '' );
+	if ( $live_ch === '' ) {
 		do_action( 'carmel_cb_handoff_requested', 'notify', $sid, $q, $email );
 		return new WP_REST_Response( array( 'mode' => 'notify' ), 200 );
 	}
@@ -296,10 +298,18 @@ function carmel_cb_handle_convo_handoff( WP_REST_Request $request ) {
 	// 担当者に相談＝行動を起こした → 会話離脱後追いは解決扱い
 	if ( function_exists( 'carmel_cb_convo_fu_resolve' ) ) { carmel_cb_convo_fu_resolve( $sid ); }
 	do_action( 'carmel_cb_handoff_requested', 'live', $sid, $q, $email );
-	$sess = carmel_cb_convo_ensure( $s, $sid, esc_url_raw( $b['page'] ?? '' ), '（営業時間内）' );
-	if ( ! $sess ) { return new WP_REST_Response( array( 'mode' => 'notify' ), 200 ); }
 
-	carmel_cb_convo_post( $s, $sess, "🆕🙋 *担当者希望！お客様がお待ちです*\n> " . mb_substr( (string) $q, 0, 500 ) . "\n*このスレッドに返信すると、お客様のチャットに届きます。*" );
+	if ( $live_ch === 'lineworks' ) {
+		// LINE WORKS：対応ルームを用意（ミラー中なら既存の小部屋を使う）して担当者希望を通知
+		if ( ! carmel_cb_lw_start( $s, $sid, $q ) ) {
+			return new WP_REST_Response( array( 'mode' => 'notify' ), 200 );
+		}
+	} else {
+		// Slack：会話スレッドに担当者希望を投稿
+		$sess = carmel_cb_convo_ensure( $s, $sid, esc_url_raw( $b['page'] ?? '' ), '（営業時間内）' );
+		if ( ! $sess ) { return new WP_REST_Response( array( 'mode' => 'notify' ), 200 ); }
+		carmel_cb_convo_post( $s, $sess, "🆕🙋 *担当者希望！お客様がお待ちです*\n> " . mb_substr( (string) $q, 0, 500 ) . "\n*このスレッドに返信すると、お客様のチャットに届きます。*" );
+	}
 
 	$busy_sec = max( 3, min( 120, (int) ( $s['handoff_busy_sec'] ?? 15 ) ) );
 	$wait_sec = max( $busy_sec + 2, min( 300, (int) ( $s['handoff_wait_sec'] ?? 45 ) ) );
