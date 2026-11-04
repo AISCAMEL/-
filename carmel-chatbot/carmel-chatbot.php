@@ -3,7 +3,7 @@
  * Plugin Name: カーメル AIチャットボット
  * Plugin URI:  https://carmelonline.jp/
  * Description: OpenRouter を使ったAI自動応答チャットボット。管理画面から人格・FAQ(学習データ)・モデル・見た目を編集でき、会話ログも確認できます。悩みを深掘りする会話設計、タップで進む候補、申込意欲が高まった場面でのCTA（仮審査/LINE/電話）、モデル自動フォールバック、有人対応(メール/Slack/LINE WORKS通知・Slack双方向)に対応。
- * Version:     2.11.0
+ * Version:     2.17.1
  * Author:      Carmel
  * License:     GPL-2.0+
  * Text Domain: carmel-chatbot
