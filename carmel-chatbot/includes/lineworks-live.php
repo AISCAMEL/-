@@ -91,8 +91,13 @@ function carmel_cb_lw_active_get() {
 function carmel_cb_lw_active_set( $m ) { update_option( 'carmel_cb_lw_active', $m, false ); }
 function carmel_cb_lw_active_add( $code, $sid, $channel = '' ) {
 	$m = carmel_cb_lw_active_get();
-	$m[ $code ] = array( 'sid' => $sid, 'channel' => (string) $channel, 'exp' => time() + 2 * HOUR_IN_SECONDS );
+	$m[ $code ] = array( 'sid' => $sid, 'channel' => (string) $channel, 'last' => time(), 'exp' => time() + 2 * HOUR_IN_SECONDS );
 	carmel_cb_lw_active_set( $m );
+}
+/** そのお客様の最終アクティビティ時刻を更新（合図なし返信の宛先判定用）。 */
+function carmel_cb_lw_active_touch( $code ) {
+	$m = carmel_cb_lw_active_get();
+	if ( isset( $m[ $code ] ) ) { $m[ $code ]['last'] = time(); carmel_cb_lw_active_set( $m ); }
 }
 /** channelId から対応中セッションを探す（小部屋モードの返信ルーティング用）。 */
 function carmel_cb_lw_sid_by_channel( $channel ) {
@@ -131,7 +136,7 @@ function carmel_cb_lw_ensure( $s, $sid, $intro, $question = '' ) {
 	if ( $question !== '' ) { $head .= "\n▼ご相談：" . mb_substr( (string) $question, 0, 500 ); }
 	$head .= ( $channel !== '' )
 		? "\nこの部屋はこのお客様専用です。そのまま返信すればお客様のチャットに届きます。"
-		: "\n合図【#{$code}】（返信の先頭に付けてください。対応中が1人なら不要）";
+		: "\n👉 この部屋でそのまま返信すれば、このお客様のチャットに届きます。\n（複数のお客様が同時のときだけ、区別のため先頭に 合図【#{$code}】 を付けてください）";
 
 	if ( ! carmel_cb_lineworks_send_text( $s, $head, $channel ) ) { return false; }
 
@@ -172,7 +177,9 @@ function carmel_cb_lw_send( $s, $sid, $text ) {
 	$sess = get_transient( carmel_cb_lw_ho_key( $sid ) );
 	if ( ! $sess ) { return false; }
 	$channel = (string) ( $sess['channel'] ?? '' );
-	// 小部屋モードは合図不要。共有ルームのみ合図を付ける
+	// このお客様を「最後に相談してきた人」として更新（合図なし返信の宛先に）
+	if ( ! empty( $sess['code'] ) ) { carmel_cb_lw_active_touch( $sess['code'] ); }
+	// 小部屋モードは合図不要。共有ルームでは、どのお客様か分かるよう合図を添える
 	$prefix = $channel !== '' ? '🙋 お客様: ' : ( '🙋 お客様【#' . $sess['code'] . '】: ' );
 	return carmel_cb_lineworks_send_text( $s, $prefix . mb_substr( (string) $text, 0, 1000 ), $channel );
 }
@@ -257,9 +264,15 @@ function carmel_cb_lw_callback( WP_REST_Request $request ) {
 				$text = trim( preg_replace( '/[【\[]\s*#?\s*[A-Za-z0-9]{4}\s*[】\]]/u', '', $text, 1 ) );
 			} else {
 				$map = carmel_cb_lw_active_get();
-				// 小部屋を持たない（共有ルーム運用の）対応中が1件だけなら自動判定
+				// 共有ルーム運用：合図なしの返信は「最後に相談してきたお客様」に届ける
 				$shared = array_filter( $map, function ( $r ) { return empty( $r['channel'] ); } );
-				if ( count( $shared ) === 1 ) { $row = reset( $shared ); $sid = $row['sid']; }
+				if ( $shared ) {
+					uasort( $shared, function ( $a, $b ) {
+						return ( (int) ( $b['last'] ?? $b['exp'] ?? 0 ) ) <=> ( (int) ( $a['last'] ?? $a['exp'] ?? 0 ) );
+					} );
+					$row = reset( $shared );
+					$sid = $row['sid'];
+				}
 			}
 		}
 		if ( $sid !== '' && $text !== '' ) {
