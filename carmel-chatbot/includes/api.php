@@ -282,7 +282,16 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
 		}
 	}
 
-	$system = $s['system_prompt'] . $ng_block . $faq_block
+	// 既出情報ブロック：お客様が既に教えてくれたことを明示し、同じ質問を繰り返させない。
+	$facts_block = '';
+	$known = carmel_cb_known_facts( $history, $session_id );
+	if ( ! empty( $known ) ) {
+		$facts_block = "\n\n【すでに伺っていること（これらは絶対に聞き返さない・前提にして次へ進む）】\n- "
+			. implode( "\n- ", $known )
+			. "\nこれらはお客様が既に教えてくださった情報です。同じことを再質問せず、ここから一歩先の提案や確認に進むこと。";
+	}
+
+	$system = $s['system_prompt'] . $ng_block . $facts_block . $faq_block
 		. "\n\n【LINE相談リンク】" . $s['line_url']
 		. "\n【在庫一覧ページ】" . $stock_page
 		. $inventory_block
@@ -548,6 +557,7 @@ function carmel_cb_protocol_instruction() {
 【会話の進め方】
 - 単刀直入に。不安には共感しすぎず、ひと言添える程度（例「大丈夫です」）にとどめ、すぐ具体的な答え・見通しを示す（例：「他社で断られた方でも、当社は独自基準で審査できます。頭金なしのプランもあります」）。長い共感文で埋めない。
 - 1ターン＝「直接の答え＋（提案 or 質問1つ）」。質問は一度に1つまで。説明だけ・質問だけで終わらせず、相手が一言で返せる一手で締める。
+- 【同じ質問を絶対に繰り返さない】質問する前に必ず会話履歴と【すでに伺っていること】を確認する。お客様が一度でも答えた内容（予算・頭金・ご状況・お名前・用途・気になる車など）は二度と聞かない。似た質問の言い換えもしない。前の回答を前提に、必ず“次の未確認の一歩”へ進む。もし答えをもらったのに自分が聞き返しそうになったら、代わりに「○○とのことですね、ありがとうございます」と受けてから次へ。
 - いきなり売り込まない。まず安心してもらい、状況を引き出しながら、その都度できることを提案する。
 - action を出すときは、reply でその入口へ自然に背中を押す一言を添える（例：applyなら「よろしければ下のかんたん審査から、無理のないお支払いを一緒に見てみましょう」）。
 - 会話で十分に解決できたら、無理に入口を出さず「他に気になる点はありますか？」と会話を続ける。
@@ -612,6 +622,51 @@ PROTOCOL;
  * AIの返答文に「ボタンへ誘導する言い回し」があるのに action 未設定のとき、
  * 文面（＋直近のお客様発話）から出すべきボタンを推定する。無ければ空文字。
  */
+/**
+ * 会話履歴から「お客様が既に教えてくれた情報」を抽出する（＝同じ質問を繰り返さないため）。
+ * 予算・頭金・ご状況・用途・お名前/連絡先 などを拾い、箇条書き配列で返す。
+ */
+function carmel_cb_known_facts( $history, $sid = '' ) {
+	$text = '';
+	foreach ( (array) $history as $m ) {
+		if ( isset( $m['role'], $m['content'] ) && $m['role'] === 'user' ) { $text .= ' ' . (string) $m['content']; }
+	}
+	$text = mb_convert_kana( $text, 'asKV' );
+	$facts = array();
+
+	// お名前・連絡先（intake取得済み）
+	if ( function_exists( 'carmel_cb_visitor_key' ) && $sid !== '' ) {
+		$v = get_transient( carmel_cb_visitor_key( $sid ) );
+		if ( is_array( $v ) ) {
+			if ( ! empty( $v['name'] ) )  { $facts[] = 'お名前：' . $v['name'] . ' 様（取得済み）'; }
+			if ( ! empty( $v['email'] ) ) { $facts[] = 'ご連絡先：取得済み'; }
+		}
+	}
+	// ご予算
+	if ( preg_match( '/月々?\s*([0-9]+)\s*万/u', $text, $m ) )       { $facts[] = 'ご予算：月々' . $m[1] . '万円くらい'; }
+	elseif ( preg_match( '/月々?\s*([0-9]{4,6})\s*円/u', $text, $m ) ) { $facts[] = 'ご予算：月々' . number_format( (int) $m[1] ) . '円くらい'; }
+	elseif ( preg_match( '/([0-9]+)\s*万円?/u', $text, $m ) )         { $facts[] = 'ご予算：総額' . $m[1] . '万円くらい'; }
+	if ( preg_match( '/頭金(?:は|が|なら)?\s*(なし|ゼロ|０|0|無し|用意できな|出せな)/u', $text ) ) { $facts[] = '頭金：なしをご希望'; }
+
+	// ご状況（信用情報・就労など）
+	$sit = array();
+	foreach ( array( '自己破産', '債務整理', '任意整理', '個人再生', '延滞', '滞納', 'ブラック', '他社で断られ', '審査に落ち' ) as $w ) {
+		if ( mb_strpos( $text, $w ) !== false ) { $sit[] = $w; }
+	}
+	if ( preg_match( '/(勤続|勤務|在籍)[^。、]{0,4}([0-9]+)\s*(年|ヶ月|か月|カ月|ヵ月)/u', $text, $m ) ) { $sit[] = '勤続' . $m[2] . $m[3]; }
+	foreach ( array( '自営', 'フリーランス', 'パート', 'アルバイト', '派遣', '正社員', '年金', '転職' ) as $w ) {
+		if ( mb_strpos( $text, $w ) !== false ) { $sit[] = $w; }
+	}
+	if ( $sit ) { $facts[] = 'ご状況：' . implode( '・', array_values( array_unique( $sit ) ) ); }
+
+	// 用途・ご家族
+	foreach ( array( '通勤', '家族', '子供', '子ども', '送迎', '仕事で', 'レジャー', 'アウトドア', '雪', '長距離', 'キャンプ' ) as $w ) {
+		if ( mb_strpos( $text, $w ) !== false ) { $facts[] = '使い方・ご事情：「' . $w . '」に言及あり'; break; }
+	}
+
+	return $facts;
+}
+
 function carmel_cb_infer_action( $reply, $last_user = '' ) {
 	$r = (string) $reply;
 
