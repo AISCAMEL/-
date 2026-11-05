@@ -453,20 +453,24 @@ function carmel_cb_notify_chat_start( $s, $first, $sid, $page ) {
 
 	$within = carmel_cb_within_hours( $s ) ? '（営業時間内）' : '（時間外・AI自動対応中）';
 	$open   = function_exists( 'carmel_cb_resume_url' ) ? carmel_cb_resume_url( $sid ) : home_url( '/?ccb=open' );
+	$geo    = function_exists( 'carmel_cb_geo_session_region' ) ? carmel_cb_geo_session_region( $sid ) : '';
 
 	// Slack・管理者メールの両方へ（統一通知）。
 	if ( function_exists( 'carmel_cb_notify_event' ) ) {
-		carmel_cb_notify_event( 'chat_started', '会話が始まりました ' . $within, array(
+		$lines = array(
 			'最初のメッセージ: ' . mb_substr( (string) $first, 0, 300 ),
 			'ページ: ' . ( $page !== '' ? $page : '(不明)' ),
-			'',
-			'▼ この会話をチャットで開く（いつでも参加できます）',
-			$open,
-			'※ 担当者として返信する場合はSlackのスレッドからどうぞ',
-		) );
+		);
+		if ( $geo !== '' ) { $lines[] = '推定地域: ' . $geo . '（IPからの目安）'; }
+		$lines[] = '';
+		$lines[] = '▼ この会話をチャットで開く（いつでも参加できます）';
+		$lines[] = $open;
+		$lines[] = '※ 担当者として返信する場合はSlackのスレッドからどうぞ';
+		carmel_cb_notify_event( 'chat_started', '会話が始まりました ' . $within, $lines );
 	}
 	if ( function_exists( 'carmel_cb_lineworks_notify' ) ) {
-		carmel_cb_lineworks_notify( $s, "🗨️ 会話が始まりました {$within}\n最初のメッセージ：" . mb_substr( (string) $first, 0, 300 ) );
+		$geo_line = $geo !== '' ? ( "\n推定地域：" . $geo . '（IPからの目安）' ) : '';
+		carmel_cb_lineworks_notify( $s, "🗨️ 会話が始まりました {$within}{$geo_line}\n最初のメッセージ：" . mb_substr( (string) $first, 0, 300 ) );
 	}
 }
 

@@ -61,10 +61,12 @@ function carmel_cb_live_sessions( $minutes = 30, $limit = 25 ) {
 		if ( strpos( $lastmsg, '[IMG]' ) === 0 ) { $lastmsg = '📷 画像'; }
 		elseif ( strpos( $lastmsg, '[FILE]' ) === 0 ) { $lastmsg = '📎 ファイル'; }
 
+		$geo = function_exists( 'carmel_cb_geo_session_region' ) ? carmel_cb_geo_session_region( $sid ) : '';
 		$out[] = array(
 			'sid'      => $sid,
 			'name'     => $name,
 			'email'    => $email,
+			'geo'      => $geo,
 			'started'  => mysql2date( 'H:i', $r->started ),
 			'last'     => mysql2date( 'H:i', $r->last_at ),
 			'ago'      => carmel_cb_live_ago( $r->last_at ),

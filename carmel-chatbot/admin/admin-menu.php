@@ -167,6 +167,8 @@ function carmel_cb_handle_post() {
 				'lw_room_per_customer' => isset( $_POST['lw_room_per_customer'] ) ? 1 : 0,
 				'lw_operators'       => sanitize_textarea_field( wp_unslash( $_POST['lw_operators'] ?? '' ) ),
 				'lw_mirror_all'      => isset( $_POST['lw_mirror_all'] ) ? 1 : 0,
+				'geo_on'             => isset( $_POST['geo_on'] ) ? 1 : 0,
+				'geo_ipinfo_token'   => sanitize_text_field( wp_unslash( $_POST['geo_ipinfo_token'] ?? '' ) ),
 				'line_oa_enabled'     => isset( $_POST['line_oa_enabled'] ) ? 1 : 0,
 				'line_channel_token'  => trim( (string) wp_unslash( $_POST['line_channel_token'] ?? '' ) ),
 				'line_channel_secret' => sanitize_text_field( wp_unslash( $_POST['line_channel_secret'] ?? '' ) ),
@@ -844,7 +846,7 @@ function carmel_cb_view_home() {
 			var html='';
 			ss.forEach(function(x){
 				var ho = x.handoff ? '<span style="background:#fde7cf;color:#8a4b00;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:700">🙋対応中 #'+esc(x.handoff)+'</span>' : '<span style="color:#1e7e45;font-size:12px">会話中</span>';
-				var who = esc(x.name||'（匿名）') + (x.email?'<br><span style="font-size:11px;color:#888">'+esc(x.email)+'</span>':'');
+				var who = esc(x.name||'（匿名）') + (x.email?'<br><span style="font-size:11px;color:#888">'+esc(x.email)+'</span>':'') + (x.geo?'<br><span style="font-size:11px;color:#1e7e45">📍'+esc(x.geo)+'</span>':'');
 				var msg = '<span style="color:#666;font-size:11px">'+roleLabel(x.lastRole)+'：</span>'+esc(x.lastMsg||'');
 				html += '<tr>'
 					+ '<td>'+ho+'</td>'
@@ -993,6 +995,20 @@ function carmel_cb_view_general() {
 							<strong>診断（直近のチャット開始通知）：</strong><br><?php echo esc_html( $csd ); ?>
 						</p>
 					<?php endif; ?>
+				</td>
+			</tr>
+			<tr>
+				<th>📍 地域（都道府県）の推定</th>
+				<td>
+					<label><input type="checkbox" name="geo_on" value="1" <?php checked( ! empty( $s['geo_on'] ) ); ?>> お客様のIPから地域（都道府県）を推定して表示する</label>
+					<p style="margin:8px 0 4px">ipinfo.io トークン：
+						<input type="password" name="geo_ipinfo_token" value="<?php echo esc_attr( $s['geo_ipinfo_token'] ?? '' ); ?>" class="regular-text" autocomplete="off" placeholder="ipinfo.io の Access Token">
+					</p>
+					<p class="description">
+						ONにすると、会話開始の通知・LINE WORKS・ライブ動向・会話スレッドの冒頭に「推定地域：東京都」のように表示します。<br>
+						トークンは <a href="https://ipinfo.io/signup" target="_blank" rel="noopener">ipinfo.io</a> の無料登録で取得できます（Dashboard → Token）。<br>
+						<span style="color:#b26a00">※ あくまで<strong>IPからの目安</strong>です。特にスマホ(4G/5G)は携帯会社の拠点地域が出るため外れることがあります（PC・光回線は比較的正確）。「確実な居住地」ではなく参考値としてご利用ください。</span>
+					</p>
 				</td>
 			</tr>
 			<tr>

@@ -33,7 +33,9 @@ function carmel_cb_convo_ensure( $s, $sid, $page, $within_label ) {
 	if ( $sess ) { return $sess; }
 
 	$vline = carmel_cb_visitor_line( $sid );
+	$geo   = function_exists( 'carmel_cb_geo_session_region' ) ? carmel_cb_geo_session_region( $sid ) : '';
 	$head = "🗨️ *新しいチャットが始まりました* {$within_label}\n"
+		. ( $geo !== '' ? ( '推定地域: ' . $geo . '（目安）' . "\n" ) : '' )
 		. ( $vline !== '' ? $vline . "\n" : '' )
 		. 'ページ: ' . ( $page !== '' ? $page : '(不明)' ) . "\n"
 		. '_このスレッドに返信すると、お客様のチャットに直接届きます（会話の途中でも割り込めます）。_';

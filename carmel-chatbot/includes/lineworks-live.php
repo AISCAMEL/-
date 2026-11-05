@@ -131,7 +131,9 @@ function carmel_cb_lw_ensure( $s, $sid, $intro, $question = '' ) {
 	}
 
 	$vline = function_exists( 'carmel_cb_visitor_line' ) ? carmel_cb_visitor_line( $sid ) : '';
+	$geo   = function_exists( 'carmel_cb_geo_session_region' ) ? carmel_cb_geo_session_region( $sid ) : '';
 	$head  = $intro;
+	if ( $geo !== '' )   { $head .= "\n推定地域：" . $geo . '（目安）'; }
 	if ( $vline !== '' ) { $head .= "\n" . $vline; }
 	if ( $question !== '' ) { $head .= "\n▼ご相談：" . mb_substr( (string) $question, 0, 500 ); }
 	$head .= ( $channel !== '' )

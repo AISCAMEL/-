@@ -279,6 +279,8 @@ function carmel_cb_default_settings() {
 		'lw_room_per_customer' => 0,  // お客様ごとに専用小部屋を自動作成
 		'lw_operators'    => '',   // 小部屋に招待する担当者アカウント（カンマ区切り）
 		'lw_mirror_all'   => 0,    // 担当者希望でなくても全会話をLINE WORKSに流す
+		'geo_on'          => 0,    // 地域（都道府県）推定を使う
+		'geo_ipinfo_token' => '',  // ipinfo.io のアクセストークン
 		// LINE公式アカウント（Messaging API）＝お客様側連携
 		'line_oa_enabled'    => 0,
 		'line_channel_token' => '', // チャネルアクセストークン（長期）
