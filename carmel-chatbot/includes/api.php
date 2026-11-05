@@ -332,6 +332,24 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
 
 	$parsed = carmel_cb_parse_ai( $reply );
 
+	// 最優先の保険：お客様が「在庫を見たい／在庫が出てこない」と言っている、
+	// または返答文が在庫一覧へ案内しているのに在庫ボタンが無いときは、必ず在庫一覧ボタンを出す。
+	// （返答に「審査」も含まれると審査ボタンが優先され、在庫ボタンが出ない不具合を防ぐ）
+	if ( $parsed['action'] === '' || $parsed['action'] === 'apply' || $parsed['action'] === 'shinsa' ) {
+		$u  = (string) $last_user;
+		$rp = (string) $parsed['reply'];
+		$wants_stock =
+			carmel_cb_is_browse_intent( $u )
+			|| preg_match( '/(在庫|車|一覧|カード).{0,8}(出てこ|出てな|出ない|見れ|見られ|見えな|表示され|どこ)/u', $u )
+			|| preg_match( '/(在庫|車)の?一覧(は|を|が|から|で|も)/u', $rp )
+			|| preg_match( '/下の?ボタン.{0,14}(在庫|一覧|車)|（?在庫|車）?の?(一覧|カード).{0,10}(ご確認|ご覧|見られ|確認|表示)/u', $rp );
+		// お客様が明確に在庫を見たい時は、審査ボタンより在庫一覧ボタンを優先
+		if ( $wants_stock && ( $parsed['action'] === '' || carmel_cb_is_browse_intent( $u )
+			|| preg_match( '/(在庫|車|一覧|カード).{0,8}(出てこ|出てな|出ない|見れ|見られ|見えな|表示され|どこ)/u', $u ) ) ) {
+			$parsed['action'] = 'stock';
+			$parsed['cta']    = true;
+		}
+	}
 	// 保険：AIが返答文で「下のボタンから」等と案内しているのに action を入れ忘れたら、
 	// 文面から出すべきボタンを推定して確実に表示する（＝ボタンが出ない不具合を防ぐ）。
 	if ( $parsed['action'] === '' ) {
@@ -570,12 +588,13 @@ function carmel_cb_infer_action( $reply, $last_user = '' ) {
 	// 話題を判定（返答文を優先、無ければ直近のお客様発話も見る）
 	$hay = $r . ' ' . (string) $last_user;
 
+	// 在庫一覧への案内を最優先で拾う（「在庫の一覧」「一覧はこちら」「在庫を見」など表記ゆれ対応）
+	if ( preg_match( '/(在庫.{0,3}一覧|一覧.{0,3}(は|を|から|で|ボタン|ページ)|在庫を(見|ご覧|確認)|在庫ページ|一覧はこちら|在庫.{0,5}ボタン)/u', $hay ) ) { return 'stock'; }
+	if ( preg_match( '/(担当者|オペレーター|スタッフにおつなぎ|人と話)/u', $hay ) ) { return 'handoff'; }
 	if ( preg_match( '/(審査診断|診断|通る見込み|見込み)/u', $hay ) ) { return 'shinsa'; }
 	if ( preg_match( '/(仮審査|審査|申込|申し込|ローンを組|与信)/u', $hay ) ) { return 'apply'; }
 	if ( preg_match( '/(お問い?合わせ|見積|問合)/u', $hay ) ) { return 'contact'; }
-	if ( preg_match( '/(担当者|オペレーター|スタッフにおつなぎ|人と話)/u', $hay ) ) { return 'handoff'; }
 	if ( preg_match( '/(在庫アプリ|専用アプリ|アプリ|注文販売|オークション)/u', $hay ) ) { return 'app'; }
-	if ( preg_match( '/(在庫一覧|在庫ページ|在庫を見|一覧はこちら)/u', $hay ) ) { return 'stock'; }
 
 	return '';
 }
