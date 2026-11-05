@@ -350,6 +350,17 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
 			$parsed['cta']    = true;
 		}
 	}
+	// 最優先の保険：お客様が「LINEで送りたい／LINEボタンが無い」等、または返答がLINE送付へ
+	// 案内しているのにLINEボタンが無いときは、必ずLINEボタンを出す。
+	if ( ! empty( $s['line_url'] ) && ( $parsed['action'] === '' || $parsed['action'] === 'apply' || $parsed['action'] === 'shinsa' ) ) {
+		$u  = (string) $last_user;
+		$rp = (string) $parsed['reply'];
+		$wants_line =
+			preg_match( '/(LINE|ライン).{0,8}(ボタン|で送|送っ|から送|で相談|で問い合わせ|送りたい|送ってみ|で聞)/u', $u )
+			|| preg_match( '/LINE.{0,6}ボタン.{0,6}(ない|無い|出て|どこ|見当たら|見つから)/u', $u )
+			|| preg_match( '/(下の?LINE|LINE.{0,6}ボタン|(LINE|ライン).{0,8}(で送|から送|送って|でお送り))/u', $rp );
+		if ( $wants_line ) { $parsed['action'] = 'line'; $parsed['cta'] = true; }
+	}
 	// 保険：AIが返答文で「下のボタンから」等と案内しているのに action を入れ忘れたら、
 	// 文面から出すべきボタンを推定して確実に表示する（＝ボタンが出ない不具合を防ぐ）。
 	if ( $parsed['action'] === '' ) {
@@ -588,6 +599,8 @@ function carmel_cb_infer_action( $reply, $last_user = '' ) {
 	// 話題を判定（返答文を優先、無ければ直近のお客様発話も見る）
 	$hay = $r . ' ' . (string) $last_user;
 
+	// LINEでの送付・相談への案内を拾う（「下のLINEボタン」「LINEで送って」等）
+	if ( preg_match( '/(下の?LINE|LINE.{0,6}ボタン|(LINE|ライン).{0,8}(で送|から送|送って|でお送り|にお送り|でご相談|で相談|で問い合わせ|でお問い合わせ))/u', $hay ) ) { return 'line'; }
 	// 在庫一覧への案内を最優先で拾う（「在庫の一覧」「一覧はこちら」「在庫を見」など表記ゆれ対応）
 	if ( preg_match( '/(在庫.{0,3}一覧|一覧.{0,3}(は|を|から|で|ボタン|ページ)|在庫を(見|ご覧|確認)|在庫ページ|一覧はこちら|在庫.{0,5}ボタン)/u', $hay ) ) { return 'stock'; }
 	if ( preg_match( '/(担当者|オペレーター|スタッフにおつなぎ|人と話)/u', $hay ) ) { return 'handoff'; }
