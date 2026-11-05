@@ -1119,7 +1119,8 @@
 		var isAndroid = /android/.test(ua);
 		if (isIOS && cfg.stockAppUrlIos) return cfg.stockAppUrlIos;
 		if (isAndroid && cfg.stockAppUrlAndroid) return cfg.stockAppUrlAndroid;
-		return cfg.stockAppUrl || cfg.stockAppUrlIos || cfg.stockAppUrlAndroid || "#";
+		// PC等：アプリはスマホ専用のため、Webの在庫一覧ページがあればそちらへ
+		return cfg.stockAppUrl || cfg.stockUrl || cfg.stockAppUrlIos || cfg.stockAppUrlAndroid || "#";
 	}
 
 	// 在庫アプリの案内（ID・店舗名・注意事項）
@@ -1171,8 +1172,18 @@
 			man.addEventListener("click", function () { showAppManual(); });
 		}
 		w.appendChild(man);
+		// 保険：アプリが開けない端末でも在庫を見られるよう、Web在庫一覧への代替リンクを添える
+		if (cfg.stockUrl) {
+			var web = document.createElement("a"); web.className = "ccb-cta-btn ccb-cta-stock";
+			web.href = cfg.stockUrl; web.target = "_blank"; web.rel = "noopener";
+			web.textContent = "Webで在庫を見る";
+			w.appendChild(web);
+		}
 		btnRow.appendChild(w); msgBox.appendChild(btnRow);
 
+		if (cfg.stockUrl) {
+			addBubble("bot", "アプリがうまく開けないときは、上の「Webで在庫を見る」からも在庫をご覧いただけます。");
+		}
 		addBubble("bot", "ご自身の与信力（借入できる目安の金額）を意識しながら、価格帯を設定してご覧くださいね。");
 		if (cfg.stockAppNote) {
 			var note = document.createElement("div");
