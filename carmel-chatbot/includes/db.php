@@ -281,6 +281,8 @@ function carmel_cb_default_settings() {
 		'lw_mirror_all'   => 0,    // 担当者希望でなくても全会話をLINE WORKSに流す
 		'geo_on'          => 0,    // 地域（都道府県）推定を使う
 		'geo_ipinfo_token' => '',  // ipinfo.io のアクセストークン
+		'geo_guidance_on' => 0,    // 地域に応じて会話を出し分ける（遠方→陸送/オンライン案内）
+		'shop_pref'       => '',   // 店舗の所在地（都道府県）。例：山梨県
 		// LINE公式アカウント（Messaging API）＝お客様側連携
 		'line_oa_enabled'    => 0,
 		'line_channel_token' => '', // チャネルアクセストークン（長期）

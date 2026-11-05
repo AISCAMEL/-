@@ -264,6 +264,24 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
 		}
 	}
 
+	// 地域に応じた案内（遠方なら陸送・オンライン完結を自然に添える）。推定なので断定しない。
+	$geo_block = '';
+	if ( ! empty( $s['geo_on'] ) && ! empty( $s['geo_guidance_on'] ) && function_exists( 'carmel_cb_geo_session_region' ) ) {
+		$geo_region = carmel_cb_geo_session_region( $session_id );
+		if ( $geo_region !== '' && strpos( $geo_region, '海外' ) === false ) {
+			$shop = trim( (string) ( $s['shop_pref'] ?? '' ) );
+			$is_local = ( $shop !== '' && $geo_region === $shop );
+			$geo_block = "\n\n【お客様の地域（IP推定・目安。断定しない）】推定地域：{$geo_region}"
+				. ( $shop !== '' ? "／当店の所在地：{$shop}" : '' ) . "\n";
+			if ( $is_local ) {
+				$geo_block .= "・お近くの方の可能性。来店は不要でもオンラインで進められる安心感を、必要なときにそっと添える。";
+			} else {
+				$geo_block .= "・県外・ご遠方の可能性。『ご遠方でも大丈夫です』と安心させ、【ご自宅まで陸送でお届けできる】【審査・契約・ご相談はすべてオンライン／LINE・電話で完結できる】ことを、押し付けず自然に1文添える。距離を理由にあきらめないよう背中を押す。";
+			}
+			$geo_block .= "\n※推定なので「〇〇の方ですね」と断定しない。『もしご遠方でしたら〜』のようにやわらかく。地域の話は会話の自然な流れでのみ触れ、毎回は出さない。";
+		}
+	}
+
 	$system = $s['system_prompt'] . $ng_block . $faq_block
 		. "\n\n【LINE相談リンク】" . $s['line_url']
 		. "\n【在庫一覧ページ】" . $stock_page
@@ -272,6 +290,7 @@ function carmel_cb_handle_chat( WP_REST_Request $request ) {
 		. $campaign_block
 		. $carsearch_block
 		. $repeat_block
+		. $geo_block
 		. carmel_cb_protocol_instruction();
 
 	if ( $is_nudge ) {

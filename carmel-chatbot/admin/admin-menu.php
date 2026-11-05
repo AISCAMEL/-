@@ -169,6 +169,8 @@ function carmel_cb_handle_post() {
 				'lw_mirror_all'      => isset( $_POST['lw_mirror_all'] ) ? 1 : 0,
 				'geo_on'             => isset( $_POST['geo_on'] ) ? 1 : 0,
 				'geo_ipinfo_token'   => sanitize_text_field( wp_unslash( $_POST['geo_ipinfo_token'] ?? '' ) ),
+				'geo_guidance_on'    => isset( $_POST['geo_guidance_on'] ) ? 1 : 0,
+				'shop_pref'          => sanitize_text_field( wp_unslash( $_POST['shop_pref'] ?? '' ) ),
 				'line_oa_enabled'     => isset( $_POST['line_oa_enabled'] ) ? 1 : 0,
 				'line_channel_token'  => trim( (string) wp_unslash( $_POST['line_channel_token'] ?? '' ) ),
 				'line_channel_secret' => sanitize_text_field( wp_unslash( $_POST['line_channel_secret'] ?? '' ) ),
@@ -1008,6 +1010,15 @@ function carmel_cb_view_general() {
 						ONにすると、会話開始の通知・LINE WORKS・ライブ動向・会話スレッドの冒頭に「推定地域：東京都」のように表示します。<br>
 						トークンは <a href="https://ipinfo.io/signup" target="_blank" rel="noopener">ipinfo.io</a> の無料登録で取得できます（Dashboard → Token）。<br>
 						<span style="color:#b26a00">※ あくまで<strong>IPからの目安</strong>です。特にスマホ(4G/5G)は携帯会社の拠点地域が出るため外れることがあります（PC・光回線は比較的正確）。「確実な居住地」ではなく参考値としてご利用ください。</span>
+					</p>
+					<hr style="margin:12px 0">
+					<label><input type="checkbox" name="geo_guidance_on" value="1" <?php checked( ! empty( $s['geo_guidance_on'] ) ); ?>> <strong>地域に応じて会話を出し分ける</strong>（遠方の方には「陸送・オンライン完結でOK」と自然に案内）</label>
+					<p style="margin:8px 0 4px">当店の所在地（都道府県）：
+						<input type="text" name="shop_pref" value="<?php echo esc_attr( $s['shop_pref'] ?? '' ); ?>" class="regular-text" style="max-width:160px" placeholder="例：山梨県">
+					</p>
+					<p class="description">
+						ONにすると、推定地域が<strong>当店の所在地と違う（＝県外・遠方の可能性）</strong>お客様に、みほが「ご遠方でも大丈夫です。ご自宅まで陸送、審査・契約もオンラインで完結できます」と<strong>自然に背中を押す</strong>よう案内します。<br>
+						推定なので断定はせず「もしご遠方でしたら〜」とやわらかく触れます。所在地を空にすると“遠方かどうか”の判定はしません（地域表示のみ）。
 					</p>
 				</td>
 			</tr>
