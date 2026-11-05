@@ -219,6 +219,11 @@ function apprex_line_member_context( $uid ) {
 		if ( $stage || ! empty( $orig['name'] ) ) {
 			$lines[] = 'AIスタジオ：利用中' . ( ! empty( $orig['name'] ) ? '・試作「' . $orig['name'] . '」' : '' );
 		}
+		// 制作の進み具合とスケジュール（inc/project-status.php）。
+		$prod = function_exists( 'apprex_prod_ai_context' ) ? apprex_prod_ai_context( $user ) : '';
+		if ( '' !== $prod ) {
+			$lines[] = "\n" . $prod;
+		}
 	}
 	// ミーティング（LINEで予約したもの、または会員のメール）。
 	$or = array( array( 'key' => 'apprex_line_uid', 'value' => $uid ) );

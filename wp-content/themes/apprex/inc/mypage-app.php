@@ -277,9 +277,27 @@ function apprex_mypage_app() {
               echo '<ol class="mp-steps">';
               foreach ( $ps as $i => $label ) {
                   $cls = $i < $prod ? 'done' : ( $i === $prod ? 'now' : '' );
-                  echo '<li class="' . esc_attr( $cls ) . '"><i>' . ( $i < $prod ? '✓' : (int) ( $i + 1 ) ) . '</i>' . esc_html( $label ) . ( $i === $prod && $prod < 6 ? '<em>進行中</em>' : '' ) . '</li>';
+                  $pn  = function_exists( 'apprex_prod_step_note' ) ? apprex_prod_step_note( $user->ID, $i ) : '';
+                  echo '<li class="' . esc_attr( $cls ) . '"><i>' . ( $i < $prod ? '✓' : (int) ( $i + 1 ) ) . '</i>' . esc_html( $label ) . ( '' !== $pn ? ' <small class="mp-muted">' . esc_html( $pn ) . '</small>' : '' ) . ( $i === $prod && $prod < 6 ? '<em>進行中</em>' : '' ) . '</li>';
               }
               echo '</ol>';
+              $pst = function_exists( 'apprex_prod_state' ) ? apprex_prod_state( $user->ID ) : null;
+              if ( $pst ) {
+                  echo '<div class="mp-prod">';
+                  if ( ! $pst['finished'] && '' !== $pst['launch'] ) {
+                      echo '<p><b>公開の予定</b>' . esc_html( apprex_prod_date( $pst['launch'] ) ) . 'ごろ</p>';
+                  }
+                  if ( '' !== $pst['note'] ) {
+                      echo '<p><b>いまの作業</b>' . esc_html( $pst['note'] ) . '</p>';
+                  }
+                  if ( '' !== $pst['wait'] ) {
+                      echo '<p class="mp-prod-wait"><b>お願い</b>' . esc_html( $pst['wait'] ) . '</p>';
+                  }
+                  if ( '' !== $pst['test'] ) {
+                      echo '<p><b>テスト版</b><a href="' . esc_url( $pst['test'] ) . '" target="_blank" rel="noopener">開く</a></p>';
+                  }
+                  echo '</div>';
+              }
           } elseif ( $steps ) {
               echo '<ol class="mp-steps">';
               foreach ( $steps as $i => $label ) {

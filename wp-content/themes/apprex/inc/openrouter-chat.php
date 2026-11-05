@@ -362,6 +362,13 @@ function apprex_rest_chat( WP_REST_Request $request ) {
 			$extra .= "\n\n# ログイン中の契約者情報（本人にのみ案内してよい）\n" . $member_ctx;
 		}
 	}
+	// ログイン中の会員の、アプリ制作の進み具合とスケジュール（inc/project-status.php）。
+	if ( is_user_logged_in() && function_exists( 'apprex_prod_ai_context' ) ) {
+		$prod_ctx = apprex_prod_ai_context( wp_get_current_user() );
+		if ( '' !== $prod_ctx ) {
+			$extra .= "\n\n" . $prod_ctx . "\n（ログイン中のご本人の記録なので、本人にだけ具体的に案内してよい）";
+		}
+	}
 
 	// ページに合わせた案内（AIスタジオでは今いる工程のマニュアルを渡す）。
 	if ( function_exists( 'apprex_chat_page_prompt' ) ) {

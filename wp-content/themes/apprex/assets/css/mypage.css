@@ -186,3 +186,10 @@
 .mp-policy p{font-size:.88rem;line-height:1.8;margin:10px 0 0}
 @media (max-width:600px){.mp-alert{flex-direction:column;align-items:stretch}}
 .mp-bank{margin:6px 0 0;padding:12px 14px;border-radius:10px;background:var(--bg);font-size:.92rem;line-height:1.8}
+
+/* 制作の進み具合（inc/project-status.php） */
+.mp-steps small.mp-muted{font-size:.74rem;margin-left:4px}
+.mp-prod{display:grid;gap:6px;margin:10px 0 4px;font-size:.88rem;line-height:1.7}
+.mp-prod p{margin:0;display:grid;grid-template-columns:5.5em 1fr;gap:8px}
+.mp-prod b{color:#64748b;font-weight:700;font-size:.8rem}
+.mp-prod-wait{background:#fff7ed;border-radius:8px;padding:6px 8px}
