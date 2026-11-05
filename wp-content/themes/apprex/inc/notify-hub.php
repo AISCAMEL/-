@@ -24,6 +24,7 @@ function apprex_nh_cats() {
 		'post'     => array( '記事の公開', 'ブログ記事が公開されたとき（毎日の自動投稿を含む）。自動投稿に失敗したときも。' ),
 		'inquiry'  => array( 'お問い合わせ・予約', 'お問い合わせ・無料相談の予約・資料請求・説明会の申し込みがあったとき。' ),
 		'chat'     => array( 'チャット・LINEのやりとり', 'サイトのチャットやLINEで、お客様がメッセージを送ったとき。担当者を呼ばれたとき・LINEで依頼を受けたとき。' ),
+		'studio'   => array( 'AIスタジオの利用', 'AIスタジオで、会員がアプリ画面・仕様書と概算・オリジナルアプリの試作・ホームページの設計を作ったとき（1人1種類につき1日1回まで）。会員登録は「お問い合わせ・予約」で届きます。' ),
 		'action'   => array( 'お客様の行動', 'LINEの友だち追加・ブロック、LABOでアプリ画面を作った、契約書に署名した、など。' ),
 		'billing'  => array( '請求・お支払い', '請求書の送信・失敗、入金の確認、お支払いの遅れのお知らせを送ったとき。' ),
 		'contract' => array( '契約', '契約の更新・解約の申し込み・契約期限。' ),
@@ -39,8 +40,9 @@ function apprex_nh_route() {
 	$out = array();
 	foreach ( array_keys( apprex_nh_cats() ) as $k ) {
 		$out[ $k ] = array(
-			's' => is_array( $r ) ? ! empty( $r[ $k ]['s'] ) : true,
-			'l' => is_array( $r ) ? ! empty( $r[ $k ]['l'] ) : true,
+			// 保存したあとに増えた種類は、最初はオン。
+			's' => ( is_array( $r ) && isset( $r[ $k ] ) ) ? ! empty( $r[ $k ]['s'] ) : true,
+			'l' => ( is_array( $r ) && isset( $r[ $k ] ) ) ? ! empty( $r[ $k ]['l'] ) : true,
 		);
 	}
 	return $out;
@@ -204,6 +206,11 @@ add_action(
 		$lines[] = ( $f( 'email' ) ? $f( 'email' ) : 'メールなし' ) . ( $f( 'phone' ) ? ' ／ ☎ ' . $f( 'phone' ) : '' );
 		if ( $f( 'message' ) ) {
 			$lines[] = '「' . mb_substr( wp_strip_all_tags( $f( 'message' ) ), 0, 120 ) . '」';
+		}
+		// どこから来たか（SNSの投稿・LINE など。inc/sns-track.php）。
+		$src = (string) get_post_meta( $post_id, 'apprex_src', true );
+		if ( '' !== $src ) {
+			$lines[] = '入口：' . ( function_exists( 'apprex_trk_src_label' ) ? apprex_trk_src_label( $src ) : $src );
 		}
 		$lines[] = apprex_nh_edit( $post_id );
 		apprex_notify( 'inquiry', implode( "\n", $lines ) );
@@ -567,4 +574,56 @@ add_filter(
 		$out[] = array( '社内への通知', $lw || $sl, ( $sl ? 'Slack：つながっています' : 'Slack：未設定' ) . '／' . ( $lw ? 'LINE WORKS：つながっています' : 'LINE WORKS：未設定' ), 'options-general.php?page=apprex-notify' );
 		return $out;
 	}
+);
+
+/* =========================================================================
+ * AIスタジオの利用（画面・仕様書・試作・ホームページの設計を作った）
+ * ====================================================================== */
+add_filter(
+	'rest_request_after_callbacks',
+	function ( $response, $handler, $request ) {
+		$kinds = array(
+			'/apprex/v1/studio/ai-design'   => array( '🎨', 'AIでアプリ画面を作りました' ),
+			'/apprex/v1/studio/ai-plan'     => array( '📝', 'AIで仕様書と概算を作りました' ),
+			'/apprex/v1/studio/ai-orig'     => array( '🧩', 'AIでオリジナルアプリの試作を作りました' ),
+			'/apprex/v1/studio/orig-design' => array( '🧩', 'AIでオリジナルアプリの試作を作りました' ),
+			'/apprex/v1/studio/ai-hp'       => array( '🖥', 'AIでホームページの設計を作りました' ),
+		);
+		$route = $request->get_route();
+		if ( ! isset( $kinds[ $route ] ) || is_wp_error( $response ) || ! is_user_logged_in() ) {
+			return $response;
+		}
+		$status = $response instanceof WP_REST_Response ? (int) $response->get_status() : 200;
+		if ( $status >= 300 ) {
+			return $response;
+		}
+		$uid = get_current_user_id();
+		$key = 'apprex_nh_st_' . $uid . '_' . md5( $kinds[ $route ][1] );
+		if ( get_transient( $key ) ) {
+			return $response; // 同じ人の同じ操作は1日1回まで。
+		}
+		set_transient( $key, 1, DAY_IN_SECONDS );
+		$u     = wp_get_current_user();
+		$done  = (array) get_user_meta( $uid, 'apprex_nh_studio_done', true );
+		$first = ! in_array( $kinds[ $route ][1], $done, true );
+		if ( $first ) {
+			$done[] = $kinds[ $route ][1];
+			update_user_meta( $uid, 'apprex_nh_studio_done', $done );
+		}
+		$co    = (string) get_user_meta( $uid, 'apprex_company', true );
+		$lines = array( $kinds[ $route ][0] . ' *AIスタジオ*：' . $u->display_name . ' 様' . ( '' !== $co ? '（' . $co . '）' : '' ) . 'が' . $kinds[ $route ][1] . ( $first ? '（はじめて）' : '' ) );
+		$orig = json_decode( (string) get_user_meta( $uid, 'apprex_orig_spec', true ), true );
+		if ( false !== strpos( $route, 'orig' ) && ! empty( $orig['name'] ) ) {
+			$lines[] = '試作：' . $orig['name'] . ( ! empty( $orig['category'] ) ? '（' . $orig['category'] . '）' : '' );
+		}
+		$joined = (int) get_user_meta( $uid, 'apprex_studio_joined', true );
+		if ( $joined ) {
+			$lines[] = '会員登録：' . wp_date( 'n/j', $joined );
+		}
+		$lines[] = admin_url( 'user-edit.php?user_id=' . $uid . '#apprex-studio' );
+		apprex_notify( 'studio', implode( "\n", $lines ) );
+		return $response;
+	},
+	10,
+	3
 );
