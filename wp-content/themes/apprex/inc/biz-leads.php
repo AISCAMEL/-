@@ -23,31 +23,115 @@ if ( ! defined( 'ABSPATH' ) ) {
  * ジャンル・状態
  * ====================================================================== */
 
-/** アプリと相性のよいジャンル。key => [名前, 検索語, 基本点, なぜアプリが合うか]。 */
+/** アプリと相性のよいジャンル。key => [名前, 検索語, 基本点, なぜアプリが合うか, まとまり]。 */
 function apprex_ld_genres() {
-	return array(
-		'hair'     => array( '美容室', '美容室', 85, '来店の間隔が決まっていて、予約・次回の案内・ポイントでリピートを増やしやすい' ),
-		'nail'     => array( 'ネイル・まつげ', 'ネイルサロン', 80, '予約とデザインの見せ方、次回の来店の案内がアプリに向く' ),
-		'esthe'    => array( 'エステ・脱毛', 'エステサロン', 80, '回数券・コース・予約の管理と、会員向けのお知らせが向く' ),
-		'seitai'   => array( '整体・整骨院', '整体', 85, '通院の間隔の案内、予約、回数券でリピートを増やしやすい' ),
-		'relax'    => array( 'リラク・マッサージ', 'マッサージ', 80, '予約とクーポン、ポイントで常連を増やしやすい' ),
-		'gym'      => array( 'パーソナルジム', 'パーソナルジム', 85, '会員証・予約・トレーニング記録・動画をアプリでまとめられる' ),
-		'fitness'  => array( 'フィットネス・ヨガ', 'ヨガスタジオ', 80, 'レッスンの予約・会員証・休講のお知らせが向く' ),
-		'juku'     => array( '学習塾', '学習塾', 75, '保護者へのお知らせ・出欠・面談の予約をまとめられる' ),
-		'school'   => array( '習い事・スクール', '英会話教室', 75, 'レッスン予約・振替・会員証・動画教材が向く' ),
-		'dance'    => array( 'ダンス・音楽教室', 'ダンススクール', 75, 'クラスの予約・お知らせ・発表会の案内が向く' ),
-		'cafe'     => array( 'カフェ', 'カフェ', 70, 'スタンプカード・クーポン・新メニューのお知らせで来店を増やせる' ),
-		'yakiniku' => array( '焼肉・居酒屋', '焼肉', 70, '予約・クーポン・誕生日の特典で再来店を増やせる' ),
-		'ramen'    => array( 'ラーメン・定食', 'ラーメン', 60, 'スタンプカードと限定メニューのお知らせが向く' ),
-		'dental'   => array( '歯科医院', '歯科医院', 70, '定期検診の案内・予約・診察券をアプリにできる' ),
-		'clinic'   => array( 'クリニック', 'クリニック', 65, '予約・診察券・順番待ちのお知らせが向く' ),
-		'pet'      => array( 'トリミング・動物病院', 'トリミングサロン', 80, '予約・ワクチンやトリミングの時期のお知らせが向く' ),
-		'golf'     => array( 'ゴルフ練習場・スクール', 'ゴルフスクール', 75, '打席・レッスンの予約、会員証、ポイントが向く' ),
-		'realty'   => array( '不動産会社', '不動産会社', 65, '物件の新着のお知らせ・内見の予約・お気に入りが向く' ),
-		'car'      => array( '車検・整備・カー用品', '車検', 65, '車検・点検の時期のお知らせと予約が向く' ),
-		'cleaning' => array( 'クリーニング', 'クリーニング', 60, '会員証・ポイント・受け取りのお知らせが向く' ),
-		'hotel'    => array( 'ホテル・旅館', '旅館', 55, '予約・館内案内・リピーター向けの特典が向く' ),
+	$B = '美容・リラク';
+	$H = '健康・医療・ペット';
+	$S = 'スポーツ・フィットネス';
+	$L = '習い事・教育';
+	$F = '飲食';
+	$R = 'お店・小売';
+	$V = '暮らし・サービス';
+	$C = '会社・その他';
+	$g = array(
+		// 美容・リラク
+		'hair'      => array( '美容室', '美容室', 85, '来店の間隔が決まっていて、予約・次回の案内・ポイントでリピートを増やしやすい', $B ),
+		'barber'    => array( '理容室・バーバー', 'バーバー', 80, '来店の間隔が短く、予約とポイントで常連を増やしやすい', $B ),
+		'nail'      => array( 'ネイルサロン', 'ネイルサロン', 80, '予約とデザインの見せ方、次回の来店の案内がアプリに向く', $B ),
+		'eyelash'   => array( 'まつげ・アイブロウ', 'まつげエクステ', 80, 'リペアの時期のお知らせと予約でリピートを増やせる', $B ),
+		'esthe'     => array( 'エステ', 'エステサロン', 80, '回数券・コース・予約の管理と、会員向けのお知らせが向く', $B ),
+		'datsumo'   => array( '脱毛サロン', '脱毛サロン', 80, '通う回数が多く、予約・回数の管理・次回の案内が向く', $B ),
+		'headspa'   => array( 'ヘッドスパ', 'ヘッドスパ', 75, '予約・回数券・会員特典でリピートを増やせる', $B ),
+		'relax'     => array( 'リラク・マッサージ', 'マッサージ', 80, '予約とクーポン、ポイントで常連を増やしやすい', $B ),
+		'sauna'     => array( 'サウナ・銭湯・スパ', 'サウナ', 70, '会員証・回数券・混雑状況のお知らせが向く', $B ),
+		// 健康・医療・ペット
+		'seitai'    => array( '整体・整骨院', '整体', 85, '通院の間隔の案内、予約、回数券でリピートを増やしやすい', $H ),
+		'shinkyu'   => array( '鍼灸院', '鍼灸院', 80, '通院の予約と、次に来る時期のお知らせが向く', $H ),
+		'dental'    => array( '歯科医院', '歯科医院', 70, '定期検診の案内・予約・診察券をアプリにできる', $H ),
+		'clinic'    => array( 'クリニック', 'クリニック', 65, '予約・診察券・順番待ちのお知らせが向く', $H ),
+		'biyou'     => array( '美容クリニック', '美容クリニック', 75, 'カウンセリングの予約・施術の案内・会員特典が向く', $H ),
+		'pharmacy'  => array( '調剤薬局', '調剤薬局', 55, '処方せんの送信・受け取りのお知らせが向く', $H ),
+		'kaigo'     => array( 'デイサービス・介護', 'デイサービス', 55, 'ご家族へのお知らせ・連絡帳をまとめられる', $H ),
+		'pet'       => array( 'トリミングサロン', 'トリミングサロン', 80, '予約・トリミングの時期のお知らせが向く', $H ),
+		'vet'       => array( '動物病院', '動物病院', 70, '予約・ワクチンの時期のお知らせ・診察券が向く', $H ),
+		'pethotel'  => array( 'ペットホテル・ドッグラン', 'ペットホテル', 65, '予約・会員証・写真のお届けが向く', $H ),
+		// スポーツ・フィットネス
+		'gym'       => array( 'パーソナルジム', 'パーソナルジム', 85, '会員証・予約・トレーニング記録・動画をアプリでまとめられる', $S ),
+		'fitness'   => array( 'フィットネスジム', 'フィットネスジム', 75, '会員証・混雑状況・レッスンの予約が向く', $S ),
+		'yoga'      => array( 'ヨガ・ピラティス', 'ピラティス', 85, 'レッスンの予約・回数券・休講のお知らせが向く', $S ),
+		'boxing'    => array( 'キックボクシング・格闘技', 'キックボクシングジム', 80, 'クラスの予約・会員証・動画が向く', $S ),
+		'swim'      => array( 'スイミングスクール', 'スイミングスクール', 75, '振替・進級のお知らせ・保護者への連絡が向く', $S ),
+		'tennis'    => array( 'テニス・スポーツスクール', 'テニススクール', 75, 'レッスンの予約・振替・会員証が向く', $S ),
+		'golf'      => array( 'ゴルフ練習場・スクール', 'ゴルフスクール', 75, '打席・レッスンの予約、会員証、ポイントが向く', $S ),
+		'climb'     => array( 'ボルダリング', 'ボルダリングジム', 70, '会員証・混雑状況・イベントのお知らせが向く', $S ),
+		// 習い事・教育
+		'juku'      => array( '学習塾', '学習塾', 75, '保護者へのお知らせ・出欠・面談の予約をまとめられる', $L ),
+		'eikaiwa'   => array( '英会話教室', '英会話教室', 75, 'レッスン予約・振替・会員証・動画教材が向く', $L ),
+		'program'   => array( 'プログラミング教室', 'プログラミング教室', 75, '予約・振替・教材・保護者への連絡が向く', $L ),
+		'dance'     => array( 'ダンススクール', 'ダンススクール', 75, 'クラスの予約・お知らせ・発表会の案内が向く', $L ),
+		'music'     => array( 'ピアノ・音楽教室', '音楽教室', 70, 'レッスンの予約・振替・発表会のお知らせが向く', $L ),
+		'cooking'   => array( '料理教室', '料理教室', 70, 'レッスンの予約・レシピ・会員特典が向く', $L ),
+		'calli'     => array( '書道・そろばん・学童', 'そろばん教室', 65, '出欠・保護者へのお知らせが向く', $L ),
+		'drive'     => array( '自動車教習所', '自動車教習所', 70, '教習の予約・進み具合・お知らせが向く', $L ),
+		// 飲食
+		'cafe'      => array( 'カフェ', 'カフェ', 70, 'スタンプカード・クーポン・新メニューのお知らせで来店を増やせる', $F ),
+		'yakiniku'  => array( '焼肉', '焼肉', 70, '予約・クーポン・誕生日の特典で再来店を増やせる', $F ),
+		'izakaya'   => array( '居酒屋・焼き鳥', '居酒屋', 65, '宴会の予約・クーポン・ポイントで再来店を増やせる', $F ),
+		'sushi'     => array( '寿司・和食', '寿司', 65, '予約・テイクアウトの注文・会員特典が向く', $F ),
+		'italian'   => array( 'イタリアン・フレンチ', 'イタリアン', 65, '予約・記念日の特典・コースの案内が向く', $F ),
+		'chinese'   => array( '中華・韓国料理', '中華料理', 60, 'テイクアウトの注文・スタンプカードが向く', $F ),
+		'ramen'     => array( 'ラーメン・定食', 'ラーメン', 60, 'スタンプカードと限定メニューのお知らせが向く', $F ),
+		'bakery'    => array( 'パン屋', 'パン屋', 65, '焼き上がりのお知らせ・予約・スタンプカードが向く', $F ),
+		'sweets'    => array( 'ケーキ・洋菓子', 'ケーキ屋', 65, 'ケーキの予約・誕生日の特典・新作のお知らせが向く', $F ),
+		'bar'       => array( 'バー', 'バー', 55, 'イベントのお知らせ・ボトルキープ・会員特典が向く', $F ),
+		'karaoke'   => array( 'カラオケ・娯楽', 'カラオケ', 55, '会員証・クーポン・予約が向く', $F ),
+		// お店・小売
+		'apparel'   => array( 'アパレル・セレクトショップ', 'セレクトショップ', 60, '新作のお知らせ・ポイント・ネット販売が向く', $R ),
+		'florist'   => array( '花屋', '花屋', 55, '予約注文・記念日のお知らせが向く', $R ),
+		'optician'  => array( '眼鏡店', '眼鏡店', 55, '保証書・会員証・点検のお知らせが向く', $R ),
+		'bike'      => array( '自転車店', '自転車店', 50, '点検の時期のお知らせ・会員証が向く', $R ),
+		'liquor'    => array( '酒屋・食品店', '酒屋', 55, '入荷のお知らせ・ポイント・予約注文が向く', $R ),
+		// 暮らし・サービス
+		'realty'    => array( '不動産会社', '不動産会社', 65, '物件の新着のお知らせ・内見の予約・お気に入りが向く', $V ),
+		'reform'    => array( 'リフォーム・工務店', 'リフォーム会社', 55, '施工事例・見積もりの相談・点検のお知らせが向く', $V ),
+		'car'       => array( '車検・整備', '車検', 65, '車検・点検の時期のお知らせと予約が向く', $V ),
+		'carwash'   => array( '洗車・コーティング', 'カーコーティング', 65, '予約・メンテナンスの時期のお知らせが向く', $V ),
+		'cleaning'  => array( 'クリーニング', 'クリーニング', 60, '会員証・ポイント・受け取りのお知らせが向く', $V ),
+		'photo'     => array( '写真館・フォトスタジオ', 'フォトスタジオ', 70, '撮影の予約・七五三などの時期のお知らせが向く', $V ),
+		'bridal'    => array( '結婚式場・ブライダル', '結婚式場', 60, 'ブライダルフェアの予約・打ち合わせの管理が向く', $V ),
+		'kimono'    => array( '着物レンタル・呉服', '着物レンタル', 55, '予約・成人式などの時期のお知らせが向く', $V ),
+		'hotel'     => array( 'ホテル・旅館', '旅館', 55, '予約・館内案内・リピーター向けの特典が向く', $V ),
+		'space'     => array( 'レンタルスペース・コワーキング', 'コワーキングスペース', 65, '予約・会員証・入退室の案内が向く', $V ),
+		// 会社・その他
+		'shigyo'    => array( '税理士・社労士・士業', '税理士事務所', 55, '顧問先へのお知らせ・書類のやりとり・相談の予約が向く', $C ),
+		'insurance' => array( '保険代理店', '保険代理店', 55, '契約の更新のお知らせ・相談の予約が向く', $C ),
+		'temple'    => array( 'お寺・神社・葬儀', '葬儀社', 50, '法要・行事のお知らせと予約が向く', $C ),
 	);
+	// 自分で追加したジャンル（「探す」で言葉を入れたもの）。
+	foreach ( (array) get_option( 'apprex_ld_custom_genres', array() ) as $k => $v ) {
+		if ( is_array( $v ) && ! isset( $g[ $k ] ) ) {
+			$g[ $k ] = array( $v[0], $v[0], 60, '自分で追加したジャンル', '自分で追加' );
+		}
+	}
+	return $g;
+}
+
+/** 言葉から、自分で追加するジャンルを作る（同じ言葉なら同じもの）。 */
+function apprex_ld_custom_genre( $kw ) {
+	$kw = trim( mb_substr( sanitize_text_field( (string) $kw ), 0, 30 ) );
+	if ( '' === $kw ) {
+		return '';
+	}
+	foreach ( apprex_ld_genres() as $k => $v ) {
+		if ( $v[1] === $kw || $v[0] === $kw ) {
+			return $k;
+		}
+	}
+	$k        = 'c_' . substr( md5( $kw ), 0, 8 );
+	$c        = (array) get_option( 'apprex_ld_custom_genres', array() );
+	$c[ $k ]  = array( $kw );
+	update_option( 'apprex_ld_custom_genres', $c, false );
+	return $k;
 }
 
 /** 状態。 */
@@ -536,7 +620,12 @@ add_action(
 		$msg  = '';
 		$back = wp_get_referer() ? wp_get_referer() : admin_url( 'admin.php?page=apprex-leads' );
 		if ( 'collect' === $do ) {
-			$r   = apprex_ld_collect( sanitize_key( $_POST['genre'] ?? '' ), sanitize_text_field( wp_unslash( $_POST['area'] ?? '' ) ), min( 60, max( 20, (int) ( $_POST['max'] ?? 20 ) ) ) );
+			$genre = sanitize_key( $_POST['genre'] ?? '' );
+			$kw    = sanitize_text_field( wp_unslash( $_POST['kw'] ?? '' ) );
+			if ( '' !== trim( $kw ) ) {
+				$genre = apprex_ld_custom_genre( $kw ); // 一覧にない業種は、言葉で探す。
+			}
+			$r   = apprex_ld_collect( $genre, sanitize_text_field( wp_unslash( $_POST['area'] ?? '' ) ), min( 60, max( 20, (int) ( $_POST['max'] ?? 20 ) ) ) );
 			$msg = is_wp_error( $r ) ? '失敗：' . $r->get_error_message() : $r[0] . '件見つかり、新しく' . $r[1] . '件をリストに入れました。';
 		} elseif ( 'research' === $do ) {
 			$ids = array_map( 'absint', (array) ( $_POST['ids'] ?? array() ) );
@@ -597,6 +686,26 @@ function apprex_ld_query( $f ) {
 	return $ids;
 }
 
+/** ジャンルを選ぶ欄（まとまりごと）。 */
+function apprex_ld_genre_select( $name, $cur, $all = '', $onchange = '' ) {
+	$groups = array();
+	foreach ( apprex_ld_genres() as $k => $g ) {
+		$groups[ $g[4] ][ $k ] = $g[0];
+	}
+	echo '<select name="' . esc_attr( $name ) . '"' . ( '' !== $onchange ? ' onchange="' . esc_attr( $onchange ) . '"' : '' ) . '>';
+	if ( '' !== $all ) {
+		echo '<option value="">' . esc_html( $all ) . '</option>';
+	}
+	foreach ( $groups as $gl => $items ) {
+		echo '<optgroup label="' . esc_attr( $gl ) . '">';
+		foreach ( $items as $k => $l ) {
+			echo '<option value="' . esc_attr( $k ) . '"' . selected( $cur, $k, false ) . '>' . esc_html( $l ) . '</option>';
+		}
+		echo '</optgroup>';
+	}
+	echo '</select>';
+}
+
 function apprex_ld_page() {
 	$gs   = apprex_ld_genres();
 	$sts  = apprex_ld_statuses();
@@ -651,11 +760,8 @@ function apprex_ld_page() {
 		<h2>探す</h2>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#fff;border:1px solid #dcdcde;padding:12px;border-radius:8px;max-width:1000px">
 			<input type="hidden" name="action" value="apprex_ld"><input type="hidden" name="do" value="collect"><?php wp_nonce_field( 'apprex_ld' ); ?>
-			<label>ジャンル <select name="genre">
-				<?php foreach ( $gs as $k => $g ) : ?>
-					<option value="<?php echo esc_attr( $k ); ?>"><?php echo esc_html( $g[0] ); ?></option>
-				<?php endforeach; ?>
-			</select></label>
+			<label>ジャンル <?php apprex_ld_genre_select( 'genre', '' ); ?></label>
+			<label>または言葉で <input name="kw" placeholder="例：ボルダリング、整骨院" style="width:170px"></label>
 			<label>地域 <input name="area" placeholder="例：東京都渋谷区" required style="width:200px"></label>
 			<label>件数 <select name="max"><option value="20">20件</option><option value="40">40件</option><option value="60">60件</option></select></label>
 			<?php submit_button( 'Googleマップで探す', 'primary', 'submit', false ); ?>
@@ -666,11 +772,7 @@ function apprex_ld_page() {
 		<form method="get" style="margin-bottom:8px">
 			<input type="hidden" name="page" value="apprex-leads">
 			<?php if ( '' !== $f['status'] ) : ?><input type="hidden" name="status" value="<?php echo esc_attr( $f['status'] ); ?>"><?php endif; ?>
-			<select name="genre" onchange="this.form.submit()"><option value="">ジャンル：すべて</option>
-				<?php foreach ( $gs as $k => $g ) : ?>
-					<option value="<?php echo esc_attr( $k ); ?>" <?php selected( $f['genre'], $k ); ?>><?php echo esc_html( $g[0] ); ?></option>
-				<?php endforeach; ?>
-			</select>
+			<?php apprex_ld_genre_select( 'genre', $f['genre'], 'ジャンル：すべて', 'this.form.submit()' ); ?>
 		</form>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="apprex_ld"><input type="hidden" name="do" value="research"><?php wp_nonce_field( 'apprex_ld' ); ?>
