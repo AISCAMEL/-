@@ -76,6 +76,7 @@ function apprex_nav_flows() {
 			'title' => '発信・集客',
 			'desc'  => 'お客様を増やす',
 			'steps' => array(
+				array( 'AI営業リストを作る', 'ジャンルと地域を選ぶと、Googleマップのお店からアプリを作れそうな見込み先を集め、AIが点数と提案のきっかけを付けます。成約・失注もここで記録します。', 'admin.php?page=apprex-leads', '営業リスト' ),
 				array( 'AIで記事を作る', 'テーマを入れると、記事を下書きで作ります。', 'edit.php?page=apprex-ai-blog', '記事を作る' ),
 				array( '記事を見直す', '検索・地図・AIに強い記事に作り直します。', 'edit.php?page=apprex-brush', '見直す' ),
 				array( '導入事例を追加する', '制作したアプリ・ホームページを紹介します。', 'post-new.php?post_type=case', '事例を追加' ),
