@@ -96,7 +96,7 @@ function apprex_mb_when( $ts ) {
  *
  * @return array [ { date, label, times: [ { t, at, ok } ] } ]
  */
-function apprex_mb_slots() {
+function apprex_mb_slots( $fresh = false ) {
 	$s     = apprex_mb_settings();
 	$tz    = wp_timezone();
 	$now   = time();
@@ -133,12 +133,13 @@ function apprex_mb_slots() {
 			);
 		}
 	}
-	return $out;
+	// Google カレンダーの予定がある時間を「予約済み」に（inc/gcal.php）。
+	return apply_filters( 'apprex_mb_slots', $out, $fresh );
 }
 
 /** その時刻が予約できるか。 */
 function apprex_mb_is_open( $at ) {
-	foreach ( apprex_mb_slots() as $d ) {
+	foreach ( apprex_mb_slots( true ) as $d ) { // 確定の直前は、Google カレンダーも読み直す。
 		foreach ( $d['times'] as $t ) {
 			if ( (int) $t['at'] === (int) $at ) {
 				return $t['ok'];
@@ -357,6 +358,11 @@ function apprex_mb_admin_page() {
 			</tbody></table>
 			<?php submit_button(); ?>
 		</form>
+		<?php
+		if ( function_exists( 'apprex_gcal_settings_box' ) ) {
+			apprex_gcal_settings_box();
+		}
+		?>
 	</div>
 	<?php
 }
