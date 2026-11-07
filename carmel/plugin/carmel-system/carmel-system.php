@@ -2,82 +2,75 @@
 /**
  * Plugin Name: カーメルシステム
  * Plugin URI:  https://carmelonline.jp/
- * Description: カーメルの在庫表示・管理用スニペットを一括で読み込むプラグイン。WPCodeへの手貼りを無くし、GitHubから1クリック更新できます。
- * Version:     1.0.0
+ * Description: カーメルのローン表示（固定13.6%・緑ボックス）を提供するプラグイン。GitHubから1クリック更新できます。他のカーメル用プラグインと衝突しないよう、最小構成＋二重定義ガード＋安全読み込みにしています。
+ * Version:     1.1.0
  * Author:      CarMel / AIS
  * License:     GPL-2.0+
  * Text Domain: carmel-system
  * ---------------------------------------------------------------------------
- * 使い方：
- *   1. このプラグインを有効化する。
- *   2. 下の $modules に載っているスニペットと同じものを、WPCode 側で無効化する
- *      （二重読み込み防止）。対応表は README-plugin.md を参照。
- *   3. 以後、修正は GitHub への push → 管理画面「更新」ボタンで反映。
+ * v1.1.0 変更点（衝突対策）
+ *   ・読み込むのを「ローン表示」1つだけに縮小（他は既存プラグイン/スニペットに任せる）。
+ *   ・各モジュールは function_exists で二重定義をガード。既に同名があれば読み込まない。
+ *   ・読み込みを plugins_loaded に遅延し、万一のエラーでも有効化が止まりにくいようにした。
  * ---------------------------------------------------------------------------
  */
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'CARMEL_SYS_VERSION', '1.0.0' );
+define( 'CARMEL_SYS_VERSION', '1.1.0' );
 define( 'CARMEL_SYS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CARMEL_SYS_FILE', __FILE__ );
 
-/* 更新チェック先（公開リポジトリの update.json）。公開配布リポジトリを用意したら URL を差し替える。 */
 if ( ! defined( 'CARMEL_SYS_UPDATE_URL' ) ) {
 	define( 'CARMEL_SYS_UPDATE_URL', 'https://raw.githubusercontent.com/AISCAMEL/carmel-system-dist/main/update.json' );
 }
 
 /**
- * 読み込むモジュール（＝旧WPCodeスニペット）。
- *   type: 'php'       … PHPスニペット（Run Everywhere 相当。管理/フロント両方で読む）
- *         'js-footer' … フロントのフッターに出す JavaScript スニペット
- * 新しいモジュールを足すときはファイルを modules/ に置き、ここに1行追加するだけ。
+ * 読み込むモジュール。
+ *   sentinel: その機能を表す関数名。既に定義済み（＝別プラグイン/スニペットが提供中）なら読み込まない。
+ * ※ 衝突を避けるため、当面「ローン表示」だけを有効にしている。
  */
 function carmel_sys_modules() {
 	return array(
-		array( 'file' => 'wpcode-loan-guide.php',      'type' => 'php', 'label' => 'ローン概算＋シミュレーション' ),
-		array( 'file' => 'wpcode-car-detail-ui.php',   'type' => 'php', 'label' => '詳細ページ 保証バッジ＋不要要素整理' ),
-		array( 'file' => 'wpcode-staff-shop.php',      'type' => 'php', 'label' => '担当スタッフ・店舗表示' ),
-		array( 'file' => 'wpcode-extra-basic.php',     'type' => 'php', 'label' => '追加の基本情報4項目（入力欄）' ),
-		array( 'file' => 'wpcode-shop-checklist.php',  'type' => 'php', 'label' => '在庫→店舗ふりわけ（チェックリスト）' ),
-		array( 'file' => 'wpcode-shop-bulk-assign.php','type' => 'php', 'label' => '在庫→店舗 一括割当（一覧）' ),
-		array( 'file' => 'wpcode-staff-manual.php',    'type' => 'php', 'label' => 'スタッフ用 手順マニュアル' ),
-		array( 'file' => 'wpcode-form-redirect.js',    'type' => 'js-footer', 'label' => '審査/お問い合わせURL 統一' ),
+		array(
+			'file'     => 'wpcode-loan-guide.php',
+			'sentinel' => 'carmelx_loan_guide_render',
+			'label'    => 'ローン概算＋シミュレーション',
+		),
+		// 以下は既存のカーメル用プラグインと重複し衝突するため、当面このプラグインには含めない：
+		// car-detail-ui / staff-shop / extra-basic / shop-checklist / shop-bulk-assign / staff-manual / form-redirect
 	);
 }
 
 /**
- * モジュールの読み込み。
- * PHP はそのまま require。各スニペットは function_exists ガードや
- * 無条件 add_shortcode を備えているので、読み込み順や重複に強い。
+ * モジュール読み込み。plugins_loaded に遅延し、各モジュールは
+ * 「同名関数が未定義のときだけ」読み込む（二重定義＝致命的エラーを根本から防ぐ）。
  */
 function carmel_sys_boot() {
 	foreach ( carmel_sys_modules() as $m ) {
+		$sentinel = isset( $m['sentinel'] ) ? $m['sentinel'] : '';
+		if ( $sentinel && function_exists( $sentinel ) ) {
+			continue; // 既に別のプラグイン/スニペットが提供中 → 読み込まない（衝突回避）
+		}
 		$path = CARMEL_SYS_DIR . 'modules/' . $m['file'];
 		if ( ! file_exists( $path ) ) { continue; }
-
-		if ( 'php' === $m['type'] ) {
+		try {
 			require_once $path;
-		} elseif ( 'js-footer' === $m['type'] ) {
-			// フロントのフッターに素の JS を出力（WPCode「サイト全体のフッター」相当）。
-			add_action( 'wp_footer', function () use ( $path ) {
-				if ( is_admin() ) { return; }
-				$js = file_get_contents( $path );
-				if ( false === $js || '' === trim( $js ) ) { return; }
-				echo "\n<script data-carmel-system=\"" . esc_attr( basename( $path ) ) . "\">\n" . $js . "\n</script>\n";
-			}, 99 );
+		} catch ( \Throwable $e ) {
+			// 1モジュールのエラーでサイト全体を止めない
+			error_log( 'carmel-system: module ' . $m['file'] . ' failed: ' . $e->getMessage() );
 		}
 	}
 }
-carmel_sys_boot();
+add_action( 'plugins_loaded', 'carmel_sys_boot', 5 );
 
 /* =========================================================================
  * 1クリック更新（GitHub の公開 update.json を見て、新しければ更新ボタンを出す）
  * ========================================================================= */
 if ( ! class_exists( 'Carmel_Sys_Updater' ) ) {
 	class Carmel_Sys_Updater {
-		private $slug;   // プラグインフォルダ名
-		private $plugin; // folder/file.php
+		private $plugin;
+		private $slug;
 		private $url;
 
 		public function __construct( $file, $url ) {
@@ -129,7 +122,6 @@ if ( ! class_exists( 'Carmel_Sys_Updater' ) ) {
 			);
 		}
 
-		/* zip 内のフォルダ名が slug と一致するよう調整（GitHub zip 対策） */
 		public function fix_dir( $source, $remote_source, $upgrader, $extra = array() ) {
 			if ( empty( $extra['plugin'] ) || $extra['plugin'] !== $this->plugin ) { return $source; }
 			global $wp_filesystem;

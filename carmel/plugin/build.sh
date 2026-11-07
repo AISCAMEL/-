@@ -12,13 +12,6 @@ MODULES="$PLUGIN/modules"
 # manifest（carmel-system.php の $modules と一致させる）
 FILES=(
   wpcode-loan-guide.php
-  wpcode-car-detail-ui.php
-  wpcode-staff-shop.php
-  wpcode-extra-basic.php
-  wpcode-shop-checklist.php
-  wpcode-shop-bulk-assign.php
-  wpcode-staff-manual.php
-  wpcode-form-redirect.js
 )
 
 rm -rf "$MODULES"
