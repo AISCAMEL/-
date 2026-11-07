@@ -21,18 +21,28 @@ if ( ! defined( 'ABSPATH' ) ) {
         <div class="stp"><b>相談から制作の進捗まで1か所で</b><p>作った内容のまま相談し、ミーティング予約、お見積り、ご入金、制作の進み具合までスタジオで確認できます。</p></div>
       </div>
       <div class="st-visual">
-        <div class="sphone" style="--pc1:#0f3d2e;--pc2:#1f9d6b" aria-hidden="true">
-          <span class="notch"></span>
-          <div class="scr">
-            <div class="sp-top"><b>炭火焼肉 はなび</b><small>飲食店</small></div>
-            <div class="sp-hero"><small>WELCOME</small><b>ご来店ごとにポイントが貯まる</b></div>
-            <div class="sp-grid"><div class="sp-btn"><i>ネ</i>ネット予約</div><div class="sp-btn"><i>お</i>お品書き</div><div class="sp-btn"><i>ク</i>クーポン</div><div class="sp-btn"><i>ス</i>スタンプ</div><div class="sp-btn"><i>お</i>お知らせ</div><div class="sp-btn"><i>ア</i>アクセス</div></div>
-            <div class="sp-cpn">ドリンク1杯無料クーポン</div>
-            <div class="sp-tab"><span>ホーム</span><span>クーポン</span><span>予約</span><span>会員証</span></div>
-          </div>
-        </div>
+        <img class="st-duo" src="<?php echo esc_url( APPREX_URI . '/assets/images/mock/studio-duo.webp' ); ?>" alt="ノーコードで作る飲食店アプリのホーム画面とメニュー画面のイメージ" width="900" height="1183" loading="lazy" decoding="async">
         <div class="st-bubble">AI：「緑で高級感を」を反映しました（版3）</div>
       </div>
+    </div>
+    <div class="tpl-gal">
+      <div class="tpl-gal-h"><b>ノーコードのデザイン例</b><span>写真・色・メニューは、業種に合わせてAIスタジオで作ります</span></div>
+      <div class="tpl-row">
+        <?php
+        $apprex_tpl = array(
+          't-food'   => '焼肉・和食',
+          't-cafe'   => 'カフェ',
+          't-beauty' => '美容室・サロン',
+          't-home'   => '住まい・リフォーム',
+          't-corp'   => '企業',
+          't-bakery' => 'カフェ・ベーカリー',
+        );
+        foreach ( $apprex_tpl as $apprex_k => $apprex_l ) :
+          ?>
+          <figure><img src="<?php echo esc_url( APPREX_URI . '/assets/images/mock/' . $apprex_k . '.webp' ); ?>" alt="<?php echo esc_attr( $apprex_l . 'のアプリのデザイン例' ); ?>" width="520" height="932" loading="lazy" decoding="async"><figcaption><?php echo esc_html( $apprex_l ); ?></figcaption></figure>
+        <?php endforeach; ?>
+      </div>
+      <p class="tpl-note">※画面はデザインのイメージです。店名・写真・内容はサンプルです。</p>
     </div>
     <div class="st-cta">
       <a class="btn btn--cta btn--lg" href="<?php echo esc_url( apprex_studio_url() ); ?>">無料会員登録してAIスタジオを使う</a>
