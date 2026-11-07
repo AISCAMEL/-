@@ -66,6 +66,15 @@ add_action( 'phpmailer_init', function ( $phpmailer ) {
 	$secure                = apprex_smtp_secure();
 	$phpmailer->SMTPSecure = ( 'none' === $secure ) ? '' : $secure;
 
+	// サーバーの返事を記録する（失敗の理由を画面に出すため。パスワードは記録しない）。
+	$GLOBALS['apprex_smtp_dbg'] = array();
+	$phpmailer->SMTPDebug       = 2;
+	$phpmailer->Debugoutput     = function ( $str ) {
+		if ( 0 === strpos( ltrim( $str ), 'SERVER -> CLIENT:' ) ) {
+			$GLOBALS['apprex_smtp_dbg'][] = trim( substr( ltrim( $str ), 17 ) );
+		}
+	};
+
 	// 差出人を認証アカウントに揃える（Gmailは不一致だと書き換え/拒否するため）。
 	$from = apprex_smtp_from();
 	if ( is_email( $from ) ) {
@@ -122,6 +131,54 @@ function apprex_smtp_sanitize_pass( $raw ) {
 	return get_option( 'apprex_smtp_pass', '' );
 }
 
+/** Google（サーバー）の返事から、失敗の理由を分かる言葉にする。 */
+function apprex_smtp_explain( $reply ) {
+	$r = (string) $reply;
+	$map = array(
+		'/5\.4\.5|sending limit|limit exceeded/i'           => '1日に送れる数の上限に達しています（Google Workspace は1日約2,000通、使いはじめや試用中はもっと少なくなります）。24時間たつと送れるようになります。',
+		'/5\.7\.0.*(security|virus|blocked)|content presents/i' => 'メールの中身が危ないと判断されて止められました（リンクや添付の内容）。',
+		'/unusual (rate|activity)|spam|5\.7\.1.*(spam|unsolicited)/i' => '迷惑メールのような送り方だと判断されて止められました。少し時間をおいて、送る数を減らしてください。',
+		'/5\.7\.(26|27|25)|unauthenticated|SPF|DKIM|DMARC/i' => '送信ドメインの認証（SPF・DKIM）で止められました。DNSの設定が必要です。',
+		'/5\.7\.1|not (allowed|authorized)|relay/i'           => 'このアカウントから、この差出人では送れません。差出人メールをユーザー名と同じにしてください。',
+		'/5\.7\.8|535|BadCredentials|Username and Password/i' => 'ユーザー名かアプリパスワードがちがいます。アプリパスワードを作り直して入れてください。',
+		'/5\.7\.9|Application-specific password required/i' => 'アプリパスワードが必要です（ふつうのパスワードでは送れません）。',
+		'/5\.5\.1|Authentication Required/i'                  => 'ログインできていません。ユーザー名とアプリパスワードを確かめてください。',
+		'/^4\d\d|4\.\d\.\d|try again later|temporar/i'      => 'Google 側が一時的に受け付けていません。少し待ってからもう一度送ってください。',
+		'/5\.2\.2|mailbox full|over quota/i'                  => '送り先のメールボックスがいっぱいです。',
+		'/5\.1\.1|does not exist|no such user/i'              => '送り先のアドレスがありません。',
+		'/suspended|disabled/i'                                => 'Google のアカウントの送信が止められています。Google Workspace の管理コンソールで確かめてください。',
+	);
+	foreach ( $map as $re => $t ) {
+		if ( preg_match( $re, $r ) ) {
+			return $t;
+		}
+	}
+	return '';
+}
+
+/** いちばん最後の、エラーのサーバーの返事。 */
+function apprex_smtp_last_reply() {
+	$err = '';
+	foreach ( (array) ( $GLOBALS['apprex_smtp_dbg'] ?? array() ) as $l ) {
+		if ( preg_match( '/^[45]\d\d[ -]/', $l ) ) {
+			$err .= ( '' !== $err ? ' ' : '' ) . preg_replace( '/^([45]\d\d)[ -]/', '$1 ', $l );
+		}
+	}
+	return mb_substr( preg_replace( '/\s+/', ' ', $err ), 0, 400 );
+}
+
+// 本番の送信でも、失敗したら理由を残す（設定画面と業務ナビに出す）。
+add_action(
+	'wp_mail_failed',
+	function ( $e ) {
+		if ( ! apprex_smtp_ready() ) {
+			return;
+		}
+		$rep = apprex_smtp_last_reply();
+		update_option( 'apprex_smtp_last_err', array( time(), $e->get_error_message(), $rep, apprex_smtp_explain( $rep . ' ' . $e->get_error_message() ) ), false );
+	}
+);
+
 /** テスト送信。 */
 add_action( 'admin_post_apprex_smtp_test', function () {
 	if ( ! current_user_can( 'manage_options' ) ) {
@@ -149,12 +206,21 @@ add_action( 'admin_post_apprex_smtp_test', function () {
 		: nl2br( esc_html( $body ) );
 	$headers = function_exists( 'apprex_mail_headers' ) ? apprex_mail_headers() : array( 'Content-Type: text/html; charset=UTF-8' );
 
+	if ( ! empty( $_POST['plain'] ) ) {
+		$html    = $body;
+		$headers = array( 'Content-Type: text/plain; charset=UTF-8' );
+	}
 	$ok = wp_mail( $to, $subject, $html, $headers );
 	remove_action( 'wp_mail_failed', $grab );
 
+	$rep = apprex_smtp_last_reply();
+	$why = apprex_smtp_explain( $rep . ' ' . $err );
 	$msg = $ok
 		? '✅ 送信しました。受信トレイ（迷惑メールも）をご確認ください。'
-		: '❌ 送信に失敗しました。' . ( $err ? '（' . $err . '）' : '' );
+		: '❌ 送信に失敗しました。' . ( $err ? '（' . $err . '）' : '' ) . ( '' !== $why ? "\n考えられる原因：" . $why : '' ) . ( '' !== $rep ? "\nGoogleからの返事：" . $rep : '' );
+	if ( $ok ) {
+		delete_option( 'apprex_smtp_last_err' );
+	}
 	wp_safe_redirect( add_query_arg( 'apprex_smtp_msg', rawurlencode( $msg ), $back ) );
 	exit;
 } );
@@ -170,7 +236,11 @@ function apprex_smtp_settings_page() {
 		<h1>APPREX メール送信（SMTP）</h1>
 
 		<?php if ( isset( $_GET['apprex_smtp_msg'] ) ) : ?>
-			<div class="notice notice-info is-dismissible"><p><?php echo esc_html( rawurldecode( wp_unslash( $_GET['apprex_smtp_msg'] ) ) ); ?></p></div>
+			<div class="notice notice-info is-dismissible"><p><?php echo nl2br( esc_html( rawurldecode( wp_unslash( $_GET['apprex_smtp_msg'] ) ) ) ); ?></p></div>
+		<?php endif; ?>
+		<?php $apprex_le = get_option( 'apprex_smtp_last_err' ); ?>
+		<?php if ( is_array( $apprex_le ) && ! isset( $_GET['apprex_smtp_msg'] ) ) : ?>
+			<div class="notice notice-warning"><p><b>最後に送れなかったメール（<?php echo esc_html( wp_date( 'n/j G:i', (int) $apprex_le[0] ) ); ?>）</b>：<?php echo esc_html( $apprex_le[1] ); ?><?php echo '' !== (string) $apprex_le[3] ? '<br>考えられる原因：' . esc_html( $apprex_le[3] ) : ''; ?><?php echo '' !== (string) $apprex_le[2] ? '<br><small>Googleからの返事：' . esc_html( $apprex_le[2] ) . '</small>' : ''; ?></p></div>
 		<?php endif; ?>
 
 		<div class="notice notice-<?php echo apprex_smtp_ready() ? 'success' : 'warning'; ?>">
@@ -237,6 +307,7 @@ function apprex_smtp_settings_page() {
 			<?php wp_nonce_field( 'apprex_smtp_test' ); ?>
 			<input type="email" name="to" value="<?php echo esc_attr( $default ); ?>" class="regular-text" required>
 			<?php submit_button( 'テスト送信する', 'secondary', 'submit', false ); ?>
+			<label style="margin-left:8px"><input type="checkbox" name="plain" value="1"> 文字だけで送る（デザインなし。中身が原因かを確かめるとき）</label>
 		</form>
 	</div>
 	<?php
