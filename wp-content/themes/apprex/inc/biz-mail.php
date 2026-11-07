@@ -73,6 +73,14 @@ function apprex_ldm_footer( $id ) {
 		. "\n今後のご案内が不要な場合は、お手数ですが下のリンクを押すか、このメールに「配信停止」とご返信ください。\n" . apprex_ldm_unsub_link( $id );
 }
 
+/** 送った記録（壊れた行を除く）。 */
+function apprex_ldm_hist( $id ) {
+	return array_values( array_filter( apprex_ld_meta_list( $id, 'apprex_ld_mails' ), 'is_array' ) );
+}
+function apprex_ldm_is_form( $to ) {
+	return 0 === strpos( (string) $to, 'form:' );
+}
+
 /** 今日送った数。 */
 function apprex_ldm_sent_today( $add = 0 ) {
 	$d = (array) get_option( 'apprex_ldm_day', array() );
@@ -116,9 +124,13 @@ function apprex_ldm_target( $id, $kind = 'first' ) {
 	if ( 'follow' === $kind && 'sent' !== $st ) {
 		return new WP_Error( 'ldm', '返事がまだのお店だけに、もう1通送れます。' );
 	}
-	$em = array_values( array_filter( (array) get_post_meta( $id, 'apprex_ld_emails', true ), 'is_email' ) );
+	$em = array_values( array_filter( apprex_ld_meta_list( $id, 'apprex_ld_emails' ), 'is_email' ) );
 	if ( ! $em ) {
-		return new WP_Error( 'ldm', '公開されているメールアドレスがありません（先に「ホームページを調べる」）。' );
+		$form = (string) get_post_meta( $id, 'apprex_ld_form', true );
+		if ( '' !== $form ) {
+			return 'form:' . $form; // メールはないが、問い合わせフォームはある（人がフォームに貼って送る）。
+		}
+		return new WP_Error( 'ldm', get_post_meta( $id, 'apprex_ld_researched', true ) ? '公開されているメールアドレスも、問い合わせフォームも見つかりませんでした。電話かSNSで連絡してください。' : '公開されているメールアドレスがありません（先に「ホームページを調べる」）。' );
 	}
 	foreach ( $em as $e ) {
 		if ( apprex_ldm_blocked( $e ) ) {
@@ -164,6 +176,11 @@ function apprex_ldm_make_draft( $id, $kind = 'first' ) {
 		}
 	}
 	$link = apprex_ldm_link( $id );
+	// 運営会社のサイトで見つけたアドレスなら、運営会社あてにする。
+	$src  = (array) get_post_meta( $id, 'apprex_ld_email_src', true );
+	$op   = (string) get_post_meta( $id, 'apprex_ld_operator', true );
+	$toop = ! apprex_ldm_is_form( $to ) && 'operator' === ( $src[ $to ][1] ?? '' );
+	$dear = $toop ? ( '' !== $op ? $op : $name . 'の運営会社' ) . ' ご担当者様' : $name . ' ご担当者様';
 	$subj = '';
 	$body = '';
 	if ( function_exists( 'apprex_ai_text_ready' ) && apprex_ai_text_ready() && function_exists( 'apprex_openrouter_complete' ) ) {
@@ -181,7 +198,9 @@ function apprex_ldm_make_draft( $id, $kind = 'first' ) {
 			. ( '' !== $hook ? '提案のきっかけ：' . $hook . "\n" : '' )
 			. ( '' !== $ghint ? 'この業種でアプリが役立つこと：' . $ghint . "\n" : '' )
 			. "無料でアプリの見本を作れるページ：{$link}\n\n"
-			. "形式：1行目に「件名：」から始めて件名（30字以内）、2行目から本文。宛名は「{$name} ご担当者様」。";
+			. ( $toop ? "このメールは、お店ではなく運営会社（{$op}）あてです。「{$name}」についてのご提案だと分かるように書いてください。\n" : '' )
+			. ( apprex_ldm_is_form( $to ) ? "このメールは、お店の問い合わせフォームに貼って送ります。\n" : '' )
+			. "形式：1行目に「件名：」から始めて件名（30字以内）、2行目から本文。宛名は「{$dear}」。";
 		$r = apprex_openrouter_complete( array( array( 'role' => 'system', 'content' => $sys ), array( 'role' => 'user', 'content' => $msg ) ), array( 'max_tokens' => 900, 'temperature' => 0.5, 'timeout' => 60 ) );
 		if ( ! is_wp_error( $r ) ) {
 			$t = trim( str_replace( "\r", '', wp_strip_all_tags( (string) $r ) ) );
@@ -194,7 +213,7 @@ function apprex_ldm_make_draft( $id, $kind = 'first' ) {
 	if ( '' === $body || false === strpos( $body, $link ) ) {
 		// ひな形（AIが使えない・URLが抜けたとき）。
 		$subj = 'follow' === $kind ? '【APPREX】先日のご案内について' : '【' . $name . '様】お店のアプリを無料で試せます';
-		$body = $name . " ご担当者様\n\n"
+		$body = $dear . "\n" . ( $toop ? '（' . $name . "について、ご案内です）\n" : '' ) . "\n"
 			. ( 'follow' === $kind
 				? "先日、お店のアプリについてご案内をお送りした APPREX（合同会社アイズ）です。\nお忙しいところ失礼いたします。最後にもう一度だけご案内させてください。\n\n"
 				: "突然のご連絡失礼いたします。福島県いわき市でアプリ制作をしている APPREX（合同会社アイズ）です。\nホームページを拝見し、ご連絡いたしました。\n\n" )
@@ -207,7 +226,7 @@ function apprex_ldm_make_draft( $id, $kind = 'first' ) {
 		$body .= "\n\n" . $link;
 	}
 	update_post_meta( $id, 'apprex_ld_draft', array( 'to' => $to, 'subject' => mb_substr( $subj, 0, 80 ), 'body' => $body, 'kind' => $kind, 'created' => time() ) );
-	apprex_ld_log( $id, ( 'follow' === $kind ? '2通目' : 'メール' ) . 'の下書きを作りました（' . $to . '）' );
+	apprex_ld_log( $id, ( 'follow' === $kind ? '2通目' : 'メール' ) . 'の下書きを作りました（' . ( apprex_ldm_is_form( $to ) ? '問い合わせフォーム用' : $to ) . '）' );
 	return true;
 }
 
@@ -232,7 +251,8 @@ function apprex_ldm_send( $id, $edit = array() ) {
 		delete_post_meta( $id, 'apprex_ld_draft' );
 		return $to;
 	}
-	if ( apprex_ldm_sent_today() >= apprex_ldm_daily() ) {
+	$isf = apprex_ldm_is_form( $to );
+	if ( ! $isf && apprex_ldm_sent_today() >= apprex_ldm_daily() ) {
 		return new WP_Error( 'ldm', '今日の上限（' . apprex_ldm_daily() . '通）に達しました。明日送れます。' );
 	}
 	$subj = isset( $edit['subject'] ) && '' !== trim( $edit['subject'] ) ? $edit['subject'] : $d['subject'];
@@ -245,8 +265,8 @@ function apprex_ldm_send( $id, $edit = array() ) {
 		'Content-Type: text/plain; charset=UTF-8',
 		'List-Unsubscribe: <' . apprex_ldm_unsub_link( $id ) . '>, <mailto:' . $from . '?subject=' . rawurlencode( '配信停止' ) . '>',
 	);
-	$ok = wp_mail( $to, $subj, $body, $hdr );
-	$h  = (array) get_post_meta( $id, 'apprex_ld_mails', true );
+	$ok = $isf ? true : wp_mail( $to, $subj, $body, $hdr ); // フォームは、人が貼って送ったあとに記録するだけ。
+	$h  = apprex_ldm_hist( $id );
 	$h[] = array( time(), $to, $subj, $d['kind'] ?? 'first', $ok ? 1 : 0, get_current_user_id() );
 	update_post_meta( $id, 'apprex_ld_mails', array_slice( $h, -20 ) );
 	if ( ! $ok ) {
@@ -261,9 +281,11 @@ function apprex_ldm_send( $id, $edit = array() ) {
 	$s          = (array) get_option( 'apprex_ldm_sent_to', array() );
 	$s[ $to ]   = (int) $id;
 	update_option( 'apprex_ldm_sent_to', $s, false );
-	apprex_ldm_sent_today( 1 );
+	if ( ! $isf ) {
+		apprex_ldm_sent_today( 1 );
+	}
 	update_option( 'apprex_ldm_total', apprex_ldm_total_sent() + 1, false );
-	apprex_ld_log( $id, ( 'follow' === ( $d['kind'] ?? '' ) ? '2通目' : 'メール' ) . 'を送りました（' . $to . '・件名「' . $subj . '」）' );
+	apprex_ld_log( $id, ( 'follow' === ( $d['kind'] ?? '' ) ? '2通目' : 'メール' ) . ( $isf ? 'を問い合わせフォームから送りました（' . substr( $to, 5 ) : 'を送りました（' . $to ) . '・件名「' . $subj . '」）' );
 	return true;
 }
 
@@ -358,8 +380,9 @@ function apprex_ldm_cron_run() {
 			}
 			$kinds = wp_list_pluck( array_map( function ( $m ) {
 				return array( 'k' => $m[3] ?? '' );
-			}, (array) get_post_meta( $id, 'apprex_ld_mails', true ) ), 'k' );
-			if ( in_array( 'follow', $kinds, true ) || get_post_meta( $id, 'apprex_ld_click', true ) ) {
+			}, apprex_ldm_hist( $id ) ), 'k' );
+			$apprex_h = apprex_ldm_hist( $id );
+			if ( in_array( 'follow', $kinds, true ) || get_post_meta( $id, 'apprex_ld_click', true ) || ( $apprex_h && apprex_ldm_is_form( end( $apprex_h )[1] ?? '' ) ) ) {
 				continue; // 2通目は1回だけ。リンクを開いた人には、人が連絡する。
 			}
 			if ( true === apprex_ldm_make_draft( $id, 'follow' ) ) {
@@ -378,6 +401,9 @@ function apprex_ldm_cron_run() {
 		foreach ( apprex_ldm_drafts() as $id ) {
 			if ( apprex_ldm_sent_today() >= apprex_ldm_daily() ) {
 				break;
+			}
+			if ( apprex_ldm_is_form( get_post_meta( $id, 'apprex_ld_draft', true )['to'] ?? '' ) ) {
+				continue; // フォームは人が送る。
 			}
 			if ( true === apprex_ldm_send( $id ) ) {
 				$sent++;
@@ -473,7 +499,7 @@ add_action(
 /** 配信停止にする。 */
 function apprex_ldm_unsubscribe( $id, $how = '' ) {
 	$b = (array) get_option( 'apprex_ldm_block', array() );
-	foreach ( (array) get_post_meta( $id, 'apprex_ld_emails', true ) as $e ) {
+	foreach ( apprex_ld_meta_list( $id, 'apprex_ld_emails' ) as $e ) {
 		$b[ strtolower( trim( (string) $e ) ) ] = time();
 	}
 	update_option( 'apprex_ldm_block', $b, false );
@@ -632,7 +658,12 @@ function apprex_ldm_box() {
 				<b style="font-size:15px"><a href="<?php echo esc_url( admin_url( 'admin.php?page=apprex-leads&lead=' . $id ) ); ?>"><?php echo esc_html( $nm ); ?></a></b>
 				<span style="color:#00a32a;font-weight:700"><?php echo (int) get_post_meta( $id, 'apprex_ld_score', true ); ?>点</span>
 				<span><?php echo 'follow' === ( $d['kind'] ?? '' ) ? '<b style="color:#996800">2通目（最後のご案内）</b>' : 'はじめてのメール'; ?></span>
-				<span style="color:#646970">宛先：<?php echo esc_html( $d['to'] ?? '' ); ?></span>
+				<?php $apprex_isf = apprex_ldm_is_form( $d['to'] ?? '' ); ?>
+				<?php if ( $apprex_isf ) : ?>
+					<span style="color:#646970">宛先：<a href="<?php echo esc_url( substr( $d['to'], 5 ) ); ?>" target="_blank" rel="noopener"><b>問い合わせフォーム</b></a>（メールがないので、フォームに貼って送ります）</span>
+				<?php else : ?>
+					<span style="color:#646970">宛先：<?php echo esc_html( $d['to'] ?? '' ); ?><?php $apprex_sr = (array) get_post_meta( $id, 'apprex_ld_email_src', true ); echo 'operator' === ( $apprex_sr[ $d['to'] ?? '' ][1] ?? '' ) ? '（運営会社）' : ''; ?></span>
+				<?php endif; ?>
 				<?php if ( $g && $g['site'] ) : ?><a href="<?php echo esc_url( $g['site'] ); ?>" target="_blank" rel="noopener" style="font-size:12px">ホームページ</a><?php endif; ?>
 			</div>
 			<form method="post" action="<?php echo $act; // phpcs:ignore ?>">
@@ -641,7 +672,12 @@ function apprex_ldm_box() {
 				<textarea name="body" rows="10" style="width:100%;font-size:13px;line-height:1.6" aria-label="本文"><?php echo esc_textarea( $d['body'] ?? '' ); ?></textarea>
 				<details style="margin:4px 0 8px;color:#646970;font-size:12px"><summary style="cursor:pointer">最後に自動で付く部分（送信者・住所・配信停止）</summary><pre style="white-space:pre-wrap;font-size:12px"><?php echo esc_html( apprex_ldm_footer( $id ) ); ?></pre></details>
 				<div style="display:flex;gap:6px;flex-wrap:wrap">
-					<button class="button button-primary" name="do" value="send" onclick="return confirm('<?php echo esc_js( $nm ); ?> にこのメールを送ります。よろしいですか？')">この内容で送る</button>
+					<?php if ( $apprex_isf ) : ?>
+						<button type="button" class="button" onclick="var f=this.form,t=f.subject.value+'\n\n'+f.body.value+f.querySelector('pre').textContent;navigator.clipboard.writeText(t).then(function(){alert('件名と本文をコピーしました。フォームに貼って送ってください。');});window.open('<?php echo esc_js( esc_url( substr( $d['to'], 5 ) ) ); ?>','_blank');">本文をコピーしてフォームを開く</button>
+						<button class="button button-primary" name="do" value="send" onclick="return confirm('フォームから送りましたか？「送った」と記録します。')">フォームから送った（記録する）</button>
+					<?php else : ?>
+						<button class="button button-primary" name="do" value="send" onclick="return confirm('<?php echo esc_js( $nm ); ?> にこのメールを送ります。よろしいですか？')">この内容で送る</button>
+					<?php endif; ?>
 					<button class="button" name="do" value="save">直したところを保存</button>
 					<button class="button" name="do" value="redraft">AIで書き直す</button>
 					<button class="button" name="do" value="drop">送らない</button>
@@ -682,7 +718,7 @@ function apprex_ldm_box() {
 
 /** お店の詳しい画面：メールの記録と操作。 */
 function apprex_ldm_detail_box( $id ) {
-	$h   = array_reverse( (array) get_post_meta( $id, 'apprex_ld_mails', true ) );
+	$h   = array_reverse( apprex_ldm_hist( $id ) );
 	$d   = get_post_meta( $id, 'apprex_ld_draft', true );
 	$act = esc_url( admin_url( 'admin-post.php' ) );
 	$clk = (int) get_post_meta( $id, 'apprex_ld_click', true );
@@ -701,7 +737,7 @@ function apprex_ldm_detail_box( $id ) {
 		<?php else : ?>
 			<span class="description"><?php echo esc_html( apprex_ldm_target( $id )->get_error_message() ); ?></span>
 		<?php endif; ?>
-		<?php if ( (array) get_post_meta( $id, 'apprex_ld_emails', true ) && ! get_post_meta( $id, 'apprex_ld_unsub', true ) ) : ?>
+		<?php if ( apprex_ld_meta_list( $id, 'apprex_ld_emails' ) && ! get_post_meta( $id, 'apprex_ld_unsub', true ) ) : ?>
 			<form method="post" action="<?php echo $act; // phpcs:ignore ?>" onsubmit="return confirm('このお店のアドレスを配信停止にします。よろしいですか？')"><input type="hidden" name="action" value="apprex_ldm"><input type="hidden" name="do" value="unsub"><input type="hidden" name="id" value="<?php echo (int) $id; ?>"><?php wp_nonce_field( 'apprex_ldm' ); ?><?php submit_button( '配信停止にする（返信で頼まれたとき）', 'delete', 'submit', false ); ?></form>
 		<?php endif; ?>
 	</div>

@@ -704,58 +704,239 @@ function apprex_ld_fetch( $url ) {
 	return $html;
 }
 
-/** ホームページから、公開メール・営業お断り・アプリ/LINE/紙のカードなどを調べる。 */
+/** メタの配列（空・壊れた値を除く）。 */
+function apprex_ld_meta_list( $id, $key ) {
+	$v = get_post_meta( $id, $key, true );
+	return is_array( $v ) ? array_values( array_filter( $v, function ( $x ) {
+		return '' !== $x && null !== $x && false !== $x;
+	} ) ) : array();
+}
+
+/** ページの中のリンク [[絶対URL, 文字], …]。 */
+function apprex_ld_links( $html, $base ) {
+	$out = array();
+	if ( preg_match_all( '#<a\b[^>]*href=["\']([^"\'\#]+)[^"\']*["\'][^>]*>(.*?)</a>#is', $html, $m, PREG_SET_ORDER ) ) {
+		foreach ( $m as $a ) {
+			if ( preg_match( '#^(mailto|tel|javascript):#i', $a[1] ) ) {
+				continue;
+			}
+			$u = WP_Http::make_absolute_url( html_entity_decode( $a[1] ), $base );
+			if ( preg_match( '#^https?://#i', $u ) ) {
+				$out[] = array( $u, trim( preg_replace( '/\s+/u', ' ', wp_strip_all_tags( $a[2] ) ) ) );
+			}
+		}
+	}
+	return $out;
+}
+
+/** ページの中のメールアドレス（ふつうの書き方・＠・[at]・mailto・Cloudflareの隠し方）。 */
+function apprex_ld_find_emails( $html ) {
+	$found = array();
+	// Cloudflare のメール保護（data-cfemail="16進"）。
+	if ( preg_match_all( '/data-cfemail=["\']([0-9a-f]+)["\']|\/cdn-cgi\/l\/email-protection#([0-9a-f]+)/i', $html, $cf, PREG_SET_ORDER ) ) {
+		foreach ( $cf as $c ) {
+			$hex = '' !== $c[1] ? $c[1] : ( $c[2] ?? '' );
+			if ( strlen( $hex ) < 4 ) {
+				continue;
+			}
+			$k = hexdec( substr( $hex, 0, 2 ) );
+			$e = '';
+			for ( $i = 2; $i < strlen( $hex ); $i += 2 ) {
+				$e .= chr( hexdec( substr( $hex, $i, 2 ) ) ^ $k );
+			}
+			$found[] = $e;
+		}
+	}
+	$t = html_entity_decode( rawurldecode( $html ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+	$t = str_replace( array( '＠', '［at］', '[at]', '(at)', '（at）', '[ at ]', '(アットマーク)', '（アットマーク）', '★', '☆' ), '@', $t );
+	$t = str_replace( array( '［dot］', '[dot]', '(dot)' ), '.', $t );
+	if ( preg_match_all( '/[A-Za-z0-9._%+\-]+\s?@\s?[A-Za-z0-9\-]+(?:\.[A-Za-z0-9\-]+)*\.[A-Za-z]{2,}/', $t, $em ) ) {
+		$found = array_merge( $found, $em[0] );
+	}
+	$out = array();
+	foreach ( $found as $e ) {
+		$e = strtolower( trim( str_replace( ' ', '', $e ), '.' ) );
+		if ( ! is_email( $e ) || preg_match( '/\.(png|jpe?g|gif|webp|svg|css|js)$|example\.|sentry|wixpress|@2x|@3x|domain\.(com|jp)|xxx|your|sample|test@|noreply|no-reply|do-not-reply|mailer-daemon|@sentry|\.wix\.com$|@w3\.org/i', $e ) ) {
+			continue;
+		}
+		$out[ $e ] = true;
+	}
+	return array_keys( $out );
+}
+
+/** 運営会社の名前（ページの文字から）。 */
+function apprex_ld_find_operator( $text ) {
+	if ( preg_match( '/(?:運営会社|運営元|運営者|運営|販売業者|事業者名?|会社名|商号)\s*[：:｜|]?\s*((?:株式会社|有限会社|合同会社|一般社団法人|医療法人(?:社団|財団)?)\s*[^\s、。,|｜()（）]{1,24}|[^\s、。,|｜()（）]{1,24}\s*(?:株式会社|有限会社|合同会社))/u', $text, $m ) ) {
+		return trim( $m[1] );
+	}
+	return '';
+}
+
+/** ホームページから、公開メール・営業お断り・アプリ/LINE/紙のカードなどを調べる。運営会社のサイトや、お問い合わせ・会社概要・特定商取引法・プライバシーのページも見る。 */
 function apprex_ld_inspect_site( $site ) {
-	$out  = array( 'emails' => array(), 'ng' => false, 'flags' => array(), 'text' => '', 'pages' => 0 );
+	$out  = array( 'emails' => array(), 'src' => array(), 'ng' => false, 'flags' => array(), 'text' => '', 'pages' => 0, 'operator' => '', 'op_site' => '', 'form' => '' );
 	$home = apprex_ld_fetch( $site );
 	if ( null === $home ) {
 		return $out;
 	}
-	$pages = array( $home );
-	// 問い合わせ・会社概要・予約のページを2つまで。
-	if ( preg_match_all( '#<a[^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)</a>#is', $home, $m, PREG_SET_ORDER ) ) {
-		$cand = array();
-		foreach ( $m as $a ) {
-			$label = wp_strip_all_tags( $a[2] );
-			if ( preg_match( '/contact|inquiry|company|about|access|お問い?合わせ|会社概要|店舗情報|アクセス|予約/iu', $a[1] . ' ' . $label ) ) {
-				$u = WP_Http::make_absolute_url( $a[1], $site );
-				if ( wp_parse_url( $u, PHP_URL_HOST ) === wp_parse_url( $site, PHP_URL_HOST ) ) {
-					$cand[ $u ] = 1;
+	$host  = (string) wp_parse_url( $site, PHP_URL_HOST );
+	$pages = array( $site => $home );
+	$kind  = array( $site => 'shop' );
+	$pat   = array(
+		'contact' => '/contact|inquiry|toiawase|otoiawase|form|お問い?合わ?せ|ご相談|ご意見/iu',
+		'law'     => '/tokushoho|tokutei|law|legal|特定商取引|特商法/iu',
+		'company' => '/company|corporate|about|profile|outline|gaiyou|会社概要|会社案内|運営会社|企業情報|事業者/iu',
+		'privacy' => '/privacy|policy|個人情報|プライバシー/iu',
+	);
+	$queue = array();
+	$add   = function ( $links, $k ) use ( &$queue, $pat, $host ) {
+		foreach ( $links as $l ) {
+			if ( (string) wp_parse_url( $l[0], PHP_URL_HOST ) !== $host ) {
+				continue;
+			}
+			foreach ( $pat as $p => $re ) {
+				if ( preg_match( $re, $l[0] . ' ' . $l[1] ) ) {
+					$u = preg_replace( '/[?#].*$/', '', $l[0] );
+					if ( ! isset( $queue[ $u ] ) ) {
+						$queue[ $u ] = array( $p, $k );
+					}
+					break;
 				}
 			}
 		}
-		foreach ( array_slice( array_keys( $cand ), 0, 2 ) as $u ) {
-			$h = apprex_ld_fetch( $u );
-			if ( null !== $h ) {
-				$pages[] = $h;
+	};
+	$links = apprex_ld_links( $home, $site );
+	$add( $links, 'shop' );
+	// お店のページがサイトの一部（例：ホテルの中のレストラン）なら、サイトのトップも見る。
+	$root = wp_parse_url( $site, PHP_URL_SCHEME ) . '://' . $host . '/';
+	if ( untrailingslashit( preg_replace( '/[?#].*$/', '', $site ) ) !== untrailingslashit( $root ) ) {
+		$rh = apprex_ld_fetch( $root );
+		if ( null !== $rh ) {
+			$pages[ $root ] = $rh;
+			$kind[ $root ]  = 'site';
+			$add( apprex_ld_links( $rh, $root ), 'site' );
+			$links = array_merge( $links, apprex_ld_links( $rh, $root ) );
+		}
+	}
+	// 読む順：お問い合わせ → 特定商取引法 → 会社概要 → プライバシー。全部で8ページまで。
+	$order = array( 'contact' => 0, 'law' => 1, 'company' => 2, 'privacy' => 3 );
+	uasort(
+		$queue,
+		function ( $a, $b ) use ( $order ) {
+			return $order[ $a[0] ] <=> $order[ $b[0] ];
+		}
+	);
+	$per = array();
+	foreach ( $queue as $u => $q ) {
+		if ( count( $pages ) >= 8 ) {
+			break;
+		}
+		if ( isset( $pages[ $u ] ) || ( $per[ $q[0] ] ?? 0 ) >= 2 ) {
+			continue;
+		}
+		$h = apprex_ld_fetch( $u );
+		$per[ $q[0] ] = ( $per[ $q[0] ] ?? 0 ) + 1;
+		if ( null !== $h ) {
+			$pages[ $u ] = $h;
+			$kind[ $u ]  = $q[0];
+			if ( '' === $out['form'] && 'contact' === $q[0] && preg_match( '/<form\b[\s\S]*?<textarea/i', $h ) ) {
+				$out['form'] = $u;
 			}
 		}
 	}
-	$all          = implode( "\n", $pages );
+	$text_of = function ( $h ) {
+		return preg_replace( '/\s+/u', ' ', wp_strip_all_tags( preg_replace( '#<(script|style|noscript)[^>]*>.*?</\1>#is', ' ', $h ) ) );
+	};
+	$all  = implode( "\n", $pages );
+	$text = $text_of( $all );
+	// 運営会社と、そのサイト（外のサイトへのリンクで、文字に会社名・「運営」があるもの）。
+	$out['operator'] = apprex_ld_find_operator( $text );
+	foreach ( $links as $l ) {
+		$lh = (string) wp_parse_url( $l[0], PHP_URL_HOST );
+		if ( '' === $lh || $lh === $host || preg_match( '/instagram|facebook|twitter|x\.com|line\.me|lin\.ee|youtube|tiktok|google|apple\.com|hotpepper|tabelog|gnavi|retty|ikyu|jalan|rakuten|booking|tablecheck|wix|jimdo|wordpress|ameblo|note\.com|amazon|yahoo/i', $lh ) ) {
+			continue;
+		}
+		if ( preg_match( '/運営|会社|株式会社|有限会社|合同会社|corporate|company|group|グループ/iu', $l[1] ) || ( '' !== $out['operator'] && false !== mb_strpos( $l[1], preg_replace( '/株式会社|有限会社|合同会社|\s/u', '', $out['operator'] ) ) ) ) {
+			$out['op_site'] = wp_parse_url( $l[0], PHP_URL_SCHEME ) . '://' . $lh . '/';
+			break;
+		}
+	}
+	if ( '' !== $out['op_site'] ) {
+		$oh = apprex_ld_fetch( $out['op_site'] );
+		if ( null !== $oh ) {
+			$opages = array( $out['op_site'] => $oh );
+			$ohost  = (string) wp_parse_url( $out['op_site'], PHP_URL_HOST );
+			$n      = 0;
+			foreach ( apprex_ld_links( $oh, $out['op_site'] ) as $l ) {
+				if ( $n >= 2 || (string) wp_parse_url( $l[0], PHP_URL_HOST ) !== $ohost || ! preg_match( $pat['contact'] . '', $l[0] . ' ' . $l[1] ) && ! preg_match( $pat['company'], $l[0] . ' ' . $l[1] ) ) {
+					continue;
+				}
+				$u = preg_replace( '/[?#].*$/', '', $l[0] );
+				if ( isset( $opages[ $u ] ) ) {
+					continue;
+				}
+				$h = apprex_ld_fetch( $u );
+				$n++;
+				if ( null !== $h ) {
+					$opages[ $u ] = $h;
+				}
+			}
+			foreach ( $opages as $u => $h ) {
+				$pages[ $u ] = $h;
+				$kind[ $u ]  = 'operator';
+			}
+			if ( '' === $out['operator'] ) {
+				$out['operator'] = apprex_ld_find_operator( $text_of( implode( "\n", $opages ) ) );
+			}
+		}
+	}
 	$out['pages'] = count( $pages );
-	$text         = preg_replace( '/\s+/u', ' ', wp_strip_all_tags( preg_replace( '#<(script|style|noscript)[^>]*>.*?</\1>#is', ' ', $all ) ) );
 	$out['text']  = mb_substr( $text, 0, 3000 );
-	// 公開されているメールアドレス。
-	if ( preg_match_all( '/[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}/', html_entity_decode( $all ), $em ) ) {
-		foreach ( array_unique( array_map( 'strtolower', $em[0] ) ) as $e ) {
-			if ( preg_match( '/\.(png|jpe?g|gif|webp|svg)$|example\.|sentry|wixpress|@2x|domain\.com|xxx|your/i', $e ) ) {
+	// メールアドレスを集めて、よいものから並べる（お店と同じドメイン → info/contact → 運営会社 → そのほか）。
+	$cands = array();
+	foreach ( $pages as $u => $h ) {
+		foreach ( apprex_ld_find_emails( $h ) as $e ) {
+			// 個人情報・採用・IRなどの窓口には、営業メールを送らない。
+			if ( isset( $cands[ $e ] ) || preg_match( '/^(privacy|kojin|personal|recruit|saiyo|career|jinji|ir|press|pr|job|kabunushi)[._@-]/', $e ) ) {
 				continue;
 			}
-			$out['emails'][] = $e;
+			$dom = substr( strrchr( $e, '@' ), 1 );
+			$sc  = 0;
+			$sc += ( $dom === $host || '.' . $dom === substr( $host, -strlen( $dom ) - 1 ) ) ? 30 : 0;
+			$sc += ( '' !== $out['op_site'] && false !== strpos( (string) wp_parse_url( $out['op_site'], PHP_URL_HOST ), $dom ) ) ? 20 : 0;
+			$sc += preg_match( '/^(info|contact|support|inquiry|otoiawase|toiawase|mail|shop|store|office|webmaster|sales|reserve|yoyaku)/', $e ) ? 15 : 0;
+			$sc += in_array( $kind[ $u ], array( 'contact', 'law', 'company' ), true ) ? 10 : 0;
+			$cands[ $e ] = array( $sc, $u, $kind[ $u ] );
 		}
-		$out['emails'] = array_slice( $out['emails'], 0, 3 );
 	}
-	// 営業お断り。
-	$out['ng'] = (bool) preg_match( '/(営業|セールス|広告|勧誘)[^。]{0,12}(メール|ご連絡|電話|お問い?合わせ)?[^。]{0,10}(お断り|ご遠慮|控え|禁止)/u', $text );
-	// アプリ・LINE・Instagram・予約・紙のカード。
-	$out['flags'] = array(
-		'app'        => (bool) preg_match( '#apps\.apple\.com|itunes\.apple\.com|play\.google\.com/store/apps#i', $all ),
-		'line'       => (bool) preg_match( '#lin\.ee/|line\.me/R/ti|page\.line\.me|@[a-z0-9]{3,}\s*（?LINE#i', $all ),
-		'insta'      => (bool) preg_match( '#instagram\.com/#i', $all ),
-		'web_book'   => (bool) preg_match( '#beauty\.hotpepper|hotpepper\.jp|reserva\.be|airrsv|coubic|stores\.jp/reserve|tablecheck|ekiten|minimodel|web予約|ネット予約|オンライン予約#iu', $all ),
-		'paper'      => (bool) preg_match( '/スタンプカード|ポイントカード/u', $text ) && ! preg_match( '#apps\.apple\.com|play\.google\.com#i', $all ),
+	uasort(
+		$cands,
+		function ( $a, $b ) {
+			return $b[0] <=> $a[0];
+		}
 	);
-	$out['flags']['phone_only'] = ! $out['flags']['web_book'] && (bool) preg_match( '/(ご予約|予約)[^。]{0,15}(お電話|電話)/u', $text );
+	foreach ( array_slice( $cands, 0, 3, true ) as $e => $c ) {
+		$out['emails'][]  = $e;
+		$out['src'][ $e ] = array( $c[1], $c[2] );
+	}
+	// 営業お断り（お店・運営会社のどちらに書いてあっても）。
+	$out['ng'] = (bool) preg_match( '/(営業|セールス|広告|勧誘|売り込み)[^。]{0,12}(メール|ご連絡|電話|お問い?合わせ)?[^。]{0,10}(お断り|ご遠慮|控え|禁止|固くお断り)/u', $text . ' ' . $text_of( implode( "\n", array_intersect_key( $pages, array_filter( $kind, function ( $k ) {
+		return 'operator' === $k;
+	} ) ) ) ) );
+	// アプリ・LINE・Instagram・予約・紙のカード（お店のページだけで見る）。
+	$shop_html = implode( "\n", array_intersect_key( $pages, array_filter( $kind, function ( $k ) {
+		return 'operator' !== $k;
+	} ) ) );
+	$shop_text = $text_of( $shop_html );
+	$out['flags'] = array(
+		'app'      => (bool) preg_match( '#apps\.apple\.com|itunes\.apple\.com|play\.google\.com/store/apps#i', $shop_html ),
+		'line'     => (bool) preg_match( '#lin\.ee/|line\.me/R/ti|page\.line\.me|@[a-z0-9]{3,}\s*（?LINE#i', $shop_html ),
+		'insta'    => (bool) preg_match( '#instagram\.com/#i', $shop_html ),
+		'web_book' => (bool) preg_match( '#beauty\.hotpepper|hotpepper\.jp|reserva\.be|airrsv|coubic|stores\.jp/reserve|tablecheck|ekiten|minimodel|web予約|ネット予約|オンライン予約#iu', $shop_html ),
+		'paper'    => (bool) preg_match( '/スタンプカード|ポイントカード/u', $shop_text ) && ! preg_match( '#apps\.apple\.com|play\.google\.com#i', $shop_html ),
+		'form'     => '' !== $out['form'],
+	);
+	$out['flags']['phone_only'] = ! $out['flags']['web_book'] && (bool) preg_match( '/(ご予約|予約)[^。]{0,15}(お電話|電話)/u', $shop_text );
 	return $out;
 }
 
@@ -791,9 +972,13 @@ function apprex_ld_research( $id ) {
 		return new WP_Error( 'ld', 'Google の情報を読めませんでした。' );
 	}
 	$genre = (string) get_post_meta( $id, 'apprex_ld_genre', true );
-	$info  = ! empty( $g['site'] ) ? apprex_ld_inspect_site( $g['site'] ) : array( 'emails' => array(), 'ng' => false, 'flags' => array(), 'text' => '', 'pages' => 0 );
+	$info  = ! empty( $g['site'] ) ? apprex_ld_inspect_site( $g['site'] ) : array( 'emails' => array(), 'src' => array(), 'ng' => false, 'flags' => array(), 'text' => '', 'pages' => 0, 'operator' => '', 'op_site' => '', 'form' => '' );
 	update_post_meta( $id, 'apprex_ld_flags', $info['flags'] );
 	update_post_meta( $id, 'apprex_ld_emails', $info['emails'] );
+	update_post_meta( $id, 'apprex_ld_email_src', $info['src'] ?? array() );
+	update_post_meta( $id, 'apprex_ld_operator', $info['operator'] ?? '' );
+	update_post_meta( $id, 'apprex_ld_op_site', $info['op_site'] ?? '' );
+	update_post_meta( $id, 'apprex_ld_form', $info['form'] ?? '' );
 	update_post_meta( $id, 'apprex_ld_ng', $info['ng'] ? 1 : 0 );
 	list( $sc, $why ) = apprex_ld_score( $genre, $g, $info['flags'], (int) get_post_meta( $id, 'apprex_ld_chain', true ) );
 	if ( $info['ng'] ) {
@@ -809,7 +994,7 @@ function apprex_ld_research( $id ) {
 	if ( 'new' === get_post_meta( $id, 'apprex_ld_status', true ) ) {
 		update_post_meta( $id, 'apprex_ld_status', $info['ng'] ? 'skip' : 'checked' );
 	}
-	apprex_ld_log( $id, 'ホームページを調べました（' . $info['pages'] . 'ページ・公開メール ' . count( $info['emails'] ) . '件' . ( $info['ng'] ? '・営業お断りの記載あり' : '' ) . '）' );
+	apprex_ld_log( $id, 'ホームページを調べました（' . $info['pages'] . 'ページ・公開メール ' . count( $info['emails'] ) . '件' . ( ! empty( $info['operator'] ) ? '・運営：' . $info['operator'] : '' ) . ( ! empty( $info['form'] ) ? '・問い合わせフォームあり' : '' ) . ( $info['ng'] ? '・営業お断りの記載あり' : '' ) . '）' );
 	return true;
 }
 
@@ -1154,7 +1339,7 @@ function apprex_ld_page() {
 					$sc    = (int) get_post_meta( $id, 'apprex_ld_score', true );
 					$why   = (array) get_post_meta( $id, 'apprex_ld_why', true );
 					$hook  = (string) get_post_meta( $id, 'apprex_ld_hook', true );
-					$em    = (array) get_post_meta( $id, 'apprex_ld_emails', true );
+					$em    = apprex_ld_meta_list( $id, 'apprex_ld_emails' );
 					$ng    = (int) get_post_meta( $id, 'apprex_ld_ng', true );
 					$res   = (int) get_post_meta( $id, 'apprex_ld_researched', true );
 					$genre = (string) get_post_meta( $id, 'apprex_ld_genre', true );
@@ -1169,7 +1354,7 @@ function apprex_ld_page() {
 						<td><?php echo esc_html( ( $gs[ $genre ][0] ?? $genre ) ); ?><br><small><?php echo esc_html( $g ? mb_substr( $g['address'], 0, 26 ) : (string) get_post_meta( $id, 'apprex_ld_area', true ) ); ?></small></td>
 						<td><?php echo $g ? esc_html( $g['reviews'] . '件' . ( $g['rating'] ? '・★' . $g['rating'] : '' ) ) : '—'; ?></td>
 						<td style="font-size:12px"><?php echo $g && $g['site'] ? '<a href="' . esc_url( $g['site'] ) . '" target="_blank" rel="noopener">サイト</a>' : 'サイトなし'; ?>
-							<?php echo $em ? '<br>' . esc_html( implode( ', ', $em ) ) : ( $res ? '<br><span style="color:#8c8f94">公開メールなし</span>' : '' ); ?>
+							<?php echo $em ? '<br>' . esc_html( implode( ', ', $em ) ) : ( get_post_meta( $id, 'apprex_ld_form', true ) ? '<br><span style="color:#2271b1">問い合わせフォームあり</span>' : ( $res ? '<br><span style="color:#8c8f94">公開メールなし</span>' : '' ) ); ?>
 							<?php echo $ng ? '<br><b style="color:#d63638">営業お断り</b>' : ''; ?></td>
 						<td style="font-size:12px;max-width:420px"><?php echo esc_html( implode( '・', $why ) ); ?><?php echo '' !== $hook ? '<div style="margin-top:4px;color:#1d2327;background:#f0f6fc;padding:4px 6px;border-radius:4px">💡 ' . esc_html( $hook ) . '</div>' : ''; ?>
 							<?php echo ! $res ? '<div style="color:#8c8f94">まだ調べていません</div>' : ''; ?></td>
@@ -1214,7 +1399,7 @@ function apprex_ld_page() {
 			<?php submit_button( '設定を保存' ); ?>
 		</form>
 		<p class="description">Google の規約に合わせて、店名・住所・電話などの Google の情報は最長30日だけ持ち、古くなったら読み直します。ずっと残すのは Place ID と、こちらで調べた情報・営業の記録です。<br>
-		ホームページは公開されているページだけを、1店につき3ページまで読みます。「営業お断り」と書いてあるお店は、自動で「対象外」にします。</p>
+		ホームページは公開されているページだけを、1店につき8ページまで読みます（お問い合わせ・特定商取引法・会社概要のページと、運営会社のサイト）。個人情報・採用の窓口のアドレスは使いません。「営業お断り」と書いてあるお店は、自動で「対象外」にします。</p>
 	</div>
 	<?php
 }
@@ -1238,7 +1423,26 @@ function apprex_ld_detail( $id ) {
 			<tr><th>口コミ</th><td><?php echo esc_html( $g['reviews'] . '件・★' . $g['rating'] ); ?>　<a href="<?php echo esc_url( $g['maps'] ); ?>" target="_blank" rel="noopener">Googleマップで見る</a></td></tr>
 			<tr><th>ホームページ</th><td><?php echo $g['site'] ? '<a href="' . esc_url( $g['site'] ) . '" target="_blank" rel="noopener">' . esc_html( $g['site'] ) . '</a>' : 'なし'; ?></td></tr>
 		<?php endif; ?>
-		<tr><th>公開メール</th><td><?php echo esc_html( implode( ', ', (array) get_post_meta( $id, 'apprex_ld_emails', true ) ) ?: '—' ); ?><?php echo get_post_meta( $id, 'apprex_ld_ng', true ) ? ' <b style="color:#d63638">「営業お断り」の記載あり</b>' : ''; ?></td></tr>
+		<?php
+		$apprex_src  = (array) get_post_meta( $id, 'apprex_ld_email_src', true );
+		$apprex_kl   = array( 'shop' => 'お店のページ', 'site' => 'サイトのトップ', 'contact' => 'お問い合わせのページ', 'law' => '特定商取引法のページ', 'company' => '会社概要のページ', 'privacy' => 'プライバシーのページ', 'operator' => '運営会社のサイト' );
+		$apprex_op   = (string) get_post_meta( $id, 'apprex_ld_operator', true );
+		$apprex_ops  = (string) get_post_meta( $id, 'apprex_ld_op_site', true );
+		$apprex_form = (string) get_post_meta( $id, 'apprex_ld_form', true );
+		?>
+		<tr><th>公開メール</th><td>
+			<?php $apprex_ems = apprex_ld_meta_list( $id, 'apprex_ld_emails' ); ?>
+			<?php if ( ! $apprex_ems ) : ?>—<?php endif; ?>
+			<?php foreach ( $apprex_ems as $apprex_e ) : ?>
+				<div><?php echo esc_html( $apprex_e ); ?><?php if ( ! empty( $apprex_src[ $apprex_e ] ) ) : ?> <small style="color:#646970">（<a href="<?php echo esc_url( $apprex_src[ $apprex_e ][0] ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $apprex_kl[ $apprex_src[ $apprex_e ][1] ] ?? 'ページ' ); ?></a>で見つけました）</small><?php endif; ?></div>
+			<?php endforeach; ?>
+			<?php echo get_post_meta( $id, 'apprex_ld_ng', true ) ? ' <b style="color:#d63638">「営業お断り」の記載あり</b>' : ''; ?></td></tr>
+		<?php if ( '' !== $apprex_op || '' !== $apprex_ops ) : ?>
+			<tr><th>運営会社</th><td><?php echo esc_html( $apprex_op ?: '—' ); ?><?php echo '' !== $apprex_ops ? '　<a href="' . esc_url( $apprex_ops ) . '" target="_blank" rel="noopener">運営会社のサイト</a>' : ''; ?></td></tr>
+		<?php endif; ?>
+		<?php if ( '' !== $apprex_form ) : ?>
+			<tr><th>問い合わせフォーム</th><td><a href="<?php echo esc_url( $apprex_form ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $apprex_form ); ?></a></td></tr>
+		<?php endif; ?>
 		<tr><th>ホームページで分かったこと</th><td><?php
 			$on = array();
 			foreach ( $labs as $k => $l ) {
@@ -1365,7 +1569,7 @@ function apprex_ld_auto_run( $manual = false ) {
 		}
 		if ( ! is_wp_error( apprex_ld_research( $id ) ) ) {
 			$check++;
-			if ( (array) get_post_meta( $id, 'apprex_ld_emails', true ) && ! get_post_meta( $id, 'apprex_ld_ng', true ) ) {
+			if ( apprex_ld_meta_list( $id, 'apprex_ld_emails' ) && ! get_post_meta( $id, 'apprex_ld_ng', true ) ) {
 				$mail++;
 			}
 		}
