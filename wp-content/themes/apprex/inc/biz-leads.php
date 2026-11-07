@@ -107,6 +107,12 @@ function apprex_ld_genres() {
 		'insurance' => array( '保険代理店', '保険代理店', 55, '契約の更新のお知らせ・相談の予約が向く', $C ),
 		'temple'    => array( 'お寺・神社・葬儀', '葬儀社', 50, '法要・行事のお知らせと予約が向く', $C ),
 	);
+	// もっと細かいジャンル（業態ごと）。キーは名前から作るので、あとで並べ替えても変わらない。
+	foreach ( apprex_ld_more_genres() as $k => $v ) {
+		if ( ! isset( $g[ $k ] ) ) {
+			$g[ $k ] = $v;
+		}
+	}
 	// 自分で追加したジャンル（「探す」で言葉を入れたもの）。
 	foreach ( (array) get_option( 'apprex_ld_custom_genres', array() ) as $k => $v ) {
 		if ( is_array( $v ) && ! isset( $g[ $k ] ) ) {
@@ -114,6 +120,126 @@ function apprex_ld_genres() {
 		}
 	}
 	return $g;
+}
+
+/**
+ * 細かいジャンル（業態ごと）。まとまり => [基本点, アプリが合う理由, [名前,検索語,点（省略可）] の一覧]。
+ *
+ * @return array key => [名前, 検索語, 基本点, 理由, まとまり]
+ */
+function apprex_ld_more_genres() {
+	static $out = null;
+	if ( null !== $out ) {
+		return $out;
+	}
+	$data = array(
+		'飲食' => array(
+			65,
+			'スタンプ・クーポン・予約・新メニューのお知らせで、再来店を増やせる',
+			array(
+				array( '焼き鳥', '焼き鳥' ), array( '寿司', '寿司' ), array( '回転寿司', '回転寿司', 55 ), array( '天ぷら', '天ぷら' ), array( 'うどん・そば', 'そば' ),
+				array( 'つけ麺', 'つけ麺', 60 ), array( 'カレー', 'カレー', 60 ), array( '韓国料理', '韓国料理' ), array( 'タイ・アジア料理', 'タイ料理' ), array( 'フレンチ', 'フレンチ' ),
+				array( 'ステーキ・鉄板焼き', 'ステーキ' ), array( 'ハンバーグ・洋食', '洋食' ), array( '定食・食堂', '定食', 55 ), array( 'お好み焼き・もんじゃ', 'お好み焼き' ), array( 'たこ焼き', 'たこ焼き', 55 ),
+				array( 'しゃぶしゃぶ・すき焼き', 'しゃぶしゃぶ' ), array( 'もつ鍋・鍋料理', 'もつ鍋' ), array( '海鮮・魚料理', '海鮮料理' ), array( 'うなぎ', 'うなぎ' ), array( '和食・割烹', '割烹' ),
+				array( '懐石・料亭', '料亭', 60 ), array( 'ホルモン', 'ホルモン' ), array( '串カツ・串焼き', '串カツ' ), array( 'ジンギスカン', 'ジンギスカン' ), array( 'ビストロ・バル', 'バル' ),
+				array( 'ピザ', 'ピザ' ), array( 'ハンバーガー', 'ハンバーガー' ), array( '喫茶店', '喫茶店' ), array( 'ブックカフェ・コンセプトカフェ', 'コンセプトカフェ' ), array( '和菓子・甘味処', '和菓子' ),
+				array( 'クレープ・スイーツ', 'クレープ' ), array( 'ジェラート・アイス', 'ジェラート' ), array( 'ドーナツ', 'ドーナツ' ), array( 'ワインバー', 'ワインバー', 55 ), array( '日本酒バー・立ち飲み', '立ち飲み', 55 ),
+				array( 'ダイニングバー', 'ダイニングバー' ), array( 'スナック・ラウンジ', 'スナック', 55 ), array( 'ビアバー・ブルワリー', 'クラフトビール' ), array( '弁当・惣菜', '弁当', 60 ), array( 'ケータリング・キッチンカー', 'ケータリング', 55 ),
+				array( 'ビュッフェ・食べ放題', '食べ放題' ), array( 'ヴィーガン・オーガニック', 'オーガニック レストラン' ),
+			),
+		),
+		'美容・リラク' => array(
+			80,
+			'来店の間隔が決まっていて、予約・次回の案内・回数券でリピートを増やしやすい',
+			array(
+				array( 'メンズ美容室', 'メンズ美容室' ), array( '髪質改善・縮毛矯正', '髪質改善' ), array( 'ヘアセット・着付け', 'ヘアセット' ), array( 'フェイシャルエステ', 'フェイシャルエステ' ), array( '痩身エステ', '痩身エステ' ),
+				array( 'メンズ脱毛', 'メンズ脱毛' ), array( 'アイブロウ・眉毛サロン', '眉毛サロン' ), array( 'ホワイトニング', 'ホワイトニング' ), array( '日焼けサロン', '日焼けサロン', 65 ), array( 'リフレクソロジー', 'リフレクソロジー' ),
+				array( 'タイ古式マッサージ', 'タイ古式マッサージ' ), array( 'アロマ・リンパ', 'アロマ リンパ' ), array( '岩盤浴', '岩盤浴', 70 ), array( 'スーパー銭湯・温泉', 'スーパー銭湯', 65 ), array( 'ネイルスクール・美容スクール', '美容スクール', 70 ),
+			),
+		),
+		'健康・医療・ペット' => array(
+			70,
+			'予約・順番待ち・次に来る時期のお知らせ・診察券をアプリにできる',
+			array(
+				array( '接骨院', '接骨院', 80 ), array( 'カイロプラクティック', 'カイロプラクティック', 80 ), array( '骨盤矯正・産後ケア', '骨盤矯正', 80 ), array( '矯正歯科', '矯正歯科' ), array( '小児歯科', '小児歯科' ),
+				array( '皮膚科', '皮膚科', 65 ), array( '美容皮膚科', '美容皮膚科', 75 ), array( '美容外科', '美容外科', 70 ), array( '眼科', '眼科', 60 ), array( '耳鼻科', '耳鼻咽喉科', 65 ),
+				array( '小児科', '小児科', 70 ), array( '内科', '内科', 60 ), array( '婦人科・レディースクリニック', 'レディースクリニック', 70 ), array( '心療内科', '心療内科', 60 ), array( '整形外科', '整形外科', 65 ),
+				array( '健診センター', '健診センター', 55 ), array( '訪問看護・訪問介護', '訪問看護', 55 ), array( '介護施設', '介護施設', 50 ), array( '漢方・自然療法', '漢方薬局', 60 ), array( '補聴器', '補聴器', 55 ),
+				array( 'ペットショップ', 'ペットショップ', 70 ), array( 'ドッグカフェ', 'ドッグカフェ', 70 ), array( '猫カフェ', '猫カフェ', 70 ), array( '犬のしつけ教室', 'ドッグトレーニング', 75 ), array( 'ペットシッター', 'ペットシッター', 70 ),
+			),
+		),
+		'スポーツ・フィットネス' => array(
+			80,
+			'会員証・レッスンの予約・振替・お知らせ・動画をアプリでまとめられる',
+			array(
+				array( '24時間ジム', '24時間ジム', 70 ), array( 'ホットヨガ', 'ホットヨガ' ), array( 'ボクシングジム', 'ボクシングジム' ), array( '空手・柔道・剣道', '空手道場', 75 ), array( '合気道・武道', '合気道', 70 ),
+				array( 'サッカースクール', 'サッカースクール', 75 ), array( '野球スクール', '野球スクール', 70 ), array( 'バスケットボールスクール', 'バスケットボールスクール', 70 ), array( 'バレエ教室', 'バレエ教室', 75 ), array( '体操教室', '体操教室', 75 ),
+				array( '乗馬クラブ', '乗馬クラブ', 70 ), array( 'ゴルフ練習場', 'ゴルフ練習場', 75 ), array( 'テニスコート・クラブ', 'テニスクラブ', 70 ), array( 'フットサル場', 'フットサル', 70 ), array( 'ボウリング場', 'ボウリング', 60 ),
+				array( 'バッティングセンター', 'バッティングセンター', 60 ), array( 'スケート・スキー', 'スケートリンク', 60 ), array( '卓球場', '卓球場', 65 ), array( '加圧・EMSトレーニング', '加圧トレーニング', 80 ), array( 'ストレッチ専門店', 'ストレッチ専門店', 85 ),
+			),
+		),
+		'習い事・教育' => array(
+			75,
+			'保護者・生徒へのお知らせ・出欠・振替・予約をまとめられる',
+			array(
+				array( '個別指導塾', '個別指導塾' ), array( '予備校', '予備校', 70 ), array( '子ども英語', '子ども英語' ), array( '中国語・韓国語教室', '韓国語教室' ), array( 'ロボット・STEM教室', 'ロボット教室' ),
+				array( '書道教室', '書道教室', 70 ), array( '絵画・アート教室', '絵画教室', 70 ), array( 'ピアノ教室', 'ピアノ教室' ), array( 'ギター・ボーカル教室', 'ボーカルスクール' ), array( 'バイオリン・管楽器', 'バイオリン教室', 70 ),
+				array( 'パン・お菓子教室', 'パン教室', 70 ), array( '茶道・華道', '華道教室', 65 ), array( '着付け教室', '着付け教室', 65 ), array( '写真・カメラ教室', '写真教室', 65 ), array( 'パソコン教室', 'パソコン教室', 70 ),
+				array( '学童保育', '学童保育' ), array( '保育園・幼稚園', '保育園', 70 ), array( '幼児教室・知育', '幼児教室' ), array( '家庭教師', '家庭教師', 70 ), array( '資格スクール', '資格スクール', 70 ),
+				array( '専門学校', '専門学校', 65 ), array( 'オンライン講座・セミナー', 'セミナー', 65 ),
+			),
+		),
+		'お店・小売' => array(
+			60,
+			'新入荷のお知らせ・ポイント・会員証・ネット販売で、また来てもらえる',
+			array(
+				array( '古着屋', '古着屋', 65 ), array( '靴屋', '靴屋' ), array( '雑貨屋', '雑貨屋', 65 ), array( '家具・インテリア', 'インテリアショップ', 65 ), array( '時計・ジュエリー', 'ジュエリーショップ', 60 ),
+				array( 'ワインショップ', 'ワインショップ', 60 ), array( '精肉店', '精肉店', 60 ), array( '鮮魚店', '鮮魚店', 55 ), array( '八百屋・青果店', '八百屋', 55 ), array( 'スーパー', 'スーパーマーケット', 60 ),
+				array( 'お茶・コーヒー豆', 'コーヒー豆 専門店', 65 ), array( '書店', '書店', 55 ), array( '文房具店', '文房具店', 55 ), array( 'おもちゃ屋', 'おもちゃ屋', 55 ), array( 'スポーツ用品店', 'スポーツ用品店', 60 ),
+				array( '釣具店', '釣具店', 60 ), array( '楽器店', '楽器店', 60 ), array( '家電・携帯ショップ', '携帯ショップ', 55 ), array( 'リサイクル・買取', 'リサイクルショップ', 65 ), array( 'ベビー・子ども服', '子供服', 60 ),
+				array( 'ドラッグストア', 'ドラッグストア', 55 ), array( 'ホームセンター', 'ホームセンター', 55 ), array( 'ギフト・お土産', 'お土産屋', 55 ), array( '農産物直売所', '直売所', 60 ),
+			),
+		),
+		'暮らし・サービス' => array(
+			60,
+			'予約・見積もりの相談・点検や時期のお知らせ・会員証が向く',
+			array(
+				array( '賃貸仲介', '賃貸', 65 ), array( '住宅メーカー', '住宅メーカー', 60 ), array( '工務店', '工務店', 55 ), array( '外構・エクステリア', '外構工事', 55 ), array( '外壁塗装', '外壁塗装', 55 ),
+				array( '水回り・リフォーム', '水回り リフォーム', 55 ), array( '鍵・修理', '鍵屋', 50 ), array( 'ハウスクリーニング', 'ハウスクリーニング', 65 ), array( '家事代行', '家事代行', 70 ), array( '引越し', '引越し業者', 55 ),
+				array( 'コインランドリー', 'コインランドリー', 60 ), array( '中古車販売', '中古車販売', 65 ), array( '新車ディーラー', 'カーディーラー', 60 ), array( 'タイヤ・カー用品', 'タイヤ', 60 ), array( 'バイクショップ', 'バイクショップ', 60 ),
+				array( 'レンタカー', 'レンタカー', 55 ), array( '民宿・ゲストハウス', 'ゲストハウス', 55 ), array( 'グランピング・キャンプ場', 'グランピング', 65 ), array( 'シェアオフィス', 'シェアオフィス', 65 ), array( 'トランクルーム', 'トランクルーム', 50 ),
+				array( '印刷・看板', '印刷会社', 50 ), array( 'スマホ・PC修理', 'スマホ修理', 60 ), array( '靴・時計の修理', '靴修理', 55 ), array( '便利屋', '便利屋', 55 ), array( '結婚相談所', '結婚相談所', 70 ),
+				array( '仏壇・墓石', '仏壇', 45 ), array( '写真スタジオ（子ども）', 'こども写真館', 75 ),
+			),
+		),
+		'会社・その他' => array(
+			55,
+			'お客様・会員へのお知らせ・書類のやりとり・相談の予約をまとめられる',
+			array(
+				array( '会計事務所', '会計事務所' ), array( '社労士事務所', '社会保険労務士' ), array( '行政書士', '行政書士' ), array( '司法書士', '司法書士' ), array( '法律事務所', '法律事務所' ),
+				array( '経営コンサルタント', '経営コンサルタント' ), array( '人材派遣・紹介', '人材派遣', 60 ), array( '広告・制作会社', '広告代理店', 50 ), array( '建設会社', '建設会社', 50 ), array( '製造業・工場', '製造業', 50 ),
+				array( '運送・物流', '運送会社', 50 ), array( '農園・観光農園', '観光農園', 60 ), array( '酒蔵・ワイナリー', '酒蔵', 60 ), array( '神社', '神社', 50 ), array( '教会', '教会', 50 ),
+				array( 'NPO・団体', 'NPO法人', 50 ), array( '商店街・商工会', '商店街', 60 ), array( '自治体・観光協会', '観光協会', 55 ),
+			),
+		),
+		'遊び・観光' => array(
+			60,
+			'チケット・予約・会員証・イベントのお知らせが向く',
+			array(
+				array( '映画館', '映画館', 55 ), array( 'ネットカフェ・漫画喫茶', 'ネットカフェ', 55 ), array( 'ゲームセンター', 'ゲームセンター', 55 ), array( '脱出ゲーム・体験', '体験施設', 60 ), array( '釣り堀・釣り船', '釣り船', 60 ),
+				array( '水族館・動物園', '水族館', 55 ), array( '美術館・博物館', '美術館', 50 ), array( '遊園地・テーマパーク', 'テーマパーク', 55 ), array( '観光ツアー', '観光ツアー', 60 ), array( 'ライブハウス', 'ライブハウス', 60 ),
+				array( 'ダーツ・ビリヤード', 'ダーツバー', 60 ), array( '麻雀店', '雀荘', 60 ),
+			),
+		),
+	);
+	$out = array();
+	foreach ( $data as $group => $d ) {
+		foreach ( $d[2] as $it ) {
+			$k         = 'm' . substr( md5( $it[0] ), 0, 7 );
+			$out[ $k ] = array( $it[0], $it[1], isset( $it[2] ) ? (int) $it[2] : (int) $d[0], $d[1], $group );
+		}
+	}
+	return $out;
 }
 
 /** 言葉から、自分で追加するジャンルを作る（同じ言葉なら同じもの）。 */
@@ -1092,11 +1218,17 @@ function apprex_ld_auto_box() {
 				<?php endforeach; ?>
 			</td></tr>
 			<tr><th>ジャンル</th><td>
+				<input type="search" placeholder="ジャンルを探す（例：ヨガ）" oninput="var q=this.value.trim();document.querySelectorAll('.ldg-item').forEach(function(l){l.style.display=!q||l.textContent.indexOf(q)>-1?'':'none';});document.querySelectorAll('.ldg-grp').forEach(function(d){if(q)d.open=true;});" style="width:260px;margin-bottom:8px">
 				<?php foreach ( $groups as $gl => $items ) : ?>
-					<div style="margin:0 0 6px"><b style="display:inline-block;width:150px;color:#646970;font-size:12px"><?php echo esc_html( $gl ); ?></b>
-					<?php foreach ( $items as $k => $l ) : ?>
-						<label style="margin-right:10px;white-space:nowrap"><input type="checkbox" name="apprex_ld_auto_genres[]" value="<?php echo esc_attr( $k ); ?>" <?php checked( in_array( $k, $sel, true ) ); ?>> <?php echo esc_html( $l ); ?></label>
-					<?php endforeach; ?></div>
+					<?php $apprex_n = count( array_intersect( array_keys( $items ), $sel ) ); ?>
+					<details class="ldg-grp" style="margin:0 0 6px;border:1px solid #e5e7eb;border-radius:6px;padding:6px 10px"<?php echo $apprex_n ? ' open' : ''; ?>>
+						<summary style="cursor:pointer;font-weight:700"><?php echo esc_html( $gl ); ?>（<?php echo (int) count( $items ); ?>）<?php echo $apprex_n ? '<span style="color:#2271b1">　選択中 ' . (int) $apprex_n . '</span>' : ''; ?></summary>
+						<div style="display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px">
+						<?php foreach ( $items as $k => $l ) : ?>
+							<label class="ldg-item" style="white-space:nowrap"><input type="checkbox" name="apprex_ld_auto_genres[]" value="<?php echo esc_attr( $k ); ?>" <?php checked( in_array( $k, $sel, true ) ); ?>> <?php echo esc_html( $l ); ?></label>
+						<?php endforeach; ?>
+						</div>
+					</details>
 				<?php endforeach; ?>
 			</td></tr>
 			<tr><th><label for="ld_areas">地域</label></th><td><textarea id="ld_areas" name="apprex_ld_auto_areas" rows="4" class="regular-text" placeholder="東京都渋谷区&#10;東京都新宿区&#10;大阪市北区"><?php echo esc_textarea( (string) get_option( 'apprex_ld_auto_areas', '' ) ); ?></textarea><p class="description">1行に1つ。</p></td></tr>
