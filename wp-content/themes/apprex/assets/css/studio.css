@@ -538,3 +538,38 @@
 .rn-studio .osc .osc-ph{display:block;width:156px;height:300px;margin:0 auto 8px;overflow:hidden;border-radius:16px;border:5px solid #11151f;background:#f3f5fa;box-shadow:0 6px 16px rgba(15,23,42,.12)}
 .rn-studio .osc .osc-ph iframe{width:390px;height:750px;border:0;transform:scale(.375);transform-origin:0 0;pointer-events:none;display:block}
 .rn-studio .orig-note{margin:8px 0 0;padding:8px 10px;border-radius:8px;background:#fff7e6;border:1px solid #f5d38a;color:#8a5a00;font-size:.8rem;line-height:1.6}
+
+/* ===== v1.114 AIスタジオのデザインを、本物のアプリに近い見た目に ===== */
+.rn-studio .ph{background:linear-gradient(145deg,#d9dde3,#8a9099 22%,#5d636b 48%,#a7adb5 75%,#e3e6ea);padding:5px;border-radius:40px;box-shadow:0 1px 0 1px #3b3f45 inset,0 26px 50px rgba(11,29,63,.28),0 8px 16px rgba(11,29,63,.18)}
+.rn-studio .ph::before{content:"";position:absolute;inset:3px;border-radius:37px;background:#0b0c0e}
+.rn-studio .ph .scr{position:relative;z-index:1;border-radius:33px;border:4px solid #0b0c0e}
+.rn-studio .ph.sm{padding:3px;border-radius:26px}
+.rn-studio .ph.sm::before{inset:2px;border-radius:24px}
+.rn-studio .ph.sm .scr{border-radius:22px;border-width:3px}
+.rn-studio .ph .notch{top:12px;width:62px;height:17px;border-radius:12px;background:#000;z-index:5}
+.rn-studio .ph.sm .notch{top:8px;width:40px;height:11px}
+.rn-studio .ph .scr::after{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(115deg,rgba(255,255,255,.12),rgba(255,255,255,0) 35%);pointer-events:none;z-index:4}
+.rn-studio .s-top{flex-direction:column;align-items:stretch;gap:.2em;padding:.6em 1.2em .8em}
+.rn-studio .s-status{display:flex;justify-content:space-between;align-items:center;font-size:.95em;padding:0 .6em 1.2em;font-family:Inter,var(--f-num),sans-serif}
+.rn-studio .s-status span{display:flex;gap:.35em;align-items:center}
+.rn-studio .s-status svg{height:.85em;fill:currentColor}
+.rn-studio .s-top-in{display:flex;align-items:center;gap:.7em}
+.rn-studio .s-hero{margin:0;border-radius:0;min-height:11em;padding:1.2em 1.3em}
+.rn-studio .s-hero.tall{min-height:17em}
+.rn-studio .s-hero.photo::before{background:linear-gradient(180deg,rgba(0,0,0,.05) 20%,rgba(0,0,0,.72))}
+.rn-studio .s-hero b{font-size:1.4em;font-weight:900;text-shadow:0 2px 8px rgba(0,0,0,.3)}
+.rn-studio .s-hero+.s-res,.rn-studio .s-hero+.s-grid,.rn-studio .s-hero+.s-list{margin-top:.9em}
+.rn-studio .s-btn{box-shadow:0 2px 8px rgba(15,23,42,.07);padding:.9em .3em .7em}
+.rn-studio .s-btn i,.rn-studio .s-li i{background:linear-gradient(145deg,var(--c2),var(--c1));box-shadow:0 3px 8px rgba(0,0,0,.15)}
+.rn-studio .s-btn svg,.rn-studio .s-li svg{fill:none;stroke:#fff;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.rn-studio .s-btn i svg{width:1.45em!important;height:1.45em!important}
+.rn-studio .s-li i svg{width:1.25em!important;height:1.25em!important}
+.rn-studio .s-item i{background-size:cover;background-position:center}
+.rn-studio .s-tab{background:var(--c1);border-top:0;color:rgba(255,255,255,.7);padding:.6em .3em 1.3em}
+.rn-studio .s-tab span{display:grid;justify-items:center;gap:.2em}
+.rn-studio .s-tab svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.rn-studio .s-tab em{font-style:normal;font-size:.9em}
+.rn-studio .s-tab span.on{color:#fff}
+.rn-studio .s-cat i{background-size:cover}
+.rn-studio .s-coupon{grid-template-columns:auto 1fr auto}
+.rn-studio .s-coupon i{width:4.4em;background:linear-gradient(135deg,var(--c2),var(--c1));background-size:cover;background-position:center}

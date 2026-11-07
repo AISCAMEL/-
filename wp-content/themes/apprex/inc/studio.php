@@ -339,7 +339,9 @@ add_action( 'wp_enqueue_scripts', function () {
 	wp_enqueue_style( 'apprex-studio-fonts', 'https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@700&family=M+PLUS+Rounded+1c:wght@700;800&display=swap', array(), null );
 	wp_enqueue_style( 'apprex-studio', APPREX_URI . '/assets/css/studio.css', array( 'apprex-style' ), APPREX_VERSION );
 
+	$apprex_mock = APPREX_URI . '/assets/images/mock/'; // 業種ごとの写真（デザインの見本用）。
 	$cfg = array(
+		'mock' => $apprex_mock,
 		'root'      => esc_url_raw( rest_url( 'apprex/v1/' ) ),
 		'nonce'     => wp_create_nonce( 'wp_rest' ),
 		'loggedIn'  => is_user_logged_in(),

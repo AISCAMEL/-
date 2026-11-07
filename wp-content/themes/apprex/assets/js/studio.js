@@ -258,34 +258,62 @@ function shade(hex,k){var n=parseInt(hex.slice(1),16),r=n>>16,g=n>>8&255,b=n&255
 function palette(){ if(S.d.custom){return [shade(S.d.custom,.45),S.d.custom,'カスタム（'+S.d.custom+'）'];} var c=COLORS[S.d.color]; return [c[1],c[2],c[0]]; }
 
 /* ---------- phone renderer ---------- */
+/* 本物のアプリに近づけるためのアイコン（線の絵）。言葉から選ぶ。 */
+var SIC={
+  cal:'<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M16 3v4M8 3v4M3 10h18"/>',
+  menu:'<path d="M4 6h16M4 12h16M4 18h10"/>',
+  ticket:'<path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/><path d="M13 6v12"/>',
+  stamp:'<circle cx="12" cy="12" r="8"/><path d="M8 12l3 3 5-6"/>',
+  bell:'<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
+  pin:'<path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/>',
+  card:'<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h4"/>',
+  star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
+  staff:'<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20a6 6 0 0 1 12 0M14 20a4 4 0 0 1 7 0"/>',
+  yen:'<path d="M6 4l6 8 6-8M12 12v8M8 13h8M8 17h8"/>',
+  img:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/>',
+  cart:'<circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h2l2.5 11h11l2-8H7"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  doc:'<path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7M14 3v5h5"/>',
+  chat:'<path d="M4 5h16v11H9l-5 4z"/>',
+  home:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  play:'<circle cx="12" cy="12" r="9"/><path d="M10 8l6 4-6 4z"/>',
+  flag:'<path d="M5 21V4M5 4h12l-2 4 2 4H5"/>',
+  build:'<rect x="4" y="3" width="10" height="18"/><path d="M14 9h6v12H14M7 7h4M7 11h4M7 15h4"/>'
+};
+var SIC_WORDS=[[/予約|レッスン|打席/,'cal'],[/メニュー|お品書き|コース|料金|プラン|商品/,'menu'],[/クーポン/,'ticket'],[/スタンプ/,'stamp'],[/お知らせ|ニュース|新商品/,'bell'],[/アクセス|地図|店舗/,'pin'],[/会員証|ポイント/,'card'],[/スタイル|ギャラリー|写真/,'img'],[/スタッフ|講師/,'staff'],[/ストア|ショップ|EC|カート/,'cart'],[/順番待ち|診療時間|時間/,'clock'],[/問診|欠席|連絡/,'doc'],[/コンペ|大会/,'flag'],[/動画/,'play'],[/問い合わせ|相談/,'chat'],[/ホーム/,'home'],[/会社|企業|事業/,'build']];
+function sic(word,size){var k='star';for(var i=0;i<SIC_WORDS.length;i++){if(SIC_WORDS[i][0].test(word)){k=SIC_WORDS[i][1];break;}}return '<svg viewBox="0 0 24 24" aria-hidden="true" style="width:'+(size||1.6)+'em;height:'+(size||1.6)+'em">'+SIC[k]+'</svg>';}
+/* 写真：のせた写真がなければ、業種の見本の写真（あとで差し替えられる）。 */
+function heroPhoto(){ if(IMG.photo){return IMG.photo;} var k=(S.d&&S.d.ind)||'food'; return CFG.mock?CFG.mock+'ph-'+(/^(food|beauty|golf|clinic|school|retail)$/.test(k)?k:'food')+'.jpg':''; }
+var STATUS_BAR='<div class="s-status"><b>9:41</b><span><svg viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg><svg viewBox="0 0 27 12"><rect x="1" y="1" width="22" height="10" rx="3" fill="none" stroke="currentColor" opacity=".5"/><rect x="2.5" y="2.5" width="17" height="7" rx="1.5"/></svg></span></div>';
 function phone(screen,small){
   var d=D(), p=palette(), t=TONES[S.d.tone], name=esc(storeName());
   var logo=IMG.logo?'<img src="'+IMG.logo+'" alt="">':esc(storeName().charAt(0));
-  var top='<div class="s-top"><span class="s-logo">'+logo+'</span><b>'+name+'</b></div>';
-  var heroStyle=IMG.photo?' style="background-image:url('+IMG.photo+')"':'';
-  var hero='<div class="s-hero'+(S.d.tall?' tall':'')+(IMG.photo?' photo':'')+'"'+heroStyle+'><small>WELCOME</small><b>'+esc(d.catch)+'</b></div>';
-  var tabs=function(on){var a=(S.app&&S.app.footer&&S.app.footer.length)?S.app.footer.slice(0,4).map(function(k){return pageName(S.app,k);}):['ホーム','クーポン','予約','会員証']; on=on===0?0:-1;return '<div class="s-tab">'+a.map(function(x,i){return '<span'+(i===on?' class="on"':'')+'>'+x+'</span>';}).join('')+'</div>';};
+  var top='<div class="s-top">'+STATUS_BAR+'<div class="s-top-in"><span class="s-logo">'+logo+'</span><b>'+name+'</b></div></div>';
+  var PH=heroPhoto();
+  var heroStyle=PH?' style="background-image:url('+PH+')"':'';
+  var hero='<div class="s-hero'+(S.d.tall?' tall':'')+(PH?' photo':'')+'"'+heroStyle+'><small>WELCOME</small><b>'+esc(d.catch)+'</b></div>';
+  var tabs=function(on){var a=(S.app&&S.app.footer&&S.app.footer.length)?S.app.footer.slice(0,4).map(function(k){return pageName(S.app,k);}):['ホーム','クーポン','予約','会員証']; on=on===0?0:-1;return '<div class="s-tab">'+a.map(function(x,i){return '<span'+(i===on?' class="on"':'')+'>'+sic(x,1.9)+'<em>'+x+'</em></span>';}).join('')+'</div>';};
   var body='';
   if(screen==='home'){
     var res=(S.d.resBig?'<div class="s-res">今すぐ予約する</div>':'')+(S.tier==='biz'?'<div class="s-mystore">いつもの店舗：<b>'+esc(storeNames()[0]||'本店')+'</b><span>店舗を変える ›</span></div>':'');
     if(S.d.variant==='B'){
-      body=hero+res+'<div class="s-list">'+d.menus.map(function(m){return '<div class="s-li"><i>'+esc(m.charAt(0))+'</i>'+esc(m)+'<span>›</span></div>';}).join('')+'</div>';
+      body=hero+res+'<div class="s-list">'+d.menus.map(function(m){return '<div class="s-li"><i>'+sic(m)+'</i>'+esc(m)+'<span>›</span></div>';}).join('')+'</div>';
     }else if(S.d.variant==='C'){
-      body='<div class="s-hero tall'+(IMG.photo?' photo':'')+'"'+heroStyle+'><small>WELCOME</small><b>'+esc(d.catch)+'</b></div>'+res+'<div class="s-grid" style="grid-template-columns:repeat(2,1fr)">'+d.menus.slice(0,4).map(function(m){return '<div class="s-btn"><i>'+esc(m.charAt(0))+'</i>'+esc(m)+'</div>';}).join('')+'</div>';
+      body='<div class="s-hero tall'+(PH?' photo':'')+'"'+heroStyle+'><small>WELCOME</small><b>'+esc(d.catch)+'</b></div>'+res+'<div class="s-grid" style="grid-template-columns:repeat(2,1fr)">'+d.menus.slice(0,4).map(function(m){return '<div class="s-btn"><i>'+sic(m)+'</i>'+esc(m)+'</div>';}).join('')+'</div>';
     }else{
-      body=hero+res+'<div class="s-grid" style="grid-template-columns:repeat('+S.d.cols+',1fr)">'+d.menus.map(function(m){return '<div class="s-btn"><i>'+esc(m.charAt(0))+'</i>'+esc(m)+'</div>';}).join('')+'</div><div class="s-cpn">'+esc(d.cps[0][0])+'</div>';
+      body=hero+res+'<div class="s-grid" style="grid-template-columns:repeat('+S.d.cols+',1fr)">'+d.menus.map(function(m){return '<div class="s-btn"><i>'+sic(m)+'</i>'+esc(m)+'</div>';}).join('')+'</div><div class="s-cpn">'+esc(d.cps[0][0])+'</div>';
     }
     body+=tabs(0);
   }else if(screen==='menu'){
     if(S.tier==='start'){
-      body='<div class="s-h">カタログ</div><div class="s-cats">'+['最新号','おすすめ特集','季節の限定','総合カタログ'].map(function(c,i){return '<div class="s-cat"><i'+(i===0&&IMG.photo?' style="background-image:url('+IMG.photo+')"':'')+'><em>'+esc(storeName())+'</em></i><b>'+c+'</b><small>'+(12+i*8)+'ページ</small></div>';}).join('')+'</div>'+tabs(-1);
+      body='<div class="s-h">カタログ</div><div class="s-cats">'+['最新号','おすすめ特集','季節の限定','総合カタログ'].map(function(c,i){return '<div class="s-cat"><i'+(PH?' style="background-image:url('+PH+');background-position:'+(i*30)+'% 50%"':'')+'><em>'+esc(storeName())+'</em></i><b>'+c+'</b><small>'+(12+i*8)+'ページ</small></div>';}).join('')+'</div>'+tabs(-1);
     }else if(S.tier==='biz'){
-      body='<div class="s-h">ネットショップ</div><div class="s-stores">'+storeNames().slice(0,2).concat(['オンライン']).map(function(x,i){return '<span'+(i===0?' class="on"':'')+'>'+x+'</span>';}).join('')+'</div>'+d.items.slice(0,3).map(function(it){return '<div class="s-item"><i></i><div><b>'+esc(it[0])+'</b><span>'+esc(it[1])+'</span></div><em class="s-cart">カート</em></div>';}).join('')+tabs(-1);
+      body='<div class="s-h">ネットショップ</div><div class="s-stores">'+storeNames().slice(0,2).concat(['オンライン']).map(function(x,i){return '<span'+(i===0?' class="on"':'')+'>'+x+'</span>';}).join('')+'</div>'+d.items.slice(0,3).map(function(it,ii){return '<div class="s-item"><i'+(PH?' style="background-image:url('+PH+');background-position:'+(['20% 50%','50% 60%','80% 40%'][ii])+'"':'')+'></i><div><b>'+esc(it[0])+'</b><span>'+esc(it[1])+'</span></div><em class="s-cart">カート</em></div>';}).join('')+tabs(-1);
     }else{
-      body='<div class="s-h">メニュー</div>'+d.items.map(function(it){return '<div class="s-item"><i></i><div><b>'+esc(it[0])+'</b><span>'+esc(it[1])+'</span></div></div>';}).join('')+tabs(-1);
+      body='<div class="s-h">メニュー</div>'+d.items.map(function(it,ii){return '<div class="s-item"><i'+(PH?' style="background-image:url('+PH+');background-position:'+(['20% 50%','50% 60%','80% 40%','35% 80%','65% 20%'][ii%5])+'"':'')+'></i><div><b>'+esc(it[0])+'</b><span>'+esc(it[1])+'</span></div></div>';}).join('')+tabs(-1);
     }
   }else if(screen==='coupon'){
-    body='<div class="s-h">クーポン</div>'+d.cps.map(function(c){return '<div class="s-coupon"><div><b>'+esc(c[0])+'</b><small>'+esc(c[1])+'</small></div><em>使う</em></div>';}).join('')+'<div class="s-cpn">新しいクーポンはプッシュ通知でお知らせ</div>'+tabs(1);
+    body='<div class="s-h">クーポン</div>'+d.cps.map(function(c,ci){return '<div class="s-coupon">'+(PH?'<i style="background-image:url('+PH+');background-position:'+(ci?'70% 40%':'30% 60%')+'"></i>':'<i></i>')+'<div><b>'+esc(c[0])+'</b><small>'+esc(c[1])+'</small></div><em>使う</em></div>';}).join('')+'<div class="s-cpn">新しいクーポンはプッシュ通知でお知らせ</div>'+tabs(1);
   }else if(screen==='reserve'){
     var dd=['月<br>20','火<br>21','水<br>22','木<br>23','金<br>24'];
     body='<div class="s-h">ご予約</div><div class="s-dates">'+dd.map(function(x,i){return '<span'+(i===1?' class="on"':'')+'>'+x+'</span>';}).join('')+'</div><div class="s-times">'+['11:00','12:00','13:00','17:00','18:00','19:00'].map(function(x,i){return '<span class="'+(i===1?'x':(i===4?'on':''))+'">'+x+'</span>';}).join('')+'</div><div class="s-res">18:00で予約する</div>'+tabs(2);
