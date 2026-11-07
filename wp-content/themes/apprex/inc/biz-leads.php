@@ -900,6 +900,19 @@ add_action(
 				}
 				$msg = '状態を「' . apprex_ld_statuses()[ $st ] . '」にしました。';
 			}
+		} elseif ( 'mdraft' === $do && function_exists( 'apprex_ldm_make_draft' ) ) {
+			$ok   = 0;
+			$errs = array();
+			foreach ( array_slice( array_map( 'absint', (array) ( $_POST['ids'] ?? array() ) ), 0, 10 ) as $id ) {
+				$r = apprex_ldm_make_draft( $id );
+				if ( true === $r ) {
+					$ok++;
+				} elseif ( is_wp_error( $r ) ) {
+					$errs[ $r->get_error_message() ] = true;
+				}
+			}
+			$msg  = $ok . '件の下書きを作りました。下の「送る前の確認」で読んでから送ってください。' . ( $errs ? '（作れなかった理由：' . implode( '／', array_keys( $errs ) ) . '）' : '' );
+			$back = admin_url( 'admin.php?page=apprex-leads#ldm' );
 		} elseif ( 'gptest' === $do ) {
 			$GLOBALS['apprex_gp_debug'] = array();
 			$r   = apprex_gp_search( '東京駅 カフェ', 20 );
@@ -1165,7 +1178,8 @@ function apprex_ld_page() {
 				<?php endforeach; ?>
 				</tbody>
 			</table>
-			<p><?php submit_button( 'チェックしたお店のホームページを調べる（AI・10件まで）', 'secondary', 'submit', false ); ?></p>
+			<p><?php submit_button( 'チェックしたお店のホームページを調べる（AI・10件まで）', 'secondary', 'submit', false ); ?>
+				<?php if ( function_exists( 'apprex_ldm_box' ) ) : ?><button class="button" name="do" value="mdraft">チェックしたお店のメールの下書きを作る（AI・10件まで）</button><?php endif; ?></p>
 		</form>
 
 		<h2>ジャンルごとの成果</h2>
@@ -1180,6 +1194,7 @@ function apprex_ld_page() {
 		?>
 		</tbody></table>
 
+		<?php if ( function_exists( 'apprex_ldm_box' ) ) { apprex_ldm_box(); } ?>
 		<?php apprex_ld_auto_box(); ?>
 		<?php apprex_ld_area_script(); ?>
 
@@ -1247,6 +1262,7 @@ function apprex_ld_detail( $id ) {
 		<input name="note" placeholder="メモ（例：電話で話した・失注の理由など）" style="width:360px">
 		<?php submit_button( '保存', 'primary', 'submit', false ); ?>
 	</form>
+	<?php if ( function_exists( 'apprex_ldm_detail_box' ) ) { apprex_ldm_detail_box( $id ); } ?>
 	<h3>これまでの記録</h3>
 	<table class="widefat striped" style="max-width:900px"><tbody>
 	<?php
