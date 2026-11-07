@@ -37,6 +37,9 @@ function apprex_rd_fixed( $path ) {
 		'/matching-cases'  => apprex_rd_page( array( 'matching-app', 'matching' ) ),
 		'/hello-world'     => '',
 		'/index.html'      => home_url( '/' ),
+		'/cases.html'      => (string) get_post_type_archive_link( 'case' ),
+		'/blog-detail.html' => apprex_rd_blog(),
+		'/blog.html'       => apprex_rd_blog(),
 		'/contact.html'    => apprex_rd_page( array( 'contact' ) ),
 		'/company.html'    => apprex_rd_page( array( 'company' ) ),
 		'/pricing.html'    => apprex_rd_page( array( 'pricing' ) ),
@@ -214,7 +217,7 @@ function apprex_rd_page_ui() {
 			return $b[1] <=> $a[1];
 		}
 	);
-	$tests = array( '/privacy.html', '/legal.html', '/free-trial.html', '/matching-cases', '/subsidy', '/partner', '/blog', '/2026/04/05/hello-world/' );
+	$tests = array( '/index.html', '/pricing.html', '/cases.html', '/blog-detail.html', '/privacy.html', '/legal.html', '/free-trial.html', '/matching-cases', '/subsidy', '/partner', '/blog', '/2026/04/05/hello-world/' );
 	?>
 	<div class="wrap">
 		<h1>転送（301）</h1>
