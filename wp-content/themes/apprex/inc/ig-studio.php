@@ -168,6 +168,29 @@ function apprex_ig_text( $im, $lines, $size, $font, $x, $y, $color, $lh = 1.45 )
 	return (int) ( $y + $size + ( count( $lines ) - 1 ) * $size * $lh + $size * 0.4 );
 }
 
+/** 蛍光ペンで線を引いたような文字（行の下半分に色）。戻り値は最後の行の下端。 */
+function apprex_ig_marker_text( $im, $lines, $size, $font, $x, $y, $ink, $mark, $lh = 1.4 ) {
+	foreach ( $lines as $i => $l ) {
+		$b    = imagettfbbox( $size, 0, $font, $l );
+		$base = (int) ( $y + $size + $i * $size * $lh );
+		imagefilledrectangle( $im, $x - 10, (int) ( $base - $size * 0.42 ), $x + ( $b[2] - $b[0] ) + 10, (int) ( $base + $size * 0.18 ), $mark );
+		imagettftext( $im, $size, 0, $x, $base, $ink, $font, $l );
+	}
+	return (int) ( $y + $size + ( count( $lines ) - 1 ) * $size * $lh + $size * 0.4 );
+}
+
+/** 帯の上に文字（1行ずつ色の帯）。戻り値は最後の帯の下端。 */
+function apprex_ig_band_text( $im, $lines, $size, $font, $x, $y, $ink, $band, $gap = 18 ) {
+	foreach ( $lines as $l ) {
+		$b = imagettfbbox( $size, 0, $font, $l );
+		$h = (int) ( $size * 1.55 );
+		imagefilledrectangle( $im, $x - 22, $y, $x + ( $b[2] - $b[0] ) + 22, $y + $h, $band );
+		imagettftext( $im, $size, 0, $x, (int) ( $y + $h / 2 + $size * 0.45 ), $ink, $font, $l );
+		$y += $h + $gap;
+	}
+	return $y;
+}
+
 /** 角丸の四角。 */
 function apprex_ig_round( $im, $x, $y, $w, $h, $r, $col ) {
 	imagefilledrectangle( $im, $x + $r, $y, $x + $w - $r, $y + $h, $col );
@@ -210,6 +233,10 @@ function apprex_ig_patterns() {
 		'white'   => array( 'label' => 'ホワイト（上に写真・下に黒い文字）', 'bg' => '#ffffff', 'ink' => '#111827', 'sub' => '#374151', 'a1' => '#e60012', 'a2' => '#111827', 'cover' => 'split', 'cbg' => '#ffffff', 'dark' => false ),
 		'pop'     => array( 'label' => 'ポップ（黄色・文字だけの表紙）', 'bg' => '#fffbeb', 'ink' => '#1f2937', 'sub' => '#374151', 'a1' => '#f97316', 'a2' => '#d97706', 'cover' => 'type', 'cbg' => '#facc15', 'dark' => false ),
 		'natural' => array( 'label' => 'ナチュラル（ベージュ・グリーン）', 'bg' => '#f6f1e9', 'ink' => '#3b352c', 'sub' => '#57514a', 'a1' => '#4d7c57', 'a2' => '#c49a5a', 'cover' => 'split', 'cbg' => '#f6f1e9', 'dark' => false ),
+		'red'     => array( 'label' => '★インパクト赤（大きな数字）', 'bg' => '#ffffff', 'ink' => '#111111', 'sub' => '#333333', 'a1' => '#e60012', 'a2' => '#ffd400', 'cover' => 'bignum', 'cbg' => '#e60012', 'dark' => false, 'pt' => 'bignum' ),
+		'ticker'  => array( 'label' => '★黒×黄色（帯の見出し）', 'bg' => '#ffd400', 'ink' => '#111111', 'sub' => '#222222', 'a1' => '#111111', 'a2' => '#111111', 'cover' => 'ticker', 'cbg' => '#111111', 'dark' => false, 'pt' => 'band' ),
+		'diagonal' => array( 'label' => '★ななめ（写真＋色の帯）', 'bg' => '#ffffff', 'ink' => '#0b1f44', 'sub' => '#334155', 'a1' => '#ff3b30', 'a2' => '#0b1f44', 'cover' => 'diagonal', 'cbg' => '#0b1f44', 'dark' => false, 'pt' => 'band' ),
+		'marker'  => array( 'label' => '★蛍光ペン（白×マーカー）', 'bg' => '#ffffff', 'ink' => '#111111', 'sub' => '#374151', 'a1' => '#ff2d87', 'a2' => '#fff200', 'cover' => 'marker', 'cbg' => '#ffffff', 'dark' => false, 'pt' => 'marker' ),
 		'dark'    => array( 'label' => 'ダーク（黒×ゴールド・上に写真）', 'bg' => '#111111', 'ink' => '#ffffff', 'sub' => '#d1d5db', 'a1' => '#c9a227', 'a2' => '#c9a227', 'cover' => 'split', 'cbg' => '#111111', 'dark' => true ),
 	);
 }
@@ -221,12 +248,14 @@ function apprex_ig_pattern_for( $post_id ) {
 	if ( isset( $all[ $p ] ) ) {
 		return $p;
 	}
-	$set = (string) get_option( 'apprex_ig_pattern', 'rotate' );
+	$set = (string) get_option( 'apprex_ig_pattern', 'rotate_impact' );
 	if ( isset( $all[ $set ] ) ) {
 		return $set;
 	}
-	// 順番に使う（記事ごとに決めて、作り直しても同じにする）。
-	$keys = array_keys( $all );
+	// 順番に使う（記事ごとに決めて、作り直しても同じにする）。インパクト系だけ／全部。
+	$keys = 'rotate' === $set ? array_keys( $all ) : array_keys( array_filter( $all, function ( $x ) {
+		return ! empty( $x['pt'] );
+	} ) );
 	$i    = (int) get_option( 'apprex_ig_pat_i', 0 );
 	update_option( 'apprex_ig_pat_i', $i + 1, false );
 	$p = $keys[ $i % count( $keys ) ];
@@ -308,6 +337,59 @@ function apprex_ig_render( $post, $copy ) {
 		apprex_ig_text( $im, $lines, 64, $bold, 72, $ph + 96, apprex_ig_color( $im, $navy ), 1.38 );
 		imagettftext( $im, 28, 0, 72, $H - 120, apprex_ig_color( $im, $pal['sub'] ), $med, '→ スワイプして読む' );
 		$footer( $im, 1, false );
+	} elseif ( 'bignum' === $pal['cover'] ) {
+		// 大きな数字（見出しの数字。なければポイントの数）。
+		$big = preg_match( '/[0-9０-９]+/u', $copy['cover'], $mm ) ? mb_convert_kana( $mm[0], 'n' ) : (string) count( $copy['points'] );
+		$bsz = strlen( $big ) > 1 ? 420 : 560;
+		$bb  = imagettfbbox( $bsz, 0, $bold, $big );
+		imagettftext( $im, $bsz, 0, $W - 60 - ( $bb[2] - $bb[0] ), 40 + $bsz, apprex_ig_color( $im, '#ffffff', 18 ), $bold, $big );
+		imagefilledrectangle( $im, 0, $H - 470, $W, $H, apprex_ig_color( $im, '#111111', 0 ) );
+		$lines = apprex_ig_wrap( $copy['cover'], 72, $bold, $W - 144, 3 );
+		$y     = $H - 430;
+		apprex_ig_text( $im, $lines, 72, $bold, 72, $y, apprex_ig_color( $im, '#ffffff' ), 1.32 );
+		// ななめのステッカー「保存版」。
+		imagefilledellipse( $im, 200, 210, 250, 250, apprex_ig_color( $im, $orng ) );
+		imagettftext( $im, 50, 14, 112, 248, apprex_ig_color( $im, '#111111' ), $bold, '保存版' );
+		imagettftext( $im, 28, 0, $W - 360, $H - 120, apprex_ig_color( $im, '#ffffff', 30 ), $bold, 'スワイプして読む →' );
+		$footer( $im, 1, true );
+	} elseif ( 'ticker' === $pal['cover'] ) {
+		// 黒の地に、黄色の帯の見出し。
+		for ( $k = -2; $k < 14; $k++ ) {
+			imagefilledpolygon( $im, array( $k * 140, 0, $k * 140 + 60, 0, $k * 140 - 340, 400, $k * 140 - 400, 400 ), apprex_ig_color( $im, '#ffd400', 112 ) );
+		}
+		$pill( $im, 72, 96, array( array( 'APPREX', '#111111' ), array( '保存版', '#e60012' ) ), 26, '#ffd400' );
+		$lines = apprex_ig_wrap( $copy['cover'], 78, $bold, $W - 200, 4 );
+		$y     = (int) max( 330, ( $H - count( $lines ) * ( 78 * 1.55 + 18 ) ) / 2 );
+		$y     = apprex_ig_band_text( $im, $lines, 78, $bold, 94, $y, apprex_ig_color( $im, '#111111' ), apprex_ig_color( $im, '#ffd400' ) );
+		imagettftext( $im, 30, 0, 72, $H - 130, apprex_ig_color( $im, '#ffd400' ), $bold, 'スワイプして読む →' );
+		$footer( $im, 1, true );
+	} elseif ( 'diagonal' === $pal['cover'] ) {
+		// 写真の上に、ななめの色の帯と見出し。
+		if ( ! apprex_ig_cover( $im, $photo0, 0, 0, $W, $H ) ) {
+			imagefilledellipse( $im, 860, 260, 900, 900, apprex_ig_color( $im, $blue, 60 ) );
+		}
+		apprex_ig_shade( $im, 0, 300, 70, 127 );
+		imagefilledpolygon( $im, array( 0, 640, $W, 500, $W, 540, 0, 680 ), apprex_ig_color( $im, $blue ) );
+		imagefilledpolygon( $im, array( 0, 680, $W, 540, $W, $H, 0, $H ), apprex_ig_color( $im, $pal['cbg'] ) );
+		$pill( $im, 72, 80, array( array( 'APPREX', $pal['cbg'] ), array( '保存版', $blue ) ), 26 );
+		$lines = apprex_ig_wrap( $copy['cover'], 76, $bold, $W - 144, 3 );
+		apprex_ig_text( $im, $lines, 76, $bold, 72, 760, apprex_ig_color( $im, '#ffffff' ), 1.34 );
+		imagettftext( $im, 28, 0, 72, $H - 120, apprex_ig_color( $im, '#ffffff', 25 ), $bold, 'スワイプして読む →' );
+		$footer( $im, 1, true );
+	} elseif ( 'marker' === $pal['cover'] ) {
+		// 白い地に、蛍光ペンの見出し。
+		if ( apprex_ig_cover( $im, $photo0, 0, 0, $W, 470 ) ) {
+			apprex_ig_shade( $im, 0, 220, 80, 127 );
+		} else {
+			imagefilledrectangle( $im, 0, 0, $W, 470, apprex_ig_color( $im, $blue ) );
+		}
+		$pill( $im, 72, 72, array( array( 'APPREX', '#111111' ), array( '保存版', $blue ) ), 26 );
+		imagefilledellipse( $im, $W - 170, 470, 230, 230, apprex_ig_color( $im, $blue ) );
+		imagettftext( $im, 42, -12, $W - 248, 460, apprex_ig_color( $im, '#ffffff' ), $bold, '必見!' );
+		$lines = apprex_ig_wrap( $copy['cover'], 80, $bold, $W - 144, 3 );
+		apprex_ig_marker_text( $im, $lines, 80, $bold, 72, 640, apprex_ig_color( $im, '#111111' ), apprex_ig_color( $im, $orng ), 1.42 );
+		imagettftext( $im, 28, 0, 72, $H - 120, apprex_ig_color( $im, $pal['sub'] ), $bold, 'スワイプして読む →' );
+		$footer( $im, 1, false );
 	} elseif ( 'type' === $pal['cover'] ) {
 		// 文字だけ。地の色に大きな見出し。
 		imagefilledellipse( $im, 960, 140, 640, 640, apprex_ig_color( $im, '#ffffff', 80 ) );
@@ -344,6 +426,56 @@ function apprex_ig_render( $post, $copy ) {
 		$im = imagecreatetruecolor( $W, $H );
 		imagealphablending( $im, true );
 		imagefilledrectangle( $im, 0, 0, $W, $H, apprex_ig_color( $im, $pal['bg'] ) );
+		$mode = $pal['pt'] ?? 'std';
+		if ( 'std' !== $mode ) {
+			$num = sprintf( '%02d', $i + 1 );
+			$hl  = apprex_ig_wrap( $p['h'], 68, $bold, $W - 160, 2 );
+			if ( 'bignum' === $mode ) {
+				// 大きな数字を背景に。
+				$bb = imagettfbbox( 400, 0, $bold, $num );
+				imagettftext( $im, 400, 0, $W - 40 - ( $bb[2] - $bb[0] ), 440, apprex_ig_color( $im, $blue, 100 ), $bold, $num );
+				imagettftext( $im, 34, 0, 72, 200, apprex_ig_color( $im, $blue ), $bold, 'POINT ' . $num );
+				imagefilledrectangle( $im, 72, 226, 220, 234, apprex_ig_color( $im, $blue ) );
+				$y = apprex_ig_marker_text( $im, $hl, 68, $bold, 72, 470, apprex_ig_color( $im, $navy ), apprex_ig_color( $im, $orng ), 1.42 );
+				$tl = apprex_ig_wrap( $p['t'], 48, $med, $W - 144, 8 );
+				$y  = apprex_ig_text( $im, $tl, 48, $med, 72, $y + 56, apprex_ig_color( $im, $pal['sub'] ), 1.75 );
+				// 下に大きく「→ 次へ」。
+				if ( $i < count( $copy['points'] ) - 1 ) {
+					apprex_ig_round( $im, 72, $H - 230, 380, 80, 40, apprex_ig_color( $im, $blue ) );
+					imagettftext( $im, 32, 0, 112, $H - 178, apprex_ig_color( $im, '#ffffff' ), $bold, '次のポイント →' );
+				}
+			} elseif ( 'band' === $mode ) {
+				// 上に色の帯「POINT 01」、写真、見出し。
+				imagefilledrectangle( $im, 0, 0, $W, 210, apprex_ig_color( $im, $blue ) );
+				imagettftext( $im, 84, 0, 72, 150, apprex_ig_color( $im, 'ticker' === $pk ? '#ffd400' : '#ffffff' ), $bold, 'POINT ' . $num );
+				$top   = 210;
+				$photo = isset( $photos[ 1 + $i ] ) ? $photos[ 1 + $i ] : ( isset( $photos[0] ) ? $photos[0] : '' );
+				if ( $photo && apprex_ig_cover( $im, $photo, 0, 210, $W, 420 ) ) {
+					$top = 630;
+				}
+				$y = 'ticker' === $pk
+					? apprex_ig_band_text( $im, $hl, 64, $bold, 94, $top + 60, apprex_ig_color( $im, '#ffd400' ), apprex_ig_color( $im, '#111111' ), 14 ) - 10
+					: apprex_ig_text( $im, $hl, 66, $bold, 72, $top + 50, apprex_ig_color( $im, $navy ), 1.35 );
+				imagefilledrectangle( $im, 72, $y + 18, 200, $y + 28, apprex_ig_color( $im, 'ticker' === $pk ? '#111111' : $blue ) );
+				$tl = apprex_ig_wrap( $p['t'], 40, $med, $W - 144, $top > 300 ? 5 : 9 );
+				apprex_ig_text( $im, $tl, 40, $med, 72, $y + 58, apprex_ig_color( $im, $pal['sub'] ), 1.7 );
+			} else {
+				// 蛍光ペン：写真、番号、マーカーの見出し。
+				$top   = 140;
+				$photo = isset( $photos[ 1 + $i ] ) ? $photos[ 1 + $i ] : ( isset( $photos[0] ) && 1 === $i % 2 ? $photos[0] : '' );
+				if ( $photo && apprex_ig_cover( $im, $photo, 0, 0, $W, 480 ) ) {
+					$top = 540;
+				}
+				apprex_ig_round( $im, 72, $top, 250, 70, 35, apprex_ig_color( $im, $blue ) );
+				imagettftext( $im, 32, 0, 104, $top + 48, apprex_ig_color( $im, '#ffffff' ), $bold, 'POINT ' . $num );
+				$y  = apprex_ig_marker_text( $im, $hl, 68, $bold, 72, $top + 110, apprex_ig_color( $im, $navy ), apprex_ig_color( $im, $orng ), 1.42 );
+				$tl = apprex_ig_wrap( $p['t'], 42, $med, $W - 144, $top > 300 ? 6 : 9 );
+				apprex_ig_text( $im, $tl, 42, $med, 72, $y + 50, apprex_ig_color( $im, $pal['sub'] ), 1.75 );
+			}
+			$footer( $im, $n, $pal['dark'] );
+			$save( $im, $n );
+			continue;
+		}
 		$top   = 120;
 		$photo = isset( $photos[ 1 + $i ] ) ? $photos[ 1 + $i ] : ( isset( $photos[0] ) && 1 === $i % 2 ? $photos[0] : '' );
 		if ( $photo && apprex_ig_cover( $im, $photo, 0, 0, $W, 520 ) ) {

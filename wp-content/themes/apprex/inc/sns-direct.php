@@ -350,7 +350,7 @@ add_action( 'admin_init', function () {
 			return 'off' === $v ? 'off' : 'on';
 		},
 		'apprex_ig_pattern'    => function ( $v ) {
-			return function_exists( 'apprex_ig_patterns' ) && isset( apprex_ig_patterns()[ $v ] ) ? $v : 'rotate';
+			return ( function_exists( 'apprex_ig_patterns' ) && isset( apprex_ig_patterns()[ $v ] ) ) || 'rotate' === $v ? $v : 'rotate_impact';
 		},
 		'apprex_ig_reel'       => function ( $v ) {
 			return 'off' === $v ? 'off' : 'on';
@@ -408,9 +408,10 @@ function apprex_sns_settings_page() {
 				<?php if ( function_exists( 'apprex_ig_patterns' ) ) : ?>
 				<tr><th>画像のデザイン</th><td>
 					<select name="apprex_ig_pattern">
-						<option value="rotate" <?php selected( 'rotate', get_option( 'apprex_ig_pattern', 'rotate' ) ); ?>>記事ごとに順番に変える（おすすめ・5種類）</option>
+						<option value="rotate_impact" <?php selected( 'rotate_impact', get_option( 'apprex_ig_pattern', 'rotate_impact' ) ); ?>>記事ごとに順番に変える：インパクト系★だけ（おすすめ・4種類）</option>
+						<option value="rotate" <?php selected( 'rotate', get_option( 'apprex_ig_pattern', 'rotate_impact' ) ); ?>>記事ごとに順番に変える：全部（9種類）</option>
 						<?php foreach ( apprex_ig_patterns() as $k => $pt ) : ?>
-							<option value="<?php echo esc_attr( $k ); ?>" <?php selected( $k, get_option( 'apprex_ig_pattern', 'rotate' ) ); ?>>いつも「<?php echo esc_html( $pt['label'] ); ?>」</option>
+							<option value="<?php echo esc_attr( $k ); ?>" <?php selected( $k, get_option( 'apprex_ig_pattern', 'rotate_impact' ) ); ?>>いつも「<?php echo esc_html( $pt['label'] ); ?>」</option>
 						<?php endforeach; ?>
 					</select>
 					<p class="description">記事の編集画面の「インスタグラム」欄でも、記事ごとにデザインを選んで作り直せます。</p>
