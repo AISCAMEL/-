@@ -399,13 +399,17 @@ function apprex_gp_search( $query, $max = 20 ) {
 		);
 		apprex_gp_usage( 1 );
 		if ( is_wp_error( $r ) ) {
+			$GLOBALS['apprex_gp_debug'][] = array( $query, 0, 0, $r->get_error_message() );
 			return $out ? $out : $r;
 		}
-		$b = json_decode( (string) wp_remote_retrieve_body( $r ), true );
-		if ( 200 !== (int) wp_remote_retrieve_response_code( $r ) ) {
-			$msg = $b['error']['message'] ?? ( 'HTTP ' . wp_remote_retrieve_response_code( $r ) );
-			return $out ? $out : new WP_Error( 'gp', 'Google：' . $msg );
+		$b    = json_decode( (string) wp_remote_retrieve_body( $r ), true );
+		$code = (int) wp_remote_retrieve_response_code( $r );
+		if ( 200 !== $code ) {
+			$msg = $b['error']['message'] ?? ( 'HTTP ' . $code );
+			$GLOBALS['apprex_gp_debug'][] = array( $query, $code, 0, $msg );
+			return $out ? $out : new WP_Error( 'gp', 'Google：' . apprex_gp_explain( $msg ) );
 		}
+		$GLOBALS['apprex_gp_debug'][] = array( $query, $code, count( (array) ( $b['places'] ?? array() ) ), '' );
 		foreach ( (array) ( $b['places'] ?? array() ) as $p ) {
 			$out[] = apprex_gp_norm( $p );
 		}
@@ -415,6 +419,67 @@ function apprex_gp_search( $query, $max = 20 ) {
 		}
 	}
 	return array_slice( $out, 0, $max );
+}
+
+/** Google のエラーの文を、分かる言葉にする。 */
+function apprex_gp_explain( $msg ) {
+	$m = (string) $msg;
+	if ( preg_match( '/API key not valid|API_KEY_INVALID/i', $m ) ) {
+		return 'APIキーが正しくありません。コピーしたキーをもう一度貼ってください。（' . $m . '）';
+	}
+	if ( preg_match( '/has not been used|is disabled|SERVICE_DISABLED|not enabled/i', $m ) ) {
+		return '「Places API (New)」が有効になっていません。Google Cloud の「ライブラリ」で有効にしてください。（' . $m . '）';
+	}
+	if ( preg_match( '/billing|BILLING/i', $m ) ) {
+		return 'Google Cloud でお支払い（カード）の登録が必要です。（' . $m . '）';
+	}
+	if ( preg_match( '/blocked|API_KEY_SERVICE_BLOCKED|referer|IP address/i', $m ) ) {
+		return 'APIキーの制限で止められています。キーの「APIの制限」に Places API (New) が入っているか、「アプリケーションの制限」が「なし」か確かめてください。（' . $m . '）';
+	}
+	return $m;
+}
+
+/** 探す言葉の言い換え（最大3つ）。 */
+function apprex_ld_terms( $term ) {
+	$map = array(
+		'美容室'         => array( '美容室', '美容院', 'ヘアサロン' ),
+		'バーバー'       => array( 'バーバー', '理容室', '床屋' ),
+		'ネイルサロン'   => array( 'ネイルサロン', 'ネイル' ),
+		'まつげエクステ' => array( 'まつげエクステ', 'まつげパーマ', 'アイラッシュ' ),
+		'エステサロン'   => array( 'エステサロン', 'エステ' ),
+		'脱毛サロン'     => array( '脱毛サロン', '脱毛' ),
+		'マッサージ'     => array( 'マッサージ', 'もみほぐし', 'リラクゼーション' ),
+		'整体'           => array( '整体', '整体院', '整骨院' ),
+		'整骨院'         => array( '整骨院', '接骨院' ),
+		'接骨院'         => array( '接骨院', '整骨院' ),
+		'鍼灸院'         => array( '鍼灸院', 'はり きゅう' ),
+		'パーソナルジム' => array( 'パーソナルジム', 'パーソナルトレーニング' ),
+		'フィットネスジム' => array( 'フィットネスジム', 'ジム', 'スポーツクラブ' ),
+		'ヨガスタジオ'   => array( 'ヨガスタジオ', 'ヨガ' ),
+		'ピラティス'     => array( 'ピラティス', 'ヨガ' ),
+		'学習塾'         => array( '学習塾', '塾', '個別指導' ),
+		'英会話教室'     => array( '英会話教室', '英会話スクール', '英語教室' ),
+		'歯科医院'       => array( '歯科医院', '歯医者', 'デンタルクリニック' ),
+		'クリニック'     => array( 'クリニック', '医院' ),
+		'カフェ'         => array( 'カフェ', '喫茶店', 'コーヒー' ),
+		'焼肉'           => array( '焼肉', '焼肉店' ),
+		'居酒屋'         => array( '居酒屋', '酒場' ),
+		'ラーメン'       => array( 'ラーメン', 'ラーメン屋' ),
+		'寿司'           => array( '寿司', '寿司屋' ),
+		'不動産会社'     => array( '不動産会社', '不動産' ),
+		'車検'           => array( '車検', '自動車整備', '自動車修理' ),
+		'クリーニング'   => array( 'クリーニング', 'クリーニング店' ),
+		'トリミングサロン' => array( 'トリミングサロン', 'トリミング', 'ペットサロン' ),
+		'動物病院'       => array( '動物病院', 'ペットクリニック' ),
+		'ゴルフスクール' => array( 'ゴルフスクール', 'ゴルフレッスン', 'ゴルフ練習場' ),
+		'パン屋'         => array( 'パン屋', 'ベーカリー' ),
+		'ケーキ屋'       => array( 'ケーキ屋', '洋菓子店', 'スイーツ' ),
+		'旅館'           => array( '旅館', 'ホテル', '民宿' ),
+		'税理士事務所'   => array( '税理士事務所', '税理士' ),
+		'リフォーム会社' => array( 'リフォーム会社', 'リフォーム' ),
+	);
+	$t = trim( (string) $term );
+	return isset( $map[ $t ] ) ? $map[ $t ] : array( $t );
 }
 
 /** 1件を読み直す。 */
@@ -529,11 +594,48 @@ function apprex_ld_collect( $genre, $area, $max = 20 ) {
 	if ( ! isset( $gs[ $genre ] ) ) {
 		return new WP_Error( 'ld', 'ジャンルを選んでください。' );
 	}
-	$area  = trim( (string) $area );
-	$query = trim( $area . ' ' . $gs[ $genre ][1] );
-	$res   = apprex_gp_search( $query, $max );
-	if ( is_wp_error( $res ) ) {
-		return $res;
+	$area = trim( preg_replace( '/[\s　]+/u', ' ', (string) $area ) );
+	if ( '' === $area ) {
+		return new WP_Error( 'ld', '地域を入れてください（例：福島県いわき市、渋谷駅）。' );
+	}
+	// 言い換えでも探して、同じお店はまとめる（1つの言葉だけだと、Googleマップの登録の仕方によっては出てこないため）。
+	$GLOBALS['apprex_gp_debug'] = array();
+	$terms = apprex_ld_terms( $gs[ $genre ][1] );
+	$res   = array();
+	$seen  = array();
+	$err   = null;
+	$query = '';
+	foreach ( $terms as $ti => $t ) {
+		if ( count( $res ) >= $max ) {
+			break;
+		}
+		$q = $area . ' ' . $t;
+		$query = '' === $query ? $q : $query;
+		$r = apprex_gp_search( $q, $max - count( $res ) );
+		if ( is_wp_error( $r ) ) {
+			$err = $err ? $err : $r;
+			if ( false !== strpos( $r->get_error_message(), 'APIキー' ) || false !== strpos( $r->get_error_message(), '上限' ) ) {
+				break; // キーや上限の問題は、言い換えても同じ。
+			}
+			continue;
+		}
+		foreach ( $r as $g ) {
+			if ( '' !== $g['id'] && empty( $seen[ $g['id'] ] ) ) {
+				$seen[ $g['id'] ] = 1;
+				$res[]            = $g;
+			}
+		}
+	}
+	// 1件も出ないときは、言葉の順番を変えてもう一度。
+	if ( ! $res && ! ( $err && ( false !== strpos( $err->get_error_message(), 'APIキー' ) || false !== strpos( $err->get_error_message(), '上限' ) ) ) ) {
+		$r = apprex_gp_search( $terms[0] . ' ' . $area, $max );
+		if ( ! is_wp_error( $r ) ) {
+			$res = $r;
+		}
+	}
+	update_option( 'apprex_ld_last_debug', array( time(), $GLOBALS['apprex_gp_debug'] ), false );
+	if ( ! $res && $err ) {
+		return $err;
 	}
 	// 同じ名前のお店がいくつあるか（多店舗）。
 	$brands = array();
@@ -763,7 +865,13 @@ add_action(
 				$genre = apprex_ld_custom_genre( $kw ); // 一覧にない業種は、言葉で探す。
 			}
 			$r   = apprex_ld_collect( $genre, sanitize_text_field( wp_unslash( $_POST['area'] ?? '' ) ), min( 60, max( 20, (int) ( $_POST['max'] ?? 20 ) ) ) );
-			$msg = is_wp_error( $r ) ? '失敗：' . $r->get_error_message() : $r[0] . '件見つかり、新しく' . $r[1] . '件をリストに入れました。';
+			if ( is_wp_error( $r ) ) {
+				$msg = '失敗：' . $r->get_error_message();
+			} elseif ( ! $r[0] ) {
+				$msg = '0件でした。下の「前回の検索の中身」で、Google からの返事を確かめてください。地域は「福島県いわき市」「渋谷駅」のように、市区町村や駅の名前で入れると見つかりやすくなります。';
+			} else {
+				$msg = $r[0] . '件見つかり、新しく' . $r[1] . '件をリストに入れました。' . ( $r[0] > $r[1] ? '（' . ( $r[0] - $r[1] ) . '件はリストに入っていたお店）' : '' );
+			}
 		} elseif ( 'research' === $do ) {
 			$ids = array_map( 'absint', (array) ( $_POST['ids'] ?? array() ) );
 			$n   = 0;
@@ -787,6 +895,11 @@ add_action(
 				}
 				$msg = '状態を「' . apprex_ld_statuses()[ $st ] . '」にしました。';
 			}
+		} elseif ( 'gptest' === $do ) {
+			$GLOBALS['apprex_gp_debug'] = array();
+			$r   = apprex_gp_search( '東京駅 カフェ', 20 );
+			$msg = is_wp_error( $r ) ? '失敗：' . $r->get_error_message() : 'Google につながりました（テストで「東京駅 カフェ」を探して ' . count( $r ) . '件）。';
+			update_option( 'apprex_ld_last_debug', array( time(), $GLOBALS['apprex_gp_debug'] ), false );
 		} elseif ( 'autorun' === $do ) {
 			$r   = apprex_ld_auto_run( true );
 			$msg = is_wp_error( $r ) ? '失敗：' . $r->get_error_message() : $r;
@@ -906,6 +1019,22 @@ function apprex_ld_page() {
 			<label>件数 <select name="max"><option value="20">20件</option><option value="40">40件</option><option value="60">60件</option></select></label>
 			<?php submit_button( 'Googleマップで探す', 'primary', 'submit', false ); ?>
 			<span class="description">今月の Google の呼び出し：<?php echo (int) apprex_gp_usage(); ?> / <?php echo (int) apprex_gp_cap(); ?>回（20件ごとに1回）</span>
+		</form>
+		<?php
+		$apprex_dbg = get_option( 'apprex_ld_last_debug' );
+		if ( is_array( $apprex_dbg ) && ! empty( $apprex_dbg[1] ) ) :
+			?>
+			<details style="max-width:1000px;margin-top:8px"><summary style="cursor:pointer">前回の検索の中身（<?php echo esc_html( wp_date( 'n/j G:i', (int) $apprex_dbg[0] ) ); ?>）</summary>
+				<table class="widefat striped" style="margin-top:6px"><thead><tr><th>Googleで探した言葉</th><th>結果</th><th>Googleからの返事</th></tr></thead><tbody>
+				<?php foreach ( (array) $apprex_dbg[1] as $d ) : ?>
+					<tr><td><?php echo esc_html( $d[0] ); ?></td><td><?php echo (int) $d[2]; ?>件</td><td><?php echo esc_html( 200 === (int) $d[1] ? 'OK' : ( $d[1] ? 'HTTP ' . $d[1] . '：' : '' ) . apprex_gp_explain( $d[3] ) ); ?></td></tr>
+				<?php endforeach; ?>
+				</tbody></table>
+			</details>
+		<?php endif; ?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top:6px">
+			<input type="hidden" name="action" value="apprex_ld"><input type="hidden" name="do" value="gptest"><?php wp_nonce_field( 'apprex_ld' ); ?>
+			<?php submit_button( 'Google につながるか確かめる', 'small', 'submit', false ); ?>
 		</form>
 
 		<h2>リスト</h2>
