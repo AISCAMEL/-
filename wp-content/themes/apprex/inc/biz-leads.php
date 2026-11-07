@@ -864,7 +864,12 @@ add_action(
 			if ( '' !== trim( $kw ) ) {
 				$genre = apprex_ld_custom_genre( $kw ); // 一覧にない業種は、言葉で探す。
 			}
-			$r   = apprex_ld_collect( $genre, sanitize_text_field( wp_unslash( $_POST['area'] ?? '' ) ), min( 60, max( 20, (int) ( $_POST['max'] ?? 20 ) ) ) );
+			$apprex_pref  = sanitize_text_field( wp_unslash( $_POST['pref'] ?? '' ) );
+			$apprex_city  = sanitize_text_field( wp_unslash( $_POST['city'] ?? '' ) );
+			$apprex_place = sanitize_text_field( wp_unslash( $_POST['place'] ?? '' ) );
+			$apprex_area  = isset( $_POST['area'] ) ? sanitize_text_field( wp_unslash( $_POST['area'] ) ) : trim( apprex_ld_area_join( $apprex_pref, $apprex_city ) . ' ' . $apprex_place );
+			update_user_meta( get_current_user_id(), 'apprex_ld_last_area', array( $apprex_pref, $apprex_city ) );
+			$r   = apprex_ld_collect( $genre, $apprex_area, min( 60, max( 20, (int) ( $_POST['max'] ?? 20 ) ) ) );
 			if ( is_wp_error( $r ) ) {
 				$msg = '失敗：' . $r->get_error_message();
 			} elseif ( ! $r[0] ) {
@@ -940,6 +945,80 @@ function apprex_ld_query( $f ) {
 }
 
 /** ジャンルを選ぶ欄（まとまりごと）。 */
+/** 都道府県と市区町村の一覧（[[都道府県, [市区町村…]], …]）。 */
+function apprex_ld_areas_data() {
+	static $d = null;
+	if ( null === $d ) {
+		$f = get_template_directory() . '/assets/data/jp-areas.json';
+		$d = is_readable( $f ) ? json_decode( (string) file_get_contents( $f ), true ) : array(); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$d = is_array( $d ) ? $d : array();
+	}
+	return $d;
+}
+
+/** 都道府県＋市区町村 → Google で探す地域の言葉（例：福島県いわき市）。 */
+function apprex_ld_area_join( $pref, $city ) {
+	$pref = trim( (string) $pref );
+	$city = trim( (string) $city );
+	return '' === $city ? $pref : $pref . $city;
+}
+
+/** 地域を選ぶしくみ（ページに1回だけ出す）。 */
+function apprex_ld_area_script() {
+	static $done = false;
+	if ( $done ) {
+		return;
+	}
+	$done = true;
+	?>
+	<script>
+	(function(){
+		var A=<?php echo wp_json_encode( apprex_ld_areas_data(), JSON_UNESCAPED_UNICODE ); ?>;
+		var P={};A.forEach(function(r){P[r[0]]=r[1];});
+		function esc(t){var d=document.createElement('div');d.textContent=t;return d.innerHTML;}
+		function fillPref(sel,cur){
+			sel.innerHTML='<option value="">都道府県を選ぶ</option>'+A.map(function(r){return '<option'+(r[0]===cur?' selected':'')+'>'+esc(r[0])+'</option>';}).join('');
+		}
+		/* 探す：都道府県 → 市区町村 */
+		document.querySelectorAll('form .ld-pref[name="pref"]').forEach(function(ps){
+			var cs=ps.form.querySelector('.ld-city');
+			fillPref(ps,ps.dataset.cur||'');
+			function fillCity(cur){
+				var l=P[ps.value]||[];
+				cs.innerHTML='<option value="">'+(ps.value?esc(ps.value)+'全体':'市区町村')+'</option>'+l.map(function(c){return '<option'+(c===cur?' selected':'')+'>'+esc(c)+'</option>';}).join('');
+				cs.disabled=!ps.value;
+			}
+			fillCity(cs.dataset.cur||'');
+			ps.addEventListener('change',function(){fillCity('');});
+		});
+		/* 自動で集める：チェックで選ぶ */
+		var ta=document.getElementById('ld_areas');if(!ta)return;
+		var ap=document.getElementById('ld_apref'),box=document.getElementById('ld_acities'),q=document.getElementById('ld_acityq'),chips=document.getElementById('ld_chips');
+		var sel=ta.value.split(/\r?\n/).map(function(s){return s.trim();}).filter(Boolean);
+		function save(){ta.value=sel.join('\n');}
+		function drawChips(){
+			chips.innerHTML=sel.length?sel.map(function(a,i){return '<span style="background:#f0f6fc;border:1px solid #c5d9ed;border-radius:99px;padding:2px 6px 2px 10px">'+esc(a)+' <button type="button" data-i="'+i+'" aria-label="外す" style="border:0;background:none;cursor:pointer;color:#b32d2e">×</button></span>';}).join(''):'<span class="description">まだ選んでいません。</span>';
+		}
+		function drawCities(){
+			var pf=ap.value,qq=(q.value||'').trim();
+			if(!pf){box.innerHTML='<span class="description">先に都道府県を選んでください。</span>';return;}
+			var l=[''].concat(P[pf]||[]);
+			box.innerHTML=l.filter(function(c){return !qq||c.indexOf(qq)>-1;}).map(function(c){
+				var v=pf+c;
+				return '<label style="white-space:nowrap"><input type="checkbox" value="'+esc(v)+'"'+(sel.indexOf(v)>-1?' checked':'')+'> '+(c?esc(c):'<b>'+esc(pf)+'全体</b>')+'</label>';
+			}).join('');
+		}
+		fillPref(ap,'');
+		ap.addEventListener('change',function(){q.value='';drawCities();});
+		q.addEventListener('input',drawCities);
+		box.addEventListener('change',function(e){var v=e.target.value;if(!v)return;var i=sel.indexOf(v);if(e.target.checked&&i<0)sel.push(v);if(!e.target.checked&&i>-1)sel.splice(i,1);save();drawChips();});
+		chips.addEventListener('click',function(e){var b=e.target.closest('button[data-i]');if(!b)return;sel.splice(+b.dataset.i,1);save();drawChips();drawCities();});
+		drawChips();drawCities();
+	})();
+	</script>
+	<?php
+}
+
 function apprex_ld_genre_select( $name, $cur, $all = '', $onchange = '' ) {
 	$groups = array();
 	foreach ( apprex_ld_genres() as $k => $g ) {
@@ -1015,7 +1094,10 @@ function apprex_ld_page() {
 			<input type="hidden" name="action" value="apprex_ld"><input type="hidden" name="do" value="collect"><?php wp_nonce_field( 'apprex_ld' ); ?>
 			<label>ジャンル <?php apprex_ld_genre_select( 'genre', '' ); ?></label>
 			<label>または言葉で <input name="kw" placeholder="例：ボルダリング、整骨院" style="width:170px"></label>
-			<label>地域 <input name="area" placeholder="例：東京都渋谷区" required style="width:200px"></label>
+			<?php $apprex_la = (array) get_user_meta( get_current_user_id(), 'apprex_ld_last_area', true ); ?>
+			<label>地域 <select name="pref" class="ld-pref" data-cur="<?php echo esc_attr( $apprex_la[0] ?? '' ); ?>" required></select></label>
+			<select name="city" class="ld-city" data-cur="<?php echo esc_attr( $apprex_la[1] ?? '' ); ?>" aria-label="市区町村"></select>
+			<label>駅・地名（なくてもOK） <input name="place" placeholder="例：渋谷駅" style="width:120px"></label>
 			<label>件数 <select name="max"><option value="20">20件</option><option value="40">40件</option><option value="60">60件</option></select></label>
 			<?php submit_button( 'Googleマップで探す', 'primary', 'submit', false ); ?>
 			<span class="description">今月の Google の呼び出し：<?php echo (int) apprex_gp_usage(); ?> / <?php echo (int) apprex_gp_cap(); ?>回（20件ごとに1回）</span>
@@ -1099,6 +1181,7 @@ function apprex_ld_page() {
 		</tbody></table>
 
 		<?php apprex_ld_auto_box(); ?>
+		<?php apprex_ld_area_script(); ?>
 
 		<h2>設定</h2>
 		<form method="post" action="options.php" style="max-width:900px">
@@ -1109,7 +1192,7 @@ function apprex_ld_page() {
 					<p class="description">Google Cloud で「Places API (New)」を有効にして作ったAPIキーです。キーの「アプリケーションの制限」で「IPアドレス」をこのサーバーにすると安全です。</p>
 				</td></tr>
 				<tr><th><label for="apprex_gp_cap">月の上限</label></th><td>
-					<input type="number" id="apprex_gp_cap" name="apprex_gp_cap" min="0" step="10" value="<?php echo (int) apprex_gp_cap(); ?>"> 回
+					<select id="apprex_gp_cap" name="apprex_gp_cap"><?php $apprex_caps = array_unique( array_merge( array( 100, 200, 300, 500, 1000, 2000, 3000, 5000 ), array( apprex_gp_cap() ) ) ); sort( $apprex_caps ); foreach ( $apprex_caps as $n ) : ?><option value="<?php echo (int) $n; ?>" <?php selected( apprex_gp_cap(), $n ); ?>><?php echo (int) $n; ?>回</option><?php endforeach; ?></select>
 					<p class="description">Google を呼び出す回数の月の上限です（検索20件で1回、読み直し1件で1回）。上限に達したら止まります。Google Cloud 側でも予算のアラートを設定してください。</p>
 				</td></tr>
 			</table>
@@ -1360,9 +1443,15 @@ function apprex_ld_auto_box() {
 					</details>
 				<?php endforeach; ?>
 			</td></tr>
-			<tr><th><label for="ld_areas">地域</label></th><td><textarea id="ld_areas" name="apprex_ld_auto_areas" rows="4" class="regular-text" placeholder="東京都渋谷区&#10;東京都新宿区&#10;大阪市北区"><?php echo esc_textarea( (string) get_option( 'apprex_ld_auto_areas', '' ) ); ?></textarea><p class="description">1行に1つ。</p></td></tr>
+			<tr><th><label for="ld_areas">地域</label></th><td>
+				<textarea id="ld_areas" name="apprex_ld_auto_areas" hidden><?php echo esc_textarea( (string) get_option( 'apprex_ld_auto_areas', '' ) ); ?></textarea>
+				<div id="ld_chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+				<select class="ld-pref" id="ld_apref" aria-label="都道府県"></select>
+				<input type="search" id="ld_acityq" placeholder="市区町村を探す（例：いわき）" style="width:220px">
+				<div id="ld_acities" style="max-height:240px;overflow:auto;border:1px solid #dcdcde;border-radius:6px;padding:6px 10px;margin-top:6px;display:flex;flex-wrap:wrap;gap:4px 14px;align-content:flex-start"></div>
+				<p class="description">都道府県を選んで、市区町村にチェックを入れます（いくつでも）。選んだ地域は上に並びます。×で外せます。</p></td></tr>
 			<tr><th>1回に探す数</th><td><select name="apprex_ld_auto_max"><?php foreach ( array( 20, 40, 60 ) as $n ) : ?><option value="<?php echo (int) $n; ?>" <?php selected( (int) get_option( 'apprex_ld_auto_max', 20 ), $n ); ?>><?php echo (int) $n; ?>件</option><?php endforeach; ?></select>
-				　AIが調べる数 <input type="number" name="apprex_ld_auto_research" min="0" max="10" value="<?php echo (int) get_option( 'apprex_ld_auto_research', 5 ); ?>" style="width:60px"> 件まで（<input type="number" name="apprex_ld_auto_min" min="0" max="100" value="<?php echo (int) get_option( 'apprex_ld_auto_min', 60 ); ?>" style="width:60px"> 点以上のお店）
+				　AIが調べる数 <select name="apprex_ld_auto_research"><?php for ( $n = 0; $n <= 10; $n++ ) : ?><option value="<?php echo (int) $n; ?>" <?php selected( (int) get_option( 'apprex_ld_auto_research', 5 ), $n ); ?>><?php echo $n ? (int) $n . '件まで' : '調べない'; ?></option><?php endfor; ?></select>（<select name="apprex_ld_auto_min"><?php for ( $n = 0; $n <= 90; $n += 10 ) : ?><option value="<?php echo (int) $n; ?>" <?php selected( (int) get_option( 'apprex_ld_auto_min', 60 ), $n ); ?>><?php echo $n ? (int) $n . '点以上' : 'すべて'; ?></option><?php endfor; ?></select> のお店）
 				<p class="description">1回の費用の目安：Google の呼び出し 1〜3回＋AI（調べる数ぶん）。月の上限の回数に達したら止まります。</p></td></tr>
 		</table>
 		<?php submit_button( '自動収集の設定を保存' ); ?>
