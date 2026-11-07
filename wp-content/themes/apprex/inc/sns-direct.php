@@ -349,6 +349,9 @@ add_action( 'admin_init', function () {
 		'apprex_ig_carousel'   => function ( $v ) {
 			return 'off' === $v ? 'off' : 'on';
 		},
+		'apprex_ig_pattern'    => function ( $v ) {
+			return function_exists( 'apprex_ig_patterns' ) && isset( apprex_ig_patterns()[ $v ] ) ? $v : 'rotate';
+		},
 		'apprex_ig_reel'       => function ( $v ) {
 			return 'off' === $v ? 'off' : 'on';
 		},
@@ -402,6 +405,17 @@ function apprex_sns_settings_page() {
 					</select>
 					<?php if ( function_exists( 'apprex_ig_can_draw' ) && ! apprex_ig_can_draw() ) : ?><p class="description" style="color:#b91c1c">このサーバーでは画像に文字を入れられない（GD・FreeType がない）ため、1枚の投稿になります。</p><?php endif; ?>
 				</td></tr>
+				<?php if ( function_exists( 'apprex_ig_patterns' ) ) : ?>
+				<tr><th>画像のデザイン</th><td>
+					<select name="apprex_ig_pattern">
+						<option value="rotate" <?php selected( 'rotate', get_option( 'apprex_ig_pattern', 'rotate' ) ); ?>>記事ごとに順番に変える（おすすめ・5種類）</option>
+						<?php foreach ( apprex_ig_patterns() as $k => $pt ) : ?>
+							<option value="<?php echo esc_attr( $k ); ?>" <?php selected( $k, get_option( 'apprex_ig_pattern', 'rotate' ) ); ?>>いつも「<?php echo esc_html( $pt['label'] ); ?>」</option>
+						<?php endforeach; ?>
+					</select>
+					<p class="description">記事の編集画面の「インスタグラム」欄でも、記事ごとにデザインを選んで作り直せます。</p>
+				</td></tr>
+				<?php endif; ?>
 				<tr><th>リール動画</th><td>
 					<select name="apprex_ig_reel">
 						<option value="on" <?php selected( 'off' !== get_option( 'apprex_ig_reel', 'on' ) ); ?>>カルーセルと一緒に、6枚をつないだリール動画も投稿する</option>

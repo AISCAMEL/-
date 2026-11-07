@@ -199,6 +199,41 @@ function apprex_ig_photos( $post ) {
  * @param array   $copy apprex_ig_copy() の結果。
  * @return array|WP_Error 画像のURL（1枚目→6枚目）。
  */
+/**
+ * デザインのパターン。
+ *
+ * bg＝ポイントの地の色／ink＝見出し／sub＝本文／a1＝番号・アクセント／a2＝線・ラベル／cover＝表紙の形（photo・split・type）／cbg＝表紙の地の色／dark＝ポイントが暗い地か。
+ */
+function apprex_ig_patterns() {
+	return array(
+		'navy'    => array( 'label' => 'ネイビー（写真＋白い文字）', 'bg' => '#f5f7fb', 'ink' => '#0b1f44', 'sub' => '#334155', 'a1' => '#1d4ed8', 'a2' => '#f97316', 'cover' => 'photo', 'cbg' => '#0b1f44', 'dark' => false ),
+		'white'   => array( 'label' => 'ホワイト（上に写真・下に黒い文字）', 'bg' => '#ffffff', 'ink' => '#111827', 'sub' => '#374151', 'a1' => '#e60012', 'a2' => '#111827', 'cover' => 'split', 'cbg' => '#ffffff', 'dark' => false ),
+		'pop'     => array( 'label' => 'ポップ（黄色・文字だけの表紙）', 'bg' => '#fffbeb', 'ink' => '#1f2937', 'sub' => '#374151', 'a1' => '#f97316', 'a2' => '#d97706', 'cover' => 'type', 'cbg' => '#facc15', 'dark' => false ),
+		'natural' => array( 'label' => 'ナチュラル（ベージュ・グリーン）', 'bg' => '#f6f1e9', 'ink' => '#3b352c', 'sub' => '#57514a', 'a1' => '#4d7c57', 'a2' => '#c49a5a', 'cover' => 'split', 'cbg' => '#f6f1e9', 'dark' => false ),
+		'dark'    => array( 'label' => 'ダーク（黒×ゴールド・上に写真）', 'bg' => '#111111', 'ink' => '#ffffff', 'sub' => '#d1d5db', 'a1' => '#c9a227', 'a2' => '#c9a227', 'cover' => 'split', 'cbg' => '#111111', 'dark' => true ),
+	);
+}
+
+/** この記事のパターン（記事で選んだもの → 設定 → 順番）。 */
+function apprex_ig_pattern_for( $post_id ) {
+	$all = apprex_ig_patterns();
+	$p   = (string) get_post_meta( $post_id, '_apprex_ig_pattern', true );
+	if ( isset( $all[ $p ] ) ) {
+		return $p;
+	}
+	$set = (string) get_option( 'apprex_ig_pattern', 'rotate' );
+	if ( isset( $all[ $set ] ) ) {
+		return $set;
+	}
+	// 順番に使う（記事ごとに決めて、作り直しても同じにする）。
+	$keys = array_keys( $all );
+	$i    = (int) get_option( 'apprex_ig_pat_i', 0 );
+	update_option( 'apprex_ig_pat_i', $i + 1, false );
+	$p = $keys[ $i % count( $keys ) ];
+	update_post_meta( $post_id, '_apprex_ig_pattern', $p );
+	return $p;
+}
+
 function apprex_ig_render( $post, $copy ) {
 	if ( ! apprex_ig_can_draw() ) {
 		return new WP_Error( 'ig_draw', 'このサーバーでは画像に文字を入れられません（GD・FreeType が必要）。' );
@@ -217,9 +252,11 @@ function apprex_ig_render( $post, $copy ) {
 	$ver   = wp_generate_password( 6, false );
 	$urls  = array();
 	$total = count( $copy['points'] ) + 2;
-	$navy  = '#0b1f44';
-	$blue  = '#1d4ed8';
-	$orng  = '#f97316';
+	$pk    = apprex_ig_pattern_for( $post->ID );
+	$pal   = apprex_ig_patterns()[ $pk ];
+	$navy  = $pal['ink'];
+	$blue  = $pal['a1'];
+	$orng  = $pal['a2'];
 
 	$save = function ( $im, $n ) use ( $dir, $up, $post, $ver, &$urls ) {
 		$f = $dir . '/' . $n . '-' . $ver . '.jpg';
@@ -243,8 +280,8 @@ function apprex_ig_render( $post, $copy ) {
 			$cx += $b[2] - $b[0] + 14;
 		}
 	};
-	$footer = function ( $im, $n, $dark ) use ( $W, $H, $med, $bold, $total ) {
-		$c = apprex_ig_color( $im, $dark ? '#ffffff' : '#0b1f44', $dark ? 20 : 0 );
+	$footer = function ( $im, $n, $dark ) use ( $W, $H, $med, $bold, $total, $pal ) {
+		$c = apprex_ig_color( $im, $dark ? '#ffffff' : $pal['ink'], $dark ? 20 : 0 );
 		imagettftext( $im, 26, 0, 72, $H - 64, $c, $bold, 'APPREX' );
 		imagettftext( $im, 22, 0, 232, $H - 66, apprex_ig_color( $im, $dark ? '#ffffff' : '#64748b', $dark ? 40 : 0 ), $med, 'ノーコードアプリ開発' );
 		$t   = $n . ' / ' . $total;
@@ -252,23 +289,53 @@ function apprex_ig_render( $post, $copy ) {
 		imagettftext( $im, 24, 0, $W - 72 - ( $box[2] - $box[0] ), $H - 64, apprex_ig_color( $im, $dark ? '#ffffff' : '#64748b', $dark ? 40 : 0 ), $med, $t );
 	};
 
-	// 1枚目：表紙（写真＋大きな見出し）。
+	// 1枚目：表紙（パターンで形が変わる）。
 	$im = imagecreatetruecolor( $W, $H );
 	imagealphablending( $im, true );
-	imagefilledrectangle( $im, 0, 0, $W, $H, apprex_ig_color( $im, $navy ) );
-	if ( ! apprex_ig_cover( $im, isset( $photos[0] ) ? $photos[0] : '', 0, 0, $W, $H ) ) {
-		imagefilledellipse( $im, 900, 260, 900, 900, apprex_ig_color( $im, $blue, 70 ) );
-		imagefilledellipse( $im, 120, 1200, 700, 700, apprex_ig_color( $im, $orng, 95 ) );
+	imagefilledrectangle( $im, 0, 0, $W, $H, apprex_ig_color( $im, $pal['cbg'] ) );
+	$photo0 = isset( $photos[0] ) ? $photos[0] : '';
+	if ( 'split' === $pal['cover'] ) {
+		// 上に写真、下に地の色と大きな見出し。
+		$ph = 760;
+		if ( ! apprex_ig_cover( $im, $photo0, 0, 0, $W, $ph ) ) {
+			imagefilledrectangle( $im, 0, 0, $W, $ph, apprex_ig_color( $im, $blue ) );
+			imagefilledellipse( $im, 860, 220, 700, 700, apprex_ig_color( $im, '#ffffff', 100 ) );
+		}
+		apprex_ig_shade( $im, 0, 260, 80, 127 );
+		$pill( $im, 72, 72, array( array( 'APPREX', $blue ), array( '保存版', $pal['dark'] ? '#111111' : $navy ) ), 26 );
+		imagefilledrectangle( $im, 72, $ph + 64, 172, $ph + 74, apprex_ig_color( $im, $blue ) );
+		$lines = apprex_ig_wrap( $copy['cover'], 64, $bold, $W - 144, 3 );
+		apprex_ig_text( $im, $lines, 64, $bold, 72, $ph + 96, apprex_ig_color( $im, $navy ), 1.38 );
+		imagettftext( $im, 28, 0, 72, $H - 120, apprex_ig_color( $im, $pal['sub'] ), $med, '→ スワイプして読む' );
+		$footer( $im, 1, false );
+	} elseif ( 'type' === $pal['cover'] ) {
+		// 文字だけ。地の色に大きな見出し。
+		imagefilledellipse( $im, 960, 140, 640, 640, apprex_ig_color( $im, '#ffffff', 80 ) );
+		imagefilledellipse( $im, 80, 1240, 520, 520, apprex_ig_color( $im, $blue, 96 ) );
+		$pill( $im, 72, 96, array( array( 'APPREX', $blue ), array( '保存版', $navy ) ), 26 );
+		$lines = apprex_ig_wrap( $copy['cover'], 86, $bold, $W - 144, 4 );
+		$y     = (int) max( 260, ( $H - count( $lines ) * 86 * 1.36 ) / 2 - 40 );
+		imagefilledrectangle( $im, 72, $y - 34, 220, $y - 20, apprex_ig_color( $im, $navy ) );
+		apprex_ig_text( $im, $lines, 86, $bold, 72, $y, apprex_ig_color( $im, $navy ), 1.36 );
+		apprex_ig_round( $im, 72, $H - 190, 420, 74, 37, apprex_ig_color( $im, $navy ) );
+		imagettftext( $im, 28, 0, 112, $H - 142, apprex_ig_color( $im, '#ffffff' ), $bold, 'スワイプして読む →' );
+		$footer( $im, 1, false );
+	} else {
+		// 写真いっぱい＋白い大きな見出し。
+		if ( ! apprex_ig_cover( $im, $photo0, 0, 0, $W, $H ) ) {
+			imagefilledellipse( $im, 900, 260, 900, 900, apprex_ig_color( $im, $blue, 70 ) );
+			imagefilledellipse( $im, 120, 1200, 700, 700, apprex_ig_color( $im, $orng, 95 ) );
+		}
+		apprex_ig_shade( $im, 0, 360, 70, 127 );
+		apprex_ig_shade( $im, 520, $H, 127, 18, $pal['dark'] ? '#000000' : '#0b1220' );
+		$pill( $im, 72, 80, array( array( 'APPREX', $pal['dark'] ? '#111111' : $blue ), array( '保存版', $pal['dark'] ? $blue : $orng ) ), 26 );
+		$lines = apprex_ig_wrap( $copy['cover'], 74, $bold, $W - 144, 3 );
+		$y     = $H - 210 - count( $lines ) * 74 * 1.4;
+		imagefilledrectangle( $im, 72, (int) $y - 26, 172, (int) $y - 16, apprex_ig_color( $im, $orng ) );
+		apprex_ig_text( $im, $lines, 74, $bold, 72, (int) $y, apprex_ig_color( $im, '#ffffff' ), 1.4 );
+		imagettftext( $im, 28, 0, 72, $H - 120, apprex_ig_color( $im, '#ffffff', 25 ), $med, '→ スワイプして読む' );
+		$footer( $im, 1, true );
 	}
-	apprex_ig_shade( $im, 0, 360, 70, 127 );
-	apprex_ig_shade( $im, 520, $H, 127, 18 );
-	$pill( $im, 72, 80, array( array( 'APPREX', $blue ), array( '保存版', $orng ) ), 26 );
-	$lines = apprex_ig_wrap( $copy['cover'], 74, $bold, $W - 144, 3 );
-	$y     = $H - 210 - count( $lines ) * 74 * 1.4;
-	imagefilledrectangle( $im, 72, (int) $y - 26, 172, (int) $y - 16, apprex_ig_color( $im, $orng ) );
-	apprex_ig_text( $im, $lines, 74, $bold, 72, (int) $y, apprex_ig_color( $im, '#ffffff' ), 1.4 );
-	imagettftext( $im, 28, 0, 72, $H - 120, apprex_ig_color( $im, '#ffffff', 25 ), $med, '→ スワイプして読む' );
-	$footer( $im, 1, true );
 	$save( $im, 1 );
 
 	// 2〜5枚目：ポイント（偶数枚目は上に写真）。
@@ -276,11 +343,11 @@ function apprex_ig_render( $post, $copy ) {
 		$n  = $i + 2;
 		$im = imagecreatetruecolor( $W, $H );
 		imagealphablending( $im, true );
-		imagefilledrectangle( $im, 0, 0, $W, $H, apprex_ig_color( $im, '#f5f7fb' ) );
+		imagefilledrectangle( $im, 0, 0, $W, $H, apprex_ig_color( $im, $pal['bg'] ) );
 		$top   = 120;
 		$photo = isset( $photos[ 1 + $i ] ) ? $photos[ 1 + $i ] : ( isset( $photos[0] ) && 1 === $i % 2 ? $photos[0] : '' );
 		if ( $photo && apprex_ig_cover( $im, $photo, 0, 0, $W, 520 ) ) {
-			apprex_ig_shade( $im, 380, 520, 127, 60, '#f5f7fb' );
+			apprex_ig_shade( $im, 380, 520, 127, 0, $pal['bg'] );
 			$top = 470;
 		} else {
 			imagefilledellipse( $im, $W - 60, 80, 420, 420, apprex_ig_color( $im, $blue, 112 ) );
@@ -289,7 +356,7 @@ function apprex_ig_render( $post, $copy ) {
 		imagefilledellipse( $im, 132, $top + 60, 120, 120, apprex_ig_color( $im, $blue ) );
 		$num = sprintf( '%02d', $i + 1 );
 		$box = imagettfbbox( 40, 0, $bold, $num );
-		imagettftext( $im, 40, 0, (int) ( 132 - ( $box[2] - $box[0] ) / 2 ), $top + 80, apprex_ig_color( $im, '#ffffff' ), $bold, $num );
+		imagettftext( $im, 40, 0, (int) ( 132 - ( $box[2] - $box[0] ) / 2 ), $top + 80, apprex_ig_color( $im, $pal['dark'] ? '#111111' : '#ffffff' ), $bold, $num );
 		imagettftext( $im, 26, 0, 220, $top + 74, apprex_ig_color( $im, $orng ), $bold, 'POINT' );
 		$hl = apprex_ig_wrap( $p['h'], 64, $bold, $W - 144, 2 );
 		$tl = apprex_ig_wrap( $p['t'], 42, $med, $W - 144, $top > 200 ? 6 : 9 );
@@ -298,8 +365,8 @@ function apprex_ig_render( $post, $copy ) {
 		$y   = max( $top + 150, (int) ( $top + 150 + ( ( $H - 180 ) - ( $top + 150 ) - $blk ) * 0.35 ) );
 		$y   = apprex_ig_text( $im, $hl, 64, $bold, 72, $y, apprex_ig_color( $im, $navy ), 1.35 );
 		imagefilledrectangle( $im, 72, $y + 18, 160, $y + 26, apprex_ig_color( $im, $orng ) );
-		apprex_ig_text( $im, $tl, 42, $med, 72, $y + 60, apprex_ig_color( $im, '#334155' ), 1.75 );
-		$footer( $im, $n, false );
+		apprex_ig_text( $im, $tl, 42, $med, 72, $y + 60, apprex_ig_color( $im, $pal['sub'] ), 1.75 );
+		$footer( $im, $n, $pal['dark'] );
 		$save( $im, $n );
 	}
 
@@ -645,6 +712,19 @@ function apprex_ig_box( $post ) {
 			echo '<p>リール動画：<a href="' . esc_url( $video ) . '" target="_blank">見る</a>／<a href="' . esc_url( $video ) . '" download>ダウンロード</a></p>';
 		}
 	}
+	// デザインのパターンを選んで作り直す。
+	$cur  = (string) get_post_meta( $post->ID, '_apprex_ig_pattern', true );
+	$base = wp_nonce_url( admin_url( 'admin-post.php?action=apprex_ig&do=make&post=' . $post->ID ), 'apprex_ig_' . $post->ID );
+	echo '<p style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">デザイン：<select id="apIgPat">';
+	foreach ( apprex_ig_patterns() as $k => $pt ) {
+		echo '<option value="' . esc_attr( $k ) . '"' . selected( $cur, $k, false ) . '>' . esc_html( $pt['label'] ) . '</option>';
+	}
+	echo '</select> <a class="button" href="#" onclick="location.href=' . esc_attr( wp_json_encode( $base ) ) . '+\'&pat=\'+document.getElementById(\'apIgPat\').value;return false;">このデザインで作り直す</a>';
+	echo '<span style="display:inline-flex;gap:3px;margin-left:4px">';
+	foreach ( apprex_ig_patterns() as $k => $pt ) {
+		echo '<span title="' . esc_attr( $pt['label'] ) . '" style="width:18px;height:18px;border-radius:4px;border:1px solid #ccc;background:linear-gradient(135deg,' . esc_attr( $pt['cbg'] ) . ' 50%,' . esc_attr( $pt['a1'] ) . ' 50%)"></span>';
+	}
+	echo '</span></p>';
 	echo '<p>';
 	echo $act( 'make', is_array( $slides ) && $slides ? '画像を作り直す' : 'インスタ用の画像を作る', ! $slides ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	if ( is_array( $slides ) && $slides && apprex_ig_ready() ) {
@@ -757,6 +837,10 @@ add_action(
 		}
 		$err = '';
 		if ( 'make' === $do ) {
+			$pat = isset( $_GET['pat'] ) ? sanitize_key( wp_unslash( $_GET['pat'] ) ) : '';
+			if ( isset( apprex_ig_patterns()[ $pat ] ) ) {
+				update_post_meta( $pid, '_apprex_ig_pattern', $pat );
+			}
 			$r   = apprex_ig_prepare( $pid );
 			$err = is_wp_error( $r ) ? $r->get_error_message() : '';
 		} elseif ( 'post' === $do ) {
