@@ -630,3 +630,11 @@
 .rn .type-ph img{position:absolute;left:50%;top:14px;width:58%;height:auto;transform:translateX(-50%);filter:drop-shadow(0 10px 16px rgba(15,30,60,.18));transition:transform .25s}
 .rn .type:hover .type-ph img{transform:translateX(-50%) translateY(-6px)}
 @media(max-width:560px){.rn .type-ph{height:150px}.rn .type-ph img{width:66%}}
+/* マッチング：本物らしい画面の見本 */
+.rn .mduo{display:block;width:100%;max-width:400px;height:auto;margin-inline:auto;filter:drop-shadow(0 26px 40px rgba(0,0,0,.35))}
+.rn .mt{overflow:hidden;padding-top:0}
+.rn .mt .type-ph{display:block;margin:0 -16px 12px;height:190px;overflow:hidden;background:linear-gradient(180deg,#eef3ff,#f7f9ff);position:relative}
+.rn .mt.warn .type-ph{background:linear-gradient(180deg,#fff1f2,#fffaf5)}
+.rn .mt .type-ph img{position:absolute;left:50%;top:14px;width:58%;height:auto;transform:translateX(-50%);filter:drop-shadow(0 10px 16px rgba(15,30,60,.18));transition:transform .25s}
+.rn .mt:hover .type-ph img{transform:translateX(-50%) translateY(-6px)}
+@media(max-width:480px){.rn .mt .type-ph{height:170px}.rn .mt .type-ph img{width:48%}}

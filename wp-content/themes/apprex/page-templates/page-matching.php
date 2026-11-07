@@ -31,14 +31,7 @@ get_header();
       <p class="rise d3" style="margin:12px 0 0;font-size:.85rem;color:#cbd7f2">作りたいサービスを書くだけで、AIが触れる試作と仕様定義書を作ります。<a style="color:#ffcf6e" href="<?php echo esc_url( apprex_demo_url( 'sample', array( 'v' => 'orig', 't' => 'matching' ) ) ); ?>" target="_blank" rel="noopener">サンプルを触ってみる</a></p>
     </div>
     <div style="min-width:0">
-      <div class="mstage" aria-hidden="true">
-        <div class="mph"><span class="notch"></span><div class="scr">
-          <div class="m-top">SkillLink<span>3 新着</span></div>
-          <div class="m-card"><div class="m-photo">佐藤 さん ／ Webデザイナー</div><div class="m-body"><b>経験7年・即日対応</b><div class="m-tags"><i>LP制作</i><i>Figma</i><i>バナー</i><i>★4.9</i></div></div></div>
-          <div class="m-acts"><b>×</b><b class="like">♥</b></div>
-        </div></div>
-        <div class="m-chat"><b>マッチングしました</b>佐藤さんとメッセージできます</div>
-      </div>
+      <img class="mduo" src="<?php echo esc_url( APPREX_URI . '/assets/images/mock/matching-duo.webp' ); ?>" alt="マッチングアプリの、専門家を探す画面とメッセージの画面のイメージ" width="900" height="1183" decoding="async" fetchpriority="high">
     </div>
   </div>
 </section>
@@ -67,15 +60,16 @@ get_header();
   <div class="wrap">
     <div class="sh"><span class="eyebrow">Types</span><h2>こんなマッチングアプリが作れます</h2></div>
     <div class="mtypes">
-      <div class="mt"><b>スキルマッチング</b><small>仕事を頼みたい人と、スキルを持つ人をつなぐ</small><span class="ex">例：デザイン・家事代行・家庭教師</span></div>
-      <div class="mt"><b>ビジネスマッチング</b><small>発注したい会社と受注したい会社をつなぐ</small><span class="ex">例：外注先探し・業務提携・商談</span></div>
-      <div class="mt"><b>人材・求人</b><small>働きたい人と、人を探している会社をつなぐ</small><span class="ex">例：スキマバイト・副業・専門職</span></div>
-      <div class="mt"><b>フリマ・売買</b><small>個人どうし、事業者どうしで物を売り買い</small><span class="ex">例：中古品・ハンドメイド・業務用品</span></div>
-      <div class="mt"><b>講師・習い事</b><small>教えたい人と習いたい人をつなぐ</small><span class="ex">例：オンラインレッスン・スポーツ指導</span></div>
-      <div class="mt"><b>スペース・シェア</b><small>空いている場所や物を貸し借りする</small><span class="ex">例：貸し会議室・駐車場・機材</span></div>
-      <div class="mt"><b>地域・コミュニティ</b><small>同じ地域や趣味の人どうしをつなぐ</small><span class="ex">例：地域の助け合い・サークル</span></div>
-      <div class="mt warn"><b>恋活・婚活</b><small>異性との出会いを目的とするサービス</small><span class="ex">届出が必要です（下の「届出の注意」）</span></div>
+      <div class="mt"><span class="type-ph"><img src="<?php echo esc_url( APPREX_URI . '/assets/images/mock/match.webp' ); ?>" alt="スキルマッチングのアプリの画面イメージ" width="520" height="932" loading="lazy" decoding="async"></span><b>スキルマッチング</b><small>仕事を頼みたい人と、スキルを持つ人をつなぐ</small><span class="ex">例：デザイン・家事代行・家庭教師</span></div>
+      <div class="mt"><span class="type-ph"><img src="<?php echo esc_url( APPREX_URI . '/assets/images/mock/m-biz.webp' ); ?>" alt="ビジネスマッチングのアプリの画面イメージ" width="520" height="932" loading="lazy" decoding="async"></span><b>ビジネスマッチング</b><small>発注したい会社と受注したい会社をつなぐ</small><span class="ex">例：外注先探し・業務提携・商談</span></div>
+      <div class="mt"><span class="type-ph"><img src="<?php echo esc_url( APPREX_URI . '/assets/images/mock/m-job.webp' ); ?>" alt="人材・求人のアプリの画面イメージ" width="520" height="932" loading="lazy" decoding="async"></span><b>人材・求人</b><small>働きたい人と、人を探している会社をつなぐ</small><span class="ex">例：スキマバイト・副業・専門職</span></div>
+      <div class="mt"><span class="type-ph"><img src="<?php echo esc_url( APPREX_URI . '/assets/images/mock/m-flea.webp' ); ?>" alt="フリマ・売買のアプリの画面イメージ" width="520" height="932" loading="lazy" decoding="async"></span><b>フリマ・売買</b><small>個人どうし、事業者どうしで物を売り買い</small><span class="ex">例：中古品・ハンドメイド・業務用品</span></div>
+      <div class="mt"><span class="type-ph"><img src="<?php echo esc_url( APPREX_URI . '/assets/images/mock/m-lesson.webp' ); ?>" alt="講師・習い事のアプリの画面イメージ" width="520" height="932" loading="lazy" decoding="async"></span><b>講師・習い事</b><small>教えたい人と習いたい人をつなぐ</small><span class="ex">例：オンラインレッスン・スポーツ指導</span></div>
+      <div class="mt"><span class="type-ph"><img src="<?php echo esc_url( APPREX_URI . '/assets/images/mock/m-space.webp' ); ?>" alt="スペース・シェアのアプリの画面イメージ" width="520" height="932" loading="lazy" decoding="async"></span><b>スペース・シェア</b><small>空いている場所や物を貸し借りする</small><span class="ex">例：貸し会議室・駐車場・機材</span></div>
+      <div class="mt"><span class="type-ph"><img src="<?php echo esc_url( APPREX_URI . '/assets/images/mock/m-local.webp' ); ?>" alt="地域・コミュニティのアプリの画面イメージ" width="520" height="932" loading="lazy" decoding="async"></span><b>地域・コミュニティ</b><small>同じ地域や趣味の人どうしをつなぐ</small><span class="ex">例：地域の助け合い・サークル</span></div>
+      <div class="mt warn"><span class="type-ph"><img src="<?php echo esc_url( APPREX_URI . '/assets/images/mock/m-date.webp' ); ?>" alt="恋活・婚活のアプリの画面イメージ" width="520" height="932" loading="lazy" decoding="async"></span><b>恋活・婚活</b><small>異性との出会いを目的とするサービス</small><span class="ex">届出が必要です（下の「届出の注意」）</span></div>
     </div>
+    <p class="tpl-note">※画面はデザインのイメージです。名前・写真・内容はサンプルです。</p>
   </div>
 </section>
 

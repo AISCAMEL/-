@@ -238,6 +238,79 @@ return status(true)+'<div class="body ph" style="background-image:linear-gradien
 +'</div><div style="position:absolute;top:70px;left:14px;color:#fff;writing-mode:vertical-rl;font-size:15px;font-weight:900;letter-spacing:.3em">炭火焼肉 はなび</div>'
 +'</div>'+tbar(c);};
 
+
+/* ===== マッチングアプリ ===== */
+function mhead(title,c,right){return '<div style="padding:4px 18px 0;display:flex;justify-content:space-between;align-items:center"><div style="font-size:21px;font-weight:900;font-family:Inter,sans-serif;color:'+c+'">'+title+'</div>'+(right||ic('bell',24))+'</div>';}
+function chips(list,c){return '<div style="display:flex;gap:7px;padding:12px 16px 0;overflow:hidden">'+list.map(function(t,i){return '<span class="chip" style="padding:7px 12px;font-size:12px;white-space:nowrap;flex:none;'+(i===0?'background:'+c+';color:#fff':'background:#fff;color:#374151')+'">'+t+'</span>';}).join('')+'</div>';}
+function search(t){return '<div style="margin:12px 16px 0;background:#fff;border-radius:16px;padding:12px 14px;display:flex;gap:10px;align-items:center;color:#9ca3af;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.04)">'+ic('search',20)+t+'</div>';}
+
+/* 恋活（スワイプのカード） */
+S.m_date=function(){var c='#f43f5e';return status(false)+'<div class="body" style="background:#fff5f7;padding-top:58px">'
++mhead('Couple+',c,ic('chat',24))
++'<div style="position:absolute;left:16px;right:16px;top:112px;bottom:190px">'
++'<div class="ph" style="position:absolute;inset:14px 14px -6px;border-radius:26px;background-image:url('+P+'face-w1.jpg);transform:rotate(-4deg);opacity:.5"></div>'
++'<div class="ph" style="position:absolute;inset:0;border-radius:26px;background-image:linear-gradient(180deg,rgba(0,0,0,0) 50%,rgba(0,0,0,.75)),url('+P+'face-w3.jpg);box-shadow:0 18px 36px rgba(244,63,94,.25);color:#fff;display:flex;flex-direction:column;justify-content:flex-end;padding:18px">'
++'<div style="display:flex;gap:5px;position:absolute;top:10px;left:14px;right:14px">'+[1,0,0,0].map(function(o){return '<i style="flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,'+(o?'.95':'.4')+')"></i>';}).join('')+'</div>'
++'<span class="chip" style="background:rgba(34,197,94,.9);color:#fff;align-self:flex-start">● オンライン</span><div style="font-size:26px;font-weight:900;margin-top:6px">ゆい <span style="font-size:20px;font-weight:600">28</span></div><div style="font-size:12px;opacity:.9">東京都 ・ 看護師 ・ 本人確認済み ✓</div><div style="display:flex;gap:6px;margin-top:8px">'+['カフェ巡り','旅行','映画'].map(function(t){return '<span class="chip" style="background:rgba(255,255,255,.22);color:#fff">'+t+'</span>';}).join('')+'</div></div></div>'
++'<div style="position:absolute;left:0;right:0;bottom:104px;display:flex;justify-content:center;gap:22px;align-items:center">'+[['#fff','#9ca3af','✕',56],['linear-gradient(135deg,#fb7185,#f43f5e)','#fff','♥',70],['#fff','#3b82f6','★',56]].map(function(b){return '<div style="width:'+b[3]+'px;height:'+b[3]+'px;border-radius:50%;background:'+b[0]+';color:'+b[1]+';display:grid;place-items:center;font-size:'+(b[3]/2.2)+'px;box-shadow:0 10px 22px rgba(0,0,0,.12)">'+b[2]+'</div>';}).join('')+'</div>'
++'</div>'+tab([['home','さがす'],['heart','いいね'],['chat','トーク'],['star','特集'],['user','マイページ']],0,c);};
+
+/* チャット（マッチング成立） */
+S.m_chat=function(){var c='#2563eb';var m=[[0,'はじめまして！LPのデザインをお願いしたくてご連絡しました。'],[1,'ご連絡ありがとうございます。参考のサイトはありますか？'],[0,'こちらです。来月中に公開したいです。'],[1,'承知しました。お見積りをお送りしますね。']];
+return status(false)+'<div class="body" style="background:#f3f5fa;padding-top:52px">'
++'<div style="display:flex;align-items:center;gap:10px;padding:8px 16px 12px;background:#fff;border-bottom:1px solid #eef0f4"><span style="font-size:22px;color:#9ca3af">‹</span><div class="ph" style="width:40px;height:40px;border-radius:50%;background-image:url('+P+'face-m1.jpg)"></div><div style="flex:1"><b style="font-size:15px">佐藤 健一</b><div style="font-size:11px;color:#22c55e">● オンライン</div></div>'+ic('cal',22,c)+'</div>'
++'<div style="margin:12px auto 0;text-align:center"><span class="chip" style="background:#dbeafe;color:'+c+'">🎉 マッチングしました</span></div>'
++'<div style="padding:12px 14px;display:grid;gap:10px">'+m.map(function(x){return x[0]?'<div style="display:flex;gap:8px;align-items:flex-end"><div class="ph" style="width:28px;height:28px;border-radius:50%;background-image:url('+P+'face-m1.jpg)"></div><div style="max-width:72%;background:#fff;border-radius:18px 18px 18px 4px;padding:10px 12px;font-size:13px;line-height:1.6;box-shadow:0 2px 6px rgba(0,0,0,.05)">'+x[1]+'</div></div>':'<div style="display:flex;justify-content:flex-end"><div style="max-width:72%;background:'+c+';color:#fff;border-radius:18px 18px 4px 18px;padding:10px 12px;font-size:13px;line-height:1.6">'+x[1]+'</div></div>';}).join('')
++'<div style="background:#fff;border-radius:18px;padding:12px;display:flex;gap:10px;align-items:center;box-shadow:0 4px 12px rgba(0,0,0,.06)"><div style="width:40px;height:40px;border-radius:12px;background:#eff6ff;color:'+c+';display:grid;place-items:center">'+ic('yen',22)+'</div><div style="flex:1"><div style="font-size:12px;color:#6b7280">お見積り</div><b style="font-size:15px">LPデザイン一式 ¥80,000</b></div><span class="chip" style="background:'+c+';color:#fff">確認</span></div></div>'
++'<div style="position:absolute;left:0;right:0;bottom:0;padding:10px 14px 30px;background:#fff;display:flex;gap:10px;align-items:center;border-top:1px solid #eef0f4"><span style="color:#9ca3af">'+ic('img',24)+'</span><div style="flex:1;background:#f3f4f6;border-radius:20px;padding:10px 14px;font-size:13px;color:#9ca3af">メッセージを入力</div><span style="width:38px;height:38px;border-radius:50%;background:'+c+';display:grid;place-items:center;color:#fff">➤</span></div>'
++'</div>';};
+
+/* ビジネスマッチング */
+S.m_biz=function(){var c='#0f766e';var cs=[['office.jpg','株式会社ネクストリンク','IT・システム開発','東京都港区','提携先を探しています',96],['team.jpg','ミライ商事','卸売・EC','大阪市北区','新しい販路を探しています',88],['room3.jpg','カフェ・ワークス','飲食・店舗運営','福岡市中央区','内装の発注先を探しています',81]];
+return status(false)+'<div class="body" style="background:#f3f7f6;padding-top:58px">'+mhead('BizConnect',c)+search('業種・地域・課題で探す')+chips(['おすすめ','業務提携','発注','受注','出資'],c)
++'<div class="sec-h" style="--c:'+c+'"><b>あなたの会社に合う企業</b><span>すべて</span></div>'
++'<div style="display:grid;gap:12px;padding:0 16px">'+cs.map(function(x){return '<div style="background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.05)"><div class="ph" style="height:88px;background-image:url('+P+x[0]+');position:relative"><span class="chip" style="position:absolute;right:8px;top:8px;background:#fff;color:'+c+'">相性 '+x[5]+'%</span></div><div style="padding:10px 12px"><b style="font-size:14px">'+x[1]+'</b><div style="font-size:11px;color:#6b7280;margin-top:2px">'+x[2]+' ・ '+x[3]+'</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><span style="font-size:12px;font-weight:700;color:#0f3d36">'+x[4]+'</span><span class="chip" style="background:'+c+';color:#fff">商談を申し込む</span></div></div></div>';}).join('')+'</div>'
++'</div>'+tab([['home','さがす'],['heart','気になる'],['chat','商談'],['cal','予定'],['user','会社情報']],0,c);};
+
+/* 人材・求人（スキマバイト） */
+S.m_job=function(){var c='#ea580c';var js=[['rest.jpg','焼肉店のホールスタッフ','渋谷駅 徒歩3分','11/9（日）17:00〜22:00','¥1,400','あと2名'],['room3.jpg','カフェのキッチン補助','表参道駅 徒歩5分','11/10（月）10:00〜15:00','¥1,250','あと1名'],['office.jpg','イベントの受付','新宿駅 徒歩7分','11/12（水）9:00〜13:00','¥1,300','あと4名']];
+return status(false)+'<div class="body" style="background:#fff7f0;padding-top:58px">'+mhead('すきまワーク',c)+chips(['今日','明日','週末','近い順','高時給'],c)
++'<div style="margin:12px 16px 0;border-radius:18px;padding:14px;color:#fff;background:linear-gradient(135deg,#f97316,#ea580c);display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:11px;opacity:.9">今月のお給料</div><div class="num" style="font-size:26px">¥48,600</div></div><span class="chip" style="background:#fff;color:'+c+'">すぐ受け取る</span></div>'
++'<div class="sec-h" style="--c:'+c+'"><b>近くのお仕事</b><span>地図で見る</span></div>'
++'<div style="display:grid;gap:10px;padding:0 16px">'+js.map(function(j){return '<div style="background:#fff;border-radius:18px;padding:10px;display:flex;gap:12px;box-shadow:0 4px 12px rgba(0,0,0,.05)"><div class="ph" style="width:92px;height:92px;border-radius:14px;background-image:url('+P+j[0]+')"></div><div style="flex:1;min-width:0"><b style="font-size:14px">'+j[1]+'</b><div style="font-size:11px;color:#6b7280;margin-top:2px">'+j[2]+'</div><div style="font-size:12px;font-weight:700;margin-top:4px">'+j[3]+'</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px"><span class="num" style="font-size:16px;color:'+c+'">'+j[4]+'<span style="font-size:10px;color:#6b7280">/時</span></span><span class="chip" style="background:#fee2e2;color:#b91c1c">'+j[5]+'</span></div></div></div>';}).join('')+'</div>'
++'</div>'+tab([['search','さがす'],['heart','お気に入り'],['cal','予定'],['chat','メッセージ'],['user','マイページ']],0,c);};
+
+/* フリマ */
+S.m_flea=function(){var c='#dc2626';var it=[['room4.jpg','木製シェルフ','¥8,500'],['room6.jpg','ガラスの窓枠ミラー','¥4,200'],['room1.jpg','ダイニングベンチ','¥6,800'],['room3.jpg','ペンダントライト 3灯','¥5,400'],['room5.jpg','観葉植物 鉢つき','¥1,900'],['rest-bar.jpg','酒器セット','¥3,300']];
+return status(false)+'<div class="body" style="background:#fff;padding-top:58px">'+mhead('Furima',c,ic('bell',24))+search('なにをお探しですか？')+chips(['おすすめ','インテリア','キッチン','ファッション','家電'],c)
++'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:14px 0 0">'+it.map(function(x){return '<div><div class="ph" style="aspect-ratio:1;background-image:url('+P+x[0]+');position:relative"><span style="position:absolute;left:6px;bottom:6px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;font-weight:800;padding:3px 7px;border-radius:999px;font-family:Inter">'+x[2]+'</span></div><div style="font-size:11px;padding:4px 6px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x[1]+'</div></div>';}).join('')+'</div>'
++'<div style="position:absolute;right:18px;bottom:104px;width:64px;height:64px;border-radius:50%;background:'+c+';color:#fff;display:grid;place-items:center;font-size:12px;font-weight:900;box-shadow:0 10px 22px rgba(220,38,38,.35);text-align:center;line-height:1.2">出品<br>する</div>'
++'</div>'+tab([['home','ホーム'],['heart','いいね'],['img','出品'],['chat','やることリスト'],['user','マイページ']],0,c);};
+
+/* 講師・習い事 */
+S.m_lesson=function(){var c='#7c3aed';var ts=[['face-w2.jpg','Emily 先生','英会話・ビジネス英語','4.9','¥2,500/25分'],['face-m2.jpg','中村 先生','ゴルフ・初心者向け','4.8','¥4,000/50分'],['face-w1.jpg','香織 先生','料理・和食の基本','5.0','¥3,500/60分']];
+return status(true)+'<div class="body" style="background:#f7f5ff">'
++'<div class="ph" style="height:250px;background-image:linear-gradient(180deg,rgba(30,10,60,.6),rgba(30,10,60,.15) 50%,rgba(30,10,60,.7)),url('+P+'lesson2.jpg);background-position:center 30%"></div>'
++'<div style="position:absolute;top:62px;left:18px;right:18px;color:#fff"><div style="font-size:20px;font-weight:900;font-family:Inter">Manabee</div><div style="font-size:22px;font-weight:900;line-height:1.35;margin-top:44px">好きな先生と、<br>好きな時間に。</div></div>'
++'<div style="margin:-26px 16px 0;position:relative;background:#fff;border-radius:16px;padding:12px 14px;display:flex;gap:10px;align-items:center;color:#9ca3af;font-size:14px;box-shadow:0 10px 24px rgba(0,0,0,.1)">'+ic('search',20)+'習いたいことを探す</div>'
++'<div class="sec-h" style="--c:'+c+'"><b>いま予約できる先生</b><span>すべて</span></div>'
++'<div style="display:grid;gap:10px;padding:0 16px">'+ts.map(function(t){return '<div style="background:#fff;border-radius:18px;padding:12px;display:flex;gap:12px;align-items:center;box-shadow:0 4px 12px rgba(0,0,0,.05)"><div class="ph" style="width:60px;height:60px;border-radius:50%;background-image:url('+P+t[0]+')"></div><div style="flex:1"><div style="display:flex;justify-content:space-between"><b style="font-size:14px">'+t[1]+'</b><span style="color:#f59e0b;font-size:12px;font-weight:700">★ '+t[3]+'</span></div><div style="font-size:11px;color:#6b7280">'+t[2]+'</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><span class="num" style="font-size:13px">'+t[4]+'</span><span class="chip" style="background:'+c+';color:#fff">予約</span></div></div></div>';}).join('')+'</div>'
++'</div>'+tab([['home','ホーム'],['search','さがす'],['cal','レッスン'],['chat','メッセージ'],['user','マイページ']],0,c);};
+
+/* スペース・シェア */
+S.m_space=function(){var c='#0891b2';var sp=[['room1.jpg','窓の大きい撮影スタジオ','渋谷区 ・ 〜10名','¥3,300/時','4.9'],['office.jpg','会議室 Aルーム','港区 ・ 〜8名','¥2,200/時','4.7'],['room3.jpg','カフェ貸切スペース','目黒区 ・ 〜20名','¥5,500/時','4.8']];
+return status(false)+'<div class="body" style="background:#f2f8fa;padding-top:58px">'+mhead('SpaceShare',c)
++'<div style="margin:12px 16px 0;background:#fff;border-radius:18px;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,.05)"><div style="display:flex;gap:8px;align-items:center;font-size:14px;font-weight:700">'+ic('pin',20,c)+'渋谷周辺 ・ 11/15（土） ・ 6名</div><div style="display:flex;gap:6px;margin-top:8px">'+['撮影','会議','パーティー'].map(function(t){return '<span class="chip" style="background:#ecfeff;color:'+c+'">'+t+'</span>';}).join('')+'</div></div>'
++'<div class="sec-h" style="--c:'+c+'"><b>空いているスペース</b><span>地図</span></div>'
++'<div style="display:grid;gap:12px;padding:0 16px">'+sp.map(function(x){return '<div style="background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.05)"><div class="ph" style="height:96px;background-image:url('+P+x[0]+');position:relative"><span style="position:absolute;right:10px;top:10px;color:#fff">'+ic('heart',22,'#fff')+'</span></div><div style="padding:9px 12px;display:flex;justify-content:space-between;align-items:center"><div><b style="font-size:14px">'+x[1]+'</b><div style="font-size:11px;color:#6b7280">'+x[2]+' ・ ★'+x[4]+'</div></div><span class="num" style="font-size:15px;color:'+c+'">'+x[3]+'</span></div></div>';}).join('')+'</div>'
++'</div>'+tab([['search','さがす'],['pin','地図'],['heart','お気に入り'],['cal','予約'],['user','マイページ']],0,c);};
+
+/* 地域・コミュニティ */
+S.m_local=function(){var c='#16a34a';var ps=[['face-w1.jpg','田中さん','代々木','週末の朝、公園の清掃に参加しませんか？','room5.jpg',24],['face-m2.jpg','中村さん','初台','窓ぎわで使っていたテーブル、お譲りします','room6.jpg',12]];
+return status(false)+'<div class="body" style="background:#f4f8f4;padding-top:58px">'+mhead('まちのわ',c)+chips(['すべて','イベント','ゆずります','助け合い','お店'],c)
++'<div style="display:grid;gap:12px;padding:14px 16px 0">'+ps.map(function(x){return '<div style="background:#fff;border-radius:18px;padding:12px;box-shadow:0 4px 12px rgba(0,0,0,.05)"><div style="display:flex;gap:10px;align-items:center"><div class="ph" style="width:38px;height:38px;border-radius:50%;background-image:url('+P+x[0]+')"></div><div style="flex:1"><b style="font-size:13px">'+x[1]+'</b><div style="font-size:11px;color:#6b7280">'+x[2]+' ・ 1時間前</div></div></div><div style="font-size:13px;margin:8px 0;line-height:1.6">'+x[3]+'</div><div class="ph" style="height:120px;border-radius:12px;background-image:url('+P+x[4]+')"></div><div style="display:flex;gap:16px;margin-top:8px;font-size:12px;color:#6b7280">'+ic('heart',18,'#ef4444')+' '+x[5]+'　'+ic('chat',18)+' コメント</div></div>';}).join('')+'</div>'
++'</div>'+tab([['home','ホーム'],['search','さがす'],['img','投稿'],['chat','トーク'],['user','マイページ']],0,c);};
+
 var key=(new URLSearchParams(location.search).get('k'))||'food';
 var light={food:1,salon:1,learn:1,realty:1,event:1}[key];
 document.getElementById('scr').insertAdjacentHTML('beforeend',S[key]()+'<span class="home'+((key==='learn'||key==='event')?' light':'')+'"></span>');
