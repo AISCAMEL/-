@@ -538,6 +538,29 @@ add_action(
 				$msg = is_wp_error( $r ) ? '失敗：' . $r->get_error_message() : ( ! empty( $_POST['publish'] ) ? 'お知らせを公開しました：' : '下書きにしました：' ) . get_the_title( $r );
 				$back = is_wp_error( $r ) ? $back : admin_url( 'post.php?action=edit&post=' . $r );
 			}
+		} elseif ( 'pick' === $do || 'best' === $do ) {
+			$cands = apprex_an_candidates();
+			$best  = array_diff( array_keys( $cands ), array( 'renewal' ) );
+			$key   = 'best' === $do ? (string) reset( $best ) : sanitize_text_field( wp_unslash( $_POST['key'] ?? '' ) );
+			if ( '' === $key || ! isset( $cands[ $key ] ) ) {
+				$msg = 'いま出せるお知らせの候補がありません（ひとことメモから作れます）。';
+			} else {
+				$r    = apprex_an_news_create( $key, $cands[ $key ][1], $cands[ $key ][2], true );
+				$msg  = is_wp_error( $r ) ? '失敗：' . $r->get_error_message() : 'お知らせを公開しました：' . get_the_title( $r );
+			}
+		} elseif ( 'casepub' === $do ) {
+			$cid  = absint( $_POST['id'] ?? 0 );
+			$note = sanitize_text_field( wp_unslash( $_POST['note'] ?? '' ) );
+			if ( 'case' !== get_post_type( $cid ) || ! current_user_can( 'publish_post', $cid ) ) {
+				$msg = '公開できませんでした。';
+			} elseif ( '' === $note ) {
+				$msg = 'いつ・誰から許可をもらったかを入れてください。';
+			} else {
+				update_post_meta( $cid, 'apprex_case_consent', 1 );
+				update_post_meta( $cid, 'apprex_case_consent_note', $note );
+				wp_update_post( array( 'ID' => $cid, 'post_status' => 'publish' ) );
+				$msg = 'publish' === get_post_status( $cid ) ? '導入事例を公開しました：' . get_the_title( $cid ) : '公開できませんでした。';
+			}
 		} elseif ( 'settings' === $do ) {
 			$o = array();
 			foreach ( array( 'case', 'holiday', 'monthly', 'publish' ) as $k ) {
@@ -570,6 +593,64 @@ add_action(
 	}
 );
 
+/**
+ * ワンクリック用：本当の出来事から、お知らせの候補を出す（まだ出していないものだけ）。
+ *
+ * @return array [ key => [ 見出し, 本当のこと, [タイトル, 本文] ] ]
+ */
+function apprex_an_candidates() {
+	$done = (array) get_option( 'apprex_an_done', array() );
+	$c    = array();
+	$cat  = apprex_an_news_cat();
+	// 公開した導入事例で、まだお知らせしていないもの。
+	foreach ( get_posts( array( 'post_type' => 'case', 'post_status' => 'publish', 'posts_per_page' => 5, 'date_query' => array( array( 'after' => '30 days ago' ) ) ) ) as $p ) {
+		$k = 'case_' . $p->ID;
+		if ( ! isset( $done[ $k ] ) ) {
+			$url     = get_permalink( $p );
+			$c[ $k ] = array( '導入事例「' . $p->post_title . '」を公開', '導入事例のページを新しく公開した。' . "\n事例のタイトル：" . $p->post_title . ( '' !== trim( $p->post_excerpt ) ? "\n概要：" . wp_strip_all_tags( $p->post_excerpt ) : '' ) . "\n事例のページ：" . $url, array( '導入事例「' . $p->post_title . '」を公開しました', "導入事例を新しく公開しました。\n\n[" . $p->post_title . '](' . $url . ')' ) );
+		}
+	}
+	// 30日以内のお休み。
+	foreach ( apprex_an_holidays() as $h ) {
+		$left = (int) round( ( strtotime( $h[0] ) - strtotime( wp_date( 'Y-m-d' ) ) ) / DAY_IN_SECONDS );
+		$k    = 'hol_' . $h[0];
+		if ( $left >= 0 && $left <= 30 && ! isset( $done[ $k ] ) ) {
+			$span    = $h[0] === $h[1] ? $h[0] : $h[0] . '〜' . $h[1];
+			$c[ $k ] = array( 'お休みのお知らせ（' . $span . '）', "お休みの日：{$span}\nこの期間は、オンラインのご相談（ミーティング）の予約を受け付けていない。お問い合わせとAIスタジオ（" . home_url( '/studio/' ) . '）はいつでも使える。お休みが明けてから順番に返事をする。', array( 'お休みのお知らせ（' . $span . '）', "{$span}はお休みをいただきます。お休み中のお問い合わせには、明けてから順番にお返事します。" ) );
+		}
+	}
+	// この2週間の新しいコラム。
+	$recent = get_posts( array( 'post_type' => 'post', 'post_status' => 'publish', 'posts_per_page' => 8, 'category__not_in' => $cat ? array( $cat ) : array(), 'date_query' => array( array( 'after' => '14 days ago' ) ) ) );
+	if ( $recent ) {
+		$k = 'week_' . wp_date( 'o-W' );
+		if ( ! isset( $done[ $k ] ) ) {
+			$list = '';
+			$md   = '';
+			foreach ( $recent as $p ) {
+				$list .= '- ' . $p->post_title . '（' . get_permalink( $p ) . "）\n";
+				$md   .= '- [' . $p->post_title . '](' . get_permalink( $p ) . ")\n";
+			}
+			$c[ $k ] = array( '新しいコラム ' . count( $recent ) . '本のご紹介', 'この2週間に公開したコラム（' . count( $recent ) . "本）：\n" . $list, array( '新しいコラムを公開しました（' . count( $recent ) . '本）', "この2週間に公開したコラムをご紹介します。\n\n" . trim( $md ) ) );
+		}
+	}
+	// AIスタジオで作られたアプリの見本の数（節目だけ）。
+	$n = count( get_users( array( 'meta_key' => 'apprex_studio_stage', 'fields' => 'ID', 'number' => 5000 ) ) ); // phpcs:ignore WordPress.DB.SlowDBQuery
+	foreach ( array( 1000, 500, 300, 200, 100, 50 ) as $ms ) {
+		if ( $n >= $ms ) {
+			$k = 'ms_' . $ms;
+			if ( ! isset( $done[ $k ] ) ) {
+				$c[ $k ] = array( 'AIスタジオの利用が' . $ms . '人をこえた', "AIスタジオ（無料でお店のアプリの見本を作れるページ）を使った人が {$ms}人をこえた（いまは {$n}人）。\nAIスタジオ：" . home_url( '/studio/' ), array( 'AIスタジオのご利用が' . $ms . '人をこえました', "AIスタジオをご利用いただいた方が{$ms}人をこえました。ありがとうございます。\n\n[AIスタジオで無料で試す](" . home_url( '/studio/' ) . ')' ) );
+			}
+			break;
+		}
+	}
+	// ホームページのリニューアル（1回だけ）。
+	if ( ! isset( $done['renewal'] ) ) {
+		$c['renewal'] = array( 'ホームページをリニューアルしました（リニューアルを公開したあとに）', "APPREXのホームページを新しくした。\nAIスタジオ（無料でアプリの見本を作れる）：" . home_url( '/studio/' ) . "\n料金：" . home_url( '/pricing/' ) . "\nオンラインのご相談：" . home_url( '/meeting/' ), array( 'ホームページをリニューアルしました', "APPREXのホームページを新しくしました。\n\nAIスタジオでは、お店のアプリの見本を無料で作れます。\n\n[AIスタジオで試す](" . home_url( '/studio/' ) . ')' ) );
+	}
+	return $c;
+}
+
 function apprex_an_msg() {
 	if ( isset( $_GET['anmsg'] ) && '' !== $_GET['anmsg'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 		echo '<div class="notice notice-info inline"><p>' . esc_html( rawurldecode( wp_unslash( $_GET['anmsg'] ) ) ) . '</p></div>'; // phpcs:ignore
@@ -585,6 +666,25 @@ function apprex_an_page() {
 		<h1>AIでお知らせ</h1>
 		<?php apprex_an_msg(); ?>
 		<p>トップページの「新着ニュース」（カテゴリー「ニュース」）に出すお知らせを、AIが書きます。<b>本当にあった出来事だけ</b>をもとに書き、日付や数字を作りません。</p>
+
+		<?php $apprex_cands = apprex_an_candidates(); ?>
+		<h2>AIにおまかせ（ワンクリック）</h2>
+		<div style="max-width:820px;background:#fff;border:1px solid #dcdcde;border-radius:8px;padding:12px 16px;margin-bottom:16px">
+			<?php if ( ! $apprex_cands ) : ?>
+				<p class="description">いま出せるお知らせの候補はありません。下の「ひとことで」から作れます。</p>
+			<?php else : ?>
+				<?php if ( array_diff( array_keys( $apprex_cands ), array( 'renewal' ) ) ) : ?>
+				<form method="post" action="<?php echo $act; // phpcs:ignore ?>" style="margin-bottom:10px"><input type="hidden" name="action" value="apprex_an"><input type="hidden" name="do" value="best"><?php wp_nonce_field( 'apprex_an' ); ?>
+					<button class="button button-primary button-hero" onclick="return confirm('AIが「<?php $apprex_bk = array_diff( array_keys( $apprex_cands ), array( 'renewal' ) ); echo esc_js( $apprex_bk ? $apprex_cands[ reset( $apprex_bk ) ][0] : '' ); ?>」のお知らせを書いて公開します。よろしいですか？')">✨ AIでお知らせを1件つくって公開</button></form>
+				<?php endif; ?>
+				<p class="description" style="margin:0 0 6px">サイトの本当の出来事から見つけた候補です。押すと、AIが書いてすぐ公開します。</p>
+				<table class="widefat striped"><tbody>
+				<?php foreach ( $apprex_cands as $k => $cd ) : ?>
+					<tr><td><?php echo esc_html( $cd[0] ); ?></td><td style="width:150px"><form method="post" action="<?php echo $act; // phpcs:ignore ?>"><input type="hidden" name="action" value="apprex_an"><input type="hidden" name="do" value="pick"><input type="hidden" name="key" value="<?php echo esc_attr( $k ); ?>"><?php wp_nonce_field( 'apprex_an' ); ?><button class="button">これで公開</button></form></td></tr>
+				<?php endforeach; ?>
+				</tbody></table>
+			<?php endif; ?>
+		</div>
 
 		<h2>ひとことで、お知らせを作る</h2>
 		<form method="post" action="<?php echo $act; // phpcs:ignore ?>" style="max-width:820px;background:#fff;border:1px solid #dcdcde;border-radius:8px;padding:12px 16px">
@@ -639,6 +739,17 @@ function apprex_case_page() {
 		<?php endforeach; ?>
 		</tbody></table>
 
+		<?php $apprex_drafts = get_posts( array( 'post_type' => 'case', 'post_status' => 'draft', 'posts_per_page' => 20, 'meta_key' => 'apprex_case_ai' ) ); // phpcs:ignore WordPress.DB.SlowDBQuery ?>
+		<h2>AIの下書き（<?php echo count( $apprex_drafts ); ?>件）</h2>
+		<table class="widefat striped" style="max-width:900px"><tbody>
+		<?php if ( ! $apprex_drafts ) : ?><tr><td>まだありません。</td></tr><?php endif; ?>
+		<?php foreach ( $apprex_drafts as $p ) : ?>
+			<tr><td><a href="<?php echo esc_url( get_edit_post_link( $p ) ); ?>"><b><?php echo esc_html( $p->post_title ); ?></b></a><br><small><?php echo esc_html( wp_trim_words( wp_strip_all_tags( $p->post_excerpt ? $p->post_excerpt : $p->post_content ), 40, '…' ) ); ?></small>　<a href="<?php echo esc_url( get_preview_post_link( $p ) ); ?>" target="_blank" rel="noopener">プレビュー</a></td>
+				<td style="width:360px"><form method="post" action="<?php echo $act; // phpcs:ignore ?>" style="display:flex;gap:6px" onsubmit="return confirm('お客様から掲載の許可をもらいましたか？公開します。')"><input type="hidden" name="action" value="apprex_an"><input type="hidden" name="do" value="casepub"><input type="hidden" name="id" value="<?php echo (int) $p->ID; ?>"><?php wp_nonce_field( 'apprex_an' ); ?>
+					<input name="note" required placeholder="許可のメモ（例：11/10 メールで許可）" style="flex:1"><button class="button button-primary">許可をもらったので公開</button></form></td></tr>
+		<?php endforeach; ?>
+		</tbody></table>
+
 		<h2>手で入れて作る（サイトの外で作ったお客様など）</h2>
 		<form method="post" action="<?php echo $act; // phpcs:ignore ?>" style="max-width:900px;background:#fff;border:1px solid #dcdcde;border-radius:8px;padding:8px 16px">
 			<input type="hidden" name="action" value="apprex_an"><input type="hidden" name="do" value="case"><?php wp_nonce_field( 'apprex_an' ); ?>
@@ -656,3 +767,38 @@ function apprex_case_page() {
 	</div>
 	<?php
 }
+
+/* =========================================================================
+ * ダッシュボード：AIワンクリック
+ * ====================================================================== */
+add_action(
+	'wp_dashboard_setup',
+	function () {
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			return;
+		}
+		wp_add_dashboard_widget(
+			'apprex_an_quick',
+			'✨ AIワンクリック（お知らせ・導入事例）',
+			function () {
+				$act    = esc_url( admin_url( 'admin-post.php' ) );
+				$cands  = apprex_an_candidates();
+				$drafts = get_posts( array( 'post_type' => 'case', 'post_status' => 'draft', 'posts_per_page' => 20, 'fields' => 'ids', 'meta_key' => 'apprex_case_ai' ) ); // phpcs:ignore WordPress.DB.SlowDBQuery
+				$wait   = array_filter( apprex_case_finished_users(), function ( $u ) {
+					return ! get_user_meta( $u, 'apprex_case_drafted', true );
+				} );
+				apprex_an_msg();
+				echo '<p><b>お知らせ</b>：候補 ' . count( $cands ) . '件' . ( $cands ? '（' . esc_html( reset( $cands )[0] ) . ' など）' : '' ) . '</p>';
+				if ( array_diff( array_keys( $cands ), array( 'renewal' ) ) ) {
+					echo '<form method="post" action="' . $act . '" style="margin-bottom:10px"><input type="hidden" name="action" value="apprex_an"><input type="hidden" name="do" value="best">' . wp_nonce_field( 'apprex_an', '_wpnonce', true, false ) . '<button class="button button-primary" onclick="return confirm(\'AIがお知らせを書いて公開します。よろしいですか？\')">AIでお知らせを1件つくって公開</button></form>';
+				}
+				echo '<p><b>導入事例</b>：AIの下書き ' . count( $drafts ) . '件・下書き待ちのお客様 ' . count( $wait ) . '人</p>';
+				if ( $wait ) {
+					$u = reset( $wait );
+					echo '<form method="post" action="' . $act . '" style="margin-bottom:10px"><input type="hidden" name="action" value="apprex_an"><input type="hidden" name="do" value="case"><input type="hidden" name="uid" value="' . (int) $u . '">' . wp_nonce_field( 'apprex_an', '_wpnonce', true, false ) . '<button class="button button-primary">AIで事例の下書きをつくる（' . esc_html( get_userdata( $u )->display_name ) . ' 様）</button></form>';
+				}
+				echo '<p><a class="button" href="' . esc_url( admin_url( 'edit.php?page=apprex-ai-news' ) ) . '">お知らせの画面</a> <a class="button" href="' . esc_url( admin_url( 'edit.php?post_type=case&page=apprex-ai-case' ) ) . '">導入事例の画面</a></p>';
+			}
+		);
+	}
+);
