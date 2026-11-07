@@ -52,6 +52,17 @@ function apprex_claude_studio_model() {
 	return $m ? $m : APPREX_CLAUDE_DEFAULT_MODEL;
 }
 
+/** AI営業リスト（提案のきっかけ・営業メール）に使う Claude のモデル。 */
+function apprex_claude_sales_model() {
+	$m = trim( (string) get_option( 'apprex_claude_sales_model', '' ) );
+	return 0 === strpos( $m, 'claude-' ) ? $m : 'claude-sonnet-5-5';
+}
+
+/** AI営業リストを Claude で動かすか（キーがあれば、はじめからオン）。 */
+function apprex_claude_sales_on() {
+	return '' !== apprex_claude_key() && '0' !== (string) get_option( 'apprex_claude_sales', '1' );
+}
+
 /** Claude のキーがあるか。 */
 function apprex_ai_use_claude() {
 	return '' !== apprex_claude_key();
@@ -79,6 +90,9 @@ function apprex_claude_for( $kind ) {
 	}
 	if ( 'article' === $kind ) {
 		return 'all' === $scope || 'chat_article' === $scope;
+	}
+	if ( 'sales' === $kind ) {
+		return apprex_claude_sales_on() || 'all' === $scope;
 	}
 	return 'all' === $scope;
 }
@@ -254,6 +268,10 @@ add_action( 'admin_init', function () {
 	register_setting( 'apprex_chat', 'apprex_claude_api_key', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 	register_setting( 'apprex_chat', 'apprex_claude_model', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 	register_setting( 'apprex_chat', 'apprex_claude_studio_model', array( 'sanitize_callback' => 'sanitize_text_field' ) );
+	register_setting( 'apprex_chat', 'apprex_claude_sales', array( 'sanitize_callback' => function ( $v ) {
+		return $v ? '1' : '0';
+	} ) );
+	register_setting( 'apprex_chat', 'apprex_claude_sales_model', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 	register_setting( 'apprex_chat', 'apprex_claude_article_model', array( 'sanitize_callback' => 'sanitize_text_field' ) );
 	register_setting(
 		'apprex_chat',
@@ -304,6 +322,15 @@ function apprex_claude_settings_rows() {
 		<td>
 			<input type="text" name="apprex_claude_article_model" value="<?php echo esc_attr( get_option( 'apprex_claude_article_model', '' ) ); ?>" class="regular-text" placeholder="<?php echo esc_attr( apprex_claude_model() ); ?>">
 			<p class="description">毎日の記事・記事の見直しに使います（「チャットと記事」「文章すべて」のとき）。未入力ならチャットと同じモデル。質を上げたいときは claude-opus-5-5（費用はおよそ2倍）。</p>
+		</td>
+	</tr>
+	<tr>
+		<th scope="row">AI営業リスト</th>
+		<td>
+			<input type="hidden" name="apprex_claude_sales" value="0">
+			<label><input type="checkbox" name="apprex_claude_sales" value="1" <?php checked( '0' !== (string) get_option( 'apprex_claude_sales', '1' ) ); ?>> 提案のきっかけ・営業メールの下書きも Claude で作る</label><br>
+			モデル <input type="text" name="apprex_claude_sales_model" value="<?php echo esc_attr( get_option( 'apprex_claude_sales_model', '' ) ); ?>" class="regular-text" placeholder="claude-sonnet-5-5">
+			<p class="description">「Claude を使う範囲」とは別に選べます。未入力時は claude-sonnet-5-5（文章が自然で、費用も中くらい）。たくさん調べて費用を下げたいときは claude-haiku-5-5。Claude で失敗したときは OpenRouter でやり直します。</p>
 		</td>
 	</tr>
 	<tr>

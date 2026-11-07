@@ -940,9 +940,37 @@ function apprex_ld_inspect_site( $site ) {
 	return $out;
 }
 
+/** AI営業リストのAIが使えるか（Claude か OpenRouter）。 */
+function apprex_ld_ai_ready() {
+	if ( ! function_exists( 'apprex_openrouter_complete' ) ) {
+		return false;
+	}
+	return ( function_exists( 'apprex_claude_for' ) && apprex_claude_for( 'sales' ) ) || ( function_exists( 'apprex_ai_text_ready' ) && apprex_ai_text_ready() );
+}
+
+/** AI営業リストのAIの呼び方（Claude のときは営業用のモデル）。 */
+function apprex_ld_ai_args( $args ) {
+	$args['sales'] = true;
+	if ( function_exists( 'apprex_claude_for' ) && apprex_claude_for( 'sales' ) && function_exists( 'apprex_claude_sales_model' ) ) {
+		$args['model'] = apprex_claude_sales_model();
+	}
+	return $args;
+}
+
+/** いま営業に使っているAIの名前。 */
+function apprex_ld_ai_label() {
+	if ( function_exists( 'apprex_claude_for' ) && apprex_claude_for( 'sales' ) && function_exists( 'apprex_claude_sales_model' ) ) {
+		return 'Claude（' . apprex_claude_sales_model() . '）';
+	}
+	if ( function_exists( 'apprex_openrouter_key' ) && '' !== apprex_openrouter_key() ) {
+		return 'OpenRouter（' . ( function_exists( 'apprex_openrouter_model' ) ? apprex_openrouter_model() : '' ) . '）';
+	}
+	return '未設定';
+}
+
 /** AIで「提案のきっかけ」（AIが使えないときは空）。 */
 function apprex_ld_ai_hook( $g, $genre, $info ) {
-	if ( ! function_exists( 'apprex_ai_text_ready' ) || ! apprex_ai_text_ready() || ! function_exists( 'apprex_openrouter_complete' ) ) {
+	if ( ! apprex_ld_ai_ready() ) {
 		return '';
 	}
 	$gs  = apprex_ld_genres();
@@ -950,7 +978,7 @@ function apprex_ld_ai_hook( $g, $genre, $info ) {
 	$msg = "お店：{$g['name']}（{$gs[$genre][0]}・{$g['address']}）\n口コミ：{$g['reviews']}件・評価{$g['rating']}\n"
 		. 'ホームページで分かったこと：' . wp_json_encode( $info['flags'], JSON_UNESCAPED_UNICODE ) . "\nホームページの文章（一部）：" . mb_substr( $info['text'], 0, 1800 )
 		. "\n\nこのお店にアプリ（予約・ポイント・クーポン・お知らせ・会員証など）を提案するなら、どこがきっかけになりますか。2〜3行の日本語で、お店の具体的な内容にふれて書いてください。前置きは不要です。";
-	$r = apprex_openrouter_complete( array( array( 'role' => 'system', 'content' => $sys ), array( 'role' => 'user', 'content' => $msg ) ), array( 'max_tokens' => 300, 'temperature' => 0.4, 'timeout' => 40 ) );
+	$r = apprex_openrouter_complete( array( array( 'role' => 'system', 'content' => $sys ), array( 'role' => 'user', 'content' => $msg ) ), apprex_ld_ai_args( array( 'max_tokens' => 300, 'temperature' => 0.4, 'timeout' => 40 ) ) );
 	if ( is_wp_error( $r ) ) {
 		return '';
 	}
@@ -1257,6 +1285,7 @@ function apprex_ld_page() {
 		<?php if ( isset( $_GET['ldmsg'] ) ) : // phpcs:ignore ?>
 			<div class="notice notice-info inline"><p><?php echo esc_html( rawurldecode( wp_unslash( $_GET['ldmsg'] ) ) ); // phpcs:ignore ?></p></div>
 		<?php endif; ?>
+		<p class="description">調べる・メールの下書きに使うAI：<b><?php echo esc_html( apprex_ld_ai_label() ); ?></b>（<a href="<?php echo esc_url( admin_url( 'options-general.php?page=apprex-chat' ) ); ?>">設定 → APPREX チャット</a>で変えられます）</p>
 		<?php if ( '' === apprex_gp_key() ) : ?>
 			<div class="notice notice-warning inline"><p>はじめに、この画面のいちばん下で Google の APIキーを入れてください。</p></div>
 		<?php endif; ?>

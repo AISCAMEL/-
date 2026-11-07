@@ -183,7 +183,7 @@ function apprex_ldm_make_draft( $id, $kind = 'first' ) {
 	$dear = $toop ? ( '' !== $op ? $op : $name . 'の運営会社' ) . ' ご担当者様' : $name . ' ご担当者様';
 	$subj = '';
 	$body = '';
-	if ( function_exists( 'apprex_ai_text_ready' ) && apprex_ai_text_ready() && function_exists( 'apprex_openrouter_complete' ) ) {
+	if ( function_exists( 'apprex_ld_ai_ready' ) && apprex_ld_ai_ready() ) {
 		$sys = 'あなたはアプリ制作サービス「APPREX」（合同会社アイズ・福島県いわき市）の営業担当です。お店に、はじめて送る短い営業メールを書きます。'
 			. '守ること：事実として分かっていることだけを使う。褒めすぎない。「突然のご連絡失礼いたします」で始める。押し売りしない。誇張・断定・数字の約束をしない。'
 			. '絵文字は使わない。本文は350〜500字。最後に、無料でアプリの見本を作れるページのURLを1回だけ入れる。署名や配信停止の文は書かない（こちらで付ける）。';
@@ -201,7 +201,7 @@ function apprex_ldm_make_draft( $id, $kind = 'first' ) {
 			. ( $toop ? "このメールは、お店ではなく運営会社（{$op}）あてです。「{$name}」についてのご提案だと分かるように書いてください。\n" : '' )
 			. ( apprex_ldm_is_form( $to ) ? "このメールは、お店の問い合わせフォームに貼って送ります。\n" : '' )
 			. "形式：1行目に「件名：」から始めて件名（30字以内）、2行目から本文。宛名は「{$dear}」。";
-		$r = apprex_openrouter_complete( array( array( 'role' => 'system', 'content' => $sys ), array( 'role' => 'user', 'content' => $msg ) ), array( 'max_tokens' => 900, 'temperature' => 0.5, 'timeout' => 60 ) );
+		$r = apprex_openrouter_complete( array( array( 'role' => 'system', 'content' => $sys ), array( 'role' => 'user', 'content' => $msg ) ), apprex_ld_ai_args( array( 'max_tokens' => 900, 'temperature' => 0.5, 'timeout' => 60 ) ) );
 		if ( ! is_wp_error( $r ) ) {
 			$t = trim( str_replace( "\r", '', wp_strip_all_tags( (string) $r ) ) );
 			if ( preg_match( '/^件名[:：]\s*(.+)\n+([\s\S]+)$/u', $t, $m ) ) {
