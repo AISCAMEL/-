@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'APPREX_VERSION', '1.117.1' );
+define( 'APPREX_VERSION', '1.118.0' );
 define( 'APPREX_DIR', get_template_directory() );
 define( 'APPREX_URI', get_template_directory_uri() );
 
@@ -94,6 +94,7 @@ require_once APPREX_DIR . '/inc/jp-linebreak.php';
 require_once APPREX_DIR . '/inc/project-status.php';
 require_once APPREX_DIR . '/inc/biz-leads.php';
 require_once APPREX_DIR . '/inc/biz-mail.php';
+require_once APPREX_DIR . '/inc/biz-queue.php';
 require_once APPREX_DIR . '/inc/gcal.php';
 require_once APPREX_DIR . '/inc/cron-health.php';
 require_once APPREX_DIR . '/inc/mf-invoice.php';

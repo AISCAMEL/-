@@ -1065,12 +1065,17 @@ add_action(
 		} elseif ( 'research' === $do ) {
 			$ids = array_map( 'absint', (array) ( $_POST['ids'] ?? array() ) );
 			$n   = 0;
+			if ( count( $ids ) > 10 && function_exists( 'apprex_ldq_start' ) ) {
+				$n    = apprex_ldq_start( $ids, 'チェックしたお店' );
+				$msg  = $n . '件を、まとめて調べ直しに入れました。上の「調べ直し中」で進み具合が見られます。';
+				$ids  = array();
+			}
 			foreach ( array_slice( $ids, 0, 10 ) as $id ) {
 				if ( 'apprex_lead' === get_post_type( $id ) && ! is_wp_error( apprex_ld_research( $id ) ) ) {
 					$n++;
 				}
 			}
-			$msg = $n . '件を調べました。' . ( count( $ids ) > 10 ? '（一度に調べるのは10件までです）' : '' );
+			$msg = '' !== $msg ? $msg : $n . '件を調べました。';
 		} elseif ( 'status' === $do ) {
 			$id = absint( $_POST['id'] ?? 0 );
 			$st = sanitize_key( $_POST['status'] ?? '' );
@@ -1323,6 +1328,7 @@ function apprex_ld_page() {
 			<?php if ( '' !== $f['status'] ) : ?><input type="hidden" name="status" value="<?php echo esc_attr( $f['status'] ); ?>"><?php endif; ?>
 			<?php apprex_ld_genre_select( 'genre', $f['genre'], 'ジャンル：すべて', 'this.form.submit()' ); ?>
 		</form>
+		<?php if ( function_exists( 'apprex_ldq_box' ) ) { apprex_ldq_box( $f ); } ?>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 			<input type="hidden" name="action" value="apprex_ld"><input type="hidden" name="do" value="research"><?php wp_nonce_field( 'apprex_ld' ); ?>
 			<table class="widefat striped">
@@ -1363,7 +1369,7 @@ function apprex_ld_page() {
 				<?php endforeach; ?>
 				</tbody>
 			</table>
-			<p><?php submit_button( 'チェックしたお店のホームページを調べる（AI・10件まで）', 'secondary', 'submit', false ); ?>
+			<p><?php submit_button( 'チェックしたお店のホームページを調べる（AI）', 'secondary', 'submit', false ); ?>
 				<?php if ( function_exists( 'apprex_ldm_box' ) ) : ?><button class="button" name="do" value="mdraft">チェックしたお店のメールの下書きを作る（AI・10件まで）</button><?php endif; ?></p>
 		</form>
 
