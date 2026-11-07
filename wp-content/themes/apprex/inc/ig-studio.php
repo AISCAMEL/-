@@ -248,11 +248,18 @@ function apprex_ig_pattern_for( $post_id ) {
 	if ( isset( $all[ $p ] ) ) {
 		return $p;
 	}
-	$set = (string) get_option( 'apprex_ig_pattern', 'rotate_impact' );
+	$set = (string) get_option( 'apprex_ig_pattern', 'block9' );
 	if ( isset( $all[ $set ] ) ) {
 		return $set;
 	}
-	// 順番に使う（記事ごとに決めて、作り直しても同じにする）。インパクト系だけ／全部。
+	// 順番に使う（記事ごとに決めて、作り直しても同じにする）。
+	if ( 'block9' === $set ) {
+		$b = apprex_ig_block9();
+		update_option( 'apprex_ig_pat_b', $b['i'] + 1, false );
+		update_post_meta( $post_id, '_apprex_ig_pattern', $b['key'] );
+		return $b['key'];
+	}
+	// インパクト系だけ／全部を、1投稿ずつ。
 	$keys = 'rotate' === $set ? array_keys( $all ) : array_keys( array_filter( $all, function ( $x ) {
 		return ! empty( $x['pt'] );
 	} ) );
@@ -261,6 +268,30 @@ function apprex_ig_pattern_for( $post_id ) {
 	$p = $keys[ $i % count( $keys ) ];
 	update_post_meta( $post_id, '_apprex_ig_pattern', $p );
 	return $p;
+}
+
+/** 9投稿ずつ同じデザインの順番（インパクト系から）。 */
+function apprex_ig_block9_order() {
+	$all   = apprex_ig_patterns();
+	$order = array( 'red', 'ticker', 'diagonal', 'marker', 'navy', 'white', 'pop', 'natural', 'dark' );
+	return array_values( array_intersect( $order, array_keys( $all ) ) );
+}
+
+/**
+ * 9投稿ずつ：いまのデザインと、あと何投稿か。
+ *
+ * @return array key（次に使うデザイン）・i（これまでの数）・left（このデザインであと何投稿）・next（その次のデザイン）。
+ */
+function apprex_ig_block9() {
+	$order = apprex_ig_block9_order();
+	$i     = (int) get_option( 'apprex_ig_pat_b', 0 );
+	$blk   = intdiv( $i, 9 );
+	return array(
+		'key'  => $order[ $blk % count( $order ) ],
+		'i'    => $i,
+		'left' => 9 - $i % 9,
+		'next' => $order[ ( $blk + 1 ) % count( $order ) ],
+	);
 }
 
 function apprex_ig_render( $post, $copy ) {
@@ -1001,6 +1032,20 @@ add_action(
 			delete_post_meta( $pid, '_apprex_ig_error' );
 		}
 		wp_safe_redirect( get_edit_post_link( $pid, 'raw' ) . '#apprex_ig_box' );
+		exit;
+	}
+);
+
+// 9投稿ずつ：次のデザインに切り替える。
+add_action(
+	'admin_post_apprex_ig_b9_next',
+	function () {
+		if ( ! current_user_can( 'manage_options' ) || ! check_admin_referer( 'apprex_ig_b9_next' ) ) {
+			wp_die( '権限がありません。' );
+		}
+		$i = (int) get_option( 'apprex_ig_pat_b', 0 );
+		update_option( 'apprex_ig_pat_b', ( intdiv( $i, 9 ) + 1 ) * 9, false );
+		wp_safe_redirect( wp_get_referer() ? wp_get_referer() : admin_url() );
 		exit;
 	}
 );

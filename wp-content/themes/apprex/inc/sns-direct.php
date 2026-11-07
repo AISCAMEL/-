@@ -350,7 +350,7 @@ add_action( 'admin_init', function () {
 			return 'off' === $v ? 'off' : 'on';
 		},
 		'apprex_ig_pattern'    => function ( $v ) {
-			return ( function_exists( 'apprex_ig_patterns' ) && isset( apprex_ig_patterns()[ $v ] ) ) || 'rotate' === $v ? $v : 'rotate_impact';
+			return ( function_exists( 'apprex_ig_patterns' ) && isset( apprex_ig_patterns()[ $v ] ) ) || in_array( $v, array( 'rotate', 'rotate_impact' ), true ) ? $v : 'block9';
 		},
 		'apprex_ig_reel'       => function ( $v ) {
 			return 'off' === $v ? 'off' : 'on';
@@ -408,13 +408,21 @@ function apprex_sns_settings_page() {
 				<?php if ( function_exists( 'apprex_ig_patterns' ) ) : ?>
 				<tr><th>画像のデザイン</th><td>
 					<select name="apprex_ig_pattern">
-						<option value="rotate_impact" <?php selected( 'rotate_impact', get_option( 'apprex_ig_pattern', 'rotate_impact' ) ); ?>>記事ごとに順番に変える：インパクト系★だけ（おすすめ・4種類）</option>
-						<option value="rotate" <?php selected( 'rotate', get_option( 'apprex_ig_pattern', 'rotate_impact' ) ); ?>>記事ごとに順番に変える：全部（9種類）</option>
+						<?php $apprex_igp = (string) get_option( 'apprex_ig_pattern', 'block9' ); ?>
+						<option value="block9" <?php selected( 'block9', $apprex_igp ); ?>>9投稿ずつ同じデザイン → 次の9投稿は別のデザイン（おすすめ・プロフィールの9マスがそろう）</option>
+						<option value="rotate_impact" <?php selected( 'rotate_impact', $apprex_igp ); ?>>1投稿ずつ順番に変える：インパクト系★だけ（4種類）</option>
+						<option value="rotate" <?php selected( 'rotate', $apprex_igp ); ?>>1投稿ずつ順番に変える：全部（9種類）</option>
 						<?php foreach ( apprex_ig_patterns() as $k => $pt ) : ?>
-							<option value="<?php echo esc_attr( $k ); ?>" <?php selected( $k, get_option( 'apprex_ig_pattern', 'rotate_impact' ) ); ?>>いつも「<?php echo esc_html( $pt['label'] ); ?>」</option>
+							<option value="<?php echo esc_attr( $k ); ?>" <?php selected( $k, $apprex_igp ); ?>>いつも「<?php echo esc_html( $pt['label'] ); ?>」</option>
 						<?php endforeach; ?>
 					</select>
-					<p class="description">記事の編集画面の「インスタグラム」欄でも、記事ごとにデザインを選んで作り直せます。</p>
+					<?php if ( 'block9' === $apprex_igp && function_exists( 'apprex_ig_block9' ) ) : ?>
+						<?php $apprex_b9 = apprex_ig_block9(); $apprex_pl = apprex_ig_patterns(); ?>
+						<p style="background:#f0f6fc;border-radius:6px;padding:8px 12px;margin:8px 0">いまのデザイン：<b><?php echo esc_html( $apprex_pl[ $apprex_b9['key'] ]['label'] ); ?></b>（あと <b><?php echo (int) $apprex_b9['left']; ?></b> 投稿）→ 次は「<?php echo esc_html( $apprex_pl[ $apprex_b9['next'] ]['label'] ); ?>」<br>
+						<span class="description">順番：<?php echo esc_html( implode( ' → ', array_map( function ( $k ) use ( $apprex_pl ) { return preg_replace( '/（.*$/u', '', $apprex_pl[ $k ]['label'] ); }, apprex_ig_block9_order() ) ) ); ?></span><br>
+						<a class="button button-small" style="margin-top:6px" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-post.php?action=apprex_ig_b9_next' ), 'apprex_ig_b9_next' ) ); ?>" onclick="return confirm('次の投稿から、次のデザインに切り替えます。よろしいですか？')">次のデザインに切り替える</a></p>
+					<?php endif; ?>
+					<p class="description">記事の編集画面の「インスタグラム」欄でも、記事ごとにデザインを選んで作り直せます（その場合は9投稿の数に入りません）。</p>
 				</td></tr>
 				<?php endif; ?>
 				<tr><th>リール動画</th><td>
