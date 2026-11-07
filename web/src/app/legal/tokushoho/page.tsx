@@ -1,16 +1,20 @@
 import type { Metadata } from "next";
 import { SitePage } from "@/components/site-page";
+import { SITE } from "@/lib/site";
+
+const op = SITE.operator;
+const fill = (v: string, todo = "【運営者にて記入】") => v || todo;
 
 export const metadata: Metadata = {
   title: "特定商取引法に基づく表記",
 };
 
 const ROWS: { k: string; v: string; todo?: boolean }[] = [
-  { k: "事業者の名称", v: "【運営者にて記入】", todo: true },
-  { k: "運営統括責任者", v: "【運営者にて記入】", todo: true },
-  { k: "所在地", v: "【運営者にて記入（請求があれば遅滞なく開示）】", todo: true },
-  { k: "電話番号", v: "【運営者にて記入（請求があれば遅滞なく開示）】", todo: true },
-  { k: "メールアドレス", v: "【運営者にて記入】", todo: true },
+  { k: "事業者の名称", v: fill(op.name), todo: !op.name },
+  { k: "運営統括責任者", v: fill(op.representative), todo: !op.representative },
+  { k: "所在地", v: fill(op.address, "【運営者にて記入（請求があれば遅滞なく開示）】"), todo: !op.address },
+  { k: "電話番号", v: fill(op.phone, "【運営者にて記入（請求があれば遅滞なく開示）】"), todo: !op.phone },
+  { k: "メールアドレス", v: fill(op.email), todo: !op.email },
   { k: "販売価格", v: "各講師・各スキルのページに税込で表示します。受講は月額制です。" },
   { k: "商品代金以外の必要料金", v: "サービス利用に通信料が発生します。決済手数料が生じる場合は購入手続き時に表示します。" },
   { k: "運営手数料", v: "マッチング成立後の月額から、所定の運営手数料（例：20%）を差し引いた額を講師にお支払いします。手数料率は申込時に表示します。" },
@@ -26,7 +30,11 @@ export default function TokushohoPage() {
   return (
     <SitePage
       title="特定商取引法に基づく表記"
-      lead="このページは雛形です。事業開始（決済導入）前に、実際の事業者情報を必ずご記入ください。"
+      lead={
+        op.name
+          ? undefined
+          : "このページは雛形です。事業開始（決済導入）前に、実際の事業者情報を必ずご記入ください。"
+      }
     >
       <div className="overflow-hidden rounded-2xl border border-navy/10 bg-white">
         <table className="w-full text-sm">

@@ -50,10 +50,14 @@ export default function PrivacyPage() {
         <p>本ポリシーは必要に応じて改定します。重要な変更は当サービス上で告知します。</p>
       </Section>
       <Section heading="8. お問い合わせ窓口">
-        <p>【運営者にて記入：事業者名・連絡先】</p>
+        <p>
+          {SITE.operator.name
+            ? `${SITE.operator.name}　${SITE.operator.email || "お問い合わせフォームよりご連絡ください"}`
+            : "【運営者にて記入：事業者名・連絡先】"}
+        </p>
       </Section>
       <p className="mt-8 text-xs text-navy/40">
-        制定日：【要記入】／ ※ 実運用前に内容と事業者情報をご確認・ご記入ください。
+        制定日：{SITE.operator.legalEffectiveDate || "【要記入】／ ※ 実運用前に内容と事業者情報をご確認・ご記入ください。"}
       </p>
     </SitePage>
   );

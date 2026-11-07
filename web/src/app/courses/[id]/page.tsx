@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { detailMetadata } from "@/lib/page-meta";
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -8,6 +10,11 @@ import { PremiumCTA } from "@/components/courses/premium-cta";
 import { DEMO, demoCourses } from "@/lib/demo";
 
 type Props = { params: Promise<{ id: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  return detailMetadata("course", id);
+}
 
 type Lesson = { id: string; title: string; is_free: boolean; duration_min: number | null };
 type Course = {

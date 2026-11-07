@@ -1,36 +1,21 @@
 import Link from "next/link";
 import { Brand } from "@/components/brand";
 import { getCurrentMember } from "@/lib/auth";
+import { MAIN_NAV } from "@/lib/nav";
 
 /** コミュニティ共通ヘッダー。LINE CTA は強い導線として常設（仕様書 セクション5） */
 export async function CommunityHeader() {
   const member = await getCurrentMember();
   return (
     <header className="sticky top-0 z-10 border-b border-navy/10 bg-white/90 backdrop-blur">
-      <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
-        <Brand href="/community" />
+      <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
+        <Brand />
         <nav className="flex items-center gap-2 text-sm">
-          <Link href="/instructors" className="hidden text-navy/70 hover:text-ocean sm:inline">
-            スクール
-          </Link>
-          <Link href="/courses" className="hidden text-navy/70 hover:text-ocean sm:inline">
-            講座
-          </Link>
-          <Link href="/rules" className="hidden text-navy/70 hover:text-ocean sm:inline">
-            海のルール
-          </Link>
-          <Link href="/articles" className="hidden text-navy/70 hover:text-ocean sm:inline">
-            ブログ
-          </Link>
-          <Link href="/waves" className="hidden text-navy/70 hover:text-ocean sm:inline">
-            波情報
-          </Link>
-          <Link href="/spots" className="hidden text-navy/70 hover:text-ocean sm:inline">
-            全国ポイント
-          </Link>
-          <Link href="/partners" className="hidden text-navy/70 hover:text-ocean sm:inline">
-            周辺ガイド
-          </Link>
+          {MAIN_NAV.map((l) => (
+            <Link key={l.href} href={l.href} className="hidden text-navy/70 hover:text-ocean lg:inline">
+              {l.label}
+            </Link>
+          ))}
           {member ? (
             <>
               <Link

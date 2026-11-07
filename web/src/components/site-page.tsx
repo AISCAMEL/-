@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Brand } from "@/components/brand";
 import { SiteFooter } from "@/components/site-footer";
+import { MAIN_NAV } from "@/lib/nav";
 
 /** 情報・法務ページの共通ガード（ヘッダー＋本文＋フッター） */
 export function SitePage({
@@ -15,11 +16,18 @@ export function SitePage({
   return (
     <div className="flex min-h-screen flex-col bg-foam">
       <header className="border-b border-navy/10 bg-white px-6 py-4">
-        <div className="mx-auto flex max-w-3xl items-center justify-between">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
           <Brand />
-          <Link href="/" className="text-sm text-navy/60 hover:text-ocean">
-            トップへ
-          </Link>
+          <nav className="flex items-center gap-3 text-sm">
+            {MAIN_NAV.map((l) => (
+              <Link key={l.href} href={l.href} className="hidden text-navy/70 hover:text-ocean lg:inline">
+                {l.label}
+              </Link>
+            ))}
+            <Link href="/" className="text-navy/60 hover:text-ocean lg:hidden">
+              トップへ
+            </Link>
+          </nav>
         </div>
       </header>
 

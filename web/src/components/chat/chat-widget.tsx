@@ -177,8 +177,8 @@ export function ChatWidget() {
     <>
       {!open ? (
         <div
-          className="fixed right-3 z-40 flex flex-col items-end"
-          style={{ bottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+          // スマホ・タブレットは下部タブバーの上に出す
+          className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-3 z-30 flex flex-col items-end lg:bottom-3"
         >
           <div className="launcher-bubble pointer-events-none mb-1 mr-2 rounded-2xl rounded-br-sm bg-white px-3 py-1.5 text-xs font-medium text-navy shadow-md">
             波のこと、聞いて！🌊

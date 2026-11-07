@@ -2,6 +2,7 @@ import { AdBanner } from "@/components/ads/ad-banner";
 import Link from "next/link";
 import { Brand } from "@/components/brand";
 import { SiteFooter } from "@/components/site-footer";
+import { MAIN_NAV } from "@/lib/nav";
 import { SITE } from "@/lib/site";
 
 const SERVICES = [
@@ -15,9 +16,14 @@ export default function Home() {
   return (
     <div className="flex min-h-screen flex-col">
       {/* ヘッダー */}
-      <header className="flex items-center justify-between px-6 py-4">
+      <header className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-6 py-4">
         <Brand />
         <nav className="flex items-center gap-3 text-sm">
+          {MAIN_NAV.map((l) => (
+            <Link key={l.href} href={l.href} className="hidden text-navy/70 hover:text-ocean lg:inline">
+              {l.label}
+            </Link>
+          ))}
           <Link href="/login" className="text-navy/70 hover:text-ocean">
             ログイン
           </Link>
@@ -25,7 +31,7 @@ export default function Home() {
             href="/signup"
             className="rounded-lg bg-ocean px-4 py-2 font-medium text-foam transition hover:bg-navy"
           >
-            新規登録
+            仲間になる
           </Link>
         </nav>
       </header>

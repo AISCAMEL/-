@@ -17,17 +17,19 @@ export default function ContactPage() {
         <ContactForm />
 
         <aside className="space-y-4">
-          <a
-            href="https://line.me/"
-            target="_blank"
-            rel="noreferrer"
-            className="block rounded-2xl bg-teal/10 p-5 text-sm text-navy/80 transition hover:bg-teal/20"
-          >
-            <p className="font-medium text-teal">LINEで相談する 🌊</p>
-            <p className="mt-1 text-xs text-navy/60">
-              波情報・イベントもLINEでお届けします。友だち追加はこちら。
-            </p>
-          </a>
+          {SITE.lineUrl ? (
+            <a
+              href={SITE.lineUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="block rounded-2xl bg-teal/10 p-5 text-sm text-navy/80 transition hover:bg-teal/20"
+            >
+              <p className="font-medium text-teal">LINEで相談する 🌊</p>
+              <p className="mt-1 text-xs text-navy/60">
+                波情報・イベントもLINEでお届けします。友だち追加はこちら。
+              </p>
+            </a>
+          ) : null}
           <div className="rounded-2xl border border-navy/10 bg-white p-5 text-sm text-navy/70">
             <p className="font-medium text-navy">運営情報</p>
             <p className="mt-2 text-xs leading-relaxed text-navy/50">

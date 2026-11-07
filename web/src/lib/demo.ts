@@ -417,13 +417,13 @@ export type DemoAd = {
 };
 
 export const demoAds: DemoAd[] = [
-  { id: "ad-1", advertiser: "WAVE RIDER 広野店", image_url: "/ads/shop.png", href: "#", placement: "feed" },
-  { id: "ad-2", advertiser: "AQUA wetsuits", image_url: "/ads/wetsuit.png", href: "#", placement: "waves" },
-  { id: "ad-3", advertiser: "岩沢の宿 うみやど", image_url: "/ads/cafe.png", href: "#", placement: "blog" },
-  { id: "ad-4", advertiser: "WAVE RIDER 広野店", image_url: "/ads/shop.png", href: "#", placement: "top" },
-  { id: "ad-5", advertiser: "AQUA wetsuits", image_url: "/ads/wetsuit.png", href: "#", placement: "spots" },
-  { id: "ad-6", advertiser: "WAVE RIDER 広野店", image_url: "/ads/shop.png", href: "#", placement: "footer" },
-  { id: "ad-7", advertiser: "岩沢の宿 うみやど", image_url: "/ads/cafe.png", href: "#", placement: "footer" },
+  { id: "ad-1", advertiser: "WAVE RIDER 広野店", image_url: "/ads/shop.png", href: "/ads", placement: "feed" },
+  { id: "ad-2", advertiser: "AQUA wetsuits", image_url: "/ads/wetsuit.png", href: "/ads", placement: "waves" },
+  { id: "ad-3", advertiser: "岩沢の宿 うみやど", image_url: "/ads/cafe.png", href: "/ads", placement: "blog" },
+  { id: "ad-4", advertiser: "WAVE RIDER 広野店", image_url: "/ads/shop.png", href: "/ads", placement: "top" },
+  { id: "ad-5", advertiser: "AQUA wetsuits", image_url: "/ads/wetsuit.png", href: "/ads", placement: "spots" },
+  { id: "ad-6", advertiser: "WAVE RIDER 広野店", image_url: "/ads/shop.png", href: "/ads", placement: "footer" },
+  { id: "ad-7", advertiser: "岩沢の宿 うみやど", image_url: "/ads/cafe.png", href: "/ads", placement: "footer" },
 ];
 
 export type DemoArticle = {

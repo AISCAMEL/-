@@ -10,18 +10,20 @@ export default function CommunityLayout({
     <div className="min-h-screen bg-foam">
       <CommunityHeader />
       {children}
-      {/* LINE CTA（強い導線として常設） */}
-      <div className="mx-auto max-w-3xl px-4 py-10">
-        <a
-          href="https://line.me/"
-          target="_blank"
-          rel="noreferrer"
-          className="block rounded-2xl bg-teal/10 p-5 text-center text-sm text-navy/80 transition hover:bg-teal/20"
-        >
-          LINEでも、{SITE.region.beachShort}の波情報やイベントをお届けします 🌊
-          <span className="mt-1 block font-medium text-teal">友だち追加する →</span>
-        </a>
-      </div>
+      {/* LINE CTA（強い導線として常設。URL未設定なら出さない） */}
+      {SITE.lineUrl ? (
+        <div className="mx-auto max-w-3xl px-4 py-10">
+          <a
+            href={SITE.lineUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="block rounded-2xl bg-teal/10 p-5 text-center text-sm text-navy/80 transition hover:bg-teal/20"
+          >
+            LINEでも、{SITE.region.beachShort}の波情報やイベントをお届けします 🌊
+            <span className="mt-1 block font-medium text-teal">友だち追加する →</span>
+          </a>
+        </div>
+      ) : null}
     </div>
   );
 }

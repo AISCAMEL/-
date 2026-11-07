@@ -62,7 +62,7 @@ export default function TermsPage() {
         <p>本規約は必要に応じて変更します。変更後の利用をもって同意とみなします。</p>
       </Section>
       <p className="mt-8 text-xs text-navy/40">
-        制定日：【要記入】／ ※ 実運用前に、事業内容に合わせて内容をご確認ください。
+        制定日：{SITE.operator.legalEffectiveDate || "【要記入】／ ※ 実運用前に、事業内容に合わせて内容をご確認ください。"}
       </p>
     </SitePage>
   );

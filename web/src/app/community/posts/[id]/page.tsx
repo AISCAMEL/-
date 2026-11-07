@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { detailMetadata } from "@/lib/page-meta";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -9,6 +11,11 @@ import { ReportButton } from "@/components/community/report-button";
 import { DEMO, demoPostById, demoPosts } from "@/lib/demo";
 
 type Props = { params: Promise<{ id: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  return detailMetadata("post", id);
+}
 
 type PostRow = {
   id: string;

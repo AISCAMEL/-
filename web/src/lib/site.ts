@@ -31,4 +31,29 @@ export const SITE = {
     /** エリア表記（フッター・問い合わせ等） */
     areaLabel: "福島県双葉郡広野町・岩沢海岸エリア",
   },
+  /**
+   * 運営者情報（特定商取引法表記・プライバシーポリシー・利用規約に表示）。
+   * 公開前にここを埋めれば、すべての法務ページに反映される。空欄のままだと「要記入」と表示。
+   */
+  operator: {
+    name: "", // 事業者の名称（例：株式会社〇〇）
+    representative: "", // 運営統括責任者
+    address: "", // 所在地
+    phone: "", // 電話番号
+    email: "", // お問い合わせ用メールアドレス
+    legalEffectiveDate: "", // 法務ページの制定日（例：2026年12月1日）
+  },
+  /** LINE公式アカウントの友だち追加URL（未設定ならLINEの案内を出さない） */
+  lineUrl: process.env.NEXT_PUBLIC_LINE_URL ?? "",
 } as const;
+
+/**
+ * サイトの公開URL（OGP・サイトマップ・検索エンジン向け）。
+ * NEXT_PUBLIC_SITE_URL を優先し、なければ Vercel の本番URL、ローカルでは localhost。
+ */
+export const SITE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : "http://localhost:3200")
+).replace(/\/$/, "");

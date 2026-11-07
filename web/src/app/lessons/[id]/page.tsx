@@ -1,3 +1,4 @@
+import { detailMetadata } from "@/lib/page-meta";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -8,9 +9,13 @@ import { VideoPlayer } from "@/components/courses/video-player";
 import { PremiumCTA } from "@/components/courses/premium-cta";
 import { DEMO, demoCourses } from "@/lib/demo";
 
-export const metadata: Metadata = { title: "レッスン" };
 
 type Props = { params: Promise<{ id: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  return detailMetadata("lesson", id);
+}
 
 type LessonView = {
   id: string;
