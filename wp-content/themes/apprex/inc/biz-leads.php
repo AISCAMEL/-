@@ -415,7 +415,8 @@ function apprex_ld_collect( $genre, $area, $max = 20 ) {
 		$b            = apprex_ld_brand( $g['name'] );
 		$brands[ $b ] = ( $brands[ $b ] ?? 0 ) + 1;
 	}
-	$new = 0;
+	$new  = 0;
+	$nids = array();
 	foreach ( $res as $g ) {
 		if ( '' === $g['id'] ) {
 			continue;
@@ -432,6 +433,7 @@ function apprex_ld_collect( $genre, $area, $max = 20 ) {
 			update_post_meta( $id, 'apprex_ld_status', 'new' );
 			apprex_ld_log( $id, 'Googleマップで見つけてリストに入れました（「' . $query . '」）' );
 			$new++;
+			$nids[] = (int) $id;
 		}
 		update_post_meta( $id, 'apprex_ld_g', array( 't' => time(), 'd' => $g ) );
 		$chain = $brands[ apprex_ld_brand( $g['name'] ) ] ?? 1;
@@ -446,7 +448,7 @@ function apprex_ld_collect( $genre, $area, $max = 20 ) {
 	$hist   = (array) get_option( 'apprex_ld_searches', array() );
 	$hist[] = array( time(), $genre, $area, count( $res ), $new );
 	update_option( 'apprex_ld_searches', array_slice( $hist, -50 ), false );
-	return array( count( $res ), $new );
+	return array( count( $res ), $new, $nids );
 }
 
 /* =========================================================================
@@ -602,6 +604,15 @@ add_action(
 			return '' === $v ? (string) get_option( 'apprex_gp_key', '' ) : sanitize_text_field( $v );
 		} ) );
 		register_setting( 'apprex_leads', 'apprex_gp_cap', array( 'sanitize_callback' => 'absint' ) );
+		register_setting( 'apprex_leads_auto', 'apprex_ld_auto', array( 'sanitize_callback' => 'absint' ) );
+		register_setting( 'apprex_leads_auto', 'apprex_ld_auto_genres', array( 'sanitize_callback' => function ( $v ) {
+			return array_values( array_intersect( array_map( 'sanitize_key', (array) $v ), array_keys( apprex_ld_genres() ) ) );
+		} ) );
+		register_setting( 'apprex_leads_auto', 'apprex_ld_auto_areas', array( 'sanitize_callback' => 'sanitize_textarea_field' ) );
+		register_setting( 'apprex_leads_auto', 'apprex_ld_auto_freq', array( 'sanitize_callback' => 'sanitize_key' ) );
+		register_setting( 'apprex_leads_auto', 'apprex_ld_auto_max', array( 'sanitize_callback' => 'absint' ) );
+		register_setting( 'apprex_leads_auto', 'apprex_ld_auto_research', array( 'sanitize_callback' => 'absint' ) );
+		register_setting( 'apprex_leads_auto', 'apprex_ld_auto_min', array( 'sanitize_callback' => 'absint' ) );
 	}
 );
 
@@ -650,6 +661,9 @@ add_action(
 				}
 				$msg = '状態を「' . apprex_ld_statuses()[ $st ] . '」にしました。';
 			}
+		} elseif ( 'autorun' === $do ) {
+			$r   = apprex_ld_auto_run( true );
+			$msg = is_wp_error( $r ) ? '失敗：' . $r->get_error_message() : $r;
 		} elseif ( 'refresh' === $do ) {
 			$id  = absint( $_POST['id'] ?? 0 );
 			$msg = ( 'apprex_lead' === get_post_type( $id ) && apprex_ld_google( $id, true ) ) ? 'Google の情報を読み直しました。' : '読み直せませんでした。';
@@ -829,6 +843,8 @@ function apprex_ld_page() {
 		?>
 		</tbody></table>
 
+		<?php apprex_ld_auto_box(); ?>
+
 		<h2>設定</h2>
 		<form method="post" action="options.php" style="max-width:900px">
 			<?php settings_fields( 'apprex_leads' ); ?>
@@ -905,5 +921,195 @@ function apprex_ld_detail( $id ) {
 	}
 	?>
 	</tbody></table>
+	<?php
+}
+
+/* =========================================================================
+ * 自動で集める（決まった曜日に、ジャンル×地域を順番に探して、上位を調べて、結果を知らせる）
+ * ====================================================================== */
+
+/** 自動で探す組み合わせ（ジャンル×地域）。 */
+function apprex_ld_auto_combos() {
+	$gs    = (array) get_option( 'apprex_ld_auto_genres', array() );
+	$areas = array_values( array_filter( array_map( 'trim', preg_split( '/\R/', (string) get_option( 'apprex_ld_auto_areas', '' ) ) ) ) );
+	$out   = array();
+	foreach ( $areas as $a ) {
+		foreach ( $gs as $g ) {
+			if ( isset( apprex_ld_genres()[ $g ] ) ) {
+				$out[] = $g . '|' . $a;
+			}
+		}
+	}
+	return $out;
+}
+
+/** 今日は動かす日か。 */
+function apprex_ld_auto_due() {
+	$f = (string) get_option( 'apprex_ld_auto_freq', 'weekly' );
+	$w = (int) wp_date( 'N' ); // 1=月。
+	if ( 'daily' === $f ) {
+		return $w <= 5; // 平日。
+	}
+	if ( 'twice' === $f ) {
+		return in_array( $w, array( 1, 4 ), true ); // 月・木。
+	}
+	return 1 === $w; // 毎週月曜。
+}
+
+/**
+ * 1回動かす：まだ探していない（いちばん前に探した）組み合わせを1つ探し、新しいお店の上位を調べて知らせる。
+ *
+ * @param bool $manual 管理画面の「いま1回動かす」。
+ * @return string|WP_Error 結果の文。
+ */
+function apprex_ld_auto_run( $manual = false ) {
+	if ( '' === apprex_gp_key() ) {
+		return new WP_Error( 'ld', 'Google の APIキーが入っていません。' );
+	}
+	$combos = apprex_ld_auto_combos();
+	if ( ! $combos ) {
+		return new WP_Error( 'ld', '自動で探すジャンルと地域を選んでください。' );
+	}
+	if ( function_exists( 'set_time_limit' ) ) {
+		@set_time_limit( 900 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+	}
+	$done = (array) get_option( 'apprex_ld_auto_done', array() );
+	usort(
+		$combos,
+		function ( $a, $b ) use ( $done ) {
+			return (int) ( $done[ $a ] ?? 0 ) <=> (int) ( $done[ $b ] ?? 0 );
+		}
+	);
+	$pick = $combos[0];
+	list( $genre, $area ) = explode( '|', $pick, 2 );
+	$max = min( 60, max( 20, (int) get_option( 'apprex_ld_auto_max', 20 ) ) );
+	$r   = apprex_ld_collect( $genre, $area, $max );
+	$done[ $pick ] = time();
+	update_option( 'apprex_ld_auto_done', $done, false );
+	if ( is_wp_error( $r ) ) {
+		update_option( 'apprex_ld_auto_last', array( time(), '失敗：' . $r->get_error_message() ), false );
+		if ( function_exists( 'apprex_notify' ) ) {
+			apprex_notify( 'sales', ':warning: AI営業リストの自動収集に失敗しました（' . $area . '・' . apprex_ld_genres()[ $genre ][0] . '）：' . $r->get_error_message() . "\n" . admin_url( 'admin.php?page=apprex-leads' ) );
+		}
+		return $r;
+	}
+	// 新しいお店のうち、点数の高いものからホームページを調べる。
+	$ids = $r[2];
+	usort(
+		$ids,
+		function ( $a, $b ) {
+			return (int) get_post_meta( $b, 'apprex_ld_score', true ) <=> (int) get_post_meta( $a, 'apprex_ld_score', true );
+		}
+	);
+	$nres  = min( 10, (int) get_option( 'apprex_ld_auto_research', 5 ) );
+	$min   = (int) get_option( 'apprex_ld_auto_min', 60 );
+	$check = 0;
+	$mail  = 0;
+	foreach ( $ids as $id ) {
+		if ( $check >= $nres || (int) get_post_meta( $id, 'apprex_ld_score', true ) < $min ) {
+			break;
+		}
+		if ( ! is_wp_error( apprex_ld_research( $id ) ) ) {
+			$check++;
+			if ( (array) get_post_meta( $id, 'apprex_ld_emails', true ) && ! get_post_meta( $id, 'apprex_ld_ng', true ) ) {
+				$mail++;
+			}
+		}
+	}
+	usort(
+		$ids,
+		function ( $a, $b ) {
+			return (int) get_post_meta( $b, 'apprex_ld_score', true ) <=> (int) get_post_meta( $a, 'apprex_ld_score', true );
+		}
+	);
+	$gl    = apprex_ld_genres()[ $genre ][0];
+	$sum   = $area . 'の' . $gl . '：' . $r[0] . '件見つかり、新しく' . $r[1] . '件。調べた ' . $check . '件（公開メールあり ' . $mail . '件）';
+	update_option( 'apprex_ld_auto_last', array( time(), $sum ), false );
+	if ( function_exists( 'apprex_notify' ) && ( $r[1] || $manual ) ) {
+		$lines = array( '🤖 *AI営業リスト（自動）*　' . $sum );
+		foreach ( array_slice( $ids, 0, 3 ) as $i => $id ) {
+			$g = apprex_ld_google( $id );
+			$h = (string) get_post_meta( $id, 'apprex_ld_hook', true );
+			$lines[] = ( $i + 1 ) . '. ' . ( $g ? $g['name'] : '' ) . '（' . (int) get_post_meta( $id, 'apprex_ld_score', true ) . '点）' . ( '' !== $h ? ' ' . mb_substr( $h, 0, 60 ) : '' );
+		}
+		$lines[] = admin_url( 'admin.php?page=apprex-leads&status=checked' );
+		apprex_notify( 'sales', implode( "\n", $lines ) );
+	}
+	return $sum;
+}
+
+add_action(
+	'init',
+	function () {
+		if ( ! wp_next_scheduled( 'apprex_ld_cron' ) ) {
+			$next = strtotime( wp_date( 'Y-m-d' ) . ' 10:20:00 ' . wp_timezone_string() );
+			wp_schedule_event( $next > time() ? $next : $next + DAY_IN_SECONDS, 'daily', 'apprex_ld_cron' );
+		}
+	}
+);
+add_action(
+	'apprex_ld_cron',
+	function () {
+		if ( get_option( 'apprex_ld_auto', 0 ) && apprex_ld_auto_due() ) {
+			apprex_ld_auto_run();
+		}
+	}
+);
+add_filter(
+	'apprex_cron_hooks',
+	function ( $h ) {
+		if ( get_option( 'apprex_ld_auto', 0 ) ) {
+			$h['apprex_ld_cron'] = 'AI営業リストの自動収集';
+		}
+		return $h;
+	}
+);
+
+/** 自動収集の設定の欄。 */
+function apprex_ld_auto_box() {
+	$on    = (int) get_option( 'apprex_ld_auto', 0 );
+	$sel   = (array) get_option( 'apprex_ld_auto_genres', array() );
+	$freq  = (string) get_option( 'apprex_ld_auto_freq', 'weekly' );
+	$last  = get_option( 'apprex_ld_auto_last' );
+	$next  = wp_next_scheduled( 'apprex_ld_cron' );
+	$combo = count( apprex_ld_auto_combos() );
+	$groups = array();
+	foreach ( apprex_ld_genres() as $k => $g ) {
+		$groups[ $g[4] ][ $k ] = $g[0];
+	}
+	?>
+	<h2 id="auto">自動で集める</h2>
+	<p>決まった曜日の朝10時ごろに、下で選んだ「ジャンル×地域」を<b>1回に1つずつ順番に</b>探してリストに入れます。新しく入ったお店のうち点数の高いものは、AIがホームページを調べます。結果は社内通知（Slack・LINE WORKS）に届きます。</p>
+	<p>状態：<b><?php echo $on ? '✅ 自動で動きます' : '⏸ 止まっています'; ?></b>（組み合わせ <?php echo (int) $combo; ?> 通り）
+	<?php if ( is_array( $last ) ) : ?><br>前回（<?php echo esc_html( wp_date( 'n/j G:i', (int) $last[0] ) ); ?>）：<?php echo esc_html( $last[1] ); ?><?php endif; ?></p>
+	<form method="post" action="options.php" style="max-width:1000px;background:#fff;border:1px solid #dcdcde;border-radius:8px;padding:8px 16px">
+		<?php settings_fields( 'apprex_leads_auto' ); ?>
+		<table class="form-table" role="presentation">
+			<tr><th>自動で集める</th><td><label><input type="checkbox" name="apprex_ld_auto" value="1" <?php checked( $on ); ?>> 自動で集める</label></td></tr>
+			<tr><th>曜日</th><td>
+				<?php foreach ( array( 'weekly' => '毎週月曜', 'twice' => '週2回（月・木）', 'daily' => '平日の毎日' ) as $k => $l ) : ?>
+					<label style="margin-right:14px"><input type="radio" name="apprex_ld_auto_freq" value="<?php echo esc_attr( $k ); ?>" <?php checked( $freq, $k ); ?>> <?php echo esc_html( $l ); ?></label>
+				<?php endforeach; ?>
+			</td></tr>
+			<tr><th>ジャンル</th><td>
+				<?php foreach ( $groups as $gl => $items ) : ?>
+					<div style="margin:0 0 6px"><b style="display:inline-block;width:150px;color:#646970;font-size:12px"><?php echo esc_html( $gl ); ?></b>
+					<?php foreach ( $items as $k => $l ) : ?>
+						<label style="margin-right:10px;white-space:nowrap"><input type="checkbox" name="apprex_ld_auto_genres[]" value="<?php echo esc_attr( $k ); ?>" <?php checked( in_array( $k, $sel, true ) ); ?>> <?php echo esc_html( $l ); ?></label>
+					<?php endforeach; ?></div>
+				<?php endforeach; ?>
+			</td></tr>
+			<tr><th><label for="ld_areas">地域</label></th><td><textarea id="ld_areas" name="apprex_ld_auto_areas" rows="4" class="regular-text" placeholder="東京都渋谷区&#10;東京都新宿区&#10;大阪市北区"><?php echo esc_textarea( (string) get_option( 'apprex_ld_auto_areas', '' ) ); ?></textarea><p class="description">1行に1つ。</p></td></tr>
+			<tr><th>1回に探す数</th><td><select name="apprex_ld_auto_max"><?php foreach ( array( 20, 40, 60 ) as $n ) : ?><option value="<?php echo (int) $n; ?>" <?php selected( (int) get_option( 'apprex_ld_auto_max', 20 ), $n ); ?>><?php echo (int) $n; ?>件</option><?php endforeach; ?></select>
+				　AIが調べる数 <input type="number" name="apprex_ld_auto_research" min="0" max="10" value="<?php echo (int) get_option( 'apprex_ld_auto_research', 5 ); ?>" style="width:60px"> 件まで（<input type="number" name="apprex_ld_auto_min" min="0" max="100" value="<?php echo (int) get_option( 'apprex_ld_auto_min', 60 ); ?>" style="width:60px"> 点以上のお店）
+				<p class="description">1回の費用の目安：Google の呼び出し 1〜3回＋AI（調べる数ぶん）。月の上限の回数に達したら止まります。</p></td></tr>
+		</table>
+		<?php submit_button( '自動収集の設定を保存' ); ?>
+	</form>
+	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top:8px">
+		<input type="hidden" name="action" value="apprex_ld"><input type="hidden" name="do" value="autorun"><?php wp_nonce_field( 'apprex_ld' ); ?>
+		<?php submit_button( 'いま1回動かす（次の組み合わせを探す）', 'secondary', 'submit', false ); ?>
+		<?php if ( $on && $next ) : ?><span class="description">　次の自動の確認：<?php echo esc_html( wp_date( 'n/j G:i', $next ) ); ?></span><?php endif; ?>
+	</form>
 	<?php
 }
