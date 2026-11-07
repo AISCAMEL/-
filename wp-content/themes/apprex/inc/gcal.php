@@ -20,7 +20,40 @@ if ( ! defined( 'ABSPATH' ) ) {
 /** サービスアカウントの鍵（JSONを読んだもの）。 */
 function apprex_gcal_sa() {
 	$j = json_decode( (string) get_option( 'apprex_gcal_sa', '' ), true );
-	return ( is_array( $j ) && ! empty( $j['client_email'] ) && ! empty( $j['private_key'] ) ) ? $j : null;
+	if ( ! is_array( $j ) || empty( $j['client_email'] ) || empty( $j['private_key'] ) ) {
+		return null;
+	}
+	$j['private_key'] = apprex_gcal_fix_pem( $j['private_key'] );
+	return $j;
+}
+
+/**
+ * 鍵の文字を直す（改行が「n」や「\n」の文字になってしまったもの）。
+ *
+ * PEM は「-----BEGIN PRIVATE KEY-----」＋64文字ごとの行＋「-----END PRIVATE KEY-----」。
+ */
+function apprex_gcal_fix_pem( $pem ) {
+	$pem = str_replace( array( "\r\n", "\r" ), "\n", (string) $pem );
+	$pem = str_replace( '\\n', "\n", $pem ); // 「\n」の2文字になっているもの。
+	if ( false !== strpos( $pem, "\n" ) && preg_match( '/-----BEGIN [A-Z ]+-----\n/', $pem ) ) {
+		return $pem;
+	}
+	// 改行が「n」1文字になっているもの：中身を64文字ずつに戻す。
+	if ( ! preg_match( '/^-----BEGIN ([A-Z ]+)-----n?(.+?)n?-----END \1-----n?$/s', trim( $pem ), $m ) ) {
+		return $pem;
+	}
+	$body = $m[2];
+	$out  = array();
+	$i    = 0;
+	$len  = strlen( $body );
+	while ( $i < $len ) {
+		$out[] = substr( $body, $i, 64 );
+		$i    += 64;
+		if ( $i < $len && 'n' === $body[ $i ] ) {
+			$i++;
+		}
+	}
+	return '-----BEGIN ' . $m[1] . "-----\n" . implode( "\n", $out ) . "\n-----END " . $m[1] . "-----\n";
 }
 
 /** 見るカレンダー（1行に1つ）。最初のものに予定を書き込む。 */
@@ -281,13 +314,22 @@ add_action(
 					if ( '' === $v ) {
 						return (string) get_option( 'apprex_gcal_sa', '' ); // 空のまま保存したら前のまま。
 					}
-					$j = json_decode( wp_unslash( $v ), true );
+					// options.php がもう \ を外しているので、ここでは外さない（外すと鍵の改行「\n」が壊れる）。
+					$j = json_decode( $v, true );
+					if ( ! is_array( $j ) ) {
+						$j = json_decode( wp_unslash( $v ), true );
+					}
 					if ( ! is_array( $j ) || empty( $j['client_email'] ) || empty( $j['private_key'] ) ) {
 						add_settings_error( 'apprex_gcal_sa', 'bad', '鍵（JSON）の形が正しくありません。ダウンロードしたJSONファイルの中身をそのまま貼ってください。' );
 						return (string) get_option( 'apprex_gcal_sa', '' );
 					}
 					delete_transient( 'apprex_gcal_token' );
-					return wp_json_encode( array( 'client_email' => $j['client_email'], 'private_key' => $j['private_key'] ) );
+					$pk = apprex_gcal_fix_pem( $j['private_key'] );
+					if ( function_exists( 'openssl_pkey_get_private' ) && ! openssl_pkey_get_private( $pk ) ) {
+						add_settings_error( 'apprex_gcal_sa', 'badkey', '鍵（JSON）の private_key が読めませんでした。Google Cloud で新しい鍵を作って、JSONファイルの中身をそのまま貼ってください。' );
+						return (string) get_option( 'apprex_gcal_sa', '' );
+					}
+					return wp_json_encode( array( 'client_email' => $j['client_email'], 'private_key' => $pk ) );
 				},
 			)
 		);
