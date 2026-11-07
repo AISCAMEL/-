@@ -1095,12 +1095,16 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&TOUR){ tou
 /* 最初から作り直す：デザイン・AI画像・ロゴと写真・進み具合（左メニューの「完了」）をすべて最初に戻す。 */
 function resetAll(btn){
   if(S.paid){ alert('ご契約済みのため、進み具合は戻せません。デザインを変えたいときは、担当者にメッセージでお知らせください。'); return; }
-  if(!window.confirm('最初から作り直します。\n\nデザイン・仕様・AIで作った画像・ロゴと写真・進み具合（左メニューの「完了」）がすべて消え、AIデザインの最初の画面に戻ります。元に戻せません。\n\n担当者とのメッセージと、すでに送った相談・予約は担当者側に残ります。よろしいですか？')) return;
+  var what=MODE==='matching'?'アプリの試作・ジャンル・AIで作った写真・仕様':MODE==='hp'?'ホームページの試作・AIで作った写真':'デザイン・仕様・AIで作った画像・ロゴと写真';
+  var back=MODE==='matching'?'「マッチングアプリをAIで」の最初の画面':MODE==='hp'?'「ホームページをAIで」の最初の画面':'AIデザインの最初の画面';
+  if(!window.confirm('最初から作り直します。\n\n'+what+'・進み具合（左メニューの「完了」）がすべて消え、'+back+'に戻ります。元に戻せません。\n\n担当者とのメッセージと、すでに送った相談・予約は担当者側に残ります。よろしいですか？')) return;
   if(btn){ btn.disabled=true; }
-  api('studio/reset',{}).then(function(){
+  api('studio/reset',{mode:MODE}).then(function(){
     var msgs=S.msgs; S=def(); S.msgs=msgs; IMGS=[]; IMG={logo:null,photo:null}; GEN={busy:false,kind:''}; STAGE=0;
+    if(MODE==='matching'){ ORIG=null; OIMG={}; }
+    if(MODE==='hp'){ HP=null; HPIMG=''; }
     try{ localStorage.removeItem(KEY); localStorage.removeItem(KEY+'-img'); }catch(e){}
-    saveImg(); S.vers=[{n:1,note:'最初から作り直し'}]; save(); go('design');
+    saveImg(); S.vers=[{n:1,note:'最初から作り直し'}]; save(); go(MODE==='matching'?'orig':MODE==='hp'?'hp':'design'); window.scrollTo(0,0);
   }).catch(function(x){ alert(x.message); if(btn){ btn.disabled=false; } });
 }
 if($('reset')) $('reset').addEventListener('click',function(e){ resetAll(e.currentTarget); });

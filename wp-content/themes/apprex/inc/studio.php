@@ -581,6 +581,26 @@ function apprex_studio_rest_reset( WP_REST_Request $request ) {
 	foreach ( array( 'apprex_studio_images', 'apprex_studio_assets', 'apprex_studio_state', 'apprex_studio_meeting' ) as $k ) {
 		delete_user_meta( $uid, $k );
 	}
+	// マッチング・オリジナルアプリの試作と、ホームページの試作も消す（どのAIスタジオからでも、最初から作り直せるように）。
+	$mode = sanitize_key( (string) $request->get_param( 'mode' ) );
+	if ( in_array( $mode, array( 'matching', 'all' ), true ) ) {
+		$map = get_user_meta( $uid, 'apprex_orig_images', true );
+		foreach ( is_array( $map ) ? $map : array() as $att ) {
+			if ( $own( (int) $att ) ) {
+				wp_delete_attachment( (int) $att, true );
+			}
+		}
+		delete_user_meta( $uid, 'apprex_orig_images' );
+		delete_user_meta( $uid, 'apprex_orig_spec' );
+	}
+	if ( in_array( $mode, array( 'hp', 'all' ), true ) ) {
+		$hpi = get_user_meta( $uid, 'apprex_hp_image', true );
+		if ( is_numeric( $hpi ) && $own( (int) $hpi ) ) {
+			wp_delete_attachment( (int) $hpi, true );
+		}
+		delete_user_meta( $uid, 'apprex_hp_image' );
+		delete_user_meta( $uid, 'apprex_hp_spec' );
+	}
 	update_user_meta( $uid, 'apprex_studio_stage', 0 );
 	return rest_ensure_response( array( 'ok' => true ) );
 }
