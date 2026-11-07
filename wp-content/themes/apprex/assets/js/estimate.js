@@ -26,7 +26,7 @@
 		var doneBox = document.getElementById('est-done');
 
 		// 初期費用はノーコード（ai）で計算。カスタマイズ・フルスクラッチは個別見積へ切り替える。
-		var state = { service: null, plan: null, options: [], quote: null, setup: 'ai' };
+		var state = { service: null, plan: null, options: [], quote: null, setup: 'ai', qty: {} };
 		function yen(n) { return '¥' + Number(n).toLocaleString('ja-JP'); }
 		function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
@@ -44,7 +44,7 @@
 				var svc = services[key];
 				var b = chip(svc.label, state.service === key && !state.quote, (svc.setup ? '月額制・初期費用15万円（ノーコード）' : '月額制・初期費用0円（1年契約）'));
 				b.addEventListener('click', function () {
-					state.service = key; state.plan = null; state.options = []; state.quote = null;
+					state.service = key; state.plan = null; state.options = []; state.quote = null; state.qty = {};
 					renderServices(); renderPlans(); renderSetup(); renderOptions(); renderTotal();
 				});
 				elServices.appendChild(b);
@@ -104,17 +104,40 @@
 			var opts = services[state.service].options || {};
 			var keys = Object.keys(opts);
 			if (!keys.length) { elOptions.innerHTML = '<p class="estimate__hint">追加オプションはありません。</p>'; return; }
-			keys.forEach(function (key) {
-				var o = opts[key];
-				var wrap = document.createElement('label');
-				wrap.className = 'est-opt';
-				wrap.innerHTML = '<input type="checkbox" value="' + key + '"><span>' + o.label + '</span><b>+' + Number(o.price).toLocaleString('ja-JP') + '円（一回）</b>';
-				wrap.querySelector('input').addEventListener('change', function (e) {
-					if (e.target.checked) { state.options.push(key); }
-					else { state.options = state.options.filter(function (k) { return k !== key; }); }
-					renderTotal();
+			var groups = {}, order = [];
+			keys.forEach(function (k) { var g = opts[k].group || 'オプション'; if (!groups[g]) { groups[g] = []; order.push(g); } groups[g].push(k); });
+			order.forEach(function (g) {
+				var box = document.createElement('div');
+				box.className = 'est-optgroup';
+				box.innerHTML = '<h4>' + esc(g) + '</h4>';
+				groups[g].forEach(function (key) {
+					var o = opts[key];
+					var on = state.options.indexOf(key) >= 0;
+					var price = o.quote ? 'お見積り' : ('+' + Number(o.price).toLocaleString('ja-JP') + '円' + (o.billing === 'monthly' ? '／月' : (o.unit ? '／1' + o.unit : '（一回）')));
+					var wrap = document.createElement('label');
+					wrap.className = 'est-opt' + (o.quote ? ' est-opt--quote' : '') + (on ? ' is-on' : '');
+					var qty = '';
+					if (o.qty) {
+						qty = '<select class="est-qty" aria-label="' + esc(o.label) + 'の数">';
+						for (var n = 1; n <= o.qty; n++) { qty += '<option value="' + n + '"' + ((state.qty[key] || 1) === n ? ' selected' : '') + '>' + n + (o.unit || '') + '</option>'; }
+						qty += '</select>';
+					}
+					wrap.innerHTML = '<input type="checkbox" value="' + key + '"' + (on ? ' checked' : '') + '><span class="est-opt-t"><span class="est-opt-l">' + esc(o.label) + '</span>' + (o.desc ? '<small>' + esc(o.desc) + '</small>' : '') + '</span>' + qty + '<b>' + price + '</b>';
+					wrap.querySelector('input').addEventListener('change', function (e) {
+						if (e.target.checked) {
+							if (o.exclusive) { state.options = state.options.filter(function (k) { return !(opts[k] && opts[k].exclusive === o.exclusive); }); }
+							state.options.push(key);
+						} else { state.options = state.options.filter(function (k) { return k !== key; }); }
+						renderOptions(); renderTotal();
+					});
+					var sel = wrap.querySelector('select');
+					if (sel) {
+						sel.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); });
+						sel.addEventListener('change', function (e) { state.qty[key] = +e.target.value; if (state.options.indexOf(key) < 0) { state.options.push(key); } renderOptions(); renderTotal(); });
+					}
+					box.appendChild(wrap);
 				});
-				elOptions.appendChild(wrap);
+				elOptions.appendChild(box);
 			});
 		}
 
@@ -122,9 +145,14 @@
 			if (!state.service || !state.plan) { return null; }
 			var svc = services[state.service];
 			var p = svc.plans[state.plan];
-			var optTotal = 0, optLines = [];
+			var optTotal = 0, optMonthly = 0, optLines = [];
 			state.options.forEach(function (k) {
-				if (svc.options && svc.options[k]) { optTotal += svc.options[k].price; optLines.push(svc.options[k]); }
+				var o = svc.options && svc.options[k];
+				if (!o) { return; }
+				var q = o.qty ? Math.max(1, Math.min(o.qty, state.qty[k] || 1)) : 1;
+				var price = (o.price || 0) * q;
+				if (!o.quote) { if (o.billing === 'monthly') { optMonthly += price; } else { optTotal += price; } }
+				optLines.push({ label: o.label + (q > 1 ? '（' + q + (o.unit || '') + '）' : ''), price: price, billing: o.billing || 'once', quote: !!o.quote });
 			});
 			var initialRegular = p.initial || 0;
 			var st = svc.setup && svc.setup[state.setup] ? svc.setup[state.setup] : null;
@@ -134,10 +162,10 @@
 				svcLabel: svc.label, planLabel: p.label,
 				monthly: p.monthly, monthlyRegular: p.monthly_regular || p.monthly,
 				initialRegular: initialRegular, initial: initial,
-				optLines: optLines, optTotal: optTotal,
+				optLines: optLines, optTotal: optTotal, optMonthly: optMonthly,
 				registration: svc.registration_fee || 0, registrationLabel: svc.registration_label || 'アプリ登録費',
 				initialTotal: initial + optTotal + (svc.registration_fee || 0),
-				annual: p.monthly * 12 + initial + optTotal + (svc.registration_fee || 0)
+				annual: (p.monthly + optMonthly) * 12 + initial + optTotal + (svc.registration_fee || 0)
 			};
 		}
 
@@ -166,9 +194,10 @@
 			if (!e) { elTotal.innerHTML = '<p class="estimate__hint">サービスとプランを選択してください。</p>'; orderForm.hidden = true; return; }
 			var html = '<ul class="estimate__lines">';
 			html += '<li><span>' + e.svcLabel + ' / ' + e.planLabel + '</span><b>' + yen(e.monthly) + '/月</b></li>';
-			e.optLines.forEach(function (o) { html += '<li class="is-opt"><span>+ ' + o.label + '（一回）</span><b>' + yen(o.price) + '</b></li>'; });
+			e.optLines.forEach(function (o) { html += '<li class="is-opt"><span>+ ' + esc(o.label) + '</span><b>' + (o.quote ? 'お見積り' : yen(o.price) + (o.billing === 'monthly' ? '/月' : '（一回）')) + '</b></li>'; });
 			html += '</ul>';
-			html += '<div class="estimate__big">' + yen(e.monthly) + '<small> / 月（税抜）</small></div>';
+			html += '<div class="estimate__big">' + yen(e.monthly + e.optMonthly) + '<small> / 月（税抜）</small></div>';
+			if (e.optMonthly) { html += '<p class="estimate__hint">アプリ ' + yen(e.monthly) + '＋毎月のオプション ' + yen(e.optMonthly) + '</p>'; }
 			html += '<ul class="estimate__sub">';
 			if (e.monthlyRegular > e.monthly) { html += '<li>月額：<s>' + yen(e.monthlyRegular) + '</s> → <b>' + yen(e.monthly) + '</b> <em>キャンペーン</em></li>'; }
 			if (e.setupKey) { html += '<li>初期費用：<b>' + yen(e.initial) + '</b>（' + esc(e.setupLabel) + '）</li>'; }
@@ -190,7 +219,7 @@
 			btn.disabled = true; btn.textContent = '送信中…';
 			var fd = new FormData(orderForm);
 			var payload = {
-				service: state.service, plan: state.plan, options: state.options, setup: state.setup,
+				service: state.service, plan: state.plan, options: state.options, setup: state.setup, qty: state.qty,
 				name: fd.get('name'), company: fd.get('company'), email: fd.get('email'),
 				message: fd.get('message'), source_url: location.href
 			};

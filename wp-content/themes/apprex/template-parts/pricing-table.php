@@ -61,11 +61,15 @@ $apprex_render_service = function ( $svc, $featured = '' ) use ( $apprex_est, $a
 	}
 	echo '</div>';
 
-	if ( ! empty( $svc['options'] ) ) {
+	if ( ! empty( $svc['options'] ) && array_filter( $svc['options'], function ( $o ) {
+		return empty( $o['quote'] ) && 'monthly' !== ( $o['billing'] ?? 'once' );
+	} ) ) {
 		echo '<p class="plan-note"><strong>オプション（一回）</strong>：';
 		$opts = array();
 		foreach ( $svc['options'] as $o ) {
-			$opts[] = esc_html( $o['label'] ) . ' ' . number_format( $o['price'] ) . '円';
+			if ( empty( $o['quote'] ) && 'monthly' !== ( $o['billing'] ?? 'once' ) ) {
+				$opts[] = esc_html( $o['label'] ) . ' ' . number_format( $o['price'] ) . '円' . ( ! empty( $o['unit'] ) ? '／1' . esc_html( $o['unit'] ) : '' );
+			}
 		}
 		echo wp_kses_post( implode( '／', $opts ) ) . '</p>';
 	}

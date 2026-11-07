@@ -4,7 +4,7 @@ Theme URI: https://site.aiscompany.jp/
 Author: AIS Company
 Author URI: https://site.aiscompany.jp/
 Description: クラウド型アプリ開発プラットフォーム「APPREX」公式サイト用テーマ。Hello Elementor の思想を踏襲したライセンス非依存の自作テーマ。固定ページ構成＋カスタム投稿タイプ cases によるリニューアル実装。モバイルファースト・WebP・Lazy Load 対応。
-Version: 1.110.1
+Version: 1.111.0
 Requires at least: 6.0
 Requires PHP: 7.4
 License: GNU General Public License v2 or later
@@ -1318,3 +1318,24 @@ h1, h2, h3, h4 { text-wrap: balance; }
 .qs-steps li { align-content: start; }
 /* 右下のチャットの吹き出しと、フッターの文字が重ならないように。 */
 @media (min-width: 769px) { .site-footer__bottom { padding-bottom: 72px; } }
+
+/* 見積もり：オプションのまとまり（v1.111） */
+.est-optgroup { display: grid; gap: 8px; margin-bottom: 14px; }
+.est-optgroup h4 { margin: 4px 0 0; font-size: .86rem; color: var(--color-muted); font-weight: 700; }
+.est-opt { align-items: center; }
+.est-opt.is-on { border-color: var(--color-primary); background: #f3f7ff; }
+.est-opt .est-opt-t { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.est-opt .est-opt-l { flex: none; }
+.est-opt-t small { color: var(--color-muted); font-size: .76rem; line-height: 1.5; }
+.est-opt b { white-space: nowrap; font-size: .92rem; }
+.est-opt--quote b { color: var(--color-muted); font-weight: 600; }
+.est-qty { padding: 4px 6px; border: 1px solid var(--color-line); border-radius: 6px; font-size: .86rem; }
+.estimate__lines li b { white-space: nowrap; }
+@media (max-width: 600px) {
+  .est-opt { flex-wrap: wrap; gap: 4px 10px; padding: 12px; }
+  .est-opt .est-opt-t { flex: 1 1 calc(100% - 40px); }
+  .est-opt .est-opt-l { flex: none; }
+  .est-opt .est-qty { margin-left: 28px; }
+  .est-opt b { margin-left: 28px; }
+  .estimate__lines li { font-size: .86rem; }
+}

@@ -80,6 +80,7 @@ function apprex_rest_order( WP_REST_Request $request ) {
 	$plan    = sanitize_key( $request->get_param( 'plan' ) );
 	$options = array_map( 'sanitize_key', (array) $request->get_param( 'options' ) );
 	$setup   = sanitize_key( (string) $request->get_param( 'setup' ) );
+	$qtys    = array_map( 'absint', (array) $request->get_param( 'qty' ) );
 
 	$name    = sanitize_text_field( (string) $request->get_param( 'name' ) );
 	$company = sanitize_text_field( (string) $request->get_param( 'company' ) );
@@ -91,7 +92,7 @@ function apprex_rest_order( WP_REST_Request $request ) {
 	}
 
 	// Recompute server-side — never trust client totals.
-	$estimate = apprex_calculate_estimate( $service, $plan, $options, $setup );
+	$estimate = apprex_calculate_estimate( $service, $plan, $options, $setup, $qtys );
 	if ( is_wp_error( $estimate ) ) {
 		return $estimate;
 	}
@@ -188,9 +189,12 @@ function apprex_notify_order( $post_id, $estimate, $meta ) {
 		'プラン: ' . $estimate['plan_label'],
 	);
 	foreach ( $estimate['options'] as $o ) {
-		$lines[] = 'オプション: ' . $o['label'] . '（+' . number_format( $o['price'] ) . '円）';
+		$lines[] = 'オプション: ' . apprex_estimate_option_text( $o );
 	}
 	$lines[] = '月額: ' . number_format( $estimate['monthly'] ) . '円（通常 ' . number_format( $estimate['monthly_regular'] ) . '円・税抜）';
+	if ( ! empty( $estimate['options_monthly'] ) ) {
+		$lines[] = '毎月のオプション: ' . number_format( (int) $estimate['options_monthly'] ) . '円（税抜）';
+	}
 	$lines[] = '初期費用: ' . apprex_estimate_initial_text( $estimate );
 	if ( ! empty( $estimate['registration'] ) ) {
 		$lines[] = $estimate['registration_label'] . ': ' . number_format( $estimate['registration'] ) . '円（一律・別途必要）';
@@ -225,9 +229,12 @@ function apprex_send_order_autoreply( $estimate, $meta ) {
 		'プラン: ' . $estimate['plan_label'],
 	);
 	foreach ( $estimate['options'] as $o ) {
-		$lines[] = 'オプション: ' . $o['label'] . '（+' . number_format( $o['price'] ) . '円）';
+		$lines[] = 'オプション: ' . apprex_estimate_option_text( $o );
 	}
 	$lines[] = '月額: ' . number_format( $estimate['monthly'] ) . '円（通常 ' . number_format( $estimate['monthly_regular'] ) . '円・税抜）';
+	if ( ! empty( $estimate['options_monthly'] ) ) {
+		$lines[] = '毎月のオプション: ' . number_format( (int) $estimate['options_monthly'] ) . '円（税抜）';
+	}
 	$lines[] = '初期費用: ' . apprex_estimate_initial_text( $estimate );
 	if ( ! empty( $estimate['registration'] ) ) {
 		$lines[] = $estimate['registration_label'] . ': ' . number_format( $estimate['registration'] ) . '円（一律・別途必要）';
@@ -257,8 +264,7 @@ function apprex_estimate_summary_html( $estimate ) {
 		<li><strong><?php esc_html_e( 'プラン', 'apprex' ); ?></strong>：<?php echo esc_html( $estimate['plan_label'] ); ?></li>
 		<?php if ( ! empty( $estimate['options'] ) ) : ?>
 			<li><strong><?php esc_html_e( 'オプション', 'apprex' ); ?></strong>：
-				<?php echo esc_html( implode( '、', wp_list_pluck( $estimate['options'], 'label' ) ) ); ?>
-				（一回 ¥<?php echo esc_html( number_format( $estimate['options_total'] ) ); ?>）
+				<?php echo esc_html( implode( '、', array_map( 'apprex_estimate_option_text', $estimate['options'] ) ) ); ?>
 			</li>
 		<?php endif; ?>
 		<li><strong><?php esc_html_e( '月額', 'apprex' ); ?></strong>：¥<?php echo esc_html( number_format( $estimate['monthly'] ) ); ?>

@@ -35,6 +35,56 @@ function apprex_app_basic_features() {
 }
 
 /**
+ * 見積もりで選べるオプション。
+ *
+ * @param string $svc app / hp。
+ * @return array key => [label, price, billing, group, desc, qty, unit, exclusive, quote]
+ */
+function apprex_pricing_extra_options( $svc ) {
+	$g_fn  = 'アプリに機能を足す（一回）';
+	$g_mk  = 'Googleマップ集客 AIMEO（月額）';
+	$g_hp  = 'ホームページも作る（月額・初期0円）';
+	$g_q   = 'ご相談・お見積り（選ぶと相談内容に入ります）';
+	$aimeo = array(
+		'aimeo_l' => array( 'label' => 'AIMEO ライト', 'price' => 15000, 'billing' => 'monthly', 'group' => $g_mk, 'exclusive' => 'aimeo', 'desc' => 'AIが投稿・口コミ返信の下書きを作り、担当者が確認して載せる' ),
+		'aimeo_s' => array( 'label' => 'AIMEO スタンダード', 'price' => 30000, 'billing' => 'monthly', 'group' => $g_mk, 'exclusive' => 'aimeo', 'desc' => '毎週の投稿まで運用' ),
+		'aimeo_p' => array( 'label' => 'AIMEO プロ', 'price' => 50000, 'billing' => 'monthly', 'group' => $g_mk, 'exclusive' => 'aimeo', 'desc' => '複数店舗の運用' ),
+	);
+	$quote = array(
+		'line'    => array( 'label' => 'LINE公式アカウントの構築', 'desc' => 'リッチメニュー・ステップ配信・アプリとの連携' ),
+		'llmo'    => array( 'label' => 'LLMO（AI検索対策）', 'desc' => 'ChatGPTなどのAIに紹介されやすくする' ),
+		'banner'  => array( 'label' => 'バナー・画像の制作', 'desc' => 'アプリ内・SNS・広告用の画像' ),
+		'seo'     => array( 'label' => '構造化データ（SEO）', 'desc' => '検索結果に詳しく表示されるように' ),
+		'api'     => array( 'label' => '外部サービスとの連動（API）', 'desc' => '予約・POS・決済などのシステムとつなぐ' ),
+		'kikan'   => array( 'label' => '基幹システムとの連動', 'desc' => '社内の顧客・在庫システムなどとつなぐ' ),
+		'custom'  => array( 'label' => '機能のカスタマイズ', 'desc' => '基盤にない機能を足す・変える' ),
+		'subsidy' => array( 'label' => '補助金の申請サポート', 'desc' => '使える制度の確認・企画書と見積書の用意' ),
+	);
+	$out = array();
+	if ( 'app' === $svc ) {
+		$out['chat'] = array( 'label' => 'チャット機能', 'price' => 300000, 'billing' => 'once', 'group' => $g_fn, 'desc' => '予約や質問に、アプリの中で個別に対応' );
+		$out['gps']  = array( 'label' => '位置情報プッシュ（GPS）', 'price' => 20000, 'billing' => 'once', 'group' => $g_fn, 'qty' => 10, 'unit' => 'カ所', 'desc' => 'お店の近くに来た人にお知らせ（1カ所ごと）' );
+		$out        += $aimeo;
+		$hp_plans    = array(
+			'hp_light'    => array( 'Light', 9800, '〜5ページ・月1回の更新サポート' ),
+			'hp_standard' => array( 'Standard', 19800, '〜10ページ＋LP1本・月2回の更新サポート' ),
+			'hp_premium'  => array( 'Premium', 39800, '〜20ページ・EC・会員機能・月3回の更新サポート' ),
+		);
+		foreach ( $hp_plans as $k => $v ) {
+			$out[ $k ] = array( 'label' => 'ホームページ制作 ' . $v[0], 'price' => $v[1], 'billing' => 'monthly', 'group' => $g_hp, 'exclusive' => 'hp', 'desc' => $v[2] );
+		}
+		$keys = array( 'line', 'llmo', 'banner', 'seo', 'api', 'kikan', 'custom', 'subsidy' );
+	} else {
+		$out += $aimeo;
+		$keys = array( 'banner', 'seo', 'line', 'llmo', 'subsidy' );
+	}
+	foreach ( $keys as $k ) {
+		$out[ $k ] = $quote[ $k ] + array( 'price' => 0, 'billing' => 'once', 'group' => $g_q, 'quote' => true );
+	}
+	return $out;
+}
+
+/**
  * 価格モデル。
  *
  * @return array
@@ -86,11 +136,9 @@ function apprex_pricing_config() {
 					'custom'  => array( 'label' => 'カスタマイズ（基盤をカスタマイズ）', 'price' => 0, 'quote' => 'original', 'price_label' => 'お見積もり', 'desc' => '基盤に機能を足す・変えるなどのカスタマイズです。初期費用は内容と最初のロットによって変わるため、お見積もりします。' ),
 					'scratch' => array( 'label' => 'フルスクラッチ（ゼロから開発）', 'price' => 0, 'quote' => 'custom', 'price_label' => '要相談', 'desc' => '用途に合わせてゼロから開発します。金額はすべてお見積もり。用途をお聞きしてご提案します。' ),
 				),
-				// 一回限りのオプション（金額あり）。
-				'options'    => array(
-					'chat'    => array( 'label' => 'チャット機能', 'price' => 300000 ),
-					'gps'     => array( 'label' => 'GPSプッシュ（1カ所）', 'price' => 20000 ),
-				),
+				// オプション。billing：once＝一回／monthly＝毎月。quote＝お見積り（選ぶと相談内容に入る）。
+				// qty＝数を選べる（上限）。exclusive＝同じグループから1つだけ。
+				'options'    => apprex_pricing_extra_options( 'app' ),
 				// 要相談オプション（金額は個別見積）。
 				'quote_options' => array(
 					'API連動', '基幹システム連動', 'オンプレミス', '機能カスタマイズ', '補助金サポート',
@@ -117,8 +165,8 @@ function apprex_pricing_config() {
 						'support' => array( '〜20ページ', '月3回までの更新サポート', 'EC・会員機能', '優先サポート' ),
 					),
 				),
-				// HPの追加項目はすべて別途見積もり（要相談）。
-				'options'       => array(),
+				// HPのオプション（AIMEOは月額、そのほかはお見積り）。
+				'options'       => apprex_pricing_extra_options( 'hp' ),
 				'quote_options' => array(
 					'バナー制作', '構造化（SEO）', 'LINE構築', 'AIMEO（AIで運用するMEO）', 'LLMO構築',
 				),
@@ -209,7 +257,8 @@ function apprex_campaign_initial( $regular ) {
  * @param string   $setup   初期費用の種類（ai。金額の出ないカスタマイズ・フルスクラッチは使えない）。
  * @return array|WP_Error
  */
-function apprex_calculate_estimate( $service, $plan, $options = array(), $setup = '' ) {
+function apprex_calculate_estimate( $service, $plan, $options = array(), $setup = '', $qtys = array() ) {
+	$qtys   = is_array( $qtys ) ? $qtys : array();
 	$config = apprex_pricing_config();
 	if ( empty( $config['services'][ $service ] ) ) {
 		return new WP_Error( 'invalid_service', 'サービスの指定が正しくありません。' );
@@ -243,27 +292,49 @@ function apprex_calculate_estimate( $service, $plan, $options = array(), $setup 
 		$initial     = apprex_campaign_initial( $initial_regular );
 	}
 
-	$opt_total = 0;
-	$opt_lines = array();
+	$opt_total   = 0; // 一回のオプション。
+	$opt_monthly = 0; // 毎月のオプション（AIMEO・ホームページなど）。
+	$opt_lines   = array();
+	$excl        = array();
 	foreach ( $options as $opt_key ) {
-		if ( ! empty( $svc['options'][ $opt_key ] ) ) {
-			$opt_total  += (int) $svc['options'][ $opt_key ]['price'];
-			$opt_lines[] = array(
-				'key'   => $opt_key,
-				'label' => $svc['options'][ $opt_key ]['label'],
-				'price' => (int) $svc['options'][ $opt_key ]['price'],
-			);
+		if ( empty( $svc['options'][ $opt_key ] ) ) {
+			continue;
 		}
+		$o = $svc['options'][ $opt_key ];
+		if ( ! empty( $o['exclusive'] ) ) {
+			if ( isset( $excl[ $o['exclusive'] ] ) ) {
+				continue; // 同じグループからは1つだけ。
+			}
+			$excl[ $o['exclusive'] ] = 1;
+		}
+		$qty   = ! empty( $o['qty'] ) ? max( 1, min( (int) $o['qty'], (int) ( $qtys[ $opt_key ] ?? 1 ) ) ) : 1;
+		$price = (int) ( $o['price'] ?? 0 ) * $qty;
+		$bill  = (string) ( $o['billing'] ?? 'once' );
+		if ( empty( $o['quote'] ) ) {
+			if ( 'monthly' === $bill ) {
+				$opt_monthly += $price;
+			} else {
+				$opt_total += $price;
+			}
+		}
+		$opt_lines[] = array(
+			'key'     => $opt_key,
+			'label'   => $o['label'] . ( $qty > 1 ? '（' . $qty . ( $o['unit'] ?? '' ) . '）' : '' ),
+			'price'   => $price,
+			'billing' => $bill,
+			'quote'   => ! empty( $o['quote'] ),
+			'qty'     => $qty,
+		);
 	}
 
-	$initial_total = $initial + $opt_total; // オプションは一回費用。
+	$initial_total = $initial + $opt_total; // 一回のオプションは初期にまとめて。
 
 	// アプリ登録費（iOS/Android）はキャンペーン対象外で別途必要。
 	$registration       = (int) ( $svc['registration_fee'] ?? 0 );
 	$registration_label = (string) ( $svc['registration_label'] ?? 'アプリ登録費' );
 	$initial_total     += $registration;
 
-	$annual_est = $monthly * 12 + $initial_total;
+	$annual_est = ( $monthly + $opt_monthly ) * 12 + $initial_total;
 
 	return array(
 		'service'            => $service,
@@ -281,6 +352,7 @@ function apprex_calculate_estimate( $service, $plan, $options = array(), $setup 
 		'registration_label' => $registration_label,
 		'options'            => $opt_lines,
 		'options_total'      => $opt_total,
+		'options_monthly'    => $opt_monthly,
 		'initial_total'      => $initial_total,
 		'annual_est'         => $annual_est,
 		'min_months'         => (int) $svc['min_months'],
@@ -311,7 +383,9 @@ function apprex_pricing_summary_text() {
 	}
 	$opts = array();
 	foreach ( $app['options'] as $o ) {
-		$opts[] = sprintf( '%s(%s円)', $o['label'], number_format( $o['price'] ) );
+		if ( empty( $o['quote'] ) && 'monthly' !== ( $o['billing'] ?? 'once' ) ) {
+			$opts[] = sprintf( '%s(%s円%s)', $o['label'], number_format( $o['price'] ), ! empty( $o['unit'] ) ? '／1' . $o['unit'] : '' );
+		}
 	}
 	$lines[] = '  オプション：' . implode( ' / ', $opts ) . '。1年契約・DL課金なし・プッシュ無制限。';
 	if ( ! empty( $app['registration_fee'] ) ) {
@@ -335,6 +409,14 @@ function apprex_pricing_summary_text() {
  * @param array $e Estimate.
  * @return string 例：「150,000円（ノーコード（APPREXの基盤で作れる範囲））」
  */
+/** オプション1行の文（メール・画面用）。 */
+function apprex_estimate_option_text( $o ) {
+	if ( ! empty( $o['quote'] ) ) {
+		return $o['label'] . '（お見積り）';
+	}
+	return $o['label'] . '（' . ( 'monthly' === ( $o['billing'] ?? 'once' ) ? '月額 ' : '一回 ' ) . number_format( (int) $o['price'] ) . '円）';
+}
+
 function apprex_estimate_initial_text( $e ) {
 	$yen = number_format( (int) $e['initial'] ) . '円';
 	if ( ! empty( $e['setup_label'] ) ) {
