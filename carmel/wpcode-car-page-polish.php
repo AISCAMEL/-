@@ -1,16 +1,17 @@
 <?php
 /**
- * カーメル：車両ページ 仕上げ（重複除去＋空白ボックス除去＋問い合わせ刷新＋シミュ微調整）
+ * カーメル：車両ページ 仕上げ（モック“完成イメージ”へ全体を寄せる総合スタイル）
  * ---------------------------------------------------------------------------
- * 車両詳細ページ（Dynamic Template / single-portfolio）の見た目を、承認済みの
- * 「完成イメージ（モック）」に寄せて整える。CSS と最小限の JS を出力する。
+ * 車両詳細ページ（Dynamic Template / single-portfolio）の全セクションの見た目を、
+ * 承認済みの「完成イメージ（モック）」に合わせて整える。CSS ＋ 最小限の JS を出力。
  *
  *   ① 緑ローンボックス上の「古い月々（静的二重表示）」を隠す。
  *   ② 中身が空の「購入プラン」セクション（背景だけの白い箱）を隠す。
- *   ③ 問い合わせ欄を、低解像度のバナー画像から「くっきりSVGアイコン」版に作り替える。
- *      （電話/メールのリンク先はそのまま流用。見た目だけ刷新）
- *   ④ 返済回数シミュレーションの配色・サイズをモックに合わせて微調整。
- *   ⑤ 余白の調整。
+ *   ③ 問い合わせ欄を「くっきりSVGアイコン」版に作り替える（リンク先は流用）。
+ *   ④ ローンボックス（.carmel-lg）をモック準拠の緑カードに。
+ *   ⑤ 基本情報・スペック表（.c-table01）をモック準拠の「緑の見出しセル」表に。
+ *   ⑥ 返済回数シミュレーションの配色をモックに合わせ微調整。
+ *   ⑦ 装備タグ・スタッフカード・余白の調整。
  *
  * ・他スニペット/プラグインと衝突しないよう固有名＋function_exists ガード。
  * ・front のみ出力。作り替えは一度だけ（data 属性で二重実行を防止）。
@@ -23,7 +24,8 @@ if ( ! function_exists( 'carmelx_page_polish_css' ) ) {
 		if ( is_admin() ) { return; }
 		?>
 <style id="carmel-page-polish">
-/* === カーメル 車両ページ 仕上げ === */
+/* === カーメル 車両ページ 仕上げ（モック準拠） ===================== */
+/* 配色：緑 #2cac44/#1c7a3a、薄緑 #f1f9f4、枠線 #cfe7d8/#e2e8e4、文字 #20292b、補助 #6a7572、橙 #e8500a */
 
 /* ① 緑ボックスの上にある「古い月々（固定の静的数字）」を隠す。 */
 .wpb_wrapper:has(> .wpb_text_column > .wpb_wrapper > .carmel-lg)
@@ -36,7 +38,83 @@ if ( ! function_exists( 'carmelx_page_polish_css' ) ) {
 	display: none !important;
 }
 
-/* ③ 問い合わせ欄（JSで作り替えたSVG版）の見た目 */
+/* ─────────────────────────────────────────────
+   ④ ローンボックス（モック準拠の緑カード）
+   ───────────────────────────────────────────── */
+.carmel-lg {
+	background: #fff !important;
+	border: 1px solid #cfe7d8 !important;
+	border-radius: 16px !important;
+	overflow: hidden !important;
+	box-shadow: 0 6px 22px -14px rgba(28,122,58,.45) !important;
+	margin-top: 2px;
+	padding: 0 !important;
+}
+.carmel-lg__price {
+	background: linear-gradient(135deg,#1c7a3a,#2cac44) !important;
+	color: #fff !important;
+	padding: 15px 18px !important;
+	margin: 0 !important;
+	display: flex !important;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 8px;
+}
+.carmel-lg__price-label { font-size: 11px; font-weight: 700; opacity: .9; letter-spacing: .05em; color:#fff !important; }
+.carmel-lg__price-val { font-size: 27px; font-weight: 900; line-height: 1; color:#fff !important; }
+.carmel-lg__price-val small { font-size: 13px; font-weight: 700; opacity: .9; margin-left: 2px; }
+.carmel-lg__t { font-size: 12px; font-weight: 800; color: #1c7a3a !important; margin: 14px 18px 8px !important; }
+.carmel-lg__rows { display: flex !important; gap: 7px; margin: 0 18px !important; padding: 0 !important; }
+.carmel-lg__row {
+	flex: 1; background: #f1f9f4 !important; border: 1px solid #cfe7d8 !important;
+	border-radius: 10px; padding: 9px 4px !important; text-align: center;
+	display: flex; flex-direction: column; gap: 2px; line-height: 1.25;
+	font-size: 14px; font-weight: 900; color: #20292b !important;
+}
+.carmel-lg__row b { font-size: 11px; color: #1c7a3a !important; font-weight: 800; }
+.carmel-lg__note { margin: 9px 18px 0 !important; font-size: 11px; color: #6a7572 !important; }
+.carmel-lg__warranty-slots { margin: 0 18px; }
+/* CTA ボタン */
+.carmel-lg__cta { margin: 14px 18px 18px !important; display: flex; flex-direction: column; gap: 8px; }
+.carmel-lg__btn { border-radius: 10px !important; font-weight: 800 !important; }
+.carmel-lg__btn--shinsa { background: #e8500a !important; color:#fff !important; }
+.carmel-lg__btn--line { background: #06c755 !important; color:#fff !important; }
+.carmel-lg__cta-sub { color:#6a7572 !important; font-size:11px !important; text-align:center; }
+
+/* ─────────────────────────────────────────────
+   ⑤ 基本情報・スペック表（モック準拠：緑の見出しセル）
+   ───────────────────────────────────────────── */
+.c-table01 { width: 100%; border-collapse: collapse; }
+.c-table01 th {
+	background: #f1f9f4 !important; color: #6a7572 !important;
+	font-weight: 700 !important; font-size: 13px; text-align: left;
+	padding: 10px 12px !important; border: 1px solid #e2e8e4 !important;
+	white-space: nowrap; width: 42%;
+}
+.c-table01 td {
+	font-size: 13px; font-weight: 700 !important; color: #20292b !important;
+	padding: 10px 12px !important; border: 1px solid #e2e8e4 !important;
+}
+.p-single-sec2__table { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
+@media (max-width: 640px) { .p-single-sec2__table { grid-template-columns: 1fr; } }
+.c-table01.mt, .c-table01.u-mb30 { margin-top: 0; }
+
+/* ─────────────────────────────────────────────
+   ⑥ 返済回数シミュレーション（モック準拠）
+   ───────────────────────────────────────────── */
+.carmel-lg__sim-fullwide { max-width: 1040px; margin-left: auto; margin-right: auto; }
+.carmel-lg__sim-badge { background: #2cac44 !important; color: #fff !important; }
+.carmel-lg__sim-amount b { color: #2cac44 !important; }
+
+/* ─────────────────────────────────────────────
+   ⑦ 装備タグ・スタッフカードの微調整
+   ───────────────────────────────────────────── */
+.cx-staff__role { background: #e8500a !important; color:#fff !important; }
+.cx-staff__name { font-weight: 900 !important; }
+
+/* ─────────────────────────────────────────────
+   ③ 問い合わせ欄（JSで作り替えたSVG版）の見た目
+   ───────────────────────────────────────────── */
 .cmx-contact { text-align: left; }
 .cmx-contact h3 {
 	margin: 0 0 10px; font-size: 13px; text-align: center;
@@ -58,14 +136,6 @@ if ( ! function_exists( 'carmelx_page_polish_css' ) ) {
 .cmx-c--tel svg { color: #e8a400; }
 .cmx-c--mail { background: #fff; }
 .cmx-c:hover { box-shadow: 0 5px 16px -7px rgba(0,0,0,.3); transform: translateY(-1px); }
-
-/* ④ 返済回数シミュレーション：モックに寄せた微調整（安全な範囲のみ） */
-.carmel-lg__sim-fullwide { max-width: 1040px; margin-left: auto; margin-right: auto; }
-.carmel-lg__sim-badge { background: #2cac44 !important; color: #fff !important; }
-.carmel-lg__sim-amount b { color: #2cac44 !important; }
-
-/* ⑤ 余白の調整 */
-.carmel-lg { margin-top: 2px; }
 </style>
 <script id="carmel-page-polish-js">
 (function(){
