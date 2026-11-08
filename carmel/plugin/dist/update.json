@@ -1,10 +1,10 @@
 {
   "name": "カーメルシステム",
   "slug": "carmel-system",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "download_url": "https://raw.githubusercontent.com/AISCAMEL/carmel-system-dist/main/carmel-system.zip",
   "homepage": "https://carmelonline.jp/",
   "requires": "5.0",
   "tested": "6.7",
-  "changelog": "v1.1.0 衝突対策。読み込みをローン表示1つに縮小し、二重定義ガード＋安全読み込み（plugins_loaded遅延）で既存のカーメル用プラグインと衝突しないようにした。"
+  "changelog": "v1.2.0 車両ページの見た目を修正。古い月々の二重表示を除去、空の購入プランボックスを非表示、余白を調整。"
 }
