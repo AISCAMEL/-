@@ -62,6 +62,10 @@ window.A = window.A || {};
     const vehSel = el('select');
     vehSel.appendChild(el('option', { value: '', text: '（車両なし）' }));
     vehList.forEach((v) => { const o = el('option', { value: v.id, text: v.name }); if (existing && v.id === existing.vehicleId) o.selected = true; vehSel.appendChild(o); });
+    const depts = S.settings.get().departments || [];
+    const deptSel = el('select');
+    deptSel.appendChild(el('option', { value: '', text: '（事業なし）' }));
+    depts.forEach((d) => { const o = el('option', { value: d.id, text: d.name }); if (existing && d.id === existing.dept) o.selected = true; deptSel.appendChild(o); });
     const preview = el('div.jsummary');
 
     const buildMain = () => {
@@ -140,7 +144,10 @@ window.A = window.A || {};
         el('label', {}, [el('span', { text: '支払・入金手段' }), paySel]),
         el('label', {}, [el('span', { text: '金額(税込)' }), amtI]),
       ]),
-      vehList.length ? el('div.form-row', {}, [el('label.grow', {}, [el('span', { text: '車両（案件・任意）' }), vehSel])]) : null,
+      (vehList.length || depts.length) ? el('div.form-row', {}, [
+        vehList.length ? el('label.grow', {}, [el('span', { text: '車両（案件・任意）' }), vehSel]) : null,
+        depts.length ? el('label.grow', {}, [el('span', { text: '事業（任意）' }), deptSel]) : null,
+      ]) : null,
       el('label', {}, [el('span', { text: '摘要' }), memoI]),
       el('div.preview-box', {}, [el('div.muted', { text: '生成される仕訳' }), preview]),
     ]);
@@ -161,7 +168,7 @@ window.A = window.A || {};
           { side: 'credit', account: mainC, tax: t, amount: amt, memo: memoI.value },
         ];
       }
-      const rec = { id, refId: refId || id, source: 'expense', date: dateI.value, description: memoI.value, vehicleId: vehSel.value || '', lines };
+      const rec = { id, refId: refId || id, source: 'expense', date: dateI.value, description: memoI.value, vehicleId: vehSel.value || '', dept: deptSel.value || '', lines };
       if (existing) rec.no = existing.no;
       await S.journals.save(rec);
       // refId を自身のidに揃える（新規時）

@@ -64,7 +64,7 @@ window.A = window.A || {};
     const fileI = el('input', { type: 'file', accept: 'image/*,application/pdf' });
     const depts = S.settings.get().departments || [];
     const deptI = el('select');
-    deptI.appendChild(el('option', { value: '', text: '（部門なし）' }));
+    deptI.appendChild(el('option', { value: '', text: '（事業なし）' }));
     depts.forEach((d) => { const o = el('option', { value: d.id, text: d.name }); if (d.id === j.dept) o.selected = true; deptI.appendChild(o); });
     const vlist = await S.vehicles.loadAll();
     const vehI = el('select');
@@ -105,7 +105,7 @@ window.A = window.A || {};
       el('div.form-row', {}, [
         el('label', {}, [el('span', { text: '日付' }), dateI]),
         el('label.grow', {}, [el('span', { text: '摘要' }), descI]),
-        depts.length ? el('label', {}, [el('span', { text: '部門' }), deptI]) : null,
+        depts.length ? el('label', {}, [el('span', { text: '事業' }), deptI]) : null,
         vlist.length ? el('label', {}, [el('span', { text: '車両' }), vehI]) : null,
         el('label', {}, [el('span', { text: '証憑(任意)' }), fileI]),
       ]),
