@@ -23,6 +23,7 @@ export const TAB_NAV: NavLink[] = [
 
 /** スマホの「メニュー」に出す全ページ */
 export const MENU_NAV: NavLink[] = [
+  { href: "/start", label: "はじめての方へ", icon: "🔰" },
   ...MAIN_NAV,
   { href: "/articles", label: "プロのブログ", icon: "📝" },
   { href: "/skills", label: "スキル掲示板", icon: "🤝" },

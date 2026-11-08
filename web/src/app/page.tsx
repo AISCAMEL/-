@@ -1,9 +1,15 @@
 import { AdBanner } from "@/components/ads/ad-banner";
 import Link from "next/link";
+import { Suspense } from "react";
+import { TodayIwasawa, TodayIwasawaSkeleton } from "@/components/home/today-iwasawa";
+import { FavoriteSpots } from "@/components/spots/favorite-spots";
 import { Brand } from "@/components/brand";
 import { SiteFooter } from "@/components/site-footer";
 import { MAIN_NAV } from "@/lib/nav";
 import { SITE } from "@/lib/site";
+
+// 「今日の岩沢」を10分ごとに更新
+export const revalidate = 600;
 
 const SERVICES = [
   { title: "オンラインスクール", desc: "海に入る前の不安を、家で解消。" },
@@ -60,11 +66,21 @@ export default function Home() {
             仲間になる
           </Link>
           <Link
-            href="/login"
+            href="/start"
             className="rounded-full border border-foam/40 px-6 py-3 font-medium text-foam transition hover:border-foam"
           >
-            ログイン
+            はじめての方へ
           </Link>
+        </div>
+      </section>
+
+      {/* 今日の岩沢（波・風・潮・警報） */}
+      <section className="relative z-[1] -mt-10 px-4 sm:px-6">
+        <div className="mx-auto max-w-3xl">
+          <Suspense fallback={<TodayIwasawaSkeleton />}>
+            <TodayIwasawa />
+          </Suspense>
+          <FavoriteSpots className="mt-4" />
         </div>
       </section>
 

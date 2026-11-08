@@ -1,3 +1,4 @@
+import { FavoriteButton } from "@/components/spots/favorite-button";
 import { AdBanner } from "@/components/ads/ad-banner";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -81,6 +82,9 @@ export default async function SpotDetailPage({ params }: Props) {
         </h1>
         {spot.reading ? <p className="mt-1 text-sm text-sand/80">{spot.reading}</p> : null}
         <p className="mt-3 text-sm leading-relaxed text-sand/95">{spot.summary}</p>
+        <div className="mt-4">
+          <FavoriteButton spotId={spot.id} name={spot.name} />
+        </div>
       </div>
 
       {/* 基本情報 */}

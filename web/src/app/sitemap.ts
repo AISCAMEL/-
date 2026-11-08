@@ -14,6 +14,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const fixed = [
     page("/", "daily", 1),
+    page("/start", "monthly", 0.8),
     page("/waves", "hourly", 0.9),
     page("/spots", "daily", 0.9),
     page("/partners", "weekly", 0.7),
