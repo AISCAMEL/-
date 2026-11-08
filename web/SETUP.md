@@ -9,19 +9,10 @@ npm install
 ```
 
 ## 2. Supabase プロジェクトを用意
-1. https://supabase.com でプロジェクトを作成
-2. `web/supabase/migrations/` の SQL を **番号順に**（または `schema.sql` を一括で）SQL Editor で実行：
-   - `0001_init_members.sql` … 会員（種別×プラン）・RLS・登録時自動作成
-   - `0002_community.sql` … 投稿/コメント/いいね
-   - `0003_skills.sql` … スキル掲示板
-   - `0004_admin.sql` … 通報・操作ログ
-3. Authentication > Providers で「Email」を有効化
-   - 開発中はメール確認をオフにすると登録がすぐ通って楽です
-
-### 運営者（Staff/Admin）にする
-管理画面 `/admin` は staff/admin のみアクセス可。最初の運営者は
-Supabase の Table Editor で対象会員の `members.role` を `admin` に変更してください。
-以降は `/admin/members` から他の会員の種別を変更できます。
+本番の接続手順は **`docs/supabase-setup.md`**（上から順に進めるだけ）を参照してください。
+- データベース：`supabase/schema.sql` を SQL Editor で一括実行（または `supabase/migrations/` の 0001〜0016 を番号順に）
+- 最初の管理者：会員登録後に `update public.members set role = 'admin' where email = '...';`
+- 初期コンテンツ：`supabase/seed_initial_content.sql`（講座・レッスン・ブログ）
 
 ## 3. 環境変数
 ```bash

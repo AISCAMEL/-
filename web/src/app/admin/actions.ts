@@ -30,7 +30,8 @@ export async function setPostStatus(formData: FormData) {
   const id = String(formData.get("id"));
   const status = String(formData.get("status"));
   const supabase = await createClient();
-  await supabase.from("posts").update({ status }).eq("id", id);
+  // 運営が非表示にした投稿は moderated=true（作者が再公開できない）。再公開で解除
+  await supabase.from("posts").update({ status, moderated: status === "hidden" }).eq("id", id);
   await audit(staff.id, `post.${status}`, "post", id);
   revalidatePath("/admin/posts");
 }
@@ -394,8 +395,11 @@ export async function resolveReport(formData: FormData) {
 
   if (action === "hide") {
     if (targetType === "post" || targetType === "comment") {
-      const table = targetType === "post" ? "posts" : "comments";
-      await supabase.from(table).update({ status: "hidden" }).eq("id", targetId);
+      if (targetType === "post") {
+        await supabase.from("posts").update({ status: "hidden", moderated: true }).eq("id", targetId);
+      } else {
+        await supabase.from("comments").update({ status: "hidden" }).eq("id", targetId);
+      }
     } else if (targetType === "skill") {
       await supabase.from("skills").update({ status: "hidden" }).eq("id", targetId);
     }

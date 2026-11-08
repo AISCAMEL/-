@@ -24,7 +24,7 @@
 
 | # | やること | どこで | 効果 |
 |---|---|---|---|
-| 1 | **Supabase を接続** | Supabase でプロジェクト作成 → `web/supabase/migrations/` の 0001〜0014 を順に実行（または `schema.sql`）→ Vercel の環境変数に `NEXT_PUBLIC_SUPABASE_URL`・`NEXT_PUBLIC_SUPABASE_ANON_KEY` を登録 | ログイン・会員登録・投稿・管理画面・お問い合わせが動く。デモデータは自動で消える |
+| 1 | **Supabase を接続** | 手順書 **`docs/supabase-setup.md`** の通りに（`schema.sql` を一括実行 → 接続情報を Vercel に登録 → 再デプロイ） | ログイン・会員登録・投稿・管理画面・お問い合わせが動く。デモデータは自動で消える |
 | 2 | **管理者アカウントを作る** | 会員登録後、Supabase の `members` で自分の role を staff/admin に | 管理画面（広告・投稿・お問い合わせ管理）が使える |
 | 3 | **事業者情報を記入** | `web/src/lib/site.ts` の `operator`（名称・責任者・所在地・電話・メール・制定日） | 特定商取引法表記・プライバシーポリシー・利用規約に反映（いまは【要記入】表示） |
 | 4 | **本番ブランチの設定** | Vercel → Project Settings → Git → Production Branch を `iwasawa-surf-demo` に（または main にマージ） | いまは push しても本番に自動反映されず、毎回手動デプロイが必要 |
