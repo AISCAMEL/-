@@ -33,6 +33,12 @@ export default function ContactPage() {
           <div className="rounded-2xl border border-navy/10 bg-white p-5 text-sm text-navy/70">
             <p className="font-medium text-navy">運営情報</p>
             <p className="mt-2 text-xs leading-relaxed text-navy/50">
+              {SITE.operator.name ? (
+                <>
+                  運営：{SITE.operator.name}
+                  <br />
+                </>
+              ) : null}
               {SITE.region.areaLabel}
               <br />
               事業者情報は{" "}

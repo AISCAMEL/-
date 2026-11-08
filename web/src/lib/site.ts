@@ -36,13 +36,14 @@ export const SITE = {
    * 公開前にここを埋めれば、すべての法務ページに反映される。空欄のままだと「要記入」と表示。
    */
   operator: {
-    name: "", // 事業者の名称（例：株式会社〇〇）
-    representative: "", // 運営統括責任者
-    address: "", // 所在地
-    phone: "", // 電話番号
-    email: "", // お問い合わせ用メールアドレス
-    legalEffectiveDate: "", // 法務ページの制定日（例：2026年12月1日）
+    name: "合同会社アイズ",
+    representative: "吉田一平",
+    address: "福島県いわき市四倉町細谷字大町１番",
+    phone: "050-1722-3365",
+    email: "info@aisjaltd.com",
+    legalEffectiveDate: "2026年11月8日",
   },
+
   /** LINE公式アカウントの友だち追加URL（未設定ならLINEの案内を出さない） */
   lineUrl: process.env.NEXT_PUBLIC_LINE_URL ?? "",
 } as const;

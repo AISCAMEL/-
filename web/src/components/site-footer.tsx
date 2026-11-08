@@ -47,6 +47,7 @@ export function SiteFooter() {
 
       <div className="mx-6 mt-10 max-w-4xl border-t border-white/10 pt-6 text-center text-xs text-sand/50 sm:mx-auto">
         © {SITE.name}
+        {SITE.operator.name ? `　運営：${SITE.operator.name}` : ""}
       </div>
     </footer>
   );
