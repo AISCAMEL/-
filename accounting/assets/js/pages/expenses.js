@@ -121,6 +121,7 @@ window.A = window.A || {};
         let hit = rules.find((x) => x.keyword && vtext.includes(x.keyword));
         if (!hit && A.reports && A.reports.learnAccount) hit = A.reports.learnAccount(learnJournals, vtext, 'out');
         if (hit && hit.account && mainWrap._sel) { mainWrap._sel.value = hit.account; if (hit.tax) taxSel.value = hit.tax; }
+        if (depts.length && A.reports && A.reports.learnDept) { const dg = A.reports.learnDept(learnJournals, vtext); if (dg && dg.dept) deptSel.value = dg.dept; }
         refresh();
         ocrStatus.textContent = `読み取り完了：${d.vendor || ''} ¥${U.yen(d.amount || 0)}（内容を確認してください）`;
       } catch (e) { ocrStatus.textContent = 'エラー：' + e.message; }

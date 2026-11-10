@@ -25,6 +25,7 @@ A.app = (function () {
   const NAV = [
     { path: 'dashboard', label: 'ダッシュボード', icon: '🏠' },
     { path: 'assistant', label: 'AI会計アシスタント', icon: '🤖' },
+    { path: 'aiwatch', label: 'AI監視センター', icon: '🛡' },
     { path: 'search', label: '検索', icon: '🔍' },
     { group: '取引' },
     { path: 'journal', label: '仕訳帳', icon: '📒' },

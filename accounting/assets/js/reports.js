@@ -438,6 +438,114 @@ A.reports = (function () {
     return { account: best, tax: acc.default_tax, count: n };
   };
 
+  /* ---- 事業（部門）の自動学習 ------------------------------------------
+   * 摘要に関連する過去の仕訳から、最も多く使われた事業(dept)を提案する。
+   * ------------------------------------------------------------------- */
+  const learnDept = (journals, text) => {
+    text = (text || '').trim();
+    if (text.length < 2) return null;
+    const freq = {};
+    (journals || []).forEach((j) => {
+      if (!j.dept) return;
+      const desc = (j.description || '').trim();
+      if (desc.length < 2) return;
+      if (!(desc === text || desc.includes(text) || text.includes(desc))) return;
+      freq[j.dept] = (freq[j.dept] || 0) + 1;
+    });
+    let best = null, n = 0;
+    Object.keys(freq).forEach((d) => { if (freq[d] > n) { n = freq[d]; best = d; } });
+    return best ? { dept: best, count: n } : null;
+  };
+
+  /* ---- AI監視エンジン（異常検知＋アラーム・オフライン） ----------------
+   * データを走査して、注意すべき事項（findings）を重大度つきで返す。
+   * findings: [{ level:'bad'|'warn'|'info', cat, title, detail, to }]
+   * ------------------------------------------------------------------- */
+  const watchdog = (ctx) => {
+    const { journals = [], invoices = [], vehicles = [], assets = [], settings = {}, fy } = ctx;
+    const today = U.today();
+    const out = [];
+    const add = (level, cat, title, detail, to) => out.push({ level, cat, title, detail, to });
+
+    // 1) 貸借対照表の不一致
+    const st = statements(journals, fy.start, fy.end);
+    if (!st.bs.balanced) add('bad', 'bs', '貸借対照表が一致していません', '仕訳の借方・貸方に差異があります。', 'statements');
+
+    // 2) 減価償却の未計上
+    const fsMonth = settings.fiscalStartMonth || 4;
+    const depPending = assets.filter((a) => !a.disposed && depForFiscalYear(a, fsMonth, fy.start) && !journals.some((j) => j.source === 'depreciation' && j.refId === a.id && U.inRange(j.date, fy.start, fy.end)));
+    if (depPending.length) add('warn', 'depreciation', `当期の減価償却が未計上（${depPending.length}件）`, '固定資産ページで計上できます。', 'assets');
+
+    // 3) 未入金・期限超過
+    const unpaid = invoices.filter((i) => i.type === 'invoice' && i.posted && !i.paid);
+    const overdue = unpaid.filter((i) => i.dueDate && i.dueDate < today);
+    if (overdue.length) add('bad', 'overdue', `支払期限超過の未入金（${overdue.length}件）`, '取引先への督促をご検討ください。', 'invoices');
+    const draftInv = invoices.filter((i) => i.type === 'invoice' && !i.posted);
+    if (draftInv.length) add('info', 'draft', `売上未計上の請求書（${draftInv.length}件）`, '売上計上が漏れていないかご確認ください。', 'invoices');
+
+    // 4) 長期在庫車
+    if (vehicles.length) {
+      const thr = settings.stockAlertDays || 45;
+      const vpl = vehiclePL(journals, vehicles);
+      const ls = vpl.rows.filter((r) => !r.sold && r.holdingDays != null && r.holdingDays > thr);
+      if (ls.length) add('warn', 'stock', `長期在庫の車両（${ls.length}台）`, `最長 ${Math.max(...ls.map((r) => r.holdingDays))}日。販売・値下げの検討を。`, 'vehicles');
+    }
+
+    // 5) 現預金残高の注意
+    if (st.bs.asset.items) {
+      const cash = (st.bs.asset.items.find((i) => i.code === '100') || {}).amount || 0;
+      const bank = (st.bs.asset.items.find((i) => i.code === '110') || {}).amount || 0;
+      if (cash + bank < 0) add('bad', 'cash', '現預金残高がマイナスです', '記帳誤りか資金不足の可能性があります。', 'cashforecast');
+    }
+
+    // 6) 費用の異常増加（直近月 vs 過去3か月平均）
+    const ym = (d) => (d || '').slice(0, 7);
+    const months = [];
+    for (let i = 0; i < 4; i++) { const d = new Date(today + 'T00:00:00'); d.setDate(1); d.setMonth(d.getMonth() - i); months.push(`${d.getFullYear()}-${pad(d.getMonth() + 1)}`); }
+    const curM = months[0], prevM = months.slice(1);
+    const expByAccM = {}; // acc -> {month -> sum}
+    journals.forEach((j) => { if (j.source === 'closing') return; const m = ym(j.date); (j.lines || []).forEach((l) => { if (S.accounts.category(l.account) !== 'expense') return; if (!expByAccM[l.account]) expByAccM[l.account] = {}; expByAccM[l.account][m] = (expByAccM[l.account][m] || 0) + (l.side === 'debit' ? 1 : -1) * l.amount; }); });
+    Object.keys(expByAccM).forEach((acc) => {
+      const cur = expByAccM[acc][curM] || 0;
+      const avg = prevM.reduce((s, m) => s + (expByAccM[acc][m] || 0), 0) / 3;
+      if (cur >= 50000 && avg > 0 && cur > avg * 1.5) add('warn', 'spike', `費用の急増：${S.accounts.name(acc)}`, `今月 ¥${U.yen(cur)}（過去3か月平均 ¥${U.yen(Math.round(avg))}の${Math.round(cur / avg * 100)}%）。`, 'monthly');
+    });
+
+    // 7) 重複仕訳の疑い（同日・同額・同摘要が複数）
+    const seen = {};
+    journals.forEach((j) => { if (j.source === 'closing' || j.source === 'depreciation') return; const tot = (j.lines || []).filter((l) => l.side === 'debit').reduce((s, l) => s + l.amount, 0); const key = `${j.date}|${tot}|${(j.description || '').trim()}`; if (!j.description || !tot) return; seen[key] = (seen[key] || 0) + 1; });
+    const dup = Object.keys(seen).filter((k) => seen[k] > 1).length;
+    if (dup) add('warn', 'dup', `重複の疑いがある仕訳（${dup}件）`, '同じ日付・金額・摘要の仕訳が複数あります。二重計上にご注意ください。', 'journal');
+
+    // 8) 事業未設定（未配賦）が多い
+    if ((settings.departments || []).length) {
+      let tagged = 0, untagged = 0;
+      journals.forEach((j) => { if (j.source === 'closing') return; if (!U.inRange(j.date, fy.start, fy.end)) return; const amt = (j.lines || []).filter((l) => l.side === 'debit').reduce((s, l) => s + l.amount, 0); if (j.dept) tagged += amt; else untagged += amt; });
+      const total = tagged + untagged;
+      if (total > 0 && untagged / total > 0.5) add('info', 'segment', '事業未設定の取引が多い', `当期の約${Math.round(untagged / total * 100)}%が未配賦です。AIで事業を一括仕分けできます。`, 'aiwatch');
+    }
+
+    // 9) 取引先の登録番号が無効
+    const badReg = (ctx.partners || []).filter((p) => p.regNo && !(U.checkInvoiceRegNo(p.regNo).valid));
+    if (badReg.length) add('warn', 'reg', `登録番号が無効な取引先（${badReg.length}件）`, 'インボイスの要件を満たさない可能性があります。', 'partners');
+
+    // 10) バックアップ
+    if (journals.length || invoices.length) {
+      const last = settings.lastBackupAt;
+      const days = last ? Math.round((new Date(today + 'T00:00:00') - new Date(last + 'T00:00:00')) / 86400000) : null;
+      if (days === null) add('warn', 'backup', 'バックアップがありません', 'データはブラウザ内のみ。設定から書き出して保管を。', 'settings');
+      else if (days >= 14) add('warn', 'backup', `バックアップから${days}日経過`, 'データの書き出しをおすすめします。', 'settings');
+    }
+
+    // 11) 決算期が近い
+    const toEnd = Math.round((new Date(fy.end + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000);
+    if (toEnd >= 0 && toEnd <= 31) add('info', 'closing', '決算期が近づいています', `当期末まで約${toEnd}日。決算・申告の準備を。`, 'closing');
+
+    const rank = { bad: 0, warn: 1, info: 2 };
+    out.sort((a, b) => rank[a.level] - rank[b.level]);
+    return out;
+  };
+
   /* ---- 勘定科目内訳明細書（税理士提出書類のベース） --------------------
    * 預貯金／売掛金（取引先別）／買掛金・未払金／借入金／固定資産 の内訳。
    * 売掛金は未回収の計上済み請求書から取引先別に、その他は科目残高から作成。
@@ -624,5 +732,5 @@ A.reports = (function () {
     return { net, dep, dAR, dInv, dAP, operating, investing, financing, adjust, cashChange, cashOpen, cashClose };
   };
 
-  return { flatLines, ledger, trialBalance, statements, taxSummary, dashboard, depSchedule, depForFiscalYear, bookValueAt, breakdown, learnAccount, vehiclePL, venueRanking, cashTrend, DEEMED_RATES, taxPayable, deptSummary, taxReturnCalc, advisor, monthlyTrend, partnerLedger, cashflow };
+  return { flatLines, ledger, trialBalance, statements, taxSummary, dashboard, depSchedule, depForFiscalYear, bookValueAt, breakdown, learnAccount, learnDept, watchdog, vehiclePL, venueRanking, cashTrend, DEEMED_RATES, taxPayable, deptSummary, taxReturnCalc, advisor, monthlyTrend, partnerLedger, cashflow };
 })();

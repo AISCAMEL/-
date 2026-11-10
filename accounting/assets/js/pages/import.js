@@ -142,7 +142,7 @@ window.A = window.A || {};
         if (!targets.length) return ui.toast('相手科目を設定した明細がありません', 'err');
         if (!await ui.confirm(`${targets.length}件を仕訳に計上します。よろしいですか？`)) return;
         const journals = targets.map((it) => ({
-          source: 'import', date: it.date, description: it.desc,
+          source: 'import', date: it.date, description: it.desc, dept: it.dept || '',
           lines: it.dir === 'out'
             ? [{ side: 'debit', account: it.account, tax: it.tax, amount: it.amount }, { side: 'credit', account: bank, tax: 'out', amount: it.amount }]
             : [{ side: 'debit', account: bank, tax: 'out', amount: it.amount }, { side: 'credit', account: it.account, tax: it.tax, amount: it.amount }],
@@ -163,10 +163,12 @@ window.A = window.A || {};
   // 明細行→取込アイテムへ（ルール/プリセットで相手科目・税区分を補完）
   const toItem = (date, desc, dir, amount, preset) => {
     const sug = suggest(desc, dir);
+    const dsug = (A.reports && A.reports.learnDept) ? A.reports.learnDept(learnJournals, desc) : null;
     return {
       date: normDate(date), desc: (desc || '').trim(), dir, amount: Math.abs(amount),
       account: sug ? sug.account : (preset.defAccount || ''),
       tax: sug ? sug.tax : (dir === 'out' ? (preset.defTax || 'purchase10') : 'sales10'),
+      dept: dsug ? dsug.dept : '',
       include: true,
     };
   };
@@ -232,7 +234,7 @@ window.A = window.A || {};
         let autoPosted = 0;
         if (autos.length) {
           const journals = autos.map((it) => ({
-            source: 'import', date: it.date, description: it.desc,
+            source: 'import', date: it.date, description: it.desc, dept: it.dept || '',
             lines: it.dir === 'out'
               ? [{ side: 'debit', account: it.account, tax: it.tax, amount: it.amount }, { side: 'credit', account: it.counter, tax: 'out', amount: it.amount }]
               : [{ side: 'debit', account: it.counter, tax: 'out', amount: it.amount }, { side: 'credit', account: it.account, tax: it.tax, amount: it.amount }],

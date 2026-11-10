@@ -76,6 +76,23 @@ window.A = window.A || {};
       ]));
     }
 
+    // AI監視サマリ
+    if (R.watchdog) {
+      const findings = R.watchdog({ journals, invoices, vehicles, assets, settings: s, fy });
+      const c = { bad: 0, warn: 0, info: 0 }; findings.forEach((f) => (c[f.level] += 1));
+      wrap.appendChild(el('div.card', {}, [
+        el('div.card-head', {}, [el('h3', { text: '🛡 AI監視' }), el('button.btn.sm', { text: 'AI監視センターへ', onclick: () => ui.go('aiwatch') })]),
+        findings.length
+          ? el('div.inline', { style: 'gap:1rem;flex-wrap:wrap' }, [
+            el('span' + (c.bad ? '.ng' : '.muted'), { text: `要対応 ${c.bad}` }),
+            el('span', { text: `注意 ${c.warn}`, style: c.warn ? 'color:#d97706;font-weight:600' : '' }),
+            el('span.muted', { text: `お知らせ ${c.info}` }),
+            findings[0] ? el('span.muted.small', { text: '｜最優先：' + findings[0].title }) : null,
+          ])
+          : el('p.result-line.ok', { text: '✓ 現在、特に注意すべき事項はありません。' }),
+      ]));
+    }
+
     // 月次売上グラフ
     const tr = R.monthlyTrend(journals, fy.start, s.fiscalStartMonth || 4);
     // 前期実績（前期比KPI用）
