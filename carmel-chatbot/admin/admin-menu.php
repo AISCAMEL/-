@@ -657,8 +657,35 @@ function carmel_cb_handle_import() {
 }
 
 /** FAQ一括投入の画面 */
+/** FAQをCSVで書き出す（ダウンロード）。？carmel_cb_faq_export=1 でストリーム出力。 */
+add_action( 'admin_init', 'carmel_cb_faq_export_maybe' );
+function carmel_cb_faq_export_maybe() {
+	if ( empty( $_GET['carmel_cb_faq_export'] ) ) { return; }
+	if ( ! current_user_can( 'manage_options' ) ) { return; }
+	if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( $_GET['_wpnonce'], 'carmel_cb_faq_export' ) ) { return; }
+
+	$faqs = carmel_cb_get_faqs( false );
+	nocache_headers();
+	header( 'Content-Type: text/csv; charset=UTF-8' );
+	header( 'Content-Disposition: attachment; filename="carmel-faq-' . date( 'Ymd' ) . '.csv"' );
+	$out = fopen( 'php://output', 'w' );
+	fwrite( $out, "\xEF\xBB\xBF" ); // Excel用BOM
+	fputcsv( $out, array( '質問', '回答', 'キーワード', '有効' ) );
+	foreach ( (array) $faqs as $f ) {
+		fputcsv( $out, array(
+			(string) $f->question,
+			(string) $f->answer,
+			(string) ( $f->keywords ?? '' ),
+			( ! empty( $f->enabled ) ? '1' : '0' ),
+		) );
+	}
+	fclose( $out );
+	exit;
+}
+
 function carmel_cb_view_faqimport() {
 	$count = count( carmel_cb_get_faqs( false ) );
+	$export_url = wp_nonce_url( admin_url( 'admin.php?page=carmel-cb&tab=faqimport&carmel_cb_faq_export=1' ), 'carmel_cb_faq_export' );
 	?>
 	<div class="ccb-card">
 		<h2>FAQ一括投入（AIにまとめて学習）</h2>
@@ -688,6 +715,11 @@ function carmel_cb_view_faqimport() {
 			<?php submit_button( '一括投入する' ); ?>
 		</form>
 		<hr>
+		<p><strong>③ 現在のFAQを書き出す（ダウンロード）</strong></p>
+		<p>
+			<a href="<?php echo esc_url( $export_url ); ?>" class="button button-primary">📥 FAQをCSVでダウンロード</a>
+			<span class="description" style="margin-left:8px">登録中の <strong><?php echo (int) $count; ?>件</strong> を「質問・回答・キーワード・有効」の列でCSV書き出し。Excel/スプレッドシートで編集して、上の①②から再投入できます（往復編集OK）。</span>
+		</p>
 		<p class="description">投入後は「学習データ(FAQ)」タブで内容を確認・編集・削除できます。</p>
 	</div>
 
