@@ -19,12 +19,12 @@ export default function SetupPage() {
   const steps = [
     { done: i.ai.connected, title: 'AIを接続する', now: i.ai.connected ? `接続中（${i.ai.provider} / ${i.ai.model}）` : '未接続', how: 'RenderにOPENAI_API_KEY等を設定（docs/quickstart-openrouter-resend.md）', link: '/ai-test', linkLabel: 'AI応対テストで確認' },
     { done: i.email.connected, title: 'メール通知を接続する', now: i.email.connected ? `接続中（${i.email.from}）` : '未接続', how: 'RenderにRESEND_API_KEYを設定。通知先を自社アドレスに', link: '/settings/notification', linkLabel: '通知設定へ' },
-    { done: Boolean(c.industry), title: '業種テンプレートを適用', now: c.industry ? `適用済み（${c.industry}）` : '未適用', how: '自動車販売・買取テンプレで挨拶文・FAQ・査定シナリオを一括投入', link: '/settings/template', linkLabel: 'テンプレートを適用' },
+    { done: Boolean(c.industry), title: '業種テンプレートを適用', now: c.industry ? `適用済み（${c.industry}）` : '未適用', how: '業種テンプレで挨拶文・FAQ・応対シナリオを一括投入', link: '/settings/template', linkLabel: 'テンプレートを適用' },
     { done: c.greeting_set && c.business_hours_set, title: '挨拶文・営業時間を設定', now: c.greeting_set && c.business_hours_set ? '設定済み' : '未設定', how: '自社の名乗り・受付時間を設定', link: '/settings/ai', linkLabel: 'AI設定へ' },
-    { done: c.faq_count >= 3, title: 'FAQを用意（3件以上）', now: `${c.faq_count}件`, how: '「買取査定は？」「出張査定できる？」などをFAQに', link: '/faqs', linkLabel: 'FAQ管理へ' },
+    { done: c.faq_count >= 3, title: 'FAQを用意（3件以上）', now: `${c.faq_count}件`, how: '「料金は？」「予約できる？」などをFAQに', link: '/faqs', linkLabel: 'FAQ管理へ' },
     { done: c.notification_email_set, title: '通知先メールを設定', now: c.notification_email_set ? '設定済み' : '未設定', how: '着信をどこに通知するか', link: '/settings/notification', linkLabel: '通知設定へ' },
     { done: i.phone.connected, title: '電話番号をつなぐ（本番着信）', now: i.phone.connected ? `接続中（番号${i.phone.numbers}件）` : '未接続（唯一の実費）', how: 'Twilio接続（docs/twilio-setup.md）。ここまでで実際に電話が鳴る', link: '/phone-numbers', linkLabel: '電話番号設定へ' },
-    { done: i.calendar.connected, title: '（任意）Googleカレンダー連携', now: i.calendar.connected ? '連携中' : '未連携', how: '査定予約をスタッフ予定と突合し重複防止（docs/google-calendar-setup.md）', link: '/appointments', linkLabel: '予約管理へ' },
+    { done: i.calendar.connected, title: '（任意）Googleカレンダー連携', now: i.calendar.connected ? '連携中' : '未連携', how: '予約をスタッフ予定と突合し重複防止（docs/google-calendar-setup.md）', link: '/appointments', linkLabel: '予約管理へ' },
   ];
   const required = steps.slice(0, 7); // 最後のカレンダーは任意
   const doneCount = required.filter((s) => s.done).length;

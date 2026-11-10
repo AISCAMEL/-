@@ -34,11 +34,11 @@ export default function ApiSettingsPage() {
   const curlInquiry = `curl -X POST ${API_BASE}/api/v1/inquiries \\
   -H "X-API-Key: aiop_live_あなたのキー" \\
   -H "Content-Type: application/json" \\
-  -d '{"name":"山田太郎","phone":"09012345678","email":"taro@example.com","car":"プリウス 2019 4万km","message":"出張査定希望"}'`;
+  -d '{"name":"山田太郎","phone":"09012345678","email":"taro@example.com","message":"お問い合わせ内容"}'`;
 
   return (
     <div>
-      <PageTitle title="API連携" sub="APIキーを発行して、御社サイトの査定フォームやLINE・他システムから査定依頼を送れます。" />
+      <PageTitle title="API連携" sub="APIキーを発行して、御社サイトのフォームやLINE・他システムから問い合わせを送れます。" />
 
       {/* 発行直後のキー表示（一度きり） */}
       {issued && (
@@ -58,7 +58,7 @@ export default function ApiSettingsPage() {
       <Card className="mb-6">
         <h2 className="mb-2 text-sm font-semibold text-gray-500">新しいAPIキーを発行</h2>
         <form onSubmit={create} className="flex flex-wrap gap-2">
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="用途がわかる名前（例：HP査定フォーム）" className="flex-1 rounded-lg border px-3 py-2 text-sm" />
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="用途がわかる名前（例：HP問い合わせフォーム）" className="flex-1 rounded-lg border px-3 py-2 text-sm" />
           <button className="rounded-lg bg-brand px-5 py-2 text-sm font-medium text-white hover:bg-brand-dark">発行</button>
         </form>
       </Card>
@@ -86,12 +86,12 @@ export default function ApiSettingsPage() {
 
       {/* 使い方 */}
       <Card>
-        <h2 className="mb-2 text-sm font-semibold text-gray-500">使い方（査定依頼の送信）</h2>
-        <p className="text-sm text-gray-600">御社サイトのフォーム送信時に、以下のように呼び出すと連絡先（査定見込み）に自動登録され、担当へメール通知が飛びます。</p>
+        <h2 className="mb-2 text-sm font-semibold text-gray-500">使い方（問い合わせの送信）</h2>
+        <p className="text-sm text-gray-600">御社サイトのフォーム送信時に、以下のように呼び出すと連絡先（見込み客）に自動登録され、担当へメール通知が飛びます。</p>
         <pre className="mt-3 overflow-x-auto rounded-lg bg-gray-900 px-4 py-3 text-xs text-gray-100"><code>{curlInquiry}</code></pre>
         <div className="mt-4 space-y-1 text-xs text-gray-500">
           <p><strong>エンドポイント</strong></p>
-          <p>・<code>POST /api/v1/inquiries</code> … 査定依頼を登録（name/phone/email/car/message など）</p>
+          <p>・<code>POST /api/v1/inquiries</code> … 問い合わせを登録（name/phone/email/message など）</p>
           <p>・<code>POST /api/v1/contacts</code> … 連絡先を作成</p>
           <p>・<code>GET /api/v1/contacts</code> … 連絡先を取得</p>
           <p className="mt-2">認証は <code>X-API-Key: （発行したキー）</code> または <code>Authorization: Bearer （キー）</code>。詳細は <code>docs/api-integration.md</code>。</p>

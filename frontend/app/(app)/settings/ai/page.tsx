@@ -66,7 +66,7 @@ export default function AiSettingsPage() {
               label="AIへの追加指示（状況・受け答えの方針）"
               value={s.ai_instructions ?? ''}
               onChange={(v) => field('ai_instructions', v)}
-              placeholder="例：遠方（対応エリア外）のお客様には出張ではなくオンライン査定を案内する。査定額は電話で確約しない。特定の車種は高価買取をアピール。など、AIに守らせたい方針を自由に書けます。"
+              placeholder="例：対応エリア外のお客様にはオンライン対応を案内する。金額は電話で確約しない。など、AIに守らせたい方針を自由に書けます。"
               hint="ここに書いた内容をAIが最優先で守ります。状況ごとの受け答えを自由に教育できます。"
             />
 
@@ -75,29 +75,29 @@ export default function AiSettingsPage() {
                 label="対応タイプ（予約・受付の種別／カンマ区切り）"
                 value={s.reception_types ?? ''}
                 onChange={(v) => field('reception_types', v)}
-                placeholder="画像査定,オンライン査定,出張査定,持込査定"
+                placeholder="来店予約,オンライン相談,電話相談"
               />
-              <p className="mt-1 text-xs text-gray-500">業種に合わせて自由に増減できます。先頭を基本の対応にすると案内しやすいです（例：画像査定を基本に）。</p>
+              <p className="mt-1 text-xs text-gray-500">業種に合わせて自由に増減できます。先頭を基本の対応にすると案内しやすいです（例：来店予約を基本に）。</p>
             </div>
 
             <div className="mt-4">
               <Text
-                label="画像査定フォームのURL（SMSでお客様に送信）"
+                label="フォームのURL（SMSでお客様に送信・任意）"
                 value={s.appraisal_form_url ?? ''}
                 onChange={(v) => field('appraisal_form_url', v)}
-                placeholder="https://（写真を送ってもらう査定フォーム）"
+                placeholder="https://（お客様に記入してもらうフォーム）"
               />
-              <p className="mt-1 text-xs text-gray-500">基本の画像査定で、お客様の携帯にこのフォームのリンクをショートメール（SMS）で送って誘導します。通話詳細の「査定フォームをSMS送信」から送れます（SMS実送信はTwilio接続が必要）。</p>
+              <p className="mt-1 text-xs text-gray-500">お客様の携帯にこのフォームのリンクをショートメール（SMS）で送って誘導します。通話詳細の「フォームをSMS送信」から送れます（SMS実送信はTwilio接続が必要）。</p>
             </div>
 
             <div className="mt-4">
               <Text
-                label="オンライン査定の予約ページURL（希望者にAIが案内）"
+                label="オンライン予約ページURL（希望者にAIが案内・任意）"
                 value={s.online_booking_url ?? ''}
                 onChange={(v) => field('online_booking_url', v)}
                 placeholder="https://calendar.app.google/xxxxxxxx"
               />
-              <p className="mt-1 text-xs text-gray-500">ビデオ査定を希望されたお客様にだけ、このGoogle予約ページを案内します（Googleが日時枠とMeetを自動発行）。</p>
+              <p className="mt-1 text-xs text-gray-500">オンライン対応を希望されたお客様にだけ、このGoogle予約ページを案内します（Googleが日時枠とMeetを自動発行）。</p>
             </div>
 
             <div className="mt-4">
@@ -106,7 +106,7 @@ export default function AiSettingsPage() {
                 value={s.sales_call_reply ?? ''}
                 onChange={(v) => field('sales_call_reply', v)}
                 placeholder="恐れ入りますが、営業・勧誘のお電話はお取り次ぎしておりません。ご用件があれば会社名とお名前を伺い、担当者より折り返しご連絡いたします。"
-                hint="営業電話とAIが判断したら、この方針でかわします（査定・予約フローには進めません）。"
+                hint="営業電話とAIが判断したら、この方針でかわします（予約フローには進めません）。"
               />
             </div>
           </div>

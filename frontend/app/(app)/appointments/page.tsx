@@ -35,11 +35,11 @@ export default function AppointmentsPage() {
   const [date, setDate] = useState(todayYmd());
   const [slots, setSlots] = useState<{ start: string; end: string }[] | null>(null);
   const [picked, setPicked] = useState<{ start: string; end: string } | null>(null);
-  const [form, setForm] = useState({ type: '査定', customer_name: '', phone_number: '', note: '' });
+  const [form, setForm] = useState({ type: '予約', customer_name: '', phone_number: '', note: '' });
   const [msg, setMsg] = useState('');
   const [cfgOpen, setCfgOpen] = useState(false);
   const [cfg, setCfg] = useState({ google_calendar_id: '', google_refresh_token: '', appointment_duration_min: 45 });
-  const [autoForm, setAutoForm] = useState({ customer_name: '', phone_number: '', type: '出張査定', date: '', preferredHHMM: '' });
+  const [autoForm, setAutoForm] = useState({ customer_name: '', phone_number: '', type: '来店', date: '', preferredHHMM: '' });
   const [autoMsg, setAutoMsg] = useState('');
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
   const [weekOffset, setWeekOffset] = useState(0); // 0=今週
@@ -88,7 +88,7 @@ export default function AppointmentsPage() {
     window.history.replaceState({}, '', '/appointments'); // クエリを消す
     loadStatus();
   }, []);
-  const [types, setTypes] = useState<string[]>(['出張査定', '持込査定', 'オンライン査定', '来店商談', '電話商談']);
+  const [types, setTypes] = useState<string[]>(['来店予約', 'オンライン相談', '電話相談']);
   useEffect(() => {
     loadList(); loadStatus();
     // 対応タイプはAI設定（reception_types）から取得。業種ごとに設定可能。
@@ -110,7 +110,7 @@ export default function AppointmentsPage() {
     try {
       const r = await api.createAppointment({ ...form, start_at: picked.start, end_at: picked.end, source: 'manual', title: `${form.type}：${form.customer_name}` });
       setMsg(`予約しました（${jstDateTime(picked.start)}）${r.google_synced ? '／Googleカレンダーにも登録' : ''}`);
-      setPicked(null); setSlots(null); setForm({ type: '査定', customer_name: '', phone_number: '', note: '' });
+      setPicked(null); setSlots(null); setForm({ type: '予約', customer_name: '', phone_number: '', note: '' });
       loadList();
     } catch (err: any) {
       setMsg(String(err).includes('409') ? 'その枠は直前に埋まりました。別の枠を選んでください。' : `エラー: ${err.message ?? err}`);
@@ -129,7 +129,7 @@ export default function AppointmentsPage() {
 
   return (
     <div>
-      <PageTitle title="予約（査定・来店）" sub="AIが取った希望と既存予約・Googleカレンダーを突き合わせ、重複しない枠だけに予約します。" />
+      <PageTitle title="予約管理" sub="AIが取った希望と既存予約・Googleカレンダーを突き合わせ、重複しない枠だけに予約します。" />
 
       {/* Google接続バナー */}
       <div className={`mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border px-4 py-3 text-sm ${status?.google_connected ? 'border-green-300 bg-green-50' : 'border-amber-300 bg-amber-50'}`}>
@@ -182,7 +182,7 @@ export default function AppointmentsPage() {
       {/* AIで自動予約（最短の空き枠） */}
       <Card className="mb-6 border-brand/40">
         <h2 className="mb-1 text-sm font-semibold text-brand">🤖 AIで自動予約（最短の空き枠に仮予約）</h2>
-        <p className="mb-3 text-xs text-gray-500">AIが通話中に使うのと同じ仕組み。希望日を指定すると、Googleカレンダーと既存予約を避けて最短の空き枠に仮予約します。遠方はオンライン査定を選択。</p>
+        <p className="mb-3 text-xs text-gray-500">AIが通話中に使うのと同じ仕組み。希望日を指定すると、Googleカレンダーと既存予約を避けて最短の空き枠に仮予約します。遠方の方にはオンライン対応を選べます。</p>
         <form onSubmit={runAutoBook} className="flex flex-wrap items-end gap-2">
           <input value={autoForm.customer_name} onChange={(e) => setAutoForm({ ...autoForm, customer_name: e.target.value })} placeholder="顧客名" className="rounded-lg border px-3 py-2 text-sm" />
           <input value={autoForm.phone_number} onChange={(e) => setAutoForm({ ...autoForm, phone_number: e.target.value })} placeholder="電話番号" className="rounded-lg border px-3 py-2 text-sm" />
@@ -233,7 +233,7 @@ export default function AppointmentsPage() {
               <input value={form.customer_name} onChange={(e) => setForm({ ...form, customer_name: e.target.value })} placeholder="顧客名" className="flex-1 rounded-lg border px-3 py-2 text-sm" />
               <input value={form.phone_number} onChange={(e) => setForm({ ...form, phone_number: e.target.value })} placeholder="電話番号" className="rounded-lg border px-3 py-2 text-sm" />
             </div>
-            <input value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="メモ（車種・年式など）" className="w-full rounded-lg border px-3 py-2 text-sm" />
+            <input value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="メモ（ご要望・備考など）" className="w-full rounded-lg border px-3 py-2 text-sm" />
             <button className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark">この枠で予約する</button>
           </form>
         )}

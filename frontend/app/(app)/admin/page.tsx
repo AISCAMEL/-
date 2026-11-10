@@ -78,7 +78,7 @@ export default function AdminPage() {
           <div className="flex flex-wrap gap-2">
             <input value={form.company_name} onChange={(e) => setForm({ ...form, company_name: e.target.value })} placeholder="会社名・店舗名 *"
               className="min-w-[180px] flex-1 rounded-lg border px-3 py-2 text-sm" />
-            <input value={form.industry} onChange={(e) => setForm({ ...form, industry: e.target.value })} placeholder="業種（例：車買取）"
+            <input value={form.industry} onChange={(e) => setForm({ ...form, industry: e.target.value })} placeholder="業種（例：美容室／不動産／車買取 など）"
               className="w-40 rounded-lg border px-3 py-2 text-sm" />
             <select value={form.plan} onChange={(e) => setForm({ ...form, plan: e.target.value })} className="rounded-lg border px-3 py-2 text-sm">
               <option value="starter">受付プラン</option>

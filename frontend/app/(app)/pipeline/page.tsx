@@ -47,7 +47,7 @@ export default function PipelinePage() {
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <PageTitle title="案件ボード" sub="お問い合わせ・査定案件をカンバンで管理。カードをドラッグして進捗を動かせます。" />
+        <PageTitle title="案件ボード" sub="お問い合わせ・案件をカンバンで管理。カードをドラッグして進捗を動かせます。" />
         <div className="flex items-center gap-3">
           <span className="text-sm text-gray-500">成約 {wonCount} / 全 {total} 件</span>
           <form onSubmit={(e) => { e.preventDefault(); load(); }} className="flex gap-2">

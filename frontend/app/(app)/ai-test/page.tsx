@@ -7,21 +7,23 @@ import { Card, PageTitle } from '@/components/ui';
 
 interface Turn { role: 'customer' | 'ai'; content: string; intent?: string; transfer?: boolean; }
 
+// 業種に依存しない中立の例文（実際の挨拶・FAQはテナント設定が反映される）
 const SUGGESTIONS = [
-  '車を売りたいので査定してほしい',
-  'プリウス2019年式、写真で査定できますか？',
-  '青森なんだけど出張で来てもらえる？',
-  'ローンが残ってても売れますか？',
-  '査定料や出張費はかかりますか？',
+  '予約をお願いしたいのですが',
+  '営業時間を教えてください',
+  '場所（アクセス）を教えてください',
+  '料金について聞きたいです',
   '広告掲載のご案内でお電話しました', // 営業電話の見極め確認
   '担当者に折り返してほしい',
 ];
 
-const OPENING = 'お電話ありがとうございます。車買取専門店、AI受付です。買取査定のご依頼を承ります。お車の車種・年式と、だいたいの地域を教えてください。（これはテスト画面です）';
+// テナントの挨拶文が未取得のときの中立フォールバック
+const NEUTRAL_OPENING = 'お電話ありがとうございます。AI受付です。ご用件をお話しください。（これはテスト画面です）';
 
 export default function AiTestPage() {
+  const [opening, setOpening] = useState(NEUTRAL_OPENING);
   const [messages, setMessages] = useState<Turn[]>([
-    { role: 'ai', content: OPENING },
+    { role: 'ai', content: NEUTRAL_OPENING },
   ]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -30,6 +32,16 @@ export default function AiTestPage() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
+
+  // 冒頭文はテナントの挨拶文（AI設定）を使う。未設定なら中立フォールバック。
+  useEffect(() => {
+    api.aiSettings().then((s: any) => {
+      const g = (s?.greeting_message || '').trim();
+      const op = (g || 'お電話ありがとうございます。AI受付です。ご用件をお話しください。') + '（これはテスト画面です）';
+      setOpening(op);
+      setMessages((prev) => (prev.length === 1 && prev[0].role === 'ai') ? [{ role: 'ai', content: op }] : prev);
+    }).catch(() => {});
+  }, []);
 
   async function say(text: string) {
     const msg = text.trim();
@@ -49,7 +61,7 @@ export default function AiTestPage() {
   }
 
   function reset() {
-    setMessages([{ role: 'ai', content: OPENING }]);
+    setMessages([{ role: 'ai', content: opening }]);
   }
 
   return (
