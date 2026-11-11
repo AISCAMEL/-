@@ -239,7 +239,7 @@ function apprex_mb_rest_book( WP_REST_Request $req ) {
 			'when' => apprex_mb_when( $at ),
 			'at'   => $at,
 			'min'  => (int) apprex_mb_settings()['min'],
-			'url'  => (string) apprex_mb_settings()['url'],
+			'url'  => $id && function_exists( 'apprex_mj_link' ) ? apprex_mj_link( $id ) : (string) apprex_mb_settings()['url'],
 			'line' => $line,
 		),
 		200
@@ -254,9 +254,9 @@ function apprex_mb_line( $id, $key ) {
 	}
 	$at   = (int) get_post_meta( $id, 'apprex_meeting_at', true );
 	$name = (string) get_post_meta( $id, 'apprex_name', true );
-	$url  = (string) apprex_mb_settings()['url'];
+	$url  = function_exists( 'apprex_mj_link' ) ? apprex_mj_link( $id ) : (string) apprex_mb_settings()['url'];
 	$when = apprex_mb_when( $at );
-	$u    = $url ? "\n▼ 参加URL（Google Meet）\n" . $url : "\n参加URLは、メールでお送りします。";
+	$u    = $url ? "\n▼ ミーティングに参加する（Google Meet）\n" . $url : "\n参加URLは、メールでお送りします。";
 	$msgs = array(
 		'confirm'   => "{$name} 様\n\nオンライン相談のご予約ありがとうございます。\n\n■ {$when}\n■ オンライン（Google Meet）{$u}\n\n" . ( ! function_exists( 'apprex_line_save_mode' ) || ! apprex_line_save_mode() ? '前日と1時間前にも、このLINEでお知らせします。' : ( get_option( 'apprex_line_save_keep_1h', 1 ) ? '1時間前に、このLINEでお知らせします。' : 'ご不明な点は、このLINEでお気軽にどうぞ。' ) ),
 		'before_1d' => "{$name} 様\n\n明日はオンライン相談のお約束です。\n■ {$when}{$u}",
@@ -324,11 +324,19 @@ function apprex_mb_admin_page() {
 		<p>予約ページ：<a href="<?php echo esc_url( apprex_mb_page_url() ); ?>" target="_blank" rel="noopener"><?php echo esc_html( apprex_mb_page_url() ); ?></a>
 		<?php if ( apprex_mb_liff_url() ) : ?>／LINEの中で開く：<code><?php echo esc_html( apprex_mb_liff_url() ); ?></code><?php endif; ?></p>
 
+		<?php if ( isset( $_GET['mjmsg'] ) ) : // phpcs:ignore ?>
+			<div class="notice notice-info inline"><p><?php echo esc_html( rawurldecode( wp_unslash( $_GET['mjmsg'] ) ) ); // phpcs:ignore ?></p></div>
+		<?php endif; ?>
+		<?php if ( apprex_mb_enabled() && '' === (string) $s['url'] ) : ?>
+			<div class="notice notice-error inline" style="padding:10px 14px"><p style="font-size:14px"><b>参加URL（Google Meet）が入っていません。</b>このままだと、お客様がミーティングに入れません。</p>
+			<p>① Google Meet（<a href="https://meet.google.com/" target="_blank" rel="noopener">meet.google.com</a>）で「新しい会議を作成」→「次回以降の会議を作成」を押して、出てきたURLをコピー　② 下の「受け付けの設定」の「参加URL」に貼って「変更を保存」。<br>
+			予約ごとに別のURLを使うときは、下の表の「参加URL（この予約だけ）」に入れて「保存してお客様に送る」を押してください。</p></div>
+		<?php endif; ?>
 		<h2>これからの予約</h2>
 		<?php if ( ! $ids ) : ?>
 			<p>まだ予約はありません。</p>
 		<?php else : ?>
-			<table class="widefat striped" style="max-width:1100px"><thead><tr><th>日時</th><th>お名前</th><th>会社名</th><th>連絡</th><th>内容</th></tr></thead><tbody>
+			<table class="widefat striped" style="max-width:1300px"><thead><tr><th>日時</th><th>お名前</th><th>会社名</th><th>連絡</th><th>内容</th><?php if ( function_exists( 'apprex_mj_cell' ) ) : ?><th>参加URL（この予約だけ）</th><?php endif; ?></tr></thead><tbody>
 			<?php foreach ( $ids as $id ) : ?>
 				<?php $c = get_post_meta( $id, 'apprex_mb_cancel', true ); ?>
 				<tr<?php echo $c ? ' style="opacity:.5"' : ''; ?>>
@@ -337,6 +345,7 @@ function apprex_mb_admin_page() {
 					<td><?php echo esc_html( get_post_meta( $id, 'apprex_company', true ) ); ?></td>
 					<td><?php echo esc_html( get_post_meta( $id, 'apprex_email', true ) ); ?><?php echo get_post_meta( $id, 'apprex_line_uid', true ) ? '・LINE' : ''; ?></td>
 					<td style="max-width:320px"><?php echo esc_html( mb_substr( (string) get_post_meta( $id, 'apprex_message', true ), 0, 60 ) ); ?></td>
+					<?php if ( function_exists( 'apprex_mj_cell' ) ) : ?><td><?php echo apprex_mj_cell( $id ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></td><?php endif; ?>
 				</tr>
 			<?php endforeach; ?>
 			</tbody></table>
@@ -354,7 +363,7 @@ function apprex_mb_admin_page() {
 				<tr><th>予約できる期間</th><td>今から <input type="number" name="apprex_mb_settings[lead]" value="<?php echo esc_attr( $s['lead'] ); ?>" min="0" style="width:70px"> 時間後〜 <input type="number" name="apprex_mb_settings[ahead]" value="<?php echo esc_attr( $s['ahead'] ); ?>" min="1" max="90" style="width:70px"> 日先まで</td></tr>
 				<tr><th>同じ時間に受ける数</th><td><input type="number" name="apprex_mb_settings[cap]" value="<?php echo esc_attr( $s['cap'] ); ?>" min="1" style="width:70px"> 件</td></tr>
 				<tr><th>お休みの日</th><td><textarea name="apprex_mb_settings[holidays]" rows="3" class="regular-text" placeholder="2026-12-29&#10;2026-12-30"><?php echo esc_textarea( $s['holidays'] ); ?></textarea><p class="description">1行に1日（年-月-日）。</p></td></tr>
-				<tr><th>参加URL（Google Meet）</th><td><input type="url" name="apprex_mb_settings[url]" value="<?php echo esc_attr( $s['url'] ); ?>" class="large-text" placeholder="https://meet.google.com/xxx-xxxx-xxx"><p class="description">いつも使う Google Meet のURL。予約の確認・前日・1時間前のお知らせに入ります。空なら「参加URLはメールでお送りします」と案内します。</p></td></tr>
+				<tr><th>参加URL（Google Meet）</th><td><input type="url" name="apprex_mb_settings[url]" value="<?php echo esc_attr( $s['url'] ); ?>" class="large-text" placeholder="https://meet.google.com/xxx-xxxx-xxx"><p class="description">いつも使う Google Meet のURL（Google Meet で「次回以降の会議を作成」したURLは、何度でも使えます）。<br>メール・LINEには予約ごとの「ミーティングに参加する」ボタンが入り、押すとこのURLに移ります（あとからURLを変えても、送ったボタンで入れます）。予約ごとに変えるときは、上の表で入れます。</p></td></tr>
 			</tbody></table>
 			<?php submit_button(); ?>
 		</form>

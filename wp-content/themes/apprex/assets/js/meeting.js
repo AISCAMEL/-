@@ -84,7 +84,7 @@
 		var h = '<div class="mb-card mb-done"><div class="mb-ok">✓</div><h2>ご予約が確定しました</h2>'
 			+ '<div class="mb-box"><b>' + esc(r.when) + '</b><br>オンライン（Google Meet）</div>'
 			+ '<p>' + (r.line ? '確認をLINEとメールにお送りしました。' : '確認のメールをお送りしました。') + '<br>前日と1時間前にもお知らせします。</p>'
-			+ (r.url ? '<a class="mb-btn" href="' + esc(r.url) + '" target="_blank" rel="noopener">参加URLを開く（当日）</a>' : '')
+			+ (r.url ? '<a class="mb-btn" href="' + esc(r.url) + '" target="_blank" rel="noopener">ミーティングに参加する（当日）</a>' : '')
 			+ '<a class="mb-btn mb-sub" href="' + esc(gcal(r)) + '" target="_blank" rel="noopener">Googleカレンダーに追加</a>'
 			+ (S.inLine ? '<button type="button" class="mb-btn mb-sub" id="mbClose">LINEに戻る</button>' : (C.line ? '<a class="mb-btn mb-line" href="' + esc(C.line) + '" target="_blank" rel="noopener">LINEの友だち追加（お知らせを受け取る）</a>' : ''))
 			+ '</div>';

@@ -37,6 +37,8 @@ function apprex_email_button_label( $url ) {
 		'/cases'       => '導入事例を見る',
 		'/hp-creation' => 'ホームページ制作を見る',
 		'calendar.app.google' => 'Google Meet で予約する',
+		'apx_join='    => 'ミーティングに参加する（Google Meet）',
+		'meet.google.com' => 'Google Meet に参加する',
 		'lin.ee'       => 'LINE で相談する',
 	);
 	foreach ( $map as $needle => $label ) {

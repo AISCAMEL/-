@@ -511,6 +511,7 @@ function apprex_rest_inquiry( WP_REST_Request $request ) {
 
 	// Type-specific auto-reply + step / reminder sequence.
 	apprex_enroll_drip( $post_id, $type, $email, $name, $meeting_at );
+	$GLOBALS['apprex_last_inquiry_id'] = $post_id; // 自動返信に、予約ごとの参加ボタンを入れるため。
 	apprex_send_autoreply( $type, $fields );
 	apprex_notify_inquiry( $post_id, $type_label, $fields );
 
@@ -753,8 +754,10 @@ function apprex_autoreply_message( $type, $fields ) {
 			if ( function_exists( 'apprex_mb_enabled' ) && apprex_mb_enabled() ) {
 				// サイトで受け付けた予約は、この時点で確定。
 				$murl  = (string) apprex_mb_settings()['url'];
+				$pid   = (int) ( $GLOBALS['apprex_last_inquiry_id'] ?? 0 );
+				$join  = $pid && function_exists( 'apprex_mj_link' ) ? apprex_mj_link( $pid ) : $murl;
 				$body .= $when ? "ご予約日時：{$when}（" . (int) apprex_mb_settings()['min'] . "分）\n" : '';
-				$body .= $murl ? "\n▼ 参加URL（Google Meet）\n{$murl}\n" : "\n参加URLは、担当者からあらためてお送りします。\n";
+				$body .= $join ? "\nお時間になりましたら、下のボタンからご参加ください（Google Meet）。\n{$join}\n" : "\n参加URLは、担当者からあらためてお送りします。\n";
 				$body .= "\n前日と1時間前に、このメールアドレスにお知らせをお送りします。日時の変更は、このメールにご返信ください。\n";
 			} else {
 				$body .= $when ? "ご希望日時：{$when}\n" : '';
@@ -1114,9 +1117,9 @@ function apprex_run_meeting_reminders( $id, $email, $name, $sent, $now ) {
 				return;
 			}
 			$body = str_replace( array( '{name}', '{when}' ), array( $name, $when ), $r['body'] );
-			$murl = $apprex_mb ? (string) apprex_mb_settings()['url'] : '';
+			$murl = $apprex_mb ? ( function_exists( 'apprex_mj_link' ) ? apprex_mj_link( $id ) : (string) apprex_mb_settings()['url'] ) : '';
 			if ( $murl && $is_before ) {
-				$body = str_replace( '接続URLは別途ご案内いたします。', '', $body ) . "\n▼ 参加URL（Google Meet）\n{$murl}\n";
+				$body = str_replace( '接続URLは別途ご案内いたします。', '', $body ) . "\nお時間になりましたら、下のボタンからご参加ください（Google Meet）。\n{$murl}\n";
 			}
 			apprex_send_drip_mail( $id, $email, $r['subject'], $body, false );
 			if ( $apprex_mb ) {
