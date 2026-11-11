@@ -557,13 +557,29 @@ function carmel_cb_handle_site_import() {
 			carmel_cb_save_faq( array(
 				'question' => $p->post_title . ( count( $chunks ) > 1 ? '（' . ( $i + 1 ) . '）' : '' ),
 				'answer'   => $chunk,
-				'keywords' => $p->post_title,
+				'keywords' => carmel_cb_keywords_from_title( $p->post_title ),
 				'enabled'  => true,
 			) );
 			$added++;
 		}
 	}
 	return array( 'pages' => $pages, 'added' => $added );
+}
+
+/** ページ/店舗名のタイトルから検索キーワードを賢く生成（例「小田原店」→「小田原店,小田原」）。 */
+function carmel_cb_keywords_from_title( $title ) {
+	$title = trim( (string) $title );
+	if ( $title === '' ) { return ''; }
+	$kw = array( $title );
+	// 店舗系の接尾辞を外した語も入れる（「小田原店」→「小田原」でもヒット）
+	$base = preg_replace( '/(店|支店|営業所|本店|センター|ショールーム|展示場)\s*$/u', '', $title );
+	if ( $base !== '' && $base !== $title ) { $kw[] = trim( $base ); }
+	// 区切り（スペース・中黒・スラッシュ等）で分割した各語（2文字以上）
+	foreach ( preg_split( '/[\s　・／\/|｜,，、]+/u', $title ) as $w ) {
+		$w = trim( $w );
+		if ( mb_strlen( $w ) >= 2 && ! in_array( $w, $kw, true ) ) { $kw[] = $w; }
+	}
+	return implode( ',', array_slice( array_values( array_unique( array_filter( $kw ) ) ), 0, 8 ) );
 }
 
 /** 文字列を約 $size 文字ずつ最大 $max 個に分割。 */
@@ -725,30 +741,56 @@ function carmel_cb_view_faqimport() {
 
 	<div class="ccb-card">
 		<h2>サイトのページから取り込む（自動学習）</h2>
-		<p>ホームページの<strong>固定ページ</strong>の内容を、そのままAIの学習データに取り込みます（スクレイピング不要・WordPressから直接読み取り）。<br>
-		<span class="description">会社概要・ローンのご案内・よくある質問など、AIに覚えさせたいページを選んで取り込んでください。長い記事は自動で分割します。取り込み後は「学習データ(FAQ)」で編集できます。</span></p>
+		<p>ホームページの<strong>固定ページ・投稿・店舗ページ</strong>などの内容を、そのままAIの学習データに取り込みます（スクレイピング不要・WordPressから直接読み取り）。<br>
+		<span class="description">会社概要・ローンのご案内・<strong>各店舗（例：小田原店）</strong>のページを取り込むと、その店舗について聞かれたときにAIがその情報をもとに答えられます。長い記事は自動分割。店名はキーワードを自動付与（「小田原店」→「小田原」でもヒット）。取り込み後は「学習データ(FAQ)」で編集できます。</span></p>
 		<form method="post">
 			<?php wp_nonce_field( 'carmel_cb_nonce' ); ?>
 			<input type="hidden" name="carmel_cb_action" value="import_site">
-			<div style="max-height:320px;overflow:auto;border:1px solid #e3e8ee;border-radius:6px;padding:10px;background:#fff;">
+			<p style="margin:4px 0 8px"><input type="text" id="ccb-imp-filter" placeholder="🔍 絞り込み（例：小田原）" style="width:240px"> <a href="#" class="button button-small" id="ccb-imp-all">全選択</a> <a href="#" class="button button-small" id="ccb-imp-none">全解除</a></p>
+			<div id="ccb-imp-list" style="max-height:360px;overflow:auto;border:1px solid #e3e8ee;border-radius:6px;padding:10px;background:#fff;">
 				<?php
-				$pages = get_pages( array( 'sort_column' => 'menu_order,post_title', 'number' => 300 ) );
-				if ( empty( $pages ) ) {
-					echo '<p class="description">公開中の固定ページが見つかりませんでした。</p>';
-				} else {
-					foreach ( $pages as $pg ) {
+				// 固定ページ＋投稿＋公開中のカスタム投稿タイプ（在庫portfolio・添付は除外）を対象にする
+				$types = get_post_types( array( 'public' => true ), 'objects' );
+				$skip  = array( 'attachment', 'portfolio' );
+				$any   = false;
+				foreach ( $types as $pt => $obj ) {
+					if ( in_array( $pt, $skip, true ) ) { continue; }
+					$posts = get_posts( array(
+						'post_type'      => $pt,
+						'post_status'    => 'publish',
+						'posts_per_page' => 300,
+						'orderby'        => 'title',
+						'order'          => 'ASC',
+						'suppress_filters' => true,
+					) );
+					if ( empty( $posts ) ) { continue; }
+					$any = true;
+					echo '<div style="font-weight:700;margin:8px 0 4px;color:#1d2327">' . esc_html( $obj->labels->name ?? $pt ) . '</div>';
+					foreach ( $posts as $pg ) {
 						printf(
-							'<label style="display:block;margin:3px 0;"><input type="checkbox" name="import_pages[]" value="%d"> %s</label>',
+							'<label class="ccb-imp-item" style="display:block;margin:3px 0;"><input type="checkbox" name="import_pages[]" value="%d"> %s</label>',
 							(int) $pg->ID,
-							esc_html( $pg->post_title )
+							esc_html( $pg->post_title !== '' ? $pg->post_title : ( '(無題 #' . $pg->ID . ')' ) )
 						);
 					}
 				}
+				if ( ! $any ) { echo '<p class="description">公開中のページ・投稿が見つかりませんでした。</p>'; }
 				?>
 			</div>
-			<p class="description" style="margin-top:6px;">※ 取り込みは「追加」です。古い内容が変わったら、再取り込み前に「学習データ(FAQ)」で古い行を消すか、一括投入の「全入れ替え」をご利用ください。</p>
+			<p class="description" style="margin-top:6px;">※ 取り込みは「追加」です。内容を更新したら、再取り込み前に「学習データ(FAQ)」で古い行を消すか、一括投入の「全入れ替え」をご利用ください。</p>
 			<?php submit_button( '選択したページを取り込む' ); ?>
 		</form>
+		<script>
+		(function(){
+			var f=document.getElementById('ccb-imp-filter'), list=document.getElementById('ccb-imp-list');
+			if(f&&list){ f.addEventListener('input',function(){ var q=f.value.trim().toLowerCase();
+				list.querySelectorAll('.ccb-imp-item').forEach(function(el){ el.style.display = (q===''||el.textContent.toLowerCase().indexOf(q)>-1)?'block':'none'; }); }); }
+			var all=document.getElementById('ccb-imp-all'), none=document.getElementById('ccb-imp-none');
+			function setAll(v){ if(!list)return; list.querySelectorAll('.ccb-imp-item').forEach(function(el){ if(el.style.display!=='none'){ var c=el.querySelector('input'); if(c)c.checked=v; } }); }
+			if(all) all.addEventListener('click',function(e){e.preventDefault();setAll(true);});
+			if(none) none.addEventListener('click',function(e){e.preventDefault();setAll(false);});
+		})();
+		</script>
 	</div>
 	<?php
 }
