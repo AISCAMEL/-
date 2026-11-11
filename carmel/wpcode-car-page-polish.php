@@ -105,6 +105,29 @@ if ( ! function_exists( 'carmelx_page_polish_css' ) ) {
 .carmel-lg__sim-fullwide { max-width: 1040px; margin-left: auto; margin-right: auto; }
 .carmel-lg__sim-badge { background: #2cac44 !important; color: #fff !important; }
 .carmel-lg__sim-amount b { color: #2cac44 !important; }
+/* タイトル2重を解消：元のタイトルを隠し、全幅ラッパーのタイトルだけ残す */
+.carmel-lg__sim-fullwide .carmel-lg__sim-title { display: none !important; }
+
+/* ─────────────────────────────────────────────
+   ⑧ テンプレ内の不要要素を外す・CTAボタンの適正化
+   ───────────────────────────────────────────── */
+/* 「LINEで在庫確認はこちら」の緑バーを外す */
+.vc_custom_1729509516503 { display: none !important; }
+/* お問い合わせ箱の黒枠（border 3px #333333）を外し、やわらかいカードに */
+.vc_custom_1707390645994 {
+	border: 1px solid #e2e8e4 !important;
+	border-radius: 14px !important;
+	margin-top: 18px !important;
+	background: #fff !important;
+	box-shadow: 0 4px 16px -12px rgba(0,0,0,.25) !important;
+}
+/* CTA（審査/LINE）ボタンを適正サイズに */
+.carmel-lg__cta { margin: 14px 18px 18px !important; display: flex !important; flex-direction: column; gap: 8px; }
+.carmel-lg__btn {
+	display: block !important; text-align: center !important; width: auto !important;
+	padding: 13px !important; font-size: 14.5px !important; line-height: 1.25 !important;
+	border-radius: 10px !important;
+}
 
 /* ─────────────────────────────────────────────
    ⑦ 装備タグ・スタッフカードの微調整
