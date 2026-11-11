@@ -1,10 +1,10 @@
 {
   "name": "カーメルシステム",
   "slug": "carmel-system",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "download_url": "https://raw.githubusercontent.com/AISCAMEL/carmel-system-dist/main/carmel-system.zip",
   "homepage": "https://carmelonline.jp/",
   "requires": "5.0",
   "tested": "6.7",
-  "changelog": "v1.6.0 車両ページをモック準拠に再構築（実ページで目視検証済み）。ローンボックスを専用クラスで作り直し（緑ヘッダー＋月々＋横並びチップ＋適正CTA）、重複/不要要素を除去。"
+  "changelog": "v1.6.1 崩れ防止ガード追加。ローン枠が新版(v4.0の緑デザイン)のときは作り直さず、そのまま美しく表示。古い版のときのみ整形。空ボックス化のバグを修正。"
 }

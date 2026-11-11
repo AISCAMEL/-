@@ -96,6 +96,9 @@ if ( ! function_exists( 'carmelx_page_polish_css' ) ) {
       var amt = r.textContent.replace(count,'').replace(/月々/g,'').trim();
       return { count: count, amt: amt };
     });
+    /* v4.0など別マークアップ（price-val/row が無い＝既にきれいな緑デザイン）では
+       作り直さず元のまま残す。空ボックス化を防ぐ崩れ防止ガード。 */
+    if(!priceHtml || rows.length === 0) return;
     var m84 = '';
     rows.forEach(function(r){ if(r.count.indexOf('84')!==-1) m84 = r.amt; });
     var noteEl = lg.querySelector('.carmel-lg__note');
