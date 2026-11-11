@@ -44,16 +44,12 @@ function carmel_cb_admin_menu() {
 		'dashicons-format-chat',
 		58
 	);
+	// 左メニューは主要5つに厳選（その他は各ページ上部のタブから）
 	add_submenu_page( 'carmel-cb', 'ホーム', '🏠 ホーム', 'manage_options', 'carmel-cb', 'carmel_cb_page_router' );
-	add_submenu_page( 'carmel-cb', '基本設定', '基本設定', 'manage_options', 'carmel-cb&tab=general', 'carmel_cb_page_router' );
-	add_submenu_page( 'carmel-cb', '応答・人格', '応答・人格', 'manage_options', 'carmel-cb&tab=prompt', 'carmel_cb_page_router' );
-	add_submenu_page( 'carmel-cb', 'テスト会話', '🧪 テスト会話', 'manage_options', 'carmel-cb&tab=testchat', 'carmel_cb_page_router' );
-	add_submenu_page( 'carmel-cb', '分析', '📊 分析', 'manage_options', 'carmel-cb&tab=analytics', 'carmel_cb_page_router' );
-	add_submenu_page( 'carmel-cb', '学習データ(FAQ)', '学習データ(FAQ)', 'manage_options', 'carmel-cb&tab=faq', 'carmel_cb_page_router' );
-	add_submenu_page( 'carmel-cb', '申込・問い合わせ', '申込・問い合わせ', 'manage_options', 'carmel-cb&tab=leads', 'carmel_cb_page_router' );
-	add_submenu_page( 'carmel-cb', '会話ログ', '会話ログ', 'manage_options', 'carmel-cb&tab=logs', 'carmel_cb_page_router' );
-	add_submenu_page( 'carmel-cb', '見た目設定', '見た目設定', 'manage_options', 'carmel-cb&tab=appearance', 'carmel_cb_page_router' );
-	add_submenu_page( 'carmel-cb', 'FAQ一括投入', 'FAQ一括投入', 'manage_options', 'carmel-cb&tab=faqimport', 'carmel_cb_page_router' );
+	add_submenu_page( 'carmel-cb', '設定', '⚙️ 設定', 'manage_options', 'carmel-cb&tab=general', 'carmel_cb_page_router' );
+	add_submenu_page( 'carmel-cb', '学習データ(FAQ)', '🧠 学習データ', 'manage_options', 'carmel-cb&tab=faq', 'carmel_cb_page_router' );
+	add_submenu_page( 'carmel-cb', 'お客様対応', '💬 お客様対応', 'manage_options', 'carmel-cb&tab=leads', 'carmel_cb_page_router' );
+	add_submenu_page( 'carmel-cb', '分析・テスト', '📊 分析・テスト', 'manage_options', 'carmel-cb&tab=analytics', 'carmel_cb_page_router' );
 }
 
 add_action( 'admin_enqueue_scripts', function ( $hook ) {
@@ -80,8 +76,16 @@ function carmel_cb_page_router() {
 		case 'prompt':     carmel_cb_view_prompt(); break;
 		case 'testchat':   carmel_cb_view_testchat(); break;
 		case 'analytics':  carmel_cb_view_analytics(); break;
-		case 'faq':        carmel_cb_view_faq(); break;
-		case 'faqimport':  carmel_cb_view_faqimport(); break;
+		case 'faq':
+			carmel_cb_view_faq();
+			echo '<hr style="margin:24px 0;border:0;border-top:1px solid #dcdcde">';
+			carmel_cb_view_faqimport(); // 一括投入・サイト取込・CSV書出も同じページに統合
+			break;
+		case 'faqimport':  // 旧タブ → 学習データに統合
+			carmel_cb_view_faq();
+			echo '<hr style="margin:24px 0;border:0;border-top:1px solid #dcdcde">';
+			carmel_cb_view_faqimport();
+			break;
 		case 'leads':      carmel_cb_view_leads(); break;
 		case 'logs':       carmel_cb_view_logs(); break;
 		case 'appearance': carmel_cb_view_appearance(); break;
@@ -91,23 +95,36 @@ function carmel_cb_page_router() {
 }
 
 function carmel_cb_render_tabs( $active ) {
-	$tabs = array(
-		'home'       => '🏠 ホーム',
-		'general'    => '基本設定',
-		'prompt'     => '応答・人格',
-		'testchat'   => '🧪 テスト会話',
-		'analytics'  => '📊 分析',
-		'faq'        => '学習データ(FAQ)',
-		'faqimport'  => 'FAQ一括投入',
-		'leads'      => '申込・問い合わせ',
-		'logs'       => '会話ログ',
-		'appearance' => '見た目設定',
+	if ( $active === 'faqimport' ) { $active = 'faq'; } // 統合タブ
+	// 用途でグループ化して見やすく
+	$groups = array(
+		''           => array( 'home' => '🏠 ホーム' ),
+		'設定'       => array( 'general' => '基本設定', 'prompt' => '応答・人格', 'appearance' => '見た目' ),
+		'知識'       => array( 'faq' => '🧠 学習データ(FAQ)' ),
+		'お客様対応' => array( 'leads' => '申込・問い合わせ', 'logs' => '会話ログ' ),
+		'確認'       => array( 'analytics' => '📊 分析', 'testchat' => '🧪 テスト会話' ),
 	);
-	echo '<nav class="nav-tab-wrapper">';
-	foreach ( $tabs as $key => $label ) {
-		$url = admin_url( 'admin.php?page=carmel-cb' . ( $key === 'home' ? '' : '&tab=' . $key ) );
-		$cls = ( $active === $key ) ? ' nav-tab-active' : '';
-		printf( '<a href="%s" class="nav-tab%s">%s</a>', esc_url( $url ), esc_attr( $cls ), esc_html( $label ) );
+	echo '<style>
+		.ccb-tabs{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:10px 0 18px}
+		.ccb-tabs .grp{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 8px;border:1px solid #dcdcde;border-radius:10px;background:#fff}
+		.ccb-tabs .glabel{font-size:11px;font-weight:700;color:#8a8f94;margin-right:2px}
+		.ccb-tabs a{font-size:13px;text-decoration:none;color:#2c3338;padding:5px 10px;border-radius:7px;line-height:1.2}
+		.ccb-tabs a:hover{background:#f0f0f1}
+		.ccb-tabs a.on{background:#1a8f5c;color:#fff;font-weight:700}
+		.ccb-tabs .home a{border:1px solid #dcdcde;background:#fff}
+		.ccb-tabs .home a.on{background:#1a8f5c;border-color:#1a8f5c}
+	</style>';
+	echo '<nav class="ccb-tabs">';
+	foreach ( $groups as $glabel => $items ) {
+		$wrapcls = $glabel === '' ? 'home' : 'grp';
+		echo '<span class="' . esc_attr( $wrapcls ) . '">';
+		if ( $glabel !== '' ) { echo '<span class="glabel">' . esc_html( $glabel ) . '</span>'; }
+		foreach ( $items as $key => $label ) {
+			$url = admin_url( 'admin.php?page=carmel-cb' . ( $key === 'home' ? '' : '&tab=' . $key ) );
+			$on  = ( $active === $key ) ? ' on' : '';
+			printf( '<a href="%s" class="%s">%s</a>', esc_url( $url ), esc_attr( trim( $on ) ), esc_html( $label ) );
+		}
+		echo '</span>';
 	}
 	echo '</nav>';
 }
