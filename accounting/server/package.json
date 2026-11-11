@@ -1,0 +1,14 @@
+{
+  "name": "aizu-kaikei-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "合同会社アイズ 会計 ― 同期サーバー＋自動化スケジューラ（依存ゼロ）",
+  "scripts": {
+    "start": "node scheduler.js",
+    "once": "node scheduler.js --once",
+    "server": "node server.js",
+    "setup": "node setup.js",
+    "gmail-token": "node gmail-token.js",
+    "test": "node connectors/test.js"
+  }
+}

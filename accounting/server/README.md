@@ -3,7 +3,33 @@
 複数人・複数端末で同じ帳簿を共有するための、**依存ゼロ**の最小同期サーバーです。
 Node.js（v18以降）だけで動きます。追加パッケージのインストールは不要です。
 
-## 起動
+## かんたんセットアップ（ワンコマンド自動運用）
+
+同期サーバーと全コネクタ（Gmail取込・在庫アラート・月次レポート・AI監視・決済）を
+**1コマンド**で立ち上げられます。cron不要・依存ゼロ。
+
+```bash
+# 1) 設定ファイルを作成して状況を点検
+node server/setup.js
+
+# 2) server/.env を編集（WORKSPACE / TOKEN を会計アプリの「設定→クラウド同期」と一致させる）
+#    Gmailを使うなら GMAIL_* を設定（refresh_token は補助ツールで取得）
+GMAIL_CLIENT_ID=xxx GMAIL_CLIENT_SECRET=yyy node server/gmail-token.js
+
+# 3) まず一度だけ実行して動作確認
+node server/scheduler.js --once
+
+# 4) 常時稼働（同期サーバー＋全コネクタを自動スケジュール実行）
+node server/scheduler.js
+#   または  cd server && npm start
+#   常駐サービス化（systemd ユニット例を表示）： node server/setup.js --systemd
+```
+
+- `server/.env` に**値が入っているコネクタだけ**が自動で有効になります（部分設定でも安全）。
+- 既定スケジュール：Gmail取込=30分毎／在庫アラート=毎朝8:00／AI監視=毎朝8:30／月次レポート=毎月1日8:00（`SCHED_*`で変更可）。
+- `server/.env` は秘密情報を含むため Git 管理外（`.gitignore` 済み）。雛形は `server/.env.example`。
+
+## 起動（サーバー単体）
 
 ```bash
 node server/server.js

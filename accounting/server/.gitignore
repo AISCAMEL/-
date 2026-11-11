@@ -1,2 +1,3 @@
 data/
 connectors/.*_cursor
+.env
