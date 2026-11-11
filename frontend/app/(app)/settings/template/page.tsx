@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Card, PageTitle } from '@/components/ui';
+import { useBrandKey, BRANDS } from '@/lib/brand';
 
 export default function TemplatePage() {
   const [list, setList] = useState<any[]>([]);
@@ -10,11 +11,26 @@ export default function TemplatePage() {
   const [busy, setBusy] = useState('');
   const [replace, setReplace] = useState(false);
   const [current, setCurrent] = useState<string | null>(null);
+  const brandKey = useBrandKey();
+  const CAR_KEYS = BRANDS.automotive.defaultTemplateKeys;
+  const [carOnly, setCarOnly] = useState(false);
 
   useEffect(() => {
     api.industryTemplates().then(setList);
     api.setupStatus().then((s) => setCurrent(s?.config?.industry ?? null)).catch(() => {});
   }, []);
+
+  // 自動車テーマのときは既定で車系のみ表示（解除可）。
+  useEffect(() => { if (brandKey === 'automotive') setCarOnly(true); }, [brandKey]);
+
+  // 自動車テーマでは車系を先頭に並べ、carOnly時は車系だけに絞る。
+  const shown = list
+    .filter((t) => !(brandKey === 'automotive' && carOnly) || CAR_KEYS.includes(t.key))
+    .slice()
+    .sort((a, b) => {
+      if (brandKey !== 'automotive') return 0;
+      return (CAR_KEYS.includes(b.key) ? 1 : 0) - (CAR_KEYS.includes(a.key) ? 1 : 0);
+    });
 
   async function apply(key: string, label: string) {
     const mode = replace ? '\n\n【切り替えモード】既存のFAQと下書きの架電シナリオを削除してから入れ替えます。' : '\n\n既存のFAQは残したまま追加します。';
@@ -41,6 +57,14 @@ export default function TemplatePage() {
       )}
       {msg && <p className="mb-4 rounded-lg bg-brand-light px-4 py-2 text-sm text-brand">{msg}</p>}
 
+      {/* 自動車テーマ: 車系のみ表示トグル */}
+      {brandKey === 'automotive' && (
+        <label className="mb-3 flex items-center gap-2 text-sm text-gray-700">
+          <input type="checkbox" checked={carOnly} onChange={(e) => setCarOnly(e.target.checked)} className="h-4 w-4" />
+          自動車関連の業種のみ表示する
+        </label>
+      )}
+
       {/* 切り替えモード */}
       <label className="mb-4 flex items-center gap-2 text-sm text-gray-700">
         <input type="checkbox" checked={replace} onChange={(e) => setReplace(e.target.checked)} className="h-4 w-4" />
@@ -48,7 +72,7 @@ export default function TemplatePage() {
       </label>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {list.map((t) => (
+        {shown.map((t) => (
           <Card key={t.key} className="flex flex-col">
             <h2 className="text-lg font-bold">{t.label}</h2>
             <p className="mt-1 flex-1 text-sm text-gray-600">{t.summary}</p>
