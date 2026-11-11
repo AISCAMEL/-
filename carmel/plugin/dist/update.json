@@ -1,10 +1,10 @@
 {
   "name": "カーメルシステム",
   "slug": "carmel-system",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "download_url": "https://raw.githubusercontent.com/AISCAMEL/carmel-system-dist/main/carmel-system.zip",
   "homepage": "https://carmelonline.jp/",
   "requires": "5.0",
   "tested": "6.7",
-  "changelog": "v1.6.1 崩れ防止ガード追加。ローン枠が新版(v4.0の緑デザイン)のときは作り直さず、そのまま美しく表示。古い版のときのみ整形。空ボックス化のバグを修正。"
+  "changelog": "v1.7.0 全体バランス調整。返済シミュをローン枠内に収納（全幅の間延び解消）、ローン枠を右カラム幅いっぱいに、余白とカードの統一感を調整。Playwrightで目視検証済み。"
 }

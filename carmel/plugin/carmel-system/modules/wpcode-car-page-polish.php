@@ -1,18 +1,14 @@
 <?php
 /**
- * カーメル：車両ページ 仕上げ（モック"完成イメージ"準拠・Playwright検証済み）
+ * カーメル：車両ページ 仕上げ（モック準拠・Playwright検証済み）
  * ---------------------------------------------------------------------------
- * 車両詳細ページ（single-portfolio）を、承認済みの完成イメージ（モック）に合わせて整える。
- * 実ページにこのCSS/JSを当てて目視検証済み。
- *
- *   ・不要要素を除去（古い月々の重複／LINEで在庫確認バー／空の購入プラン枠）
- *   ・お問い合わせ箱の黒枠を柔らかいカードに
- *   ・ローンボックスを専用クラス(cmx-loan)で作り直し（緑ヘッダー＋価格＋月々＋横並びチップ＋適正CTA）
- *     ※ 既存CSSと競合しないよう固有クラスで再構築。元データ（価格/回数/月々/CTAリンク）はDOMから流用。
- *   ・問い合わせ欄をSVGアイコン版に
- *   ・基本情報/スペック表を緑見出しセルに、シミュ配色・スタッフを微調整
- *
- * ・固有名＋function_exists ガードで二重定義を防止。front のみ出力。
+ * 車両詳細ページ（single-portfolio）をモックの完成イメージに合わせて整える。
+ * 実ページにCSS/JSを当てて目視検証済み。
+ *   ・不要要素の除去／問い合わせSVG化／基本情報の緑表
+ *   ・ローン枠：旧マークアップは専用クラスで再構築、新版(v4.0)はそのまま表示（崩れ防止ガード）
+ *   ・返済シミュをローン枠内に戻す（全幅の間延び解消）
+ *   ・上段の幅バランス・余白・カード統一
+ * ・固有名＋function_exists ガード。front のみ出力。
  * ---------------------------------------------------------------------------
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -83,6 +79,21 @@ if ( ! function_exists( 'carmelx_page_polish_css' ) ) {
 .cmx-cta__sub{font-size:11px;color:#6a7572;text-align:center;margin:2px 0 0;}
 .carmel-lg__warranty-slots{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px;}
 .carmel-lg__warranty-badge{display:inline-flex;align-items:center;gap:5px;background:#f1f9f4;border:1px solid #cfe7d8;color:#1c7a3a;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:700;}
+
+
+/* ===== 全体バランス調整 ===== */
+/* ① 上段：ローン枠を右カラムの幅いっぱいに（下のスペック表と幅をそろえる） */
+.vc_column_container.vc_col-xs-8:has(.carmel-lg), .vc_column_container.vc_col-xs-8:has(.cmx-loan){
+  width:100% !important; max-width:100% !important; flex-basis:100% !important;
+}
+/* ② シミュをローン枠内に戻した後の体裁（全幅ラッパ用CSSは無効化） */
+.carmel-lg__sim-fullwide{ all:unset; display:block; }
+/* ③ セクション間の余白を少し詰める */
+.single-portfolio .vc_section.wpex-vc_section-has-fill{ margin-top:0 !important; }
+.single-portfolio .vc_row.vc_custom_1707905591743,
+.single-portfolio .vc_row.vc_custom_1707913463113{ padding-top:6px !important; }
+/* ④ カード統一：主要セクションの角丸・影・枠をそろえる */
+.single-portfolio .wpex-vc_section-has-fill > .vc_row{ border-radius:16px; }
 </style>
 <script id="carmel-page-polish-js">
 (function(){
@@ -157,7 +168,21 @@ if ( ! function_exists( 'carmelx_page_polish_css' ) ) {
       '<a class="cmx-c cmx-c--mail" href="'+mail+'"'+(ext?' target="_blank" rel="noopener noreferrer"':'')+'>'+ml+'<span class="cmx-c__t">メールで相談<small>24時間受付OK</small></span></a></div>';
   }
 
-  function run(){ rebuildContact(); rebuildLoan(); }
+
+  function restoreSim(){
+    var sim = document.querySelector('.carmel-lg__sim');
+    if(!sim) return;
+    var bd = document.querySelector('.carmel-lg__bd') || document.querySelector('.cmx-loan__bd');
+    if(!bd) return;
+    if(!bd.contains(sim)){
+      var cta = bd.querySelector('.cmx-cta, .carmel-lg__cta');
+      if(cta) bd.insertBefore(sim, cta); else bd.appendChild(sim);
+    }
+    var fw = document.querySelector('.carmel-lg__sim-fullwide');
+    if(fw && !fw.querySelector('.carmel-lg__sim') && fw.parentNode){ fw.parentNode.removeChild(fw); }
+  }
+
+  function run(){ rebuildContact(); rebuildLoan(); restoreSim(); }
   // moveSim(既存) がシミュを .carmel-lg の外へ移すので、その後に実行
   if(document.readyState==='loading') window.addEventListener('DOMContentLoaded', function(){ setTimeout(run,60); });
   else setTimeout(run,60);
