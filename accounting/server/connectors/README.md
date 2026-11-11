@@ -240,6 +240,32 @@ node server/connectors/monthly-report.js
 
 - cron 例（毎月1日 午前8時に先月分）：`0 8 1 * * cd /path/to/app && SYNC_URL=... WORKSPACE=... TOKEN=... ALERT_TO=... GMAIL_CLIENT_ID=... GMAIL_CLIENT_SECRET=... GMAIL_REFRESH_TOKEN=... node server/connectors/monthly-report.js >> /var/log/kaikei-monthly.log 2>&1`
 
+## AI監視アラート（`ai-watch.js`）
+
+同期スナップショットを走査し、**異常・リスク**（貸借不一致／現預金マイナス／
+費用の急増／長期在庫／重複仕訳／未配賦過多／無効な登録番号／期限超過の未入金／
+バックアップ切れ／決算期接近 等）を検知。**しきい値以上**の事項があればメールで
+通知します。アプリの「AI監視センター」と同じ判定をサーバー側で行います。
+
+```bash
+SYNC_URL=http://localhost:8787 WORKSPACE=aizu-2026 TOKEN=合言葉 \
+ALERT_TO=owner@example.com WATCH_MIN_LEVEL=warn \
+GMAIL_CLIENT_ID=xxx GMAIL_CLIENT_SECRET=yyy GMAIL_REFRESH_TOKEN=zzz \
+node server/connectors/ai-watch.js
+```
+
+| 変数 | 説明 |
+|------|------|
+| `SYNC_URL` / `WORKSPACE` / `TOKEN` | 会計アプリと同じ同期設定 |
+| `GMAIL_CLIENT_ID` / `_SECRET` / `_REFRESH_TOKEN` | Gmail送信用 OAuth（`gmail.send`） |
+| `ALERT_TO` | 通知先（省略時は会社設定 email） |
+| `WATCH_MIN_LEVEL` | 通知するしきい値 `bad`／`warn`／`info`（既定 `warn`） |
+| `DRY_RUN=1` | 送信せず内容のみ表示 |
+
+- サーバーに AI 連携（`AI_API_KEY`）があれば、本文末尾に**AIの一言講評**も添えます（無ければ検知結果のみ）。
+- しきい値以上の検知が無ければメールは送りません（静かな日は通知なし）。
+- cron 例（毎朝8時半）：`30 8 * * * cd /path/to/app && SYNC_URL=... WORKSPACE=... TOKEN=... ALERT_TO=... WATCH_MIN_LEVEL=warn GMAIL_CLIENT_ID=... GMAIL_CLIENT_SECRET=... GMAIL_REFRESH_TOKEN=... node server/connectors/ai-watch.js >> /var/log/kaikei-aiwatch.log 2>&1`
+
 ## 共通ライブラリ（`_lib.js` / `pdfextract.js`）
 
 - `_lib.js`：HTTP・金額換算（ゼロデシマル通貨対応）・金額推定（`guessAmount`）・
