@@ -1637,7 +1637,44 @@ function carmel_cb_view_faq() {
 		foreach ( $faqs as $f ) { if ( (int) $f->id === (int) $_GET['edit'] ) { $edit = $f; } }
 	}
 	$suggestions = function_exists( 'carmel_cb_faq_suggestions_get' ) ? carmel_cb_faq_suggestions_get() : array();
+	$recent_q    = function_exists( 'carmel_cb_recent_questions' ) ? carmel_cb_recent_questions( 20 ) : array();
+	$faq_url     = admin_url( 'admin.php?page=carmel-cb&tab=faq' );
 	?>
+	<div class="ccb-card" style="border-left:4px solid #1a8f5c">
+		<h2 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+			🆕 最新のお客様の質問（ここから学習）
+			<a href="<?php echo esc_url( $faq_url ); ?>" class="button button-secondary">🔄 最新に更新</a>
+		</h2>
+		<p class="description">お客様が実際にチャットで聞いた質問を<strong>新しい順</strong>に表示します。「更新」で最新化。<strong>⚠️マーク</strong>は、みほがうまく答えられなかった可能性のある質問です。<strong>「この質問をFAQにする」</strong>を押すと、下の追加フォームに質問が入ります。回答を書いて保存すれば、次からは正しく答えます。</p>
+		<?php if ( empty( $recent_q ) ) : ?>
+			<p style="margin:8px 0 0">まだお客様の質問がありません。</p>
+		<?php else : ?>
+			<div style="max-height:380px;overflow:auto;border:1px solid #e3e8ee;border-radius:8px">
+				<table class="widefat striped" style="margin:0">
+					<thead><tr><th style="width:42%">お客様の質問</th><th>みほの返答（先頭）</th><th style="width:150px"></th></tr></thead>
+					<tbody>
+					<?php foreach ( $recent_q as $rq ) :
+						$ans = (string) $rq['a'];
+						$unanswered = (bool) preg_match( '/(分かりません|わかりません|情報がありません|ご案内できる情報|お答えでき(ず|ません)|見当たりません|存じ上げ)/u', $ans );
+						$add_url = esc_url( add_query_arg( array( 'faq_q' => rawurlencode( $rq['q'] ) ), $faq_url ) ) . '#ccb-add-faq';
+					?>
+						<tr>
+							<td>
+								<?php if ( $unanswered ) : ?><span style="color:#b02a16;font-weight:700">⚠️ </span><?php endif; ?>
+								<?php echo esc_html( mb_substr( $rq['q'], 0, 120 ) ); ?>
+								<br><span class="description"><?php echo esc_html( $rq['at'] ); ?></span>
+							</td>
+							<td><span class="description"><?php echo esc_html( mb_substr( preg_replace( '/\s+/u', ' ', $ans ), 0, 90 ) ); ?></span></td>
+							<td><a href="<?php echo $add_url; ?>" class="button button-small button-primary">この質問をFAQにする</a></td>
+						</tr>
+					<?php endforeach; ?>
+					</tbody>
+				</table>
+			</div>
+			<p class="description" style="margin-top:6px">※ まとめてAIに学習させたい場合は、下の「🧠 会話から学習する（AI自動抽出）」で候補を一括生成できます。</p>
+		<?php endif; ?>
+	</div>
+
 	<div class="ccb-card" style="border-left:4px solid #6d28d9">
 		<h2>🧠 会話から学習する（AI自動抽出）</h2>
 		<p class="description">
@@ -1675,15 +1712,16 @@ function carmel_cb_view_faq() {
 		<?php endif; ?>
 	</div>
 
-	<div class="ccb-card">
-		<h2><?php echo $edit ? 'FAQを編集' : 'FAQを追加'; ?></h2>
+	<?php $prefill_q = ( ! $edit && isset( $_GET['faq_q'] ) ) ? sanitize_textarea_field( rawurldecode( wp_unslash( $_GET['faq_q'] ) ) ) : ''; ?>
+	<div class="ccb-card" id="ccb-add-faq"<?php echo $prefill_q !== '' ? ' style="border-left:4px solid #1a8f5c"' : ''; ?>>
+		<h2><?php echo $edit ? 'FAQを編集' : 'FAQを追加'; ?><?php echo $prefill_q !== '' ? ' <span style="font-size:13px;color:#1a8f5c">（お客様の質問を取り込みました。回答を書いて保存）</span>' : ''; ?></h2>
 		<p class="description">ここに追加した内容がボットの「知識」になります。質問に近いFAQが自動で参照され、回答の根拠になります。</p>
 		<?php carmel_cb_form_open( 'save_faq' ); ?>
 		<input type="hidden" name="faq_id" value="<?php echo esc_attr( $edit->id ?? 0 ); ?>">
 		<table class="form-table">
 			<tr>
 				<th>質問</th>
-				<td><textarea name="question" rows="2" class="large-text" required><?php echo esc_textarea( $edit->question ?? '' ); ?></textarea></td>
+				<td><textarea name="question" rows="2" class="large-text" required><?php echo esc_textarea( $edit->question ?? $prefill_q ); ?></textarea></td>
 			</tr>
 			<tr>
 				<th>回答</th>

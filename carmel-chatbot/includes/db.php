@@ -512,3 +512,32 @@ function carmel_cb_get_session_messages( $session_id ) {
 		$wpdb->prepare( "SELECT * FROM $t WHERE session_id = %s ORDER BY id ASC", $session_id )
 	);
 }
+/**
+ * 最新のお客様の質問を新しい順に取得（各質問に対するみほの返答も付ける）。
+ * 戻り値: array( array('q'=>質問, 'a'=>返答, 'at'=>日時, 'sid'=>session), ... )
+ */
+function carmel_cb_recent_questions( $limit = 20 ) {
+	global $wpdb;
+	$t = $wpdb->prefix . CARMEL_CB_LOG_TABLE;
+	if ( $wpdb->get_var( "SHOW TABLES LIKE '" . esc_sql( $t ) . "'" ) !== $t ) { return array(); }
+	$limit = max( 1, min( 100, (int) $limit ) );
+	$rows  = $wpdb->get_results( $wpdb->prepare(
+		"SELECT id, session_id, content, created_at FROM $t
+		 WHERE role='user' AND content <> '' AND content NOT LIKE '[IMG]%' AND content NOT LIKE '[FILE]%'
+		 ORDER BY id DESC LIMIT %d", $limit
+	) );
+	$out = array();
+	foreach ( (array) $rows as $r ) {
+		$reply = $wpdb->get_var( $wpdb->prepare(
+			"SELECT content FROM $t WHERE session_id=%s AND role='assistant' AND id > %d ORDER BY id ASC LIMIT 1",
+			$r->session_id, (int) $r->id
+		) );
+		$out[] = array(
+			'q'   => (string) $r->content,
+			'a'   => (string) ( $reply ?? '' ),
+			'at'  => (string) $r->created_at,
+			'sid' => (string) $r->session_id,
+		);
+	}
+	return $out;
+}
