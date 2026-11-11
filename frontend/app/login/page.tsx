@@ -1,5 +1,7 @@
 'use client';
 
+import { BrandName } from '@/components/BrandName';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -48,7 +50,7 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-50 px-6">
       <div className="w-full max-w-sm rounded-2xl border bg-white p-8 shadow-sm">
-        <Link href="/" className="block text-center text-lg font-bold text-brand">AIオペレーター24</Link>
+        <Link href="/" className="block text-center text-lg font-bold text-brand"><BrandName /></Link>
         <h1 className="mt-6 text-center text-xl font-semibold">管理画面ログイン</h1>
 
         <form onSubmit={submit} className="mt-6 space-y-4">

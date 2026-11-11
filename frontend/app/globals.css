@@ -4,6 +4,17 @@
 
 :root {
   color-scheme: light;
+  /* ブランドテーマ（既定＝オールマイティー：ブルー系で信頼・中立） */
+  --brand: #2563eb;
+  --brand-dark: #1d4ed8;
+  --brand-light: #eaf1ff;
+}
+
+/* 自動車専用テーマ（力強さ・スピード感：レッドを主色に） */
+html[data-brand='automotive'] {
+  --brand: #dc2626;
+  --brand-dark: #991b1b;
+  --brand-light: #fef2f2;
 }
 
 body {

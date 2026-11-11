@@ -9,10 +9,11 @@ const config: Config = {
         heading: ['"Zen Kaku Gothic New"', '"Noto Sans JP"', 'sans-serif'],
       },
       colors: {
+        // 配色は CSS変数で切替（globals.css の :root / html[data-brand=...]）。
         brand: {
-          DEFAULT: '#2563eb',
-          dark: '#1d4ed8',
-          light: '#eaf1ff',
+          DEFAULT: 'var(--brand)',
+          dark: 'var(--brand-dark)',
+          light: 'var(--brand-light)',
         },
       },
     },

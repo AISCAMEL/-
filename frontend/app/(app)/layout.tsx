@@ -1,5 +1,7 @@
 'use client';
 
+import { BrandName } from '@/components/BrandName';
+
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -90,7 +92,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen">
       {/* PC: 固定サイドバー */}
       <aside className="hidden w-60 shrink-0 border-r bg-white md:flex md:flex-col">
-        <div className="px-5 py-5 text-lg font-bold text-brand">AIオペレーター24</div>
+        <div className="px-5 py-5 text-lg font-bold text-brand"><BrandName /></div>
         {navLinks}
         <div className="border-t p-4 text-xs text-gray-500">
           <div className="truncate">{session?.email}</div>
@@ -104,7 +106,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="absolute inset-0 bg-black/40" onClick={() => setMenuOpen(false)} />
           <aside className="absolute left-0 top-0 flex h-full w-64 flex-col bg-white shadow-xl">
             <div className="flex items-center justify-between px-5 py-4">
-              <span className="text-lg font-bold text-brand">AIオペレーター24</span>
+              <span className="text-lg font-bold text-brand"><BrandName /></span>
               <button onClick={() => setMenuOpen(false)} aria-label="閉じる" className="text-gray-400">✕</button>
             </div>
             {navLinks}
@@ -124,7 +126,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <span className="block h-0.5 w-6 bg-gray-700" />
             <span className="block h-0.5 w-6 bg-gray-700" />
           </button>
-          <span className="font-bold text-brand">AIオペレーター24</span>
+          <span className="font-bold text-brand"><BrandName /></span>
           <button onClick={logout} className="text-xs text-brand">ログアウト</button>
         </header>
         <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>

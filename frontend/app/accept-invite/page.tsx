@@ -1,5 +1,7 @@
 'use client';
 
+import { BrandName } from '@/components/BrandName';
+
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
@@ -38,7 +40,7 @@ function AcceptInviteInner() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-50 px-6">
       <div className="w-full max-w-sm rounded-2xl border bg-white p-8 shadow-sm">
-        <div className="text-center text-lg font-bold text-brand">AIオペレーター24</div>
+        <div className="text-center text-lg font-bold text-brand"><BrandName /></div>
         <h1 className="mt-6 text-center text-xl font-semibold">パスワードの設定</h1>
         <p className="mt-2 text-center text-xs text-gray-500">管理画面にログインするためのパスワードを決めてください。</p>
 
