@@ -1,10 +1,10 @@
 {
   "name": "カーメルシステム",
   "slug": "carmel-system",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "download_url": "https://raw.githubusercontent.com/AISCAMEL/carmel-system-dist/main/carmel-system.zip",
   "homepage": "https://carmelonline.jp/",
   "requires": "5.0",
   "tested": "6.7",
-  "changelog": "v1.7.0 全体バランス調整。返済シミュをローン枠内に収納（全幅の間延び解消）、ローン枠を右カラム幅いっぱいに、余白とカードの統一感を調整。Playwrightで目視検証済み。"
+  "changelog": "v1.8.0 担当スタッフ＋販売店ブロックを上段直後へ移動。上段の問い合わせカードを削除し、お問い合わせ導線を店舗ブロックに集約。Playwrightで目視検証済み。"
 }

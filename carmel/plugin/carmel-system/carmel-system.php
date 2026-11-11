@@ -3,7 +3,7 @@
  * Plugin Name: カーメルシステム
  * Plugin URI:  https://carmelonline.jp/
  * Description: カーメルのローン表示（固定13.6%・緑ボックス）を提供するプラグイン。GitHubから1クリック更新できます。他のカーメル用プラグインと衝突しないよう、最小構成＋二重定義ガード＋安全読み込みにしています。
- * Version:     1.7.0
+ * Version:     1.8.0
  * Author:      CarMel / AIS
  * License:     GPL-2.0+
  * Text Domain: carmel-system
@@ -17,7 +17,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'CARMEL_SYS_VERSION', '1.7.0' );
+define( 'CARMEL_SYS_VERSION', '1.8.0' );
 define( 'CARMEL_SYS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CARMEL_SYS_FILE', __FILE__ );
 
