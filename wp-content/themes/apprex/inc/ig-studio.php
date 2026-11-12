@@ -814,14 +814,27 @@ add_action(
 			return;
 		}
 		if ( apprex_ig_today_count() >= max( 1, (int) get_option( 'apprex_ig_per_day', 2 ) ) ) {
-			update_post_meta( $post_id, '_apprex_ig_error', '今日の投稿数の上限のため、投稿しませんでした。' );
+			update_post_meta( $post_id, '_apprex_ig_error', '今日の投稿数の上限のため、明日の朝に投稿します。' );
+			wp_schedule_single_event( strtotime( wp_date( 'Y-m-d', time() + DAY_IN_SECONDS ) . ' 09:30:00 ' . wp_timezone_string() ) + wp_rand( 0, 1800 ), 'apprex_ig_auto', array( $post_id ) );
 			return;
 		}
 		$r = apprex_ig_publish( $post_id );
 		if ( is_wp_error( $r ) ) {
-			update_post_meta( $post_id, '_apprex_ig_error', $r->get_error_message() );
+			$m = $r->get_error_message();
+			update_post_meta( $post_id, '_apprex_ig_error', $m );
+			update_option( 'apprex_ig_last_error', array( time(), $m, $post_id ), false );
+			// 1回だけ30分後にやり直す（Instagram側の一時的な失敗のため）。
+			if ( ! get_post_meta( $post_id, '_apprex_ig_retry', true ) && ! apprex_ig_token_expired( $m ) ) {
+				update_post_meta( $post_id, '_apprex_ig_retry', 1 );
+				wp_schedule_single_event( time() + 30 * MINUTE_IN_SECONDS, 'apprex_ig_auto', array( $post_id ) );
+			}
+			if ( function_exists( 'apprex_notify' ) ) {
+				apprex_notify( 'post', ':warning: インスタへの投稿に失敗しました（' . get_the_title( $post_id ) . '）：' . $m . ( apprex_ig_token_expired( $m ) ? "\n→ Instagram の連携（アクセストークン）の期限が切れています。設定 → APPREX 配信(SNS)で、つなぎ直してください。" : '' ) . "\n" . admin_url( 'options-general.php?page=apprex-sns' ) );
+			}
 		} else {
 			delete_post_meta( $post_id, '_apprex_ig_error' );
+			update_option( 'apprex_ig_last_ok', array( time(), $post_id ), false );
+			delete_option( 'apprex_ig_last_error' );
 			if ( isset( $r['reel'] ) && ! ctype_digit( (string) $r['reel'] ) && '' !== $r['reel'] ) {
 				update_post_meta( $post_id, '_apprex_ig_error', 'リール：' . $r['reel'] );
 			}
@@ -1047,5 +1060,28 @@ add_action(
 		update_option( 'apprex_ig_pat_b', ( intdiv( $i, 9 ) + 1 ) * 9, false );
 		wp_safe_redirect( wp_get_referer() ? wp_get_referer() : admin_url() );
 		exit;
+	}
+);
+
+/** エラーの文が、トークンの期限切れ・無効か。 */
+function apprex_ig_token_expired( $msg ) {
+	return (bool) preg_match( '/expired|Session has|validating access token|OAuth|Invalid OAuth|code.?190|トークン/i', (string) $msg );
+}
+
+// 業務ナビの「いまの状態」：インスタの投稿。
+add_filter(
+	'apprex_nav_health',
+	function ( $out ) {
+		if ( ! function_exists( 'apprex_ig_ready' ) || ! apprex_ig_ready() ) {
+			return $out;
+		}
+		$err = get_option( 'apprex_ig_last_error' );
+		$ok  = get_option( 'apprex_ig_last_ok' );
+		if ( is_array( $err ) ) {
+			$out[] = array( 'インスタの投稿', false, '失敗しています（' . wp_date( 'n/j G:i', (int) $err[0] ) . '）：' . mb_substr( (string) $err[1], 0, 70 ) . ( apprex_ig_token_expired( $err[1] ) ? '　→ 連携をつなぎ直してください' : '' ), 'options-general.php?page=apprex-sns' );
+		} elseif ( is_array( $ok ) ) {
+			$out[] = array( 'インスタの投稿', true, '最後の投稿 ' . wp_date( 'n/j G:i', (int) $ok[0] ) . '「' . mb_substr( get_the_title( (int) $ok[1] ), 0, 24 ) . '」', 'options-general.php?page=apprex-sns' );
+		}
+		return $out;
 	}
 );

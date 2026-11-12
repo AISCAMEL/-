@@ -543,8 +543,15 @@ function apprex_ai_blog_page() {
 			<?php submit_button( 'Claude に調べて書いてもらう（下書き）', 'primary', 'submit', false, ( function_exists( 'apprex_ai_use_claude' ) && apprex_ai_use_claude() ) ? array() : array( 'disabled' => 'disabled' ) ); ?>
 			<?php if ( ! ( function_exists( 'apprex_ai_use_claude' ) && apprex_ai_use_claude() ) ) : ?><span class="description" style="margin-left:8px"><?php esc_html_e( '先に Claude APIキーを入れて保存してください（設定 → APPREX チャット）。', 'apprex' ); ?></span><?php endif; ?>
 			<?php $apprex_lr = get_option( 'apprex_autopost_last_result', '' ); ?>
-			<?php if ( $apprex_lr ) : ?><p class="description"><?php echo esc_html( '前回の自動投稿：' . $apprex_lr ); ?></p><?php endif; ?>
+			<?php if ( $apprex_lr ) : ?><p class="description" id="autopost-now" style="<?php echo false !== strpos( $apprex_lr, '止まっています' ) || 0 === strpos( $apprex_lr, '失敗' ) ? 'color:#b91c1c;font-weight:700' : ''; ?>"><?php echo esc_html( '前回の自動投稿：' . $apprex_lr ); ?></p><?php endif; ?>
 		</form>
+		<?php if ( get_option( 'apprex_autopost_enabled', 0 ) ) : ?>
+			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top:8px" onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').textContent='書いています（1〜3分）…';">
+				<input type="hidden" name="action" value="apprex_autopost_now"><?php wp_nonce_field( 'apprex_autopost_now' ); ?>
+				<button class="button"><?php esc_html_e( '自動投稿をいま1回動かす（公開まで）', 'apprex' ); ?></button>
+				<span class="description"><?php esc_html_e( '自動投稿と同じやり方で1本書いて公開します。インスタへの投稿も、いつもどおり2分後に動きます。', 'apprex' ); ?></span>
+			</form>
+		<?php endif; ?>
 
 		<hr>
 		<h2><?php esc_html_e( '今すぐ1記事つくる（テーマを指定）', 'apprex' ); ?></h2>
@@ -890,17 +897,69 @@ add_action( 'switch_theme', function () {
 } );
 add_action( 'apprex_autopost_cron', 'apprex_run_autopost' );
 
+/** 自動投稿の結果を残す（止まった理由も画面と通知で分かるように）。 */
+function apprex_autopost_note( $msg, $notify = false ) {
+	update_option( 'apprex_autopost_last_result', $msg . '（' . wp_date( 'n/j G:i' ) . '）', false );
+	if ( $notify && function_exists( 'apprex_notify' ) && get_transient( 'apprex_autopost_warned' ) !== md5( $msg ) ) {
+		set_transient( 'apprex_autopost_warned', md5( $msg ), DAY_IN_SECONDS );
+		apprex_notify( 'post', ':warning: 記事の自動投稿：' . $msg . "\n" . admin_url( 'edit.php?page=apprex-ai-blog' ) );
+	}
+}
+
+/**
+ * トピック一覧を使い切ったとき、AIに新しいテーマを10個考えてもらって足す。
+ *
+ * @return string[] 足したテーマ。
+ */
+function apprex_autopost_more_topics() {
+	if ( ! function_exists( 'apprex_openrouter_complete' ) ) {
+		return array();
+	}
+	$titles = wp_list_pluck( get_posts( array( 'post_type' => 'post', 'post_status' => 'publish', 'posts_per_page' => 60 ) ), 'post_title' );
+	$focus  = apprex_ai_research_focus();
+	$sys    = 'あなたはアプリ制作サービス「APPREX」のブログ編集者です。中小企業・お店の経営者が検索しそうな記事のテーマを考えます。';
+	$usr    = "書く分野：\n{$focus}\n\nもう書いた記事（これと似たテーマは出さない）：\n- " . implode( "\n- ", array_slice( $titles, 0, 60 ) )
+		. "\n\n新しい記事のテーマを10個、1行に1つずつ、テーマだけを書いてください（番号・記号・説明は不要。全角30字以内）。";
+	$r = apprex_openrouter_complete( array( array( 'role' => 'system', 'content' => $sys ), array( 'role' => 'user', 'content' => $usr ) ), array( 'max_tokens' => 800, 'temperature' => 0.8, 'timeout' => 60, 'article' => true ) );
+	if ( is_wp_error( $r ) ) {
+		return array();
+	}
+	$new = array();
+	foreach ( preg_split( '/\R/', (string) $r ) as $l ) {
+		$l = trim( preg_replace( '/^[\s\-・*#0-9０-９.、)）]+/u', '', $l ) );
+		if ( '' !== $l && mb_strlen( $l ) <= 40 && ! apprex_ai_find_similar( $l, 0, 80 ) ) {
+			$new[] = $l;
+		}
+	}
+	$new = array_slice( array_values( array_unique( $new ) ), 0, 10 );
+	if ( $new ) {
+		$cur = trim( (string) get_option( 'apprex_autopost_topics', apprex_default_autopost_topics() ) );
+		update_option( 'apprex_autopost_topics', $cur . "\n" . implode( "\n", $new ) );
+	}
+	return $new;
+}
+
 /**
  * 自動投稿の実行（頻度を判定して1記事生成・公開）。
+ *
+ * @param bool $force 「いま1本書く」：頻度・時刻の判定をしない。
  */
-function apprex_run_autopost() {
-	if ( ! get_option( 'apprex_autopost_enabled', 0 ) || ! apprex_chat_enabled() ) {
+function apprex_run_autopost( $force = false ) {
+	if ( ! get_option( 'apprex_autopost_enabled', 0 ) && ! $force ) {
+		return;
+	}
+	if ( ! apprex_chat_enabled() ) {
+		apprex_autopost_note( '止まっています：AIのキー（OpenRouter か Claude）が使えません。設定 → APPREX チャットを確かめてください', true );
 		return;
 	}
 	$topics = array_filter( array_map( 'trim', preg_split( '/\r\n|\r|\n/', (string) get_option( 'apprex_autopost_topics', apprex_default_autopost_topics() ) ) ) );
 	$research = 'research' === get_option( 'apprex_autopost_mode', 'queue' ) && function_exists( 'apprex_claude_research' ) && apprex_ai_use_claude();
 	if ( empty( $topics ) && ! $research ) {
-		return;
+		$topics = apprex_autopost_more_topics();
+		if ( ! $topics ) {
+			apprex_autopost_note( '止まっています：トピック一覧が空です', true );
+			return;
+		}
 	}
 
 	$freq      = get_option( 'apprex_autopost_freq', 'weekly' );
@@ -912,7 +971,9 @@ function apprex_run_autopost() {
 	$today   = wp_date( 'Ymd' );
 	$tc      = get_option( 'apprex_autopost_today', array( 'd' => '', 'n' => 0 ) );
 	$tc      = ( is_array( $tc ) && isset( $tc['d'] ) && $today === $tc['d'] ) ? $tc : array( 'd' => $today, 'n' => 0 );
-	if ( 'daily' === $freq ) {
+	if ( $force ) {
+		$tc['n'] = min( $tc['n'], $per_day - 1 );
+	} elseif ( 'daily' === $freq ) {
 		if ( $tc['n'] >= $per_day || ( $tc['n'] > 0 && $last && time() - $last < 3 * HOUR_IN_SECONDS + 30 * MINUTE_IN_SECONDS ) ) {
 			return; // 今日の分は出した／前の記事から時間がたっていない。
 		}
@@ -926,7 +987,7 @@ function apprex_run_autopost() {
 	$slot = $tc['n'];
 	$tc['n']++;
 	update_option( 'apprex_autopost_today', $tc, false );
-	if ( $tc['n'] < $per_day ) {
+	if ( $tc['n'] < $per_day && ! $force ) {
 		wp_schedule_single_event( time() + 4 * HOUR_IN_SECONDS, 'apprex_autopost_cron' );
 	}
 	$focus = array_values( array_filter( array_map( 'trim', preg_split( '/\R/', apprex_ai_research_focus() ) ) ) );
@@ -972,12 +1033,22 @@ function apprex_run_autopost() {
 		break;
 	}
 	if ( $picked < 0 ) {
-		// 全トピックが既出。重複量産はしない。次回に備えて時刻だけ更新。
-		update_option( 'apprex_autopost_last', time() );
-		apprex_ai_dedupe_scan(); // 念のため既存重複を整理。
-		return;
+		// 全トピックが既出：AIに新しいテーマを足してもらって続ける（ここで止まらないように）。
+		$more = apprex_autopost_more_topics();
+		if ( ! $more ) {
+			update_option( 'apprex_autopost_last', time() );
+			apprex_autopost_note( '止まっています：トピック一覧のテーマをすべて書き終えました。AIで新しいテーマを作れなかったので、トピック一覧にテーマを足してください', true );
+			apprex_ai_dedupe_scan();
+			return;
+		}
+		if ( function_exists( 'apprex_notify' ) ) {
+			apprex_notify( 'post', '📝 トピック一覧を使い切ったので、AIが新しいテーマを' . count( $more ) . '個足しました：' . implode( '／', array_slice( $more, 0, 3 ) ) . ' など' );
+		}
+		$topic = $more[0];
+		$picked = count( $vals ); // 足したテーマの1つ目（次回はその続きから）。
+	} else {
+		$topic = $vals[ $picked ];
 	}
-	$topic = $vals[ $picked ];
 
 	$res = apprex_ai_generate_post(
 		array(
@@ -1002,3 +1073,42 @@ function apprex_run_autopost() {
 	apprex_ai_dedupe_scan();
 	// 公開されると blog.php の transition_post_status が SNS連動 Webhook を送出。
 }
+
+/*
+ * 取りこぼしの救済：サイトへのアクセスが少なくて WordPress の予約（WP-Cron）が動かなかったときに、
+ * 管理画面を開いたタイミングで遅れている自動投稿を動かす（3時間に1回まで）。
+ */
+add_action(
+	'admin_init',
+	function () {
+		if ( wp_doing_ajax() || ! get_option( 'apprex_autopost_enabled', 0 ) || get_transient( 'apprex_autopost_catchup' ) ) {
+			return;
+		}
+		$freq = get_option( 'apprex_autopost_freq', 'weekly' );
+		$need = array( 'daily' => DAY_IN_SECONDS, 'weekly' => 7 * DAY_IN_SECONDS, 'biweekly' => 14 * DAY_IN_SECONDS );
+		$last = (int) get_option( 'apprex_autopost_last', 0 );
+		if ( $last && time() - $last < ( $need[ $freq ] ?? 7 * DAY_IN_SECONDS ) + 6 * HOUR_IN_SECONDS ) {
+			return;
+		}
+		set_transient( 'apprex_autopost_catchup', 1, 3 * HOUR_IN_SECONDS );
+		wp_schedule_single_event( time() + 30, 'apprex_autopost_cron' );
+		if ( function_exists( 'spawn_cron' ) ) {
+			spawn_cron();
+		}
+	}
+);
+
+add_action(
+	'admin_post_apprex_autopost_now',
+	function () {
+		if ( ! current_user_can( 'edit_posts' ) || ! check_admin_referer( 'apprex_autopost_now' ) ) {
+			wp_die( '権限がありません。' );
+		}
+		if ( function_exists( 'set_time_limit' ) ) {
+			@set_time_limit( 900 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+		}
+		apprex_run_autopost( true );
+		wp_safe_redirect( admin_url( 'edit.php?page=apprex-ai-blog#autopost-now' ) );
+		exit;
+	}
+);
