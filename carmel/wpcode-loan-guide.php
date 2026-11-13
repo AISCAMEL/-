@@ -108,8 +108,18 @@ if ( ! function_exists( 'carmelx_loan_guide_render' ) ) {
 		<div class="carmel-lg" id="<?php echo esc_attr( $uid ); ?>">
 
 			<div class="carmel-lg__hd">
-				<span class="carmel-lg__hd-label"><?php echo esc_html( $disp_label ); ?></span>
-				<span class="carmel-lg__hd-price"><?php echo number_format( $disp_price / 10000, 1 ); ?><i>万円</i></span>
+				<?php if ( $honntai > 0 && $total > 0 && abs( $total - $honntai ) >= 1 ) : // 本体と総額が両方あり、値が違う ?>
+					<div class="carmel-lg__hd-main">
+						<span class="carmel-lg__hd-label">お支払総額<small>（諸費用込）</small></span>
+						<span class="carmel-lg__hd-price"><?php echo number_format( $total / 10000, 1 ); ?><i>万円</i></span>
+					</div>
+					<div class="carmel-lg__hd-sub"><span>車両本体価格</span><b><?php echo number_format( $honntai / 10000, 1 ); ?>万円</b></div>
+				<?php else : ?>
+					<div class="carmel-lg__hd-main">
+						<span class="carmel-lg__hd-label"><?php echo esc_html( $disp_label ); ?></span>
+						<span class="carmel-lg__hd-price"><?php echo number_format( $disp_price / 10000, 1 ); ?><i>万円</i></span>
+					</div>
+				<?php endif; ?>
 			</div>
 
 			<div class="carmel-lg__bd">
@@ -212,8 +222,11 @@ if ( ! function_exists( 'carmelx_lg_styles_v2' ) ) {
 		.carmel-lg{margin:8px 0 4px;background:#fff;border:1px solid #d3e6d9;border-radius:16px;overflow:hidden;
 			font-family:inherit;box-sizing:border-box;width:100%;color:#243029;box-shadow:0 6px 20px -12px rgba(28,122,58,.4);}
 		/* ヘッダー帯（価格） */
-		.carmel-lg__hd{background:linear-gradient(135deg,#1c7a3a,#2cac44);color:#fff;padding:14px 18px;
-			display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
+		.carmel-lg__hd{background:linear-gradient(135deg,#1c7a3a,#2cac44);color:#fff;padding:14px 18px;}
+		.carmel-lg__hd-main{display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
+		.carmel-lg__hd-sub{margin-top:7px;padding-top:7px;border-top:1px solid rgba(255,255,255,.28);display:flex;align-items:baseline;justify-content:space-between;font-size:12px;font-weight:700;opacity:.96;}
+		.carmel-lg__hd-sub b{font-size:16px;font-weight:900;}
+		.carmel-lg__hd-label small{font-size:10px;font-weight:700;opacity:.88;}
 		.carmel-lg__hd-label{font-size:11px;font-weight:700;opacity:.9;letter-spacing:.06em;white-space:nowrap;}
 		.carmel-lg__hd-price{font-size:30px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;}
 		.carmel-lg__hd-price i{font-size:14px;font-style:normal;margin-left:2px;font-weight:700;opacity:.9;}

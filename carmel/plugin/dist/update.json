@@ -1,10 +1,10 @@
 {
   "name": "カーメルシステム",
   "slug": "carmel-system",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "download_url": "https://raw.githubusercontent.com/AISCAMEL/carmel-system-dist/main/carmel-system.zip",
   "homepage": "https://carmelonline.jp/",
   "requires": "5.0",
   "tested": "6.7",
-  "changelog": "v1.10.0 セクションの並び順を元に戻す（基本情報→装備→担当スタッフ→販売店）。担当スタッフ・販売店の上部移動を取り消し。装備の空カテゴリ非表示は維持。"
+  "changelog": "v1.11.0 動画埋め込み機能を追加（編集画面で動画URLを入れると車両ページの画像の下に表示）。ローン枠に『お支払総額（諸費用込）』を追加（2023年義務化対応）。"
 }
