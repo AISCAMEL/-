@@ -73,7 +73,8 @@ function apprex_ai_research_prompt( $tone, $length, $hint = '' ) {
 	$titles = array_map( 'get_the_title', $recent );
 	return "今日は" . wp_date( 'Y年n月j日' ) . "です。APPREXのブログに載せる記事を1本作ってください。\n\n"
 		. "手順：\n"
-		. "1. Web検索で、次の分野のここ1〜2週間ほどの新しいニュース・発表・話題を調べる（日本の情報を優先。公式発表や信頼できるメディアを使う）。\n"
+		. "1. Web検索で、次の分野のここ1〜2週間ほどの新しいニュース・発表・話題を調べる（日本の情報を優先。公式発表や信頼できるメディアを使う）。検索は多くても8回までにする。\n"
+		. "   1〜2週間で見つからなければ、ここ2〜3か月に広げる。それでも見つからなければ、調べて分かった最近の動き（制度・サービスの変更、よく読まれている使い方など）をもとに、役に立つ解説記事にしてよい。\n"
 		. apprex_ai_research_focus() . "\n"
 		. ( '' !== $hint ? "今回は特に「{$hint}」の分野から話題を選ぶ（同じ日のほかの記事と分野が重ならないように）。\n" : '' )
 		. "2. その中から、店舗や中小企業の経営者が「自分ごと」として読める話題を1つ選ぶ。下の既存記事と同じテーマは避ける。\n"
@@ -81,7 +82,7 @@ function apprex_ai_research_prompt( $tone, $length, $hint = '' ) {
 		. "条件：トーンは{$tone}文体。本文は約{$length}字。調べて分からなかったことは書かない。日付や数字は調べた情報のとおりに書く。\n"
 		. "出力形式（厳守）：1行目に「TITLE: 記事タイトル（32字前後。検索されやすい言葉を入れる）」。2行目以降に本文を HTML（<h2>,<h3>,<p>,<ul><li> のみ、<h1>不可）で。前置きやあいさつは書かない。\n"
 		. "TITLE の行より前と本文の最初に、作業の説明（「調べました」「以下が記事です」「出力します」など）は一切書かない。\n"
-		. "Web検索ができなかった・十分な情報が見つからなかったときは、記事を書かずに「ERROR: 理由」の1行だけを出力する。\n\n"
+		. "Web検索そのものが1回もできなかったときだけ、記事を書かずに「ERROR: 理由」の1行だけを出力する（情報が少ないだけなら、上のとおり期間を広げて書く）。\n\n"
 		. "既存記事（同じテーマは避ける）：\n- " . implode( "\n- ", array_slice( array_filter( $titles ), 0, 40 ) );
 }
 
@@ -391,7 +392,7 @@ function apprex_ai_generate_post( $args ) {
 	if ( $research ) {
 		// Claude が Web で最新の情報を調べて、テーマ選びから書く（毎日の自動投稿）。
 		$prompt = apprex_ai_research_prompt( $tone, $length, isset( $args['focus_hint'] ) ? (string) $args['focus_hint'] : '' );
-		$r      = apprex_claude_research( $system, $prompt, array( 'timeout' => 300, 'model' => apprex_claude_article_model() ) );
+		$r      = apprex_claude_research( $system, $prompt, array( 'timeout' => 300, 'model' => apprex_claude_article_model(), 'searches' => 12 ) );
 		if ( is_wp_error( $r ) ) {
 			return $r;
 		}
@@ -400,7 +401,7 @@ function apprex_ai_generate_post( $args ) {
 			return apprex_ai_extract_title( $t ) || mb_strlen( wp_strip_all_tags( $t ) ) > 800 && preg_match( '/<(h2|p)\b|^##\s/mi', $t );
 		};
 		if ( ! $ok( $r['text'] ) ) {
-			$r2 = apprex_claude_research( $system, $prompt . "\n\n【大事】前回は記事の形で返ってきませんでした。調べ終わったら、必ず1行目を「TITLE: 記事タイトル」にして、そのあとに HTML の本文だけを書いてください。", array( 'timeout' => 300, 'model' => apprex_claude_article_model() ) );
+			$r2 = apprex_claude_research( $system, $prompt . "\n\n【大事】前回は記事の形で返ってきませんでした。調べ終わったら、必ず1行目を「TITLE: 記事タイトル」にして、そのあとに HTML の本文だけを書いてください。新しいニュースが少なければ、期間を広げるか、分野の役に立つ解説記事にしてください。", array( 'timeout' => 300, 'model' => apprex_claude_article_model(), 'searches' => 12 ) );
 			if ( ! is_wp_error( $r2 ) ) {
 				$r = $r2;
 			}
@@ -1084,13 +1085,25 @@ function apprex_run_autopost( $force = false ) {
 				'gen_image' => (bool) get_option( 'apprex_autopost_image', 0 ),
 			)
 		);
-		update_option( 'apprex_autopost_last', time() );
-		update_option( 'apprex_autopost_last_result', is_wp_error( $res ) ? '失敗：' . $res->get_error_message() : '公開：' . $res['title'], false );
-		if ( is_wp_error( $res ) && function_exists( 'apprex_notify' ) ) {
-			apprex_notify( 'post', ':warning: 記事の自動投稿に失敗しました：' . $res->get_error_message() . "\n" . admin_url( 'edit.php?page=apprex-ai-blog' ) );
+		if ( ! is_wp_error( $res ) ) {
+			update_option( 'apprex_autopost_last', time() );
+			update_option( 'apprex_autopost_last_result', '公開：' . $res['title'], false );
+			apprex_ai_dedupe_scan();
+			return;
 		}
-		apprex_ai_dedupe_scan();
-		return;
+		// 調べて書けなかった：止めずに、トピック一覧から1本書く（下へ続く）。
+		$research_err = $res->get_error_message();
+		if ( function_exists( 'apprex_notify' ) ) {
+			apprex_notify( 'post', ':information_source: 調べて書く記事は作れなかったので、トピック一覧から書きます（理由：' . mb_substr( $research_err, 0, 120 ) . '）' );
+		}
+		if ( empty( $topics ) ) {
+			$topics = apprex_autopost_more_topics();
+		}
+		if ( empty( $topics ) ) {
+			update_option( 'apprex_autopost_last', time() );
+			apprex_autopost_note( '失敗：' . $research_err, true );
+			return;
+		}
 	}
 
 	// 重複を作らないよう、既に類似記事があるトピックはスキップして未出のテーマを選ぶ。
