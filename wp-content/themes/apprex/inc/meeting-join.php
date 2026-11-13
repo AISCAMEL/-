@@ -38,6 +38,11 @@ function apprex_mj_has_default() {
 	return function_exists( 'apprex_mb_settings' ) && '' !== (string) apprex_mb_settings()['url'];
 }
 
+/** 予約ごとに Google Meet を自動で作る設定か。 */
+function apprex_mj_auto_meet() {
+	return function_exists( 'apprex_gcal_meet_on' ) && apprex_gcal_meet_on() && function_exists( 'apprex_gcal_ready' ) && apprex_gcal_ready();
+}
+
 // 参加リンクを開いたとき。
 add_action(
 	'template_redirect',
@@ -149,7 +154,7 @@ function apprex_mj_cell( $id ) {
 add_filter(
 	'apprex_nav_health',
 	function ( $out ) {
-		if ( function_exists( 'apprex_mb_enabled' ) && apprex_mb_enabled() && ! apprex_mj_has_default() ) {
+		if ( function_exists( 'apprex_mb_enabled' ) && apprex_mb_enabled() && ! apprex_mj_has_default() && ! apprex_mj_auto_meet() ) {
 			$out[] = array( 'ミーティング', false, '参加URL（Google Meet）が入っていません。お客様がミーティングに入れません', 'admin.php?page=apprex-meeting' );
 		}
 		return $out;

@@ -327,9 +327,10 @@ function apprex_mb_admin_page() {
 		<?php if ( isset( $_GET['mjmsg'] ) ) : // phpcs:ignore ?>
 			<div class="notice notice-info inline"><p><?php echo esc_html( rawurldecode( wp_unslash( $_GET['mjmsg'] ) ) ); // phpcs:ignore ?></p></div>
 		<?php endif; ?>
-		<?php if ( apprex_mb_enabled() && '' === (string) $s['url'] ) : ?>
+		<?php if ( apprex_mb_enabled() && '' === (string) $s['url'] && ! ( function_exists( 'apprex_mj_auto_meet' ) && apprex_mj_auto_meet() ) ) : ?>
 			<div class="notice notice-error inline" style="padding:10px 14px"><p style="font-size:14px"><b>参加URL（Google Meet）が入っていません。</b>このままだと、お客様がミーティングに入れません。</p>
-			<p>① Google Meet（<a href="https://meet.google.com/" target="_blank" rel="noopener">meet.google.com</a>）で「新しい会議を作成」→「次回以降の会議を作成」を押して、出てきたURLをコピー　② 下の「受け付けの設定」の「参加URL」に貼って「変更を保存」。<br>
+			<p><b>おすすめ：</b>いちばん下の「Google カレンダーと連携」で「Google Meet を自動で作る」をオンにすると、予約ごとに Meet が自動でできて、ここは空のままで大丈夫です。<br>
+			または、① Google Meet（<a href="https://meet.google.com/" target="_blank" rel="noopener">meet.google.com</a>）で「新しい会議を作成」→「次回以降の会議を作成」を押して、出てきたURLをコピー　② 下の「受け付けの設定」の「参加URL」に貼って「変更を保存」。<br>
 			予約ごとに別のURLを使うときは、下の表の「参加URL（この予約だけ）」に入れて「保存してお客様に送る」を押してください。</p></div>
 		<?php endif; ?>
 		<h2>これからの予約</h2>

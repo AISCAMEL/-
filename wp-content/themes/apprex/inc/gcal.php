@@ -74,6 +74,20 @@ function apprex_gcal_b64u( $s ) {
 }
 
 /** アクセストークン。 */
+/** ドメイン全体の委任で、なりかわるアカウント（'' なら使わない）。 */
+function apprex_gcal_subject() {
+	if ( ! get_option( 'apprex_gcal_dwd', 0 ) ) {
+		return '';
+	}
+	$ids = apprex_gcal_ids();
+	return is_email( $ids[0] ?? '' ) ? $ids[0] : '';
+}
+
+/** 予約ごとに Google Meet を作るか。 */
+function apprex_gcal_meet_on() {
+	return (bool) get_option( 'apprex_gcal_meet', 0 );
+}
+
 function apprex_gcal_token() {
 	$t = get_transient( 'apprex_gcal_token' );
 	if ( $t ) {
@@ -92,7 +106,7 @@ function apprex_gcal_token() {
 				'aud'   => 'https://oauth2.googleapis.com/token',
 				'iat'   => $now,
 				'exp'   => $now + 3600,
-			)
+			) + ( '' !== apprex_gcal_subject() ? array( 'sub' => apprex_gcal_subject() ) : array() )
 		)
 	);
 	$key = openssl_pkey_get_private( $sa['private_key'] );
@@ -114,7 +128,11 @@ function apprex_gcal_token() {
 	}
 	$b = json_decode( (string) wp_remote_retrieve_body( $r ), true );
 	if ( empty( $b['access_token'] ) ) {
-		return new WP_Error( 'gcal', 'Google にログインできませんでした：' . ( $b['error_description'] ?? $b['error'] ?? ( 'HTTP ' . wp_remote_retrieve_response_code( $r ) ) ) );
+		$why = (string) ( $b['error_description'] ?? $b['error'] ?? ( 'HTTP ' . wp_remote_retrieve_response_code( $r ) ) );
+		if ( '' !== apprex_gcal_subject() && preg_match( '/unauthorized_client|not authorized/i', $why ) ) {
+			$why .= '（Google Workspace の管理コンソールで、ドメイン全体の委任がまだ許可されていません）';
+		}
+		return new WP_Error( 'gcal', 'Google にログインできませんでした：' . $why );
 	}
 	set_transient( 'apprex_gcal_token', $b['access_token'], max( 300, (int) ( $b['expires_in'] ?? 3600 ) - 300 ) );
 	return $b['access_token'];
@@ -262,11 +280,11 @@ add_action(
 			'end'         => array( 'dateTime' => wp_date( 'c', $at + (int) $s['min'] * 60 ), 'timeZone' => wp_timezone_string() ),
 			'reminders'   => array( 'useDefault' => true ),
 		);
-		if ( ! empty( $s['url'] ) ) {
+		if ( ! empty( $s['url'] ) && ! apprex_gcal_meet_on() ) {
 			$ev['location'] = $s['url'];
 		}
 		$cal = apprex_gcal_ids()[0];
-		$r   = apprex_gcal_api( 'POST', '/calendars/' . rawurlencode( $cal ) . '/events', $ev );
+		$r   = apprex_gcal_insert_event( $cal, $ev, $post_id );
 		if ( is_wp_error( $r ) ) {
 			apprex_gcal_err( '予定の書き込み：' . $r->get_error_message() );
 			return;
@@ -276,6 +294,42 @@ add_action(
 	40,
 	3
 );
+
+/**
+ * 予定を入れる。Meet をつくる設定なら、予定に Google Meet を付けて、その参加URLを予約に保存する。
+ * Meet を付けられなかったときは、Meet なしで予定だけ入れる（エラーは記録）。
+ *
+ * @return array|WP_Error 予定。
+ */
+function apprex_gcal_insert_event( $cal, $ev, $post_id = 0 ) {
+	$path = '/calendars/' . rawurlencode( $cal ) . '/events';
+	if ( apprex_gcal_meet_on() ) {
+		$with = $ev + array(
+			'conferenceData' => array(
+				'createRequest' => array(
+					'requestId'             => 'apprex-' . (int) $post_id . '-' . wp_generate_password( 8, false ),
+					'conferenceSolutionKey' => array( 'type' => 'hangoutsMeet' ),
+				),
+			),
+		);
+		$r = apprex_gcal_api( 'POST', $path . '?conferenceDataVersion=1', $with );
+		if ( ! is_wp_error( $r ) ) {
+			$meet = (string) ( $r['hangoutLink'] ?? '' );
+			foreach ( (array) ( $r['conferenceData']['entryPoints'] ?? array() ) as $ep ) {
+				if ( '' === $meet && 'video' === ( $ep['entryPointType'] ?? '' ) ) {
+					$meet = (string) ( $ep['uri'] ?? '' );
+				}
+			}
+			if ( '' !== $meet && $post_id ) {
+				update_post_meta( $post_id, 'apprex_meet_url', esc_url_raw( $meet ) );
+				update_post_meta( $post_id, 'apprex_meet_auto', 1 );
+			}
+			return $r;
+		}
+		apprex_gcal_err( 'Google Meet を作れませんでした（Meet なしで予定だけ入れました）：' . $r->get_error_message() . ( '' === apprex_gcal_subject() ? '　→ 「info@… として動かす（ドメイン全体の委任）」が必要です' : '' ) );
+	}
+	return apprex_gcal_api( 'POST', $path, $ev );
+}
 
 /* キャンセルしたら、Google カレンダーの予定を消す。 */
 $apprex_gcal_on_cancel = function ( $mid, $post_id, $key, $value ) {
@@ -335,6 +389,11 @@ add_action(
 		);
 		register_setting( 'apprex_gcal', 'apprex_gcal_ids', array( 'sanitize_callback' => 'sanitize_textarea_field' ) );
 		register_setting( 'apprex_gcal', 'apprex_gcal_write', array( 'sanitize_callback' => 'absint' ) );
+		register_setting( 'apprex_gcal', 'apprex_gcal_meet', array( 'sanitize_callback' => 'absint' ) );
+		register_setting( 'apprex_gcal', 'apprex_gcal_dwd', array( 'sanitize_callback' => function ( $v ) {
+			delete_transient( 'apprex_gcal_token' );
+			return absint( $v );
+		} ) );
 	}
 );
 
@@ -353,6 +412,29 @@ add_action(
 		$msg  = ( $ok >= $from - 5 && ( ! is_array( $err ) || (int) $err[0] < $from - 5 ) )
 			? 'つながりました。これから7日間に、予定が入っている時間が ' . count( $busy ) . ' 件あります（その時間は予約できなくなります）。'
 			: '失敗：' . ( is_array( $err ) ? $err[1] : '設定を確かめてください。' );
+		// Meet を作れるか（テストの予定を作って、すぐ消す）。
+		if ( apprex_gcal_meet_on() && 0 === strpos( $msg, 'つながりました' ) ) {
+			$cal = apprex_gcal_ids()[0];
+			$at  = strtotime( '+30 days 03:00', $from );
+			$r   = apprex_gcal_api(
+				'POST',
+				'/calendars/' . rawurlencode( $cal ) . '/events?conferenceDataVersion=1',
+				array(
+					'summary'        => '【APPREX】Meet のテスト（自動で消えます）',
+					'start'          => array( 'dateTime' => wp_date( 'c', $at ), 'timeZone' => wp_timezone_string() ),
+					'end'            => array( 'dateTime' => wp_date( 'c', $at + 900 ), 'timeZone' => wp_timezone_string() ),
+					'conferenceData' => array( 'createRequest' => array( 'requestId' => 'apprex-test-' . wp_generate_password( 8, false ), 'conferenceSolutionKey' => array( 'type' => 'hangoutsMeet' ) ) ),
+				)
+			);
+			if ( is_wp_error( $r ) ) {
+				$msg .= '　／　Google Meet：作れませんでした（' . $r->get_error_message() . '）' . ( '' === apprex_gcal_subject() ? '。「info@… として動かす（ドメイン全体の委任）」にチェックを入れて、管理コンソールで許可してください。' : '' );
+			} else {
+				$msg .= '　／　Google Meet：作れました（' . (string) ( $r['hangoutLink'] ?? 'URLあり' ) . '）。予約ごとに自動で作ります。';
+				if ( ! empty( $r['id'] ) ) {
+					apprex_gcal_api( 'DELETE', '/calendars/' . rawurlencode( $cal ) . '/events/' . rawurlencode( $r['id'] ) );
+				}
+			}
+		}
 		set_transient( 'apprex_gcal_test_res', $msg, 300 );
 		wp_safe_redirect( admin_url( 'edit.php?post_type=apprex_inquiry&page=apprex-meeting#gcal' ) );
 		exit;
@@ -382,6 +464,21 @@ function apprex_gcal_settings_box() {
 				<p class="description">カレンダーID（ふつうは Google アカウントのメールアドレス）を1行に1つ。担当者が複数なら全員分を入れると、全員の予定を見ます。予定は1つ目のカレンダーに入れます。</p>
 			</td></tr>
 			<tr><th>予定を書き込む</th><td><label><input type="checkbox" name="apprex_gcal_write" value="1" <?php checked( (int) get_option( 'apprex_gcal_write', 1 ) ); ?>> 予約が入ったら Google カレンダーに予定を入れる（キャンセルしたら消す）</label></td></tr>
+			<tr><th>Google Meet を自動で作る</th><td>
+				<label><input type="checkbox" name="apprex_gcal_meet" value="1" <?php checked( apprex_gcal_meet_on() ); ?>> 予約ごとに、専用の Google Meet を自動で作る（メール・LINEの「ミーティングに参加する」ボタンに自動で入ります）</label><br>
+				<label><input type="checkbox" name="apprex_gcal_dwd" value="1" <?php checked( (int) get_option( 'apprex_gcal_dwd', 0 ) ); ?>> 1つ目のカレンダーのアカウント（<?php echo esc_html( apprex_gcal_ids()[0] ?? 'info@…' ); ?>）として動かす（ドメイン全体の委任）</label>
+				<?php if ( $sa ) : ?>
+				<details style="margin-top:6px"><summary style="cursor:pointer">Meet を作るための準備（Google Workspace の管理者が1回だけ）</summary>
+					<ol style="margin-top:6px">
+						<li>Google Cloud →「IAMと管理」→「サービスアカウント」→ <code><?php echo esc_html( $sa['client_email'] ); ?></code> を開き、「<b>一意のID</b>」（数字）をコピー</li>
+						<li><a href="https://admin.google.com/ac/owl/domainwidedelegation" target="_blank" rel="noopener">Google 管理コンソール →「セキュリティ」→「APIの制御」→「ドメイン全体の委任」</a>で「新しく追加」</li>
+						<li>クライアントID に 1 の数字、OAuth スコープに <code>https://www.googleapis.com/auth/calendar</code> を入れて「承認」</li>
+						<li>ここで上の2つにチェック →「カレンダーの設定を保存」→「つながるか確かめる」で「Google Meet：作れました」と出ればOK</li>
+					</ol>
+					<p class="description">Meet を作れないときは、Meet なしで予定だけ入れて、「ミーティング予約の設定」の参加URL（いつも使うURL）を使います。</p>
+				</details>
+				<?php endif; ?>
+			</td></tr>
 		</tbody></table>
 		<?php submit_button( 'カレンダーの設定を保存' ); ?>
 	</form>
