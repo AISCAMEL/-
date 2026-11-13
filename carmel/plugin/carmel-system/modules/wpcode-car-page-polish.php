@@ -6,8 +6,8 @@
  *   ・不要要素の除去／基本情報の緑表
  *   ・ローン枠：旧版は再構築、新版(v4.0)はそのまま（崩れ防止ガード）
  *   ・返済シミュをローン枠内に収納／上段の幅・余白・カード統一
- *   ・担当スタッフ＋販売店ブロックを上段直後へ移動
- *   ・上段の問い合わせカードは削除し、お問い合わせ導線を店舗ブロックへ集約
+ *   ・担当スタッフ＋販売店ブロックを上段直後へ移動、問い合わせ導線を集約
+ *   ・装備の空カテゴリ（中身が無い項目）を非表示にしてスッキリ
  * ・固有名＋function_exists ガード。front のみ出力。
  * ---------------------------------------------------------------------------
  */
@@ -197,7 +197,23 @@ if ( ! function_exists( 'carmelx_page_polish_css' ) ) {
     }
   }
 
-  function run(){ rebuildContact(); rebuildLoan(); restoreSim(); moveStaffUp(); }
+
+  function hideEmptyEquip(){
+    var sec=null;
+    document.querySelectorAll('.vc_section').forEach(function(s){ if(!sec && s.textContent.indexOf('基本装備')!==-1) sec=s; });
+    if(!sec) return;
+    sec.querySelectorAll('.vcex-flex-container').forEach(function(fc){
+      var clone = fc.cloneNode(true);
+      clone.querySelectorAll('style,script').forEach(function(n){ n.remove(); });
+      var txt = clone.textContent.replace(/\s+/g,'').trim();
+      if(txt === ''){
+        var row = fc.closest('.vc_row');
+        if(row){ row.style.display='none'; }
+      }
+    });
+  }
+
+  function run(){ rebuildContact(); rebuildLoan(); restoreSim(); moveStaffUp(); hideEmptyEquip(); }
   // moveSim(既存) がシミュを .carmel-lg の外へ移すので、その後に実行
   if(document.readyState==='loading') window.addEventListener('DOMContentLoaded', function(){ setTimeout(run,60); });
   else setTimeout(run,60);

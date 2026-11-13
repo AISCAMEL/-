@@ -1,10 +1,10 @@
 {
   "name": "カーメルシステム",
   "slug": "carmel-system",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "download_url": "https://raw.githubusercontent.com/AISCAMEL/carmel-system-dist/main/carmel-system.zip",
   "homepage": "https://carmelonline.jp/",
   "requires": "5.0",
   "tested": "6.7",
-  "changelog": "v1.8.0 担当スタッフ＋販売店ブロックを上段直後へ移動。上段の問い合わせカードを削除し、お問い合わせ導線を店舗ブロックに集約。Playwrightで目視検証済み。"
+  "changelog": "v1.9.0 装備の空カテゴリ（中身の無い項目）を非表示にしてスッキリ。装備が多い車では全項目表示。Playwrightで目視検証済み。"
 }
