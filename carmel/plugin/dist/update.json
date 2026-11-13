@@ -1,10 +1,10 @@
 {
   "name": "カーメルシステム",
   "slug": "carmel-system",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "download_url": "https://raw.githubusercontent.com/AISCAMEL/carmel-system-dist/main/carmel-system.zip",
   "homepage": "https://carmelonline.jp/",
   "requires": "5.0",
   "tested": "6.7",
-  "changelog": "v1.12.0 競合標準の追加スペックを実装。編集画面に保証(期間/距離)・乗車定員・燃費・ワンオーナー/禁煙車/記録簿の入力欄を追加し、基本情報に表示（空欄は非表示）。"
+  "changelog": "v1.13.0 お気に入り（♡）＋一覧パネルを追加。車両ページの「お問い合わせ」から、どの車かをContact Form 7の隠し項目（vehicle-id/title等）へ自動入力し、フォーム上部に『お問い合わせ車両』を表示。チャットボットは既にページ車IDを送信済み。"
 }

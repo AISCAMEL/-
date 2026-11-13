@@ -3,7 +3,7 @@
  * Plugin Name: カーメルシステム
  * Plugin URI:  https://carmelonline.jp/
  * Description: カーメルのローン表示（固定13.6%・緑ボックス）を提供するプラグイン。GitHubから1クリック更新できます。他のカーメル用プラグインと衝突しないよう、最小構成＋二重定義ガード＋安全読み込みにしています。
- * Version:     1.12.0
+ * Version:     1.13.0
  * Author:      CarMel / AIS
  * License:     GPL-2.0+
  * Text Domain: carmel-system
@@ -17,7 +17,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'CARMEL_SYS_VERSION', '1.12.0' );
+define( 'CARMEL_SYS_VERSION', '1.13.0' );
 define( 'CARMEL_SYS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CARMEL_SYS_FILE', __FILE__ );
 
@@ -51,6 +51,16 @@ function carmel_sys_modules() {
 			'file'     => 'wpcode-car-spec-extra.php',
 			'sentinel' => 'carmelx_specx_render',
 			'label'    => '追加スペック（保証・定員・燃費・ワンオーナー等）',
+		),
+		array(
+			'file'     => 'wpcode-car-favorite.php',
+			'sentinel' => 'carmelx_favorite_render',
+			'label'    => 'お気に入り（♡）＋一覧パネル',
+		),
+		array(
+			'file'     => 'wpcode-car-inquiry.php',
+			'sentinel' => 'carmelx_inquiry_render',
+			'label'    => 'お問い合わせ車両連動（CF7隠し項目へ自動入力）',
 		),
 		// 以下は既存のカーメル用プラグインと重複し衝突するため、当面このプラグインには含めない：
 		// car-detail-ui / staff-shop / extra-basic / shop-checklist / shop-bulk-assign / staff-manual / form-redirect
