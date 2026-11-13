@@ -490,8 +490,9 @@ function apprex_claude_research( $system, $user, $args = array() ) {
 			break;
 		}
 		// 調べものの途中で区切られた：ここまでの返答を渡して続きを頼む。
+		// ここまでの文章は捨てない（記事の書き出し・TITLE の行が区切りの前にあることがある）。
 		$messages[] = array( 'role' => 'assistant', 'content' => $content );
-		$text       = '';
+		$text      .= "\n";
 	}
 	$text = trim( $text );
 	// 調べられなかったときは記事にしない（「作れませんでした」という文章を記事にしない）。

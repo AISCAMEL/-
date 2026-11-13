@@ -304,6 +304,50 @@ add_action( 'template_redirect', function () {
  * ---------------------------------------------------------------------- */
 
 /**
+ * AIの返事から、タイトルと本文を取り出す（書き方のゆれに強く）。
+ *
+ * TITLE: ／ **TITLE:** ／ タイトル： ／ # 見出し ／ <h1> のどれでも読む。いちばん最後の TITLE を使う（途中で書き直したとき）。
+ *
+ * @return array|null [ title, body ]
+ */
+function apprex_ai_extract_title( $text ) {
+	$text = (string) $text;
+	if ( preg_match_all( '/^[ \t>*_#]*(?:TITLE|Title|title|タイトル|記事タイトル)[ \t*_]*[:：][ \t*_「『]*(.+?)[ \t*_」』]*$/mu', $text, $m, PREG_SET_ORDER | PREG_OFFSET_CAPTURE ) ) {
+		$last = end( $m );
+		$t    = trim( wp_strip_all_tags( $last[1][0] ) );
+		if ( '' !== $t ) {
+			return array( $t, trim( substr( $text, $last[0][1] + strlen( $last[0][0] ) ) ) );
+		}
+	}
+	if ( preg_match( '/<h1[^>]*>(.*?)<\/h1>/is', $text, $m, PREG_OFFSET_CAPTURE ) ) {
+		return array( trim( wp_strip_all_tags( $m[1][0] ) ), trim( substr( $text, $m[0][1] + strlen( $m[0][0] ) ) ) );
+	}
+	if ( preg_match( '/^#[ \t]+(.+)$/mu', $text, $m, PREG_OFFSET_CAPTURE ) ) {
+		return array( trim( $m[1][0], " *\t" ), trim( substr( $text, $m[0][1] + strlen( $m[0][0] ) ) ) );
+	}
+	return null;
+}
+
+/** 本文から、AIにタイトルだけ考えてもらう（タイトルの行がなかったとき）。 */
+function apprex_ai_title_from_body( $body ) {
+	if ( ! function_exists( 'apprex_openrouter_complete' ) ) {
+		return '';
+	}
+	$r = apprex_openrouter_complete(
+		array(
+			array( 'role' => 'system', 'content' => 'あなたはブログの編集者です。' ),
+			array( 'role' => 'user', 'content' => "次の記事に合うタイトルを、32字前後で1行だけ書いてください（検索されやすい言葉を入れる。記号や説明は不要）。\n\n" . mb_substr( wp_strip_all_tags( $body ), 0, 2500 ) ),
+		),
+		array( 'max_tokens' => 120, 'temperature' => 0.4, 'timeout' => 40, 'article' => true )
+	);
+	if ( is_wp_error( $r ) ) {
+		return '';
+	}
+	$t = trim( preg_replace( '/^(TITLE|タイトル)\s*[:：]\s*/u', '', strtok( trim( wp_strip_all_tags( (string) $r ) ), "\n" ) ), " 　「」『』\"*" );
+	return mb_strlen( $t ) >= 8 && mb_strlen( $t ) <= 60 ? $t : '';
+}
+
+/**
  * AIで記事を生成して投稿を作成。
  *
  * @param array $args topic, keywords, tone, length, publish, gen_image.
@@ -346,9 +390,20 @@ function apprex_ai_generate_post( $args ) {
 	$sources = array();
 	if ( $research ) {
 		// Claude が Web で最新の情報を調べて、テーマ選びから書く（毎日の自動投稿）。
-		$r = apprex_claude_research( $system, apprex_ai_research_prompt( $tone, $length, isset( $args['focus_hint'] ) ? (string) $args['focus_hint'] : '' ), array( 'timeout' => 300, 'model' => apprex_claude_article_model() ) );
+		$prompt = apprex_ai_research_prompt( $tone, $length, isset( $args['focus_hint'] ) ? (string) $args['focus_hint'] : '' );
+		$r      = apprex_claude_research( $system, $prompt, array( 'timeout' => 300, 'model' => apprex_claude_article_model() ) );
 		if ( is_wp_error( $r ) ) {
 			return $r;
+		}
+		// 記事の形（タイトル＋HTMLの本文）で返ってこなかったら、もう1回だけ頼む。
+		$ok = function ( $t ) {
+			return apprex_ai_extract_title( $t ) || mb_strlen( wp_strip_all_tags( $t ) ) > 800 && preg_match( '/<(h2|p)\b|^##\s/mi', $t );
+		};
+		if ( ! $ok( $r['text'] ) ) {
+			$r2 = apprex_claude_research( $system, $prompt . "\n\n【大事】前回は記事の形で返ってきませんでした。調べ終わったら、必ず1行目を「TITLE: 記事タイトル」にして、そのあとに HTML の本文だけを書いてください。", array( 'timeout' => 300, 'model' => apprex_claude_article_model() ) );
+			if ( ! is_wp_error( $r2 ) ) {
+				$r = $r2;
+			}
 		}
 		$result  = $r['text'];
 		$sources = $r['sources'];
@@ -370,17 +425,36 @@ function apprex_ai_generate_post( $args ) {
 
 	$title = '';
 	$body  = $result;
-	if ( preg_match( '/^\s*TITLE\s*[:：]\s*(.+)$/m', $result, $m, PREG_OFFSET_CAPTURE ) ) {
-		$title = trim( $m[1][0] );
+	$found = apprex_ai_extract_title( $result );
+	if ( $found ) {
 		// TITLE の行より前（作業の説明など）は捨てて、その後ろだけを本文にする。
-		$body = trim( substr( $result, $m[0][1] + strlen( $m[0][0] ) ) );
+		list( $title, $body ) = $found;
 	}
 	$body = apprex_ai_clean_body( $body );
+	// Markdown の見出し・段落で返ってきたときは HTML にする。
+	if ( ! preg_match( '/<(h2|h3|p|ul)\b/i', $body ) && preg_match( '/^##\s/m', $body ) ) {
+		$html = '';
+		foreach ( preg_split( '/\n{2,}/', trim( $body ) ) as $blk ) {
+			$blk = trim( $blk );
+			if ( preg_match( '/^(#{2,3})\s*(.+)$/u', $blk, $hm ) ) {
+				$tag   = 2 === strlen( $hm[1] ) ? 'h2' : 'h3';
+				$html .= "<{$tag}>" . esc_html( trim( $hm[2], ' *' ) ) . "</{$tag}>\n";
+			} elseif ( preg_match_all( '/^[-・*]\s*(.+)$/mu', $blk, $lm ) && count( $lm[1] ) === count( preg_split( '/\n/', $blk ) ) ) {
+				$html .= '<ul><li>' . implode( '</li><li>', array_map( 'esc_html', $lm[1] ) ) . "</li></ul>\n";
+			} elseif ( '' !== $blk ) {
+				$html .= '<p>' . preg_replace( '/\*\*(.+?)\*\*/u', '<strong>$1</strong>', esc_html( $blk ) ) . "</p>\n";
+			}
+		}
+		$body = $html;
+	}
+	if ( '' === $title && $research && mb_strlen( wp_strip_all_tags( $body ) ) > 800 ) {
+		$title = apprex_ai_title_from_body( $body ); // タイトルの行だけ抜けていた。
+	}
 	$title = $title ? $title : $topic;
 	// 調べた記事：前置き（「調べました」など）を外し、出典を最後に。
 	if ( $research ) {
-		if ( ! preg_match( '/^\s*TITLE\s*[:：]/m', $result ) ) {
-			return new WP_Error( 'no_title', '記事の形で返ってこなかったため、作りませんでした。' );
+		if ( '' === $title || mb_strlen( wp_strip_all_tags( $body ) ) < 600 ) {
+			return new WP_Error( 'no_title', '記事の形で返ってこなかったため、作りませんでした（2回試しました）。返事の書き出し：' . mb_substr( preg_replace( '/\s+/u', ' ', wp_strip_all_tags( $result ) ), 0, 80 ) );
 		}
 		if ( $sources && false === mb_strpos( $body, '参考' ) ) {
 			$body .= "\n<h2>参考にした情報</h2>\n<ul>";
