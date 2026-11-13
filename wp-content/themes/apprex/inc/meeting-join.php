@@ -145,6 +145,12 @@ function apprex_mj_cell( $id ) {
 		<button class="button button-small">保存</button>
 		<button class="button button-small button-primary" name="send" value="1">保存してお客様に送る</button>
 	</form>
+	<?php if ( '' === $own && apprex_mj_auto_meet() ) : ?>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top:4px">
+			<input type="hidden" name="action" value="apprex_mj_meet"><input type="hidden" name="id" value="<?php echo (int) $id; ?>"><?php wp_nonce_field( 'apprex_mj_meet_' . $id ); ?>
+			<button class="button button-small">Google Meet を作ってお客様に送る</button>
+		</form>
+	<?php endif; ?>
 	<small><a href="<?php echo esc_url( apprex_mj_link( $id ) ); ?>" target="_blank" rel="noopener">参加ボタンを試す</a><?php echo $click ? '・お客様が押した回数 ' . (int) $click : ''; ?><?php echo '' === apprex_mj_url( $id ) ? '　<b style="color:#d63638">参加URLなし</b>' : ''; ?></small>
 	<?php
 	return (string) ob_get_clean();
@@ -158,5 +164,57 @@ add_filter(
 			$out[] = array( 'ミーティング', false, '参加URL（Google Meet）が入っていません。お客様がミーティングに入れません', 'admin.php?page=apprex-meeting' );
 		}
 		return $out;
+	}
+);
+
+// すでに入っている予約に、あとから Google Meet を作る（Google カレンダーの予定に Meet を付ける）。
+add_action(
+	'admin_post_apprex_mj_meet',
+	function () {
+		$id = absint( $_POST['id'] ?? 0 );
+		if ( ! current_user_can( 'edit_posts' ) || ! check_admin_referer( 'apprex_mj_meet_' . $id ) || 'apprex_inquiry' !== get_post_type( $id ) ) {
+			wp_die( '権限がありません。' );
+		}
+		$msg = 'Google Meet を作れませんでした。';
+		if ( function_exists( 'apprex_gcal_api' ) && function_exists( 'apprex_gcal_ids' ) ) {
+			$cr = array(
+				'conferenceData' => array(
+					'createRequest' => array(
+						'requestId'             => 'apprex-' . $id . '-' . wp_generate_password( 8, false ),
+						'conferenceSolutionKey' => array( 'type' => 'hangoutsMeet' ),
+					),
+				),
+			);
+			$ev = (string) get_post_meta( $id, 'apprex_gcal_event', true );
+			list( $cal, $eid ) = array_pad( explode( '|', $ev, 2 ), 2, '' );
+			if ( '' !== $eid ) {
+				$r = apprex_gcal_api( 'PATCH', '/calendars/' . rawurlencode( $cal ) . '/events/' . rawurlencode( $eid ) . '?conferenceDataVersion=1', $cr );
+			} else {
+				$at  = (int) get_post_meta( $id, 'apprex_meeting_at', true );
+				$min = function_exists( 'apprex_mb_settings' ) ? (int) apprex_mb_settings()['min'] : 60;
+				$cal = apprex_gcal_ids()[0] ?? '';
+				$r   = apprex_gcal_api(
+					'POST',
+					'/calendars/' . rawurlencode( $cal ) . '/events?conferenceDataVersion=1',
+					array(
+						'summary' => '【APPREX】オンライン相談：' . get_post_meta( $id, 'apprex_name', true ) . ' 様',
+						'start'   => array( 'dateTime' => wp_date( 'c', $at ), 'timeZone' => wp_timezone_string() ),
+						'end'     => array( 'dateTime' => wp_date( 'c', $at + $min * 60 ), 'timeZone' => wp_timezone_string() ),
+					) + $cr
+				);
+				if ( ! is_wp_error( $r ) && ! empty( $r['id'] ) ) {
+					update_post_meta( $id, 'apprex_gcal_event', $cal . '|' . $r['id'] );
+				}
+			}
+			if ( is_wp_error( $r ) ) {
+				$msg .= '（' . $r->get_error_message() . '）';
+			} elseif ( ! empty( $r['hangoutLink'] ) ) {
+				update_post_meta( $id, 'apprex_meet_url', esc_url_raw( $r['hangoutLink'] ) );
+				update_post_meta( $id, 'apprex_meet_auto', 1 );
+				$msg = 'Google Meet を作りました（' . $r['hangoutLink'] . '）。' . ( apprex_mj_send( $id ) ? 'お客様にも送りました。' : 'お客様への送信はできませんでした。' );
+			}
+		}
+		wp_safe_redirect( add_query_arg( 'mjmsg', rawurlencode( $msg ), admin_url( 'admin.php?page=apprex-meeting' ) ) );
+		exit;
 	}
 );
