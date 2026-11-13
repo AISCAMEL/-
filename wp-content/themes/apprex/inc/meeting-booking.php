@@ -54,6 +54,32 @@ function apprex_mb_times() {
 	return $out;
 }
 
+/**
+ * 曜日ごとの受付時間（0=日〜6=土 => [HH:MM, …]）。
+ * 表で決めたもの（grid）があればそれを、なければ「受け付ける曜日」×「時間」から作る。
+ */
+function apprex_mb_grid() {
+	$s = apprex_mb_settings();
+	if ( ! empty( $s['grid_on'] ) && is_array( $s['grid'] ?? null ) ) {
+		$g = array();
+		for ( $w = 0; $w < 7; $w++ ) {
+			$t = array_values( array_unique( array_filter( (array) ( $s['grid'][ $w ] ?? array() ), function ( $x ) {
+				return (bool) preg_match( '/^\d{2}:\d{2}$/', (string) $x );
+			} ) ) );
+			sort( $t );
+			$g[ $w ] = $t;
+		}
+		return $g;
+	}
+	$times = apprex_mb_times();
+	$days  = array_map( 'intval', (array) $s['days'] );
+	$g     = array();
+	for ( $w = 0; $w < 7; $w++ ) {
+		$g[ $w ] = in_array( $w, $days, true ) ? $times : array();
+	}
+	return $g;
+}
+
 /** 予約済みの数（開始時刻 => 件数）。キャンセルは数えない。 */
 function apprex_mb_booked( $from, $to ) {
 	$ids = get_posts(
@@ -101,16 +127,16 @@ function apprex_mb_slots( $fresh = false ) {
 	$tz    = wp_timezone();
 	$now   = time();
 	$first = $now + (int) $s['lead'] * HOUR_IN_SECONDS;
-	$times = apprex_mb_times();
+	$grid  = apprex_mb_grid();
 	$hol   = array_filter( array_map( 'trim', preg_split( '/[\s,]+/', (string) $s['holidays'] ) ) );
-	$days  = array_map( 'intval', (array) $s['days'] );
 	$cap   = max( 1, (int) $s['cap'] );
 	$book  = apprex_mb_booked( $now, $now + ( (int) $s['ahead'] + 2 ) * DAY_IN_SECONDS );
 	$out   = array();
 	for ( $i = 0; $i <= (int) $s['ahead']; $i++ ) {
 		$d    = ( new DateTimeImmutable( 'today', $tz ) )->modify( '+' . $i . ' day' );
 		$date = $d->format( 'Y-m-d' );
-		if ( ! in_array( (int) $d->format( 'w' ), $days, true ) || in_array( $date, $hol, true ) ) {
+		$times = $grid[ (int) $d->format( 'w' ) ] ?? array();
+		if ( ! $times || in_array( $date, $hol, true ) ) {
 			continue;
 		}
 		$list = array();
@@ -284,8 +310,25 @@ add_action( 'admin_init', function () {
 		'apprex_mb_settings',
 		array(
 			'sanitize_callback' => function ( $v ) {
-				$v = (array) $v;
+				$v    = (array) $v;
+				$grid = array();
+				$on   = ! empty( $v['grid_on'] );
+				if ( $on ) {
+					for ( $w = 0; $w < 7; $w++ ) {
+						$grid[ $w ] = array_values( array_filter( array_map( 'sanitize_text_field', (array) ( $v['grid'][ $w ] ?? array() ) ), function ( $x ) {
+							return (bool) preg_match( '/^\d{2}:\d{2}$/', $x );
+						} ) );
+						sort( $grid[ $w ] );
+					}
+					// 古い形（曜日・時間）も、表に合わせておく（ほかの機能のため）。
+					$v['days']  = array_keys( array_filter( $grid ) );
+					$all        = array_unique( array_merge( array(), ...array_values( $grid ) ) );
+					sort( $all );
+					$v['times'] = implode( ',', $all );
+				}
 				return array(
+					'grid_on'  => $on ? 1 : 0,
+					'grid'     => $grid,
 					'days'     => array_values( array_map( 'intval', isset( $v['days'] ) ? (array) $v['days'] : array() ) ),
 					'times'    => sanitize_text_field( isset( $v['times'] ) ? $v['times'] : '' ),
 					'min'      => max( 15, (int) ( isset( $v['min'] ) ? $v['min'] : 60 ) ),
@@ -358,8 +401,7 @@ function apprex_mb_admin_page() {
 			<table class="form-table" role="presentation"><tbody>
 				<tr><th>受け付け方</th><td><label><input type="checkbox" name="apprex_mb_enabled" value="1" <?php checked( apprex_mb_enabled() ); ?>> サイトで予約を受け付ける（管理画面・メール・LINEに届きます）</label>
 					<p class="description">外すと、これまでの Google カレンダーの予約ページ（APPREX 連携の「ミーティング予約URL」）に戻ります。</p></td></tr>
-				<tr><th>受け付ける曜日</th><td><?php foreach ( $wd as $i => $w ) : ?><label style="margin-right:10px"><input type="checkbox" name="apprex_mb_settings[days][]" value="<?php echo (int) $i; ?>" <?php checked( in_array( $i, array_map( 'intval', (array) $s['days'] ), true ) ); ?>> <?php echo esc_html( $w ); ?></label><?php endforeach; ?></td></tr>
-				<tr><th>時間</th><td><input type="text" name="apprex_mb_settings[times]" value="<?php echo esc_attr( $s['times'] ); ?>" class="regular-text"><p class="description">始まりの時刻をカンマで区切ります（例：10:00,11:00,13:00,14:00）。</p></td></tr>
+				<tr><th>受付時間</th><td><?php apprex_mb_grid_ui( $wd ); ?></td></tr>
 				<tr><th>1回の時間</th><td><input type="number" name="apprex_mb_settings[min]" value="<?php echo esc_attr( $s['min'] ); ?>" min="15" step="5" style="width:80px"> 分</td></tr>
 				<tr><th>予約できる期間</th><td>今から <input type="number" name="apprex_mb_settings[lead]" value="<?php echo esc_attr( $s['lead'] ); ?>" min="0" style="width:70px"> 時間後〜 <input type="number" name="apprex_mb_settings[ahead]" value="<?php echo esc_attr( $s['ahead'] ); ?>" min="1" max="90" style="width:70px"> 日先まで</td></tr>
 				<tr><th>同じ時間に受ける数</th><td><input type="number" name="apprex_mb_settings[cap]" value="<?php echo esc_attr( $s['cap'] ); ?>" min="1" style="width:70px"> 件</td></tr>
@@ -522,3 +564,73 @@ add_action( 'apprex_mb_cron', function () {
 		apprex_run_meeting_reminders( $id, (string) get_post_meta( $id, 'apprex_email', true ), (string) get_post_meta( $id, 'apprex_name', true ), is_array( $sent ) ? $sent : array(), $now );
 	}
 } );
+
+/** 受付時間の表（曜日×時刻のマスにチェック）。 */
+function apprex_mb_grid_ui( $wd ) {
+	$grid  = apprex_mb_grid();
+	$slots = array();
+	for ( $m = 7 * 60; $m <= 21 * 60 + 30; $m += 30 ) {
+		$slots[] = sprintf( '%02d:%02d', intdiv( $m, 60 ), $m % 60 );
+	}
+	// 表にない時刻（例：10:15）も消えないように足す。
+	foreach ( $grid as $ts ) {
+		$slots = array_merge( $slots, $ts );
+	}
+	$slots = array_values( array_unique( $slots ) );
+	sort( $slots );
+	$opt = function ( $sel ) use ( $slots ) {
+		$h = '';
+		foreach ( $slots as $t ) {
+			$h .= '<option' . ( $t === $sel ? ' selected' : '' ) . '>' . $t . '</option>';
+		}
+		return $h;
+	};
+	?>
+	<input type="hidden" name="apprex_mb_settings[grid_on]" value="1">
+	<div style="background:#fff;border:1px solid #dcdcde;border-radius:8px;padding:10px 12px;max-width:760px;margin-bottom:10px" id="mbq">
+		<b>まとめて入れる</b>
+		<div style="display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-top:6px">
+			<span><?php foreach ( $wd as $i => $w ) : ?><label style="margin-right:6px"><input type="checkbox" class="mbq-d" value="<?php echo (int) $i; ?>" <?php checked( $i >= 1 && $i <= 5 ); ?>> <?php echo esc_html( $w ); ?></label><?php endforeach; ?></span>
+			<span><select class="mbq-s"><?php echo $opt( '10:00' ); // phpcs:ignore ?></select> 〜 <select class="mbq-e"><?php echo $opt( '18:00' ); // phpcs:ignore ?></select> まで</span>
+			<span><select class="mbq-i"><option value="30">30分ごと</option><option value="60" selected>1時間ごと</option><option value="90">1時間半ごと</option><option value="120">2時間ごと</option></select></span>
+			<span>お昼休み <select class="mbq-b"><option value="">なし</option><option value="12:00-13:00" selected>12:00〜13:00</option><option value="12:00-14:00">12:00〜14:00</option><option value="13:00-14:00">13:00〜14:00</option></select></span>
+			<button type="button" class="button" id="mbq-go">表に入れる</button>
+			<button type="button" class="button-link" id="mbq-clear" style="color:#b32d2e">選んだ曜日を空にする</button>
+		</div>
+		<p class="description" style="margin:6px 0 0">「〜まで」は最後の予約の終わりの時刻です（1回の時間が60分で 18:00 までなら、最後は 17:00 開始）。入れたあと、下の表で1マスずつ直せます。</p>
+	</div>
+	<div style="max-height:420px;overflow:auto;border:1px solid #dcdcde;border-radius:8px;max-width:760px">
+		<table class="widefat striped" style="border:0" id="mbgrid"><thead><tr><th style="width:70px">時刻</th><?php foreach ( $wd as $i => $w ) : ?><th style="text-align:center;<?php echo 0 === $i ? 'color:#b32d2e' : ( 6 === $i ? 'color:#2271b1' : '' ); ?>"><?php echo esc_html( $w ); ?></th><?php endforeach; ?></tr></thead><tbody>
+		<?php foreach ( $slots as $t ) : ?>
+			<tr><td><?php echo esc_html( $t ); ?></td>
+			<?php for ( $w = 0; $w < 7; $w++ ) : ?>
+				<td style="text-align:center"><input type="checkbox" name="apprex_mb_settings[grid][<?php echo (int) $w; ?>][]" value="<?php echo esc_attr( $t ); ?>" data-w="<?php echo (int) $w; ?>" data-t="<?php echo esc_attr( $t ); ?>" <?php checked( in_array( $t, $grid[ $w ], true ) ); ?> aria-label="<?php echo esc_attr( $wd[ $w ] . ' ' . $t ); ?>"></td>
+			<?php endfor; ?></tr>
+		<?php endforeach; ?>
+		</tbody></table>
+	</div>
+	<p class="description">チェックしたマスの時刻から予約を受け付けます（その時刻が始まり）。曜日の列にチェックがなければ、その曜日はお休みです。</p>
+	<script>
+	(function(){
+		var q=document.getElementById('mbq');if(!q)return;
+		function mins(t){var p=t.split(':');return +p[0]*60+ +p[1];}
+		function days(){return [].map.call(q.querySelectorAll('.mbq-d:checked'),function(c){return c.value;});}
+		var dur=function(){var m=document.querySelector('input[name="apprex_mb_settings[min]"]');return m?Math.max(15,+m.value||60):60;};
+		document.getElementById('mbq-go').addEventListener('click',function(){
+			var s=mins(q.querySelector('.mbq-s').value),e=mins(q.querySelector('.mbq-e').value),iv=+q.querySelector('.mbq-i').value,b=q.querySelector('.mbq-b').value,bs=-1,be=-1;
+			if(b){var bb=b.split('-');bs=mins(bb[0]);be=mins(bb[1]);}
+			var ds=days();
+			document.querySelectorAll('#mbgrid input[type=checkbox]').forEach(function(c){
+				if(ds.indexOf(c.dataset.w)<0)return;
+				var t=mins(c.dataset.t),on=t>=s&&t+dur()<=e&&(t-s)%iv===0&&!(bs>=0&&t<be&&t+dur()>bs);
+				c.checked=on;
+			});
+		});
+		document.getElementById('mbq-clear').addEventListener('click',function(){
+			var ds=days();
+			document.querySelectorAll('#mbgrid input[type=checkbox]').forEach(function(c){if(ds.indexOf(c.dataset.w)>-1)c.checked=false;});
+		});
+	})();
+	</script>
+	<?php
+}
