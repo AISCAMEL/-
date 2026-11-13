@@ -6,8 +6,9 @@
  *   ・不要要素の除去／基本情報の緑表
  *   ・ローン枠：旧版は再構築、新版(v4.0)はそのまま（崩れ防止ガード）
  *   ・返済シミュをローン枠内に収納／上段の幅・余白・カード統一
- *   ・担当スタッフ＋販売店ブロックを上段直後へ移動、問い合わせ導線を集約
- *   ・装備の空カテゴリ（中身が無い項目）を非表示にしてスッキリ
+ *   ・上段の問い合わせカードは削除し、お問い合わせ導線を店舗ブロックへ集約
+ *   ・装備の空カテゴリ（中身が無い項目）を非表示
+ *   ※ セクションの並び順は元のまま（基本情報→装備→担当スタッフ→販売店）
  * ・固有名＋function_exists ガード。front のみ出力。
  * ---------------------------------------------------------------------------
  */
@@ -184,18 +185,6 @@ if ( ! function_exists( 'carmelx_page_polish_css' ) ) {
   }
 
 
-  function moveStaffUp(){
-    var secs = document.querySelectorAll('.custom-singular-template > .vc_section, .single-portfolio .vc_section');
-    var top=null, staff=null;
-    secs.forEach(function(s){
-      if(!top && s.querySelector('.carmel-lg, .cmx-loan')) top = s;
-      if(!staff && s.querySelector('.cx-staff')) staff = s;
-    });
-    if(top && staff && staff!==top && top.parentNode && staff.getAttribute('data-cmx-moved')!=='1'){
-      staff.setAttribute('data-cmx-moved','1');
-      top.parentNode.insertBefore(staff, top.nextSibling);
-    }
-  }
 
 
   function hideEmptyEquip(){
@@ -213,7 +202,7 @@ if ( ! function_exists( 'carmelx_page_polish_css' ) ) {
     });
   }
 
-  function run(){ rebuildContact(); rebuildLoan(); restoreSim(); moveStaffUp(); hideEmptyEquip(); }
+  function run(){ rebuildContact(); rebuildLoan(); restoreSim(); hideEmptyEquip(); }
   // moveSim(既存) がシミュを .carmel-lg の外へ移すので、その後に実行
   if(document.readyState==='loading') window.addEventListener('DOMContentLoaded', function(){ setTimeout(run,60); });
   else setTimeout(run,60);
