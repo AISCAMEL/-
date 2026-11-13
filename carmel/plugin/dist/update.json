@@ -1,10 +1,10 @@
 {
   "name": "カーメルシステム",
   "slug": "carmel-system",
-  "version": "1.15.0",
+  "version": "1.16.0",
   "download_url": "https://raw.githubusercontent.com/AISCAMEL/carmel-system-dist/main/carmel-system.zip",
   "homepage": "https://carmelonline.jp/",
   "requires": "5.0",
   "tested": "6.7",
-  "changelog": "v1.15.0 管理画面メニュー整理を追加。スタッフ（管理者以外）の左メニューを必要なものだけに絞ってシンプル化。管理者は常に全表示でロックアウトなし。設定→カーメル メニュー整理 で表示/非表示を切替（初期値は在庫・メディア等のみ表示のおすすめ）。"
+  "changelog": "v1.16.0 サイト健康モニターを追加。主要ページの重さ（容量・要素数・応答時間）を計測して重い順に一覧表示し、特大画像を検出。改善は提案のみ（見た目は変えない）。安全な軽量化（絵文字/埋め込みJS停止）は承認制トグル。AI診断は次段で追加予定。"
 }

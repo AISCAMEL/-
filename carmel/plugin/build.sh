@@ -11,6 +11,7 @@ MODULES="$PLUGIN/modules"
 
 # manifest（carmel-system.php の $modules と一致させる）
 FILES=(
+  wpcode-site-monitor.php
   wpcode-admin-menu.php
   wpcode-car-spec-extra.php
   wpcode-car-breakdown.php
