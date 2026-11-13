@@ -1,10 +1,10 @@
 {
   "name": "カーメルシステム",
   "slug": "carmel-system",
-  "version": "1.14.0",
+  "version": "1.15.0",
   "download_url": "https://raw.githubusercontent.com/AISCAMEL/carmel-system-dist/main/carmel-system.zip",
   "homepage": "https://carmelonline.jp/",
   "requires": "5.0",
   "tested": "6.7",
-  "changelog": "v1.14.0 4機能を追加：支払総額の内訳（本体＋税金＋諸費用の明細）／不安解消ミニFAQ（信用回復向け）／最近見た車＋この車を共有（LINE・メール・コピー）／車両比較（最大3台）。いずれも保存はブラウザでログイン不要、既存プラグイン非改造。"
+  "changelog": "v1.15.0 管理画面メニュー整理を追加。スタッフ（管理者以外）の左メニューを必要なものだけに絞ってシンプル化。管理者は常に全表示でロックアウトなし。設定→カーメル メニュー整理 で表示/非表示を切替（初期値は在庫・メディア等のみ表示のおすすめ）。"
 }
