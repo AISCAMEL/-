@@ -3,7 +3,7 @@
  * Plugin Name: カーメルシステム
  * Plugin URI:  https://carmelonline.jp/
  * Description: カーメルのローン表示（固定13.6%・緑ボックス）を提供するプラグイン。GitHubから1クリック更新できます。他のカーメル用プラグインと衝突しないよう、最小構成＋二重定義ガード＋安全読み込みにしています。
- * Version:     1.16.0
+ * Version:     1.17.0
  * Author:      CarMel / AIS
  * License:     GPL-2.0+
  * Text Domain: carmel-system
@@ -17,7 +17,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'CARMEL_SYS_VERSION', '1.16.0' );
+define( 'CARMEL_SYS_VERSION', '1.17.0' );
 define( 'CARMEL_SYS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CARMEL_SYS_FILE', __FILE__ );
 
@@ -91,6 +91,16 @@ function carmel_sys_modules() {
 			'file'     => 'wpcode-site-monitor.php',
 			'sentinel' => 'carmelx_sm_render',
 			'label'    => 'サイト健康モニター（重いページ検出＋安全な軽量化）',
+		),
+		array(
+			'file'     => 'wpcode-image-optimize.php',
+			'sentinel' => 'carmelx_io_render',
+			'label'    => '画像最適化（新規自動＋既存一括・バックアップ付き）',
+		),
+		array(
+			'file'     => 'wpcode-ai-diagnose.php',
+			'sentinel' => 'carmelx_ai_render',
+			'label'    => 'AI診断・デザイン（Claude API）',
 		),
 		// 以下は既存のカーメル用プラグインと重複し衝突するため、当面このプラグインには含めない：
 		// car-detail-ui / staff-shop / extra-basic / shop-checklist / shop-bulk-assign / staff-manual / form-redirect

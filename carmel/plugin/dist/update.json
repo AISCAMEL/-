@@ -1,10 +1,10 @@
 {
   "name": "カーメルシステム",
   "slug": "carmel-system",
-  "version": "1.16.0",
+  "version": "1.17.0",
   "download_url": "https://raw.githubusercontent.com/AISCAMEL/carmel-system-dist/main/carmel-system.zip",
   "homepage": "https://carmelonline.jp/",
   "requires": "5.0",
   "tested": "6.7",
-  "changelog": "v1.16.0 サイト健康モニターを追加。主要ページの重さ（容量・要素数・応答時間）を計測して重い順に一覧表示し、特大画像を検出。改善は提案のみ（見た目は変えない）。安全な軽量化（絵文字/埋め込みJS停止）は承認制トグル。AI診断は次段で追加予定。"
+  "changelog": "v1.17.0 画像最適化とAI診断を追加。画像最適化：新規アップロードの自動リサイズ・圧縮＋既存の特大画像を一括最適化（写真PNGはJPEG化しURLも置換、元画像バックアップ＆ワンクリック復元）。AI診断：Claude APIでページの重さを診断、要望からCSSを生成し確認のうえ適用（承認制）。"
 }
