@@ -12,6 +12,10 @@ MODULES="$PLUGIN/modules"
 # manifest（carmel-system.php の $modules と一致させる）
 FILES=(
   wpcode-car-spec-extra.php
+  wpcode-car-breakdown.php
+  wpcode-car-faq.php
+  wpcode-car-history-share.php
+  wpcode-car-compare.php
   wpcode-car-favorite.php
   wpcode-car-inquiry.php
   wpcode-car-video.php

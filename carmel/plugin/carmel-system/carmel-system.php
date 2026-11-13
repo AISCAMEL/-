@@ -3,7 +3,7 @@
  * Plugin Name: カーメルシステム
  * Plugin URI:  https://carmelonline.jp/
  * Description: カーメルのローン表示（固定13.6%・緑ボックス）を提供するプラグイン。GitHubから1クリック更新できます。他のカーメル用プラグインと衝突しないよう、最小構成＋二重定義ガード＋安全読み込みにしています。
- * Version:     1.13.0
+ * Version:     1.14.0
  * Author:      CarMel / AIS
  * License:     GPL-2.0+
  * Text Domain: carmel-system
@@ -17,7 +17,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'CARMEL_SYS_VERSION', '1.13.0' );
+define( 'CARMEL_SYS_VERSION', '1.14.0' );
 define( 'CARMEL_SYS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CARMEL_SYS_FILE', __FILE__ );
 
@@ -61,6 +61,26 @@ function carmel_sys_modules() {
 			'file'     => 'wpcode-car-inquiry.php',
 			'sentinel' => 'carmelx_inquiry_render',
 			'label'    => 'お問い合わせ車両連動（CF7隠し項目へ自動入力）',
+		),
+		array(
+			'file'     => 'wpcode-car-breakdown.php',
+			'sentinel' => 'carmelx_breakdown_render',
+			'label'    => 'お支払総額の内訳（本体＋諸費用）',
+		),
+		array(
+			'file'     => 'wpcode-car-faq.php',
+			'sentinel' => 'carmelx_faq_render',
+			'label'    => '不安解消ミニFAQ（信用回復向け）',
+		),
+		array(
+			'file'     => 'wpcode-car-history-share.php',
+			'sentinel' => 'carmelx_histshare_render',
+			'label'    => '最近見た車＋この車を共有（LINE/メール）',
+		),
+		array(
+			'file'     => 'wpcode-car-compare.php',
+			'sentinel' => 'carmelx_compare_render',
+			'label'    => '車両比較（最大3台）',
 		),
 		// 以下は既存のカーメル用プラグインと重複し衝突するため、当面このプラグインには含めない：
 		// car-detail-ui / staff-shop / extra-basic / shop-checklist / shop-bulk-assign / staff-manual / form-redirect
