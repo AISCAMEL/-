@@ -1,0 +1,10 @@
+{
+  "name": "カーメルシステム",
+  "slug": "carmel-system",
+  "version": "1.18.0",
+  "download_url": "https://raw.githubusercontent.com/AISCAMEL/carmel-system-dist/main/carmel-system.zip",
+  "homepage": "https://carmelonline.jp/",
+  "requires": "5.0",
+  "tested": "6.7",
+  "changelog": "v1.18.0 在庫編集画面に『AIアシスト』を追加。型式/車台番号からスペックを推定して下書き表示（追加スペック欄はワンクリック反映）。車両情報からGoogleビジネス用の投稿文をAIできれいに自動作成（確認してコピー→投稿）。写真は実車のみ・AIは生成しません。APIキーはAI診断の設定を共用。"
+}
