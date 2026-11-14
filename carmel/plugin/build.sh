@@ -13,6 +13,7 @@ MODULES="$PLUGIN/modules"
 FILES=(
   wpcode-image-optimize.php
   wpcode-ai-diagnose.php
+  wpcode-ai-intake.php
   wpcode-site-monitor.php
   wpcode-admin-menu.php
   wpcode-car-spec-extra.php
