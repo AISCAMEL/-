@@ -44,9 +44,14 @@ if ( ! function_exists( 'carmelx_faq_render' ) ) {
 		?>
 <style id="carmel-faq-css">
 .cmx-faq{margin:16px 0 4px;}
-.cmx-faq__hd{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:900;color:#17331f;margin:0 0 10px;}
-.cmx-faq__hd .cmx-faq__badge{display:inline-flex;align-items:center;gap:5px;background:#009de0;color:#fff;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:800;}
-.cmx-faq__list{border:1px solid #e3e8ee;border-radius:12px;overflow:hidden;background:#fff;}
+.cmx-faq__bar{list-style:none;cursor:pointer;display:flex;align-items:center;gap:9px;font-size:14.5px;font-weight:900;color:#17331f;background:#f3faf5;border:1px solid #d7e4dc;border-radius:12px;padding:13px 15px;transition:.15s;}
+.cmx-faq__bar:hover{background:#eef7f1;}
+.cmx-faq__bar::-webkit-details-marker{display:none;}
+.cmx-faq__badge{display:inline-flex;align-items:center;gap:5px;background:#009de0;color:#fff;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:800;}
+.cmx-faq__chev{width:16px;height:16px;fill:#2cac44;margin-left:auto;transition:.2s;flex:0 0 auto;}
+.cmx-faq[open] .cmx-faq__chev{transform:rotate(180deg);}
+.cmx-faq[open] .cmx-faq__bar{border-radius:12px 12px 0 0;border-bottom:none;}
+.cmx-faq__list{border:1px solid #e3e8ee;border-top:none;border-radius:0 0 12px 12px;overflow:hidden;background:#fff;}
 .cmx-faq__item{border-bottom:1px solid #eef1f4;}
 .cmx-faq__item:last-child{border-bottom:none;}
 .cmx-faq__q{list-style:none;cursor:pointer;display:flex;align-items:center;gap:11px;padding:14px 15px;font-size:13.5px;font-weight:800;color:#233;background:#fff;transition:.15s;}
@@ -63,8 +68,8 @@ if ( ! function_exists( 'carmelx_faq_render' ) ) {
 .cmx-faq__cta .is-contact{background:#ff7a00;color:#fff;}
 </style>
 <div id="cmx-faq-src" style="display:none;">
-	<section class="cmx-faq">
-		<div class="cmx-faq__hd"><span class="cmx-faq__badge">安心</span>よくあるご不安・ご質問</div>
+	<details class="cmx-faq">
+		<summary class="cmx-faq__bar"><span class="cmx-faq__badge">安心</span>よくあるご不安・ご質問<svg class="cmx-faq__chev" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></summary>
 		<div class="cmx-faq__list">
 			<?php foreach ( $faqs as $f ) : ?>
 			<details class="cmx-faq__item">
@@ -73,7 +78,7 @@ if ( ! function_exists( 'carmelx_faq_render' ) ) {
 			</details>
 			<?php endforeach; ?>
 		</div>
-	</section>
+	</details>
 </div>
 <script id="carmel-faq-js">
 (function(){
