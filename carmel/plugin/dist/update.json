@@ -1,10 +1,10 @@
 {
   "name": "カーメルシステム",
   "slug": "carmel-system",
-  "version": "1.19.0",
+  "version": "1.20.0",
   "download_url": "https://raw.githubusercontent.com/AISCAMEL/carmel-system-dist/main/carmel-system.zip",
   "homepage": "https://carmelonline.jp/",
   "requires": "5.0",
   "tested": "6.7",
-  "changelog": "v1.19.0 メニュー整理を刷新。スタッフ用に加え『自分（管理者）の画面』も整理可能に（初期ON）。1画面でスタッフ表示／自分表示をチェック切替。管理者はダッシュボード・在庫・メディア・プラグイン・設定を常に表示でロックアウトなし。自分の初期値はSEO/解析/補助系のノイズのみ非表示（機能メニューは残す）。"
+  "changelog": "v1.20.0 在庫受信口を追加。外部カーメルシステムから在庫データを受け取り、車両ページ(portfolio)へ作成/更新するRESTエンドポイント /wp-json/carmel/v1/inventory（アプリパスワード認証）。stock_idで冪等upsert、公開制御（在庫/商談中=公開・売約/納車=下書き）、基本情報ACF・装備・写真ギャラリーを反映。"
 }
