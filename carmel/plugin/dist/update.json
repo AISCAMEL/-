@@ -1,10 +1,10 @@
 {
   "name": "カーメルシステム",
   "slug": "carmel-system",
-  "version": "1.20.0",
+  "version": "1.20.1",
   "download_url": "https://raw.githubusercontent.com/AISCAMEL/carmel-system-dist/main/carmel-system.zip",
   "homepage": "https://carmelonline.jp/",
   "requires": "5.0",
   "tested": "6.7",
-  "changelog": "v1.20.0 在庫受信口を追加。外部カーメルシステムから在庫データを受け取り、車両ページ(portfolio)へ作成/更新するRESTエンドポイント /wp-json/carmel/v1/inventory（アプリパスワード認証）。stock_idで冪等upsert、公開制御（在庫/商談中=公開・売約/納車=下書き）、基本情報ACF・装備・写真ギャラリーを反映。"
+  "changelog": "v1.20.1 在庫受信口を改良（販売店を店舗名からshopスラッグへ解決・安心フラグ反映・既存ステータス欄は非変更）。v1.20.0 在庫受信口を追加。外部カーメルシステムから在庫データを受け取り、車両ページ(portfolio)へ作成/更新するRESTエンドポイント /wp-json/carmel/v1/inventory（アプリパスワード認証）。stock_idで冪等upsert、公開制御（在庫/商談中=公開・売約/納車=下書き）、基本情報ACF・装備・写真ギャラリーを反映。"
 }

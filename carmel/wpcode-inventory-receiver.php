@@ -41,6 +41,25 @@ if ( ! function_exists( 'carmelx_invrecv_find' ) ) {
 	}
 }
 
+if ( ! function_exists( 'carmelx_invrecv_shop_slug' ) ) {
+	/** 店舗名 or スラッグ → shop 投稿のスラッグ（見つからなければ空） */
+	function carmelx_invrecv_shop_slug( $name ) {
+		$name = trim( (string) $name );
+		if ( '' === $name || ! post_type_exists( 'shop' ) ) { return ''; }
+		$shops = get_posts( array( 'post_type' => 'shop', 'post_status' => 'publish', 'posts_per_page' => 100, 'suppress_filters' => true ) );
+		$norm = function ( $s ) { return preg_replace( '/[\s　]+/u', '', (string) $s ); };
+		foreach ( $shops as $s ) {
+			if ( $s->post_name === $name || $norm( $s->post_title ) === $norm( $name ) ) { return $s->post_name; }
+		}
+		// 部分一致（「カーメル福島本店」⇔「福島本店」など）
+		foreach ( $shops as $s ) {
+			$t = $norm( $s->post_title ); $n = $norm( $name );
+			if ( $t !== '' && $n !== '' && ( false !== mb_strpos( $t, $n ) || false !== mb_strpos( $n, $t ) ) ) { return $s->post_name; }
+		}
+		return '';
+	}
+}
+
 if ( ! function_exists( 'carmelx_invrecv_images' ) ) {
 	/** 画像URL配列をWPメディアへ取り込み（既に取り込み済みなら再利用）→ 添付ID配列 */
 	function carmelx_invrecv_images( $post_id, $urls ) {
@@ -124,9 +143,23 @@ if ( ! function_exists( 'carmelx_invrecv_handle' ) ) {
 		carmelx_invrecv_set( $id, 'kudou', $str( 'drive' ) );
 		carmelx_invrecv_set( $id, 'color', $str( 'body_color' ) !== '' ? $str( 'body_color' ) : $str( 'color' ) );
 		carmelx_invrecv_set( $id, 'inspection', $str( 'inspection_status' ) );
-		carmelx_invrecv_set( $id, 'shop', $str( 'shop' ) );
+		// 販売店：WP側は shop 投稿のスラッグで持つ。店舗名（またはスラッグ）から解決できた時だけ設定
+		$shop_slug = carmelx_invrecv_shop_slug( $str( 'shop' ) );
+		if ( $shop_slug !== '' ) {
+			update_post_meta( $id, 'shop', $shop_slug );
+			carmelx_invrecv_set( $id, 'shop', $shop_slug );
+		}
 		if ( $str( 'tel' ) !== '' ) { carmelx_invrecv_set( $id, 'tel', $str( 'tel' ) ); }
-		carmelx_invrecv_set( $id, 'status', $status_in );
+		// 外部の在庫状態は専用メタに保存（WP側の既存ステータス欄は触らない。公開/下書きで制御）
+		update_post_meta( $id, 'carmel_inv_status', $status_in );
+		update_post_meta( $id, 'carmel_inv_synced_at', current_time( 'mysql' ) );
+
+		// 安心フラグ（ワンオーナー/禁煙車/記録簿）→ 追加スペックのバッジ
+		if ( isset( $p['flags'] ) && is_array( $p['flags'] ) ) {
+			foreach ( array( 'one_owner' => 'cx_one_owner', 'kinen' => 'cx_kinen', 'kirokubo' => 'cx_kirokubo' ) as $fk => $mk ) {
+				if ( array_key_exists( $fk, $p['flags'] ) ) { update_post_meta( $id, $mk, ! empty( $p['flags'][ $fk ] ) ? '1' : '' ); }
+			}
+		}
 
 		// 金額（本体・支払総額）
 		if ( $price ) { carmelx_invrecv_set( $id, 'est_honntai', (string) $price ); }
