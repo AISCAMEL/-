@@ -73,10 +73,6 @@ if ( ! function_exists( 'carmelx_faq_render' ) ) {
 			</details>
 			<?php endforeach; ?>
 		</div>
-		<div class="cmx-faq__cta">
-			<a class="is-line" href="https://lin.ee/ZgZJvF4" target="_blank" rel="noopener">LINEで相談する</a>
-			<a class="is-contact" href="https://carmelonline.jp/contact-form">この車で問い合わせる</a>
-		</div>
 	</section>
 </div>
 <script id="carmel-faq-js">
