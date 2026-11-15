@@ -18,6 +18,13 @@
  * ・装備は ACF チェックボックス（選択肢＝表示ラベル）の形式で保存する。
  * ・写真はURLごとに取り込み済みを覚える（途中で失敗・時間切れでも、次回は続きから。二重取り込みなし）。
  * ・空の値では既存の入力を消さない。
+ *
+ * v1.22.0 追加
+ * ・GET /wp-json/carmel/v1/inventory/export … ホームページに載っている車両を、外部システムの
+ *   在庫へ取り込むための一覧（読み取りだけ。サイトの表示・データは何も変えない）。
+ * ・取り込んだ車両を外部から反映する時は、link_post_id（元の車両ページ番号）で同じページに
+ *   紐づく（管理番号も一致している時だけ。確認の手間なし・別の車は上書きしない）。
+ * ・写真がこのサイトのメディアに既にある時は、取り込み直さずそのまま使う。
  * 管理者/投稿権限ユーザーのみ。固有名＋function_existsガード。
  * ---------------------------------------------------------------------------
  */
@@ -110,6 +117,33 @@ if ( ! function_exists( 'carmelx_invrecv_monthly' ) ) {
 	}
 }
 
+if ( ! function_exists( 'carmelx_invrecv_local_attachment' ) ) {
+	/**
+	 * 画像URLが、このサイトのメディアに既にあるものなら添付IDを返す（無ければ 0）。
+	 * コピーサイト⇔本番でURLの頭が違っても、uploads 以下の場所が同じなら同じ画像とみなす。
+	 */
+	function carmelx_invrecv_local_attachment( $url ) {
+		if ( function_exists( 'attachment_url_to_postid' ) ) {
+			$id = (int) attachment_url_to_postid( $url );
+			if ( $id ) { return $id; }
+		}
+		$pos = strpos( $url, '/wp-content/uploads/' );
+		if ( false === $pos ) { return 0; }
+		$rel = preg_replace( '/[?#].*$/', '', substr( $url, $pos + strlen( '/wp-content/uploads/' ) ) );
+		if ( '' === $rel ) { return 0; }
+		$q = get_posts( array(
+			'post_type'        => 'attachment',
+			'post_status'      => 'inherit',
+			'meta_key'         => '_wp_attached_file',
+			'meta_value'       => $rel,
+			'fields'           => 'ids',
+			'numberposts'      => 1,
+			'suppress_filters' => true,
+		) );
+		return $q ? (int) $q[0] : 0;
+	}
+}
+
 if ( ! function_exists( 'carmelx_invrecv_images' ) ) {
 	/**
 	 * 画像URL配列をWPメディアへ取り込む。URLごとに「取り込み済みの添付ID」を覚えるので、
@@ -129,6 +163,9 @@ if ( ! function_exists( 'carmelx_invrecv_images' ) ) {
 			if ( ! preg_match( '#^https?://#i', $u ) ) { $res['failed']++; continue; }
 			$k = md5( $u );
 			if ( isset( $map[ $k ] ) && 'attachment' === get_post_type( (int) $map[ $k ] ) ) { $res['ids'][] = (int) $map[ $k ]; continue; }
+			// このサイトのメディアに既にある画像（WPから取り込んだ車両の写真など）は取り込み直さない
+			$local = carmelx_invrecv_local_attachment( $u );
+			if ( $local ) { $map[ $k ] = $local; $res['ids'][] = $local; continue; }
 			if ( time() >= $deadline ) { $res['pending']++; continue; } // 時間切れ → 次回に続きから
 			if ( ! function_exists( 'media_sideload_image' ) ) {
 				require_once ABSPATH . 'wp-admin/includes/media.php';
@@ -196,10 +233,12 @@ if ( ! function_exists( 'carmelx_invrecv_handle' ) ) {
 			}
 			// 手入力（または旧版の反映）で作られた同じ管理番号の車両ページ
 			$by_old_sync = '' !== (string) get_post_meta( $same_no, 'carmel_inv_synced_at', true );
-			if ( ! $by_old_sync && empty( $p['adopt'] ) ) {
+			// WPから取り込んだ在庫は、元の車両ページ番号（link_post_id）が一致すれば確認なしで紐づく
+			$by_import = isset( $p['link_post_id'] ) && (int) $p['link_post_id'] === $same_no;
+			if ( ! $by_old_sync && ! $by_import && empty( $p['adopt'] ) ) {
 				return carmelx_invrecv_err( 409, 'needs_adopt', '管理ID「' . $stock_id . '」の車両ページが、ホームページにすでにあります（' . $existing['title'] . '）。同じ車なら「このページに紐づける」を選んでください', array( 'existing' => $existing ) );
 			}
-			$id = $same_no; $adopted = ! $by_old_sync;
+			$id = $same_no; $adopted = ! $by_old_sync && ! $by_import;
 		}
 		if ( $id && ! current_user_can( 'edit_post', $id ) ) { return carmelx_invrecv_err( 403, 'forbidden', 'この車両ページを編集する権限がありません' ); }
 
@@ -295,7 +334,9 @@ if ( ! function_exists( 'carmelx_invrecv_handle' ) ) {
 
 		// 追加スペック（定員）・セールスポイント
 		$cap = $num( 'capacity' ); if ( $cap ) { update_post_meta( $id, 'cx_teiin', (string) $cap ); }
-		carmelx_invrecv_set( $id, 'sales_point', $str( 'sales_point' ) );
+		// セールスポイント → 車両ページの「担当者より」(comment)。改行を残す
+		$sp = isset( $p['sales_point'] ) && is_scalar( $p['sales_point'] ) ? trim( sanitize_textarea_field( (string) $p['sales_point'] ) ) : '';
+		carmelx_invrecv_set( $id, 'comment', $sp );
 
 		// 装備：ACFチェックボックス（選択肢＝表示ラベル）。送られてきた項目だけ ON/OFF
 		if ( isset( $p['equipment'] ) && is_array( $p['equipment'] ) ) {
@@ -338,12 +379,133 @@ if ( ! function_exists( 'carmelx_invrecv_handle' ) ) {
 	}
 }
 
+if ( ! function_exists( 'carmelx_invrecv_export_item' ) ) {
+	/** 車両ページ1件を、外部システムの在庫に取り込める形にまとめる（読み取りだけ） */
+	function carmelx_invrecv_export_item( $pid ) {
+		$g = function ( $keys ) use ( $pid ) {
+			foreach ( (array) $keys as $k ) {
+				$v = get_post_meta( $pid, $k, true );
+				if ( is_array( $v ) ) { $v = implode( '・', array_filter( array_map( 'strval', $v ) ) ); }
+				$v = trim( (string) $v );
+				if ( '' !== $v ) { return $v; }
+			}
+			return '';
+		};
+		$digits = function ( $v ) {
+			$v = function_exists( 'mb_convert_kana' ) ? mb_convert_kana( (string) $v, 'n', 'UTF-8' ) : (string) $v;
+			$d = preg_replace( '/[^0-9]/', '', $v );
+			return '' === $d ? null : (int) $d;
+		};
+
+		// 装備：チェックの入っている欄の名前
+		$equipment = array();
+		foreach ( carmelx_invrecv_equip_labels() as $name => $label ) {
+			$v = get_post_meta( $pid, $name, true );
+			if ( is_array( $v ) ) { $v = array_filter( $v ); }
+			if ( ! empty( $v ) && '0' !== $v ) { $equipment[ $name ] = true; }
+		}
+
+		// 写真：アイキャッチ → ギャラリーの順（重複なし）
+		$ids = array();
+		$th  = (int) get_post_thumbnail_id( $pid );
+		if ( $th ) { $ids[] = $th; }
+		foreach ( array( 'carmel_gallery', 'wpex_post_gallery_ids', 'vehicle_image_ids', '_easy_image_gallery' ) as $mk ) {
+			$raw = get_post_meta( $pid, $mk, true );
+			if ( is_array( $raw ) ) { $raw = implode( ',', $raw ); }
+			foreach ( array_filter( array_map( 'intval', explode( ',', (string) $raw ) ) ) as $aid ) { $ids[] = $aid; }
+		}
+		$images = array();
+		foreach ( array_slice( array_values( array_unique( $ids ) ), 0, 30 ) as $aid ) {
+			$u = wp_get_attachment_url( $aid );
+			if ( $u ) { $images[] = $u; }
+		}
+
+		// 販売店（shop 投稿のスラッグ → 店舗名）
+		$shop_slug = $g( array( 'shop' ) );
+		$shop_name = '';
+		if ( '' !== $shop_slug ) {
+			$sp = get_posts( array( 'post_type' => 'shop', 'name' => $shop_slug, 'post_status' => 'publish', 'numberposts' => 1, 'suppress_filters' => true ) );
+			if ( $sp ) { $shop_name = $sp[0]->post_title; }
+		}
+
+		$year = $digits( $g( array( 'year', 'nenshiki' ) ) );
+		if ( $year && ( $year < 1950 || $year > 2100 ) ) { $year = null; }
+
+		return array(
+			'wp_post_id'     => (int) $pid,
+			'ext_id'         => (string) get_post_meta( $pid, 'carmel_inv_ext_id', true ),
+			'url'            => get_permalink( $pid ),
+			'status'         => get_post_status( $pid ),
+			'title'          => get_the_title( $pid ),
+			'date'           => get_post_field( 'post_date', $pid ),
+			'stock_id'       => $g( array( 'kanri_bango' ) ),
+			'maker'          => $g( array( 'marker', 'maker' ) ),
+			'type'           => $g( array( 'type', 'name', 'car_model', 'shashu' ) ),
+			'year'           => $year,
+			'mileage'        => $digits( $g( array( 'mileage', 'soukou', 'soukou_kyori', 'kyori' ) ) ),
+			'displacement'   => $digits( $g( array( 'displacement', 'haikiryou', 'haiki' ) ) ),
+			'mission'        => $g( array( 'mission', 'mt' ) ),
+			'drive'          => $g( array( 'kudou', 'drive' ) ),
+			'color'          => $g( array( 'color', 'body_color', 'iro' ) ),
+			'inspection'     => $g( array( 'inspection', 'shaken' ) ),
+			'handle'         => $g( array( 'handle' ) ),
+			'repair_history' => $g( array( 'repair_history', 'shuufuku' ) ),
+			'fuel'           => $g( array( 'fuel_type', 'fuel', 'nenryou' ) ),
+			'seibi'          => $g( array( 'seibi' ) ),
+			'recycle'        => $digits( $g( array( 'est_recycle', 'recicle', 'recycle' ) ) ),
+			'price'          => $digits( $g( array( 'est_honntai', 'price' ) ) ),
+			'total_payment'  => $digits( $g( array( 'est_total' ) ) ),
+			'capacity'       => $digits( $g( array( 'cx_teiin' ) ) ),
+			'comment'        => $g( array( 'comment' ) ),
+			'shop_slug'      => $shop_slug,
+			'shop_name'      => $shop_name,
+			'equipment'      => $equipment,
+			'images'         => $images,
+		);
+	}
+}
+
+if ( ! function_exists( 'carmelx_invrecv_export' ) ) {
+	/** GET carmel/v1/inventory/export?page=1&per_page=50&status=publish|all */
+	function carmelx_invrecv_export( WP_REST_Request $req ) {
+		$page = max( 1, (int) $req->get_param( 'page' ) );
+		$per  = (int) $req->get_param( 'per_page' );
+		$per  = $per > 0 ? min( 100, $per ) : 50;
+		$statuses = ( 'all' === $req->get_param( 'status' ) ) ? array( 'publish', 'draft', 'pending', 'private' ) : array( 'publish' );
+		$q = new WP_Query( array(
+			'post_type'        => 'portfolio',
+			'post_status'      => $statuses,
+			'posts_per_page'   => $per,
+			'paged'            => $page,
+			'orderby'          => 'date',
+			'order'            => 'DESC',
+			'fields'           => 'ids',
+			'suppress_filters' => true,
+		) );
+		$items = array();
+		foreach ( (array) $q->posts as $pid ) { $items[] = carmelx_invrecv_export_item( (int) $pid ); }
+		return new WP_REST_Response( array(
+			'ok'    => true,
+			'total' => (int) $q->found_posts,
+			'pages' => (int) $q->max_num_pages,
+			'page'  => $page,
+			'items' => $items,
+		), 200 );
+	}
+}
+
 if ( ! function_exists( 'carmelx_invrecv_routes' ) ) {
 	function carmelx_invrecv_routes() {
 		register_rest_route( 'carmel/v1', '/inventory', array(
 			'methods'             => 'POST',
 			'callback'            => 'carmelx_invrecv_handle',
 			'permission_callback' => function () { return current_user_can( 'publish_posts' ); },
+		) );
+		// ホームページの車両 → 外部システムの在庫へ取り込むための一覧（読み取りだけ）
+		register_rest_route( 'carmel/v1', '/inventory/export', array(
+			'methods'             => 'GET',
+			'callback'            => 'carmelx_invrecv_export',
+			'permission_callback' => function () { return current_user_can( 'edit_others_posts' ); },
 		) );
 		// 疎通確認用
 		register_rest_route( 'carmel/v1', '/ping', array(
