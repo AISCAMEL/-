@@ -1,0 +1,7 @@
+{
+  "name": "ais-web-studio",
+  "version": "0.1.0",
+  "description": "プロフェッショナルWeb制作チーム（7エージェント＋10スキル＋標準ワークフロー）。Next.js/TypeScript/Tailwind/shadcn/Motion/Vercel を前提に、デザイン性・操作性・マーケ性能・技術品質を兼ね備えたサイトを再現性高く制作する。",
+  "author": { "name": "合同会社アイズ（AIS CO., LTD.）" },
+  "keywords": ["web", "design", "nextjs", "tailwind", "seo", "ux", "qa", "landing-page"]
+}

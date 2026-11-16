@@ -1,0 +1,17 @@
+{
+  "name": "ais-marketplace",
+  "owner": { "name": "合同会社アイズ（AIS CO., LTD.）" },
+  "metadata": {
+    "description": "合同会社アイズ 社内向け Claude Code プラグイン置き場",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "ais-web-studio",
+      "source": "./plugins/ais-web-studio",
+      "description": "プロフェッショナルWeb制作チーム（7エージェント＋10スキル＋標準14工程ワークフロー）。複数の企業サイト・LP・サービスサイト制作に再利用できる。",
+      "version": "0.1.0",
+      "category": "development"
+    }
+  ]
+}
