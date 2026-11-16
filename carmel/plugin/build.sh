@@ -15,6 +15,7 @@ FILES=(
   wpcode-ai-diagnose.php
   wpcode-ai-intake.php
   wpcode-inventory-receiver.php
+  wpcode-inventory-selftest.php
   wpcode-site-monitor.php
   wpcode-admin-menu.php
   wpcode-car-spec-extra.php
@@ -48,6 +49,7 @@ echo "built carmel-system.zip (v$VER) with ${#FILES[@]} modules"
 # 軽量版「カーメル 在庫連携」（在庫の受け口だけ。サイトの表示は変えない＝本番に先に入れられる）
 BRIDGE="$HERE/carmel-inventory-bridge"
 cp "$SRC/wpcode-inventory-receiver.php" "$BRIDGE/wpcode-inventory-receiver.php"
+cp "$SRC/wpcode-inventory-selftest.php" "$BRIDGE/wpcode-inventory-selftest.php"
 BVER="$(grep -oE "Version:[[:space:]]*[0-9.]+" "$BRIDGE/carmel-inventory-bridge.php" | grep -oE "[0-9.]+")"
 rm -f carmel-inventory-bridge.zip
 zip -rq carmel-inventory-bridge.zip carmel-inventory-bridge -x "*.DS_Store"
