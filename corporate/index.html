@@ -8,17 +8,20 @@
 
 <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
 
-<!-- OGP -->
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="合同会社アイズ（AIS）" />
 <meta property="og:title" content="合同会社アイズ｜車のこと、ぜんぶ。" />
 <meta property="og:description" content="自動車の販売・買取・リース・セキュリティ・レッカー・オークション代行・FC事業と、AI／アプリ／Web開発まで。福島県いわき市から全国へ。" />
 
-<!-- デザインの設定（色・フォント等）は theme.css に集約。見た目を変えるときは theme.css を編集 -->
+<!-- フォント（上質な明朝＋エレガントな英字） -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@500;600;700&display=swap" rel="stylesheet" />
+
+<!-- デザインの設定（色・フォント等）は theme.css に集約 -->
 <link rel="stylesheet" href="assets/css/theme.css" />
 <link rel="stylesheet" href="assets/css/style.css" />
 
-<!-- 構造化データ（会社情報） -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -46,7 +49,7 @@
 <header class="site-header">
   <div class="wrap">
     <a class="brand" href="index.html" aria-label="合同会社アイズ ホーム">
-      <span class="logo">AIS</span>
+      <span class="mark">AIS</span>
       <span class="name">合同会社アイズ<small>AIS CO., LTD.</small></span>
     </a>
     <nav class="nav" id="nav">
@@ -56,170 +59,133 @@
       <a class="nav-link" href="#contact">お問い合わせ</a>
       <a class="btn btn-gold btn-sm" href="#contact">ご相談はこちら</a>
     </nav>
-    <button class="nav-toggle" id="navToggle" aria-label="メニュー">☰</button>
+    <button class="nav-toggle" id="navToggle" aria-label="メニューを開閉">☰</button>
   </div>
 </header>
 
 <!-- ============ ヒーロー ============ -->
 <section class="hero">
   <div class="wrap">
-    <span class="badge">福島県いわき市 ／ 全国対応</span>
-    <h1>車のこと、ぜんぶ。<br>そして、<span class="hl">次の事業</span>へ。</h1>
-    <p class="lead">
-      合同会社アイズは、自動車の<strong>販売・買取・リース・セキュリティ・レッカー・オークション代行</strong>までを一社で担う車の総合カンパニー。
-      あわせて、AI・ノーコードアプリ・Web開発で未来の事業も育てています。
+    <span class="kicker">AIS CO., LTD. — Fukushima, Japan</span>
+    <h1 class="reveal">車のこと、ぜんぶ。<br>そして、<span class="hl">次の事業</span>へ。</h1>
+    <p class="lead reveal">
+      自動車の販売・買取・リース・セキュリティ・レッカー・オークション代行までを一社で担う、
+      車の総合カンパニー。あわせて AI・アプリ・Web開発で、未来の事業を育てています。
     </p>
-    <div class="cta">
-      <a class="btn btn-gold" href="#business">車の事業を見る</a>
+    <div class="cta reveal">
+      <a class="btn btn-gold" href="#business">事業を見る <span class="arw">→</span></a>
       <a class="btn btn-ghost" href="#contact">お問い合わせ</a>
     </div>
-    <div class="stats">
-      <div><div class="t-num">7+</div><div class="t-label">車のサービス・ブランド</div></div>
-      <div><div class="t-num">全国</div><div class="t-label">対応エリア</div></div>
-      <div><div class="t-num">8 : 2</div><div class="t-label">自動車事業 ： IT事業</div></div>
+    <div class="meta reveal">
+      <div><div class="m-num">07</div><div class="m-label">車のサービス・ブランド</div></div>
+      <div><div class="m-num">全国</div><div class="m-label">対応エリア</div></div>
+      <div><div class="m-num">8:2</div><div class="m-label">自動車事業 ／ IT事業</div></div>
     </div>
   </div>
 </section>
 
 <!-- ============ 自動車事業（約8割）============ -->
 <!--
-   ▼ 各ブランドの詳しいページができたら、下の href="#" を各サイトのURLに差し替えてください。
-     例）カーメル → https://carmel.example.com/   のように。
+   ▼ 各ブランドの詳しいページができたら、各行の href="#" を各サイトのURLに差し替えてください。
 -->
 <section class="section" id="business">
   <div class="wrap">
-    <div class="section-head center">
-      <span class="ratio-tag car">自動車事業 ／ 事業の約 8 割</span>
-      <h2 style="margin-top:14px;">クルマのことは、アイズにすべておまかせ。</h2>
-      <p>購入から売却、維持、もしものレッカーまで。車のライフサイクル全体をカバーします。</p>
+    <div class="section-head reveal">
+      <span class="eyebrow">Automotive</span>
+      <h2>クルマのことは、<br>アイズにすべておまかせ。</h2>
+      <p>購入から売却、維持、車両の保護、もしものレッカーまで。車のライフサイクル全体を一社でカバーします。</p>
+      <p class="ratio-tag" style="margin-top:20px;">自動車事業 <b>／ 事業の約 8 割</b></p>
     </div>
 
-    <div class="grid cols-3">
-      <!-- 1. カーメル -->
-      <article class="card car">
-        <span class="top-accent"></span>
-        <div class="ico">🚗</div>
-        <div class="en">CARMEL</div>
-        <h3>カーメル｜自動車販売</h3>
-        <p>新車・中古車の販売。あなたにぴったりの一台を、プロがご提案します。</p>
-        <a class="more" href="#">詳しく見る →</a>
-      </article>
-
-      <!-- 2. BUYMO -->
-      <article class="card car">
-        <span class="top-accent"></span>
-        <div class="ico">💰</div>
-        <div class="en">BUYMO</div>
-        <h3>バイモ｜自動車買取</h3>
-        <p>無料出張査定・高価買取・最短即日入金。愛車をしっかり評価します。</p>
-        <a class="more" href="#">詳しく見る →</a>
-      </article>
-
-      <!-- 3. CARSHICO -->
-      <article class="card car">
-        <span class="top-accent"></span>
-        <div class="ico">🔑</div>
-        <div class="en">CARSHICO</div>
-        <h3>カーシコ｜カーリース</h3>
-        <p>頭金0円・月々定額で新車に乗れる。車のサブスクという新しい選択。</p>
-        <a class="more" href="#">詳しく見る →</a>
-      </article>
-
-      <!-- 4. 天護 TENGO -->
-      <article class="card car">
-        <span class="top-accent"></span>
-        <div class="ico">🛡️</div>
-        <div class="en">TENGO</div>
-        <h3>天護（テンゴ）｜車両セキュリティ</h3>
-        <p>盗難対策・GPS追跡で大切な愛車を見守る、車両セキュリティサービス。</p>
-        <a class="more" href="#">詳しく見る →</a>
-      </article>
-
-      <!-- 5. レッカー＆カーレスキュー -->
-      <article class="card car">
-        <span class="top-accent"></span>
-        <div class="ico">🚨</div>
-        <div class="en">RESCUE &amp; GPS</div>
-        <h3>レッカー＆カーレスキュー</h3>
-        <p>事故・故障・バッテリー上がりに緊急対応。GPSによる位置把握にも対応。</p>
-        <a class="more" href="#">詳しく見る →</a>
-      </article>
-
-      <!-- 6. AUC-AGENT -->
-      <article class="card car">
-        <span class="top-accent"></span>
-        <div class="ico">🔨</div>
-        <div class="en">AUC-AGENT</div>
-        <h3>オークション代行</h3>
-        <p>全国のオートオークションからプロが入札・落札・出品を代行。相場よりおトクに。</p>
-        <a class="more" href="#">詳しく見る →</a>
-      </article>
+    <div class="biz-list">
+      <a class="biz-row reveal" href="#">
+        <div class="no">01</div>
+        <div><div class="en">CARMEL</div><h3>カーメル｜自動車販売</h3><p>新車・中古車の販売。ご予算とご希望に合わせ、あなたにぴったりの一台をプロがご提案します。</p></div>
+        <div class="go">→</div>
+      </a>
+      <a class="biz-row reveal" href="#">
+        <div class="no">02</div>
+        <div><div class="en">BUYMO</div><h3>バイモ｜自動車買取</h3><p>無料出張査定・高価買取・最短即日入金。愛車の価値を正しく評価し、気持ちよくお売りいただけます。</p></div>
+        <div class="go">→</div>
+      </a>
+      <a class="biz-row reveal" href="#">
+        <div class="no">03</div>
+        <div><div class="en">CARSHICO</div><h3>カーシコ｜カーリース</h3><p>頭金0円・月々定額で新車に乗れる。車のサブスクという、新しく合理的な持ち方をご提案します。</p></div>
+        <div class="go">→</div>
+      </a>
+      <a class="biz-row reveal" href="#">
+        <div class="no">04</div>
+        <div><div class="en">TENGO</div><h3>天護（テンゴ）｜車両セキュリティ</h3><p>盗難対策・GPS追跡で大切な愛車を見守る車両セキュリティ。所在の把握にも対応します。</p></div>
+        <div class="go">→</div>
+      </a>
+      <a class="biz-row reveal" href="#">
+        <div class="no">05</div>
+        <div><div class="en">Rescue &amp; GPS</div><h3>レッカー＆カーレスキュー</h3><p>事故・故障・バッテリー上がりなどの緊急時に迅速対応。GPSによる位置把握にも対応します。</p></div>
+        <div class="go">→</div>
+      </a>
+      <a class="biz-row reveal" href="#">
+        <div class="no">06</div>
+        <div><div class="en">AUC-AGENT</div><h3>オークション代行</h3><p>全国のオートオークションから、プロが入札・落札・出品を代行。中間コストを抑え、相場よりおトクに。</p></div>
+        <div class="go">→</div>
+      </a>
     </div>
 
-    <!-- FC事業（幅広の帯で1枚）-->
-    <article class="card car fc-card" style="margin-top:20px;">
-      <span class="top-accent"></span>
-      <div class="ico" style="margin:0;">🤝</div>
+    <!-- FC事業 -->
+    <div class="fc-band reveal">
       <div>
-        <div class="en">FRANCHISE</div>
-        <h3 style="margin-bottom:6px;">FC事業｜カーメル／BUYMO 加盟店募集</h3>
-        <p style="margin:0;">アイズのノウハウとブランドで、あなたの地域で車事業を。フランチャイズ加盟を募集しています。</p>
+        <div class="en">Franchise</div>
+        <h3>FC事業｜カーメル／BUYMO 加盟店募集</h3>
+        <p>アイズのノウハウとブランドで、あなたの地域に車事業を。フランチャイズ加盟を募集しています。</p>
       </div>
-      <a class="btn btn-outline btn-sm" href="#contact">加盟を相談</a>
-    </article>
+      <div class="cta-wrap"><a class="btn btn-gold" href="#contact">加盟を相談する <span class="arw">→</span></a></div>
+    </div>
   </div>
 </section>
 
 <!-- ============ IT・クリエイティブ事業（約2割）============ -->
 <section class="section-sm it-band" id="it">
   <div class="wrap">
-    <div class="section-head center">
-      <span class="ratio-tag it">IT・クリエイティブ事業 ／ 事業の約 2 割</span>
-      <h2 style="margin-top:14px;">AIとアプリで、次の事業をつくる。</h2>
+    <div class="section-head reveal">
+      <span class="eyebrow">Technology</span>
+      <h2>AIとアプリで、次の事業をつくる。</h2>
       <p>車事業で培った現場感を、ITの力で加速。アプリ開発を最優先に取り組んでいます。</p>
+      <p class="ratio-tag" style="margin-top:20px;">IT・クリエイティブ事業 <b>／ 事業の約 2 割</b></p>
     </div>
 
-    <div class="grid cols-2">
-      <!-- APPREX -->
-      <article class="card it">
-        <span class="top-accent"></span>
-        <div class="ico">📱</div>
+    <div class="it-grid reveal">
+      <div class="it-cell">
         <div class="en">APPREX</div>
         <h3>APPREX｜ノーコード アプリ開発</h3>
         <p>AIとノーコードで、アイデアを素早くアプリに。自社アプリの開発・リリースを進める最優先事業です。</p>
-        <a class="more" href="#">詳しく見る →</a>
-      </article>
-
-      <!-- WEB crews -->
-      <article class="card it">
-        <span class="top-accent"></span>
-        <div class="ico">💻</div>
-        <div class="en">WEB CREWS</div>
+        <a class="tlink" href="#">View more</a>
+      </div>
+      <div class="it-cell">
+        <div class="en">WEB crews</div>
         <h3>WEB crews｜Web制作・システム開発</h3>
         <p>ホームページ制作、システム開発、マーケティングまで。事業の成長をデジタルで支えます。</p>
-        <a class="more" href="#">詳しく見る →</a>
-      </article>
+        <a class="tlink" href="#">View more</a>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- ============ 会社概要 ============ -->
 <section class="section" id="company">
-  <div class="wrap">
-    <div class="section-head center">
-      <span class="eyebrow">COMPANY</span>
+  <div class="wrap narrow">
+    <div class="section-head reveal">
+      <span class="eyebrow">Company</span>
       <h2>会社概要</h2>
     </div>
-    <div class="company" style="max-width:820px; margin:0 auto;">
-      <table>
-        <tr><th>会社名</th><td>合同会社アイズ（AIS CO., LTD.）</td></tr>
-        <tr><th>代表社員</th><td>吉田 一平</td></tr>
-        <tr><th>所在地</th><td>〒979-0204　福島県いわき市四倉町細谷字大町1番</td></tr>
-        <tr><th>事業内容</th><td>自動車の販売・買取・リース・車両セキュリティ・レッカー／カーレスキュー・オートオークション代行・FC（フランチャイズ）事業／AI・ノーコードアプリ開発・Web制作・システム開発・マーケティング</td></tr>
-        <tr><th>許認可</th><td>古物商許可　第25121A010859号</td></tr>
-        <tr><th>法人番号</th><td>T9380003004349</td></tr>
-        <tr><th>メール</th><td><a href="mailto:info@aisjaltd.com" style="color:var(--brand);text-decoration:underline;">info@aisjaltd.com</a></td></tr>
-      </table>
+    <div class="company reveal">
+      <dl>
+        <div class="row"><dt>会社名</dt><dd>合同会社アイズ（AIS CO., LTD.）</dd></div>
+        <div class="row"><dt>代表社員</dt><dd>吉田 一平</dd></div>
+        <div class="row"><dt>所在地</dt><dd>〒979-0204　福島県いわき市四倉町細谷字大町1番</dd></div>
+        <div class="row"><dt>事業内容</dt><dd>自動車の販売・買取・リース・車両セキュリティ・レッカー／カーレスキュー・オートオークション代行・FC（フランチャイズ）事業／AI・ノーコードアプリ開発・Web制作・システム開発・マーケティング</dd></div>
+        <div class="row"><dt>許認可</dt><dd>古物商許可　第25121A010859号</dd></div>
+        <div class="row"><dt>法人番号</dt><dd>T9380003004349</dd></div>
+        <div class="row"><dt>メール</dt><dd><a href="mailto:info@aisjaltd.com">info@aisjaltd.com</a></dd></div>
+      </dl>
     </div>
   </div>
 </section>
@@ -227,10 +193,11 @@
 <!-- ============ お問い合わせ CTA ============ -->
 <section class="section" id="contact" style="padding-top:0;">
   <div class="wrap">
-    <div class="cta-band">
-      <h2>車のこと・IT のこと、まずはお気軽にご相談ください。</h2>
+    <div class="cta-band reveal">
+      <span class="eyebrow">Contact</span>
+      <h2>車のこと・IT のこと、<br>まずはお気軽にご相談ください。</h2>
       <p>販売・買取・リース・FC加盟・アプリ／Web開発まで。担当者が丁寧にお答えします。</p>
-      <a class="btn btn-gold" href="mailto:info@aisjaltd.com">メールで相談する（info@aisjaltd.com）</a>
+      <a class="btn btn-gold" href="mailto:info@aisjaltd.com">メールで相談する <span class="arw">→</span></a>
     </div>
   </div>
 </section>
@@ -240,16 +207,16 @@
   <div class="wrap">
     <div class="footer-grid">
       <div>
-        <a class="brand" href="index.html" style="margin-bottom:14px;">
-          <span class="logo">AIS</span>
-          <span class="name" style="color:#fff;">合同会社アイズ<small style="color:var(--accent-2);">AIS CO., LTD.</small></span>
+        <a class="brand" href="index.html" style="margin-bottom:18px;">
+          <span class="mark">AIS</span>
+          <span class="name">合同会社アイズ<small>AIS CO., LTD.</small></span>
         </a>
-        <p style="font-size:13.5px; margin:0; color:rgba(255,255,255,.7);">
+        <p style="font-size:14px; margin:0; color:rgba(255,255,255,.66); line-height:1.9;">
           福島県いわき市から全国へ。<br>車の総合サービス＋ITで、次の事業をつくります。
         </p>
       </div>
       <div>
-        <h4>自動車事業</h4>
+        <h4>Automotive</h4>
         <a href="#business">カーメル（販売）</a>
         <a href="#business">BUYMO（買取）</a>
         <a href="#business">CARSHICO（リース）</a>
@@ -259,7 +226,7 @@
         <a href="#business">FC事業</a>
       </div>
       <div>
-        <h4>IT・その他</h4>
+        <h4>Technology</h4>
         <a href="#it">APPREX（アプリ開発）</a>
         <a href="#it">WEB crews（Web開発）</a>
         <a href="#company">会社概要</a>
@@ -276,14 +243,27 @@
 <script>
   // スマホ用メニューの開閉
   (function () {
-    var t = document.getElementById('navToggle');
-    var n = document.getElementById('nav');
+    var t = document.getElementById('navToggle'), n = document.getElementById('nav');
     if (t && n) {
       t.addEventListener('click', function () { n.classList.toggle('open'); });
       n.addEventListener('click', function (e) {
         if (e.target.classList.contains('nav-link')) n.classList.remove('open');
       });
     }
+  })();
+  // スクロールで要素をふわっと表示（控えめ・目的のある動き）
+  (function () {
+    var els = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      els.forEach(function (el) { el.classList.add('in'); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+    els.forEach(function (el) { io.observe(el); });
   })();
 </script>
 </body>
