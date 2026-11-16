@@ -168,6 +168,23 @@ if ( ! function_exists( 'carmelx_survey_text' ) ) {
 			}
 		} );
 
+		$try( 'Post Types Unlimited で作った投稿タイプ・タクソノミー', function () use ( &$L ) {
+			foreach ( array( 'ptu' => '_ptu_name', 'ptu_tax' => '_ptu_name' ) as $type => $key ) {
+				foreach ( (array) get_posts( array( 'post_type' => $type, 'post_status' => 'publish', 'numberposts' => 50, 'suppress_filters' => true ) ) as $p ) {
+					$L[] = ( 'ptu' === $type ? '投稿タイプ' : 'タクソノミー' ) . ' | ' . $p->post_title . ' | ' . get_post_meta( $p->ID, $key, true );
+				}
+			}
+		} );
+
+		$try( '記事の入れ物の保持（旧プラグインを止めても残すための控え）', function () use ( &$L ) {
+			if ( ! function_exists( 'carmelx_ctypes_status' ) ) { $L[] = 'この機能は入っていません'; return; }
+			foreach ( carmelx_ctypes_status() as $k => $v ) { $L[] = $k . ' | ' . $v; }
+			foreach ( array( 'media_article', 'shop_blog', 'news' ) as $pt ) {
+				$o = get_post_type_object( $pt ); if ( ! $o ) { continue; }
+				$L[] = '   ' . $pt . ' の設定：URL=' . wp_json_encode( $o->rewrite, JSON_UNESCAPED_UNICODE ) . ' 一覧ページ=' . wp_json_encode( $o->has_archive ) . ' 対応=' . implode( ',', array_keys( (array) get_all_post_type_supports( $pt ) ) );
+			}
+		} );
+
 		$try( 'ショートコード（出どころ：名前）', function () use ( &$L, &$shortcode_tags ) {
 			$by = array();
 			foreach ( (array) $shortcode_tags as $tag => $cb ) { $by[ carmelx_survey_owner( carmelx_survey_src( $cb ) ) ][] = $tag; }
@@ -181,7 +198,7 @@ if ( ! function_exists( 'carmelx_survey_text' ) ) {
 				$ns = preg_match( '#^/([^/]+/v[0-9\.]+)#', $route, $m ) ? $m[1] : '(root)';
 				if ( ! isset( $by[ $ns ] ) ) { $by[ $ns ] = array( 0, '' ); }
 				$by[ $ns ][0]++;
-				if ( '' === $by[ $ns ][1] ) { foreach ( (array) $handlers as $h ) { if ( isset( $h['callback'] ) ) { $s = carmelx_survey_src( $h['callback'] ); if ( '' !== $s ) { $by[ $ns ][1] = carmelx_survey_owner( $s ); break; } } } }
+				if ( '' === $by[ $ns ][1] ) { foreach ( (array) $handlers as $h ) { if ( isset( $h['callback'] ) ) { $s = carmelx_survey_src( $h['callback'] ); if ( '' !== $s && false !== strpos( $s, '/' ) ) { $by[ $ns ][1] = carmelx_survey_owner( $s ); break; } } } }
 			}
 			ksort( $by );
 			foreach ( $by as $ns => $v ) { $L[] = $ns . ' | ' . $v[0] . ' | ' . $v[1]; }

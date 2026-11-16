@@ -17,6 +17,7 @@ FILES=(
   wpcode-inventory-receiver.php
   wpcode-inventory-selftest.php
   wpcode-site-survey.php
+  wpcode-content-types.php
   wpcode-site-monitor.php
   wpcode-admin-menu.php
   wpcode-car-spec-extra.php
