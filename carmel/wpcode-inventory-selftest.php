@@ -198,7 +198,24 @@ if ( ! function_exists( 'carmelx_invtest_run' ) ) {
 			$lq->set_body( wp_json_encode( array( 'links' => array( array( 'wp_post_id' => $id, 'ext_id' => $ext ), array( 'wp_post_id' => $id, 'ext_id' => 'selftest-other' ) ) ) ) );
 			$ld = (array) carmelx_invrecv_link( $lq )->get_data();
 			$add( 1 === (int) $ld['already'] && 0 === (int) $ld['linked'] && 1 === count( (array) $ld['skipped'] ), '目印：付いているページの目印は付け替えない', '' );
+			// 「いま付いている番号」を正しく添えた時だけ付け替える → すぐ元に戻す
+			$lq->set_body( wp_json_encode( array( 'links' => array( array( 'wp_post_id' => $id, 'ext_id' => $ext . '-x', 'replace' => 'selftest-wrong' ) ) ) ) );
+			$l1 = (array) carmelx_invrecv_link( $lq )->get_data();
+			$lq->set_body( wp_json_encode( array( 'links' => array( array( 'wp_post_id' => $id, 'ext_id' => $ext . '-x', 'replace' => $ext ) ) ) ) );
+			$l2 = (array) carmelx_invrecv_link( $lq )->get_data();
+			$moved = (string) get_post_meta( $id, 'carmel_inv_ext_id', true ) === $ext . '-x';
+			update_post_meta( $id, 'carmel_inv_ext_id', $ext );
+			$add( 0 === (int) $l1['linked'] && 1 === (int) $l2['linked'] && $moved, '目印：正しい番号を添えた時だけ付け替えられる', '' );
 		}
+
+		/* ---------- 11b) 在庫を削除した時：目印を外す ---------- */
+		$st_before = get_post_status( $id );
+		list( $http, $r8 ) = carmelx_invtest_call( array( 'ext_id' => $ext, 'action' => 'detach' ) );
+		$add( 200 === $http && '' === (string) get_post_meta( $id, 'carmel_inv_ext_id', true ) && get_post_status( $id ) === $st_before && $meta( $id, 'kanri_bango' ) === $stock, '在庫だけ削除：目印を外し、車両ページはそのまま', get_post_status( $id ) );
+		update_post_meta( $id, 'carmel_inv_ext_id', $ext );
+		list( $http, $r9 ) = carmelx_invtest_call( array( 'ext_id' => $ext, 'action' => 'unpublish', 'detach' => true ) );
+		$add( 200 === $http && 'draft' === get_post_status( $id ) && '' === (string) get_post_meta( $id, 'carmel_inv_ext_id', true ), '在庫を削除して取り下げ：下書きにして目印も外す', get_post_status( $id ) );
+		update_post_meta( $id, 'carmel_inv_ext_id', $ext ); // 後片付けで見つけられるように戻す
 
 		/* ---------- 12) ACFの欄の割り当て状況（参考） ---------- */
 		if ( function_exists( 'carmelx_invrecv_field_key' ) && function_exists( 'update_field' ) ) {

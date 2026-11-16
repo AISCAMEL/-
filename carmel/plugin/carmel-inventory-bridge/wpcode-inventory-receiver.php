@@ -39,6 +39,12 @@
  * ・タイトルは、手で付けたもの（自動の並びと違うもの）は変えない。
  * ・装備を外した時は、車両ページの装備一覧（equip）からも外す。取り込みは equip と安心フラグも読む。
  * ・写真：上限を80枚に。1枚ごとに取り込み済みを記録。1枚あたりの待ち時間に上限。
+ *
+ * v1.26.0
+ * ・在庫を削除した時は、車両ページから在庫の番号（目印）を外す（action=unpublish＋detach、または action=detach）。
+ *   目印が残ったままだと、そのページを後で取り込み直した時に紐づけられなくなるため。
+ * ・目印の付け替え：link の replace に「いま付いている番号」を添えた時だけ、新しい番号に替える
+ *   （在庫が既に無い古い目印の付け替え用。番号が一致しなければ替えない）。
  * 管理者/投稿権限ユーザーのみ。固有名＋function_existsガード。
  * ---------------------------------------------------------------------------
  */
@@ -294,16 +300,23 @@ if ( ! function_exists( 'carmelx_invrecv_handle' ) ) {
 			return carmelx_invrecv_err( 400, 'ext_id_required', '外部システムの在庫ID（ext_id）がありません。外部システム側を最新版にしてください' );
 		}
 
-		/* ---------- 下書きに戻すだけ（外部で在庫を削除した時など） ---------- */
-		if ( 'unpublish' === $str( 'action' ) ) {
+		/* ---------- 取り下げ／目印を外す（外部で在庫を削除した時など） ----------
+		 *   action=unpublish … 下書きに戻す。detach=true なら目印も外す
+		 *   action=detach    … 公開状態はそのまま、目印だけ外す（車両ページは残して在庫だけ消す時）
+		 */
+		$action = $str( 'action' );
+		if ( 'unpublish' === $action || 'detach' === $action ) {
 			$id = carmelx_invrecv_find_by( 'carmel_inv_ext_id', $ext_id );
 			if ( ! $id ) { return new WP_REST_Response( array( 'ok' => true, 'wp_post_id' => 0, 'status' => 'none', 'url' => '' ), 200 ); }
 			if ( ! current_user_can( 'edit_post', $id ) ) { return carmelx_invrecv_err( 403, 'forbidden', 'この車両ページを編集する権限がありません' ); }
-			$r = wp_update_post( array( 'ID' => $id, 'post_status' => 'draft' ), true );
-			if ( is_wp_error( $r ) ) { return carmelx_invrecv_err( 500, 'wp_error', $r->get_error_message() ); }
-			update_post_meta( $id, 'carmel_inv_status', '削除' );
+			if ( 'unpublish' === $action ) {
+				$r = wp_update_post( array( 'ID' => $id, 'post_status' => 'draft' ), true );
+				if ( is_wp_error( $r ) ) { return carmelx_invrecv_err( 500, 'wp_error', $r->get_error_message() ); }
+				update_post_meta( $id, 'carmel_inv_status', '削除' );
+			}
+			if ( 'detach' === $action || ! empty( $p['detach'] ) ) { delete_post_meta( $id, 'carmel_inv_ext_id' ); }
 			update_post_meta( $id, 'carmel_inv_synced_at', current_time( 'mysql' ) );
-			return new WP_REST_Response( array( 'ok' => true, 'wp_post_id' => $id, 'status' => 'draft', 'url' => get_permalink( $id ) ), 200 );
+			return new WP_REST_Response( array( 'ok' => true, 'wp_post_id' => $id, 'status' => get_post_status( $id ), 'url' => get_permalink( $id ) ), 200 );
 		}
 
 		$stock_id = $str( 'stock_id' );
@@ -681,7 +694,9 @@ if ( ! function_exists( 'carmelx_invrecv_link' ) ) {
 			if ( ! $pid || '' === $ext || 'portfolio' !== get_post_type( $pid ) || ! current_user_can( 'edit_post', $pid ) ) { $skipped[] = $pid; continue; }
 			$cur = (string) get_post_meta( $pid, 'carmel_inv_ext_id', true );
 			if ( $cur === $ext ) { $already++; continue; }
-			if ( '' !== $cur ) { $skipped[] = $pid; continue; }                                   // 別の在庫に紐づけ済み
+			// 別の番号が付いている → 「いま付いている番号」を正しく添えた時だけ付け替える（在庫が既に無い古い目印の整理）
+			$rep = is_array( $l ) && isset( $l['replace'] ) && is_scalar( $l['replace'] ) ? sanitize_text_field( (string) $l['replace'] ) : '';
+			if ( '' !== $cur && ( '' === $rep || $rep !== $cur ) ) { $skipped[] = $pid; continue; }
 			$other = carmelx_invrecv_find_by( 'carmel_inv_ext_id', $ext );
 			if ( $other && $other !== $pid ) { $skipped[] = $pid; continue; }                     // その番号は別のページで使用中
 			update_post_meta( $pid, 'carmel_inv_ext_id', $ext );
