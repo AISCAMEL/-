@@ -150,6 +150,7 @@ function carmel_cb_handle_post() {
 				'ai_provider'     => ( ( $_POST['ai_provider'] ?? 'openrouter' ) === 'claude' ) ? 'claude' : 'openrouter',
 				'claude_api_key'  => sanitize_text_field( wp_unslash( $_POST['claude_api_key'] ?? '' ) ),
 				'claude_model'    => sanitize_text_field( wp_unslash( $_POST['claude_model'] ?? 'claude-sonnet-5-5' ) ),
+				'agent_mode'      => isset( $_POST['agent_mode'] ) ? 1 : 0,
 				'log_enabled'     => isset( $_POST['log_enabled'] ) ? 1 : 0,
 				'handoff_enabled' => isset( $_POST['handoff_enabled'] ) ? 1 : 0,
 				'biz_start'       => max( 0, min( 23, (int) ( $_POST['biz_start'] ?? 10 ) ) ),
@@ -407,7 +408,42 @@ function carmel_cb_handle_post() {
 				'keywords' => sanitize_text_field( wp_unslash( $_POST['keywords'] ?? '' ) ),
 				'enabled'  => isset( $_POST['faq_enabled'] ),
 			) );
-			carmel_cb_notice( 'FAQ（学習データ）を保存しました。' );
+			// 「答えられなかった質問」から登録した場合は、その行を解決済みにする（似た質問もまとめて外す）
+			$solved = 0;
+			if ( $faq_id === 0 && function_exists( 'carmel_cb_unanswered_resolve' ) ) {
+				$ua_id = sanitize_text_field( wp_unslash( $_POST['ua_id'] ?? '' ) );
+				if ( $ua_id !== '' ) {
+					$before = count( carmel_cb_unanswered_get() );
+					carmel_cb_unanswered_remove( $ua_id );
+					$solved += $before - count( carmel_cb_unanswered_get() );
+				}
+				$solved += carmel_cb_unanswered_resolve( $question );
+			}
+			carmel_cb_notice( 'FAQ（学習データ）を保存しました。' . ( $solved > 0 ? '「答えられなかった質問」から ' . $solved . ' 件を解決済みにしました。' : '' ) );
+			break;
+
+		case 'agent_mode_set':
+			$on = ! empty( $_POST['agent_on'] ) ? 1 : 0;
+			if ( $on && ( ! function_exists( 'carmel_cb_agent_available' ) || ! carmel_cb_agent_available( carmel_cb_get_settings() ) ) ) {
+				carmel_cb_notice( 'エージェントモードは「Claude直接」＋Claude APIキーの設定が必要です。基本設定をご確認ください。', 'error' );
+				break;
+			}
+			carmel_cb_update_settings( array( 'agent_mode' => $on ) );
+			carmel_cb_notice( $on ? '🧠 エージェントモードを ON にしました（お客様向けのチャットに反映されます）。' : 'エージェントモードを OFF にしました（従来方式に戻りました）。' );
+			break;
+
+		case 'unanswered_delete':
+			if ( function_exists( 'carmel_cb_unanswered_remove' ) ) {
+				carmel_cb_unanswered_remove( sanitize_text_field( wp_unslash( $_POST['ua_id'] ?? '' ) ) );
+				carmel_cb_notice( '一覧から外しました。' );
+			}
+			break;
+
+		case 'unanswered_clear':
+			if ( function_exists( 'carmel_cb_unanswered_set' ) ) {
+				carmel_cb_unanswered_set( array() );
+				carmel_cb_notice( '「答えられなかった質問」をすべてクリアしました。' );
+			}
 			break;
 
 		case 'delete_faq':
@@ -872,6 +908,9 @@ function carmel_cb_view_home() {
 	$notify_to = trim( (string) ( $s['admin_notify_email'] ?? '' ) ) !== '' || trim( (string) ( $s['notify_email'] ?? '' ) ) !== '' || ! empty( $s['slack_bot_token'] ) || ! empty( $s['slack_webhook'] );
 	$slack_ok  = ! empty( $s['slack_bot_token'] ) && ! empty( $s['slack_channel'] );
 	$fu_on     = ! empty( $s['apply_followup_on'] ) || ! empty( $s['convo_followup_on'] );
+	$agent_on  = function_exists( 'carmel_cb_agent_on' ) && carmel_cb_agent_on( $s );
+	$agent_st  = function_exists( 'carmel_cb_agent_stats_get' ) ? carmel_cb_agent_stats_get() : array();
+	$ua_count  = function_exists( 'carmel_cb_unanswered_get' ) ? count( carmel_cb_unanswered_get() ) : 0;
 
 	$chk = function ( $ok, $okmsg, $ngmsg, $tab ) use ( $link ) {
 		echo '<li style="margin:0 0 8px;display:flex;align-items:flex-start;gap:8px">';
@@ -895,6 +934,18 @@ function carmel_cb_view_home() {
 			<div style="flex:1 1 180px;min-width:160px;border:1px solid #e2e4e7;border-radius:10px;padding:14px;background:#fafbfc">
 				<div style="font-size:12px;color:#666">認識中の在庫</div>
 				<div style="font-size:18px;font-weight:800;color:<?php echo $stock_n > 0 ? '#1e7e45' : '#c0392b'; ?>"><?php echo $stock_n; ?> 台<?php echo $stock_n >= 60 ? '+' : ''; ?></div>
+			</div>
+			<div style="flex:1 1 220px;min-width:200px;border:1px solid #c9b8f0;border-radius:10px;padding:14px;background:#faf8ff">
+				<div style="font-size:12px;color:#666">🧠 エージェントモード（自分で調べるAI）</div>
+				<?php if ( $agent_on ) : ?>
+					<div style="font-size:18px;font-weight:800;color:#6d28d9">● ON</div>
+					<div style="font-size:12px;color:#555;margin-top:2px">今日：回答 <?php echo (int) ( $agent_st['ok'] ?? 0 ); ?>回・検索 <?php echo (int) ( $agent_st['searches'] ?? 0 ); ?>回<?php if ( ! empty( $agent_st['fail'] ) ) : ?>・従来方式に切替 <?php echo (int) $agent_st['fail']; ?>回<?php endif; ?></div>
+					<?php if ( ! empty( $agent_st['last_err'] ) ) : ?><div style="font-size:11px;color:#b02a16;margin-top:2px">直近の切替理由（<?php echo esc_html( (string) ( $agent_st['last_err_at'] ?? '' ) ); ?>）：<?php echo esc_html( mb_substr( (string) $agent_st['last_err'], 0, 120 ) ); ?></div><?php endif; ?>
+				<?php else : ?>
+					<div style="font-size:18px;font-weight:800;color:#8a8f94">○ OFF</div>
+					<div style="font-size:12px;margin-top:2px"><a href="<?php echo $link( 'testchat' ); ?>">テスト会話で試す →</a>　<a href="<?php echo $link( 'general' ); ?>">ONにする →</a></div>
+				<?php endif; ?>
+				<?php if ( $ua_count > 0 ) : ?><div style="font-size:12px;margin-top:4px"><a href="<?php echo $link( 'faq' ); ?>" style="color:#b02a16;font-weight:700">❓ 答えられなかった質問 <?php echo (int) $ua_count; ?>件 →</a></div><?php endif; ?>
 			</div>
 		</div>
 	</div>
@@ -940,7 +991,8 @@ function carmel_cb_view_home() {
 			ss.forEach(function(x){
 				var ho = x.handoff ? '<span style="background:#fde7cf;color:#8a4b00;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:700">🙋対応中 #'+esc(x.handoff)+'</span>' : '<span style="color:#1e7e45;font-size:12px">会話中</span>';
 				var who = esc(x.name||'（匿名）') + (x.email?'<br><span style="font-size:11px;color:#888">'+esc(x.email)+'</span>':'') + (x.geo?'<br><span style="font-size:11px;color:#1e7e45">📍'+esc(x.geo)+'</span>':'');
-				var msg = '<span style="color:#666;font-size:11px">'+roleLabel(x.lastRole)+'：</span>'+esc(x.lastMsg||'');
+				var msg = '<span style="color:#666;font-size:11px">'+roleLabel(x.lastRole)+'：</span>'+esc(x.lastMsg||'')
+					+ (x.karte ? '<div style="margin-top:4px;padding:3px 8px;background:#f3effc;border-radius:6px;font-size:11.5px;color:#3b2a6b">📋 '+esc(x.karte)+'</div>' : '');
 				html += '<tr>'
 					+ '<td>'+ho+'</td>'
 					+ '<td>'+who+'</td>'
@@ -1045,6 +1097,14 @@ function carmel_cb_view_general() {
 						<?php endforeach; ?>
 					</select>
 					<p class="description">長い指示文はキャッシュしてコストを抑えています。</p>
+					<div style="margin-top:14px;padding:12px 14px;border:1px solid #c9b8f0;border-left:4px solid #6d28d9;border-radius:8px;background:#faf8ff">
+						<label style="font-size:14px"><input type="checkbox" name="agent_mode" <?php checked( ! empty( $s['agent_mode'] ) ); ?>> <strong>🧠 エージェントモードを使う（新方式）</strong></label>
+						<p class="description" style="margin:6px 0 0">
+							AIが<strong>自分でFAQ・サイト情報・在庫を検索してから</strong>答えます。見つからなければ言い換えて調べ直し、それでも無ければ作り話をせず<strong>「答えられなかった質問」として自動で記録</strong>します（学習データタブに並びます）。会話から<strong>お客様カルテ</strong>も自動で作ります。<br>
+							※ 上の「Claude直接」を選び、Claude APIキーを入れているときだけ動きます。うまく動かないときは<strong>自動で従来方式に切り替わる</strong>ので、会話が止まることはありません。<br>
+							※ 調べる分だけAIの呼び出しが増えるため、返答が数秒遅くなり、AI利用料も少し増えます。まずは <a href="<?php echo esc_url( admin_url( 'admin.php?page=carmel-cb&tab=testchat' ) ); ?>">🧪 テスト会話</a> でお試しください（ここをONにしなくても試せます）。
+						</p>
+					</div>
 				</td>
 			</tr>
 			<tr>
@@ -1495,8 +1555,11 @@ function carmel_cb_view_testchat() {
 	$s = carmel_cb_get_settings();
 	$endpoint = esc_url_raw( rest_url( 'carmel-cb/v1/chat' ) );
 	$nonce    = wp_create_nonce( 'wp_rest' );
-	$model    = esc_html( $s['model'] ?? '' );
-	$has_key  = ! empty( $s['api_key'] );
+	$is_claude = ( ( $s['ai_provider'] ?? 'openrouter' ) === 'claude' ) && ! empty( $s['claude_api_key'] );
+	$model    = esc_html( $is_claude ? ( 'Claude直接 ' . ( $s['claude_model'] ?? 'claude-sonnet-5-5' ) ) : ( $s['model'] ?? '' ) );
+	$has_key  = $is_claude || ! empty( $s['api_key'] );
+	$agent_ok = function_exists( 'carmel_cb_agent_available' ) && carmel_cb_agent_available( $s );
+	$agent_on = $agent_ok && ! empty( $s['agent_mode'] );
 	?>
 	<div class="ccb-card">
 		<h2 style="margin-top:0">🧪 テスト会話</h2>
@@ -1547,6 +1610,22 @@ function carmel_cb_view_testchat() {
 		}
 		?>
 
+		<div style="padding:10px 14px;border:1px solid #c9b8f0;border-left:4px solid #6d28d9;border-radius:8px;background:#faf8ff;margin:0 0 4px">
+			<label style="font-size:14px"><input type="checkbox" id="ccb-test-agent" <?php checked( $agent_on ); ?> <?php disabled( ! $agent_ok ); ?>> <strong>🧠 エージェントモードで試す</strong>（AIが自分でFAQ・在庫を調べてから答えます）</label>
+			<?php if ( ! $agent_ok ) : ?>
+				<div style="font-size:12px;color:#b02a16;margin-top:4px">※ 基本設定で「Claude直接」を選び、Claude APIキーを入れると使えます。</div>
+			<?php else : ?>
+				<div style="font-size:12px;color:#555;margin-top:4px">チェックを入れると、お客様には影響なく<strong>ここだけで</strong>新方式を試せます。返答の下に「AIが何を調べたか」「お客様カルテ」が表示されます。</div>
+				<div style="margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+					<span style="font-size:13px">お客様向け（本番）は現在：<strong style="color:<?php echo $agent_on ? '#6d28d9' : '#8a8f94'; ?>"><?php echo $agent_on ? '● ON' : '○ OFF'; ?></strong></span>
+					<?php carmel_cb_form_open( 'agent_mode_set' ); ?>
+						<input type="hidden" name="agent_on" value="<?php echo $agent_on ? '0' : '1'; ?>">
+						<button type="submit" class="button <?php echo $agent_on ? '' : 'button-primary'; ?>" onclick="return confirm('<?php echo $agent_on ? 'エージェントモードをOFFにして従来方式に戻します。よろしいですか？' : 'お客様向けのチャットでもエージェントモードをONにします。よろしいですか？'; ?>');"><?php echo $agent_on ? 'OFFに戻す（従来方式）' : '✅ お客様向けにもONにする'; ?></button>
+					</form>
+				</div>
+			<?php endif; ?>
+		</div>
+
 		<div id="ccb-test-log" style="border:1px solid #dcdcde;border-radius:8px;background:#f6f8fa;padding:14px;height:440px;overflow-y:auto;margin:12px 0"></div>
 
 		<div style="display:flex;gap:8px;align-items:flex-end">
@@ -1563,6 +1642,7 @@ function carmel_cb_view_testchat() {
 			var inputEl = document.getElementById('ccb-test-input');
 			var sendEl  = document.getElementById('ccb-test-send');
 			var resetEl = document.getElementById('ccb-test-reset');
+			var agentEl = document.getElementById('ccb-test-agent');
 			var history = [];
 			var sid = 'admin-test-' + Date.now();
 
@@ -1590,6 +1670,34 @@ function carmel_cb_view_testchat() {
 				});
 				logEl.appendChild(row); logEl.scrollTop = logEl.scrollHeight;
 			}
+			// 裏側の動き（どのAIが答えたか・何を調べたか・カルテ）を小さく表示
+			function note(lines){
+				if(!lines || !lines.length) return;
+				var w = document.createElement('div');
+				w.style.cssText = 'margin:2px 0 10px;padding:8px 12px;border-left:3px solid #6d28d9;background:#f3effc;border-radius:6px;font-size:12px;line-height:1.7;color:#3b2a6b;max-width:88%';
+				w.innerHTML = lines.map(function(l){ return esc(l); }).join('<br>');
+				logEl.appendChild(w); logEl.scrollTop = logEl.scrollHeight;
+			}
+			function debugLines(dbg){
+				var out = [];
+				if(!dbg) return out;
+				var a = dbg.agent;
+				if(dbg.engine === 'agent' && a){
+					var t = (a.tools||[]).map(function(x){
+						return (x.name === 'search_stock' ? '在庫検索' : 'FAQ検索') + '「' + (x.query||'') + '」→' + x.hits + (x.name === 'search_stock' ? '台' : '件');
+					});
+					out.push('🧠 エージェント：' + (t.length ? t.join(' ／ ') : '検索なしで即答') + '　（AI呼び出し ' + a.rounds + '回・' + (a.ms/1000).toFixed(1) + '秒）');
+					if(a.degraded){ out.push('ℹ️ 一部の新機能（' + a.degraded + '）を使わずに動作しました。動作に問題はありません。'); }
+				} else {
+					if(a && a.error){ out.push('⚠️ エージェントは失敗し、従来方式で回答しました（理由：' + a.error + '）'); }
+					if(dbg.engine === 'claude'){ out.push('回答したAI：Claude直接（従来方式）'); }
+					else if(dbg.engine && dbg.engine.indexOf('openrouter:') === 0){ out.push('回答したAI：OpenRouter ' + dbg.engine.slice(11) + (dbg.error ? '　※Claudeが使えなかった理由：' + dbg.error : '')); }
+					else if(dbg.error){ out.push('⚠️ AIエラー：' + dbg.error); }
+				}
+				if(dbg.profile){ out.push('📋 お客様カルテ：' + dbg.profile); }
+				if(dbg.unanswered){ out.push('❓ 答えられなかった質問として記録されます（本番時）：' + dbg.unanswered); }
+				return out;
+			}
 			function typing(on){
 				var ex = document.getElementById('ccb-test-typing');
 				if(on){ if(ex) return; var w=document.createElement('div'); w.id='ccb-test-typing'; w.style.cssText='color:#6b7280;font-size:13px;margin:6px 0'; w.textContent='みほ が入力中…'; logEl.appendChild(w); logEl.scrollTop=logEl.scrollHeight; }
@@ -1605,7 +1713,7 @@ function carmel_cb_view_testchat() {
 				fetch(endpoint, {
 					method:'POST',
 					headers:{ 'Content-Type':'application/json', 'X-WP-Nonce': nonce },
-					body: JSON.stringify({ messages: history, session_id: sid, test: true })
+					body: JSON.stringify({ messages: history, session_id: sid, test: true, agent: (agentEl && agentEl.checked) ? 1 : 0 })
 				})
 				.then(function(r){ return r.json(); })
 				.then(function(d){
@@ -1614,7 +1722,8 @@ function carmel_cb_view_testchat() {
 					bubble('bot', reply);
 					history.push({role:'assistant', content:reply});
 					if(d && d.action){ bubble('bot', '［システム：CTAボタン表示 → '+d.action+'］'); }
-					if(d && d.cars && d.cars.length){ bubble('bot', '［システム：在庫カード '+d.cars.length+'台 表示］'); }
+					if(d && d.cars && d.cars.length){ bubble('bot', '［システム：在庫カード '+d.cars.length+'台 表示］' + d.cars.map(function(c){ return '\n・' + (c.title||''); }).join('')); }
+					if(d && d.debug){ note(debugLines(d.debug)); }
 					if(d && d.suggestions) chips(d.suggestions);
 				})
 				.catch(function(){ typing(false); bubble('bot','（通信エラー：APIキー・モデル設定を確認してください）'); })
@@ -1639,7 +1748,40 @@ function carmel_cb_view_faq() {
 	$suggestions = function_exists( 'carmel_cb_faq_suggestions_get' ) ? carmel_cb_faq_suggestions_get() : array();
 	$recent_q    = function_exists( 'carmel_cb_recent_questions' ) ? carmel_cb_recent_questions( 20 ) : array();
 	$faq_url     = admin_url( 'admin.php?page=carmel-cb&tab=faq' );
+	$unanswered  = function_exists( 'carmel_cb_unanswered_get' ) ? array_reverse( carmel_cb_unanswered_get() ) : array();
 	?>
+	<?php if ( ! empty( $unanswered ) ) : ?>
+	<div class="ccb-card" style="border-left:4px solid #b02a16">
+		<h2>❓ みほが答えられなかった質問（<?php echo count( $unanswered ); ?>件）</h2>
+		<p class="description">🧠 エージェントモードのAIが、<strong>調べても答えが見つからなかった質問</strong>を自動で記録したものです。<strong>「回答を登録する」</strong>を押して回答を書いて保存すると、次からは正しく答えられるようになり、この一覧からも自動で消えます。</p>
+		<div style="max-height:340px;overflow:auto;border:1px solid #e3e8ee;border-radius:8px">
+			<table class="widefat striped" style="margin:0">
+				<thead><tr><th>答えられなかった内容</th><th style="width:34%">お客様の実際の発言</th><th style="width:60px">回数</th><th style="width:210px"></th></tr></thead>
+				<tbody>
+				<?php foreach ( $unanswered as $ua ) :
+					$ua_add = esc_url( add_query_arg( array( 'faq_q' => rawurlencode( (string) ( $ua['q'] ?? '' ) ), 'ua' => rawurlencode( (string) ( $ua['id'] ?? '' ) ) ), $faq_url ) ) . '#ccb-add-faq';
+				?>
+					<tr>
+						<td><strong><?php echo esc_html( (string) ( $ua['q'] ?? '' ) ); ?></strong><br><span class="description"><?php echo esc_html( (string) ( $ua['at'] ?? '' ) ); ?></span></td>
+						<td><span class="description"><?php echo esc_html( mb_substr( (string) ( $ua['user'] ?? '' ), 0, 110 ) ); ?></span></td>
+						<td><?php echo (int) ( $ua['n'] ?? 1 ); ?>回</td>
+						<td>
+							<a href="<?php echo $ua_add; ?>" class="button button-small button-primary">回答を登録する</a>
+							<?php carmel_cb_form_open( 'unanswered_delete' ); ?>
+								<input type="hidden" name="ua_id" value="<?php echo esc_attr( (string) ( $ua['id'] ?? '' ) ); ?>">
+								<button type="submit" class="button button-small" style="margin-top:4px">一覧から外す</button>
+							</form>
+						</td>
+					</tr>
+				<?php endforeach; ?>
+				</tbody>
+			</table>
+		</div>
+		<?php carmel_cb_form_open( 'unanswered_clear' ); ?>
+			<p style="margin:8px 0 0"><button type="submit" class="button button-link-delete" onclick="return confirm('答えられなかった質問をすべて削除します。よろしいですか？');">すべてクリア</button></p>
+		</form>
+	</div>
+	<?php endif; ?>
 	<div class="ccb-card" style="border-left:4px solid #1a8f5c">
 		<h2 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
 			🆕 最新のお客様の質問（ここから学習）
@@ -1718,6 +1860,7 @@ function carmel_cb_view_faq() {
 		<p class="description">ここに追加した内容がボットの「知識」になります。質問に近いFAQが自動で参照され、回答の根拠になります。</p>
 		<?php carmel_cb_form_open( 'save_faq' ); ?>
 		<input type="hidden" name="faq_id" value="<?php echo esc_attr( $edit->id ?? 0 ); ?>">
+		<?php if ( ! $edit && ! empty( $_GET['ua'] ) ) : ?><input type="hidden" name="ua_id" value="<?php echo esc_attr( sanitize_text_field( wp_unslash( $_GET['ua'] ) ) ); ?>"><?php endif; ?>
 		<table class="form-table">
 			<tr>
 				<th>質問</th>
@@ -1962,6 +2105,12 @@ function carmel_cb_view_logs() {
 				echo '<div class="ccb-card" style="background:#f0f6ff;border:1px solid #cfe0f5"><strong>お客様情報</strong>　' . esc_html( $mv->content ) . '</div>';
 				break;
 			}
+		}
+
+		// 🧠 エージェントがまとめたお客様カルテ（あれば）
+		$karte = function_exists( 'carmel_cb_profile_text' ) ? carmel_cb_profile_text( $view, "\n" ) : '';
+		if ( $karte !== '' ) {
+			echo '<div class="ccb-card" style="background:#faf8ff;border:1px solid #c9b8f0"><strong>📋 お客様カルテ（AIが会話から自動作成）</strong><div style="margin-top:6px;line-height:1.8">' . nl2br( esc_html( $karte ) ) . '</div></div>';
 		}
 
 		// 役割ラベル・メディア描画のヘルパー

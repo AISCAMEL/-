@@ -74,6 +74,7 @@ function carmel_cb_live_sessions( $minutes = 30, $limit = 25 ) {
 			'lastRole' => $last->role ?? '',
 			'lastMsg'  => mb_substr( $lastmsg, 0, 70 ),
 			'handoff'  => isset( $active_sids[ $sid ] ) ? $active_sids[ $sid ] : '',
+			'karte'    => function_exists( 'carmel_cb_profile_short' ) ? carmel_cb_profile_short( carmel_cb_profile_get( $sid ) ) : '',
 		);
 	}
 	return $out;

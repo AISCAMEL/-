@@ -136,6 +136,9 @@ function carmel_cb_lw_ensure( $s, $sid, $intro, $question = '' ) {
 	if ( $geo !== '' )   { $head .= "\n推定地域：" . $geo . '（目安）'; }
 	if ( $vline !== '' ) { $head .= "\n" . $vline; }
 	if ( $question !== '' ) { $head .= "\n▼ご相談：" . mb_substr( (string) $question, 0, 500 ); }
+	// 🧠 エージェントがまとめたお客様カルテ（あれば）を添える
+	$karte = function_exists( 'carmel_cb_profile_text' ) ? carmel_cb_profile_text( $sid ) : '';
+	if ( $karte !== '' ) { $head .= "\n📋 お客様カルテ（AIが会話から自動作成）\n" . $karte; }
 	$head .= ( $channel !== '' )
 		? "\nこの部屋はこのお客様専用です。そのまま返信すればお客様のチャットに届きます。"
 		: "\n👉 この部屋でそのまま返信すれば、このお客様のチャットに届きます。\n（複数のお客様が同時のときだけ、区別のため先頭に 合図【#{$code}】 を付けてください）";
@@ -155,7 +158,14 @@ function carmel_cb_lw_start( $s, $sid, $question ) {
 	if ( ! $sess ) { return false; }
 	if ( $existed ) {
 		// 既に部屋がある（会話ミラー中）→ 担当者希望だけ知らせる
-		carmel_cb_lineworks_send_text( $s, '🙋 お客様が『担当者に相談』を希望されました。この部屋で対応できます。', (string) ( $sess['channel'] ?? '' ) );
+		$karte = function_exists( 'carmel_cb_profile_text' ) ? carmel_cb_profile_text( $sid ) : '';
+		carmel_cb_lineworks_send_text(
+			$s,
+			'🙋 お客様が『担当者に相談』を希望されました。この部屋で対応できます。'
+				. ( $question !== '' ? "\n▼ご相談：" . mb_substr( (string) $question, 0, 500 ) : '' )
+				. ( $karte !== '' ? "\n📋 お客様カルテ（AIが会話から自動作成）\n" . $karte : '' ),
+			(string) ( $sess['channel'] ?? '' )
+		);
 	}
 	return true;
 }
