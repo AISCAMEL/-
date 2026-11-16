@@ -29,17 +29,85 @@
  * v1.23.0 追加
  * ・諸費用の内訳（値引き・下取り・税金/保険料・登録/諸費用・消費税）を受け取り／取り込みに対応。
  *   車両ページの「お支払総額の内訳」(est_*) と諸経費合計(keihi)に反映する。
+ *
+ * v1.24.0（点検で見つかった点の修正）
+ * ・取り込み時に POST carmel/v1/inventory/link で「在庫の番号」を車両ページに付ける（見えない目印）。
+ *   以後は必ずその番号で同じページを見つける。link_post_id による紐づけと、旧版で作ったページの
+ *   自動引き継ぎは廃止（どちらも、確認なしで別の車のページに繋がる余地があったため）。
+ * ・ACFの欄は「この車両ページに割り当てられた欄」から探して書く（同じ名前の別の欄に書かない）。
+ * ・新しいページは下書きで作り、中身と写真を入れ終えてから公開する。
+ * ・タイトルは、手で付けたもの（自動の並びと違うもの）は変えない。
+ * ・装備を外した時は、車両ページの装備一覧（equip）からも外す。取り込みは equip と安心フラグも読む。
+ * ・写真：上限を80枚に。1枚ごとに取り込み済みを記録。1枚あたりの待ち時間に上限。
  * 管理者/投稿権限ユーザーのみ。固有名＋function_existsガード。
  * ---------------------------------------------------------------------------
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
+if ( ! function_exists( 'carmelx_invrecv_field_key' ) ) {
+	/**
+	 * 欄の名前 → ACFのフィールドキー。この車両ページ（portfolio）に割り当てられたフィールドグループの中だけで探す。
+	 * （同じ名前の欄が別の投稿タイプ用にもあると、名前だけで書くと違う欄の定義に繋がるため）
+	 */
+	function carmelx_invrecv_field_key( $post_id, $name ) {
+		static $map = null;
+		if ( null === $map ) {
+			$map = array();
+			if ( function_exists( 'acf_get_field_groups' ) && function_exists( 'acf_get_fields' ) ) {
+				$groups = acf_get_field_groups( array( 'post_id' => $post_id ) );
+				if ( empty( $groups ) ) { $groups = acf_get_field_groups( array( 'post_type' => 'portfolio' ) ); }
+				foreach ( (array) $groups as $g ) {
+					foreach ( (array) acf_get_fields( $g ) as $f ) {
+						if ( is_array( $f ) && ! empty( $f['name'] ) && ! empty( $f['key'] ) && ! isset( $map[ $f['name'] ] ) ) { $map[ $f['name'] ] = $f['key']; }
+					}
+				}
+			}
+		}
+		return isset( $map[ $name ] ) ? $map[ $name ] : '';
+	}
+}
+
+if ( ! function_exists( 'carmelx_invrecv_write' ) ) {
+	/** 値を保存。ACFの欄が見つかればその欄として、無ければ post_meta として保存する */
+	function carmelx_invrecv_write( $post_id, $name, $value ) {
+		$key = function_exists( 'update_field' ) ? carmelx_invrecv_field_key( $post_id, $name ) : '';
+		if ( '' !== $key ) { update_field( $key, $value, $post_id ); return; }
+		if ( is_array( $value ) && empty( $value ) ) { delete_post_meta( $post_id, $name ); return; }
+		update_post_meta( $post_id, $name, is_string( $value ) && function_exists( 'wp_slash' ) ? wp_slash( $value ) : $value );
+	}
+}
+
 if ( ! function_exists( 'carmelx_invrecv_set' ) ) {
-	/** ACFがあれば update_field、無ければ post_meta に保存（null/空文字は書かない＝既存値を守る） */
+	/** null/空文字は書かない＝既存の入力を守る */
 	function carmelx_invrecv_set( $post_id, $name, $value ) {
 		if ( $value === null || $value === '' ) { return; }
-		if ( function_exists( 'update_field' ) ) { update_field( $name, $value, $post_id ); }
-		else { update_post_meta( $post_id, $name, $value ); }
+		carmelx_invrecv_write( $post_id, $name, $value );
+	}
+}
+
+if ( ! function_exists( 'carmelx_invrecv_norm' ) ) {
+	/** 比べる用：空白（全角も）を全部取る */
+	function carmelx_invrecv_norm( $s ) { return (string) preg_replace( '/[\s\x{3000}]+/u', '', (string) $s ); }
+}
+
+if ( ! function_exists( 'carmelx_invrecv_auto_title' ) ) {
+	/** 管理画面の自動生成と同じ並びのタイトル：信用回復ローン メーカー 車種(＋グレード) 年式 色 走行距離 管理番号 */
+	function carmelx_invrecv_auto_title( $maker, $type, $year, $color, $mileage, $stock ) {
+		$y = preg_replace( '/[^0-9]/', '', function_exists( 'mb_convert_kana' ) ? mb_convert_kana( (string) $year, 'n', 'UTF-8' ) : (string) $year );
+		$m = preg_replace( '/[^0-9]/', '', function_exists( 'mb_convert_kana' ) ? mb_convert_kana( (string) $mileage, 'n', 'UTF-8' ) : (string) $mileage );
+		$parts = array( '信用回復ローン', $maker, $type, '' !== $y ? $y . '年' : '', $color, ( '' !== $m && (int) $m > 0 ) ? number_format( (int) $m ) . 'km' : '', $stock );
+		$parts = array_filter( $parts, function ( $v ) { return '' !== trim( (string) $v ); } );
+		return trim( (string) preg_replace( '/\s+/u', ' ', implode( ' ', $parts ) ) );
+	}
+}
+
+if ( ! function_exists( 'carmelx_invrecv_yesno' ) ) {
+	/** 「なし」「あり」のどちらの意味か（どちらでもなければ空） */
+	function carmelx_invrecv_yesno( $s ) {
+		$s = (string) $s;
+		if ( false !== strpos( $s, 'なし' ) || false !== strpos( $s, '無' ) ) { return 'なし'; }
+		if ( false !== strpos( $s, 'あり' ) || false !== strpos( $s, '有' ) ) { return 'あり'; }
+		return '';
 	}
 }
 
@@ -70,12 +138,13 @@ if ( ! function_exists( 'carmelx_invrecv_shop_slug' ) ) {
 		foreach ( $shops as $s ) {
 			if ( $s->post_name === $name || $norm( $s->post_title ) === $norm( $name ) ) { return $s->post_name; }
 		}
-		// 部分一致（「カーメル福島本店」⇔「福島本店」など）
+		// 部分一致（「カーメル福島本店」⇔「福島本店」など）。当てはまる店舗が1つだけの時に限る
+		$hit = array();
 		foreach ( $shops as $s ) {
 			$t = $norm( $s->post_title ); $n = $norm( $name );
-			if ( $t !== '' && $n !== '' && ( false !== mb_strpos( $t, $n ) || false !== mb_strpos( $n, $t ) ) ) { return $s->post_name; }
+			if ( $t !== '' && $n !== '' && ( false !== strpos( $t, $n ) || false !== strpos( $n, $t ) ) ) { $hit[] = $s->post_name; }
 		}
-		return '';
+		return 1 === count( $hit ) ? $hit[0] : '';
 	}
 }
 
@@ -143,6 +212,10 @@ if ( ! function_exists( 'carmelx_invrecv_local_attachment' ) ) {
 			$id = (int) attachment_url_to_postid( $url );
 			if ( $id ) { return $id; }
 		}
+		// 場所での照合は、このサイトと同じホスト（本番⇔同じドメインのコピーサイト）の画像だけ
+		$uh = strtolower( (string) parse_url( $url, PHP_URL_HOST ) );
+		$sh = strtolower( (string) parse_url( home_url(), PHP_URL_HOST ) );
+		if ( '' === $uh || $uh !== $sh ) { return 0; }
 		$pos = strpos( $url, '/wp-content/uploads/' );
 		if ( false === $pos ) { return 0; }
 		$rel = preg_replace( '/[?#].*$/', '', substr( $url, $pos + strlen( '/wp-content/uploads/' ) ) );
@@ -169,11 +242,14 @@ if ( ! function_exists( 'carmelx_invrecv_images' ) ) {
 	function carmelx_invrecv_images( $post_id, $urls, $deadline ) {
 		$res = array( 'ids' => array(), 'total' => 0, 'failed' => 0, 'pending' => 0 );
 		if ( empty( $urls ) || ! is_array( $urls ) ) { return $res; }
-		$urls = array_slice( array_values( array_unique( array_filter( array_map( 'trim', array_map( 'strval', $urls ) ) ) ) ), 0, 30 );
+		$urls = array_slice( array_values( array_unique( array_filter( array_map( 'trim', array_map( 'strval', $urls ) ) ) ) ), 0, 80 );
 		$res['total'] = count( $urls );
 
 		$map = get_post_meta( $post_id, 'carmel_inv_img_map', true );
 		if ( ! is_array( $map ) ) { $map = array(); }
+
+		// 1枚の取り込みで待つ時間に上限（既定は300秒。重い画像1枚で全体が止まらないように）
+		$cap = function ( $args ) { if ( ! isset( $args['timeout'] ) || $args['timeout'] > 25 ) { $args['timeout'] = 25; } return $args; };
 
 		foreach ( $urls as $u ) {
 			if ( ! preg_match( '#^https?://#i', $u ) ) { $res['failed']++; continue; }
@@ -183,15 +259,16 @@ if ( ! function_exists( 'carmelx_invrecv_images' ) ) {
 			$local = carmelx_invrecv_local_attachment( $u );
 			if ( $local ) { $map[ $k ] = $local; $res['ids'][] = $local; continue; }
 			if ( time() >= $deadline ) { $res['pending']++; continue; } // 時間切れ → 次回に続きから
-			if ( ! function_exists( 'media_sideload_image' ) ) {
-				require_once ABSPATH . 'wp-admin/includes/media.php';
-				require_once ABSPATH . 'wp-admin/includes/file.php';
-				require_once ABSPATH . 'wp-admin/includes/image.php';
-			}
+			if ( ! function_exists( 'download_url' ) )          { require_once ABSPATH . 'wp-admin/includes/file.php'; }
+			if ( ! function_exists( 'media_sideload_image' ) )  { require_once ABSPATH . 'wp-admin/includes/media.php'; }
+			if ( ! function_exists( 'wp_read_image_metadata' ) ) { require_once ABSPATH . 'wp-admin/includes/image.php'; }
+			add_filter( 'http_request_args', $cap, 99 );
 			$id = media_sideload_image( $u, $post_id, null, 'id' );
+			remove_filter( 'http_request_args', $cap, 99 );
 			if ( is_wp_error( $id ) || ! $id ) { $res['failed']++; continue; }
 			$map[ $k ] = (int) $id;
 			$res['ids'][] = (int) $id;
+			update_post_meta( $post_id, 'carmel_inv_img_map', $map ); // 1枚ごとに記録（途中で切れても二重に取り込まない）
 		}
 		update_post_meta( $post_id, 'carmel_inv_img_map', $map );
 		return $res;
@@ -247,14 +324,11 @@ if ( ! function_exists( 'carmelx_invrecv_handle' ) ) {
 				// すでに自分のページがあるのに、同じ管理番号の手入力ページが別にある
 				return carmelx_invrecv_err( 409, 'stock_id_taken', '管理ID「' . $stock_id . '」は、ホームページ上の別の車両（' . $existing['title'] . '）と重なっています。管理IDを変えてから反映してください', array( 'existing' => $existing ) );
 			}
-			// 手入力（または旧版の反映）で作られた同じ管理番号の車両ページ
-			$by_old_sync = '' !== (string) get_post_meta( $same_no, 'carmel_inv_synced_at', true );
-			// WPから取り込んだ在庫は、元の車両ページ番号（link_post_id）が一致すれば確認なしで紐づく
-			$by_import = isset( $p['link_post_id'] ) && (int) $p['link_post_id'] === $same_no;
-			if ( ! $by_old_sync && ! $by_import && empty( $p['adopt'] ) ) {
+			// 在庫の番号が付いていない、同じ管理番号の車両ページ（手入力など）→ 確認した時だけ引き継ぐ
+			if ( empty( $p['adopt'] ) ) {
 				return carmelx_invrecv_err( 409, 'needs_adopt', '管理ID「' . $stock_id . '」の車両ページが、ホームページにすでにあります（' . $existing['title'] . '）。同じ車なら「このページに紐づける」を選んでください', array( 'existing' => $existing ) );
 			}
-			$id = $same_no; $adopted = ! $by_old_sync && ! $by_import;
+			$id = $same_no; $adopted = true;
 		}
 		if ( $id && ! current_user_can( 'edit_post', $id ) ) { return carmelx_invrecv_err( 403, 'forbidden', 'この車両ページを編集する権限がありません' ); }
 
@@ -272,21 +346,35 @@ if ( ! function_exists( 'carmelx_invrecv_handle' ) ) {
 		// 車種（type）＝ 車種＋グレード（管理画面の手入力と同じ決まり）
 		$type = trim( $model . ( $grade !== '' ? ' ' . $grade : '' ) );
 
-		// 公開判定
-		$public      = ( $published && in_array( $status_in, array( '在庫', '商談中', '' ), true ) );
+		// 公開判定（状態が空の時は公開しない）
+		$public      = ( $published && in_array( $status_in, array( '在庫', '商談中' ), true ) );
 		$post_status = $public ? 'publish' : 'draft';
 
-		// タイトル（管理画面の自動生成と同じ並び：信用回復ローン メーカー 車種 グレード 年式 色 走行距離 管理番号）
+		// タイトル：新しいページは自動の並びで作る。既存のページは、いまのタイトルが自動の並びの時だけ作り直す
+		// （手で付けたタイトル・昔の並びのタイトルは変えない）
 		$title = $str( 'title' );
 		if ( '' === $title ) {
-			$parts = array( '信用回復ローン', $maker, $model, $grade, $year ? $year . '年' : '', $color, $mileage ? number_format( $mileage ) . 'km' : '', $stock_id );
-			$title = trim( preg_replace( '/\s+/u', ' ', implode( ' ', array_filter( $parts, function ( $v ) { return '' !== trim( (string) $v ); } ) ) ) );
+			$title = carmelx_invrecv_auto_title( $maker, $type, $year ? (string) $year : '', $color, $mileage ? (string) $mileage : '', $stock_id );
+			if ( $id ) {
+				$cur_title = trim( (string) get_post_field( 'post_title', $id ) );
+				$old_auto  = carmelx_invrecv_auto_title(
+					get_post_meta( $id, 'marker', true ), get_post_meta( $id, 'type', true ), get_post_meta( $id, 'year', true ),
+					get_post_meta( $id, 'color', true ), get_post_meta( $id, 'mileage', true ), get_post_meta( $id, 'kanri_bango', true )
+				);
+				if ( '' !== $cur_title && carmelx_invrecv_norm( $cur_title ) !== carmelx_invrecv_norm( $old_auto ) ) { $title = $cur_title; }
+			}
 		}
 
-		$arr = array( 'post_type' => 'portfolio', 'post_title' => $title, 'post_status' => $post_status );
-		if ( $id ) { $arr['ID'] = $id; $created = false; $id = wp_update_post( $arr, true ); }
-		else { $created = true; $id = wp_insert_post( $arr, true ); }
-		if ( is_wp_error( $id ) ) { return carmelx_invrecv_err( 500, 'wp_error', $id->get_error_message() ); }
+		// 新しいページは下書きで作り、中身と写真を入れ終えてから最後に公開する（空のページを見せない）
+		$created = ! $id;
+		if ( $created ) {
+			$id = wp_insert_post( array( 'post_type' => 'portfolio', 'post_title' => $title, 'post_status' => 'draft' ), true );
+			if ( is_wp_error( $id ) ) { return carmelx_invrecv_err( 500, 'wp_error', $id->get_error_message() ); }
+		} elseif ( ! $public && 'publish' === get_post_status( $id ) ) {
+			// 取り下げる時は、先に非公開にする
+			$r = wp_update_post( array( 'ID' => $id, 'post_status' => 'draft' ), true );
+			if ( is_wp_error( $r ) ) { return carmelx_invrecv_err( 500, 'wp_error', $r->get_error_message() ); }
+		}
 		$id = (int) $id;
 
 		// 紐づけ（次回からは ext_id で同じページを見つける）
@@ -298,7 +386,8 @@ if ( ! function_exists( 'carmelx_invrecv_handle' ) ) {
 		// 基本情報（ACF）※空の値は書かない＝既存の入力を消さない
 		carmelx_invrecv_set( $id, 'kanri_bango', $stock_id );
 		carmelx_invrecv_set( $id, 'marker', $maker );
-		carmelx_invrecv_set( $id, 'type', $type );
+		// 車種は、空白の違い（全角/半角）だけなら書き換えない
+		if ( carmelx_invrecv_norm( $type ) !== carmelx_invrecv_norm( get_post_meta( $id, 'type', true ) ) ) { carmelx_invrecv_set( $id, 'type', $type ); }
 		if ( $year )    { carmelx_invrecv_set( $id, 'year', (string) $year ); }
 		if ( $mileage ) { carmelx_invrecv_set( $id, 'mileage', (string) $mileage ); }
 		carmelx_invrecv_set( $id, 'displacement', $str( 'displacement' ) );
@@ -309,17 +398,21 @@ if ( ! function_exists( 'carmelx_invrecv_handle' ) ) {
 		$handle = $str( 'handle' );
 		if ( '右' === $handle || '左' === $handle ) { $handle .= 'ハンドル'; }
 		carmelx_invrecv_set( $id, 'handle', $handle );
-		carmelx_invrecv_set( $id, 'repair_history', $str( 'repair_history' ) );
+		// 修復歴・法定整備：意味（あり/なし）が同じなら、手で書かれた詳しい文は書き換えない
+		$rh = $str( 'repair_history' );
+		if ( '' !== $rh && carmelx_invrecv_yesno( get_post_meta( $id, 'repair_history', true ) ) !== carmelx_invrecv_yesno( $rh ) ) { carmelx_invrecv_set( $id, 'repair_history', $rh ); }
 		carmelx_invrecv_set( $id, 'fuel_type', $str( 'fuel' ) );
 		$seibi = $str( 'legal_maintenance' );
-		if ( '' !== $seibi ) { carmelx_invrecv_set( $id, 'seibi', ( false !== mb_strpos( $seibi, 'なし' ) ) ? 'なし' : 'あり' ); }
+		if ( '' !== $seibi ) {
+			$sv = ( false !== strpos( $seibi, 'なし' ) ) ? 'なし' : 'あり';
+			if ( carmelx_invrecv_yesno( get_post_meta( $id, 'seibi', true ) ) !== $sv ) { carmelx_invrecv_set( $id, 'seibi', $sv ); }
+		}
 		$recycle = $num( 'recycle_deposit' );
 		if ( $recycle ) { carmelx_invrecv_set( $id, 'est_recycle', (string) $recycle ); carmelx_invrecv_set( $id, 'recicle', number_format( $recycle ) . '円' ); }
 
 		// 販売店：WP側は shop 投稿のスラッグで持つ。店舗名（またはスラッグ）から解決できた時だけ設定
 		$shop_slug = carmelx_invrecv_shop_slug( $str( 'shop' ) );
 		if ( $shop_slug !== '' ) {
-			update_post_meta( $id, 'shop', $shop_slug );
 			carmelx_invrecv_set( $id, 'shop', $shop_slug );
 		}
 		carmelx_invrecv_set( $id, 'tel', $str( 'tel' ) );
@@ -337,8 +430,7 @@ if ( ! function_exists( 'carmelx_invrecv_handle' ) ) {
 			foreach ( carmelx_invrecv_fee_keys() as $fk ) {
 				if ( ! array_key_exists( $fk, $p['fees'] ) || ! is_scalar( $p['fees'][ $fk ] ) ) { continue; }
 				$fv = (int) preg_replace( '/[^0-9]/', '', (string) $p['fees'][ $fk ] );
-				if ( function_exists( 'update_field' ) ) { update_field( 'est_' . $fk, (string) $fv, $id ); }
-				else { update_post_meta( $id, 'est_' . $fk, (string) $fv ); }
+				carmelx_invrecv_write( $id, 'est_' . $fk, (string) $fv );
 				$any = true;
 				if ( ! in_array( $fk, array( 'nebiki', 'shitadori' ), true ) ) { $keihi += $fv; }
 			}
@@ -375,28 +467,51 @@ if ( ! function_exists( 'carmelx_invrecv_handle' ) ) {
 		// 装備：ACFチェックボックス（選択肢＝表示ラベル）。送られてきた項目だけ ON/OFF
 		if ( isset( $p['equipment'] ) && is_array( $p['equipment'] ) ) {
 			$labels = carmelx_invrecv_equip_labels();
+			$off    = array();
 			foreach ( $p['equipment'] as $ef => $on ) {
 				if ( ! isset( $labels[ $ef ] ) ) { continue; }
-				$val = ! empty( $on ) ? array( $labels[ $ef ] ) : array();
-				if ( function_exists( 'update_field' ) ) { update_field( $ef, $val, $id ); }
-				else { update_post_meta( $id, $ef, $val ? $labels[ $ef ] : '' ); }
+				carmelx_invrecv_write( $id, $ef, ! empty( $on ) ? array( $labels[ $ef ] ) : array() );
+				if ( empty( $on ) ) { $off[ $ef ] = true; }
+			}
+			// 車両ページの装備一覧は「個別の欄」＋「equip（ラベルの一覧）」の両方を見るので、外した装備は equip からも外す
+			$eq_raw = get_post_meta( $id, 'equip', true );
+			$eq_arr = is_array( $eq_raw ) ? $eq_raw : explode( ',', (string) $eq_raw );
+			if ( $off && array_filter( array_map( 'trim', array_map( 'strval', $eq_arr ) ) ) ) {
+				$tmap = function_exists( 'carmel_theme_equip_map' ) ? (array) carmel_theme_equip_map() : array();
+				$keep = array(); $changed = false;
+				foreach ( $eq_arr as $l ) {
+					$l = trim( (string) $l ); if ( '' === $l ) { continue; }
+					$name = isset( $tmap[ $l ] ) ? $tmap[ $l ] : array_search( $l, $labels, true );
+					if ( $name && isset( $off[ $name ] ) ) { $changed = true; continue; }
+					$keep[] = $l;
+				}
+				if ( $changed ) { update_post_meta( $id, 'equip', is_array( $eq_raw ) ? $keep : implode( ',', $keep ) ); }
 			}
 		}
 
 		// 写真（1回の受信で使う時間に上限。残りは次回の反映で続きから）
 		if ( function_exists( 'set_time_limit' ) ) { @set_time_limit( 150 ); }
 		$imgs = isset( $p['images'] ) && is_array( $p['images'] ) ? $p['images'] : array();
-		$im   = carmelx_invrecv_images( $id, $imgs, time() + 60 );
+		$im   = carmelx_invrecv_images( $id, $imgs, time() + 40 );
 		if ( $im['ids'] ) {
 			$csv = implode( ',', $im['ids'] );
-			update_post_meta( $id, 'carmel_gallery', $csv );
-			update_post_meta( $id, 'wpex_post_gallery_ids', $csv );
+			// 元になる一覧（全画像）。サイト側の保存時の仕組みが、ここからスライダー用の欄を作る
 			update_post_meta( $id, 'vehicle_image_ids', $csv );
+			update_post_meta( $id, 'carmel_gallery', $csv );
+			if ( function_exists( 'carmel_write_post_gallery' ) ) { carmel_write_post_gallery( $id, $im['ids'] ); }
+			else {
+				update_post_meta( $id, 'wpex_post_gallery_ids', $csv );
+				update_post_meta( $id, '_wpex_post_gallery_ids', $csv );
+			}
 			set_post_thumbnail( $id, $im['ids'][0] ); // 1枚目＝アイキャッチ
 		}
 
 		// 表示用のミラー項目（修復歴→shuufuku 等）を既存の仕組みで更新
 		if ( function_exists( 'carmel_mirror_detail_fields_one' ) ) { carmel_mirror_detail_fields_one( $id ); }
+
+		// 最後にタイトルと公開状態を確定する（中身が入った後なので、サイト側の保存時の仕組みも正しい内容で動く）
+		$r = wp_update_post( array( 'ID' => $id, 'post_title' => $title, 'post_status' => $post_status ), true );
+		if ( is_wp_error( $r ) ) { return carmelx_invrecv_err( 500, 'wp_error', $r->get_error_message() ); }
 
 		return new WP_REST_Response( array(
 			'ok'             => true,
@@ -438,6 +553,20 @@ if ( ! function_exists( 'carmelx_invrecv_export_item' ) ) {
 			if ( is_array( $v ) ) { $v = array_filter( $v ); }
 			if ( ! empty( $v ) && '0' !== $v ) { $equipment[ $name ] = true; }
 		}
+		// equip（ラベルの一覧）にだけ入っている装備も拾う（車両ページはこれも表示している）
+		$eq_raw = get_post_meta( $pid, 'equip', true );
+		$eq_arr = is_array( $eq_raw ) ? $eq_raw : explode( ',', (string) $eq_raw );
+		$tmap   = function_exists( 'carmel_theme_equip_map' ) ? (array) carmel_theme_equip_map() : array();
+		$labels = carmelx_invrecv_equip_labels();
+		foreach ( $eq_arr as $l ) {
+			$l = trim( (string) $l ); if ( '' === $l ) { continue; }
+			$name = isset( $tmap[ $l ] ) ? $tmap[ $l ] : array_search( $l, $labels, true );
+			if ( $name && isset( $labels[ $name ] ) ) { $equipment[ $name ] = true; }
+		}
+		// 追加スペックの安心フラグ（ワンオーナー/禁煙車/記録簿）も装備として返す
+		foreach ( array( 'cx_one_owner' => 'one_owner', 'cx_kinen' => 'kinen_sha', 'cx_kirokubo' => 'kirokubo' ) as $mk => $name ) {
+			if ( '' !== trim( (string) get_post_meta( $pid, $mk, true ) ) && '0' !== (string) get_post_meta( $pid, $mk, true ) ) { $equipment[ $name ] = true; }
+		}
 
 		// 写真：アイキャッチ → ギャラリーの順（重複なし）
 		$ids = array();
@@ -449,7 +578,7 @@ if ( ! function_exists( 'carmelx_invrecv_export_item' ) ) {
 			foreach ( array_filter( array_map( 'intval', explode( ',', (string) $raw ) ) ) as $aid ) { $ids[] = $aid; }
 		}
 		$images = array();
-		foreach ( array_slice( array_values( array_unique( $ids ) ), 0, 30 ) as $aid ) {
+		foreach ( array_slice( array_values( array_unique( $ids ) ), 0, 80 ) as $aid ) {
 			$u = wp_get_attachment_url( $aid );
 			if ( $u ) { $images[] = $u; }
 		}
@@ -501,7 +630,7 @@ if ( ! function_exists( 'carmelx_invrecv_export_item' ) ) {
 			'comment'        => $g( array( 'comment' ) ),
 			'shop_slug'      => $shop_slug,
 			'shop_name'      => $shop_name,
-			'equipment'      => $equipment,
+			'equipment'      => (object) $equipment,
 			'images'         => $images,
 		);
 	}
@@ -536,6 +665,32 @@ if ( ! function_exists( 'carmelx_invrecv_export' ) ) {
 	}
 }
 
+if ( ! function_exists( 'carmelx_invrecv_link' ) ) {
+	/**
+	 * POST carmel/v1/inventory/link  { links: [ { wp_post_id, ext_id }, … ] }
+	 * 取り込んだ車両ページに「在庫の番号」を付ける（見えない目印だけ。表示・内容は変えない）。
+	 * すでに別の番号が付いているページは変えない。
+	 */
+	function carmelx_invrecv_link( WP_REST_Request $req ) {
+		$p     = $req->get_json_params();
+		$links = ( is_array( $p ) && isset( $p['links'] ) && is_array( $p['links'] ) ) ? array_slice( $p['links'], 0, 500 ) : array();
+		$linked = 0; $already = 0; $skipped = array();
+		foreach ( $links as $l ) {
+			$pid = is_array( $l ) && isset( $l['wp_post_id'] ) ? (int) $l['wp_post_id'] : 0;
+			$ext = is_array( $l ) && isset( $l['ext_id'] ) && is_scalar( $l['ext_id'] ) ? sanitize_text_field( (string) $l['ext_id'] ) : '';
+			if ( ! $pid || '' === $ext || 'portfolio' !== get_post_type( $pid ) || ! current_user_can( 'edit_post', $pid ) ) { $skipped[] = $pid; continue; }
+			$cur = (string) get_post_meta( $pid, 'carmel_inv_ext_id', true );
+			if ( $cur === $ext ) { $already++; continue; }
+			if ( '' !== $cur ) { $skipped[] = $pid; continue; }                                   // 別の在庫に紐づけ済み
+			$other = carmelx_invrecv_find_by( 'carmel_inv_ext_id', $ext );
+			if ( $other && $other !== $pid ) { $skipped[] = $pid; continue; }                     // その番号は別のページで使用中
+			update_post_meta( $pid, 'carmel_inv_ext_id', $ext );
+			$linked++;
+		}
+		return new WP_REST_Response( array( 'ok' => true, 'linked' => $linked, 'already' => $already, 'skipped' => $skipped ), 200 );
+	}
+}
+
 if ( ! function_exists( 'carmelx_invrecv_routes' ) ) {
 	function carmelx_invrecv_routes() {
 		register_rest_route( 'carmel/v1', '/inventory', array(
@@ -547,6 +702,12 @@ if ( ! function_exists( 'carmelx_invrecv_routes' ) ) {
 		register_rest_route( 'carmel/v1', '/inventory/export', array(
 			'methods'             => 'GET',
 			'callback'            => 'carmelx_invrecv_export',
+			'permission_callback' => function () { return current_user_can( 'edit_others_posts' ); },
+		) );
+		// 取り込んだ車両ページに在庫の番号を付ける（見えない目印だけ）
+		register_rest_route( 'carmel/v1', '/inventory/link', array(
+			'methods'             => 'POST',
+			'callback'            => 'carmelx_invrecv_link',
 			'permission_callback' => function () { return current_user_can( 'edit_others_posts' ); },
 		) );
 		// 疎通確認用
