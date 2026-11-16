@@ -25,6 +25,10 @@
  * ・取り込んだ車両を外部から反映する時は、link_post_id（元の車両ページ番号）で同じページに
  *   紐づく（管理番号も一致している時だけ。確認の手間なし・別の車は上書きしない）。
  * ・写真がこのサイトのメディアに既にある時は、取り込み直さずそのまま使う。
+ *
+ * v1.23.0 追加
+ * ・諸費用の内訳（値引き・下取り・税金/保険料・登録/諸費用・消費税）を受け取り／取り込みに対応。
+ *   車両ページの「お支払総額の内訳」(est_*) と諸経費合計(keihi)に反映する。
  * 管理者/投稿権限ユーザーのみ。固有名＋function_existsガード。
  * ---------------------------------------------------------------------------
  */
@@ -101,6 +105,18 @@ if ( ! function_exists( 'carmelx_invrecv_equip_labels' ) ) {
 			'fog_lamp' => 'フォグランプ', 'adaptive_light' => 'アダプティブライト',
 			'etc' => 'ETC', 'etc2' => 'ETC2.0', 'kinen_sha' => '禁煙車', 'one_owner' => 'ワンオーナー',
 			'kirokubo' => '記録簿あり', 'seibi_zumi' => '整備済み', 'shuufuku_nashi' => '修復歴なし',
+		);
+	}
+}
+
+if ( ! function_exists( 'carmelx_invrecv_fee_keys' ) ) {
+	/** 諸費用の内訳で外部システムとやり取りする欄（WP側の欄名は est_ を頭に付けたもの） */
+	function carmelx_invrecv_fee_keys() {
+		return array(
+			'nebiki', 'shitadori',                                   // 値引き・下取り
+			'jidoshazei', 'jibaiseki', 'juuryouzei', 'inshi',        // 税金・保険料（非課税）
+			'touroku_daiko', 'shako', 'nousha', 'kensa_daiko', 'seibi', 'hoshou', 'hanbai_tesuu', 'auction', // 登録・諸費用（課税）
+			'shouhizei',                                             // 消費税
 		);
 	}
 }
@@ -315,6 +331,24 @@ if ( ! function_exists( 'carmelx_invrecv_handle' ) ) {
 			}
 		}
 
+		// 諸費用の内訳（送られてきた欄だけ更新。0 は「0円」として保存、欄が無ければ触らない）
+		if ( isset( $p['fees'] ) && is_array( $p['fees'] ) ) {
+			$keihi = 0; $any = false;
+			foreach ( carmelx_invrecv_fee_keys() as $fk ) {
+				if ( ! array_key_exists( $fk, $p['fees'] ) || ! is_scalar( $p['fees'][ $fk ] ) ) { continue; }
+				$fv = (int) preg_replace( '/[^0-9]/', '', (string) $p['fees'][ $fk ] );
+				if ( function_exists( 'update_field' ) ) { update_field( 'est_' . $fk, (string) $fv, $id ); }
+				else { update_post_meta( $id, 'est_' . $fk, (string) $fv ); }
+				$any = true;
+				if ( ! in_array( $fk, array( 'nebiki', 'shitadori' ), true ) ) { $keihi += $fv; }
+			}
+			// 諸経費合計（税金・保険料＋登録・諸費用＋消費税＋リサイクル料）※値引き・下取りは含めない
+			if ( $any ) {
+				$keihi += $recycle ? $recycle : (int) preg_replace( '/[^0-9]/', '', (string) get_post_meta( $id, 'est_recycle', true ) );
+				if ( $keihi > 0 ) { carmelx_invrecv_set( $id, 'keihi', number_format( $keihi ) . '円' ); }
+			}
+		}
+
 		// 金額：本体（est_honntai・price）／支払総額（est_total）
 		if ( $price ) { carmelx_invrecv_set( $id, 'est_honntai', (string) $price ); carmelx_invrecv_set( $id, 'price', (string) $price ); }
 		if ( $total ) { carmelx_invrecv_set( $id, 'est_total', (string) $total ); }
@@ -431,6 +465,13 @@ if ( ! function_exists( 'carmelx_invrecv_export_item' ) ) {
 		$year = $digits( $g( array( 'year', 'nenshiki' ) ) );
 		if ( $year && ( $year < 1950 || $year > 2100 ) ) { $year = null; }
 
+		// 諸費用の内訳（金額が入っている欄だけ）
+		$fees = array();
+		foreach ( carmelx_invrecv_fee_keys() as $fk ) {
+			$fv = $digits( $g( array( 'est_' . $fk ) ) );
+			if ( $fv ) { $fees[ $fk ] = $fv; }
+		}
+
 		return array(
 			'wp_post_id'     => (int) $pid,
 			'ext_id'         => (string) get_post_meta( $pid, 'carmel_inv_ext_id', true ),
@@ -456,6 +497,7 @@ if ( ! function_exists( 'carmelx_invrecv_export_item' ) ) {
 			'price'          => $digits( $g( array( 'est_honntai', 'price' ) ) ),
 			'total_payment'  => $digits( $g( array( 'est_total' ) ) ),
 			'capacity'       => $digits( $g( array( 'cx_teiin' ) ) ),
+			'fees'           => (object) $fees,
 			'comment'        => $g( array( 'comment' ) ),
 			'shop_slug'      => $shop_slug,
 			'shop_name'      => $shop_name,
