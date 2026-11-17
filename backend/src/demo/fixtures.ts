@@ -73,7 +73,7 @@ export const demoSettings = {
   tenant_id: TENANT,
   business_hours: { mon: [['10:00', '19:00']], tue: [['10:00', '19:00']], wed: [['10:00', '19:00']], thu: [['10:00', '19:00']], fri: [['10:00', '19:00']], sat: [['10:00', '17:00']] },
   holiday_settings: { weekly: ['sun'], dates: [] as string[] },
-  greeting_message: 'お電話ありがとうございます。車買取専門店、AI受付です。買取査定のご依頼を承ります。お車の車種・年式と、だいたいの地域を教えてください。',
+  greeting_message: 'お電話ありがとうございます。車買取専門店でございます。本日はどのようなご用件でしょうか？',
   ai_tone: 'polite',
   default_language: 'ja-JP',
   recording_enabled: false,

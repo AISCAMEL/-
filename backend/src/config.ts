@@ -99,5 +99,5 @@ export const config = {
 
   defaultGreeting:
     process.env.DEFAULT_GREETING ??
-    'お電話ありがとうございます。AI受付です。ご用件をお話しください。',
+    'お電話ありがとうございます。本日はどのようなご用件でしょうか？',
 } as const;
