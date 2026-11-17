@@ -1,0 +1,180 @@
+/* =============================================================
+   合同会社アイズ｜コーポレートサイト   レイアウト本体（style.css）
+   方針：上質・高級感。主題（車の総合カンパニー）に根ざした固有の表現。
+   ※AI生成にありがちな“手口”（連番・末尾矢印・全見出しの英字大文字ラベル・
+     1語だけ色替え 等）は使わない。色やフォントの設定は theme.css。
+   ============================================================= */
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: var(--font-size-base);
+  line-height: var(--lh-base);
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+img, svg { max-width: 100%; height: auto; display: block; }
+a { color: inherit; text-decoration: none; }
+
+/* ---- タイポグラフィ ---- */
+h1, h2, h3, .serif { font-family: var(--font-serif); font-weight: 600; letter-spacing: .01em; }
+h1 { line-height: 1.34; }
+h2 { line-height: 1.44; }
+
+/* ---- 共通レイアウト ---- */
+.wrap { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 var(--gutter); }
+.narrow { max-width: var(--maxw-narrow); }
+.section { padding: var(--section-y) 0; }
+.section-sm { padding: calc(var(--section-y) * .72) 0; }
+
+/* 控えめなセクション・ラベル（日本語・意味のある語のみ。装飾ラベルにしない）*/
+.eyebrow { display: inline-block; font-size: 13px; font-weight: 700; letter-spacing: .06em;
+  color: var(--accent); margin: 0 0 16px; }
+
+.section-head { margin: 0 0 56px; }
+.section-head h2 { font-size: clamp(27px, 3.6vw, 42px); margin: 0 0 16px; color: var(--brand); }
+.section-head p { color: var(--muted); margin: 0; max-width: 620px; font-size: 16px; }
+
+/* ---- ボタン（上品：塗り＋細い縁。末尾の矢印は付けない）---- */
+.btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 16px 32px; border-radius: var(--radius);
+  font-family: var(--font); font-weight: 600; font-size: 15px; letter-spacing: .04em;
+  cursor: pointer; border: 1px solid transparent; transition: all .25s ease;
+}
+.btn-gold { background: var(--accent); color: #fff; }
+.btn-gold:hover { background: var(--brand); }
+.btn-navy { background: var(--brand); color: #fff; }
+.btn-navy:hover { background: var(--accent); }
+.btn-ghost { background: transparent; color: #fff; border-color: rgba(255,255,255,.4); }
+.btn-ghost:hover { border-color: var(--accent-2); color: var(--accent-2); }
+.btn-outline { background: transparent; color: var(--brand); border-color: var(--line-strong); }
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+.btn-sm { padding: 12px 22px; font-size: 14px; }
+
+/* テキストリンク（下線が伸びる・日本語）*/
+.tlink { font-size: 14px; letter-spacing: .02em; color: var(--brand); font-weight: 700;
+  display: inline-flex; align-items: center; gap: 10px; }
+.tlink::after { content:""; width: 24px; height: 1px; background: var(--accent); transition: width .3s ease; }
+.tlink:hover::after { width: 46px; }
+
+/* ---- ヘッダー ---- */
+.site-header {
+  position: sticky; top: 0; z-index: 60;
+  background: rgba(246,243,236,.85); backdrop-filter: saturate(140%) blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+.site-header .wrap { display: flex; align-items: center; justify-content: space-between; height: 80px; }
+.brand { display: flex; align-items: center; gap: 13px; }
+.brand .mark { width: 42px; height: 42px; border: 1px solid var(--accent); display: grid; place-items: center;
+  color: var(--accent); font-family: var(--font-en); font-weight: 600; font-size: 19px; letter-spacing: .5px; }
+.brand .name { font-family: var(--font-serif); font-weight: 600; font-size: 18px; color: var(--brand); line-height: 1.2; }
+.brand .name small { display: block; font-family: var(--font-en); font-size: 10px; font-weight: 600; color: var(--accent); letter-spacing: .24em; margin-top: 2px; }
+.nav { display: flex; align-items: center; gap: 30px; }
+.nav a.nav-link { font-size: 14px; font-weight: 500; color: var(--ink); letter-spacing: .02em; position: relative; padding: 4px 0; }
+.nav a.nav-link::after { content:""; position:absolute; left:0; bottom:-2px; width:0; height:1px; background: var(--accent); transition: width .3s ease; }
+.nav a.nav-link:hover::after { width: 100%; }
+.nav-toggle { display: none; background: none; border: 0; font-size: 24px; color: var(--brand); cursor: pointer; line-height: 1; }
+
+/* ---- ヒーロー ---- */
+.hero { position: relative; color: #fff; background: var(--brand); overflow: hidden; }
+.hero::before { content: ""; position: absolute; inset: 0;
+  background: radial-gradient(120% 85% at 82% 0%, rgba(184,144,63,.20), transparent 55%); pointer-events: none; }
+.hero .wrap { position: relative; min-height: 84vh; display: flex; flex-direction: column; justify-content: center; padding: 120px 24px 96px; }
+.hero .kicker { font-size: 14px; letter-spacing: .04em; color: var(--accent-2); margin-bottom: 26px; font-weight: 500; }
+.hero h1 { font-size: clamp(34px, 6vw, 70px); line-height: 1.3; margin: 0 0 30px; font-weight: 600; max-width: 15em; }
+.hero p.lead { font-size: clamp(15px, 1.5vw, 18px); line-height: 2; color: rgba(255,255,255,.82); max-width: 560px; margin: 0 0 40px; }
+.hero .cta { display: flex; gap: 16px; flex-wrap: wrap; }
+.hero .meta { margin-top: 64px; display: flex; gap: 56px; flex-wrap: wrap; border-top: 1px solid rgba(255,255,255,.14); padding-top: 32px; }
+.hero .meta .m-num { font-family: var(--font-en); font-size: 38px; font-weight: 600; color: var(--accent-2); line-height: 1; }
+.hero .meta .m-label { font-size: 12.5px; color: rgba(255,255,255,.66); margin-top: 8px; letter-spacing: .04em; }
+
+/* ---- 事業インデックス（ブランド名を主役に。連番は使わない）---- */
+.biz-list { border-top: 1px solid var(--line-strong); }
+.biz-row { display: grid; grid-template-columns: minmax(200px, 300px) 1fr; gap: 40px; align-items: baseline;
+  padding: 34px 8px; border-bottom: 1px solid var(--line); transition: background .3s ease; }
+.biz-row:hover { background: var(--surface); }
+.biz-id { display: flex; flex-direction: column; gap: 4px; }
+.biz-en { font-family: var(--font-en); font-size: 30px; font-weight: 600; color: var(--brand); line-height: 1.05; letter-spacing: .01em; }
+.biz-ja { font-size: 13px; color: var(--muted); letter-spacing: .06em; }
+.biz-body h3 { font-size: 20px; margin: 0 0 8px; color: var(--brand); font-weight: 600; }
+.biz-body p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.85; max-width: 44em; }
+.biz-row:hover .biz-en { color: var(--accent); }
+
+/* ---- FC 帯 ---- */
+.fc-band { margin-top: 56px; background: var(--brand); color: #fff; border-radius: var(--radius-lg);
+  padding: 48px 52px; display: grid; grid-template-columns: 1fr auto; gap: 28px; align-items: center; position: relative; overflow: hidden; }
+.fc-band::after { content:""; position:absolute; inset:0; background: radial-gradient(90% 140% at 100% 0, rgba(184,144,63,.18), transparent 60%); pointer-events:none; }
+.fc-band h3 { font-size: 24px; margin: 0 0 10px; color: #fff; }
+.fc-band p { margin: 0; color: rgba(255,255,255,.76); font-size: 15px; max-width: 42em; }
+.fc-band .cta-wrap { position: relative; }
+
+/* ---- IT セクション（控えめ＝2割）---- */
+.it-band { background: var(--surface); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.it-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; }
+.it-cell { padding: 48px; border-right: 1px solid var(--line); background: var(--bg); }
+.it-cell:last-child { border-right: 0; }
+.it-cell .lead-name { font-family: var(--font-en); font-size: 22px; font-weight: 600; color: var(--it-accent); margin-bottom: 10px; }
+.it-cell h3 { font-size: 19px; margin: 0 0 12px; color: var(--brand); }
+.it-cell p { margin: 0 0 22px; color: var(--muted); font-size: 15px; line-height: 1.9; }
+.it-cell .tlink::after { background: var(--it-accent); }
+
+/* ---- 会社概要（定義リスト・罫線）---- */
+.company { border-top: 1px solid var(--line-strong); }
+.company dl { margin: 0; }
+.company .row { display: grid; grid-template-columns: 220px 1fr; gap: 24px; padding: 24px 4px; border-bottom: 1px solid var(--line); }
+.company dt { font-family: var(--font-serif); font-weight: 600; color: var(--brand); font-size: 15px; }
+.company dd { margin: 0; color: var(--ink); font-size: 15px; line-height: 1.9; }
+.company dd a { color: var(--accent); border-bottom: 1px solid var(--line-strong); }
+
+/* ---- CTA 帯 ---- */
+.cta-band { background: var(--brand); color: #fff; border-radius: var(--radius-lg); padding: 80px 40px; text-align: center; position: relative; overflow: hidden; }
+.cta-band::after { content:""; position:absolute; inset:0; background: radial-gradient(70% 120% at 50% 0, rgba(184,144,63,.18), transparent 60%); pointer-events:none; }
+.cta-band h2 { position: relative; margin: 0 0 16px; font-size: clamp(24px, 3.2vw, 36px); color: #fff; }
+.cta-band p { position: relative; margin: 0 0 32px; color: rgba(255,255,255,.8); }
+
+/* ---- フッター ---- */
+.site-footer { background: var(--brand); color: rgba(255,255,255,.74); }
+.site-footer .wrap { padding: 72px 24px 36px; }
+.footer-grid { display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 40px; }
+.site-footer .brand .name { color: #fff; }
+.site-footer h4 { color: var(--accent-2); font-size: 13px; letter-spacing: .06em; margin: 0 0 18px; font-weight: 700; }
+.site-footer a { display: block; font-size: 14px; color: rgba(255,255,255,.74); padding: 6px 0; transition: color .2s; }
+.site-footer a:hover { color: var(--accent-2); }
+.footer-bottom { border-top: 1px solid rgba(255,255,255,.12); margin-top: 48px; padding-top: 24px; font-size: 12.5px; color: rgba(255,255,255,.55); display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+
+/* ---- スクロール時の出現（1回のみ・控えめ。全要素一律にはしない）---- */
+.reveal { opacity: 0; transform: translateY(16px); transition: opacity .7s ease, transform .7s ease; }
+.reveal.in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } html { scroll-behavior: auto; } }
+
+/* ---- レスポンシブ ---- */
+@media (max-width: 900px) {
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+  .it-grid { grid-template-columns: 1fr; }
+  .it-cell { border-right: 0; border-bottom: 1px solid var(--line); }
+  .it-cell:last-child { border-bottom: 0; }
+}
+@media (max-width: 680px) {
+  :root { --section-y: var(--section-y-sp); }
+  .nav { position: fixed; inset: 80px 0 auto 0; background: var(--bg); flex-direction: column; align-items: stretch;
+    gap: 0; padding: 10px 24px 22px; border-bottom: 1px solid var(--line); box-shadow: var(--shadow-lg);
+    transform: translateY(-130%); transition: transform .3s ease; }
+  .nav.open { transform: translateY(0); }
+  .nav a.nav-link { padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .nav .btn { margin-top: 12px; justify-content: center; }
+  .nav-toggle { display: block; }
+  .hero .wrap { min-height: auto; padding: 92px 24px 68px; }
+  .hero .meta { gap: 36px; }
+  .biz-row { grid-template-columns: 1fr; gap: 10px; padding: 26px 4px; }
+  .biz-id { flex-direction: row; align-items: baseline; gap: 12px; }
+  .biz-en { font-size: 24px; }
+  .fc-band { grid-template-columns: 1fr; padding: 36px 28px; }
+  .company .row { grid-template-columns: 1fr; gap: 6px; padding: 20px 4px; }
+  .company dt { font-size: 13px; color: var(--accent); }
+  .cta-band { padding: 56px 24px; }
+}
