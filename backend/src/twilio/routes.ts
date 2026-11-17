@@ -19,7 +19,7 @@ function buildConnectTwiml(greeting: string): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Connect action="${action}">
-    <ConversationRelay url="${wsUrl}" welcomeGreeting="${greet}" language="ja-JP" ttsProvider="${escapeXml(config.twilio.ttsProvider)}" voice="${escapeXml(config.twilio.ttsVoice)}" interruptible="any" />
+    <ConversationRelay url="${wsUrl}" welcomeGreeting="${greet}" language="ja-JP" ${relayMediaAttrs()} interruptible="any" />
   </Connect>
 </Response>`;
 }
@@ -27,6 +27,18 @@ function buildConnectTwiml(greeting: string): string {
 function escapeXml(s: string): string {
   return s.replace(/[<>&"']/g, (c) =>
     ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' }[c] as string));
+}
+
+// ConversationRelay の音声(TTS)・認識(STT)属性をまとめて生成。
+// STTは設定があるときだけ付与（未設定なら ConversationRelay 既定を使う＝安全）。
+function relayMediaAttrs(): string {
+  const parts = [
+    `ttsProvider="${escapeXml(config.twilio.ttsProvider)}"`,
+    `voice="${escapeXml(config.twilio.ttsVoice)}"`,
+  ];
+  if (config.twilio.sttProvider) parts.push(`transcriptionProvider="${escapeXml(config.twilio.sttProvider)}"`);
+  if (config.twilio.sttModel) parts.push(`speechModel="${escapeXml(config.twilio.sttModel)}"`);
+  return parts.join(' ');
 }
 
 export async function registerTwilioRoutes(app: FastifyInstance): Promise<void> {
@@ -68,7 +80,7 @@ export async function registerTwilioRoutes(app: FastifyInstance): Promise<void> 
     return reply.send(`<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Connect action="${action}">
-    <ConversationRelay url="${wsUrl}" welcomeGreeting="${escapeXml(opening)}" language="ja-JP" ttsProvider="${escapeXml(config.twilio.ttsProvider)}" voice="${escapeXml(config.twilio.ttsVoice)}" interruptible="any">
+    <ConversationRelay url="${wsUrl}" welcomeGreeting="${escapeXml(opening)}" language="ja-JP" ${relayMediaAttrs()} interruptible="any">
       <Parameter name="campaignId" value="${escapeXml(campaignId)}" />
     </ConversationRelay>
   </Connect>
