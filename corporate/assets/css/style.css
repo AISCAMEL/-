@@ -1,7 +1,8 @@
 /* =============================================================
    合同会社アイズ｜コーポレートサイト   レイアウト本体（style.css）
-   方針：上質・高級感（エディトリアル）／ 影より罫線・広い余白・明朝見出し
-   ※色やフォントの「設定」は theme.css。見た目の調整は原則 theme.css を触る。
+   方針：上質・高級感。主題（車の総合カンパニー）に根ざした固有の表現。
+   ※AI生成にありがちな“手口”（連番・末尾矢印・全見出しの英字大文字ラベル・
+     1語だけ色替え 等）は使わない。色やフォントの設定は theme.css。
    ============================================================= */
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -21,8 +22,8 @@ a { color: inherit; text-decoration: none; }
 
 /* ---- タイポグラフィ ---- */
 h1, h2, h3, .serif { font-family: var(--font-serif); font-weight: 600; letter-spacing: .01em; }
-h1 { line-height: 1.32; }
-h2 { line-height: 1.42; }
+h1 { line-height: 1.34; }
+h2 { line-height: 1.44; }
 
 /* ---- 共通レイアウト ---- */
 .wrap { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 var(--gutter); }
@@ -30,25 +31,20 @@ h2 { line-height: 1.42; }
 .section { padding: var(--section-y) 0; }
 .section-sm { padding: calc(var(--section-y) * .72) 0; }
 
-/* エディトリアルな英字ラベル */
-.eyebrow {
-  font-family: var(--font-en);
-  font-size: 15px; font-weight: 600; letter-spacing: .34em; text-transform: uppercase;
-  color: var(--accent); margin: 0 0 18px; display: inline-flex; align-items: center; gap: 12px;
-}
-.eyebrow::before { content: ""; width: 34px; height: 1px; background: var(--accent); display: inline-block; }
+/* 控えめなセクション・ラベル（日本語・意味のある語のみ。装飾ラベルにしない）*/
+.eyebrow { display: inline-block; font-size: 13px; font-weight: 700; letter-spacing: .06em;
+  color: var(--accent); margin: 0 0 16px; }
 
 .section-head { margin: 0 0 56px; }
 .section-head h2 { font-size: clamp(27px, 3.6vw, 42px); margin: 0 0 16px; color: var(--brand); }
 .section-head p { color: var(--muted); margin: 0; max-width: 620px; font-size: 16px; }
-.section-head .ja-label { font-size: 13px; color: var(--muted); letter-spacing:.1em; }
 
-/* ---- ボタン（上品：塗り＋細い縁、角丸ほぼ無し）---- */
+/* ---- ボタン（上品：塗り＋細い縁。末尾の矢印は付けない）---- */
 .btn {
-  display: inline-flex; align-items: center; gap: 12px;
+  display: inline-flex; align-items: center; gap: 10px;
   padding: 16px 32px; border-radius: var(--radius);
   font-family: var(--font); font-weight: 600; font-size: 15px; letter-spacing: .04em;
-  cursor: pointer; border: 1px solid transparent; transition: all .25s ease; position: relative;
+  cursor: pointer; border: 1px solid transparent; transition: all .25s ease;
 }
 .btn-gold { background: var(--accent); color: #fff; }
 .btn-gold:hover { background: var(--brand); }
@@ -59,13 +55,12 @@ h2 { line-height: 1.42; }
 .btn-outline { background: transparent; color: var(--brand); border-color: var(--line-strong); }
 .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
 .btn-sm { padding: 12px 22px; font-size: 14px; }
-.btn .arw { font-family: var(--font-en); font-size: 17px; }
 
-/* テキストリンク（下線が伸びる）*/
-.tlink { font-family: var(--font-en); font-size: 14px; letter-spacing: .14em; text-transform: uppercase;
-  color: var(--brand); font-weight: 600; display: inline-flex; align-items: center; gap: 10px; }
-.tlink::after { content:""; width: 22px; height: 1px; background: var(--accent); transition: width .3s ease; }
-.tlink:hover::after { width: 42px; }
+/* テキストリンク（下線が伸びる・日本語）*/
+.tlink { font-size: 14px; letter-spacing: .02em; color: var(--brand); font-weight: 700;
+  display: inline-flex; align-items: center; gap: 10px; }
+.tlink::after { content:""; width: 24px; height: 1px; background: var(--accent); transition: width .3s ease; }
+.tlink:hover::after { width: 46px; }
 
 /* ---- ヘッダー ---- */
 .site-header {
@@ -78,7 +73,7 @@ h2 { line-height: 1.42; }
 .brand .mark { width: 42px; height: 42px; border: 1px solid var(--accent); display: grid; place-items: center;
   color: var(--accent); font-family: var(--font-en); font-weight: 600; font-size: 19px; letter-spacing: .5px; }
 .brand .name { font-family: var(--font-serif); font-weight: 600; font-size: 18px; color: var(--brand); line-height: 1.2; }
-.brand .name small { display: block; font-family: var(--font-en); font-size: 10px; font-weight: 600; color: var(--accent); letter-spacing: .28em; margin-top: 2px; }
+.brand .name small { display: block; font-family: var(--font-en); font-size: 10px; font-weight: 600; color: var(--accent); letter-spacing: .24em; margin-top: 2px; }
 .nav { display: flex; align-items: center; gap: 30px; }
 .nav a.nav-link { font-size: 14px; font-weight: 500; color: var(--ink); letter-spacing: .02em; position: relative; padding: 4px 0; }
 .nav a.nav-link::after { content:""; position:absolute; left:0; bottom:-2px; width:0; height:1px; background: var(--accent); transition: width .3s ease; }
@@ -87,49 +82,34 @@ h2 { line-height: 1.42; }
 
 /* ---- ヒーロー ---- */
 .hero { position: relative; color: #fff; background: var(--brand); overflow: hidden; }
-.hero::before { /* 大きな背景の飾り文字 */
-  content: "AIS"; position: absolute; right: -2vw; bottom: -6vw;
-  font-family: var(--font-en); font-weight: 600; font-size: 44vw; line-height: .8;
-  color: rgba(255,255,255,.035); letter-spacing: -.02em; pointer-events: none; user-select: none;
-}
-.hero::after { content:""; position:absolute; inset:0; background:
-  radial-gradient(120% 80% at 80% 0%, rgba(184,144,63,.16), transparent 55%); pointer-events:none; }
-.hero .wrap { position: relative; min-height: 86vh; display: flex; flex-direction: column; justify-content: center; padding: 120px 24px 96px; }
-.hero .kicker { font-family: var(--font-en); font-size: 14px; letter-spacing: .34em; text-transform: uppercase;
-  color: var(--accent-2); display:inline-flex; align-items:center; gap:14px; margin-bottom: 30px; }
-.hero .kicker::before { content:""; width: 46px; height:1px; background: var(--accent-2); }
-.hero h1 { font-size: clamp(34px, 6vw, 72px); line-height: 1.28; margin: 0 0 30px; font-weight: 600; max-width: 15em; }
-.hero h1 .hl { color: var(--accent-2); }
+.hero::before { content: ""; position: absolute; inset: 0;
+  background: radial-gradient(120% 85% at 82% 0%, rgba(184,144,63,.20), transparent 55%); pointer-events: none; }
+.hero .wrap { position: relative; min-height: 84vh; display: flex; flex-direction: column; justify-content: center; padding: 120px 24px 96px; }
+.hero .kicker { font-size: 14px; letter-spacing: .04em; color: var(--accent-2); margin-bottom: 26px; font-weight: 500; }
+.hero h1 { font-size: clamp(34px, 6vw, 70px); line-height: 1.3; margin: 0 0 30px; font-weight: 600; max-width: 15em; }
 .hero p.lead { font-size: clamp(15px, 1.5vw, 18px); line-height: 2; color: rgba(255,255,255,.82); max-width: 560px; margin: 0 0 40px; }
 .hero .cta { display: flex; gap: 16px; flex-wrap: wrap; }
 .hero .meta { margin-top: 64px; display: flex; gap: 56px; flex-wrap: wrap; border-top: 1px solid rgba(255,255,255,.14); padding-top: 32px; }
 .hero .meta .m-num { font-family: var(--font-en); font-size: 38px; font-weight: 600; color: var(--accent-2); line-height: 1; }
 .hero .meta .m-label { font-size: 12.5px; color: rgba(255,255,255,.66); margin-top: 8px; letter-spacing: .04em; }
 
-/* ---- 事業セクション見出しの比率タグ ---- */
-.ratio-tag { font-family: var(--font-en); font-size: 12.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
-  color: var(--muted); display:inline-flex; align-items:center; gap:10px; }
-.ratio-tag b { color: var(--accent); font-size: 15px; }
-
-/* ---- 事業インデックス（エディトリアル・番号つき）---- */
-.biz-list { border-top: 1px solid var(--line); }
-.biz-row { display: grid; grid-template-columns: 96px 1fr auto; gap: 32px; align-items: center;
-  padding: 34px 8px; border-bottom: 1px solid var(--line); transition: background .3s ease, padding .3s ease; position: relative; }
+/* ---- 事業インデックス（ブランド名を主役に。連番は使わない）---- */
+.biz-list { border-top: 1px solid var(--line-strong); }
+.biz-row { display: grid; grid-template-columns: minmax(200px, 300px) 1fr; gap: 40px; align-items: baseline;
+  padding: 34px 8px; border-bottom: 1px solid var(--line); transition: background .3s ease; }
 .biz-row:hover { background: var(--surface); }
-.biz-row .no { font-family: var(--font-en); font-size: 40px; font-weight: 500; color: var(--line-strong); line-height: 1; transition: color .3s ease; }
-.biz-row:hover .no { color: var(--accent); }
-.biz-row .en { font-family: var(--font-en); font-size: 13px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
-.biz-row h3 { font-size: 22px; margin: 0 0 8px; color: var(--brand); font-weight: 600; }
-.biz-row p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.85; max-width: 46em; }
-.biz-row .go { font-family: var(--font-en); font-size: 22px; color: var(--line-strong); transition: color .3s ease, transform .3s ease; }
-.biz-row:hover .go { color: var(--accent); transform: translateX(6px); }
+.biz-id { display: flex; flex-direction: column; gap: 4px; }
+.biz-en { font-family: var(--font-en); font-size: 30px; font-weight: 600; color: var(--brand); line-height: 1.05; letter-spacing: .01em; }
+.biz-ja { font-size: 13px; color: var(--muted); letter-spacing: .06em; }
+.biz-body h3 { font-size: 20px; margin: 0 0 8px; color: var(--brand); font-weight: 600; }
+.biz-body p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.85; max-width: 44em; }
+.biz-row:hover .biz-en { color: var(--accent); }
 
 /* ---- FC 帯 ---- */
 .fc-band { margin-top: 56px; background: var(--brand); color: #fff; border-radius: var(--radius-lg);
   padding: 48px 52px; display: grid; grid-template-columns: 1fr auto; gap: 28px; align-items: center; position: relative; overflow: hidden; }
 .fc-band::after { content:""; position:absolute; inset:0; background: radial-gradient(90% 140% at 100% 0, rgba(184,144,63,.18), transparent 60%); pointer-events:none; }
-.fc-band .en { font-family: var(--font-en); font-size: 13px; letter-spacing: .2em; text-transform: uppercase; color: var(--accent-2); margin-bottom: 8px; }
-.fc-band h3 { font-size: 24px; margin: 0 0 8px; color: #fff; }
+.fc-band h3 { font-size: 24px; margin: 0 0 10px; color: #fff; }
 .fc-band p { margin: 0; color: rgba(255,255,255,.76); font-size: 15px; max-width: 42em; }
 .fc-band .cta-wrap { position: relative; }
 
@@ -138,10 +118,9 @@ h2 { line-height: 1.42; }
 .it-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; }
 .it-cell { padding: 48px; border-right: 1px solid var(--line); background: var(--bg); }
 .it-cell:last-child { border-right: 0; }
-.it-cell .en { font-family: var(--font-en); font-size: 13px; letter-spacing: .2em; text-transform: uppercase; color: var(--it-accent); margin-bottom: 12px; }
-.it-cell h3 { font-size: 21px; margin: 0 0 12px; color: var(--brand); }
+.it-cell .lead-name { font-family: var(--font-en); font-size: 22px; font-weight: 600; color: var(--it-accent); margin-bottom: 10px; }
+.it-cell h3 { font-size: 19px; margin: 0 0 12px; color: var(--brand); }
 .it-cell p { margin: 0 0 22px; color: var(--muted); font-size: 15px; line-height: 1.9; }
-.it-cell .tlink { color: var(--brand); }
 .it-cell .tlink::after { background: var(--it-accent); }
 
 /* ---- 会社概要（定義リスト・罫線）---- */
@@ -155,8 +134,6 @@ h2 { line-height: 1.42; }
 /* ---- CTA 帯 ---- */
 .cta-band { background: var(--brand); color: #fff; border-radius: var(--radius-lg); padding: 80px 40px; text-align: center; position: relative; overflow: hidden; }
 .cta-band::after { content:""; position:absolute; inset:0; background: radial-gradient(70% 120% at 50% 0, rgba(184,144,63,.18), transparent 60%); pointer-events:none; }
-.cta-band .eyebrow { justify-content: center; color: var(--accent-2); }
-.cta-band .eyebrow::before { background: var(--accent-2); }
 .cta-band h2 { position: relative; margin: 0 0 16px; font-size: clamp(24px, 3.2vw, 36px); color: #fff; }
 .cta-band p { position: relative; margin: 0 0 32px; color: rgba(255,255,255,.8); }
 
@@ -165,13 +142,13 @@ h2 { line-height: 1.42; }
 .site-footer .wrap { padding: 72px 24px 36px; }
 .footer-grid { display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 40px; }
 .site-footer .brand .name { color: #fff; }
-.site-footer h4 { font-family: var(--font-en); color: var(--accent-2); font-size: 12px; letter-spacing: .2em; text-transform: uppercase; margin: 0 0 18px; font-weight: 600; }
+.site-footer h4 { color: var(--accent-2); font-size: 13px; letter-spacing: .06em; margin: 0 0 18px; font-weight: 700; }
 .site-footer a { display: block; font-size: 14px; color: rgba(255,255,255,.74); padding: 6px 0; transition: color .2s; }
 .site-footer a:hover { color: var(--accent-2); }
 .footer-bottom { border-top: 1px solid rgba(255,255,255,.12); margin-top: 48px; padding-top: 24px; font-size: 12.5px; color: rgba(255,255,255,.55); display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; }
 
-/* ---- スクロール時の出現アニメ（控えめ）---- */
-.reveal { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s ease; }
+/* ---- スクロール時の出現（1回のみ・控えめ。全要素一律にはしない）---- */
+.reveal { opacity: 0; transform: translateY(16px); transition: opacity .7s ease, transform .7s ease; }
 .reveal.in { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } html { scroll-behavior: auto; } }
 
@@ -191,11 +168,11 @@ h2 { line-height: 1.42; }
   .nav a.nav-link { padding: 14px 0; border-bottom: 1px solid var(--line); }
   .nav .btn { margin-top: 12px; justify-content: center; }
   .nav-toggle { display: block; }
-  .hero .wrap { min-height: auto; padding: 96px 24px 72px; }
+  .hero .wrap { min-height: auto; padding: 92px 24px 68px; }
   .hero .meta { gap: 36px; }
-  .biz-row { grid-template-columns: 56px 1fr; grid-template-rows: auto auto; gap: 6px 20px; padding: 28px 4px; }
-  .biz-row .no { font-size: 30px; grid-row: 1 / 3; }
-  .biz-row .go { display: none; }
+  .biz-row { grid-template-columns: 1fr; gap: 10px; padding: 26px 4px; }
+  .biz-id { flex-direction: row; align-items: baseline; gap: 12px; }
+  .biz-en { font-size: 24px; }
   .fc-band { grid-template-columns: 1fr; padding: 36px 28px; }
   .company .row { grid-template-columns: 1fr; gap: 6px; padding: 20px 4px; }
   .company dt { font-size: 13px; color: var(--accent); }
