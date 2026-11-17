@@ -19,7 +19,7 @@ function buildConnectTwiml(greeting: string): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Connect action="${action}">
-    <ConversationRelay url="${wsUrl}" welcomeGreeting="${greet}" language="ja-JP" interruptible="any" />
+    <ConversationRelay url="${wsUrl}" welcomeGreeting="${greet}" language="ja-JP" ttsProvider="${escapeXml(config.twilio.ttsProvider)}" voice="${escapeXml(config.twilio.ttsVoice)}" interruptible="any" />
   </Connect>
 </Response>`;
 }
@@ -68,7 +68,7 @@ export async function registerTwilioRoutes(app: FastifyInstance): Promise<void> 
     return reply.send(`<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Connect action="${action}">
-    <ConversationRelay url="${wsUrl}" welcomeGreeting="${escapeXml(opening)}" language="ja-JP" interruptible="any">
+    <ConversationRelay url="${wsUrl}" welcomeGreeting="${escapeXml(opening)}" language="ja-JP" ttsProvider="${escapeXml(config.twilio.ttsProvider)}" voice="${escapeXml(config.twilio.ttsVoice)}" interruptible="any">
       <Parameter name="campaignId" value="${escapeXml(campaignId)}" />
     </ConversationRelay>
   </Connect>

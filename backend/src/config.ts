@@ -18,6 +18,15 @@ export const config = {
     validateSignature: (process.env.TWILIO_VALIDATE_SIGNATURE ?? 'true') === 'true',
     // SMS送信元（電話番号 or Messaging Service SID）。未設定ならSMSはドライラン。
     smsFrom: process.env.TWILIO_SMS_FROM ?? '',
+    // ConversationRelay の音声(TTS)。環境変数で差し替え可能（再デプロイ不要で声を試せる）。
+    // 既定は Google Chirp3-HD（最新の自然な日本語音声）。
+    // 他の選択肢例：
+    //   Google: ja-JP-Chirp3-HD-Aoede / ja-JP-Chirp3-HD-Charon / ja-JP-Wavenet-B
+    //   Amazon: Takumi-Neural / Kazuha-Neural（TWILIO_TTS_PROVIDER=Amazon）
+    //   ElevenLabs: <voiceId>-v4（TWILIO_TTS_PROVIDER=ElevenLabs）
+    // ※ provider と voice の組み合わせが不正だと通話が繋がらないので、対で設定すること。
+    ttsProvider: process.env.TWILIO_TTS_PROVIDER ?? 'Google',
+    ttsVoice: process.env.TWILIO_TTS_VOICE ?? 'ja-JP-Chirp3-HD-Kore',
   },
 
   openai: {
