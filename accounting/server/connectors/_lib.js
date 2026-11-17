@@ -57,11 +57,27 @@ const cfgBase = () => ({
   syncUrl: (process.env.SYNC_URL || 'http://localhost:8787').replace(/\/$/, ''),
   workspace: process.env.WORKSPACE || '',
   token: process.env.TOKEN || '',
+  // Supabase 直読（サーバー専用の service_role キー。RLSをバイパスするので非公開厳守）
+  supaUrl: (process.env.SUPA_URL || '').replace(/\/$/, ''),
+  supaKey: process.env.SUPA_SERVICE_KEY || '',
+  supaLedger: process.env.SUPA_LEDGER || '',
   salesAccount: process.env.SALES_ACCOUNT || '400',
   feeAccount: process.env.FEE_ACCOUNT || '580',
   salesTax: process.env.SALES_TAX || 'sales10',
   feeTax: process.env.FEE_TAX || 'out',
 });
+// スナップショット取得：Supabase（SUPA_*設定時）優先、無ければ自前同期サーバー。
+// 返り値は db.exportAll() 相当の {_app,_version,data:{stores}}。
+const pullSnapshot = async (cfg) => {
+  if (cfg.supaUrl && cfg.supaKey && cfg.supaLedger) {
+    const rows = await getJson(`${cfg.supaUrl}/rest/v1/ledgers?id=eq.${encodeURIComponent(cfg.supaLedger)}&select=data`, { apikey: cfg.supaKey, Authorization: 'Bearer ' + cfg.supaKey });
+    if (!Array.isArray(rows) || !rows.length) throw new Error('Supabase：台帳が見つかりません（SUPA_LEDGER/キーを確認）');
+    return rows[0].data || {};
+  }
+  if (!cfg.workspace) throw new Error('WORKSPACE も SUPA_* も未設定です');
+  const pull = await postJson(`${cfg.syncUrl}/api/pull`, { workspace: cfg.workspace, token: cfg.token });
+  return (pull && pull.data) || {};
+};
 const postInbox = async (cfg, items) => {
   if (!cfg.workspace) throw new Error('WORKSPACE が未設定です');
   return postJson(`${cfg.syncUrl}/api/inbox`, { workspace: cfg.workspace, token: cfg.token, items });
@@ -74,4 +90,4 @@ const salesAndFee = (cfg, date, desc, gross, fee, tag) => {
   return items;
 };
 
-module.exports = { request, getJson, postJson, postForm, ymd, ymdUnix, ymdIso, minorToYen, majorToYen, guessAmount, readCursor, writeCursor, cfgBase, postInbox, salesAndFee };
+module.exports = { request, getJson, postJson, postForm, ymd, ymdUnix, ymdIso, minorToYen, majorToYen, guessAmount, readCursor, writeCursor, cfgBase, pullSnapshot, postInbox, salesAndFee };

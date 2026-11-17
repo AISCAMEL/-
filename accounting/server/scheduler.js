@@ -36,6 +36,8 @@ const E = process.env;
 const num = (v, d) => (v != null && v !== '' && !isNaN(Number(v)) ? Number(v) : d);
 const have = (k) => !!(E[k] && String(E[k]).trim());
 const syncReady = have('WORKSPACE');
+const supaReady = have('SUPA_URL') && have('SUPA_SERVICE_KEY') && have('SUPA_LEDGER');
+const dataReady = syncReady || supaReady; // データ取得元（自前サーバー or Supabase）
 const gmailReady = have('GMAIL_CLIENT_ID') && have('GMAIL_CLIENT_SECRET') && have('GMAIL_REFRESH_TOKEN');
 
 const CFG = {
@@ -53,9 +55,9 @@ const CFG = {
 const C = (f) => path.join(DIR, 'connectors', f);
 const TASKS = [
   { key: 'gmail', file: C('gmail.js'), enabled: gmailReady && syncReady, type: 'interval', min: CFG.gmailMin },
-  { key: 'stock-alert', file: C('stock-alert.js'), enabled: gmailReady && syncReady, type: 'daily', at: CFG.stockAt },
-  { key: 'ai-watch', file: C('ai-watch.js'), enabled: gmailReady && syncReady, type: 'daily', at: CFG.aiwatchAt },
-  { key: 'monthly-report', file: C('monthly-report.js'), enabled: gmailReady && syncReady, type: 'monthly', dom: CFG.monthlyDom, at: CFG.monthlyAt },
+  { key: 'stock-alert', file: C('stock-alert.js'), enabled: gmailReady && dataReady, type: 'daily', at: CFG.stockAt },
+  { key: 'ai-watch', file: C('ai-watch.js'), enabled: gmailReady && dataReady, type: 'daily', at: CFG.aiwatchAt },
+  { key: 'monthly-report', file: C('monthly-report.js'), enabled: gmailReady && dataReady, type: 'monthly', dom: CFG.monthlyDom, at: CFG.monthlyAt },
   { key: 'stripe', file: C('stripe.js'), enabled: have('STRIPE_API_KEY') && syncReady, type: 'interval', min: CFG.payMin },
   { key: 'square', file: C('square.js'), enabled: have('SQUARE_ACCESS_TOKEN') && syncReady, type: 'interval', min: CFG.payMin },
   { key: 'paypal', file: C('paypal.js'), enabled: have('PAYPAL_CLIENT_ID') && have('PAYPAL_SECRET') && syncReady, type: 'interval', min: CFG.payMin },

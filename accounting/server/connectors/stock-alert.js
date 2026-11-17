@@ -27,12 +27,11 @@ const b64url = (buf) => Buffer.from(buf).toString('base64').replace(/\+/g, '-').
 
 async function main() {
   const cfg = L.cfgBase();
-  if (!cfg.workspace) throw new Error('WORKSPACE が未設定です');
+  if (!cfg.workspace && !(cfg.supaUrl && cfg.supaKey && cfg.supaLedger)) throw new Error('WORKSPACE または SUPA_* が未設定です');
 
   // 1) スナップショット取得
-  const pull = await L.postJson(`${cfg.syncUrl}/api/pull`, { workspace: cfg.workspace, token: cfg.token });
-  const snap = (pull && pull.data) || {};
-  const stores = snap.data || {};
+  const snap = await L.pullSnapshot(cfg);
+  const stores = (snap && snap.data) || {};
   const vehicles = stores.vehicles || [];
   const journals = stores.journals || [];
   const accounts = stores.accounts || [];

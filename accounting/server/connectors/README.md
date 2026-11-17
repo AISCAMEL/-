@@ -266,6 +266,28 @@ node server/connectors/ai-watch.js
 - しきい値以上の検知が無ければメールは送りません（静かな日は通知なし）。
 - cron 例（毎朝8時半）：`30 8 * * * cd /path/to/app && SYNC_URL=... WORKSPACE=... TOKEN=... ALERT_TO=... WATCH_MIN_LEVEL=warn GMAIL_CLIENT_ID=... GMAIL_CLIENT_SECRET=... GMAIL_REFRESH_TOKEN=... node server/connectors/ai-watch.js >> /var/log/kaikei-aiwatch.log 2>&1`
 
+## Supabaseからデータを取得する（任意）
+
+**AI監視・在庫アラート・月次レポート**は、`SUPA_*` を設定すると自前同期サーバーの
+代わりに **Supabase から直接**スナップショットを読みます（送信はGmailのまま）。
+
+| 変数 | 説明 |
+|------|------|
+| `SUPA_URL` | Supabase の Project URL（例 `https://xxxx.supabase.co`） |
+| `SUPA_SERVICE_KEY` | **service_role** キー（サーバー専用・絶対に公開しない。RLSをバイパス） |
+| `SUPA_LEDGER` | 台帳のUUID（アプリの「設定→クラウド(Supabase)」で選択中の台帳ID） |
+
+```bash
+SUPA_URL=https://xxxx.supabase.co SUPA_SERVICE_KEY=eyJ... SUPA_LEDGER=xxxxxxxx-... \
+ALERT_TO=owner@example.com WATCH_MIN_LEVEL=warn \
+GMAIL_CLIENT_ID=... GMAIL_CLIENT_SECRET=... GMAIL_REFRESH_TOKEN=... \
+node server/connectors/ai-watch.js
+```
+
+- `SUPA_*` が未設定なら、従来どおり `SYNC_URL`/`WORKSPACE`/`TOKEN` の自前サーバーから読みます。
+- Gmail取込（`gmail.js`）は取込キュー（`/api/inbox`）へ**書き込む**ため、現状は自前同期サーバーが必要です。
+- `service_role` キーは公開厳禁。`server/.env`（Git管理外）にのみ置いてください。
+
 ## 共通ライブラリ（`_lib.js` / `pdfextract.js`）
 
 - `_lib.js`：HTTP・金額換算（ゼロデシマル通貨対応）・金額推定（`guessAmount`）・

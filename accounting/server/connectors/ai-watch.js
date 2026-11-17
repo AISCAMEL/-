@@ -130,13 +130,13 @@ function watchdog(stores, settings) {
 
 async function main() {
   const cfg = L.cfgBase();
-  if (!cfg.workspace) throw new Error('WORKSPACE が未設定です');
+  if (!cfg.workspace && !(cfg.supaUrl && cfg.supaKey && cfg.supaLedger)) throw new Error('WORKSPACE または SUPA_* が未設定です');
   const minLevel = (process.env.WATCH_MIN_LEVEL || 'warn').toLowerCase();
   const rank = { bad: 0, warn: 1, info: 2 };
   const threshold = rank[minLevel] != null ? rank[minLevel] : 1;
 
-  const pull = await L.postJson(`${cfg.syncUrl}/api/pull`, { workspace: cfg.workspace, token: cfg.token });
-  const stores = ((pull && pull.data) || {}).data || {};
+  const snap = await L.pullSnapshot(cfg);
+  const stores = (snap && snap.data) || {};
   const settings = (stores.settings || []).find((x) => x.key === 'company') || {};
   const to = process.env.ALERT_TO || settings.email;
 

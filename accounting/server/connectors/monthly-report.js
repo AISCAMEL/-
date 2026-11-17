@@ -25,12 +25,12 @@ const b64url = (s) => Buffer.from(s).toString('base64').replace(/\+/g, '-').repl
 
 async function main() {
   const cfg = L.cfgBase();
-  if (!cfg.workspace) throw new Error('WORKSPACE が未設定です');
+  if (!cfg.workspace && !(cfg.supaUrl && cfg.supaKey && cfg.supaLedger)) throw new Error('WORKSPACE または SUPA_* が未設定です');
   const ym = process.env.MONTH || prevMonth();
   const { start, end } = monthBounds(ym);
 
-  const pull = await L.postJson(`${cfg.syncUrl}/api/pull`, { workspace: cfg.workspace, token: cfg.token });
-  const stores = ((pull && pull.data) || {}).data || {};
+  const snap = await L.pullSnapshot(cfg);
+  const stores = (snap && snap.data) || {};
   const journals = (stores.journals || []).filter((j) => j.source !== 'closing');
   const catOf = {}; (stores.accounts || []).forEach((a) => (catOf[a.code] = a.category));
   const settings = (stores.settings || []).find((x) => x.key === 'company') || {};
