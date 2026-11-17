@@ -48,6 +48,7 @@ window.A = window.A || {};
     { title: 'データ・設定', items: [
       { icon: '🏢', label: '取引先', desc: '取引先マスタ。登録番号(T番号)の妥当性を自動チェック。', to: 'partners' },
       { icon: '☁', label: 'クラウド同期', desc: '複数端末・複数人でデータを共有（同期サーバーが必要）。設定から有効化。', to: 'settings' },
+      { icon: '🟢', label: 'Supabase（ログイン共有）', desc: 'サーバー不要。Supabaseのクラウドでログイン認証つきの複数人共有。設定→クラウド（Supabase）から。手順は server/SUPABASE.md。', to: 'settings' },
       { icon: '🔒', label: 'ログインロック', desc: 'パスコードでアプリをロック。設定から変更できます。', to: 'settings' },
     ] },
   ];

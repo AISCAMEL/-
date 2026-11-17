@@ -234,6 +234,52 @@ window.A = window.A || {};
       ]),
     ]);
     wrap.appendChild(syncCard);
+
+    /* --- Supabase（マネージドなクラウド：ログイン認証つき・推奨） --- */
+    const supaUrl = el('input', { type: 'text', value: s.supaUrl || '', placeholder: 'https://xxxx.supabase.co' });
+    const supaKey = el('input', { type: 'text', value: s.supaAnonKey || '', placeholder: 'anon public キー' });
+    const saveSupa = async () => { await S.settings.save({ supaUrl: supaUrl.value.trim(), supaAnonKey: supaKey.value.trim() }); };
+    const authLine = el('div.small');
+    const refreshAuthLine = () => {
+      const signed = A.supa && A.supa.isAuthed();
+      authLine.className = 'small ' + (signed ? 'ok' : 'muted');
+      authLine.textContent = signed ? `サインイン中：${A.supa.currentEmail()}　台帳：${s.supaLedgerName || '(未選択)'}` : '未サインイン';
+    };
+    const inviteEmail = el('input', { type: 'email', placeholder: '招待する人のメール（登録済み）' });
+
+    const supaCard = el('div.card', {}, [
+      el('h2', { text: 'クラウド（Supabase・ログイン認証つき）' }),
+      el('p.muted.small', { html: 'サーバーを自前で動かさずに、Supabaseのクラウドで複数人・複数端末共有＋ログイン保護ができます。手順は <code>server/supabase.sql</code> と <code>server/SUPABASE.md</code> を参照。' }),
+      el('div.form-row', {}, [
+        el('label.grow', {}, [el('span', { text: 'Project URL' }), supaUrl]),
+        el('label.grow', {}, [el('span', { text: 'anon key' }), supaKey]),
+      ]),
+      authLine,
+      el('div.quick-row', {}, [
+        el('button.btn.primary', {
+          text: 'サインイン / 台帳を選ぶ', onclick: async () => {
+            await saveSupa();
+            if (!A.supa.configured()) return ui.toast('Project URL と anon key を入力してください', 'err');
+            const host = el('div'); document.body.appendChild(host);
+            await A.supa.showLogin(host); host.remove();
+            refreshAuthLine(); ui.toast('設定を更新しました', 'ok'); ui.go('dashboard');
+          },
+        }),
+        el('button.btn', {
+          text: '⬆ 保存（push）', onclick: async () => { await saveSupa(); try { const r = await A.supa.push(); r.ok ? ui.toast(`保存しました（v${r.version}）`, 'ok') : ui.toast(r.message, 'err'); } catch (e) { ui.toast(e.message, 'err'); } },
+        }),
+        el('button.btn', {
+          text: '⬇ 取得（pull）', onclick: async () => { await saveSupa(); if (!await ui.confirm('クラウドのデータでこの端末を上書きします。よろしいですか？')) return; try { const r = await A.supa.pull(); r.ok ? (ui.toast(`取得しました（v${r.version}）`, 'ok'), ui.go('dashboard')) : ui.toast(r.message, 'err'); } catch (e) { ui.toast(e.message, 'err'); } },
+        }),
+        el('button.btn.sm', { text: 'サインアウト', onclick: async () => { A.supa.signOut(); await S.settings.save({ cloudBackend: '' }); refreshAuthLine(); ui.toast('サインアウトしました'); } }),
+      ]),
+      el('div.form-row', {}, [
+        el('label.grow', {}, [el('span', { text: 'メンバーを招待（この台帳に追加）' }), inviteEmail]),
+        el('button.btn', { text: '招待', onclick: async () => { if (!s.supaLedgerId) return ui.toast('先に台帳を選択してください', 'err'); const r = await A.supa.addMember(s.supaLedgerId, inviteEmail.value.trim()); r.ok ? (ui.toast('招待しました', 'ok'), inviteEmail.value = '') : ui.toast(r.message, 'err'); } }),
+      ]),
+    ]);
+    if (A.supa) refreshAuthLine();
+    wrap.appendChild(supaCard);
     return wrap;
   });
 })();

@@ -112,6 +112,16 @@ A.app = (function () {
     // 初回セットアップ・ウィザード（未完了かつデータ空のときのみ）
     if (A.setup) { try { await A.setup.maybeRun(); } catch (e) { console.warn('setup:', e); } }
 
+    // Supabaseバックエンド：ログイン＆台帳の取得（有効かつ設定済みのとき）
+    if (A.supa && S.settings.get().cloudBackend === 'supabase' && A.supa.configured()) {
+      try {
+        const app0 = document.getElementById('app');
+        if (A.supa.isAuthed()) await A.supa.refresh();
+        if (!A.supa.isAuthed()) { await A.supa.showLogin(app0); app0.innerHTML = ''; }
+        else if (S.settings.get().supaAuto && S.settings.get().supaLedgerId) { try { await A.supa.pull(); } catch (e) { console.warn('supa pull:', e); } }
+      } catch (e) { console.warn('supa:', e); }
+    }
+
     const s = S.settings.get();
     const app = document.getElementById('app');
     app.innerHTML = '';

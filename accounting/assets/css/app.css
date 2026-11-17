@@ -360,3 +360,9 @@ table.sum .grand td { font-weight: 800; font-size: 16px; background: var(--brand
 .help-ico{font-size:1.3rem;width:1.8rem;text-align:center;flex:none}
 .help-body{flex:1;min-width:0}
 .help-title{font-weight:600}
+
+/* Supabaseログイン（ワイド） */
+.login-box.wide{width:480px;max-width:94vw;text-align:left}
+.login-box.wide label{display:block;margin-bottom:8px}
+.login-box.wide label>span{display:block;font-size:12px;color:var(--muted);margin-bottom:3px}
+.login-box.wide input{width:100%;padding:9px 10px}

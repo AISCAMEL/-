@@ -95,6 +95,13 @@ A.db = (function () {
     syncWorkspace: '',                     // ワークスペースID（共有単位）
     syncToken: '',                         // 認証トークン
     syncVersion: 0,                        // 最後に同期したデータ版
+    cloudBackend: '',                      // '' | 'supabase'（使用するクラウド方式）
+    supaUrl: '',                           // Supabase プロジェクトURL
+    supaAnonKey: '',                       // Supabase anon キー
+    supaLedgerId: '',                      // 選択中の台帳ID
+    supaLedgerName: '',                    // 台帳名
+    supaVersion: 0,                        // 最後に同期した台帳の版
+    supaAuto: true,                        // 起動時に自動取得／保存時に自動保存
   };
 
   // 初回のみ既定データを投入する。
