@@ -1,33 +1,100 @@
 ---
 name: frontend-design
-description: レイアウト・配色・タイポグラフィ・デザインシステム（トークン/コンポーネント）を設計・実装するとき。トップ/下層の見た目を作り込み、テンプレ感を排して美しい階層と余白を作るのに使う。
+description: 独自性のある意図的なビジュアルデザイン（配色・タイポ・レイアウト）で新規UIを作る／既存UIを磨くとき。テンプレ臭さ（AI生成の定番の手口）を避け、主題に根ざした固有の表現を作るのに使う。実装の品質基準・禁止事項・チェックは末尾の「AIS 実装規約」を参照。
+license: 本文前半は Anthropic 公式 skill "frontend-design" を基にしています。原文ライセンスは同フォルダ LICENSE.txt を参照。
 ---
 
-# フロントエンド・デザイン（レイアウト/配色/タイポ）
+# Frontend Design
 
-共通基準は `../../reference/DESIGN-STANDARDS.md`、技術規約は `../../reference/TECH-STACK.md`。
-配色の初期設計は公式 **theme-factory / artifact-design** を参照してよい。
+Approach this as the design lead at a design studio known for giving every client a distinct visual identity that is not mistaken for anyone else's. This client has already rejected proposals that felt cliché or templated, and is paying for a distinctive point of view: make deliberate, opinionated choices about palette, typography, and layout that are specific to this brief, and take aesthetic risk if justified.
 
-## 作業手順
-1. **トークン定義が先**: 色/タイポ/間隔(4の倍数)/角丸/影/最大幅を Tailwind theme or CSS変数に集約。
-2. **グリッド＆余白**: セクションの上下余白でリズムを作る。近接の法則で要素を束ねる。
-3. **タイポ階層**: 見出し/本文のジャンプ率≥1.5。本文幅は和文35〜45字。
-4. **1画面1主役**: 視線の始点→終点(CTA)を設計。装飾は最小限。
-5. **セクション単位で実装**し、各セクションに目的を持たせる。
-6. 実装後にスクショ（PC/タブレット/スマホ）で階層・余白・一貫性を確認し調整。
+## Ground your designs in the subject matter
 
-## 品質基準
-- テンプレ感がない（独自の余白・崩し・タイポ）。
-- 色は主色3以内＋中立色、アクセント面積≤5%、コントラストAA。
-- トークンで全ページ一貫、例外なし。
+If the brief does not identify what the product or subject matter is, identify it yourself before designing, and confirm with the client. You can come up with one concrete subject, the design's audience, and the design's primary job, as a proposal. If there's any information in your memory about the client's preferences or context about what they're building, use that as a hint. The subject's industry, subject matter, materials, and vernacular are where distinctive visual choices come from — a design for a toy for girls aged 8–11 will be very aesthetically different from a dashboard for financial analysts. Build with the brief's real content and subject matter throughout.
 
-## 禁止事項
-- 安易な多色グラデ・装飾過多。
-- トークンを無視した色/余白の直書き。
-- 1ページにCTA乱立・中央揃えの長文。
+## Design principles
 
-## 確認チェックリスト
-- [ ] トークンが定義され一貫している
-- [ ] ジャンプ率/本文幅/余白リズムが基準内
-- [ ] アクセント面積・コントラストが基準内
-- [ ] 3デバイスのスクショで崩れ・階層OK
+For web designs, the hero is the first thing viewers will see. Open with the most characteristic thing in the subject's world, in the form that is most appropriate: a headline, an image, an animation, a live demo, an interactive moment, or other treatments. Be deliberate with your choice: a big number with a small label, supporting stats, and a gradient accent is the default treatment, so only use it if that's truly the best option.
+
+Typography carries the personality of the page. You don't need a different typeface for display or headline text and body content: use one family or two, and if two, make them clearly distinct.
+
+Choose your typefaces deliberately, not the default families you would reach for on any other project, and set a clear type scale following the default guidance of The Elements of Typographic Style with intentional weights, widths, and spacing. When type is used as a headline or visual element, use the type treatment itself as an active part of the design, not a neutral delivery vehicle for the content.
+
+Default to line lengths of less than 80 characters. Serif typefaces can have slightly longer line lengths; give serif body text slightly more line-height than a sans-serif.
+
+Avoid these default typographic treatments; they are the commonest tells of a generated page:
+- Accenting just a single word or phrase in a headline, like putting one word in italic/bold or a different color.
+- Using all caps for labels.
+- Adding unnecessary typographic labels above content.
+
+Visual structure is information. Structural devices like outlines, borders, numbering, eyebrows, dividers, labels, etc., encode useful information about the content rather than decorate it. Many generic designs use numbered markers (01 / 02 / 03), but that's only appropriate if the content actually is a sequence — like a stepped process or a timeline. Before adding numbered markers, check the content really is a sequence.
+
+Use non-user-triggered motion sparingly and deliberately, only to draw attention. A single orchestrated moment — one page-load sequence or one reveal — lands better than scattered effects; fade-and-slide-up entrances on each section and hover transitions on every card are the generic default and read as AI-generated. Motion that answers a person's action (opening, expanding, confirming) is welcome when it shows what changed.
+
+Consider written content carefully. Often a design brief may not contain real content, and it's up to you to come up with copy and placeholder content. Copy can make a design feel as templated as the design itself. See the below section on writing for more guidance.
+
+## Process: plan, review against the brief, build, critique
+
+For calibration, AI-generated design right now clusters around some traits:
+1. a warm cream background (near #F4F1EA) with a high-contrast serif display and a terracotta or warm-clay accent (often near #D97757 — Anthropic's own Claude-interaction accent, so on a user's brief it reads as a tell);
+2. a near-black background with a single bright acid-green or vermilion accent;
+3. a broadsheet-style layout with hairline rules, zero border-radius, and dense newspaper-like columns;
+4. the SaaS-card kit: content chopped into identical rounded cards, one border-radius on everything regardless of hierarchy, the same soft grey shadow (rgba(0,0,0,.1)) under each, and gradient washes as decoration;
+5. template chrome that appears whatever the subject: a tracked-out ALL-CAPS eyebrow label above every heading; meta strings joined with middle dots ('A · B · C'); labels built as 'WORD — fragment' with a spaced em dash; tinted near-black (#0B0B0B, #111) standing in for black; a monospace face for small data labels; a '→' appended to link and button text.
+
+All traits are legitimate for some briefs, but they are defaults rather than choices, and they appear regardless of subject. Where the brief pins down a visual direction, follow it exactly — the brief's own words always win, including when it asks for one of these looks. Where it leaves an axis free, don't spend that freedom on one of these defaults. As with a hired human designer, there's often a careful balance between doing what you're good at and taking each project as a chance to experiment and learn.
+
+Work in two passes. First, brainstorm a short design plan based on the client's design brief: create a compact token system with color, type, layout, and principles.
+- Color: describe the core base palette as 4–6 named hex values.
+- Type: the typefaces and their roles.
+- Layout: a layout concept, using one-sentence prose descriptions and ASCII wireframes to ideate and compare. Include alignment guidance; should the content be left aligned, center aligned, justified?
+- Principles: the high-level guidance for what makes this page unique.
+
+Then review that plan against the brief before building: if any part of it reads like the generic default you would produce for any similar page (work through a similar prompt to see if you arrive somewhere similar) rather than a choice made for this specific brief — revise that part, say what you changed and why. Only after you've confirmed the relative uniqueness of your design plan should you start to write the code, following the revised plan.
+
+When writing the code, be careful of structuring your CSS selector specificities. It's easy to generate CSS classes that cancel each other out (especially with a type-based selector like .section and an element-based selector like .cta). This can happen often with padding/margin between sections.
+
+## Restraint and self-critique
+
+Spend your boldness in one place. Let one element be the memorable thing, keep everything around it quiet and disciplined, and cut any decoration that does not serve the brief. Build to a quality floor without announcing it: responsive down to mobile, visible keyboard focus, reduced motion respected, visually accessible, harmonious color palettes. Critique your own work as you build, taking screenshots to review if your environment supports it — a picture is worth 1000 tokens. Consider Chanel's advice: before leaving the house, take a look in the mirror and remove one accessory. Human creatives have memory and always try to do something new, so if you have a space to quickly jot down notes about what you've tried, it can help you in future passes.
+
+## More on writing in design
+
+Words appear in a design for one reason: to make it easier to understand and use. They are design content, not decoration. Bring the same intentionality and minimalism to copywriting that you would bring to spacing and color. Before writing anything, ask what the design needs to say, and how it can best be said to help the person navigate the experience.
+
+Write from the end user's perspective. Name things by what users will understand in simple language, not by how the system is built. A user manages notifications, not webhook config. Describe what something is or does in plain terms rather than selling it. Being specific and legible to new users is always better than being clever.
+
+Use active voice as default. A CTA says exactly what happens when it is used: "Save changes," not "Submit." An action keeps the same name through the whole flow, so the button that says "Publish" produces a toast that says "Published." The vocabulary of an interface is the signposting for someone navigating the product. Cohesion and consistency are how people learn their way around.
+
+Treat failure and emptiness as moments for direction, not mood. Explain what went wrong and how to fix it, in the interface's voice rather than a person's. Errors don't apologize, and they are never vague about what happened. An empty screen is an invitation to act.
+
+Keep the tone conversational: plain verbs, sentence case, no filler, with tone matched to the brand and the audience. Let each written element do exactly one job.
+
+---
+
+# AIS 実装規約（この工程で必ず守る）
+
+上のデザイン哲学に加え、AISの制作では次を満たすこと。共通基準は `../../reference/DESIGN-STANDARDS.md`、技術規約は `../../reference/TECH-STACK.md`。
+
+## 手順
+1. **トークンを先に定義**：色（4–6色の命名hex）/タイポ（書体と役割）/間隔(4の倍数)/角丸/最大幅を Tailwind theme か CSS変数に集約。以降は直書きしない。
+2. **主題に根ざす**：案件の業種・素材・語彙から固有の表現を決める（自動車／地域／ITなど）。汎用の“それっぽさ”で埋めない。
+3. **ヒーローは主題の最も象徴的なもの**を、最適な形（見出し/写真/実演/インタラクション）で。既定の「大きな数字＋小ラベル＋グラデ」は本当に最適なときだけ。
+4. **セクション単位**で実装し、各セクションに1つの目的。1画面1主役、視線の始点→CTA。
+5. 実装後に **PC/タブレット/スマホのスクショ**で階層・余白・一貫性・特異性を自己批評し、装飾を1つ削る。
+
+## 禁止事項（AI生成の“手口”を避ける）
+- ❌ 見出しで1語だけ色替え／ALL-CAPSの英字ラベルを全見出しの上に機械的に置く／不要なラベルの乱用。
+- ❌ 連番 01/02/03 を「順序でない」内容（並列のサービス一覧など）に付ける。
+- ❌ ボタン/リンク文言末尾の「→」、中黒区切りのメタ（A・B・C）、`WORD — 断片`、monospaceの小ラベル、#0B0B0B等の“ほぼ黒”。
+- ❌ 全要素を同じ角丸・同じ薄グレー影の“SaaSカード”化／装飾のためのグラデ。
+- ❌ 全セクション一律のフェードイン＋全カード一律ホバー。動きは「1つの印象的な瞬間」に絞る。
+- ❌ トークン無視の直値・1ページCTA乱立。
+
+## 品質基準 / 確認チェックリスト
+- [ ] 主題固有の選択になっている（他案件でも作れる汎用デフォルトになっていない）
+- [ ] 書体は意図的に選択、タイプスケール/行長(<80字, 和文35–45字)が適切
+- [ ] 大胆さは1箇所に集中、他は静かで規律的（装飾を1つ削った）
+- [ ] トークンで全ページ一貫、コントラストAA、キーボードフォーカス可視、reduced-motion対応
+- [ ] PC/タブレット/スマホのスクショで崩れ0・階層OK
+- [ ] 上の「禁止事項（手口）」に該当していない
