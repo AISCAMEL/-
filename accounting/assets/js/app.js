@@ -119,6 +119,7 @@ A.app = (function () {
         if (A.supa.isAuthed()) await A.supa.refresh();
         if (!A.supa.isAuthed()) { await A.supa.showLogin(app0); app0.innerHTML = ''; }
         else if (S.settings.get().supaAuto && S.settings.get().supaLedgerId) { try { await A.supa.pull(); } catch (e) { console.warn('supa pull:', e); } }
+        if (A.supa.isAuthed() && A.supa.startSessionGuard) A.supa.startSessionGuard();
       } catch (e) { console.warn('supa:', e); }
     }
 

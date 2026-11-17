@@ -12,8 +12,10 @@ A.supa = (function () {
   const cfg = () => { const s = S.settings.get(); return { url: (s.supaUrl || '').replace(/\/$/, ''), key: s.supaAnonKey || '' }; };
   const configured = () => { const c = cfg(); return !!(c.url && c.key); };
 
-  const getSession = () => { try { return JSON.parse(localStorage.getItem(LS) || 'null'); } catch (e) { return null; } };
-  const setSession = (s) => { try { s ? localStorage.setItem(LS, JSON.stringify(s)) : localStorage.removeItem(LS); } catch (e) {} };
+  // 保存先：既定は永続（localStorage）。共有PC向けに非永続（sessionStorage）も選択可。
+  const area = () => { try { return S.settings.get().supaPersist === false ? sessionStorage : localStorage; } catch (e) { return localStorage; } };
+  const getSession = () => { try { return JSON.parse((sessionStorage.getItem(LS) || localStorage.getItem(LS)) || 'null'); } catch (e) { return null; } };
+  const setSession = (s) => { try { if (s) { area().setItem(LS, JSON.stringify(s)); } else { localStorage.removeItem(LS); sessionStorage.removeItem(LS); } } catch (e) {} };
   const currentEmail = () => { const s = getSession(); return s && s.user ? s.user.email : ''; };
   const isAuthed = () => { const s = getSession(); return !!(s && s.access_token); };
 
@@ -50,6 +52,24 @@ A.supa = (function () {
   const myLedgers = async () => { const r = await rpc('my_ledgers', {}); return r.ok && Array.isArray(r.data) ? r.data : []; };
   const createLedger = async (name) => { const r = await rpc('create_ledger', { p_name: name || '会計帳簿' }); if (!r.ok) return { ok: false, message: (r.data && r.data.message) || ('HTTP ' + r.status) }; return { ok: true, id: r.data }; };
   const addMember = async (ledgerId, email) => { const r = await rpc('add_member', { p_ledger: ledgerId, p_email: email }); return r.ok ? { ok: true } : { ok: false, message: (r.data && r.data.message) || ('HTTP ' + r.status) }; };
+  const removeMember = async (ledgerId, email) => { const r = await rpc('remove_member', { p_ledger: ledgerId, p_email: email }); return r.ok ? { ok: true } : { ok: false, message: (r.data && r.data.message) || ('HTTP ' + r.status) }; };
+  const leaveLedger = async (ledgerId) => { const r = await rpc('leave_ledger', { p_ledger: ledgerId }); return r.ok ? { ok: true } : { ok: false, message: (r.data && r.data.message) || ('HTTP ' + r.status) }; };
+  const deleteLedger = async (ledgerId) => { const r = await rpc('delete_ledger', { p_ledger: ledgerId }); return r.ok ? { ok: true } : { ok: false, message: (r.data && r.data.message) || ('HTTP ' + r.status) }; };
+
+  /* ---- セッション保護：無操作で自動ログアウト＋定期トークン更新 ---- */
+  let idleT = null, refreshT = null, guardOn = false;
+  const resetIdle = () => {
+    clearTimeout(idleT);
+    const mins = Number(S.settings.get().supaIdleMin); const m = isNaN(mins) ? 30 : mins;
+    if (m <= 0) return; // 0 で無効化
+    idleT = setTimeout(() => { signOut(); try { location.reload(); } catch (e) {} }, m * 60000);
+  };
+  const startSessionGuard = () => {
+    if (guardOn) return; guardOn = true;
+    ['click', 'keydown', 'mousedown', 'touchstart'].forEach((e) => document.addEventListener(e, resetIdle, { passive: true }));
+    resetIdle();
+    refreshT = setInterval(() => { if (isAuthed()) refresh(); }, 30 * 60000); // 30分ごとにトークン更新
+  };
 
   /* ---- 同期 ---- */
   const pull = async (ledgerId) => {
@@ -136,5 +156,5 @@ A.supa = (function () {
     if (isAuthed()) chooseLedger();
   });
 
-  return { cfg, configured, getSession, isAuthed, currentEmail, signUp, signIn, signOut, refresh, myLedgers, createLedger, addMember, pull, push, showLogin };
+  return { cfg, configured, getSession, isAuthed, currentEmail, signUp, signIn, signOut, refresh, myLedgers, createLedger, addMember, removeMember, leaveLedger, deleteLedger, pull, push, showLogin, startSessionGuard };
 })();

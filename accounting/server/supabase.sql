@@ -32,6 +32,11 @@ create or replace function public.is_member(l uuid) returns boolean
   language sql security definer stable set search_path = public as $$
   select exists(select 1 from public.ledger_members m where m.ledger_id = l and m.user_id = auth.uid());
 $$;
+-- オーナー判定（招待・削除などの管理操作に使用）
+create or replace function public.is_owner(l uuid) returns boolean
+  language sql security definer stable set search_path = public as $$
+  select exists(select 1 from public.ledger_members m where m.ledger_id = l and m.user_id = auth.uid() and m.role = 'owner');
+$$;
 
 -- 台帳：所属メンバーのみ参照・更新可
 drop policy if exists ledgers_select on public.ledgers;
@@ -53,20 +58,58 @@ begin
   return new_id;
 end; $$;
 
--- メンバー招待（既存メンバーが、登録済みユーザーを email で追加）
+-- メンバー招待（★オーナーのみ★が、登録済みユーザーを email で追加）
 create or replace function public.add_member(p_ledger uuid, p_email text) returns void
   language plpgsql security definer set search_path = public as $$
 declare uid uuid;
 begin
-  if not public.is_member(p_ledger) then raise exception 'not a member of this ledger'; end if;
+  if not public.is_owner(p_ledger) then raise exception 'only an owner can invite members'; end if;
   select id into uid from auth.users where lower(email) = lower(p_email);
   if uid is null then raise exception 'user not found: %', p_email; end if;
   insert into public.ledger_members(ledger_id, user_id, role) values (p_ledger, uid, 'member') on conflict do nothing;
 end; $$;
 
+-- メンバー削除（★オーナーのみ★。最後のオーナーは削除不可）
+create or replace function public.remove_member(p_ledger uuid, p_email text) returns void
+  language plpgsql security definer set search_path = public as $$
+declare uid uuid; owners int;
+begin
+  if not public.is_owner(p_ledger) then raise exception 'only an owner can remove members'; end if;
+  select id into uid from auth.users where lower(email) = lower(p_email);
+  if uid is null then raise exception 'user not found: %', p_email; end if;
+  select count(*) into owners from public.ledger_members where ledger_id = p_ledger and role = 'owner';
+  if owners <= 1 and exists(select 1 from public.ledger_members where ledger_id = p_ledger and user_id = uid and role = 'owner') then
+    raise exception 'cannot remove the last owner'; end if;
+  delete from public.ledger_members where ledger_id = p_ledger and user_id = uid;
+end; $$;
+
+-- 自分で台帳から退出（最後のオーナーは退出不可）
+create or replace function public.leave_ledger(p_ledger uuid) returns void
+  language plpgsql security definer set search_path = public as $$
+declare owners int;
+begin
+  if not public.is_member(p_ledger) then return; end if;
+  select count(*) into owners from public.ledger_members where ledger_id = p_ledger and role = 'owner';
+  if owners <= 1 and public.is_owner(p_ledger) then raise exception 'the last owner cannot leave; delete the ledger or assign another owner'; end if;
+  delete from public.ledger_members where ledger_id = p_ledger and user_id = auth.uid();
+end; $$;
+
+-- 台帳の削除（★オーナーのみ★）
+create or replace function public.delete_ledger(p_ledger uuid) returns void
+  language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_owner(p_ledger) then raise exception 'only an owner can delete the ledger'; end if;
+  delete from public.ledgers where id = p_ledger;
+end; $$;
+
+-- 権限付与（メンバー表への直接 insert/update/delete はRLSで既定拒否。管理はRPC経由のみ）
 grant execute on function public.create_ledger(text) to authenticated;
 grant execute on function public.add_member(uuid, text) to authenticated;
+grant execute on function public.remove_member(uuid, text) to authenticated;
+grant execute on function public.leave_ledger(uuid) to authenticated;
+grant execute on function public.delete_ledger(uuid) to authenticated;
 grant execute on function public.is_member(uuid) to authenticated;
+grant execute on function public.is_owner(uuid) to authenticated;
 
 -- 自分が所属する台帳の一覧（UI用）
 create or replace function public.my_ledgers() returns table(id uuid, name text, version integer, updated_at timestamptz)

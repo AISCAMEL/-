@@ -274,9 +274,21 @@ window.A = window.A || {};
         el('button.btn.sm', { text: 'サインアウト', onclick: async () => { A.supa.signOut(); await S.settings.save({ cloudBackend: '' }); refreshAuthLine(); ui.toast('サインアウトしました'); } }),
       ]),
       el('div.form-row', {}, [
-        el('label.grow', {}, [el('span', { text: 'メンバーを招待（この台帳に追加）' }), inviteEmail]),
+        el('label.grow', {}, [el('span', { text: 'メンバーを招待（オーナーのみ・この台帳に追加）' }), inviteEmail]),
         el('button.btn', { text: '招待', onclick: async () => { if (!s.supaLedgerId) return ui.toast('先に台帳を選択してください', 'err'); const r = await A.supa.addMember(s.supaLedgerId, inviteEmail.value.trim()); r.ok ? (ui.toast('招待しました', 'ok'), inviteEmail.value = '') : ui.toast(r.message, 'err'); } }),
       ]),
+      // セキュリティ設定
+      (() => {
+        const persist = el('input', { type: 'checkbox' }); persist.checked = s.supaPersist !== false;
+        persist.addEventListener('change', () => S.settings.save({ supaPersist: persist.checked }));
+        const idle = el('input', { type: 'number', min: '0', value: s.supaIdleMin != null ? s.supaIdleMin : 30, style: 'width:6rem' });
+        idle.addEventListener('change', () => S.settings.save({ supaIdleMin: Math.max(0, Number(idle.value) || 0) }));
+        return el('div.form-row', {}, [
+          el('label.inline', { style: 'gap:.4rem' }, [persist, el('span', { text: 'この端末にログインを保持する（共有PCではオフ推奨）' })]),
+          el('label', {}, [el('span', { text: '無操作で自動ログアウト（分・0で無効）' }), idle]),
+        ]);
+      })(),
+      el('p.muted.small', { text: '招待・削除は台帳オーナーのみ。データは RLS（行レベルセキュリティ）で許可メンバーだけがアクセスできます。詳しくは server/SUPABASE.md。' }),
     ]);
     if (A.supa) refreshAuthLine();
     wrap.appendChild(supaCard);

@@ -102,6 +102,8 @@ A.db = (function () {
     supaLedgerName: '',                    // 台帳名
     supaVersion: 0,                        // 最後に同期した台帳の版
     supaAuto: true,                        // 起動時に自動取得／保存時に自動保存
+    supaPersist: true,                     // サインイン状態を端末に保持（false=タブを閉じると解除）
+    supaIdleMin: 30,                       // 無操作で自動ログアウトする分数（0で無効）
   };
 
   // 初回のみ既定データを投入する。
