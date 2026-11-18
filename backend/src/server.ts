@@ -42,42 +42,6 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
     llm_provider: llmProvider,
   }));
 
-  // 日程調整の動作診断（一時的・?key=diag2026 でガード）。
-  // 空き枠計算とAIのツール利用が本番で動くかを1発で確認する。
-  app.get('/api/debug/scheduling', async (req) => {
-    if ((req.query as any)?.key !== 'diag2026') return { ok: false, error: 'forbidden' };
-    const { calendarStatus, findSlots } = await import('./calendar/index.js');
-    const { chatAgentStream, llmDiag } = await import('./ai/llm.js');
-    const { schedulingTools, makeSchedulingRunner } = await import('./ai/schedulingTools.js');
-    const tenantId = config.demoTenantId;
-    const out: Record<string, unknown> = { llm_provider: llmProvider, tenantId };
-    try { out.llm_diag = await llmDiag(); } catch (e) { out.llm_diag_err = String(e); }
-    try { out.calendar = await calendarStatus(tenantId); } catch (e) { out.calendar_err = String(e); }
-    try {
-      const days: unknown[] = [];
-      for (let i = 1; i <= 3; i++) {
-        const ymd = new Date(Date.now() + i * 24 * 3600_000).toLocaleDateString('sv-SE', { timeZone: 'Asia/Tokyo' });
-        const slots = await findSlots(tenantId, ymd);
-        days.push({ ymd, count: slots.length, first: slots.slice(0, 2).map((s) => s.start) });
-      }
-      out.slots = days;
-    } catch (e) { out.slots_err = String(e); }
-    try {
-      let toolCalled: unknown = null;
-      const base = makeSchedulingRunner(tenantId, null);
-      const runner = async (name: string, input: any) => { toolCalled = { name, input }; return base(name, input); };
-      const text = await chatAgentStream(
-        [
-          { role: 'system', content: '受付テスト。find_available_slots ツールで明日以降の空きを調べ、最初の候補を一言で述べよ。' },
-          { role: 'user', content: '出張査定の空きを教えて' },
-        ],
-        schedulingTools, runner, () => {}, 300,
-      );
-      out.agent = { tool_called: toolCalled, text };
-    } catch (e) { out.agent_err = String(e); }
-    return out;
-  });
-
   await registerTwilioRoutes(app);
   await registerConversationWs(app);
   await registerAuthRoutes(app);

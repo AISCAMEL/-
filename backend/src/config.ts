@@ -5,6 +5,17 @@ function env(key: string, fallback?: string): string {
   return v;
 }
 
+// APIキーの防御的サニタイズ。
+// 誤って curl コマンドや "x-api-key: sk-ant-..." ごと貼られても、キー本体だけを取り出す。
+// 余計な空白・改行が混ざるとHTTPヘッダが壊れて全呼び出しが失敗するため、ここで吸収する。
+function cleanAnthropicKey(raw: string): string {
+  const s = (raw ?? '').trim();
+  const m = s.match(/sk-ant-[A-Za-z0-9_-]+/);
+  if (m) return m[0];
+  // sk-ant- 形式でなくても、改行・空白を含む値はヘッダを壊すので先頭トークンだけ使う。
+  return s.split(/\s/)[0] ?? '';
+}
+
 export const config = {
   port: Number(process.env.PORT ?? 8080),
   publicApiBaseUrl: env('PUBLIC_API_BASE_URL', 'http://localhost:8080'),
@@ -47,8 +58,8 @@ export const config = {
   // Anthropic Claude（会話の頭脳）。ANTHROPIC_API_KEY があれば OpenAI/OpenRouter より優先して使う。
   // 電話受付は速度重視のため既定は Claude Haiku 5.5（速い・安い）。ANTHROPIC_MODEL で変更可。
   anthropic: {
-    apiKey: process.env.ANTHROPIC_API_KEY ?? '',
-    model: process.env.ANTHROPIC_MODEL ?? 'claude-haiku-5-5',
+    apiKey: cleanAnthropicKey(process.env.ANTHROPIC_API_KEY ?? ''),
+    model: (process.env.ANTHROPIC_MODEL ?? 'claude-haiku-5-5').trim(),
   },
 
   mail: {
