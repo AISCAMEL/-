@@ -43,6 +43,13 @@ export const config = {
     summaryModel: process.env.OPENAI_SUMMARY_MODEL ?? 'gpt-4o-mini',
   },
 
+  // Anthropic Claude（会話の頭脳）。ANTHROPIC_API_KEY があれば OpenAI/OpenRouter より優先して使う。
+  // 電話受付は速度重視のため既定は Claude Haiku 5.5（速い・安い）。ANTHROPIC_MODEL で変更可。
+  anthropic: {
+    apiKey: process.env.ANTHROPIC_API_KEY ?? '',
+    model: process.env.ANTHROPIC_MODEL ?? 'claude-haiku-5-5',
+  },
+
   mail: {
     resendApiKey: process.env.RESEND_API_KEY ?? '',
     from: process.env.MAIL_FROM ?? 'AIオペレーター24 <noreply@ai-operator24.com>',
