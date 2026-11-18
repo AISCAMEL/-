@@ -65,6 +65,27 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
       );
       out.agent = { ok: Boolean(text), tool_called: toolCalled, reply: text ? scrub(text) : null };
     } catch (e) { out.agent = { ok: false, error: scrub(String(e)) }; }
+    // 直近の通話の文字起こし（STTが何を拾ったか＝聞き取り確認用）。
+    try {
+      const { query } = await import('./db/index.js');
+      const calls = await query<{ id: string; started_at: string; from_number: string }>(
+        `select id, started_at, from_number from calls where tenant_id = $1 order by started_at desc nulls last limit 1`,
+        [tenantId],
+      );
+      if (calls[0]) {
+        const lines = await query<{ speaker: string; message: string }>(
+          `select speaker, message from transcripts where call_id = $1 order by sequence`,
+          [calls[0].id],
+        );
+        out.last_call = {
+          started_at: calls[0].started_at,
+          from: calls[0].from_number,
+          turns: lines.map((l) => ({ who: l.speaker, text: scrub(l.message).slice(0, 160) })),
+        };
+      } else {
+        out.last_call = null;
+      }
+    } catch (e) { out.last_call_err = scrub(String(e)); }
     return out;
   });
 
