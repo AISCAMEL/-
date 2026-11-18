@@ -179,6 +179,12 @@ if ( ! function_exists( 'carmelx_survey_text' ) ) {
 		$try( '記事の入れ物の保持（旧プラグインを止めても残すための控え）', function () use ( &$L ) {
 			if ( ! function_exists( 'carmelx_ctypes_status' ) ) { $L[] = 'この機能は入っていません'; return; }
 			foreach ( carmelx_ctypes_status() as $k => $v ) { $L[] = $k . ' | ' . $v; }
+			if ( function_exists( 'carmelx_ctypes_old_crons' ) ) {
+				foreach ( carmelx_ctypes_old_crons() as $marker => $hooks ) {
+					$left = array(); foreach ( $hooks as $h ) { if ( wp_next_scheduled( $h ) ) { $left[] = $h; } }
+					$L[] = '旧プラグインの定期実行（' . $marker . '）：' . ( function_exists( $marker ) ? 'プラグインが動作中' : '停止中' ) . ' ／ 残っている予約 ' . ( $left ? implode( ', ', $left ) : 'なし' );
+				}
+			}
 			foreach ( array( 'media_article', 'shop_blog', 'news' ) as $pt ) {
 				$o = get_post_type_object( $pt ); if ( ! $o ) { continue; }
 				$L[] = '   ' . $pt . ' の設定：URL=' . wp_json_encode( $o->rewrite, JSON_UNESCAPED_UNICODE ) . ' 一覧ページ=' . wp_json_encode( $o->has_archive ) . ' 対応=' . implode( ',', array_keys( (array) get_all_post_type_supports( $pt ) ) );

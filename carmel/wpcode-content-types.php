@@ -10,7 +10,9 @@
  *      そのまま「控え」として保存する（毎回、変化があれば更新）。
  *   2) 登録するプラグインが無くなったら、控えの内容で同じものを登録する（＝引き継ぎ）。
  * 旧プラグインの登録内容を写すだけなので、見た目・URL・投稿データは変わらない。
- * 何も削除しない。固有名＋function_existsガード。
+ *   3) 旧プラグインを止めた後に残る定期実行の予約（5分おきのSlack確認など、空回りするもの）を取り消す。
+ *      旧プラグインが動いている間は触らない。
+ * 投稿・設定は何も削除しない。固有名＋function_existsガード。
  * ---------------------------------------------------------------------------
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
@@ -123,6 +125,43 @@ if ( ! function_exists( 'carmelx_ctypes_snapshot' ) ) {
 		if ( md5( wp_json_encode( $new ) ) !== md5( wp_json_encode( $snap ) ) ) { update_option( 'carmelx_ctypes_snapshot', $new, false ); }
 	}
 	add_action( 'init', 'carmelx_ctypes_snapshot', 9999 );
+}
+
+if ( ! function_exists( 'carmelx_ctypes_old_crons' ) ) {
+	/**
+	 * 旧プラグインの定期実行（プラグインを止めても、予約だけが残って空回りするもの）。
+	 * 目印の関数 => その関数が無い時（＝プラグインが止まっている時）に取り消す予約の名前
+	 */
+	function carmelx_ctypes_old_crons() {
+		return array(
+			// CARMEL 自動生成（毎日自動）
+			'carmel3_auto_run' => array( 'carmel3_auto_generate_cron', 'carmel3_auto_img_worker', 'carmel3_auto_run_single', 'carmel3_regen_single', 'carmel3_news_generate_single', 'carmel3_slack_poll_tick', 'carmel3_eyecatch_single', 'carmel3_daily_tick', 'carmel3_daily_now', 'carmel3_rewrite_tick', 'carmel3_rewrite_now' ),
+			// CARMEL統合管理プラグイン
+			'carmel_check_fb_token_expiry' => array( 'carmel_daily_token_check', 'carmel_process_sns_schedules' ),
+		);
+	}
+}
+
+if ( ! function_exists( 'carmelx_ctypes_cron_cleanup' ) ) {
+	/**
+	 * 止めた旧プラグインの定期実行の予約を取り消す（管理画面を開いた時に確認。1日1回まで）。
+	 * 旧プラグインを有効に戻せば、旧プラグイン自身が予約を作り直す。
+	 * @return string[] 取り消した予約の名前
+	 */
+	function carmelx_ctypes_cron_cleanup( $force = false ) {
+		if ( ! $force && get_transient( 'carmelx_ctypes_cron_checked' ) ) { return array(); }
+		set_transient( 'carmelx_ctypes_cron_checked', 1, DAY_IN_SECONDS );
+		$cleared = array();
+		foreach ( carmelx_ctypes_old_crons() as $marker => $hooks ) {
+			if ( function_exists( $marker ) ) { continue; } // 旧プラグインが動いている → 触らない
+			foreach ( $hooks as $h ) {
+				if ( wp_next_scheduled( $h ) || ( function_exists( 'wp_get_scheduled_event' ) && wp_get_scheduled_event( $h ) ) ) { $cleared[] = $h; }
+				if ( function_exists( 'wp_unschedule_hook' ) ) { wp_unschedule_hook( $h ); } else { wp_clear_scheduled_hook( $h ); }
+			}
+		}
+		return $cleared;
+	}
+	add_action( 'admin_init', 'carmelx_ctypes_cron_cleanup', 50 );
 }
 
 if ( ! function_exists( 'carmelx_ctypes_status' ) ) {
