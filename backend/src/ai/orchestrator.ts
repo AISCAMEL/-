@@ -1,5 +1,5 @@
-import { chatJson, llmEnabled } from './llm.js';
-import { buildSystemPrompt, buildOutboundSystemPrompt } from './prompts.js';
+import { chatJson, chatTextStream, llmEnabled } from './llm.js';
+import { buildSystemPrompt, buildReplyPrompt, buildOutboundSystemPrompt } from './prompts.js';
 import type { AiTurnResult, ExtractedFields, TenantContext, TranscriptLine } from '../types.js';
 
 const EMPTY_EXTRACTED: ExtractedFields = {
@@ -27,6 +27,63 @@ export class ConversationOrchestrator {
     return this.outbound
       ? buildOutboundSystemPrompt(this.ctx, this.outbound.purpose, this.outbound.goal)
       : buildSystemPrompt(this.ctx);
+  }
+
+  // 音声用：返答を平文でストリーミング生成し、合間を最小化する。
+  // 分類・抽出はここでは行わず（通話後の要約でまとめて行う）、転送判定だけ軽量に行う。
+  private replyPrompt(): string {
+    return this.outbound
+      ? buildOutboundSystemPrompt(this.ctx, this.outbound.purpose, this.outbound.goal)
+      : buildReplyPrompt(this.ctx);
+  }
+
+  /**
+   * ユーザ発話を受けて、返答をストリーミング生成する（音声の合間を最小化）。
+   * onDelta にトークンが届くたびに即発話できる。返り値は確定した返答全文等。
+   */
+  async handleUserUtteranceStream(
+    text: string,
+    onDelta: (t: string) => void,
+  ): Promise<{ reply: string; should_transfer: boolean; should_end_call: boolean }> {
+    this.history.push({ speaker: 'customer', message: text });
+
+    let reply: string | null = null;
+    if (llmEnabled && !this.outbound) {
+      const messages = [
+        { role: 'system' as const, content: this.replyPrompt() },
+        ...this.history.map((l) => ({
+          role: (l.speaker === 'customer' ? 'user' : 'assistant') as 'user' | 'assistant',
+          content: l.message,
+        })),
+      ];
+      reply = await chatTextStream(messages, onDelta);
+    } else if (llmEnabled && this.outbound) {
+      // アウトバウンドは従来のJSON経路（能動発話・判定が必要なため）。
+      const r = await this.callLlm();
+      if (r) { reply = r.reply; onDelta(r.reply); this.lastResult = r; }
+    }
+
+    if (!reply || !reply.trim()) {
+      const fb = this.fallback(text);
+      reply = fb.reply;
+      onDelta(reply);
+      this.lastResult = fb;
+    }
+
+    this.history.push({ speaker: 'ai', message: reply });
+    // 軽量な転送判定（実発話の転送はMVP未実装のため、基本は折り返し運用＝自動切断しない）。
+    const wantsHuman = /担当者と|担当の方|人と話|責任者|オペレーター|クレーム/.test(text);
+    const canTransfer = Boolean(this.ctx.humanTransferEnabled && this.ctx.transferPhoneNumber);
+    const should_transfer = wantsHuman && canTransfer;
+    if (!this.lastResult) {
+      this.lastResult = {
+        reply, intent: 'other', state: 'initial', extracted: this.extracted,
+        should_transfer, should_end_call: false, next_action: null, confidence: 0.5,
+      };
+    } else {
+      this.lastResult.should_transfer = this.lastResult.should_transfer || should_transfer;
+    }
+    return { reply, should_transfer, should_end_call: false };
   }
 
   get transcript(): TranscriptLine[] {

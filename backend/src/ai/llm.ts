@@ -32,12 +32,26 @@ interface ChatMessage {
 // Claude は system をトップレベルで渡すため、system役を分離して会話(user/assistant)だけを messages にする。
 // 電話受付はレイテンシ重視のため thinking を無効化（Haiku 5.5は disabled 可）。
 // モデルによっては disabled が不可(400)なので、その場合は thinking無しで再試行する。
-async function claudeComplete(messages: ChatMessage[], maxTokens: number): Promise<string | null> {
-  if (!anthropic) return null;
-  const system = messages.filter((m) => m.role === 'system').map((m) => m.content).join('\n\n');
+
+// system は配列(text block)にして prompt caching を効かせる。
+// 電話は多ターンで同じシステムプロンプトを毎回送るため、2ターン目以降の入力処理が速く・安くなる。
+function splitForClaude(messages: ChatMessage[]): {
+  system: Anthropic.TextBlockParam[] | undefined;
+  convo: { role: 'user' | 'assistant'; content: string }[];
+} {
+  const systemText = messages.filter((m) => m.role === 'system').map((m) => m.content).join('\n\n');
+  const system: Anthropic.TextBlockParam[] | undefined = systemText
+    ? [{ type: 'text', text: systemText, cache_control: { type: 'ephemeral' } }]
+    : undefined;
   const convo = messages
     .filter((m) => m.role !== 'system')
     .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+  return { system, convo };
+}
+
+async function claudeComplete(messages: ChatMessage[], maxTokens: number): Promise<string | null> {
+  if (!anthropic) return null;
+  const { system, convo } = splitForClaude(messages);
   // Claude 5系は temperature 等の非既定値で400になるため指定しない。
   const base = { model: config.anthropic.model, max_tokens: maxTokens, system, messages: convo } as const;
   const extractText = (res: Anthropic.Message): string =>
@@ -53,6 +67,70 @@ async function claudeComplete(messages: ChatMessage[], maxTokens: number): Promi
       console.error('[llm] claudeComplete failed:', err);
       return null;
     }
+  }
+}
+
+// ストリーミング生成。トークンが届くたび onDelta を呼ぶ（音声は最初の数文字で喋り始められる＝合間が消える）。
+// 返り値は生成し終えた全文。失敗時は null。
+async function claudeStream(
+  messages: ChatMessage[],
+  maxTokens: number,
+  onDelta: (text: string) => void,
+): Promise<string | null> {
+  if (!anthropic) return null;
+  const { system, convo } = splitForClaude(messages);
+  const base = { model: config.anthropic.model, max_tokens: maxTokens, system, messages: convo } as const;
+  let emitted = false;
+  const run = async (extra: Record<string, unknown>): Promise<string> => {
+    const stream = anthropic!.messages.stream({ ...base, ...extra });
+    let full = '';
+    stream.on('text', (t: string) => { full += t; emitted = true; onDelta(t); });
+    await stream.finalMessage();
+    return full;
+  };
+  try {
+    return await run({ thinking: { type: 'disabled' } });
+  } catch (err) {
+    // 途中まで喋ってしまっていたら、二重発話を避けるため再試行しない。
+    if (emitted) { console.error('[llm] claudeStream partial then failed:', err); return null; }
+    try {
+      return await run({});
+    } catch (err2) {
+      console.error('[llm] claudeStream failed:', err2);
+      return null;
+    }
+  }
+}
+
+/**
+ * 返答をストリーミング生成し、トークンごとに onDelta を呼ぶ（音声の合間を最小化）。
+ * 返り値は全文。未設定/失敗時は null（呼び出し側でフォールバック）。
+ */
+export async function chatTextStream(
+  messages: ChatMessage[],
+  onDelta: (text: string) => void,
+  maxTokens = 220,
+): Promise<string | null> {
+  if (anthropic) return claudeStream(messages, maxTokens, onDelta);
+  // OpenAI/OpenRouter フォールバック（ストリーミング）。
+  if (!openai) return null;
+  try {
+    const stream = await openai.chat.completions.create({
+      model: config.openai.model,
+      messages,
+      temperature: 0.5,
+      max_tokens: maxTokens,
+      stream: true,
+    });
+    let full = '';
+    for await (const chunk of stream) {
+      const t = chunk.choices[0]?.delta?.content ?? '';
+      if (t) { full += t; onDelta(t); }
+    }
+    return full || null;
+  } catch (err) {
+    console.error('[llm] chatTextStream failed:', err);
+    return null;
   }
 }
 

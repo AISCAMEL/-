@@ -103,16 +103,21 @@ export async function registerConversationWs(app: FastifyInstance): Promise<void
           const session = getSession(callSid);
           if (!session) break;
 
-          const result = await session.orchestrator.handleUserUtterance(m.voicePrompt);
+          // 返答をストリーミング生成：トークンが届くたびに即発話（合間を最小化）。
+          // Conversation Relay は last:false のtextを順次受け取り、届いた分から読み上げる。
+          const result = await session.orchestrator.handleUserUtteranceStream(
+            m.voicePrompt,
+            (delta) => send(socket, { type: 'text', token: delta, last: false }),
+          );
+          // 生成完了を通知（これで読み上げが確定する）。
+          send(socket, { type: 'text', token: '', last: true });
 
-          // 文字起こしを永続化（customer 発話 → AI 応答の2行）。
+          // 文字起こしは発話を止めないよう、await せずに永続化（遅延の原因にしない）。
           if (session.callId) {
-            await saveTranscriptLine(session.callId, session.tenantId, { speaker: 'customer', message: m.voicePrompt }, sequence++).catch(() => {});
-            await saveTranscriptLine(session.callId, session.tenantId, { speaker: 'ai', message: result.reply }, sequence++).catch(() => {});
+            const cid = session.callId, tid = session.tenantId;
+            void saveTranscriptLine(cid, tid, { speaker: 'customer', message: m.voicePrompt }, sequence++).catch(() => {});
+            void saveTranscriptLine(cid, tid, { speaker: 'ai', message: result.reply }, sequence++).catch(() => {});
           }
-
-          // AI 応答を発話（Conversation Relay の text メッセージ）。
-          send(socket, { type: 'text', token: result.reply, last: true });
 
           // 転送指示があれば end して TwiML 側の転送に委ねる、または通話終了。
           if (result.should_transfer || result.should_end_call) {

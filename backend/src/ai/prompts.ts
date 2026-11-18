@@ -32,7 +32,7 @@ export function buildSystemPrompt(ctx: TenantContext): string {
   const salesReply = ctx.salesCallReply?.trim()
     || '恐れ入りますが、営業・勧誘のお電話はお取り次ぎしておりません。ご用件があれば会社名とお名前を伺い、担当者より折り返しご連絡いたします。';
 
-  return `あなたは「${ctx.companyName}」の電話受付担当です。${
+  const body = `あなたは「${ctx.companyName}」の電話受付担当です。${
     ctx.industry ? `業種は「${ctx.industry}」です。` : ''
   }${hoursLine ? `\n営業時間：${hoursLine}（記載のない曜日は休業）。営業時間や休業日を聞かれたらこの情報で答える。` : ''}${instructionsBlock}
 
@@ -91,7 +91,13 @@ export function buildSystemPrompt(ctx: TenantContext): string {
 - クレーム: まず「ご不便をおかけして申し訳ありません」と謝意。内容を簡単に聞き、人間転送か折り返しへ。言い訳・責任判断はしない。
 
 # FAQ（この範囲内でのみ回答する）
-${faqBlock}
+${faqBlock}`;
+
+  // 従来のJSON出力版（テスト・テストチャット互換）。
+  return body + JSON_OUTPUT_SPEC;
+}
+
+const JSON_OUTPUT_SPEC = `
 
 # 出力形式（必ずこのJSONのみを返す。前後に文章を付けない）
 {
@@ -115,6 +121,18 @@ ${faqBlock}
 会話状態(state)の候補: initial, intent_detected, inquiry_answering, reservation_collect_datetime, reservation_collect_name, reservation_confirm, callback_collect_name, callback_collect_detail, callback_confirm, transfer_precheck, transfer_ready, complaint_escalation, closing, ended
 
 reply は必ず音声で読み上げる前提の自然な日本語にすること。extracted は判明した項目のみ更新し、不明は null のままにすること。`;
+
+// 音声通話用：返答の日本語「だけ」を平文で生成させる（ストリーミング発話で合間を最小化）。
+// 会話中の分類・抽出は行わず、通話終了後の要約(summarizeCall)でまとめて行う。
+export function buildReplyPrompt(ctx: TenantContext): string {
+  // buildSystemPrompt と同じ会話ガイダンス本文を使い、出力指定だけ差し替える。
+  const body = buildSystemPrompt(ctx).replace(JSON_OUTPUT_SPEC, '');
+  return body + `
+
+# 出力（厳守）
+- お客様に音声で読み上げる「返答の日本語」だけを出力する。JSON・記号・ラベル・説明・前置きは一切付けない。
+- 1〜2文の短い話し言葉。堅すぎない自然な丁寧語で、テンポよく。
+- 聞き返す・復唱する場合も同様に、話す言葉そのものだけを返す。`;
 }
 
 // 通話終了後の要約用システムプロンプト。
