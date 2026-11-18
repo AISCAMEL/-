@@ -5,7 +5,7 @@ import cors from '@fastify/cors';
 import { pathToFileURL } from 'node:url';
 import { config } from './config.js';
 import { dbEnabled, ensureSchema } from './db/index.js';
-import { llmEnabled } from './ai/llm.js';
+import { llmEnabled, llmProvider } from './ai/llm.js';
 import { registerTwilioRoutes } from './twilio/routes.js';
 import { registerConversationWs } from './ws/conversation.js';
 import { registerApiRoutes } from './api/routes.js';
@@ -39,6 +39,7 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
     ok: true,
     db: dbEnabled ? 'connected' : 'disabled (demo mode)',
     llm: llmEnabled ? 'enabled' : 'disabled (fallback mode)',
+    llm_provider: llmProvider,
   }));
 
   await registerTwilioRoutes(app);

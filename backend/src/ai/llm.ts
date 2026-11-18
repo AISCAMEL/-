@@ -20,6 +20,8 @@ const openai = config.openai.apiKey
   : null;
 
 export const llmEnabled = Boolean(anthropic || openai);
+// いまどのLLMを会話の頭脳に使っているか（/healthで確認できるように公開）。
+export const llmProvider = anthropic ? 'anthropic' : openai ? 'openai' : 'none';
 
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
