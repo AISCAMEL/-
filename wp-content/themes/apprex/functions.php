@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'APPREX_VERSION', '1.125.0' );
+define( 'APPREX_VERSION', '1.125.1' );
 define( 'APPREX_DIR', get_template_directory() );
 define( 'APPREX_URI', get_template_directory_uri() );
 
@@ -98,6 +98,7 @@ require_once APPREX_DIR . '/inc/biz-queue.php';
 require_once APPREX_DIR . '/inc/ai-news.php';
 require_once APPREX_DIR . '/inc/redirects.php';
 require_once APPREX_DIR . '/inc/meeting-join.php';
+require_once APPREX_DIR . '/inc/rest-nonce.php';
 require_once APPREX_DIR . '/inc/gcal.php';
 require_once APPREX_DIR . '/inc/cron-health.php';
 require_once APPREX_DIR . '/inc/mf-invoice.php';
