@@ -32,10 +32,18 @@ function escapeXml(s: string): string {
 // ConversationRelay の音声(TTS)・認識(STT)属性をまとめて生成。
 // STTは設定があるときだけ付与（未設定なら ConversationRelay 既定を使う＝安全）。
 function relayMediaAttrs(): string {
-  const parts = [
-    `ttsProvider="${escapeXml(config.twilio.ttsProvider)}"`,
-    `voice="${escapeXml(config.twilio.ttsVoice)}"`,
-  ];
+  const provider = config.twilio.ttsProvider;
+  const voice = config.twilio.ttsVoice;
+  const parts = [`ttsProvider="${escapeXml(provider)}"`];
+
+  // 安全ガード：プロバイダと voice の不一致は通話を即切断させる。
+  // Google系の声名（例 ja-JP-Chirp3-HD-Kore）は Google のときだけ付与。
+  // 例えば provider=ElevenLabs のまま voice を変え忘れても、不一致の voice は
+  // 付けずに ElevenLabs 既定声で繋ぐ（切断を防ぐ）。
+  const googleStyleVoice = /^[a-z]{2}-[A-Z]{2}-/.test(voice);
+  const voiceOk = Boolean(voice) && (provider === 'Google' ? googleStyleVoice : !googleStyleVoice);
+  if (voiceOk) parts.push(`voice="${escapeXml(voice)}"`);
+
   if (config.twilio.sttProvider) parts.push(`transcriptionProvider="${escapeXml(config.twilio.sttProvider)}"`);
   if (config.twilio.sttModel) parts.push(`speechModel="${escapeXml(config.twilio.sttModel)}"`);
   return parts.join(' ');
