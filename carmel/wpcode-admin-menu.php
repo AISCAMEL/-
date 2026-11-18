@@ -9,6 +9,9 @@
  *   ・設定 → カーメル メニュー整理 で、今あるメニューを自動一覧化し、1画面で
  *     「スタッフに表示／自分に表示」をチェックで切替。初期値はおすすめ。
  *   ・隠すのは表示だけ。データ・機能は消しません（直URLでは到達可）。無効化で元通り。
+ *   ・隠した項目は「すべてのメニュー」ページ（左メニュー上部）からいつでも開けます。
+ *   ・旧「CARMEL 自動生成」プラグインが隠していた項目（carmel_auto_settings の hidden_menus）を
+ *     引き継ぎます。旧プラグインを止めても、左メニューが元の長さに戻りません。
  * 管理者専用。固有名＋function_existsガード。
  * ---------------------------------------------------------------------------
  */
@@ -36,6 +39,50 @@ if ( ! function_exists( 'carmelx_adminmenu_admin_noise' ) ) {
 	}
 }
 
+/* この機能自身のページと、記事・在庫の入れ物は、引き継ぎでは隠さない（旧プラグインの中に移設されていた分は左に戻す） */
+if ( ! function_exists( 'carmelx_adminmenu_never_inherit' ) ) {
+	function carmelx_adminmenu_never_inherit() {
+		return array(
+			'carmel-allmenus', 'index.php', 'upload.php', 'plugins.php', 'options-general.php',
+			'edit.php?post_type=portfolio', 'edit.php?post_type=news', 'edit.php?post_type=shop_blog',
+			'edit.php?post_type=media_article', 'edit.php?post_type=page',
+		);
+	}
+}
+/* 旧「CARMEL 自動生成」が隠していたトップメニュー（設定は旧プラグインを止めても DB に残っている） */
+if ( ! function_exists( 'carmelx_adminmenu_inherited' ) ) {
+	function carmelx_adminmenu_inherited() {
+		$old = get_option( 'carmel_auto_settings' );
+		if ( ! is_array( $old ) || empty( $old['hidden_menus'] ) || ! is_array( $old['hidden_menus'] ) ) { return array(); }
+		$out = array();
+		foreach ( $old['hidden_menus'] as $slug ) {
+			$slug = (string) $slug;
+			if ( '' === $slug || in_array( $slug, carmelx_adminmenu_never_inherit(), true ) ) { continue; }
+			$out[] = $slug;
+		}
+		return array_values( array_unique( $out ) );
+	}
+}
+/* 隠す前の左メニュー（「すべてのメニュー」ページと設定ページで使う） */
+if ( ! function_exists( 'carmelx_adminmenu_snapshot' ) ) {
+	function carmelx_adminmenu_snapshot() {
+		global $menu, $submenu;
+		if ( isset( $GLOBALS['carmelx_adminmenu_all'] ) ) { return; }
+		$GLOBALS['carmelx_adminmenu_all']     = is_array( $menu ) ? $menu : array();
+		$GLOBALS['carmelx_adminmenu_all_sub'] = is_array( $submenu ) ? $submenu : array();
+	}
+}
+/* メニューのスラッグ → 開く先の URL */
+if ( ! function_exists( 'carmelx_adminmenu_url' ) ) {
+	function carmelx_adminmenu_url( $slug ) {
+		$slug = html_entity_decode( (string) $slug, ENT_QUOTES, 'UTF-8' );
+		if ( preg_match( '#^https?://#i', $slug ) ) { return $slug; }
+		if ( false !== strpos( $slug, '.php' ) ) { return admin_url( $slug ); }
+		$u = function_exists( 'menu_page_url' ) ? menu_page_url( $slug, false ) : '';
+		return ( '' !== (string) $u ) ? $u : admin_url( 'admin.php?page=' . $slug );
+	}
+}
+
 if ( ! function_exists( 'carmelx_adminmenu_label' ) ) {
 	function carmelx_adminmenu_label( $title ) {
 		$t = preg_replace( '/<span[^>]*>.*?<\/span>/is', '', (string) $title );
@@ -48,11 +95,14 @@ if ( ! function_exists( 'carmelx_adminmenu_list' ) ) {
 	function carmelx_adminmenu_list() {
 		global $menu;
 		$out = array();
-		if ( empty( $menu ) || ! is_array( $menu ) ) { return $out; }
-		foreach ( $menu as $m ) {
+		// 隠す前の一覧を使う（隠した項目も出さないと、保存のたびに元へ戻ってしまう）
+		$src = ( isset( $GLOBALS['carmelx_adminmenu_all'] ) && is_array( $GLOBALS['carmelx_adminmenu_all'] ) && $GLOBALS['carmelx_adminmenu_all'] ) ? $GLOBALS['carmelx_adminmenu_all'] : $menu;
+		if ( empty( $src ) || ! is_array( $src ) ) { return $out; }
+		foreach ( $src as $m ) {
 			$slug  = isset( $m[2] ) ? (string) $m[2] : '';
 			$class = isset( $m[4] ) ? (string) $m[4] : '';
 			if ( '' === $slug || false !== strpos( $class, 'wp-menu-separator' ) ) { continue; }
+			if ( 'carmel-allmenus' === $slug ) { continue; }
 			$label = carmelx_adminmenu_label( isset( $m[0] ) ? $m[0] : $slug );
 			$out[ $slug ] = ( '' !== $label ) ? $label : $slug;
 		}
@@ -84,7 +134,10 @@ if ( ! function_exists( 'carmelx_adminmenu_hide_staff' ) ) {
 if ( ! function_exists( 'carmelx_adminmenu_hide_admin' ) ) {
 	function carmelx_adminmenu_hide_admin( $slug, $label, $hidden ) {
 		if ( in_array( $slug, carmelx_adminmenu_admin_keep(), true ) ) { return false; } // 安全セットは常に表示
-		if ( null === $hidden ) { return carmelx_adminmenu_admin_noise( $slug, $label ); } // 既定：ノイズだけ隠す
+		if ( 'carmel-allmenus' === $slug ) { return false; }                             // 「すべてのメニュー」は常に表示
+		if ( null === $hidden ) {                                                         // 既定：ノイズ＋旧プラグインが隠していた分
+			return carmelx_adminmenu_admin_noise( $slug, $label ) || in_array( $slug, carmelx_adminmenu_inherited(), true );
+		}
 		return in_array( $slug, $hidden, true );
 	}
 }
@@ -94,6 +147,7 @@ if ( ! function_exists( 'carmelx_adminmenu_apply' ) ) {
 	function carmelx_adminmenu_apply() {
 		global $menu;
 		if ( empty( $menu ) || ! is_array( $menu ) ) { return; }
+		carmelx_adminmenu_snapshot();
 		$o = carmelx_adminmenu_opts();
 		$is_admin_user = current_user_can( 'manage_options' );
 		if ( $is_admin_user && empty( $o['admin_on'] ) ) { return; }
@@ -111,6 +165,90 @@ if ( ! function_exists( 'carmelx_adminmenu_apply' ) ) {
 		}
 	}
 	add_action( 'admin_menu', 'carmelx_adminmenu_apply', 9999 );
+}
+
+/* ---- 旧プラグインの「隠す」設定を一度だけ取り込む（こちらで既に保存済みの場合） ---- */
+if ( ! function_exists( 'carmelx_adminmenu_inherit_once' ) ) {
+	function carmelx_adminmenu_inherit_once() {
+		if ( ! current_user_can( 'manage_options' ) ) { return; }
+		if ( get_option( 'carmelx_adminmenu_inherit_done' ) ) { return; }
+		if ( function_exists( 'carmel3_hide_menus' ) ) { return; } // 旧プラグインが動いている間は何もしない
+		$inh = carmelx_adminmenu_inherited();
+		$o   = get_option( CARMEL_ADMINMENU_OPT );
+		if ( $inh && is_array( $o ) && isset( $o['hidden_admin'] ) && is_array( $o['hidden_admin'] ) ) {
+			$o['hidden_admin'] = array_values( array_unique( array_merge( $o['hidden_admin'], $inh ) ) );
+			update_option( CARMEL_ADMINMENU_OPT, $o );
+		}
+		update_option( 'carmelx_adminmenu_inherit_done', 1, false );
+	}
+	add_action( 'admin_init', 'carmelx_adminmenu_inherit_once', 40 );
+}
+
+/* ---- 「すべてのメニュー」：隠した項目もここから全部開ける ---- */
+if ( ! function_exists( 'carmelx_adminmenu_all_page' ) ) {
+	function carmelx_adminmenu_all_page() {
+		add_menu_page( 'すべてのメニュー', 'すべてのメニュー', 'manage_options', 'carmel-allmenus', 'carmelx_adminmenu_all_render', 'dashicons-screenoptions', '2.71' );
+	}
+	add_action( 'admin_menu', 'carmelx_adminmenu_all_page', 100 );
+}
+if ( ! function_exists( 'carmelx_adminmenu_all_render' ) ) {
+	function carmelx_adminmenu_all_render() {
+		if ( ! current_user_can( 'manage_options' ) ) { return; }
+		global $menu;
+		$all = isset( $GLOBALS['carmelx_adminmenu_all'] ) && is_array( $GLOBALS['carmelx_adminmenu_all'] ) ? $GLOBALS['carmelx_adminmenu_all'] : ( is_array( $menu ) ? $menu : array() );
+		$sub = isset( $GLOBALS['carmelx_adminmenu_all_sub'] ) && is_array( $GLOBALS['carmelx_adminmenu_all_sub'] ) ? $GLOBALS['carmelx_adminmenu_all_sub'] : array();
+		$o   = carmelx_adminmenu_opts();
+		$groups = array( 'hidden' => array(), 'shown' => array() );
+		foreach ( $all as $m ) {
+			$slug  = isset( $m[2] ) ? (string) $m[2] : '';
+			$class = isset( $m[4] ) ? (string) $m[4] : '';
+			if ( '' === $slug || 'carmel-allmenus' === $slug || false !== strpos( $class, 'wp-menu-separator' ) ) { continue; }
+			if ( ! empty( $m[1] ) && ! current_user_can( $m[1] ) ) { continue; }
+			$label = carmelx_adminmenu_label( isset( $m[0] ) ? $m[0] : $slug );
+			if ( '' === $label ) { $label = $slug; }
+			$links = array();
+			if ( ! empty( $sub[ $slug ] ) && is_array( $sub[ $slug ] ) ) {
+				foreach ( $sub[ $slug ] as $sm ) {
+					if ( empty( $sm[2] ) ) { continue; }
+					if ( ! empty( $sm[1] ) && ! current_user_can( $sm[1] ) ) { continue; }
+					$sl = carmelx_adminmenu_label( isset( $sm[0] ) ? $sm[0] : '' );
+					if ( '' === $sl ) { continue; }
+					$links[ carmelx_adminmenu_url( $sm[2] ) ] = $sl;
+				}
+			}
+			$top = $links ? key( $links ) : carmelx_adminmenu_url( $slug );
+			$hidden = ! empty( $o['admin_on'] ) && carmelx_adminmenu_hide_admin( $slug, $label, $o['hidden_admin'] );
+			$groups[ $hidden ? 'hidden' : 'shown' ][] = array( 'label' => $label, 'url' => $top, 'links' => $links );
+		}
+		$titles = array(
+			'hidden' => '左メニューから隠している項目',
+			'shown'  => '左メニューに出ている項目',
+		);
+		?>
+		<div class="wrap">
+			<h1>すべてのメニュー</h1>
+			<p style="max-width:860px;">左メニューは、よく使うものだけにしています。隠している項目も、ここから全部開けます。隠すのは表示だけで、機能やデータは消していません。
+			左に出す項目は <a href="<?php echo esc_url( admin_url( 'options-general.php?page=carmel-adminmenu' ) ); ?>">設定 → カーメル メニュー整理</a> で変えられます。</p>
+			<?php foreach ( $groups as $key => $rows ) : if ( ! $rows ) { continue; } ?>
+				<h2 style="margin-top:22px;"><?php echo esc_html( $titles[ $key ] ); ?>（<?php echo (int) count( $rows ); ?>）</h2>
+				<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;max-width:1200px;">
+				<?php foreach ( $rows as $r ) : ?>
+					<div style="background:#fff;border:1px solid #dcdcde;border-radius:8px;padding:12px 14px;">
+						<a href="<?php echo esc_url( $r['url'] ); ?>" style="font-size:14px;font-weight:600;text-decoration:none;"><?php echo esc_html( $r['label'] ); ?></a>
+						<?php if ( count( $r['links'] ) > 1 ) : ?>
+							<ul style="margin:8px 0 0;">
+							<?php foreach ( $r['links'] as $u => $l ) : ?>
+								<li style="margin:0 0 4px;"><a href="<?php echo esc_url( $u ); ?>" style="text-decoration:none;"><?php echo esc_html( $l ); ?></a></li>
+							<?php endforeach; ?>
+							</ul>
+						<?php endif; ?>
+					</div>
+				<?php endforeach; ?>
+				</div>
+			<?php endforeach; ?>
+		</div>
+		<?php
+	}
 }
 
 /* ---- 設定ページ ---- */
@@ -193,7 +331,8 @@ if ( ! function_exists( 'carmelx_adminmenu_render' ) ) {
 				<p style="color:#777;font-size:12px;max-width:820px;">
 					・チェックＯＮ＝表示／ＯＦＦ＝非表示。<br>
 					・スタッフの初期値：在庫・メディア等の必須のみ表示。<br>
-					・自分の初期値：SEO/解析/補助系など“ノイズ”だけ非表示（機能メニューは残す）。<br>
+					・自分の初期値：SEO/解析/補助系など“ノイズ”と、旧「CARMEL 自動生成」で隠していた項目（<?php echo (int) count( carmelx_adminmenu_inherited() ); ?>件）を非表示。<br>
+					・隠した項目は、左メニューの「すべてのメニュー」から開けます。<br>
 					・この設定ページは管理者のみ表示されます。
 				</p>
 			</form>
