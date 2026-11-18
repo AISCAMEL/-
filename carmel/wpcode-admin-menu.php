@@ -94,6 +94,7 @@ if ( ! function_exists( 'carmelx_adminmenu_label' ) ) {
 	function carmelx_adminmenu_label( $title ) {
 		$t = preg_replace( '/<span[^>]*>.*?<\/span>/is', '', (string) $title );
 		$t = wp_strip_all_tags( $t );
+		$t = html_entity_decode( $t, ENT_QUOTES, 'UTF-8' ); // &#128241; などの絵文字を文字に戻してから外す
 		$t = preg_replace( '/^[^\p{L}\p{N}]+/u', '', trim( $t ) );
 		return trim( $t );
 	}
