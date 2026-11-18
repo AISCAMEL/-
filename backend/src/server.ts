@@ -42,6 +42,32 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
     llm_provider: llmProvider,
   }));
 
+  // Claude＋日程調整の疎通確認（安全版・?key=diag2026）。
+  // 秘密情報は一切返さない：成功可否・ツール呼び出し有無・返答文のみ。
+  app.get('/api/debug/scheduling', async (req) => {
+    if ((req.query as any)?.key !== 'diag2026') return { ok: false, error: 'forbidden' };
+    // 返す文字列から秘密っぽい値を除去（保険）。
+    const scrub = (s: string) => s.replace(/sk-ant-[A-Za-z0-9_-]+/g, '***').slice(0, 200);
+    const { chatAgentStream } = await import('./ai/llm.js');
+    const { schedulingTools, makeSchedulingRunner } = await import('./ai/schedulingTools.js');
+    const tenantId = config.demoTenantId;
+    const out: Record<string, unknown> = { llm_provider: llmProvider };
+    try {
+      let toolCalled: string | null = null;
+      const base = makeSchedulingRunner(tenantId, null);
+      const runner = async (name: string, input: any) => { toolCalled = name; return base(name, input); };
+      const text = await chatAgentStream(
+        [
+          { role: 'system', content: '受付テスト。find_available_slots ツールで明日以降の空きを調べ、最初の候補を一言で述べよ。' },
+          { role: 'user', content: '出張査定の空きを教えて' },
+        ],
+        schedulingTools, runner, () => {}, 300,
+      );
+      out.agent = { ok: Boolean(text), tool_called: toolCalled, reply: text ? scrub(text) : null };
+    } catch (e) { out.agent = { ok: false, error: scrub(String(e)) }; }
+    return out;
+  });
+
   await registerTwilioRoutes(app);
   await registerConversationWs(app);
   await registerAuthRoutes(app);
