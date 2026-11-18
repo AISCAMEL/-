@@ -27,11 +27,12 @@ export const config = {
     // ※ provider と voice の組み合わせが不正だと通話が繋がらないので、対で設定すること。
     ttsProvider: process.env.TWILIO_TTS_PROVIDER ?? 'Google',
     ttsVoice: process.env.TWILIO_TTS_VOICE ?? 'ja-JP-Chirp3-HD-Kore',
-    // 音声認識(STT)の provider/model。未設定なら ConversationRelay 既定(日本語=Deepgram nova-3)を使う。
-    // 聞き取り精度を変えたいときだけ設定（対で／不正値だと通話が繋がらないので注意）。
-    //   例) TWILIO_STT_PROVIDER=Google / TWILIO_STT_MODEL=telephony
-    //       TWILIO_STT_PROVIDER=Deepgram / TWILIO_STT_MODEL=nova-2-general
-    sttProvider: process.env.TWILIO_STT_PROVIDER ?? '',
+    // 音声認識(STT)の provider/model。既定は Google（日本語の電話音声で実績。
+    // Twilioの日本語ConversationRelay実例が transcriptionProvider:Google を採用）。
+    // speechModel は未指定のまま（ja-JP既定モデルに任せる＝不正組合せで切断されない安全策）。
+    // 変えたいときだけ設定（対で／不正値だと通話が繋がらないので注意）。
+    //   例) TWILIO_STT_PROVIDER=Deepgram / TWILIO_STT_MODEL=nova-3
+    sttProvider: process.env.TWILIO_STT_PROVIDER ?? 'Google',
     sttModel: process.env.TWILIO_STT_MODEL ?? '',
   },
 
