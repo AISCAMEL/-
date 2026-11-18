@@ -134,6 +134,71 @@ export async function chatTextStream(
   }
 }
 
+// ---- ツール利用（function calling）付きの会話 ----
+export interface ToolSpec {
+  name: string;
+  description: string;
+  input_schema: Record<string, unknown>;
+}
+export type ToolRunner = (name: string, input: any) => Promise<unknown>;
+
+/**
+ * ツール（空き確認・予約など）を使いながら返答をストリーミング生成する。
+ * 1) モデルがツールを要求したら runTool を実行し結果を返して継続、
+ * 2) ツール要求が無くなったら最終の返答（音声）を全文返す。
+ * onDelta には音声で読み上げるテキストだけが届く（tool_use は読み上げない）。
+ * Anthropic未設定時はツール無しのテキストストリームにフォールバック。
+ */
+export async function chatAgentStream(
+  messages: ChatMessage[],
+  tools: ToolSpec[],
+  runTool: ToolRunner,
+  onDelta: (t: string) => void,
+  maxTokens = 400,
+): Promise<string | null> {
+  if (!anthropic) return chatTextStream(messages, onDelta, maxTokens);
+  const { system, convo } = splitForClaude(messages);
+  const msgs: Anthropic.MessageParam[] = convo.map((m) => ({ role: m.role, content: m.content }));
+  let finalText = '';
+  let emitted = false;
+  try {
+    // 最大4ステップ（ツール→応答）までで打ち切り、無限ループを防ぐ。
+    for (let step = 0; step < 4; step++) {
+      const stream = anthropic.messages.stream({
+        model: config.anthropic.model,
+        max_tokens: maxTokens,
+        system,
+        messages: msgs,
+        tools: tools as unknown as Anthropic.Tool[],
+        thinking: { type: 'disabled' },
+      });
+      stream.on('text', (t: string) => { finalText += t; emitted = true; onDelta(t); });
+      const final = await stream.finalMessage();
+      const toolUses = final.content.filter(
+        (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
+      );
+      if (toolUses.length === 0) break;
+      // アシスタントのツール要求を会話に積む。
+      msgs.push({ role: 'assistant', content: final.content });
+      // 各ツールを実行し、結果をまとめて返す。
+      const results: Anthropic.ToolResultBlockParam[] = [];
+      for (const tu of toolUses) {
+        let out: unknown;
+        try { out = await runTool(tu.name, tu.input); }
+        catch (e) { out = { error: String(e) }; }
+        results.push({ type: 'tool_result', tool_use_id: tu.id, content: JSON.stringify(out) });
+      }
+      msgs.push({ role: 'user', content: results });
+    }
+    return finalText || null;
+  } catch (err) {
+    console.error('[llm] chatAgentStream failed:', err);
+    // まだ何も喋っていなければ、ツール無しで素直に返答を試みる。
+    if (!emitted) return chatTextStream(messages, onDelta, maxTokens);
+    return finalText || null;
+  }
+}
+
 /**
  * JSON応答を強制してチャット補完を呼ぶ。
  * 失敗や未設定時は null を返し、呼び出し側でフォールバックさせる。

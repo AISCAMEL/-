@@ -1,5 +1,6 @@
-import { chatJson, chatTextStream, llmEnabled } from './llm.js';
+import { chatJson, chatTextStream, chatAgentStream, llmEnabled } from './llm.js';
 import { buildSystemPrompt, buildReplyPrompt, buildOutboundSystemPrompt } from './prompts.js';
+import { schedulingTools, makeSchedulingRunner } from './schedulingTools.js';
 import type { AiTurnResult, ExtractedFields, TenantContext, TranscriptLine } from '../types.js';
 
 const EMPTY_EXTRACTED: ExtractedFields = {
@@ -21,7 +22,12 @@ export class ConversationOrchestrator {
   private lastResult: AiTurnResult | null = null;
 
   // outbound を渡すと「電話をかける側」のプロンプトに切り替わる。
-  constructor(private readonly ctx: TenantContext, private readonly outbound?: { purpose: string; goal: string }) {}
+  // runtime にDB上のtenantId/callIdを渡すと、着信時にスケジューリング用ツールを有効化する。
+  constructor(
+    private readonly ctx: TenantContext,
+    private readonly outbound?: { purpose: string; goal: string },
+    private readonly runtime?: { tenantId: string; callId: string | null },
+  ) {}
 
   private systemPrompt(): string {
     return this.outbound
@@ -56,7 +62,14 @@ export class ConversationOrchestrator {
           content: l.message,
         })),
       ];
-      reply = await chatTextStream(messages, onDelta);
+      // DB上のtenantIdがあれば、空き確認・仮予約ツールを使えるようにする。
+      const tid = this.runtime?.tenantId;
+      if (tid) {
+        const runner = makeSchedulingRunner(tid, this.runtime?.callId ?? null);
+        reply = await chatAgentStream(messages, schedulingTools, runner, onDelta);
+      } else {
+        reply = await chatTextStream(messages, onDelta);
+      }
     } else if (llmEnabled && this.outbound) {
       // アウトバウンドは従来のJSON経路（能動発話・判定が必要なため）。
       const r = await this.callLlm();

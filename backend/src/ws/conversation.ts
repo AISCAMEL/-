@@ -91,7 +91,8 @@ export async function registerConversationWs(app: FastifyInstance): Promise<void
             callId,
             from, to,
             startedAt: Date.now(),
-            orchestrator: new ConversationOrchestrator(tenant, outbound),
+            // 着信時は空き確認・仮予約ツールを有効化（DB上のtenantId/callIdを渡す）。
+            orchestrator: new ConversationOrchestrator(tenant, outbound, { tenantId, callId }),
           });
           app.log.info({ callSid, from, to, tenant: tenant.companyName, outbound: Boolean(outbound) }, 'ws setup');
           break;

@@ -7,6 +7,19 @@ import { createAppointment, getAppointment, listAppointments, updateAppointment,
 
 const DEFAULT_DURATION = 45;
 
+// 営業時間が未設定のテナントでも空き枠を出せるよう、既定の営業時間（毎日10:00-19:00）。
+// 管理画面で business_hours を設定すればそちらが優先される。
+const DEFAULT_BUSINESS_HOURS: Record<string, [string, string][]> = {
+  mon: [['10:00', '19:00']], tue: [['10:00', '19:00']], wed: [['10:00', '19:00']],
+  thu: [['10:00', '19:00']], fri: [['10:00', '19:00']], sat: [['10:00', '19:00']], sun: [['10:00', '19:00']],
+};
+
+function hoursOf(settings: any): Record<string, [string, string][]> {
+  const bh = settings?.business_hours;
+  const hasAny = bh && typeof bh === 'object' && Object.values(bh).some((v) => Array.isArray(v) && v.length > 0);
+  return hasAny ? bh : DEFAULT_BUSINESS_HOURS;
+}
+
 function durationOf(settings: any): number {
   const d = Number(settings?.appointment_duration_min);
   return Number.isFinite(d) && d > 0 ? d : DEFAULT_DURATION;
@@ -45,7 +58,7 @@ export async function findSlots(tenantId: string, dateYmd: string, durationMin?:
   const dayStart = new Date(`${dateYmd}T00:00:00+09:00`).toISOString();
   const dayEnd = new Date(new Date(`${dateYmd}T00:00:00+09:00`).getTime() + 24 * 3600_000).toISOString();
   const busy = await combinedBusy(tenantId, dayStart, dayEnd);
-  return availableSlots(dateYmd, settings?.business_hours, settings?.holiday_settings, busy, duration);
+  return availableSlots(dateYmd, hoursOf(settings), settings?.holiday_settings, busy, duration);
 }
 
 export interface BookResult {
