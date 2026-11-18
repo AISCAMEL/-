@@ -39,6 +39,13 @@ if ( ! function_exists( 'carmelx_adminmenu_admin_noise' ) ) {
 	}
 }
 
+/* 「引き継ぎだけ」モード：旧プラグインが隠していた項目だけを隠し、それ以外は何も変えない。
+   軽量版「カーメル 在庫連携」から読み込まれた時に使う（本番の左メニューを今と同じに保つため）。 */
+if ( ! function_exists( 'carmelx_adminmenu_inherit_only' ) ) {
+	function carmelx_adminmenu_inherit_only() {
+		return defined( 'CARMEL_ADMINMENU_INHERIT_ONLY' ) && CARMEL_ADMINMENU_INHERIT_ONLY;
+	}
+}
 /* この機能自身のページと、記事・在庫の入れ物は、引き継ぎでは隠さない（旧プラグインの中に移設されていた分は左に戻す） */
 if ( ! function_exists( 'carmelx_adminmenu_never_inherit' ) ) {
 	function carmelx_adminmenu_never_inherit() {
@@ -127,7 +134,10 @@ if ( ! function_exists( 'carmelx_adminmenu_opts' ) ) {
 if ( ! function_exists( 'carmelx_adminmenu_hide_staff' ) ) {
 	function carmelx_adminmenu_hide_staff( $slug, $hidden ) {
 		if ( in_array( $slug, carmelx_adminmenu_staff_keep(), true ) ) { return false; }
-		if ( null === $hidden ) { return true; }        // 既定：必須以外は隠す
+		if ( null === $hidden ) {
+			if ( carmelx_adminmenu_inherit_only() ) { return in_array( $slug, carmelx_adminmenu_inherited(), true ); } // 引き継ぎだけ
+			return true;                                // 既定：必須以外は隠す
+		}
 		return in_array( $slug, $hidden, true );
 	}
 }
@@ -136,6 +146,7 @@ if ( ! function_exists( 'carmelx_adminmenu_hide_admin' ) ) {
 		if ( in_array( $slug, carmelx_adminmenu_admin_keep(), true ) ) { return false; } // 安全セットは常に表示
 		if ( 'carmel-allmenus' === $slug ) { return false; }                             // 「すべてのメニュー」は常に表示
 		if ( null === $hidden ) {                                                         // 既定：ノイズ＋旧プラグインが隠していた分
+			if ( carmelx_adminmenu_inherit_only() ) { return in_array( $slug, carmelx_adminmenu_inherited(), true ); } // 引き継ぎだけ
 			return carmelx_adminmenu_admin_noise( $slug, $label ) || in_array( $slug, carmelx_adminmenu_inherited(), true );
 		}
 		return in_array( $slug, $hidden, true );
@@ -165,6 +176,8 @@ if ( ! function_exists( 'carmelx_adminmenu_apply' ) ) {
 		}
 	}
 	add_action( 'admin_menu', 'carmelx_adminmenu_apply', 9999 );
+	// 旧プラグインなど他の仕組みが隠す（9999）より前に、全項目を控える
+	add_action( 'admin_menu', 'carmelx_adminmenu_snapshot', 9990 );
 }
 
 /* ---- 旧プラグインの「隠す」設定を一度だけ取り込む（こちらで既に保存済みの場合） ---- */
@@ -197,7 +210,8 @@ if ( ! function_exists( 'carmelx_adminmenu_all_render' ) ) {
 		global $menu;
 		$all = isset( $GLOBALS['carmelx_adminmenu_all'] ) && is_array( $GLOBALS['carmelx_adminmenu_all'] ) ? $GLOBALS['carmelx_adminmenu_all'] : ( is_array( $menu ) ? $menu : array() );
 		$sub = isset( $GLOBALS['carmelx_adminmenu_all_sub'] ) && is_array( $GLOBALS['carmelx_adminmenu_all_sub'] ) ? $GLOBALS['carmelx_adminmenu_all_sub'] : array();
-		$o   = carmelx_adminmenu_opts();
+		$left = array(); // いま実際に左に出ている項目
+		if ( is_array( $menu ) ) { foreach ( $menu as $lm ) { if ( ! empty( $lm[2] ) ) { $left[ (string) $lm[2] ] = 1; } } }
 		$groups = array( 'hidden' => array(), 'shown' => array() );
 		foreach ( $all as $m ) {
 			$slug  = isset( $m[2] ) ? (string) $m[2] : '';
@@ -217,7 +231,7 @@ if ( ! function_exists( 'carmelx_adminmenu_all_render' ) ) {
 				}
 			}
 			$top = $links ? key( $links ) : carmelx_adminmenu_url( $slug );
-			$hidden = ! empty( $o['admin_on'] ) && carmelx_adminmenu_hide_admin( $slug, $label, $o['hidden_admin'] );
+			$hidden = ! isset( $left[ $slug ] );
 			$groups[ $hidden ? 'hidden' : 'shown' ][] = array( 'label' => $label, 'url' => $top, 'links' => $links );
 		}
 		$titles = array(
@@ -330,8 +344,12 @@ if ( ! function_exists( 'carmelx_adminmenu_render' ) ) {
 				</p>
 				<p style="color:#777;font-size:12px;max-width:820px;">
 					・チェックＯＮ＝表示／ＯＦＦ＝非表示。<br>
+					<?php if ( carmelx_adminmenu_inherit_only() ) : ?>
+					・初期値：旧「CARMEL 自動生成」で隠していた項目（<?php echo (int) count( carmelx_adminmenu_inherited() ); ?>件）だけを非表示。それ以外は元のまま。<br>
+					<?php else : ?>
 					・スタッフの初期値：在庫・メディア等の必須のみ表示。<br>
 					・自分の初期値：SEO/解析/補助系など“ノイズ”と、旧「CARMEL 自動生成」で隠していた項目（<?php echo (int) count( carmelx_adminmenu_inherited() ); ?>件）を非表示。<br>
+					<?php endif; ?>
 					・隠した項目は、左メニューの「すべてのメニュー」から開けます。<br>
 					・この設定ページは管理者のみ表示されます。
 				</p>
