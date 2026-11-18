@@ -270,3 +270,38 @@ export async function chatText(messages: ChatMessage[], model?: string): Promise
     return null;
   }
 }
+
+// ---- 診断用：Anthropic呼び出しの4パターンを個別に試す ----
+// どの組み合わせ(create/stream × tools有無)で失敗するか切り分けるための一時関数。
+export async function llmDiag(): Promise<Record<string, unknown>> {
+  const res: Record<string, unknown> = { model: config.anthropic.model, hasClient: Boolean(anthropic) };
+  if (!anthropic) return res;
+  const testTool = [{ name: 'ping', description: 'pingを返すテスト用ツール', input_schema: { type: 'object', properties: {} } }];
+  const ask = [{ role: 'user' as const, content: 'pingツールを必ず使ってください' }];
+  const hi = [{ role: 'user' as const, content: 'こんにちは' }];
+  // 1) create（ツール無し）
+  try {
+    const r = await anthropic.messages.create({ model: config.anthropic.model, max_tokens: 50, messages: hi, thinking: { type: 'disabled' } });
+    res.create = { ok: true, stop: r.stop_reason };
+  } catch (e) { res.create = { ok: false, err: String(e).slice(0, 300) }; }
+  // 2) create（ツール有り）
+  try {
+    const r = await anthropic.messages.create({ model: config.anthropic.model, max_tokens: 80, messages: ask, tools: testTool as unknown as Anthropic.Tool[], thinking: { type: 'disabled' } });
+    res.createTools = { ok: true, stop: r.stop_reason, types: r.content.map((b) => b.type) };
+  } catch (e) { res.createTools = { ok: false, err: String(e).slice(0, 300) }; }
+  // 3) stream（ツール無し）
+  try {
+    const s = anthropic.messages.stream({ model: config.anthropic.model, max_tokens: 50, messages: hi, thinking: { type: 'disabled' } });
+    let t = ''; s.on('text', (x: string) => { t += x; });
+    const f = await s.finalMessage();
+    res.stream = { ok: true, stop: f.stop_reason, len: t.length };
+  } catch (e) { res.stream = { ok: false, err: String(e).slice(0, 300) }; }
+  // 4) stream（ツール有り）＝実際に会話で使う経路
+  try {
+    const s = anthropic.messages.stream({ model: config.anthropic.model, max_tokens: 80, messages: ask, tools: testTool as unknown as Anthropic.Tool[], thinking: { type: 'disabled' } });
+    let t = ''; s.on('text', (x: string) => { t += x; });
+    const f = await s.finalMessage();
+    res.streamTools = { ok: true, stop: f.stop_reason, types: f.content.map((b) => b.type), len: t.length };
+  } catch (e) { res.streamTools = { ok: false, err: String(e).slice(0, 300) }; }
+  return res;
+}

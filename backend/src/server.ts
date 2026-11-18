@@ -47,10 +47,11 @@ export async function buildApp(opts: { logger?: boolean } = {}): Promise<Fastify
   app.get('/api/debug/scheduling', async (req) => {
     if ((req.query as any)?.key !== 'diag2026') return { ok: false, error: 'forbidden' };
     const { calendarStatus, findSlots } = await import('./calendar/index.js');
-    const { chatAgentStream } = await import('./ai/llm.js');
+    const { chatAgentStream, llmDiag } = await import('./ai/llm.js');
     const { schedulingTools, makeSchedulingRunner } = await import('./ai/schedulingTools.js');
     const tenantId = config.demoTenantId;
     const out: Record<string, unknown> = { llm_provider: llmProvider, tenantId };
+    try { out.llm_diag = await llmDiag(); } catch (e) { out.llm_diag_err = String(e); }
     try { out.calendar = await calendarStatus(tenantId); } catch (e) { out.calendar_err = String(e); }
     try {
       const days: unknown[] = [];
