@@ -30,6 +30,7 @@ FILES=(
   wpcode-car-video.php
   wpcode-loan-guide.php
   wpcode-car-page-polish.php
+  wpcode-car-chat.php
 )
 
 rm -rf "$MODULES"
@@ -59,3 +60,11 @@ BVER="$(grep -oE "Version:[[:space:]]*[0-9.]+" "$BRIDGE/carmel-inventory-bridge.
 rm -f carmel-inventory-bridge.zip
 zip -rq carmel-inventory-bridge.zip carmel-inventory-bridge -x "*.DS_Store"
 echo "built carmel-inventory-bridge.zip (v$BVER)"
+
+# 単体版「カーメル 車両チャット相談」（車両ページの LINE ボタン → チャット。本番に単独で入れられる）
+CHAT="$HERE/carmel-car-chat"
+cp "$SRC/wpcode-car-chat.php" "$CHAT/wpcode-car-chat.php"
+CVER="$(grep -oE "Version:[[:space:]]*[0-9.]+" "$CHAT/carmel-car-chat.php" | grep -oE "[0-9.]+")"
+rm -f carmel-car-chat.zip
+zip -rq carmel-car-chat.zip carmel-car-chat -x "*.DS_Store"
+echo "built carmel-car-chat.zip (v$CVER)"
