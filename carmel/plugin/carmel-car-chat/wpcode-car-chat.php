@@ -54,6 +54,7 @@ if ( ! function_exists( 'carmelx_carchat_footer' ) ) {
 		?>
 <style id="carmelx-carchat-css">
 a.carmelx-carchat{background-color:var(--carmelx-carchat,#009de0)!important;border-color:var(--carmelx-carchat,#009de0)!important;color:#fff!important;}
+a.carmelx-carchat[style],a.carmelx-carchat{box-shadow:0 4px 0 rgba(0,0,0,.18)!important;}
 a.carmelx-carchat:hover{filter:brightness(1.08);}
 </style>
 <script id="carmelx-carchat-js">
