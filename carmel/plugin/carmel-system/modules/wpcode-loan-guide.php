@@ -11,7 +11,8 @@
  *   ・バッジ注入先 .carmel-lg__warranty-slots は維持（car-detail-ui と連携）。
  *
  * v3.2 変更点
- *   ・金利を「固定 13.6%（実質年率）」に統一。est_nenritsu は参照しない。
+ *   ・金利は「固定 13.9%（実質年率）」に統一（チャットの概算と同じ）。est_nenritsu は参照しない。
+ *     変える時は carmelx_loan_rate フィルター、または定数 CARMEL_LOAN_RATE で。
  *
  * v3.1 変更点（確実版）
  *   ・関数名を固有名（*_v2 / *_render）にして他スニペットとの衝突を回避。
@@ -22,6 +23,15 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 /* 月々の元利均等返済額（固有名・自己完結） */
+/* ローン概算の金利（実質年率・%）。サイト全体でこの値を使う（チャットの概算と同じ 13.9%） */
+if ( ! function_exists( 'carmelx_loan_rate' ) ) {
+	function carmelx_loan_rate() {
+		$r = defined( 'CARMEL_LOAN_RATE' ) ? (float) CARMEL_LOAN_RATE : 13.9;
+		$r = (float) apply_filters( 'carmelx_loan_rate', $r );
+		return ( $r > 0 && $r < 30 ) ? $r : 13.9;
+	}
+}
+
 if ( ! function_exists( 'carmelx_lg_monthly_v2' ) ) {
 	function carmelx_lg_monthly_v2( $principal, $nenritsu, $count ) {
 		if ( $count <= 0 || $principal <= 0 ) { return 0; }
@@ -51,8 +61,8 @@ if ( ! function_exists( 'carmelx_loan_guide_render' ) ) {
 		$honntai = $num( 'est_honntai' );
 		$total   = $num( 'est_total' );
 		$atama   = $num( 'est_atamakin' );
-		// 金利は固定 13.6%（実質年率）。est_nenritsu の値は使わない。
-		$nen     = 13.6;
+		// 金利は固定（実質年率 13.9%・carmelx_loan_rate）。est_nenritsu の値は使わない。
+		$nen     = carmelx_loan_rate();
 
 		// est_total が空でも本体価格などから概算できるようフォールバック。
 		if ( $total <= 0 ) { $total = $honntai; }

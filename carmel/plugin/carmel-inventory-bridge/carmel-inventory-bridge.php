@@ -3,7 +3,7 @@
  * Plugin Name: カーメル 在庫連携
  * Plugin URI:  https://carmelonline.jp/
  * Description: 外部のカーメルシステム（業務ポータル）と在庫をやり取りする「受け口」と、旧プラグイン（CARMEL統合管理・CARMEL自動生成）を止めるための受け皿だけの軽量プラグイン。ホームページの掲載車両をシステムへ取り込み／システムの在庫を車両ページへ反映します。旧プラグインが持っていた記事の入れ物（店舗分類など）と左メニューの整理を引き継ぎます。お客様が見るページの見た目・表示は一切変えません。「カーメルシステム」プラグインを有効にしている場合は、そちらに同じ機能が入っているので不要です（両方有効でも衝突しません）。
- * Version:     1.31.0
+ * Version:     1.33.0
  * Author:      CarMel / AIS
  * License:     GPL-2.0+
  */
@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 /**
  * 「カーメルシステム」（plugins_loaded 優先度5）が先に同じ受け口を読み込んでいれば、こちらは何もしない。
  */
-if ( ! defined( 'CARMEL_INV_BRIDGE_VERSION' ) ) { define( 'CARMEL_INV_BRIDGE_VERSION', '1.31.0' ); }
+if ( ! defined( 'CARMEL_INV_BRIDGE_VERSION' ) ) { define( 'CARMEL_INV_BRIDGE_VERSION', '1.33.0' ); }
 
 add_action( 'plugins_loaded', function () {
 	$dir = plugin_dir_path( __FILE__ );

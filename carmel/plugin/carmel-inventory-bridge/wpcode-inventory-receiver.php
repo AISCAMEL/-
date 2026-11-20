@@ -197,12 +197,13 @@ if ( ! function_exists( 'carmelx_invrecv_fee_keys' ) ) {
 }
 
 if ( ! function_exists( 'carmelx_invrecv_monthly' ) ) {
-	/** 月々の概算（車両ページのローン概算と同じ計算：実質年率13.6%・84回・100円単位切り上げ） */
+	/** 月々の概算（車両ページのローン概算と同じ計算：実質年率13.9%・84回・100円単位切り上げ） */
 	function carmelx_invrecv_monthly( $principal ) {
 		$principal = (float) $principal;
 		if ( $principal <= 0 ) { return 0; }
-		if ( function_exists( 'carmelx_lg_monthly_v2' ) ) { return (int) carmelx_lg_monthly_v2( $principal, 13.6, 84 ); }
-		$r = ( 13.6 / 100 ) / 12;
+		$rate = function_exists( 'carmelx_loan_rate' ) ? carmelx_loan_rate() : 13.9;
+		if ( function_exists( 'carmelx_lg_monthly_v2' ) ) { return (int) carmelx_lg_monthly_v2( $principal, $rate, 84 ); }
+		$r = ( $rate / 100 ) / 12;
 		$m = $principal * $r / ( 1 - pow( 1 + $r, -84 ) );
 		return (int) ( ceil( $m / 100 ) * 100 );
 	}
