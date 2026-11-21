@@ -68,7 +68,15 @@ function ais_hub_ai_page() {
 	echo '<div class="wrap"><h1>AI記事生成（SEO）</h1>';
 	echo '<p>キーワードから<strong>下書き</strong>を生成します（既定は承認制＝自動公開しません）。本文は Claude API、画像は OpenRouter を使用します。</p>';
 	echo '<p>当月の生成数：<strong>' . (int) $usage['count'] . '</strong> / 上限 ' . (int) $o['monthly_cap'] . '　｜　緊急停止：' . ( ! empty( $o['kill'] ) ? '<span style="color:#b32d2e">ON（停止中）</span>' : 'OFF' ) . '</p>';
-	echo '<p><a class="button" href="' . esc_url( admin_url( 'edit.php?post_status=draft' ) ) . '">下書き（承認キュー）を見る</a></p>';
+	echo '<p><a class="button" href="' . esc_url( admin_url( 'edit.php?post_status=draft' ) ) . '">下書き（承認キュー）を見る</a>';
+	echo ' <a class="button" href="' . esc_url( admin_url( 'edit.php?post_status=all&post_type=post' ) ) . '">記事一覧</a></p>';
+	if ( isset( $_GET['samples_cleared'] ) ) { echo '<div class="notice notice-success is-dismissible"><p>セットアップのサンプル記事をゴミ箱へ移動しました。</p></div>'; }
+	echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="margin:6px 0 14px" onsubmit="return confirm(\'初期セットアップで作成したサンプル記事（ais-sample-*）をゴミ箱へ移動します。よろしいですか？\')">';
+	echo '<input type="hidden" name="action" value="ais_hub_ai_clear_samples">';
+	wp_nonce_field( 'ais_hub_ai_clear_samples', 'ais_hub_ai_samples_nonce' );
+	echo '<button class="button button-secondary">サンプル記事を削除（“これはサンプル”の初期記事を消す）</button>';
+	echo ' <span class="description">AI記事や本物の記事に置き換える前の、ダミー4本を一括でゴミ箱へ。</span>';
+	echo '</form>';
 
 	// 設定フォーム
 	echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
@@ -219,6 +227,19 @@ add_action( 'admin_post_ais_hub_ai_generate_now', function () {
 	exit;
 } );
 
+/* サンプル記事の一括削除（ゴミ箱へ） */
+add_action( 'admin_post_ais_hub_ai_clear_samples', function () {
+	if ( ! current_user_can( 'manage_options' ) ) { wp_die( '権限がありません', '', array( 'response' => 403 ) ); }
+	if ( ! isset( $_POST['ais_hub_ai_samples_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ais_hub_ai_samples_nonce'] ) ), 'ais_hub_ai_clear_samples' ) ) { wp_die( '不正なリクエストです', '', array( 'response' => 403 ) ); }
+	$slugs = array( 'ais-sample-carshico', 'ais-sample-export', 'ais-sample-ai', 'ais-sample-gps' );
+	foreach ( $slugs as $slug ) {
+		$posts = get_posts( array( 'name' => $slug, 'post_type' => 'post', 'post_status' => 'any', 'numberposts' => 1 ) );
+		if ( $posts ) { wp_trash_post( $posts[0]->ID ); }
+	}
+	wp_safe_redirect( admin_url( 'admin.php?page=ais-hub-ai&samples_cleared=1' ) );
+	exit;
+} );
+
 /* Cron ハンドラ */
 add_action( 'ais_hub_ai_cron', function () {
 	if ( ais_hub_ai_opt( 'kill', 0 ) ) { return; }
@@ -256,16 +277,18 @@ function ais_hub_ai_build_prompt( $keyword ) {
 	$p  = "あなたは日本の自動車・モビリティ業界（中古車販売/買取/カーリース/車両セキュリティ・GPS/レッカー/輸出/オークション代行）と、中小企業のIT・AI活用に精通した、経験豊富な日本語のSEO編集者です。\n";
 	$p .= "次の検索キーワードで上位表示を狙う、読者の検索意図に正面から応える解説記事を1本作成してください。\n\n";
 	$p .= "■ 検索キーワード: {$keyword}\n\n";
-	$p .= "■ 書き方\n";
+	$p .= "■ 書き方（具体的で“本物”の記事にする）\n";
 	$p .= "- 検索意図を見極め、結論→理由→具体策→注意点→まとめ の流れで構成する。\n";
 	$p .= "- 導入は読者の悩みに共感する2〜3文。各見出しは検索語や関連語を自然に含める。\n";
+	$p .= "- 一般論で逃げない。手順・判断基準・チェックリスト・具体例・比較表など、読者がすぐ行動できる実用情報を必ず入れる。\n";
+	$p .= "- サンプル/ひな形/プレースホルダのような中身の薄い文章は禁止。『〜について解説します』だけで終わらせず、必ず中身を書き切る。\n";
 	$p .= "- {$len_txt}\n- 文体：{$tone_txt}\n";
-	$p .= "- 箇条書き(<ul><li>)や手順を適切に使い、スマホで読みやすく。\n";
-	$p .= "- 可能なら最後の見出しを「よくある質問」にし、Q&Aを2〜3組入れる。\n\n";
-	$p .= "■ 厳守（信頼性・コンプライアンス）\n";
-	$p .= "- 事実が不確実な固有の数値・実績・順位・ニュース・価格・金利・審査可否・納期は断定しない。一般的な傾向や「目安」「場合により異なる」として説明する。\n";
-	$p .= "- 法令・税務・融資に関わる断定や保証表現（必ず/絶対/誰でも通る 等）は使わない。\n";
-	$p .= "- 誇大表現・他社誹謗は書かない。\n";
+	$p .= "- 箇条書き(<ul><li>)や手順(<ol>)を適切に使い、スマホで読みやすく。\n";
+	$p .= "- 最後の見出しは「よくある質問」にし、Q&Aを2〜3組入れる。\n\n";
+	$p .= "■ 信頼性・コンプライアンス（守りつつ、断定回避で曖昧にしすぎない）\n";
+	$p .= "- 一般的な知識・手順・考え方は、自信を持って具体的に言い切ってよい。\n";
+	$p .= "- ただし『自社や特定業者の実績・順位・最新ニュース・個別の価格/金利/審査可否/納期』など検証できない固有情報は断定しない（『目安』『条件により異なる』『詳細は要確認』と添える）。\n";
+	$p .= "- 法令・税務・融資の保証表現（必ず/絶対/誰でも通る/100% 等）は使わない。誇大表現・他社誹謗も書かない。\n";
 	if ( '' !== $context ) {
 		$p .= "\n■ 自社情報（記事末尾の自然な1文の導線にのみ使用。本文の主張の根拠には使わない）\n{$context}\n";
 		$p .= "末尾に、押し付けない相談導線を1つだけ入れてよい（リンク先: {$cta_url}）。<a href=\"{$cta_url}\">…</a> の形で1リンクまで。\n";
@@ -329,6 +352,13 @@ function ais_hub_ai_generate( $keyword ) {
 
 	ais_hub_ai_usage_inc();
 	ais_hub_ai_log( '生成: ' . $keyword . ' → 投稿#' . $post_id . '（' . $status . '）' );
+	/**
+	 * AI下書き生成の完了通知フック。
+	 * @param int    $post_id 生成した投稿ID
+	 * @param string $keyword キーワード
+	 * @param string $status  公開状態
+	 */
+	do_action( 'ais_hub_ai_generated', $post_id, $keyword, $status );
 	return $post_id;
 }
 

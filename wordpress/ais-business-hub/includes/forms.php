@@ -99,6 +99,14 @@ function ais_hub_contact_submit() {
 	$to = ais_hub_get( 'notify_email', get_option( 'admin_email' ) );
 	wp_mail( $to, 'AIS 新規お問い合わせ: ' . $label, $body );
 
+	/**
+	 * 新規お問い合わせ通知フック（Slack等）。
+	 * @param int    $id    問い合わせ投稿ID
+	 * @param string $label 種別ラベル
+	 * @param string $topic トピックキー
+	 */
+	do_action( 'ais_hub_inquiry', $id, $label, $topic );
+
 	wp_safe_redirect( add_query_arg( 'ais_sent', '1', wp_get_referer() ? wp_get_referer() : home_url( '/contact/' ) ) );
 	exit;
 }
