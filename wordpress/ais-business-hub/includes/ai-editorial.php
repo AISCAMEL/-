@@ -71,12 +71,23 @@ function ais_hub_ai_page() {
 	echo '<p><a class="button" href="' . esc_url( admin_url( 'edit.php?post_status=draft' ) ) . '">下書き（承認キュー）を見る</a>';
 	echo ' <a class="button" href="' . esc_url( admin_url( 'edit.php?post_status=all&post_type=post' ) ) . '">記事一覧</a></p>';
 	if ( isset( $_GET['samples_cleared'] ) ) { echo '<div class="notice notice-success is-dismissible"><p>セットアップのサンプル記事をゴミ箱へ移動しました。</p></div>'; }
-	echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="margin:6px 0 14px" onsubmit="return confirm(\'初期セットアップで作成したサンプル記事（ais-sample-*）をゴミ箱へ移動します。よろしいですか？\')">';
+	if ( isset( $_GET['samples_refreshed'] ) ) { echo '<div class="notice notice-success is-dismissible"><p>既存のサンプル記事 ' . (int) $_GET['samples_refreshed'] . ' 本を、本物の内容に更新しました。記事一覧でご確認ください。</p></div>'; }
+	echo '<div style="background:#fff;border:1px solid #dcdfe3;border-radius:8px;padding:12px 16px;margin:8px 0 16px">';
+	echo '<p style="margin:0 0 8px"><strong>サンプル記事（ニュース）を本物にする</strong></p>';
+	// 本物の内容へ上書き
+	echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:inline-block;margin:0 8px 6px 0" onsubmit="return confirm(\'既存のサンプル記事（ais-sample-*）を、最新の本物の内容に上書きします。よろしいですか？\')">';
+	echo '<input type="hidden" name="action" value="ais_hub_ai_refresh_samples">';
+	wp_nonce_field( 'ais_hub_ai_refresh_samples', 'ais_hub_ai_refresh_nonce' );
+	echo '<button class="button button-primary">サンプル記事を本物の内容に更新する</button>';
+	echo '</form>';
+	// 削除
+	echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:inline-block" onsubmit="return confirm(\'初期セットアップで作成したサンプル記事（ais-sample-*）をゴミ箱へ移動します。よろしいですか？\')">';
 	echo '<input type="hidden" name="action" value="ais_hub_ai_clear_samples">';
 	wp_nonce_field( 'ais_hub_ai_clear_samples', 'ais_hub_ai_samples_nonce' );
-	echo '<button class="button button-secondary">サンプル記事を削除（“これはサンプル”の初期記事を消す）</button>';
-	echo ' <span class="description">AI記事や本物の記事に置き換える前の、ダミー4本を一括でゴミ箱へ。</span>';
+	echo '<button class="button button-secondary">サンプル記事を削除</button>';
 	echo '</form>';
+	echo '<p class="description" style="margin:8px 0 0">「更新」＝ダミー4本を実用コラム（リース比較／高く売るコツ／AI活用／GPS）に即時置換（API不要）。さらにAIで独自記事にしたい場合は、上の「AIで書き直す」や新規生成をご利用ください。</p>';
+	echo '</div>';
 
 	// 設定フォーム
 	echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
@@ -227,6 +238,32 @@ add_action( 'admin_post_ais_hub_ai_generate_now', function () {
 	} else {
 		wp_safe_redirect( admin_url( 'admin.php?page=ais-hub-ai&generated=1' ) );
 	}
+	exit;
+} );
+
+/** 既存のサンプル記事を、最新の“本物”の内容に上書き更新（API不要） */
+function ais_hub_refresh_sample_posts() {
+	$count = 0;
+	foreach ( ais_hub_sample_posts() as $sp ) {
+		$posts = get_posts( array( 'name' => $sp['slug'], 'post_type' => 'post', 'post_status' => array( 'publish', 'draft', 'pending', 'future', 'private' ), 'numberposts' => 1 ) );
+		if ( ! $posts ) { continue; }
+		$pid = $posts[0]->ID;
+		wp_update_post( array( 'ID' => $pid, 'post_title' => $sp['title'], 'post_content' => $sp['content'] ) );
+		if ( ! empty( $sp['cat'] ) ) {
+			$term = get_term_by( 'name', $sp['cat'], 'category' );
+			if ( ! $term ) { $t = wp_insert_term( $sp['cat'], 'category' ); if ( ! is_wp_error( $t ) ) { $term = get_term( $t['term_id'], 'category' ); } }
+			if ( $term && ! is_wp_error( $term ) ) { wp_set_post_categories( $pid, array( (int) $term->term_id ) ); }
+		}
+		$count++;
+	}
+	return $count;
+}
+
+add_action( 'admin_post_ais_hub_ai_refresh_samples', function () {
+	if ( ! current_user_can( 'manage_options' ) ) { wp_die( '権限がありません', '', array( 'response' => 403 ) ); }
+	if ( ! isset( $_POST['ais_hub_ai_refresh_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['ais_hub_ai_refresh_nonce'] ) ), 'ais_hub_ai_refresh_samples' ) ) { wp_die( '不正なリクエストです', '', array( 'response' => 403 ) ); }
+	$n = ais_hub_refresh_sample_posts();
+	wp_safe_redirect( admin_url( 'admin.php?page=ais-hub-ai&samples_refreshed=' . $n ) );
 	exit;
 } );
 

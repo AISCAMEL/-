@@ -83,7 +83,14 @@ add_action( 'admin_post_ais_hub_run_setup', function () {
 	// サンプル記事（ニュース／コラムの体裁用・冪等）
 	foreach ( ais_hub_sample_posts() as $sp ) {
 		$exist = get_posts( array( 'name' => $sp['slug'], 'post_type' => 'post', 'post_status' => 'any', 'numberposts' => 1 ) );
-		if ( $exist ) { continue; }
+		if ( $exist ) {
+			if ( ! empty( $_POST['overwrite'] ) ) {
+				wp_update_post( array( 'ID' => $exist[0]->ID, 'post_title' => $sp['title'], 'post_content' => $sp['content'] ) );
+				$term = get_term_by( 'name', $sp['cat'], 'category' );
+				if ( $term ) { wp_set_post_categories( $exist[0]->ID, array( (int) $term->term_id ) ); }
+			}
+			continue;
+		}
 		$pid = wp_insert_post( array(
 			'post_type'    => 'post',
 			'post_status'  => 'publish',
