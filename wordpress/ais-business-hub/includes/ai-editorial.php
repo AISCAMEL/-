@@ -115,6 +115,9 @@ function ais_hub_ai_page() {
 	// ログ
 	echo '<hr><h2>実行ログ</h2><textarea rows="8" style="width:100%" readonly>' . esc_textarea( is_array( $log ) ? implode( "\n", $log ) : '' ) . '</textarea>';
 
+	/** 一括リライト等の追加セクション（ai-rewrite.php） */
+	do_action( 'ais_hub_ai_page_extra' );
+
 	echo '<hr><h2>注意（公開前に必ず）</h2><ul style="list-style:disc;padding-left:22px">';
 	echo '<li>AI生成記事は<strong>人が内容・出典を確認してから公開</strong>してください（既定は下書き）。</li>';
 	echo '<li>断定的な実績・価格・審査可否は記載しない方針でプロンプトを構成していますが、最終確認は必須です。</li>';
