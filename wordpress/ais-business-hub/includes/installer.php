@@ -79,6 +79,24 @@ add_action( 'admin_post_ais_hub_run_setup', function () {
 		}
 	}
 
+	// サンプル記事（ニュース／コラムの体裁用・冪等）
+	foreach ( ais_hub_sample_posts() as $sp ) {
+		$exist = get_posts( array( 'name' => $sp['slug'], 'post_type' => 'post', 'post_status' => 'any', 'numberposts' => 1 ) );
+		if ( $exist ) { continue; }
+		$pid = wp_insert_post( array(
+			'post_type'    => 'post',
+			'post_status'  => 'publish',
+			'post_title'   => $sp['title'],
+			'post_name'    => $sp['slug'],
+			'post_content' => $sp['content'],
+		), true );
+		if ( ! is_wp_error( $pid ) ) {
+			$term = get_term_by( 'name', $sp['cat'], 'category' );
+			if ( $term ) { wp_set_post_categories( $pid, array( (int) $term->term_id ) ); }
+			$created['posts'][ $sp['slug'] ] = $pid;
+		}
+	}
+
 	// 事業（冪等：slugで判定）
 	foreach ( ais_hub_default_businesses() as $b ) {
 		$exist = get_posts( array( 'post_type' => 'ais_business', 'name' => $b['slug'], 'post_status' => 'any', 'numberposts' => 1 ) );
@@ -110,6 +128,12 @@ add_action( 'admin_post_ais_hub_run_setup', function () {
 			$created['pages'][ $pg['key'] ] = $pid;
 			if ( $is_new ) { $created['pages_new'][] = $pid; }
 		}
+	}
+
+	// 採用情報ページは廃止：当プラグインが作成したものがあればゴミ箱へ
+	if ( ! empty( $created['pages']['recruit'] ) ) {
+		wp_trash_post( (int) $created['pages']['recruit'] );
+		unset( $created['pages']['recruit'] );
 	}
 
 	// フロントページ設定（元設定を保存）

@@ -70,19 +70,29 @@ function ais_hub_business_detail( $slug ) {
 	return isset( $d[ $slug ] ) ? $d[ $slug ] : array( '', array() );
 }
 
+/** サンプル投稿（ニュース／コラムの体裁用。クリックで編集・削除可） */
+function ais_hub_sample_posts() {
+	$note = '<!-- wp:paragraph --><p>※これはサンプル記事です。管理画面（投稿）から編集・削除してください。</p><!-- /wp:paragraph -->';
+	return array(
+		array( 'slug' => 'ais-sample-carshico', 'cat' => '事業情報',   'title' => 'CARSHICO（カシコ）の新プランを開始', 'content' => '<!-- wp:paragraph --><p>新車・中古車リースの選択肢がさらに広がりました。法人・個人どちらも対応しています。</p><!-- /wp:paragraph -->' . $note ),
+		array( 'slug' => 'ais-sample-export',   'cat' => '業界ニュース', 'title' => '中古車輸出の最新動向', 'content' => '<!-- wp:paragraph --><p>アジア・アフリカでの需要が拡大し、日本の中古車が海外で高い評価を受けています。</p><!-- /wp:paragraph -->' . $note ),
+		array( 'slug' => 'ais-sample-ai',       'cat' => 'コラム',     'title' => 'AIが変える自動車販売の未来', 'content' => '<!-- wp:paragraph --><p>AI活用による業務効率化と、顧客体験の向上について解説します。</p><!-- /wp:paragraph -->' . $note ),
+		array( 'slug' => 'ais-sample-gps',      'cat' => 'お知らせ',   'title' => 'GPS車両管理システムがアップデート', 'content' => '<!-- wp:paragraph --><p>位置情報の精度向上と、新機能の追加を行いました。</p><!-- /wp:paragraph -->' . $note ),
+	);
+}
+
 /** sitemap（インストーラが生成する固定ページ） */
 function ais_hub_sitemap() {
 	return array(
 		array( 'key' => 'home',     'path' => '',               'title' => 'ホーム',                 'tpl' => '' ),
 		array( 'key' => 'about',    'path' => 'company',        'title' => '会社情報',               'tpl' => '', 'content' => '<!-- wp:ais/corporate /-->' ),
 		array( 'key' => 'mission',  'path' => 'company/vision', 'title' => '企業理念',               'tpl' => '', 'content' => '<!-- wp:heading --><h2>企業理念</h2><!-- /wp:heading --><!-- wp:paragraph --><p>クルマを通じて、人の暮らしと挑戦を支える。モビリティの提供にとどまらず、AIとデジタルの力で地域・日本・そして世界をつなぎ、人とビジネスの可能性を広げていきます。</p><!-- /wp:paragraph -->' ),
-		array( 'key' => 'message',  'path' => 'company/message','title' => '代表メッセージ',         'tpl' => '', 'content' => '<!-- wp:paragraph --><p>※代表メッセージの本文は管理画面から編集してください（プレースホルダ）。</p><!-- /wp:paragraph -->' ),
+		array( 'key' => 'message',  'path' => 'company/message','title' => '代表メッセージ',         'tpl' => '', 'content' => '<!-- wp:paragraph --><p>合同会社アイズは、自動車ビジネスを軸に、AI・デジタル・グローバル・プラットフォーム事業へと歩みを広げてまいりました。クルマは、人の暮らしと挑戦を支える大切なパートナーです。私たちはその価値を、テクノロジーと誠実なサービスでさらに高め、地域から日本、そして世界へと貢献してまいります。これからもAISは、お客様と共に新しい価値を創り続けます。</p><!-- /wp:paragraph --><!-- wp:paragraph --><p>合同会社アイズ　代表社員　吉田 一平</p><!-- /wp:paragraph -->' ),
 		array( 'key' => 'business', 'path' => 'business',       'title' => '事業一覧',               'tpl' => '', 'content' => '<!-- wp:ais/business-list /-->' ),
 		array( 'key' => 'partner',  'path' => 'partner',        'title' => '販売店・事業パートナー', 'tpl' => '', 'content' => '<!-- wp:heading --><h2>販売店・事業パートナー募集</h2><!-- /wp:heading --><!-- wp:ais/partner /-->' ),
 		array( 'key' => 'news',     'path' => 'news',           'title' => 'ニュース・お知らせ',     'tpl' => '' ),
-		array( 'key' => 'column',   'path' => 'column',         'title' => '業界コラム',             'tpl' => '' ),
+		array( 'key' => 'column',   'path' => 'column',         'title' => '業界コラム',             'tpl' => '', 'content' => '<!-- wp:heading --><h2>業界コラム</h2><!-- /wp:heading --><!-- wp:paragraph --><p>自動車・GPS・リース・AI／アプリ開発など、業界の動向や役立つ情報をお届けします。</p><!-- /wp:paragraph -->' ),
 		array( 'key' => 'contact',  'path' => 'contact',        'title' => 'お問い合わせ',           'tpl' => '', 'content' => '[ais_contact]' ),
-		array( 'key' => 'privacy',  'path' => 'privacy',        'title' => 'プライバシーポリシー',   'tpl' => '' ),
-		array( 'key' => 'recruit',  'path' => 'recruit',        'title' => '採用情報',               'tpl' => '' ),
+		array( 'key' => 'privacy',  'path' => 'privacy',        'title' => 'プライバシーポリシー',   'tpl' => '', 'content' => '<!-- wp:paragraph --><p>合同会社アイズ（以下「当社」）は、お客様の個人情報の保護を重要な責務と考え、以下の方針に基づき適切に取り扱います。</p><!-- /wp:paragraph --><!-- wp:heading {"level":3} --><h3>1. 個人情報の取得</h3><!-- /wp:heading --><!-- wp:paragraph --><p>当社は、適法かつ公正な手段により、お問い合わせ・各種お申し込み等を通じて個人情報を取得します。</p><!-- /wp:paragraph --><!-- wp:heading {"level":3} --><h3>2. 利用目的</h3><!-- /wp:heading --><!-- wp:paragraph --><p>取得した個人情報は、お問い合わせ・ご相談への対応、サービスのご提供・ご案内、品質向上、法令に基づく対応のために利用します。</p><!-- /wp:paragraph --><!-- wp:heading {"level":3} --><h3>3. 第三者提供</h3><!-- /wp:heading --><!-- wp:paragraph --><p>法令に定める場合を除き、ご本人の同意なく個人情報を第三者に提供しません。</p><!-- /wp:paragraph --><!-- wp:heading {"level":3} --><h3>4. 安全管理</h3><!-- /wp:heading --><!-- wp:paragraph --><p>個人情報の漏えい・滅失・毀損の防止その他安全管理のため、必要かつ適切な措置を講じます。</p><!-- /wp:paragraph --><!-- wp:heading {"level":3} --><h3>5. 開示・訂正・削除</h3><!-- /wp:heading --><!-- wp:paragraph --><p>ご本人から開示・訂正・利用停止・削除のお求めがあった場合、ご本人であることを確認のうえ、法令に従い速やかに対応します。</p><!-- /wp:paragraph --><!-- wp:heading {"level":3} --><h3>6. お問い合わせ窓口</h3><!-- /wp:heading --><!-- wp:paragraph --><p>合同会社アイズ　個人情報お問い合わせ窓口<br>〒979-0204 福島県いわき市四倉町細谷字大町1番<br>メール：info@aisjaltd.com</p><!-- /wp:paragraph --><!-- wp:heading {"level":3} --><h3>7. 改定</h3><!-- /wp:heading --><!-- wp:paragraph --><p>本方針は、法令の改正や事業内容の変更に応じて改定することがあります。</p><!-- /wp:paragraph -->' ),
 	);
 }
