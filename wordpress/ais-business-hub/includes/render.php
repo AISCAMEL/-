@@ -279,6 +279,28 @@ function ais_hub_render_partner() {
 	return $h;
 }
 
+/** コーポレートページ（会社概要＋企業理念＋代表メッセージ） */
+function ais_hub_render_corporate() {
+	$h  = '<section class="ais-corp-sec reveal"><h2 class="ais-corp-h">会社概要</h2>' . ais_hub_render_company() . '</section>';
+
+	$philo = array(
+		array( 'パーパス（存在意義）', 'クルマを通じて、人の暮らしと挑戦を支える。' ),
+		array( 'ミッション（使命）',   'モビリティ × AI × プラットフォームで、人とクルマとビジネスの新しい価値を創る。' ),
+		array( 'ビジョン（目指す姿）', '地域から全国・そして世界へ。モビリティとデジタルの力で、社会を一歩前へ。' ),
+		array( 'バリュー（価値観）',   '誠実・挑戦・共創。お客様と地域に、長く信頼される存在であり続ける。' ),
+	);
+	$h .= '<section class="ais-corp-sec reveal"><h2 class="ais-corp-h">企業理念</h2><div class="ais-philo-grid">';
+	foreach ( $philo as $p ) {
+		$h .= '<div class="ais-philo-card"><div class="t">' . esc_html( $p[0] ) . '</div><p>' . esc_html( $p[1] ) . '</p></div>';
+	}
+	$h .= '</div></section>';
+
+	$h .= '<section class="ais-corp-sec reveal"><h2 class="ais-corp-h">代表メッセージ</h2><div class="ais-message">';
+	$h .= '<p>合同会社アイズは、自動車ビジネスを軸に、AI・デジタル・グローバル・プラットフォーム事業へと歩みを広げてまいりました。クルマは、人の暮らしと挑戦を支える大切なパートナーです。私たちはその価値を、テクノロジーと誠実なサービスでさらに高め、地域から日本、そして世界へと貢献してまいります。これからもAISは、お客様と共に新しい価値を創り続けます。</p>';
+	$h .= '<p class="sign">合同会社アイズ　代表社員　吉田 一平</p></div></section>';
+	return $h;
+}
+
 /* ショートコード登録（後方互換） */
 add_shortcode( 'ais_home', 'ais_hub_render_home' );
 add_shortcode( 'ais_business_list', 'ais_hub_render_business_list' );
@@ -286,6 +308,7 @@ add_shortcode( 'ais_business_header', 'ais_hub_render_business_header' );
 add_shortcode( 'ais_business_cta', 'ais_hub_render_business_cta' );
 add_shortcode( 'ais_company', 'ais_hub_render_company' );
 add_shortcode( 'ais_partner', 'ais_hub_render_partner' );
+add_shortcode( 'ais_corporate', 'ais_hub_render_corporate' );
 
 /* ダイナミックブロック登録（ブロックテンプレート／ページで素のHTMLを出力し、自動整形による崩れを防ぐ） */
 add_action( 'init', function () {
@@ -297,6 +320,7 @@ add_action( 'init', function () {
 		'ais/business-body'   => 'ais_hub_render_business_body',
 		'ais/business-cta'    => 'ais_hub_render_business_cta',
 		'ais/company'         => 'ais_hub_render_company',
+		'ais/corporate'       => 'ais_hub_render_corporate',
 		'ais/partner'         => 'ais_hub_render_partner',
 	);
 	foreach ( $blocks as $name => $cb ) {

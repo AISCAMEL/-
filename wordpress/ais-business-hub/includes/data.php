@@ -14,6 +14,7 @@ function ais_hub_default_businesses() {
 		array( 'slug' => 'gps', 'en' => 'GPS', 'ja' => '', 'cat' => '車両管理システム', 'desc' => '位置情報×車両管理で運用の安全を強化', 'cta' => '導入相談', 'status' => '提供中', 'layout' => 'grid', 'order' => 40 ),
 		array( 'slug' => 'triple-gear', 'en' => 'トリプル・ギア・システム', 'ja' => 'Triple Gear System', 'cat' => '中古車販売店向けプラットフォーム', 'desc' => '在庫・審査・リース・GPSをワンパッケージ', 'cta' => '加盟相談', 'status' => '提供中', 'layout' => 'grid', 'order' => 50 ),
 		array( 'slug' => 'export', 'en' => 'AIS JAPAN AUTO EXPORT', 'ja' => '', 'cat' => '中古車の海外輸出', 'desc' => '世界の需要へ、安心・確実に届ける', 'cta' => '車両リクエスト', 'status' => '提供中', 'layout' => 'grid', 'order' => 60 ),
+		array( 'slug' => 'design', 'en' => 'DESIGN', 'ja' => 'デザイン', 'cat' => 'デザイン・クリエイティブ', 'desc' => 'ブランド・Web・販促物のデザイン制作', 'cta' => '制作相談', 'status' => '提供中', 'layout' => 'grid', 'order' => 65 ),
 		array( 'slug' => 'ai-digital', 'en' => 'AI・デジタル事業', 'ja' => 'AI／Web／システム開発／SNS運用', 'cat' => 'AI導入支援・Web制作・システム開発', 'desc' => 'SNS運用・業務自動化でビジネスを加速', 'cta' => '開発相談', 'status' => '提供中', 'layout' => 'wide', 'order' => 70 ),
 		array( 'slug' => 'platforms', 'en' => '各種プラットフォーム', 'ja' => 'APPREX・メルマッチ・RE:ME・NEXORA', 'cat' => 'AI分身・マッチング・業務支援・新規プロジェクト', 'desc' => '暮らし・ビジネス・ライフレガシーを支える多様なサービス', 'cta' => 'お問い合わせ', 'status' => '一部準備中', 'layout' => 'wide', 'order' => 80 ),
 		array( 'slug' => 'app-development', 'en' => 'アプリ開発', 'ja' => 'iOS／Android／Webアプリ', 'cat' => '業務システム・AI搭載アプリ開発', 'desc' => '企画から開発・運用まで一気通貫で支援', 'cta' => '見積相談', 'status' => '提供中', 'layout' => 'hidden', 'order' => 90 ),
@@ -64,6 +65,7 @@ function ais_hub_business_detail( $slug ) {
 		'ai-digital'      => array( 'AI・デジタル事業では、AI業務支援・Web制作・SNS運用をワンストップで。デジタルの力でビジネスを加速します。', array( 'AI導入・業務自動化支援', 'ホームページ・LP制作', 'SNS運用・マーケティング', 'システム開発のご相談' ) ),
 		'app-development'  => array( 'アプリ開発事業では、iOS/Android/Webアプリ、業務システム、AI搭載アプリを企画から開発・運用まで支援します。', array( 'iOS／Android／Webアプリ開発', '業務システム・基幹連携', 'AI搭載アプリ', '企画・見積のご相談' ) ),
 		'platforms'       => array( 'APPREX・メルマッチ・RE:ME・NEXORA 等、暮らしとビジネスを支える多様なプラットフォームを展開しています。', array( 'APPREX（ノーコードアプリ）', 'メルマッチ（マッチング）', 'RE:ME（AI分身）', 'NEXORA 他（提供中／準備中は個別にご案内）' ) ),
+		'design'          => array( 'ブランド・Web・販促物まで、伝わるデザインをワンストップで制作。事業の魅力を正しく、美しく届けます。', array( 'ロゴ・ブランディング', 'Web／LP デザイン', 'チラシ・名刺・販促物', '写真・動画・SNS素材' ) ),
 	);
 	return isset( $d[ $slug ] ) ? $d[ $slug ] : array( '', array() );
 }
@@ -72,7 +74,7 @@ function ais_hub_business_detail( $slug ) {
 function ais_hub_sitemap() {
 	return array(
 		array( 'key' => 'home',     'path' => '',               'title' => 'ホーム',                 'tpl' => '' ),
-		array( 'key' => 'about',    'path' => 'company',        'title' => '会社情報',               'tpl' => '', 'content' => '<!-- wp:heading --><h2>会社概要</h2><!-- /wp:heading --><!-- wp:ais/company /-->' ),
+		array( 'key' => 'about',    'path' => 'company',        'title' => '会社情報',               'tpl' => '', 'content' => '<!-- wp:ais/corporate /-->' ),
 		array( 'key' => 'mission',  'path' => 'company/vision', 'title' => '企業理念',               'tpl' => '', 'content' => '<!-- wp:heading --><h2>企業理念</h2><!-- /wp:heading --><!-- wp:paragraph --><p>クルマを通じて、人の暮らしと挑戦を支える。モビリティの提供にとどまらず、AIとデジタルの力で地域・日本・そして世界をつなぎ、人とビジネスの可能性を広げていきます。</p><!-- /wp:paragraph -->' ),
 		array( 'key' => 'message',  'path' => 'company/message','title' => '代表メッセージ',         'tpl' => '', 'content' => '<!-- wp:paragraph --><p>※代表メッセージの本文は管理画面から編集してください（プレースホルダ）。</p><!-- /wp:paragraph -->' ),
 		array( 'key' => 'business', 'path' => 'business',       'title' => '事業一覧',               'tpl' => '', 'content' => '<!-- wp:ais/business-list /-->' ),
