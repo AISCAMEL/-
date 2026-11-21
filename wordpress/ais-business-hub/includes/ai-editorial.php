@@ -407,7 +407,8 @@ function ais_hub_ai_call_claude( $prompt ) {
 	$key   = ais_hub_ai_anthropic_key();
 	$model = ais_hub_ai_opt( 'anthropic_model', 'claude-sonnet-5-5' );
 	$len   = ais_hub_ai_opt( 'length', 'medium' );
-	$max   = array( 'short' => 2200, 'medium' => 3200, 'long' => 4500 );
+	// 思考(thinking)が既定ONのモデル（Sonnet/Opus 5系等）は、思考トークンも出力に含まれるため余裕を持たせる
+	$max   = array( 'short' => 4000, 'medium' => 6000, 'long' => 8000 );
 	$resp  = wp_remote_post( 'https://api.anthropic.com/v1/messages', array(
 		'timeout' => 120,
 		'headers' => array(
@@ -417,19 +418,29 @@ function ais_hub_ai_call_claude( $prompt ) {
 		),
 		'body'    => wp_json_encode( array(
 			'model'      => $model,
-			'max_tokens' => $max[ $len ] ?? 3200,
+			'max_tokens' => $max[ $len ] ?? 6000,
 			'messages'   => array( array( 'role' => 'user', 'content' => $prompt ) ),
 		) ),
 	) );
 	if ( is_wp_error( $resp ) ) { return $resp; }
-	$code = wp_remote_retrieve_response_code( $resp );
+	$code = (int) wp_remote_retrieve_response_code( $resp );
 	$body = json_decode( wp_remote_retrieve_body( $resp ), true );
-	if ( 200 !== (int) $code ) {
+	if ( 200 !== $code ) {
 		$msg = isset( $body['error']['message'] ) ? $body['error']['message'] : ( 'HTTP ' . $code );
 		return new WP_Error( 'api', 'Claude API: ' . $msg );
 	}
-	if ( isset( $body['content'][0]['text'] ) ) { return (string) $body['content'][0]['text']; }
-	return new WP_Error( 'empty', 'Claude API: 応答が空です' );
+	// thinking有効時は content[0] が thinking ブロックのことがあるため、text ブロックを走査して結合
+	if ( isset( $body['content'] ) && is_array( $body['content'] ) ) {
+		$text = '';
+		foreach ( $body['content'] as $block ) {
+			if ( isset( $block['type'], $block['text'] ) && 'text' === $block['type'] ) { $text .= $block['text']; }
+		}
+		if ( '' !== trim( $text ) ) { return $text; }
+	}
+	$stop = isset( $body['stop_reason'] ) ? $body['stop_reason'] : '';
+	if ( 'refusal' === $stop ) { return new WP_Error( 'refusal', 'Claude API: 安全性の理由で生成が拒否されました（キーワードや自社紹介文の表現を調整してください）' ); }
+	if ( 'max_tokens' === $stop ) { return new WP_Error( 'maxtok', 'Claude API: 出力上限で打ち切られました（文字数の目安を短くするか再実行してください）' ); }
+	return new WP_Error( 'empty', 'Claude API: テキスト応答が空です（stop_reason=' . ( $stop ? $stop : '不明' ) . '）' );
 }
 
 /**
