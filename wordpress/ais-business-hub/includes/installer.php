@@ -23,7 +23,8 @@ function ais_hub_setup_page() {
 	echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="margin:18px 0">';
 	echo '<input type="hidden" name="action" value="ais_hub_run_setup">';
 	wp_nonce_field( 'ais_hub_setup', 'ais_hub_setup_nonce' );
-	echo '<label><input type="checkbox" name="confirm" value="1" required> 内容を確認し、実行します（本番はバックアップ済み）</label><br><br>';
+	echo '<label><input type="checkbox" name="confirm" value="1" required> 内容を確認し、実行します（本番はバックアップ済み）</label><br>';
+	echo '<label style="color:#b32d2e"><input type="checkbox" name="overwrite" value="1"> <strong>既存ページの内容も新デザインに上書きする</strong>（事業一覧・会社情報・パートナー・プライバシー・代表メッセージ等の旧コンテンツを置き換えます）</label><br><br>';
 	submit_button( $done ? '再実行（不足分のみ作成）' : '一括セットアップを実行', 'primary', 'submit', false );
 	echo '</form>';
 
@@ -125,6 +126,9 @@ add_action( 'admin_post_ais_hub_run_setup', function () {
 		$content = isset( $pg['content'] ) ? $pg['content'] : '';
 		list( $pid, $is_new ) = ais_hub_ensure_page( $pg['path'], $pg['title'], $content, $created );
 		if ( $pid ) {
+			if ( ! $is_new && ! empty( $_POST['overwrite'] ) && '' !== $content ) {
+				wp_update_post( array( 'ID' => $pid, 'post_content' => $content ) );
+			}
 			$created['pages'][ $pg['key'] ] = $pid;
 			if ( $is_new ) { $created['pages_new'][] = $pid; }
 		}
