@@ -72,12 +72,11 @@ function ais_hub_business_detail( $slug ) {
 
 /** サンプル投稿（ニュース／コラムの体裁用。クリックで編集・削除可） */
 function ais_hub_sample_posts() {
-	$note = '<!-- wp:paragraph --><p>※これはサンプル記事です。管理画面（投稿）から編集・削除してください。</p><!-- /wp:paragraph -->';
 	return array(
-		array( 'slug' => 'ais-sample-carshico', 'cat' => '事業情報',   'title' => 'CARSHICO（カシコ）の新プランを開始', 'content' => '<!-- wp:paragraph --><p>新車・中古車リースの選択肢がさらに広がりました。法人・個人どちらも対応しています。</p><!-- /wp:paragraph -->' . $note ),
-		array( 'slug' => 'ais-sample-export',   'cat' => '業界ニュース', 'title' => '中古車輸出の最新動向', 'content' => '<!-- wp:paragraph --><p>アジア・アフリカでの需要が拡大し、日本の中古車が海外で高い評価を受けています。</p><!-- /wp:paragraph -->' . $note ),
-		array( 'slug' => 'ais-sample-ai',       'cat' => 'コラム',     'title' => 'AIが変える自動車販売の未来', 'content' => '<!-- wp:paragraph --><p>AI活用による業務効率化と、顧客体験の向上について解説します。</p><!-- /wp:paragraph -->' . $note ),
-		array( 'slug' => 'ais-sample-gps',      'cat' => 'お知らせ',   'title' => 'GPS車両管理システムがアップデート', 'content' => '<!-- wp:paragraph --><p>位置情報の精度向上と、新機能の追加を行いました。</p><!-- /wp:paragraph -->' . $note ),
+		array( 'slug' => 'ais-sample-carshico', 'cat' => '事業情報',   'title' => 'CARSHICO（カシコ）の新プランを開始', 'content' => '<!-- wp:paragraph --><p>新車・中古車リースの選択肢がさらに広がりました。法人・個人どちらも対応しています。</p><!-- /wp:paragraph -->' ),
+		array( 'slug' => 'ais-sample-export',   'cat' => '業界ニュース', 'title' => '中古車輸出の最新動向', 'content' => '<!-- wp:paragraph --><p>アジア・アフリカでの需要が拡大し、日本の中古車が海外で高い評価を受けています。</p><!-- /wp:paragraph -->' ),
+		array( 'slug' => 'ais-sample-ai',       'cat' => 'コラム',     'title' => 'AIが変える自動車販売の未来', 'content' => '<!-- wp:paragraph --><p>AI活用による業務効率化と、顧客体験の向上について解説します。</p><!-- /wp:paragraph -->' ),
+		array( 'slug' => 'ais-sample-gps',      'cat' => 'お知らせ',   'title' => 'GPS車両管理システムがアップデート', 'content' => '<!-- wp:paragraph --><p>位置情報の精度向上と、新機能の追加を行いました。</p><!-- /wp:paragraph -->' ),
 	);
 }
 

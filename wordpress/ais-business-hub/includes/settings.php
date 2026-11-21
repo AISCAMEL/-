@@ -16,7 +16,7 @@ function ais_hub_default_settings() {
 		'notify_email'     => get_option( 'admin_email' ),
 		'show_stats'       => 1,
 		'stats'            => ais_hub_default_stats(),
-		'stats_note'       => '※数値はサンプルです（管理画面で編集／承認後に実数を掲載）',
+		'stats_note'       => '',
 		'show_news'        => 1,
 	);
 }
