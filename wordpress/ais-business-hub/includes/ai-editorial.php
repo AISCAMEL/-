@@ -86,7 +86,7 @@ function ais_hub_ai_page() {
 	echo '<h2>生成設定</h2><table class="form-table">';
 	echo '<tr><th>キーワード（1行1件）</th><td><textarea name="keywords" rows="6" style="width:480px" placeholder="中古車 ローン 通らない&#10;カーリース 法人 メリット&#10;GPS 車両管理 導入">' . esc_textarea( $o['keywords'] ) . '</textarea></td></tr>';
 	echo '<tr><th>投稿カテゴリ</th><td><input type="text" name="category" value="' . esc_attr( $o['category'] ) . '"> <span class="description">例：コラム</span></td></tr>';
-	echo '<tr><th>公開状態</th><td><select name="post_status"><option value="draft" ' . selected( $o['post_status'], 'draft', false ) . '>下書き（承認制・推奨）</option><option value="pending" ' . selected( $o['post_status'], 'pending', false ) . '>承認待ち</option><option value="publish" ' . selected( $o['post_status'], 'publish', false ) . '>即時公開（非推奨）</option></select></td></tr>';
+	echo '<tr><th>文字数の目安</th><td><select name="length"><option value="short" ' . selected( $o['length'], 'short', false ) . '>短め（約800字）</option><option value="medium" ' . selected( $o['length'], 'medium', false ) . '>標準（約1,200字）</option><option value="long" ' . selected( $o['length'], 'long', false ) . '>長め（約1,800字）</option></select></td></tr><tr><th>トーン</th><td><select name="tone"><option value="friendly" ' . selected( $o['tone'], 'friendly', false ) . '>やさしく丁寧（一般ユーザー向け）</option><option value="professional" ' . selected( $o['tone'], 'professional', false ) . '>専門的・信頼感（法人/BtoB向け）</option><option value="casual" ' . selected( $o['tone'], 'casual', false ) . '>カジュアル・親しみやすい</option></select></td></tr><tr><th>自社紹介文（任意）</th><td><textarea name="company_context" rows="3" style="width:480px">' . esc_textarea( $o['company_context'] ) . '</textarea><p class="description">記事末尾の自然な導線に使います。空欄可・事実のみ簡潔に。</p></td></tr><tr><th>相談導線リンク</th><td><input type="text" name="cta_url" value="' . esc_attr( $o['cta_url'] ) . '" style="width:320px"> <span class="description">例：/contact/</span></td></tr><tr><th>公開状態</th><td><select name="post_status"><option value="draft"' . selected( $o['post_status'], 'draft', false ) . '>下書き（承認制・推奨）</option><option value="pending" ' . selected( $o['post_status'], 'pending', false ) . '>承認待ち</option><option value="publish" ' . selected( $o['post_status'], 'publish', false ) . '>即時公開（非推奨）</option></select></td></tr>';
 	echo '<tr><th>月間生成上限</th><td><input type="number" name="monthly_cap" value="' . (int) $o['monthly_cap'] . '" min="0" style="width:100px"> 件/月</td></tr>';
 	echo '<tr><th>自動スケジュール</th><td><label><input type="checkbox" name="cron_enable" value="1" ' . checked( ! empty( $o['cron_enable'] ), true, false ) . '> 毎日自動で生成する</label>　1回あたり <input type="number" name="per_run" value="' . (int) $o['per_run'] . '" min="1" max="5" style="width:60px"> 件（下書き）</td></tr>';
 	echo '<tr><th>緊急停止</th><td><label style="color:#b32d2e"><input type="checkbox" name="kill" value="1" ' . checked( ! empty( $o['kill'] ), true, false ) . '> すべての生成を停止する</label></td></tr>';
@@ -121,14 +121,47 @@ function ais_hub_ai_defaults() {
 		'openrouter_key'  => '',
 		'image_model'     => 'google/gemini-2.5-flash-image-preview',
 		'image_enable'    => 0,
-		'keywords'        => '',
+		'keywords'        => ais_hub_ai_default_keywords(),
 		'category'        => 'コラム',
+		'length'          => 'medium',
+		'tone'            => 'friendly',
+		'company_context' => '合同会社アイズ（AIS）は福島・会津を拠点に、中古車販売カーメル・買取BUYMO・カーリースCARSHICO（カシコ）・車両セキュリティ天護（GPS/レッカー）・輸出AIS JAPAN AUTO EXPORT、さらにAI/デジタル事業を展開しています。',
+		'cta_url'         => '/contact/',
 		'post_status'     => 'draft',
 		'monthly_cap'     => 20,
 		'cron_enable'     => 0,
 		'per_run'         => 1,
 		'kill'            => 0,
 	);
+}
+
+/** AIS向け 集客キーワード初期セット（検索意図ベース） */
+function ais_hub_ai_default_keywords() {
+	$kw = array(
+		// 販売カーメル
+		'中古車 ローン 審査 不安 対処法',
+		'中古車 選び方 初心者 チェックポイント',
+		'車 購入 自社ローン とは 仕組み',
+		// 買取BUYMO
+		'車 高く売る コツ 買取 査定',
+		'車 買取 相場 調べ方',
+		'動かない車 廃車 買取 流れ',
+		// リース カシコ
+		'カーリース 個人 メリット デメリット',
+		'法人 カーリース 経費 仕組み',
+		'マイカーリース 購入 比較 違い',
+		// 天護 セキュリティ/GPS/レッカー
+		'車両 盗難 対策 方法',
+		'社用車 GPS 管理 導入 メリット',
+		'車 トラブル レッカー 呼び方 費用',
+		// 輸出・オークション代行
+		'車 オークション代行 とは 流れ',
+		'中古車 輸出 ビジネス 仕組み',
+		// IT・AI
+		'中小企業 AI 活用 事例 始め方',
+		'業務アプリ 開発 外注 費用 相場',
+	);
+	return implode( "\n", $kw );
 }
 
 /* 設定保存 */
@@ -145,6 +178,12 @@ add_action( 'admin_post_ais_hub_ai_save', function () {
 	$out['image_enable']    = empty( $_POST['image_enable'] ) ? 0 : 1;
 	$out['keywords']        = sanitize_textarea_field( wp_unslash( $_POST['keywords'] ?? '' ) );
 	$out['category']        = sanitize_text_field( wp_unslash( $_POST['category'] ?? 'コラム' ) );
+	$ln                     = sanitize_text_field( wp_unslash( $_POST['length'] ?? 'medium' ) );
+	$out['length']          = in_array( $ln, array( 'short', 'medium', 'long' ), true ) ? $ln : 'medium';
+	$tn                     = sanitize_text_field( wp_unslash( $_POST['tone'] ?? 'friendly' ) );
+	$out['tone']            = in_array( $tn, array( 'friendly', 'professional', 'casual' ), true ) ? $tn : 'friendly';
+	$out['company_context'] = sanitize_textarea_field( wp_unslash( $_POST['company_context'] ?? '' ) );
+	$out['cta_url']         = esc_url_raw( wp_unslash( $_POST['cta_url'] ?? '' ) );
 	$st                     = sanitize_text_field( wp_unslash( $_POST['post_status'] ?? 'draft' ) );
 	$out['post_status']     = in_array( $st, array( 'draft', 'pending', 'publish' ), true ) ? $st : 'draft';
 	$out['monthly_cap']     = max( 0, (int) ( $_POST['monthly_cap'] ?? 20 ) );
@@ -195,6 +234,47 @@ add_action( 'ais_hub_ai_cron', function () {
 	update_option( 'ais_hub_ai_offset', ( $off + $per ) % count( $list ) );
 } );
 
+/** 業種特化・トーン/文字数対応のSEOプロンプトを組み立て */
+function ais_hub_ai_build_prompt( $keyword ) {
+	$len_map = array(
+		'short'  => '本文は約700〜900字。見出しは2〜3個。',
+		'medium' => '本文は約1,100〜1,400字。見出しは3〜4個。',
+		'long'   => '本文は約1,700〜2,000字。見出しは4〜6個。',
+	);
+	$tone_map = array(
+		'friendly'     => 'やさしく丁寧な「です・ます」。専門用語は噛み砕き、初めての読者にも分かるように。',
+		'professional' => '専門的で信頼感のある「です・ます」。法人・BtoB担当者を想定し、根拠と判断材料を明確に。',
+		'casual'       => '親しみやすく会話的な「です・ます」。堅すぎず、読みやすいテンポで。',
+	);
+	$len     = ais_hub_ai_opt( 'length', 'medium' );
+	$tone    = ais_hub_ai_opt( 'tone', 'friendly' );
+	$context = trim( (string) ais_hub_ai_opt( 'company_context', '' ) );
+	$cta_url = (string) ais_hub_ai_opt( 'cta_url', '/contact/' );
+	$len_txt  = $len_map[ $len ] ?? $len_map['medium'];
+	$tone_txt = $tone_map[ $tone ] ?? $tone_map['friendly'];
+
+	$p  = "あなたは日本の自動車・モビリティ業界（中古車販売/買取/カーリース/車両セキュリティ・GPS/レッカー/輸出/オークション代行）と、中小企業のIT・AI活用に精通した、経験豊富な日本語のSEO編集者です。\n";
+	$p .= "次の検索キーワードで上位表示を狙う、読者の検索意図に正面から応える解説記事を1本作成してください。\n\n";
+	$p .= "■ 検索キーワード: {$keyword}\n\n";
+	$p .= "■ 書き方\n";
+	$p .= "- 検索意図を見極め、結論→理由→具体策→注意点→まとめ の流れで構成する。\n";
+	$p .= "- 導入は読者の悩みに共感する2〜3文。各見出しは検索語や関連語を自然に含める。\n";
+	$p .= "- {$len_txt}\n- 文体：{$tone_txt}\n";
+	$p .= "- 箇条書き(<ul><li>)や手順を適切に使い、スマホで読みやすく。\n";
+	$p .= "- 可能なら最後の見出しを「よくある質問」にし、Q&Aを2〜3組入れる。\n\n";
+	$p .= "■ 厳守（信頼性・コンプライアンス）\n";
+	$p .= "- 事実が不確実な固有の数値・実績・順位・ニュース・価格・金利・審査可否・納期は断定しない。一般的な傾向や「目安」「場合により異なる」として説明する。\n";
+	$p .= "- 法令・税務・融資に関わる断定や保証表現（必ず/絶対/誰でも通る 等）は使わない。\n";
+	$p .= "- 誇大表現・他社誹謗は書かない。\n";
+	if ( '' !== $context ) {
+		$p .= "\n■ 自社情報（記事末尾の自然な1文の導線にのみ使用。本文の主張の根拠には使わない）\n{$context}\n";
+		$p .= "末尾に、押し付けない相談導線を1つだけ入れてよい（リンク先: {$cta_url}）。<a href=\"{$cta_url}\">…</a> の形で1リンクまで。\n";
+	}
+	$p .= "\n■ 出力形式（これ以外は一切出力しない。コードフェンスや前置き禁止）\n";
+	$p .= 'JSONオブジェクトのみ: {"title":"32文字前後の魅力的なタイトル","meta_description":"110〜140字の説明","body_html":"<h2>…</h2><p>…</p>…(本文HTML。titleのh1は含めない)","tags":["関連タグ","3〜6個"]}';
+	return $p;
+}
+
 /* =======================================================
  *  生成本体
  * ======================================================= */
@@ -206,12 +286,7 @@ function ais_hub_ai_generate( $keyword ) {
 	$key = ais_hub_ai_anthropic_key();
 	if ( ! $key ) { return new WP_Error( 'nokey', 'Claude APIキーが未設定です' ); }
 
-	$prompt = "あなたは自動車・モビリティ業界に詳しい日本語のSEOライターです。次のキーワードで、読者の検索意図に応える解説記事を作成してください。\n"
-		. "キーワード: {$keyword}\n\n"
-		. "制約:\n- 事実が不確実な固有の数値・実績・ニュース・審査可否・価格は断定しない（一般的な解説に留める）。\n"
-		. "- 特定企業の宣伝は最小限（末尾に自然な相談導線を1つまで）。\n- 800〜1200字程度。<h2>/<h3> で構造化し、<p> と <ul> を用いる。\n\n"
-		. "出力は次のJSONのみ（前後に説明やコードフェンスを付けない）:\n"
-		. '{"title":"記事タイトル","meta_description":"120字程度の説明","body_html":"<h2>..</h2><p>..</p>","tags":["タグ1","タグ2"]}';
+	$prompt = ais_hub_ai_build_prompt( $keyword );
 
 	$text = ais_hub_ai_call_claude( $prompt );
 	if ( is_wp_error( $text ) ) { ais_hub_ai_log( '失敗(Claude): ' . $keyword . ' / ' . $text->get_error_message() ); return $text; }
@@ -261,8 +336,10 @@ function ais_hub_ai_generate( $keyword ) {
 function ais_hub_ai_call_claude( $prompt ) {
 	$key   = ais_hub_ai_anthropic_key();
 	$model = ais_hub_ai_opt( 'anthropic_model', 'claude-sonnet-5-5' );
+	$len   = ais_hub_ai_opt( 'length', 'medium' );
+	$max   = array( 'short' => 2200, 'medium' => 3200, 'long' => 4500 );
 	$resp  = wp_remote_post( 'https://api.anthropic.com/v1/messages', array(
-		'timeout' => 90,
+		'timeout' => 120,
 		'headers' => array(
 			'x-api-key'         => $key,
 			'anthropic-version' => '2023-06-01',
@@ -270,7 +347,7 @@ function ais_hub_ai_call_claude( $prompt ) {
 		),
 		'body'    => wp_json_encode( array(
 			'model'      => $model,
-			'max_tokens' => 2500,
+			'max_tokens' => $max[ $len ] ?? 3200,
 			'messages'   => array( array( 'role' => 'user', 'content' => $prompt ) ),
 		) ),
 	) );
