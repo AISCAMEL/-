@@ -27,9 +27,10 @@ require_once AIS_HUB_DIR . 'includes/installer.php';
 
 /** イラスト素材のURL（スラッグ→ファイル） */
 function ais_hub_illustration_url( $slug ) {
-	$file = AIS_HUB_DIR . 'assets/illustrations/' . $slug . '.svg';
-	if ( file_exists( $file ) ) {
-		return AIS_HUB_URL . 'assets/illustrations/' . $slug . '.svg';
+	foreach ( array( 'jpg', 'png', 'webp', 'svg' ) as $ext ) {
+		if ( file_exists( AIS_HUB_DIR . 'assets/illustrations/' . $slug . '.' . $ext ) ) {
+			return AIS_HUB_URL . 'assets/illustrations/' . $slug . '.' . $ext;
+		}
 	}
 	return AIS_HUB_URL . 'assets/illustrations/platforms.svg';
 }

@@ -80,6 +80,7 @@ function ais_hub_render_home() {
 	$title_lines = array_filter( array_map( 'trim', explode( "\n", (string) ais_hub_get( 'hero_title' ) ) ) );
 	$hero_style  = '';
 	$hero_img    = ais_hub_get( 'hero_image' );
+	if ( ! $hero_img && file_exists( AIS_HUB_DIR . 'assets/hero.jpg' ) ) { $hero_img = AIS_HUB_URL . 'assets/hero.jpg'; }
 	if ( $hero_img ) { $hero_style = ' style="background-image:url(' . esc_url( $hero_img ) . ')"'; }
 	$o .= '<section class="ais-hero"><div class="media"' . $hero_style . '></div><div class="inner">';
 	$o .= '<h1 class="reveal">' . implode( '<br>', array_map( 'esc_html', $title_lines ) ) . '</h1>';
@@ -163,7 +164,8 @@ function ais_hub_render_home() {
 
 	/* PHILOSOPHY */
 	$quote_lines = array_filter( array_map( 'trim', explode( "\n", (string) ais_hub_get( 'philo_quote' ) ) ) );
-	$o .= '<section class="ais-philo"><div class="media"></div><div class="inner"><div class="reveal">';
+	$philo_style = file_exists( AIS_HUB_DIR . 'assets/philosophy.jpg' ) ? ' style="background-image:url(' . esc_url( AIS_HUB_URL . 'assets/philosophy.jpg' ) . ')"' : '';
+	$o .= '<section class="ais-philo"><div class="media"' . $philo_style . '></div><div class="inner"><div class="reveal">';
 	$o .= '<p class="quote">' . implode( '<br>', array_map( 'esc_html', $quote_lines ) ) . '</p>';
 	$o .= '<p class="lead">' . esc_html( ais_hub_get( 'philo_lead' ) ) . '</p></div>';
 	$o .= '<div class="ais-values reveal">';
