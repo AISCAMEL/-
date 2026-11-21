@@ -210,6 +210,26 @@ function ais_hub_render_business_header() {
 	return $h;
 }
 
+/** 事業ページ本文（CPTメタ＋既定の説明から自動生成） */
+function ais_hub_render_business_body() {
+	$id    = get_the_ID();
+	$slug  = get_post_field( 'post_name', $id );
+	$cat   = get_post_meta( $id, 'ais_cat', true );
+	$detail = ais_hub_business_detail( $slug );
+	$lead   = isset( $detail[0] ) ? $detail[0] : '';
+	$points = isset( $detail[1] ) ? $detail[1] : array();
+	$h  = '<div class="ais-biz-body reveal">';
+	if ( $cat )  { $h .= '<p class="ais-biz-cat">' . esc_html( $cat ) . '</p>'; }
+	if ( $lead ) { $h .= '<p class="lead">' . esc_html( $lead ) . '</p>'; }
+	if ( $points ) {
+		$h .= '<h2>提供内容</h2><ul class="ais-points">';
+		foreach ( $points as $p ) { $h .= '<li>' . esc_html( $p ) . '</li>'; }
+		$h .= '</ul>';
+	}
+	$h .= '</div>';
+	return $h;
+}
+
 /** 事業ページ下部のCTA（種類別フォームへ誘導） */
 function ais_hub_render_business_cta() {
 	$cta   = get_post_meta( get_the_ID(), 'ais_cta', true );
@@ -272,6 +292,7 @@ add_action( 'init', function () {
 		'ais/home'            => 'ais_hub_render_home',
 		'ais/business-list'   => 'ais_hub_render_business_list',
 		'ais/business-header' => 'ais_hub_render_business_header',
+		'ais/business-body'   => 'ais_hub_render_business_body',
 		'ais/business-cta'    => 'ais_hub_render_business_cta',
 		'ais/company'         => 'ais_hub_render_company',
 		'ais/partner'         => 'ais_hub_render_partner',
