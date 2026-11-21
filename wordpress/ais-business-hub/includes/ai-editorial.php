@@ -80,7 +80,7 @@ function ais_hub_ai_page() {
 	echo '<tr><th>Claude APIキー</th><td>' . ( $ak_const ? '<em>wp-config の定数 AIS_ANTHROPIC_KEY を使用中</em>' : '<input type="password" name="anthropic_key" value="' . esc_attr( $o['anthropic_key'] ) . '" style="width:420px" autocomplete="off"> <span class="description">sk-ant-...</span>' ) . '</td></tr>';
 	echo '<tr><th>Claude モデルID</th><td><input type="text" name="anthropic_model" value="' . esc_attr( $o['anthropic_model'] ) . '" style="width:320px"> <span class="description">お使いのアカウントで利用可能なモデルIDに合わせてください</span></td></tr>';
 	echo '<tr><th>OpenRouter APIキー</th><td>' . ( $ok_const ? '<em>wp-config の定数 AIS_OPENROUTER_KEY を使用中</em>' : '<input type="password" name="openrouter_key" value="' . esc_attr( $o['openrouter_key'] ) . '" style="width:420px" autocomplete="off"></td></tr>' );
-	echo '<tr><th>画像モデル（OpenRouter）</th><td><input type="text" name="image_model" value="' . esc_attr( $o['image_model'] ) . '" style="width:320px"> <label style="margin-left:10px"><input type="checkbox" name="image_enable" value="1" ' . checked( ! empty( $o['image_enable'] ), true, false ) . '> 画像生成を有効化</label><p class="description">※OpenRouterで画像生成可能なモデルIDを指定。未対応時は画像なしで下書きを作成します。</p></td></tr>';
+	echo '<tr><th>画像モデル（OpenRouter）</th><td><input type="text" name="image_model" value="' . esc_attr( $o['image_model'] ) . '" style="width:320px"> <label style="margin-left:10px"><input type="checkbox" name="image_enable" value="1" ' . checked( ! empty( $o['image_enable'] ), true, false ) . '> 画像生成を有効化</label><p class="description">※OpenRouterの<strong>画像出力対応</strong>モデルIDを指定（既定：<code>google/gemini-2.5-flash-image-preview</code>）。1枚あたり約$0.03前後。未対応モデルや失敗時は画像なしで下書きを作成します。対応モデルは openrouter.ai/collections/image-models を参照。</p></td></tr>';
 	echo '</table>';
 
 	echo '<h2>生成設定</h2><table class="form-table">';
@@ -119,7 +119,7 @@ function ais_hub_ai_defaults() {
 		'anthropic_key'   => '',
 		'anthropic_model' => 'claude-sonnet-5-5',
 		'openrouter_key'  => '',
-		'image_model'     => '',
+		'image_model'     => 'google/gemini-2.5-flash-image-preview',
 		'image_enable'    => 0,
 		'keywords'        => '',
 		'category'        => 'コラム',
@@ -285,34 +285,61 @@ function ais_hub_ai_call_claude( $prompt ) {
 	return new WP_Error( 'empty', 'Claude API: 応答が空です' );
 }
 
-/** OpenRouter 画像生成（ベストエフォート） */
+/**
+ * OpenRouter 画像生成（ベストエフォート）
+ * chat/completions + modalities:["image","text"] 方式。
+ * 画像は choices[0].message.images[0].image_url.url に base64 data URL で返る。
+ * 対応モデル例：google/gemini-2.5-flash-image-preview（Nano Banana）
+ */
 function ais_hub_ai_openrouter_image( $prompt ) {
 	$key   = ais_hub_ai_openrouter_key();
 	$model = ais_hub_ai_opt( 'image_model', '' );
 	if ( ! $key || ! $model ) { return new WP_Error( 'nokey', 'OpenRouter未設定' ); }
-	$resp = wp_remote_post( 'https://openrouter.ai/api/v1/chat/completions', array(
-		'timeout' => 90,
+	$referer = home_url( '/' );
+	$resp    = wp_remote_post( 'https://openrouter.ai/api/v1/chat/completions', array(
+		'timeout' => 120,
 		'headers' => array(
 			'Authorization' => 'Bearer ' . $key,
-			'content-type'  => 'application/json',
+			'Content-Type'  => 'application/json',
+			'HTTP-Referer'  => $referer,
+			'X-Title'       => 'AIS Business Hub',
 		),
 		'body'    => wp_json_encode( array(
-			'model'    => $model,
-			'messages' => array( array( 'role' => 'user', 'content' => 'この記事のアイキャッチ画像を生成してください（文字なし・写実的・濃紺とティール基調）: ' . $prompt ) ),
+			'model'      => $model,
+			'modalities' => array( 'image', 'text' ),
+			'messages'   => array( array(
+				'role'    => 'user',
+				'content' => 'ブログ記事のアイキャッチ画像を1枚生成してください。要件：文字・ロゴ・透かしを入れない／写実的で明るい／濃紺(#092448)とティール(#0E9BA9)を基調。テーマ：' . $prompt,
+			) ),
 		) ),
 	) );
 	if ( is_wp_error( $resp ) ) { return $resp; }
+	$code = (int) wp_remote_retrieve_response_code( $resp );
 	$body = json_decode( wp_remote_retrieve_body( $resp ), true );
-	// OpenRouter の画像出力モデルは choices[].message.images[].image_url.url に返すことがある
-	if ( isset( $body['choices'][0]['message']['images'][0]['image_url']['url'] ) ) {
-		return (string) $body['choices'][0]['message']['images'][0]['image_url']['url'];
+	if ( 200 !== $code ) {
+		$msg = isset( $body['error']['message'] ) ? $body['error']['message'] : ( 'HTTP ' . $code );
+		return new WP_Error( 'api', 'OpenRouter: ' . $msg );
 	}
-	// content 内の data: URL も試す
-	$content = $body['choices'][0]['message']['content'] ?? '';
-	if ( is_string( $content ) && preg_match( '#(data:image/[a-z]+;base64,[A-Za-z0-9+/=]+)#', $content, $m ) ) {
+	$msg = isset( $body['choices'][0]['message'] ) ? $body['choices'][0]['message'] : array();
+	// 代表的な形：message.images[].image_url.url（data URL もしくは http URL）
+	if ( ! empty( $msg['images'] ) && is_array( $msg['images'] ) ) {
+		foreach ( $msg['images'] as $im ) {
+			if ( isset( $im['image_url']['url'] ) ) { return (string) $im['image_url']['url']; }
+			if ( is_string( $im ) && $im ) { return $im; }
+		}
+	}
+	// 一部モデルは content を配列で返す（{type:image_url,image_url:{url}}）
+	if ( isset( $msg['content'] ) && is_array( $msg['content'] ) ) {
+		foreach ( $msg['content'] as $part ) {
+			if ( isset( $part['image_url']['url'] ) ) { return (string) $part['image_url']['url']; }
+		}
+	}
+	// content が文字列で data: URL を含む場合
+	$content = isset( $msg['content'] ) && is_string( $msg['content'] ) ? $msg['content'] : '';
+	if ( $content && preg_match( '#(data:image/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+)#i', $content, $m ) ) {
 		return $m[1];
 	}
-	return new WP_Error( 'noimg', 'OpenRouter: 画像を取得できませんでした（モデル要確認）' );
+	return new WP_Error( 'noimg', 'OpenRouter: 画像を取得できませんでした（画像生成対応モデルか確認してください）' );
 }
 
 /** 画像をメディアに取り込みアイキャッチに設定（URL または data: URL） */
@@ -321,17 +348,25 @@ function ais_hub_ai_attach_image( $src, $post_id ) {
 	require_once ABSPATH . 'wp-admin/includes/media.php';
 	require_once ABSPATH . 'wp-admin/includes/image.php';
 	$tmp = '';
+	$ext = 'png';
 	if ( 0 === strpos( $src, 'data:image/' ) && false !== strpos( $src, 'base64,' ) ) {
+		if ( preg_match( '#^data:image/([a-z0-9.+-]+);base64,#i', $src, $mm ) ) {
+			$ext = strtolower( $mm[1] );
+			if ( 'jpeg' === $ext ) { $ext = 'jpg'; }
+			if ( ! in_array( $ext, array( 'png', 'jpg', 'webp', 'gif' ), true ) ) { $ext = 'png'; }
+		}
 		$parts = explode( 'base64,', $src, 2 );
 		$bin   = base64_decode( $parts[1] );
 		if ( ! $bin ) { return false; }
-		$tmp = wp_tempnam( 'ais-ai.png' );
+		$tmp = wp_tempnam( 'ais-ai.' . $ext );
 		file_put_contents( $tmp, $bin );
 	} else {
 		$tmp = download_url( esc_url_raw( $src ), 60 );
 		if ( is_wp_error( $tmp ) ) { return false; }
+		$path_ext = strtolower( pathinfo( wp_parse_url( $src, PHP_URL_PATH ), PATHINFO_EXTENSION ) );
+		if ( in_array( $path_ext, array( 'png', 'jpg', 'jpeg', 'webp', 'gif' ), true ) ) { $ext = ( 'jpeg' === $path_ext ) ? 'jpg' : $path_ext; }
 	}
-	$file  = array( 'name' => 'ais-ai-' . $post_id . '.png', 'tmp_name' => $tmp );
+	$file  = array( 'name' => 'ais-ai-' . $post_id . '.' . $ext, 'tmp_name' => $tmp );
 	$id    = media_handle_sideload( $file, $post_id );
 	if ( is_wp_error( $id ) ) { @unlink( $tmp ); return false; }
 	set_post_thumbnail( $post_id, $id );
