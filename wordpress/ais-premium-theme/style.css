@@ -1,0 +1,16 @@
+/*
+Theme Name: AIS Premium
+Theme URI: https://aiscompany.jp/
+Author: 合同会社アイズ（AIS Co., Ltd.）
+Author URI: https://aisjaltd.com/
+Description: 合同会社アイズ（AIS）公式サイト用ブロックテーマ。モビリティ×AI×プラットフォームの上質なコーポレートデザイン。管理用プラグイン「AIS Business Hub」と併用します。
+Requires at least: 6.4
+Tested up to: 6.7
+Requires PHP: 7.4
+Version: 1.0.0
+License: GNU General Public License v2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: ais-premium
+*/
+
+/* 実装CSSは assets/css/ais.css（functions.php で読み込み）。 */

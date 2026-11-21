@@ -1,0 +1,41 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/theme.json",
+  "version": 3,
+  "settings": {
+    "appearanceTools": true,
+    "layout": { "contentSize": "840px", "wideSize": "1200px" },
+    "color": {
+      "palette": [
+        { "slug": "navy", "color": "#092448", "name": "Navy" },
+        { "slug": "navy-dark", "color": "#06172D", "name": "Navy Dark" },
+        { "slug": "teal", "color": "#0E9BA9", "name": "Teal" },
+        { "slug": "gold", "color": "#C9A14A", "name": "Gold" },
+        { "slug": "background", "color": "#F5F8FB", "name": "Background" },
+        { "slug": "text", "color": "#152B43", "name": "Text" },
+        { "slug": "muted", "color": "#64748B", "name": "Muted" },
+        { "slug": "white", "color": "#FFFFFF", "name": "White" }
+      ],
+      "custom": false
+    },
+    "typography": {
+      "fluid": true,
+      "fontFamilies": [
+        { "fontFamily": "\"Noto Sans JP\", system-ui, sans-serif", "slug": "base", "name": "Noto Sans JP" },
+        { "fontFamily": "\"Noto Serif JP\", serif", "slug": "serif", "name": "Noto Serif JP" }
+      ]
+    },
+    "spacing": { "units": ["px", "rem", "%", "vw"] }
+  },
+  "styles": {
+    "color": { "text": "#152B43", "background": "#F5F8FB" },
+    "typography": {
+      "fontFamily": "\"Noto Sans JP\", system-ui, sans-serif",
+      "lineHeight": "1.8"
+    },
+    "elements": {
+      "link": { "color": { "text": "#0E9BA9" } },
+      "h1": { "typography": { "fontFamily": "\"Noto Serif JP\", serif" } },
+      "h2": { "typography": { "fontFamily": "\"Noto Serif JP\", serif" } }
+    }
+  }
+}

@@ -1,0 +1,224 @@
+/* =============================================================
+   AIS Premium — デザイン実装CSS（design_tokens.json 準拠）
+   モック（01_mockups/04）のレイアウト・配色・余白・カード形状を再現。
+   クラスはブロックテーマのパターン/パーツから className で付与。
+   ============================================================= */
+:root{
+  --navy:#092448; --navy-d:#06172D; --navy-2:#0d2f5a;
+  --teal:#0E9BA9; --teal-2:#14b8c6; --gold:#c9a14a; --gold-2:#e2c278;
+  --white:#fff; --bg:#F5F8FB; --surface:#fff;
+  --text:#152B43; --muted:#64748B; --line:#e4e9f0; --line-d:rgba(255,255,255,.14);
+  --container:1200px; --r-card:12px; --r-btn:8px;
+  --font:"Noto Sans JP",system-ui,-apple-system,sans-serif;
+  --font-serif:"Noto Serif JP",var(--font);
+  --shadow:0 8px 30px rgba(9,36,72,.08); --shadow-lg:0 24px 60px rgba(6,23,45,.35);
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;font-family:var(--font);color:var(--text);background:var(--bg);line-height:1.8;-webkit-font-smoothing:antialiased}
+img,svg{max-width:100%;height:auto;display:block}
+a{color:inherit;text-decoration:none}
+.container{width:100%;max-width:var(--container);margin:0 auto;padding:0 24px}
+.en{font-family:var(--font);letter-spacing:.02em}
+
+/* ---- ボタン ---- */
+.ais-btn{display:inline-flex;align-items:center;gap:10px;padding:14px 26px;border-radius:var(--r-btn);
+  font-weight:700;font-size:15px;border:1.5px solid transparent;cursor:pointer;transition:.2s;line-height:1}
+.ais-btn .ico{width:18px;height:18px;flex:0 0 18px}
+.ais-btn-teal{background:var(--teal);color:#fff}
+.ais-btn-teal:hover{background:#0b8591}
+.ais-btn-navy{background:var(--navy);color:#fff}
+.ais-btn-navy:hover{background:var(--navy-2)}
+.ais-btn-ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.45)}
+.ais-btn-ghost:hover{background:rgba(255,255,255,.08)}
+.ais-btn-outline{background:#fff;color:var(--navy);border-color:var(--line)}
+.ais-btn-outline:hover{border-color:var(--teal);color:var(--teal)}
+.ais-btn-sm{padding:10px 18px;font-size:14px}
+
+/* ---- ヘッダー ---- */
+.ais-header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.ais-header .bar{display:flex;align-items:center;justify-content:space-between;height:74px;gap:24px}
+.ais-logo{display:flex;align-items:center;gap:10px}
+.ais-logo .mk{font-family:var(--font-serif);font-weight:700;font-size:26px;color:var(--navy);letter-spacing:.02em}
+.ais-logo .mk b{color:var(--teal)}
+.ais-logo .sub{font-size:11px;color:var(--muted);line-height:1.3}
+.ais-logo .sub strong{display:block;color:var(--navy);font-size:13px}
+.ais-nav{display:flex;align-items:center;gap:26px;margin-left:auto}
+.ais-nav a{font-size:14.5px;font-weight:500;color:var(--text);position:relative;padding:6px 0;white-space:nowrap}
+.ais-nav a:hover,.ais-nav a[aria-current]{color:var(--teal)}
+.ais-nav a[aria-current]::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:2px;background:var(--teal)}
+.ais-head-cta{display:flex;align-items:center;gap:10px}
+.ais-burger{display:none;background:none;border:0;font-size:26px;color:var(--navy);cursor:pointer;line-height:1}
+
+/* ---- ヒーロー ---- */
+.ais-hero{position:relative;background:var(--navy-d);color:#fff;overflow:hidden}
+.ais-hero .media{position:absolute;inset:0 0 0 42%;background:linear-gradient(120deg,#0b2446,#15406f 60%,#1d5a86);
+  background-size:cover;background-position:center}
+.ais-hero .media::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--navy-d) 8%,rgba(6,23,45,.72) 38%,rgba(6,23,45,.15) 70%)}
+.ais-hero .inner{position:relative;max-width:var(--container);margin:0 auto;padding:92px 24px 84px;min-height:560px}
+.ais-hero h1{font-family:var(--font-serif);font-weight:600;font-size:clamp(28px,4vw,48px);line-height:1.36;margin:0 0 22px;max-width:22em}
+.ais-hero .lead{font-size:clamp(15px,1.3vw,17px);line-height:2;color:rgba(255,255,255,.86);max-width:30em;margin:0 0 32px}
+.ais-hero .cta{display:flex;gap:16px;flex-wrap:wrap}
+.ais-hero .laurel{position:absolute;right:24px;bottom:40px;text-align:center;color:var(--gold-2);font-size:13px;line-height:1.5;
+  padding:10px 30px;}
+.ais-hero .laurel b{display:block;font-family:var(--font-serif);font-size:21px;color:var(--gold-2);margin-top:2px}
+.ais-hero .laurel::before,.ais-hero .laurel::after{content:"";position:absolute;top:0;bottom:0;width:22px;
+  border:2px solid rgba(201,161,74,.6);border-radius:60%}
+.ais-hero .laurel::before{left:-6px;border-right:0;border-radius:60% 0 0 60%}
+.ais-hero .laurel::after{right:-6px;border-left:0;border-radius:0 60% 60% 0}
+
+/* ---- 実績ストリップ ---- */
+.ais-stats{background:var(--navy);color:#fff;border-top:1px solid rgba(255,255,255,.08)}
+.ais-stats .grid{display:grid;grid-template-columns:repeat(6,1fr)}
+.ais-stat{display:flex;align-items:center;gap:14px;padding:26px 20px;border-left:1px solid rgba(255,255,255,.1)}
+.ais-stat:first-child{border-left:0}
+.ais-stat .ico{width:30px;height:30px;color:var(--teal-2);flex:0 0 30px}
+.ais-stat .v{font-size:22px;font-weight:800;line-height:1.1;font-family:var(--font-serif)}
+.ais-stat .l{font-size:12px;color:rgba(255,255,255,.7)}
+.ais-note{font-size:11px;color:rgba(255,255,255,.4);text-align:right;padding:0 24px 10px;max-width:var(--container);margin:0 auto}
+
+/* ---- セクション共通 ---- */
+.ais-section{padding:96px 0}
+.ais-eyebrow{font-size:13px;font-weight:700;letter-spacing:.14em;color:var(--teal);text-transform:uppercase;margin:0 0 8px}
+.ais-sechead{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:44px;flex-wrap:wrap}
+.ais-sechead h2{font-family:var(--font-serif);font-weight:600;font-size:clamp(24px,3vw,34px);color:var(--navy);margin:0}
+.ais-more{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--navy)}
+.ais-more:hover{color:var(--teal)}
+
+/* ---- 事業カード ---- */
+.ais-biz-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.ais-biz-grid .wide{grid-column:span 3}
+.ais-biz-row2{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:22px}
+.ais-card{position:relative;display:block;border-radius:var(--r-card);overflow:hidden;background:var(--navy);color:#fff;
+  min-height:188px;box-shadow:var(--shadow);transition:transform .2s,box-shadow .2s}
+.ais-card:hover{transform:translateY(-4px);box-shadow:0 18px 40px rgba(9,36,72,.22)}
+.ais-card .bg{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.9}
+.ais-card .bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,23,45,.45),rgba(6,23,45,.86))}
+.ais-card .c{position:relative;padding:22px 24px;display:flex;flex-direction:column;height:100%;min-height:188px}
+.ais-card .brand{font-family:var(--font-serif);font-weight:700;font-size:22px;letter-spacing:.02em}
+.ais-card .brand small{display:inline-block;font-size:13px;font-weight:500;color:rgba(255,255,255,.8);margin-left:8px;font-family:var(--font)}
+.ais-card .cat{margin-top:auto;font-size:15px;font-weight:700}
+.ais-card .desc{font-size:13px;color:rgba(255,255,255,.75);margin-top:4px}
+.ais-card .arw{position:absolute;right:18px;bottom:16px;width:30px;height:30px;border:1px solid rgba(255,255,255,.4);
+  border-radius:50%;display:grid;place-items:center;font-size:14px;transition:.2s}
+.ais-card:hover .arw{background:var(--teal);border-color:var(--teal)}
+.ais-card.alt{min-height:210px}
+.ais-card.alt .pf{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0 2px}
+.ais-card.alt .pf span{font-size:12px;background:rgba(255,255,255,.12);border-radius:999px;padding:4px 12px}
+
+/* ---- パートナー帯 ---- */
+.ais-partner{background:linear-gradient(120deg,var(--navy-d),var(--navy) 70%);color:#fff;border-radius:16px;overflow:hidden;
+  display:grid;grid-template-columns:260px 1fr auto;gap:36px;align-items:center;padding:40px 44px;position:relative}
+.ais-partner .ph{width:220px;height:150px;border-radius:12px;background:linear-gradient(135deg,#14406f,#0b2446);align-self:center}
+.ais-partner h3{font-family:var(--font-serif);font-size:24px;margin:0 0 10px}
+.ais-partner p{margin:0 0 18px;color:rgba(255,255,255,.8);font-size:15px}
+.ais-partner .feats{display:flex;gap:26px;flex-wrap:wrap}
+.ais-partner .feat{display:flex;align-items:center;gap:12px;font-size:13px}
+.ais-partner .feat .ico{width:26px;height:26px;color:var(--teal-2)}
+.ais-partner .feat b{display:block;font-size:14px}
+
+/* ---- ニュース ---- */
+.ais-news{background:var(--bg)}
+.ais-tabs{display:flex;gap:10px;flex-wrap:wrap}
+.ais-tabs button{border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:999px;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer}
+.ais-tabs button.on,.ais-tabs button:hover{background:var(--teal);color:#fff;border-color:var(--teal)}
+.ais-news-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
+.ais-ncard{background:#fff;border:1px solid var(--line);border-radius:var(--r-card);overflow:hidden;box-shadow:var(--shadow);transition:.2s}
+.ais-ncard:hover{transform:translateY(-3px);box-shadow:0 16px 34px rgba(9,36,72,.14)}
+.ais-ncard .thumb{aspect-ratio:16/10;background-size:cover;background-position:center;background-color:#dde6ef}
+.ais-ncard .b{padding:16px 18px}
+.ais-ncard .meta{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.ais-ncard .tag{font-size:11px;font-weight:700;color:#fff;background:var(--teal);border-radius:4px;padding:3px 9px}
+.ais-ncard .date{font-size:12px;color:var(--muted)}
+.ais-ncard h4{font-size:15px;margin:0 0 6px;color:var(--navy);line-height:1.5}
+.ais-ncard p{font-size:12.5px;color:var(--muted);margin:0;line-height:1.7}
+
+/* ---- 理念帯 ---- */
+.ais-philo{position:relative;background:var(--navy-d);color:#fff;overflow:hidden}
+.ais-philo .media{position:absolute;inset:0 56% 0 0;background:linear-gradient(120deg,#0b2446,#1d5a86);background-size:cover;background-position:center}
+.ais-philo .media::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(6,23,45,.3),var(--navy-d) 78%)}
+.ais-philo .inner{position:relative;max-width:var(--container);margin:0 auto;padding:84px 24px;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+.ais-philo .quote{font-family:var(--font-serif);font-size:clamp(24px,3vw,34px);line-height:1.5;margin:0 0 18px}
+.ais-philo .quote .hl{color:var(--teal-2)}
+.ais-philo .lead{color:rgba(255,255,255,.82);font-size:15px;margin:0}
+.ais-values{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.ais-value{background:rgba(255,255,255,.06);border:1px solid var(--line-d);border-radius:12px;padding:22px}
+.ais-value .ico{width:30px;height:30px;color:var(--teal-2);margin-bottom:12px}
+.ais-value b{display:block;font-size:16px;margin-bottom:4px}
+.ais-value span{font-size:12.5px;color:rgba(255,255,255,.72)}
+
+/* ---- AIコンシェルジュ ---- */
+.ais-concierge{position:fixed;right:22px;bottom:22px;z-index:200}
+.ais-cc-btn{display:inline-flex;align-items:center;gap:10px;background:var(--navy);color:#fff;border:0;border-radius:999px;
+  padding:14px 22px;font-weight:700;font-size:14px;cursor:pointer;box-shadow:var(--shadow-lg)}
+.ais-cc-btn .ico{width:20px;height:20px;color:var(--teal-2)}
+.ais-cc-panel{position:absolute;right:0;bottom:64px;width:340px;max-width:calc(100vw - 44px);background:#fff;border-radius:16px;
+  box-shadow:var(--shadow-lg);overflow:hidden;display:none}
+.ais-cc-panel.open{display:block}
+.ais-cc-head{background:linear-gradient(120deg,var(--navy),var(--navy-2));color:#fff;padding:16px 18px;display:flex;align-items:center;gap:10px}
+.ais-cc-head b{font-size:15px}
+.ais-cc-head small{display:block;font-size:11px;color:rgba(255,255,255,.75)}
+.ais-cc-head .x{margin-left:auto;background:none;border:0;color:#fff;font-size:18px;cursor:pointer}
+.ais-cc-body{padding:16px 18px;max-height:min(60vh,440px);overflow:auto}
+.ais-cc-msg{background:var(--bg);border-radius:12px;padding:12px 14px;font-size:13px;margin-bottom:12px}
+.ais-cc-opt{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:#fff;border:1px solid var(--line);
+  border-radius:10px;padding:11px 14px;font-size:13.5px;font-weight:600;color:var(--navy);cursor:pointer;margin-bottom:8px;transition:.15s}
+.ais-cc-opt:hover{border-color:var(--teal);background:#f3fbfc}
+.ais-cc-opt .ico{width:18px;height:18px;color:var(--teal);flex:0 0 18px}
+
+/* ---- フッター ---- */
+.ais-footer{background:var(--navy-d);color:rgba(255,255,255,.76)}
+.ais-footer .top{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:36px;padding:66px 24px 40px;max-width:var(--container);margin:0 auto}
+.ais-footer h4{color:#fff;font-size:13px;letter-spacing:.08em;margin:0 0 16px}
+.ais-footer a{display:block;font-size:13.5px;color:rgba(255,255,255,.72);padding:5px 0}
+.ais-footer a:hover{color:var(--teal-2)}
+.ais-footer .logo .mk{font-family:var(--font-serif);font-size:24px;color:#fff;font-weight:700}
+.ais-footer .logo .mk b{color:var(--teal-2)}
+.ais-footer .addr{font-size:13px;line-height:1.9;margin-top:12px;color:rgba(255,255,255,.66)}
+.ais-footer .bottom{border-top:1px solid rgba(255,255,255,.12);padding:18px 24px;font-size:12px;color:rgba(255,255,255,.5);
+  max-width:var(--container);margin:0 auto;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+
+/* ---- 下層ページ本文 ---- */
+.ais-page{padding:64px 24px 96px}
+.ais-page h1.wp-block-post-title{font-family:var(--font-serif);font-size:clamp(26px,3.4vw,38px);color:var(--navy);margin:0 0 24px;line-height:1.4}
+.ais-page h2{font-family:var(--font-serif);color:var(--navy);margin-top:2em}
+.ais-page .ais-post-meta{gap:14px;color:var(--muted);font-size:13px;margin-bottom:20px}
+.ais-page .ais-arch-title{font-family:var(--font-serif);color:var(--navy)}
+.ais-business-single .ais-biz-cta{margin-top:48px;background:linear-gradient(120deg,var(--navy-d),var(--navy));color:#fff;border-radius:16px;padding:40px;text-align:center}
+.ais-business-single .ais-biz-cta h3{font-family:var(--font-serif);margin:0 0 10px;font-size:22px}
+.ais-business-single .ais-biz-cta p{margin:0 0 20px;color:rgba(255,255,255,.82)}
+
+/* ---- スクロール出現 ---- */
+.reveal{opacity:0;transform:translateY(16px);transition:opacity .6s,transform .6s}
+.reveal.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+
+/* ---- レスポンシブ ---- */
+@media(max-width:1023px){
+  .ais-biz-grid{grid-template-columns:1fr 1fr}
+  .ais-biz-grid .wide{grid-column:span 2}
+  .ais-news-grid{grid-template-columns:1fr 1fr}
+  .ais-stats .grid{grid-template-columns:repeat(3,1fr)}
+  .ais-stat:nth-child(4){border-left:0}
+  .ais-partner{grid-template-columns:1fr;text-align:left}
+  .ais-partner .ph{display:none}
+  .ais-philo .inner{grid-template-columns:1fr}
+  .ais-philo .media{inset:0;opacity:.3}
+}
+@media(max-width:767px){
+  .ais-section{padding:60px 0}
+  .ais-nav,.ais-head-cta{display:none}
+  .ais-nav.open{display:flex;position:fixed;inset:74px 0 auto 0;flex-direction:column;align-items:stretch;background:#fff;
+    padding:12px 24px 20px;border-bottom:1px solid var(--line);box-shadow:var(--shadow);gap:0;margin:0}
+  .ais-nav.open a{padding:14px 0;border-bottom:1px solid var(--line)}
+  .ais-burger{display:block}
+  .ais-hero .media{inset:0;opacity:.5}
+  .ais-hero .inner{min-height:auto;padding:64px 24px 72px}
+  .ais-hero .laurel{position:static;margin-top:28px;display:inline-block;padding-left:26px;padding-right:26px}
+  .ais-biz-grid,.ais-biz-row2,.ais-news-grid{grid-template-columns:1fr}
+  .ais-biz-grid .wide{grid-column:span 1}
+  .ais-stats .grid{grid-template-columns:1fr 1fr}
+  .ais-stat:nth-child(3){border-left:0}
+  .ais-values{grid-template-columns:1fr}
+  .ais-footer .top{grid-template-columns:1fr 1fr}
+  .ais-sechead{align-items:flex-start}
+}
