@@ -229,6 +229,59 @@ a{color:inherit;text-decoration:none}
 /* ---- 事業一覧ページ（下層・全幅化）---- */
 .ais-biz-list-page{position:relative;left:50%;transform:translateX(-50%);width:min(1160px,92vw);margin-top:8px;padding-bottom:24px}
 
+/* =======================================================
+   LIGHT & AIRY（明るく軽やか）テーマ上書き
+   ※濃紺はパートナー帯・CTA・理念などアクセントに限定
+   ======================================================= */
+:root{ --bg:#ffffff; --r-card:16px; --teal:#12aab9; }
+body{ background:#fff }
+
+/* ヒーロー：明るく（写真は右、左に薄いフェード） */
+.ais-hero{ background:#e9f1f8; color:var(--navy) }
+.ais-hero::after{ display:none }
+.ais-hero .media{ inset:0 0 0 40% }
+.ais-hero .media::before{ background:linear-gradient(90deg,#e9f1f8 12%,rgba(233,241,248,.55) 42%,transparent 72%) }
+.ais-hero h1{ color:var(--navy) }
+.ais-hero h1 .hl{ color:var(--teal) }
+.ais-hero .lead{ color:#4a5568 }
+.ais-hero .kicker{ color:#0b8591 }
+.ais-hero .kicker::before{ background:#0b8591 }
+.ais-hero .laurel{ color:#9a7a2e }
+.ais-hero .laurel b{ color:var(--navy) }
+.ais-hero .ais-btn-ghost{ background:#fff; color:var(--navy); border-color:var(--line) }
+.ais-hero .ais-btn-ghost:hover{ border-color:var(--teal); color:var(--teal) }
+.ais-hero .meta{ border-top-color:rgba(9,36,72,.12) }
+.ais-hero .meta .m-num{ color:var(--teal) }
+.ais-hero .meta .m-label{ color:var(--muted) }
+
+/* 実績ストリップ：明るく */
+.ais-stats{ background:#fff; color:var(--navy); border-top:1px solid var(--line); border-bottom:1px solid var(--line) }
+.ais-stats .ais-stat{ border-left:1px solid var(--line) }
+.ais-stats .ais-stat:first-child{ border-left:0 }
+.ais-stat .ico{ color:var(--teal) }
+.ais-stat .v{ color:var(--navy) }
+.ais-stat .l{ color:var(--muted) }
+.ais-note{ color:var(--muted) }
+
+/* 事業カード：白＋画像を上に */
+.ais-card{ background:#fff; border:1px solid var(--line); color:var(--ink); box-shadow:0 6px 24px rgba(9,36,72,.06) }
+.ais-card:hover{ box-shadow:0 16px 36px rgba(9,36,72,.12) }
+.ais-card .bg{ position:relative; inset:auto; height:148px; opacity:1 }
+.ais-card .bg::after{ background:linear-gradient(180deg,rgba(0,0,0,0),rgba(9,36,72,.06)) }
+.ais-card .c{ position:relative; color:var(--ink); min-height:0; padding:18px 20px }
+.ais-card.alt{ min-height:0 }
+.ais-card.alt .c{ min-height:0 }
+.ais-card .brand{ color:var(--navy) }
+.ais-card .brand small{ color:var(--muted) }
+.ais-card .cat{ margin-top:12px; color:var(--navy) }
+.ais-card .desc{ color:var(--muted) }
+.ais-card .arw{ border-color:var(--line); color:var(--navy) }
+.ais-card:hover .arw{ background:var(--teal); border-color:var(--teal); color:#fff }
+.ais-card.alt .pf span{ background:rgba(18,170,185,.12); color:var(--navy) }
+
+/* セクションのリズム（交互の背景で軽やかに） */
+.ais-news{ background:#f3f8fb }
+
 /* ---- スクロール出現 ---- */
 .reveal{opacity:0;transform:translateY(16px);transition:opacity .6s,transform .6s}
 .reveal.in{opacity:1;transform:none}
