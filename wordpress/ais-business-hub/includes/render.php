@@ -186,12 +186,76 @@ add_shortcode( 'ais_business_list', function () {
 	return $o;
 } );
 
-/** [ais_business_cta] 事業ページ下部のCTA */
+/** 事業スラッグ→問い合わせトピックの対応 */
+function ais_hub_slug_topic( $slug ) {
+	$m = array( 'carmel' => 'purchase', 'carshico' => 'lease', 'buymo' => 'buyback', 'gps' => 'gps', 'export' => 'export', 'ai-digital' => 'app', 'app-development' => 'app', 'triple-gear' => 'partner' );
+	return isset( $m[ $slug ] ) ? $m[ $slug ] : '';
+}
+
+/** [ais_business_header] 事業ページ上部のバナー */
+add_shortcode( 'ais_business_header', function () {
+	$id     = get_the_ID();
+	$en     = get_post_meta( $id, 'ais_en', true ) ?: get_the_title();
+	$ja     = get_post_meta( $id, 'ais_ja', true );
+	$cat    = get_post_meta( $id, 'ais_cat', true );
+	$status = get_post_meta( $id, 'ais_status', true );
+	$illo   = get_post_meta( $id, 'ais_illo', true ) ?: get_post_field( 'post_name', $id );
+	$thumb  = get_the_post_thumbnail_url( $id, 'large' );
+	$bg     = $thumb ? $thumb : ais_hub_illustration_url( $illo );
+	$h  = '<div class="ais-biz-hero"><div class="bg" style="background-image:url(' . esc_url( $bg ) . ')"></div><div class="c">';
+	if ( $status ) { $h .= '<span class="ais-badge">' . esc_html( $status ) . '</span>'; }
+	$h .= '<div class="en">' . esc_html( $en ) . '</div>';
+	if ( $ja )  { $h .= '<div class="ja">' . esc_html( $ja ) . '</div>'; }
+	if ( $cat ) { $h .= '<h1>' . esc_html( $cat ) . '</h1>'; }
+	$h .= '</div></div>';
+	return $h;
+} );
+
+/** [ais_business_cta] 事業ページ下部のCTA（種類別フォームへ誘導） */
 add_shortcode( 'ais_business_cta', function () {
 	$cta   = get_post_meta( get_the_ID(), 'ais_cta', true );
 	$label = $cta ? $cta : 'お問い合わせ';
+	$slug  = get_post_field( 'post_name', get_the_ID() );
+	$topic = ais_hub_slug_topic( $slug );
+	$url   = home_url( '/contact/' . ( $topic ? '?topic=' . $topic : '' ) );
 	$h  = '<div class="ais-biz-cta"><h3>' . esc_html( get_the_title() ) . ' のご相談</h3>';
 	$h .= '<p>お気軽にお問い合わせください。担当者が丁寧にご案内します。</p>';
-	$h .= '<a class="ais-btn ais-btn-teal" href="' . esc_url( home_url( '/contact/' ) ) . '">' . esc_html( $label ) . '</a></div>';
+	$h .= '<a class="ais-btn ais-btn-teal" href="' . esc_url( $url ) . '">' . esc_html( $label ) . '</a></div>';
 	return $h;
 } );
+
+/** [ais_company] 会社概要 */
+add_shortcode( 'ais_company', function () {
+	$rows = array(
+		'会社名'   => '合同会社アイズ（AIS Co., Ltd.）',
+		'代表社員' => '吉田 一平',
+		'所在地'   => '〒979-0204　福島県いわき市四倉町細谷字大町1番',
+		'事業内容' => '自動車の販売・買取・リース・車両セキュリティ・レッカー／カーレスキュー・オートオークション代行・FC事業／AI・ノーコードアプリ開発・Web制作・システム開発・マーケティング',
+		'許認可'   => '古物商許可　第25121A010859号',
+		'法人番号' => 'T9380003004349',
+		'メール'   => '<a href="mailto:info@aisjaltd.com">info@aisjaltd.com</a>',
+	);
+	$h = '<div class="ais-company reveal"><dl>';
+	foreach ( $rows as $k => $v ) {
+		$safe = ( 'メール' === $k ) ? $v : esc_html( $v ); // メールのみリンク許可
+		$h .= '<div class="row"><dt>' . esc_html( $k ) . '</dt><dd>' . $safe . '</dd></div>';
+	}
+	$h .= '</dl></div>';
+	return $h;
+} );
+
+/** [ais_partner] 販売店・事業パートナー募集（紹介＋専用フォーム） */
+add_shortcode( 'ais_partner', function () {
+	$h  = '<div class="ais-partner-page reveal">';
+	$h .= '<p class="lead">AISのプラットフォームで、あなたのビジネスを次のステージへ。在庫・リース・信販・GPS・AIまでをワンストップでご提供します。</p>';
+	$h .= '<div class="ais-feats-row">';
+	$h .= '<div class="feat">' . ais_icon( 'i-box', 26 ) . '<div><b>在庫無制限</b>全国ネットワーク</div></div>';
+	$h .= '<div class="feat">' . ais_icon( 'i-shield', 26 ) . '<div><b>リース・信販</b>自社審査サポート</div></div>';
+	$h .= '<div class="feat">' . ais_icon( 'i-pin', 26 ) . '<div><b>GPS・AI機能</b>システム提供</div></div>';
+	$h .= '</div></div>';
+	$h .= '<h2 style="margin-top:40px">加盟のご相談</h2>';
+	$h .= do_shortcode( '[ais_contact topic="partner"]' );
+	return $h;
+} );
+
+/** [ais_business_cta] 旧 end */
