@@ -301,7 +301,47 @@ function ais_hub_render_corporate() {
 	return $h;
 }
 
+/** 指定カテゴリの投稿一覧をカードで表示（業界コラム等） */
+function ais_hub_render_posts( $atts = array() ) {
+	$atts = shortcode_atts( array( 'cat' => '', 'count' => 12 ), is_array( $atts ) ? $atts : array() );
+	$q    = array( 'post_type' => 'post', 'post_status' => 'publish', 'posts_per_page' => max( 1, (int) $atts['count'] ), 'ignore_sticky_posts' => true );
+	if ( '' !== $atts['cat'] ) {
+		$term = get_term_by( 'name', $atts['cat'], 'category' );
+		if ( $term && ! is_wp_error( $term ) ) { $q['cat'] = (int) $term->term_id; }
+		else { $q['category_name'] = sanitize_title( $atts['cat'] ); }
+	}
+	$posts = get_posts( $q );
+	$o  = '<div class="ais-biz-list-page"><div class="ais-news-grid">';
+	if ( ! $posts ) {
+		return $o . '</div><p style="color:var(--muted);margin-top:8px">記事はまだありません。管理画面の「AI記事生成」や投稿から記事を追加してください。</p></div>';
+	}
+	foreach ( $posts as $p ) {
+		$cats  = get_the_category( $p->ID );
+		$cat   = $cats ? $cats[0]->name : '';
+		$thumb = get_the_post_thumbnail_url( $p->ID, 'medium' );
+		$thumb = $thumb ? $thumb : ais_hub_illustration_url( 'ai-digital' );
+		$o .= '<a class="ais-ncard reveal" href="' . esc_url( get_permalink( $p ) ) . '">';
+		$o .= '<div class="thumb" style="background-image:url(' . esc_url( $thumb ) . ')"></div><div class="b"><div class="meta"><span class="tag">' . esc_html( $cat ) . '</span><span class="date">' . esc_html( get_the_date( 'Y.m.d', $p ) ) . '</span></div>';
+		$o .= '<h4>' . esc_html( get_the_title( $p ) ) . '</h4><p>' . esc_html( wp_trim_words( wp_strip_all_tags( $p->post_content ), 40 ) ) . '</p></div></a>';
+	}
+	$o .= '</div></div>';
+	return $o;
+}
+
+/**
+ * 業界コラム固定ページ（slug=column）に、コラム記事一覧を自動追記
+ * （既存サイトでも再セットアップ不要で表示。既に一覧ブロックがある場合は重複しない）
+ */
+add_filter( 'the_content', function ( $content ) {
+	if ( ! is_page() || ! is_main_query() || ! in_the_loop() ) { return $content; }
+	$post = get_queried_object();
+	if ( ! $post || empty( $post->post_name ) || 'column' !== $post->post_name ) { return $content; }
+	if ( false !== strpos( $content, 'ais-news-grid' ) ) { return $content; } // 既に一覧あり
+	return $content . ais_hub_render_posts( array( 'cat' => 'コラム', 'count' => 12 ) );
+}, 20 );
+
 /* ショートコード登録（後方互換） */
+add_shortcode( 'ais_posts', 'ais_hub_render_posts' );
 add_shortcode( 'ais_home', 'ais_hub_render_home' );
 add_shortcode( 'ais_business_list', 'ais_hub_render_business_list' );
 add_shortcode( 'ais_business_header', 'ais_hub_render_business_header' );
@@ -326,4 +366,12 @@ add_action( 'init', function () {
 	foreach ( $blocks as $name => $cb ) {
 		register_block_type( $name, array( 'render_callback' => $cb ) );
 	}
+	// 属性つきブロック（カテゴリ指定の記事一覧）
+	register_block_type( 'ais/posts', array(
+		'attributes'      => array(
+			'cat'   => array( 'type' => 'string', 'default' => '' ),
+			'count' => array( 'type' => 'number', 'default' => 12 ),
+		),
+		'render_callback' => 'ais_hub_render_posts',
+	) );
 } );
