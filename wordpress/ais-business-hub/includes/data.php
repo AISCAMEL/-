@@ -56,11 +56,11 @@ function ais_hub_sample_news() {
 function ais_hub_sitemap() {
 	return array(
 		array( 'key' => 'home',     'path' => '',               'title' => 'ホーム',                 'tpl' => '' ),
-		array( 'key' => 'about',    'path' => 'company',        'title' => '会社情報',               'tpl' => '', 'content' => '<!-- wp:heading --><h2>会社概要</h2><!-- /wp:heading -->[ais_company]' ),
+		array( 'key' => 'about',    'path' => 'company',        'title' => '会社情報',               'tpl' => '', 'content' => '<!-- wp:heading --><h2>会社概要</h2><!-- /wp:heading --><!-- wp:ais/company /-->' ),
 		array( 'key' => 'mission',  'path' => 'company/vision', 'title' => '企業理念',               'tpl' => '', 'content' => '<!-- wp:heading --><h2>企業理念</h2><!-- /wp:heading --><!-- wp:paragraph --><p>クルマを通じて、人の暮らしと挑戦を支える。モビリティの提供にとどまらず、AIとデジタルの力で地域・日本・そして世界をつなぎ、人とビジネスの可能性を広げていきます。</p><!-- /wp:paragraph -->' ),
 		array( 'key' => 'message',  'path' => 'company/message','title' => '代表メッセージ',         'tpl' => '', 'content' => '<!-- wp:paragraph --><p>※代表メッセージの本文は管理画面から編集してください（プレースホルダ）。</p><!-- /wp:paragraph -->' ),
-		array( 'key' => 'business', 'path' => 'business',       'title' => '事業一覧',               'tpl' => '', 'content' => '[ais_business_list]' ),
-		array( 'key' => 'partner',  'path' => 'partner',        'title' => '販売店・事業パートナー', 'tpl' => '', 'content' => '<!-- wp:heading --><h2>販売店・事業パートナー募集</h2><!-- /wp:heading -->[ais_partner]' ),
+		array( 'key' => 'business', 'path' => 'business',       'title' => '事業一覧',               'tpl' => '', 'content' => '<!-- wp:ais/business-list /-->' ),
+		array( 'key' => 'partner',  'path' => 'partner',        'title' => '販売店・事業パートナー', 'tpl' => '', 'content' => '<!-- wp:heading --><h2>販売店・事業パートナー募集</h2><!-- /wp:heading --><!-- wp:ais/partner /-->' ),
 		array( 'key' => 'news',     'path' => 'news',           'title' => 'ニュース・お知らせ',     'tpl' => '' ),
 		array( 'key' => 'column',   'path' => 'column',         'title' => '業界コラム',             'tpl' => '' ),
 		array( 'key' => 'contact',  'path' => 'contact',        'title' => 'お問い合わせ',           'tpl' => '', 'content' => '[ais_contact]' ),

@@ -1,5 +1,5 @@
 <?php
-/** フロント描画：[ais_home] / [ais_business_cta] */
+/** フロント描画：ダイナミックブロック＋ショートコード（ブロックテンプレートで自動整形を回避） */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 /** アイコン利用ヘルパー（spriteはテーマのヘッダーパーツが出力） */
@@ -32,14 +32,14 @@ function ais_hub_get_businesses() {
 		$illo  = $illo ? $illo : $p->post_name;
 		$thumb = get_the_post_thumbnail_url( $p->ID, 'large' );
 		$out[] = array(
-			'slug'   => $p->post_name,
-			'en'     => get_post_meta( $p->ID, 'ais_en', true ) ?: get_the_title( $p ),
-			'ja'     => get_post_meta( $p->ID, 'ais_ja', true ),
-			'cat'    => get_post_meta( $p->ID, 'ais_cat', true ),
-			'desc'   => get_post_meta( $p->ID, 'ais_desc', true ),
-			'layout' => get_post_meta( $p->ID, 'ais_layout', true ) ?: 'grid',
-			'status' => get_post_meta( $p->ID, 'ais_status', true ),
-			'cta'    => get_post_meta( $p->ID, 'ais_cta', true ),
+			'slug'     => $p->post_name,
+			'en'       => get_post_meta( $p->ID, 'ais_en', true ) ?: get_the_title( $p ),
+			'ja'       => get_post_meta( $p->ID, 'ais_ja', true ),
+			'cat'      => get_post_meta( $p->ID, 'ais_cat', true ),
+			'desc'     => get_post_meta( $p->ID, 'ais_desc', true ),
+			'layout'   => get_post_meta( $p->ID, 'ais_layout', true ) ?: 'grid',
+			'status'   => get_post_meta( $p->ID, 'ais_status', true ),
+			'cta'      => get_post_meta( $p->ID, 'ais_cta', true ),
 			'url'      => get_post_meta( $p->ID, 'ais_url', true ) ?: get_permalink( $p ),
 			'external' => (bool) get_post_meta( $p->ID, 'ais_url', true ),
 			'image'    => $thumb ? $thumb : ais_hub_illustration_url( $illo ),
@@ -60,12 +60,12 @@ function ais_hub_card_html( $b, $wide = false ) {
 	if ( $wide && ! empty( $b['ja'] ) ) { $h .= '<div class="desc" style="margin-top:2px">' . esc_html( $b['ja'] ) . '</div>'; }
 	if ( ! empty( $b['cat'] ) ) { $h .= '<div class="cat"' . ( $wide ? ' style="margin-top:12px"' : '' ) . '>' . esc_html( $b['cat'] ) . '</div>'; }
 	if ( ! empty( $b['desc'] ) ) { $h .= '<div class="desc">' . esc_html( $b['desc'] ) . '</div>'; }
-	if ( ! empty( $b['external'] ) ) { $h .= '<span class="desc" style="margin-top:6px;opacity:.75;font-size:12px">外部サイトへ移動します ↗</span>'; }
+	if ( ! empty( $b['external'] ) ) { $h .= '<div class="desc" style="margin-top:6px;opacity:.75;font-size:12px">外部サイトへ移動します ↗</div>'; }
 	$h .= '<span class="arw">' . ais_icon( 'i-arrow', 14 ) . '</span></div></a>';
 	return $h;
 }
 
-/** [ais_home] ホームページ本文 */
+/** ホームページ本文 */
 function ais_hub_render_home() {
 	$biz   = ais_hub_get_businesses();
 	$grid  = array();
@@ -174,17 +174,16 @@ function ais_hub_render_home() {
 
 	return $o;
 }
-add_shortcode( 'ais_home', 'ais_hub_render_home' );
 
-/** [ais_business_list] 事業・サービス一覧ページ */
-add_shortcode( 'ais_business_list', function () {
+/** 事業・サービス一覧 */
+function ais_hub_render_business_list() {
 	$biz = ais_hub_get_businesses();
 	$o  = '<div class="ais-biz-list-page"><div class="ais-sechead reveal"><div><p class="ais-eyebrow">Business</p><h2>事業・サービス一覧</h2></div></div>';
 	$o .= '<div class="ais-biz-grid">';
 	foreach ( $biz as $b ) { $o .= ais_hub_card_html( $b, false ); }
 	$o .= '</div></div>';
 	return $o;
-} );
+}
 
 /** 事業スラッグ→問い合わせトピックの対応 */
 function ais_hub_slug_topic( $slug ) {
@@ -192,8 +191,8 @@ function ais_hub_slug_topic( $slug ) {
 	return isset( $m[ $slug ] ) ? $m[ $slug ] : '';
 }
 
-/** [ais_business_header] 事業ページ上部のバナー */
-add_shortcode( 'ais_business_header', function () {
+/** 事業ページ上部のバナー */
+function ais_hub_render_business_header() {
 	$id     = get_the_ID();
 	$en     = get_post_meta( $id, 'ais_en', true ) ?: get_the_title();
 	$ja     = get_post_meta( $id, 'ais_ja', true );
@@ -209,10 +208,10 @@ add_shortcode( 'ais_business_header', function () {
 	if ( $cat ) { $h .= '<h1>' . esc_html( $cat ) . '</h1>'; }
 	$h .= '</div></div>';
 	return $h;
-} );
+}
 
-/** [ais_business_cta] 事業ページ下部のCTA（種類別フォームへ誘導） */
-add_shortcode( 'ais_business_cta', function () {
+/** 事業ページ下部のCTA（種類別フォームへ誘導） */
+function ais_hub_render_business_cta() {
 	$cta   = get_post_meta( get_the_ID(), 'ais_cta', true );
 	$label = $cta ? $cta : 'お問い合わせ';
 	$slug  = get_post_field( 'post_name', get_the_ID() );
@@ -222,10 +221,10 @@ add_shortcode( 'ais_business_cta', function () {
 	$h .= '<p>お気軽にお問い合わせください。担当者が丁寧にご案内します。</p>';
 	$h .= '<a class="ais-btn ais-btn-teal" href="' . esc_url( $url ) . '">' . esc_html( $label ) . '</a></div>';
 	return $h;
-} );
+}
 
-/** [ais_company] 会社概要 */
-add_shortcode( 'ais_company', function () {
+/** 会社概要 */
+function ais_hub_render_company() {
 	$rows = array(
 		'会社名'   => '合同会社アイズ（AIS Co., Ltd.）',
 		'代表社員' => '吉田 一平',
@@ -237,15 +236,15 @@ add_shortcode( 'ais_company', function () {
 	);
 	$h = '<div class="ais-company reveal"><dl>';
 	foreach ( $rows as $k => $v ) {
-		$safe = ( 'メール' === $k ) ? $v : esc_html( $v ); // メールのみリンク許可
+		$safe = ( 'メール' === $k ) ? $v : esc_html( $v );
 		$h .= '<div class="row"><dt>' . esc_html( $k ) . '</dt><dd>' . $safe . '</dd></div>';
 	}
 	$h .= '</dl></div>';
 	return $h;
-} );
+}
 
-/** [ais_partner] 販売店・事業パートナー募集（紹介＋専用フォーム） */
-add_shortcode( 'ais_partner', function () {
+/** 販売店・事業パートナー募集（紹介＋専用フォーム） */
+function ais_hub_render_partner() {
 	$h  = '<div class="ais-partner-page reveal">';
 	$h .= '<p class="lead">AISのプラットフォームで、あなたのビジネスを次のステージへ。在庫・リース・信販・GPS・AIまでをワンストップでご提供します。</p>';
 	$h .= '<div class="ais-feats-row">';
@@ -256,6 +255,28 @@ add_shortcode( 'ais_partner', function () {
 	$h .= '<h2 style="margin-top:40px">加盟のご相談</h2>';
 	$h .= do_shortcode( '[ais_contact topic="partner"]' );
 	return $h;
-} );
+}
 
-/** [ais_business_cta] 旧 end */
+/* ショートコード登録（後方互換） */
+add_shortcode( 'ais_home', 'ais_hub_render_home' );
+add_shortcode( 'ais_business_list', 'ais_hub_render_business_list' );
+add_shortcode( 'ais_business_header', 'ais_hub_render_business_header' );
+add_shortcode( 'ais_business_cta', 'ais_hub_render_business_cta' );
+add_shortcode( 'ais_company', 'ais_hub_render_company' );
+add_shortcode( 'ais_partner', 'ais_hub_render_partner' );
+
+/* ダイナミックブロック登録（ブロックテンプレート／ページで素のHTMLを出力し、自動整形による崩れを防ぐ） */
+add_action( 'init', function () {
+	if ( ! function_exists( 'register_block_type' ) ) { return; }
+	$blocks = array(
+		'ais/home'            => 'ais_hub_render_home',
+		'ais/business-list'   => 'ais_hub_render_business_list',
+		'ais/business-header' => 'ais_hub_render_business_header',
+		'ais/business-cta'    => 'ais_hub_render_business_cta',
+		'ais/company'         => 'ais_hub_render_company',
+		'ais/partner'         => 'ais_hub_render_partner',
+	);
+	foreach ( $blocks as $name => $cb ) {
+		register_block_type( $name, array( 'render_callback' => $cb ) );
+	}
+} );
