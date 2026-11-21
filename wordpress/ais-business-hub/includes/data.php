@@ -59,7 +59,7 @@ function ais_hub_sitemap() {
 		array( 'key' => 'about',    'path' => 'company',        'title' => '会社情報',               'tpl' => '' ),
 		array( 'key' => 'mission',  'path' => 'company/vision', 'title' => '企業理念',               'tpl' => '' ),
 		array( 'key' => 'message',  'path' => 'company/message','title' => '代表メッセージ',         'tpl' => '' ),
-		array( 'key' => 'business', 'path' => 'business',       'title' => '事業一覧',               'tpl' => '' ),
+		array( 'key' => 'business', 'path' => 'business',       'title' => '事業一覧',               'tpl' => '', 'content' => '[ais_business_list]' ),
 		array( 'key' => 'partner',  'path' => 'partner',        'title' => '販売店・事業パートナー', 'tpl' => '' ),
 		array( 'key' => 'news',     'path' => 'news',           'title' => 'ニュース・お知らせ',     'tpl' => '' ),
 		array( 'key' => 'column',   'path' => 'column',         'title' => '業界コラム',             'tpl' => '' ),

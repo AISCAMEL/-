@@ -176,6 +176,16 @@ function ais_hub_render_home() {
 }
 add_shortcode( 'ais_home', 'ais_hub_render_home' );
 
+/** [ais_business_list] 事業・サービス一覧ページ */
+add_shortcode( 'ais_business_list', function () {
+	$biz = ais_hub_get_businesses();
+	$o  = '<div class="ais-biz-list-page"><div class="ais-sechead reveal"><div><p class="ais-eyebrow">Business</p><h2>事業・サービス一覧</h2></div></div>';
+	$o .= '<div class="ais-biz-grid">';
+	foreach ( $biz as $b ) { $o .= ais_hub_card_html( $b, false ); }
+	$o .= '</div></div>';
+	return $o;
+} );
+
 /** [ais_business_cta] 事業ページ下部のCTA */
 add_shortcode( 'ais_business_cta', function () {
 	$cta   = get_post_meta( get_the_ID(), 'ais_cta', true );

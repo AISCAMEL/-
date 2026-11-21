@@ -187,6 +187,9 @@ a{color:inherit;text-decoration:none}
 .ais-business-single .ais-biz-cta h3{font-family:var(--font-serif);margin:0 0 10px;font-size:22px}
 .ais-business-single .ais-biz-cta p{margin:0 0 20px;color:rgba(255,255,255,.82)}
 
+/* ---- 事業一覧ページ（下層・全幅化）---- */
+.ais-biz-list-page{position:relative;left:50%;transform:translateX(-50%);width:min(1160px,92vw);margin-top:8px;padding-bottom:24px}
+
 /* ---- スクロール出現 ---- */
 .reveal{opacity:0;transform:translateY(16px);transition:opacity .6s,transform .6s}
 .reveal.in{opacity:1;transform:none}
