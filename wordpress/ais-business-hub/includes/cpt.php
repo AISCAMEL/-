@@ -27,7 +27,7 @@ function ais_hub_register_cpt() {
 		'map_meta_cap' => true,
 	) );
 
-	$meta_keys = array( 'ais_en', 'ais_ja', 'ais_cat', 'ais_desc', 'ais_illo', 'ais_layout', 'ais_status', 'ais_cta' );
+	$meta_keys = array( 'ais_en', 'ais_ja', 'ais_cat', 'ais_desc', 'ais_illo', 'ais_layout', 'ais_status', 'ais_cta', 'ais_url' );
 	foreach ( $meta_keys as $k ) {
 		register_post_meta( 'ais_business', $k, array(
 			'type'              => 'string',
@@ -56,6 +56,7 @@ function ais_hub_business_metabox( $post ) {
 		'ais_layout' => array( 'ホーム表示（grid/wide/hidden）', 'text' ),
 		'ais_status' => array( '提供状況（提供中/準備中/構想段階）', 'text' ),
 		'ais_cta'    => array( 'CTA文言（例：リース相談）', 'text' ),
+		'ais_url'    => array( '転送先URL（空欄=事業ページ／外部URLは別タブで開く）', 'text' ),
 	);
 	echo '<table class="form-table">';
 	foreach ( $fields as $key => $f ) {
@@ -75,5 +76,8 @@ add_action( 'save_post_ais_business', function ( $post_id ) {
 		if ( isset( $_POST[ $k ] ) ) {
 			update_post_meta( $post_id, $k, sanitize_text_field( wp_unslash( $_POST[ $k ] ) ) );
 		}
+	}
+	if ( isset( $_POST['ais_url'] ) ) {
+		update_post_meta( $post_id, 'ais_url', esc_url_raw( wp_unslash( $_POST['ais_url'] ) ) );
 	}
 } );

@@ -19,9 +19,10 @@ function ais_hub_get_businesses() {
 	if ( empty( $posts ) ) {
 		$out = array();
 		foreach ( ais_hub_default_businesses() as $b ) {
-			$b['url']   = home_url( '/business/' . $b['slug'] . '/' );
-			$b['image'] = ais_hub_illustration_url( $b['slug'] );
-			$out[]      = $b;
+			$b['url']      = home_url( '/business/' . $b['slug'] . '/' );
+			$b['external'] = false;
+			$b['image']    = ais_hub_illustration_url( $b['slug'] );
+			$out[]         = $b;
 		}
 		return $out;
 	}
@@ -39,8 +40,9 @@ function ais_hub_get_businesses() {
 			'layout' => get_post_meta( $p->ID, 'ais_layout', true ) ?: 'grid',
 			'status' => get_post_meta( $p->ID, 'ais_status', true ),
 			'cta'    => get_post_meta( $p->ID, 'ais_cta', true ),
-			'url'    => get_permalink( $p ),
-			'image'  => $thumb ? $thumb : ais_hub_illustration_url( $illo ),
+			'url'      => get_post_meta( $p->ID, 'ais_url', true ) ?: get_permalink( $p ),
+			'external' => (bool) get_post_meta( $p->ID, 'ais_url', true ),
+			'image'    => $thumb ? $thumb : ais_hub_illustration_url( $illo ),
 		);
 	}
 	return $out;
@@ -49,7 +51,8 @@ function ais_hub_get_businesses() {
 function ais_hub_card_html( $b, $wide = false ) {
 	$cls   = 'ais-card reveal' . ( $wide ? ' alt' : '' );
 	$brandsize = ( mb_strlen( $b['en'] ) > 10 ) ? ' style="font-size:18px"' : '';
-	$h  = '<a class="' . esc_attr( $cls ) . '" href="' . esc_url( $b['url'] ) . '">';
+	$ext_attr = ! empty( $b['external'] ) ? ' target="_blank" rel="noopener"' : '';
+	$h  = '<a class="' . esc_attr( $cls ) . '" href="' . esc_url( $b['url'] ) . '"' . $ext_attr . '>';
 	$h .= '<div class="bg" style="background-image:url(' . esc_url( $b['image'] ) . ')"></div>';
 	$h .= '<div class="c"><div class="brand"' . $brandsize . '>' . esc_html( $b['en'] );
 	if ( ! empty( $b['ja'] ) && ! $wide ) { $h .= '<small>' . esc_html( $b['ja'] ) . '</small>'; }
@@ -57,6 +60,7 @@ function ais_hub_card_html( $b, $wide = false ) {
 	if ( $wide && ! empty( $b['ja'] ) ) { $h .= '<div class="desc" style="margin-top:2px">' . esc_html( $b['ja'] ) . '</div>'; }
 	if ( ! empty( $b['cat'] ) ) { $h .= '<div class="cat"' . ( $wide ? ' style="margin-top:12px"' : '' ) . '>' . esc_html( $b['cat'] ) . '</div>'; }
 	if ( ! empty( $b['desc'] ) ) { $h .= '<div class="desc">' . esc_html( $b['desc'] ) . '</div>'; }
+	if ( ! empty( $b['external'] ) ) { $h .= '<span class="desc" style="margin-top:6px;opacity:.75;font-size:12px">外部サイトへ移動します ↗</span>'; }
 	$h .= '<span class="arw">' . ais_icon( 'i-arrow', 14 ) . '</span></div></a>';
 	return $h;
 }
