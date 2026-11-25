@@ -487,7 +487,8 @@ function apprex_contract_doc_body( $contract_id ) {
 		'{{provider_name}}' => $provider_name,
 		'{{today}}'         => wp_date( 'Y年n月j日' ),
 	);
-	return strtr( $tpl, $map );
+	// サービスごとの条文の差しかえ（例：ホームページは3年契約・解約金＝残りの月数×月額。inc/hp-proposal.php）。
+	return (string) apply_filters( 'apprex_contract_doc_body', strtr( $tpl, $map ), $contract_id );
 }
 
 /**
