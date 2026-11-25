@@ -18,6 +18,11 @@ function apprex_hp_term_months() {
 	return 36;
 }
 
+/** 3年たったあとの説明（ページ・提案・チャットで同じ言葉を使う）。 */
+function apprex_hp_renewal_text() {
+	return '1年ごとの自動更新です。更新しないときは、期間が終わる1か月前までにお知らせください。更新したあとの年の途中で解約するときも、解約金は「残りの月数 × 月額」です。';
+}
+
 /** 月額プラン（料金表の設定と同じ金額）。key => [名前, 月額, 中身]。 */
 function apprex_hp_plans() {
 	return array(

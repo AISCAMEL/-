@@ -145,7 +145,7 @@ while ( have_posts() ) :
 						<tr><th><?php esc_html_e( '契約期間', 'apprex' ); ?></th><td><?php echo esc_html( sprintf( '3年（%dか月）', apprex_hp_term_months() ) ); ?></td></tr>
 						<tr><th><?php esc_html_e( '途中で解約するとき', 'apprex' ); ?></th><td><?php esc_html_e( '解約金として「残りの月数 × 月額」をお支払いいただきます。', 'apprex' ); ?><br>
 							<small><?php echo esc_html( sprintf( '例：Standard（月額%s円）を12か月で解約 → 残り%dか月 × %s円 ＝ %s円', number_format( $apprex_ex ), apprex_hp_term_months() - 12, number_format( $apprex_ex ), number_format( apprex_hp_penalty( $apprex_ex, 12 ) ) ) ); ?></small></td></tr>
-						<tr><th><?php esc_html_e( '3年たったあと', 'apprex' ); ?></th><td><?php esc_html_e( '続けるか・どのプランにするかは、ご契約の際に契約書でご案内します。', 'apprex' ); ?></td></tr>
+						<tr><th><?php esc_html_e( '3年たったあと', 'apprex' ); ?></th><td><?php echo esc_html( apprex_hp_renewal_text() ); ?></td></tr>
 					</tbody>
 				</table>
 				<p><small><?php esc_html_e( '制作費をいただかない代わりに、3年間の月額で費用をいただく仕組みです。提案書・お見積りまでは無料で、ご契約は内容にご納得いただいてからです。', 'apprex' ); ?></small></p>

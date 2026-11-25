@@ -366,6 +366,7 @@ table{width:100%;border-collapse:collapse}th,td{padding:10px 8px;border-bottom:1
 		<tr><th>月額</th><td class="big"><?php echo esc_html( number_format( $m ) ); ?>円</td></tr>
 		<tr><th>契約期間</th><td>3年（<?php echo (int) $term; ?>か月）</td></tr>
 		<tr><th>3年間の合計</th><td><?php echo esc_html( number_format( $m * $term ) ); ?>円</td></tr>
+		<tr><th>3年たったあと</th><td><?php echo esc_html( apprex_hp_renewal_text() ); ?></td></tr>
 		<tr><th>途中で解約するとき</th><td>解約金として「残りの月数 × 月額」をお支払いいただきます。<br>
 			<span class="note"><?php foreach ( array( 6, 12, 24 ) as $u ) : ?><?php echo esc_html( $u . 'か月で解約：残り' . ( $term - $u ) . 'か月 × ' . number_format( $m ) . '円 ＝ ' . number_format( apprex_hp_penalty( $m, $u ) ) . '円' ); ?><br><?php endforeach; ?></span></td></tr>
 	</tbody></table>
@@ -422,7 +423,7 @@ function apprex_hpp_make_contract( $id, $p ) {
 		'apprex_c_term'       => 3,
 		'apprex_c_renewal'    => wp_date( 'Y-m-d', strtotime( $start . ' +3 years' ) ),
 		'apprex_c_status'     => 'active',
-		'apprex_c_autorenew'  => 0,
+		'apprex_c_autorenew'  => 1, // 3年たったら1年ごとに自動更新。
 		'apprex_c_kind'       => 'hp',
 		'apprex_c_note'       => 'ホームページの提案から申し込み（受付 #' . $id . '・' . wp_date( 'Y/n/j G:i' ) . '・3年契約と解約金に同意）',
 	);
@@ -445,7 +446,7 @@ add_filter(
 		$html   = str_replace( 'におけるアプリ作成サービスの', 'におけるホームページ制作・運用サービスの', $html );
 		$clause = '<p>4.（契約期間・中途解約・違約金）本サービスのうちホームページ制作・運用の契約期間は、契約開始日から起算して' . apprex_hp_term_months() . 'ヶ月間とする。制作費は0円とし、ホームページの制作の対価は契約期間中の月額利用料に含めるものとする。乙が契約期間の満了前に、退会その他事由の如何を問わず本サービス利用契約を終了する場合（第１０条に基づき甲が解除した場合を含む。）、乙は甲に対し、違約金として、解約日の属する月の翌月から契約期間の満了月までの残存月数に月額利用料を乗じた額を、解約日の属する月の翌月末日までに一括して支払うものとする。<br>'
 			. 'なお、本項の違約金は損害賠償額の予定とし、既に支払済みの月額利用料を返金しない旨（本条第１項）の定めを妨げるものではない。ドメイン・有料素材その他の実費は別途乙の負担とする。<br>'
-			. '5.契約期間満了後の取り扱いは、甲乙協議のうえ定めるものとする。</p>';
+			. '5.（自動更新）契約期間満了日の１ヶ月前までに、甲乙いずれからも書面又は電磁的方法により更新しない旨の申出がないときは、本契約は同一の条件でさらに１年間自動的に更新されるものとし、以後も同様とする。更新後の期間の途中で乙が本サービス利用契約を終了する場合も、前項に準じ、当該期間の残存月数に月額利用料を乗じた額を違約金として支払うものとする。</p>';
 		$new = preg_replace( '#<p>\s*4\.（中途解約・違約金）.*?</p>#su', $clause, $html, 1, $n );
 		if ( ! $n ) {
 			$new = preg_replace( '#(<h2>第７条)#u', $clause . "\n$1", $html, 1 );
