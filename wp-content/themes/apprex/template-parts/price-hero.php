@@ -16,7 +16,7 @@ $apprex_ph_est  = apprex_page_url( 'estimate' );
 $apprex_ph_meet = apprex_page_url( 'meeting' );
 $apprex_ph_line = function_exists( 'apprex_line_url' ) ? apprex_line_url() : '';
 $apprex_ph_app  = function_exists( 'apprex_studio_url' ) ? apprex_studio_url() : $apprex_ph_est;
-$apprex_ph_hp   = function_exists( 'apprex_studio_url' ) ? apprex_studio_url( 'hp' ) : $apprex_ph_est;
+$apprex_ph_hp   = apprex_page_url( 'hp-creation' ) . '#hearing';
 $apprex_ph_tiles = array(
 	array(
 		'tag'   => 'アプリ（ノーコード）',
@@ -32,10 +32,10 @@ $apprex_ph_tiles = array(
 		'tag'   => 'ホームページ',
 		'num'   => '9,800',
 		'unit'  => '円〜／月',
-		'badge' => '初期費用0円（AIプランナーで制作費0円）',
-		'pts'   => array( 'ページ構成と文章をAIが提案', 'スマホ対応・更新サポートつき', '月々の費用だけで持てる' ),
+		'badge' => '制作費0円・3年契約',
+		'pts'   => array( 'ヒアリングして提案書・デザインをご提案（無料）', 'スマホ対応・更新サポートつき', '月々の費用だけで持てる' ),
 		'plans' => array( array( 'Light', '9,800円' ), array( 'Standard', '19,800円' ), array( 'Premium', '39,800円' ) ),
-		'btn'   => array( 'AIプランナーで作る', $apprex_ph_hp ),
+		'btn'   => array( '無料でヒアリングを申し込む', $apprex_ph_hp ),
 		'feat'  => false,
 	),
 	array(

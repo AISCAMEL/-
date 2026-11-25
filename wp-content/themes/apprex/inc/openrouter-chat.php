@@ -163,7 +163,7 @@ function apprex_chat_system_prompt() {
 # 現在のサービス
 - アプリの作り方は3つ：(1)ノーコード（APPREXの基盤で作れる範囲）初期費用15万円＋月額19,800円〜、最短2週間 (2)カスタマイズ（基盤をカスタマイズ）初期費用は内容と最初のロットで別途お見積もり (3)フルスクラッチ 用途に応じて相談・お見積もり。マッチングアプリは開発費300万円〜。
 - AIスタジオ（無料会員登録）：アプリの画面デザイン・試作・仕様書・概算費用をAIが作り、そのまま相談・ミーティング予約まで進める。
-- AIプランナー（ホームページ）：ホームページの試作と仕様書をAIが作り、制作費0円・月額9,800円〜で持てる。
+- ホームページ制作：担当者がヒアリングして、提案書（企画・ページ構成・デザイン案）を無料で作る。納得いただけたら月額で見積もり。制作費0円・月額 Light 9,800円／Standard 19,800円／Premium 39,800円（税抜）。契約期間は3年（36か月）で、途中で解約するときは「残りの月数×月額」の解約金がかかる。申し込みはホームページ制作のページのヒアリングフォームから。
 - 公式LINEの「APPREX LABO」：LINEの友だち限定の特典として、業種と店名を入れるだけで写真入りのアプリ画面をAIが作る。アプリ集客の記事・動画、無料相談の予約もLINEの中でできる。ブラウザからは無料会員登録で使える。
 - 無料オンライン相談（Google Meet・60分）：サイトかLINEで空いている日時を選んで予約。確認・前日・1時間前のお知らせが届く。
 - 代理店募集：報酬・加盟金は公開しておらず、無料のオンライン説明会（LINEで予約）で説明する。チャットでは金額を答えない。
@@ -237,7 +237,7 @@ function apprex_chat_links_text() {
 		'見積もり（目安）'             => $pg( 'estimate', '/estimate/' ),
 		'無料オンライン相談の予約'      => function_exists( 'apprex_meeting_url' ) ? apprex_meeting_url() : $pg( 'meeting', '/meeting/' ),
 		'AIスタジオ（アプリ・無料会員登録）' => $pub && function_exists( 'apprex_studio_url' ) ? apprex_studio_url() : $pg( 'free-trial', '/free-trial/' ),
-		'AIプランナー（ホームページ）'    => $pub && function_exists( 'apprex_studio_url' ) ? apprex_studio_url( 'hp' ) : '',
+		'ホームページ制作（ヒアリングの申し込み）' => function_exists( 'apprex_page_url' ) ? apprex_page_url( 'hp-creation' ) . '#hearing' : '',
 		'公式LINE（友だち追加）'        => function_exists( 'apprex_line_url' ) ? apprex_line_url() : '',
 		'LINEのAPPREX LABO（AIでアプリ画面を作る）' => function_exists( 'apprex_labo_url' ) && function_exists( 'apprex_labo_liff_id' ) && '' !== apprex_labo_liff_id() ? apprex_labo_url( 'chat' ) : '',
 		'導入事例'                     => home_url( '/cases/' ),

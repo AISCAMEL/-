@@ -38,6 +38,15 @@
 					agency_type: fd.get('agency_type') || '',
 					source_url: location.href
 				};
+				// ホームページのヒアリング（hp[...] の項目）。チェックボックスは「、」でつなぐ。
+				var hp = {};
+				form.querySelectorAll('[name^="hp["]').forEach(function (el) {
+					var k = el.name.replace(/^hp\[|\](\[\])?$/g, '');
+					if ((el.type === 'checkbox' || el.type === 'radio') && !el.checked) { return; }
+					if (!el.value) { return; }
+					hp[k] = hp[k] ? hp[k] + '、' + el.value : el.value;
+				});
+				if (Object.keys(hp).length) { payload.hp = hp; }
 
 				fetch(cfg.root + 'inquiry', {
 					method: 'POST',

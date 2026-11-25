@@ -13,12 +13,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 get_header();
 
-$apprex_hp_plans = array(
-	array( 'name' => __( 'Light', 'apprex' ), 'price' => '9,800', 'desc' => __( '基本的なコーポレートサイト', 'apprex' ), 'featured' => false ),
-	array( 'name' => __( 'Standard', 'apprex' ), 'price' => '19,800', 'desc' => __( 'LP付き・問い合わせフォーム充実', 'apprex' ), 'featured' => true ),
-	array( 'name' => __( 'Premium', 'apprex' ), 'price' => '39,800', 'desc' => __( 'EC機能・会員機能付き', 'apprex' ), 'featured' => false ),
-	array( 'name' => __( 'Enterprise', 'apprex' ), 'price' => __( '要相談', 'apprex' ), 'desc' => __( '大規模・カスタム開発対応', 'apprex' ), 'featured' => false ),
-);
+$apprex_hp_plans = array();
+foreach ( apprex_hp_plans() as $apprex_k => $apprex_p ) {
+	$apprex_hp_plans[] = array( 'name' => $apprex_p[0], 'price' => number_format( $apprex_p[1] ), 'desc' => $apprex_p[2], 'featured' => 'standard' === $apprex_k );
+}
+$apprex_hp_plans[] = array( 'name' => 'Enterprise', 'price' => __( '要相談', 'apprex' ), 'desc' => __( '大規模・カスタム開発対応', 'apprex' ), 'featured' => false );
+$apprex_hp_hear = '#hearing';
+$apprex_hp_meet = apprex_page_url( 'meeting' );
 
 $apprex_hp_subs = array(
 	array( 'name' => __( 'デザイン・バナー制作', 'apprex' ), 'price' => __( '月額 5万円〜', 'apprex' ), 'desc' => __( 'バナー・SNS画像・LPビジュアル・A/Bテスト用制作', 'apprex' ) ),
@@ -35,16 +36,18 @@ while ( have_posts() ) :
 				<a href="<?php echo esc_url( home_url( '/' ) ); ?>"><?php esc_html_e( 'ホーム', 'apprex' ); ?></a>
 			</nav>
 			<h1><?php the_title(); ?></h1>
-			<p><?php esc_html_e( 'AIプランナーを使えば制作費0円。月々の費用（月額9,800円〜）だけで、高品質なホームページを持てます。', 'apprex' ); ?></p>
-			<?php if ( function_exists( 'apprex_rn_enabled' ) && apprex_rn_enabled() ) : ?>
-				<p style="margin-top:18px"><a class="btn btn--primary" href="<?php echo esc_url( apprex_studio_url( 'hp' ) ); ?>"><?php esc_html_e( 'AIプランナーで作る（制作費0円）', 'apprex' ); ?></a></p>
-			<?php endif; ?>
+			<p><?php esc_html_e( '制作費0円・月額9,800円〜。ご要望をお伺いして、提案書・企画・デザインまでプロがご提案します。公開後の更新・運用もおまかせください。', 'apprex' ); ?></p>
+			<p style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
+				<a class="btn btn--primary" href="<?php echo esc_url( $apprex_hp_hear ); ?>"><?php esc_html_e( '無料でヒアリングを申し込む', 'apprex' ); ?></a>
+				<a class="btn btn--ghost" href="<?php echo esc_url( $apprex_hp_meet ); ?>"><?php esc_html_e( 'オンラインで相談する', 'apprex' ); ?></a>
+			</p>
+			<p style="font-size:.9rem;opacity:.85;margin-top:8px"><?php esc_html_e( '提案書まで無料。ご契約は内容にご納得いただいてからです（契約期間3年）。', 'apprex' ); ?></p>
 		</div>
 	</section>
 
 	<section class="section">
 		<div class="container">
-			<?php apprex_section_head( 'About', __( 'APPREX のホームページ制作とは', 'apprex' ), __( 'AI とノーコードを組み合わせ、高品質なサイトを初期費用0円・月額制でスピード提供します。', 'apprex' ) ); ?>
+			<?php apprex_section_head( 'About', __( 'APPREX のホームページ制作とは', 'apprex' ), __( 'ヒアリングしてプロが提案。制作費0円・月額制で、作ったあとの運用まで続けてお手伝いします。', 'apprex' ) ); ?>
 			<div class="content-prose">
 				<p><?php esc_html_e( '「制作費が高い」「公開まで時間がかかる」「更新が面倒」——そんなホームページの悩みを、APPREX が解決します。コーポレートサイト・サービスサイト・LP・採用ページ・EC まで、目的に合わせて最適な構成をご提案。公開後の更新・運用までワンストップで対応します。', 'apprex' ); ?></p>
 			</div>
@@ -76,15 +79,16 @@ while ( have_posts() ) :
 
 	<section class="section section--soft">
 		<div class="container">
-			<?php apprex_section_head( 'Flow', __( '制作の流れ', 'apprex' ), __( 'お申し込みから公開まで、最短スケジュールでご案内します。', 'apprex' ) ); ?>
+			<?php apprex_section_head( 'Flow', __( 'ご契約までの流れ', 'apprex' ), __( 'まずはご要望をお聞かせください。提案書までは無料です。', 'apprex' ) ); ?>
 			<div class="grid grid--3">
 				<?php
 				$apprex_flow = array(
-					array( 'STEP 1', 'ヒアリング', '目的・ターゲット・参考サイトをお伺いし、構成をご提案します。' ),
-					array( 'STEP 2', 'デザイン・原稿', 'AIも活用してデザイン案と原稿を作成。スマホ表示も最適化。' ),
-					array( 'STEP 3', '制作・実装', 'ご確認いただきながらページを制作。フォームや予約等も実装。' ),
-					array( 'STEP 4', '公開', 'ドメイン・SSL設定を行い公開。最短スケジュールで対応します。' ),
-					array( 'STEP 5', '運用・更新', '公開後の更新・改善・アクセス解析まで継続サポート。' ),
+					array( 'STEP 1', 'ヒアリング（無料）', '下のフォームか、オンラインで、目的・お客様・ほしいページ・参考サイトをお伺いします。' ),
+					array( 'STEP 2', '提案書・企画・デザイン（無料）', 'ご要望をもとに、企画・ページ構成・デザイン案をまとめた提案書をお作りします。' ),
+					array( 'STEP 3', '月額のお見積り', '提案にご納得いただけたら、内容に合う月額プランでお見積りします。制作費は0円です。' ),
+					array( 'STEP 4', 'ご契約（3年）', 'お見積りの内容でご契約。契約期間は3年（36か月）です。' ),
+					array( 'STEP 5', '制作・公開', 'ご確認いただきながら制作し、ドメイン・SSLを設定して公開します。' ),
+					array( 'STEP 6', '運用・更新', '公開後の更新・改善まで、月額の中で続けてサポートします。' ),
 				);
 				foreach ( $apprex_flow as $f ) :
 					?>
@@ -114,7 +118,7 @@ while ( have_posts() ) :
 
 	<section class="section">
 		<div class="container">
-			<?php apprex_section_head( 'Plans', __( '基本プラン（初期費用0円・月額制）', 'apprex' ) ); ?>
+			<?php apprex_section_head( 'Plans', __( '月額プラン（制作費0円・3年契約）', 'apprex' ), __( '金額は月額・税抜です。どのプランが合うかは、提案書でご提案します。', 'apprex' ) ); ?>
 			<div class="grid grid--3">
 				<?php foreach ( $apprex_hp_plans as $plan ) : ?>
 					<div class="price-card<?php echo $plan['featured'] ? ' price-card--featured' : ''; ?> is-reveal">
@@ -122,10 +126,38 @@ while ( have_posts() ) :
 						<h3><?php echo esc_html( $plan['name'] ); ?></h3>
 						<div class="price"><?php echo esc_html( $plan['price'] ); ?><small><?php echo is_numeric( str_replace( ',', '', $plan['price'] ) ) ? esc_html__( '円 / 月〜', 'apprex' ) : ''; ?></small></div>
 						<p style="color:var(--color-muted);font-size:.95rem"><?php echo esc_html( $plan['desc'] ); ?></p>
-						<a class="btn <?php echo $plan['featured'] ? 'btn--primary' : 'btn--ghost'; ?>" href="<?php echo esc_url( apprex_page_url( 'contact' ) ); ?>"><?php esc_html_e( 'お問い合わせ', 'apprex' ); ?></a>
+						<a class="btn <?php echo $plan['featured'] ? 'btn--primary' : 'btn--ghost'; ?>" href="<?php echo esc_url( $apprex_hp_hear ); ?>"><?php esc_html_e( 'ヒアリングを申し込む', 'apprex' ); ?></a>
 					</div>
 				<?php endforeach; ?>
 			</div>
+		</div>
+	</section>
+
+	<section class="section section--soft">
+		<div class="container">
+			<?php apprex_section_head( 'Contract', __( 'ご契約について', 'apprex' ) ); ?>
+			<?php $apprex_ex = apprex_hp_plans()['standard'][1]; ?>
+			<div class="content-prose">
+				<table>
+					<tbody>
+						<tr><th><?php esc_html_e( '制作費', 'apprex' ); ?></th><td><?php esc_html_e( '0円', 'apprex' ); ?></td></tr>
+						<tr><th><?php esc_html_e( '月額', 'apprex' ); ?></th><td><?php esc_html_e( 'Light 9,800円／Standard 19,800円／Premium 39,800円（税抜）。サーバー・保守・更新サポートを含みます。', 'apprex' ); ?></td></tr>
+						<tr><th><?php esc_html_e( '契約期間', 'apprex' ); ?></th><td><?php echo esc_html( sprintf( '3年（%dか月）', apprex_hp_term_months() ) ); ?></td></tr>
+						<tr><th><?php esc_html_e( '途中で解約するとき', 'apprex' ); ?></th><td><?php esc_html_e( '解約金として「残りの月数 × 月額」をお支払いいただきます。', 'apprex' ); ?><br>
+							<small><?php echo esc_html( sprintf( '例：Standard（月額%s円）を12か月で解約 → 残り%dか月 × %s円 ＝ %s円', number_format( $apprex_ex ), apprex_hp_term_months() - 12, number_format( $apprex_ex ), number_format( apprex_hp_penalty( $apprex_ex, 12 ) ) ) ); ?></small></td></tr>
+						<tr><th><?php esc_html_e( '3年たったあと', 'apprex' ); ?></th><td><?php esc_html_e( '続けるか・どのプランにするかは、ご契約の際に契約書でご案内します。', 'apprex' ); ?></td></tr>
+					</tbody>
+				</table>
+				<p><small><?php esc_html_e( '制作費をいただかない代わりに、3年間の月額で費用をいただく仕組みです。提案書・お見積りまでは無料で、ご契約は内容にご納得いただいてからです。', 'apprex' ); ?></small></p>
+			</div>
+		</div>
+	</section>
+
+	<section class="section" id="hearing">
+		<div class="container" style="max-width:760px">
+			<?php apprex_section_head( 'Hearing', __( '無料でヒアリングを申し込む', 'apprex' ), __( 'わかる範囲で大丈夫です。担当者が内容を確認して、2営業日以内にご連絡します。', 'apprex' ) ); ?>
+			<?php apprex_render_form( 'hp' ); ?>
+			<p style="margin-top:14px;text-align:center"><a href="<?php echo esc_url( $apprex_hp_meet ); ?>"><?php esc_html_e( '文字で書くのが大変な方は、オンライン相談（無料）をご予約ください →', 'apprex' ); ?></a></p>
 		</div>
 	</section>
 

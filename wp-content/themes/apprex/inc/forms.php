@@ -300,6 +300,7 @@ function apprex_form_meta( $type ) {
 		'trial'    => array( 'submit' => '30日間 無料体験を申し込む', 'msg_label' => 'ご要望（任意）', 'msg_required' => false, 'datetime' => false ),
 		'meeting'  => array( 'submit' => 'この日時で予約する', 'msg_label' => '相談したい内容（任意）', 'msg_required' => false, 'datetime' => true ),
 		'partner'  => array( 'submit' => '代理店に申し込む', 'msg_label' => '事業内容・お客様層・ご質問（任意）', 'msg_required' => false, 'datetime' => false ),
+		'hp'       => array( 'submit' => '無料でヒアリングを申し込む', 'msg_label' => 'そのほかのご要望・気になること（任意）', 'msg_required' => false, 'datetime' => false ),
 	);
 	return isset( $map[ $type ] ) ? $map[ $type ] : $map['contact'];
 }
@@ -310,7 +311,7 @@ function apprex_form_meta( $type ) {
  * @return string[]
  */
 function apprex_inquiry_types() {
-	return array( 'contact', 'document', 'trial', 'meeting', 'partner', 'signup', 'studio' );
+	return array( 'contact', 'document', 'trial', 'meeting', 'partner', 'signup', 'studio', 'hp' );
 }
 
 /**
@@ -330,6 +331,7 @@ function apprex_type_label( $type ) {
 		'signup'   => 'AIスタジオ会員登録',
 		'studio'   => 'AIスタジオから開発相談',
 		'seminar'  => '説明会の予約',
+		'hp'       => 'ホームページのヒアリング',
 	);
 	return isset( $labels[ $type ] ) ? $labels[ $type ] : 'お問い合わせ';
 }
@@ -372,6 +374,9 @@ function apprex_render_form( $type = 'contact' ) {
 					<?php endforeach; ?>
 				</select>
 			</label>
+		<?php endif; ?>
+		<?php if ( 'hp' === $type && function_exists( 'apprex_hp_hearing_fields' ) ) : ?>
+			<?php apprex_hp_hearing_fields(); ?>
 		<?php endif; ?>
 		<?php if ( ! empty( $meta['datetime'] ) ) : ?>
 			<label>
@@ -479,6 +484,17 @@ function apprex_rest_inquiry( WP_REST_Request $request ) {
 		return new WP_Error( 'bad_request', 'ご希望日時をご指定ください。', array( 'status' => 400 ) );
 	}
 
+	// ホームページのヒアリング：答えを本文の先頭にまとめて、別にも保存する。
+	$hp_answers = array();
+	if ( 'hp' === $type && function_exists( 'apprex_hp_hearing_collect' ) ) {
+		$hp_answers = apprex_hp_hearing_collect( (array) $request->get_param( 'hp' ) );
+		$lines      = array();
+		foreach ( $hp_answers as $k => $v ) {
+			$lines[] = '【' . $k . '】' . $v;
+		}
+		$message = implode( "\n", $lines ) . ( '' !== $message ? "\n\n【そのほかのご要望】\n" . $message : '' );
+	}
+
 	if ( '' === $name || ! is_email( $email ) ) {
 		return new WP_Error( 'bad_request', 'お名前と有効なメールアドレスをご入力ください。', array( 'status' => 400 ) );
 	}
@@ -501,6 +517,9 @@ function apprex_rest_inquiry( WP_REST_Request $request ) {
 		update_post_meta( $post_id, 'apprex_' . $k, $v );
 	}
 	update_post_meta( $post_id, 'apprex_submitted_at', current_time( 'mysql' ) );
+	if ( ! empty( $hp_answers ) ) {
+		update_post_meta( $post_id, 'apprex_hp_hearing', $hp_answers );
+	}
 	if ( '' !== $ref ) {
 		update_post_meta( $post_id, 'apprex_ref', $ref );
 	}
@@ -589,6 +608,8 @@ function apprex_autoreply_onscreen( $type ) {
 			return '無料体験のお申し込みを受け付けました。担当者より2営業日以内にご案内します。';
 		case 'meeting':
 			return ( function_exists( 'apprex_mb_enabled' ) && apprex_mb_enabled() ) ? 'ミーティングのご予約が確定しました。確認のメールをお送りしました。前日と1時間前にもお知らせします。' : 'ミーティングのご予約を受け付けました。確認のうえ、確定のご連絡を差し上げます。リマインダーもお送りします。';
+		case 'hp':
+			return 'ヒアリングのお申し込みを受け付けました。担当者が内容を確認し、2営業日以内にご連絡します。続けてオンラインでのヒアリング日時をご予約いただくと、よりスムーズです。';
 		case 'partner':
 			return '代理店のお申し込みを受け付けました。担当者よりご連絡します。報酬・加盟金は説明会でご説明しますので、まだの方はLINEから説明会をご予約ください。';
 		case 'signup':
@@ -669,7 +690,7 @@ function apprex_drip_track( $type ) {
  * @return int
  */
 function apprex_drip_rank( $type ) {
-	$r = array( 'contact' => 1, 'document' => 2, 'signup' => 3, 'trial' => 4, 'studio' => 5, 'estimate' => 6, 'meeting' => 7, 'partner' => 1 );
+	$r = array( 'contact' => 1, 'document' => 2, 'signup' => 3, 'trial' => 4, 'studio' => 5, 'estimate' => 6, 'meeting' => 7, 'partner' => 1, 'hp' => 6 );
 	return isset( $r[ $type ] ) ? $r[ $type ] : 1;
 }
 
@@ -767,6 +788,10 @@ function apprex_autoreply_message( $type, $fields ) {
 					$body .= "\n▼ ご自身で今すぐ日時を確定したい方はこちら（Google Meet・URL自動発行）\n{$meet}\n";
 				}
 			}
+			break;
+		case 'hp':
+			$subject = '【APPREX】ホームページのヒアリングのお申し込みありがとうございます';
+			$body    = "{$name} 様\n\nAPPREXのホームページ制作にお申し込みいただき、ありがとうございます。\n\nこれからの流れ\n1. 担当者がご要望を確認し、2営業日以内にご連絡します（必要に応じてオンラインで詳しくお伺いします）\n2. ご要望をもとに、提案書（企画・ページ構成・デザイン案）をお作りします（無料）\n3. 内容にご納得いただけたら、月額のお見積りをお出しします\n4. ご契約後に制作・公開し、公開後の更新・運用もお任せください\n\n制作費は0円、月額9,800円〜（ご契約期間は3年）です。提案書までは費用はかかりません。\n\n▼ オンラインでのヒアリング日時のご予約はこちら\n{meeting_url}\n";
 			break;
 		case 'partner':
 			$subject = '【APPREX】代理店のお申し込みありがとうございます';
