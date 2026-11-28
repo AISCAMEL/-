@@ -262,7 +262,7 @@ add_action( 'admin_menu', function () {
 		return;
 	}
 	global $menu, $submenu;
-	$hide = array( 'apprex-dashboard', 'edit-comments.php', 'edit.php?post_type=apprex_chatlog', 'edit.php?post_type=apprex_labo_post', 'edit.php?post_type=apprex_meo', 'tools.php', 'plugins.php' );
+	$hide = array( 'apprex-dashboard', 'edit-comments.php', 'edit.php?post_type=apprex_chatlog', 'edit.php?post_type=apprex_labo_post', 'edit.php?post_type=apprex_meo', 'tools.php' );
 	foreach ( (array) $menu as $i => $item ) {
 		$slug  = isset( $item[2] ) ? $item[2] : '';
 		$title = isset( $item[0] ) ? wp_strip_all_tags( $item[0] ) : '';
